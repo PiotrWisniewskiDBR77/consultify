@@ -179,6 +179,18 @@ export function resolveIdeaMapHydration(
   return { map: serverMap, draft, usedDraft: false };
 }
 
+/** #6c — humanize the raw seconds-since-save into "just now" / "2 min ago" / "1h ago" etc. */
+function humanizeSecondsAgo(sec: number, isPolish: boolean): string {
+  if (sec < 10) return isPolish ? 'przed chwilą' : 'just now';
+  if (sec < 60) return isPolish ? `${sec}s temu` : `${sec}s ago`;
+  const min = Math.round(sec / 60);
+  if (min < 60) return isPolish ? `${min} min temu` : `${min} min ago`;
+  const hours = Math.round(min / 60);
+  if (hours < 24) return isPolish ? `${hours} godz. temu` : `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return isPolish ? `${days} dni temu` : `${days}d ago`;
+}
+
 export function formatIdeaMapSyncLabel(
   state: IdeaMapSyncState,
   lastSavedAt: number | null,
@@ -200,7 +212,8 @@ export function formatIdeaMapSyncLabel(
     return isPolish ? 'Draft lokalny' : 'Local draft';
   }
   const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
-  return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
+  const humanized = humanizeSecondsAgo(sec, isPolish);
+  return isPolish ? `Zapisano ${humanized}` : `Saved ${humanized}`;
 }
 
 // L-03: module-level version registry — shared across all tool instances for the same ideaId
