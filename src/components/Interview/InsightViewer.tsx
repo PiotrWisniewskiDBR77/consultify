@@ -1786,6 +1786,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     () => insight?.evidenceMap ?? [],
     [insight?.evidenceMap]
   );
+
+  // #57 "dramat pustych kart" — some insights (mostly seed/imported rows created
+  // directly in the DB, bypassing the create() → generateInsight() pipeline) sit
+  // at status 'completed' with narrative `content` but no themes/issues/
+  // opportunities/signals/evidenceMap ever written. The V6 section cards below
+  // only read the structured fields, so those rows show a dead-end "will appear
+  // after V6 analysis" placeholder forever — nothing ever triggers generation.
+  // The backend materialization pipeline (InterviewInsightService.generateInsight)
+  // already exists and is already wired to `handleRegenerate` (used by the
+  // section card headers). Give the empty state itself a working CTA into that
+  // same, existing pipeline instead of a dead end. Gate to status 'completed'
+  // (not already generating/failed) and exclude demo-mock insights (no backing
+  // DB row to regenerate).
+  const canRegenerateV6 =
+    insight?.status === 'completed' && !isRegenerating && !isInterviewDemoId(insightId);
+
   const materialQuality = useMemo<V8InsightMaterialQuality | null>(() => {
     if (insight?.materialQuality) {
       // Backend can return a partial material_quality (older rows, imported/seeded
@@ -4847,6 +4863,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       ? 'Tematy pojawią się po wygenerowaniu analizy V6.'
                       : 'Themes will appear after V6 analysis generation.'
                   }
+                  action={
+                    canRegenerateV6
+                      ? {
+                          label: isPolish ? 'Wygeneruj analizę V6' : 'Generate V6 analysis',
+                          onClick: handleRegenerate,
+                          disabled: isRegenerating,
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <div className="space-y-3">
@@ -5111,6 +5136,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       ? 'Problemy pojawią się po analizie V6.'
                       : 'Issues will appear after V6 analysis.'
                   }
+                  action={
+                    canRegenerateV6
+                      ? {
+                          label: isPolish ? 'Wygeneruj analizę V6' : 'Generate V6 analysis',
+                          onClick: handleRegenerate,
+                          disabled: isRegenerating,
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <div className="space-y-3">
@@ -5365,6 +5399,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       ? 'Szanse pojawią się po analizie V6.'
                       : 'Opportunities will appear after V6 analysis.'
                   }
+                  action={
+                    canRegenerateV6
+                      ? {
+                          label: isPolish ? 'Wygeneruj analizę V6' : 'Generate V6 analysis',
+                          onClick: handleRegenerate,
+                          disabled: isRegenerating,
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <div className="space-y-3">
@@ -5601,6 +5644,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'signals':
           component = (
             <div className="space-y-4">
+              {/* #57 fix: this card was missing the section header that every
+                  other V6 card gets (state badge + Regenerate/Edit/Accept) —
+                  add it for consistency, matching 'themes'/'issues-risks'/
+                  'opportunities'/'evidence-map' above. */}
+              {renderSectionCardHeader('signals', v6Signals.length > 0)}
               {v6Signals.length === 0 ? (
                 <EmptyStateInline
                   icon={Radio}
@@ -5609,6 +5657,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     isPolish
                       ? 'Sygnały pojawią się po analizie V6.'
                       : 'Signals will appear after V6 analysis.'
+                  }
+                  action={
+                    canRegenerateV6
+                      ? {
+                          label: isPolish ? 'Wygeneruj analizę V6' : 'Generate V6 analysis',
+                          onClick: handleRegenerate,
+                          disabled: isRegenerating,
+                        }
+                      : undefined
                   }
                 />
               ) : (
@@ -5721,6 +5778,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     isPolish
                       ? 'Mapa pojawi się po analizie V6.'
                       : 'Map will appear after V6 analysis.'
+                  }
+                  action={
+                    canRegenerateV6
+                      ? {
+                          label: isPolish ? 'Wygeneruj analizę V6' : 'Generate V6 analysis',
+                          onClick: handleRegenerate,
+                          disabled: isRegenerating,
+                        }
+                      : undefined
                   }
                 />
               ) : (
