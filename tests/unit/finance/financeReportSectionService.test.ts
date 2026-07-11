@@ -25,7 +25,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   composeFinanceReportSection,
+  evaluateReconcileEnforcement,
+  FinanceReportReconcileBlockedError,
   renderFinanceReportMarkdown,
+  type FinanceReconcileSummary,
   type RawFinanceReportInputs,
 } from '../../../server/src/services/financeReportSectionService.js';
 import { FINANCE_RATIO_FAMILY_CATALOG } from '../../../server/src/services/financeRatioFamilyCatalog.js';
@@ -80,7 +83,11 @@ function baseInput(overrides: Partial<RawFinanceReportInputs> = {}): RawFinanceR
   };
 }
 
+// `blocksReady` mirrors reconciliationService's own formula: true only when at least one
+// error-severity check has status='fail' (R1 here). A 'warning'-only package (R2) never sets
+// it, matching `checks.some(c => c.severity==='error' && c.status==='fail')`.
 function reconcileRows(overallStatus: 'pass' | 'warning' | 'fail') {
+  const blocksReady = overallStatus === 'fail';
   return [
     {
       check_code: 'R1_BS_BALANCES',
@@ -117,7 +124,7 @@ function reconcileRows(overallStatus: 'pass' | 'warning' | 'fail') {
         enforce: false,
         overallStatus,
         summary: { passed: overallStatus === 'pass' ? 8 : 6, warnings: overallStatus === 'warning' ? 1 : 0, failed: overallStatus === 'fail' ? 1 : 0, skipped: 0 },
-        blocksReady: false,
+        blocksReady,
         wouldBlockReady: false,
       },
       computed_at: '2026-07-11T10:00:00.000Z',
@@ -200,6 +207,17 @@ describe('financeReportSectionService — composeFinanceReportSection', () => {
     expect(section.reconcile.checks.some((c) => c.checkCode === 'RECONCILE_SUMMARY')).toBe(false);
     expect(section.reconcile.summary).toEqual({ passed: 6, warnings: 0, failed: 1, skipped: 0 });
     expect(section.reconcile.enforceMode).toBe(false);
+    // A 'fail' overallStatus in this fixture is driven by an error+fail check (R1) →
+    // blocksReady=true, persisted verbatim from RECONCILE_SUMMARY.details_json.
+    expect(section.reconcile.blocksReady).toBe(true);
+  });
+
+  it('blocksReady stays false for a warning-only package (no error+fail check)', () => {
+    const section = composeFinanceReportSection(
+      baseInput({ reconcileValidations: reconcileRows('warning') })
+    );
+    expect(section.reconcile.overallStatus).toBe('warning');
+    expect(section.reconcile.blocksReady).toBe(false);
   });
 
   it('marks reconcile unavailable (not "0 checks") when the pack never recomputed', () => {
@@ -207,6 +225,7 @@ describe('financeReportSectionService — composeFinanceReportSection', () => {
     expect(section.reconcile.available).toBe(false);
     expect(section.reconcile.overallStatus).toBe('na');
     expect(section.reconcile.checks).toEqual([]);
+    expect(section.reconcile.blocksReady).toBe(false);
   });
 
   it('carries the EV basket through untouched and reflects consistency in the verdict', () => {
@@ -265,5 +284,90 @@ describe('financeReportSectionService — renderFinanceReportMarkdown', () => {
     expect(md.reconcile_result).toContain('R2_CF_TIES');
     expect(md.ev_football_field).toContain('DCF/FCFF');
     expect(md.ev_football_field).toContain('rozjeżdżają się');
+  });
+});
+
+/**
+ * evaluateReconcileEnforcement — the enforce GATE behind the "Piotr's switch"
+ * (RECONCILE_ENFORCE), tested with an explicit `enforce` flag so it does not depend on
+ * flipping the real module constant (which stays a hardcoded `false` until DBR77
+ * calibration signs off — see reconciliationService.ts docblock).
+ *
+ * Contracts under test (per the task's hard requirements):
+ *   1. enforce=false → report proceeds (nothing thrown) EVEN WITH violations present
+ *      (today's default behavior — pure log/shadow, unchanged).
+ *   2. enforce=true + violations present → blocked, with the violating checks attached.
+ *   3. clean package (no violations) → proceeds in BOTH modes.
+ */
+describe('financeReportSectionService — evaluateReconcileEnforcement (RECONCILE_ENFORCE gate)', () => {
+  function reconcileSummary(overrides: Partial<FinanceReconcileSummary>): FinanceReconcileSummary {
+    return {
+      available: true,
+      enforceMode: false,
+      overallStatus: 'pass',
+      summary: { passed: 8, warnings: 0, failed: 0, skipped: 0 },
+      checks: [],
+      computedAt: '2026-07-11T10:00:00.000Z',
+      blocksReady: false,
+      ...overrides,
+    };
+  }
+
+  const dirtySummary = reconcileSummary({
+    overallStatus: 'fail',
+    blocksReady: true,
+    checks: [
+      {
+        checkCode: 'R1_BS_BALANCES',
+        checkName: 'Balance sheet balances',
+        severity: 'error',
+        status: 'fail',
+        message: 'Assets != Liabilities+Equity',
+        difference: 12.5,
+        tolerance: 1,
+      },
+      {
+        checkCode: 'R2_CF_TIES',
+        checkName: 'CF ties to BS cash movement',
+        severity: 'warning',
+        status: 'warning',
+        message: 'Minor drift',
+        difference: 3,
+        tolerance: 1,
+      },
+    ],
+  });
+
+  const cleanSummary = reconcileSummary({});
+
+  it('enforce=false: a dirty package is NEVER blocked (today\'s default — shadow/log only)', () => {
+    expect(evaluateReconcileEnforcement('pack-1', dirtySummary, false)).toBeNull();
+  });
+
+  it('enforce=true: a dirty package IS blocked, with only the error+fail checks as violations', () => {
+    const blocked = evaluateReconcileEnforcement('pack-1', dirtySummary, true);
+    expect(blocked).toBeInstanceOf(FinanceReportReconcileBlockedError);
+    expect(blocked?.code).toBe('RECONCILE_ENFORCE_BLOCKED');
+    expect(blocked?.statusCode).toBe(409);
+    expect(blocked?.packId).toBe('pack-1');
+    expect(blocked?.violations).toHaveLength(1);
+    expect(blocked?.violations[0]?.checkCode).toBe('R1_BS_BALANCES');
+  });
+
+  it('clean package: proceeds (null) in BOTH enforce=false and enforce=true', () => {
+    expect(evaluateReconcileEnforcement('pack-1', cleanSummary, false)).toBeNull();
+    expect(evaluateReconcileEnforcement('pack-1', cleanSummary, true)).toBeNull();
+  });
+
+  it('enforce=true but reconcile never ran (available=false) does not block (nothing to gate on)', () => {
+    const neverRecomputed = reconcileSummary({ available: false, overallStatus: 'na', blocksReady: false });
+    expect(evaluateReconcileEnforcement('pack-1', neverRecomputed, true)).toBeNull();
+  });
+
+  it('defaults to the real RECONCILE_ENFORCE module switch when no override is passed (today: false)', () => {
+    // No third argument — exercises the exact call path publishFinanceReportSectionSnapshot
+    // uses. Must be a no-op today: RECONCILE_ENFORCE is a hardcoded `false` until DBR77
+    // calibration flips it (see reconciliationService.ts).
+    expect(evaluateReconcileEnforcement('pack-1', dirtySummary)).toBeNull();
   });
 });

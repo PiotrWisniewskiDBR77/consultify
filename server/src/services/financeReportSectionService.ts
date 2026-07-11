@@ -99,6 +99,14 @@ export interface FinanceReconcileSummary {
   summary: { passed: number; warnings: number; failed: number; skipped: number } | null;
   checks: FinanceReconcileCheckRow[];
   computedAt: string | null;
+  /**
+   * Persystowany `ReconcileResult.blocksReady` z ostatniego `recomputeStatementPack`
+   * (`reconciliationService.reconcileStatements` → `checks.some(error && fail)`), CZYTANY
+   * z `RECONCILE_SUMMARY.details_json`, NIE przeliczany drugi raz. Samo w sobie nic nie
+   * blokuje — bramkę stanowi `RECONCILE_ENFORCE && blocksReady`, patrz
+   * `publishFinanceReportSectionSnapshot`. false gdy niedostępny (brak recompute).
+   */
+  blocksReady: boolean;
 }
 
 export interface FinanceValuationSummary {
@@ -236,6 +244,7 @@ export function summarizeReconcileValidations(
       summary: null,
       checks: [],
       computedAt: null,
+      blocksReady: false,
     };
   }
   const summaryRow = reconcileValidations.find((v) => v.check_code === 'RECONCILE_SUMMARY') || null;
@@ -252,6 +261,15 @@ export function summarizeReconcileValidations(
       tolerance: v.tolerance,
     }));
   const overallStatus = (summaryDetails.overallStatus as FinanceReconcileSummary['overallStatus']) || 'na';
+  // Persisted `ReconcileResult.blocksReady` from the last recompute (shadowReconcilePack
+  // writes it verbatim into RECONCILE_SUMMARY.details_json). Fallback to re-deriving from
+  // the checks themselves (identical formula to reconciliationService.reconcileStatements)
+  // for older rows written before this field existed, so historical packs are not silently
+  // treated as non-blocking once enforce flips on.
+  const blocksReady =
+    typeof summaryDetails.blocksReady === 'boolean'
+      ? summaryDetails.blocksReady
+      : checks.some((c) => c.severity === 'error' && c.status === 'fail');
   return {
     available: Boolean(summaryRow) || checks.length > 0,
     enforceMode: RECONCILE_ENFORCE,
@@ -259,6 +277,7 @@ export function summarizeReconcileValidations(
     summary: (summaryDetails.summary as FinanceReconcileSummary['summary']) || null,
     checks,
     computedAt: summaryRow?.computed_at ?? null,
+    blocksReady,
   };
 }
 
@@ -301,6 +320,7 @@ function emptyFinanceReportSection(organizationId: string, asOf: string): Financ
       summary: null,
       checks: [],
       computedAt: null,
+      blocksReady: false,
     },
     valuation: { available: false, valuationId: null, valuationTitle: null, basket: null },
     dataQuality: { statementTypesPresent: [], missingStatementTypes: ['P&L', 'BS', 'CF'], resolvedLineCount: 0 },
@@ -652,8 +672,58 @@ export interface PublishFinanceReportSectionResult {
 }
 
 /**
+ * Enforce gate (RECONCILE_ENFORCE=false today → NEVER thrown, zero behavior change).
+ * Thrown by `publishFinanceReportSectionSnapshot` BEFORE any write (createReport/snapshot/
+ * envelope) when `RECONCILE_ENFORCE=true` and the pack's persisted reconcile R1-R8 result
+ * `blocksReady` (error-severity + fail-status check present). Route layer maps this to
+ * HTTP 409 with the violating checks — see `finance-statements.routes.ts` POST
+ * `/packs/:id/report-section`.
+ */
+export class FinanceReportReconcileBlockedError extends Error {
+  code = 'RECONCILE_ENFORCE_BLOCKED';
+  statusCode = 409;
+  packId: string;
+  violations: FinanceReconcileCheckRow[];
+
+  constructor(packId: string, violations: FinanceReconcileCheckRow[]) {
+    super(
+      `Reconcile R1-R8 blocks publikację raportu dla pakietu ${packId} ` +
+        `(RECONCILE_ENFORCE=true): ${violations.length} naruszenie(a) blokujące (error+fail).`
+    );
+    this.name = 'FinanceReportReconcileBlockedError';
+    this.packId = packId;
+    this.violations = violations;
+  }
+}
+
+/**
+ * PURE decision function behind the enforce gate — extracted so it is unit-testable with an
+ * explicit `enforce` flag, without having to flip the real `RECONCILE_ENFORCE` module constant
+ * (which stays a hardcoded `false` until DBR77 calibration signs off, per reconciliationService
+ * docblock). `publishFinanceReportSectionSnapshot` calls this with no third argument, so it
+ * always uses the real switch — defaulting the parameter is what keeps prod behavior identical
+ * to before this function existed.
+ *   - enforce=false (today, always in prod) → always returns null, regardless of violations.
+ *   - enforce=true + reconcile unavailable/clean → null (nothing to block on).
+ *   - enforce=true + reconcile.blocksReady → the error to throw, with the violating checks.
+ */
+export function evaluateReconcileEnforcement(
+  packId: string,
+  reconcile: FinanceReconcileSummary,
+  enforce: boolean = RECONCILE_ENFORCE
+): FinanceReportReconcileBlockedError | null {
+  if (!enforce || !reconcile.available || !reconcile.blocksReady) return null;
+  const violations = reconcile.checks.filter((c) => c.severity === 'error' && c.status === 'fail');
+  return new FinanceReportReconcileBlockedError(packId, violations);
+}
+
+/**
  * TRYB 1 (publikować) — freeze snapshot immutable + Evidence Envelope. Ścieżka identyczna
  * z `threeAxisReportService.publishThreeAxisSnapshot`:
+ *   0. ENFORCE GATE — gdy `RECONCILE_ENFORCE=true` i persystowany reconcile R1-R8 pakietu
+ *      `blocksReady` → rzuca `FinanceReportReconcileBlockedError` PRZED jakimkolwiek zapisem
+ *      (report/snapshot/envelope). Gdy `RECONCILE_ENFORCE=false` (dziś, domyślnie) — ta gałąź
+ *      nigdy się nie wykonuje, zero zmiany zachowania (shadow, patrz reconciliationService).
  *   1. loadFinanceReportSectionData (read-model) → renderFinanceReportMarkdown (sekcje)
  *   2. ReportBuilderService.createReport({sourceType:'FINANCE_SECTION', ...}) — wymaga seeda
  *      `report_builder_templates` (id='tpl-finance-section', migracja 916, NIE aplikowana).
@@ -669,6 +739,10 @@ export async function publishFinanceReportSectionSnapshot(
     packId: params.packId,
     valuationId: params.valuationId,
   });
+
+  const blocked = evaluateReconcileEnforcement(params.packId, section.reconcile);
+  if (blocked) throw blocked;
+
   const markdown = renderFinanceReportMarkdown(section);
 
   const title = params.title || `Sekcja finansowa — ${section.periodLabel || params.packId} (${section.asOf.slice(0, 10)})`;
@@ -783,4 +857,6 @@ export default {
   renderFinanceReportMarkdown,
   getFinanceReportSectionLiveView,
   publishFinanceReportSectionSnapshot,
+  evaluateReconcileEnforcement,
+  FinanceReportReconcileBlockedError,
 };

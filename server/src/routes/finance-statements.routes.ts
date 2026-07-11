@@ -54,6 +54,7 @@ import {
 } from '../services/financeAggregateScopeService.js';
 import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
 import {
+  FinanceReportReconcileBlockedError,
   loadReconcileSummaryForPack,
   publishFinanceReportSectionSnapshot,
 } from '../services/financeReportSectionService.js';
@@ -1798,6 +1799,19 @@ router.post(
         section: result.section,
       });
     } catch (e: any) {
+      if (e instanceof FinanceReportReconcileBlockedError) {
+        // RECONCILE_ENFORCE=true + persisted R1-R8 blocksReady → report NOT published.
+        // Structural 409 with the blocking checks, not a generic 500 (see
+        // financeReportSectionService.FinanceReportReconcileBlockedError docblock).
+        logger.warn(`[FinanceStatements] Report section publish blocked by reconcile enforce: ${e.message}`);
+        return res.status(409).json({
+          success: false,
+          error: e.message,
+          code: e.code,
+          packId: e.packId,
+          violations: e.violations,
+        });
+      }
       logger.error('[FinanceStatements] Error publishing finance report section:', e);
       res.status(500).json({ error: 'Failed to publish finance report section' });
     }
@@ -1836,6 +1850,7 @@ router.get(
         summary: null,
         checks: [],
         computedAt: null,
+        blocksReady: false,
       });
     }
   })
