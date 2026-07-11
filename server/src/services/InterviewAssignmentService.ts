@@ -70,6 +70,18 @@ export type InterviewReviewAlignment =
   | 'manager_overrode_ai_warning'
   | 'no_ai_signal';
 
+// #48a — objective scoring rubric (Oxford style): each answer is judged on
+// named criteria (concreteness/evidence/depth/measurability/coherence),
+// 0-4 each, with a per-criterion justification. See INTERVIEW_RUBRIC_CRITERIA
+// in InterviewController.ts (the rubric is code, not a black box).
+export interface InterviewAiRubricCriterionResult {
+  criterion: string;
+  label: string;
+  score: number;
+  maxScore: number;
+  justification: string;
+}
+
 export interface InterviewAiWeakAnswerItem {
   key: string;
   label: string;
@@ -80,6 +92,7 @@ export interface InterviewAiWeakAnswerItem {
   feedback: string;
   fixType: InterviewAiFixType;
   isRequired: boolean;
+  rubric?: InterviewAiRubricCriterionResult[];
 }
 
 export interface InterviewAiReviewSnapshot {
@@ -91,9 +104,14 @@ export interface InterviewAiReviewSnapshot {
     verdict: InterviewAiAnswerVerdict;
     feedback: string;
     fixType: InterviewAiFixType;
+    rubric?: InterviewAiRubricCriterionResult[];
+    rubricTotal?: number;
+    rubricMax?: number;
   }>;
   recommendations: string[];
   weakAnswerMap: InterviewAiWeakAnswerItem[];
+  rubricVersion?: string;
+  rubricCriteria?: Array<{ key: string; label: string; description: string; maxScore: number }>;
 }
 
 export interface InterviewReviewDecisionMemoryEntry {

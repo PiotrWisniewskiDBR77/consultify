@@ -195,12 +195,100 @@ type InterviewReviewAlignment =
   | 'manager_overrode_ai_warning'
   | 'no_ai_signal';
 
+// ── #48a — Objective scoring rubric (Oxford style) ──
+// The rubric is DATA, not a black box: every criterion has an explicit key,
+// label, and a 0-4 anchored description. The LLM only judges each criterion
+// independently (low temperature, no free-form "overall impression"); every
+// rollup — per-question score, verdict, and the session overallScore/verdict —
+// is computed by plain arithmetic in this file, not guessed by the model.
+// This is what makes the score reproducible/defensible instead of "losowy".
+const INTERVIEW_RUBRIC_CRITERIA = [
+  {
+    key: 'concreteness',
+    labelEn: 'Concreteness',
+    labelPl: 'Konkretność',
+    descriptionEn:
+      'Specific facts, names, numbers, or examples instead of vague generalities ("some", "a lot", "we try to").',
+    descriptionPl:
+      'Konkretne fakty, nazwy, liczby lub przykłady zamiast ogólników ("trochę", "sporo", "staramy się").',
+  },
+  {
+    key: 'evidence',
+    labelEn: 'Evidence',
+    labelPl: 'Dowody',
+    descriptionEn:
+      'Cites something checkable — a data point, named system/process, document, or observed event — to support the claim.',
+    descriptionPl:
+      'Podaje coś sprawdzalnego — dane, nazwany system/proces, dokument lub zaobserwowane zdarzenie — na poparcie twierdzenia.',
+  },
+  {
+    key: 'depth',
+    labelEn: 'Depth',
+    labelPl: 'Głębia',
+    descriptionEn:
+      'Goes beyond restating the question — explains mechanism, root cause, trade-off, or context rather than a surface answer.',
+    descriptionPl:
+      'Wykracza poza powtórzenie pytania — wyjaśnia mechanizm, przyczynę źródłową, kompromis lub kontekst, a nie tylko odpowiedź powierzchowną.',
+  },
+  {
+    key: 'measurability',
+    labelEn: 'Measurability',
+    labelPl: 'Mierzalność',
+    descriptionEn:
+      'Contains a quantifiable, verifiable, or falsifiable statement (a number, date, percentage, threshold, or named comparison).',
+    descriptionPl:
+      'Zawiera mierzalne, weryfikowalne lub falsyfikowalne stwierdzenie (liczbę, datę, procent, próg lub nazwane porównanie).',
+  },
+  {
+    key: 'coherence',
+    labelEn: 'Coherence',
+    labelPl: 'Spójność',
+    descriptionEn:
+      'Directly and consistently answers what was actually asked, without contradicting itself or drifting off-topic.',
+    descriptionPl:
+      'Bezpośrednio i spójnie odpowiada na zadane pytanie, bez sprzeczności i bez odchodzenia od tematu.',
+  },
+] as const;
+
+type InterviewRubricCriterionKey = (typeof INTERVIEW_RUBRIC_CRITERIA)[number]['key'];
+const INTERVIEW_RUBRIC_MAX_PER_CRITERION = 4; // anchored 0 (absent) .. 4 (excellent)
+const INTERVIEW_RUBRIC_MAX_TOTAL =
+  INTERVIEW_RUBRIC_CRITERIA.length * INTERVIEW_RUBRIC_MAX_PER_CRITERION; // 20
+const INTERVIEW_RUBRIC_VERSION = 'oxford-v1';
+
+type InterviewAiRubricCriterionResult = {
+  criterion: InterviewRubricCriterionKey;
+  label: string;
+  score: number; // 0..INTERVIEW_RUBRIC_MAX_PER_CRITERION
+  maxScore: number;
+  justification: string;
+};
+
+// Deterministic 0-20 rubric total -> legacy 1-5 scale, so every existing
+// consumer (hard-floor gate, notification %, InterviewHub column) keeps working
+// unchanged. Rounded to 1 decimal for readability.
+const rubricTotalToFiveScale = (total: number): number => {
+  const clamped = Math.max(0, Math.min(INTERVIEW_RUBRIC_MAX_TOTAL, total));
+  return Math.round((1 + (clamped / INTERVIEW_RUBRIC_MAX_TOTAL) * 4) * 10) / 10;
+};
+
+// Deterministic per-answer verdict from the rubric ratio — replaces the old
+// LLM-guessed verdict so categorization is rule-based, not "vibes".
+const verdictFromRubricRatio = (ratio: number): InterviewAiAnswerVerdict => {
+  if (ratio >= 0.8) return 'sufficient';
+  if (ratio >= 0.5) return 'needs_improvement';
+  return 'insufficient';
+};
+
 type InterviewAiQuestionEvaluation = {
   questionId: string;
   score: number;
   verdict: InterviewAiAnswerVerdict;
   feedback: string;
   fixType: InterviewAiFixType;
+  rubric: InterviewAiRubricCriterionResult[];
+  rubricTotal: number;
+  rubricMax: number;
 };
 
 type InterviewAiWeakAnswerItem = InterviewMissingItem & {
@@ -209,6 +297,7 @@ type InterviewAiWeakAnswerItem = InterviewMissingItem & {
   feedback: string;
   fixType: InterviewAiFixType;
   isRequired: boolean;
+  rubric: InterviewAiRubricCriterionResult[];
 };
 
 type InterviewAiReviewSnapshot = {
@@ -217,6 +306,8 @@ type InterviewAiReviewSnapshot = {
   questionEvaluations: InterviewAiQuestionEvaluation[];
   recommendations: string[];
   weakAnswerMap: InterviewAiWeakAnswerItem[];
+  rubricVersion: string;
+  rubricCriteria: Array<{ key: string; label: string; description: string; maxScore: number }>;
 };
 
 type InterviewReviewDecisionMemoryEntry = {
@@ -310,6 +401,7 @@ const buildInterviewAiWeakAnswerMap = (
         feedback: item.feedback,
         fixType: item.fixType,
         isRequired: Boolean(question?.is_required),
+        rubric: item.rubric,
       };
     })
     .sort((a, b) => {
@@ -319,15 +411,56 @@ const buildInterviewAiWeakAnswerMap = (
     });
 };
 
+// Normalizes one LLM-scored rubric (an array of {criterion, score, justification})
+// into the fixed 5-criterion shape, in the canonical INTERVIEW_RUBRIC_CRITERIA
+// order, clamping stray scores into [0, MAX]. Missing/unknown criteria default
+// to 0 with an empty justification rather than being silently dropped — a
+// truncated LLM response degrades the score instead of corrupting the shape.
+const normalizeRubricResult = (
+  rawRubric: Array<{ criterion?: unknown; score?: unknown; justification?: unknown }> | undefined
+): InterviewAiRubricCriterionResult[] => {
+  const byKey = new Map<string, { score?: unknown; justification?: unknown }>();
+  for (const entry of rawRubric || []) {
+    const key = String(entry?.criterion || '').trim();
+    if (key) byKey.set(key, entry);
+  }
+  return INTERVIEW_RUBRIC_CRITERIA.map((criterion) => {
+    const entry = byKey.get(criterion.key);
+    const rawScore = Number(entry?.score);
+    const score = Number.isFinite(rawScore)
+      ? Math.max(0, Math.min(INTERVIEW_RUBRIC_MAX_PER_CRITERION, Math.round(rawScore)))
+      : 0;
+    return {
+      criterion: criterion.key,
+      label: criterion.labelEn,
+      score,
+      maxScore: INTERVIEW_RUBRIC_MAX_PER_CRITERION,
+      justification: String(entry?.justification || '').trim(),
+    };
+  });
+};
+
+const zeroRubric = (): InterviewAiRubricCriterionResult[] =>
+  INTERVIEW_RUBRIC_CRITERIA.map((criterion) => ({
+    criterion: criterion.key,
+    label: criterion.labelEn,
+    score: 0,
+    maxScore: INTERVIEW_RUBRIC_MAX_PER_CRITERION,
+    justification: '',
+  }));
+
+// #48a — Builds the full review snapshot from PER-CRITERION rubric judgments.
+// Every numeric rollup here (per-question score/verdict, session overallScore/
+// overallVerdict) is deterministic arithmetic over the rubric — the LLM never
+// supplies a final score or verdict directly, only the 0-4 judgment per
+// criterion. Same rubric + same answers -> same score, every time.
 const buildInterviewAiReviewSnapshot = (
   raw: {
-    overallScore: number;
-    overallVerdict: InterviewAiOverallVerdict;
     questionEvaluations: Array<{
       questionId: string;
-      score: number;
-      verdict: InterviewAiAnswerVerdict;
-      feedback: string;
+      isAnswered: boolean;
+      rubric?: Array<{ criterion?: unknown; score?: unknown; justification?: unknown }>;
+      feedback?: string;
       fixType?: InterviewAiFixType;
     }>;
     recommendations: string[];
@@ -336,7 +469,8 @@ const buildInterviewAiReviewSnapshot = (
     id: string;
     question_text?: string;
     is_required?: boolean;
-  }>
+  }>,
+  lang: 'pl' | 'en' = 'en'
 ): InterviewAiReviewSnapshot => {
   const questionMeta = new Map<string, { is_required?: boolean }>();
   for (const question of questions) {
@@ -344,27 +478,83 @@ const buildInterviewAiReviewSnapshot = (
   }
 
   const questionEvaluations: InterviewAiQuestionEvaluation[] = (raw.questionEvaluations || []).map(
-    (item) => ({
-      questionId: String(item.questionId),
-      score: Number(item.score || 1),
-      verdict: item.verdict,
-      feedback: String(item.feedback || '').trim(),
-      fixType: normalizeInterviewAiFixType(item.fixType, {
-        verdict: item.verdict,
-        isRequired: Boolean(questionMeta.get(String(item.questionId))?.is_required),
-        feedback: item.feedback,
-      }),
-    })
+    (item) => {
+      const isRequired = Boolean(questionMeta.get(String(item.questionId))?.is_required);
+      if (!item.isAnswered) {
+        return {
+          questionId: String(item.questionId),
+          score: 1,
+          verdict: 'unanswered' as InterviewAiAnswerVerdict,
+          feedback: lang === 'pl' ? 'Brak odpowiedzi.' : 'No answer provided.',
+          fixType: normalizeInterviewAiFixType(undefined, {
+            verdict: 'unanswered',
+            isRequired,
+            feedback: '',
+          }),
+          rubric: zeroRubric(),
+          rubricTotal: 0,
+          rubricMax: INTERVIEW_RUBRIC_MAX_TOTAL,
+        };
+      }
+      const rubric = normalizeRubricResult(item.rubric);
+      const rubricTotal = rubric.reduce((sum, r) => sum + r.score, 0);
+      const verdict = verdictFromRubricRatio(rubricTotal / INTERVIEW_RUBRIC_MAX_TOTAL);
+      return {
+        questionId: String(item.questionId),
+        score: rubricTotalToFiveScale(rubricTotal),
+        verdict,
+        feedback: String(item.feedback || '').trim(),
+        fixType: normalizeInterviewAiFixType(item.fixType, {
+          verdict,
+          isRequired,
+          feedback: item.feedback,
+        }),
+        rubric,
+        rubricTotal,
+        rubricMax: INTERVIEW_RUBRIC_MAX_TOTAL,
+      };
+    }
   );
 
+  // Session-level rollup — weighted average (required answers count 1.5x so a
+  // weak mandatory answer moves the score more than a weak optional one),
+  // computed here rather than asked of the LLM.
+  let weightedSum = 0;
+  let weightTotal = 0;
+  let requiredBlocked = false;
+  for (const evalItem of questionEvaluations) {
+    const isRequired = Boolean(questionMeta.get(evalItem.questionId)?.is_required);
+    const weight = isRequired ? 1.5 : 1;
+    weightedSum += evalItem.score * weight;
+    weightTotal += weight;
+    if (isRequired && (evalItem.verdict === 'insufficient' || evalItem.verdict === 'unanswered')) {
+      requiredBlocked = true;
+    }
+  }
+  const overallScore =
+    weightTotal > 0 ? Math.round((weightedSum / weightTotal) * 10) / 10 : 0;
+  const overallVerdict: InterviewAiOverallVerdict =
+    overallScore >= 3.5 && !requiredBlocked
+      ? 'ready_for_approval'
+      : overallScore >= 2.5
+        ? 'needs_improvement'
+        : 'insufficient';
+
   return {
-    overallScore: Number(raw.overallScore || 0),
-    overallVerdict: raw.overallVerdict,
+    overallScore,
+    overallVerdict,
     questionEvaluations,
     recommendations: Array.isArray(raw.recommendations)
       ? raw.recommendations.map((item) => String(item || '').trim()).filter(Boolean)
       : [],
     weakAnswerMap: buildInterviewAiWeakAnswerMap(questions, questionEvaluations),
+    rubricVersion: INTERVIEW_RUBRIC_VERSION,
+    rubricCriteria: INTERVIEW_RUBRIC_CRITERIA.map((c) => ({
+      key: c.key,
+      label: lang === 'pl' ? c.labelPl : c.labelEn,
+      description: lang === 'pl' ? c.descriptionPl : c.descriptionEn,
+      maxScore: INTERVIEW_RUBRIC_MAX_PER_CRITERION,
+    })),
   };
 };
 
@@ -2210,6 +2400,7 @@ async function evaluateInterviewSessionAnswers(params: {
   language?: unknown;
 }): Promise<InterviewAiReviewSnapshot> {
   const { session, questions } = params;
+  const langCode: 'pl' | 'en' = params.language === 'pl' ? 'pl' : 'en';
   if (!questions || questions.length === 0) {
     return {
       overallScore: 0,
@@ -2217,16 +2408,36 @@ async function evaluateInterviewSessionAnswers(params: {
       questionEvaluations: [],
       recommendations: [],
       weakAnswerMap: [],
+      rubricVersion: INTERVIEW_RUBRIC_VERSION,
+      rubricCriteria: INTERVIEW_RUBRIC_CRITERIA.map((c) => ({
+        key: c.key,
+        label: langCode === 'pl' ? c.labelPl : c.labelEn,
+        description: langCode === 'pl' ? c.descriptionPl : c.descriptionEn,
+        maxScore: INTERVIEW_RUBRIC_MAX_PER_CRITERION,
+      })),
     };
   }
 
-  const lang = params.language === 'pl' ? 'Polish' : 'English';
+  const lang = langCode === 'pl' ? 'Polish' : 'English';
+
+  // #48a — Deterministic split: questions with no answer never go to the LLM
+  // at all (there is nothing to judge), they are scored 0/unanswered in code.
+  // Only answered questions are sent for rubric evaluation.
+  const answeredQuestions = (questions as any[]).filter(
+    (q) => q.status === 'answered' && String(q.answer_text || '').trim().length > 0
+  );
+
+  const criterionKeys = INTERVIEW_RUBRIC_CRITERIA.map((c) => c.key) as [string, ...string[]];
+  const RubricCriterionSchema = z.object({
+    criterion: z.enum(criterionKeys),
+    score: z.number().int().min(0).max(INTERVIEW_RUBRIC_MAX_PER_CRITERION),
+    justification: z.string(),
+  });
   const EvalSchema = z.object({
     questionEvaluations: z.array(
       z.object({
         questionId: z.string(),
-        score: z.number().min(1).max(5),
-        verdict: z.enum(['sufficient', 'needs_improvement', 'insufficient', 'unanswered']),
+        rubric: z.array(RubricCriterionSchema).length(INTERVIEW_RUBRIC_CRITERIA.length),
         feedback: z.string(),
         fixType: z
           .enum([
@@ -2240,38 +2451,51 @@ async function evaluateInterviewSessionAnswers(params: {
           .optional(),
       })
     ),
-    overallScore: z.number().min(1).max(5),
-    overallVerdict: z.enum(['ready_for_approval', 'needs_improvement', 'insufficient']),
     recommendations: z.array(z.string()),
   });
 
-  const questionsForPrompt = (questions as any[])
-    .map((q, i) => {
-      const answered = q.status === 'answered' && q.answer_text?.trim();
-      return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
+  let llmEvaluations: Array<{
+    questionId: string;
+    rubric?: Array<{ criterion?: unknown; score?: unknown; justification?: unknown }>;
+    feedback?: string;
+    fixType?: InterviewAiFixType;
+  }> = [];
+  let recommendations: string[] = [];
+
+  if (answeredQuestions.length > 0) {
+    const rubricText = INTERVIEW_RUBRIC_CRITERIA.map(
+      (c, i) => `${i + 1}. ${c.labelEn} (key: "${c.key}") — ${c.descriptionEn}`
+    ).join('\n');
+
+    const questionsForPrompt = answeredQuestions
+      .map((q, i) => {
+        return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
 Question: ${q.question_text}
 ${q.expected_answer_shape ? `Expected format: ${q.expected_answer_shape}` : ''}
 ${q.description ? `Helper: ${q.description}` : ''}
-Status: ${q.status || 'not_started'}
-Answer: ${answered ? q.answer_text.trim() : '(no answer)'}
+Answer: ${String(q.answer_text).trim()}
 ${q.context_note ? `Context note: ${q.context_note}` : ''}`;
-    })
-    .join('\n\n');
+      })
+      .join('\n\n');
 
-  const systemPrompt = `You are a quality reviewer for interview/survey answers. Evaluate each answer for:
-1. Completeness - does it address the full question?
-2. Specificity - does it give concrete details, examples, or data rather than vague generalities?
-3. Actionability - could a consultant use this answer to make decisions or recommendations?
-4. Relevance - does it actually answer what was asked?
+    // Oxford-style rubric: explicit, named, independently-scored criteria — no
+    // single "overall impression" number from the model. Low temperature and
+    // per-criterion anchors keep repeated runs on the same answer stable.
+    const systemPrompt = `You are an objective rubric-based reviewer for interview/survey answers.
 
-Score each answer 1-5:
-- 5: Excellent - thorough, specific, actionable
-- 4: Good - adequate with minor gaps
-- 3: Acceptable - covers basics but lacks depth
-- 2: Needs improvement - too vague, incomplete, or off-topic
-- 1: Insufficient - essentially empty or irrelevant
+For EACH answer, score it against ALL ${INTERVIEW_RUBRIC_CRITERIA.length} criteria below, independently. Do NOT
+produce a single "overall impression" score — score every criterion on its own, each 0-${INTERVIEW_RUBRIC_MAX_PER_CRITERION}:
+- 0: absent — the answer shows nothing for this criterion
+- 1: poor — barely present
+- 2: partial — present but thin
+- 3: good — clearly present
+- 4: excellent — strongly and clearly present
 
-For unanswered questions, use verdict "unanswered" and score 1.
+Rubric criteria (use these exact keys):
+${rubricText}
+
+For each criterion, write a one-sentence justification tied to the actual answer text (quote or paraphrase it) —
+never a generic statement. If the answer does not demonstrate a criterion, say why, briefly.
 
 For each weak answer choose the most useful fixType:
 - clarify
@@ -2281,40 +2505,51 @@ For each weak answer choose the most useful fixType:
 - complete_required_fields
 - correct_meaning
 
-Overall verdict:
-- "ready_for_approval": overallScore >= 3.5 and no required questions are "insufficient"
-- "needs_improvement": overallScore >= 2.5 or some answers need work
-- "insufficient": overallScore < 2.5 or many required questions unanswered
+Also provide 2-5 actionable, session-level recommendations for improving the weakest answers overall.
+Write all feedback, justifications, and recommendations in ${lang}.
+Return valid JSON matching the schema. Do not include any field for an overall score or overall verdict — those are computed separately.`;
 
-Provide 2-5 actionable recommendations for improving the weakest answers.
-Write all feedback and recommendations in ${lang}.
-Return valid JSON matching the schema.`;
-
-  const userPrompt = `Session: ${session?.name || 'Interview session'}
+    const userPrompt = `Session: ${session?.name || 'Interview session'}
 Total questions: ${questions.length}
-Answered: ${(questions as any[]).filter((q) => q.status === 'answered').length}
+Answered (being scored below): ${answeredQuestions.length}
 
 ${questionsForPrompt}`;
 
-  const result = await llmService.call({
-    type: 'structured',
-    modelConfig: { id: 'standard' },
-    systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-    schema: EvalSchema,
-    maxTokens: 2000,
-    temperature: 0.2,
-    cache: false,
+    const result = await llmService.call({
+      type: 'structured',
+      modelConfig: { id: 'standard' },
+      systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      schema: EvalSchema,
+      maxTokens: 2500,
+      temperature: 0.1,
+      cache: false,
+    });
+
+    const evaluation = (result as any).object || { questionEvaluations: [], recommendations: [] };
+    llmEvaluations = Array.isArray(evaluation.questionEvaluations)
+      ? evaluation.questionEvaluations
+      : [];
+    recommendations = Array.isArray(evaluation.recommendations) ? evaluation.recommendations : [];
+  }
+
+  const llmByQuestionId = new Map(llmEvaluations.map((item) => [String(item.questionId), item]));
+  const answeredIds = new Set(answeredQuestions.map((q) => String(q.id)));
+
+  const questionEvaluations = (questions as any[]).map((q) => {
+    const qid = String(q.id);
+    const isAnswered = answeredIds.has(qid);
+    const llmItem = llmByQuestionId.get(qid);
+    return {
+      questionId: qid,
+      isAnswered,
+      rubric: llmItem?.rubric,
+      feedback: llmItem?.feedback,
+      fixType: llmItem?.fixType,
+    };
   });
 
-  const evaluation = (result as any).object || {
-    questionEvaluations: [],
-    overallScore: 1,
-    overallVerdict: 'insufficient',
-    recommendations: [],
-  };
-
-  return buildInterviewAiReviewSnapshot(evaluation, questions);
+  return buildInterviewAiReviewSnapshot({ questionEvaluations, recommendations }, questions, langCode);
 }
 
 /**
@@ -3646,9 +3881,11 @@ export const InterviewController = {
     try {
       const createdBy = (assignment as any).created_by;
       if (createdBy) {
+        // #48a — overallScore is the rubric's 1-5 scale; map to 0-100 (1 -> 0%,
+        // 5 -> 100%) the same way as the InterviewHub aiScore column.
         const scorePct =
           typeof aiReview?.overallScore === 'number'
-            ? Math.round(aiReview.overallScore <= 1 ? aiReview.overallScore * 100 : aiReview.overallScore)
+            ? Math.round(Math.max(0, Math.min(1, (aiReview.overallScore - 1) / 4)) * 100)
             : null;
         const topRecommendation = (aiReview?.recommendations || []).find((r) => r && r.trim());
         const scorePart = scorePct !== null ? `AI quality score: ${scorePct}/100. ` : '';
@@ -6080,6 +6317,13 @@ Answer type: ${(question as any).answer_type || 'open'}`;
         questionEvaluations: [],
         recommendations: [],
         weakAnswerMap: [],
+        rubricVersion: INTERVIEW_RUBRIC_VERSION,
+        rubricCriteria: INTERVIEW_RUBRIC_CRITERIA.map((c) => ({
+          key: c.key,
+          label: language === 'pl' ? c.labelPl : c.labelEn,
+          description: language === 'pl' ? c.descriptionPl : c.descriptionEn,
+          maxScore: INTERVIEW_RUBRIC_MAX_PER_CRITERION,
+        })),
       });
       return;
     }

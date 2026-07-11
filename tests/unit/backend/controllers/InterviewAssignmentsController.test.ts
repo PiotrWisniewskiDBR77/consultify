@@ -453,13 +453,24 @@ describe('InterviewController assignments', () => {
   // All-sufficient → 200, status flips to submitted, AI score is persisted.
   it('submitAssignment: all-sufficient answers → 200, status flips, score persisted', async () => {
     mockReq.params.id = 'a-ok';
+    // #48a — rubric-based mock: LLM only judges the 5 named criteria (0-4 each);
+    // the aggregate score/verdict are computed deterministically by the
+    // controller, not returned by the mock. 18/20 -> overallScore 4.6.
     mockLlmCall.mockResolvedValue({
       object: {
-        overallScore: 4.2,
-        overallVerdict: 'ready_for_approval',
         recommendations: [],
         questionEvaluations: [
-          { questionId: 'q1', score: 4, verdict: 'sufficient', feedback: 'Good.' },
+          {
+            questionId: 'q1',
+            rubric: [
+              { criterion: 'concreteness', score: 4, justification: 'Specific detail.' },
+              { criterion: 'evidence', score: 4, justification: 'Names a concrete example.' },
+              { criterion: 'depth', score: 3, justification: 'Explains cause.' },
+              { criterion: 'measurability', score: 3, justification: 'Gives a rough figure.' },
+              { criterion: 'coherence', score: 4, justification: 'Directly on-topic.' },
+            ],
+            feedback: 'Good.',
+          },
         ],
       },
     });
@@ -527,7 +538,7 @@ describe('InterviewController assignments', () => {
           String(call[0]).includes('ai_review_snapshot_json = ?') &&
           Array.isArray(call[1]) &&
           call[1].some(
-            (arg: unknown) => typeof arg === 'string' && arg.includes('"overallScore":4.2')
+            (arg: unknown) => typeof arg === 'string' && arg.includes('"overallScore":4.6')
           )
       )
     ).toBe(true);
@@ -555,6 +566,16 @@ describe('InterviewController assignments', () => {
           is_required: 1,
           status: 'not_started',
           answer_text: '',
+        },
+        // #48a — an answered question so the rubric LLM call actually happens
+        // (unanswered questions are scored deterministically without calling the
+        // LLM at all); this is what makes the LLM's rejection observable here.
+        {
+          id: 'q2',
+          question_text: 'Optional context?',
+          is_required: 0,
+          status: 'answered',
+          answer_text: 'Some answer',
         },
       ]);
 
@@ -599,12 +620,24 @@ describe('InterviewController assignments', () => {
   it('submitAssignment: notification to the sender carries the AI quality score', async () => {
     mockReq.params.id = 'a-notify';
     // AI verdict ready_for_approval (>= floor) so submit proceeds.
+    // #48a — rubric-based mock: 15/20 (3 on each of the 5 criteria) -> a
+    // deterministic overallScore of exactly 4, matching the assertion below.
     mockLlmCall.mockResolvedValue({
       object: {
-        overallScore: 4,
-        overallVerdict: 'ready_for_approval',
         recommendations: ['Tighten the second answer.'],
-        questionEvaluations: [],
+        questionEvaluations: [
+          {
+            questionId: 'q1',
+            rubric: [
+              { criterion: 'concreteness', score: 3, justification: 'Reasonably specific.' },
+              { criterion: 'evidence', score: 3, justification: 'One supporting example.' },
+              { criterion: 'depth', score: 3, justification: 'Some explanation of cause.' },
+              { criterion: 'measurability', score: 3, justification: 'Rough figure given.' },
+              { criterion: 'coherence', score: 3, justification: 'On-topic.' },
+            ],
+            feedback: 'Solid, could tighten.',
+          },
+        ],
       },
     });
     mockQueryAll

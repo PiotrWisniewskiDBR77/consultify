@@ -6852,13 +6852,19 @@ Return ONLY the answer text (no markdown fences).`;
                 if (typeof score !== 'number') {
                   return <span className="text-xs text-c-text-muted">—</span>;
                 }
-                const pct = Math.round(score <= 1 ? score * 100 : score);
+                // #48a — overallScore is on the rubric's 1-5 scale (1 = worst, 5 =
+                // best), not already a 0-100 percentage. Map linearly (1 -> 0%,
+                // 5 -> 100%) so the tone thresholds below are meaningful.
+                const pct = Math.round(Math.max(0, Math.min(1, (score - 1) / 4)) * 100);
                 const tone =
                   pct >= 75 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
+                const title = isPolish
+                  ? `Ocena jakości AI wg rubryki (konkretność/dowody/głębia/mierzalność/spójność): ${score.toFixed(1)}/5`
+                  : `AI quality score per rubric (concreteness/evidence/depth/measurability/coherence): ${score.toFixed(1)}/5`;
                 return (
                   <span
                     className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
-                    title={isPolish ? 'Ocena jakości AI' : 'AI quality score'}
+                    title={title}
                   >
                     <Gauge size={12} />
                     {pct}
