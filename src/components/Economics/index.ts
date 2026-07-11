@@ -6,10 +6,6 @@
 
 // Core Components
 export { AIRecommendationsPanel } from './AIRecommendationsPanel';
-export { AnalysisCatalog } from './AnalysisCatalog';
-export { AnalysisCompareView } from './AnalysisCompareView';
-export { AnalysisCreateModal } from './AnalysisCreateModal';
-export { AnalysisResultsPanel } from './AnalysisResultsPanel';
 export { DigitizationToolTab } from './DigitizationToolTab';
 export { EvidencePanel } from './EvidencePanel';
 export { ExcelImportWizard } from './ExcelImportWizard';
@@ -17,13 +13,10 @@ export { PDFExportModal } from './PDFExportModal';
 export { VersionHistoryPanel } from './VersionHistoryPanel';
 
 // Financial Analysis Components (Phase 3)
-export { BusinessCaseGenerator } from './BusinessCaseGenerator';
-export { CashFlowChart } from './CashFlowChart';
-export { FinancialAnalysisPanel } from './FinancialAnalysisPanel';
-export { FinancialInputForm } from './FinancialInputForm';
+// NOTE: FinancialMetricsPanel kept — has dedicated test coverage
+// (tests/components/Economics/FinancialMetricsPanel.test.tsx) even though
+// no src/ caller renders it currently. See chore/lightness-deadcode audit.
 export { FinancialMetricsPanel } from './FinancialMetricsPanel';
-export { InitiativeLinkingPanel } from './InitiativeLinkingPanel';
-export { SensitivityChart } from './SensitivityChart';
 
 // Initiative Integration (Phase 4)
 export { InitiativeFinancialIntegration } from './InitiativeFinancialIntegration';
