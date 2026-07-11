@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { checkSimilarInitiatives } from '../services/initiativeSimilarityService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -1565,6 +1566,18 @@ export class ToolController {
 
       let initiatives: Awaited<ReturnType<typeof ToolInitiativeService.generateFromSession>>;
       let created: Awaited<ReturnType<typeof ToolInitiativeService.persistInitiatives>>;
+      // #68b — functional parity with the canonical InitiativeWizardModal
+      // (POST /initiatives/similarity-check): before persisting, compare the
+      // AI-generated candidates against the org/project's existing active
+      // initiatives so Tools -> Initiatives stops proposing initiatives the
+      // portfolio already has. Informational only — mirrors the wizard's own
+      // doctrine ("never blocks") and is intentionally isolated in its own
+      // try/catch so a similarity-service outage never fails generation.
+      let duplicateWarnings: Array<{
+        title: string;
+        verdict: 'duplicate' | 'similar' | 'related' | 'new';
+        topMatch: { id: string; title: string; status: string; score: number } | null;
+      }> = [];
       try {
         initiatives = await ToolInitiativeService.generateFromSession({
           toolSession: session,
@@ -1573,6 +1586,33 @@ export class ToolController {
           includeChatContext: Boolean(includeChatContext),
           userId: user.id,
         });
+
+        try {
+          const similarity = await checkSimilarInitiatives({
+            orgId: user.organizationId,
+            projectId: session.project_id || null,
+            candidates: initiatives.map((i) => ({ title: i.title, description: i.description })),
+          });
+          duplicateWarnings = similarity.results
+            .filter((r) => r.verdict === 'duplicate' || r.verdict === 'similar')
+            .map((r) => ({
+              title: initiatives[r.candidateIndex]?.title || '',
+              verdict: r.verdict,
+              topMatch: r.matches[0]
+                ? {
+                    id: r.matches[0].id,
+                    title: r.matches[0].title,
+                    status: r.matches[0].status,
+                    score: r.matches[0].score,
+                  }
+                : null,
+            }));
+        } catch (similarityError: unknown) {
+          logger.warn('[ToolController] similarity-check unavailable (non-blocking):', {
+            toolId,
+            error: similarityError instanceof Error ? similarityError.message : String(similarityError),
+          });
+        }
 
         created = await ToolInitiativeService.persistInitiatives({
           toolSession: session,
@@ -1623,7 +1663,7 @@ export class ToolController {
         [batchId, now, toolId]
       );
 
-      res.json({ batchId, initiatives: created, status: 'GENERATED' });
+      res.json({ batchId, initiatives: created, status: 'GENERATED', duplicateWarnings });
     }
   );
 

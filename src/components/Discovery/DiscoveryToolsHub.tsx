@@ -4673,8 +4673,27 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             const toolId = generateInitiativesForId;
             try {
               setGenerationDefaults(payload);
-              await Api.generateToolInitiatives(toolId, payload);
+              const result = await Api.generateToolInitiatives(toolId, payload);
               toast.success(isPolish ? 'Wygenerowano inicjatywy' : 'Initiatives generated');
+              // #68b — functional parity with the canonical AI Initiative Wizard's
+              // duplicate/similar detection (POST /initiatives/similarity-check).
+              // Informational only, shown after success — never blocks creation.
+              const duplicateWarnings = Array.isArray(result?.duplicateWarnings)
+                ? result.duplicateWarnings
+                : [];
+              if (duplicateWarnings.length > 0) {
+                const names = duplicateWarnings
+                  .map((w: { title: string }) => w.title)
+                  .filter(Boolean)
+                  .slice(0, 3)
+                  .join(', ');
+                toast(
+                  isPolish
+                    ? `Uwaga: ${duplicateWarnings.length} z wygenerowanych inicjatyw przypomina istniejące (${names}). Sprawdź portfolio pod kątem duplikatów.`
+                    : `Heads up: ${duplicateWarnings.length} generated initiative(s) resemble existing ones (${names}). Review the portfolio for duplicates.`,
+                  { icon: '⚠️', duration: 6000 }
+                );
+              }
               setGenerateInitiativesForId(null);
               await fetchData(true);
               // Refresh preview details if preview is open for this session
