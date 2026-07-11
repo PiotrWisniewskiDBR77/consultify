@@ -22,12 +22,10 @@ import {
   Lightbulb,
   List,
   Plus,
-  RefreshCw,
   Shield,
   Sparkles,
   Tag,
   Target,
-  TrendingUp,
   Trash2,
   UserPlus,
   Users,
@@ -2245,48 +2243,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  // F5: show the portfolio-level "Make material" control only on portfolio-style
-  // tabs (not on candidates/health/observability where it would be out of context).
-  const showMaterializeControl =
-    activeTab !== 'candidates' &&
-    activeTab !== 'portfolioHealth' &&
-    activeTab !== 'observability' &&
-    !activeDocumentId;
-
-  const rightControls = (
-    <div className="flex items-center gap-2">
-      {scopeToggle}
-      {showMaterializeControl && (
-        <button
-          type="button"
-          onClick={() => void handleMaterializePortfolio('deck')}
-          disabled={isMaterializing}
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          title={
-            i18n.language?.startsWith('pl')
-              ? 'Zrób materiał z portfela (prezentacja)'
-              : 'Make a deck from the portfolio'
-          }
-        >
-          {isMaterializing ? (
-            <RefreshCw size={13} className="animate-spin" />
-          ) : (
-            <Sparkles size={13} />
-          )}
-          {t('initiatives.materialize.cta', 'Make material')}
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={() => navigate(ROUTES.ROI)}
-        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
-        title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
-      >
-        <TrendingUp size={13} />
-        ROI
-      </button>
-    </div>
-  );
+  const rightControls = <div className="flex items-center gap-2">{scopeToggle}</div>;
 
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>
