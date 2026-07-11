@@ -11,6 +11,8 @@
 
 import crypto from 'crypto';
 
+import { decodeHtmlEntities } from './htmlEntities.js';
+
 // ==========================================
 // XSS PREVENTION
 // ==========================================
@@ -30,6 +32,21 @@ const HTML_ENTITIES: Record<string, string> = {
 /**
  * Sanitize string input to prevent XSS attacks
  * Escapes HTML special characters
+ *
+ * Z139 (data-integrity) idempotency guard:
+ * This runs on EVERY request-body/query/param string via the global
+ * `inputSanitizationMiddleware`, on EVERY write. If a field's current value
+ * already contains escaped entities — e.g. because a prior save escaped it
+ * and the client echoed the escaped string back verbatim on the next
+ * save/PATCH without decoding it first — escaping again used to compound
+ * without bound (`&` -> `&amp;` -> `&amp;amp;` -> ... on every edit cycle).
+ * We decode any pre-existing entities back to plain text FIRST, then escape
+ * exactly once. This makes sanitization idempotent (repeated saves converge
+ * to a single escape level, never grow) for ALL text fields across ALL
+ * modules, while preserving the exact same escaped-storage/security
+ * guarantee this function always had for values that were never escaped —
+ * dangerous characters are still neutralized on every call. This does NOT
+ * disable sanitization, it only removes the double/triple-escape defect.
  */
 export function sanitizeString(input: unknown): string {
   if (input === null || input === undefined) return '';
@@ -39,7 +56,8 @@ export function sanitizeString(input: unknown): string {
   // - This runs on API input (JSON), not on HTML rendering.
   // - Escaping `/` or `=` breaks legitimate data (URLs, tokens, base64).
   // - Keep escaping to the minimal set needed to neutralize HTML contexts.
-  return input.replace(/[&<>"'`]/g, (char) => HTML_ENTITIES[char] || char);
+  const decoded = decodeHtmlEntities(input);
+  return decoded.replace(/[&<>"'`]/g, (char) => HTML_ENTITIES[char] || char);
 }
 
 /**
