@@ -108,7 +108,6 @@ import {
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { Banner } from '../shared/Banner';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
@@ -2607,21 +2606,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         availableViewModes={availableViewModes}
       >
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
-          {v8PlanningDegraded && (
-            <div className="flex-shrink-0 px-4 pt-3">
-              <Banner
-                variant="degraded"
-                title={t(
-                  'initiatives.v8Degraded.title',
-                  'Planning runtime is in degraded mode'
-                )}
-                message={t(
-                  'initiatives.v8Degraded.message',
-                  'The governed V8 Planning service is unavailable, so initiatives are shown from the legacy data source. Some governed features (gates, decision chains, portfolio rollups) may be limited until it is restored.'
-                )}
-              />
-            </div>
-          )}
           <div className="min-h-0 flex-1 overflow-hidden">{renderContent()}</div>
         </div>
       </ModuleHub>
