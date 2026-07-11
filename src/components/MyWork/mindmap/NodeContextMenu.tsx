@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { usePointFixedMenuPosition } from '@/hooks/useFixedMenuPosition';
+
 import { ContextMenuPortal } from './ContextMenuPortal';
 import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
 
@@ -75,7 +77,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   onClose,
   onAction,
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const { ref, style: posStyle } = usePointFixedMenuPosition(x, y, true);
   const [submenu, setSubmenu] = useState<string | null>(null);
   const submenuTimerRef = useRef<number | null>(null);
 
@@ -481,9 +483,6 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     [canPasteNodes, canPasteStyle, hasChildren, isLocked, isProtected]
   );
 
-  const clampedX = Math.min(x, window.innerWidth - 260);
-  const clampedY = Math.min(y, window.innerHeight - 400);
-
   const renderItem = (item: MenuItemBase) => {
     const Icon = item.icon;
     const comingSoon = comingSoonIds?.includes(item.id) ?? false;
@@ -522,8 +521,8 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       <ContextMenuPortal>
         <div
           ref={ref}
-          className={`${MENU_CONTAINER_CLASS} min-w-[230px] max-h-[80vh] overflow-y-auto`}
-          style={{ left: clampedX, top: clampedY }}
+          className={`${MENU_CONTAINER_CLASS} min-w-[230px] overflow-y-auto`}
+          style={posStyle}
         >
           {groups.map((group, gi) => (
           <React.Fragment key={gi}>
@@ -551,8 +550,8 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     <ContextMenuPortal>
       <div
         ref={ref}
-        className={`${MENU_CONTAINER_CLASS} min-w-[230px]`}
-        style={{ left: clampedX, top: clampedY }}
+        className={`${MENU_CONTAINER_CLASS} min-w-[230px] overflow-y-auto`}
+        style={posStyle}
       >
       {mainItems.map((group, gi) => (
         <React.Fragment key={gi}>
@@ -586,7 +585,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
           {submenu === group.titleEn && (
             <div
-              className="absolute left-full top-0 ml-1 min-w-[200px] py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
+              className="absolute left-full top-0 ml-1 min-w-[200px] max-h-[70vh] overflow-y-auto py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
               onMouseEnter={() => {
                 if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
               }}
