@@ -627,7 +627,7 @@ function BreakdownAside({
   return (
     <>
       <p className="mx-0.5 mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.13em] text-c-text-muted">
-        {t('Rozkład', 'Breakdown')}
+        {t('Wsparcie', 'Support')}
       </p>
 
       <div className="mb-3 overflow-hidden rounded-xl border border-c-border">

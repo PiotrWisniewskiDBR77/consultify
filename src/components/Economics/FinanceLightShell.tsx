@@ -373,7 +373,7 @@ export const FinanceLightShell: React.FC<FinanceLightShellProps> = ({
         {/* ASIDE */}
         <aside className="hidden overflow-y-auto border-l border-c-border bg-c-surface px-4 py-4 lg:block">
           <p className="mx-0.5 mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.13em] text-c-text-muted">
-            {t('Pochodzenie', 'Lineage')}
+            {t('Wsparcie', 'Support')}
           </p>
 
           <div className="mb-3 overflow-hidden rounded-xl border border-c-border">
