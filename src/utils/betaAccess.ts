@@ -112,6 +112,45 @@ export function lockClosedBetaModules(
 }
 
 /**
+ * Nav declutter (Q1 — `Harvard/wdrozenie-100/_AUDYT_NADMIAR_ELEMENTOW_2026-07-11.md`,
+ * flag `ff.nav_declutter` in `navDeclutterFlag.ts`, default OFF).
+ *
+ * `lockClosedBetaModules` above still SHOWS closed-beta modules to admins
+ * (BETA_ADMINS_EXEMPT keeps the team able to test them) — that is the direct
+ * cause of the "too many elements" complaint: the owner is an admin, so they
+ * see Audits/Meeting (empty/post-GA modules) that a regular user never sees.
+ *
+ * When the nav-declutter flag is ON, call this AFTER `lockClosedBetaModules`
+ * to additionally:
+ *   1. Remove closed-beta items from the tree entirely, for EVERY role
+ *      (effectively `BETA_ADMINS_EXEMPT = false` for just these items) —
+ *      instead of the locked/grayed-out plate, they simply do not render.
+ *   2. Strip the `beta` badge from items whose status is 'open' (GA per D-A:
+ *      Results/Finance/Materials) — access is untouched, only the visual
+ *      badge is removed since these modules no longer carry beta risk.
+ *
+ * When the flag is OFF, this function is never called by Sidebar.tsx — nav
+ * renders exactly as it does today.
+ */
+export function declutterMenu(menu: MenuItem[]): MenuItem[] {
+  const strip = (items: MenuItem[]): MenuItem[] =>
+    items
+      .filter((item) => !isBetaClosed(item.id))
+      .map((item) => {
+        const next: MenuItem = { ...item };
+        if (next.subItems) {
+          next.subItems = strip(next.subItems);
+        }
+        if (next.badge === 'beta' && getBetaStatus(item.id) === 'open') {
+          delete next.badge;
+        }
+        return next;
+      });
+
+  return strip(menu);
+}
+
+/**
  * Surface the polished beta "access restricted" plate. Intentionally carries no
  * CTA so the modal shows a single acknowledge button.
  */

@@ -17,10 +17,12 @@ import { AppView } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
 import {
   BETA_LOCKED_CODE,
+  declutterMenu,
   dispatchBetaAccessBlocked,
   lockClosedBetaModules,
 } from '../../../utils/betaAccess';
 import { canUseInternalTools } from '../../../utils/internalToolsAccess';
+import { isNavDeclutterEnabled } from '../../../utils/navDeclutterFlag';
 import {
   dispatchPilotAccessBlocked,
   getPilotLockedAreaDetail,
@@ -152,10 +154,15 @@ export const Sidebar: React.FC = () => {
   // Beta gating: closed-beta modules are locked for non-administrators. They see
   // the polished "access restricted" plate and cannot enter; admins keep access.
   const betaLockedMessage = t('access.blocked.BETA_LOCKED');
-  const gatedMenuStructure = React.useMemo(
-    () => lockClosedBetaModules(visibleMenuStructure, currentUser?.role, betaLockedMessage),
-    [visibleMenuStructure, currentUser?.role, betaLockedMessage]
-  );
+  // Nav declutter (Q1, `ff.nav_declutter`, default OFF — see navDeclutterFlag.ts).
+  // OFF: behavior below is skipped entirely, nav is unchanged from today. ON:
+  // closed-beta modules (Audits/Meeting) are hidden even from admins, and the
+  // 'beta' badge is stripped from GA modules (Results/Finance/Materials).
+  const navDeclutterEnabled = isNavDeclutterEnabled();
+  const gatedMenuStructure = React.useMemo(() => {
+    const locked = lockClosedBetaModules(visibleMenuStructure, currentUser?.role, betaLockedMessage);
+    return navDeclutterEnabled ? declutterMenu(locked) : locked;
+  }, [visibleMenuStructure, currentUser?.role, betaLockedMessage, navDeclutterEnabled]);
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
   const internalToolsMenuItem = React.useMemo(() => getInternalToolsMenuItem(t), [t]);
