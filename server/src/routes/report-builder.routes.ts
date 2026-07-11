@@ -54,6 +54,7 @@ import {
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportContract from '../services/report/reportContract.js';
+import { publishThreeAxisSnapshot } from '../services/execution/threeAxisReportService.js';
 import {
   getCanonicalTemplate,
   proposeOutline,
@@ -320,6 +321,58 @@ router.get('/definitions', async (req: Request, res: Response, _next: NextFuncti
     res.status(500).json({ error: 'Failed to list report definitions' });
   }
 });
+
+/**
+ * POST /api/report-builder/program-3axis/publish
+ * F5 wiring — "silnik→papier" dla flagowego raportu PM: publikuje niemutowalny snapshot
+ * raportu wykonawczego 3 osi (T=czas × Z=zadania × W=wartość) przez
+ * `threeAxisReportService.publishThreeAxisSnapshot`. Additive — wzorem świeżo dodanego
+ * `POST /api/finance-statements/packs/:id/report-section` (financeReportSectionService);
+ * definicja rejestru `report_definitions` = 'sponsor-3axis' (migracja 913).
+ * Body: { projectId?, programId?, title?, periodFrom?, periodTo? }. Zakres domyślny (brak
+ * projectId/programId) = cała organizacja (patrz threeAxisReportService.buildThreeAxisReport).
+ */
+router.post(
+  '/program-3axis/publish',
+  async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { userId, organizationId } = getAuthContext(req);
+      const body = req.body || {};
+      const projectId =
+        typeof body.projectId === 'string' && body.projectId.trim()
+          ? body.projectId.trim()
+          : undefined;
+      const programId =
+        typeof body.programId === 'string' && body.programId.trim()
+          ? body.programId.trim()
+          : undefined;
+      const title =
+        typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
+      const periodFrom = typeof body.periodFrom === 'string' ? body.periodFrom : undefined;
+      const periodTo = typeof body.periodTo === 'string' ? body.periodTo : undefined;
+
+      const result = await publishThreeAxisSnapshot({
+        organizationId,
+        createdBy: userId || 'system',
+        projectId,
+        programId,
+        title,
+        periodFrom,
+        periodTo,
+      });
+
+      res.status(201).json({
+        success: true,
+        reportId: result.reportId,
+        snapshotId: result.snapshotId,
+        report: result.report,
+      });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error publishing 3-axis program report:', err);
+      res.status(500).json({ error: 'Failed to publish 3-axis program report' });
+    }
+  }
+);
 
 // ==========================================
 // INVOCATION PROFILES ENDPOINTS
