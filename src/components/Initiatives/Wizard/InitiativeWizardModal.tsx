@@ -734,6 +734,17 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const wasOpenRef = useRef(false);
+  // #75 — the "insights" step is a source-anchored picker (values in
+  // ANCHORED_SOURCE_TYPES). When the wizard is opened without any seeded
+  // source (scratch / hub context, e.g. Initiatives §Menu 3 "AI Initiative
+  // Wizard") AND the org genuinely has zero interview insights to pick from,
+  // showing that step first is a dead end ("No interview insights
+  // available."). Auto-advance past it once, the first time we learn there's
+  // nothing to pick — never again after that, so an explicit "Back" to
+  // Insights later is respected. Source-anchored opens (Interview hub with a
+  // real seeded basket, or any org that actually has insights) are
+  // unaffected — the step still shows normally.
+  const autoSkippedEmptyInsightsRef = useRef(false);
 
   const t = useMemo(() => WIZARD_COPY[language] ?? WIZARD_COPY.pl, [language]);
 
@@ -830,6 +841,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   useEffect(() => {
     if (!isOpen) {
       wasOpenRef.current = false;
+      autoSkippedEmptyInsightsRef.current = false;
       return;
     }
     if (wasOpenRef.current) return;
@@ -904,6 +916,22 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // #75 — once insight loading settles, skip the (optional) insights step
+  // when there's genuinely nothing to pick and no source was seeded. See
+  // autoSkippedEmptyInsightsRef comment above for the full rationale. This
+  // never fires twice per open, and never fires once insights/basket exist.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (step !== 'insights') return;
+    if (insightsLoading) return;
+    if (autoSkippedEmptyInsightsRef.current) return;
+    if (insights.length > 0) return;
+    if (selectedInsightIds.length > 0) return;
+    if (initialSourceBasket.length > 0) return;
+    autoSkippedEmptyInsightsRef.current = true;
+    setStep('intent');
+  }, [isOpen, step, insightsLoading, insights, selectedInsightIds, initialSourceBasket]);
 
   // #29c — fetch the capacity / overload signal when entering the Intent step.
   // Defaults the count field to the suggested number unless the user has
