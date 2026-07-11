@@ -27,6 +27,7 @@ import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { exportValuationPptx } from '../services/valuationExportService.js';
 import * as valuationSvc from '../services/valuationService.js';
+import { buildBasketFromResults } from '../services/valuationBasketService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -2388,6 +2389,48 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const results = await valuationSvc.computeValuation(orgId, req.params.id);
     return res.json({ success: true, results });
+  })
+);
+
+/**
+ * GET /api/economics/valuations/:id/basket
+ * ENTERPRISE VALUE — KOSZYK metod (football-field). Read-only, deterministyczny,
+ * zero LLM: buduje koszyk z JUŻ policzonych `results` (nie recompute, nie persist),
+ * czytając opcjonalny config z `assumptions.basket`. Gdy brak gotowych wyników
+ * wejściowych (koszyk bez metod) → `{ basket: null }` (front pokaże pusty stan),
+ * NIGDY nie rzuca. Za flagą FE `ff_evBasket` (podgląd); endpoint zawsze bezpieczny.
+ */
+router.get(
+  '/valuations/:id/basket',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const val = await valuationSvc.getValuation(orgId, req.params.id);
+    if (!val) return res.status(404).json({ error: 'Not found' });
+
+    const parseMaybe = (raw: any): any => {
+      if (raw == null) return {};
+      if (typeof raw === 'object') return raw;
+      if (typeof raw !== 'string') return {};
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return {};
+      }
+    };
+
+    const results = parseMaybe((val as any).results);
+    const assumptions = parseMaybe((val as any).assumptions);
+    const config =
+      assumptions?.basket && typeof assumptions.basket === 'object' ? assumptions.basket : {};
+
+    const basket = buildBasketFromResults(results, config);
+    // Brak metod = brak gotowych wyników wejściowych → pusty stan na froncie.
+    if (!basket.methods || basket.methods.length === 0) {
+      return res.json({ success: true, basket: null });
+    }
+    return res.json({ success: true, basket });
   })
 );
 
