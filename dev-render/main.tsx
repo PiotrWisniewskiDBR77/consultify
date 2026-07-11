@@ -20,11 +20,21 @@ import '../src/index.css';
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
 
+import AssessmentListScreen from './screens/assessment-list';
 import DrdLightScreen from './screens/drd-light';
+import EvFootballFieldScreen from './screens/ev-football-field';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'drd-light': { label: 'DRD Light Shell', render: () => <DrdLightScreen /> },
+  'ev-football-field': {
+    label: 'EV Basket Football Field (Finance)',
+    render: () => <EvFootballFieldScreen />,
+  },
+  'assessment-list': {
+    label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
+    render: () => <AssessmentListScreen />,
+  },
 };
 
 const params = new URLSearchParams(window.location.search);
