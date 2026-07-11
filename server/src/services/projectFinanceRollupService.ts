@@ -96,7 +96,7 @@ export interface ProjectFinanceRollup {
   };
 }
 
-function toNumber(v: unknown): number {
+export function toNumber(v: unknown): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 }
@@ -186,7 +186,7 @@ async function getBudgetContainers(
  * literal SSOT formula "Σ po inicjatywach" rather than double-counting deltas
  * per KPI.
  */
-async function getValueRollup(
+export async function getValueRollup(
   orgId: string,
   initiativeIds: string[]
 ): Promise<{ perInitiative: ProjectInitiativeValueRow[]; total: number }> {
@@ -232,7 +232,7 @@ async function getValueRollup(
   }
 }
 
-async function getBenefitsRollup(orgId: string, initiativeIds: string[]): Promise<ProjectBenefitsRollup> {
+export async function getBenefitsRollup(orgId: string, initiativeIds: string[]): Promise<ProjectBenefitsRollup> {
   const empty: ProjectBenefitsRollup = { count: 0, targetTotal: 0, currentTotal: 0, byStatus: {} };
   if (initiativeIds.length === 0) return empty;
   try {
@@ -274,7 +274,7 @@ async function getBenefitsRollup(orgId: string, initiativeIds: string[]): Promis
   }
 }
 
-async function getRoiRollup(orgId: string, initiativeIds: string[]): Promise<ProjectRoiRollup> {
+export async function getRoiRollup(orgId: string, initiativeIds: string[]): Promise<ProjectRoiRollup> {
   const empty: ProjectRoiRollup = {
     capexTotal: 0,
     opexAnnualTotal: 0,
