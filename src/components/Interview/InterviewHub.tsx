@@ -40,7 +40,6 @@ import {
   Gauge,
   Grid3X3,
   Inbox,
-  Info,
   LayoutGrid,
   LayoutList,
   Lightbulb,
@@ -7665,18 +7664,6 @@ Return ONLY the answer text (no markdown fences).`;
               </div>
             </div>
           ) : null}
-          {/* M13 flow redesign — staging is a SOURCE view, not the working surface. */}
-          <div
-            data-testid="interview-initiatives-source-note"
-            className="mx-4 mb-2 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-slate-200/70 bg-slate-50/70 px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
-          >
-            <Info size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'To jest widok źródłowy inicjatyw z wywiadów. Pracuj nad inicjatywą w jej dokumencie — otwórz podwójnym kliknięciem lub przyciskiem „Otwórz”.'
-                : 'This is the source view of interview-born initiatives. Work on an initiative in its document — open it with a double-click or the “Open” button.'}
-            </p>
-          </div>
           <div className="min-h-0 flex-1">
             <TableWithPreviewLayout<InterviewInitiativeDraft & { title: string }>
               selectedId={selectedInterviewInitiativeId}
