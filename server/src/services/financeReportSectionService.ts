@@ -42,7 +42,11 @@ import { all as dbAll } from '../utils/DbPromise.js';
 import {
   attachSource as attachEvidenceSource,
   upsertEnvelope as upsertEvidenceEnvelope,
+  type EvidenceAssumption,
+  type EvidenceAssumptionSourceType,
   type EvidenceEnvelope,
+  type EvidenceSource,
+  type EvidenceSourceType,
 } from './evidence/evidenceEnvelopeService.js';
 import {
   computeDupontFromLines,
@@ -116,6 +120,231 @@ export interface FinanceValuationSummary {
   basket: BasketResult | null;
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   LINEAGE (#82g) — jawny ślad źródeł dla kluczowych liczb sekcji finansowej.
+   "Każda liczba ma ślad do źródła": SKĄD (pakiet/okres) · PRZEZ CO (formuła
+   wskaźnika / check reconcile R1-R8 / metoda EV) · Z JAKIMI ZAŁOŻENIAMI
+   (WACC, tryb enforce reconcile). Pure — zero I/O, budowane WYŁĄCZNIE z tego,
+   co `composeFinanceReportSection` już policzył (żadnego przeliczania drugi
+   raz). Ten sam obiekt zasila (a) odczyt live (przed publikacją) i (b) Evidence
+   Envelope przy publikacji (patrz `lineageToEvidenceInputs` niżej) — jedno
+   źródło prawdy, nie dwa niezależnie utrzymywane zbiory źródeł/założeń.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/** Pakiet/okres, z którego wywodzi się liczba — powtarzalny fragment lineage. */
+export interface FinanceLineageSourcePack {
+  packId: string;
+  entityName: string | null;
+  periodLabel: string | null;
+  periodEnd: string | null;
+  currency: string;
+}
+
+/** Założenie w formacie lineage (mapuje 1:1 na `EvidenceAssumption`, patrz evidenceEnvelopeService). */
+export interface FinanceLineageAssumption {
+  key: string;
+  value: unknown;
+  sourceType: EvidenceAssumptionSourceType;
+  rationale?: string;
+}
+
+export type FinanceLineageCategory = 'ratio' | 'reconcile' | 'valuation';
+
+/** Jeden wpis lineage — jedna liczba/pozycja z jawnym śladem pochodzenia. */
+export interface FinanceReportLineageEntry {
+  /** Stabilny id: kod wskaźnika / checkCode reconcile / klucz metody EV. */
+  id: string;
+  category: FinanceLineageCategory;
+  label: string;
+  /** Wartość jako string do prezentacji (np. "12.4%") — null gdy pominięta/niedostępna. */
+  value: string | null;
+  /** PRZEZ CO: formuła wskaźnika / nazwa checku reconcile / opis metody EV. */
+  method: string;
+  family?: RatioFamily;
+  /** Linie kanoniczne (financeCanonicalRegistry) czytane przez formułę — tylko dla category='ratio'. */
+  requiredLineCodes?: string[];
+  reconcileStatus?: FinanceReconcileCheckRow['status'];
+  severity?: FinanceReconcileCheckRow['severity'];
+  /** SKĄD: pakiet sprawozdań/okres — null tylko dla wpisów bez powiązanego pakietu. */
+  sourcePack: FinanceLineageSourcePack | null;
+  /** Z JAKIMI ZAŁOŻENIAMI: puste dla większości wpisów, niepuste np. dla ROIC_WACC_SPREAD (WACC). */
+  assumptions: FinanceLineageAssumption[];
+}
+
+/** Pełny ślad lineage sekcji — nagłówek (pakiet/okres) + lista wpisów per liczba. */
+export interface FinanceReportLineage {
+  packId: string | null;
+  sourcePack: FinanceLineageSourcePack | null;
+  generatedAt: string;
+  /** Założenia silnika na poziomie sekcji (nie per-liczba) — np. które engine'y liczyły co. */
+  assumptions: FinanceLineageAssumption[];
+  entries: FinanceReportLineageEntry[];
+}
+
+function emptyFinanceReportLineage(asOf: string): FinanceReportLineage {
+  return { packId: null, sourcePack: null, generatedAt: asOf, assumptions: [], entries: [] };
+}
+
+/**
+ * Buduje lineage z JUŻ POLICZONYCH wyników trzech silników (ratios/reconcile/valuation) —
+ * PURE, zero I/O, zero przeliczania. Wołane z `composeFinanceReportSection` (patrz niżej),
+ * więc lineage jest zawsze spójne z liczbami widocznymi w sekcji (ten sam input).
+ */
+export function buildFinanceReportLineage(
+  pack: PackContextInput,
+  ratios: FinanceReportRatioRow[],
+  reconcile: FinanceReconcileSummary,
+  valuation: FinanceValuationSummary,
+  waccPct: number | undefined,
+  asOf: string
+): FinanceReportLineage {
+  const sourcePack: FinanceLineageSourcePack = {
+    packId: pack.packId,
+    entityName: pack.entityName,
+    periodLabel: pack.periodLabel,
+    periodEnd: pack.periodEnd,
+    currency: pack.currency,
+  };
+
+  const sectionAssumptions: FinanceLineageAssumption[] = [
+    {
+      key: 'ratio_engine',
+      value: 'financeRatioFamilyCatalog.computeFinanceRatioFamilyCatalog (Z111, 24 wskaźników / 5 rodzin + DuPont)',
+      sourceType: 'imported',
+      rationale: 'Brak wartości linii kanonicznej = skipped (null), nigdy 0 (doktryna "no guessing").',
+    },
+    {
+      key: 'reconcile_engine',
+      value: 'reconciliationService.reconcileStatements (R1-R8) — CZYTANE z persystowanego shadow-wyniku, nie przeliczane',
+      sourceType: 'imported',
+      rationale: `RECONCILE_ENFORCE=${RECONCILE_ENFORCE} — obserwacyjny, nie blokuje readiness pakietu.`,
+    },
+    {
+      key: 'valuation_engine',
+      value: 'valuationBasketService.buildBasketFromResults (M1 DCF, M2 comps, M3 precedent, M4 asset/income)',
+      sourceType: 'imported',
+    },
+  ];
+  if (typeof waccPct === 'number' && Number.isFinite(waccPct)) {
+    sectionAssumptions.push({
+      key: 'wacc_pct',
+      value: waccPct,
+      sourceType: 'imported',
+      rationale: 'valuationService.getOrgDefaultWacc — organization_settings.finance.defaultWacc (fallback 12% gdy organizacja nie ustawiła własnego).',
+    });
+  }
+
+  const entries: FinanceReportLineageEntry[] = [];
+
+  for (const r of ratios) {
+    entries.push({
+      id: r.code,
+      category: 'ratio',
+      label: r.labelPl,
+      value: r.status === 'computed' ? `${r.value}${r.unit}` : null,
+      method: r.formula,
+      family: r.family,
+      requiredLineCodes: r.requiredLineCodes,
+      sourcePack,
+      assumptions:
+        r.code === 'ROIC_WACC_SPREAD' && typeof waccPct === 'number'
+          ? [
+              {
+                key: 'wacc_pct',
+                value: waccPct,
+                sourceType: 'imported',
+                rationale: 'Wejście z silnika wyceny (valuationService.getOrgDefaultWacc), nie z linii kanonicznej pakietu.',
+              },
+            ]
+          : [],
+    });
+  }
+
+  for (const c of reconcile.checks) {
+    entries.push({
+      id: c.checkCode,
+      category: 'reconcile',
+      label: c.checkName,
+      value: c.status,
+      method: `Reconcile R1-R8 (shadow${reconcile.enforceMode ? ', enforce' : ', obserwacyjny'}) — ${c.message}`,
+      reconcileStatus: c.status,
+      severity: c.severity,
+      sourcePack,
+      assumptions: [],
+    });
+  }
+
+  if (valuation.basket) {
+    for (const m of valuation.basket.methods) {
+      entries.push({
+        id: m.key,
+        category: 'valuation',
+        label: m.label,
+        value: `${m.low}–${m.high} (mid ${m.mid})`,
+        method: `Koszyk EV — waga ${Math.round(m.weight * 100)}% (valuationBasketService.buildBasketFromResults)`,
+        sourcePack,
+        assumptions: [],
+      });
+    }
+  }
+
+  return {
+    packId: pack.packId,
+    sourcePack,
+    generatedAt: asOf,
+    assumptions: sectionAssumptions,
+    entries,
+  };
+}
+
+/**
+ * Mapuje lineage sekcji na wejścia Evidence Envelope (`sources`/`assumptions`) — REUŻYWA
+ * `buildFinanceReportLineage`, nie buduje drugiego, niezależnego zbioru źródeł. Wołane
+ * WYŁĄCZNIE z `publishFinanceReportSectionSnapshot` (jedyne miejsce, które persystuje
+ * envelope). Truncation (30/20 wpisów) — jak wcześniej — chroni przed nadmiarowym JSON
+ * przy dużych katalogach wskaźników/checków, envelope to koperta dowodowa, nie pełny dump.
+ */
+export function lineageToEvidenceInputs(
+  lineage: FinanceReportLineage
+): { sources: EvidenceSource[]; assumptions: EvidenceAssumption[] } {
+  const categoryToSourceType: Record<FinanceLineageCategory, EvidenceSourceType> = {
+    ratio: 'statement_pack',
+    reconcile: 'statement_pack',
+    valuation: 'kpi_series',
+  };
+
+  const perCategoryLimit: Record<FinanceLineageCategory, number> = {
+    ratio: 30,
+    reconcile: 20,
+    valuation: 20,
+  };
+  const seenPerCategory: Record<FinanceLineageCategory, number> = { ratio: 0, reconcile: 0, valuation: 0 };
+
+  const sources: EvidenceSource[] = [];
+  for (const entry of lineage.entries) {
+    if (entry.category === 'ratio' && entry.value === null) continue; // skipped ratios nie są "source", nie ma czego cytować
+    if (seenPerCategory[entry.category] >= perCategoryLimit[entry.category]) continue;
+    seenPerCategory[entry.category] += 1;
+    const packRef = entry.sourcePack
+      ? ` [pakiet ${entry.sourcePack.packId}${entry.sourcePack.periodLabel ? `, ${entry.sourcePack.periodLabel}` : ''}]`
+      : '';
+    sources.push({
+      type: categoryToSourceType[entry.category],
+      ref: entry.id,
+      snippet: `${entry.label}: ${entry.value ?? '—'} · ${entry.method}${packRef}`,
+    });
+  }
+
+  const assumptions: EvidenceAssumption[] = lineage.assumptions.map((a) => ({
+    key: a.key,
+    value: a.value,
+    source_type: a.sourceType,
+    rationale: a.rationale,
+  }));
+
+  return { sources, assumptions };
+}
+
 export interface FinanceReportSection {
   organizationId: string;
   packId: string | null;
@@ -142,6 +371,8 @@ export interface FinanceReportSection {
     missingStatementTypes: string[];
     resolvedLineCount: number;
   };
+  /** #82g — jawny ślad źródeł per liczba (pakiet/okres · formuła/check/metoda · założenia). */
+  lineage: FinanceReportLineage;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -324,6 +555,7 @@ function emptyFinanceReportSection(organizationId: string, asOf: string): Financ
     },
     valuation: { available: false, valuationId: null, valuationTitle: null, basket: null },
     dataQuality: { statementTypesPresent: [], missingStatementTypes: ['P&L', 'BS', 'CF'], resolvedLineCount: 0 },
+    lineage: emptyFinanceReportLineage(asOf),
   };
 }
 
@@ -376,6 +608,8 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
     `reconcile R1-R8 ${reconcile.available ? reconcile.overallStatus : 'niedostępny'} (shadow${RECONCILE_ENFORCE ? '' : ', nie blokuje'}) · ` +
     `EV koszyk ${valuation.basket ? `${valuation.basket.methods.length} metod${valuation.basket.consistencyFlag.triggered ? ', ROZBIEŻNOŚĆ >20%' : ''}` : 'niedostępny'}.`;
 
+  const lineage = buildFinanceReportLineage(input.pack, ratios, reconcile, valuation, input.waccPct, asOf);
+
   return {
     organizationId: input.organizationId,
     packId: input.pack.packId,
@@ -393,6 +627,7 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
       missingStatementTypes: input.pack.missingStatementTypes,
       resolvedLineCount: Object.keys(input.lineValues).length,
     },
+    lineage,
   };
 }
 
@@ -526,6 +761,32 @@ export async function loadReconcileSummaryForPack(
     : [];
   const reconcileValidations = mapPackValidationsToReconcileRows(packValidations);
   return { packId, ...summarizeReconcileValidations(reconcileValidations) };
+}
+
+export interface PackLineageResult {
+  packId: string;
+  /** false gdy pakiet nie ma jeszcze policzonych wskaźników/reconcile/wyceny (pusty stan). */
+  available: boolean;
+  lineage: FinanceReportLineage;
+}
+
+/**
+ * #82g — Lekki READ-ONLY endpoint pod kartę raportu Finance: jawny LINEAGE (skąd/przez co/z
+ * jakimi założeniami) dla sekcji finansowej, LIVE (przed publikacją) — bez tworzenia
+ * raportu/snapshotu/envelope. Woła `loadFinanceReportSectionData` (te same trzy silniki co
+ * publish), zwraca WYŁĄCZNIE `section.lineage`. Ten sam lineage trafia do Evidence Envelope
+ * przy `publishFinanceReportSectionSnapshot` (patrz `lineageToEvidenceInputs`) — jedno źródło
+ * prawdy dla obu ścieżek (patrz/publikuj). `null` = pakiet nie istnieje/nie należy do org.
+ */
+export async function loadFinanceReportLineageForPack(
+  organizationId: string,
+  packId: string,
+  valuationId?: string
+): Promise<PackLineageResult | null> {
+  const detail = await getStatementPackDetail(organizationId, packId);
+  if (!detail) return null;
+  const section = await loadFinanceReportSectionData({ organizationId, packId, valuationId });
+  return { packId, available: section.packId !== null, lineage: section.lineage };
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -669,6 +930,8 @@ export interface PublishFinanceReportSectionResult {
   snapshotId: string;
   section: FinanceReportSection;
   envelope: EvidenceEnvelope;
+  /** = section.lineage — wygodny alias, żeby caller (route) nie musiał schodzić do section.lineage. */
+  lineage: FinanceReportLineage;
 }
 
 /**
@@ -779,46 +1042,17 @@ export async function publishFinanceReportSectionSnapshot(
     title,
   });
 
-  const ratioSources = (Object.keys(section.ratios.byFamily) as RatioFamily[])
-    .flatMap((f) => section.ratios.byFamily[f])
-    .filter((r) => r.status === 'computed')
-    .slice(0, 30)
-    .map((r) => ({ type: 'statement_pack' as const, ref: r.code, snippet: `${r.labelPl} = ${r.value}${r.unit}` }));
-  const reconcileSources = section.reconcile.checks.slice(0, 20).map((c) => ({
-    type: 'statement_pack' as const,
-    ref: c.checkCode,
-    snippet: `${c.checkName}: ${c.status}${c.difference != null ? ` (Δ${c.difference})` : ''}`,
-  }));
-  const valuationSources = (section.valuation.basket?.methods || []).map((m) => ({
-    type: 'kpi_series' as const,
-    ref: m.key,
-    snippet: `${m.label}: ${m.low}–${m.high} (mid ${m.mid})`,
-  }));
+  // #82g — jawny LINEAGE: REUŻYWA `section.lineage` (już zbudowany w `composeFinanceReportSection`,
+  // czyli identyczny z tym, co widać w live-view PRZED publikacją) jako JEDYNE źródło sources/
+  // assumptions envelope — nie ma już drugiego, niezależnie utrzymywanego zbioru "co jest źródłem".
+  const { sources: lineageSources, assumptions: lineageAssumptions } = lineageToEvidenceInputs(section.lineage);
 
   const envelope = await upsertEvidenceEnvelope({
     organizationId: params.organizationId,
     artifactType: 'report',
     artifactId: snapshot.snapshotId,
-    sources: [...ratioSources, ...reconcileSources, ...valuationSources],
-    assumptions: [
-      {
-        key: 'ratio_engine',
-        value: 'financeRatioFamilyCatalog.computeFinanceRatioFamilyCatalog (Z111, 24 wskaźników / 5 rodzin)',
-        source_type: 'imported',
-        rationale: 'Brak wartości linii kanonicznej = skipped (null), nigdy 0 (doktryna "no guessing").',
-      },
-      {
-        key: 'reconcile_engine',
-        value: 'reconciliationService.reconcileStatements (R1-R8) — CZYTANE z persystowanego shadow-wyniku, nie przeliczane',
-        source_type: 'imported',
-        rationale: `RECONCILE_ENFORCE=${RECONCILE_ENFORCE} — obserwacyjny, nie blokuje readiness pakietu.`,
-      },
-      {
-        key: 'valuation_engine',
-        value: 'valuationBasketService.buildBasketFromResults (M1 DCF, M2 comps, M3 precedent, M4 asset/income)',
-        source_type: 'imported',
-      },
-    ],
+    sources: lineageSources,
+    assumptions: lineageAssumptions,
     confidence: section.ratios.total > 0 ? section.ratios.computed / section.ratios.total : null,
     toVerify: section.ratios.skipped > 0
       ? [
@@ -845,7 +1079,7 @@ export async function publishFinanceReportSectionSnapshot(
     // best-effort — nie blokuje publikacji (wzorzec threeAxisReportService).
   }
 
-  return { reportId: rb.report.id, snapshotId: snapshot.snapshotId, section, envelope };
+  return { reportId: rb.report.id, snapshotId: snapshot.snapshotId, section, envelope, lineage: section.lineage };
 }
 
 export default {
@@ -854,6 +1088,9 @@ export default {
   mapPackValidationsToReconcileRows,
   loadFinanceReportSectionData,
   loadReconcileSummaryForPack,
+  buildFinanceReportLineage,
+  lineageToEvidenceInputs,
+  loadFinanceReportLineageForPack,
   renderFinanceReportMarkdown,
   getFinanceReportSectionLiveView,
   publishFinanceReportSectionSnapshot,

@@ -21,8 +21,9 @@
  *   PUT    /benchmarks          — Upsert benchmark
  *
  *   -- F5 engine→route wiring (additive, `_KONCEPT_FINANCE_2026-07-10.md`) --
- *   POST   /packs/:id/report-section                       — publish finance report section snapshot
+ *   POST   /packs/:id/report-section                       — publish finance report section snapshot (now returns envelope+lineage)
  *   GET    /packs/:id/reconcile-summary                    — persisted R1-R8 result (UI badge)
+ *   GET    /packs/:id/report-section/lineage                — #82g jawny LINEAGE (skąd/przez co/założenia), live, bez publikacji
  *   GET    /aggregate-scope/initiatives/:initiativeId/delta — A2 initiative pro-forma delta
  *   GET    /packs/:id/aggregate-scope/portfolio             — A3 portfolio aggregate (A1 + ΣA2)
  */
@@ -55,6 +56,7 @@ import {
 import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
 import {
   FinanceReportReconcileBlockedError,
+  loadFinanceReportLineageForPack,
   loadReconcileSummaryForPack,
   publishFinanceReportSectionSnapshot,
 } from '../services/financeReportSectionService.js';
@@ -1797,6 +1799,11 @@ router.post(
         reportId: result.reportId,
         snapshotId: result.snapshotId,
         section: result.section,
+        // #82g — jawny LINEAGE: envelope = koperta dowodowa persystowana w `artifact_evidence`
+        // (czytelna też przez generyczny `GET /api/evidence/report/:snapshotId`); lineage = ten
+        // sam ślad w kształcie karty raportu (skąd/przez co/z jakimi założeniami per liczba).
+        envelope: result.envelope,
+        lineage: result.lineage,
       });
     } catch (e: any) {
       if (e instanceof FinanceReportReconcileBlockedError) {
@@ -1851,6 +1858,46 @@ router.get(
         checks: [],
         computedAt: null,
         blocksReady: false,
+      });
+    }
+  })
+);
+
+/**
+ * GET /api/finance-statements/packs/:id/report-section/lineage
+ * #82g — jawny LINEAGE dla karty raportu Finance: dla kluczowych liczb (wskaźniki Z111,
+ * reconcile R1-R8, koszyk EV) — SKĄD (pakiet sprawozdań/okres), PRZEZ CO (formuła
+ * wskaźnika/check reconcile/metoda EV), Z JAKIMI ZAŁOŻENIAMI (WACC, tryb enforce). LIVE —
+ * bez tworzenia raportu/snapshotu (nic nie zapisuje); publikacja (`POST .../report-section`)
+ * persystuje IDENTYCZNY lineage w Evidence Envelope (`lineageToEvidenceInputs`). Query param
+ * opcjonalny `valuationId` — jak przy publish, best-effort najnowsza wycena gdy pominięty.
+ * Fail-soft: błąd silnika → { available:false, lineage: pusty }, nie 500 (read endpoint).
+ */
+router.get(
+  '/packs/:id/report-section/lineage',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+    const valuationId =
+      typeof req.query.valuationId === 'string' && req.query.valuationId.trim()
+        ? req.query.valuationId.trim()
+        : undefined;
+    try {
+      const result = await loadFinanceReportLineageForPack(orgId, packId, valuationId);
+      if (!result) return res.status(404).json({ error: 'Statement pack not found' });
+      res.json({ success: true, ...result });
+    } catch (e: any) {
+      logger.warn(
+        `[FinanceStatements] report-section/lineage degraded to unavailable for pack ${packId}: ${e?.message || e}`
+      );
+      res.json({
+        success: true,
+        packId,
+        available: false,
+        lineage: { packId: null, sourcePack: null, generatedAt: new Date().toISOString(), assumptions: [], entries: [] },
       });
     }
   })

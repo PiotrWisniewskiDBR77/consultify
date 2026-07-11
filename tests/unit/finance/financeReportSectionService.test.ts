@@ -27,6 +27,7 @@ import {
   composeFinanceReportSection,
   evaluateReconcileEnforcement,
   FinanceReportReconcileBlockedError,
+  lineageToEvidenceInputs,
   renderFinanceReportMarkdown,
   type FinanceReconcileSummary,
   type RawFinanceReportInputs,
@@ -257,6 +258,88 @@ describe('financeReportSectionService — composeFinanceReportSection', () => {
       })
     );
     expect(section.verdict).toBe('RED');
+  });
+});
+
+describe('financeReportSectionService — lineage (#82g jawny ślad źródeł)', () => {
+  it('empty state (no pack) → empty lineage, no numbers guessed', () => {
+    const section = composeFinanceReportSection(baseInput({ pack: null, lineValues: {}, orgBenchmarkRows: [] }));
+    expect(section.lineage.packId).toBeNull();
+    expect(section.lineage.sourcePack).toBeNull();
+    expect(section.lineage.entries).toEqual([]);
+  });
+
+  it('carries SKĄD (pakiet/okres) on every ratio entry, and PRZEZ CO (formula) + required line codes', () => {
+    const section = composeFinanceReportSection(baseInput());
+    const grossMargin = section.lineage.entries.find((e) => e.id === 'GROSS_MARGIN');
+    expect(grossMargin).toBeDefined();
+    expect(grossMargin?.category).toBe('ratio');
+    expect(grossMargin?.sourcePack).toEqual({
+      packId: 'pack-1',
+      entityName: 'DBR77 Sp. z o.o.',
+      periodLabel: 'FY2025',
+      periodEnd: '2025-12-31',
+      currency: 'PLN',
+    });
+    expect(grossMargin?.method).toBe('GROSS_PROFIT / REVENUE × 100');
+    expect(grossMargin?.requiredLineCodes).toEqual(['GROSS_PROFIT', 'REVENUE']);
+    expect(grossMargin?.value).toContain('%');
+  });
+
+  it('a skipped ratio (missing lines) still appears in lineage with value:null (not silently dropped)', () => {
+    const section = composeFinanceReportSection(baseInput()); // no waccPct → ROIC_WACC_SPREAD skipped
+    const spread = section.lineage.entries.find((e) => e.id === 'ROIC_WACC_SPREAD');
+    expect(spread).toBeDefined();
+    expect(spread?.value).toBeNull();
+  });
+
+  it('attaches the WACC assumption only to ROIC_WACC_SPREAD when waccPct is provided', () => {
+    const section = composeFinanceReportSection(baseInput({ waccPct: 9.5 }));
+    const spread = section.lineage.entries.find((e) => e.id === 'ROIC_WACC_SPREAD');
+    const grossMargin = section.lineage.entries.find((e) => e.id === 'GROSS_MARGIN');
+    expect(spread?.assumptions).toEqual([
+      expect.objectContaining({ key: 'wacc_pct', value: 9.5, sourceType: 'imported' }),
+    ]);
+    expect(grossMargin?.assumptions).toEqual([]);
+    // Section-level assumptions also carry the WACC value once (engine-level provenance).
+    expect(section.lineage.assumptions.some((a) => a.key === 'wacc_pct' && a.value === 9.5)).toBe(true);
+  });
+
+  it('reconcile checks appear as lineage entries with reconcileStatus/severity and SKĄD=pack', () => {
+    const section = composeFinanceReportSection(baseInput({ reconcileValidations: reconcileRows('fail') }));
+    const r1 = section.lineage.entries.find((e) => e.id === 'R1_BS_BALANCES');
+    expect(r1).toBeDefined();
+    expect(r1?.category).toBe('reconcile');
+    expect(r1?.reconcileStatus).toBe('fail');
+    expect(r1?.severity).toBe('error');
+    expect(r1?.sourcePack?.packId).toBe('pack-1');
+  });
+
+  it('EV basket methods appear as lineage entries (valuation category, weight in method)', () => {
+    const section = composeFinanceReportSection(
+      baseInput({ valuation: { id: 'val-1', title: 'DCF vs comps', basket: realBasket(false) } })
+    );
+    const m1 = section.lineage.entries.find((e) => e.id === 'M1');
+    expect(m1).toBeDefined();
+    expect(m1?.category).toBe('valuation');
+    expect(m1?.value).toContain('900');
+    expect(m1?.method).toContain('waga');
+  });
+
+  it('lineageToEvidenceInputs maps entries→sources (skipped ratios excluded) and assumptions 1:1', () => {
+    const section = composeFinanceReportSection(
+      baseInput({ waccPct: 9.5, reconcileValidations: reconcileRows('pass'), valuation: { id: 'val-1', title: 'DCF', basket: realBasket(false) } })
+    );
+    const { sources, assumptions } = lineageToEvidenceInputs(section.lineage);
+    // No source for a skipped ratio (value:null) — nothing to cite.
+    expect(sources.some((s) => s.ref === 'ROIC_WACC_SPREAD' && section.lineage.entries.find((e) => e.id === 'ROIC_WACC_SPREAD')?.value === null)).toBe(false);
+    const grossMarginSource = sources.find((s) => s.ref === 'GROSS_MARGIN');
+    expect(grossMarginSource).toBeDefined();
+    expect(grossMarginSource?.type).toBe('statement_pack');
+    expect(grossMarginSource?.snippet).toContain('pack-1');
+    const valuationSource = sources.find((s) => s.ref === 'M1');
+    expect(valuationSource?.type).toBe('kpi_series');
+    expect(assumptions.some((a) => a.key === 'wacc_pct' && a.value === 9.5 && a.source_type === 'imported')).toBe(true);
   });
 });
 

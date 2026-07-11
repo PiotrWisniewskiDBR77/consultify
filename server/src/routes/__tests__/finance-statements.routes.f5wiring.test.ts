@@ -5,6 +5,7 @@
  *
  *   POST /packs/:id/report-section                       → financeReportSectionService.publishFinanceReportSectionSnapshot
  *   GET  /packs/:id/reconcile-summary                     → financeReportSectionService.loadReconcileSummaryForPack
+ *   GET  /packs/:id/report-section/lineage                → financeReportSectionService.loadFinanceReportLineageForPack (#82g)
  *   GET  /aggregate-scope/initiatives/:initiativeId/delta → financeAggregateScopeService.computeInitiativeDeltaForOrg
  *   GET  /packs/:id/aggregate-scope/portfolio              → financeAggregateScopeService.computePortfolioAggregateForPack
  *
@@ -20,6 +21,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockGetPackDetail = vi.fn();
 const mockPublishReportSection = vi.fn();
 const mockLoadReconcileSummary = vi.fn();
+const mockLoadLineage = vi.fn();
 const mockComputeInitiativeDelta = vi.fn();
 const mockComputePortfolioAggregate = vi.fn();
 
@@ -36,6 +38,7 @@ vi.mock('../../services/financialStatementPackService.js', () => ({
 vi.mock('../../services/financeReportSectionService.js', () => ({
   publishFinanceReportSectionSnapshot: (...a: unknown[]) => mockPublishReportSection(...a),
   loadReconcileSummaryForPack: (...a: unknown[]) => mockLoadReconcileSummary(...a),
+  loadFinanceReportLineageForPack: (...a: unknown[]) => mockLoadLineage(...a),
 }));
 
 vi.mock('../../services/financeAggregateScopeService.js', () => ({
@@ -90,13 +93,15 @@ describe('POST /packs/:id/report-section', () => {
     expect(mockPublishReportSection).not.toHaveBeenCalled();
   });
 
-  it('own-org publish succeeds → 201 with reportId/snapshotId/section, forwards orgId/createdBy/packId/valuationId', async () => {
+  it('own-org publish succeeds → 201 with reportId/snapshotId/section/envelope/lineage, forwards orgId/createdBy/packId/valuationId', async () => {
     mockGetPackDetail.mockResolvedValue({ id: PACK_ID });
+    const lineageStub = { packId: PACK_ID, sourcePack: null, generatedAt: '2026-07-11T00:00:00.000Z', assumptions: [], entries: [] };
     mockPublishReportSection.mockResolvedValue({
       reportId: 'report-1',
       snapshotId: 'snap-1',
       section: { packId: PACK_ID, verdict: 'GREEN' },
       envelope: { id: 'env-1' },
+      lineage: lineageStub,
     });
 
     const res = await request(createApp())
@@ -104,11 +109,15 @@ describe('POST /packs/:id/report-section', () => {
       .send({ valuationId: 'val-1', title: 'Sekcja Q1' });
 
     expect(res.status).toBe(201);
+    // #82g — jawny LINEAGE: publish teraz zwraca envelope+lineage obok section (wcześniej
+    // route je milcząco odrzucał mimo że publishFinanceReportSectionSnapshot je liczył).
     expect(res.body).toEqual({
       success: true,
       reportId: 'report-1',
       snapshotId: 'snap-1',
       section: { packId: PACK_ID, verdict: 'GREEN' },
+      envelope: { id: 'env-1' },
+      lineage: lineageStub,
     });
     expect(mockPublishReportSection).toHaveBeenCalledWith({
       organizationId: CALLER_ORG,
@@ -164,6 +173,73 @@ describe('GET /packs/:id/reconcile-summary', () => {
     const res = await request(createApp()).get(`/api/finance-statements/packs/${PACK_ID}/reconcile-summary`);
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ packId: PACK_ID, available: false, overallStatus: 'na' });
+  });
+});
+
+describe('GET /packs/:id/report-section/lineage (#82g)', () => {
+  it('no validated org → 401, service not called', async () => {
+    mockCtx = { userId: 'user-orgless', reqOrg: '' };
+    const res = await request(createApp()).get(`/api/finance-statements/packs/${PACK_ID}/report-section/lineage`);
+    expect(res.status).toBe(401);
+    expect(mockLoadLineage).not.toHaveBeenCalled();
+  });
+
+  it('pack not found → 404', async () => {
+    mockLoadLineage.mockResolvedValue(null);
+    const res = await request(createApp()).get(`/api/finance-statements/packs/${PACK_ID}/report-section/lineage`);
+    expect(res.status).toBe(404);
+  });
+
+  it('own-org read succeeds → 200 with packId/available/lineage entries carrying sourcePack+method+assumptions', async () => {
+    mockLoadLineage.mockResolvedValue({
+      packId: PACK_ID,
+      available: true,
+      lineage: {
+        packId: PACK_ID,
+        sourcePack: { packId: PACK_ID, entityName: 'DBR77 Sp. z o.o.', periodLabel: 'FY2025', periodEnd: '2025-12-31', currency: 'PLN' },
+        generatedAt: '2026-07-11T00:00:00.000Z',
+        assumptions: [{ key: 'ratio_engine', value: 'financeRatioFamilyCatalog', sourceType: 'imported' }],
+        entries: [
+          {
+            id: 'GROSS_MARGIN',
+            category: 'ratio',
+            label: 'Marża brutto',
+            value: '40%',
+            method: 'GROSS_PROFIT / REVENUE × 100',
+            family: 'profitability',
+            requiredLineCodes: ['GROSS_PROFIT', 'REVENUE'],
+            sourcePack: { packId: PACK_ID, entityName: 'DBR77 Sp. z o.o.', periodLabel: 'FY2025', periodEnd: '2025-12-31', currency: 'PLN' },
+            assumptions: [],
+          },
+        ],
+      },
+    });
+    const res = await request(createApp()).get(`/api/finance-statements/packs/${PACK_ID}/report-section/lineage`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.packId).toBe(PACK_ID);
+    expect(res.body.available).toBe(true);
+    expect(res.body.lineage.entries).toHaveLength(1);
+    expect(res.body.lineage.entries[0]).toMatchObject({
+      id: 'GROSS_MARGIN',
+      category: 'ratio',
+      sourcePack: { packId: PACK_ID, periodLabel: 'FY2025' },
+      method: 'GROSS_PROFIT / REVENUE × 100',
+    });
+    expect(mockLoadLineage).toHaveBeenCalledWith(CALLER_ORG, PACK_ID, undefined);
+  });
+
+  it('forwards optional valuationId query param', async () => {
+    mockLoadLineage.mockResolvedValue({ packId: PACK_ID, available: true, lineage: { packId: PACK_ID, sourcePack: null, generatedAt: '2026-07-11T00:00:00.000Z', assumptions: [], entries: [] } });
+    await request(createApp()).get(`/api/finance-statements/packs/${PACK_ID}/report-section/lineage?valuationId=val-9`);
+    expect(mockLoadLineage).toHaveBeenCalledWith(CALLER_ORG, PACK_ID, 'val-9');
+  });
+
+  it('fail-soft: service throws → 200 with available:false, not 500', async () => {
+    mockLoadLineage.mockRejectedValue(new Error('db down'));
+    const res = await request(createApp()).get(`/api/finance-statements/packs/${PACK_ID}/report-section/lineage`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ success: true, packId: PACK_ID, available: false });
   });
 });
 

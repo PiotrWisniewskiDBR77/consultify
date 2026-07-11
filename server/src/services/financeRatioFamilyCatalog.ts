@@ -79,6 +79,14 @@ export interface ComputedFamilyRatio {
   unit: RatioUnit;
   formula: string;
   missingLineCodes: string[];
+  /**
+   * Canonical line codes this formula reads (`def.requiredLineCodes`), present regardless
+   * of `status` — additive field for lineage (#82g Finance report lineage): lets a caller
+   * trace a computed ratio back to the exact statement-pack lines that fed it, without
+   * re-deriving the definition table. Purely additive (new field, existing values
+   * unchanged) — safe for callers that destructure a subset of this interface.
+   */
+  requiredLineCodes: string[];
 }
 
 export interface DupontFromLines {
@@ -555,6 +563,7 @@ export function computeFinanceRatioFamilyCatalog(
       unit: def.unit,
       formula: def.formula,
       missingLineCodes,
+      requiredLineCodes: def.requiredLineCodes,
     };
   });
 }
