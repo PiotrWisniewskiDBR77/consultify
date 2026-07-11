@@ -14,12 +14,6 @@ export { MyWorkHub } from './MyWorkHub';
 export { DecisionsPanelContent } from './DecisionsPanelContent';
 export { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 export { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
-export {
-  IdeaCanvasToolSelector,
-  type IdeaEdge,
-  type IdeaNode,
-  type IdeaWorkspaceGraph,
-} from './IdeaCanvasToolSelector';
 export { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 export { IdeaExportMenu } from './IdeaExportMenu';
 export { IdeaGhostCards } from './IdeaGhostCards';
