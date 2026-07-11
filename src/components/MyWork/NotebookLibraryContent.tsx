@@ -430,7 +430,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                   {nb.scope === 'team' ? (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
                       <Users size={11} />
-                      {pl ? 'Zespół' : 'Team'}
+                      {pl ? 'Cała organizacja' : 'Organization'}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
@@ -627,14 +627,14 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             }`}
           >
             <Users size={15} />
-            {pl ? 'Zespół' : 'Team'}
+            {pl ? 'Cała organizacja' : 'Organization'}
           </button>
         </div>
 
         {scope === 'team' && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-c-text-secondary mb-1">
-              {pl ? 'Zespół' : 'Team'}
+              {pl ? 'Cała organizacja' : 'Organization'}
             </label>
             {teams.length ? (
               <select
