@@ -234,6 +234,14 @@ export interface GenerateFullInput {
   organizationId?: string;
   /** Override which cards to fill (else = proposeCards(...).core). */
   cardKeys?: string[];
+  /**
+   * §6 downstream Insight seeds (#57/Z60) — owner-role/KPI seeds inherited
+   * from a materialized Insight candidate (see `insightMaterializationService.
+   * deriveInitiativeSeedContext`), merged into the base `GenerationContext` so
+   * the KPI/control cards INHERIT instead of guessing. Optional/additive —
+   * omitting it (the existing brief-only flow) leaves generation unchanged.
+   */
+  insightSeeds?: { seedOwnerRole?: string; seedKpiSeeds?: string };
 }
 
 export interface CardOutcome {
@@ -303,6 +311,10 @@ export async function generateFullInitiative(
     language,
     ...(input.brief ? { summary: input.brief } : {}),
     ...(input.sourceType ? { sourceLineage: input.sourceType } : {}),
+    // §6 downstream Insight seeds (#57/Z60) — additive: absent when the caller
+    // didn't supply insightSeeds, so the existing brief-only flow is unchanged.
+    ...(input.insightSeeds?.seedOwnerRole ? { seedOwnerRole: input.insightSeeds.seedOwnerRole } : {}),
+    ...(input.insightSeeds?.seedKpiSeeds ? { seedKpiSeeds: input.insightSeeds.seedKpiSeeds } : {}),
   };
 
   // Generate ONE section with a bounded retry on a HARD failure (thrown error).

@@ -27,6 +27,21 @@
  *                    before any Insight row is created. Persistence/creation
  *                    is the caller's job.
  *
+ * DOWNSTREAM SEEDS (§6, #57/Z60) — "karta Insight = waluta wymiany": every
+ * issue/opportunity the distillation produces can ALSO carry a small seed
+ * toward its eventual initiative — `{suggestedOwnerRole, horizon, baseline,
+ * target, metric}` — so `initiativeGenerationService` INHERITS a starting
+ * owner-role and baseline→target instead of guessing one from scratch when it
+ * fills the KPI/control cards. Every seed field is OPTIONAL and defaults to
+ * `null`: the LLM fills it ONLY when the source items actually ground it,
+ * never invents one to satisfy the shape (`normalizeSeedValue` also treats
+ * placeholder text like "do ustalenia"/"TBD"/"N/A" as absent — same
+ * fail-soft posture as the rest of this module). `deriveInitiativeSeedContext`
+ * below is the bridge helper: it collects the seeds off a materialized
+ * candidate into the two `GenerationContext` fields
+ * (`seedOwnerRole`/`seedKpiSeeds`) that `initiativeGenerationService`'s
+ * `buildGroundingBlock` already knows how to surface to the LLM.
+ *
  * DESIGN CONTRACT:
  *   - ADVISORY / fail-soft, always. A bad LLM response, a parse failure, or an
  *     unexpected error never throws — it returns `degraded: true` with a
@@ -102,14 +117,34 @@ export interface InsightCandidateTheme {
   strength?: 'weak' | 'moderate' | 'strong';
 }
 
-export interface InsightCandidateIssue {
+/**
+ * §6 downstream seed (#57/Z60) — the "zalążek" toward an eventual initiative.
+ * Every field is null unless the source items actually grounded it; NEVER a
+ * guess. Attached to issues/opportunities (not themes — themes describe
+ * patterns, issues/opportunities are the actionable units an initiative gets
+ * born from).
+ */
+export interface InsightSeedFields {
+  /** Suggested owner ROLE (not a person name), e.g. "Head of Operations". */
+  suggestedOwnerRole?: string | null;
+  /** Realization horizon, e.g. "6 miesięcy" / "Q3 2026". */
+  horizon?: string | null;
+  /** Numeric-with-unit starting point, e.g. "~40h/mies.". */
+  baseline?: string | null;
+  /** Numeric-with-unit target, e.g. "10h/mies.". */
+  target?: string | null;
+  /** What is being measured, e.g. "czas cyklu zatwierdzania zapytań". */
+  metric?: string | null;
+}
+
+export interface InsightCandidateIssue extends InsightSeedFields {
   title: string;
   description: string;
   severity?: string;
   evidence_refs: string[];
 }
 
-export interface InsightCandidateOpportunity {
+export interface InsightCandidateOpportunity extends InsightSeedFields {
   title: string;
   description: string;
   evidence_refs: string[];
@@ -197,12 +232,19 @@ const CANDIDATE_SCHEMA_HINT = `{
   "title": string (action-title, tytuł-akcja, max 14 słów),
   "executive_summary": string (60-130 słów, answer-first: teza + so-what + poziom pewności),
   "themes": [{ "title": string, "description": string (min 50 słów), "evidence_refs": [item_id, ...], "strength": "weak"|"moderate"|"strong" }],
-  "issues": [{ "title": string, "description": string, "severity": "low"|"medium"|"high"|"critical", "evidence_refs": [item_id, ...] }],
-  "opportunities": [{ "title": string, "description": string, "evidence_refs": [item_id, ...] }],
+  "issues": [{ "title": string, "description": string, "severity": "low"|"medium"|"high"|"critical", "evidence_refs": [item_id, ...], "suggestedOwnerRole": string|null, "metric": string|null, "baseline": string|null, "target": string|null, "horizon": string|null }],
+  "opportunities": [{ "title": string, "description": string, "evidence_refs": [item_id, ...], "suggestedOwnerRole": string|null, "metric": string|null, "baseline": string|null, "target": string|null, "horizon": string|null }],
   "signals": [],
   "evidence_map": [{ "item_id": string, "answer_snippet": string (max 120 znaków) }],
   "missing_data": [string, ...] (min 2 realne luki danych)
 }`;
+
+const SEED_FIELDS_INSTRUCTIONS =
+  'Dla KAŻDEGO issue i opportunity spróbuj dodatkowo wypełnić zalążek pod przyszłą inicjatywę: ' +
+  '"suggestedOwnerRole" (rola-właściciel, NIE nazwisko), "metric" (co mierzymy), "baseline" (punkt ' +
+  'startowy z jednostką), "target" (cel z jednostką), "horizon" (horyzont realizacji). WYPEŁNIAJ TE ' +
+  'POLA WYŁĄCZNIE gdy materiał źródłowy je faktycznie sugeruje — w przeciwnym razie zostaw `null`. ' +
+  'ZAKAZ zgadywania/wymyślania tych pól "na wszelki wypadek" i zakaz placeholderów typu "do ustalenia"/"TBD".';
 
 /** Pure prompt builder — step [3] "Zbierz wnioski". */
 export function buildDistillationPrompt(input: MaterializationInput): string {
@@ -216,6 +258,7 @@ export function buildDistillationPrompt(input: MaterializationInput): string {
     `\nPoniżej surowy wynik narzędzia/assessmentu, podzielony na pozycje z ID. Zdestyluj go w JEDNĄ ` +
     `kandydacką kartę Insight wg poniższego kontraktu JSON. Każdy evidence_ref MUSI być jednym z ` +
     `pokazanych item_id — zakaz wymyślania ID. Zwróć WYŁĄCZNIE obiekt JSON, bez komentarzy.\n\n` +
+    `${SEED_FIELDS_INSTRUCTIONS}\n\n` +
     `KONTRAKT:\n${CANDIDATE_SCHEMA_HINT}\n\n--- POZYCJE WYNIKU ---\n${itemsBlock}`
   );
 }
@@ -265,6 +308,38 @@ function arrayWithEvidenceRefs<T extends { evidence_refs?: unknown }>(
   });
 }
 
+const SEED_FIELD_KEYS = ['suggestedOwnerRole', 'metric', 'baseline', 'target', 'horizon'] as const;
+
+/** Placeholder text the LLM sometimes writes instead of a real `null` — treat as absent. */
+const SEED_PLACEHOLDER_RE = /^(null|n\/?a|brak|do ustalenia|do okre[śs]lenia|tbd|unknown|-)$/i;
+
+/**
+ * Normalizes ONE raw seed value: a non-empty, non-placeholder string (trimmed,
+ * capped) survives; anything else (missing, empty, non-string, placeholder
+ * text) becomes `null` — never guessed, never fabricated.
+ */
+export function normalizeSeedValue(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || SEED_PLACEHOLDER_RE.test(trimmed)) return null;
+  return trimmed.slice(0, 200);
+}
+
+/**
+ * Stamps the 5 downstream-seed fields (§6, #57/Z60) onto ONE issue/opportunity
+ * entry, normalizing each to a real value or explicit `null`. Non-object
+ * entries pass through untouched (mirrors `arrayWithEvidenceRefs`'s guard).
+ */
+export function withSeedFields<T>(entry: T): T & InsightSeedFields {
+  if (!entry || typeof entry !== 'object') return entry as T & InsightSeedFields;
+  const raw = entry as Record<string, unknown>;
+  const seeds = {} as InsightSeedFields;
+  for (const key of SEED_FIELD_KEYS) {
+    seeds[key] = normalizeSeedValue(raw[key]);
+  }
+  return { ...(entry as object), ...seeds } as T & InsightSeedFields;
+}
+
 /**
  * Lineage guard (§5 "lineage obowiązkowy"): strips any evidence_ref/item_id
  * that does not match a real source item — never lets the model fabricate
@@ -286,8 +361,13 @@ export function reconcileEvidenceRefs(
   return {
     ...candidate,
     themes: arrayWithEvidenceRefs<InsightCandidateTheme>(candidate.themes, validIds),
-    issues: arrayWithEvidenceRefs<InsightCandidateIssue>(candidate.issues, validIds),
-    opportunities: arrayWithEvidenceRefs<InsightCandidateOpportunity>(candidate.opportunities, validIds),
+    // §6 (#57/Z60): issues/opportunities also carry the downstream-seed fields
+    // (suggestedOwnerRole/metric/baseline/target/horizon), normalized to a real
+    // value or explicit `null` — never left as an unvalidated LLM guess.
+    issues: arrayWithEvidenceRefs<InsightCandidateIssue>(candidate.issues, validIds).map(withSeedFields),
+    opportunities: arrayWithEvidenceRefs<InsightCandidateOpportunity>(candidate.opportunities, validIds).map(
+      withSeedFields
+    ),
     evidence_map: evidenceMap,
   };
 }
@@ -537,6 +617,66 @@ export async function materializeInsightCandidates(
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// §6 bridge (#57/Z60): InsightCandidate → GenerationContext seed fields.
+// ────────────────────────────────────────────────────────────────────────────
+
+/** The two `GenerationContext` fields `initiativeGenerationService` inherits from. */
+export interface InitiativeSeedContext {
+  /** First grounded owner-role seed found across issues/opportunities, if any. */
+  seedOwnerRole?: string;
+  /** "metric (baseline → target, horyzont)" seeds, one per grounded entry, joined. */
+  seedKpiSeeds?: string;
+}
+
+/**
+ * Bridge helper (§6, #57/Z60): collects the downstream seeds a materialized
+ * Insight candidate carries on its issues/opportunities into the two
+ * `GenerationContext` fields `initiativeGenerationService` already knows how
+ * to surface via `buildGroundingBlock` (`seedOwnerRole`/`seedKpiSeeds`) — so a
+ * caller wiring an Insight into `generateFullInitiative` (or any section
+ * generation call) can pass real seeds instead of leaving the generator to
+ * guess an owner/KPI from nothing.
+ *
+ * Pure + fail-soft: a null/undefined candidate, or one with no grounded
+ * seeds, returns `{}` (no keys set) — callers can always safely spread the
+ * result into a context object without touching existing behavior.
+ */
+export function deriveInitiativeSeedContext(
+  candidate: InsightCandidate | null | undefined
+): InitiativeSeedContext {
+  if (!candidate) return {};
+
+  const entries: InsightSeedFields[] = [
+    ...(Array.isArray(candidate.issues) ? candidate.issues : []),
+    ...(Array.isArray(candidate.opportunities) ? candidate.opportunities : []),
+  ];
+
+  const seedOwnerRole = entries
+    .map((e) => normalizeSeedValue(e?.suggestedOwnerRole))
+    .find((v): v is string => v != null);
+
+  const kpiLines = entries
+    .map((e) => ({
+      metric: normalizeSeedValue(e?.metric),
+      baseline: normalizeSeedValue(e?.baseline),
+      target: normalizeSeedValue(e?.target),
+      horizon: normalizeSeedValue(e?.horizon),
+    }))
+    // A usable KPI seed needs at least the metric AND one of baseline/target —
+    // a bare metric with nothing to anchor it isn't worth surfacing.
+    .filter((s) => s.metric && (s.baseline || s.target))
+    .map((s) => {
+      const range = `${s.baseline ?? '—'} → ${s.target ?? '—'}`;
+      return s.horizon ? `${s.metric} (${range}, ${s.horizon})` : `${s.metric} (${range})`;
+    });
+
+  const result: InitiativeSeedContext = {};
+  if (seedOwnerRole) result.seedOwnerRole = seedOwnerRole;
+  if (kpiLines.length) result.seedKpiSeeds = kpiLines.join('; ');
+  return result;
+}
+
 export default {
   materializeInsightCandidates,
   buildDistillationPrompt,
@@ -544,4 +684,5 @@ export default {
   reconcileEvidenceRefs,
   buildGenericMaterialQuality,
   runQualityGate,
+  deriveInitiativeSeedContext,
 };

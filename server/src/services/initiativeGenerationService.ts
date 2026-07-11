@@ -61,6 +61,20 @@ export interface GenerationContext {
   orgContext?: string;
   /** F0 — twarde dane finansowe org dla business-case/financial-impact. */
   financialsSummary?: string;
+  /**
+   * §6 downstream Insight seed (#57/Z60) — a suggested owner ROLE inherited
+   * from the source Insight's issue/opportunity, when the distillation
+   * already grounded one (see `insightMaterializationService.
+   * deriveInitiativeSeedContext`). Present only when a caller supplied it —
+   * absent means "no seed available", NOT "guess one" (unchanged behavior).
+   */
+  seedOwnerRole?: string;
+  /**
+   * §6 downstream Insight seed (#57/Z60) — "metric (baseline → target,
+   * horyzont)" seeds inherited from the source Insight, joined per grounded
+   * issue/opportunity. See `seedOwnerRole` for the same absence contract.
+   */
+  seedKpiSeeds?: string;
   language: 'en' | 'pl';
   [key: string]: any;
 }
@@ -621,6 +635,17 @@ export function buildGroundingBlock(context: GenerationContext): string | null {
     lines.push(`Istniejące inicjatywy w organizacji (NIE duplikuj; dopasuj do luk): ${String(context.portfolioSummary).slice(0, 1000)}`);
   if (context.category) lines.push(`Kategoria: ${context.category}`);
   if (context.module) lines.push(`Obszar/moduł: ${context.module}`);
+  // §6 downstream Insight seeds (#57/Z60) — inherited, not guessed: when the
+  // source Insight already computed an owner role or baseline→target, USE it
+  // directly instead of estimating a fresh one from nothing.
+  if (context.seedOwnerRole)
+    lines.push(
+      `Zalążek właściciela z Insightu (UŻYJ WPROST zamiast proponować inną rolę): ${context.seedOwnerRole}`
+    );
+  if (context.seedKpiSeeds)
+    lines.push(
+      `Zalążki KPI z Insightu — metric (baseline → target, horyzont), UŻYJ WPROST zamiast szacować od zera: ${context.seedKpiSeeds}`
+    );
   return lines.length ? lines.join('\n') : null;
 }
 
