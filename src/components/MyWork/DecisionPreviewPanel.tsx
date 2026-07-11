@@ -31,6 +31,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
+import { useUserIntegrations } from '@/hooks/useUserIntegrations';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
@@ -260,6 +261,12 @@ export const DecisionPreviewBody: React.FC<{
 
   const detailsText = detailsOverride ?? String(decision?.description || '').trim();
 
+  // #41: "Copy for Slack" only makes sense when the user actually has an
+  // active Slack integration (server/src/data/integrationsCatalog.ts +
+  // /api/settings/integrations) — otherwise it's a dead affordance.
+  const { isConnected: isIntegrationConnected } = useUserIntegrations();
+  const isSlackConnected = isIntegrationConnected('slack');
+
   return (
     <div className="space-y-4">
       <PreviewMetaCard pills={pills} trailing={trailing}>
@@ -308,19 +315,23 @@ export const DecisionPreviewBody: React.FC<{
                   isPolish ? 'pl' : 'en'
                 ),
             },
-            {
-              id: 'copy-slack',
-              label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
-              onClick: () =>
-                void copyForSlack(
+            ...(isSlackConnected
+              ? [
                   {
-                    title: decision?.title || '',
-                    status: decision?.status ?? undefined,
-                    description: detailsText,
+                    id: 'copy-slack',
+                    label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+                    onClick: () =>
+                      void copyForSlack(
+                        {
+                          title: decision?.title || '',
+                          status: decision?.status ?? undefined,
+                          description: detailsText,
+                        },
+                        isPolish ? 'pl' : 'en'
+                      ),
                   },
-                  isPolish ? 'pl' : 'en'
-                ),
-            },
+                ]
+              : []),
           ] as DetailsAction[]
         }
       />
