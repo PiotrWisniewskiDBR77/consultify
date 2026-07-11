@@ -1,15 +1,41 @@
 import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
 
+import { Api } from '@/services/api';
+
+import { getArtifactPath } from './artifactLinks';
 import {
   buildMyWorkSheetTableOpenPath,
   resolveTablePlatformWorkspaceIdForTable,
 } from './sheetArtifactOpen';
 
+/**
+ * Z125/Z126 — route a table's "open/edit" click to the surface that actually owns it.
+ *
+ * The `/my-work/sheets/:workspaceId/...` deep link only resolves when `workspaceId`
+ * is a real My Work idea. Materials / Table-Studio sheets carry
+ * `tp_bases.workspace_id = organization_id` (no idea record), so that path 404s
+ * ("Idea not found"). We probe `getMyIdea(workspaceId)`: if an idea exists the table
+ * is idea-backed and keeps the My Work path (unchanged — zero regression); otherwise
+ * it is a Materials sheet and opens on the `/tabele` surface instead.
+ */
+async function isIdeaBackedWorkspace(workspaceId: string): Promise<boolean> {
+  try {
+    const idea = await Api.getMyIdea(workspaceId);
+    return Boolean(idea);
+  } catch {
+    return false;
+  }
+}
+
 export async function buildTableBuilderOpenPath(tableId: string): Promise<string | null> {
   const workspaceId = await resolveTablePlatformWorkspaceIdForTable(tableId);
   if (!workspaceId) return null;
-  return buildMyWorkSheetTableOpenPath(workspaceId, tableId);
+  if (await isIdeaBackedWorkspace(workspaceId)) {
+    return buildMyWorkSheetTableOpenPath(workspaceId, tableId);
+  }
+  // Materials sheet → open on the Tabele surface (was: unconditional My Work → 404).
+  return getArtifactPath('sheet', tableId);
 }
 
 export async function openTableBuilderInNewTab(tableId: string, t: TFunction): Promise<boolean> {
