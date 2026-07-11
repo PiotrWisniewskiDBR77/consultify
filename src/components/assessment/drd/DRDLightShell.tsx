@@ -240,7 +240,7 @@ export const DRDLightShell: React.FC<DRDLightShellProps> = ({
             className="inline-flex items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
           >
             <MessageSquare className="h-4 w-4" />
-            Teresa
+            {t('Zapytaj Teresę', 'Ask Teresa')}
           </button>
         )}
         <button
