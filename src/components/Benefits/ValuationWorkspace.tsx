@@ -4,9 +4,14 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  EvBasketFootballField,
+  type EvBasketResult,
+} from '@/components/Economics/panels/EvBasketFootballField';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { API_URL, getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { isFinanceEvBasketEnabled } from '@/utils/financeEvBasketFlag';
 
 import { ExportButton } from '../Finance/ExportButton';
 
@@ -223,6 +228,37 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   const dcf = computed?.dcf;
   const advisory = safeJson<any>(selected?.advisory, null);
   const negotiationPack = safeJson<any>(selected?.negotiation_pack, null);
+
+  // EV KOSZYK (football-field) — za flagą (default OFF; podgląd `?ff_evBasket=1`).
+  // Additive: czyta osobny read-only endpoint, nie rusza istniejących surface'ów.
+  const evBasketEnabled = useMemo(() => isFinanceEvBasketEnabled(), []);
+  const [evBasket, setEvBasket] = useState<EvBasketResult | null>(null);
+  const dcfEv = dcf?.enterpriseValue;
+  useEffect(() => {
+    if (!evBasketEnabled || !selectedId || !Number.isFinite(Number(dcfEv))) {
+      setEvBasket(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/basket`, {
+          headers: getHeaders(),
+        });
+        if (!res.ok) {
+          if (!cancelled) setEvBasket(null);
+          return;
+        }
+        const d = (await res.json()) as { basket?: EvBasketResult | null };
+        if (!cancelled) setEvBasket((d?.basket ?? null) as EvBasketResult | null);
+      } catch {
+        if (!cancelled) setEvBasket(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [evBasketEnabled, selectedId, dcfEv]);
 
   const fmtCurrency = useMemo(() => {
     const cur = selected?.currency || 'PLN';
@@ -1077,6 +1113,16 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         )}
                       </div>
                     </div>
+                  )}
+
+                  {/* EV KOSZYK — football-field (za flagą ff_evBasket; default OFF) */}
+                  {evBasketEnabled && dcf && (
+                    <EvBasketFootballField
+                      basket={evBasket}
+                      subjectLabel={selected?.title}
+                      unitLabel={selected?.currency || 'PLN'}
+                      t={t as (key: string, defaultValue: string) => string}
+                    />
                   )}
 
                   <div className="grid grid-cols-2 gap-4">
