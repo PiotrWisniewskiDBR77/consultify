@@ -1,0 +1,68 @@
+/**
+ * DEV-RENDER HARNESS entry.
+ *
+ * Mounts a REAL screen component with mock data + the app's real CSS
+ * (Tailwind + c-* tokens) + working i18n, so the supervisor can screenshot it
+ * BEFORE the owner sees it (CLAUDE.md #7). Dev-only; never ships to demo.
+ *
+ * URL params:
+ *   ?screen=drd-light   which screen to mount (see SCREENS registry)
+ *   &lang=pl|en         i18n language (default pl)
+ *   &theme=light|dark   applies the app's `.dark` class strategy (default light)
+ *
+ * Extend by adding an entry to SCREENS below.
+ */
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+// Real app stylesheet: Tailwind layers + the full c-* token system (light+dark).
+import '../src/index.css';
+// Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
+import i18n from '../src/i18n';
+
+import DrdLightScreen from './screens/drd-light';
+
+// ── Screen registry (extensible) ──────────────────────────────────────────
+const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'drd-light': { label: 'DRD Light Shell', render: () => <DrdLightScreen /> },
+};
+
+const params = new URLSearchParams(window.location.search);
+const screenKey = params.get('screen') || 'drd-light';
+const lang = params.get('lang') || 'pl';
+const theme = params.get('theme') || 'light';
+
+// Apply theme via the app's `.dark` class strategy (tailwind darkMode:'class').
+const root = document.documentElement;
+root.classList.toggle('dark', theme === 'dark');
+document.body.style.background = 'var(--c-bg)';
+
+// Apply language (component reads i18n.language for its inline pl/en copy).
+void i18n.changeLanguage(lang);
+
+const entry = SCREENS[screenKey];
+const mount = document.getElementById('dev-render-root')!;
+
+function Fallback(): React.ReactElement {
+  return (
+    <div style={{ padding: 24, fontFamily: 'system-ui', color: 'var(--c-text)' }}>
+      <h1>Dev Render Harness</h1>
+      <p>
+        Unknown <code>?screen={screenKey}</code>. Available screens:
+      </p>
+      <ul>
+        {Object.entries(SCREENS).map(([k, v]) => (
+          <li key={k}>
+            <a href={`?screen=${k}&lang=${lang}&theme=${theme}`}>
+              {k} — {v.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+createRoot(mount).render(
+  <React.StrictMode>{entry ? entry.render() : <Fallback />}</React.StrictMode>
+);

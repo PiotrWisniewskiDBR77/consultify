@@ -7,6 +7,7 @@ export default {
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
+    './dev-render/**/*.{js,ts,jsx,tsx,html}', // dev-only render harness (never ships)
     './views/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}',
     './App.tsx',
