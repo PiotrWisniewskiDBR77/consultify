@@ -13,6 +13,10 @@
 // Main Hub (Golden Standard)
 export { InterviewHub } from './InterviewHub';
 
+// Light shell (Vegas/Oxford, ff.interview_light — OFF by default, harness-only
+// caller for now; InterviewHub wiring is a later step, see interviewLightFlag.ts)
+export { InterviewLightShell } from './InterviewLightShell';
+
 // Main workspace
 export { InterviewWorkspace } from './InterviewWorkspace';
 

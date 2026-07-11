@@ -26,12 +26,14 @@ import DrdLightScreen from './screens/drd-light';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import ExecutionLightScreen from './screens/execution-light';
 import FinanceLightScreen from './screens/finance-light';
+import InterviewLightScreen from './screens/interview-light';
 import ResultsLightScreen from './screens/results-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'drd-light': { label: 'DRD Light Shell', render: () => <DrdLightScreen /> },
   'finance-light': { label: 'Finance Light Shell', render: () => <FinanceLightScreen /> },
+  'interview-light': { label: 'Interview Light Shell', render: () => <InterviewLightScreen /> },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,
