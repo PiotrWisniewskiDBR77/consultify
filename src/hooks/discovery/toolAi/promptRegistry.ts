@@ -5,16 +5,55 @@ import {
   buildA3DeepenPrompt,
   type A3SectionId,
 } from '@/config/a3problemsolving';
-import { buildDmsConclusionPrompt, toDmsSession } from '@/config/dmsbuilder';
 import {
+  DMS_LAYERS,
+  buildDmsConclusionPrompt,
+  buildDmsDeepenPrompt,
+  toDmsSession,
+  type DmsLayerId,
+} from '@/config/dmsbuilder';
+import {
+  AUTOMATION_PHASES,
   buildProcessAutomationConclusionPrompt,
+  buildProcessAutomationDeepenPrompt,
   toAutomationSession,
+  type AutomationPhaseId,
 } from '@/config/processautomation';
-import { buildInventoryConclusionPrompt, toInventorySession } from '@/config/inventoryautopilot';
-import { buildAiDiscoveryConclusionPrompt, toDiscoverySession } from '@/config/aidiscovery';
-import { buildSmedConclusionPrompt, toSmedSession } from '@/config/smedplanner';
-import { buildPainConclusionPrompt, toPainSession } from '@/config/painexplorer';
-import { buildRpaConclusionPrompt, toRpaSession } from '@/config/rpascanner';
+import {
+  INVENTORY_LEVERS,
+  buildInventoryConclusionPrompt,
+  buildInventoryDeepenPrompt,
+  toInventorySession,
+  type InventoryLeverId,
+} from '@/config/inventoryautopilot';
+import {
+  AI_PHASES,
+  buildAiDiscoveryConclusionPrompt,
+  buildAiDiscoveryDeepenPrompt,
+  toDiscoverySession,
+  type AiPhaseId,
+} from '@/config/aidiscovery';
+import {
+  SMED_PHASES,
+  buildSmedConclusionPrompt,
+  buildSmedDeepenPrompt,
+  toSmedSession,
+  type SmedPhaseId,
+} from '@/config/smedplanner';
+import {
+  PAIN_STAGES,
+  buildPainConclusionPrompt,
+  buildPainDeepenPrompt,
+  toPainSession,
+  type PainStageId,
+} from '@/config/painexplorer';
+import {
+  RPA_GATES,
+  buildRpaConclusionPrompt,
+  buildRpaDeepenPrompt,
+  toRpaSession,
+  type RpaGateId,
+} from '@/config/rpascanner';
 import {
   SOP_SECTIONS,
   buildSopConclusionPrompt,
@@ -95,6 +134,167 @@ function getToolSuggestionPromptInner(
   stepId: string,
   inputData: unknown
 ): string {
+  // Grounded deepening overrides for the operational tools that carry a
+  // deepening ladder (surface -> evidence -> quantification -> risk/capability).
+  // These MUST run BEFORE the generic OPERATIONAL_TOOL_TYPES branch below —
+  // every one of these tool types is also a member of that list, so a later
+  // check would be unreachable dead code (stepId is a real section id here,
+  // never 'context'/'summary', so the generic branch always intercepts first;
+  // this is the same class of bug OXFORD #102 fixed for the conclusion prompts
+  // in getToolSummaryPromptInner below — see that comment).
+  if (toolType === 'a3-problem-solving' && A3_SECTIONS.includes(stepId as A3SectionId)) {
+    const deepen = buildA3DeepenPrompt(stepId as A3SectionId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner running an A3. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item traces down the staircase: a countermeasure names the root cause it removes; a root cause names the problem gap it explains.
+- Prefer measurable items (set target/threshold/durationMinutes where the fact exists); do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'sop-builder' && SOP_SECTIONS.includes(stepId as SopSectionId)) {
+    const deepen = buildSopDeepenPrompt(stepId as SopSectionId, 'quantification', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner building an SOP. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Standards are pass/fail boundaries with a measurable threshold; checklist items are verifications (pass/fail), not actions.
+- Set threshold/target/durationMinutes where a measurable criterion exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'dms-builder' && DMS_LAYERS.includes(stepId as DmsLayerId)) {
+    const deepen = buildDmsDeepenPrompt(stepId as DmsLayerId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner building a Daily Management System. Propose 3-5 concrete items for the "${stepId}" control-loop layer, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item ties to the control loop: a KPI must be owned and current (not a laminated poster); an escalation names its trigger threshold and the next tier; a response closes with a verified check.
+- Set threshold/target/durationMinutes where a measurable criterion exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'smed-planner' && SMED_PHASES.includes(stepId as SmedPhaseId)) {
+    const deepen = buildSmedDeepenPrompt(stepId as SmedPhaseId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner running a SMED changeover reduction. Propose 3-5 concrete items for the "${stepId}" phase, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item is grounded in measured changeover time, not an aspirational estimate; separate/convert/streamline items name the internal or external step they touch.
+- Set target/threshold/durationMinutes where the fact exists; do not invent minutes.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'inventory-autopilot' && INVENTORY_LEVERS.includes(stepId as InventoryLeverId)) {
+    const deepen = buildInventoryDeepenPrompt(stepId as InventoryLeverId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner running Inventory Autopilot. Propose 3-5 concrete items for the "${stepId}" lever, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item ties to a concrete SKU class or service-level lever; do not invent stock, capital, or fill-rate figures.
+- Set target/threshold/durationMinutes where the fact exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'ai-discovery' && AI_PHASES.includes(stepId as AiPhaseId)) {
+    const deepen = buildAiDiscoveryDeepenPrompt(stepId as AiPhaseId, 'evidence', false);
+    if (deepen) {
+      return `Act as an AI transformation partner running AI Discovery. Propose 3-5 concrete items for the "${stepId}" phase, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item names a concrete use case and the evidence for its feasibility or value; do not invent adoption or value figures.
+- Set target/threshold/durationMinutes where the fact exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'pain-explorer' && PAIN_STAGES.includes(stepId as PainStageId)) {
+    const deepen = buildPainDeepenPrompt(stepId as PainStageId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner running Pain Explorer. Propose 3-5 concrete items for the "${stepId}" stage, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item traces a pain to its measured cost and, once diagnosed, its root cause; do not invent cost figures.
+- Set target/threshold/durationMinutes where the fact exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'rpa-scanner' && RPA_GATES.includes(stepId as RpaGateId)) {
+    const deepen = buildRpaDeepenPrompt(stepId as RpaGateId, 'evidence', false);
+    if (deepen) {
+      return `Act as an automation feasibility partner running RPA Scanner. Propose 3-5 concrete items for the "${stepId}" gate, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item names the process gate it passes (identify/standardize/quantify/feasibility) and the measured volume or ROI behind it; do not invent volume or ROI figures.
+- Set target/threshold/durationMinutes where the fact exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'process-automation' && AUTOMATION_PHASES.includes(stepId as AutomationPhaseId)) {
+    const deepen = buildProcessAutomationDeepenPrompt(stepId as AutomationPhaseId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner running Process Automation. Propose 3-5 concrete items for the "${stepId}" phase, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item traces from a mapped step to its automation target with a sustain/monitoring owner; do not invent hours or volumes.
+- Set target/threshold/durationMinutes where the fact exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
   if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
     // The shared OperationalToolData tools: each non-context/summary step is a
     // section. Generate concrete operational items for the current section.
@@ -514,42 +714,6 @@ Return JSON:
 }`;
     }
     return '';
-  }
-
-  // Grounded deepening overrides for A3 / SOP analytical sections (backward-compatible:
-  // falls through to the generic operational prompt above when no override applies).
-  if (toolType === 'a3-problem-solving' && A3_SECTIONS.includes(stepId as A3SectionId)) {
-    const deepen = buildA3DeepenPrompt(stepId as A3SectionId, 'evidence', false);
-    if (deepen) {
-      return `Act as an operational-excellence partner running an A3. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
-
-Staircase framing for this section:
-${deepen}
-
-Rules:
-- Every item traces down the staircase: a countermeasure names the root cause it removes; a root cause names the problem gap it explains.
-- Prefer measurable items (set target/threshold/durationMinutes where the fact exists); do not invent numbers.
-
-Return JSON:
-{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
-    }
-  }
-
-  if (toolType === 'sop-builder' && SOP_SECTIONS.includes(stepId as SopSectionId)) {
-    const deepen = buildSopDeepenPrompt(stepId as SopSectionId, 'quantification', false);
-    if (deepen) {
-      return `Act as an operational-excellence partner building an SOP. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
-
-Staircase framing for this section:
-${deepen}
-
-Rules:
-- Standards are pass/fail boundaries with a measurable threshold; checklist items are verifications (pass/fail), not actions.
-- Set threshold/target/durationMinutes where a measurable criterion exists; do not invent numbers.
-
-Return JSON:
-{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
-    }
   }
 
   const swotData = inputData as SWOTData | undefined;
