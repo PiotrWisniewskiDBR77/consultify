@@ -82,7 +82,6 @@ import {
 } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
 import { NModeSectionWrapper } from '../shared/NModeLayout/NModeSectionWrapper';
 import type { NModeSection } from '../shared/NModeLayout/types';
 // ── N-Mode Sections (shared, reusable across artifacts) ─────────────────────
@@ -4108,126 +4107,6 @@ Return ONLY the final comment text.`;
                   />
                 </div>
               )}
-
-              {/* PropertiesStrip — order: Status, Priority, Due Date, Owner, Initiative (2-col) */}
-              <NModePropertiesStrip
-                fields={[
-                  {
-                    id: 'status',
-                    label: { en: 'Status', pl: 'Status' },
-                    type: 'select' as const,
-                    value: status,
-                    onChange: (v) => {
-                      const old = status;
-                      setStatus(v as keyof typeof STATUS_CONFIG);
-                      addActivityLogEntry(
-                        'status_change',
-                        isPolish ? 'Status zmieniony' : 'Status changed',
-                        old,
-                        v
-                      );
-                    },
-                    options: Object.entries(STATUS_CONFIG).map(([key, config]) => ({
-                      value: key,
-                      label: config.label,
-                    })),
-                    alertBorderClass: statusAlertBorderClass,
-                  },
-                  {
-                    id: 'priority',
-                    label: { en: 'Priority', pl: 'Priorytet' },
-                    type: 'select' as const,
-                    value: priority,
-                    onChange: (v) => {
-                      const old = priority;
-                      setPriority(v as keyof typeof PRIORITY_CONFIG);
-                      addActivityLogEntry(
-                        'priority',
-                        isPolish ? 'Priorytet zmieniony' : 'Priority changed',
-                        old,
-                        v
-                      );
-                    },
-                    options: Object.entries(PRIORITY_CONFIG).map(([key, config]) => ({
-                      value: key,
-                      label: config.label,
-                    })),
-                    alertBorderClass: priorityAlertBorderClass,
-                  },
-                  {
-                    id: 'dueDate',
-                    label: { en: 'Due Date', pl: 'Termin' },
-                    type: 'date' as const,
-                    value: dueDate,
-                    onChange: setDueDate,
-                    alertBorderClass: dueDateAlertBorderClass,
-                  },
-                  {
-                    id: 'owner',
-                    label: { en: 'Owner', pl: 'Właściciel' },
-                    type: 'custom' as const,
-                    value: ownerId,
-                    onChange: setOwnerId,
-                    render: () => (
-                      <select
-                        value={ownerId}
-                        onChange={(e) => setOwnerId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
-                      >
-                        <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
-                        {users.map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.firstName} {u.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    ),
-                  },
-                  {
-                    id: 'initiative',
-                    label: { en: 'Initiative', pl: 'Inicjatywa' },
-                    type: 'custom' as const,
-                    value: initiativeId || '',
-                    colSpan: 2,
-                    onChange: (v) => {
-                      if (v) {
-                        setInitiativeId(v);
-                        const found = availableInitiatives.find((i) => i.id === v);
-                        setInitiativeName(found?.name || null);
-                      } else {
-                        setInitiativeId(null);
-                        setInitiativeName(null);
-                      }
-                    },
-                    render: () => (
-                      <select
-                        value={initiativeId || ''}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v) {
-                            setInitiativeId(v);
-                            const found = availableInitiatives.find((i) => i.id === v);
-                            setInitiativeName(found?.name || null);
-                          } else {
-                            setInitiativeId(null);
-                            setInitiativeName(null);
-                          }
-                        }}
-                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
-                      >
-                        <option value="">
-                          {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
-                        </option>
-                        {availableInitiatives.map((init) => (
-                          <option key={init.id} value={init.id}>
-                            {init.name}
-                          </option>
-                        ))}
-                      </select>
-                    ),
-                  },
-                ]}
-              />
 
               {/* ── Origin Badge ──────────────────────────────────── */}
               {sourceType && sourceId && (

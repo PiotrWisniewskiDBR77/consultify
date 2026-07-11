@@ -89,7 +89,6 @@ import {
 } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
 import type { NModeSection } from '../shared/NModeLayout/types';
 import type {
   ActivityLogEntry as NModeActivityLogEntry,
@@ -4805,79 +4804,6 @@ Use userId only from this list:
               <div className="flex items-center justify-end">
                 <ReadEditToggle readMode={readMode} onChange={setReadMode} />
               </div>
-              {/* ── PropertiesStrip — shared NModePropertiesStrip ─────────── */}
-              <NModePropertiesStrip
-                fields={[
-                  {
-                    id: 'status',
-                    label: { en: 'Status', pl: 'Status' },
-                    type: 'select' as const,
-                    value: status,
-                    onChange: (v) => setStatus(v as keyof typeof STATUS_CONFIG),
-                    options: Object.entries(STATUS_CONFIG).map(([key, config]) => ({
-                      value: key,
-                      label: config.label,
-                    })),
-                    alertBorderClass: statusAlertBorderClass,
-                  },
-                  {
-                    id: 'priority',
-                    label: { en: 'Priority', pl: 'Priorytet' },
-                    type: 'select' as const,
-                    value: priority,
-                    onChange: (v) => setPriority(v as keyof typeof PRIORITY_CONFIG),
-                    options: Object.entries(PRIORITY_CONFIG).map(([key, config]) => ({
-                      value: key,
-                      label: config.label,
-                    })),
-                    alertBorderClass: priorityAlertBorderClass,
-                  },
-                  {
-                    id: 'createdAt',
-                    label: { en: 'Created date', pl: 'Data utworzenia' },
-                    type: 'date' as const,
-                    value: createdAt ? createdAt.split('T')[0] : '',
-                    onChange: setCreatedAt,
-                  },
-                  {
-                    id: 'dueDate',
-                    label: { en: 'Deadline', pl: 'Termin' },
-                    type: 'date' as const,
-                    value: dueDate,
-                    onChange: setDueDate,
-                    alertBorderClass: dueDateAlertBorderClass,
-                  },
-                  {
-                    id: 'requester',
-                    label: { en: 'Requester', pl: 'Wnioskodawca' },
-                    type: 'text' as const,
-                    value: requesterName,
-                    onChange: setRequesterName,
-                    placeholder: { en: 'Requester...', pl: 'Wnioskodawca...' },
-                  },
-                  {
-                    id: 'decider',
-                    label: { en: 'Decider', pl: 'Decydent' },
-                    type: 'custom' as const,
-                    value: deciderId,
-                    onChange: setDeciderId,
-                    render: () => (
-                      <select
-                        value={deciderId}
-                        onChange={(e) => setDeciderId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
-                      >
-                        <option value="">—</option>
-                        {users.map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.firstName} {u.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    ),
-                  },
-                ]}
-              />
               {/* ── Origin Badge ──────────────────────────────────── */}
               {sourceType && sourceId && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
