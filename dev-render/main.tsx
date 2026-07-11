@@ -27,6 +27,7 @@ import DrdLightScreen from './screens/drd-light';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import ExecutionLightScreen from './screens/execution-light';
 import FinanceLightScreen from './screens/finance-light';
+import InsightLightScreen from './screens/insight-light';
 import InterviewLightScreen from './screens/interview-light';
 import InitiativesLightScreen from './screens/initiatives-light';
 import MaterialsLightScreen from './screens/materials-light';
@@ -36,6 +37,7 @@ import ResultsLightScreen from './screens/results-light';
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'drd-light': { label: 'DRD Light Shell', render: () => <DrdLightScreen /> },
   'finance-light': { label: 'Finance Light Shell', render: () => <FinanceLightScreen /> },
+  'insight-light': { label: 'Insight Light Shell', render: () => <InsightLightScreen /> },
   'interview-light': { label: 'Interview Light Shell', render: () => <InterviewLightScreen /> },
   'materials-light': { label: 'Materials Light Shell', render: () => <MaterialsLightScreen /> },
   'ev-football-field': {
