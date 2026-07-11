@@ -17093,6 +17093,7 @@
       "viewLevel": "Showing level {{level}}",
       "allExpanded": "All expanded",
       "selectNodeToAttach": "Select a node to attach to",
+      "selectNodeForComments": "Select a node to comment on",
       "labelKnowledge": "Knowledge",
       "labelNote": "Note",
       "labelEvidence": "Evidence",

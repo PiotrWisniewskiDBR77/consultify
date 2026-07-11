@@ -18163,6 +18163,7 @@
       "viewLevel": "Widok: poziom {{level}}",
       "allExpanded": "Wszystko rozwinięte",
       "selectNodeToAttach": "Zaznacz węzeł, do którego chcesz dodać",
+      "selectNodeForComments": "Zaznacz węzeł, aby dodać komentarz",
       "labelKnowledge": "Wiedza",
       "labelNote": "Notatka",
       "labelEvidence": "Dowód",

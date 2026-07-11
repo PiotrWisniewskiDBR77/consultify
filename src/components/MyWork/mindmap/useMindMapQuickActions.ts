@@ -264,7 +264,14 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     if (action === 'mm_comments') {
       const sel = handlers.getSelectedNode();
-      if (sel && sel.type === 'idea') setters.setCommentNodeId(sel.id);
+      if (sel && sel.type === 'idea') {
+        setters.setCommentNodeId(sel.id);
+      } else {
+        // #6g — this used to no-op silently when nothing was selected; give the
+        // user the same "select a node first" hint used by the other node-scoped
+        // quick actions instead of a dead click.
+        toast(i18n.t('mindmap.quickActions.selectNodeForComments'), { icon: 'ℹ️' });
+      }
     }
     if (action === 'mm_export_pptx') setters.setShowExportPPTX(true);
     if (action === 'mm_embed_report') setters.setShowEmbedInReports(true);
