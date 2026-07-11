@@ -1757,7 +1757,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { organizationId } = getAuthContext(req);
-    const { status, statusIn, sourceType, sourceId, search } = req.query;
+    const { status, statusIn, sourceType, sourceId, search, archived, includeArchived } =
+      req.query;
 
     // Parse statusIn if provided as comma-separated string
     let statusInArray: string[] | undefined;
@@ -1771,6 +1772,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       sourceType: sourceType as any,
       sourceId: sourceId as string,
       search: search as string,
+      // ?archived=true -> only archived reports; default (unset) -> only active reports.
+      archived: archived === 'true' ? true : archived === 'false' ? false : undefined,
+      // ?includeArchived=true -> both active and archived, overrides the `archived` default filter.
+      includeArchived: includeArchived === 'true',
     });
 
     res.json({ reports, total: reports.length });
@@ -2017,6 +2022,52 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
     res.json({ success: true });
   } catch (err) {
     logger.error('[ReportBuilder] Error deleting report:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/archive
+ * Archive a report (#68e). Orthogonal to `status` — workflow status is preserved so
+ * unarchive restores the report exactly where it left off. Archived reports are hidden
+ * from the default GET / list.
+ */
+router.post('/:id/archive', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+
+    const result = await ReportBuilderService.archiveReport(id, organizationId, userId);
+    if (!result) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    logger.info('[ReportBuilder] Report archived', { reportId: id, userId });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error archiving report:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/unarchive
+ * Restore an archived report to default-list visibility (#68e).
+ */
+router.post('/:id/unarchive', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+
+    const result = await ReportBuilderService.unarchiveReport(id, organizationId, userId);
+    if (!result) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    logger.info('[ReportBuilder] Report unarchived', { reportId: id, userId });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error unarchiving report:', err);
     next(err);
   }
 });

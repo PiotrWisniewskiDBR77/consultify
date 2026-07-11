@@ -2091,6 +2091,17 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
     await db.query(
       `CREATE INDEX IF NOT EXISTS idx_rb_reports_type_v3 ON report_builder_reports(report_type_v3)`
     );
+    // Archive/unarchive (#68e) — orthogonal to `status` workflow (DRAFT..UTILIZED) so a
+    // report keeps its workflow status while archived and can be restored to it.
+    await db.query(
+      `ALTER TABLE report_builder_reports ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP`
+    );
+    await db.query(
+      `ALTER TABLE report_builder_reports ADD COLUMN IF NOT EXISTS archived_by TEXT`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_reports_archived ON report_builder_reports(organization_id, archived_at)`
+    );
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS report_builder_sections (

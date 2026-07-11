@@ -109,6 +109,10 @@ export interface ReportRecord {
   approvedAt?: string;
   approvedBy?: string;
   version: number;
+  // Archive (#68e) — orthogonal to `status`; archivedAt set means hidden from default
+  // listReports() results but the underlying workflow status is preserved for restore.
+  archivedAt?: string;
+  archivedBy?: string;
   // V3 Report Definition Layer
   reportTypeV3?: ReportTypeV3;
   periodFrom?: string;
@@ -1013,6 +1017,8 @@ export async function getReport(
       approvedAt: row.approved_at,
       approvedBy: row.approved_by,
       version: row.version,
+      archivedAt: row.archived_at || undefined,
+      archivedBy: row.archived_by || undefined,
     },
     sections: sections.map((s) => ({
       id: s.id,
@@ -1063,6 +1069,10 @@ export async function listReports(
     sourceType?: ReportSourceType;
     sourceId?: string;
     search?: string;
+    /** true = only archived reports; false/undefined = only active (default) */
+    archived?: boolean;
+    /** true = no filter on archived_at, return both active and archived */
+    includeArchived?: boolean;
   }
 ): Promise<ReportRecord[]> {
   let sql = `
@@ -1099,6 +1109,13 @@ export async function listReports(
     sql += ` AND r.title LIKE ?`;
     params.push(`%${filters.search}%`);
   }
+  if (!filters?.includeArchived) {
+    if (filters?.archived) {
+      sql += ` AND r.archived_at IS NOT NULL`;
+    } else {
+      sql += ` AND r.archived_at IS NULL`;
+    }
+  }
 
   sql += ` ORDER BY r.created_at DESC LIMIT 100`;
 
@@ -1123,6 +1140,8 @@ export async function listReports(
     generatedAt: row.generated_at,
     approvedAt: row.approved_at,
     version: row.version,
+    archivedAt: row.archived_at || undefined,
+    archivedBy: row.archived_by || undefined,
     initiativesCount: Number(row.initiatives_count || 0),
     createdByName: row.created_by_name || undefined,
     config: row.config_json ? JSON.parse(row.config_json) : undefined,
@@ -1696,6 +1715,97 @@ export async function updateReportStatus(
       message: err?.message,
     });
   }
+}
+
+/**
+ * Archive a report (#68e). Orthogonal to `status` — the workflow status (DRAFT..UTILIZED)
+ * is preserved so unarchive restores the report exactly where it left off. Archived reports
+ * are excluded from listReports() by default (see `archived`/`includeArchived` filters).
+ */
+export async function archiveReport(
+  reportId: string,
+  organizationId: string,
+  userId: string
+): Promise<{ id: string; archivedAt: string; archivedBy: string } | null> {
+  const existing = await queryOne<{ id: string; archived_at: string | null }>(
+    `SELECT id, archived_at FROM report_builder_reports WHERE id = ? AND organization_id = ?`,
+    [reportId, organizationId]
+  );
+  if (!existing) return null;
+  if (existing.archived_at) {
+    return { id: reportId, archivedAt: existing.archived_at, archivedBy: userId };
+  }
+
+  const now = new Date().toISOString();
+  await queryRun(
+    `
+    UPDATE report_builder_reports
+    SET archived_at = ?, archived_by = ?, updated_at = ?, updated_by = ?
+    WHERE id = ? AND organization_id = ?
+  `,
+    [now, userId, now, userId, reportId, organizationId]
+  );
+
+  await logActivity(reportId, 'ARCHIVED', userId);
+
+  // Snapshot the pre-archive state so the version history stays legible for restore/audit.
+  try {
+    await createVersion(reportId, organizationId, userId, {
+      changeType: 'archive',
+      changeSummary: 'Report archived',
+    });
+  } catch (err: any) {
+    logger.warn('[ReportBuilder] Failed to snapshot version on archive (non-fatal)', {
+      reportId,
+      message: err?.message,
+    });
+  }
+
+  return { id: reportId, archivedAt: now, archivedBy: userId };
+}
+
+/**
+ * Unarchive a report (#68e). Restores default-list visibility; `status` is untouched.
+ */
+export async function unarchiveReport(
+  reportId: string,
+  organizationId: string,
+  userId: string
+): Promise<{ id: string } | null> {
+  const existing = await queryOne<{ id: string; archived_at: string | null }>(
+    `SELECT id, archived_at FROM report_builder_reports WHERE id = ? AND organization_id = ?`,
+    [reportId, organizationId]
+  );
+  if (!existing) return null;
+  if (!existing.archived_at) {
+    return { id: reportId };
+  }
+
+  const now = new Date().toISOString();
+  await queryRun(
+    `
+    UPDATE report_builder_reports
+    SET archived_at = NULL, archived_by = NULL, updated_at = ?, updated_by = ?
+    WHERE id = ? AND organization_id = ?
+  `,
+    [now, userId, reportId, organizationId]
+  );
+
+  await logActivity(reportId, 'UNARCHIVED', userId);
+
+  try {
+    await createVersion(reportId, organizationId, userId, {
+      changeType: 'archive',
+      changeSummary: 'Report unarchived',
+    });
+  } catch (err: any) {
+    logger.warn('[ReportBuilder] Failed to snapshot version on unarchive (non-fatal)', {
+      reportId,
+      message: err?.message,
+    });
+  }
+
+  return { id: reportId };
 }
 
 /**
@@ -2554,7 +2664,7 @@ export async function createVersion(
   organizationId: string,
   userId: string,
   options?: {
-    changeType?: 'auto' | 'manual' | 'rollback';
+    changeType?: 'auto' | 'manual' | 'rollback' | 'archive';
     changeSummary?: string;
     previousStatus?: string;
     newStatus?: string;
@@ -3146,6 +3256,8 @@ const ReportBuilderService = {
   updateReportStatus,
   updateReportMetadata,
   updateReportConfig,
+  archiveReport,
+  unarchiveReport,
   duplicateReport,
   getSourceDataForReport,
   // Export functions
