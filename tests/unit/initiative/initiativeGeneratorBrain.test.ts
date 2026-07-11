@@ -175,6 +175,41 @@ describe('F1 — generateFullInitiative (pełny fill)', () => {
     expect(firstCtx.sourceLineage).toBe('audit');
   });
 
+  // §6 downstream Insight seeds (#57/Z60) — insightMaterializationService.
+  // deriveInitiativeSeedContext() → generateFullInitiative's insightSeeds
+  // input, merged into baseContext so KPI/control cards inherit instead of
+  // guessing an owner/baseline→target from nothing.
+  it('przekazuje insightSeeds jako seedOwnerRole/seedKpiSeeds do kontekstu generacji', async () => {
+    const { gen, spy } = makeGen();
+    await generateFullInitiative(depsFor(gen), {
+      initiativeId: 'i-2b',
+      sourceType: 'interview_insight',
+      insightSeeds: {
+        seedOwnerRole: 'Head of Customer Ops',
+        seedKpiSeeds: 'czas obsługi zapytania (~5 dni → 1 dzień, 2 kwartały)',
+      },
+    });
+    const firstCtx = spy.mock.calls[0][1] as any;
+    expect(firstCtx.seedOwnerRole).toBe('Head of Customer Ops');
+    expect(firstCtx.seedKpiSeeds).toBe('czas obsługi zapytania (~5 dni → 1 dzień, 2 kwartały)');
+  });
+
+  it('bez insightSeeds kontekst NIE ma pól seed* (istniejący tor brief-only niezmieniony)', async () => {
+    const { gen, spy } = makeGen();
+    await generateFullInitiative(depsFor(gen), { initiativeId: 'i-2c', brief: 'brief bez insightu' });
+    const firstCtx = spy.mock.calls[0][1] as any;
+    expect(firstCtx.seedOwnerRole).toBeUndefined();
+    expect(firstCtx.seedKpiSeeds).toBeUndefined();
+  });
+
+  it('insightSeeds z pustymi polami nie zaśmieca kontekstu (fail-soft, additive)', async () => {
+    const { gen, spy } = makeGen();
+    await generateFullInitiative(depsFor(gen), { initiativeId: 'i-2d', insightSeeds: {} });
+    const firstCtx = spy.mock.calls[0][1] as any;
+    expect(firstCtx.seedOwnerRole).toBeUndefined();
+    expect(firstCtx.seedKpiSeeds).toBeUndefined();
+  });
+
   it('respektuje język (en) — propaguje do każdej karty', async () => {
     const { gen, spy } = makeGen({ contentFor: (k, c) => `EN ${k}#${c}` });
     const r = await generateFullInitiative(depsFor(gen), { initiativeId: 'i-3', language: 'en' });

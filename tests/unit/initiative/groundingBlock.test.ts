@@ -49,4 +49,45 @@ describe('F0 — buildGroundingBlock (grunt 4 źródeł)', () => {
     // org ≤800 + label, portfolio ≤1000 + label — sumarycznie znacznie poniżej 2×2000
     expect(g.length).toBeLessThan(2100);
   });
+
+  // §6 downstream Insight seeds (#57/Z60) — insightMaterializationService.
+  // deriveInitiativeSeedContext feeds these two fields; the generator must
+  // INHERIT them (instruct the LLM to use directly) instead of guessing.
+  describe('§6 downstream Insight seeds (seedOwnerRole / seedKpiSeeds)', () => {
+    it('bez seedów blok NIE wspomina zalążków (istniejące zachowanie niezmienione)', () => {
+      expect(buildGroundingBlock({ ...base })).toBeNull();
+      const g = buildGroundingBlock({ ...base, orgContext: 'ORG' })!;
+      expect(g).not.toContain('Zalążek');
+      expect(g).not.toContain('Zalążki KPI');
+    });
+
+    it('seedOwnerRole trafia do bloku z instrukcją "UŻYJ WPROST"', () => {
+      const g = buildGroundingBlock({ ...base, seedOwnerRole: 'Head of Operations' })!;
+      expect(g).toContain('Zalążek właściciela z Insightu');
+      expect(g).toContain('UŻYJ WPROST');
+      expect(g).toContain('Head of Operations');
+    });
+
+    it('seedKpiSeeds trafia do bloku z instrukcją "UŻYJ WPROST"', () => {
+      const g = buildGroundingBlock({
+        ...base,
+        seedKpiSeeds: 'czas obsługi zapytania (~5 dni → 1 dzień, 2 kwartały)',
+      })!;
+      expect(g).toContain('Zalążki KPI z Insightu');
+      expect(g).toContain('UŻYJ WPROST');
+      expect(g).toContain('czas obsługi zapytania (~5 dni → 1 dzień, 2 kwartały)');
+    });
+
+    it('oba seedy razem współistnieją z resztą groundingu (additive, nie zastępuje)', () => {
+      const g = buildGroundingBlock({
+        ...base,
+        orgContext: 'ORG',
+        seedOwnerRole: 'Head of Sales Ops',
+        seedKpiSeeds: 'metric (a → b)',
+      })!;
+      expect(g).toContain('Kontekst organizacji');
+      expect(g).toContain('Head of Sales Ops');
+      expect(g).toContain('metric (a → b)');
+    });
+  });
 });

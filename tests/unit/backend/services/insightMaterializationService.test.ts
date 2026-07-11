@@ -3,12 +3,16 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildDistillationPrompt,
   buildGenericMaterialQuality,
+  deriveInitiativeSeedContext,
   materializeInsightCandidates,
+  normalizeSeedValue,
   parseDistillationResponse,
   reconcileEvidenceRefs,
   runQualityGate,
+  withSeedFields,
   type GenerateArgs,
   type GenerateResponseLike,
+  type InsightCandidate,
   type MaterializationInput,
 } from '../../../../server/src/services/insightMaterializationService.js';
 
@@ -259,5 +263,197 @@ describe('materializeInsightCandidates', () => {
       generate: fixedGenerate(JSON.stringify(hallucinated)),
     });
     expect(outcome.candidates[0].themes[0].evidence_refs).toEqual([]);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// §6 downstream seeds (#57/Z60) — suggestedOwnerRole/metric/baseline/target/
+// horizon on issues/opportunities. "opcjonalne, gdy dane są, inaczej null".
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('normalizeSeedValue', () => {
+  it('keeps a real, trimmed string value', () => {
+    expect(normalizeSeedValue('  Head of Operations  ')).toBe('Head of Operations');
+  });
+
+  it('normalizes missing/empty/non-string values to null', () => {
+    expect(normalizeSeedValue(undefined)).toBeNull();
+    expect(normalizeSeedValue(null)).toBeNull();
+    expect(normalizeSeedValue('')).toBeNull();
+    expect(normalizeSeedValue('   ')).toBeNull();
+    expect(normalizeSeedValue(42)).toBeNull();
+  });
+
+  it('treats placeholder text as absent, never as a real seed', () => {
+    for (const placeholder of ['do ustalenia', 'TBD', 'N/A', 'brak', 'unknown', 'null']) {
+      expect(normalizeSeedValue(placeholder)).toBeNull();
+    }
+  });
+});
+
+describe('withSeedFields', () => {
+  it('stamps all 5 seed keys as explicit null when the entry has none', () => {
+    const stamped = withSeedFields({ title: 'x', description: 'y', evidence_refs: [] });
+    expect(stamped).toMatchObject({
+      suggestedOwnerRole: null,
+      metric: null,
+      baseline: null,
+      target: null,
+      horizon: null,
+    });
+  });
+
+  it('normalizes real grounded values through, and scrubs placeholder text', () => {
+    const stamped = withSeedFields({
+      title: 'x',
+      suggestedOwnerRole: 'Head of Sales Ops',
+      metric: 'czas cyklu zatwierdzania',
+      baseline: '~5 dni',
+      target: '1 dzień',
+      horizon: 'do ustalenia', // placeholder — must become null
+    });
+    expect(stamped.suggestedOwnerRole).toBe('Head of Sales Ops');
+    expect(stamped.metric).toBe('czas cyklu zatwierdzania');
+    expect(stamped.baseline).toBe('~5 dni');
+    expect(stamped.target).toBe('1 dzień');
+    expect(stamped.horizon).toBeNull();
+  });
+
+  it('passes non-object entries through untouched (mirrors arrayWithEvidenceRefs guard)', () => {
+    expect(withSeedFields(null as any)).toBeNull();
+    expect(withSeedFields('a string' as any)).toBe('a string');
+  });
+});
+
+function goodCandidateJsonWithSeeds(): string {
+  const base = JSON.parse(goodCandidateJson());
+  base.issues[0] = {
+    ...base.issues[0],
+    suggestedOwnerRole: 'Head of Customer Ops',
+    metric: 'czas obsługi zapytania',
+    baseline: '~5 dni',
+    target: '1 dzień',
+    horizon: '2 kwartały',
+  };
+  base.issues[1] = { ...base.issues[1] }; // no seeds — must degrade to null, not guessed
+  base.opportunities[0] = {
+    ...base.opportunities[0],
+    suggestedOwnerRole: 'IT Lead',
+    metric: 'liczba ręcznych integracji',
+    baseline: '3',
+    target: '0',
+    // horizon intentionally omitted
+  };
+  return JSON.stringify(base);
+}
+
+describe('materializeInsightCandidates — downstream seeds end-to-end', () => {
+  it('carries grounded seed fields through onto the final candidate issues/opportunities', async () => {
+    const outcome = await materializeInsightCandidates(baseInput(), {
+      generate: fixedGenerate(goodCandidateJsonWithSeeds()),
+    });
+    expect(outcome.degraded).toBe(false);
+    const [candidate] = outcome.candidates;
+    expect(candidate.issues[0]).toMatchObject({
+      suggestedOwnerRole: 'Head of Customer Ops',
+      metric: 'czas obsługi zapytania',
+      baseline: '~5 dni',
+      target: '1 dzień',
+      horizon: '2 kwartały',
+    });
+    expect(candidate.opportunities[0]).toMatchObject({
+      suggestedOwnerRole: 'IT Lead',
+      metric: 'liczba ręcznych integracji',
+      baseline: '3',
+      target: '0',
+      horizon: null,
+    });
+  });
+
+  it('degrades ungrounded issues to explicit null seeds rather than inventing anything', async () => {
+    const outcome = await materializeInsightCandidates(baseInput(), {
+      generate: fixedGenerate(goodCandidateJsonWithSeeds()),
+    });
+    const [candidate] = outcome.candidates;
+    expect(candidate.issues[1]).toMatchObject({
+      suggestedOwnerRole: null,
+      metric: null,
+      baseline: null,
+      target: null,
+      horizon: null,
+    });
+  });
+
+  it('when the LLM omits seed fields entirely, candidates still materialize with null seeds (no crash, no guess)', async () => {
+    const outcome = await materializeInsightCandidates(baseInput(), {
+      generate: fixedGenerate(goodCandidateJson()),
+    });
+    expect(outcome.degraded).toBe(false);
+    const [candidate] = outcome.candidates;
+    for (const issue of candidate.issues) {
+      expect(issue.suggestedOwnerRole).toBeNull();
+      expect(issue.metric).toBeNull();
+    }
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// deriveInitiativeSeedContext — the §6 bridge to GenerationContext
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('deriveInitiativeSeedContext', () => {
+  it('returns {} for a null/undefined candidate (fail-soft)', () => {
+    expect(deriveInitiativeSeedContext(null)).toEqual({});
+    expect(deriveInitiativeSeedContext(undefined)).toEqual({});
+  });
+
+  it('returns {} when no issue/opportunity carries a grounded seed', async () => {
+    const outcome = await materializeInsightCandidates(baseInput(), {
+      generate: fixedGenerate(goodCandidateJson()),
+    });
+    expect(deriveInitiativeSeedContext(outcome.candidates[0])).toEqual({});
+  });
+
+  it('picks the first grounded owner role and formats KPI seeds as "metric (baseline → target, horizon)"', async () => {
+    const outcome = await materializeInsightCandidates(baseInput(), {
+      generate: fixedGenerate(goodCandidateJsonWithSeeds()),
+    });
+    const seeds = deriveInitiativeSeedContext(outcome.candidates[0]);
+    expect(seeds.seedOwnerRole).toBe('Head of Customer Ops');
+    expect(seeds.seedKpiSeeds).toContain('czas obsługi zapytania (~5 dni → 1 dzień, 2 kwartały)');
+    expect(seeds.seedKpiSeeds).toContain('liczba ręcznych integracji (3 → 0)');
+  });
+
+  it('skips an entry with a metric but no baseline/target (nothing to anchor)', () => {
+    const candidate: InsightCandidate = {
+      title: 't',
+      executive_summary: 'e',
+      themes: [],
+      issues: [
+        {
+          title: 'i',
+          description: 'd',
+          evidence_refs: [],
+          suggestedOwnerRole: null,
+          metric: 'coś tam',
+          baseline: null,
+          target: null,
+          horizon: null,
+        },
+      ],
+      opportunities: [],
+      signals: [],
+      evidence_map: [],
+      missing_data: [],
+      material_quality: {
+        score: 50,
+        answer_quality_posture: 'usable',
+        coverage_posture: 'partial_coverage',
+        missing_voices: [],
+        limitations: [],
+        recommended_followups: [],
+      },
+    };
+    expect(deriveInitiativeSeedContext(candidate)).toEqual({});
   });
 });
