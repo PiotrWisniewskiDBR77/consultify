@@ -371,7 +371,7 @@ async function persistPackValidations(packId: string, aggregate: PackAggregate):
 type StatementValueRow = { statement_id: string; line_code: string; value: number };
 
 /** Load {CODE: sum(value)} maps keyed by statement type for the given statements. */
-async function loadPackValueMaps(
+export async function loadPackValueMaps(
   statements: Array<{ id: string; statement_type?: string | null }>
 ): Promise<{ pnl: Record<string, number>; bs: Record<string, number>; cf: Record<string, number> }> {
   const maps = {
