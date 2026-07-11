@@ -21,6 +21,7 @@ import '../src/index.css';
 import i18n from '../src/i18n';
 
 import AssessmentListScreen from './screens/assessment-list';
+import CanvasToolbarScreen from './screens/canvas-toolbar';
 import DrdLightScreen from './screens/drd-light';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import FinanceLightScreen from './screens/finance-light';
@@ -39,6 +40,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AssessmentListScreen />,
   },
   'results-light': { label: 'Results Light Shell (KPI · ROI · OKR)', render: () => <ResultsLightScreen /> },
+  'canvas-toolbar': {
+    label: 'Canvas toolbar V2 (lightweight, spec #87-#87d)',
+    render: () => <CanvasToolbarScreen />,
+  },
 };
 
 const params = new URLSearchParams(window.location.search);
