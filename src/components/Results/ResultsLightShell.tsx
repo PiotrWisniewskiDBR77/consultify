@@ -28,12 +28,11 @@
  * COLOR DOCTRINE (hard, same as DRDLightShell):
  *   - `c-accent` is Harvard Crimson — reserved for critical semantics only,
  *     NOT used here. Accent = `--c-focus-solid` (blue). Status semantics
- *     (on-target/above = emerald, below/at-risk = amber, critical/off-track
- *     = red) use the same emerald/amber/red utility classes already used
- *     across `src/components/Results/*` (ResultsUIPrimitives, ROITrackingView,
- *     StrategicLayerPanel) — never `primary-*` (that token is crimson).
- *   - No inline hex; all accent colors reference CSS-var tokens so light/dark
- *     both adapt.
+ *     (on-target/above = `c-success`, below/at-risk = `c-warning`,
+ *     critical/off-track = `c-danger`) — same tokens as ExecutionLightShell's
+ *     `RAG_META` — never `primary-*` (that token is crimson).
+ *   - No inline hex, no raw Tailwind emerald/amber/red; all accent colors
+ *     reference CSS-var `c-*` tokens so light/dark both adapt.
  */
 
 import {
@@ -41,6 +40,7 @@ import {
   ChevronRight,
   Clock,
   DollarSign,
+  FileText,
   ListChecks,
   MessageSquare,
   Minus,
@@ -129,6 +129,7 @@ interface ResultsLightShellProps {
   onOpenChat?: () => void;
   onOpenKpi?: (kpiId: string) => void;
   onOpenRoiItem?: (initiativeId: string) => void;
+  onExportResults?: () => void;
 }
 
 type Section = 'kpi' | 'roi' | 'okr';
@@ -137,31 +138,31 @@ const BLUE = 'rgb(var(--c-focus-solid-rgb))';
 const BLUE_SOFT = 'rgb(var(--c-focus-solid-rgb) / 0.10)';
 
 const KPI_STATUS_COLOR: Record<ResultsLightKpiStatus, string> = {
-  'on-target': 'text-emerald-600 dark:text-emerald-400',
-  below: 'text-amber-600 dark:text-amber-400',
+  'on-target': 'text-c-success',
+  below: 'text-c-warning',
   'no-data': 'text-c-text-muted',
 };
 
 const KPI_STATUS_DOT: Record<ResultsLightKpiStatus, string> = {
-  'on-target': 'bg-emerald-500',
-  below: 'bg-amber-500',
+  'on-target': 'bg-c-success',
+  below: 'bg-c-warning',
   'no-data': 'bg-c-border-strong',
 };
 
 // rgb(...) not a tailwind class: the health bar fill needs an inline color so
 // it can share the same c-* token ramp as the rest of the shell (BLUE) while
-// still switching to status semantics (emerald/amber) — tailwind utility
+// still switching to status semantics (success/warning) — tailwind utility
 // classes can't be conditionally interpolated into an inline `width` style.
 const KPI_STATUS_BAR_COLOR: Record<ResultsLightKpiStatus, string> = {
-  'on-target': 'rgb(16 185 129)', // emerald-500
-  below: 'rgb(245 158 11)', // amber-500
+  'on-target': 'rgb(var(--c-success-rgb))',
+  below: 'rgb(var(--c-warning-rgb))',
   'no-data': 'rgb(var(--c-border-strong-rgb))',
 };
 
 const ROI_STATUS_COLOR: Record<ResultsLightRoiStatus, string> = {
   'on-track': 'text-c-text-secondary',
-  above: 'text-emerald-600 dark:text-emerald-400',
-  below: 'text-red-600 dark:text-red-400',
+  above: 'text-c-success',
+  below: 'text-c-danger',
 };
 
 function deriveRoiStatus(item: ResultsLightRoiItem): ResultsLightRoiStatus {
@@ -192,9 +193,9 @@ function okrRag(score: number): 'green' | 'amber' | 'red' {
 }
 
 const RAG_TEXT: Record<'green' | 'amber' | 'red', string> = {
-  green: 'text-emerald-600 dark:text-emerald-400',
-  amber: 'text-amber-600 dark:text-amber-400',
-  red: 'text-red-600 dark:text-red-400',
+  green: 'text-c-success',
+  amber: 'text-c-warning',
+  red: 'text-c-danger',
 };
 
 export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
@@ -210,6 +211,7 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
   onOpenChat,
   onOpenKpi,
   onOpenRoiItem,
+  onExportResults,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -303,6 +305,15 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
             Teresa
           </button>
         )}
+        <button
+          type="button"
+          onClick={onExportResults}
+          disabled={!onExportResults}
+          className="inline-flex items-center gap-2 rounded-lg bg-c-text px-3.5 py-1.5 text-[13px] font-semibold text-c-surface transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          <FileText className="h-4 w-4" />
+          {t('Eksportuj wyniki', 'Export results')}
+        </button>
       </div>
 
       {/* ─── 3-column work area ─── */}
@@ -363,7 +374,7 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
                 </div>
                 <div className="flex items-center gap-5">
                   <div className="text-right">
-                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-emerald-600 dark:text-emerald-400">
+                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-success">
                       {kpiCounts.onTarget}
                     </div>
                     <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
@@ -371,7 +382,7 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-amber-600 dark:text-amber-400">
+                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-warning">
                       {kpiCounts.below}
                     </div>
                     <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
@@ -451,9 +462,9 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
                             {kpi.actualValue ?? '—'} → {kpi.targetValue ?? '—'} {kpi.unit || ''}
                           </span>
                           {kpi.trend === 'up' ? (
-                            <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                            <TrendingUp className="h-3.5 w-3.5 text-c-success" />
                           ) : kpi.trend === 'down' ? (
-                            <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                            <TrendingDown className="h-3.5 w-3.5 text-c-danger" />
                           ) : (
                             <Minus className="h-3.5 w-3.5 text-c-text-muted" />
                           )}
@@ -486,7 +497,7 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
                               </span>
                             )}
                             {kpi.needsEntry && (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                              <span className="rounded-full bg-c-warning/15 px-2 py-0.5 text-[11px] font-semibold text-c-warning">
                                 {t('brak nowego wpisu', 'needs entry')}
                               </span>
                             )}
@@ -549,8 +560,8 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
                     <div
                       className={`text-[20px] font-bold tracking-tight tabular-nums ${
                         netVariancePct >= 0
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : 'text-red-600 dark:text-red-400'
+                          ? 'text-c-success'
+                          : 'text-c-danger'
                       }`}
                     >
                       {netVariancePct >= 0 ? '+' : ''}
@@ -628,13 +639,13 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-[12px]">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span className="text-c-success font-semibold">
                     {okrSummary.onTrack} {t('na torze', 'on track')}
                   </span>
-                  <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                  <span className="text-c-warning font-semibold">
                     {okrSummary.atRisk} {t('zagrożone', 'at risk')}
                   </span>
-                  <span className="text-red-600 dark:text-red-400 font-semibold">
+                  <span className="text-c-danger font-semibold">
                     {okrSummary.offTrack} {t('poza torem', 'off track')}
                   </span>
                 </div>

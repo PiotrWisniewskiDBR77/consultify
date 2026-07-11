@@ -216,6 +216,7 @@ export function ResultsLightScreen(): React.ReactElement {
       onOpenChat={noop}
       onOpenKpi={noop}
       onOpenRoiItem={noop}
+      onExportResults={noop}
     />
   );
 }
