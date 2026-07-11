@@ -54,10 +54,10 @@ import {
   FolderOpen,
   GitBranch,
   KanbanSquare,
+  Lightbulb,
   List,
   MessageSquare,
   Plus,
-  Sparkles,
   Target,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
@@ -129,7 +129,7 @@ const TAB_ICON: Record<LightTab, React.ReactNode> = {
 const KANBAN_COLUMNS: InitiativeStatusLite[] = ['draft', 'planning', 'executing', 'blocked', 'done'];
 
 const SOURCE_ICON: Record<InitiativeSourceTypeLite, React.ReactNode> = {
-  idea: <Sparkles className="h-3.5 w-3.5 text-c-warning" />,
+  idea: <Lightbulb className="h-3.5 w-3.5 text-c-warning" />,
   assessment: <FileText className="h-3.5 w-3.5" style={{ color: BLUE }} />,
   interview: <ClipboardList className="h-3.5 w-3.5 text-c-success" />,
   audit: <FileText className="h-3.5 w-3.5 text-c-text-muted" />,

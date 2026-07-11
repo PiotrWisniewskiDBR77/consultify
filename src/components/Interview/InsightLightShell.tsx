@@ -61,7 +61,6 @@ import {
   MessageSquare,
   Radio,
   ShieldAlert,
-  Sparkles,
   Target,
   TrendingUp,
 } from 'lucide-react';
@@ -263,7 +262,7 @@ export const InsightLightShell: React.FC<InsightLightShellProps> = ({
           {isPolish ? statusMeta.labelPl : statusMeta.labelEn}
         </span>
         <span className="flex items-center gap-1.5 text-[12px] text-c-text-muted">
-          <Sparkles className="h-3.5 w-3.5" />
+          <Layers className="h-3.5 w-3.5" />
           {sourceSessionCount} {t('sesji źródłowych', 'source sessions')}
         </span>
 
@@ -623,7 +622,7 @@ function SignalsTab({
     tension: { labelPl: 'Napięcie', labelEn: 'Tension', colorClass: 'text-c-danger', icon: <AlertTriangle className="h-2.5 w-2.5" /> },
     gap: { labelPl: 'Luka', labelEn: 'Gap', colorClass: 'text-c-warning', icon: <Target className="h-2.5 w-2.5" /> },
     contradiction: { labelPl: 'Sprzeczność', labelEn: 'Contradiction', colorClass: 'text-c-info', icon: <AlertCircle className="h-2.5 w-2.5" /> },
-    emerging_pattern: { labelPl: 'Wzorzec', labelEn: 'Emerging pattern', colorClass: 'text-c-focus', icon: <Sparkles className="h-2.5 w-2.5" /> },
+    emerging_pattern: { labelPl: 'Wzorzec', labelEn: 'Emerging pattern', colorClass: 'text-c-focus', icon: <TrendingUp className="h-2.5 w-2.5" /> },
   };
   return (
     <>

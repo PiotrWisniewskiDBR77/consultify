@@ -54,6 +54,7 @@
 import {
   AlertTriangle,
   BookOpen,
+  Bot,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -66,7 +67,6 @@ import {
   Network,
   Pin,
   Plus,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
@@ -438,7 +438,7 @@ export const NotebookLightShell: React.FC<NotebookLightShellProps> = ({
 
               {typeof activeNote.pendingAIProposals === 'number' && activeNote.pendingAIProposals > 0 && (
                 <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-c-border bg-c-surface-raised px-3.5 py-2.5 text-[12.5px]">
-                  <Sparkles className="h-3.5 w-3.5 flex-shrink-0" style={{ color: BLUE }} />
+                  <Bot className="h-3.5 w-3.5 flex-shrink-0" style={{ color: BLUE }} />
                   <span className="text-c-text-secondary">
                     {activeNote.pendingAIProposals}{' '}
                     {t('propozycje AI czekają na review', 'AI proposals waiting for review')}
