@@ -9,6 +9,10 @@
  */
 
 import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
+import logger from '../utils/Logger.js';
+import { registerArtifactOrigin } from './v8/artifactRegistryService.js';
+
+const LOG_PREFIX = '[deliverableTemplateService]';
 
 export type DeliverableTemplateType = 'doc' | 'deck' | 'table';
 
@@ -278,6 +282,138 @@ export async function getDeliverableTemplate(
   return null;
 }
 
+function safeParseArray(raw: string): unknown[] {
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Split-brain fix (Template Library): templates created directly in a builder
+ * (report/deck) land in the legacy tables (report_builder_templates /
+ * presentation_templates) but, unlike the "save as template" flow
+ * (server/src/routes/artifacts.routes.ts POST /:id/save-as-template), were
+ * never registered in the canonical Outputs artifact registry
+ * (artifactRegistryService). The Template Library tab reads
+ * `GET /api/artifacts?artifactFamily=template`, which is backed by that
+ * registry — so builder-created templates were saved but invisible there.
+ *
+ * This mirrors the origin-runtime + visibilityScope shape used both by the
+ * save-as-template route and by the report/presentation template backfill
+ * helpers in artifactRegistryService.ts (`backfillReportTemplatesForOrg` /
+ * `backfillPresentationTemplatesForOrg`): is_system is always false here
+ * (user-created, not a system template) and organization_id is always set,
+ * so visibilityScope maps to 'organization' (org-wide, matching how these
+ * rows are already readable org-wide via listDeliverableTemplates' own
+ * `is_system = true OR organization_id = $1` clause).
+ *
+ * `table` templates (tp_base_templates) have no matching ArtifactOriginRuntime
+ * value today (only 'report_template' / 'presentation_template' exist) —
+ * registering them would require inventing a new origin runtime, which is
+ * out of scope for this fix. They are skipped with a warning log.
+ *
+ * Registry write is best-effort and must never fail template creation — the
+ * legacy table row is (and remains) the source of truth.
+ */
+async function registerBuilderTemplateArtifactBestEffort(params: {
+  type: DeliverableTemplateType;
+  templateId: string;
+  name: string;
+  description: string | null;
+  sectionsJson?: string;
+  outlineJson?: string;
+  organizationId: string;
+  userId: string;
+}): Promise<void> {
+  const { type, templateId, name, description, organizationId, userId } = params;
+
+  if (type === 'table') {
+    logger.warn(
+      `${LOG_PREFIX} skipping artifact-registry registration for table template ${templateId} — no ArtifactOriginRuntime mapping exists for tp_base_templates yet`
+    );
+    return;
+  }
+
+  try {
+    const now = new Date().toISOString();
+    if (type === 'doc') {
+      const sections = safeParseArray(params.sectionsJson ?? '[]');
+      await registerArtifactOrigin({
+        organizationId,
+        outputType: 'report',
+        artifactFamily: 'template',
+        originRuntime: 'report_template',
+        originRecordId: templateId,
+        titleSnapshot: name,
+        ownerUserId: userId,
+        createdBy: userId,
+        deliveryState: 'draft',
+        visibilityScope: 'organization',
+        originSummary: {
+          template: {
+            scope: 'org',
+            status: 'draft',
+            description: description || '',
+            reportType: 'custom',
+            structureBlueprint: {
+              sections: sections.map((s: any) => ({
+                key: s?.key || s?.sectionKey || s?.section_key || s?.id || '',
+                title: s?.title || s?.name || '',
+              })),
+            },
+            metadata: {
+              createdBy: userId,
+              createdAt: now,
+              updatedAt: now,
+              legacyTemplateId: templateId,
+            },
+          },
+          sourceTable: 'report_builder_templates',
+        },
+      });
+      return;
+    }
+
+    // deck
+    const outline = safeParseArray(params.outlineJson ?? '[]');
+    await registerArtifactOrigin({
+      organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'template',
+      originRuntime: 'presentation_template',
+      originRecordId: templateId,
+      titleSnapshot: name,
+      ownerUserId: userId,
+      createdBy: userId,
+      deliveryState: 'draft',
+      visibilityScope: 'organization',
+      originSummary: {
+        template: {
+          scope: 'org',
+          status: 'draft',
+          description: description || '',
+          deckType: 'custom',
+          structureBlueprint: { outline },
+          metadata: {
+            createdBy: userId,
+            createdAt: now,
+            updatedAt: now,
+            legacyTemplateId: templateId,
+          },
+        },
+        sourceTable: 'presentation_templates',
+      },
+    });
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} artifact-registry registration failed for builder template ${templateId} (type=${type}, template row still saved): ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
+
 /** Utwórz user-owned template w odpowiedniej tabeli. */
 export async function createDeliverableTemplate(
   type: DeliverableTemplateType,
@@ -304,6 +440,15 @@ export async function createDeliverableTemplate(
       [name, desc, sectionsJson, orgId, userId]
     );
     if (!row) throw new Error('Insert doc template returned no row');
+    await registerBuilderTemplateArtifactBestEffort({
+      type,
+      templateId: row.id,
+      name,
+      description: desc,
+      sectionsJson,
+      organizationId: orgId,
+      userId,
+    });
     return (await getDeliverableTemplate(row.id, orgId))!;
   }
 
@@ -321,6 +466,15 @@ export async function createDeliverableTemplate(
       [name, desc, outlineJson, orgId, userId]
     );
     if (!row) throw new Error('Insert deck template returned no row');
+    await registerBuilderTemplateArtifactBestEffort({
+      type,
+      templateId: row.id,
+      name,
+      description: desc,
+      outlineJson,
+      organizationId: orgId,
+      userId,
+    });
     return (await getDeliverableTemplate(row.id, orgId))!;
   }
 
@@ -338,6 +492,14 @@ export async function createDeliverableTemplate(
     [name, desc, category, schemaSnapshot, orgId, userId]
   );
   if (!row) throw new Error('Insert table template returned no row');
+  await registerBuilderTemplateArtifactBestEffort({
+    type,
+    templateId: row.id,
+    name,
+    description: desc,
+    organizationId: orgId,
+    userId,
+  });
   return (await getDeliverableTemplate(row.id, orgId))!;
 }
 

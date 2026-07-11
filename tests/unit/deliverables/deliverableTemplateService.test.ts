@@ -9,11 +9,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // --- Mock queryHelpers ---
 const queryAllMock = vi.fn();
+const queryOneMock = vi.fn();
 
 vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: any[]) => queryAllMock(...args),
-  queryOne: vi.fn(),
+  queryOne: (...args: any[]) => queryOneMock(...args),
   queryRun: vi.fn(),
+}));
+
+// --- Mock artifact registry (split-brain fix under test) ---
+const registerArtifactOriginMock = vi.fn();
+
+vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
+  registerArtifactOrigin: (...args: any[]) => registerArtifactOriginMock(...args),
 }));
 
 describe('deliverableTemplateService', () => {
@@ -100,5 +108,177 @@ describe('deliverableTemplateService', () => {
     queryAllMock.mockRejectedValue(new Error('column sections_json does not exist'));
     const result = await listDeliverableTemplates('doc', 'org-x');
     expect(result).toEqual([]);
+  });
+});
+
+// FT-2.x — createDeliverableTemplate split-brain fix: builder-created templates
+// must be registered in the canonical Outputs artifact registry
+// (registerArtifactOrigin) so they show up in the Template Library tab
+// (GET /api/artifacts?artifactFamily=template), not just in
+// GET /api/deliverables/templates.
+describe('deliverableTemplateService — createDeliverableTemplate registry registration', () => {
+  let createDeliverableTemplate: (
+    type: any,
+    name: string,
+    description: string | undefined,
+    meta: Record<string, unknown> | undefined,
+    orgId: string,
+    userId: string
+  ) => Promise<any>;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    const mod = await import('../../../server/src/services/deliverableTemplateService.js');
+    createDeliverableTemplate = mod.createDeliverableTemplate;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // FT-2.1 — doc: INSERT into report_builder_templates then registerArtifactOrigin
+  // is called with artifactFamily='template', originRuntime='report_template'.
+  it('registers a doc template in the artifact registry after insert', async () => {
+    queryOneMock
+      .mockResolvedValueOnce({ id: 'tpl-doc-1' }) // INSERT ... RETURNING id
+      .mockResolvedValueOnce(null) // getDeliverableTemplate: deck lookup miss
+      .mockResolvedValueOnce({
+        // getDeliverableTemplate: doc lookup hit
+        id: 'tpl-doc-1',
+        name: 'My Doc Template',
+        description: 'desc',
+        is_system: false,
+        is_public: false,
+        report_type: 'custom',
+        sections_json: '[]',
+        organization_id: 'org-x',
+      });
+    registerArtifactOriginMock.mockResolvedValue({ artifactId: 'artifact-1' });
+
+    const result = await createDeliverableTemplate(
+      'doc',
+      'My Doc Template',
+      'desc',
+      { sections_json: [] },
+      'org-x',
+      'user-1'
+    );
+
+    expect(result.id).toBe('tpl-doc-1');
+    expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
+    const call = registerArtifactOriginMock.mock.calls[0][0];
+    expect(call).toMatchObject({
+      organizationId: 'org-x',
+      outputType: 'report',
+      artifactFamily: 'template',
+      originRuntime: 'report_template',
+      originRecordId: 'tpl-doc-1',
+      titleSnapshot: 'My Doc Template',
+      ownerUserId: 'user-1',
+      createdBy: 'user-1',
+      visibilityScope: 'organization',
+    });
+  });
+
+  // FT-2.2 — deck: INSERT into presentation_templates then registerArtifactOrigin
+  // is called with originRuntime='presentation_template'.
+  it('registers a deck template in the artifact registry after insert', async () => {
+    queryOneMock
+      .mockResolvedValueOnce({ id: 'tpl-deck-1' }) // INSERT ... RETURNING id
+      .mockResolvedValueOnce({
+        // getDeliverableTemplate: deck lookup hit
+        id: 'tpl-deck-1',
+        name: 'My Deck Template',
+        description: null,
+        is_system: false,
+        theme: null,
+        organization_id: 'org-x',
+        outline_json: '[]',
+      });
+    registerArtifactOriginMock.mockResolvedValue({ artifactId: 'artifact-2' });
+
+    const result = await createDeliverableTemplate(
+      'deck',
+      'My Deck Template',
+      undefined,
+      { outline_json: [] },
+      'org-x',
+      'user-1'
+    );
+
+    expect(result.id).toBe('tpl-deck-1');
+    expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
+    const call = registerArtifactOriginMock.mock.calls[0][0];
+    expect(call).toMatchObject({
+      organizationId: 'org-x',
+      outputType: 'presentation',
+      artifactFamily: 'template',
+      originRuntime: 'presentation_template',
+      originRecordId: 'tpl-deck-1',
+      visibilityScope: 'organization',
+    });
+  });
+
+  // FT-2.3 — table: no ArtifactOriginRuntime mapping exists yet → registry is
+  // skipped (not called), but the template row is still created successfully.
+  it('does not call registerArtifactOrigin for table templates (no mapping)', async () => {
+    queryOneMock
+      .mockResolvedValueOnce({ id: 'tpl-table-1' }) // INSERT ... RETURNING id
+      .mockResolvedValueOnce(null) // getDeliverableTemplate: deck miss
+      .mockResolvedValueOnce(null) // getDeliverableTemplate: doc miss
+      .mockResolvedValueOnce({
+        // getDeliverableTemplate: table hit
+        id: 'tpl-table-1',
+        name: 'My Table Template',
+        description: null,
+        is_featured: false,
+        category: 'custom',
+        schema_snapshot: {},
+        created_by: 'user-1',
+        organization_id: 'org-x',
+      });
+
+    const result = await createDeliverableTemplate(
+      'table',
+      'My Table Template',
+      undefined,
+      {},
+      'org-x',
+      'user-1'
+    );
+
+    expect(result.id).toBe('tpl-table-1');
+    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
+  });
+
+  // FT-2.4 — fail-soft: registry throwing must NOT break template creation.
+  it('still returns the created template when registerArtifactOrigin throws', async () => {
+    queryOneMock
+      .mockResolvedValueOnce({ id: 'tpl-doc-2' }) // INSERT ... RETURNING id
+      .mockResolvedValueOnce(null) // deck lookup miss
+      .mockResolvedValueOnce({
+        id: 'tpl-doc-2',
+        name: 'Resilient Doc',
+        description: null,
+        is_system: false,
+        is_public: false,
+        report_type: 'custom',
+        sections_json: '[]',
+        organization_id: 'org-x',
+      });
+    registerArtifactOriginMock.mockRejectedValue(new Error('registry unavailable'));
+
+    const result = await createDeliverableTemplate(
+      'doc',
+      'Resilient Doc',
+      undefined,
+      {},
+      'org-x',
+      'user-1'
+    );
+
+    expect(result.id).toBe('tpl-doc-2');
+    expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
   });
 });
