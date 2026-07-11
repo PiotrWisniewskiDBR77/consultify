@@ -70,6 +70,14 @@ export interface ValuationAssumptions {
   manualForecast?: {
     years: Array<{ year: number; fcff: number; revenue?: number; ebitda?: number }>;
   };
+  /** F-4 EV depth switch (D-2, additive, Z113 §5) — 'managerial' (domyślna, MŚP) |
+   *  'banking' (na żądanie). Czytane przez valuationDepthProfileService; NIE
+   *  wpływa na computeValuation/computeDcf (żadna funkcja w tym pliku jej nie czyta). */
+  depth?: 'managerial' | 'banking';
+  /** Konfiguracja koszyka EV (Z113, additive) — czytana przez valuationBasketService
+   *  (assumptions.basket) i valuationDepthProfileService. Kształt luźny celowo —
+   *  patrz `BasketConfig` w valuationBasketService.ts (SSOT kształtu). */
+  basket?: Record<string, any>;
 }
 
 export interface MultiplesInput {

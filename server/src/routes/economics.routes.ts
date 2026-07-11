@@ -28,6 +28,14 @@ import { createInitiative as funnelCreateInitiative } from '../services/initiati
 import { exportValuationPptx } from '../services/valuationExportService.js';
 import * as valuationSvc from '../services/valuationService.js';
 import { buildBasketFromResults } from '../services/valuationBasketService.js';
+import {
+  buildBasketForDepth,
+  depthNarrative,
+  isValidDepth,
+  normalizeDepth,
+  resolveStoredDepth,
+  setValuationDepth,
+} from '../services/valuationDepthProfileService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -294,6 +302,16 @@ const createValuationSchema = z
     sourceId: idLike.nullish(),
     horizonYears: z.number().optional(),
     currency: z.string().max(10).optional(),
+    // F-4 EV depth switch (D-2, additive) — optional; omitted = existing behavior
+    // (valuationService.createValuation defaults, untouched).
+    depth: z.enum(['managerial', 'banking']).optional(),
+  })
+  .strict();
+
+// valuationDepthProfileService.setValuationDepth — PUT /valuations/:id/depth.
+const updateValuationDepthSchema = z
+  .object({
+    depth: z.enum(['managerial', 'banking']),
   })
   .strict();
 
@@ -2303,6 +2321,7 @@ router.post(
       sourceId,
       horizonYears,
       currency,
+      depth,
     } = req.body || {};
     if (!title || !sourceType)
       return res.status(400).json({ error: 'title and sourceType required' });
@@ -2312,7 +2331,47 @@ router.post(
       { title, description, projectId, initiativeId, sourceType, sourceId, horizonYears, currency },
       userId
     );
+    // F-4 EV depth switch (D-2, additive) — optional; when omitted, createValuation
+    // behavior is byte-for-byte unchanged (no second write happens at all).
+    if (depth) {
+      await setValuationDepth(orgId, created.id, depth, {
+        actor: {
+          userId,
+          userEmail: (req.user as any)?.email,
+          ip: req.ip,
+          userAgent: req.get('user-agent') || undefined,
+        },
+      });
+    }
     return res.status(201).json({ success: true, id: created.id });
+  })
+);
+
+/**
+ * PUT /api/economics/valuations/:id/depth
+ * F-4 EV depth switch (D-2) — zmienia głębokość wyceny NA ŻĄDANIE (managerial↔banking)
+ * na już istniejącej wycenie. Additive: nowy endpoint, nie rusza żadnego innego.
+ */
+router.put(
+  '/valuations/:id/depth',
+  verifyToken,
+  validateBody(updateValuationDepthSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user?.id || (req.user as any)?.user_id;
+    const val = await valuationSvc.getValuation(orgId, req.params.id);
+    if (!val) return res.status(404).json({ error: 'Not found' });
+
+    await setValuationDepth(orgId, req.params.id, req.body.depth, {
+      actor: {
+        userId,
+        userEmail: (req.user as any)?.email,
+        ip: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+      },
+    });
+    return res.json({ success: true, depth: normalizeDepth(req.body.depth) });
   })
 );
 
@@ -2399,6 +2458,14 @@ router.post(
  * czytając opcjonalny config z `assumptions.basket`. Gdy brak gotowych wyników
  * wejściowych (koszyk bez metod) → `{ basket: null }` (front pokaże pusty stan),
  * NIGDY nie rzuca. Za flagą FE `ff_evBasket` (podgląd); endpoint zawsze bezpieczny.
+ *
+ * F-4 EV depth switch (D-2, additive): opcjonalny `?depth=managerial|banking`
+ * PRZEŁĄCZA odpowiedź na widok jednej-metody-dominującej (managerial) albo
+ * potwierdza pełny koszyk (banking). BEZ `?depth=` i BEZ zapisanej depth na
+ * wycenie (assumptions.depth) zachowanie jest DOKŁADNIE takie jak przed tą
+ * zmianą — `buildBasketFromResults(results, config)` wprost, żadnej redukcji.
+ * Zapisana depth (patrz PUT /valuations/:id/depth) jest respektowana, gdy
+ * caller nie poda jawnego `?depth=` — tak nowe wyceny "trzymają" swój wybór.
  */
 router.get(
   '/valuations/:id/basket',
@@ -2425,12 +2492,30 @@ router.get(
     const config =
       assumptions?.basket && typeof assumptions.basket === 'object' ? assumptions.basket : {};
 
-    const basket = buildBasketFromResults(results, config);
-    // Brak metod = brak gotowych wyników wejściowych → pusty stan na froncie.
-    if (!basket.methods || basket.methods.length === 0) {
-      return res.json({ success: true, basket: null });
+    const depthOverrideRaw = typeof req.query.depth === 'string' ? req.query.depth : undefined;
+    const depthOverride = depthOverrideRaw && isValidDepth(depthOverrideRaw) ? depthOverrideRaw : null;
+    const resolvedDepth = depthOverride ?? resolveStoredDepth(assumptions);
+
+    if (!resolvedDepth) {
+      // Nierozpoznana/nigdy niewybrana depth → zachowanie SPRZED tej zmiany, bit-for-bit.
+      const basket = buildBasketFromResults(results, config);
+      if (!basket.methods || basket.methods.length === 0) {
+        return res.json({ success: true, basket: null });
+      }
+      return res.json({ success: true, basket });
     }
-    return res.json({ success: true, basket });
+
+    const view = buildBasketForDepth(results, config, resolvedDepth);
+    if (!view.basket.methods || view.basket.methods.length === 0) {
+      return res.json({ success: true, basket: null, depth: resolvedDepth });
+    }
+    return res.json({
+      success: true,
+      basket: view.basket,
+      depth: view.depth,
+      dominantMethodKey: view.dominantMethodKey,
+      narrative: depthNarrative(view, val.currency || 'PLN'),
+    });
   })
 );
 
