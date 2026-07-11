@@ -53,7 +53,8 @@ router.get('/templates', async (req, res) => {
   try {
     const templates = await listDeliverableTemplates(
       type as DeliverableTemplateType,
-      getOrgId(req)
+      getOrgId(req),
+      getUserId(req)
     );
     res.json({ templates });
   } catch (err) {

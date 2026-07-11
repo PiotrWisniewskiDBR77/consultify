@@ -111,6 +111,183 @@ describe('deliverableTemplateService', () => {
   });
 });
 
+// FT-3.x — Template Library visibility unification (System/Organizacja/Prywatny).
+// deliverableTemplateService now applies a single 3-level rule across all
+// 3 legacy tables (presentation_templates/report_builder_templates/
+// tp_base_templates): System (is_system=true, or created_by IS NULL for
+// table) is visible everywhere; Organization (visibility<>'private' AND
+// organization_id = orgId) is visible org-wide; Private (visibility='private'
+// AND created_by = userId) is owner-only. Because `visibility` may not exist
+// yet on a given DB (migration 918 is additive/manual, not auto-applied),
+// each list* function falls back to the pre-existing 2-level query when the
+// DB throws "column visibility does not exist" — this is the backward
+// compatibility guarantee under test here.
+describe('deliverableTemplateService — 3-level visibility (System/Organization/Private)', () => {
+  let listDeliverableTemplates: (
+    type: any,
+    orgId: string,
+    userId?: string
+  ) => Promise<any[]>;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    const mod = await import('../../../server/src/services/deliverableTemplateService.js');
+    listDeliverableTemplates = mod.listDeliverableTemplates;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // FT-3.1 — deck: SQL passes both orgId and userId so 'private' rows can be
+  // matched by owner, and encodes all 3 levels.
+  it('deck: query encodes system/organization/private and passes [orgId, userId]', async () => {
+    queryAllMock.mockResolvedValue([]);
+    await listDeliverableTemplates('deck', 'org-x', 'user-1');
+    expect(queryAllMock).toHaveBeenCalledOnce();
+    const [sql, params] = queryAllMock.mock.calls[0];
+    expect(sql).toContain('is_system = true');
+    expect(sql).toContain("visibility, 'organization') <> 'private'");
+    expect(sql).toContain("visibility = 'private' AND created_by = $2");
+    expect(params).toEqual(['org-x', 'user-1']);
+  });
+
+  // FT-3.2 — doc: same 3-level shape, plus legacy is_public bypass preserved.
+  it('doc: query preserves is_public bypass alongside the 3-level rule', async () => {
+    queryAllMock.mockResolvedValue([]);
+    await listDeliverableTemplates('doc', 'org-x', 'user-1');
+    const [sql, params] = queryAllMock.mock.calls[0];
+    expect(sql).toContain('is_public = true');
+    expect(sql).toContain("visibility = 'private' AND created_by = $2");
+    expect(params).toEqual(['org-x', 'user-1']);
+  });
+
+  // FT-3.3 — table: org-scoping is NEW (legacy query had none at all) — this
+  // is the actual gap-close. Verify it's now present in the live query.
+  it('table: query now org-scopes (gap-close vs legacy unscoped SELECT *)', async () => {
+    queryAllMock.mockResolvedValue([]);
+    await listDeliverableTemplates('table', 'org-x', 'user-1');
+    const [sql, params] = queryAllMock.mock.calls[0];
+    expect(sql).toContain('created_by IS NULL');
+    expect(sql).toContain('organization_id = $1');
+    expect(params).toEqual(['org-x', 'user-1']);
+  });
+
+  // FT-3.4 — private row (visibility='private') IS returned when the caller
+  // is the owner (userId matches created_by) — end-to-end row shape check.
+  it('deck: maps a private row through when returned by the DB (owner path)', async () => {
+    queryAllMock.mockResolvedValue([
+      {
+        id: 'd-priv',
+        name: 'My Private Deck',
+        description: null,
+        is_system: false,
+        theme: null,
+        organization_id: 'org-x',
+        outline_json: '[]',
+      },
+    ]);
+    const result = await listDeliverableTemplates('deck', 'org-x', 'user-1');
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('d-priv');
+    expect(result[0].isSystem).toBe(false);
+  });
+
+  // FT-3.5 — backward compatibility: when the DB doesn't have the
+  // `visibility` column yet (migration 918 not applied), the service must
+  // NOT go fail-open→[] (that would hide every template until the manual
+  // migration runs) — it must fall back to the legacy 2-level query and
+  // still return rows.
+  it('deck: falls back to the legacy 2-level query when `visibility` column is missing', async () => {
+    queryAllMock
+      .mockRejectedValueOnce(new Error('column "visibility" does not exist'))
+      .mockResolvedValueOnce([
+        {
+          id: 'd-legacy',
+          name: 'Legacy Deck',
+          description: null,
+          is_system: true,
+          theme: null,
+          organization_id: null,
+          outline_json: '[]',
+        },
+      ]);
+    const result = await listDeliverableTemplates('deck', 'org-x', 'user-1');
+    expect(queryAllMock).toHaveBeenCalledTimes(2);
+    const [legacySql, legacyParams] = queryAllMock.mock.calls[1];
+    expect(legacySql).not.toContain('visibility');
+    expect(legacyParams).toEqual(['org-x']);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('d-legacy');
+  });
+
+  // FT-3.6 — same backward-compat guarantee for doc.
+  it('doc: falls back to the legacy 2-level query when `visibility` column is missing', async () => {
+    queryAllMock
+      .mockRejectedValueOnce(new Error('column visibility does not exist'))
+      .mockResolvedValueOnce([
+        {
+          id: 'r-legacy',
+          name: 'Legacy Report',
+          description: null,
+          is_system: false,
+          is_public: true,
+          report_type: 'custom',
+          sections_json: '[]',
+          organization_id: null,
+        },
+      ]);
+    const result = await listDeliverableTemplates('doc', 'org-x', 'user-1');
+    expect(queryAllMock).toHaveBeenCalledTimes(2);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('r-legacy');
+  });
+
+  // FT-3.7 — same backward-compat guarantee for table, AND confirms the
+  // legacy fallback SQL is truly unscoped (matches today's exact behaviour,
+  // not the new org-scoped rule) — i.e. nothing regresses before the manual
+  // migration is applied.
+  it('table: falls back to the legacy unscoped query when `visibility` column is missing', async () => {
+    queryAllMock
+      .mockRejectedValueOnce(new Error('column "visibility" does not exist'))
+      .mockResolvedValueOnce([
+        {
+          id: 't-legacy',
+          name: 'Legacy Table Template',
+          description: null,
+          is_featured: false,
+          category: 'custom',
+          schema_snapshot: {},
+          created_by: 'some-other-user',
+          organization_id: null,
+        },
+      ]);
+    const result = await listDeliverableTemplates('table', 'org-x', 'user-1');
+    expect(queryAllMock).toHaveBeenCalledTimes(2);
+    const [legacySql, legacyParams] = queryAllMock.mock.calls[1];
+    expect(legacySql).not.toContain('visibility');
+    expect(legacySql).not.toContain('organization_id = $1');
+    expect(legacyParams).toEqual([]);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('t-legacy');
+  });
+
+  // FT-3.8 — orphan safety net: a legacy tp_base_templates row created via
+  // the OTHER save-as-template path (tablePlatform/TemplateService.ts —
+  // organization_id is never set there) must not silently vanish once the
+  // org-scoping gap-close ships. The runtime query carries an explicit
+  // `organization_id IS NULL AND created_by IS NOT NULL` branch for this;
+  // here we just assert the branch text is present (row-level DB filtering
+  // can't be exercised against a mock).
+  it('table: query keeps a safety-net branch for org_id-NULL orphan rows (no silent disappearance)', async () => {
+    queryAllMock.mockResolvedValue([]);
+    await listDeliverableTemplates('table', 'org-x', 'user-1');
+    const [sql] = queryAllMock.mock.calls[0];
+    expect(sql).toContain('organization_id IS NULL AND created_by IS NOT NULL');
+  });
+});
+
 // FT-2.x — createDeliverableTemplate split-brain fix: builder-created templates
 // must be registered in the canonical Outputs artifact registry
 // (registerArtifactOrigin) so they show up in the Template Library tab

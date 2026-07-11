@@ -29,6 +29,17 @@ export interface DeliverableTemplate {
 
 const BLANK_NAME_PATTERN = /blank|pusty/i;
 
+/**
+ * True gdy błąd DB to "column visibility does not exist" (Postgres 42703) —
+ * czyli migracja 918_template_visibility.sql jeszcze nie została ręcznie
+ * zastosowana na tej bazie. W takim wypadku wołający ma paść z powrotem na
+ * starą, 2-poziomową regułę (system/organizacja) — wsteczna zgodność.
+ */
+function isMissingVisibilityColumnError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /column\s+"?visibility"?\s+does not exist/i.test(msg);
+}
+
 function detectIsBlank(
   name: string,
   meta: Record<string, unknown>
@@ -59,131 +70,221 @@ function detectIsBlank(
   return false;
 }
 
-async function listDeckTemplates(orgId: string): Promise<DeliverableTemplate[]> {
-  try {
-    const rows = await queryAll<{
-      id: string;
-      name: string;
-      description: string | null;
-      is_system: boolean;
-      theme: string | null;
-      organization_id: string | null;
-      outline_json: string | null;
-    }>(
-      `SELECT id, name, description, is_system, theme, organization_id, outline_json
+type DeckRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  is_system: boolean;
+  theme: string | null;
+  organization_id: string | null;
+  outline_json: string | null;
+};
+
+function mapDeckRow(r: DeckRow): DeliverableTemplate {
+  const meta: Record<string, unknown> = {
+    theme: r.theme,
+    outline_json: r.outline_json,
+  };
+  return {
+    id: r.id,
+    type: 'deck' as DeliverableTemplateType,
+    name: r.name,
+    description: r.description,
+    isSystem: Boolean(r.is_system),
+    isBlank: detectIsBlank(r.name, meta),
+    organizationId: r.organization_id,
+    meta,
+  };
+}
+
+const LEGACY_DECK_SQL = `SELECT id, name, description, is_system, theme, organization_id, outline_json
        FROM presentation_templates
        WHERE (is_system = true OR organization_id = $1) AND is_active = true
+       ORDER BY is_system DESC, name`;
+
+/**
+ * 3-poziomowa reguła widoczności (System/Organizacja/Prywatny), spójna z
+ * doc/table poniżej. `visibility` może nie istnieć jeszcze na tej bazie
+ * (migracja 918 nie zastosowana) — w takim razie łapiemy błąd i wracamy do
+ * starej, 2-poziomowej reguły (LEGACY_*_SQL) zamiast fail-open→[] (co
+ * ukryłoby WSZYSTKIE szablony aż do ręcznej migracji).
+ *
+ * Gałąź `organization_id IS NULL AND created_by IS NOT NULL` to sieć
+ * bezpieczeństwa dla osieroconych rekordów sprzed org-scopingu (np.
+ * tp_base_templates zapisywanych przez inny caller —
+ * tablePlatform/TemplateService.ts:createFromTable — bez organization_id):
+ * zamiast nowo zniknąć (żaden `organization_id = $1` ich nie złapie), zostają
+ * widoczne tak jak dziś (twardy wymóg: „żaden istniejący template nie znika").
+ */
+async function listDeckTemplates(orgId: string, userId?: string): Promise<DeliverableTemplate[]> {
+  try {
+    const rows = await queryAll<DeckRow>(
+      `SELECT id, name, description, is_system, theme, organization_id, outline_json
+       FROM presentation_templates
+       WHERE is_active = true
+         AND (
+           is_system = true
+           OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = $1)
+           OR (visibility = 'private' AND created_by = $2)
+           OR (organization_id IS NULL AND created_by IS NOT NULL)
+         )
        ORDER BY is_system DESC, name`,
-      [orgId]
+      [orgId, userId ?? null]
     );
-    return rows.map((r) => {
-      const meta: Record<string, unknown> = {
-        theme: r.theme,
-        outline_json: r.outline_json,
-      };
-      return {
-        id: r.id,
-        type: 'deck' as DeliverableTemplateType,
-        name: r.name,
-        description: r.description,
-        isSystem: Boolean(r.is_system),
-        isBlank: detectIsBlank(r.name, meta),
-        organizationId: r.organization_id,
-        meta,
-      };
-    });
-  } catch {
+    return rows.map(mapDeckRow);
+  } catch (err) {
+    if (isMissingVisibilityColumnError(err)) {
+      try {
+        const rows = await queryAll<DeckRow>(LEGACY_DECK_SQL, [orgId]);
+        return rows.map(mapDeckRow);
+      } catch {
+        return [];
+      }
+    }
     return [];
   }
 }
 
-async function listDocTemplates(orgId: string): Promise<DeliverableTemplate[]> {
-  try {
-    const rows = await queryAll<{
-      id: string;
-      name: string;
-      description: string | null;
-      is_system: boolean;
-      is_public: boolean;
-      report_type: string | null;
-      sections_json: string | null;
-      organization_id: string | null;
-    }>(
-      `SELECT id, name, description, is_system, is_public, report_type, sections_json, organization_id
+type DocRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  is_system: boolean;
+  is_public: boolean;
+  report_type: string | null;
+  sections_json: string | null;
+  organization_id: string | null;
+};
+
+function mapDocRow(r: DocRow): DeliverableTemplate {
+  const meta: Record<string, unknown> = {
+    report_type: r.report_type,
+    sections_json: r.sections_json,
+  };
+  return {
+    id: r.id,
+    type: 'doc' as DeliverableTemplateType,
+    name: r.name,
+    description: r.description,
+    isSystem: Boolean(r.is_system),
+    isBlank: detectIsBlank(r.name, meta),
+    organizationId: r.organization_id,
+    meta,
+  };
+}
+
+const LEGACY_DOC_SQL = `SELECT id, name, description, is_system, is_public, report_type, sections_json, organization_id
        FROM report_builder_templates
        WHERE (is_system = true OR is_public = true OR organization_id = $1)
+       ORDER BY is_system DESC, name`;
+
+async function listDocTemplates(orgId: string, userId?: string): Promise<DeliverableTemplate[]> {
+  try {
+    const rows = await queryAll<DocRow>(
+      `SELECT id, name, description, is_system, is_public, report_type, sections_json, organization_id
+       FROM report_builder_templates
+       WHERE (
+         is_system = true
+         OR is_public = true
+         OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = $1)
+         OR (visibility = 'private' AND created_by = $2)
+         OR (organization_id IS NULL AND created_by IS NOT NULL)
+       )
        ORDER BY is_system DESC, name`,
-      [orgId]
+      [orgId, userId ?? null]
     );
-    return rows.map((r) => {
-      const meta: Record<string, unknown> = {
-        report_type: r.report_type,
-        sections_json: r.sections_json,
-      };
-      return {
-        id: r.id,
-        type: 'doc' as DeliverableTemplateType,
-        name: r.name,
-        description: r.description,
-        isSystem: Boolean(r.is_system),
-        isBlank: detectIsBlank(r.name, meta),
-        organizationId: r.organization_id,
-        meta,
-      };
-    });
-  } catch {
+    return rows.map(mapDocRow);
+  } catch (err) {
+    if (isMissingVisibilityColumnError(err)) {
+      try {
+        const rows = await queryAll<DocRow>(LEGACY_DOC_SQL, [orgId]);
+        return rows.map(mapDocRow);
+      } catch {
+        return [];
+      }
+    }
     return [];
   }
 }
 
-async function listTableTemplates(): Promise<DeliverableTemplate[]> {
-  try {
-    const rows = await queryAll<{
-      id: string;
-      name: string;
-      description: string | null;
-      is_featured: boolean;
-      category: string | null;
-      schema_snapshot: unknown;
-      created_by: string | null;
-    }>(
-      `SELECT id, name, description, is_featured, category, schema_snapshot, created_by
+type TableRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  is_featured: boolean;
+  category: string | null;
+  schema_snapshot: unknown;
+  created_by: string | null;
+  organization_id: string | null;
+};
+
+function mapTableRow(r: TableRow): DeliverableTemplate {
+  const meta: Record<string, unknown> = {
+    category: r.category,
+    schema_snapshot: r.schema_snapshot,
+  };
+  return {
+    id: String(r.id),
+    type: 'table' as DeliverableTemplateType,
+    name: r.name,
+    description: r.description,
+    isSystem: r.created_by === null,
+    isBlank: detectIsBlank(r.name, {}),
+    organizationId: r.organization_id ?? null,
+    meta,
+  };
+}
+
+// Legacy behaviour (pre-3-level-visibility): NO org scoping at all — every
+// tp_base_templates row was visible to every org. Kept only as the
+// missing-column fallback so this list never goes empty because of a schema
+// drift; org-scoping the same as deck/doc is the actual bug fix here (see
+// migration 918 comment / final report — flagged as an intentional gap-close,
+// not a silent behaviour change).
+const LEGACY_TABLE_SQL = `SELECT id, name, description, is_featured, category, schema_snapshot, created_by, organization_id
        FROM tp_base_templates
+       ORDER BY is_featured DESC, name`;
+
+async function listTableTemplates(orgId: string, userId?: string): Promise<DeliverableTemplate[]> {
+  try {
+    const rows = await queryAll<TableRow>(
+      `SELECT id, name, description, is_featured, category, schema_snapshot, created_by, organization_id
+       FROM tp_base_templates
+       WHERE (
+         created_by IS NULL
+         OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = $1)
+         OR (visibility = 'private' AND created_by = $2)
+         OR (organization_id IS NULL AND created_by IS NOT NULL)
+       )
        ORDER BY is_featured DESC, name`,
-      []
+      [orgId, userId ?? null]
     );
-    return rows.map((r) => {
-      const meta: Record<string, unknown> = {
-        category: r.category,
-        schema_snapshot: r.schema_snapshot,
-      };
-      return {
-        id: String(r.id),
-        type: 'table' as DeliverableTemplateType,
-        name: r.name,
-        description: r.description,
-        isSystem: r.created_by === null,
-        isBlank: detectIsBlank(r.name, {}),
-        organizationId: null,
-        meta,
-      };
-    });
-  } catch {
+    return rows.map(mapTableRow);
+  } catch (err) {
+    if (isMissingVisibilityColumnError(err)) {
+      try {
+        const rows = await queryAll<TableRow>(LEGACY_TABLE_SQL, []);
+        return rows.map(mapTableRow);
+      } catch {
+        return [];
+      }
+    }
     return [];
   }
 }
 
 export async function listDeliverableTemplates(
   type: DeliverableTemplateType,
-  orgId: string
+  orgId: string,
+  userId?: string
 ): Promise<DeliverableTemplate[]> {
   switch (type) {
     case 'deck':
-      return listDeckTemplates(orgId);
+      return listDeckTemplates(orgId, userId);
     case 'doc':
-      return listDocTemplates(orgId);
+      return listDocTemplates(orgId, userId);
     case 'table':
-      return listTableTemplates();
+      return listTableTemplates(orgId, userId);
     default:
       return [];
   }
