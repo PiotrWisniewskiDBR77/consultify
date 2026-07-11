@@ -354,9 +354,9 @@ export function precedentMethod(
   return {
     key: 'M3',
     label,
-    low: m2.low * (1 + pLow),
-    mid: m2.mid * (1 + pMid),
-    high: m2.high * (1 + pHigh),
+    low: round(m2.low * (1 + pLow)),
+    mid: round(m2.mid * (1 + pMid)),
+    high: round(m2.high * (1 + pHigh)),
     note: `Mnożniki + premia za kontrolę ${round(pLow * 100)}–${round(pHigh * 100)}%`,
   };
 }
@@ -390,9 +390,9 @@ export function assetIncomeMethod(
     return {
       key: 'M4',
       label,
-      low: v * (1 - band),
-      mid: v,
-      high: v * (1 + band),
+      low: round(v * (1 - band)),
+      mid: round(v),
+      high: round(v * (1 + band)),
       note: `Pojedyncza wartość ±${round(band * 100)}%`,
     };
   }
@@ -402,9 +402,9 @@ export function assetIncomeMethod(
   return {
     key: 'M4',
     label,
-    low,
-    mid: (low + high) / 2,
-    high,
+    low: round(low),
+    mid: round((low + high) / 2),
+    high: round(high),
     note: 'Majątkowa + dochodowa',
   };
 }
