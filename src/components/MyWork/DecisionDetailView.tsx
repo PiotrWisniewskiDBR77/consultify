@@ -4755,7 +4755,11 @@ Use userId only from this list:
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    // Z34-parity (Task fix 246ad9e5f9): N-mode root must scroll internally
+    // (h-full overflow-y-auto), not via document scroll (min-h-screen) —
+    // the parent shell renders this inside an overflow-hidden container so
+    // min-h-screen content below the fold was unreachable.
+    <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       <div className="p-6">
         <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
