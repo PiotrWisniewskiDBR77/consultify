@@ -542,30 +542,6 @@ export const DRDLightShell: React.FC<DRDLightShellProps> = ({
             {t('Wsparcie', 'Support')}
           </p>
 
-          {/* Teresa */}
-          <div className="mb-3 rounded-xl p-3.5" style={{ backgroundColor: BLUE_SOFT }}>
-            <div className="mb-1.5 flex items-center gap-2 text-[12.5px] font-semibold" style={{ color: BLUE }}>
-              <MessageSquare className="h-4 w-4" />
-              {t('Teresa · asystent diagnozy', 'Teresa · diagnosis assistant')}
-            </div>
-            <p className="m-0 mb-2.5 text-[12.5px] leading-snug text-c-text-secondary">
-              {t(
-                'Prowadzę Cię obszar po obszarze pytaniami z metody. Powiedz „zdiagnozuj procesy sprzedaży", a zaproponuję poziom z uzasadnieniem.',
-                'I guide you area by area with the method’s questions. Say “diagnose sales processes” and I’ll propose a level with rationale.'
-              )}
-            </p>
-            {onOpenChat && (
-              <button
-                type="button"
-                onClick={onOpenChat}
-                className="text-[12.5px] font-semibold transition-opacity hover:opacity-80"
-                style={{ color: BLUE }}
-              >
-                {t('Zacznij rozmowę →', 'Start a conversation →')}
-              </button>
-            )}
-          </div>
-
           {/* Źródła i założenia */}
           <div className="mb-3 overflow-hidden rounded-xl border border-c-border">
             <div className="flex items-center gap-2 px-3.5 py-3 text-[12.5px] font-semibold text-c-text">

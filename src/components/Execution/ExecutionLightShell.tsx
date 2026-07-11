@@ -399,30 +399,6 @@ export const ExecutionLightShell: React.FC<ExecutionLightShellProps> = ({
             {t('Wsparcie', 'Support')}
           </p>
 
-          {/* Teresa */}
-          <div className="mb-3 rounded-xl p-3.5" style={{ backgroundColor: BLUE_SOFT }}>
-            <div className="mb-1.5 flex items-center gap-2 text-[12.5px] font-semibold" style={{ color: BLUE }}>
-              <MessageSquare className="h-4 w-4" />
-              {t('Teresa · asystent programu', 'Teresa · program assistant')}
-            </div>
-            <p className="m-0 mb-2.5 text-[12.5px] leading-snug text-c-text-secondary">
-              {t(
-                'Zapytaj, która inicjatywa ma największą lukę wpływu (W-vs-Z) albo które ryzyko wymaga decyzji dziś.',
-                'Ask which initiative has the biggest impact gap (W-vs-Z) or which risk needs a decision today.'
-              )}
-            </p>
-            {onOpenChat && (
-              <button
-                type="button"
-                onClick={onOpenChat}
-                className="text-[12.5px] font-semibold transition-opacity hover:opacity-80"
-                style={{ color: BLUE }}
-              >
-                {t('Zacznij rozmowę →', 'Start a conversation →')}
-              </button>
-            )}
-          </div>
-
           <div className="mb-3 overflow-hidden rounded-xl border border-c-border">
             <div className="flex items-center gap-2 px-3.5 py-3 text-[12.5px] font-semibold text-c-text">
               <FolderOpen className="h-[15px] w-[15px] text-c-text-muted" />

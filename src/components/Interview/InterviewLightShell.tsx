@@ -397,30 +397,6 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
             {t('Wsparcie', 'Support')}
           </p>
 
-          {/* Teresa */}
-          <div className="mb-3 rounded-xl p-3.5" style={{ backgroundColor: BLUE_SOFT }}>
-            <div className="mb-1.5 flex items-center gap-2 text-[12.5px] font-semibold" style={{ color: BLUE }}>
-              <MessageSquare className="h-4 w-4" />
-              {t('Teresa · asystent wywiadu', 'Teresa · interview assistant')}
-            </div>
-            <p className="m-0 mb-2.5 text-[12.5px] leading-snug text-c-text-secondary">
-              {t(
-                'Powiedz „dociągnij odpowiedź na pytanie 3", a zaproponuję konkretniejszą wersję — ocenioną tą samą rubryką.',
-                'Say “tighten the answer to question 3” and I’ll propose a sharper version — scored against the same rubric.'
-              )}
-            </p>
-            {onOpenChat && (
-              <button
-                type="button"
-                onClick={onOpenChat}
-                className="text-[12.5px] font-semibold transition-opacity hover:opacity-80"
-                style={{ color: BLUE }}
-              >
-                {t('Zacznij rozmowę →', 'Start a conversation →')}
-              </button>
-            )}
-          </div>
-
           {/* Rubryka oceny — reused verbatim from the engine (#48a) */}
           <div className="mb-3 overflow-hidden rounded-xl border border-c-border">
             <div className="flex items-center gap-2 px-3.5 py-3 text-[12.5px] font-semibold text-c-text">
