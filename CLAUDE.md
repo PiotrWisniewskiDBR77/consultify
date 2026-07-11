@@ -23,6 +23,16 @@ Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko
    zmienia TYLKO centrum (A Canvas·B Dokument·C Rekord·D Matryca·E Deck). Przy każdej pracy nad
    artefaktem użyj skilla `consultify-artefakty`. Pułapka: `primary-*` KAŻDY numer = crimson
    (hook `check-artefakt.sh` blokuje w powłoce). Odbiór = DoD §18.1 oczami. Plan: `_ROLLOUT_ARTEFAKTY_PLAN.md`.
+7. **★ PIOTR NIGDY NIE JEST PIERWSZYM TESTEREM WIZUALNYM (nienaruszalne — powód: załamanie 07-11, „gwiazda").**
+   Zanim Piotr zobaczy JAKIKOLWIEK ekran wizualny: (a) prototyp → wstępny OK Piotra; (b) JA renderuję realny
+   ekran + robię ZRZUT sam (dev-render/harness z mock-danymi, bez logowania Piotra — wzór: harness EV
+   football-field); (c) zrzut czysty (zero gwiazdek/ozdób, tokeny c-*, zgodny z prototypem); (d) DOPIERO wtedy
+   Piotr patrzy — do AKCEPTU, nie do odkrywania zepsucia. Zakaz „włącz flagę i zobacz" jako pierwszego
+   sprawdzenia. Wygląd tylko za flagą (default OFF) do akceptu. Po akcepcie → flaga domyślna + re-tag punktu.
+8. **★ PRZYCISK COFANIA (`_RUNBOOK_COFANIA.md`).** Bezpieczny punkt = tag `demo-safe-<data>` (ostatni stan
+   zaakceptowany przez Piotra), re-tagowany po każdej akcept-partii. Dramat wizualny→flaga OFF (natychmiast);
+   zły deploy→Railway rollback/`git revert`; nuklearne→restore-commit DO PRZODU (checkout tagu→commit→push,
+   NIGDY force-push na demo). Migracje sesji addytywne=bez rollbacku.
 
 ## STRUKTURA PRAC (2026-07)
 - Program 7 rozbudów narzędzi = mechanika NAJPIERW; artefakty (frontend) dorabiamy PO gotowej
