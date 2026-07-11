@@ -222,7 +222,11 @@ router.post(
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['notebooks']))) return;
 
-    const title = String(req.body?.title || '').trim();
+    // Z139 (full scope): undo the global sanitizer's HTML-entity escaping
+    // before storing the title, mirroring contentJson/contentText below —
+    // otherwise the title (rendered as plain text in lists) shows literal
+    // `&amp;` and re-saving compounds it further.
+    const title = decodeHtmlEntities(String(req.body?.title || '').trim());
     if (!title) return res.status(400).json({ error: 'title is required' });
 
     const scope = normalizeScope(req.body?.scope);
@@ -573,7 +577,8 @@ router.post(
     if (!(await requireTables(res, ['notebook_pages']))) return;
     const nbCols = await getTableColumns('notebook_pages');
 
-    const title = String(req.body?.title || '').trim();
+    // Z139 (full scope): decode before storing, mirroring contentJson/contentText.
+    const title = decodeHtmlEntities(String(req.body?.title || '').trim());
     if (!title) return res.status(400).json({ error: 'title is required' });
 
     const projectId = req.body?.projectId ? String(req.body.projectId) : null;
@@ -1175,7 +1180,8 @@ router.put(
       params.push(val);
     };
 
-    if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
+    if (typeof req.body?.title === 'string')
+      set('title', decodeHtmlEntities(String(req.body.title).trim()));
     if (req.body?.tags !== undefined)
       set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
     if (req.body?.contentJson !== undefined)

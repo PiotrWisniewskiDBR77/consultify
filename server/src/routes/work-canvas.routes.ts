@@ -2728,14 +2728,16 @@ router.post('/drafts', async (req: AuthRequest, res) => {
   await ensureStorage();
   const { organizationId, userId } = authContext(req);
   const now = new Date().toISOString();
-  // Z139: undo the input-sanitizer's HTML-entity escaping before storing rich
-  // text, otherwise every save re-escapes and corrupts the canvas content.
+  // Z139 (full scope): undo the input-sanitizer's HTML-entity escaping before
+  // storing rich text AND the title, otherwise every save re-escapes and
+  // corrupts the canvas content/title.
   if (req.body && typeof req.body === 'object') {
     const b = req.body as Record<string, unknown>;
     if (typeof b.contentMd === 'string') b.contentMd = decodeHtmlEntities(b.contentMd);
     if (typeof b.content === 'string') b.content = decodeHtmlEntities(b.content);
     if (b.contentJson !== undefined) b.contentJson = deepDecodeHtmlEntities(b.contentJson);
     if (Array.isArray(b.blocks)) b.blocks = deepDecodeHtmlEntities(b.blocks);
+    if (typeof b.title === 'string') b.title = decodeHtmlEntities(b.title);
   }
   const draft: WorkCanvasDraft = {
     id: randomUUID(),
@@ -3357,13 +3359,15 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   }
   const payload =
     req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>) : {};
-  // Z139: undo the input-sanitizer's HTML-entity escaping before storing rich
-  // text, otherwise every save re-escapes and corrupts the canvas content.
+  // Z139 (full scope): undo the input-sanitizer's HTML-entity escaping before
+  // storing rich text AND the title, otherwise every save re-escapes and
+  // corrupts the canvas content/title.
   if (typeof payload.contentMd === 'string') payload.contentMd = decodeHtmlEntities(payload.contentMd);
   if (typeof payload.content === 'string') payload.content = decodeHtmlEntities(payload.content);
   if (payload.contentJson !== undefined)
     payload.contentJson = deepDecodeHtmlEntities(payload.contentJson);
   if (Array.isArray(payload.blocks)) payload.blocks = deepDecodeHtmlEntities(payload.blocks);
+  if (typeof payload.title === 'string') payload.title = decodeHtmlEntities(payload.title);
   const nextKind = String(payload.kind || draft.kind) as DraftKind;
   const allowedKinds: DraftKind[] = [
     'markdown',
