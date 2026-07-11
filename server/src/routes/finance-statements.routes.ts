@@ -19,6 +19,12 @@
  *   GET    /ratios/catalog      — Get ratio definitions catalog
  *   GET    /benchmarks          — Get org benchmarks
  *   PUT    /benchmarks          — Upsert benchmark
+ *
+ *   -- F5 engine→route wiring (additive, `_KONCEPT_FINANCE_2026-07-10.md`) --
+ *   POST   /packs/:id/report-section                       — publish finance report section snapshot
+ *   GET    /packs/:id/reconcile-summary                    — persisted R1-R8 result (UI badge)
+ *   GET    /aggregate-scope/initiatives/:initiativeId/delta — A2 initiative pro-forma delta
+ *   GET    /packs/:id/aggregate-scope/portfolio             — A3 portfolio aggregate (A1 + ΣA2)
  */
 
 import { Request, Response, Router } from 'express';
@@ -42,7 +48,15 @@ import {
   isLikelySubtotalOrAggregate,
   isNonFinancialByPolicy,
 } from '../services/financeMappingPolicy.js';
+import {
+  computeInitiativeDeltaForOrg,
+  computePortfolioAggregateForPack,
+} from '../services/financeAggregateScopeService.js';
 import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
+import {
+  loadReconcileSummaryForPack,
+  publishFinanceReportSectionSnapshot,
+} from '../services/financeReportSectionService.js';
 import {
   assignStatementToExistingPack,
   detachStatementFromPack,
@@ -1736,6 +1750,167 @@ router.post(
     const pack = await recomputeStatementPackForOrganization(orgId, packId);
     if (!pack) return res.status(404).json({ error: 'Statement pack not found' });
     res.json({ success: true, pack });
+  })
+);
+
+/**
+ * POST /api/finance-statements/packs/:id/report-section
+ * F5 wiring — "silnik→papier": publikuje niemutowalny snapshot sekcji finansowej raportu
+ * (wskaźniki Z111 + reconcile R1-R8 (shadow, czytany) + koszyk EV) przez
+ * `financeReportSectionService.publishFinanceReportSectionSnapshot`. Additive — nie zmienia
+ * `/packs/:id/recompute` ani żadnego istniejącego endpointu.
+ * Body: { valuationId?, title?, periodFrom?, periodTo? }.
+ */
+router.post(
+  '/packs/:id/report-section',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+
+    const pack = await getStatementPackDetail(orgId, packId);
+    if (!pack) return res.status(404).json({ error: 'Statement pack not found' });
+
+    const userId = getUserId(req);
+    const body = req.body || {};
+    const valuationId =
+      typeof body.valuationId === 'string' && body.valuationId.trim() ? body.valuationId.trim() : undefined;
+    const title = typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
+    const periodFrom = typeof body.periodFrom === 'string' ? body.periodFrom : undefined;
+    const periodTo = typeof body.periodTo === 'string' ? body.periodTo : undefined;
+
+    try {
+      const result = await publishFinanceReportSectionSnapshot({
+        organizationId: orgId,
+        createdBy: userId || 'system',
+        packId,
+        valuationId,
+        title,
+        periodFrom,
+        periodTo,
+      });
+      res.status(201).json({
+        success: true,
+        reportId: result.reportId,
+        snapshotId: result.snapshotId,
+        section: result.section,
+      });
+    } catch (e: any) {
+      logger.error('[FinanceStatements] Error publishing finance report section:', e);
+      res.status(500).json({ error: 'Failed to publish finance report section' });
+    }
+  })
+);
+
+/**
+ * GET /api/finance-statements/packs/:id/reconcile-summary
+ * Lekki READ-ONLY endpoint (UI badge) — persystowany wynik reconcile R1-R8 dla pakietu
+ * (`financial_statement_validations`, scope='pack'), CZYTANY przez
+ * `financeReportSectionService.loadReconcileSummaryForPack`, bez przeliczania (shadow, nie
+ * blokuje readiness — patrz `reconciliationService.RECONCILE_ENFORCE`). Fail-soft: błąd/pakiet
+ * bez recompute → { available:false }, nie 500.
+ */
+router.get(
+  '/packs/:id/reconcile-summary',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+    try {
+      const summary = await loadReconcileSummaryForPack(orgId, packId);
+      if (!summary) return res.status(404).json({ error: 'Statement pack not found' });
+      res.json(summary);
+    } catch (e: any) {
+      logger.warn(
+        `[FinanceStatements] reconcile-summary degraded to unavailable for pack ${packId}: ${e?.message || e}`
+      );
+      res.json({
+        packId,
+        available: false,
+        enforceMode: false,
+        overallStatus: 'na',
+        summary: null,
+        checks: [],
+        computedAt: null,
+      });
+    }
+  })
+);
+
+/**
+ * GET /api/finance-statements/aggregate-scope/initiatives/:initiativeId/delta
+ * A2 (Finance↔Results bridge) — pro-forma delta P&L/BS/CF dla JEDNEJ inicjatywy, przez
+ * `financeAggregateScopeService.computeInitiativeDeltaForOrg` (budget_initiative_links →
+ * fallback initiative_benefits → null gdy brak sygnału, nigdy zero-zgadywane). Read-only.
+ */
+router.get(
+  '/aggregate-scope/initiatives/:initiativeId/delta',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const initiativeId = String(req.params.initiativeId);
+    try {
+      const delta = await computeInitiativeDeltaForOrg(orgId, initiativeId);
+      res.json({ initiativeId, delta });
+    } catch (e: any) {
+      logger.warn(
+        `[FinanceStatements] aggregate-scope initiative delta degraded to null for ${initiativeId}: ${e?.message || e}`
+      );
+      res.json({ initiativeId, delta: null });
+    }
+  })
+);
+
+/**
+ * GET /api/finance-statements/packs/:id/aggregate-scope/portfolio?initiativeIds=a,b,c
+ * A3 (portfel/scenariusz) — A1 (ten pakiet) + Σ(A2 dla wybranych inicjatyw), przez
+ * `financeAggregateScopeService.computePortfolioAggregateForPack`. `initiativeIds` — lista
+ * CSV lub powtórzony query param. Read-only; nigdy nie mutuje pakiet/statement.
+ */
+router.get(
+  '/packs/:id/aggregate-scope/portfolio',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+
+    const pack = await getStatementPackDetail(orgId, packId);
+    if (!pack) return res.status(404).json({ error: 'Statement pack not found' });
+
+    const rawIds = req.query.initiativeIds;
+    const initiativeIds = (
+      Array.isArray(rawIds) ? rawIds : typeof rawIds === 'string' ? rawIds.split(',') : []
+    )
+      .map((v) => String(v).trim())
+      .filter(Boolean);
+
+    try {
+      const result = await computePortfolioAggregateForPack({
+        organizationId: orgId,
+        basePackId: packId,
+        initiativeIds,
+      });
+      res.json(result);
+    } catch (e: any) {
+      logger.warn(
+        `[FinanceStatements] aggregate-scope portfolio degraded to base-only for pack ${packId}: ${e?.message || e}`
+      );
+      res.json({
+        scope: 'portfolio',
+        basePackId: packId,
+        includedInitiativeIds: [],
+        skippedInitiativeIds: initiativeIds,
+        statements: { pnl: {}, bs: {}, cf: {} },
+      });
+    }
   })
 );
 

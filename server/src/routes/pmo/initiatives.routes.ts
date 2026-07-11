@@ -38,6 +38,7 @@ import initiativeGenerationService from '../../services/initiativeGenerationServ
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
+import { getProgramRollup } from '../../services/pmo/programRollupService.js';
 import {
   getCapacityTimeline,
   getInitiativeCapacity,
@@ -900,6 +901,27 @@ router.get('/programs/:programId', async (req: any, res: any) => {
     });
   } catch (err: any) {
     return failInitiative500(res, 'Failed to fetch program', 'PROGRAM_FETCH_FAILED', err);
+  }
+});
+
+/**
+ * GET /api/initiatives/programs/:programId/rollup
+ * Program rollup (F5 engine→route wiring, additive) — budget/value/benefits/ROI/health rolled
+ * up across a program's projects + root initiatives + child programs, via
+ * `programRollupService.getProgramRollup`. Read-only.
+ */
+router.get('/programs/:programId/rollup', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { programId } = req.params;
+    const rollup = await getProgramRollup(String(orgId), String(programId));
+    if (!rollup) return res.status(404).json({ error: 'Program not found' });
+
+    return res.json(rollup);
+  } catch (err: any) {
+    return failInitiative500(res, 'Failed to fetch program rollup', 'PROGRAM_ROLLUP_FETCH_FAILED', err);
   }
 });
 

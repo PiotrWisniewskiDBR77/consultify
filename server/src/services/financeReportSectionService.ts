@@ -160,6 +160,19 @@ interface OrgBenchmarkRow {
   source_label?: string;
 }
 
+/** Row shape read straight off `financial_statement_validations` (scope='pack'). */
+export interface RawReconcileValidationRow {
+  check_code: string;
+  check_name: string;
+  severity: string;
+  status: string;
+  message: string;
+  difference: number | null;
+  tolerance: number | null;
+  details_json: unknown;
+  computed_at: string;
+}
+
 export interface RawFinanceReportInputs {
   organizationId: string;
   /** null = brak pakietu → pusty stan (kontrakt: "brak packa→pusty stan"). */
@@ -171,17 +184,7 @@ export interface RawFinanceReportInputs {
   orgIndustry?: string;
   orgBenchmarkRows: OrgBenchmarkRow[];
   /** null = pakiet nigdy nie przeszedł recompute (brak wpisów w financial_statement_validations). */
-  reconcileValidations: Array<{
-    check_code: string;
-    check_name: string;
-    severity: string;
-    status: string;
-    message: string;
-    difference: number | null;
-    tolerance: number | null;
-    details_json: unknown;
-    computed_at: string;
-  }> | null;
+  reconcileValidations: RawReconcileValidationRow[] | null;
   valuation: { id: string; title: string | null; basket: BasketResult | null } | null;
   asOf?: number;
 }
@@ -213,6 +216,69 @@ function safeParseDetails(raw: unknown): Record<string, unknown> {
     }
   }
   return {};
+}
+
+/**
+ * Pure: parsuje persystowany shadow-wynik reconcile R1-R8 (financial_statement_validations,
+ * scope='pack') do struktury gotowej pod UI badge. `null` wejście = pakiet nigdy nie przeszedł
+ * recompute (kontrakt "brak wpisów → niedostępny", nie "0 checków"). Ekstraktowane z
+ * `composeFinanceReportSection`, żeby `loadReconcileSummaryForPack` (lekki endpoint UI-badge)
+ * mógł reużyć IDENTYCZNĄ logikę bez przechodzenia przez pełną sekcję raportu (wskaźniki+EV).
+ */
+export function summarizeReconcileValidations(
+  reconcileValidations: RawReconcileValidationRow[] | null
+): FinanceReconcileSummary {
+  if (reconcileValidations === null) {
+    return {
+      available: false,
+      enforceMode: RECONCILE_ENFORCE,
+      overallStatus: 'na',
+      summary: null,
+      checks: [],
+      computedAt: null,
+    };
+  }
+  const summaryRow = reconcileValidations.find((v) => v.check_code === 'RECONCILE_SUMMARY') || null;
+  const summaryDetails = summaryRow ? safeParseDetails(summaryRow.details_json) : {};
+  const checks: FinanceReconcileCheckRow[] = reconcileValidations
+    .filter((v) => v.check_code !== 'RECONCILE_SUMMARY')
+    .map((v) => ({
+      checkCode: v.check_code,
+      checkName: v.check_name,
+      severity: (v.severity as FinanceReconcileCheckRow['severity']) || 'warning',
+      status: (v.status as FinanceReconcileCheckRow['status']) || 'warning',
+      message: v.message,
+      difference: v.difference,
+      tolerance: v.tolerance,
+    }));
+  const overallStatus = (summaryDetails.overallStatus as FinanceReconcileSummary['overallStatus']) || 'na';
+  return {
+    available: Boolean(summaryRow) || checks.length > 0,
+    enforceMode: RECONCILE_ENFORCE,
+    overallStatus,
+    summary: (summaryDetails.summary as FinanceReconcileSummary['summary']) || null,
+    checks,
+    computedAt: summaryRow?.computed_at ?? null,
+  };
+}
+
+/** Maps raw `financial_statement_validations` rows (as returned by `getStatementPackDetail`) into
+ *  `RawReconcileValidationRow[]` — `null` gdy pakiet nigdy nie przeszedł recompute. */
+export function mapPackValidationsToReconcileRows(
+  packValidations: Array<Record<string, any>>
+): RawReconcileValidationRow[] | null {
+  if (!Array.isArray(packValidations) || packValidations.length === 0) return null;
+  return packValidations.map((v) => ({
+    check_code: String(v.check_code),
+    check_name: String(v.check_name),
+    severity: String(v.severity),
+    status: String(v.status),
+    message: String(v.message || ''),
+    difference: v.difference == null ? null : Number(v.difference),
+    tolerance: v.tolerance == null ? null : Number(v.tolerance),
+    details_json: v.details_json,
+    computed_at: String(v.computed_at || ''),
+  }));
 }
 
 /** Emptied section — kontrakt "brak packa→pusty stan" (żadnych zgadywanych liczb). */
@@ -262,40 +328,7 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
 
   // 2) Reconcile R1-R8 — CZYTANE z persystowanego shadow-wyniku (financial_statement_validations),
   //    NIE przeliczane drugi raz (patrz docblock pliku, punkt 2).
-  let reconcile: FinanceReconcileSummary;
-  if (input.reconcileValidations === null) {
-    reconcile = {
-      available: false,
-      enforceMode: RECONCILE_ENFORCE,
-      overallStatus: 'na',
-      summary: null,
-      checks: [],
-      computedAt: null,
-    };
-  } else {
-    const summaryRow = input.reconcileValidations.find((v) => v.check_code === 'RECONCILE_SUMMARY') || null;
-    const summaryDetails = summaryRow ? safeParseDetails(summaryRow.details_json) : {};
-    const checks: FinanceReconcileCheckRow[] = input.reconcileValidations
-      .filter((v) => v.check_code !== 'RECONCILE_SUMMARY')
-      .map((v) => ({
-        checkCode: v.check_code,
-        checkName: v.check_name,
-        severity: (v.severity as FinanceReconcileCheckRow['severity']) || 'warning',
-        status: (v.status as FinanceReconcileCheckRow['status']) || 'warning',
-        message: v.message,
-        difference: v.difference,
-        tolerance: v.tolerance,
-      }));
-    const overallStatus = (summaryDetails.overallStatus as FinanceReconcileSummary['overallStatus']) || 'na';
-    reconcile = {
-      available: Boolean(summaryRow) || checks.length > 0,
-      enforceMode: RECONCILE_ENFORCE,
-      overallStatus,
-      summary: (summaryDetails.summary as FinanceReconcileSummary['summary']) || null,
-      checks,
-      computedAt: summaryRow?.computed_at ?? null,
-    };
-  }
+  const reconcile: FinanceReconcileSummary = summarizeReconcileValidations(input.reconcileValidations);
 
   // 3) Koszyk EV — football field. Basket już policzony przez wołającego (orkiestracja DB
   //    poniżej), tu tylko przenoszony do struktury sekcji.
@@ -429,20 +462,7 @@ export async function loadFinanceReportSectionData(
   const lineValues: LineValueMap = { ...maps.pnl, ...maps.bs, ...maps.cf };
 
   const packValidations: Array<Record<string, any>> = Array.isArray(detail.validations) ? detail.validations : [];
-  const reconcileValidations =
-    packValidations.length > 0
-      ? packValidations.map((v) => ({
-          check_code: String(v.check_code),
-          check_name: String(v.check_name),
-          severity: String(v.severity),
-          status: String(v.status),
-          message: String(v.message || ''),
-          difference: v.difference == null ? null : Number(v.difference),
-          tolerance: v.tolerance == null ? null : Number(v.tolerance),
-          details_json: v.details_json,
-          computed_at: String(v.computed_at || ''),
-        }))
-      : null; // pakiet nigdy nie przeszedł recompute → brak wpisów, NIE puste tablice = "0 checków"
+  const reconcileValidations = mapPackValidationsToReconcileRows(packValidations);
 
   return composeFinanceReportSection({
     organizationId: scope.organizationId,
@@ -463,6 +483,29 @@ export async function loadFinanceReportSectionData(
     valuation,
     asOf: scope.asOf,
   });
+}
+
+export interface PackReconcileSummary extends FinanceReconcileSummary {
+  packId: string;
+}
+
+/**
+ * Lekki READ-ONLY wrapper (UI badge use case, Delta route-wiring F5): zwraca WYŁĄCZNIE
+ * persystowany wynik reconcile R1-R8 dla pakietu (`financial_statement_validations`,
+ * scope='pack') bez liczenia wskaźników/EV (w odróżnieniu od `loadFinanceReportSectionData`,
+ * który komponuje pełną sekcję raportu). `null` = pakiet nie istnieje/nie należy do org.
+ */
+export async function loadReconcileSummaryForPack(
+  organizationId: string,
+  packId: string
+): Promise<PackReconcileSummary | null> {
+  const detail = await getStatementPackDetail(organizationId, packId);
+  if (!detail) return null;
+  const packValidations: Array<Record<string, any>> = Array.isArray(detail.validations)
+    ? detail.validations
+    : [];
+  const reconcileValidations = mapPackValidationsToReconcileRows(packValidations);
+  return { packId, ...summarizeReconcileValidations(reconcileValidations) };
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -733,7 +776,10 @@ export async function publishFinanceReportSectionSnapshot(
 
 export default {
   composeFinanceReportSection,
+  summarizeReconcileValidations,
+  mapPackValidationsToReconcileRows,
   loadFinanceReportSectionData,
+  loadReconcileSummaryForPack,
   renderFinanceReportMarkdown,
   getFinanceReportSectionLiveView,
   publishFinanceReportSectionSnapshot,
