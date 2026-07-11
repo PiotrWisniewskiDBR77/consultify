@@ -14,6 +14,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import { validateInitiativeCard } from './cardContentFormulaValidator.js';
+import {
+  materializeInsightCandidates,
+  type MaterializationOutcome,
+  type MaterializationSourceItem,
+} from './insightMaterializationService.js';
 
 // F3.3 — CARD_CONTENT_FORMULA §A3: injected into every assessment initiative-generation
 // prompt so the AI targets the McKinsey-grade card standard from the first call
@@ -180,6 +185,43 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
       });
   });
 };
+
+/**
+ * Raw assessment `answers_json` (Record<questionId, answer>) → generic
+ * `MaterializationSourceItem[]` — the "positions" the shared
+ * insightMaterializationService distills into candidates and every
+ * evidence_ref must point back to. Tolerant of any answer shape (plain
+ * string, `{ answer|value|text }`, or an arbitrary object) — never throws.
+ */
+function buildAssessmentSourceItems(
+  answersJson: string | null | undefined
+): MaterializationSourceItem[] {
+  if (!answersJson || typeof answersJson !== 'string') return [];
+  let answers: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(answersJson);
+    answers = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return [];
+  }
+
+  return Object.entries(answers)
+    .map(([key, value]) => {
+      let text: string;
+      if (value == null) {
+        text = '';
+      } else if (typeof value === 'string') {
+        text = value;
+      } else if (typeof value === 'object') {
+        const v = value as Record<string, unknown>;
+        text = String(v.answer ?? v.value ?? v.text ?? JSON.stringify(v));
+      } else {
+        text = String(value);
+      }
+      return { id: key, label: key, text: text.trim() };
+    })
+    .filter((item) => item.text.length > 0);
+}
 
 class AssessmentInitiativeService {
   /**
@@ -574,6 +616,77 @@ Return a JSON array with exactly ${count} initiatives in this format:
           err instanceof Error ? err.message : String(err)
         }`
       );
+    }
+  }
+
+  /**
+   * REFERENCE WIRING — Content Engines §5, pipeline steps [3]-[5] ("Zbierz
+   * wnioski"). Distills the RAW assessment answers (not the AI-generated
+   * initiatives above — the actual step-[2] result) into Insight-card
+   * candidates via the shared `insightMaterializationService`, gated by F14
+   * (CARD_CONTENT_FORMULA, ADVISORY).
+   *
+   * This is the "1 przykładowe wpięcie" showing how Catalog B (Assessment)
+   * calls the shared core instead of re-implementing distill→validate→repair.
+   * It is intentionally NOT invoked from any route yet (no user-facing
+   * change) — materialization must stay explicit/reversible (§5: the user
+   * sees candidates before any Insight row is created), so wiring this into
+   * an actual "Zbierz wnioski" action is a follow-up (Faza 3, §12) once the
+   * UI has a place to show candidates for review.
+   */
+  static async collectInsightCandidatesFromAssessment(
+    assessmentId: string,
+    organizationId: string
+  ): Promise<MaterializationOutcome> {
+    try {
+      const assessment = await queryHelpers.queryOne<AssessmentRow>(
+        `SELECT * FROM assessments WHERE id = ? AND organization_id = ?`,
+        [assessmentId, organizationId]
+      );
+      if (!assessment) {
+        return {
+          candidates: [],
+          repaired: false,
+          tokensUsed: 0,
+          generationTimeMs: 0,
+          degraded: true,
+          degradedReason: 'assessment_not_found',
+        };
+      }
+
+      const items = buildAssessmentSourceItems(assessment.answers_json);
+      if (items.length === 0) {
+        return {
+          candidates: [],
+          repaired: false,
+          tokensUsed: 0,
+          generationTimeMs: 0,
+          degraded: true,
+          degradedReason: 'no_answers',
+        };
+      }
+
+      return await materializeInsightCandidates({
+        sourceType: 'assessment',
+        sourceId: assessment.id,
+        organizationId,
+        title: `${assessment.assessment_type} — ${assessment.name}`,
+        items,
+      });
+    } catch (err) {
+      logger.warn(
+        `[AssessmentInitiativeService] collectInsightCandidatesFromAssessment failed (fail-soft): ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+      return {
+        candidates: [],
+        repaired: false,
+        tokensUsed: 0,
+        generationTimeMs: 0,
+        degraded: true,
+        degradedReason: 'unexpected_error',
+      };
     }
   }
 
