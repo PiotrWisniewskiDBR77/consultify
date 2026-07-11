@@ -25,7 +25,20 @@
  *   - Primary CTA is neutral (`bg-c-text text-c-surface`), inverting per theme.
  */
 
-import { FileText, Sparkles, FolderOpen, Clock, ChevronRight } from 'lucide-react';
+import {
+  FileText,
+  MessageSquare,
+  FolderOpen,
+  Clock,
+  ChevronRight,
+  Settings,
+  Lightbulb,
+  TrendingUp,
+  Database,
+  Users,
+  Shield,
+  Activity,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -55,16 +68,16 @@ interface DRDLightShellProps {
   onOpenChat?: () => void;
 }
 
-// Axis glyphs echo the mockup's calm mono symbols (kept as text so the rail
-// stays feather-light and theme-neutral).
-const AXIS_GLYPH: Record<number, string> = {
-  1: '⚙',
-  2: '◈',
-  3: '↗',
-  4: '▤',
-  5: '◎',
-  6: '⛨',
-  7: '✦',
+// Axis markers use the app's real lucide icon set (same as DRDForm's AXIS_META)
+// — no decorative glyphs, no stars. Meaningful, on-brand, theme-neutral.
+const AXIS_ICON: Record<number, React.ReactNode> = {
+  1: <Settings className="h-[13px] w-[13px]" />,
+  2: <Lightbulb className="h-[13px] w-[13px]" />,
+  3: <TrendingUp className="h-[13px] w-[13px]" />,
+  4: <Database className="h-[13px] w-[13px]" />,
+  5: <Users className="h-[13px] w-[13px]" />,
+  6: <Shield className="h-[13px] w-[13px]" />,
+  7: <Activity className="h-[13px] w-[13px]" />,
 };
 
 /** Monotonic blue maturity ramp (level 1..5) over the --c-focus-solid token. */
@@ -226,7 +239,7 @@ export const DRDLightShell: React.FC<DRDLightShellProps> = ({
             onClick={onOpenChat}
             className="inline-flex items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
           >
-            <Sparkles className="h-4 w-4" />
+            <MessageSquare className="h-4 w-4" />
             Teresa
           </button>
         )}
@@ -276,7 +289,7 @@ export const DRDLightShell: React.FC<DRDLightShellProps> = ({
                       className="grid h-[19px] w-[19px] place-items-center rounded-full text-[11px] text-c-text-secondary"
                       style={{ backgroundColor: on ? 'var(--c-surface)' : 'var(--c-surface)' }}
                     >
-                      {AXIS_GLYPH[axis.id]}
+                      {AXIS_ICON[axis.id]}
                     </span>
                   </span>
                   <span className="min-w-0 flex-1">
@@ -508,7 +521,7 @@ export const DRDLightShell: React.FC<DRDLightShellProps> = ({
                           className="mt-3 inline-flex items-center gap-2 text-[12.5px] font-medium transition-opacity hover:opacity-80"
                           style={{ color: BLUE }}
                         >
-                          <Sparkles className="h-3.5 w-3.5" />
+                          <MessageSquare className="h-3.5 w-3.5" />
                           {t(
                             'Nie wiesz? Poproś Teresę o diagnozę tego obszaru',
                             "Not sure? Ask Teresa to diagnose this area"
@@ -532,7 +545,7 @@ export const DRDLightShell: React.FC<DRDLightShellProps> = ({
           {/* Teresa */}
           <div className="mb-3 rounded-xl p-3.5" style={{ backgroundColor: BLUE_SOFT }}>
             <div className="mb-1.5 flex items-center gap-2 text-[12.5px] font-semibold" style={{ color: BLUE }}>
-              <Sparkles className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" />
               {t('Teresa · asystent diagnozy', 'Teresa · diagnosis assistant')}
             </div>
             <p className="m-0 mb-2.5 text-[12.5px] leading-snug text-c-text-secondary">

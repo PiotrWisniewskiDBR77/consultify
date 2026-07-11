@@ -23,6 +23,8 @@ import { AssessmentMenu3ActionBar } from '@/components/assessment/AssessmentMenu
 import { AssessmentV8CanonPanel } from '@/components/assessment/AssessmentV8CanonPanel';
 import { AssessmentWorkbenchPanel } from '@/components/assessment/AssessmentWorkbenchPanel';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
+import { DRDLightShell } from '@/components/assessment/drd/DRDLightShell';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DRDMatrixSession } from '@/components/assessment/drd/DRDMatrixSession';
 import { areasToFormData, formDataToAreas } from '@/components/assessment/drd/drdAnswersAdapter';
 import { DRDForm } from '@/components/assessment/tools/DRDForm';
@@ -45,6 +47,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
+import { isAssessmentLightEnabled } from '@/utils/assessmentLightFlag';
 
 type SupportedFramework = 'drd' | 'siri' | 'adma' | 'cmmi' | 'lean';
 
@@ -1770,6 +1773,34 @@ export const AssessmentSessionEditorView: React.FC = () => {
       </div>
     );
   };
+
+  // ── Fala 1 lekkość: gęsta powłoka DRD za flagą (default OFF; podgląd ?ff_assessmentLight=1).
+  // ON = pełne zastąpienie ciężkiego chromu (przełącznik surface / Manage / 6-stopniowy obieg /
+  // pół-pusta karta statusu) jedną lekką powłoką. OFF = poniższy return BEZ ZMIAN. Tylko DRD.
+  // Umieszczone PO wszystkich hookach → zgodne z regułami hooków.
+  if (framework === 'drd' && isAssessmentLightEnabled()) {
+    const lightDrdData = (answers?.drd || {}) as DRDFormData;
+    const lightPct = calcDrdCompletionPercent(lightDrdData);
+    return (
+      <ErrorBoundary>
+      <DRDLightShell
+        data={lightDrdData}
+        onChange={(next) => {
+          const nextAnswers = { ...answers, drd: next };
+          setAnswers(nextAnswers);
+          scheduleSave(nextAnswers, calcDrdCompletionPercent(next));
+        }}
+        readOnly={isLocked}
+        assessmentName={assessment?.name}
+        status={(assessment as any)?.workflow_status ?? (assessment as any)?.status}
+        progressPercent={lightPct}
+        confidence={calcConfidenceAvgFromCompletion(lightPct)}
+        onGenerateReport={handleOpenReportWorkflow}
+        onOpenChat={handleOpenChat}
+      />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-c-bg">
