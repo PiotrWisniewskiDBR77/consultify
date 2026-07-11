@@ -116,8 +116,13 @@ function deriveStatementReadiness(row: {
   return 'pending';
 }
 
-/** Best-effort org industry lookup — never throws (schema drift / missing org → undefined). */
-async function loadOrganizationIndustry(organizationId: string): Promise<string | undefined> {
+/**
+ * Best-effort org industry lookup — never throws (schema drift / missing org → undefined).
+ * Exported (additive) so other report composers (e.g. financeReportSectionService) can
+ * attach the same industry-benchmark context to a different ratio catalog's codes
+ * without re-querying/duplicating this lookup.
+ */
+export async function loadOrganizationIndustry(organizationId: string): Promise<string | undefined> {
   try {
     const row = await dbGet<any>(`SELECT industry FROM organizations WHERE id = ?`, [
       organizationId,

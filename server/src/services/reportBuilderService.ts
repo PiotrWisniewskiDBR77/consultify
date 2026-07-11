@@ -37,7 +37,14 @@ export type ReportSourceType =
   // PM2 (flagowy raport 3 osi, `_KONCEPT_PROGRAM_MANAGEMENT_2026-07-10.md` §6) —
   // dedykowany discriminant zamiast przeciążania RESULTS_KPI_REPORT/INITIATIVE;
   // sourceId = projectId|programId|organizationId (patrz threeAxisReportService.ts).
-  | 'PROGRAM_3AXIS';
+  | 'PROGRAM_3AXIS'
+  // Finance report section (silnik→raport, `_KONCEPT_FINANCE_2026-07-10.md` §3/§5) —
+  // wskaźniki (financeRatioFamilyCatalog) + reconcile R1-R8 (reconciliationService,
+  // shadow) + koszyk EV (valuationBasketService). Osobny discriminant z tego samego
+  // powodu co PROGRAM_3AXIS: 'FINANCIAL_ANALYSIS'/'VALUATION' są starszymi silnikami
+  // (financialAnalysisService / raw valuationService), nie tym kompozytem.
+  // sourceId = statementPackId (patrz financeReportSectionService.ts).
+  | 'FINANCE_SECTION';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'
