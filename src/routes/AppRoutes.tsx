@@ -31,8 +31,10 @@ import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
+import { isStudioEnabled } from '@/utils/studioFlag';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
+import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
@@ -1149,14 +1151,17 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Studio */}
+        {/* Studio — gated OFF by default (studioFlag): AI chat backend
+            (/api/studio/ai/*) was never implemented server-side, so the
+            real StudioView crashes on first chat message. Placeholder
+            keeps the route reachable without exposing the broken chat. */}
         <Route
           path={ROUTES.STUDIO}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Studio']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <StudioView />
+                  {isStudioEnabled() ? <StudioView /> : <StudioUnavailableView />}
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

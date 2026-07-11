@@ -58,6 +58,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { AppView } from '../../../types';
+import { isStudioEnabled } from '../../../utils/studioFlag';
 
 // ============================================
 // TYPES
@@ -191,7 +192,8 @@ export const useCommandPalette = () => {
 // DEFAULT COMMANDS
 // ============================================
 
-const getDefaultCommands = (onNavigate: (view: AppView) => void): CommandItem[] => [
+const getDefaultCommands = (onNavigate: (view: AppView) => void): CommandItem[] => {
+  const allCommands: CommandItem[] = [
   // Navigation
   {
     id: 'nav-ai-chat',
@@ -359,7 +361,13 @@ const getDefaultCommands = (onNavigate: (view: AppView) => void): CommandItem[] 
     keywords: ['security', 'password', 'mfa', '2fa'],
     onSelect: () => onNavigate(AppView.SETTINGS_MFA),
   },
-];
+  ];
+
+  // Studio's AI chat backend (/api/studio/ai/*) was never implemented
+  // server-side (studioFlag.ts, default OFF) — hide the palette entry so
+  // users don't land on the broken chat via search.
+  return isStudioEnabled() ? allCommands : allCommands.filter((cmd) => cmd.id !== 'nav-studio');
+};
 
 // ============================================
 // ANIMATIONS
