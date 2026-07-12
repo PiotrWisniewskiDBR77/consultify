@@ -43,6 +43,13 @@
  * `FinanceLightShell`. Mock data for the dev-render harness lives in
  * `dev-render/screens/execution-light.tsx`, not here.
  *
+ * TABLE CANON (2026-07-12, CLAUDE.md rule #9 / `scripts/check-list-canon.sh`):
+ * every record list here (initiatives, alerts, reports, decisions) embeds the
+ * REAL `<StandardTable>` facade (import, not reimplementation) — mirrors
+ * `InitiativesLightShell.tsx` ListTab. No hand-rolled `grid` + `.map()`
+ * tables; that regression ("tabelki jak dla trzylatka") is exactly what this
+ * rebuild fixes.
+ *
  * COLOR DOCTRINE (hard, identical to DRDLightShell/FinanceLightShell):
  *   - `c-accent` (Harvard Crimson) is reserved for critical semantics only —
  *     NOT used here. Active tab / primary numbers = the blue focus token
@@ -56,8 +63,8 @@
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronRight,
   Clock,
+  Eye,
   FileText,
   FolderOpen,
   Gauge,
@@ -71,6 +78,12 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import StandardTable, {
+  type StandardRowMenu,
+  type TableColumn,
+  type TableRow,
+} from '../standard/StandardTable';
 
 // ---------------------------------------------------------------------------
 // Types — lightweight mirrors of the real engine output shapes
@@ -573,57 +586,169 @@ function SummaryTab({
         </span>
       </div>
 
-      {/* per-initiative T/Z/W rows */}
+      {/* per-initiative T/Z/W rows — REAL <StandardTable> (2026-07-12 rule #9) */}
       <div className="mt-5 mb-2.5 flex items-center justify-between">
         <h3 className="m-0 text-[13px] font-semibold uppercase tracking-[0.08em] text-c-text-muted">
           {t('Inicjatywy', 'Initiatives')}
         </h3>
         <span className="text-[11.5px] text-c-text-muted">{initiatives.length}</span>
       </div>
-      <div className="flex flex-col gap-1.5">
-        {initiatives.map((ini) => (
-          <button
-            key={ini.id}
-            type="button"
-            onClick={() => onOpenInitiative?.(ini.id)}
-            className="grid w-full grid-cols-[1fr_260px_16px] items-center gap-4 rounded-xl border border-c-border bg-c-surface px-4 py-3 text-left transition-colors hover:border-c-border-strong"
-          >
-            <span className="min-w-0">
-              <span className="block truncate text-[14px] font-medium text-c-text">{ini.name}</span>
-              {ini.ownerName && (
-                <span className="block truncate text-[11.5px] text-c-text-muted">{ini.ownerName}</span>
-              )}
-            </span>
-            <span className="flex items-center gap-3">
-              <span className="flex w-full flex-col gap-1">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-4 text-[9.5px] font-semibold text-c-text-muted">T</span>
-                  <AxisBar pct={ini.T.pct} color={BLUE} />
-                  <span className="w-8 text-right text-[10.5px] tabular-nums text-c-text-muted">{fmtPct(ini.T.pct)}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-4 text-[9.5px] font-semibold text-c-text-muted">Z</span>
-                  <AxisBar pct={ini.Z.pct} color={BLUE} />
-                  <span className="w-8 text-right text-[10.5px] tabular-nums text-c-text-muted">{fmtPct(ini.Z.pct)}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-4 text-[9.5px] font-semibold text-c-text-muted">W</span>
-                  <AxisBar pct={ini.W.pct} color={RAG_META[ini.rag].barColor} />
-                  <span className="w-8 text-right text-[10.5px] tabular-nums text-c-text-muted">{fmtPct(ini.W.pct)}</span>
-                </span>
-              </span>
-              <span className={RAG_META[ini.rag].colorClass}>{RAG_META[ini.rag].icon}</span>
-            </span>
-            <ChevronRight className="h-4 w-4 text-c-text-muted" />
-          </button>
-        ))}
-        {initiatives.length === 0 && (
-          <div className="rounded-xl border border-dashed border-c-border px-4 py-6 text-center text-[12.5px] text-c-text-muted">
-            {t('Brak inicjatyw w tym programie.', 'No initiatives in this program.')}
-          </div>
-        )}
-      </div>
+      <InitiativesTable initiatives={initiatives} onOpenInitiative={onOpenInitiative} t={t} />
     </>
+  );
+}
+
+/** avg() over the available T/Z/W readings — the "Postęp %" blended figure;
+ * derived deterministically from the same axis data the bars render, never
+ * invented. null when no axis has data (mirrors AxisBar's null handling). */
+function avgAxisPct(ini: ExecutionInitiativeRowLite): number | null {
+  const vals = [ini.T.pct, ini.Z.pct, ini.W.pct].filter((v): v is number => v !== null);
+  if (vals.length === 0) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+function InitiativesTable({
+  initiatives,
+  onOpenInitiative,
+  t,
+}: {
+  initiatives: ExecutionInitiativeRowLite[];
+  onOpenInitiative?: (id: string) => void;
+  t: (pl: string, en: string) => string;
+}): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const RAG_ORDER: ExecutionRag[] = ['GREEN', 'AMBER', 'RED', 'NA'];
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: t('Inicjatywa', 'Initiative'),
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionInitiativeRowLite) => (
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-medium text-c-text">{row.name}</span>
+            {row.ownerName && (
+              <span className="block truncate text-[11px] text-c-text-muted">{row.ownerName}</span>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: 'T',
+        label: 'T',
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: ExecutionInitiativeRowLite) => row.T.pct ?? -1,
+        render: (row: ExecutionInitiativeRowLite) => (
+          <span className="flex items-center justify-end gap-2">
+            <span className="flex w-10 flex-shrink-0 overflow-hidden">
+              <AxisBar pct={row.T.pct} color={BLUE} />
+            </span>
+            <span className="w-8 text-right text-[10.5px] tabular-nums text-c-text-muted">{fmtPct(row.T.pct)}</span>
+          </span>
+        ),
+      },
+      {
+        id: 'Z',
+        label: 'Z',
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: ExecutionInitiativeRowLite) => row.Z.pct ?? -1,
+        render: (row: ExecutionInitiativeRowLite) => (
+          <span className="flex items-center justify-end gap-2">
+            <span className="flex w-10 flex-shrink-0 overflow-hidden">
+              <AxisBar pct={row.Z.pct} color={BLUE} />
+            </span>
+            <span className="w-8 text-right text-[10.5px] tabular-nums text-c-text-muted">{fmtPct(row.Z.pct)}</span>
+          </span>
+        ),
+      },
+      {
+        id: 'W',
+        label: 'W',
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: ExecutionInitiativeRowLite) => row.W.pct ?? -1,
+        render: (row: ExecutionInitiativeRowLite) => (
+          <span className="flex items-center justify-end gap-2">
+            <span className="flex w-10 flex-shrink-0 overflow-hidden">
+              <AxisBar pct={row.W.pct} color={RAG_META[row.rag].barColor} />
+            </span>
+            <span className="w-8 text-right text-[10.5px] tabular-nums text-c-text-muted">{fmtPct(row.W.pct)}</span>
+          </span>
+        ),
+      },
+      {
+        id: 'progress',
+        label: t('Postęp %', 'Progress %'),
+        width: '90px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: ExecutionInitiativeRowLite) => avgAxisPct(row) ?? -1,
+        render: (row: ExecutionInitiativeRowLite) => (
+          <span className="text-[12px] font-semibold tabular-nums text-c-text">{fmtPct(avgAxisPct(row))}</span>
+        ),
+      },
+      {
+        id: 'rag',
+        label: t('Status', 'Status'),
+        width: '130px',
+        sortable: true,
+        filterable: true,
+        filterOptions: RAG_ORDER.map((rag) => ({
+          value: rag,
+          label: RAG_META[rag].labelPl,
+          color: rag === 'GREEN' ? 'bg-c-success' : rag === 'AMBER' ? 'bg-c-warning' : rag === 'RED' ? 'bg-c-danger' : 'bg-c-text-muted',
+        })),
+        render: (row: ExecutionInitiativeRowLite) => (
+          <span className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium ${RAG_META[row.rag].colorClass}`}>
+            <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ backgroundColor: RAG_META[row.rag].barColor }} />
+            {RAG_META[row.rag].labelPl}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
+  );
+
+  const rowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('Otwórz', 'Open'),
+        icon: Eye,
+        onClick: onOpenInitiative ? () => onOpenInitiative(String(row.id)) : undefined,
+        disabled: !onOpenInitiative,
+      },
+    ],
+    universalHandlers: {
+      preview: onOpenInitiative ? () => onOpenInitiative(String(row.id)) : undefined,
+      previewNote: t('Podgląd z poziomu Initiatives', 'Preview from the Initiatives module'),
+    },
+  });
+
+  return (
+    <StandardTable
+      columns={columns}
+      data={initiatives}
+      onRowClick={onOpenInitiative ? (row) => onOpenInitiative(String(row.id)) : undefined}
+      onRowDoubleClick={onOpenInitiative ? (row) => onOpenInitiative(String(row.id)) : undefined}
+      rowMenu={rowMenu}
+      selection={{ selectedIds, onChange: setSelectedIds }}
+      persistKey="execution-light.summary-initiatives"
+      defaultSort={{ columnId: 'name', direction: 'asc' }}
+      canvasClassName="p-0"
+      empty={{
+        title: t('Brak inicjatyw w tym programie', 'No initiatives in this program'),
+      }}
+    />
   );
 }
 
@@ -664,35 +789,104 @@ function AlertsTab({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-1.5">
-        {alerts.map((alert) => {
-          const meta = SEVERITY_META[alert.severity];
-          return (
-            <div key={alert.id} className="overflow-hidden rounded-xl border border-c-border bg-c-surface px-4 py-3">
-              <div className="flex items-center gap-2.5">
-                <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide ${meta.colorClass} ${meta.bgClass}`}>
-                  {meta.labelPl}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-c-text">{alert.title}</span>
-                {alert.initiativeName && (
-                  <span className="shrink-0 truncate text-[11.5px] text-c-text-muted">{alert.initiativeName}</span>
-                )}
-              </div>
-              <p className="m-0 mt-1.5 text-[12.5px] leading-snug text-c-text-secondary">{alert.rationale}</p>
-              <div className="mt-1.5 text-[11.5px]">
-                <span className="text-c-text-muted">{t('sugerowana akcja', 'suggested action')}: </span>
-                <span className="font-semibold text-c-text-secondary">{alert.suggestedAction}</span>
-              </div>
-            </div>
-          );
-        })}
-        {alerts.length === 0 && (
-          <div className="rounded-xl border border-dashed border-c-border px-4 py-6 text-center text-[12.5px] text-c-text-muted">
-            {t('Brak aktywnych alertów — program bez sygnałów ryzyka.', 'No active alerts — program has no risk signals.')}
-          </div>
-        )}
+      <div className="mt-4">
+        <AlertsTable alerts={alerts} t={t} />
       </div>
     </>
+  );
+}
+
+/** REAL <StandardTable> for the alerts list (2026-07-12 rule #9) — replaces
+ * the previous hand-rolled `.map()` card list. */
+function AlertsTable({
+  alerts,
+  t,
+}: {
+  alerts: ExecutionAlertLite[];
+  t: (pl: string, en: string) => string;
+}): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const SEVERITY_ORDER: ExecutionAlertSeverity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+  const SEVERITY_DOT_CLASS: Record<ExecutionAlertSeverity, string> = {
+    CRITICAL: 'bg-c-danger',
+    HIGH: 'bg-c-danger',
+    MEDIUM: 'bg-c-warning',
+    LOW: 'bg-c-text-muted',
+  };
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: t('Alert', 'Alert'),
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionAlertLite) => (
+          <span className="flex min-w-0 items-start gap-2">
+            <span className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${SEVERITY_DOT_CLASS[row.severity]}`} />
+            <span className="min-w-0">
+              <span className="block truncate text-[13px] font-medium text-c-text">{row.title}</span>
+              <span className="block truncate text-[11px] text-c-text-muted">{row.rationale}</span>
+            </span>
+          </span>
+        ),
+      },
+      {
+        id: 'initiativeName',
+        label: t('Inicjatywa', 'Initiative'),
+        width: '190px',
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionAlertLite) => (
+          <span className="truncate text-[11.5px] text-c-text-secondary">{row.initiativeName || '—'}</span>
+        ),
+      },
+      {
+        id: 'suggestedAction',
+        label: t('Sugerowana akcja', 'Suggested action'),
+        width: '220px',
+        render: (row: ExecutionAlertLite) => (
+          <span className="truncate text-[11.5px] text-c-text-secondary">{row.suggestedAction}</span>
+        ),
+      },
+      {
+        id: 'severity',
+        label: t('Priorytet', 'Priority'),
+        width: '120px',
+        sortable: true,
+        sortAccessor: (row: ExecutionAlertLite) => SEVERITY_ORDER.indexOf(row.severity),
+        filterable: true,
+        filterOptions: SEVERITY_ORDER.map((s) => ({
+          value: s,
+          label: SEVERITY_META[s].labelPl,
+          color: SEVERITY_DOT_CLASS[s],
+        })),
+        render: (row: ExecutionAlertLite) => (
+          <span className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium ${SEVERITY_META[row.severity].colorClass}`}>
+            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${SEVERITY_DOT_CLASS[row.severity]}`} />
+            {SEVERITY_META[row.severity].labelPl}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
+  );
+
+  return (
+    <StandardTable
+      columns={columns}
+      data={alerts}
+      selection={{ selectedIds, onChange: setSelectedIds }}
+      persistKey="execution-light.alerts"
+      defaultSort={{ columnId: 'severity', direction: 'asc' }}
+      canvasClassName="p-0"
+      empty={{
+        title: t('Brak aktywnych alertów', 'No active alerts'),
+        description: t('Program bez sygnałów ryzyka.', 'Program has no risk signals.'),
+      }}
+    />
   );
 }
 
@@ -718,39 +912,123 @@ function ReportingTab({
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-c-border">
-        {reports.map((report, idx) => {
-          const meta = REPORT_RAG_META[report.rag];
-          return (
-            <button
-              key={report.id}
-              type="button"
-              onClick={() => onOpenReport?.(report.id)}
-              className={`grid w-full grid-cols-[1fr_140px_120px_90px] items-center gap-3 px-4 py-3 text-left text-[12.5px] transition-colors hover:bg-c-surface-raised ${
-                idx > 0 ? 'border-t border-c-border' : ''
-              }`}
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-[13.5px] font-medium text-c-text">{report.title}</span>
-                {report.lastRefreshLabel && (
-                  <span className="block truncate text-[11px] text-c-text-muted">{report.lastRefreshLabel}</span>
-                )}
-              </span>
-              <span className="truncate text-c-text-secondary">{report.audience}</span>
-              <span className="truncate text-c-text-muted">{report.cadence}</span>
-              <span className={`text-right text-[11px] font-semibold uppercase tracking-wide ${meta.colorClass}`}>
-                {meta.labelPl}
-              </span>
-            </button>
-          );
-        })}
-        {reports.length === 0 && (
-          <div className="px-4 py-6 text-center text-[12.5px] text-c-text-muted">
-            {t('Brak zdefiniowanych raportów.', 'No reports defined yet.')}
-          </div>
-        )}
+      <div className="mt-4">
+        <ReportsTable reports={reports} onOpenReport={onOpenReport} t={t} />
       </div>
     </>
+  );
+}
+
+/** REAL <StandardTable> for the report catalog list (2026-07-12 rule #9) —
+ * replaces the previous hand-rolled `grid-cols-[...]` button list. */
+function ReportsTable({
+  reports,
+  onOpenReport,
+  t,
+}: {
+  reports: ExecutionReportLite[];
+  onOpenReport?: (id: string) => void;
+  t: (pl: string, en: string) => string;
+}): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const RAG_ORDER: ExecutionReportRag[] = ['red', 'amber', 'green'];
+  const RAG_DOT_CLASS: Record<ExecutionReportRag, string> = {
+    green: 'bg-c-success',
+    amber: 'bg-c-warning',
+    red: 'bg-c-danger',
+  };
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: t('Raport', 'Report'),
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionReportLite) => (
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-medium text-c-text">{row.title}</span>
+            {row.lastRefreshLabel && (
+              <span className="block truncate text-[11px] text-c-text-muted">{row.lastRefreshLabel}</span>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: 'audience',
+        label: t('Odbiorca', 'Audience'),
+        width: '170px',
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionReportLite) => (
+          <span className="truncate text-[11.5px] text-c-text-secondary">{row.audience}</span>
+        ),
+      },
+      {
+        id: 'cadence',
+        label: t('Cykl', 'Cadence'),
+        width: '130px',
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionReportLite) => (
+          <span className="truncate text-[11.5px] text-c-text-muted">{row.cadence}</span>
+        ),
+      },
+      {
+        id: 'rag',
+        label: t('Status', 'Status'),
+        width: '110px',
+        sortable: true,
+        sortAccessor: (row: ExecutionReportLite) => RAG_ORDER.indexOf(row.rag),
+        filterable: true,
+        filterOptions: RAG_ORDER.map((r) => ({
+          value: r,
+          label: REPORT_RAG_META[r].labelPl,
+          color: RAG_DOT_CLASS[r],
+        })),
+        render: (row: ExecutionReportLite) => (
+          <span className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium ${REPORT_RAG_META[row.rag].colorClass}`}>
+            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${RAG_DOT_CLASS[row.rag]}`} />
+            {REPORT_RAG_META[row.rag].labelPl}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
+  );
+
+  const rowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('Otwórz', 'Open'),
+        icon: Eye,
+        onClick: onOpenReport ? () => onOpenReport(String(row.id)) : undefined,
+        disabled: !onOpenReport,
+      },
+    ],
+    universalHandlers: {
+      preview: onOpenReport ? () => onOpenReport(String(row.id)) : undefined,
+    },
+  });
+
+  return (
+    <StandardTable
+      columns={columns}
+      data={reports}
+      onRowClick={onOpenReport ? (row) => onOpenReport(String(row.id)) : undefined}
+      onRowDoubleClick={onOpenReport ? (row) => onOpenReport(String(row.id)) : undefined}
+      rowMenu={rowMenu}
+      selection={{ selectedIds, onChange: setSelectedIds }}
+      persistKey="execution-light.reports"
+      defaultSort={{ columnId: 'title', direction: 'asc' }}
+      canvasClassName="p-0"
+      empty={{
+        title: t('Brak zdefiniowanych raportów', 'No reports defined yet'),
+      }}
+    />
   );
 }
 
@@ -805,42 +1083,125 @@ function ManagementTab({
         </h3>
         <span className="text-[11.5px] text-c-text-muted">{decisions.length}</span>
       </div>
-      <div className="flex flex-col gap-1.5">
-        {decisions.map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            onClick={() => onOpenDecision?.(d.id)}
-            className="grid w-full grid-cols-[1fr_auto_auto] items-center gap-3.5 rounded-xl border border-c-border bg-c-surface px-4 py-3 text-left transition-colors hover:border-c-border-strong"
-          >
-            <span className="min-w-0">
-              <span className="block truncate text-[14px] font-medium text-c-text">{d.title}</span>
-              {d.linkedRiskTitle && (
-                <span className="block truncate text-[11.5px] text-c-text-muted">
-                  {t('powiązane ryzyko', 'linked risk')}: {d.linkedRiskTitle}
-                </span>
-              )}
-            </span>
-            <span className="whitespace-nowrap text-right text-[12px] text-c-text-muted">
-              {d.ownerName && <span>{d.ownerName}</span>}
-              {d.dueLabel && (
-                <span className={d.status === 'overdue' ? 'ml-2 font-semibold text-c-danger' : 'ml-2'}>
-                  {d.dueLabel}
-                </span>
-              )}
-            </span>
-            <span className={`whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide ${PRIORITY_META[d.priority].colorClass}`}>
-              {PRIORITY_META[d.priority].labelPl}
-            </span>
-          </button>
-        ))}
-        {decisions.length === 0 && (
-          <div className="rounded-xl border border-dashed border-c-border px-4 py-6 text-center text-[12.5px] text-c-text-muted">
-            {t('Brak decyzji oczekujących.', 'No pending decisions.')}
-          </div>
-        )}
-      </div>
+      <DecisionsTable decisions={decisions} onOpenDecision={onOpenDecision} t={t} />
     </>
+  );
+}
+
+/** REAL <StandardTable> for the decisions list (2026-07-12 rule #9) —
+ * replaces the previous hand-rolled `grid-cols-[...]` button list. */
+function DecisionsTable({
+  decisions,
+  onOpenDecision,
+  t,
+}: {
+  decisions: ExecutionDecisionLite[];
+  onOpenDecision?: (id: string) => void;
+  t: (pl: string, en: string) => string;
+}): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const PRIORITY_ORDER: ExecutionDecisionPriority[] = ['high', 'medium', 'low'];
+  const PRIORITY_DOT_CLASS: Record<ExecutionDecisionPriority, string> = {
+    high: 'bg-c-danger',
+    medium: 'bg-c-warning',
+    low: 'bg-c-text-muted',
+  };
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: t('Decyzja', 'Decision'),
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionDecisionLite) => (
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-medium text-c-text">{row.title}</span>
+            {row.linkedRiskTitle && (
+              <span className="block truncate text-[11px] text-c-text-muted">
+                {t('powiązane ryzyko', 'linked risk')}: {row.linkedRiskTitle}
+              </span>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: 'ownerName',
+        label: t('Właściciel', 'Owner'),
+        width: '140px',
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionDecisionLite) => (
+          <span className="truncate text-[11.5px] text-c-text-secondary">{row.ownerName || '—'}</span>
+        ),
+      },
+      {
+        id: 'dueLabel',
+        label: t('Termin', 'Due'),
+        width: '140px',
+        align: 'right',
+        sortable: true,
+        render: (row: ExecutionDecisionLite) => (
+          <span className={`text-[11.5px] ${row.status === 'overdue' ? 'font-semibold text-c-danger' : 'text-c-text-muted'}`}>
+            {row.dueLabel || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'priority',
+        label: t('Priorytet', 'Priority'),
+        width: '110px',
+        sortable: true,
+        sortAccessor: (row: ExecutionDecisionLite) => PRIORITY_ORDER.indexOf(row.priority),
+        filterable: true,
+        filterOptions: PRIORITY_ORDER.map((p) => ({
+          value: p,
+          label: PRIORITY_META[p].labelPl,
+          color: PRIORITY_DOT_CLASS[p],
+        })),
+        render: (row: ExecutionDecisionLite) => (
+          <span className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium ${PRIORITY_META[row.priority].colorClass}`}>
+            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${PRIORITY_DOT_CLASS[row.priority]}`} />
+            {PRIORITY_META[row.priority].labelPl}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
+  );
+
+  const rowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('Otwórz', 'Open'),
+        icon: Eye,
+        onClick: onOpenDecision ? () => onOpenDecision(String(row.id)) : undefined,
+        disabled: !onOpenDecision,
+      },
+    ],
+    universalHandlers: {
+      preview: onOpenDecision ? () => onOpenDecision(String(row.id)) : undefined,
+    },
+  });
+
+  return (
+    <StandardTable
+      columns={columns}
+      data={decisions}
+      onRowClick={onOpenDecision ? (row) => onOpenDecision(String(row.id)) : undefined}
+      onRowDoubleClick={onOpenDecision ? (row) => onOpenDecision(String(row.id)) : undefined}
+      rowMenu={rowMenu}
+      selection={{ selectedIds, onChange: setSelectedIds }}
+      persistKey="execution-light.decisions"
+      defaultSort={{ columnId: 'priority', direction: 'asc' }}
+      canvasClassName="p-0"
+      empty={{
+        title: t('Brak decyzji oczekujących', 'No pending decisions'),
+      }}
+    />
   );
 }
 
