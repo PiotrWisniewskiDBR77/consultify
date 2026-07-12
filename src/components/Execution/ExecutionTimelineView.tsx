@@ -55,6 +55,21 @@ interface ExecutionTimelineViewProps {
   riskSignals?: RiskSignalItem[];
   delaySignals?: DelaySignalItem[];
   governedTimelineWarnings?: TimelineWarning[];
+  /**
+   * #76 — real CPM (server/src/services/criticalPathService.ts, task-level)
+   * rolled up to initiative granularity. Keyed by initiativeId. When present
+   * (non-empty), it REPLACES the client-side heuristic (computeExecutionCriticalPath)
+   * for ring-highlighting; when absent/empty the heuristic keeps rendering exactly
+   * as before (fail-soft — no CPM data should never look different from today).
+   */
+  serverCriticalPath?: Map<string, CriticalPathInfo>;
+}
+
+/** Roll-up of task-level CPM onto one initiative: is any of its tasks on the
+ *  critical path, and what's the tightest (minimum) slack among them. */
+export interface CriticalPathInfo {
+  isCritical: boolean;
+  slackDays: number;
 }
 
 export interface RiskSignalItem {
@@ -281,19 +296,14 @@ function validateInitiativeDependencies(initiatives: FullInitiative[]): DepWarni
 // ============================================
 
 function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string> {
+  // Readability fix (#76): this heuristic used to also mark every BLOCKED/overdue
+  // initiative as "critical path" (danger ring). Those are already flagged by
+  // computeTimelineWarnings (amber ring + AlertTriangle badge + WarningsStrip),
+  // so double-marking them here just piled a second red ring on top of the amber
+  // one for no new information — the exact "too much red at once" complaint in #76.
+  // The critical-path ring below is reserved for genuine longest-dependency-chain
+  // membership (used only as a fallback when no server-side CPM data is available).
   const ids = new Set<string>();
-  const today = new Date();
-
-  initiatives.forEach((i) => {
-    if (i.status === InitiativeStatus.BLOCKED) ids.add(i.id);
-    if (
-      i.plannedEndDate &&
-      new Date(i.plannedEndDate) < today &&
-      i.status !== InitiativeStatus.DONE
-    ) {
-      ids.add(i.id);
-    }
-  });
 
   const initMap = new Map<string, FullInitiative>();
   initiatives.forEach((i) => initMap.set(i.id, i));
@@ -438,6 +448,10 @@ interface TimelineBarProps {
   baselineStartIdx?: number;
   baselineEndIdx?: number;
   showBaseline?: boolean;
+  /** #76 — tightest task-level slack (days) among this initiative's tasks, from
+   *  the real CPM. Only set when server CPM data is available; used for the
+   *  bar's hover tooltip so slack is visible without opening the initiative. */
+  criticalSlackDays?: number | null;
 }
 
 const TimelineBar: React.FC<TimelineBarProps> = ({
@@ -456,11 +470,31 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   baselineStartIdx,
   baselineEndIdx,
   showBaseline,
+  criticalSlackDays,
 }) => {
+  const { t } = useTranslation();
   const colors = STATUS_COLORS[initiative.status] || STATUS_COLORS[InitiativeStatus.EXECUTING];
   const span = Math.max(1, endIdx - startIdx + 1);
   const progress = initiative.progress || 0;
   const leftPercent = (startIdx / totalWeeks) * 100;
+  // Readability fix (#76): the bar itself never showed its date range — you had
+  // to click into the initiative to find out. A native title tooltip is the
+  // cheapest fix that needs zero visual redesign.
+  const rangeStart = initiative.startDate || initiative.plannedStartDate;
+  const rangeEnd = initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
+  const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('pl-PL') : '?');
+  const barTooltipLines = [
+    `${initiative.name} (${progress}%)`,
+    `${fmtDate(rangeStart)} → ${fmtDate(rangeEnd)}`,
+  ];
+  if (isOnCriticalPath) {
+    barTooltipLines.push(
+      typeof criticalSlackDays === 'number'
+        ? t('execution.timeline.slackDays', { count: Math.max(0, Math.round(criticalSlackDays)) })
+        : t('execution.timeline.criticalPath')
+    );
+  }
+  const barTooltip = barTooltipLines.join('\n');
   // M14/2.5 — baseline ghost bar: render only when enabled, indices valid, and the
   // plan actually differs from the current bar (slip/pull-in worth showing).
   const hasBaseline =
@@ -526,6 +560,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
       style={{ left: `${leftPercent}%`, width: `${widthPercent}%`, minWidth: '60px' }}
       whileHover={{ scale: 1.02 }}
       whileTap={onDragEnd ? { scale: 0.98 } : undefined}
+      title={barTooltip}
     >
       {hasWarning && (
         <div
@@ -750,6 +785,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   riskSignals,
   delaySignals,
   governedTimelineWarnings,
+  serverCriticalPath,
 }) => {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -974,11 +1010,22 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     return position < 0 || position > 100 ? null : position;
   }, [weeks, viewWeeks]);
 
-  const criticalPathIds = useMemo(
-    () =>
-      showCriticalPath ? computeExecutionCriticalPath(filteredInitiatives) : new Set<string>(),
-    [filteredInitiatives, showCriticalPath]
-  );
+  // #76 — prefer the real, task-level CPM (server/src/services/criticalPathService.ts)
+  // rolled up per initiative when it's available; fall back to the client-side
+  // longest-chain heuristic otherwise (unchanged behavior — fail-soft).
+  const usingServerCriticalPath = !!serverCriticalPath && serverCriticalPath.size > 0;
+
+  const criticalPathIds = useMemo(() => {
+    if (!showCriticalPath) return new Set<string>();
+    if (usingServerCriticalPath) {
+      const ids = new Set<string>();
+      serverCriticalPath!.forEach((info, initiativeId) => {
+        if (info.isCritical) ids.add(initiativeId);
+      });
+      return ids;
+    }
+    return computeExecutionCriticalPath(filteredInitiatives);
+  }, [filteredInitiatives, showCriticalPath, serverCriticalPath, usingServerCriticalPath]);
 
   const dependencyLines = useMemo(() => {
     const lines: Array<{
@@ -1472,6 +1519,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                         totalWeeks={viewWeeks}
                         onClick={() => onInitiativeClick(initiative)}
                         isOnCriticalPath={criticalPathIds.has(initiative.id)}
+                        criticalSlackDays={serverCriticalPath?.get(initiative.id)?.slackDays}
                         hasWarning={initWarnings.length > 0}
                         warningMessage={initWarnings.map((w) => w.message).join('\n')}
                         hasRiskSignal={initRisks.length > 0}
@@ -1512,7 +1560,11 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
           <div className="w-3 h-3 rounded ring-2 ring-danger-500/50 bg-danger-500/20" />
-          <span className="text-c-text-muted">Critical/Overdue</span>
+          <span className="text-c-text-muted">
+            {usingServerCriticalPath
+              ? t('execution.timeline.criticalPath')
+              : t('execution.timeline.criticalPathEstimate')}
+          </span>
         </div>
         {riskSignals && riskSignals.length > 0 && (
           <div className="flex items-center gap-1.5">

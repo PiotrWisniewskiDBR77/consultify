@@ -555,8 +555,9 @@ router.get(
       started_at: string | null;
       due_date: string | null;
       estimated_hours: number | null;
+      initiative_id: string | null;
     }>(
-      `SELECT t.id, t.title, t.status, t.started_at, t.due_date, t.estimated_hours
+      `SELECT t.id, t.title, t.status, t.started_at, t.due_date, t.estimated_hours, t.initiative_id
        FROM tasks t
        WHERE t.organization_id = ? AND t.${filterCol} = ?`,
       [orgId, filterVal]
@@ -630,6 +631,7 @@ router.get(
         durationDays,
         status: t.status,
         dependencies: depsBySucc.get(t.id) ?? [],
+        initiativeId: t.initiative_id,
       };
     });
 

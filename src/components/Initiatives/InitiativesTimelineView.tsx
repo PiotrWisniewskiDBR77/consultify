@@ -10,13 +10,22 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import type { FullInitiative, PortfolioInitiative, RelatedInitiative } from '../../types';
-import { ExecutionTimelineView } from '../Execution/ExecutionTimelineView';
+import { ExecutionTimelineView, type CriticalPathInfo } from '../Execution/ExecutionTimelineView';
 
 interface Dependency {
   id: string;
   fromInitiativeId: string;
   toInitiativeId: string;
   type: 'FINISH_TO_START' | 'START_TO_START';
+}
+
+/** Shape of one task row from GET /pmo/tasks/critical-path (task-level CPM,
+ *  server/src/services/criticalPathService.ts). Only the fields we roll up
+ *  onto initiatives are listed here. */
+interface CriticalPathTaskRow {
+  initiativeId?: string | null;
+  isCritical?: boolean;
+  slack?: number;
 }
 
 interface InitiativesTimelineViewProps {
@@ -92,10 +101,59 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
   const { t } = useTranslation();
   const [localInitiatives, setLocalInitiatives] = useState<PortfolioInitiative[]>(initiatives);
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
+  const [criticalPath, setCriticalPath] = useState<Map<string, CriticalPathInfo>>(new Map());
 
   useEffect(() => {
     setLocalInitiatives(initiatives);
   }, [initiatives]);
+
+  // #76 — wire the real, task-level CPM engine (server/src/services/criticalPathService.ts,
+  // GET /api/pmo/tasks/critical-path) into the timeline. It previously had zero callers in
+  // the front-end; the ring highlight was driven entirely by a client-side longest-chain
+  // heuristic over initiative-level dependencies (see ExecutionTimelineView.computeExecutionCriticalPath).
+  // The endpoint requires either initiativeId or projectId — this view lists many initiatives
+  // at once, so we use projectId (the project currently in scope) and roll task-level
+  // criticality/slack up to whichever initiative each task belongs to.
+  // Fail-soft by design: no projectId, an empty result, or a request error all leave
+  // `criticalPath` empty, so ExecutionTimelineView falls back to its existing heuristic
+  // — the timeline renders exactly as it does today.
+  useEffect(() => {
+    if (!projectId) {
+      setCriticalPath(new Map());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await Api.get(
+          `/pmo/tasks/critical-path?projectId=${encodeURIComponent(projectId)}`
+        );
+        const tasks: CriticalPathTaskRow[] = Array.isArray(response?.tasks) ? response.tasks : [];
+        const map = new Map<string, CriticalPathInfo>();
+        for (const task of tasks) {
+          const initiativeId = task.initiativeId;
+          if (!initiativeId) continue;
+          const prev = map.get(initiativeId);
+          const isCritical = !!task.isCritical || !!prev?.isCritical;
+          const taskSlack = typeof task.slack === 'number' ? task.slack : undefined;
+          const slackDays =
+            taskSlack === undefined
+              ? (prev?.slackDays ?? 0)
+              : prev
+                ? Math.min(prev.slackDays, taskSlack)
+                : taskSlack;
+          map.set(initiativeId, { isCritical, slackDays });
+        }
+        if (!cancelled) setCriticalPath(map);
+      } catch (error) {
+        console.error('[InitiativesTimelineView] Failed to load critical path:', error);
+        if (!cancelled) setCriticalPath(new Map());
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   const loadDependencies = useCallback(async () => {
     try {
@@ -190,6 +248,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
         onUpdateInitiative={handleUpdateInitiative}
         onDependenciesChanged={loadDependencies}
         projectId={projectId}
+        serverCriticalPath={criticalPath}
       />
     </div>
   );

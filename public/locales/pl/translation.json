@@ -4795,6 +4795,8 @@
       "noResults": "Brak inicjatyw pasujących do filtrów",
       "today": "Dziś",
       "criticalPath": "Ścieżka krytyczna",
+      "criticalPathEstimate": "Ścieżka krytyczna (szacunek)",
+      "slackDays": "Zapas: {{count}} dni",
       "hideCriticalPath": "Ukryj ścieżkę krytyczną",
       "showCriticalPath": "Pokaż ścieżkę krytyczną",
       "scheduleWarning": "Ostrzeżenie harmonogramu",
