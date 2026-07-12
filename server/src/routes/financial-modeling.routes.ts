@@ -38,6 +38,7 @@ import {
   createModel,
   deleteEvent,
   getModel,
+  getModelAssumptionsStatus,
   getOutputs,
   getValidations,
   listEvents,
@@ -324,6 +325,32 @@ router.get(
       source_statement: sourceStatement || null,
       source_statement_pack: sourceStatementPack || null,
     });
+  })
+);
+
+/**
+ * GET /api/financial-modeling/models/:id/assumptions-status
+ * #82f — jawny status założeń modelu (assumptionsRegistry / Z114): dla driverów
+ * baseline P&L + otwarcia bilansu — czy „imported" (z pakietu/sprawozdania), „ai_assumed"
+ * (domyślne, do przeglądu) czy „missing". Read-only, nic nie przelicza. Fail-soft:
+ * błąd silnika → { available:false }, nie 500 (read endpoint, wzorzec report-section/lineage).
+ */
+router.get(
+  '/models/:id/assumptions-status',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const modelId = String(req.params.id);
+    try {
+      const result = await getModelAssumptionsStatus(modelId, req.user?.organizationId);
+      if (!result) return res.status(404).json({ error: 'Model not found' });
+      res.json(result);
+    } catch (e: any) {
+      logger.warn(
+        `[FinancialModeling] assumptions-status degraded to unavailable for model ${modelId}: ${e?.message || e}`
+      );
+      res.json({ modelId, available: false, isGrounded: false, seedSource: null, assumptions: [], coverage: null });
+    }
   })
 );
 
