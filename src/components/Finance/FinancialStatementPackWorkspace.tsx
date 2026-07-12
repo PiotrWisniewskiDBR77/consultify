@@ -9,6 +9,7 @@ import {
   PanelRightOpen,
   RefreshCw,
   RotateCcw,
+  Search,
   Upload,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -31,6 +32,37 @@ import { StatementExplainPanel } from './StatementExplainPanel';
 import { StatementValidationBadges } from './StatementValidationBadges';
 
 type StatementTabType = 'P&L' | 'BS' | 'CF';
+
+/** #82g — mirror of server FinanceReportLineage (financeReportSectionService.ts). */
+interface FinanceLineageSourcePack {
+  packId: string;
+  entityName: string | null;
+  periodLabel: string | null;
+  periodEnd: string | null;
+  currency: string;
+}
+interface FinanceLineageAssumption {
+  key: string;
+  value: unknown;
+  sourceType: string;
+  rationale?: string;
+}
+interface FinanceReportLineageEntry {
+  id: string;
+  category: 'ratio' | 'reconcile' | 'valuation';
+  label: string;
+  value: string | null;
+  method: string;
+  sourcePack: FinanceLineageSourcePack | null;
+  assumptions: FinanceLineageAssumption[];
+}
+interface FinanceReportLineage {
+  packId: string | null;
+  sourcePack: FinanceLineageSourcePack | null;
+  generatedAt: string;
+  assumptions: FinanceLineageAssumption[];
+  entries: FinanceReportLineageEntry[];
+}
 
 interface PackDetail {
   id: string;
@@ -332,6 +364,11 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     []
   );
   const [showValidations, setShowValidations] = useState(false);
+  // #82g — F5 lineage (skąd/przez co/założenia), lazy-loaded on first toggle.
+  const [showLineage, setShowLineage] = useState(false);
+  const [lineageLoading, setLineageLoading] = useState(false);
+  const [lineage, setLineage] = useState<FinanceReportLineage | null>(null);
+  const [lineageLoaded, setLineageLoaded] = useState(false);
   const statementRequestSeq = useRef(0);
   const explainRequestSeq = useRef(0);
 
@@ -381,6 +418,12 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   useEffect(() => {
     void loadPack();
   }, [loadPack]);
+
+  useEffect(() => {
+    setLineage(null);
+    setLineageLoaded(false);
+    setShowLineage(false);
+  }, [statementPackId]);
 
   const packRow = useMemo(() => (detail ? mapPackDetailToRow(detail) : null), [detail]);
   const packValidations = useMemo(
@@ -505,6 +548,30 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
 
   const failCount = packValidations.filter((v) => v.status === 'fail').length;
   const warnCount = packValidations.filter((v) => v.status === 'warning').length;
+
+  // #82g — F5 lineage: GET .../report-section/lineage (live, read-only, nic nie publikuje).
+  const loadLineage = useCallback(async () => {
+    setLineageLoading(true);
+    try {
+      const response = (await Api.get(
+        `/api/finance-statements/packs/${statementPackId}/report-section/lineage`
+      )) as { lineage?: FinanceReportLineage } | null;
+      setLineage(response?.lineage || null);
+    } catch {
+      setLineage(null);
+    } finally {
+      setLineageLoading(false);
+      setLineageLoaded(true);
+    }
+  }, [statementPackId]);
+
+  const toggleLineage = useCallback(() => {
+    setShowLineage((prev) => {
+      const next = !prev;
+      if (next && !lineageLoaded) void loadLineage();
+      return next;
+    });
+  }, [lineageLoaded, loadLineage]);
 
   const sourceFiles = useMemo(() => {
     return childStatements.map((s) => ({
@@ -704,6 +771,17 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             </button>
           )}
 
+          {/* #82g — Lineage toggle: skąd/przez co/założenia dla wskaźników+reconcile+EV tej karty raportu */}
+          <button
+            type="button"
+            onClick={toggleLineage}
+            className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]"
+            title={isPl ? 'Ślad źródła (skąd ta liczba)' : 'Source lineage (where this number comes from)'}
+          >
+            <Search size={11} />
+            {showLineage ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+          </button>
+
           {/* Separator */}
           <div className="mx-1 h-5 w-px bg-slate-200/60 dark:bg-white/[0.06]" />
 
@@ -757,6 +835,60 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               validations={packValidations}
               emptyLabel={isPl ? 'Brak walidacji pakietu.' : 'No pack validations.'}
             />
+          </div>
+        )}
+
+        {/* #82g — Collapsible lineage (skąd/przez co/założenia) */}
+        {showLineage && (
+          <div className="border-t border-slate-200/50 dark:border-white/[0.05]">
+            {lineageLoading ? (
+              <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                {isPl ? 'Ładowanie śladu źródła…' : 'Loading source lineage…'}
+              </div>
+            ) : !lineage || lineage.entries.length === 0 ? (
+              <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                {isPl
+                  ? 'Brak śladu źródła — pakiet nie ma jeszcze przeliczonych wskaźników/reconcile/wyceny.'
+                  : 'No lineage yet — this pack has no computed ratios/reconcile/valuation.'}
+              </div>
+            ) : (
+              <div className="max-h-64 divide-y divide-slate-200/40 overflow-y-auto dark:divide-white/[0.04]">
+                {lineage.entries.map((entry) => (
+                  <div key={`${entry.category}-${entry.id}`} className="px-4 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[12px] font-medium text-slate-800 dark:text-slate-100">
+                        {entry.label}
+                      </span>
+                      <span className="font-mono text-[11px] tabular-nums text-slate-700 dark:text-slate-300">
+                        {entry.value ?? '—'}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                      {entry.method}
+                    </div>
+                    {entry.sourcePack && (
+                      <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
+                        {isPl ? 'Skąd: ' : 'Source: '}
+                        {entry.sourcePack.entityName || entry.sourcePack.packId}
+                        {entry.sourcePack.periodLabel ? ` · ${entry.sourcePack.periodLabel}` : ''}
+                      </div>
+                    )}
+                    {entry.assumptions.length > 0 && (
+                      <div className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+                        {isPl ? 'Założenia: ' : 'Assumptions: '}
+                        {entry.assumptions.map((a) => `${a.key}=${String(a.value)}`).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {lineage && lineage.assumptions.length > 0 && (
+              <div className="border-t border-slate-200/40 px-4 py-2 text-[10px] text-slate-500 dark:border-white/[0.04] dark:text-slate-400">
+                {isPl ? 'Założenia sekcji: ' : 'Section assumptions: '}
+                {lineage.assumptions.map((a) => a.key).join(', ')}
+              </div>
+            )}
           </div>
         )}
       </div>
