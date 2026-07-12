@@ -102,7 +102,16 @@ class StakeholderRegistryController {
           actorId,
           req.body || {}
         );
-        res.status(201).json({ success: true, stakeholder: entry });
+        // D11 defense-in-depth: the route's write-capability gate
+        // (requireStakeholderWrite) is itself a no-op unless
+        // EFFECTIVE_ACCESS_ENFORCE/SHADOW is set — so redact the response the
+        // same way every read path does, rather than trusting the mutation
+        // gate alone to keep confidential fields from a caller who lacks
+        // stakeholder.assessment.view.
+        const canView = await canViewAssessment(req, null);
+        res
+          .status(201)
+          .json({ success: true, stakeholder: stakeholderRegistryService.stripConfidential(entry, canView) });
       } catch (err: any) {
         res.status(err?.status || 400).json({ error: err?.message || 'Failed to create stakeholder' });
       }
@@ -125,7 +134,16 @@ class StakeholderRegistryController {
         res.status(404).json({ error: 'Stakeholder not found' });
         return;
       }
-      res.json({ success: true, stakeholder: entry });
+      // D11 defense-in-depth (see `create` above): redact before echoing the
+      // merged row back — it can carry pre-existing confidential fields the
+      // caller of THIS request never set (e.g. a PATCH that only touches
+      // orgUnit still echoes defaultInfluence/defaultInterest set earlier by
+      // someone else).
+      const canView = await canViewAssessment(req, null);
+      res.json({
+        success: true,
+        stakeholder: stakeholderRegistryService.stripConfidential(entry, canView),
+      });
     }
   );
 
@@ -208,7 +226,15 @@ class StakeholderRegistryController {
         res.status(404).json({ error: 'Engagement not found' });
         return;
       }
-      res.json({ success: true, engagement });
+      // D11 defense-in-depth (see `update` above): the merged row can carry
+      // confidential fields (influence/interest/status/notes) that predate
+      // this request and belong to the engagement's OWN project context, not
+      // necessarily the org-level baseline — gate on that project.
+      const canView = await canViewAssessment(req, engagement.projectId ?? null);
+      res.json({
+        success: true,
+        engagement: stakeholderRegistryService.stripConfidential(engagement, canView),
+      });
     }
   );
 
