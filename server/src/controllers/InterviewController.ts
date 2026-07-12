@@ -2232,7 +2232,7 @@ export async function loadAcceptedInterviewSessionsForManager(
 > {
   const rows = await queryHelpers.queryAll(
     `SELECT
-       s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id,
+       s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id, s.is_anonymous,
        s.answered_questions, s.total_questions,
        t.name as template_name, t.category as template_category,
        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
@@ -2254,20 +2254,28 @@ export async function loadAcceptedInterviewSessionsForManager(
     [organizationId, userId, organizationId, organizationId]
   );
 
-  return (rows || []).map((row: any) => ({
-    id: row.id,
-    name: row.name,
-    templateId: row.template_id || undefined,
-    templateName: row.template_name || undefined,
-    templateCategory: row.template_category || undefined,
-    status: row.status,
-    startedAt: row.started_at || undefined,
-    completedAt: row.completed_at || undefined,
-    respondentId: row.owner_id || undefined,
-    respondentName: String(row.respondent_name || '').trim() || undefined,
-    answeredQuestions: row.answered_questions || 0,
-    totalQuestions: row.total_questions || 0,
-  }));
+  // D18-A hard wall — this loader is joined on `a.created_by = userId`, so the
+  // caller is always the manager who created the assignment, never the
+  // respondent. Anonymize identity for any anonymous session.
+  return (rows || []).map((row: any) => {
+    const isAnon = flagOn(row.is_anonymous);
+    return {
+      id: row.id,
+      name: row.name,
+      templateId: row.template_id || undefined,
+      templateName: row.template_name || undefined,
+      templateCategory: row.template_category || undefined,
+      status: row.status,
+      startedAt: row.started_at || undefined,
+      completedAt: row.completed_at || undefined,
+      respondentId: isAnon ? undefined : row.owner_id || undefined,
+      respondentName: isAnon
+        ? 'Anonymous respondent'
+        : String(row.respondent_name || '').trim() || undefined,
+      answeredQuestions: row.answered_questions || 0,
+      totalQuestions: row.total_questions || 0,
+    };
+  });
 }
 
 export type InterviewSessionLifecycle = 'active' | 'archived' | 'trash' | 'all';
@@ -2400,6 +2408,7 @@ export async function loadManagedInterviewSessionsForManager(
        s.project_id,
        s.name,
        s.owner_id,
+       s.is_anonymous,
        s.status as session_runtime_status,
        s.template_id,
        s.started_at,
@@ -2448,36 +2457,50 @@ export async function loadManagedInterviewSessionsForManager(
     params
   );
 
-  const managed = (rows || []).map((row: any) => ({
-    id: row.id,
-    organizationId: row.organization_id,
-    projectId: row.project_id || undefined,
-    name: row.name || 'Discovery Interview',
-    ownerId: row.owner_id,
-    status: normalizeAssignmentStatusForClient(row.assignment_status || 'in_progress'),
-    sessionRuntimeStatus: row.session_runtime_status || undefined,
-    assignmentId: row.assignment_id || undefined,
-    assignmentStatus: normalizeAssignmentStatusForClient(row.assignment_status || undefined),
-    assignmentPriority: row.assignment_priority || undefined,
-    assignmentCreatedBy: row.assignment_created_by || undefined,
-    totalQuestions: row.total_questions || 0,
-    answeredQuestions: row.answered_questions || 0,
-    startedAt: row.started_at,
-    completedAt: row.completed_at || undefined,
-    lastActivityAt: row.last_activity_at || undefined,
-    templateId: row.template_id || undefined,
-    templateName: row.template_name || undefined,
-    templateCategory: row.template_category || undefined,
-    respondentId: row.owner_id || undefined,
-    respondentName: String(row.respondent_name || '').trim() || undefined,
-    assigneeId: row.assignee_id || undefined,
-    assigneeName: String(row.assignee_name || '').trim() || undefined,
-    assigneeEmail: row.assignee_email || undefined,
-    dueAt: row.due_at || undefined,
-    submittedAt: row.submitted_at || undefined,
-    sentBackAt: row.sent_back_at || undefined,
-    sentBackReason: row.sent_back_reason || undefined,
-  }));
+  // D18-A hard wall — this is the manager's "managed sessions" list. The
+  // caller can coincide with the respondent only in edge cases (e.g. a
+  // manager reviewing their own ad-hoc-turned-assigned session), so still
+  // check ownership rather than assuming "always someone else".
+  const managed = (rows || []).map((row: any) => {
+    const wallActive = isAnonymityWallActive(row, userId, 'owner_id');
+    return {
+      id: row.id,
+      organizationId: row.organization_id,
+      projectId: row.project_id || undefined,
+      name: row.name || 'Discovery Interview',
+      ownerId: row.owner_id,
+      status: normalizeAssignmentStatusForClient(row.assignment_status || 'in_progress'),
+      sessionRuntimeStatus: row.session_runtime_status || undefined,
+      assignmentId: row.assignment_id || undefined,
+      assignmentStatus: normalizeAssignmentStatusForClient(row.assignment_status || undefined),
+      assignmentPriority: row.assignment_priority || undefined,
+      assignmentCreatedBy: row.assignment_created_by || undefined,
+      totalQuestions: row.total_questions || 0,
+      answeredQuestions: row.answered_questions || 0,
+      startedAt: row.started_at,
+      completedAt: row.completed_at || undefined,
+      lastActivityAt: row.last_activity_at || undefined,
+      templateId: row.template_id || undefined,
+      templateName: row.template_name || undefined,
+      templateCategory: row.template_category || undefined,
+      respondentId: wallActive ? undefined : row.owner_id || undefined,
+      respondentName: wallActive
+        ? 'Anonymous respondent'
+        : String(row.respondent_name || '').trim() || undefined,
+      // For a single (non-team) assignment, assignee === respondent — leaving
+      // the assignee name visible here would silently undo the anonymization
+      // above, so it gets the same treatment.
+      assigneeId: wallActive ? undefined : row.assignee_id || undefined,
+      assigneeName: wallActive
+        ? 'Anonymous respondent'
+        : String(row.assignee_name || '').trim() || undefined,
+      assigneeEmail: wallActive ? undefined : row.assignee_email || undefined,
+      dueAt: row.due_at || undefined,
+      submittedAt: row.submitted_at || undefined,
+      sentBackAt: row.sent_back_at || undefined,
+      sentBackReason: row.sent_back_reason || undefined,
+    };
+  });
 
   // V-A — include the caller's own ad-hoc sessions (created via the Sessions-tab
   // "New session" CTA with no template/assignment). The managed query above
@@ -8198,12 +8221,13 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const userProfileExtendedColumns = await getTableColumns('user_profile_extended');
     const hasUserProfileExtended = userProfileExtendedColumns.size > 0;
+    await ensureInterviewAnonymityColumns();
 
     // Filter by organization and return approved/completed source material only.
     // Assigned interviews must be manager-approved; legacy/ad-hoc sessions remain eligible when completed.
     const rows = await queryHelpers.queryAll(
-      `SELECT 
-        s.id, s.name as name, s.template_id, s.status, s.completed_at, s.owner_id,
+      `SELECT
+        s.id, s.name as name, s.template_id, s.status, s.completed_at, s.owner_id, s.is_anonymous,
         s.answered_questions, s.total_questions,
         a.status as assignment_status,
         t.name as template_name, t.category as template_category,
@@ -8224,23 +8248,33 @@ ${JSON.stringify(questions || [], null, 2)}
       [user.organizationId, user.organizationId, user.organizationId]
     );
 
-    const sessions = (rows || []).map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      templateId: row.template_id,
-      templateName: row.template_name,
-      templateCategory: row.template_category,
-      status: row.status,
-      approvalStatus: row.assignment_status || 'completed',
-      sourceScopeStatus: 'approved_only',
-      completedAt: row.completed_at,
-      respondentId: row.owner_id,
-      respondentName: row.respondent_name,
-      respondentRole: row.job_title,
-      department: row.department,
-      answeredQuestions: row.answered_questions,
-      totalQuestions: row.total_questions,
-    }));
+    const sessions = (rows || []).map((row: any) => {
+      // D18-A hard wall — this is the Insights-tab session picker (manager
+      // chooses which sessions to feed into an Insight). It never exposes
+      // answer content, but respondent name/role/department alone already
+      // identify WHO answered — the exact "autora" leak the wall forbids for
+      // anonymous sessions. The respondent themselves still sees their own
+      // identity (they know who they are); anyone else gets anonymized labels.
+      const wallActive = isAnonymityWallActive(row, user.id, 'owner_id');
+      return {
+        id: row.id,
+        name: row.name,
+        templateId: row.template_id,
+        templateName: row.template_name,
+        templateCategory: row.template_category,
+        status: row.status,
+        approvalStatus: row.assignment_status || 'completed',
+        sourceScopeStatus: 'approved_only',
+        completedAt: row.completed_at,
+        respondentId: wallActive ? undefined : row.owner_id,
+        respondentName: wallActive ? 'Anonymous respondent' : row.respondent_name,
+        respondentRole: wallActive ? undefined : row.job_title,
+        department: wallActive ? undefined : row.department,
+        isAnonymous: flagOn(row.is_anonymous),
+        answeredQuestions: row.answered_questions,
+        totalQuestions: row.total_questions,
+      };
+    });
 
     res.json(sessions);
   }),
