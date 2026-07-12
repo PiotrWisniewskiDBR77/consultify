@@ -13,6 +13,10 @@ export interface CriticalPathTask {
   durationDays: number;
   status: string;
   dependencies: Array<{ fromTaskId: string; type: string; lagDays: number }>;
+  /** Optional passthrough so callers (e.g. project-wide CPM queries spanning
+   *  multiple initiatives) can roll task-level criticality up to the initiative
+   *  it belongs to. Not used by the CPM algorithm itself. */
+  initiativeId?: string | null;
 }
 
 export interface CriticalPathResultTask extends CriticalPathTask {
