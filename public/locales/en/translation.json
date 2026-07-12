@@ -12976,7 +12976,11 @@
       "error": "Could not load sheets",
       "emptyTitle": "Sheets in Outputs Library",
       "emptyBody": "Governed workbooks and exports will appear here through the same canonical artifact registry as documents and presentations. This tab now reflects live sheet artifacts as soon as the registry receives them.",
-      "emptyHint": "Create or export a governed sheet and it will appear here automatically."
+      "emptyHint": "Create or export a governed sheet and it will appear here automatically.",
+      "subtabs": {
+        "label": "Sheets sections",
+        "data": "Data sources"
+      }
     },
     "onboarding": {
       "title": "Your outputs land here",

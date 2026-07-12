@@ -13,7 +13,6 @@ export const RAP_TAB_TO_QUERY: Record<RapTab, string> = {
   outputs_documents: 'documents',
   presentations: 'presentations',
   outputs_sheets: 'sheets',
-  outputs_data: 'data',
   templates: 'templates',
 };
 
@@ -29,7 +28,9 @@ export function parseRapTabFromQuery(raw: string | null): RapTab | null {
     reports: 'outputs_documents',
     presentations: 'presentations',
     sheets: 'outputs_sheets',
-    data: 'outputs_data',
+    // #83a: Data Sources retired as a top-level tab — legacy `?tab=data` deep
+    // links now land on Sheets, where the Data Sources sub-tab lives.
+    data: 'outputs_sheets',
     templates: 'templates',
   };
   return map[n] ?? null;
