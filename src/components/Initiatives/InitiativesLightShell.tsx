@@ -46,10 +46,20 @@
  *   - All colors via c-* tokens (Tailwind classes or `var(--c-*)` /
  *     `rgb(var(--c-*-rgb) / a)`), never raw hex — both themes adapt.
  *
- * This component is presentational only (props in, JSX out) — no store, no
- * API calls, no context — exactly like `FinanceLightShell`. Mock data for
- * the dev-render harness lives in `dev-render/screens/initiatives-light.tsx`,
+ * This component is presentational only for its main props (props in, JSX
+ * out, no store, no context) — exactly like `FinanceLightShell`. Mock data
+ * for the dev-render harness lives in `dev-render/screens/initiatives-light.tsx`,
  * not here (same split as `finance-light.tsx` vs `FinanceLightShell.tsx`).
+ *
+ * ONE deliberate exception (2026-07-12, wiring RACI+results into the list):
+ * `ListTab` fires a single additive, batched `GET
+ * /api/initiatives/raci-results-summary?ids=...` (see
+ * `useInitiativesRaciResultsSummary` below) to enrich the "RACI"/"Wyniki"
+ * columns — the portfolio-list read (`PortfolioInitiative`) never carries
+ * per-initiative RACI/KPI data (see KNOWN GAPS note in `InitiativesHub.tsx`'s
+ * `mapPortfolioInitiativeToLite`). Fail-soft per row (dash, never a crash);
+ * this whole component only mounts behind `ff.initiatives_light` (OFF by
+ * default), so the fetch never fires unless the flag is already on.
  */
 import {
   AlertTriangle,
@@ -66,9 +76,10 @@ import {
   Plus,
   Target,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { API_URL, fetchWithRetry, getHeaders } from '../../services/api/baseClient';
 import StandardTable, {
   type StandardRowMenu,
   type TableColumn,
@@ -125,6 +136,100 @@ interface InitiativesLightShellProps {
   lastUpdatedLabel?: string;
   onCreateInitiative?: () => void;
   onOpenChat?: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// RACI + results batch summary — additive companion read for the Lista tab.
+// Mirrors the response shape of `GET /api/initiatives/raci-results-summary`
+// (server/src/services/pmo/initiativeRaciResultsSummaryService.ts,
+// `InitiativeRaciResultsEntry`) — kept as a local, loose type here rather
+// than importing a server module into the frontend bundle.
+// ---------------------------------------------------------------------------
+
+interface RaciAssignmentSummaryEntry {
+  id: string;
+  raciType: string | null;
+  role: string | null;
+  userId: string | null;
+  name: string | null;
+  email: string | null;
+}
+
+interface InitiativeResultSummaryEntry {
+  kpiId: string;
+  name: string;
+  unit: string | null;
+  targetValue: number | null;
+  latestValue: number | null;
+  isOnTarget: boolean;
+  status: string;
+}
+
+interface InitiativeRaciResultsSummaryEntry {
+  initiativeId: string;
+  raci: {
+    responsible: RaciAssignmentSummaryEntry[];
+    accountable: RaciAssignmentSummaryEntry[];
+    consulted: RaciAssignmentSummaryEntry[];
+    informed: RaciAssignmentSummaryEntry[];
+    unspecified: RaciAssignmentSummaryEntry[];
+  };
+  raciCount: number;
+  results: InitiativeResultSummaryEntry[];
+  resultsCount: number;
+}
+
+const RACI_RESULTS_BATCH_SIZE = 200; // matches server-side MAX_IDS
+
+/**
+ * Fires ONE (or, past 200 ids, a few chunked) batched `GET
+ * /api/initiatives/raci-results-summary` — never N+1 per row. Fail-soft: a
+ * failed/aborted chunk simply leaves those ids missing from the returned
+ * map, which callers render as a dash rather than crashing the row.
+ */
+function useInitiativesRaciResultsSummary(
+  ids: string[]
+): Record<string, InitiativeRaciResultsSummaryEntry> {
+  const [summaryById, setSummaryById] = useState<Record<string, InitiativeRaciResultsSummaryEntry>>({});
+  const idsKey = useMemo(() => Array.from(new Set(ids.filter(Boolean))).join(','), [ids]);
+
+  useEffect(() => {
+    if (!idsKey) {
+      setSummaryById({});
+      return;
+    }
+    let cancelled = false;
+    const uniqueIds = idsKey.split(',');
+    const chunks: string[][] = [];
+    for (let i = 0; i < uniqueIds.length; i += RACI_RESULTS_BATCH_SIZE) {
+      chunks.push(uniqueIds.slice(i, i + RACI_RESULTS_BATCH_SIZE));
+    }
+
+    (async () => {
+      const merged: Record<string, InitiativeRaciResultsSummaryEntry> = {};
+      for (const chunk of chunks) {
+        try {
+          const res = await fetchWithRetry(
+            `${API_URL}/initiatives/raci-results-summary?ids=${encodeURIComponent(chunk.join(','))}`,
+            { method: 'GET', headers: getHeaders() }
+          );
+          if (!res.ok) continue;
+          const body = (await res.json()) as { summary?: Record<string, InitiativeRaciResultsSummaryEntry> };
+          Object.assign(merged, body?.summary || {});
+        } catch {
+          // Fail-soft per batch/chunk — those rows fall back to the empty
+          // (dash) state below; never blocks the rest of the list.
+        }
+      }
+      if (!cancelled) setSummaryById(merged);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [idsKey]);
+
+  return summaryById;
 }
 
 type LightTab = 'list' | 'kanban' | 'backbone';
@@ -550,6 +655,13 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
  * layout 1:1 (Inicjatywa · Status · Źródło · Rezultaty · Budżet), now
  * rendered through StandardTable's sort/filter header + kebab 5-block
  * contract + row-select → bulk (mirrors MaterialsLightShell/ToolsLightShell).
+ *
+ * 2026-07-12 addition: two more columns — "RACI" (role counts) and "Wyniki"
+ * (linked KPI count / on-target status) — sourced from ONE batched
+ * `useInitiativesRaciResultsSummary(ids)` call (see hook above), not from
+ * `row.results`/`row.stakeholders` (those are always `[]` at portfolio-list
+ * scope — see KNOWN GAPS note in `InitiativesHub.tsx`). Still the same
+ * `<StandardTable>` — only `columns` grows, no bespoke table.
  */
 function ListTab({
   initiatives,
@@ -575,6 +687,11 @@ function ListTab({
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // RACI + results batch enrichment for the "RACI"/"Wyniki" columns below —
+  // ONE call for the whole visible list, not N+1 per row (see hook doc above).
+  const initiativeIds = useMemo(() => initiatives.map((i) => i.id), [initiatives]);
+  const raciResultsSummary = useInitiativesRaciResultsSummary(initiativeIds);
 
   const STATUS_ORDER: InitiativeStatusLite[] = ['draft', 'planning', 'executing', 'blocked', 'done'];
   const PRIORITY_LABEL: Record<InitiativePriorityLite, string> = {
@@ -670,6 +787,53 @@ function ListTab({
         },
       },
       {
+        id: 'raci',
+        label: t('RACI', 'RACI'),
+        width: '120px',
+        align: 'right',
+        render: (row: PortfolioInitiativeLite) => {
+          const entry = raciResultsSummary[row.id];
+          if (!entry || entry.raciCount === 0) {
+            return <span className="text-[11.5px] text-c-text-muted">–</span>;
+          }
+          const buckets: { key: keyof typeof RACI_META; count: number }[] = [
+            { key: 'responsible', count: entry.raci.responsible.length },
+            { key: 'accountable', count: entry.raci.accountable.length },
+            { key: 'consulted', count: entry.raci.consulted.length },
+            { key: 'informed', count: entry.raci.informed.length },
+          ];
+          const nonZero = buckets.filter((b) => b.count > 0);
+          const title = nonZero.map((b) => `${RACI_META[b.key].label}: ${b.count}`).join(' · ');
+          return (
+            <span className="text-[11.5px] tabular-nums text-c-text-secondary" title={title}>
+              {nonZero.map((b) => `${RACI_META[b.key].abbr}${b.count}`).join(' ')}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'wyniki',
+        label: t('Wyniki', 'Outcomes'),
+        width: '130px',
+        align: 'right',
+        render: (row: PortfolioInitiativeLite) => {
+          const entry = raciResultsSummary[row.id];
+          if (!entry || entry.resultsCount === 0) {
+            return <span className="text-[11.5px] text-c-text-muted">–</span>;
+          }
+          const onTarget = entry.results.filter((r) => r.isOnTarget).length;
+          return (
+            <span
+              className={`text-[11.5px] tabular-nums ${
+                onTarget === entry.resultsCount ? 'text-c-success' : 'text-c-warning'
+              }`}
+            >
+              {onTarget}/{entry.resultsCount} KPI
+            </span>
+          );
+        },
+      },
+      {
         id: 'budget',
         label: t('Budżet', 'Budget'),
         width: '110px',
@@ -684,7 +848,7 @@ function ListTab({
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t, isPolish, currency, priorityDotClass, statusColorClass, statusDotClass, statusLabel]
+    [t, isPolish, currency, priorityDotClass, statusColorClass, statusDotClass, statusLabel, raciResultsSummary]
   );
 
   const rowMenu = (row: TableRow): StandardRowMenu => ({
