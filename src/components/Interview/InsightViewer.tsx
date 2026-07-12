@@ -81,8 +81,6 @@ import {
   NModeSectionWrapper,
   ToolbarIconButton,
 } from '@/components/shared/NModeLayout';
-import type { AIConsultantAction } from '@/components/shared/NModeLayout/AIConsultantPanel';
-import { AIConsultantPanel } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import { AddCardMenu } from '@/components/shared/NModeLayout/NModeCardManager';
@@ -986,6 +984,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const { currentUser, currentOrganization } = useAppStore();
+  const setChatSystemPrompt = useAppStore((s) => s.setChatSystemPrompt);
+  const setChatContextActions = useAppStore((s) => s.setChatContextActions);
   const openChatWithContext = useOpenChatWithContext();
   const interviewDemoData = useMemo(
     () =>
@@ -1197,9 +1197,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // AI/heuristic candidates from this insight against the live initiative grid).
   const [genOpen, setGenOpen] = useState(false);
 
-  // Artifact-level AI Consultant panel (POZIOM 3 — right slide-over). The
-  // slot-9 solid-teal toolbar button toggles this instead of a dropdown.
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   // Lifecycle transition state
   const [lifecycleTransitioning, setLifecycleTransitioning] = useState(false);
@@ -2405,6 +2402,126 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setIsRegenerating(false);
     }
   };
+
+  // #56 (D17) — "AI Konsultant" na Insight NIE otwiera już drugiego czatu
+  // (dawny AIConsultantPanel). Zamiast tego otwiera JEDEN, docked panel Teresy
+  // (prawa strona) z kontekstem całego insightu i publikuje te same 5 akcji
+  // jako trwałe przyciski komend WEWNĄTRZ Teresy (uiSlice.chatContextActions,
+  // renderowane przez UnifiedChatPanel). 4 akcje zasiewają prompt przez
+  // kanoniczny kanał pending-prompt Teresy (sessionStorage + event, konsumowany
+  // przez EnhancedChatInput); "Odśwież" wywołuje realny handleRegenerate.
+  const seedTeresaPrompt = useCallback((prompt: string) => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(
+          'consultify.teresa.pendingPrompt',
+          JSON.stringify({ prompt, ts: Date.now() })
+        );
+        window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
+      }
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
+  const openInsightConsultant = useCallback(() => {
+    if (!insight) return;
+
+    // Whole-insight context → docked Teresa system prompt (parytet z dawnym
+    // AIConsultantPanel.buildSystemPrompt).
+    const ctx = aiContextText && aiContextText.trim() ? `\n\n${aiContextText.trim()}` : '';
+    const systemPrompt = isPolish
+      ? `Jesteś konsultantem AI pracującym nad całym insightem${insight.title ? ` „${insight.title}”` : ''}. ` +
+        `Masz dostęp do pełnego kontekstu (wszystkie sekcje + metadane). ` +
+        `Pomagaj: uzupełniaj puste pola, syntetyzuj, kontroluj jakość, proponuj kolejne kroki. ` +
+        `Odpowiadaj zwięźle i konkretnie.${ctx}`
+      : `You are an AI consultant working on the whole insight${insight.title ? ` "${insight.title}"` : ''}. ` +
+        `You have access to the full context (all sections + metadata). ` +
+        `Help the user fill empty fields, synthesize, run quality checks, and propose next steps. ` +
+        `Answer concisely and concretely.${ctx}`;
+    setChatSystemPrompt(systemPrompt);
+
+    // Te same 5 akcji, teraz WEWNĄTRZ panelu Teresy.
+    setChatContextActions([
+      {
+        id: 'fill-empty',
+        label: isPolish ? 'Uzupełnij puste' : 'Fill empty',
+        icon: <Plus size={13} />,
+        onClick: () =>
+          seedTeresaPrompt(
+            isPolish
+              ? 'Uzupełnij puste i słabe pola tego insightu dobrze uzasadnioną propozycją treści, opartą na istniejącym kontekście. Wskaż, które pola uzupełniasz.'
+              : 'Fill in the empty and weak fields of this insight with well-reasoned draft content based on the existing context. Call out which fields you are completing.'
+          ),
+      },
+      {
+        id: 'synthesize',
+        label: isPolish ? 'Synteza' : 'Synthesize',
+        icon: <Layers size={13} />,
+        onClick: () =>
+          seedTeresaPrompt(
+            isPolish
+              ? 'Zsyntetyzuj ten insight: wydobądź kluczowe tematy, napięcia i myśl przewodnią spinającą wszystkie sekcje.'
+              : 'Synthesize this insight: surface the key themes, tensions, and the through-line across all sections.'
+          ),
+      },
+      {
+        id: 'quality-check',
+        label: isPolish ? 'Kontrola jakości' : 'Quality check',
+        icon: <CheckCircle2 size={13} />,
+        onClick: () =>
+          seedTeresaPrompt(
+            isPolish
+              ? 'Zrób kontrolę jakości tego insightu: czego brakuje, co jest słabe, sprzeczne lub niegotowe dla klienta? Podaj listę priorytetową.'
+              : "Do a quality check of this insight: what's missing, weak, contradictory, or not client-ready? Give a prioritized list."
+          ),
+      },
+      {
+        id: 'refresh',
+        label: isPolish ? 'Odśwież' : 'Refresh',
+        icon: <RefreshCw size={13} />,
+        busy: isRegenerating,
+        onClick: () => {
+          void handleRegenerate();
+        },
+      },
+      {
+        id: 'continue',
+        label: isPolish ? 'Kontynuuj' : 'Continue',
+        icon: <Send size={13} />,
+        onClick: () =>
+          seedTeresaPrompt(
+            isPolish
+              ? 'Kontynuujmy pracę nad tym insightem od miejsca, w którym skończyliśmy — jaki jest najbardziej wartościowy następny krok i pomóż mi go wykonać.'
+              : "Continue where we left off on this insight — what's the most valuable next step, and help me do it."
+          ),
+      },
+    ]);
+
+    // Otwórz JEDEN docked panel Teresy z kontekstem insightu (prawa strona).
+    void openChatWithContext({
+      entityType: 'insight',
+      entityId: insight.id,
+      entityName: insight.title,
+    });
+  }, [
+    insight,
+    aiContextText,
+    isPolish,
+    isRegenerating,
+    handleRegenerate,
+    seedTeresaPrompt,
+    setChatSystemPrompt,
+    setChatContextActions,
+    openChatWithContext,
+  ]);
+
+  // Sprzątanie: akcje kontekstowe insightu nie mogą wyciekać do innych modułów.
+  useEffect(() => {
+    return () => {
+      setChatContextActions(null);
+    };
+  }, [setChatContextActions]);
 
   // Pasek stanu karty AI-draft dla sekcji Insightu (wzorzec N §3.3). Wpina badge
   // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
@@ -8265,7 +8382,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setAiPanelOpen((v) => !v)}
+            onClick={openInsightConsultant}
             className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
           >
             <Sparkles size={14} className="text-c-text-muted" />
@@ -8766,9 +8883,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 onClick={() => setPresentOpen(true)}
               />
 
-              {/* Slot 9 — artifact-level AI Consultant (solid teal). Now TOGGLES
-                  the right-side AIConsultantPanel (POZIOM 3) instead of opening a
-                  one-shot dropdown. Stays teal/solid.
+              {/* Slot 9 — AI Consultant (solid teal). #56 (D17): otwiera JEDEN
+                  docked panel Teresy z kontekstem insightu + 5 akcji jako
+                  przyciski komend wewnątrz Teresy (openInsightConsultant), zamiast
+                  osobnego AIConsultantPanel. Stays teal/solid.
                   Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji AI. */}
               {!readMode && (
                 <>
@@ -8776,10 +8894,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <ToolbarAISolidButton
                     icon={<Sparkles size={14} />}
                     onClick={() => {
-                      setAiPanelOpen((v) => !v);
                       setExportMenuOpen(false);
                       setSectionsMenuOpen(false);
                       setAiMenuOpen(false);
+                      openInsightConsultant();
                     }}
                     title={isPolish ? 'AI Konsultant' : 'AI Consultant'}
                   >
@@ -9172,66 +9290,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           by the same `sections`. No custom children needed. (#21) */}
       </NModeShell>
 
-      {/* POZIOM 3 — artifact-level AI Consultant (canonical right slide-over).
-          Toggled by the slot-9 solid-teal toolbar button. The 5 canon actions:
-          Refresh runs the real `handleRegenerate`; the other four have no
-          distinct backend, so they ensure the panel is open and defer to the
-          embedded chat (which already carries the whole-artifact context +
-          quick prompts) — no invented endpoints. */}
-      {insight && (
-        <AIConsultantPanel
-          open={aiPanelOpen}
-          onClose={() => setAiPanelOpen(false)}
-          artifactType="insight"
-          artifactId={insight.id}
-          artifactTitle={insight.title}
-          contextText={aiContextText}
-          isPolish={isPolish}
-          isBusy={isRegenerating}
-          actions={
-            [
-              {
-                id: 'fill-empty',
-                label: 'Fill empty',
-                labelPl: 'Uzupełnij puste',
-                icon: <Plus size={14} />,
-                onClick: () => setAiPanelOpen(true),
-              },
-              {
-                id: 'synthesize',
-                label: 'Synthesize',
-                labelPl: 'Synteza',
-                icon: <Layers size={14} />,
-                onClick: () => setAiPanelOpen(true),
-              },
-              {
-                id: 'quality-check',
-                label: 'Quality check',
-                labelPl: 'Kontrola jakości',
-                icon: <CheckCircle2 size={14} />,
-                onClick: () => setAiPanelOpen(true),
-              },
-              {
-                id: 'refresh',
-                label: 'Refresh',
-                labelPl: 'Odśwież',
-                icon: <RefreshCw size={14} />,
-                onClick: () => {
-                  void handleRegenerate();
-                },
-                busy: isRegenerating,
-              },
-              {
-                id: 'continue',
-                label: 'Continue',
-                labelPl: 'Kontynuuj',
-                icon: <Send size={14} />,
-                onClick: () => setAiPanelOpen(true),
-              },
-            ] satisfies AIConsultantAction[]
-          }
-        />
-      )}
+      {/* #56 (D17): dawny artifact-level AIConsultantPanel (drugi czat) został
+          scalony w JEDEN docked panel Teresy. „AI Konsultant" (toolbar + prawy
+          panel Akcje) wywołuje openInsightConsultant() — otwiera Teresę z
+          kontekstem insightu i publikuje 5 akcji jako przyciski komend wewnątrz
+          Teresy. Komponent AIConsultantPanel nie jest już renderowany (plik
+          zostaje do sprzątnięcia martwego kodu po odbiorze). */}
 
       {/* Phase A3 — fullscreen Present mode over the canonical insight sections */}
       {presentOpen && presentCards.length > 0 && (
