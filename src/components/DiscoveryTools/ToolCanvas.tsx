@@ -824,6 +824,20 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     }
 
     if (toolType === 'portfolio-priority') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+            missionSuggestion={missionSuggestion}
+            onApplyMissionSuggestion={onApplyMissionSuggestion}
+            onDismissMissionSuggestion={onDismissMissionSuggestion}
+          />
+        );
+      }
       if (stepDefinition.id === 'input') {
         return (
           <PortfolioInputPhase
@@ -881,6 +895,20 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     }
 
     if (toolType === 'risk-uncertainty') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+            missionSuggestion={missionSuggestion}
+            onApplyMissionSuggestion={onApplyMissionSuggestion}
+            onDismissMissionSuggestion={onDismissMissionSuggestion}
+          />
+        );
+      }
       if (stepDefinition.id === 'input') {
         return (
           <RiskInputPhase
