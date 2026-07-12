@@ -139,9 +139,12 @@ router.put('/:id/program', requireOrgRole('user'), async (req: any, res: any) =>
   } catch (err: any) {
     const msg = String(err?.message || err);
     if (/program_id/i.test(msg) && /column/i.test(msg)) {
-      logger.warn(`[ProjectsRoute] PUT /:id/program — projects.program_id column missing (migration 916 not applied): ${msg}`);
+      logger.warn(
+        `[ProjectsRoute] PUT /:id/program — projects.program_id column missing (migration 916 not applied): ${msg}`
+      );
       return res.status(503).json({
-        error: 'projects.program_id not available yet on this database (migration 916 not applied).',
+        error:
+          'projects.program_id not available yet on this database (migration 916 not applied).',
       });
     }
     logger.error('[ProjectsRoute] PUT /:id/program failed:', err);
