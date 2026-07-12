@@ -262,6 +262,14 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const cellPadding = density === 'compact' ? 'px-4 py-2' : 'px-4 py-3';
 
+  // PPM-mirror (ANEKS #3b): right-click on a row opens the SAME
+  // RowActionsMenu popover as its kebab, anchored at the cursor instead of
+  // the button. One row can have an active context-menu point at a time.
+  const [contextMenuRow, setContextMenuRow] = useState<{
+    rowId: string;
+    point: { x: number; y: number };
+  } | null>(null);
+
   // Opt-in selection (canon §3.5). Normalize selectedIds to a Set for O(1) lookup.
   const selectedIdSet = useMemo(() => {
     if (!selection) return null;
@@ -757,6 +765,29 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     key={row.id}
                     onClick={() => onRowClick?.(row)}
                     onDoubleClick={() => onRowDoubleClick?.(row)}
+                    onContextMenu={
+                      hideRowActions
+                        ? undefined
+                        : (e) => {
+                            // ANEKS #3b — PPM-mirror: this row's menu content
+                            // mirrors exactly what the kebab column below
+                            // would compute. If it's genuinely empty, don't
+                            // swallow the native browser menu for nothing.
+                            const sections = getRowActionSections?.(row);
+                            const hasMenu = sections
+                              ? sections.length > 0
+                              : getRowActions
+                                ? (getRowActions(row)?.length ?? 0) > 0
+                                : true; // default hard-coded 5-action fallback
+                            if (!hasMenu) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenuRow({
+                              rowId: String(row.id),
+                              point: { x: e.clientX, y: e.clientY },
+                            });
+                          }
+                    }
                     className={[
                       'group cursor-pointer transition-colors',
                       row.id === selectedRowId
@@ -831,11 +862,25 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       <td className={`${cellPadding} text-right`}>
                         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                           {(() => {
+                            // PPM-mirror (ANEKS #3b): this row's context-menu
+                            // anchor, if the last right-click landed here.
+                            const contextMenuAnchor =
+                              contextMenuRow?.rowId === String(row.id)
+                                ? contextMenuRow.point
+                                : null;
+                            const closeContextMenu = () => setContextMenuRow(null);
                             // Triada standard: LONG contextual kebab as sections.
                             const sections = getRowActionSections?.(row);
                             if (sections) {
                               if (!sections.length) return null;
-                              return <RowActionsMenu iconVariant="vertical" sections={sections} />;
+                              return (
+                                <RowActionsMenu
+                                  iconVariant="vertical"
+                                  sections={sections}
+                                  contextMenuAnchor={contextMenuAnchor}
+                                  onContextMenuClose={closeContextMenu}
+                                />
+                              );
                             }
                             const actions: RowAction[] =
                               getRowActions?.(row) ??
@@ -877,7 +922,14 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
 
                             if (!actions.length) return null;
 
-                            return <RowActionsMenu iconVariant="vertical" actions={actions} />;
+                            return (
+                              <RowActionsMenu
+                                iconVariant="vertical"
+                                actions={actions}
+                                contextMenuAnchor={contextMenuAnchor}
+                                onContextMenuClose={closeContextMenu}
+                              />
+                            );
                           })()}
                         </div>
                       </td>
