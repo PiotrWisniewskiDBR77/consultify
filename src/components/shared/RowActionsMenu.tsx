@@ -52,6 +52,19 @@ interface RowActionsMenuProps {
   className?: string;
   /** Icon variant: horizontal "⋯" or vertical "⋮" */
   iconVariant?: 'horizontal' | 'vertical';
+  /**
+   * PPM-mirror (ANEKS #3b — `_PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md` #3/#33):
+   * "DOKŁADNIE TO SAMO menu ma wyskakiwać pod prawym przyciskiem myszy".
+   * When set to a viewport point, this SAME popover (same sections, same
+   * repositioning mechanism) opens already-open, anchored at that point
+   * instead of the kebab button — independent of the kebab's own open state.
+   * The caller (e.g. a table row's onContextMenu) owns this state and must
+   * clear it via `onContextMenuClose` to close (backdrop click/Escape/pick
+   * all call it). Purely additive: omit both props and behavior is
+   * byte-identical to today's kebab-only menu.
+   */
+  contextMenuAnchor?: { x: number; y: number } | null;
+  onContextMenuClose?: () => void;
 }
 
 export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
@@ -61,8 +74,10 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   className = '',
   // App Table Standard (v3): always prefer vertical kebab (⋮)
   iconVariant = 'vertical',
+  contextMenuAnchor = null,
+  onContextMenuClose,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [kebabOpen, setKebabOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -74,17 +89,40 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
     placement: 'top' | 'bottom';
   } | null>(null);
 
+  // Either trigger can drive the SAME popover: kebab click (internal state)
+  // or the PPM-mirror context-menu anchor (externally controlled point).
+  const isOpen = kebabOpen || !!contextMenuAnchor;
+
+  const closeMenu = useCallback(() => {
+    setKebabOpen(false);
+    onContextMenuClose?.();
+  }, [onContextMenuClose]);
+
   const handleToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsOpen((prev) => !prev);
+    setKebabOpen((prev) => !prev);
   }, []);
 
-  // Capture anchor rect on open and keep updated on scroll/resize.
+  // Capture anchor rect on open and keep updated on scroll/resize. In
+  // context-menu mode the anchor is the cursor point itself (static viewport
+  // coords) — no button to measure/track.
   useEffect(() => {
     if (!isOpen) {
       setAnchorRect(null);
       setPanelPos(null);
       setExpandedId(null);
+      return;
+    }
+
+    if (contextMenuAnchor) {
+      setAnchorRect({
+        top: contextMenuAnchor.y,
+        bottom: contextMenuAnchor.y,
+        left: contextMenuAnchor.x,
+        right: contextMenuAnchor.x,
+        width: 0,
+        height: 0,
+      } as DOMRect);
       return;
     }
 
@@ -101,7 +139,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
       window.removeEventListener('resize', update);
       window.removeEventListener('scroll', update, true);
     };
-  }, [isOpen]);
+  }, [isOpen, contextMenuAnchor]);
 
   // Position panel (fixed) so it won't be clipped by overflow containers.
   // Right-anchored to the button's right edge via CSS `right` — robust to panel width
@@ -148,11 +186,11 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
+      if (e.key === 'Escape') closeMenu();
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [isOpen]);
+  }, [isOpen, closeMenu]);
 
   const visibleSections = useMemo<RowActionSection[]>(() => {
     if (sections?.length) {
@@ -210,7 +248,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setIsOpen(false);
+                closeMenu();
               }}
             />
             <div
@@ -261,7 +299,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                                 return;
                               }
                               action.onClick();
-                              setIsOpen(false);
+                              closeMenu();
                             }}
                             disabled={action.disabled}
                             className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[action.variant || 'default']}`}
@@ -301,7 +339,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                                       e.stopPropagation();
                                       if (sub.disabled) return;
                                       sub.onClick();
-                                      setIsOpen(false);
+                                      closeMenu();
                                     }}
                                     disabled={sub.disabled}
                                     className={`w-full flex items-center gap-2 py-1.5 pl-8 pr-3 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[sub.variant || 'default']}`}

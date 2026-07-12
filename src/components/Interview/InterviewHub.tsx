@@ -48,6 +48,7 @@ import {
   Loader2,
   MessageSquare,
   MoreVertical,
+  Presentation,
   Rocket,
   RotateCcw,
   Send,
@@ -5673,32 +5674,6 @@ export const InterviewHub: React.FC = () => {
           return {
             primary: [
               {
-                id: 'export-tools',
-                label: insight.exportedToTools
-                  ? isPolish
-                    ? 'Wyeksportowano do Tools'
-                    : 'Exported to Tools'
-                  : isPolish
-                    ? 'Eksportuj do Tools'
-                    : 'Export to Tools',
-                icon: Send,
-                disabled: !!insight.exportedToTools,
-                onClick: () => handleExportInsightToTools(insight.id),
-              },
-              {
-                id: 'export-assessment',
-                label: insight.exportedToAssessment
-                  ? isPolish
-                    ? 'Wyeksportowano do Assessment'
-                    : 'Exported to Assessment'
-                  : isPolish
-                    ? 'Eksportuj do Assessment'
-                    : 'Export to Assessment',
-                icon: FileText,
-                disabled: !!insight.exportedToAssessment,
-                onClick: () => handleExportInsightToAssessment(insight.id),
-              },
-              {
                 id: 'download',
                 label: isPolish ? 'Pobierz' : 'Download',
                 icon: Download,
@@ -5723,6 +5698,53 @@ export const InterviewHub: React.FC = () => {
                 icon: GitFork,
                 disabled: forkingInsightIds.has(insight.id),
                 onClick: () => handleForkInsight(insight.id),
+              },
+            ],
+            // ANEKS #3a — blok referencyjny CONVERT TO (moduł-wzorzec, patrz
+            // `_PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md` #3/#254). Export-tools/
+            // Export-assessment ISTNIAŁY już wcześniej jako konwersje bespoke w
+            // bloku primary — tu tylko przeniesione pod wspólny nagłówek grupy
+            // "Convert to" (StandardTable buduje sam). Initiative/Presentation
+            // = pozycje "soon" z zrzutu Piotra — disabled z notą (brak onClick),
+            // NIGDY ukryte, gotowe do podłączenia realnego handlera później.
+            convertActions: [
+              {
+                id: 'export-tools',
+                label: insight.exportedToTools
+                  ? isPolish
+                    ? 'Wyeksportowano do Tools'
+                    : 'Exported to Tools'
+                  : isPolish
+                    ? 'Tools'
+                    : 'Tools',
+                icon: Send,
+                disabled: !!insight.exportedToTools,
+                onClick: () => handleExportInsightToTools(insight.id),
+              },
+              {
+                id: 'export-assessment',
+                label: insight.exportedToAssessment
+                  ? isPolish
+                    ? 'Wyeksportowano do Assessment'
+                    : 'Exported to Assessment'
+                  : isPolish
+                    ? 'Assessment'
+                    : 'Assessment',
+                icon: FileText,
+                disabled: !!insight.exportedToAssessment,
+                onClick: () => handleExportInsightToAssessment(insight.id),
+              },
+              {
+                id: 'convert-initiative',
+                label: isPolish ? 'Inicjatywa' : 'Initiative',
+                icon: Target,
+                note: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+              },
+              {
+                id: 'convert-presentation',
+                label: isPolish ? 'Prezentacja' : 'Presentation',
+                icon: Presentation,
+                note: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
               },
             ],
             universalHandlers: {

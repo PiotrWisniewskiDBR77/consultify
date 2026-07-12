@@ -181,6 +181,17 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
     }
   };
 
+  // Shown ONCE for the whole group, always at the TOP of the menu (ANEKS #4 —
+  // `_PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md` #4/#254: this note previously had
+  // two independent renders — one per variant branch, the inline one at the
+  // BOTTOM — flagged as a dubel. Single definition below, reused by both,
+  // both positioned above the item list.
+  const createsSessionNote = (
+    <div className="mb-1 border-b border-slate-200/60 px-3 pb-1.5 pt-1 text-[10px] text-slate-500 dark:border-white/10 dark:text-slate-500">
+      {t('traceability.convertTo.createsSession', 'Creates a MyWork session first')}
+    </div>
+  );
+
   return (
     <>
       <ConvertToDialog
@@ -236,10 +247,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                     style={menuStyle}
                     role="menu"
                   >
-                    {/* Shown once for the whole group instead of repeating on every item. */}
-                    <div className="px-3 pb-1.5 pt-1 text-[10px] text-slate-500 dark:text-slate-500 border-b border-slate-200/60 dark:border-white/10 mb-1">
-                      {t('traceability.convertTo.createsSession', 'Creates a MyWork session first')}
-                    </div>
+                    {createsSessionNote}
                     {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
                       <button
                         key={type}
@@ -258,6 +266,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
           </>
         ) : (
           <div className="flex flex-col gap-1 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 p-1">
+            {createsSessionNote}
             <div className="flex items-center gap-1">
               {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
                 <button
@@ -270,10 +279,6 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                   {t(labelKey)}
                 </button>
               ))}
-            </div>
-            {/* Shown once for the whole group instead of repeating on every item. */}
-            <div className="px-1 text-[10px] text-slate-600 dark:text-slate-500">
-              {t('traceability.convertTo.createsSession', 'Creates a MyWork session first')}
             </div>
           </div>
         )}
