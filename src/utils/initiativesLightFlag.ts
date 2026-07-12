@@ -72,7 +72,7 @@ export function isInitiativesLightEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return readEnvFlag();
+  return true; // FLIP 07-12: domyślnie ON na demo (akcept Piotra „daj mi to do demo"); ?ff_initiativesLight=0 wyłącza per-sesja
 }
 
 export const INITIATIVES_LIGHT_FLAG_KEYS = {
