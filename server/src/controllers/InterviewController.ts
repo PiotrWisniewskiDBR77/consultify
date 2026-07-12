@@ -4321,20 +4321,34 @@ export const InterviewController = {
       logger.warn('[InterviewController] Failed to send interview_sent_back notification', e);
     }
 
+    // D18-A hard wall — sendBackAssignment is always called by the reviewer
+    // (never the respondent), so an anonymous assignment always gets the
+    // score-only redaction here. Also strip the raw ai_review_snapshot_json
+    // string from both spreads below — it would otherwise bypass the
+    // redacted `aiReview` field.
+    const sendBackWallActive = isAnonymityWallActive(updated, admin.id, 'assignee_user_id');
+    const {
+      ai_review_snapshot_json: _sendBackRawAiReviewJson,
+      ...updatedWithoutRawAiReview
+    } = (updated as any) || {};
+    const sendBackAiReview = sendBackWallActive
+      ? redactAiReviewSnapshotForAnonymity(parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json))
+      : parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json);
+
     res.json({
-      ...updated,
+      ...updatedWithoutRawAiReview,
       status: normalizeAssignmentStatusForClient((updated as any)?.status),
       missingItems: parseMissingItems((updated as any)?.missing_items_json),
-      aiReview: parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json),
+      aiReview: sendBackAiReview,
       aiReviewedAt: (updated as any)?.ai_reviewed_at || null,
       reviewDecisionMemory: parseReviewDecisionMemory(
         (updated as any)?.review_decision_memory_json
       ),
       assignment: {
-        ...updated,
+        ...updatedWithoutRawAiReview,
         status: normalizeAssignmentStatusForClient((updated as any)?.status),
         missingItems: parseMissingItems((updated as any)?.missing_items_json),
-        aiReview: parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json),
+        aiReview: sendBackAiReview,
         aiReviewedAt: (updated as any)?.ai_reviewed_at || null,
         reviewDecisionMemory: parseReviewDecisionMemory(
           (updated as any)?.review_decision_memory_json
@@ -4471,10 +4485,23 @@ export const InterviewController = {
       [(assignment as any).session_id]
     );
 
+    // D18-A hard wall — approveAssignment is always called by the reviewer
+    // (never the respondent); redact + strip the raw snapshot JSON the same
+    // way as sendBackAssignment above.
+    const approveWallActive = isAnonymityWallActive(updatedAssignment, reviewer.id, 'assignee_user_id');
+    const {
+      ai_review_snapshot_json: _approveRawAiReviewJson,
+      ...updatedAssignmentWithoutRawAiReview
+    } = (updatedAssignment as any) || {};
+
     res.json({
       assignment: {
-        ...(updatedAssignment as any),
-        aiReview: parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
+        ...updatedAssignmentWithoutRawAiReview,
+        aiReview: approveWallActive
+          ? redactAiReviewSnapshotForAnonymity(
+              parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json)
+            )
+          : parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
         aiReviewedAt: (updatedAssignment as any)?.ai_reviewed_at || null,
         reviewDecisionMemory: parseReviewDecisionMemory(
           (updatedAssignment as any)?.review_decision_memory_json
@@ -4699,9 +4726,14 @@ export const InterviewController = {
       `SELECT * FROM interview_assignments WHERE id = ?`,
       [id]
     );
+    // D18-A hard wall — strip the raw ai_review_snapshot_json string before
+    // spreading; this endpoint never surfaces a parsed `aiReview` field, but
+    // the raw string would otherwise leak per-answer feedback/justification.
+    const { ai_review_snapshot_json: _escalateRawAiReviewJson, ...updatedWithoutRawAiReview } =
+      (updated as any) || {};
     res.json({
       success: true,
-      ...(updated || {}),
+      ...updatedWithoutRawAiReview,
       status: normalizeAssignmentStatusForClient((updated as any)?.status),
       escalatedAt: (updated as any)?.escalated_at || null,
       escalationCount: (updated as any)?.escalation_count || 0,
