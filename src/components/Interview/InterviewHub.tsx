@@ -108,6 +108,7 @@ import {
 import { type TableFilters } from '@/components/ui/ResizableTable';
 import { getTypeStyle } from '@/constants/statusColors';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
@@ -704,6 +705,9 @@ export const InterviewHub: React.FC = () => {
     currentUser,
     setInterviewBreadcrumbs,
   } = useAppStore();
+  // Fala lekkości — Interview light shell "Zapytaj Teresę" CTA (mirrors
+  // FinanceHub/InitiativesHub's openChatWithContext wiring).
+  const openChatWithContext = useOpenChatWithContext();
   // Permissions hook
   const {
     canAssign: permissionsCanAssign,
@@ -9737,6 +9741,13 @@ Return ONLY the answer text (no markdown fences).`;
           assignments={liteAssignments}
           insights={liteInsights}
           onNewSession={handleNewSession}
+          onOpenChat={() =>
+            openChatWithContext({
+              entityType: 'interview_module',
+              entityId: currentProjectId || 'interview',
+              entityName: isPolish ? 'Wywiady' : 'Interview',
+            })
+          }
           onOpenInsight={(id) => {
             // #57 follow-up — route the light shell's Insighty card through the
             // SAME handleOpenDocument()/activeDocumentId mechanism the legacy
@@ -9749,6 +9760,27 @@ Return ONLY the answer text (no markdown fences).`;
             // duplicated viewer, no visual change to either surface.
             const insight = insights.find((i) => i.id === id);
             if (insight) handleViewInsight(insight);
+          }}
+          onOpenSession={(id) => {
+            // Same #57-pattern fix, applied to Sesje: the kebab's "Otwórz" and
+            // the row double-click route through handleViewSession, which
+            // opens the real interview_session document (identical mechanism
+            // to onOpenInsight above).
+            const session = sessions.find((s) => s.id === id);
+            if (session) handleViewSession(session);
+          }}
+          onContinueAssignment={(id) => {
+            // AssignedTab's Rozpocznij/Kontynuuj button was fully dead (no
+            // onClick at all). openInterviewAssignmentFull is the legacy
+            // hub's single entry point for this action — starts the
+            // assignment (assignee, not yet started) or opens its session
+            // (already started) exactly like the Przypisane/Zarządzane
+            // tables in the full hub.
+            const assignment = combinedAssignments.find((a) => a.id === id);
+            if (assignment) {
+              const isManagerView = managedAssignments.some((a) => a.id === id);
+              void openInterviewAssignmentFull(assignment, isManagerView);
+            }
           }}
         />
       </ErrorBoundary>
