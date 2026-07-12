@@ -46,6 +46,7 @@ import organizationContextService from '../../services/organizationContext/Organ
 import { listFindings as listP10Findings } from '../../services/v8/interviewInsightFindingsService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
@@ -1626,7 +1627,10 @@ router.post(
           organizationId,
           resolvedProjectId,
           'dynamic-swot',
-          `Interview Insight: ${String(insightRow.title || 'Untitled')}`,
+          // Z139 (data-integrity): decode before storing tool_sessions.name —
+          // insightRow.title may already carry entities escaped by the global
+          // sanitizer on a prior save (mirrors notebook/canvas decode-before-store).
+          decodeHtmlEntities(`Interview Insight: ${String(insightRow.title || 'Untitled')}`),
           JSON.stringify({}),
           JSON.stringify(contextSnapshot),
           userId,

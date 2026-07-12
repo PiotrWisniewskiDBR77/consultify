@@ -39,6 +39,7 @@ import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapa
 import { assertIdeaMembership, selectCanonicalMapRow } from '../realtime/ideaMapAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { resolveMentionsFromComment } from '../utils/mentionResolver.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -759,7 +760,10 @@ const createMyWorkToolSession = async (params: {
   add('organization_id', orgId);
   add('project_id', null);
   add('tool_type', 'MYWORK');
-  add('name', `MyWork ${sourceType}: ${safeTitle}`.slice(0, 255));
+  // Z139 (data-integrity): safeTitle may already carry entities escaped by the
+  // global sanitizer on a prior save of the source idea/notebook. Decode before
+  // composing tool_sessions.name (mirrors the notebook/canvas decode-before-store fix).
+  add('name', decodeHtmlEntities(`MyWork ${sourceType}: ${safeTitle}`.slice(0, 255)));
   add('status', 'APPROVED');
   add('completion_percent', 100);
   add('confidence_avg', 1);
