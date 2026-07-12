@@ -163,6 +163,7 @@ export enum AppView {
   // Teamwork Views
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
   PROJECT_INTELLIGENCE = 'PROJECT_INTELLIGENCE', // AI-powered project knowledge capture
+  PROJECTS = 'PROJECTS', // Zwornik (#78): project stakeholder registry + finance rollup
 
   // Initiative Lifecycle Management
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP

@@ -309,6 +309,13 @@ export const Sidebar: React.FC = () => {
       icon: <Briefcase size={20} />,
       viewId: AppView.MY_WORK,
     },
+    // 1.6 Projects - Zwornik (#78): rejestr stakeholderów + rollup finansów projektu
+    {
+      id: 'PROJECTS',
+      label: t('sidebar.projects', 'Projects'),
+      icon: <Building2 size={20} />,
+      viewId: AppView.PROJECTS,
+    },
     // 2. Interview - ustrukturyzowana rozmowa z AI konsultantem
     {
       id: 'INTERVIEW',
