@@ -17,10 +17,15 @@
  *      needs day-to-day (doctryna gęstości §5: governance/analytics-heavy
  *      tabs stay optional, not on by default).
  *   3. Center:
- *      - Lista: dense TRIADA-style rows — priority dot · name+axis ·
- *        status pill · source badge (Idea Workspace/Assessment/Interview
- *        Insight/Audit Readout — mirrors `InitiativeSourceLink.tsx` labels)
- *        · results mini-summary · owner initials · budget.
+ *      - Lista: the REAL `<StandardTable>` facade (import, not
+ *        reimplementation) — Inicjatywa (priority dot + name/axis) · Status
+ *        (leading status dot, TRIADA kanon) · Źródło (Idea Workspace/
+ *        Assessment/Interview Insight/Audit Readout — mirrors
+ *        `InitiativeSourceLink.tsx` labels) · Rezultaty (on-target ratio,
+ *        text-right) · Budżet (text-right) — sort/filter header, kebab
+ *        5-block contract, row-select → bulk (2026-07-12 fix: this tab used
+ *        to hand-roll its own `grid` + `.map()` table, which broke the
+ *        frozen TRIADA canon — see `scripts/check-list-canon.sh`).
  *      - Kanban: 5 lanes (Draft/Planning/Executing/Blocked/Done — condensed
  *        from `InitiativeStatus`, mirrors `PortfolioKanbanView.tsx` lane
  *        logic) with dense cards.
@@ -50,6 +55,7 @@ import {
   AlertTriangle,
   Clock,
   ClipboardList,
+  Eye,
   FileText,
   FolderOpen,
   GitBranch,
@@ -62,6 +68,12 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import StandardTable, {
+  type StandardRowMenu,
+  type TableColumn,
+  type TableRow,
+} from '../standard/StandardTable';
 
 // ---------------------------------------------------------------------------
 // Types — lightweight mirrors of the real engine/store shapes
@@ -240,6 +252,18 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
     done: 'text-c-success',
   };
 
+  // Leading status dot (StandardTable column render) — same tone mapping as
+  // STATUS_COLOR_CLASS above, but as a `bg-*` for the dot instead of `text-*`
+  // for the label (TRIADA kanon: dot + neutral-toned label, mirrors
+  // InitiativesHub.tsx `statusDotClass`).
+  const STATUS_DOT_CLASS: Record<InitiativeStatusLite, string> = {
+    draft: 'bg-c-text-muted',
+    planning: '',
+    executing: '',
+    blocked: 'bg-c-danger',
+    done: 'bg-c-success',
+  };
+
   const PRIORITY_DOT_CLASS: Record<InitiativePriorityLite, string> = {
     CRITICAL: 'bg-c-danger',
     HIGH: 'bg-c-warning',
@@ -368,7 +392,9 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
               currency={currency}
               statusLabel={STATUS_LABEL}
               statusColorClass={STATUS_COLOR_CLASS}
+              statusDotClass={STATUS_DOT_CLASS}
               priorityDotClass={PRIORITY_DOT_CLASS}
+              isPolish={isPolish}
               t={t}
             />
           )}
@@ -510,6 +536,15 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
 // Sub-sections (kept in-file — presentational only, not reused elsewhere yet)
 // ---------------------------------------------------------------------------
 
+/**
+ * ListTab — the "Lista" view of the Initiatives light shell, rebuilt
+ * (2026-07-12) to embed the REAL `<StandardTable>` facade instead of a
+ * hand-rolled `grid` + `.map()` table (that regression broke the frozen
+ * TRIADA canon — `scripts/check-list-canon.sh`). Columns match the previous
+ * layout 1:1 (Inicjatywa · Status · Źródło · Rezultaty · Budżet), now
+ * rendered through StandardTable's sort/filter header + kebab 5-block
+ * contract + row-select → bulk (mirrors MaterialsLightShell/ToolsLightShell).
+ */
 function ListTab({
   initiatives,
   selectedId,
@@ -517,7 +552,9 @@ function ListTab({
   currency,
   statusLabel,
   statusColorClass,
+  statusDotClass,
   priorityDotClass,
+  isPolish,
   t,
 }: {
   initiatives: PortfolioInitiativeLite[];
@@ -526,9 +563,139 @@ function ListTab({
   currency: string;
   statusLabel: Record<InitiativeStatusLite, string>;
   statusColorClass: Record<InitiativeStatusLite, string>;
+  statusDotClass: Record<InitiativeStatusLite, string>;
   priorityDotClass: Record<InitiativePriorityLite, string>;
+  isPolish: boolean;
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const STATUS_ORDER: InitiativeStatusLite[] = ['draft', 'planning', 'executing', 'blocked', 'done'];
+  const PRIORITY_LABEL: Record<InitiativePriorityLite, string> = {
+    CRITICAL: t('Krytyczny', 'Critical'),
+    HIGH: t('Wysoki', 'High'),
+    MEDIUM: t('Średni', 'Medium'),
+    LOW: t('Niski', 'Low'),
+  };
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: t('Inicjatywa', 'Initiative'),
+        sortable: true,
+        filterable: true,
+        render: (row: PortfolioInitiativeLite) => (
+          <span className="flex min-w-0 items-center gap-2">
+            <span
+              className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${priorityDotClass[row.priority]}`}
+              style={row.priority === 'MEDIUM' ? { backgroundColor: BLUE } : undefined}
+              title={PRIORITY_LABEL[row.priority]}
+            />
+            <span className="min-w-0">
+              <span className="block truncate text-[13px] font-medium text-c-text">{row.name}</span>
+              <span className="block truncate text-[11px] text-c-text-muted">{row.axis}</span>
+            </span>
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('Status', 'Status'),
+        width: '130px',
+        sortable: true,
+        filterable: true,
+        filterOptions: STATUS_ORDER.map((s) => ({
+          value: s,
+          label: statusLabel[s],
+          color: statusDotClass[s] || 'bg-c-focus-solid',
+        })),
+        render: (row: PortfolioInitiativeLite) => (
+          <span
+            className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium ${statusColorClass[row.status]}`}
+            style={row.status === 'planning' || row.status === 'executing' ? { color: BLUE } : undefined}
+          >
+            <span
+              className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass[row.status]}`}
+              style={row.status === 'planning' || row.status === 'executing' ? { backgroundColor: BLUE } : undefined}
+            />
+            {statusLabel[row.status]}
+          </span>
+        ),
+      },
+      {
+        id: 'sourceType',
+        label: t('Źródło', 'Source'),
+        width: '140px',
+        sortable: true,
+        filterable: true,
+        filterOptions: (Object.keys(SOURCE_SHORT_LABEL) as InitiativeSourceTypeLite[]).map((s) => ({
+          value: s,
+          label: SOURCE_SHORT_LABEL[s],
+        })),
+        render: (row: PortfolioInitiativeLite) => (
+          <span className="flex items-center gap-1.5 truncate text-[11.5px] text-c-text-secondary" title={row.sourceLabel}>
+            {SOURCE_ICON[row.sourceType]}
+            <span className="truncate">{SOURCE_SHORT_LABEL[row.sourceType]}</span>
+          </span>
+        ),
+      },
+      {
+        id: 'results',
+        label: t('Rezultaty', 'Results'),
+        width: '130px',
+        align: 'right',
+        sortAccessor: (row: PortfolioInitiativeLite) =>
+          row.results.length === 0 ? -1 : row.results.filter((r) => r.onTarget).length / row.results.length,
+        sortable: true,
+        render: (row: PortfolioInitiativeLite) => {
+          const onTarget = row.results.filter((r) => r.onTarget).length;
+          return row.results.length === 0 ? (
+            <span className="text-[11.5px] text-c-text-muted">{t('brak', 'none')}</span>
+          ) : (
+            <span
+              className={`text-[11.5px] tabular-nums ${
+                onTarget === row.results.length ? 'text-c-success' : 'text-c-warning'
+              }`}
+            >
+              {onTarget}/{row.results.length} {t('na celu', 'on target')}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'budget',
+        label: t('Budżet', 'Budget'),
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: PortfolioInitiativeLite) => row.budget,
+        render: (row: PortfolioInitiativeLite) => (
+          <span className="text-[11.5px] tabular-nums text-c-text-secondary">
+            {formatCurrencyValue(row.budget, currency)}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, isPolish, currency, priorityDotClass, statusColorClass, statusDotClass, statusLabel]
+  );
+
+  const rowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('Otwórz', 'Open'),
+        icon: Eye,
+        onClick: () => onSelect(String(row.id)),
+      },
+    ],
+    universalHandlers: {
+      preview: () => onSelect(String(row.id)),
+      editNote: t('Edycja z poziomu pełnego widoku inicjatyw', 'Edit from the full Initiatives view'),
+    },
+  });
+
   return (
     <>
       <div className="mb-1 flex items-end justify-between gap-4">
@@ -542,61 +709,26 @@ function ListTab({
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-c-border">
-        <div className="grid grid-cols-[16px_minmax(160px,1fr)_96px_112px_110px_84px] items-center gap-3 border-b border-c-border bg-c-surface-raised px-4 py-2 text-[10.5px] font-semibold uppercase tracking-wide text-c-text-muted">
-          <span />
-          <span>{t('Inicjatywa', 'Initiative')}</span>
-          <span>{t('Status', 'Status')}</span>
-          <span>{t('Źródło', 'Source')}</span>
-          <span>{t('Rezultaty', 'Results')}</span>
-          <span className="text-right">{t('Budżet', 'Budget')}</span>
-        </div>
-        {initiatives.map((item, idx) => {
-          const onTarget = item.results.filter((r) => r.onTarget).length;
-          const on = item.id === selectedId;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelect(item.id)}
-              title={item.name}
-              className={`grid w-full grid-cols-[16px_minmax(160px,1fr)_96px_112px_110px_84px] items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                idx > 0 ? 'border-t border-c-border' : ''
-              } ${on ? '' : 'hover:bg-c-surface-raised'}`}
-              style={on ? { backgroundColor: BLUE_SOFT } : undefined}
-            >
-              <span className={`h-2 w-2 flex-shrink-0 rounded-full ${priorityDotClass[item.priority]}`} style={item.priority === 'MEDIUM' ? { backgroundColor: BLUE } : undefined} />
-              <span className="min-w-0">
-                <span className="block truncate text-[13px] font-medium text-c-text">{item.name}</span>
-                <span className="block truncate text-[11px] text-c-text-muted">{item.axis}</span>
-              </span>
-              <span className={`text-[11.5px] font-semibold ${statusColorClass[item.status]}`} style={item.status === 'planning' || item.status === 'executing' ? { color: BLUE } : undefined}>
-                {statusLabel[item.status]}
-              </span>
-              <span className="flex items-center gap-1.5 truncate text-[11.5px] text-c-text-secondary" title={item.sourceLabel}>
-                {SOURCE_ICON[item.sourceType]}
-                <span className="truncate">{SOURCE_SHORT_LABEL[item.sourceType]}</span>
-              </span>
-              <span className="text-[11.5px] tabular-nums text-c-text-secondary">
-                {item.results.length === 0 ? (
-                  <span className="text-c-text-muted">{t('brak', 'none')}</span>
-                ) : (
-                  <span className={onTarget === item.results.length ? 'text-c-success' : 'text-c-warning'}>
-                    {onTarget}/{item.results.length} {t('na celu', 'on target')}
-                  </span>
-                )}
-              </span>
-              <span className="text-right text-[11.5px] tabular-nums text-c-text-secondary">
-                {formatCurrencyValue(item.budget, currency)}
-              </span>
-            </button>
-          );
-        })}
-        {initiatives.length === 0 && (
-          <div className="px-4 py-6 text-center text-[12.5px] text-c-text-muted">
-            {t('Brak inicjatyw w portfolio.', 'No initiatives in the portfolio.')}
-          </div>
-        )}
+      <div className="mt-4">
+        <StandardTable
+          columns={columns}
+          data={initiatives}
+          selectedRowId={selectedId}
+          onRowClick={(row) => onSelect(String(row.id))}
+          onRowDoubleClick={(row) => onSelect(String(row.id))}
+          rowMenu={rowMenu}
+          selection={{ selectedIds, onChange: setSelectedIds }}
+          persistKey="initiatives-light.list"
+          defaultSort={{ columnId: 'name', direction: 'asc' }}
+          canvasClassName="p-0"
+          empty={{
+            title: t('Brak inicjatyw w portfolio', 'No initiatives in the portfolio'),
+            description: t(
+              'Utwórz pierwszą inicjatywę przyciskiem „Nowa inicjatywa" powyżej.',
+              'Create the first initiative with the "New initiative" button above.'
+            ),
+          }}
+        />
       </div>
     </>
   );
