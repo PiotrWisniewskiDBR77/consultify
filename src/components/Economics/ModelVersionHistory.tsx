@@ -3,7 +3,8 @@
  *
  * Lists all saved snapshots of a financial model (financial_model_versions).
  * Optionally shows an assumption diff between any two selected versions.
- * Mounted behind ff_modelVersions flag in FinanceModelDocumentView.
+ * Mounted behind ff_modelVersioning flag in FinancialModelWorkspace (#82c —
+ * moved here from the now-unused FinanceModelDocumentView full-view).
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-import { Plus, X } from 'lucide-react';
+import { ArrowRight, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,51 @@ interface FinancialAnalysisWorkspaceProps {
   initialAnalysisId?: string;
   hideSidebar?: boolean;
   onAnalysisChanged?: () => void;
+}
+
+/** #82e — target model for the "Use as model assumptions" bridge. */
+interface TargetModelOption {
+  id: string;
+  name: string;
+}
+
+// #82e — Analysis→Models bridge helpers (mirror the same V8-first/legacy-fallback
+// pattern already used for ratios/analyses above; no new backend, reuses the
+// existing financial-modeling CRUD: GET /models, GET /models/:id, PUT /models/:id).
+async function getModelsListForBridge(): Promise<TargetModelOption[]> {
+  try {
+    const data = await V8FinanceApi.getModels();
+    return Array.isArray(data?.models)
+      ? data.models.map((m) => ({ id: m.id, name: m.name }))
+      : [];
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) throw error;
+    const data = (await Api.get('/api/financial-modeling/models')) as any;
+    return Array.isArray(data) ? data.map((m: any) => ({ id: m.id, name: m.name })) : [];
+  }
+}
+
+async function getModelAssumptionsForBridge(modelId: string): Promise<Record<string, unknown>> {
+  try {
+    const data = await V8FinanceApi.getModel(modelId);
+    return (data?.model as any)?.assumptions_json || {};
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) throw error;
+    const data = (await Api.get(`/api/financial-modeling/models/${modelId}`)) as any;
+    return data?.assumptions_json || {};
+  }
+}
+
+async function updateModelAssumptionsForBridge(
+  modelId: string,
+  assumptions: Record<string, unknown>
+): Promise<void> {
+  try {
+    await V8FinanceApi.updateModel(modelId, { assumptions });
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) throw error;
+    await Api.put(`/api/financial-modeling/models/${modelId}`, { assumptions });
+  }
 }
 
 type RatioValueFormat = 'percent' | 'multiple' | 'days' | 'currency';
@@ -222,6 +267,15 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
 
+  // #82e — Analysis→Models bridge: which ratio rows are selected, and the
+  // modal state for picking the target model.
+  const [selectedRatioIds, setSelectedRatioIds] = useState<Set<string>>(new Set());
+  const [showUseAsAssumptions, setShowUseAsAssumptions] = useState(false);
+  const [targetModels, setTargetModels] = useState<TargetModelOption[]>([]);
+  const [targetModelsLoading, setTargetModelsLoading] = useState(false);
+  const [targetModelId, setTargetModelId] = useState('');
+  const [applyingAssumptions, setApplyingAssumptions] = useState(false);
+
   const fetchAnalyses = useCallback(async () => {
     try {
       let data: any;
@@ -243,6 +297,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
 
   const selectAnalysis = useCallback(async (analysis: Analysis) => {
     setSelected(analysis);
+    setSelectedRatioIds(new Set());
     try {
       let data: any;
       try {
@@ -257,6 +312,15 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
     } catch {
       setRatios([]);
     }
+  }, []);
+
+  const toggleRatioSelected = useCallback((ratioId: string) => {
+    setSelectedRatioIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(ratioId)) next.delete(ratioId);
+      else next.add(ratioId);
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -296,6 +360,70 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
       toast.error(t('finance.analysis.createFailed', 'Failed to create analysis'));
     }
   }, [fetchAnalyses, newTitle, onAnalysisChanged, selectAnalysis, t]);
+
+  // #82e — open the "Use as model assumptions" picker; lazy-loads the org's
+  // financial models the first time it's opened.
+  const openUseAsAssumptions = useCallback(async () => {
+    setShowUseAsAssumptions(true);
+    if (targetModels.length > 0) return;
+    setTargetModelsLoading(true);
+    try {
+      const models = await getModelsListForBridge();
+      setTargetModels(models);
+      if (models.length > 0) setTargetModelId((prev) => prev || models[0].id);
+    } catch {
+      toast.error(
+        t('finance.analysis.bridgeModelsLoadFailed', 'Failed to load financial models')
+      );
+    } finally {
+      setTargetModelsLoading(false);
+    }
+  }, [t, targetModels.length]);
+
+  // #82e — bridge: push the selected ratios into the target model's assumptions
+  // layer via the existing assumptions CRUD (PUT /models/:id), tagged with
+  // provenance 'from-analysis' so the model's Inputs & Assumptions tab can show
+  // where they came from. Ratios are KPIs (margins/days/multiples), not raw P&L
+  // baseline lines, so they are attached as a labeled, reviewable bundle rather
+  // than silently overwriting numeric baseline drivers with mismatched units.
+  const handleApplyAsAssumptions = useCallback(async () => {
+    if (!selected || !targetModelId) return;
+    const chosenRatios = getLatestRatios(ratios).filter((r) => selectedRatioIds.has(r.id));
+    if (chosenRatios.length === 0) return;
+    setApplyingAssumptions(true);
+    try {
+      const existingAssumptions = await getModelAssumptionsForBridge(targetModelId);
+      const mergedAssumptions = {
+        ...existingAssumptions,
+        fromAnalysis: {
+          analysisId: selected.id,
+          analysisTitle: selected.title,
+          appliedAt: new Date().toISOString(),
+          provenance: 'from-analysis',
+          ratios: chosenRatios.map((r) => ({
+            ratio_code: r.ratio_code,
+            ratio_name: r.ratio_name,
+            value: r.value,
+            period: r.period,
+            interpretation: r.interpretation ?? null,
+            benchmark: r.benchmark_value ?? r.benchmark ?? null,
+          })),
+        },
+      };
+      await updateModelAssumptionsForBridge(targetModelId, mergedAssumptions);
+      toast.success(
+        t('finance.analysis.bridgeApplied', 'Model assumptions updated from this analysis')
+      );
+      setShowUseAsAssumptions(false);
+      setSelectedRatioIds(new Set());
+    } catch {
+      toast.error(
+        t('finance.analysis.bridgeApplyFailed', 'Failed to update model assumptions')
+      );
+    } finally {
+      setApplyingAssumptions(false);
+    }
+  }, [ratios, selected, selectedRatioIds, t, targetModelId]);
 
   const fmtNumber = useMemo(
     () => new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -383,7 +511,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                     )}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                   <span className="rounded-full bg-white/[0.04] px-3 py-1.5">
                     {selected.status}
                   </span>
@@ -393,6 +521,25 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                   <span className="rounded-full bg-white/[0.04] px-3 py-1.5">
                     {t('finance.analysis.period', 'Period')}: {latestPeriod}
                   </span>
+                  {/* #82e — Analysis→Models bridge entry point. Disabled until at
+                      least one ratio row is checked below. */}
+                  <button
+                    onClick={() => void openUseAsAssumptions()}
+                    disabled={selectedRatioIds.size === 0}
+                    title={
+                      selectedRatioIds.size === 0
+                        ? (t(
+                            'finance.analysis.bridgeSelectHint',
+                            'Check one or more indicators below first'
+                          ) as string)
+                        : undefined
+                    }
+                    className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
+                  >
+                    {t('finance.analysis.useAsAssumptions', 'Use as model assumptions')}
+                    {selectedRatioIds.size > 0 ? ` (${selectedRatioIds.size})` : ''}
+                    <ArrowRight size={12} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -405,7 +552,12 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                 )}
               </div>
             ) : (
-              <RatioBlocksTable groupedRatios={groupedRatios} fmtNumber={fmtNumber} />
+              <RatioBlocksTable
+                groupedRatios={groupedRatios}
+                fmtNumber={fmtNumber}
+                selectedRatioIds={selectedRatioIds}
+                onToggleRatio={toggleRatioSelected}
+              />
             )}
           </div>
         )}
@@ -451,6 +603,80 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
           </div>
         </div>
       )}
+
+      {/* #82e — Analysis→Models bridge modal: pick a target financial model,
+          push the checked ratios into its assumptions layer (provenance
+          'from-analysis'). No new engine — reuses the existing models list +
+          assumptions CRUD. */}
+      {showUseAsAssumptions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-2xl bg-slate-950 p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-100">
+                {t('finance.analysis.useAsAssumptions', 'Use as model assumptions')}
+              </h2>
+              <button
+                onClick={() => setShowUseAsAssumptions(false)}
+                className="rounded-lg p-1 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="mb-4 text-sm text-slate-500">
+              {t(
+                'finance.analysis.bridgeHint',
+                'The selected indicators will be attached to the chosen financial model’s assumptions, labeled as coming from this analysis.'
+              )}
+            </p>
+            {targetModelsLoading ? (
+              <div className="py-4 text-sm text-slate-500">
+                {t('common.loading', 'Loading…')}
+              </div>
+            ) : targetModels.length === 0 ? (
+              <div className="mb-4 rounded-xl bg-white/[0.03] px-3 py-4 text-sm text-slate-500">
+                {t(
+                  'finance.analysis.bridgeNoModels',
+                  'No financial models yet. Create one in the Models tab first.'
+                )}
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="text-xs text-slate-500">
+                  {t('finance.analysis.bridgeTargetModel', 'Target model')}
+                </label>
+                <select
+                  value={targetModelId}
+                  onChange={(event) => setTargetModelId(event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none"
+                >
+                  {targetModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name || m.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowUseAsAssumptions(false)}
+                className="rounded-xl px-4 py-2 text-sm text-slate-600 transition hover:bg-white/[0.04] hover:text-slate-200"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                onClick={() => void handleApplyAsAssumptions()}
+                disabled={applyingAssumptions || !targetModelId || targetModels.length === 0}
+                className="rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg transition hover:bg-c-text-secondary disabled:opacity-50"
+              >
+                {applyingAssumptions
+                  ? t('common.saving', 'Saving…')
+                  : t('finance.analysis.bridgeApply', 'Apply to model')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -458,7 +684,9 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
 const RatioBlocksTable: React.FC<{
   groupedRatios: Record<string, Ratio[]>;
   fmtNumber: Intl.NumberFormat;
-}> = ({ groupedRatios, fmtNumber }) => (
+  selectedRatioIds: Set<string>;
+  onToggleRatio: (ratioId: string) => void;
+}> = ({ groupedRatios, fmtNumber, selectedRatioIds, onToggleRatio }) => (
   <div className="space-y-4">
     {RATIO_BLOCKS.map((block) => {
       const items = groupedRatios[block.key] || [];
@@ -477,6 +705,7 @@ const RatioBlocksTable: React.FC<{
             <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full min-w-[980px] text-sm">
               <thead>
                 <tr className="border-y border-white/[0.06] text-left text-[11px] uppercase tracking-wide text-slate-500">
+                  <th className="w-10 px-5 py-3" />
                   <th className="px-5 py-3 min-w-[240px]">Wskaźnik</th>
                   <th className="px-5 py-3 min-w-[240px]">Wyliczenie</th>
                   <th className="px-5 py-3 min-w-[360px]">Interpretacja</th>
@@ -494,6 +723,15 @@ const RatioBlocksTable: React.FC<{
 
                   return (
                     <tr key={ratio.id} className="border-t border-white/[0.06] align-top">
+                      <td className="px-5 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedRatioIds.has(ratio.id)}
+                          onChange={() => onToggleRatio(ratio.id)}
+                          aria-label={`${ratio.ratio_name} — use as model assumption`}
+                          className="h-4 w-4 rounded border-white/20 bg-white/[0.04] accent-white"
+                        />
+                      </td>
                       <td className="px-5 py-4">
                         <div className="font-medium text-slate-100">{ratio.ratio_name}</div>
                         <div className="mt-1 text-xs text-slate-500">Okres: {ratio.period}</div>

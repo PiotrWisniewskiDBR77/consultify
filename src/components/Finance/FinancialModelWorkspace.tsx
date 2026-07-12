@@ -35,6 +35,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { EmptyState as SharedEmptyState } from '@/components/shared/states';
 
+import { isFinanceFlagEnabled } from '../Economics/financeFeatureFlags';
+import { ModelVersionHistory } from '../Economics/ModelVersionHistory';
 import Api from '../../services/api';
 import {
   shouldFallbackToLegacyFinance,
@@ -680,6 +682,25 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const seedSource = selectedModel?.assumptions_json?.seedSource || null;
   const seedStatus = selectedModel?.assumptions_json?.seedStatus || null;
   const baselineAssumptions = (assumptions?.baseline || {}) as Record<string, number>;
+  // #82e — Analysis→Models bridge (FinancialAnalysisWorkspace "Use as model
+  // assumptions"): ratios pushed from a financial analysis, tagged with
+  // provenance 'from-analysis'. Read-only display here; written via the
+  // existing PUT /models/:id assumptions CRUD by the bridge action.
+  const fromAnalysis = (assumptions as any)?.fromAnalysis as
+    | {
+        analysisId?: string;
+        analysisTitle?: string;
+        appliedAt?: string;
+        ratios?: Array<{
+          ratio_code: string;
+          ratio_name: string;
+          value: number | null;
+          period?: string;
+          interpretation?: string | null;
+          benchmark?: number | null;
+        }>;
+      }
+    | undefined;
   const missingBaselineLines: string[] = Array.isArray(seedStatus?.missingBaselineLines)
     ? seedStatus.missingBaselineLines
     : [];
@@ -1016,6 +1037,40 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       ))}
                     </div>
                   </div>
+
+                  {/* #82e — Analysis→Models bridge: shows what a "Use as model
+                      assumptions" action from FinancialAnalysisWorkspace pushed
+                      here, so the wiring is visible, not silent. */}
+                  {fromAnalysis && (fromAnalysis.ratios?.length ?? 0) > 0 && (
+                    <div className="rounded-xl border border-blue-200/70 dark:border-blue-700/40 bg-blue-50/70 dark:bg-blue-900/10 p-5 space-y-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                          {t('finance.model.fromAnalysisTitle', 'From financial analysis')}
+                        </h3>
+                        <span className="text-[10px] uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                          {t('finance.model.fromAnalysisProvenance', 'from-analysis')}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-600 dark:text-slate-300">
+                        {fromAnalysis.analysisTitle || fromAnalysis.analysisId}
+                        {fromAnalysis.appliedAt
+                          ? ` · ${new Date(fromAnalysis.appliedAt).toLocaleString(isPl ? 'pl-PL' : 'en-US')}`
+                          : ''}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {(fromAnalysis.ratios || []).map((r) => (
+                          <span
+                            key={r.ratio_code}
+                            title={r.interpretation || undefined}
+                            className="rounded-full bg-white dark:bg-navy-800 border border-blue-200/70 dark:border-blue-700/40 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200"
+                          >
+                            {r.ratio_name}: <span className="font-mono">{r.value ?? '—'}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5 space-y-4">
                     <h3 className="font-semibold text-slate-900 dark:text-white">
                       {t('finance.model.initialBalances', 'Initial Balance Sheet')}
@@ -1602,6 +1657,17 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                 </div>
               )}
             </div>
+
+            {/* Version history (M16/6.5) — behind ff_modelVersioning, same
+                parity as the previous FinanceModelDocumentView full-view. */}
+            {isFinanceFlagEnabled('modelVersioning') && (
+              <div className="border-t border-slate-200 dark:border-navy-700 p-4">
+                <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('finance.versions.title', 'Version history')}
+                </div>
+                <ModelVersionHistory modelId={selectedModel.id} />
+              </div>
+            )}
           </>
         )}
       </div>
