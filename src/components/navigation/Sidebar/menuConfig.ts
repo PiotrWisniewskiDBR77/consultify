@@ -126,16 +126,6 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.ECONOMICS,
       badge: 'beta',
     },
-    // 8.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
-    // The functional hub lives at /audit-programs (AppRoutes), reached via the
-    // canonical audits AppView so it inherits the authenticated app shell.
-    {
-      id: 'MODULE_AUDITS',
-      label: t('sidebar.audits', 'Audits'),
-      icon: React.createElement(ClipboardCheck, { size: 20 }),
-      viewId: AppView.ASSESSMENT_AUDITS,
-      badge: 'beta',
-    },
     // 9. Materiały — ONE unified module: library (table) of all created materials
     // (decks, reports, tables, templates) + "Nowy" creation. Consolidates the former
     // four sidebar entries (Outputs / Document Studio / Presentation Studio / Table
@@ -150,12 +140,23 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.PRESENTATIONS,
       badge: 'beta',
     },
+    // 9.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
+    // The functional hub lives at /audit-programs (AppRoutes), reached via the
+    // canonical audits AppView so it inherits the authenticated app shell.
+    // Positioned under Materials (Reports/Materials group) per owner instruction (#85).
+    {
+      id: 'MODULE_AUDITS',
+      label: t('sidebar.audits', 'Audits'),
+      icon: React.createElement(ClipboardCheck, { size: 20 }),
+      viewId: AppView.ASSESSMENT_AUDITS,
+      badge: 'soon',
+    },
     {
       id: 'MODULE_MEETING',
       label: t('sidebar.meeting', 'Meeting'),
       icon: React.createElement(Users, { size: 20 }),
       viewId: AppView.MEETING,
-      badge: 'beta',
+      badge: 'soon',
     },
     // MCP IRIS (14) and MCP Marketplace (15) removed from navigation per decision
     // D7 (placeholder-only modules dropped). Their routes now redirect to /chat.

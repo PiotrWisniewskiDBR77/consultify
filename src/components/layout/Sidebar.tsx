@@ -60,7 +60,6 @@ import { useConversationStore } from '../../store/useConversationStore';
 import { AppView, UserRole } from '../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
 import { isSuperAdminRole } from '../../utils/roleGuards';
-import { PhaseIndicator } from '../PMO/PhaseIndicator';
 
 interface MenuItem {
   id: string;
@@ -857,11 +856,6 @@ export const Sidebar: React.FC = () => {
           aria-label={t('sidebar.mainNavigation', 'Main navigation')}
           className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent"
         >
-          {/* PMO Phase Indicator - Always visible */}
-          <div className={`${showFull ? 'px-3 pt-4' : 'px-2 pt-4'}`}>
-            <PhaseIndicator compact={!showFull} />
-          </div>
-
           <div className={`space-y-1 pb-2 ${showFull ? 'pt-4' : 'pt-4'}`}>
             {menuStructure.map((item) => renderMenuItem(item))}
           </div>

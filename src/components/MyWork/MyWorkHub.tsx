@@ -2528,7 +2528,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: isPolish ? 'Osobiste' : 'Personal',
           count: notebookScopeCounts.personal,
         },
-        { id: 'team', label: isPolish ? 'Zespołowe' : 'Team', count: notebookScopeCounts.team },
+        {
+          // #11-extend: mirrors NotebookLibraryContent "Team"→"Organization" fix (#11) —
+          // Consultify has no sub-team concept below the org, scope value stays 'team'.
+          id: 'team',
+          label: isPolish ? 'Cała organizacja' : 'Organization',
+          count: notebookScopeCounts.team,
+        },
       ];
       return (
         <div className={MENU_3_ROW_CLASS}>

@@ -37,7 +37,6 @@ import {
   isPilotRestrictedRole,
   isSuperAdminRole,
 } from '../../../utils/roleGuards';
-import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
 import {
   getAdminMenuItem,
@@ -514,11 +513,6 @@ export const Sidebar: React.FC = () => {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent">
-          {/* PMO Phase Indicator */}
-          <div className={`${showFull ? 'px-3 pt-4' : 'px-2 pt-4'}`}>
-            <PhaseIndicator compact={!showFull} />
-          </div>
-
           {/* Menu Items */}
           <div className={`space-y-0.5 pb-2 ${showFull ? 'pt-4 px-2' : 'pt-4 px-1'}`}>
             {gatedMenuStructure.map(renderNavItem)}
