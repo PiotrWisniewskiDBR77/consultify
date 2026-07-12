@@ -611,7 +611,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
   // "Do pokazania klientowi": read = karty read-only (hideActions), główne pola
   // wyłączone, pasek akcji stanu (Reassign/Delay/Mark complete) ukryty.
-  const [readMode, setReadMode] = useState(false);
+  // Z31: karta otwiera się DOMYŚLNIE na READ. Wyjątek: świeżo tworzony task
+  // (brak taskId — jeszcze nie zapisany, więc z definicji pusty) → EDIT od razu.
+  // Drugi wyjątek (task właśnie utworzony i pusty, wiek < 2 min) — patrz loadTask.
+  const [readMode, setReadMode] = useState<boolean>(() => !taskId);
 
   useEffect(() => {
     if (presentationMode === 'c') {
@@ -806,6 +809,17 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setSourceType(task.sourceType || task.source_type || null);
       setSourceId(task.sourceId || task.source_id || null);
       setBlockedByDecisionId(task.blockedByDecisionId || '');
+
+      // Z31: świeżo utworzony task (bez opisu, wiek < 2 min) → otwórz na EDIT,
+      // nie READ (default). Tani sygnał — bez systemu uprawnień (to gate #28).
+      const createdAtMs = task.createdAt ? new Date(task.createdAt).getTime() : NaN;
+      const isFreshAndEmpty =
+        !task.description?.trim() &&
+        !Number.isNaN(createdAtMs) &&
+        Date.now() - createdAtMs < 2 * 60 * 1000;
+      if (isFreshAndEmpty) {
+        setReadMode(false);
+      }
 
       // Set initiative name if found
       if (task.initiativeId) {
