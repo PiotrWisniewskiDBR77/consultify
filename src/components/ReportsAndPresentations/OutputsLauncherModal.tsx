@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Loader2,
   Package2,
+  PenSquare,
   Presentation,
   ShieldAlert,
   Sparkles,
@@ -29,7 +30,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { downloadBundleZip } from '../../services/deliverablesBundle';
+import { type CanvasOutputResource, createOutputFromCanvasDraft } from './createOutputFromCanvas';
 import { useDeliverableTemplates } from './useDeliverableTemplates';
+import { useRecentWorkCanvasDrafts } from './useRecentWorkCanvasDrafts';
 import { useTemplateSuggestion } from './useTemplateSuggestion';
 
 export type DeliverableType = 'report' | 'presentation' | 'table';
@@ -39,6 +42,12 @@ export interface LauncherSelection {
   /** templateId === 'blank' ⇒ start od zera (bez szkieletu). */
   templateId: string;
 }
+
+/** #83e — result of POST /work-canvas/drafts/:id/create-output. Re-exported for callers. */
+export type { CanvasOutputResource };
+
+/** #83e — step-2 sub-mode: start from a template gallery, or from an existing canvas. */
+type TemplateStepMode = 'template' | 'canvas';
 
 interface TypeTile {
   type: DeliverableType;
@@ -93,6 +102,13 @@ const BLANK_CARD: TemplateCard = {
   labelKey: 'rap.outputs.launcher.tpl.blank',
   labelFallback: 'Blank',
 };
+
+/** #83e — compact "updated" date for the canvas picker rows; no i18n lib dependency. */
+function formatCanvasUpdatedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+}
 
 // v1 — kuratorowane szablony placeholder (realna biblioteka DBR77 = seria T).
 // id-y zgodne ze scenariuszami MQ-* z DELIVERABLES_QUALITY_RUBRIC.md.
@@ -151,6 +167,13 @@ export interface OutputsLauncherModalProps {
   onSelect: (selection: LauncherSelection) => void;
   /** Wywoływane po udanej generacji Kompletu AI — pozwala odświeżyć historię. */
   onBundleGenerated?: () => void;
+  /**
+   * #83e — wywoływane po udanej konwersji wybranego canvasa na output
+   * (Api.workCanvasCreateOutput). W przeciwieństwie do onSelect (które seeduje
+   * czat Teresy pustym openerem), output tutaj JUŻ istnieje z treścią canvasa —
+   * caller nawiguje pod `output.url`.
+   */
+  onCanvasOutputCreated?: (output: CanvasOutputResource) => void;
 }
 
 export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
@@ -158,6 +181,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   onClose,
   onSelect,
   onBundleGenerated,
+  onCanvasOutputCreated,
 }) => {
   const { t } = useTranslation();
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -170,6 +194,19 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
     useTemplateSuggestion();
 
   const [intentInput, setIntentInput] = useState('');
+
+  // #83e — 3rd wizard option: "From canvas". Sits alongside Blank/Template at
+  // step 2; picking a canvas calls the existing Api.workCanvasCreateOutput
+  // conversion endpoint (accepts outputType = report|presentation|table, a 1:1
+  // match with DeliverableType) instead of seeding a blank Teresa opener.
+  const [templateStepMode, setTemplateStepMode] = useState<TemplateStepMode>('template');
+  const {
+    drafts: canvasDrafts,
+    loading: canvasDraftsLoading,
+    error: canvasDraftsError,
+  } = useRecentWorkCanvasDrafts(!!selectedType && templateStepMode === 'canvas');
+  const [canvasConvertBusyId, setCanvasConvertBusyId] = useState<string | null>(null);
+  const [canvasConvertError, setCanvasConvertError] = useState<string | null>(null);
 
   // W3.5 — Komplet AI: brief → ZIP generation state.
   const [bundleStep, setBundleStep] = useState(false);
@@ -191,9 +228,19 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
       setBundleError(null);
       setBundlePhase(0);
       bundlePhaseRef.current = 0;
+      setTemplateStepMode('template');
+      setCanvasConvertBusyId(null);
+      setCanvasConvertError(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Reset the canvas sub-mode whenever the type tile changes (going back to
+  // step 1 and picking a different type starts step 2 fresh on Template).
+  useEffect(() => {
+    setTemplateStepMode('template');
+    setCanvasConvertError(null);
+  }, [selectedType]);
 
   // W3.7 — cycle through generation phases while loading.
   useEffect(() => {
@@ -252,6 +299,33 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
     suggest(intentText, toApiType(selectedType));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType, intentInput, suggest, t]);
+
+  // #83e — convert a picked canvas draft directly into the selected output
+  // type via the existing Work Canvas → Outputs endpoint. The result already
+  // carries real content (no Teresa-seeded blank opener needed) so we hand it
+  // to the caller (onCanvasOutputCreated) and close, mirroring handlePickTemplate.
+  const handleUseCanvas = useCallback(
+    async (draftId: string) => {
+      if (!selectedType) return;
+      setCanvasConvertBusyId(draftId);
+      setCanvasConvertError(null);
+      try {
+        const outputResource = await createOutputFromCanvasDraft(draftId, selectedType);
+        onCanvasOutputCreated?.(outputResource);
+        onClose();
+      } catch {
+        setCanvasConvertError(
+          t(
+            'rap.outputs.launcher.canvasConvertError',
+            'Failed to create the output from this canvas — please try again.'
+          )
+        );
+      } finally {
+        setCanvasConvertBusyId(null);
+      }
+    },
+    [selectedType, onCanvasOutputCreated, onClose, t]
+  );
 
   const handleBundleGenerate = useCallback(async () => {
     const brief = bundleBrief.trim();
@@ -453,6 +527,125 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                 {t('rap.outputs.launcher.templateSubtitle', 'Start blank or from a template')}
               </p>
 
+              {/* #83e — 3rd wizard option: Template gallery vs From canvas. */}
+              <div
+                className="mb-3 flex gap-1 rounded-lg bg-slate-100 dark:bg-navy-900 p-1"
+                role="tablist"
+                aria-label={t('rap.outputs.launcher.modeLabel', 'Start mode')}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={templateStepMode === 'template'}
+                  data-testid="launcher-mode-template"
+                  onClick={() => setTemplateStepMode('template')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    templateStepMode === 'template'
+                      ? 'bg-white dark:bg-navy-700 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Sparkles size={13} />
+                  {t('rap.outputs.launcher.modeTemplate', 'Blank / Template')}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={templateStepMode === 'canvas'}
+                  data-testid="launcher-mode-canvas"
+                  onClick={() => setTemplateStepMode('canvas')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    templateStepMode === 'canvas'
+                      ? 'bg-white dark:bg-navy-700 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <PenSquare size={13} />
+                  {t('rap.outputs.launcher.modeCanvas', 'From canvas')}
+                </button>
+              </div>
+
+              {templateStepMode === 'canvas' ? (
+                /* #83e — From canvas: pick a recent canvas → convert directly via
+                   Api.workCanvasCreateOutput (real content, not a blank Teresa seed). */
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t(
+                      'rap.outputs.launcher.canvasSubtitle',
+                      'Pick a recent canvas to turn into this output — its content carries over immediately.'
+                    )}
+                  </p>
+
+                  {canvasDraftsLoading && (
+                    <div className="flex items-center justify-center py-8 text-slate-400">
+                      <Loader2 size={20} className="animate-spin mr-2" />
+                      <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+                    </div>
+                  )}
+
+                  {!canvasDraftsLoading && canvasDraftsError && (
+                    <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">
+                      {canvasDraftsError}
+                    </div>
+                  )}
+
+                  {!canvasDraftsLoading && !canvasDraftsError && canvasDrafts.length === 0 && (
+                    <div
+                      className="px-3 py-6 text-center text-xs text-slate-400 dark:text-slate-500"
+                      data-testid="launcher-canvas-empty"
+                    >
+                      {t(
+                        'rap.outputs.launcher.canvasEmpty',
+                        'No canvases yet — start one from the chat and come back here.'
+                      )}
+                    </div>
+                  )}
+
+                  {!canvasDraftsLoading && !canvasDraftsError && canvasDrafts.length > 0 && (
+                    <div className="flex flex-col gap-1.5 max-h-72 overflow-y-auto">
+                      {canvasDrafts.map((d) => {
+                        const busy = canvasConvertBusyId === d.id;
+                        const updated = formatCanvasUpdatedAt(d.updatedAt);
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            data-testid={`launcher-canvas-${d.id}`}
+                            onClick={() => void handleUseCanvas(d.id)}
+                            disabled={canvasConvertBusyId !== null}
+                            className="group flex items-center gap-2.5 w-full p-3 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                              {busy ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <PenSquare size={16} />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight truncate">
+                                {d.title}
+                              </div>
+                              {updated && (
+                                <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                  {t('rap.outputs.launcher.canvasUpdated', 'Updated')} {updated}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {canvasConvertError && (
+                    <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">
+                      {canvasConvertError}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
               {/* Teresa zaproponuje — mini input + przycisk */}
               <div className="mb-4 flex gap-2">
                 <input
@@ -567,6 +760,8 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                       </button>
                     ))}
                 </div>
+              )}
+                </>
               )}
             </>
           )}

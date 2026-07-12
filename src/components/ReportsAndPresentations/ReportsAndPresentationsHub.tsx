@@ -22,6 +22,7 @@ import {
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -55,7 +56,11 @@ import {
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { deliverableKickoffSeed, deliverableTypeLabel } from './deliverableKickoff';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
-import { type LauncherSelection, OutputsLauncherModal } from './OutputsLauncherModal';
+import {
+  type CanvasOutputResource,
+  type LauncherSelection,
+  OutputsLauncherModal,
+} from './OutputsLauncherModal';
 import { DataSourcesTabContent } from './DataSourcesTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
@@ -258,6 +263,23 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       });
     },
     [i18n, openChatWithContext]
+  );
+
+  // #83e — "From canvas" wizard option: the launcher already converted the
+  // picked canvas into a real output via Api.workCanvasCreateOutput (content
+  // included, no Teresa seeding needed) — just take the user to it.
+  const handleCanvasOutputCreated = useCallback(
+    (output: CanvasOutputResource) => {
+      const successMsg = t(
+        'rap.outputs.launcher.canvasConvertSuccess',
+        'Created from canvas'
+      );
+      toast.success(`${output.title} — ${successMsg}`);
+      if (output.url) {
+        navigate(output.url);
+      }
+    },
+    [navigate, t]
   );
 
   const handleNewItem = useCallback(() => {
@@ -1271,6 +1293,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         open={launcherOpen}
         onClose={() => setLauncherOpen(false)}
         onSelect={handleLauncherSelect}
+        onCanvasOutputCreated={handleCanvasOutputCreated}
         onBundleGenerated={() => {
           setBundleRefresh((n) => n + 1);
           setBundleHistoryOpen(true); // rozwiń historię, żeby świeży bundle był widoczny
