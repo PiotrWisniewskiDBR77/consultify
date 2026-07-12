@@ -231,8 +231,22 @@ export interface InsightCardData {
   [k: string]: unknown;
 }
 
-/** Material-quality sub-fields the renderer (InsightViewer) needs — §A6.2 hard rule. */
-const MATERIAL_QUALITY_REQUIRED = ['score', 'limitations', 'missing_voices', 'recommended_followups'];
+/**
+ * Material-quality sub-fields the renderer (InsightViewer) needs — §A6.2 hard rule.
+ * Each entry lists the accepted field aliases for one logical sub-field; the check
+ * passes when ANY alias is present. The live generation pipeline
+ * (`buildInsightMaterialQuality`) and the renderer (`InsightViewer.tsx`) use
+ * `overall_material_score` as the canonical score field — `score` is only a legacy
+ * fallback — so requiring a bare `score` would hard-fail EVERY real card even
+ * though the material_quality object is complete. Aliases keep the historical
+ * `score` shape valid too.
+ */
+const MATERIAL_QUALITY_REQUIRED: string[][] = [
+  ['overall_material_score', 'score'],
+  ['limitations'],
+  ['missing_voices'],
+  ['recommended_followups'],
+];
 
 export function validateInsightCard(card: InsightCardData | null | undefined): FormulaVerdict {
   const violations: FormulaViolation[] = [];
@@ -386,10 +400,11 @@ export function validateInsightCard(card: InsightCardData | null | undefined): F
     });
   } else {
     const mq = materialQuality as Record<string, unknown>;
-    const missingSub = MATERIAL_QUALITY_REQUIRED.filter((k) => {
-      const v = mq[k] ?? mq[toCamel(k)];
-      return v == null;
-    });
+    const missingSub = MATERIAL_QUALITY_REQUIRED.filter((aliases) => {
+      // Present when ANY accepted alias (snake or camel) carries a value.
+      const present = aliases.some((k) => (mq[k] ?? mq[toCamel(k)]) != null);
+      return !present;
+    }).map((aliases) => aliases[0]);
     if (missingSub.length > 0) {
       violations.push({
         code: `${P}.material_quality_complete`,
