@@ -66,7 +66,10 @@ export function isFinanceEvBasketEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return readEnvFlag();
+  // 2026-07-12: default flipped ON per Piotr's explicit request to review
+  // everything live on demo.consultify.ai. Explicit ?ff_x=0 or localStorage
+  // override still works to force it back OFF.
+  return true;
 }
 
 export const FINANCE_EV_BASKET_FLAG_KEYS = {
