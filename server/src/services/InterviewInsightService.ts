@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { llmService } from './ai/llmService.js';
@@ -2471,12 +2472,31 @@ Rules:
     const db = await this.getDb();
     if (sessionIds.length === 0) return [];
 
+    // D18-A — defensive self-heal: `is_anonymous` is added by every session
+    // creation path (InterviewController.createSessionFromTemplate), but a
+    // process that generates an insight before any session has been created
+    // since deploy could still hit an environment where the column is
+    // missing (migration 922 not yet applied). Guard the SELECT below.
+    const sessionCols = await getTableColumns('interview_sessions');
+    if (!sessionCols.has('is_anonymous')) {
+      try {
+        await db.query(
+          `ALTER TABLE interview_sessions ADD COLUMN is_anonymous BOOLEAN DEFAULT FALSE`
+        );
+      } catch (err: any) {
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) {
+          logger.warn('[InterviewInsightService] Failed to add is_anonymous column', err);
+        }
+      }
+    }
+
     const placeholders = sessionIds.map(() => '?').join(',');
     const scopeWhere = buildInsightScopeSessionWhereClause(analysisScope);
 
     const sessions = await db.all<any>(
       `SELECT
-        s.id, s.name, s.status, s.completed_at, s.owner_id,
+        s.id, s.name, s.status, s.completed_at, s.owner_id, s.is_anonymous,
         s.answered_questions, s.total_questions,
         t.name as template_name, t.category as template_category,
         u.job_title, upe.department,
@@ -2539,13 +2559,27 @@ Rules:
           )
           .join('\n\n');
 
+        // D18-A hard wall — an anonymous session's respondent/role/department
+        // labels are never handed to the LLM. The prompt already instructs
+        // the model to cite "which sessions support it (by respondent name or
+        // session name)" — for anonymous sessions there is no name to give it,
+        // so it can only ever cite "Anonymous respondent" / the session index.
+        const isAnonymous = flagOn(session.is_anonymous);
+        const respondentLabel = isAnonymous
+          ? 'Anonymous respondent'
+          : session.respondent_name || 'Anonymous';
+        const roleLabel = isAnonymous ? 'Withheld (anonymous)' : session.job_title || 'Unknown';
+        const departmentLabel = isAnonymous
+          ? 'Withheld (anonymous)'
+          : session.department || 'Unknown';
+
         return `
 --- Interview ${index + 1} ---
 Template: ${session.template_name || 'Unknown'}
 Category: ${session.template_category || 'General'}
-Respondent: ${session.respondent_name || 'Anonymous'}
-Role: ${session.job_title || 'Unknown'}
-Department: ${session.department || 'Unknown'}
+Respondent: ${respondentLabel}
+Role: ${roleLabel}
+Department: ${departmentLabel}
 Date: ${session.completed_at || 'Unknown'}
 
 ${answerText}

@@ -146,6 +146,7 @@ export interface CreateAssignmentInput {
   notes?: string;
   createdBy: string;
   processRef?: string;
+  isAnonymous?: boolean; // D18-A — anonymous survey mode (default false)
 }
 
 export interface Assignment {
@@ -175,6 +176,7 @@ export interface Assignment {
   escalationCount: number;
   escalateTo?: string; // User ID for escalation target
   isTeamAssignment: boolean;
+  isAnonymous: boolean; // D18-A — anonymous survey mode (default false)
   notes?: string;
   createdBy: string;
   createdAt: string;
@@ -335,6 +337,10 @@ class InterviewAssignmentService {
     await ensureAssignmentColumn('ai_review_snapshot_json', 'ai_review_snapshot_json TEXT');
     await ensureAssignmentColumn('ai_reviewed_at', 'ai_reviewed_at TIMESTAMP');
     await ensureAssignmentColumn('review_decision_memory_json', 'review_decision_memory_json TEXT');
+    // D18-A — anonymous survey mode. Default FALSE: zero behavior change for
+    // existing assignments. Canonical migration:
+    // server/migrations/922_interview_anonymity_wall.sql (not auto-applied).
+    await ensureAssignmentColumn('is_anonymous', 'is_anonymous BOOLEAN DEFAULT FALSE');
 
     await querySafe(`
       CREATE TABLE IF NOT EXISTS interview_assignment_members (
@@ -424,8 +430,8 @@ class InterviewAssignmentService {
     await db.run(
       `INSERT INTO interview_assignments
        (id, organization_id, project_id, assignee_user_id, template_id, template_version,
-        process_ref, status, due_at, priority, is_team_assignment, notes, escalate_to, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        process_ref, status, due_at, priority, is_team_assignment, is_anonymous, notes, escalate_to, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -438,6 +444,7 @@ class InterviewAssignmentService {
         input.dueAt,
         input.priority || 'medium',
         isTeam ? 1 : 0,
+        input.isAnonymous === true, // D18-A — default false, zero change for existing callers
         input.notes || null,
         input.escalateTo || input.createdBy, // Default to creator if not specified
         input.createdBy,
@@ -1413,6 +1420,7 @@ class InterviewAssignmentService {
       escalationCount: row.escalation_count || 0,
       escalateTo: row.escalate_to || undefined,
       isTeamAssignment: flagOn(row.is_team_assignment), // bigint on PG → coerce
+      isAnonymous: flagOn(row.is_anonymous),
       notes: row.notes || undefined,
       createdBy: row.created_by,
       createdAt: row.created_at,

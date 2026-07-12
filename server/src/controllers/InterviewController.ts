@@ -1090,6 +1090,101 @@ async function ensureInterviewAssignmentLifecycleColumns(): Promise<void> {
   }
 }
 
+/**
+ * D18-A — Lazy-ensure `is_anonymous` on both interview_assignments and
+ * interview_sessions (DB_MANAGED_SCHEMA off in dev). Canonical formal
+ * migration: server/migrations/922_interview_anonymity_wall.sql (NOT
+ * auto-applied — this runtime path is what makes dev/local work without it).
+ * Default FALSE — zero behavior change for existing/non-anonymous surveys.
+ */
+async function ensureInterviewAnonymityColumns(): Promise<void> {
+  const assignmentCols = await getTableColumns('interview_assignments');
+  if (!assignmentCols.has('is_anonymous')) {
+    try {
+      await queryHelpers.queryRun(
+        `ALTER TABLE interview_assignments ADD COLUMN is_anonymous BOOLEAN DEFAULT FALSE`
+      );
+    } catch (err: any) {
+      const m = String(err?.message || err).toLowerCase();
+      if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+    }
+  }
+
+  const sessionCols = await getTableColumns('interview_sessions');
+  if (!sessionCols.has('is_anonymous')) {
+    try {
+      await queryHelpers.queryRun(
+        `ALTER TABLE interview_sessions ADD COLUMN is_anonymous BOOLEAN DEFAULT FALSE`
+      );
+    } catch (err: any) {
+      const m = String(err?.message || err).toLowerCase();
+      if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+    }
+  }
+}
+
+/**
+ * D18-A hard wall — true when `row` (an interview_assignments or
+ * interview_sessions row) is anonymous AND the requesting user is NOT the
+ * respondent themselves. The respondent always sees their own full answers
+ * (they need them to write/edit); anyone else gets the redacted view.
+ */
+const isAnonymityWallActive = (row: any, viewerUserId: string, ownerField: string): boolean =>
+  flagOn(row?.is_anonymous) && String(row?.[ownerField] ?? '') !== String(viewerUserId ?? '');
+
+/**
+ * D18-A hard wall — strips every field on an AI review snapshot that could
+ * quote or paraphrase a specific respondent's raw answer (feedback text,
+ * per-criterion justification). Keeps everything that is a pure number/score
+ * (overallScore, overallVerdict, rubric scores, rubricVersion/Criteria) plus
+ * session-level recommendations, so the manager still sees the AI-score wall
+ * — just never the underlying answer content or per-answer commentary.
+ */
+function redactAiReviewSnapshotForAnonymity(
+  aiReview: InterviewAiReviewSnapshot | null | undefined
+): InterviewAiReviewSnapshot | null {
+  if (!aiReview) return aiReview ?? null;
+  return {
+    ...aiReview,
+    questionEvaluations: (aiReview.questionEvaluations || []).map((qe: any) => ({
+      questionId: qe.questionId,
+      score: qe.score,
+      verdict: qe.verdict,
+      fixType: qe.fixType,
+      rubricTotal: qe.rubricTotal,
+      rubricMax: qe.rubricMax,
+      rubric: Array.isArray(qe.rubric)
+        ? qe.rubric.map((r: any) => ({
+            criterion: r.criterion,
+            label: r.label,
+            score: r.score,
+            maxScore: r.maxScore,
+            // justification intentionally dropped — may quote the raw answer
+          }))
+        : qe.rubric,
+      // feedback intentionally dropped — same reason
+    })),
+    weakAnswerMap: (aiReview.weakAnswerMap || []).map((w: any) => ({
+      key: w.key,
+      label: w.label, // question text, not answer content — safe to keep
+      questionId: w.questionId,
+      score: w.score,
+      verdict: w.verdict,
+      fixType: w.fixType,
+      isRequired: w.isRequired,
+      rubric: Array.isArray(w.rubric)
+        ? w.rubric.map((r: any) => ({
+            criterion: r.criterion,
+            label: r.label,
+            score: r.score,
+            maxScore: r.maxScore,
+          }))
+        : w.rubric,
+      // feedback intentionally dropped
+    })),
+  };
+}
+
 async function ensureInterviewTemplateV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_templates');
   const missingColumns: Array<{ name: string; sql: string }> = [
@@ -1399,6 +1494,45 @@ const buildEvidenceResponse = (row: any) => {
 };
 
 /**
+ * D18-A hard wall — strips the free-text answer content from a question
+ * response, keeping only structural/progress fields (status, whether it was
+ * answered, confidence self-rating, required/allow-* flags). Used when the
+ * session is anonymous and the viewer is not the respondent.
+ */
+const redactQuestionResponseForAnonymity = (q: NonNullable<ReturnType<typeof buildQuestionResponse>>) => ({
+  ...q,
+  answerText: '',
+  answerPayload: {},
+  contextNote: '',
+  notes: '',
+  voiceTranscript: '',
+  voiceAudioEvidenceId: undefined,
+});
+
+/**
+ * D18-A hard wall — strips free-text note content (manager-facing note reads
+ * only see that a note exists, never its body) when the session is
+ * anonymous and the viewer is not the respondent.
+ */
+const redactNoteResponseForAnonymity = (n: NonNullable<ReturnType<typeof buildNoteResponse>>) => ({
+  ...n,
+  content: '',
+});
+
+/**
+ * D18-A hard wall — strips evidence transcript content for anonymous
+ * sessions viewed by anyone other than the respondent.
+ */
+const redactEvidenceResponseForAnonymity = (
+  e: NonNullable<ReturnType<typeof buildEvidenceResponse>>
+) => ({
+  ...e,
+  transcriptText: '',
+  filePath: '',
+  url: '',
+});
+
+/**
  * Ensures evidence records exist for a question's text-based answer artifacts.
  * For each non-empty field (answer_text, voice_transcript, context_note),
  * creates an interview_evidence row if one doesn't already exist for that role.
@@ -1667,12 +1801,26 @@ async function createSessionFromTemplate(params: {
   const now = new Date().toISOString();
   await ensureInterviewSessionV6Columns();
   await ensureInterviewQuestionV6Columns();
+  await ensureInterviewAnonymityColumns();
   const resolvedProjectId = await resolveValidProjectId({
     organizationId: user.organizationId,
     projectId,
   });
   if (!resolvedProjectId) {
     throw new Error('Project not found');
+  }
+
+  // D18-A — mirror the assignment's anonymity flag onto the session at
+  // creation time so session-scoped reads (getQuestions/getNotes/getEvidence/
+  // getSummary) can check it directly without an extra JOIN back to
+  // interview_assignments on every request.
+  let sessionIsAnonymous = false;
+  if (assignmentId) {
+    const assignmentRow = await queryHelpers.queryOne(
+      `SELECT is_anonymous FROM interview_assignments WHERE id = ?`,
+      [assignmentId]
+    );
+    sessionIsAnonymous = flagOn((assignmentRow as any)?.is_anonymous);
   }
 
   // Create session from template (snapshot)
@@ -1682,9 +1830,9 @@ async function createSessionFromTemplate(params: {
      (id, organization_id, project_id, name, owner_id, status, progress_json,
       runtime_mode_default,
       template_id, template_version,
-      assignment_id,
+      assignment_id, is_anonymous,
       started_at, last_activity_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.organizationId,
@@ -1699,6 +1847,7 @@ async function createSessionFromTemplate(params: {
       template.id,
       template.version || 1,
       assignmentId || null,
+      sessionIsAnonymous,
       now,
       now,
       now,
@@ -3339,6 +3488,7 @@ export const InterviewController = {
       escalateTo,
       notes,
       teamLeadId,
+      isAnonymous,
     } = req.body || {};
 
     // Support both singular and plural assignee fields
@@ -3484,6 +3634,9 @@ export const InterviewController = {
       notes: notes || undefined,
       processRef: processRef || undefined,
       createdBy: admin.id,
+      // D18-A — anonymous survey toggle ("Odpowiedzi anonimowe" in the assignment
+      // modal). Defaults false: zero behavior change for existing assignments.
+      isAnonymous: isAnonymous === true,
     };
 
     // Multi-assign is modeled as separate assignments per assignee so each person
@@ -3569,9 +3722,17 @@ export const InterviewController = {
     const mapped = (rows || []).map((r: any) => {
       const answered = Number(r.answered_questions || 0);
       const total = Number(r.total_questions || 0);
+      // D18-A hard wall — `...r` below would otherwise leak the raw
+      // ai_review_snapshot_json string (feedback/justification quoting the
+      // answer) alongside the parsed+redacted `aiReview`. Drop it from the
+      // spread; only the caller who is the assignee themselves keeps it.
+      const { ai_review_snapshot_json: _rawAiReviewSnapshotJson, ...rWithoutRawAiReview } = r;
+      const wallActive = isAnonymityWallActive(r, admin.id, 'assignee_user_id');
       return {
-        ...r,
-        aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
+        ...rWithoutRawAiReview,
+        aiReview: wallActive
+          ? redactAiReviewSnapshotForAnonymity(parseAiReviewSnapshot(r.ai_review_snapshot_json))
+          : parseAiReviewSnapshot(r.ai_review_snapshot_json),
         aiReviewedAt: r.ai_reviewed_at || null,
         reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
         template: {
@@ -4391,7 +4552,12 @@ export const InterviewController = {
         sentBackAt: r.sent_back_at || null,
         sentBackReason: r.sent_back_reason || null,
         missingItems: parseMissingItems(r.missing_items_json),
-        aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
+        // D18-A hard wall — getManagedAssignments is a manager-only list (the
+        // viewer is never the respondent here), so any anonymous assignment
+        // always gets the score-only redaction.
+        aiReview: isAnonymityWallActive(r, user.id, 'assignee_user_id')
+          ? redactAiReviewSnapshotForAnonymity(parseAiReviewSnapshot(r.ai_review_snapshot_json))
+          : parseAiReviewSnapshot(r.ai_review_snapshot_json),
         aiReviewedAt: r.ai_reviewed_at || null,
         reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
         isTeamAssignment: flagOn(r.is_team_assignment), // bigint on PG → coerce
@@ -4800,7 +4966,12 @@ export const InterviewController = {
       sentBackAt: r.sent_back_at || null,
       sentBackReason: r.sent_back_reason || null,
       missingItems: parseMissingItems(r.missing_items_json),
-      aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
+      // D18-A hard wall — the assignee always sees their own full AI review;
+      // anyone else (manager/creator) gets score/rubric numbers only for an
+      // anonymous assignment, never per-answer feedback/justification text.
+      aiReview: isAnonymityWallActive(r, user.id, 'assignee_user_id')
+        ? redactAiReviewSnapshotForAnonymity(parseAiReviewSnapshot(r.ai_review_snapshot_json))
+        : parseAiReviewSnapshot(r.ai_review_snapshot_json),
       aiReviewedAt: r.ai_reviewed_at || null,
       reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
       notes: r.notes || null,
@@ -6404,7 +6575,12 @@ Answer type: ${(question as any).answer_type || 'open'}`;
         logger.warn('[evaluateSessionAnswers] Failed to persist AI review snapshot', persistError);
       }
 
-      res.json(evaluation);
+      // D18-A hard wall — the FULL evaluation (with per-answer feedback/
+      // justification, which may quote the raw answer) is always persisted
+      // above so the respondent keeps full self-review; only the RESPONSE to
+      // a non-respondent viewer of an anonymous session is redacted here.
+      const wallActive = isAnonymityWallActive(session, user.id, 'owner_id');
+      res.json(wallActive ? redactAiReviewSnapshotForAnonymity(evaluation) : evaluation);
     } catch (err) {
       logger.error('[evaluateSessionAnswers] AI call failed:', err);
       res.status(500).json({ error: 'AI evaluation failed' });
@@ -6512,6 +6688,7 @@ ${JSON.stringify(questions || [], null, 2)}
     const { sessionId } = req.params;
     const { category } = req.query;
     await ensureInterviewQuestionV6Columns();
+    await ensureInterviewAnonymityColumns();
 
     try {
       await assertSessionAccessibleOrThrow({
@@ -6529,6 +6706,14 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
 
+    // D18-A hard wall — anonymous sessions never expose per-answer content to
+    // anyone but the respondent, regardless of who else has session access.
+    const sessionOwnerRow = await queryHelpers.queryOne(
+      `SELECT owner_id, is_anonymous FROM interview_sessions WHERE id = ?`,
+      [sessionId]
+    );
+    const wallActive = isAnonymityWallActive(sessionOwnerRow, user.id, 'owner_id');
+
     let query = `SELECT * FROM interview_questions WHERE session_id = ? AND organization_id = ?`;
     const params: unknown[] = [sessionId, user.organizationId];
 
@@ -6540,7 +6725,10 @@ ${JSON.stringify(questions || [], null, 2)}
     query += ` ORDER BY category, sort_order`;
 
     const rows = await queryHelpers.queryAll(query, params);
-    res.json(rows.map(buildQuestionResponse));
+    const mapped = rows.map(buildQuestionResponse).filter(Boolean) as NonNullable<
+      ReturnType<typeof buildQuestionResponse>
+    >[];
+    res.json(wallActive ? mapped.map(redactQuestionResponseForAnonymity) : mapped);
   }),
 
   updateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -6900,11 +7088,21 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
 
+    await ensureInterviewAnonymityColumns();
+    const sessionOwnerRow = await queryHelpers.queryOne(
+      `SELECT owner_id, is_anonymous FROM interview_sessions WHERE id = ?`,
+      [sessionId]
+    );
+    const wallActive = isAnonymityWallActive(sessionOwnerRow, user.id, 'owner_id');
+
     const rows = await queryHelpers.queryAll(
       `SELECT * FROM interview_notes WHERE session_id = ? AND organization_id = ? ORDER BY created_at DESC`,
       [sessionId, user.organizationId]
     );
-    res.json(rows.map(buildNoteResponse));
+    const mapped = rows.map(buildNoteResponse).filter(Boolean) as NonNullable<
+      ReturnType<typeof buildNoteResponse>
+    >[];
+    res.json(wallActive ? mapped.map(redactNoteResponseForAnonymity) : mapped);
   }),
 
   createNote: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -7098,11 +7296,21 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
 
+    await ensureInterviewAnonymityColumns();
+    const sessionOwnerRow = await queryHelpers.queryOne(
+      `SELECT owner_id, is_anonymous FROM interview_sessions WHERE id = ?`,
+      [sessionId]
+    );
+    const wallActive = isAnonymityWallActive(sessionOwnerRow, user.id, 'owner_id');
+
     const rows = await queryHelpers.queryAll(
       `SELECT * FROM interview_evidence WHERE session_id = ? AND organization_id = ? ORDER BY created_at DESC`,
       [sessionId, user.organizationId]
     );
-    res.json(rows.map(buildEvidenceResponse));
+    const mapped = rows.map(buildEvidenceResponse).filter(Boolean) as NonNullable<
+      ReturnType<typeof buildEvidenceResponse>
+    >[];
+    res.json(wallActive ? mapped.map(redactEvidenceResponseForAnonymity) : mapped);
   }),
 
   createEvidence: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -7920,14 +8128,25 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
 
+    await ensureInterviewAnonymityColumns();
     const row = await queryHelpers.queryOne(
-      `SELECT summary_facts, summary_gaps, summary_constraints, summary_pain_points
+      `SELECT summary_facts, summary_gaps, summary_constraints, summary_pain_points, owner_id, is_anonymous
        FROM interview_sessions
        WHERE id = ? AND organization_id = ?`,
       [sessionId, user.organizationId]
     );
     if (!row) {
       res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    // D18-A hard wall — summary facts/gaps/constraints/pain points are literal
+    // "question: answer" strings (see generateSummary above) for THIS single
+    // respondent's session. For anonymous sessions, that's per-answer content
+    // attributable to one person — never expose it to anyone but the
+    // respondent. The manager still gets the AI score via getAssignment.
+    if (isAnonymityWallActive(row, user.id, 'owner_id')) {
+      res.json({ facts: [], gaps: [], constraints: [], painPoints: [], anonymized: true });
       return;
     }
 
@@ -9003,6 +9222,20 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { sessionId } = req.params;
     const limit = parseInt(req.query.limit as string) || 200;
+
+    // D18-A hard wall — the conversational transcript is raw respondent
+    // content; redact it the same way as questions/notes/evidence for
+    // anonymous sessions viewed by anyone but the respondent.
+    await ensureInterviewAnonymityColumns();
+    const sessionOwnerRow = await queryHelpers.queryOne(
+      `SELECT owner_id, is_anonymous FROM interview_sessions WHERE id = ?`,
+      [sessionId]
+    );
+    if (isAnonymityWallActive(sessionOwnerRow, user.id, 'owner_id')) {
+      res.json({ messages: [], anonymized: true });
+      return;
+    }
+
     const transcriptService = await import('../services/interviewTranscriptService.js');
     const messages = await transcriptService.getMessages(user.organizationId, sessionId, limit);
     res.json({ messages });
