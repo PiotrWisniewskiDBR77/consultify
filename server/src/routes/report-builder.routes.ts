@@ -60,6 +60,11 @@ import {
   publishThreeAxisSnapshot,
 } from '../services/execution/threeAxisReportService.js';
 import {
+  buildPmReportSections,
+  publishPmReport,
+  type PmReportKind,
+} from '../services/execution/programManagementReportsService.js';
+import {
   getCanonicalTemplate,
   proposeOutline,
 } from '../services/reportCanonicalTemplatesService.js';
@@ -421,6 +426,90 @@ router.get(
         available: false,
         report: null,
       });
+    }
+  }
+);
+
+const PM_REPORT_KINDS: PmReportKind[] = ['sponsor-onepager', 'steering', 'pmo-weekly'];
+
+function parsePmReportKind(raw: unknown): PmReportKind | null {
+  const kind = typeof raw === 'string' ? raw.trim() : '';
+  return (PM_REPORT_KINDS as string[]).includes(kind) ? (kind as PmReportKind) : null;
+}
+
+/**
+ * GET /api/report-builder/program-management/:kind/live
+ * D12+D13 — podgląd na żywo jednego z 3 pakietów PM (sponsor-onepager | steering |
+ * pmo-weekly), bez publikacji. Wzorzec `GET /program-3axis/live` — czysty odczyt
+ * (fail-soft), sekcje renderowane przez `programManagementReportsService` z
+ * ISTNIEJĄCYCH read-modeli (3-osi, alerty, decyzje, ryzyka, capacity, cycle-time).
+ * Query: `projectId?`, `programId?` (domyślnie = cała organizacja).
+ */
+router.get(
+  '/program-management/:kind/live',
+  async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const kind = parsePmReportKind(req.params.kind);
+      if (!kind) {
+        res.status(400).json({ error: `Unknown PM report kind. Expected one of: ${PM_REPORT_KINDS.join(', ')}` });
+        return;
+      }
+      const { organizationId } = getAuthContext(req);
+      const projectId =
+        typeof req.query.projectId === 'string' && req.query.projectId.trim()
+          ? req.query.projectId.trim()
+          : undefined;
+      const programId =
+        typeof req.query.programId === 'string' && req.query.programId.trim()
+          ? req.query.programId.trim()
+          : undefined;
+
+      const sections = await buildPmReportSections(kind, { organizationId, projectId, programId });
+      res.json({ success: true, available: true, kind, sections });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error building live PM report:', err);
+      res.json({ success: true, available: false, sections: null });
+    }
+  }
+);
+
+/**
+ * POST /api/report-builder/program-management/:kind/publish
+ * Tworzy realny raport-artefakt (kanon F5) z jednego z 3 szablonów PM zaseedowanych
+ * migracją 924 (`tpl-pm-sponsor-onepager` | `tpl-pm-steering` | `tpl-pm-weekly`) i
+ * wypełnia sekcje policzonymi (nie AI-zmyślonymi) danymi — wzorzec `POST /program-3axis/publish`.
+ * Body: { projectId?, programId?, title? }.
+ */
+router.post(
+  '/program-management/:kind/publish',
+  async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const kind = parsePmReportKind(req.params.kind);
+      if (!kind) {
+        res.status(400).json({ error: `Unknown PM report kind. Expected one of: ${PM_REPORT_KINDS.join(', ')}` });
+        return;
+      }
+      const { userId, organizationId } = getAuthContext(req);
+      const body = req.body || {};
+      const projectId =
+        typeof body.projectId === 'string' && body.projectId.trim() ? body.projectId.trim() : undefined;
+      const programId =
+        typeof body.programId === 'string' && body.programId.trim() ? body.programId.trim() : undefined;
+      const title =
+        typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
+
+      const result = await publishPmReport(kind, {
+        organizationId,
+        createdBy: userId || 'system',
+        projectId,
+        programId,
+        title,
+      });
+
+      res.status(201).json({ success: true, reportId: result.reportId });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error publishing PM report:', err);
+      res.status(500).json({ error: 'Failed to publish PM report' });
     }
   }
 );
