@@ -9,7 +9,7 @@
  *
  * Read-only. i18n PL/EN via t(). Statuses via EntityStatusChip (canon c.*).
  */
-import { ArrowRight, GitBranch, Loader2, TrendingUp } from 'lucide-react';
+import { ArrowRight, Clock, GitBranch, Loader2, TrendingUp } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -41,6 +41,22 @@ function ShareBar({ label, count, total }: { label: React.ReactNode; count: numb
       </div>
       <div className="w-14 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
         {count} · {pct}%
+      </div>
+    </div>
+  );
+}
+
+/** Horizontal bar scaled to a max value, labelled in days (not %). */
+function DwellBar({ label, days, maxDays }: { label: React.ReactNode; days: number; maxDays: number }) {
+  const pct = maxDays > 0 ? Math.min(100, Math.round((days / maxDays) * 100)) : 0;
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <div className="w-32 shrink-0 text-xs text-slate-600 dark:text-slate-300">{label}</div>
+      <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div className="absolute inset-y-0 left-0 rounded-full bg-c-info" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="w-16 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
+        {days.toLocaleString(undefined, { maximumFractionDigits: 1 })}d
       </div>
     </div>
   );
@@ -186,6 +202,50 @@ export function InitiativeObservabilityPanel({
         ) : (
           <p className="py-4 text-sm text-slate-500">
             {t('initiatives.observability.empty', 'No observability data.')}
+          </p>
+        )}
+      </section>
+
+      {/* ── F5.2: Cycle time per status ─────────────────────────────────── */}
+      <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <header className="mb-3 flex items-center gap-2">
+          <Clock className="h-4 w-4 text-c-info" />
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t('initiatives.observability.cycleTimeTitle', 'Cycle time (avg days per stage)')}
+          </h3>
+        </header>
+
+        {funnelLoading ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t('common.loading', 'Loading…')}
+          </div>
+        ) : funnel && (funnel.cycleTime || []).length > 0 ? (
+          <>
+            <div className="space-y-0.5">
+              {funnel.cycleTime.map((stage) => (
+                <DwellBar
+                  key={stage.status}
+                  label={<EntityStatusChip status={stage.status} />}
+                  days={stage.avgDays}
+                  maxDays={funnel.cycleTime[0].avgDays}
+                />
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] text-slate-400">
+              {t(
+                'initiatives.observability.cycleTimeHint',
+                'Days = average time initiatives spent in the stage before moving on ({{count}} completed transitions total).',
+                { count: funnel.cycleTime.reduce((a, s) => a + s.count, 0) }
+              )}
+            </p>
+          </>
+        ) : (
+          <p className="py-4 text-sm text-slate-500">
+            {t(
+              'initiatives.observability.noCycleTime',
+              'No completed stage transitions yet — cycle time appears once initiatives move between statuses.'
+            )}
           </p>
         )}
       </section>

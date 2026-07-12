@@ -13,10 +13,12 @@
 import {
   AlertTriangle,
   CopyX,
+  ExternalLink,
   Grid3x3,
   Layers,
   Loader2,
   Map as MapIcon,
+  Rocket,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +41,11 @@ export interface DuplicateCluster {
   titles: string[];
   peakScore: number;
 }
+export interface ReadyToLaunchItem {
+  id: string;
+  title: string;
+  status: string;
+}
 export interface PortfolioHealth {
   total: number;
   byStatus: Record<string, number>;
@@ -52,6 +59,8 @@ export interface PortfolioHealth {
     fillIns: number;
   };
   duplicateClusters: DuplicateCluster[];
+  /** Z94 §5.4 — pre-launch initiatives with a complete charter, no duplicate. Optional for backward-compat with older payloads/tests. */
+  readyToLaunch?: ReadyToLaunchItem[];
 }
 
 const LEVELS: Array<'low' | 'medium' | 'high'> = ['low', 'medium', 'high'];
@@ -131,9 +140,15 @@ export interface PortfolioHealthViewProps {
   endpoint?: string;
   /** Injected data (tests / storybook) — skips fetch. */
   health?: PortfolioHealth | null;
+  /** Open an initiative document (wired by InitiativesHub — Z94 §5.4 "Uruchom" list). */
+  onOpenInitiative?: (id: string, title: string) => void;
 }
 
-export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHealthViewProps) {
+export function PortfolioHealthView({
+  endpoint,
+  health: injected,
+  onOpenInitiative,
+}: PortfolioHealthViewProps) {
   const { t } = useTranslation();
   const hook = usePortfolioHealth(endpoint);
   // Injected data takes priority (test/preview), otherwise from the hook.
@@ -188,6 +203,61 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
         <HeadlineStat label={t('initiatives.portfolioHealth.moneyPits', 'Money pits')} value={health.balance.moneyPits} />
         <HeadlineStat label={t('initiatives.portfolioHealth.gapsCount', 'Coverage gaps')} value={health.gaps.length} />
       </div>
+
+      {/* Ready to launch (Z94 §5.4 werdykt zakładki) --------------------------- */}
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
+        data-testid="portfolio-health-ready-to-launch"
+      >
+        <header className="mb-3 flex items-center gap-2">
+          <Rocket className="h-4 w-4 text-c-info" />
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t('initiatives.portfolioHealth.readyTitle', 'Ready to launch')}
+          </h3>
+          <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+            {t('initiatives.portfolioHealth.readyCount', '{{count}} initiatives', {
+              count: (health.readyToLaunch || []).length,
+            })}
+          </span>
+        </header>
+        {(health.readyToLaunch || []).length === 0 ? (
+          <p className="py-2 text-sm text-slate-500" data-testid="portfolio-health-ready-empty">
+            {t(
+              'initiatives.portfolioHealth.readyEmpty',
+              'No pre-launch initiative has a complete charter (owner + sizing + timeline) without a duplicate yet.'
+            )}
+          </p>
+        ) : (
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+            {health.readyToLaunch.map((item) => (
+              <li key={item.id} className="flex items-center justify-between gap-2 py-2">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {item.title || t('initiatives.portfolioHealth.untitled', '(untitled)')}
+                  </div>
+                  <div className="text-xs text-slate-400">{item.status}</div>
+                </div>
+                {onOpenInitiative && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenInitiative(item.id, item.title)}
+                    className="flex shrink-0 items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-c-info hover:text-c-info dark:border-slate-700 dark:text-slate-300"
+                  >
+                    {t('initiatives.portfolioHealth.open', 'Open')}
+                    <ExternalLink className="h-3 w-3" />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-2 text-[11px] text-slate-400">
+          {t(
+            'initiatives.portfolioHealth.readyHint',
+            'Charter-completeness signal (owner + sizing + timeline, no duplicate) — not a full feasibility simulation.'
+          )}
+        </p>
+      </section>
 
       {/* MECE coverage -------------------------------------------------------- */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">

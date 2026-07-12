@@ -1617,7 +1617,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
     // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
     if (activeTab === 'portfolioHealth') {
-      return <PortfolioHealthView />;
+      return (
+        <PortfolioHealthView
+          onOpenInitiative={(id, title) =>
+            handleOpenDocument({
+              id,
+              type: 'initiative',
+              name: title || t('initiatives.document.untitled', 'Untitled initiative'),
+            })
+          }
+        />
+      );
     }
     // V3-F02: Analysis tab — portfolio quality gate
     if (activeTab === 'analysis') {
