@@ -89,6 +89,9 @@ const SHARED_TOP: ToolSlot[] = [
     labelEn: 'Cursor mode',
     action: 'mm_toggle_pointer',
   },
+  // #6j: AI na samej górze raila, zaraz pod wskaźnikiem trybu chwytu —
+  // najcenniejsza część raila, ma być widoczna od razu z góry.
+  { id: 'ai', icon: Sparkles, labelPl: 'AI', labelEn: 'AI', popover: 'ai' },
   {
     id: 'templates',
     icon: LayoutTemplate,
@@ -195,7 +198,6 @@ const SHARED_BOTTOM: ToolSlot[] = [
     labelEn: 'Import / Export',
     popover: 'importExport',
   },
-  { id: 'ai', icon: Sparkles, labelPl: 'AI', labelEn: 'AI', popover: 'ai' },
   {
     id: 'more',
     icon: MoreHorizontal,
