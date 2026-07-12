@@ -21,6 +21,7 @@ import ExecutionLightShell, {
   type ExecutionInitiativeRowLite,
   type ExecutionProgramSummaryLite,
   type ExecutionReportLite,
+  type ExecutionTaskLite,
 } from '../../src/components/Execution/ExecutionLightShell';
 
 const INITIATIVES: ExecutionInitiativeRowLite[] = [
@@ -183,6 +184,41 @@ const DECISIONS: ExecutionDecisionLite[] = [
   },
 ];
 
+const TASKS: ExecutionTaskLite[] = [
+  {
+    id: 'task-1',
+    title: 'Przygotować scenariusz testowy integracji API',
+    initiativeName: 'Automatyzacja raportów DRD',
+    dueLabel: 'termin: 3 dni temu',
+    overdue: true,
+  },
+  {
+    id: 'task-2',
+    title: 'Zebrać podpisy interesariuszy — onboarding',
+    initiativeName: 'Onboarding klienta DBR77',
+    dueLabel: 'termin: jutro',
+    overdue: false,
+  },
+  {
+    id: 'task-3',
+    title: 'Zweryfikować dane KPI dla ekspansji',
+    initiativeName: 'Ekspansja rynkowa',
+    dueLabel: 'termin: za 4 dni',
+    overdue: false,
+  },
+];
+
+const BLOCKED_TASKS: ExecutionTaskLite[] = [
+  {
+    id: 'task-4',
+    title: 'Integracja API rachunkowości',
+    initiativeName: 'Automatyzacja raportów DRD',
+    dueLabel: 'termin: 6 dni temu',
+    overdue: true,
+    blockedReason: 'Brak odpowiedzi dostawcy zewnętrznego od 9 dni',
+  },
+];
+
 const TOP_ACTIONS = [
   'Eskaluj przekroczenie budżetu „Automatyzacja raportów DRD" do sponsora — dziś.',
   'Odblokuj integrację API rachunkowości — 9 dni bez odpowiedzi dostawcy.',
@@ -208,6 +244,8 @@ export function ExecutionLightScreen(): React.ReactElement {
       alerts={ALERTS}
       reports={REPORTS}
       decisions={DECISIONS}
+      tasks={TASKS}
+      blockedTasks={BLOCKED_TASKS}
       topActions={TOP_ACTIONS}
       lineageSources={LINEAGE_SOURCES}
       lastUpdatedLabel="Zaktualizowano dziś, 08:15 · triage alertów"
@@ -216,6 +254,7 @@ export function ExecutionLightScreen(): React.ReactElement {
       onOpenInitiative={noop}
       onOpenReport={noop}
       onOpenDecision={noop}
+      onOpenTask={noop}
     />
   );
 }

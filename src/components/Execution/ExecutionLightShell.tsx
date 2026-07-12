@@ -174,6 +174,24 @@ export interface ExecutionLineageSourceLite {
   detail: string;
 }
 
+/** "Zadania" / "Zależności" row in the Management tab — mirrors the real
+ * `Task` entity (existing `executionScopedTasks`/`taskBuckets` in
+ * ExecutionHub, the same data the classic Action Queue already renders).
+ * No new engine — this is the existing task/blocker data, relabeled into
+ * the target IA slot per §3.4 of the PM concept ("zadania"/"zależności"). */
+export interface ExecutionTaskLite {
+  id: string;
+  title: string;
+  initiativeName?: string;
+  dueLabel?: string;
+  overdue: boolean;
+  /** Set only for blocked-status tasks — the existing `Task.blockedReason`
+   * field; this IS today's "zależności" signal (task blocked pending
+   * something else), pending the richer initiative-level dependency graph
+   * from §4.1 of the concept (PM4, separate step). */
+  blockedReason?: string;
+}
+
 interface ExecutionLightShellProps {
   programName?: string;
   periodLabel?: string;
@@ -183,6 +201,8 @@ interface ExecutionLightShellProps {
   alerts?: ExecutionAlertLite[];
   reports?: ExecutionReportLite[];
   decisions?: ExecutionDecisionLite[];
+  tasks?: ExecutionTaskLite[];
+  blockedTasks?: ExecutionTaskLite[];
   topActions?: string[];
   lineageSources?: ExecutionLineageSourceLite[];
   lastUpdatedLabel?: string;
@@ -191,6 +211,7 @@ interface ExecutionLightShellProps {
   onOpenInitiative?: (id: string) => void;
   onOpenReport?: (id: string) => void;
   onOpenDecision?: (id: string) => void;
+  onOpenTask?: (id: string) => void;
 }
 
 type LightTab = 'summary' | 'alerts' | 'reporting' | 'management';
@@ -248,6 +269,8 @@ export const ExecutionLightShell: React.FC<ExecutionLightShellProps> = ({
   alerts = [],
   reports = [],
   decisions = [],
+  tasks = [],
+  blockedTasks = [],
   topActions = [],
   lineageSources = [],
   lastUpdatedLabel,
@@ -256,6 +279,7 @@ export const ExecutionLightShell: React.FC<ExecutionLightShellProps> = ({
   onOpenInitiative,
   onOpenReport,
   onOpenDecision,
+  onOpenTask,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -399,8 +423,11 @@ export const ExecutionLightShell: React.FC<ExecutionLightShellProps> = ({
           {activeTab === 'management' && (
             <ManagementTab
               decisions={decisions}
+              tasks={tasks}
+              blockedTasks={blockedTasks}
               topActions={topActions}
               onOpenDecision={onOpenDecision}
+              onOpenTask={onOpenTask}
               t={t}
             />
           )}
@@ -1034,13 +1061,19 @@ function ReportsTable({
 
 function ManagementTab({
   decisions,
+  tasks,
+  blockedTasks,
   topActions,
   onOpenDecision,
+  onOpenTask,
   t,
 }: {
   decisions: ExecutionDecisionLite[];
+  tasks: ExecutionTaskLite[];
+  blockedTasks: ExecutionTaskLite[];
   topActions: string[];
   onOpenDecision?: (id: string) => void;
+  onOpenTask?: (id: string) => void;
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
   return (
@@ -1084,7 +1117,124 @@ function ManagementTab({
         <span className="text-[11.5px] text-c-text-muted">{decisions.length}</span>
       </div>
       <DecisionsTable decisions={decisions} onOpenDecision={onOpenDecision} t={t} />
+
+      <div className="mt-5 mb-2.5 flex items-center justify-between">
+        <h3 className="m-0 text-[13px] font-semibold uppercase tracking-[0.08em] text-c-text-muted">
+          {t('Zadania (przeterminowane i pilne)', 'Tasks (overdue and due soon)')}
+        </h3>
+        <span className="text-[11.5px] text-c-text-muted">{tasks.length}</span>
+      </div>
+      <TasksTable tasks={tasks} onOpenTask={onOpenTask} t={t} />
+
+      <div className="mt-5 mb-2.5 flex items-center justify-between">
+        <h3 className="m-0 text-[13px] font-semibold uppercase tracking-[0.08em] text-c-text-muted">
+          {t('Zależności / zablokowane', 'Dependencies / blocked')}
+        </h3>
+        <span className="text-[11.5px] text-c-text-muted">{blockedTasks.length}</span>
+      </div>
+      <TasksTable
+        tasks={blockedTasks}
+        onOpenTask={onOpenTask}
+        t={t}
+        emptyTitle={t('Brak zablokowanych zadań', 'No blocked tasks')}
+        persistKey="execution-light.management-blocked-tasks"
+      />
     </>
+  );
+}
+
+/** REAL <StandardTable> shared by both the "Zadania" and "Zależności /
+ * zablokowane" sections — same existing `Task` data (`executionScopedTasks`/
+ * `taskBuckets` in ExecutionHub, the same source as the classic Action
+ * Queue), just relabeled into the target IA slot (2026-07-12 rule #9). */
+function TasksTable({
+  tasks,
+  onOpenTask,
+  t,
+  emptyTitle,
+  persistKey = 'execution-light.management-tasks',
+}: {
+  tasks: ExecutionTaskLite[];
+  onOpenTask?: (id: string) => void;
+  t: (pl: string, en: string) => string;
+  emptyTitle?: string;
+  persistKey?: string;
+}): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: t('Zadanie', 'Task'),
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionTaskLite) => (
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-medium text-c-text">{row.title}</span>
+            {row.blockedReason && (
+              <span className="block truncate text-[11px] text-c-text-muted">{row.blockedReason}</span>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: 'initiativeName',
+        label: t('Inicjatywa', 'Initiative'),
+        width: '190px',
+        sortable: true,
+        filterable: true,
+        render: (row: ExecutionTaskLite) => (
+          <span className="truncate text-[11.5px] text-c-text-secondary">{row.initiativeName || '—'}</span>
+        ),
+      },
+      {
+        id: 'dueLabel',
+        label: t('Termin', 'Due'),
+        width: '140px',
+        align: 'right',
+        sortable: true,
+        render: (row: ExecutionTaskLite) => (
+          <span className={`text-[11.5px] ${row.overdue ? 'font-semibold text-c-danger' : 'text-c-text-muted'}`}>
+            {row.dueLabel || '—'}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
+  );
+
+  const rowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('Otwórz', 'Open'),
+        icon: Eye,
+        onClick: onOpenTask ? () => onOpenTask(String(row.id)) : undefined,
+        disabled: !onOpenTask,
+      },
+    ],
+    universalHandlers: {
+      preview: onOpenTask ? () => onOpenTask(String(row.id)) : undefined,
+    },
+  });
+
+  return (
+    <StandardTable
+      columns={columns}
+      data={tasks}
+      onRowClick={onOpenTask ? (row) => onOpenTask(String(row.id)) : undefined}
+      onRowDoubleClick={onOpenTask ? (row) => onOpenTask(String(row.id)) : undefined}
+      rowMenu={rowMenu}
+      selection={{ selectedIds, onChange: setSelectedIds }}
+      persistKey={persistKey}
+      defaultSort={{ columnId: 'dueLabel', direction: 'asc' }}
+      canvasClassName="p-0"
+      empty={{
+        title: emptyTitle || t('Brak zadań', 'No tasks'),
+      }}
+    />
   );
 }
 

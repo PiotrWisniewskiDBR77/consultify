@@ -139,6 +139,7 @@ import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
 import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { getArtifactPath } from '@/utils/artifactLinks';
 import { isExecutionLightEnabled } from '@/utils/executionLightFlag';
 import {
   ExecutionLightShell,
@@ -148,6 +149,7 @@ import {
   type ExecutionProgramSummaryLite,
   type ExecutionRag,
   type ExecutionReportLite,
+  type ExecutionTaskLite,
 } from './ExecutionLightShell';
 
 /**
@@ -5826,6 +5828,56 @@ Please return:
     [decisions]
   );
 
+  // "Zadania"/"Zależności" rows in the Management tab (§3.4 concept mapping) —
+  // reuse the SAME real task data + initiative lookup as the classic Action
+  // Queue (`taskBuckets`/`executionScopedTasks`/`renderTasksQueue` above), just
+  // relabeled into the new IA slot. No new engine.
+  const lightTaskToLite = useCallback(
+    (task: Task): ExecutionTaskLite => {
+      const initiative = task.initiativeId
+        ? dashboardBaseInitiatives.find((i) => i.id === task.initiativeId)
+        : undefined;
+      return {
+        id: task.id,
+        title: task.title,
+        initiativeName: initiative?.name,
+        dueLabel: task.dueDate,
+        overdue: isPastDue(task.dueDate),
+        blockedReason: task.blockedReason,
+      };
+    },
+    [dashboardBaseInitiatives]
+  );
+
+  const lightTasks: ExecutionTaskLite[] = useMemo(
+    () => [...taskBuckets.overdue, ...taskBuckets.dueSoon].map(lightTaskToLite),
+    [taskBuckets, lightTaskToLite]
+  );
+
+  const lightBlockedTasks: ExecutionTaskLite[] = useMemo(
+    () =>
+      executionScopedTasks
+        .filter((task) => normalizeTaskStatus(task.status) === 'blocked')
+        .map(lightTaskToLite),
+    [executionScopedTasks, lightTaskToLite]
+  );
+
+  const handleOpenLightTask = useCallback(
+    (taskId: string) => {
+      const task =
+        executionScopedTasks.find((t) => t.id === taskId) || tasks.find((t) => t.id === taskId);
+      const initiative = task?.initiativeId
+        ? dashboardBaseInitiatives.find((i) => i.id === task.initiativeId)
+        : undefined;
+      if (initiative) {
+        handleOpenDocument(initiative);
+        return;
+      }
+      toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
+    },
+    [executionScopedTasks, tasks, dashboardBaseInitiatives, handleOpenDocument, t]
+  );
+
   const lightTopActions: string[] = useMemo(() => {
     const out: string[] = [];
     if (actionCenter.blocked.length > 0) {
@@ -5979,7 +6031,10 @@ Please return:
           alerts={lightAlerts}
           reports={lightReports}
           decisions={lightDecisions}
+          tasks={lightTasks}
+          blockedTasks={lightBlockedTasks}
           topActions={lightTopActions}
+          onOpenTask={handleOpenLightTask}
           onOpenChat={() =>
             openChatWithContext({
               entityType: 'execution_module',
@@ -5994,6 +6049,23 @@ Please return:
               | undefined;
             if (initiative) handleOpenDocument(initiative);
           }}
+          onOpenReport={(id) => {
+            // Reuses the existing classic-view report opener (ReportDocumentView,
+            // see handleOpenReport above) — no new report silnik, per PM1 scope
+            // (report-builder/threeAxisReportService belong to a separate D12/D13 pass).
+            const report = enrichedReportCatalog.find((r) => r.id === id);
+            if (report) handleOpenReport(report);
+          }}
+          onOpenDecision={(id) => {
+            // Canonical cross-module artifact deep-link (RouterSync + parseArtifactRef) —
+            // same mechanism ReportDocumentView.tsx uses to jump to another module's record.
+            navigate(getArtifactPath('decision', id));
+          }}
+          // onPublishSnapshot intentionally NOT wired: "Publikuj snapshot" maps to the
+          // report-builder freeze→snapshot flow (report_builder_versions), which is
+          // explicitly owned by a separate D12/D13 pass (threeAxisReportService /
+          // report-builder.routes) — out of scope for this IA-reorg step. Button stays
+          // disabled until that silnik ships an endpoint to call here.
         />
       </ErrorBoundary>
     );
