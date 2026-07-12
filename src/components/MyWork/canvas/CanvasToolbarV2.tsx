@@ -205,9 +205,9 @@ export function CanvasToolbarV2({
             setIsNewMenuOpen((open) => !open);
             setIsKebabOpen(false);
           }}
-          aria-label="New Canvas"
+          aria-label="Nowy canvas"
           aria-expanded={isNewMenuOpen}
-          title="New Canvas"
+          title="Nowy canvas"
           data-testid="canvas-toolbar-v2-new"
           className={iconButtonBase}
         >
@@ -297,8 +297,8 @@ export function CanvasToolbarV2({
           type="button"
           onClick={onImportMarkdown}
           disabled={!onImportMarkdown}
-          aria-label="Import Markdown"
-          title={onImportMarkdown ? 'Import Markdown' : 'Import Markdown (wkrótce)'}
+          aria-label="Importuj Markdown"
+          title={onImportMarkdown ? 'Importuj Markdown' : 'Importuj Markdown (wkrótce)'}
           data-testid="canvas-toolbar-v2-import-md"
           className={iconButtonBase}
         >
@@ -307,8 +307,8 @@ export function CanvasToolbarV2({
         <button
           type="button"
           onClick={onExportMarkdown}
-          aria-label="Export Markdown"
-          title="Export Markdown"
+          aria-label="Eksportuj Markdown"
+          title="Eksportuj Markdown"
           data-testid="canvas-toolbar-v2-export-md"
           className={iconButtonBase}
         >

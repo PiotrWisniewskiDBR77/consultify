@@ -290,7 +290,7 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
       {/* ─── Compact header strip ─── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-c-border bg-c-surface px-5 py-3">
         <span className="text-[12px] text-c-text-muted">
-          Interview <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
+          {t('Wywiad', 'Interview')} <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
         </span>
         <h1 className="m-0 text-[15px] font-semibold tracking-tight text-c-text">
           {cycleName || t('Cykl wywiadów DBR77 · FY2026', 'DBR77 interview cycle · FY2026')}
@@ -327,7 +327,7 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
         {/* NAV RAIL */}
         <nav className="hidden overflow-y-auto border-r border-c-border bg-c-surface px-3 py-4 md:block">
           <p className="mx-1.5 mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.13em] text-c-text-muted">
-            {t('Interview', 'Interview')}
+            {t('Wywiady', 'Interview')}
           </p>
           <div className="flex flex-col gap-0.5">
             {(['sessions', 'assigned', 'insights'] as LightTab[]).map((tab) => {

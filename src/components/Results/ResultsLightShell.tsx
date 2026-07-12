@@ -292,7 +292,7 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
       {/* ─── Compact status strip ─── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-c-border bg-c-surface px-5 py-3">
         <span className="text-[12px] text-c-text-muted">
-          Results <span className="mx-1 text-c-text-secondary">›</span> {t('Rezultaty', 'Results')}
+          {t('Wyniki', 'Results')} <span className="mx-1 text-c-text-secondary">›</span> {t('Rezultaty', 'Results')}
         </span>
         <h1 className="m-0 text-[15px] font-semibold tracking-tight text-c-text">
           {projectName || 'DBR77 Scale-Up'}

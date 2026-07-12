@@ -507,7 +507,7 @@ export const NotebookLightShell: React.FC<NotebookLightShellProps> = ({
               <div className="mb-3 overflow-hidden rounded-xl border border-c-border">
                 <div className="flex items-center gap-2 px-3.5 py-3 text-[12.5px] font-semibold text-c-text">
                   <Layers className="h-[15px] w-[15px] text-c-text-muted" />
-                  {t('Mini outline', 'Mini outline')}
+                  {t('Konspekt', 'Mini outline')}
                 </div>
                 <div className="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
                   {headingOutline.map((h) => (

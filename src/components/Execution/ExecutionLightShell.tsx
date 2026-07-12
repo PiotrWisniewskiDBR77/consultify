@@ -272,10 +272,10 @@ export const ExecutionLightShell: React.FC<ExecutionLightShellProps> = ({
   const overdueDecisions = decisions.filter((d) => d.status === 'overdue').length;
 
   const TAB_LABEL: Record<LightTab, string> = {
-    summary: t('Summary', 'Summary'),
+    summary: t('Podsumowanie', 'Summary'),
     alerts: t('Alerty', 'Alerts'),
-    reporting: t('Reporting', 'Reporting'),
-    management: t('Management', 'Management'),
+    reporting: t('Raportowanie', 'Reporting'),
+    management: t('Zarządzanie', 'Management'),
   };
   const TAB_META: Record<LightTab, string> = {
     summary: `${program.initiativeCount} ${t('inicjatyw', 'initiatives')} · ${RAG_META[program.rag].labelPl}`,
@@ -298,7 +298,7 @@ export const ExecutionLightShell: React.FC<ExecutionLightShellProps> = ({
       {/* ─── Compact header strip ─── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-c-border bg-c-surface px-5 py-3">
         <span className="text-[12px] text-c-text-muted">
-          Execution <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
+          {t('Realizacja', 'Execution')} <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
         </span>
         <h1 className="m-0 text-[15px] font-semibold tracking-tight text-c-text">
           {programName || 'DBR77 Scale-Up'}
@@ -904,7 +904,7 @@ function ReportingTab({
       <div className="mb-1 flex items-end justify-between gap-4">
         <div>
           <h2 className="m-0 text-[21px] font-semibold tracking-tight text-c-text">
-            {t('Reporting', 'Reporting')}
+            {t('Raportowanie', 'Reporting')}
           </h2>
           <div className="mt-0.5 text-[12.5px] text-c-text-muted">
             {t('Raporty dla różnych odbiorców — sponsor, zespół, zarząd', 'Reports for different audiences — sponsor, team, board')}
@@ -1048,7 +1048,7 @@ function ManagementTab({
       <div className="mb-1 flex items-end justify-between gap-4">
         <div>
           <h2 className="m-0 text-[21px] font-semibold tracking-tight text-c-text">
-            {t('Management', 'Management')}
+            {t('Zarządzanie', 'Management')}
           </h2>
           <div className="mt-0.5 text-[12.5px] text-c-text-muted">
             {t('Wsparcie decyzji na bazie zidentyfikowanych zagrożeń', 'Decision support based on identified risks')}

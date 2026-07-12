@@ -151,7 +151,13 @@ const SOURCE_ICON: Record<InitiativeSourceTypeLite, React.ReactNode> = {
  * `sourceLabel` (e.g. "Digital Readiness — Oś 5 (Ludzie)") is reserved for
  * the aside/backbone tab so the list row keeps space for the initiative
  * name (doctryna gęstości §2: primary content, not the row's ellipsis). */
-const SOURCE_SHORT_LABEL: Record<InitiativeSourceTypeLite, string> = {
+const SOURCE_SHORT_LABEL_PL: Record<InitiativeSourceTypeLite, string> = {
+  idea: 'Workspace pomysłu',
+  assessment: 'Ocena',
+  interview: 'Wywiad',
+  audit: 'Audyt',
+};
+const SOURCE_SHORT_LABEL_EN: Record<InitiativeSourceTypeLite, string> = {
   idea: 'Idea Workspace',
   assessment: 'Assessment',
   interview: 'Interview',
@@ -287,7 +293,7 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
       {/* ─── Compact header strip ─── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-c-border bg-c-surface px-5 py-3">
         <span className="text-[12px] text-c-text-muted">
-          Initiatives <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
+          {t('Inicjatywy', 'Initiatives')} <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
         </span>
         <h1 className="m-0 text-[15px] font-semibold tracking-tight text-c-text">
           {portfolioName || 'DBR77 — Portfolio inicjatyw'}
@@ -629,14 +635,14 @@ function ListTab({
         width: '140px',
         sortable: true,
         filterable: true,
-        filterOptions: (Object.keys(SOURCE_SHORT_LABEL) as InitiativeSourceTypeLite[]).map((s) => ({
+        filterOptions: (Object.keys(SOURCE_SHORT_LABEL_EN) as InitiativeSourceTypeLite[]).map((s) => ({
           value: s,
-          label: SOURCE_SHORT_LABEL[s],
+          label: isPolish ? SOURCE_SHORT_LABEL_PL[s] : SOURCE_SHORT_LABEL_EN[s],
         })),
         render: (row: PortfolioInitiativeLite) => (
           <span className="flex items-center gap-1.5 truncate text-[11.5px] text-c-text-secondary" title={row.sourceLabel}>
             {SOURCE_ICON[row.sourceType]}
-            <span className="truncate">{SOURCE_SHORT_LABEL[row.sourceType]}</span>
+            <span className="truncate">{isPolish ? SOURCE_SHORT_LABEL_PL[row.sourceType] : SOURCE_SHORT_LABEL_EN[row.sourceType]}</span>
           </span>
         ),
       },
@@ -829,10 +835,10 @@ function BackboneTab({
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
   const SOURCE_LABEL: Record<InitiativeSourceTypeLite, string> = {
-    idea: t('Idea Workspace', 'Idea Workspace'),
-    assessment: t('Assessment', 'Assessment'),
-    interview: t('Interview Insight', 'Interview Insight'),
-    audit: t('Audit Readout', 'Audit Readout'),
+    idea: t('Workspace pomysłu', 'Idea Workspace'),
+    assessment: t('Ocena', 'Assessment'),
+    interview: t('Insight z wywiadu', 'Interview Insight'),
+    audit: t('Readout audytu', 'Audit Readout'),
   };
   const SOURCE_ORDER: InitiativeSourceTypeLite[] = ['assessment', 'interview', 'audit', 'idea'];
 

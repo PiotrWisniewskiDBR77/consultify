@@ -241,7 +241,7 @@ export const FinanceLightShell: React.FC<FinanceLightShellProps> = ({
       {/* ─── Compact header strip ─── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-c-border bg-c-surface px-5 py-3">
         <span className="text-[12px] text-c-text-muted">
-          Finance <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
+          {t('Finanse', 'Finance')} <span className="mx-1 text-c-text-secondary">›</span> {TAB_LABEL[activeTab]}
         </span>
         <h1 className="m-0 text-[15px] font-semibold tracking-tight text-c-text">
           {companyName || 'DBR77 Sp. z o.o.'}
