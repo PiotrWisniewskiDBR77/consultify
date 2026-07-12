@@ -1143,6 +1143,106 @@ async function synthesizeExecutiveSummary(
 }
 
 // ==========================================
+// DRD BOOK GROUNDING (RAG)
+// ==========================================
+
+/**
+ * Section types whose narrative benefits from grounding in the "Digital
+ * Pathfinder" book methodology (Dr. Piotr Wiśniewski). Deterministic sections
+ * (cover/matrix/appendix/initiatives-JSON) are excluded — they render from
+ * engine data, not prose.
+ */
+const DRD_GROUNDABLE_SECTION_TYPES = new Set<string>([
+  'summary',
+  'methodology',
+  'axis_analysis',
+  'recommendations',
+  'action_plan',
+  'list',
+]);
+
+/**
+ * Retrieve "Digital Pathfinder" book methodology excerpts for a section and
+ * format them as an inline grounding block appended to the user prompt.
+ *
+ * This wires the SAME indexed tool-KB (`knowledge/tool-kb/drd/methodology/**`,
+ * `tool_slug='drd'`, `pack_type='methodology'`) that the standalone DRD report
+ * narrator uses (`drdReportGrounding.ts` / `searchKnowledgeBase`). The Report
+ * Builder path previously never called it, so DRD reports produced generic
+ * consultant prose with no book grounding — this closes that wiring gap.
+ *
+ * Fail-open by design: any KB/retrieval failure resolves to '' so report
+ * generation always proceeds (matches the drdReportGrounding fail-safe posture).
+ * Numbers still come only from the assessment data already in the prompt — book
+ * excerpts are qualitative grounding/citation material, never a source of facts.
+ */
+async function buildDrdBookGroundingBlock(
+  query: string,
+  organizationId: string,
+  maxChunks = 3
+): Promise<string> {
+  try {
+    const mod = await import('./ai/tools/searchKnowledgeBase.js');
+    const searchKnowledgeBase = mod.searchKnowledgeBase || mod.default?.searchKnowledgeBase;
+    if (typeof searchKnowledgeBase !== 'function') return '';
+
+    const { results } = await searchKnowledgeBase(
+      { query, maxResults: maxChunks, toolSlug: 'drd', packType: 'methodology' },
+      { organizationId }
+    );
+
+    const excerpts = (results || [])
+      .filter((r: any) => r?.content && String(r.content).trim().length > 0)
+      // Only ground on the branded book pack — never on unrelated org docs that
+      // may leak through a loose vector match (integrity guard).
+      .filter((r: any) => r?.branded === true)
+      .map((r: any, idx: number) => {
+        const cite =
+          r.branded && r.sourceAuthor ? `„${r.source}", ${r.sourceAuthor}` : r.source || 'DRD Methodology';
+        return `[${idx + 1}] (${cite})\n${String(r.content).slice(0, 600).trim()}`;
+      });
+
+    if (excerpts.length === 0) return '';
+
+    return (
+      `\n\n---\nMETHODOLOGY GROUNDING — excerpts from the "Digital Pathfinder" book ` +
+      `(the canonical DRD source). Ground your analysis in this methodology and cite it ` +
+      `inline as (Digital Pathfinder) where you draw on it. Use it for qualitative framing ` +
+      `(maturity-level meaning, good practices) only — do NOT introduce any numbers that are ` +
+      `not already in the assessment data above.\n\n` +
+      excerpts.join('\n\n')
+    );
+  } catch (err) {
+    logger.warn('[ReportGeneration] DRD book grounding failed (non-fatal), continuing ungrounded', {
+      query,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return '';
+  }
+}
+
+/**
+ * Build the retrieval query for a section's DRD book grounding. Axis sections
+ * query by axis name for targeted retrieval; others use a section-oriented query.
+ */
+function drdGroundingQueryForSection(section: SectionRecord): string {
+  const title = (section.title || '').trim();
+  switch (section.sectionType) {
+    case 'axis_analysis':
+      return `${title || 'axis'} — methodology, maturity levels, good practices`;
+    case 'methodology':
+      return 'DRD digital readiness methodology, seven axes, maturity levels, scoring scale';
+    case 'summary':
+      return 'digital maturity overall assessment, maturity levels, transformation priorities';
+    case 'recommendations':
+    case 'action_plan':
+      return 'digital transformation priorities, maturity improvement, roadmap by axis';
+    default:
+      return `${title || 'digital readiness'} — digital maturity, methodology`;
+  }
+}
+
+// ==========================================
 // GENERATION SERVICE
 // ==========================================
 
@@ -1257,6 +1357,32 @@ export async function generateSectionContent(
       };
       prompts.user = interpolateTemplate(bt.pptx_prompt_template, vars);
       prompts.system = `${prompts.system}\n\nIMPORTANT: You MUST return ONLY valid JSON. No markdown, no explanation, no code fences. Just the JSON object.`;
+    }
+  }
+
+  // DRD book grounding (RAG): for DRD assessments, ground narrative sections in
+  // the "Digital Pathfinder" methodology KB so the report cites the canonical
+  // book instead of producing generic consultant prose. Fail-open — appends
+  // nothing on any retrieval miss/error. Skipped for pptx (structured JSON) and
+  // for the V3 narrative-engine path below (which does its own grounding).
+  const assessmentType = String(context.sourceData.assessment?.type || '').toUpperCase();
+  if (
+    targetFormat !== 'pptx' &&
+    assessmentType === 'DRD' &&
+    DRD_GROUNDABLE_SECTION_TYPES.has(String(section.sectionType))
+  ) {
+    const groundingBlock = await buildDrdBookGroundingBlock(
+      drdGroundingQueryForSection(section),
+      organizationId
+    );
+    if (groundingBlock) {
+      prompts.user = `${prompts.user}${groundingBlock}`;
+      logger.info('[ReportGeneration] DRD book grounding attached', {
+        reportId,
+        sectionKey,
+        sectionType: section.sectionType,
+        addedChars: groundingBlock.length,
+      });
     }
   }
 
