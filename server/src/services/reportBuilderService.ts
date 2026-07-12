@@ -2457,9 +2457,15 @@ export async function listTemplates(
   organizationId: string,
   options?: { sourceType?: string; isPublic?: boolean; isSystem?: boolean }
 ): Promise<any[]> {
+  // NOTE: is_public / is_system are BOOLEAN columns in Postgres and are NOT
+  // covered by the SQLite-0/1 → TRUE/FALSE normalization in PostgresDatabase
+  // (only is_active/is_default are). Using `= 1` here threw
+  // `operator does not exist: boolean = integer` → 500 on every listTemplates
+  // call, blocking assessment/report template selection. Use TRUE/FALSE
+  // literals (valid in both Postgres and SQLite).
   let sql = `
     SELECT * FROM report_builder_templates
-    WHERE (organization_id IS NULL OR organization_id = ? OR is_public = 1)
+    WHERE (organization_id IS NULL OR organization_id = ? OR is_public = TRUE)
   `;
   const params: any[] = [organizationId];
 
@@ -2469,11 +2475,11 @@ export async function listTemplates(
   }
 
   if (options?.isSystem) {
-    sql += ` AND is_system = 1`;
+    sql += ` AND is_system = TRUE`;
   }
 
   if (options?.isPublic) {
-    sql += ` AND is_public = 1`;
+    sql += ` AND is_public = TRUE`;
   }
 
   sql += ` ORDER BY is_system DESC, name ASC`;
@@ -2496,7 +2502,7 @@ export async function getTemplateById(
   const row = await queryOne<any>(
     `
     SELECT * FROM report_builder_templates
-    WHERE id = ? AND (organization_id IS NULL OR organization_id = ? OR is_public = 1)
+    WHERE id = ? AND (organization_id IS NULL OR organization_id = ? OR is_public = TRUE)
   `,
     [templateId, organizationId]
   );
@@ -2564,7 +2570,7 @@ export async function updateTemplate(
 ): Promise<any | null> {
   // Check if template exists and is editable (not system)
   const existing = await queryOne<any>(
-    `SELECT * FROM report_builder_templates WHERE id = ? AND organization_id = ? AND is_system = 0`,
+    `SELECT * FROM report_builder_templates WHERE id = ? AND organization_id = ? AND is_system = FALSE`,
     [templateId, organizationId]
   );
 
@@ -2614,7 +2620,7 @@ export async function updateTemplate(
  */
 export async function deleteTemplate(templateId: string, organizationId: string): Promise<boolean> {
   const result = await queryRun(
-    `DELETE FROM report_builder_templates WHERE id = ? AND organization_id = ? AND is_system = 0`,
+    `DELETE FROM report_builder_templates WHERE id = ? AND organization_id = ? AND is_system = FALSE`,
     [templateId, organizationId]
   );
 
