@@ -205,7 +205,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                   <span className="truncate">{currentProject.name}</span>
                   <span className="ml-auto text-[10px] text-slate-600 dark:text-slate-500 uppercase">
                     {currentProject.scope === 'team'
-                      ? t('aiChat.teamFolder', 'Team')
+                      ? t('aiChat.teamFolder', 'Organization')
                       : t('aiChat.personalFolder', 'Personal')}
                   </span>
                 </div>
@@ -348,7 +348,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                       }`}
                     >
                       <Users size={12} className="inline mr-1" />
-                      {t('aiChat.teamFolder', 'Team')}
+                      {t('aiChat.teamFolder', 'Organization')}
                     </button>
                   </div>
                   <button

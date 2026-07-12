@@ -1139,9 +1139,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     onDropConversation={handleDropToFolder}
                   />
 
-                  {/* Team Folders (Shared) */}
+                  {/* Organization Folders (Shared) — Consultify has no sub-team
+                      concept below the org, so 'team' scope is labeled
+                      Organization for the user (#11-extend, mirrors #11 fix
+                      in NotebookLibraryContent). Underlying scope value
+                      ('team'), API and store fields are unchanged. */}
                   <FolderSection
-                    title={t('aiChat.teamFolders', 'Team Folders')}
+                    title={t('aiChat.teamFolders', 'Organization Folders')}
                     icon={<Users size={11} />}
                     projects={teamProjects}
                     expandedProjectIds={expandedProjectIds}
@@ -1153,8 +1157,8 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     onUpdateProject={handleUpdateProject}
                     onManageMembers={setMembersModalProject}
                     onCreateProject={handleCreateTeamProject}
-                    createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
-                    emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
+                    createButtonLabel={t('aiChat.newTeamFolder', 'New organization folder')}
+                    emptyLabel={t('aiChat.createTeamFolder', 'Create organization folder')}
                     t={t}
                     onFolderClick={setActiveFolderId}
                     sectionCollapsed={teamFoldersCollapsed}
