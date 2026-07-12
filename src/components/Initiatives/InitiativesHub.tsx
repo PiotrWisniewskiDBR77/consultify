@@ -2641,6 +2641,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               entityName: isPolishLite ? 'Portfolio inicjatyw' : 'Initiative portfolio',
             })
           }
+          // #57-pattern follow-up — row/kanban/backbone click-through was
+          // preview-only (local `selectedId`, no route to the real artifact).
+          // Same handleOpenDocument()/activeDocumentId mechanism the legacy
+          // hub already uses for every other open path in this file.
+          onOpenInitiative={(id) => {
+            const initiative = initiatives.find((i) => i.id === id);
+            if (initiative) handleOpenInitiativeDocument(initiative);
+          }}
         />
       </ErrorBoundary>
     );

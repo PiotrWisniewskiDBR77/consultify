@@ -125,6 +125,14 @@ interface InitiativesLightShellProps {
   lastUpdatedLabel?: string;
   onCreateInitiative?: () => void;
   onOpenChat?: () => void;
+  // #57-pattern follow-up — row click / kanban card / backbone row only ever
+  // called `onSelect` (local highlight driving the aside "Źródło → rezultat"
+  // panel), with no path to the REAL initiative artifact (tasks/comments/
+  // KPIs). Optional so the component still renders standalone in the
+  // dev-render harness without a handler. Single click keeps selecting (real
+  // working feature — aside panel), double-click / kebab "Otwórz" open the
+  // full record — mirrors ExecutionLightShell's `onOpenInitiative` contract.
+  onOpenInitiative?: (id: string) => void;
 }
 
 type LightTab = 'list' | 'kanban' | 'backbone';
@@ -195,6 +203,7 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
   lastUpdatedLabel,
   onCreateInitiative,
   onOpenChat,
+  onOpenInitiative,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -395,6 +404,7 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
               initiatives={initiatives}
               selectedId={selected?.id || null}
               onSelect={setSelectedId}
+              onOpenInitiative={onOpenInitiative}
               currency={currency}
               statusLabel={STATUS_LABEL}
               statusColorClass={STATUS_COLOR_CLASS}
@@ -409,6 +419,7 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
               byStatus={byStatus}
               selectedId={selected?.id || null}
               onSelect={setSelectedId}
+              onOpenInitiative={onOpenInitiative}
               statusLabel={STATUS_LABEL}
               priorityDotClass={PRIORITY_DOT_CLASS}
               t={t}
@@ -419,6 +430,7 @@ export const InitiativesLightShell: React.FC<InitiativesLightShellProps> = ({
               bySource={bySource}
               selectedId={selected?.id || null}
               onSelect={setSelectedId}
+              onOpenInitiative={onOpenInitiative}
               t={t}
             />
           )}
@@ -555,6 +567,7 @@ function ListTab({
   initiatives,
   selectedId,
   onSelect,
+  onOpenInitiative,
   currency,
   statusLabel,
   statusColorClass,
@@ -566,6 +579,7 @@ function ListTab({
   initiatives: PortfolioInitiativeLite[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onOpenInitiative?: (id: string) => void;
   currency: string;
   statusLabel: Record<InitiativeStatusLite, string>;
   statusColorClass: Record<InitiativeStatusLite, string>;
@@ -687,17 +701,24 @@ function ListTab({
     [t, isPolish, currency, priorityDotClass, statusColorClass, statusDotClass, statusLabel]
   );
 
+  // Kebab "Otwórz" (MUST — same gap class as InterviewLightShell's Insighty
+  // fix): previously called `onSelect` only, which just re-highlights the row
+  // that's already selected by the click that opened the menu — no way to
+  // reach the real initiative artifact. Routes through `onOpenInitiative`
+  // (hub wires it to `handleOpenInitiativeDocument`, same activeDocumentId
+  // mechanism as the rest of the hub); falls back to `onSelect` so the
+  // standalone dev-render harness (no hub wiring) still does *something*.
   const rowMenu = (row: TableRow): StandardRowMenu => ({
     primary: [
       {
         id: 'open',
         label: t('Otwórz', 'Open'),
         icon: Eye,
-        onClick: () => onSelect(String(row.id)),
+        onClick: () => (onOpenInitiative ? onOpenInitiative(String(row.id)) : onSelect(String(row.id))),
       },
     ],
     universalHandlers: {
-      preview: () => onSelect(String(row.id)),
+      preview: () => (onOpenInitiative ? onOpenInitiative(String(row.id)) : onSelect(String(row.id))),
       editNote: t('Edycja z poziomu pełnego widoku inicjatyw', 'Edit from the full Initiatives view'),
     },
   });
@@ -721,7 +742,9 @@ function ListTab({
           data={initiatives}
           selectedRowId={selectedId}
           onRowClick={(row) => onSelect(String(row.id))}
-          onRowDoubleClick={(row) => onSelect(String(row.id))}
+          onRowDoubleClick={(row) =>
+            onOpenInitiative ? onOpenInitiative(String(row.id)) : onSelect(String(row.id))
+          }
           rowMenu={rowMenu}
           selection={{ selectedIds, onChange: setSelectedIds }}
           persistKey="initiatives-light.list"
@@ -744,6 +767,7 @@ function KanbanTab({
   byStatus,
   selectedId,
   onSelect,
+  onOpenInitiative,
   statusLabel,
   priorityDotClass,
   t,
@@ -751,6 +775,7 @@ function KanbanTab({
   byStatus: Record<InitiativeStatusLite, PortfolioInitiativeLite[]>;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onOpenInitiative?: (id: string) => void;
   statusLabel: Record<InitiativeStatusLite, string>;
   priorityDotClass: Record<InitiativePriorityLite, string>;
   t: (pl: string, en: string) => string;
@@ -787,6 +812,8 @@ function KanbanTab({
                       key={item.id}
                       type="button"
                       onClick={() => onSelect(item.id)}
+                      onDoubleClick={() => onOpenInitiative?.(item.id)}
+                      title={onOpenInitiative ? t('Kliknij 2x, aby otworzyć', 'Double-click to open') : undefined}
                       className="rounded-lg border bg-c-surface px-3 py-2.5 text-left transition-colors hover:border-c-border-strong"
                       style={on ? { borderColor: BLUE, backgroundColor: BLUE_SOFT } : { borderColor: 'var(--c-border)' }}
                     >
@@ -827,11 +854,13 @@ function BackboneTab({
   bySource,
   selectedId,
   onSelect,
+  onOpenInitiative,
   t,
 }: {
   bySource: Record<InitiativeSourceTypeLite, PortfolioInitiativeLite[]>;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onOpenInitiative?: (id: string) => void;
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
   const SOURCE_LABEL: Record<InitiativeSourceTypeLite, string> = {
@@ -878,6 +907,8 @@ function BackboneTab({
                       key={item.id}
                       type="button"
                       onClick={() => onSelect(item.id)}
+                      onDoubleClick={() => onOpenInitiative?.(item.id)}
+                      title={onOpenInitiative ? t('Kliknij 2x, aby otworzyć', 'Double-click to open') : undefined}
                       className={`grid w-full grid-cols-[1fr_18px_1fr_18px_120px] items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                         idx > 0 ? 'border-t border-c-border' : ''
                       } ${on ? '' : 'hover:bg-c-surface-raised'}`}
