@@ -5864,6 +5864,25 @@ Please return:
     [threeAxisLive]
   );
 
+  // Merge live-engine reading vs. best-effort proxy PER-FIELD: the live engine
+  // (threeAxisReportService) always returns a well-formed AxisReading/AxisRatio
+  // even when it has no data for that specific axis (dataQuality:'missing' /
+  // ratio:null) — a plain `liveX ?? proxyX` would treat that "missing" object
+  // as truthy and clobber a proxy that DOES have a real number (observed live:
+  // atelier org has no `value_baselines` rows → engine W is always missing,
+  // while the ROI proxy below has real realized/projected data for a few
+  // initiatives). Only let the live value win when it actually carries data.
+  const pickAxis = (
+    live: { pct: number | null; dataQuality: 'ok' | 'missing' } | undefined,
+    proxy: { pct: number | null; dataQuality: 'ok' | 'missing' }
+  ) => (live && live.dataQuality === 'ok' ? live : proxy);
+  const pickRatio = (
+    live: { ratio: number | null; rag: ExecutionRag } | undefined,
+    proxy: { ratio: number | null; rag: ExecutionRag }
+  ) => (live && live.ratio !== null ? live : proxy);
+  const pickRag = (live: ExecutionRag | undefined, proxy: ExecutionRag): ExecutionRag =>
+    live && live !== 'NA' ? live : proxy;
+
   const lightInitiativeRows: ExecutionInitiativeRowLite[] = useMemo(() => {
     const roiByInitiative = new Map((execSnapshot?.roi.items || []).map((r) => [r.initiativeId, r]));
     return dashboardBaseInitiatives.map((i) => {
@@ -5889,13 +5908,13 @@ Please return:
         id: i.id,
         name: i.name,
         ownerName: (i as any).ownerName || (i as any).owner?.name,
-        T: liveRow?.T ?? { pct: null, dataQuality: 'missing' },
-        Z: liveRow?.Z ?? {
+        T: pickAxis(liveRow?.T, { pct: null, dataQuality: 'missing' }),
+        Z: pickAxis(liveRow?.Z, {
           pct: Number.isFinite(zPct) ? zPct : null,
           dataQuality: Number.isFinite(zPct) ? 'ok' : 'missing',
-        },
-        W: liveRow?.W ?? { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' },
-        rag: liveRow?.rag ?? rag,
+        }),
+        W: pickAxis(liveRow?.W, { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' }),
+        rag: pickRag(liveRow?.rag, rag),
       };
     });
   }, [dashboardBaseInitiatives, execSnapshot, initiativeHealthMap, threeAxisRowsById]);
@@ -5928,13 +5947,13 @@ Please return:
     const liveProgram = threeAxisLive?.program;
     return {
       initiativeCount: dashboardBaseInitiatives.length,
-      T: liveProgram?.T ?? { pct: null, dataQuality: 'missing' },
-      Z: liveProgram?.Z ?? { pct: zPct, dataQuality: zPct === null ? 'missing' : 'ok' },
-      W: liveProgram?.W ?? { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' },
-      scheduleHealth: liveProgram?.scheduleHealth ?? { ratio: null, rag: 'NA' },
-      impactGap: liveProgram?.impactGap ?? { ratio: impactGapRatio, rag: impactGapRag },
-      deliveryPromise: liveProgram?.deliveryPromise ?? { ratio: null, rag: 'NA' },
-      rag: liveProgram?.rag ?? programRag,
+      T: pickAxis(liveProgram?.T, { pct: null, dataQuality: 'missing' }),
+      Z: pickAxis(liveProgram?.Z, { pct: zPct, dataQuality: zPct === null ? 'missing' : 'ok' }),
+      W: pickAxis(liveProgram?.W, { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' }),
+      scheduleHealth: pickRatio(liveProgram?.scheduleHealth, { ratio: null, rag: 'NA' }),
+      impactGap: pickRatio(liveProgram?.impactGap, { ratio: impactGapRatio, rag: impactGapRag }),
+      deliveryPromise: pickRatio(liveProgram?.deliveryPromise, { ratio: null, rag: 'NA' }),
+      rag: pickRag(liveProgram?.rag, programRag),
       engagementPct: null,
       onTimePct,
       peopleAssigned: 0,
