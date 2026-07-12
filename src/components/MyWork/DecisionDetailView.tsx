@@ -4526,12 +4526,13 @@ Use userId only from this list:
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       id: 'actions',
-      // Z29/Z30 (parytet #37 z TaskDetailView): rozpisane przyciski AI
-      // (Assistant/AI-assist) usunięte — AI dostępne jako JEDEN zwięzły
-      // przycisk (brak M3-slotu dla klasy S, więc żyje na górze tej sekcji,
-      // stąd "+ AI" w etykiecie).
-      label: isPolish ? 'Akcje + AI' : 'Actions + AI',
-      icon: Sparkles,
+      // #27/#37: AI przeniesiony do nagłówka (NModeHeader, showChatButton) —
+      // header ma wolny slot obok Save/mode-switcher, więc rozpisany
+      // przycisk AI w tej sekcji był zbędnym duplikatem (Z29/Z30 go tu
+      // zostawiły tylko z braku slotu M3 dla klasy S; teraz jest taniej).
+      // Save+Delegate dzielą teraz jeden rząd (był z AI pomiędzy nimi).
+      label: isPolish ? 'Akcje' : 'Actions',
+      icon: Save,
       defaultOpen: true,
       children: (
         <div className="grid grid-cols-2 gap-2">
@@ -4539,19 +4540,10 @@ Use userId only from this list:
             type="button"
             onClick={() => handleSave()}
             disabled={saving}
-            className={`col-span-2 ${rpBtn}`}
+            className={rpBtn}
           >
             <Save size={14} className="text-c-text-muted" />
             {isPolish ? 'Zapisz' : 'Save'}
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenChat}
-            title={isPolish ? 'AI — asystent do tej decyzji' : 'AI — assistant for this decision'}
-            className={rpBtn}
-          >
-            <Sparkles size={14} className="text-c-text-muted" />
-            AI
           </button>
           <button type="button" onClick={() => setShowDelegationModal(true)} className={rpBtn}>
             <Share2 size={14} className="text-c-text-muted" />
@@ -4791,6 +4783,7 @@ Use userId only from this list:
             saving={saving}
             isDirty={isDirty}
             onChat={handleOpenChat}
+            showChatButton
             onClose={onClose}
             draftSavedLabel={draftSavedLabel || undefined}
             statusDotColor={statusConfig.color}

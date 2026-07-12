@@ -3887,11 +3887,12 @@ Return ONLY the final comment text.`;
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
         id: 'actions',
-        // Z29/Z30: rozpisane przyciski AI (Assistant/AI-assist) usunięte —
-        // AI dostępne jako JEDEN zwięzły przycisk (brak M3-slotu dla klasy S,
-        // więc żyje na górze tej sekcji, stąd "+ AI" w etykiecie).
-        label: isPolish ? 'Akcje + AI' : 'Actions + AI',
-        icon: Sparkles,
+        // #27/#37: AI przeniesiony do nagłówka (NModeHeader, showChatButton) —
+        // header ma wolny slot obok Save/mode-switcher, więc rozpisany
+        // przycisk AI w tej sekcji był zbędnym duplikatem (Z29/Z30 go tu
+        // zostawiły tylko z braku slotu M3 dla klasy S; teraz jest taniej).
+        label: isPolish ? 'Akcje' : 'Actions',
+        icon: Save,
         defaultOpen: true,
         children: (
           <div className="flex items-center gap-2">
@@ -3903,15 +3904,6 @@ Return ONLY the final comment text.`;
             >
               <Save size={14} className="text-c-text-muted" />
               {isPolish ? 'Zapisz' : 'Save'}
-            </button>
-            <button
-              type="button"
-              onClick={handleOpenChat}
-              title={isPolish ? 'AI — asystent do tego zadania' : 'AI — assistant for this task'}
-              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-            >
-              <Sparkles size={14} className="text-c-text-muted" />
-              AI
             </button>
           </div>
         ),
@@ -4074,6 +4066,7 @@ Return ONLY the final comment text.`;
                   : undefined
               }
               onChat={handleOpenChat}
+              showChatButton
               onClose={onClose}
               statusDotColor={statusConfig.color}
               presentationMode={presentationMode}

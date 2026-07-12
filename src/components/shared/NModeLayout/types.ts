@@ -210,6 +210,15 @@ export interface NModeHeaderConfig {
   isDirty?: boolean;
   /** Chat button handler (omit to hide) */
   onChat?: () => void;
+  /**
+   * #27/#37: render the AI (onChat) button in the header top-right, next to
+   * Save/mode-switcher. Opt-in and scoped per consumer — back-compat default
+   * is `false` so existing headers that already pass `onChat` (Notification,
+   * Initiative, Insight) keep their current look unchanged. Task/Decision set
+   * this explicitly (klasa S has no M3 slot, so the header is the cheap home
+   * for the single AI action instead of the right-panel Actions section).
+   */
+  showChatButton?: boolean;
   /** Back/close handler */
   onClose: () => void;
   /** Deprecated: lifecycle/governance label. Do not use for persistence state. */
