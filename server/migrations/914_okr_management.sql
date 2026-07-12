@@ -1,13 +1,21 @@
--- Migration 914: OKR management — cycles, check-ins, KR<->KPI auto-score link.
+-- Migration 914: OKR management — cycles, check-ins, KR<->KPI reference link.
 --
 -- SSOT: Harvard/wdrozenie-100/_KONCEPT_RESULTS_2026-07-10.md, §3.3 (para 3: OKR
 -- + Raporty OKR). D7 (first slice): OKR CRUD + okr_cycles + okr_check_ins +
--- link KR->KPI (auto-score). Decisions already resolved (not "Pytania"):
--- legacy tables = kanon (not v8), OKR KR<->KPI auto-score via a live KPI link,
--- one OKR set per dept x quarterly cycle (folded into okr_cycles.dept_id /
--- team_id rather than a separate okr_sets table for this first slice — a
--- dedicated okr_sets table remains a documented follow-up if multiple
--- concurrent sets per dept per cycle are needed).
+-- link KR->KPI. Decisions already resolved (not "Pytania"): legacy tables =
+-- kanon (not v8), one OKR set per dept x quarterly cycle (folded into
+-- okr_cycles.dept_id / team_id rather than a separate okr_sets table for this
+-- first slice — a dedicated okr_sets table remains a documented follow-up if
+-- multiple concurrent sets per dept per cycle are needed).
+--
+-- ★ SUPERSEDED (D7 decision, Piotr, 2026-07-12, `_DECYZJE_PIOTRA_2026-07-12.md`):
+-- "OKRy są indywidualne, zatem ręcznie tylko, one są niezależne" — the
+-- KR<->KPI link below is now INFORMATIONAL ONLY (context/navigation), not an
+-- auto-score source. Key Results are scored exclusively from manual
+-- check-ins / the manual baseline-target-current triple. See
+-- server/src/services/results/okrService.ts (recomputeKeyResultScore).
+-- The `kpi_id` column/FK/index are unaffected (still a valid optional
+-- reference) — only the app-level scoring behavior changed.
 --
 -- okr_objectives / okr_key_results already exist (lazy-DDL'd, read-only, by
 -- resultsStrategic.routes.ts ensureOkrTables() — D10). This migration:
