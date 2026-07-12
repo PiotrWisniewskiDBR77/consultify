@@ -10,8 +10,10 @@ export type RapTab =
   | 'outputs_documents'
   | 'presentations'
   | 'outputs_sheets'
-  | 'outputs_data'
   | 'templates';
+// NOTE (#83a): 'outputs_data' retired as a top-level Menu 2 tab — Data Sources
+// moved to a sub-tab inside Sheets (SheetsTabContent). Legacy `?tab=data` deep
+// links now resolve to 'outputs_sheets' via outputsLibraryTabQuery.ts.
 
 /** Canonical registry row flattened for All / Mine / Needs review tabs */
 export interface UnifiedOutputRow {

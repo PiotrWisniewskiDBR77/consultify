@@ -13565,7 +13565,11 @@
       "error": "Nie można załadować arkuszy",
       "emptyTitle": "Arkusze w bibliotece outputów",
       "emptyBody": "Nadzorowane skoroszyty i eksporty pojawią się tutaj poprzez ten sam kanoniczny rejestr artefaktów co dokumenty i prezentacje. Ta zakładka odzwierciedla teraz aktywne artefakty arkuszy, gdy tylko rejestr je otrzyma.",
-      "emptyHint": "Utwórz lub wyeksportuj nadzorowany arkusz, a pojawi się tutaj automatycznie."
+      "emptyHint": "Utwórz lub wyeksportuj nadzorowany arkusz, a pojawi się tutaj automatycznie.",
+      "subtabs": {
+        "label": "Sekcje arkuszy",
+        "data": "Źródła danych"
+      }
     },
     "onboarding": {
       "title": "Tutaj lądują Twoje wyniki",
