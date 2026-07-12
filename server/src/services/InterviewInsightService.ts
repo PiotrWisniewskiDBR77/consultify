@@ -2541,7 +2541,147 @@ Rules:
       };
     });
 
-    return Promise.all(sessionDataPromises);
+    const sessionData = await Promise.all(sessionDataPromises);
+
+    // #47b — attach Link/Artifact evidence (interview_evidence, + a KB excerpt
+    // when ingested) to each answer so the insight prompt sees more than
+    // `answer_text`. Fail-open: any error here must never break insight
+    // generation — evidence is a prompt enrichment, not a hard dependency.
+    try {
+      const allQuestionIds = sessionData.flatMap((session: any) =>
+        (session.answers || []).map((a: any) => String(a.id))
+      );
+      const evidenceByQuestionId = await this.fetchEvidenceForQuestionIds(
+        allQuestionIds,
+        organizationId
+      );
+      if (evidenceByQuestionId.size > 0) {
+        for (const session of sessionData) {
+          for (const answer of session.answers || []) {
+            const evidence = evidenceByQuestionId.get(String(answer.id));
+            if (evidence && evidence.length > 0) answer.evidence = evidence;
+          }
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        `[InterviewInsightService] Evidence attach skipped (fail-open): ${String((err as Error)?.message || err)}`
+      );
+    }
+
+    return sessionData;
+  }
+
+  /**
+   * #47b — fetch attached evidence (Link/Artifact, `interview_evidence`) for a
+   * batch of question ids, plus a short KB excerpt when the evidence was
+   * ingested into the knowledge base (`knowledge_document_id` set →
+   * `ai_knowledge_embeddings`, first chunk only). Returns question_id →
+   * evidence[] (capped per question). Fail-open: any failure returns an empty
+   * map rather than throwing, so a KB/schema hiccup never blocks insight
+   * generation — the prompt just falls back to `answer_text` alone (today's
+   * behavior).
+   */
+  private async fetchEvidenceForQuestionIds(
+    questionIds: string[],
+    organizationId: string
+  ): Promise<Map<string, Array<{ title: string; url: string | null; snippet: string }>>> {
+    const EVIDENCE_PER_QUESTION = 3;
+    const SNIPPET_MAX_CHARS = 500;
+    const result = new Map<string, Array<{ title: string; url: string | null; snippet: string }>>();
+
+    const ids = Array.from(new Set(questionIds.filter(Boolean)));
+    if (ids.length === 0) return result;
+
+    try {
+      const db = await this.getDb();
+      const placeholders = ids.map(() => '?').join(',');
+      const rows = await db.all<any>(
+        `SELECT id, question_id, title, description, url, file_name,
+                evidence_type, transcript_text, knowledge_document_id, created_at
+           FROM interview_evidence
+          WHERE organization_id = ?
+            AND question_id IN (${placeholders})
+          ORDER BY created_at ASC`,
+        [organizationId, ...ids]
+      );
+      if (!rows || rows.length === 0) return result;
+
+      // Batch-resolve a first-chunk KB excerpt per distinct knowledge_document_id
+      // (best-effort — sqlite/postgres store the chunk text under different
+      // column names, see embeddingService.storeChunk).
+      const docIds = Array.from(
+        new Set(rows.map((r: any) => r.knowledge_document_id).filter(Boolean).map(String))
+      );
+      const excerptByDocId = new Map<string, string>();
+      if (docIds.length > 0) {
+        try {
+          const isPg = process.env.DB_TYPE === 'postgres';
+          const contentCol = isPg ? 'chunk_text' : 'content';
+          const docPlaceholders = docIds.map(() => '?').join(',');
+          const chunkRows = await db.all<any>(
+            `SELECT document_id, chunk_index, ${contentCol} as content
+               FROM ai_knowledge_embeddings
+              WHERE document_id IN (${docPlaceholders})
+              ORDER BY document_id ASC, chunk_index ASC`,
+            docIds
+          );
+          for (const chunk of chunkRows || []) {
+            const docId = String(chunk.document_id);
+            if (excerptByDocId.has(docId)) continue; // keep the first chunk only
+            const text = String(chunk.content || '').trim();
+            if (text) excerptByDocId.set(docId, text);
+          }
+        } catch (err) {
+          logger.warn(
+            `[InterviewInsightService] Evidence KB excerpt lookup skipped: ${String((err as Error)?.message || err)}`
+          );
+        }
+      }
+
+      for (const row of rows) {
+        const questionId = String(row.question_id || '');
+        if (!questionId) continue;
+        const list = result.get(questionId) || [];
+        if (list.length >= EVIDENCE_PER_QUESTION) continue;
+
+        const kbExcerpt = row.knowledge_document_id
+          ? excerptByDocId.get(String(row.knowledge_document_id))
+          : undefined;
+        const rawSnippet = kbExcerpt || row.transcript_text || row.description || '';
+        const snippet = String(rawSnippet).trim().slice(0, SNIPPET_MAX_CHARS);
+
+        list.push({
+          title: String(row.title || row.file_name || 'Evidence').trim(),
+          url: row.url ? String(row.url) : null,
+          snippet,
+        });
+        result.set(questionId, list);
+      }
+    } catch (err) {
+      logger.warn(
+        `[InterviewInsightService] Evidence fetch skipped (fail-open): ${String((err as Error)?.message || err)}`
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * #47b — render an answer's attached evidence as a compact "Evidence:"
+   * block (title + optional URL + KB/description snippet). Returns '' when
+   * there's no evidence so callers can splice it in without extra blank lines.
+   */
+  private formatEvidenceBlock(
+    evidence?: Array<{ title: string; url: string | null; snippet: string }>
+  ): string {
+    if (!evidence || evidence.length === 0) return '';
+    const lines = evidence.map((item, index) => {
+      const link = item.url ? ` (${item.url})` : '';
+      const snippet = item.snippet ? `: ${item.snippet}` : '';
+      return `  ${index + 1}. ${item.title}${link}${snippet}`;
+    });
+    return `Evidence:\n${lines.join('\n')}`;
   }
 
   /**
@@ -2551,12 +2691,14 @@ Rules:
     return sessionData
       .map((session, index) => {
         const answerText = session.answers
-          .map(
-            (a: any) =>
-              `[answer_id: ${a.id}] Q: ${a.question_text}\nA: ${a.answer_text || 'No answer'}${
-                a.status ? ` (status: ${a.status})` : ''
-              }${a.confidence_score ? ` (confidence: ${a.confidence_score}/5)` : ''}`
-          )
+          .map((a: any) => {
+            const base = `[answer_id: ${a.id}] Q: ${a.question_text}\nA: ${a.answer_text || 'No answer'}${
+              a.status ? ` (status: ${a.status})` : ''
+            }${a.confidence_score ? ` (confidence: ${a.confidence_score}/5)` : ''}`;
+            // #47b — Link/Artifact evidence attached to this question, if any.
+            const evidenceBlock = this.formatEvidenceBlock(a.evidence);
+            return evidenceBlock ? `${base}\n${evidenceBlock}` : base;
+          })
           .join('\n\n');
 
         // D18-A hard wall — an anonymous session's respondent/role/department
