@@ -1961,11 +1961,11 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
 
 {
   "schema_version": "${INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION}",
-  "executive_summary": "2-4 sentence overview of the most important findings",
+  "executive_summary": "3-5 sentences / 60-130 words. Answer-first (lead with the conclusion), then the so-what implication, then an explicit confidence posture. No methodology, no filler.",
   "themes": [
     {
-      "title": "Theme title",
-      "description": "What this theme means, grounded in the data",
+      "title": "Action-title carrying the conclusion (≤14 words, not a bare topic)",
+      "description": "≥3 sentences / ≥50 words. What the pattern is, why it matters, grounded in the cited answers — quote or paraphrase the specific evidence, never generic prose.",
       "evidence_refs": ["answer_id_1", "answer_id_2"],
       "strength": "strong|moderate|weak"${crossSessionBlock}
     }
@@ -2002,7 +2002,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
       "linked_issues": ["Issue title 1"]
     }
   ],
-  "missing_data": ["Description of what data is missing or what follow-up questions would help"],
+  "missing_data": ["At least 2 concrete gaps: what evidence is missing or which follow-up question would raise confidence"],
   "material_quality": {
     "overall_material_score": 0-100,
     "answer_quality_posture": "strong|usable|thin|poor",
@@ -2021,7 +2021,8 @@ Rules:
 - Do NOT provide final approved action plans, roadmaps, timelines, owners, or mitigation plans. Recommendation-like content must stay clearly labeled as a hypothesis/opportunity with evidence limits.
 - If evidence is weak or incomplete, note it in missing_data.
 - Material Quality is not a blocking gate. It is an honest assessment of how far the generated insight can be trusted.
-- Aim for 3-7 themes, 2-5 issues, 2-5 opportunities, 1-4 signals (scale with data volume).
+- Minimums for a decision-useful readout: ≥3 themes (each ≥50-word description + ≥1 evidence_ref), ≥2 issues (each with severity + ≥1 evidence_ref), ≥2 missing_data entries, executive_summary 60-130 words across ≥3 sentences.
+- Aim for 3-7 themes, 2-5 issues, 2-5 opportunities, 1-4 signals (scale with data volume), but never drop below the minimums above.
 `;
 
     const extra = (customPrompt || '').trim();
@@ -2175,6 +2176,20 @@ Rules:
     const db = await this.getDb();
     const startTime = Date.now();
 
+    // The card title (§A2) lives on the insight row, not in the generated V6
+    // payload. Load it so the CARD_CONTENT_FORMULA guardian scores the real
+    // headline instead of hard-failing `insight.title_present` on every card.
+    let insightTitle = '';
+    try {
+      const titleRow = await db.get<{ title?: string }>(
+        `SELECT title FROM interview_insights WHERE id = ?`,
+        [insightId]
+      );
+      insightTitle = String(titleRow?.title || '').trim();
+    } catch {
+      /* fail-soft: title stays empty, guardian still advisory */
+    }
+
     try {
       const scope = analysisScope || buildDefaultAnalysisScope({ sessionIds, filters: {} });
       const sessionData = await this.fetchSessionData(sessionIds, organizationId, scope);
@@ -2249,7 +2264,7 @@ Rules:
       try {
         const materialQualityPreview = this.buildMaterialQuality(sessionData, v6Data);
         formulaVerdict = validateInsightCard({
-          title: v6Data.executive_summary ? (v6Data as any).title : undefined,
+          title: insightTitle,
           executive_summary: v6Data.executive_summary,
           themes: v6Data.themes,
           issues: v6Data.issues,
@@ -2282,6 +2297,7 @@ Rules:
             const repairedParsed = this.parseV6Response(repairedRaw);
             const repairedRun = validateInsightEvidenceRefs(repairedParsed, availableAnswerIds);
             const repairedVerdict = validateInsightCard({
+              title: insightTitle,
               executive_summary: repairedRun.data.executive_summary,
               themes: repairedRun.data.themes,
               issues: repairedRun.data.issues,

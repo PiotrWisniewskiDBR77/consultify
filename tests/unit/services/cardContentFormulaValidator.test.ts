@@ -110,6 +110,22 @@ describe('validateInsightCard (§A2/§B3)', () => {
     expect(validateInsightCard(card).violationCodes).toContain('insight.material_quality_complete');
   });
 
+  it('accepts overall_material_score as the score sub-field (live generation field name)', () => {
+    // The live pipeline (buildInsightMaterialQuality) and renderer (InsightViewer)
+    // use `overall_material_score`, not a bare `score`. Requiring `score` would
+    // hard-fail every real card even though material_quality is complete.
+    const card = goldInsight();
+    card.material_quality = {
+      overall_material_score: 82,
+      limitations: ['Mała próba ról'],
+      missing_voices: ['Dział IT'],
+      recommended_followups: ['Zebrać dane wolumenowe'],
+    };
+    const v = validateInsightCard(card);
+    expect(v.violationCodes).not.toContain('insight.material_quality_complete');
+    expect(v.pass).toBe(true);
+  });
+
   it('flags English prose (lang_pl)', () => {
     const card = goldInsight();
     card.executive_summary =
