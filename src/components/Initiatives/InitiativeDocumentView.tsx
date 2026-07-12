@@ -74,6 +74,7 @@ import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/type
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { LoadingState } from '@/components/ui/primitives';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api, API_URL, getHeaders } from '@/services/api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
@@ -373,6 +374,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const { isChatCollapsed, toggleChatCollapse, setCurrentView, setMyWorkIntent, currentUser } =
     useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+  const openChatWithContext = useOpenChatWithContext();
 
   const initiativesDemoData = useMemo(() => {
     const currentUserAny = currentUser as any;
@@ -4486,6 +4488,42 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       raidCount: raidItems.length,
     });
   };
+
+  // #33 — contextual AI-CTA on the Initiative card ("Zaproponuj kolejne kroki" /
+  // "Propose next steps"), same doctrine (D17) as TaskDetailView's "Create Ideas"
+  // and DecisionDetailView's "Analyze options": ONE docked Teresa panel opened via
+  // useOpenChatWithContext + a pre-seeded prompt (contextData.teresaPrompt, the
+  // same mechanism InsightViewer's openInsightConsultant relies on). Deliberately
+  // separate from the legacy Slot 9 "AI Consultant" button (setAiPanelOpen /
+  // AIConsultantPanel below) — that is a second, non-canonical panel out of scope
+  // here; this CTA routes only through the single Teresa panel.
+  const handleProposeNextStepsWithAI = useCallback(async () => {
+    const teresaPrompt = isPolish
+      ? `Zaproponuj kolejne kroki dla inicjatywy „${initiative?.name || 'bez tytułu'}” na podstawie jej obecnego statusu (${status}), otwartych zadań (${tasks.length - tasksDone}/${tasks.length}) i decyzji (${decisions.length}). Podaj konkretną, priorytetową listę akcji.`
+      : `Propose next steps for the initiative "${initiative?.name || 'untitled'}" based on its current status (${status}), open tasks (${tasks.length - tasksDone}/${tasks.length}), and decisions (${decisions.length}). Give a concrete, prioritized action list.`;
+    await openChatWithContext({
+      entityType: 'initiative',
+      entityId: initiativeId,
+      entityName: initiative?.name || '',
+      contextData: {
+        module: 'initiative',
+        status,
+        tasksCount: tasks.length,
+        tasksDone,
+        decisionsCount: decisions.length,
+        teresaPrompt,
+      },
+    });
+  }, [
+    openChatWithContext,
+    initiativeId,
+    initiative?.name,
+    status,
+    tasks.length,
+    tasksDone,
+    decisions.length,
+    isPolish,
+  ]);
 
   const handleOpenTaskArtifact = useCallback(
     (taskId: string) => {
@@ -10398,6 +10436,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               </>
                             )}
                           </div>
+                        )}
+
+                        {/* #33 — contextual AI-CTA ("Propose next steps"), opens the
+                            ONE docked Teresa panel via useOpenChatWithContext (D17).
+                            Deliberately separate from Slot 9 below, which still opens
+                            the legacy AIConsultantPanel (out of scope migration). */}
+                        {!readMode && (
+                          <ToolbarGhostButton
+                            onClick={() => void handleProposeNextStepsWithAI()}
+                            title={t(
+                              'initiatives.proposeNextStepsTitle',
+                              'Discuss next steps for this initiative with Teresa'
+                            )}
+                            icon={<Sparkles size={13} />}
+                          >
+                            <span>{t('initiatives.proposeNextSteps', 'Propose next steps')}</span>
+                          </ToolbarGhostButton>
                         )}
 
                         {/* ── Slot 9: artifact-level AI (solid teal).
