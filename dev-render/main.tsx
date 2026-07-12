@@ -33,6 +33,7 @@ import InitiativesLightScreen from './screens/initiatives-light';
 import MaterialsLightScreen from './screens/materials-light';
 import NotebookLightScreen from './screens/notebook-light';
 import ResultsLightScreen from './screens/results-light';
+import StandardQuestionScreen from './screens/standard-question';
 import ToolsLightScreen from './screens/tools-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
@@ -68,6 +69,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'chat-landing': {
     label: 'Chat Landing Light Shell (/chat empty state, #86/#1)',
     render: () => <ChatLandingScreen />,
+  },
+  'standard-question': {
+    label: 'StandardQuestion (SPEC-Q · 4. format: Q-Text + Q-Level drabinka)',
+    render: () => <StandardQuestionScreen />,
   },
 };
 
