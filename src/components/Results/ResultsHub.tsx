@@ -1863,10 +1863,16 @@ export const ResultsHub: React.FC = () => {
   //    legacy hub already loads — status/trend enums match 1:1 (kpiDomain.ts).
   //  - ROI: fetched from the SAME endpoint ROITrackingView uses
   //    (V8ResultsApi.getRoiPortfolioSummary(), fallback
-  //    `/benefits/roi/portfolio/summary`). That endpoint has no per-initiative
-  //    `opexAnnual` and no portfolio-level `totalOpex` — both default to 0
-  //    (net-of-opex figure the shell shows collapses to gross realized until
-  //    that field ships).
+  //    `/benefits/roi/portfolio/summary`). That endpoint now returns netto
+  //    fields (Faza2 gap #3, resultsROIService.ts): per-item
+  //    `netProjectedBenefit`/`netRealizedBenefit`/`roiPercentGross`/
+  //    `roiPercentNet`, and portfolio-level `totalOpexAnnual`/
+  //    `netTotalProjected`/`netTotalRealized`/`roiPercentGross`/
+  //    `roiPercentNet`. Passed through as-is; the legacy fallback endpoint
+  //    (`/benefits/roi/portfolio/summary`) does not return them, so they stay
+  //    `undefined` there and the shell/RoiTab fall back to client-side
+  //    `benefit - opexAnnual` (opexAnnual also undefined → net collapses to
+  //    gross, same as before — no crash, no regression).
   //  - OKR: fetched from the SAME endpoint StrategicLayerPanel uses
   //    (`/results-strategic/all/okr`, backed by okrService.ts). `cycleLabel` /
   //    `lastCheckIn` are NOT returned by that endpoint today — left undefined
@@ -1879,9 +1885,24 @@ export const ResultsHub: React.FC = () => {
       ownerName?: string;
       projectedBenefit: number;
       realizedBenefit: number;
+      opexAnnual?: number;
       hasRealized: boolean;
+      netProjectedBenefit?: number;
+      netRealizedBenefit?: number;
+      roiPercentGross?: number | null;
+      roiPercentNet?: number | null;
     }>;
-    summary: { totalProjected: number; totalRealized: number; totalCapex: number } | null;
+    summary: {
+      totalProjected: number;
+      totalRealized: number;
+      totalCapex: number;
+      coveragePercent?: number;
+      totalOpexAnnual?: number;
+      netTotalProjected?: number;
+      netTotalRealized?: number;
+      roiPercentGross?: number | null;
+      roiPercentNet?: number | null;
+    } | null;
   }>({ items: [], summary: null });
   const [lightOkr, setLightOkr] = useState<{
     objectives: ResultsLightObjective[];
@@ -1967,8 +1988,12 @@ export const ResultsHub: React.FC = () => {
         ownerName: item.ownerName,
         projectedBenefit: item.projectedBenefit,
         realizedBenefit: item.realizedBenefit,
-        opexAnnual: 0,
+        opexAnnual: item.opexAnnual ?? 0,
         hasRealized: item.hasRealized,
+        netProjectedBenefit: item.netProjectedBenefit,
+        netRealizedBenefit: item.netRealizedBenefit,
+        roiPercentGross: item.roiPercentGross,
+        roiPercentNet: item.roiPercentNet,
       })),
     [lightRoi.items]
   );
@@ -1978,9 +2003,13 @@ export const ResultsHub: React.FC = () => {
     return {
       totalProjected: s?.totalProjected ?? 0,
       totalRealized: s?.totalRealized ?? 0,
-      totalOpex: 0,
+      totalOpex: s?.totalOpexAnnual ?? 0,
       totalCapex: s?.totalCapex ?? 0,
-      coveragePercent: (s as any)?.coveragePercent ?? 0,
+      coveragePercent: s?.coveragePercent ?? 0,
+      netTotalProjected: s?.netTotalProjected,
+      netTotalRealized: s?.netTotalRealized,
+      roiPercentGross: s?.roiPercentGross,
+      roiPercentNet: s?.roiPercentNet,
     };
   }, [lightRoi.summary]);
 
