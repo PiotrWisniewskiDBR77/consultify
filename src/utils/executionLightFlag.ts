@@ -71,7 +71,7 @@ export function isExecutionLightEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return readEnvFlag();
+  return true; // FLIP 07-12 noc (decyzja Piotra: odbiór na żywym demo, dokończenie przez noc); ?ff_executionLight=0 wyłącza per-sesja
 }
 
 export const EXECUTION_LIGHT_FLAG_KEYS = {
