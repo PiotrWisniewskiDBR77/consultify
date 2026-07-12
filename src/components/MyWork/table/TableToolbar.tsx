@@ -1281,8 +1281,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         </div>
       )}
 
-      {/* Save status + button */}
-      <span className="text-[11px] text-c-text-muted">{saveStatusLabel}</span>
+      {/* Save button — #6c: "Saved Xs ago" tekst usunięty, autosave ma być cichy
+          (dublet z Mind Map #6b/#6c). Mechanika sync (saveStatusLabel prop) zostaje. */}
       <Button
         variant="primary"
         size="sm"

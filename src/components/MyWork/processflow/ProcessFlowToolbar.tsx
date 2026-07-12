@@ -500,7 +500,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
             </button>
-            <span className="text-[11px] text-c-text-muted">{syncLabel}</span>
+            {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
+                Mechanika sync (syncLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
 
             <div className="mx-1 h-5 w-px bg-c-surface-raised" />
 

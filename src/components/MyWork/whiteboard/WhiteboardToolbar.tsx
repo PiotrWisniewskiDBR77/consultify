@@ -404,7 +404,8 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
         {saving ? t('myWork.whiteboard.toolbarExtra.saving') : t('myWork.whiteboard.toolbar.save')}
       </button>
-      <span className="text-[11px] text-c-text-muted">{saveStatusLabel}</span>
+      {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
+          Mechanika sync (saveStatusLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
     </div>
   );
 };
