@@ -65,6 +65,16 @@ export interface StandardRowMenu {
   statusTransitions?: StandardRowMenuAction[];
   /** Blok 3: czas — Delay ›/Snooze-presety (tylko encje z terminami). */
   timeActions?: StandardRowMenuAction[];
+  /**
+   * Blok CONVERT TO (OPCJONALNY, ANEKS #3a — `_PRZEGLAD_DOMOWY_WYNIKI_2026-07-10`
+   * #3/#254): cele konwersji encji (Initiative/Report/Presentation/…, wzór
+   * `ConvertToOutputMenu`). Renderowany MIĘDZY blokiem 4 (universal) i blokiem 5
+   * (destructive), z nagłówkiem grupy "Convert to" — DOKŁADNIE jak dziś w
+   * `ConvertToOutputMenu` (jeden dopisek dla całej grupy, nie per-pozycja).
+   * Brak deklaracji ⇒ sekcja całkowicie pominięta, ZERO zmian wizualnych
+   * (addytywne — moduły bez `convertActions` renderują się identycznie).
+   */
+  convertActions?: StandardRowMenuAction[];
   /** Blok 4: handlery uniwersalne; brak handlera = disabled z notą. */
   universalHandlers?: {
     preview?: () => void;
@@ -237,6 +247,16 @@ export const StandardTable: React.FC<StandardTableProps> = ({
           },
         ],
       });
+      // Blok CONVERT TO — opcjonalny (ANEKS #3a), MIĘDZY universal i danger.
+      // Brak deklaracji ⇒ push pominięty, sekcja nie istnieje (addytywne).
+      if (menu.convertActions?.length) {
+        sections.push({
+          id: 'convert',
+          kind: 'convert',
+          label: t('common.convertTo', isPolish ? 'Konwertuj na' : 'Convert to'),
+          actions: menu.convertActions.map(toRowAction),
+        });
+      }
       // Blok 5 — ZAWSZE ostatni, czerwony, oddzielony separatorem sekcji.
       const d = menu.destructive ?? {};
       sections.push({
