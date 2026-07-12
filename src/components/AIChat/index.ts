@@ -6,7 +6,6 @@
 
 // Menu and sidebar components
 export { ChatHistorySidebar } from './ChatHistorySidebar';
-export { ChatMenu } from './ChatMenu';
 export { ConversationActions } from './ConversationActions';
 export { ConversationItem } from './ConversationItem';
 export { ConversationList } from './ConversationList';
