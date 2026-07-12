@@ -64,6 +64,27 @@ export interface StandardPreviewActions {
   time?: StandardPreviewAction[];
 }
 
+export interface StandardPreviewWhatsNextItem {
+  id: string;
+  label: string;
+  icon?: LucideIcon;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+export interface StandardPreviewWhatsNext {
+  /** Nagłówek sekcji (default: "What's next"). */
+  label?: string;
+  /**
+   * Dopisek dla CAŁEJ grupy (np. "Creates a MyWork session first") —
+   * pokazany RAZ pod chipami, NIGDY per-pozycja. Audyt
+   * `_PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md` #4/#254: bespoke WHAT'S NEXT
+   * powtarzał ten dopisek ×3 (raz na pozycję) — kanon wymusza jeden.
+   */
+  note?: string;
+  items: StandardPreviewWhatsNextItem[];
+}
+
 export interface StandardPreviewMeta {
   pills: MetaPill[];
   /** Termin / SLA — prawa strona karty meta. */
@@ -114,6 +135,17 @@ export interface StandardPreviewProps {
   /* Blok 6 — akcje (PreviewActionButton, grid 2 kolumny) */
   actions?: StandardPreviewActions;
 
+  /**
+   * Blok opcjonalny — WHAT'S NEXT (ANEKS #4, `_PRZEGLAD_DOMOWY_WYNIKI_2026-07-10`
+   * #4/#254). Kanonizuje ścieżki konwersji z dołu preview (dziś bespoke per
+   * moduł, np. "Convert to Initiative/Report/Presentation") jako chipy z
+   * JEDNYM wspólnym dopiskiem — zamiast ściśniętej, powtarzającej się
+   * tabelki. Renderowany na samym dole, po bloku 6. Brak deklaracji ⇒ blok
+   * całkowicie pominięty (addytywne — istniejące preview bez `whatsNext`
+   * renderują się identycznie jak dziś).
+   */
+  whatsNext?: StandardPreviewWhatsNext;
+
   loading?: boolean;
   className?: string;
   children?: React.ReactNode;
@@ -163,6 +195,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
   relations,
   relationsEmptyLabel,
   actions,
+  whatsNext,
   loading,
   className,
   children,
@@ -210,7 +243,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
   );
 
   const footer =
-    ai || relations || actionRows.length > 0 ? (
+    ai || relations || actionRows.length > 0 || whatsNext ? (
       // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
       <div className="space-y-2.5">
         {/* Blok 4 — ramka AI */}
@@ -236,6 +269,36 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
             {actionRows.map((row, idx) => (
               <ActionGridRow key={idx} actions={row} />
             ))}
+          </div>
+        ) : null}
+
+        {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
+            tabelki; JEDEN dopisek dla całej grupy pod chipami, nie per-pozycja. */}
+        {whatsNext ? (
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+              {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {whatsNext.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={item.onClick}
+                    disabled={item.disabled}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {Icon ? <Icon size={12} /> : null}
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            {whatsNext.note ? (
+              <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
+            ) : null}
           </div>
         ) : null}
       </div>
