@@ -1050,6 +1050,14 @@ async function ensureInterviewAssignmentLifecycleColumns(): Promise<void> {
       name: 'archived_by',
       sql: `ALTER TABLE interview_assignments ADD COLUMN archived_by TEXT`,
     },
+    // #50a — set TRUE only by the session-archive cascade in
+    // applySessionLifecycleAction; read back on session-restore so we only
+    // un-archive assignments the cascade itself archived (mirrors migration
+    // 920_interview_assignment_archived_via_session.sql).
+    {
+      name: 'archived_via_session',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN archived_via_session BOOLEAN DEFAULT FALSE`,
+    },
     // Defensive: ensure escalation columns exist even if the service path has not
     // run yet (additive, mirrors InterviewAssignmentService DDL names).
     {
@@ -2608,11 +2616,37 @@ async function applySessionLifecycleAction(params: {
         `UPDATE interview_sessions SET archived_at = ?, archived_by = ? WHERE id = ?`,
         [now, userId, sessionId]
       );
+      // #50a — cascade: archiving a session archives its assignments too, so
+      // an assignment tied to an archived session doesn't stay visible as
+      // active. Guarded by `archived_at IS NULL` so an assignment the admin
+      // ALREADY archived independently (via archiveAssignment) keeps its own
+      // archived_at/archived_by and archived_via_session stays FALSE for it —
+      // the cascade never overwrites an independent archive record.
+      await ensureInterviewAssignmentLifecycleColumns();
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+            SET archived_at = ?, archived_by = ?, archived_via_session = TRUE, updated_at = ?
+          WHERE session_id = ? AND archived_at IS NULL`,
+        [now, userId, now, sessionId]
+      );
       break;
     case 'restore':
       await queryHelpers.queryRun(
         `UPDATE interview_sessions SET archived_at = NULL, archived_by = NULL WHERE id = ?`,
         [sessionId]
+      );
+      // #50a — cascade back: restoring a session only un-archives the
+      // assignments THIS cascade archived (archived_via_session = TRUE).
+      // Assignments an admin archived independently via archiveAssignment
+      // (archived_via_session = FALSE) are left archived — restoring a
+      // session must never silently un-archive someone's deliberate,
+      // independent assignment-level archive.
+      await ensureInterviewAssignmentLifecycleColumns();
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+            SET archived_at = NULL, archived_by = NULL, archived_via_session = FALSE, updated_at = ?
+          WHERE session_id = ? AND archived_via_session = TRUE`,
+        [now, sessionId]
       );
       break;
     case 'trash':
