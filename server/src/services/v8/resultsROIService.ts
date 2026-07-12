@@ -1319,31 +1319,46 @@ export async function getROIPortfolioSummary(
 
   const items = (assumptions || []).map((row) => {
     const realizedRow = realizedMap.get(row.initiative_id);
+    const capex = row.capex || 0;
+    const opexAnnual = row.opex_annual || 0;
     const projectedBenefit = (row.expected_revenue_delta || 0) + (row.expected_cost_delta || 0);
     const realizedBenefit = realizedRow
       ? (realizedRow.total_rev || 0) +
         (realizedRow.total_cost || 0) +
         (realizedRow.total_savings || 0)
       : 0;
+    // Faza2 gap #3 — ROI netto: benefit pomniejszony o opex_annual (roi_assumptions).
+    // Additive obok gross projectedBenefit/realizedBenefit powyżej — nie psuje istniejących pól.
+    const netProjectedBenefit = projectedBenefit - opexAnnual;
+    const netRealizedBenefit = realizedBenefit - opexAnnual;
+    const roiPercentGross = capex > 0 ? (realizedBenefit / capex) * 100 : null;
+    const roiPercentNet = capex > 0 ? (netRealizedBenefit / capex) * 100 : null;
 
     return {
       initiativeId: row.initiative_id,
       initiativeName: row.initiative_name,
       status: row.status,
       priority: row.priority,
-      capex: row.capex || 0,
-      opexAnnual: row.opex_annual || 0,
+      capex,
+      opexAnnual,
       projectedBenefit,
       realizedBenefit,
       variance: realizedBenefit - projectedBenefit,
       confidence: row.confidence,
       hasRealized: Boolean(realizedRow),
+      netProjectedBenefit,
+      netRealizedBenefit,
+      roiPercentGross,
+      roiPercentNet,
     };
   });
 
   const totalProjected = items.reduce((sum, item) => sum + item.projectedBenefit, 0);
   const totalRealized = items.reduce((sum, item) => sum + item.realizedBenefit, 0);
   const totalCapex = items.reduce((sum, item) => sum + item.capex, 0);
+  const totalOpexAnnual = items.reduce((sum, item) => sum + item.opexAnnual, 0);
+  const netTotalProjected = totalProjected - totalOpexAnnual;
+  const netTotalRealized = totalRealized - totalOpexAnnual;
   const coveragePercent =
     items.length > 0
       ? Math.round((items.filter((item) => item.hasRealized).length / items.length) * 100)
@@ -1359,6 +1374,11 @@ export async function getROIPortfolioSummary(
       totalVariance: totalRealized - totalProjected,
       initiativeCount: items.length,
       coveragePercent,
+      totalOpexAnnual,
+      netTotalProjected,
+      netTotalRealized,
+      roiPercentGross: totalCapex > 0 ? (totalRealized / totalCapex) * 100 : null,
+      roiPercentNet: totalCapex > 0 ? (netTotalRealized / totalCapex) * 100 : null,
     },
   };
 }
@@ -1404,6 +1424,8 @@ export async function getROIInitiativeDetail(
   if (!assumptionRow) {
     variance = { hasAssumptions: false, variance: null };
   } else {
+    const capex = Number(assumptionRow.capex || 0);
+    const opexAnnual = Number(assumptionRow.opex_annual || 0);
     const projectedBenefit =
       Number(assumptionRow.expected_revenue_delta || 0) +
       Number(assumptionRow.expected_cost_delta || 0);
@@ -1411,6 +1433,10 @@ export async function getROIInitiativeDetail(
     const varianceAbs = realizedBenefit - projectedBenefit;
     const variancePct =
       projectedBenefit !== 0 ? (varianceAbs / Math.abs(projectedBenefit)) * 100 : 0;
+    // Faza2 gap #3 — ROI netto: benefit pomniejszony o opex_annual. Additive pola
+    // obok istniejących gross totalBenefit — konsumenci ignorujący nowe pola działają bez zmian.
+    const netProjectedBenefit = projectedBenefit - opexAnnual;
+    const netRealizedBenefit = realizedBenefit - opexAnnual;
 
     variance = {
       hasAssumptions: true,
@@ -1418,13 +1444,15 @@ export async function getROIInitiativeDetail(
         revenueDelta: Number(assumptionRow.expected_revenue_delta || 0),
         costDelta: Number(assumptionRow.expected_cost_delta || 0),
         totalBenefit: projectedBenefit,
-        capex: Number(assumptionRow.capex || 0),
-        opexAnnual: Number(assumptionRow.opex_annual || 0),
+        capex,
+        opexAnnual,
         roiPercent: Number(assumptionRow.expected_roi_percent || 0),
         npv: Number(assumptionRow.expected_npv || 0),
         paybackMonths: Number(assumptionRow.expected_payback_months || 0),
         horizonMonths: Number(assumptionRow.horizon_months || 0),
         confidence: String(assumptionRow.confidence || ''),
+        netTotalBenefit: netProjectedBenefit,
+        roiPercentNet: capex > 0 ? (netProjectedBenefit / capex) * 100 : null,
       },
       realized: {
         revenueDelta: totalRealizedRevDelta,
@@ -1432,6 +1460,8 @@ export async function getROIInitiativeDetail(
         savings: totalRealizedSavings,
         totalBenefit: realizedBenefit,
         dataPoints: realizedList.length,
+        netTotalBenefit: netRealizedBenefit,
+        roiPercentNet: capex > 0 ? (netRealizedBenefit / capex) * 100 : null,
       },
       variance: {
         absolute: varianceAbs,

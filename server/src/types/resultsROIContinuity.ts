@@ -409,6 +409,14 @@ export interface ROIPortfolioSummaryItem {
   variance: number;
   confidence: string | null;
   hasRealized: boolean;
+  /** Faza2 gap #3 — ROI netto: benefit pomniejszony o opex_annual (ten sam rok/okres
+   *  co roi_assumptions.opex_annual). Additive — nie zastępuje gross projectedBenefit/
+   *  realizedBenefit powyżej, tylko dokłada widok "po odjęciu kosztów operacyjnych". */
+  netProjectedBenefit: number;
+  netRealizedBenefit: number;
+  /** ROI % = benefit / capex * 100. null gdy capex <= 0 (dzielenie niezdefiniowane). */
+  roiPercentGross: number | null;
+  roiPercentNet: number | null;
 }
 
 export interface ROIPortfolioSummary {
@@ -421,6 +429,12 @@ export interface ROIPortfolioSummary {
     totalVariance: number;
     initiativeCount: number;
     coveragePercent: number;
+    /** Faza2 gap #3 — dodatkowe pola netto (opex_annual odjęty) obok istniejących gross. */
+    totalOpexAnnual: number;
+    netTotalProjected: number;
+    netTotalRealized: number;
+    roiPercentGross: number | null;
+    roiPercentNet: number | null;
   };
 }
 
@@ -437,6 +451,9 @@ export interface ROIInitiativeVarianceDetail {
     paybackMonths?: number | null;
     horizonMonths?: number | null;
     confidence?: string | null;
+    /** Faza2 gap #3 — projected benefit netto (po odjęciu opexAnnual). Additive. */
+    netTotalBenefit?: number;
+    roiPercentNet?: number | null;
   };
   realized?: {
     revenueDelta: number;
@@ -444,6 +461,9 @@ export interface ROIInitiativeVarianceDetail {
     savings: number;
     totalBenefit: number;
     dataPoints: number;
+    /** Faza2 gap #3 — realized benefit netto (po odjęciu opexAnnual z roi_assumptions). */
+    netTotalBenefit?: number;
+    roiPercentNet?: number | null;
   };
   variance?: {
     absolute: number;
