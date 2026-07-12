@@ -97,7 +97,6 @@ import {
 } from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type {
-  NModePropertyField,
   NModeSection,
   PropertyFieldOption,
 } from '@/components/shared/NModeLayout/types';
@@ -3167,141 +3166,53 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [findings, analysis, insight]
   );
 
-  // ── Properties strip fields ────────────────────────────────────────────────
-
-  const propertyFields = useMemo<NModePropertyField[]>(
-    () => [
-      // Canon (INSIGHT_CANON line 60/101): status changes happen by clicking the
-      // STATUS field in the Properties Strip — NOT via toolbar buttons. The strip
-      // select is now interactive and routes the publish/review transitions to
-      // the EXISTING `handleLifecycleTransition` handler (same backend the old
-      // toolbar buttons used). The option set is curated by current governance
-      // state so only valid transitions are offered.
-      (() => {
-        const currentStatus =
-          insight?.reviewStatus === 'in_review' || insight?.reviewStatus === 'published'
-            ? insight.reviewStatus
-            : insight?.status || 'generating';
-        // Always include the current (display) value so the select renders it.
-        const baseOptions: PropertyFieldOption[] = [
-          { value: 'draft', label: { en: 'Draft', pl: 'Szkic' } },
-          { value: 'generating', label: { en: 'Generating', pl: 'Generowanie' } },
-          { value: 'completed', label: { en: 'Completed', pl: 'Ukończone' } },
-          { value: 'in_review', label: { en: 'In Review', pl: 'W recenzji' } },
-          { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
-          { value: 'failed', label: { en: 'Failed', pl: 'Błąd' } },
-        ];
-        // Governance transitions only fire when the value actually changes to a
-        // valid target; AI-generation statuses (draft/generating/completed/failed)
-        // are not user-settable, so selecting them is a no-op.
-        const editable = !lifecycleTransitioning;
-        const runTransition = (next: string) => {
-          if (next === currentStatus) return;
-          if (next === 'in_review' && currentStatus === 'completed') {
-            void handleLifecycleTransition('submit_review');
-          } else if (next === 'published') {
-            void handleLifecycleTransition('approve');
-          } else if (next === 'draft' && currentStatus === 'published') {
-            void handleLifecycleTransition('revert_draft');
-          }
-          // Any other target is an AI-generation status → not user-settable.
-        };
-        // Colored-pill visual parity with Initiative (bg / text / dot per state):
-        // Draft=slate · Generating=amber · In Review=blue · Completed=emerald ·
-        // Published(Ready)=teal · Failed=rose.
-        const pill = STATUS_PILL[currentStatus] || STATUS_PILL.completed;
-        const pillLabel = isPolish
-          ? STATUS_CONFIG[currentStatus]?.label.pl
-          : STATUS_CONFIG[currentStatus]?.label.en;
-        return {
-          id: 'status',
-          label: { en: 'Status', pl: 'Status' },
-          type: 'custom' as const,
-          value: currentStatus,
-          readOnly: !editable,
-          onChange: runTransition,
-          options: baseOptions,
-          render: () => (
-            <div className="relative">
-              <div
-                className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${pill.bg} border border-slate-200/60 dark:border-navy-600/60 ${pill.text}`}
-              >
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${pill.dot}`} />
-                <span className="flex-1 truncate">{pillLabel || currentStatus}</span>
-                {editable && <ChevronDown size={12} className="flex-shrink-0 opacity-60" />}
-              </div>
-              {editable && (
-                <select
-                  value={currentStatus}
-                  onChange={(e) => runTransition(e.target.value)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  title={isPolish ? 'Zmień status' : 'Change status'}
-                >
-                  {baseOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {isPolish ? opt.label.pl : opt.label.en}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          ),
-        };
-      })(),
-      {
-        id: 'type',
-        label: { en: 'Analysis Type', pl: 'Typ analizy' },
-        type: 'custom' as const,
-        value: isPolish ? typeMeta.labelPl : typeMeta.label,
-        onChange: () => {},
-        readOnly: true,
-        render: () => (
-          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/20 border border-slate-200/60 dark:border-navy-600/60 text-indigo-600 dark:text-indigo-300">
-            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-indigo-500" />
-            <span className="flex-1 truncate">{isPolish ? typeMeta.labelPl : typeMeta.label}</span>
-          </div>
-        ),
-      },
-      {
-        id: 'created',
-        label: { en: 'Created', pl: 'Utworzono' },
-        type: 'date' as const,
-        value: insight?.createdAt?.split('T')[0] || '',
-        onChange: () => {},
-        readOnly: true,
-      },
-      {
-        id: 'sessions',
-        label: { en: 'Sessions', pl: 'Sesje' },
-        type: 'custom' as const,
-        value: String(insight?.sourceSessionCount || 0),
-        onChange: () => {},
-        readOnly: true,
-        render: () => (
-          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 border border-slate-200/60 dark:border-navy-600/60 text-blue-600 dark:text-blue-300">
-            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-blue-500" />
-            <span className="flex-1 truncate">{String(insight?.sourceSessionCount || 0)}</span>
-          </div>
-        ),
-      },
-      {
-        id: 'findings',
-        label: { en: 'Findings', pl: 'Findingi' },
-        type: 'text' as const,
-        value: String(findingsSummary.total),
-        onChange: () => {},
-        readOnly: true,
-      },
-    ],
-    [
-      findingsSummary.total,
-      insight,
-      isPolish,
-      typeMeta,
-      handleLifecycleTransition,
-      lifecycleTransitioning,
-    ]
-  );
+  // ── Status field (governance) ───────────────────────────────────────────────
+  // #54: the center "Properties Strip" (NModePropertiesStrip via NModeShell
+  // `properties` prop) was removed — metadata belongs in the right panel
+  // "Właściwości" tab (ArtifactRightPanel), not the artifact center. This field
+  // is computed here (not in the old propertyFields array) and rendered as a
+  // row inside `rightPanelSections` below. Canon (INSIGHT_CANON line 60/101):
+  // status changes happen by clicking the STATUS field — NOT via toolbar
+  // buttons. The select is interactive and routes the publish/review
+  // transitions to the EXISTING `handleLifecycleTransition` handler (same
+  // backend the old toolbar buttons used). Analysis Type/Created/Sessions
+  // already have a home in the right panel table (Tag/Date/Source rows) — only
+  // Status and Findings needed a new row there (see rightPanelSections below).
+  const currentInsightStatus =
+    insight?.reviewStatus === 'in_review' || insight?.reviewStatus === 'published'
+      ? insight.reviewStatus
+      : insight?.status || 'generating';
+  // Always include the current (display) value so the select renders it.
+  const statusBaseOptions: PropertyFieldOption[] = [
+    { value: 'draft', label: { en: 'Draft', pl: 'Szkic' } },
+    { value: 'generating', label: { en: 'Generating', pl: 'Generowanie' } },
+    { value: 'completed', label: { en: 'Completed', pl: 'Ukończone' } },
+    { value: 'in_review', label: { en: 'In Review', pl: 'W recenzji' } },
+    { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
+    { value: 'failed', label: { en: 'Failed', pl: 'Błąd' } },
+  ];
+  // Governance transitions only fire when the value actually changes to a
+  // valid target; AI-generation statuses (draft/generating/completed/failed)
+  // are not user-settable, so selecting them is a no-op.
+  const statusEditable = !lifecycleTransitioning;
+  const runStatusTransition = (next: string) => {
+    if (next === currentInsightStatus) return;
+    if (next === 'in_review' && currentInsightStatus === 'completed') {
+      void handleLifecycleTransition('submit_review');
+    } else if (next === 'published') {
+      void handleLifecycleTransition('approve');
+    } else if (next === 'draft' && currentInsightStatus === 'published') {
+      void handleLifecycleTransition('revert_draft');
+    }
+    // Any other target is an AI-generation status → not user-settable.
+  };
+  // Colored-pill visual parity with Initiative (bg / text / dot per state):
+  // Draft=slate · Generating=amber · In Review=blue · Completed=emerald ·
+  // Published(Ready)=teal · Failed=rose.
+  const statusPill = STATUS_PILL[currentInsightStatus] || STATUS_PILL.completed;
+  const statusPillLabel = isPolish
+    ? STATUS_CONFIG[currentInsightStatus]?.label.pl
+    : STATUS_CONFIG[currentInsightStatus]?.label.en;
 
   // ── Activity log → NMode format ───────────────────────────────────────────
 
@@ -8383,6 +8294,36 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             </thead>
             <tbody>
               <tr>
+                <td className={panelTdKey}>{isPolish ? 'Status' : 'Status'}</td>
+                <td className={panelTdVal}>
+                  <div className="relative inline-flex justify-end w-full">
+                    <span
+                      className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`} />
+                      <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
+                      {statusEditable && (
+                        <ChevronDown size={10} className="flex-shrink-0 opacity-60" />
+                      )}
+                    </span>
+                    {statusEditable && (
+                      <select
+                        value={currentInsightStatus}
+                        onChange={(e) => runStatusTransition(e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        title={isPolish ? 'Zmień status' : 'Change status'}
+                      >
+                        {statusBaseOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {isPolish ? opt.label.pl : opt.label.en}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </td>
+              </tr>
+              <tr>
                 <td className={panelTdKey}>{isPolish ? 'Źródło' : 'Source'}</td>
                 <td className={panelTdVal}>
                   {isPolish
@@ -8397,6 +8338,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               <tr>
                 <td className={panelTdKey}>{isPolish ? 'Pewność' : 'Confidence'}</td>
                 <td className={panelTdVal}>{panelConfidence || panelDash}</td>
+              </tr>
+              <tr>
+                <td className={panelTdKey}>{isPolish ? 'Findingi' : 'Findings'}</td>
+                <td className={`${panelTdVal} tabular-nums`}>{String(findingsSummary.total)}</td>
               </tr>
               <tr>
                 <td className="px-3 py-2 text-c-text-muted">{isPolish ? 'Tag' : 'Tag'}</td>
@@ -8524,8 +8469,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             disabled: !insight?.id,
           },
         }}
-        properties={propertyFields}
-        propertiesMaxColumns={5}
         sections={visibleNModeSections}
         activeSection={activeNSection}
         onSectionChange={setActiveNSection}
