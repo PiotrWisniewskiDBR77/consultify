@@ -7,10 +7,11 @@
 
 // ── Pill bases ──────────────────────────────────────────────────────────────
 
-/* VISUAL_STANDARD.md §5.1/§4 — controls are 8px-radius rectangles (rounded-lg);
- * pills are reserved for badges/chips. Focus ring is blue (--c-focus). */
+/* D21 (Piotr 07-12): przyciski akcji w preview = pill (rounded-full), "taki jak Google i Apple".
+ * Zgodne z TRIADA_KANON.md A8/C9 (pigułka h-9 rounded-full, widoczna ramka) — poprzedni rounded-lg
+ * tutaj był regresją względem już ustanowionego kanonu. Focus ring is blue (--c-focus). */
 export const PREVIEW_PILL_BASE =
-  'inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
 export const PREVIEW_META_PILL =
   'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
