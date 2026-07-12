@@ -5290,8 +5290,9 @@ function MindMapInner({
         />
       )}
 
-      {/* Breadcrumb for drill-down — positioned below the unified header */}
-      {drillPath.length > 0 && (
+      {/* Breadcrumb for drill-down — positioned below the unified header.
+          #6e: also top chrome — hides in fullscreen. */}
+      {drillPath.length > 0 && !isFullscreen && (
         <div className="absolute top-[110px] left-3 z-dropdown">
           <SubMapBreadcrumb
             path={drillPath}
@@ -5305,7 +5306,10 @@ function MindMapInner({
           jest ciągły — SaaS nie pokazuje "not saved"). Close (X) zostaje —
           to jedyny sposób wyjścia z wariantu overlay, nie jest częścią
           usuniętego paska stanu. */}
-      {showClose && (
+      {/* #6e: close (X) is top chrome too — hides in fullscreen (Esc exits
+          fullscreen first via native browser Fullscreen API; the X returns
+          once fullscreen ends). */}
+      {showClose && !isFullscreen && (
         <div className="absolute top-3 left-3 z-dropdown">
           <button
             onClick={onClose}
