@@ -150,6 +150,43 @@ import {
   type ExecutionReportLite,
 } from './ExecutionLightShell';
 
+/**
+ * Lokalny (frontend-only) kształt odpowiedzi `GET /api/report-builder/program-3axis/live`
+ * — podzbiór `ThreeAxisReport`/`ThreeAxisAggregate`/`ThreeAxisRow` z
+ * `server/src/services/execution/threeAxisReportService.ts`, tylko pola faktycznie
+ * używane do zasilenia `ExecutionLightShell` (bez `raw`/`exceptions`/`dataQuality`/`flags`).
+ * `src/` nie importuje `server/` bezpośrednio w tym kodzie (patrz komentarz w
+ * ExecutionLightShell.tsx) — stąd osobna, lekka definicja.
+ */
+interface ThreeAxisAxisLite {
+  pct: number | null;
+  dataQuality: 'ok' | 'missing';
+}
+interface ThreeAxisRatioLite {
+  ratio: number | null;
+  rag: ExecutionRag;
+}
+interface ThreeAxisRowLite {
+  initiativeId: string;
+  T: ThreeAxisAxisLite;
+  Z: ThreeAxisAxisLite;
+  W: ThreeAxisAxisLite;
+  rag: ExecutionRag;
+}
+interface ThreeAxisProgramLite {
+  T: ThreeAxisAxisLite;
+  Z: ThreeAxisAxisLite;
+  W: ThreeAxisAxisLite;
+  scheduleHealth: ThreeAxisRatioLite;
+  impactGap: ThreeAxisRatioLite;
+  deliveryPromise: ThreeAxisRatioLite;
+  rag: ExecutionRag;
+}
+interface ThreeAxisLiveReportLite {
+  program: ThreeAxisProgramLite;
+  rows: ThreeAxisRowLite[];
+}
+
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
     default: module.InitiativeDocumentView,
@@ -776,6 +813,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   >([]);
   const [isLoadingActionQueue, setIsLoadingActionQueue] = useState(false);
   const [deepLinkHandled, setDeepLinkHandled] = useState(false);
+
+  // Fala 1 lekkość — 3-osiowy raport NA ŻYWO (T=czas × Z=zadania × W=wartość),
+  // GET /api/report-builder/program-3axis/live (threeAxisReportService.buildThreeAxisReport).
+  // Zastępuje "best-effort PROXY" T-osi (patrz komentarz przy executionLightModeActive) —
+  // T było ZAWSZE `{pct:null}` bo żaden route wcześniej nie wołał silnika. Fail-soft:
+  // `available:false`/błąd sieci → `null`, lekka powłoka wraca do proxy (patrz
+  // lightProgramSummary/lightInitiativeRows), nigdy crash i nigdy sztywne "NA".
+  const [threeAxisLive, setThreeAxisLive] = useState<ThreeAxisLiveReportLite | null>(null);
 
   // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
   const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
@@ -5661,19 +5706,27 @@ Please return:
   // AssessmentSessionEditorView's DRDLightShell branch.
   //
   // Data-source caveat (headline one — see final report to Piotr for the
-  // full list): `threeAxisReportService.ts` / `programRollupService.ts` have
-  // NO frontend caller ANYWHERE in this codebase — the literal T (time-
-  // elapsed) × Z (EV/BAC) × W (value-vs-target) engine is not wired to any
-  // route the frontend calls. Below is a best-effort PROXY built only from
-  // data ExecutionHub already loads:
+  // full list): until 2026-07-12, `threeAxisReportService.ts` /
+  // `programRollupService.ts` had NO frontend caller ANYWHERE in this
+  // codebase — the literal T (time-elapsed) × Z (EV/BAC) × W (value-vs-target)
+  // engine was not wired to any route the frontend called. That gap is now
+  // closed for T (see `threeAxisLive`/`useEffect` above, `GET
+  // /api/report-builder/program-3axis/live`) — when the org has baseline
+  // schedule dates the real engine values win; the PROXY below stays as the
+  // fail-soft fallback (`available:false` / network error / no schedule
+  // dates → engine itself returns `null`, same shape):
   //   - Z (zadania) ← execSnapshot.overview.progressPercent (real, but is a
-  //     simple completion %, not literally EV/BAC).
+  //     simple completion %, not literally EV/BAC) unless the live engine row
+  //     has a cost-baseline-derived Z.
   //   - W (wartość) ← execSnapshot.roi summary/items (realized vs projected
   //     benefit — real ROI engine, but "value" here means financial benefit
-  //     realization, not the generic value_ledger the doc describes).
-  //   - T (czas) ← NOT available from any state ExecutionHub loads → always
-  //     `{ pct: null, dataQuality: 'missing' }`. scheduleHealth/deliveryPromise
-  //     (both need T) are therefore always NA; only impactGap (W/Z) can compute.
+  //     realization, not the generic value_ledger the doc describes) unless
+  //     the live engine row has a value-baseline-derived W.
+  //   - T (czas) ← `threeAxisLive.program.T` / per-row `.T` when the live
+  //     engine has baseline_start/baseline_end for the scope; otherwise still
+  //     `{ pct: null, dataQuality: 'missing' }` (no schedule dates = no proxy
+  //     possible, this axis has no fallback source). scheduleHealth/
+  //     deliveryPromise mirror the same live-or-NA rule.
   //   - Alerts ← `riskSignals` (RiskSignalItem[], the SAME real, already-loaded
   //     state ExecutionTimelineView renders) — 1:1 shape match, not a proxy.
   //   - Reports ← `enrichedReportCatalog` (the SAME real "11 raportów" catalog
@@ -5685,6 +5738,44 @@ Please return:
   //     decisions / due-soon tasks / missing dates), the SAME real derived
   //     state already used elsewhere in this hub.
   const executionLightModeActive = isExecutionLightEnabled();
+
+  // GET /api/report-builder/program-3axis/live — real T×Z×W engine (threeAxisReportService,
+  // wzorzec fetch identyczny z `/api/report-builder/definitions` powyżej: plain fetch +
+  // getHeaders(), best-effort, `cancelled` guard). Odpalane TYLKO gdy lekka powłoka jest
+  // aktywna — klasyczny ExecutionHub nie ponosi dodatkowego ruchu sieciowego. Fail-soft:
+  // `available:false`/wyjątek sieciowy → `threeAxisLive` zostaje `null`, lightProgramSummary/
+  // lightInitiativeRows poniżej wracają do best-effort proxy (T zawsze `null`, nie crash).
+  useEffect(() => {
+    if (!executionLightModeActive) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        if (currentProjectId) params.set('projectId', currentProjectId);
+        const qs = params.toString();
+        const res = await fetch(`/api/report-builder/program-3axis/live${qs ? `?${qs}` : ''}`, {
+          headers: getHeaders(),
+        });
+        if (!res.ok) {
+          if (!cancelled) setThreeAxisLive(null);
+          return;
+        }
+        const data = (await res.json()) as {
+          available?: boolean;
+          report?: ThreeAxisLiveReportLite | null;
+        };
+        if (!cancelled) {
+          setThreeAxisLive(data.available && data.report ? data.report : null);
+        }
+      } catch {
+        // best-effort: zostaje proxy z execSnapshot (T=NA, jak dziś)
+        if (!cancelled) setThreeAxisLive(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [executionLightModeActive, currentProjectId]);
 
   const lightAlerts: ExecutionAlertLite[] = useMemo(
     () =>
@@ -5768,6 +5859,30 @@ Please return:
     return out;
   }, [actionCenter, isPolish]);
 
+  const threeAxisRowsById = useMemo(
+    () => new Map((threeAxisLive?.rows || []).map((r) => [r.initiativeId, r])),
+    [threeAxisLive]
+  );
+
+  // Merge live-engine reading vs. best-effort proxy PER-FIELD: the live engine
+  // (threeAxisReportService) always returns a well-formed AxisReading/AxisRatio
+  // even when it has no data for that specific axis (dataQuality:'missing' /
+  // ratio:null) — a plain `liveX ?? proxyX` would treat that "missing" object
+  // as truthy and clobber a proxy that DOES have a real number (observed live:
+  // atelier org has no `value_baselines` rows → engine W is always missing,
+  // while the ROI proxy below has real realized/projected data for a few
+  // initiatives). Only let the live value win when it actually carries data.
+  const pickAxis = (
+    live: { pct: number | null; dataQuality: 'ok' | 'missing' } | undefined,
+    proxy: { pct: number | null; dataQuality: 'ok' | 'missing' }
+  ) => (live && live.dataQuality === 'ok' ? live : proxy);
+  const pickRatio = (
+    live: { ratio: number | null; rag: ExecutionRag } | undefined,
+    proxy: { ratio: number | null; rag: ExecutionRag }
+  ) => (live && live.ratio !== null ? live : proxy);
+  const pickRag = (live: ExecutionRag | undefined, proxy: ExecutionRag): ExecutionRag =>
+    live && live !== 'NA' ? live : proxy;
+
   const lightInitiativeRows: ExecutionInitiativeRowLite[] = useMemo(() => {
     const roiByInitiative = new Map((execSnapshot?.roi.items || []).map((r) => [r.initiativeId, r]));
     return dashboardBaseInitiatives.map((i) => {
@@ -5786,17 +5901,23 @@ Please return:
             : healthRaw === 'GREEN'
               ? 'GREEN'
               : 'NA';
+      // Realny wiersz z threeAxisReportService (T×Z×W silnik), gdy dostępny — inaczej
+      // best-effort proxy z execSnapshot/initiativeHealthMap (T zawsze `missing`, jak dziś).
+      const liveRow = threeAxisRowsById.get(i.id);
       return {
         id: i.id,
         name: i.name,
         ownerName: (i as any).ownerName || (i as any).owner?.name,
-        T: { pct: null, dataQuality: 'missing' },
-        Z: { pct: Number.isFinite(zPct) ? zPct : null, dataQuality: Number.isFinite(zPct) ? 'ok' : 'missing' },
-        W: { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' },
-        rag,
+        T: pickAxis(liveRow?.T, { pct: null, dataQuality: 'missing' }),
+        Z: pickAxis(liveRow?.Z, {
+          pct: Number.isFinite(zPct) ? zPct : null,
+          dataQuality: Number.isFinite(zPct) ? 'ok' : 'missing',
+        }),
+        W: pickAxis(liveRow?.W, { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' }),
+        rag: pickRag(liveRow?.rag, rag),
       };
     });
-  }, [dashboardBaseInitiatives, execSnapshot, initiativeHealthMap]);
+  }, [dashboardBaseInitiatives, execSnapshot, initiativeHealthMap, threeAxisRowsById]);
 
   const lightProgramSummary: ExecutionProgramSummaryLite = useMemo(() => {
     const zPct = execSnapshot?.overview.progressPercent ?? null;
@@ -5820,22 +5941,32 @@ Please return:
             )) *
           100
         : null;
+    // Realny agregat programu z threeAxisReportService (T×Z×W silnik), gdy dostępny —
+    // inaczej best-effort proxy powyżej (T/scheduleHealth/deliveryPromise zawsze `NA`,
+    // jak dziś, bo żaden loader ExecutionHub nie niesie dat harmonogramu).
+    const liveProgram = threeAxisLive?.program;
     return {
       initiativeCount: dashboardBaseInitiatives.length,
-      T: { pct: null, dataQuality: 'missing' },
-      Z: { pct: zPct, dataQuality: zPct === null ? 'missing' : 'ok' },
-      W: { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' },
-      scheduleHealth: { ratio: null, rag: 'NA' },
-      impactGap: { ratio: impactGapRatio, rag: impactGapRag },
-      deliveryPromise: { ratio: null, rag: 'NA' },
-      rag: programRag,
+      T: pickAxis(liveProgram?.T, { pct: null, dataQuality: 'missing' }),
+      Z: pickAxis(liveProgram?.Z, { pct: zPct, dataQuality: zPct === null ? 'missing' : 'ok' }),
+      W: pickAxis(liveProgram?.W, { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' }),
+      scheduleHealth: pickRatio(liveProgram?.scheduleHealth, { ratio: null, rag: 'NA' }),
+      impactGap: pickRatio(liveProgram?.impactGap, { ratio: impactGapRatio, rag: impactGapRag }),
+      deliveryPromise: pickRatio(liveProgram?.deliveryPromise, { ratio: null, rag: 'NA' }),
+      rag: pickRag(liveProgram?.rag, programRag),
       engagementPct: null,
       onTimePct,
       peopleAssigned: 0,
       peopleCapacity: 0,
       overdueCount: actionCenter.overdueDecisions.length,
     };
-  }, [dashboardBaseInitiatives.length, execSnapshot, executionHealth, actionCenter.overdueDecisions.length]);
+  }, [
+    dashboardBaseInitiatives.length,
+    execSnapshot,
+    executionHealth,
+    actionCenter.overdueDecisions.length,
+    threeAxisLive,
+  ]);
 
   if (executionLightModeActive) {
     return (
