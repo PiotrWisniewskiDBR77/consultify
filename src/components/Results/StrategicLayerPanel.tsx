@@ -8,12 +8,25 @@
  */
 import {
   AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2,
-  Layers, ListChecks, Minus, Target, TrendingUp,
+  Layers, ListChecks, MessageSquare, Minus, Pencil, Plus, Target, Trash2, TrendingUp,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import {
+  closeOkrCycle,
+  createOkrCycle,
+  deleteOkrKeyResult,
+  deleteOkrObjective,
+  listOkrCycles,
+  type OkrCycle,
+} from '@/services/api/okrStrategic';
+
+import { OkrCheckInModal } from './OkrCheckInModal';
+import { OkrKeyResultModal, type OkrKeyResultModalKeyResult } from './OkrKeyResultModal';
+import { OkrObjectiveModal, type OkrObjectiveModalObjective } from './OkrObjectiveModal';
 import { RagPill, type RagStatus } from './ResultsUIPrimitives';
 
 interface BscPerspective {
@@ -114,7 +127,7 @@ interface BenefitProfileData {
   summary: BenefitProfileSummary;
 }
 
-// ── D10: OKR cascade ──
+// ── D10: OKR cascade (+ D7 CRUD passthrough fields) ──
 interface KeyResult {
   id: string;
   label: string;
@@ -122,6 +135,9 @@ interface KeyResult {
   target: number;
   current: number;
   weight: number;
+  kpiId?: string | null;
+  krType?: 'metric' | 'milestone';
+  kind?: 'committed' | 'aspirational';
 }
 
 interface Objective {
@@ -131,6 +147,8 @@ interface Objective {
   keyResults: KeyResult[];
   score: number; // 0-1
   rollupScore: number; // 0-1
+  cycleId?: string | null;
+  description?: string | null;
 }
 
 interface OkrSummary {
@@ -194,6 +212,85 @@ function okrStatus(score: number): RagStatus {
   return score >= 0.7 ? 'green' : score >= 0.4 ? 'amber' : 'red';
 }
 
+type OkrModalState =
+  | { kind: 'objective'; mode: 'create' | 'edit'; objective?: OkrObjectiveModalObjective | null }
+  | { kind: 'keyResult'; mode: 'create' | 'edit'; objectiveId: string; keyResult?: OkrKeyResultModalKeyResult | null }
+  | { kind: 'checkIn'; keyResultId: string; keyResultLabel: string; isManualMetric: boolean }
+  | null;
+
+/**
+ * One Key Result row: progress bar + current/target + actions (check-in /
+ * edit / delete). Shared between top-level and cascaded (child) objectives —
+ * factored out to avoid duplicating the row markup twice.
+ */
+const OkrKeyResultRow: React.FC<{
+  kr: KeyResult;
+  objectiveId: string;
+  setOkrModal: React.Dispatch<React.SetStateAction<OkrModalState>>;
+  onDelete: (id: string, label: string) => void;
+  t: (key: string, fallback: string, opts?: Record<string, unknown>) => string;
+}> = ({ kr, objectiveId, setOkrModal, onDelete, t }) => {
+  const denom = (kr.target - kr.baseline) || 1;
+  const pct = Math.max(0, Math.min(100, Math.round(((kr.current - kr.baseline) / denom) * 100)));
+  const isManualMetric = !kr.kpiId && kr.krType !== 'milestone';
+  return (
+    <div className="flex items-center gap-2 group">
+      <span className="w-40 text-xs text-slate-500 dark:text-slate-400 truncate" title={kr.label}>{kr.label}</span>
+      <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
+        <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-20 text-right text-xs font-medium text-slate-600 dark:text-slate-300">
+        {kr.current} / {kr.target}
+      </span>
+      <span className="flex shrink-0 items-center gap-0.5">
+        <button
+          type="button"
+          title={t('results.okr.checkIn', 'Check-in')}
+          onClick={() =>
+            setOkrModal({ kind: 'checkIn', keyResultId: kr.id, keyResultLabel: kr.label, isManualMetric })
+          }
+          className="p-1 rounded-md text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+        >
+          <MessageSquare size={11} />
+        </button>
+        <button
+          type="button"
+          title={t('common.edit', 'Edit')}
+          onClick={() =>
+            setOkrModal({
+              kind: 'keyResult',
+              mode: 'edit',
+              objectiveId,
+              keyResult: {
+                id: kr.id,
+                label: kr.label,
+                baseline: kr.baseline,
+                target: kr.target,
+                current: kr.current,
+                weight: kr.weight,
+                kpiId: kr.kpiId,
+                krType: kr.krType,
+                kind: kr.kind,
+              },
+            })
+          }
+          className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+        >
+          <Pencil size={11} />
+        </button>
+        <button
+          type="button"
+          title={t('common.delete', 'Delete')}
+          onClick={() => onDelete(kr.id, kr.label)}
+          className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+        >
+          <Trash2 size={11} />
+        </button>
+      </span>
+    </div>
+  );
+};
+
 interface Props {
   projectId?: string;
 }
@@ -205,7 +302,21 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
   const [sustainment, setSustainment] = useState<SustainmentData | null>(null);
   const [benefitProfiles, setBenefitProfiles] = useState<BenefitProfileData | null>(null);
   const [okr, setOkr] = useState<OkrData | null>(null);
+  const [okrCycles, setOkrCycles] = useState<OkrCycle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [okrModal, setOkrModal] = useState<OkrModalState>(null);
+  const [creatingCycle, setCreatingCycle] = useState(false);
+  const [closingCycleId, setClosingCycleId] = useState<string | null>(null);
+
+  const reloadOkr = useCallback(() => {
+    Promise.allSettled([
+      Api.get(`/results-strategic/${projectId}/okr`),
+      listOkrCycles(projectId),
+    ]).then(([ok, cycles]) => {
+      if (ok.status === 'fulfilled') setOkr((ok.value as any)?.data ?? ok.value);
+      if (cycles.status === 'fulfilled') setOkrCycles(cycles.value);
+    });
+  }, [projectId]);
 
   useEffect(() => {
     setLoading(true);
@@ -215,14 +326,86 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       Api.get(`/results-extended/${projectId}/sustainment`),
       Api.get(`/results-extended/${projectId}/benefit-profiles`),
       Api.get(`/results-strategic/${projectId}/okr`),
-    ]).then(([s, a, su, bp, ok]) => {
+      listOkrCycles(projectId),
+    ]).then(([s, a, su, bp, ok, cycles]) => {
       if (s.status === 'fulfilled') setStrategic((s.value as any)?.data ?? s.value);
       if (a.status === 'fulfilled') setAdoption((a.value as any)?.data ?? a.value);
       if (su.status === 'fulfilled') setSustainment((su.value as any)?.data ?? su.value);
       if (bp.status === 'fulfilled') setBenefitProfiles((bp.value as any)?.data ?? bp.value);
       if (ok.status === 'fulfilled') setOkr((ok.value as any)?.data ?? ok.value);
+      if (cycles.status === 'fulfilled') setOkrCycles(cycles.value);
     }).finally(() => setLoading(false));
   }, [projectId]);
+
+  const handleDeleteObjective = useCallback(
+    (objectiveId: string, label: string) => {
+      if (!window.confirm(t('results.okr.confirmDeleteObjective', 'Delete objective "{{label}}" and all its key results?', { label }))) {
+        return;
+      }
+      deleteOkrObjective(projectId, objectiveId)
+        .then(() => {
+          toast.success(t('results.okr.objectiveDeleted', 'Objective deleted'));
+          reloadOkr();
+        })
+        .catch((error: any) =>
+          toast.error(error?.message || t('results.okr.deleteFailed', 'Delete failed'))
+        );
+    },
+    [projectId, reloadOkr, t]
+  );
+
+  const handleDeleteKeyResult = useCallback(
+    (keyResultId: string, label: string) => {
+      if (!window.confirm(t('results.okr.confirmDeleteKr', 'Delete key result "{{label}}"?', { label }))) {
+        return;
+      }
+      deleteOkrKeyResult(projectId, keyResultId)
+        .then(() => {
+          toast.success(t('results.okr.krDeleted', 'Key result deleted'));
+          reloadOkr();
+        })
+        .catch((error: any) =>
+          toast.error(error?.message || t('results.okr.deleteFailed', 'Delete failed'))
+        );
+    },
+    [projectId, reloadOkr, t]
+  );
+
+  const handleCreateCycle = useCallback(() => {
+    const name = window.prompt(t('results.okr.newCyclePrompt', 'Cycle name (e.g. Q3 2026):'));
+    if (!name || !name.trim()) return;
+    const yearMatch = name.match(/20\d{2}/);
+    const quarterMatch = name.match(/Q([1-4])/i);
+    setCreatingCycle(true);
+    createOkrCycle(projectId, {
+      name: name.trim(),
+      periodYear: yearMatch ? Number(yearMatch[0]) : new Date().getFullYear(),
+      periodQuarter: quarterMatch ? Number(quarterMatch[1]) : null,
+    })
+      .then(() => {
+        toast.success(t('results.okr.cycleCreated', 'Cycle created'));
+        reloadOkr();
+      })
+      .catch((error: any) => toast.error(error?.message || t('results.okr.cycleSaveFailed', 'Failed to create cycle')))
+      .finally(() => setCreatingCycle(false));
+  }, [projectId, reloadOkr, t]);
+
+  const handleCloseCycle = useCallback(
+    (cycleId: string, name: string) => {
+      if (!window.confirm(t('results.okr.confirmCloseCycle', 'Close cycle "{{name}}"? This grades all its objectives.', { name }))) {
+        return;
+      }
+      setClosingCycleId(cycleId);
+      closeOkrCycle(projectId, cycleId)
+        .then(() => {
+          toast.success(t('results.okr.cycleClosed', 'Cycle closed'));
+          reloadOkr();
+        })
+        .catch((error: any) => toast.error(error?.message || t('results.okr.cycleCloseFailed', 'Failed to close cycle')))
+        .finally(() => setClosingCycleId(null));
+    },
+    [projectId, reloadOkr, t]
+  );
 
   if (loading) {
     return (
@@ -500,13 +683,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         )}
       </section>
 
-      {/* OKR cascade — D10 */}
-      <section>
+      {/* OKR cascade — D10 read + D7 CRUD (objectives/key results/cycles/check-ins) */}
+      <section data-testid="okr-crud-section">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
           <ListChecks size={14} />
           {t('results.strategic.okr', 'OKR — objective cascade')}
           {okrSummary && objectives.length > 0 && (
-            <span className="ml-auto flex items-center gap-2 text-xs font-normal text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-2 text-xs font-normal text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-slate-700 dark:text-slate-200">
                 {Math.round(okrSummary.avgScore * 100)}% {t('results.strategic.okrAvg', 'avg')}
               </span>
@@ -515,7 +698,55 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               <span className="text-red-600 dark:text-red-400">{okrSummary.offTrack} {t('results.strategic.okrOffTrack', 'off track')}</span>
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => setOkrModal({ kind: 'objective', mode: 'create' })}
+            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-300 dark:border-navy-600 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          >
+            <Plus size={12} />
+            {t('results.okr.addObjective', 'Objective')}
+          </button>
         </h3>
+
+        {/* Cycles — quarterly OKR cadence (Doerr/Google): create + close-out */}
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          {okrCycles.map((cycle) => (
+            <span
+              key={cycle.id}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                cycle.status === 'closed'
+                  ? 'border-slate-200 dark:border-white/[0.08] text-slate-400'
+                  : 'border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+              }`}
+            >
+              {cycle.name}
+              <span className="text-slate-400">
+                {cycle.status === 'closed' ? t('results.okr.cycleClosedTag', 'closed') : cycle.status}
+              </span>
+              {cycle.status !== 'closed' && (
+                <button
+                  type="button"
+                  onClick={() => handleCloseCycle(cycle.id, cycle.name)}
+                  disabled={closingCycleId === cycle.id}
+                  className="ml-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-40"
+                  title={t('results.okr.closeCycle', 'Close cycle')}
+                >
+                  ×
+                </button>
+              )}
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={handleCreateCycle}
+            disabled={creatingCycle}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 dark:border-navy-600 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+          >
+            <Plus size={10} />
+            {t('results.okr.addCycle', 'Cycle')}
+          </button>
+        </div>
+
         {objectives.length === 0 ? (
           <div className="text-sm text-slate-400 py-4 text-center">
             {t('results.strategic.okrNoData', 'No OKRs defined')}
@@ -529,11 +760,43 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   <div className="flex items-center gap-2">
                     <Target size={14} className="text-slate-400 shrink-0" />
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate" title={parent.label}>{parent.label}</span>
-                    <span className="ml-auto shrink-0">
+                    <span className="shrink-0">
                       <RagPill
                         status={okrStatus(parent.rollupScore)}
                         label={`${Math.round(parent.rollupScore * 100)}%`}
                       />
+                    </span>
+                    <span className="ml-auto flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        title={t('results.okr.addKeyResult', 'Add key result')}
+                        onClick={() => setOkrModal({ kind: 'keyResult', mode: 'create', objectiveId: parent.id })}
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                      >
+                        <Plus size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        title={t('common.edit', 'Edit')}
+                        onClick={() =>
+                          setOkrModal({
+                            kind: 'objective',
+                            mode: 'edit',
+                            objective: { id: parent.id, label: parent.label, parentId: parent.parentId, cycleId: parent.cycleId, description: parent.description },
+                          })
+                        }
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        title={t('common.delete', 'Delete')}
+                        onClick={() => handleDeleteObjective(parent.id, parent.label)}
+                        className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     </span>
                   </div>
 
@@ -544,30 +807,50 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                           <div className="flex items-center gap-2">
                             <ArrowRight size={12} className="text-slate-400 shrink-0" />
                             <span className="text-sm text-slate-700 dark:text-slate-300 truncate" title={child.label}>{child.label}</span>
-                            <span className="ml-auto shrink-0">
+                            <span className="shrink-0">
                               <RagPill
                                 status={okrStatus(child.score)}
                                 label={`${Math.round(child.score * 100)}%`}
                               />
                             </span>
+                            <span className="ml-auto flex shrink-0 items-center gap-0.5">
+                              <button
+                                type="button"
+                                title={t('results.okr.addKeyResult', 'Add key result')}
+                                onClick={() => setOkrModal({ kind: 'keyResult', mode: 'create', objectiveId: child.id })}
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                              >
+                                <Plus size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                title={t('common.edit', 'Edit')}
+                                onClick={() =>
+                                  setOkrModal({
+                                    kind: 'objective',
+                                    mode: 'edit',
+                                    objective: { id: child.id, label: child.label, parentId: child.parentId, cycleId: child.cycleId, description: child.description },
+                                  })
+                                }
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                              >
+                                <Pencil size={11} />
+                              </button>
+                              <button
+                                type="button"
+                                title={t('common.delete', 'Delete')}
+                                onClick={() => handleDeleteObjective(child.id, child.label)}
+                                className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </span>
                           </div>
                           {child.keyResults.length > 0 && (
                             <div className="mt-1.5 ml-5 space-y-1.5">
-                              {child.keyResults.map((kr) => {
-                                const denom = (kr.target - kr.baseline) || 1;
-                                const pct = Math.max(0, Math.min(100, Math.round(((kr.current - kr.baseline) / denom) * 100)));
-                                return (
-                                  <div key={kr.id} className="flex items-center gap-2">
-                                    <span className="w-40 text-xs text-slate-500 dark:text-slate-400 truncate" title={kr.label}>{kr.label}</span>
-                                    <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
-                                      <div className="h-full rounded-full bg-primary-500" style={{ width: `${pct}%` }} />
-                                    </div>
-                                    <span className="w-20 text-right text-xs font-medium text-slate-600 dark:text-slate-300">
-                                      {kr.current} / {kr.target}
-                                    </span>
-                                  </div>
-                                );
-                              })}
+                              {child.keyResults.map((kr) => (
+                                <OkrKeyResultRow key={kr.id} kr={kr} objectiveId={child.id} setOkrModal={setOkrModal} onDelete={handleDeleteKeyResult} t={t} />
+                              ))}
                             </div>
                           )}
                         </div>
@@ -577,21 +860,9 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
 
                   {parent.keyResults.length > 0 && (
                     <div className="mt-2 ml-5 space-y-1.5">
-                      {parent.keyResults.map((kr) => {
-                        const denom = (kr.target - kr.baseline) || 1;
-                        const pct = Math.max(0, Math.min(100, Math.round(((kr.current - kr.baseline) / denom) * 100)));
-                        return (
-                          <div key={kr.id} className="flex items-center gap-2">
-                            <span className="w-40 text-xs text-slate-500 dark:text-slate-400 truncate" title={kr.label}>{kr.label}</span>
-                            <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
-                              <div className="h-full rounded-full bg-primary-500" style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className="w-20 text-right text-xs font-medium text-slate-600 dark:text-slate-300">
-                              {kr.current} / {kr.target}
-                            </span>
-                          </div>
-                        );
-                      })}
+                      {parent.keyResults.map((kr) => (
+                        <OkrKeyResultRow key={kr.id} kr={kr} objectiveId={parent.id} setOkrModal={setOkrModal} onDelete={handleDeleteKeyResult} t={t} />
+                      ))}
                     </div>
                   )}
                 </div>
@@ -600,6 +871,47 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </div>
         )}
       </section>
+
+      {okrModal?.kind === 'objective' && (
+        <OkrObjectiveModal
+          projectId={projectId}
+          objective={okrModal.objective}
+          objectiveOptions={objectives.map((o) => ({ id: o.id, label: o.label }))}
+          cycles={okrCycles}
+          onClose={() => setOkrModal(null)}
+          onSuccess={() => {
+            setOkrModal(null);
+            reloadOkr();
+          }}
+        />
+      )}
+
+      {okrModal?.kind === 'keyResult' && (
+        <OkrKeyResultModal
+          projectId={projectId}
+          objectiveId={okrModal.objectiveId}
+          keyResult={okrModal.keyResult}
+          onClose={() => setOkrModal(null)}
+          onSuccess={() => {
+            setOkrModal(null);
+            reloadOkr();
+          }}
+        />
+      )}
+
+      {okrModal?.kind === 'checkIn' && (
+        <OkrCheckInModal
+          projectId={projectId}
+          keyResultId={okrModal.keyResultId}
+          keyResultLabel={okrModal.keyResultLabel}
+          isManualMetric={okrModal.isManualMetric}
+          onClose={() => setOkrModal(null)}
+          onSuccess={() => {
+            setOkrModal(null);
+            reloadOkr();
+          }}
+        />
+      )}
 
       {/* Sustainment */}
       {sustainSummary && (
