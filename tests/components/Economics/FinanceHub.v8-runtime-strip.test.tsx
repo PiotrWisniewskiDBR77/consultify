@@ -190,8 +190,8 @@ vi.mock('../../../src/components/Finance/FinancialStatementImportWizard', () => 
     </button>
   ),
 }));
-vi.mock('../../../src/components/Economics/FinanceModelDocumentView', () => ({
-  FinanceModelDocumentView: () => <div>finance-model-document-view</div>,
+vi.mock('../../../src/components/Finance/FinancialModelWorkspace', () => ({
+  FinancialModelWorkspace: () => <div>financial-model-workspace</div>,
 }));
 vi.mock('../../../src/components/Economics/modals/CreateAnalysisModal', () => ({
   CreateAnalysisModal: () => null,

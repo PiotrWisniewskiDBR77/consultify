@@ -76,6 +76,7 @@ import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
 import { ValuationWorkspace } from '../Benefits/ValuationWorkspace';
 import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
+import { FinancialModelWorkspace } from '../Finance/FinancialModelWorkspace';
 import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
 import { FinancialStatementPackWorkspace } from '../Finance/FinancialStatementPackWorkspace';
 import {
@@ -107,7 +108,6 @@ import { FinanceDegradedBanner } from './FinanceDegradedBanner';
 import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
-import { FinanceModelDocumentView } from './FinanceModelDocumentView';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
@@ -2590,9 +2590,17 @@ export const FinanceHub: React.FC = () => {
                 onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
               />
             ) : isModelWorkspace ? (
-              <FinanceModelDocumentView
-                row={activeDocument as FinanceModelRow}
-                detail={modelPreviewDetail}
+              // #82c/#82f — FinanceModelDocumentView (read-only P&L/BS/CF table) had no
+              // way to edit assumptions, add events, compute, approve, or refresh from
+              // source: FinancialModelWorkspace is the superset (same tabs' data PLUS
+              // Inputs & Assumptions editing incl. #82f assumptionsRegistry status,
+              // Events Timeline CRUD, Compute, Approve, Refresh from source) and already
+              // follows the same initialXId/hideSidebar/onXChanged contract as the
+              // sibling Analysis/Valuation/Budget workspaces below.
+              <FinancialModelWorkspace
+                initialModelId={activeDocument.id}
+                hideSidebar
+                onModelChanged={handleModelChanged}
               />
             ) : openAnalysis ? (
               <FinancialAnalysisWorkspace
