@@ -34,6 +34,14 @@ Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko
    zły deploy→Railway rollback/`git revert`; nuklearne→restore-commit DO PRZODU (checkout tagu→commit→push,
    NIGDY force-push na demo). Migracje sesji addytywne=bez rollbacku.
 
+9. **★ ZAKAZ MASOWEGO WŁĄCZANIA + kanon tabel twardo (powód: krach 07-12, „tabelki jak dla trzylatka").**
+   NIGDY nie włączaj wielu flag wizualnych naraz na żywo. Każdy ekran za flagą OFF idzie na demo
+   TYLKO po akcepcie Piotra na CZYSTYM zrzucie, JEDEN po drugim (nie „daj wszystko"). Ekrany listowe
+   WYŁĄCZNIE `StandardTable`/`StandardModuleBar` — powłoki NIE mogą kleić własnych tabel (to złamało
+   zamrożony kanon 07-12: InitiativesLightShell/InterviewLightShell zrobiły bespoke grid zamiast
+   StandardTable, poszły hurtem na żywo). Bezpiecznik: `scripts/check-list-canon.sh` (hook pre-commit
+   + OBOWIĄZKOWO przed KAŻDYM push UI na demo) blokuje własne tabele. Materials/Tools = wzór poprawny
+   (osadzają realny StandardTable).
 ## STRUKTURA PRAC (2026-07)
 - Program 7 rozbudów narzędzi = mechanika NAJPIERW; artefakty (frontend) dorabiamy PO gotowej
   mechanice — patrz `Harvard/wdrozenie-100/_STRUKTURA_PRAC_UI.md`.

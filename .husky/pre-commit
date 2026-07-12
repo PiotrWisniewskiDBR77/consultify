@@ -1,5 +1,13 @@
 #!/usr/bin/env sh
-
-# Disabled: Husky pre-commit checks
-# Requested: "remove check and husky from commit"
+# JEDYNY guard włączony po regresji 2026-07-12 (własne tabele zamiast StandardTable).
+# Wąski i szybki: odpala się tylko gdy commit dotyka komponentów .tsx.
+# Ciężkie checki (lint/typecheck/tests) pozostają wyłączone jak prosiłeś.
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/components/.*\.tsx$' | grep -v '^src/components/standard/')
+[ -z "$STAGED" ] && exit 0
+if ! bash scripts/check-list-canon.sh $STAGED; then
+  echo "" >&2
+  echo "  ⛔ Commit zablokowany: ekran listowy nie używa StandardTable (kanon TRIADA, reguła #1)." >&2
+  echo "     To ta sama klasa błędu co 2026-07-12. Osadź <StandardTable> i commituj ponownie." >&2
+  exit 1
+fi
 exit 0
