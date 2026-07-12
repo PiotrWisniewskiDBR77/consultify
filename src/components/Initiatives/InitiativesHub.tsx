@@ -2603,17 +2603,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           );
         })}
       </div>
-      {/* Stable right group — AI Initiative Wizard + Charter. Present at all times
-          (not conditional), separated from the status filters. */}
+      {/* Stable right group — Charter. Present at all times (not conditional),
+          separated from the status filters.
+          #75 — the "AI Initiative Wizard" entry that used to live here was
+          removed: it duplicated the same source-anchored insight-picker that
+          belongs to the SOURCE (Interview/Tools), while the hub already offers
+          the scratch-creation path via the "+ New Initiative" primaryCta
+          (which opens the same InitiativeWizardModal, unseeded). Wizard code
+          is unchanged — it is still invoked from the source surfaces. */}
       <div className={MENU_3_RIGHT_CLASS}>
-        <button
-          type="button"
-          onClick={() => setShowInitiativeWizard(true)}
-          className={MENU_3_ACTION_NEUTRAL}
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          AI Initiative Wizard
-        </button>
         <button
           type="button"
           onClick={() => setShowCharter(true)}
