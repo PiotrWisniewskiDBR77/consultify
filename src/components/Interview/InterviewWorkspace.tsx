@@ -278,6 +278,37 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [isApproving, setIsApproving] = useState(false);
   const [showSendBackForm, setShowSendBackForm] = useState(false);
 
+  // #48B — "poprzednia wersja": load answer-history snapshots (taken on a
+  // prior send-back) for the reviewer view. Fail-open: on any error the map
+  // just stays empty and the per-question disclosure simply doesn't render —
+  // no impact on review/approve/send-back itself.
+  const [answerHistoryByQuestionId, setAnswerHistoryByQuestionId] = useState<
+    Record<string, Array<{ id: string; answerText: string | null; savedAt: string }>>
+  >({});
+
+  useEffect(() => {
+    if (!isReviewerMode || !session?.assignmentId) {
+      setAnswerHistoryByQuestionId({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await Api.get(
+          `/interview/assignments/${session.assignmentId}/answer-history`
+        );
+        if (!cancelled) {
+          setAnswerHistoryByQuestionId((result as any)?.byQuestion || {});
+        }
+      } catch {
+        if (!cancelled) setAnswerHistoryByQuestionId({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isReviewerMode, session?.assignmentId]);
+
   // Populate send-back checklist when entering reviewer mode
   useEffect(() => {
     if (!isReviewerMode) return;
@@ -2272,6 +2303,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               sessionName={sessionName}
               readOnly={isLocked}
               isSubmitting={isSubmittingSession}
+              answerHistoryByQuestionId={answerHistoryByQuestionId}
             />
           ) : (
             <Callout
@@ -2997,6 +3029,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 readOnly={isLocked}
                 isSubmitting={isSubmittingSession}
                 immersive
+                answerHistoryByQuestionId={answerHistoryByQuestionId}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full py-20 px-6">

@@ -10,6 +10,7 @@ import {
   FileText,
   Hash,
   HelpCircle,
+  History,
   Image as ImageIcon,
   Lightbulb,
   Link2,
@@ -70,6 +71,16 @@ interface InterviewSingleQuestionRuntimeProps {
   readOnly?: boolean;
   isSubmitting?: boolean;
   immersive?: boolean;
+  /**
+   * #48B — previous-version snapshots per question, taken on send-back
+   * (interview_answer_history via GET /interview/assignments/:id/answer-history).
+   * Optional: when absent/empty the "poprzednia wersja" disclosure simply
+   * doesn't render (fail-open, zero behavior change for existing callers).
+   */
+  answerHistoryByQuestionId?: Record<
+    string,
+    Array<{ id: string; answerText: string | null; savedAt: string }>
+  >;
 }
 
 type DraftInputMode = 'text_answer' | 'voice_answer';
@@ -186,9 +197,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   readOnly = false,
   isSubmitting = false,
   immersive = false,
+  answerHistoryByQuestionId,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+
+  // #48B — "poprzednia wersja" disclosure toggle, keyed by question id so only
+  // one history panel is open at a time (mirrors the guidance disclosure).
+  const [historyOpenId, setHistoryOpenId] = useState<string | null>(null);
 
   const orderedQuestions = useMemo(() => {
     return [...questions].sort((a, b) => {
@@ -1845,6 +1861,62 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       />
                     </button>
                   </div>
+
+                  {/* #48B — "poprzednia wersja": previous answer snapshot(s) from
+                      before a send-back, so a reviewer can see what changed on
+                      re-submit. `answerHistoryByQuestionId` is only populated by
+                      the parent in reviewer mode (see InterviewWorkspace.tsx), so
+                      this is effectively reviewer-facing without needing its own
+                      `readOnly` gate — and it no-ops whenever the assignment was
+                      never sent back (no history rows for this question). */}
+                  {(() => {
+                    const history = answerHistoryByQuestionId?.[currentQuestion.id];
+                    if (!history || history.length === 0) return null;
+                      const isOpen = historyOpenId === currentQuestion.id;
+                      return (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setHistoryOpenId(isOpen ? null : currentQuestion.id)
+                            }
+                            aria-expanded={isOpen}
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                            title={
+                              isPolish
+                                ? 'Treść odpowiedzi zapisana przed odesłaniem do poprawy'
+                                : 'Answer content saved before it was sent back for revision'
+                            }
+                          >
+                            <History size={12} />
+                            {isPolish
+                              ? `Poprzednia wersja (${history.length})`
+                              : `Previous version (${history.length})`}
+                            <ChevronDown
+                              size={12}
+                              className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            />
+                          </button>
+                          {isOpen && (
+                            <div className="mt-2 space-y-2 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50 dark:bg-navy-900/60 p-3">
+                              {history.map((entry) => (
+                                <div key={entry.id} className="space-y-1">
+                                  <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                    {new Date(entry.savedAt).toLocaleString(
+                                      isPolish ? 'pl-PL' : 'en-US'
+                                    )}
+                                  </div>
+                                  <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                                    {entry.answerText?.trim() ||
+                                      (isPolish ? '(brak odpowiedzi)' : '(no answer)')}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                   {/* Guidance reveal — static instruction + example, with AI deep-dive fallback */}
                   {guidanceOpen && (

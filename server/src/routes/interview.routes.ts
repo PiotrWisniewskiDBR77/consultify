@@ -177,6 +177,13 @@ router.post(
   InterviewController.sendBackAssignment
 );
 
+/** GET /interview/assignments/:id/answer-history - #48B previous-version read (send-back snapshots) */
+router.get(
+  '/assignments/:id/answer-history',
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
+  InterviewController.getAnswerHistory
+);
+
 /** POST /interview/assignments/:id/approve - Admin/PM approve submission */
 router.post(
   '/assignments/:id/approve',
