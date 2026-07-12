@@ -71,6 +71,7 @@ import {
   useCloudIntegrations,
 } from '@/hooks/useCloudIntegrations';
 import { useDemoSession } from '@/hooks/useDemoSession';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ROUTES } from '@/routes/routeConfig';
@@ -777,6 +778,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     emitMyWorkEvent,
   } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+  const openChatWithContext = useOpenChatWithContext();
   const {
     connectedProviderIds,
     openFilePicker,
@@ -2044,6 +2046,47 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       attachmentsCount: attachments.length,
     });
   };
+
+  // #33 — contextual AI-CTA on the Decision card ("Przeanalizuj opcje" /
+  // "Analyze options"), same doctrine (D17) as TaskDetailView's "Create Ideas"
+  // and InsightViewer's openInsightConsultant: ONE docked Teresa panel, opened
+  // with entity context (useOpenChatWithContext) + a pre-seeded, action-specific
+  // kickoff message (setChatKickoffMessage) — mirrors MyWorkHub's combined usage
+  // of both. Complements (does not replace) the local "Generate options" button,
+  // which drafts alternatives directly; this one opens a conversation to reason
+  // through them with Teresa.
+  const handleAnalyzeOptionsWithAI = useCallback(async () => {
+    await openChatWithContext({
+      entityType: 'decision',
+      entityId: decisionId || 'new',
+      entityName: title,
+      contextData: {
+        module: 'decision',
+        status,
+        priority,
+        alternativesCount: alternatives.length,
+      },
+    });
+    setChatKickoffMessage(
+      isPolish
+        ? `Przeanalizuj opcje decyzji „${title || 'bez tytułu'}”: porównaj plusy i minusy, ryzyka oraz zaproponuj rekomendację.`
+        : `Analyze the options for decision "${title || 'untitled'}": compare pros/cons, risks, and propose a recommendation.`
+    );
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+  }, [
+    openChatWithContext,
+    decisionId,
+    title,
+    status,
+    priority,
+    alternatives.length,
+    isPolish,
+    isChatCollapsed,
+    toggleChatCollapse,
+    setChatKickoffMessage,
+  ]);
 
   const handleApprove = async () => {
     if (!decisionId) return;
@@ -4991,6 +5034,20 @@ Use userId only from this list:
                           <Sparkles size={13} />
                         )}
                         {t('decisions.detail.actions.generateOptions', 'Generate options')}
+                      </button>
+                    )}
+                    {activeNotionSection === 'options-tradeoffs' && (
+                      <button
+                        onClick={handleAnalyzeOptionsWithAI}
+                        disabled={isDecisionStageLocked}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={t(
+                          'decisions.detail.actions.analyzeOptionsTitle',
+                          'Discuss and analyze these options with Teresa'
+                        )}
+                      >
+                        <Sparkles size={13} />
+                        {t('decisions.detail.actions.analyzeOptions', 'Analyze options')}
                       </button>
                     )}
                     {activeNotionSection === 'risk-impact' && (
