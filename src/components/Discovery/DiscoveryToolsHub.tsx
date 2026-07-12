@@ -777,6 +777,28 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [addMenuQuery, setAddMenuQuery] = useState('');
   const addMenuRef = useRef<HTMLDivElement>(null);
 
+  // #64: AI picker — "Nie wiesz, które wybrać?" (which tool do I pick?)
+  const [suggestProblemText, setSuggestProblemText] = useState('');
+  const [isSuggestingTool, setIsSuggestingTool] = useState(false);
+  const [suggestToolResults, setSuggestToolResults] = useState<Array<{
+    toolType: string;
+    name: string;
+    confidence: 'high' | 'medium' | 'low';
+    reasoning: string;
+  }> | null>(null);
+  const [suggestToolError, setSuggestToolError] = useState<string | null>(null);
+
+  // Reset the AI-picker panel whenever the Add menu is closed, so re-opening
+  // it starts clean rather than showing a stale problem description/results.
+  useEffect(() => {
+    if (!isAddMenuOpen) {
+      setSuggestProblemText('');
+      setSuggestToolResults(null);
+      setSuggestToolError(null);
+      setIsSuggestingTool(false);
+    }
+  }, [isAddMenuOpen]);
+
   useEffect(() => {
     setLibraryCategoryFilter(initialCategory);
   }, [initialCategory]);
@@ -2287,7 +2309,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   }, []);
 
   const createAndOpenToolSession = useCallback(
-    async (params: { toolType: string; name?: string; source?: 'add_menu' | 'library' }) => {
+    async (params: {
+      toolType: string;
+      name?: string;
+      source?: 'add_menu' | 'library' | 'ai_suggest';
+    }) => {
       const toolType = String(params.toolType || '').trim();
       if (!toolType) return;
       try {
@@ -2318,6 +2344,53 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       }
     },
     [currentProjectId, fetchData, handleOpenDocument, isPolish, t]
+  );
+
+  // #64: AI picker — "Nie wiesz, które wybrać?" Free-text problem description in,
+  // top-3 candidate tools out. Fail-soft: any error just shows a message and the
+  // manual picker list below stays fully usable.
+  const handleSuggestTool = useCallback(async () => {
+    const problemDescription = suggestProblemText.trim();
+    if (!problemDescription) return;
+    setIsSuggestingTool(true);
+    setSuggestToolError(null);
+    setSuggestToolResults(null);
+    try {
+      const { suggestions } = await Api.suggestTools({
+        problemDescription,
+        lang: isPolish ? 'pl' : 'en',
+      });
+      if (!suggestions || suggestions.length === 0) {
+        setSuggestToolResults([]);
+        setSuggestToolError(
+          isPolish
+            ? 'Nie udało się dopasować narzędzia do tego opisu. Wybierz ręcznie z listy poniżej.'
+            : 'Could not match a tool to this description. Pick manually from the list below.'
+        );
+      } else {
+        setSuggestToolResults(suggestions);
+      }
+    } catch {
+      setSuggestToolResults(null);
+      setSuggestToolError(
+        isPolish
+          ? 'Rekomendacja AI jest chwilowo niedostępna. Wybierz ręcznie z listy poniżej.'
+          : 'AI suggestion is temporarily unavailable. Pick manually from the list below.'
+      );
+    } finally {
+      setIsSuggestingTool(false);
+    }
+  }, [suggestProblemText, isPolish]);
+
+  const handleSelectSuggestedTool = useCallback(
+    (toolType: string, name: string) => {
+      setIsAddMenuOpen(false);
+      setSuggestProblemText('');
+      setSuggestToolResults(null);
+      setSuggestToolError(null);
+      void createAndOpenToolSession({ toolType, name, source: 'ai_suggest' });
+    },
+    [createAndOpenToolSession]
   );
 
   const createAndOpenAssessmentSession = useCallback(
@@ -4653,6 +4726,83 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   );
                 })}
               </div>
+            </div>
+
+            {/* #64: AI picker — "Nie wiesz, które wybrać?" free-text -> top-3 candidates */}
+            <div className="p-3 border-b border-c-border-subtle dark:border-white/[0.06] bg-c-surface-raised/40">
+              <div className="text-xs font-medium text-c-text-secondary mb-1.5">
+                {isPolish ? 'Nie wiesz, które wybrać?' : 'Not sure which one to pick?'}
+              </div>
+              <div className="flex items-start gap-2">
+                <textarea
+                  value={suggestProblemText}
+                  onChange={(e) => setSuggestProblemText(e.target.value)}
+                  placeholder={
+                    isPolish
+                      ? 'Opisz problem w 1-2 zdaniach…'
+                      : 'Describe the problem in 1-2 sentences…'
+                  }
+                  rows={2}
+                  maxLength={500}
+                  className="flex-1 resize-none rounded-xl px-3 py-2 text-sm bg-c-bg/70 border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleSuggestTool()}
+                  disabled={isSuggestingTool || suggestProblemText.trim().length < 3}
+                  className="shrink-0 h-9 px-3 rounded-full text-xs font-medium bg-navy-900 text-white hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
+                >
+                  {isSuggestingTool
+                    ? isPolish
+                      ? 'Analizuję…'
+                      : 'Analyzing…'
+                    : isPolish
+                      ? 'Zaproponuj narzędzie'
+                      : 'Suggest a tool'}
+                </button>
+              </div>
+
+              {suggestToolError ? (
+                <div className="mt-2 text-xs text-c-text-muted">{suggestToolError}</div>
+              ) : null}
+
+              {suggestToolResults && suggestToolResults.length > 0 ? (
+                <div className="mt-2 space-y-1.5">
+                  {suggestToolResults.map((s) => (
+                    <button
+                      key={s.toolType}
+                      type="button"
+                      onClick={() => handleSelectSuggestedTool(s.toolType, s.name)}
+                      className="w-full flex items-start gap-2 px-3 py-2 rounded-xl text-left border border-c-accent/30 bg-c-accent-soft/40 hover:bg-c-accent-soft transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-c-text truncate">
+                            {s.name}
+                          </span>
+                          <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-c-border-subtle text-c-text-secondary">
+                            {s.confidence === 'high'
+                              ? isPolish
+                                ? 'Wysokie dopasowanie'
+                                : 'High match'
+                              : s.confidence === 'medium'
+                                ? isPolish
+                                  ? 'Średnie dopasowanie'
+                                  : 'Medium match'
+                                : isPolish
+                                  ? 'Niskie dopasowanie'
+                                  : 'Low match'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-c-text-muted mt-0.5">{s.reasoning}</div>
+                      </div>
+                      <span className="mt-0.5 text-c-text-secondary">
+                        <ArrowRight size={14} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             <div className="max-h-[60vh] overflow-auto p-2">
