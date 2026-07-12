@@ -4510,7 +4510,11 @@ Use userId only from this list:
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       id: 'actions',
-      label: isPolish ? 'Akcje' : 'Actions',
+      // Z29/Z30 (parytet #37 z TaskDetailView): rozpisane przyciski AI
+      // (Assistant/AI-assist) usunięte — AI dostępne jako JEDEN zwięzły
+      // przycisk (brak M3-slotu dla klasy S, więc żyje na górze tej sekcji,
+      // stąd "+ AI" w etykiecie).
+      label: isPolish ? 'Akcje + AI' : 'Actions + AI',
       icon: Sparkles,
       defaultOpen: true,
       children: (
@@ -4524,18 +4528,14 @@ Use userId only from this list:
             <Save size={14} className="text-c-text-muted" />
             {isPolish ? 'Zapisz' : 'Save'}
           </button>
-          <button type="button" onClick={handleOpenChat} className={rpBtn}>
-            <MessageSquare size={14} className="text-c-text-muted" />
-            {isPolish ? 'Asystent' : 'Assistant'}
-          </button>
           <button
             type="button"
-            onClick={() => generateAIComment()}
-            disabled={isGeneratingAIComment}
+            onClick={handleOpenChat}
+            title={isPolish ? 'AI — asystent do tej decyzji' : 'AI — assistant for this decision'}
             className={rpBtn}
           >
             <Sparkles size={14} className="text-c-text-muted" />
-            {isPolish ? 'Uzupełnij AI' : 'AI assist'}
+            AI
           </button>
           <button type="button" onClick={() => setShowDelegationModal(true)} className={rpBtn}>
             <Share2 size={14} className="text-c-text-muted" />

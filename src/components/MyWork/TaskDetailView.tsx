@@ -3872,16 +3872,19 @@ Return ONLY the final comment text.`;
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
         id: 'actions',
-        label: isPolish ? 'Akcje' : 'Actions',
+        // Z29/Z30: rozpisane przyciski AI (Assistant/AI-assist) usunięte —
+        // AI dostępne jako JEDEN zwięzły przycisk (brak M3-slotu dla klasy S,
+        // więc żyje na górze tej sekcji, stąd "+ AI" w etykiecie).
+        label: isPolish ? 'Akcje + AI' : 'Actions + AI',
         icon: Sparkles,
         defaultOpen: true,
         children: (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => handleSave()}
               disabled={saving}
-              className="col-span-2 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
             >
               <Save size={14} className="text-c-text-muted" />
               {isPolish ? 'Zapisz' : 'Save'}
@@ -3889,19 +3892,11 @@ Return ONLY the final comment text.`;
             <button
               type="button"
               onClick={handleOpenChat}
+              title={isPolish ? 'AI — asystent do tego zadania' : 'AI — assistant for this task'}
               className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
             >
-              <MessageSquare size={14} className="text-c-text-muted" />
-              {isPolish ? 'Asystent' : 'Assistant'}
-            </button>
-            <button
-              type="button"
-              onClick={() => generateAIComment()}
-              disabled={isGeneratingAIComment}
-              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-            >
               <Sparkles size={14} className="text-c-text-muted" />
-              {isPolish ? 'Uzupełnij AI' : 'AI assist'}
+              AI
             </button>
           </div>
         ),
