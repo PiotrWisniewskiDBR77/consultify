@@ -2,7 +2,7 @@
  * FinanceHub (Economics route)
  *
  * KANON v3 (Golden Standard Table+Cards+Preview):
- * - 5 main functional tabs: Modele / Analiza / Predykcja / Wycena przedsiębiorstw / Analiza inwestycyjna
+ * - 5 main functional tabs (order): Statements / Analysis / Models / Prediction / Enterprise valuation
  * - Table + Preview layout: FilterableTable + TableWithPreviewLayout (gap-1.5, preview width clamp, no divider)
  * - Grid/Cards alternative: GridView SSOT with finance type accents
  * - Table canvas padding: pl-4 pr-1.5 pt-3 pb-4
@@ -261,7 +261,7 @@ export const FinanceHub: React.FC = () => {
     },
   });
   const validFinanceTabs = useMemo(
-    () => ['statements', 'models', 'analysis', 'prediction', 'valuation'] as ModuleTab[],
+    () => ['statements', 'analysis', 'models', 'prediction', 'valuation'] as ModuleTab[],
     []
   );
 
@@ -848,16 +848,16 @@ export const FinanceHub: React.FC = () => {
         count: statements.length,
       },
       {
-        id: 'models' as ModuleTab,
-        label: t('finance.tabs.models', 'Models'),
-        icon: <Calculator size={16} />,
-        count: models.length,
-      },
-      {
         id: 'analysis' as ModuleTab,
         label: t('finance.tabs.analysis', 'Analysis'),
         icon: <BarChart3 size={16} />,
         count: analyses.length,
+      },
+      {
+        id: 'models' as ModuleTab,
+        label: t('finance.tabs.models', 'Models'),
+        icon: <Calculator size={16} />,
+        count: models.length,
       },
       {
         id: 'prediction' as ModuleTab,
