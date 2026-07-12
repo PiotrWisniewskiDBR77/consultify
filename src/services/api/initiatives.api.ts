@@ -63,6 +63,14 @@ export interface InitiativeFunnelStats {
     tracking: number;
     conversionPct: number;
   };
+  /** Z94 §3.2/§5.2 — avg days spent per status before leaving it. Optional for backward-compat with older payloads/tests. */
+  cycleTime?: InitiativeCycleTimeStage[];
+}
+
+export interface InitiativeCycleTimeStage {
+  status: string;
+  avgDays: number;
+  count: number;
 }
 
 // USPOJNIENIE E1 — kształt odpowiedzi GET /initiatives/:id/lineage
@@ -156,7 +164,12 @@ export const InitiativeApi = {
       if (!res.ok) throw new Error('funnel stats failed');
       return (await res.json()) as InitiativeFunnelStats;
     } catch {
-      return { byStatus: {}, bySource: {}, conversion: { created: 0, inExecution: 0, tracking: 0, conversionPct: 0 } };
+      return {
+        byStatus: {},
+        bySource: {},
+        conversion: { created: 0, inExecution: 0, tracking: 0, conversionPct: 0 },
+        cycleTime: [],
+      };
     }
   },
 
