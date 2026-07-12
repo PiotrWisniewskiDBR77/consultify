@@ -4945,23 +4945,10 @@ function MindMapInner({
     ]
   );
 
-  const savedLabel = useMemo(() => {
-    if (persistence === 'no_route')
-      return t('mindmap.backendRestartRequired');
-    if (persistence === 'missing_table')
-      return t('mindmap.mapTableMissing');
-    if (persistence === 'offline')
-      return t('mindmap.offlineNotSaving');
-    if (saving) return t('mindmap.saving2');
-    if (!lastSavedAt) return t('mindmap.notSavedYet');
-    const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
-    return t('mindmap.savedSecondsAgo', { count: sec });
-  }, [isPolish, lastSavedAt, persistence, saving]);
-  const interactionModeLabel = useMemo(() => {
-    if (interactionMode === 'pan') return t('mindmap.modePan');
-    if (interactionMode === 'connect') return t('mindmap.modeConnect');
-    return t('mindmap.modeSelect');
-  }, [interactionMode, isPolish]);
+  // #6b (doktryna EWOLUCJA+ŻYWY): narzędzia idei = autosave ciągły, ZERO
+  // tekstów o stanie zapisu/trybie w UI — pasek "tytuł · Mode · Not saved"
+  // usunięty w całości (był dubletem breadcrumb/kontekstu). Autosave dalej
+  // zapisuje w tle (queueSync/persistence bez zmian) — zniknął tylko napis.
 
   const containerClassName =
     variant === 'overlay'
@@ -5303,8 +5290,9 @@ function MindMapInner({
         />
       )}
 
-      {/* Breadcrumb for drill-down — positioned below the unified header */}
-      {drillPath.length > 0 && (
+      {/* Breadcrumb for drill-down — positioned below the unified header.
+          #6e: also top chrome — hides in fullscreen. */}
+      {drillPath.length > 0 && !isFullscreen && (
         <div className="absolute top-[110px] left-3 z-dropdown">
           <SubMapBreadcrumb
             path={drillPath}
@@ -5314,29 +5302,24 @@ function MindMapInner({
         </div>
       )}
 
-      {/* Top-left minimal label: title + save status */}
-      <div className="absolute top-3 left-3 z-dropdown max-w-[320px]">
-        <div className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-lg border border-slate-200/40 dark:border-white/[0.04] shadow-lg px-3 py-1.5">
-          {showClose && (
-            <button
-              onClick={onClose}
-              className="p-0.5 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
-              title={t('mindmap.closeMap')}
-            >
-              <X size={12} />
-            </button>
-          )}
-          <h3 className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-snug truncate flex-1 min-w-0">
-            {ideaTitle || (t('mindmap.untitled'))}
-          </h3>
-          <span className="hidden sm:inline-flex rounded-full border border-slate-200/80 dark:border-navy-700 px-2 py-0.5 text-[9px] text-slate-500 dark:text-slate-400 shrink-0">
-            {interactionModeLabel}
-          </span>
-          <span className="text-[9px] text-slate-600 dark:text-slate-500 shrink-0">
-            {savedLabel}
-          </span>
+      {/* #6b: pasek tytuł/Mode/Not-saved USUNIĘTY W CAŁOŚCI (dublet + zapis
+          jest ciągły — SaaS nie pokazuje "not saved"). Close (X) zostaje —
+          to jedyny sposób wyjścia z wariantu overlay, nie jest częścią
+          usuniętego paska stanu. */}
+      {/* #6e: close (X) is top chrome too — hides in fullscreen (Esc exits
+          fullscreen first via native browser Fullscreen API; the X returns
+          once fullscreen ends). */}
+      {showClose && !isFullscreen && (
+        <div className="absolute top-3 left-3 z-dropdown">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-lg border border-slate-200/40 dark:border-white/[0.04] shadow-lg text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            title={t('mindmap.closeMap')}
+          >
+            <X size={12} />
+          </button>
         </div>
-      </div>
+      )}
 
       {!loading && (
         <CanvasZoomControls

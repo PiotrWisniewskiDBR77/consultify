@@ -154,6 +154,30 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
   if (!open) return null;
 
+  // #6i: empty-state — on a map with zero nodes, Present had nothing to show
+  // but a title slide with "0 branches · 0 ideas" (confusing, no honest
+  // explanation). Short-circuit with a clear message + a way out instead.
+  const totalNodeCount = branches.reduce((s, b) => s + b.nodes.length, 0);
+  if (totalNodeCount === 0) {
+    return (
+      <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface flex flex-col items-center justify-center gap-4 px-8 text-center">
+        <Lightbulb size={40} className="text-c-warning" />
+        <p className="max-w-sm text-sm text-c-text-secondary dark:text-c-text-muted">
+          {isPl
+            ? 'Ta mapa jest pusta — dodaj węzły, aby uruchomić prezentację.'
+            : 'This map is empty — add nodes to start a presentation.'}
+        </p>
+        <button
+          onClick={onClose}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
+        >
+          <X size={14} />
+          {isPl ? 'Zamknij' : 'Close'}
+        </button>
+      </div>
+    );
+  }
+
   const slide = slides[currentSlide];
   const progress = ((currentSlide + 1) / slides.length) * 100;
 

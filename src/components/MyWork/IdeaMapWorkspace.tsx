@@ -2661,32 +2661,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
     [activeTool, isPolish]
   );
-  const workspaceNextStepLabel = useMemo(() => {
-    if (selection.type !== 'none') {
-      return t('mindmap.refineTheCurrentSelectionInTools');
-    }
-    if (activePanel !== 'tools') {
-      return t('mindmap.openTheToolsPanelToGive');
-    }
-    switch (activeTool) {
-      case 'mindmap':
-        return t('mindmap.startWithTheCoreProblemAnd');
-      case 'whiteboard':
-        return t('mindmap.sketchOptionsAndClusterTheStrongest');
-      case 'process_flow':
-        return t('mindmap.mapTheMainStepsOwnersAnd');
-      case 'table':
-        return t('mindmap.translateTheIdeaIntoStructuredRows');
-      default:
-        return t('mindmap.giveThisIdeaTheNextConcrete');
-    }
-  }, [activePanel, activeTool, isPolish, selection.type]);
-  // top-14 (56px) keeps the breadcrumb/header card BELOW the tool's top toolbar (~44px) so it
-  // never covers the left toolbar buttons (Create / Draw / Undo / Voting). Previously top-4
-  // overlapped the toolbar, making Create hard to reach on the whiteboard/mindmap canvas.
-  const workspaceHeaderOffsetClass =
-    drillDownStack.length > 0 || focusMode !== 'full' ? 'top-20' : 'top-14';
-
   // ── EditorShell Wave W-1 (flag-gated, default OFF) ──────────────────────
   // When `isMelsCanvasEnabled()` is true, the four canvases render inside the
   // EditorShell (`IdeaCanvasMelsView`, `centerMode='canvas'`) instead of the
@@ -3074,110 +3048,57 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         role="group"
         aria-label={t('mindmap.ideaCanvasAndMapTools')}
       >
-        {/* Breadcrumb for drill-down navigation */}
-        {drillDownStack.length > 0 && (
-          <div className="absolute top-2 left-4 z-sticky flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
-            <button
-              onClick={() => handleDrillUp(0)}
-              className="text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:underline"
-            >
-              {t('mindmap.rootMap')}
-            </button>
-            {drillDownStack.map((item, i) => (
-              <React.Fragment key={item.nodeId}>
-                <span className="text-[10px] text-c-text-secondary mx-0.5">/</span>
+        {/* #6e: fullscreen = 100% płótna, zero górnych pasków — cała góra
+            (breadcrumb drill-down, focus indicator, tool-switcher/Discuss)
+            znika; Esc wychodzi z fullscreen (natywne browser Fullscreen API,
+            już obsłużone przez toggleWorkspaceFullscreen/fullscreenchange). */}
+        {!isFullscreen && (
+          <>
+            {/* Breadcrumb for drill-down navigation */}
+            {drillDownStack.length > 0 && (
+              <div className="absolute top-2 left-4 z-sticky flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
                 <button
-                  onClick={() => handleDrillUp(i + 1)}
-                  className={`text-[10px] font-medium truncate max-w-[120px] ${
-                    i === drillDownStack.length - 1
-                      ? 'text-c-text-secondary dark:text-c-text'
-                      : 'text-c-text-secondary dark:text-c-text-muted hover:underline'
-                  }`}
+                  onClick={() => handleDrillUp(0)}
+                  className="text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:underline"
                 >
-                  {item.label}
+                  {t('mindmap.rootMap')}
                 </button>
-              </React.Fragment>
-            ))}
-          </div>
-        )}
+                {drillDownStack.map((item, i) => (
+                  <React.Fragment key={item.nodeId}>
+                    <span className="text-[10px] text-c-text-secondary mx-0.5">/</span>
+                    <button
+                      onClick={() => handleDrillUp(i + 1)}
+                      className={`text-[10px] font-medium truncate max-w-[120px] ${
+                        i === drillDownStack.length - 1
+                          ? 'text-c-text-secondary dark:text-c-text'
+                          : 'text-c-text-secondary dark:text-c-text-muted hover:underline'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
 
-        {/* V5-IDEA-15: Focus mode indicator */}
-        {focusMode !== 'full' && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-sticky flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wide text-c-text-secondary dark:text-c-text">
-              {focusMode === 'system'
-                ? t('mindmap.focusedOnTool', { activeToolLabel })
-                : t('mindmap.objectFocus')}
-            </span>
-            <button
-              onClick={handleExitFocus}
-              className="text-[10px] font-semibold text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text transition-colors"
-            >
-              {t('mindmap.fullCanvas')}
-            </button>
-          </div>
-        )}
-
-        <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-sticky max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border-subtle dark:bg-c-surface`}
-        >
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
-            <button
-              type="button"
-              onClick={() => navigate('/my-work')}
-              className="text-[11px] font-semibold text-c-text-secondary hover:underline dark:text-c-text-muted"
-            >
-              {t('mindmap.ideas')}
-            </button>
-            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
-              ›
-            </span>
-            <span
-              className="max-w-[14rem] truncate text-[11px] font-semibold text-c-text-secondary dark:text-c-text"
-              title={title || (t('mindmap.untitled'))}
-            >
-              {title ||
-                safeTitleFromSeed(seedText, isPolish) ||
-                (t('mindmap.untitled'))}
-            </span>
-            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
-              ›
-            </span>
-            <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted">
-              {activeToolLabel}
-            </span>
-            {(() => {
-              const rootNode = graphNodes.find(
-                (n: any) =>
-                  n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id)
-              );
-              const ps = rootNode?.data?.pipelineStage;
-              if (!ps || ps === 'draft') return null;
-              return (
-                <span className="rounded-full bg-c-surface dark:bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:text-c-text border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle">
-                  {ps}
+            {/* V5-IDEA-15: Focus mode indicator */}
+            {focusMode !== 'full' && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-sticky flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-c-text-secondary dark:text-c-text">
+                  {focusMode === 'system'
+                    ? t('mindmap.focusedOnTool', { activeToolLabel })
+                    : t('mindmap.objectFocus')}
                 </span>
-              );
-            })()}
-            <span className="text-[10px] text-c-text-secondary dark:text-c-text-secondary">
-              {draftSavedLabel}
-            </span>
-          </div>
-          {/*
-           * UI-L14 (Editor Shell Canon §2 GÓRNA): the title already lives in the
-           * breadcrumb above, so we no longer repeat it as a heading. The next-step
-           * hint is an empty-state affordance — it only helps before there's a graph,
-           * so we hide it once the canvas has content instead of hovering over the work.
-           */}
-          {!mapHasNodes && (
-            <div className="mt-2 text-[11px] leading-5 text-c-text-secondary dark:text-c-text-muted">
-              {workspaceNextStepLabel}
-            </div>
-          )}
-        </div>
-
-        {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
+                <button
+                  onClick={handleExitFocus}
+                  className="text-[10px] font-semibold text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text transition-colors"
+                >
+                  {t('mindmap.fullCanvas')}
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Ghost cards — AI gap suggestions */}
         {isAccepted &&
@@ -3239,23 +3160,29 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {/* UI overlays rendered AFTER canvas tools so they appear on top */}
         {floatingLeftRailNode}
 
-        {/* MM-12: AI Governance badge — opens governance panel */}
-        <div className="absolute left-[4.5rem] top-4 z-sticky">
-          <AIGovernanceBadge
-            mapExtensions={mapExtensions}
-            onClick={() => setGovernancePanelOpen(true)}
-          />
-        </div>
+        {/* #6e: top chrome (governance badge + tool-switcher/search/help/
+            Discuss with Teresa) hides in fullscreen — cała góra znika. */}
+        {!isFullscreen && (
+          <>
+            {/* MM-12: AI Governance badge — opens governance panel */}
+            <div className="absolute left-[4.5rem] top-4 z-sticky">
+              <AIGovernanceBadge
+                mapExtensions={mapExtensions}
+                onClick={() => setGovernancePanelOpen(true)}
+              />
+            </div>
 
-        <IdeaWorkspaceToolbar
-          activeTool={activeTool}
-          onToolChange={setActiveTool}
-          familyCounts={familyCounts}
-          onSearch={() => setSearchOpen(true)}
-          onShowHelp={() => setShortcutsHelpOpen(true)}
-          onDiscuss={handleDiscussWithTeresa}
-          discussDisabled={!mapHasNodes}
-        />
+            <IdeaWorkspaceToolbar
+              activeTool={activeTool}
+              onToolChange={setActiveTool}
+              familyCounts={familyCounts}
+              onSearch={() => setSearchOpen(true)}
+              onShowHelp={() => setShortcutsHelpOpen(true)}
+              onDiscuss={handleDiscussWithTeresa}
+              discussDisabled={!mapHasNodes}
+            />
+          </>
+        )}
 
         {proposalBatch && (
           <div className="absolute bottom-4 left-4 right-4 z-dropdown max-w-lg mx-auto">
