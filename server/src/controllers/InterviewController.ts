@@ -34,6 +34,7 @@ import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -8537,7 +8538,13 @@ ${JSON.stringify(questions || [], null, 2)}
 
       const toolSessionId = uuidv4();
       const toolType = 'dynamic-swot';
-      const name = `Interview Insight: ${String(insightRow.title || 'Untitled')}`;
+      // Z139 (data-integrity): insightRow.title may itself already carry HTML
+      // entities escaped by the global sanitizer on a prior save. Decode before
+      // composing tool_sessions.name so we don't bake an escaped `&amp;` into a
+      // brand-new session name (mirrors the notebook/canvas decode-before-store fix).
+      const name = decodeHtmlEntities(
+        `Interview Insight: ${String(insightRow.title || 'Untitled')}`
+      );
 
       const orgContext = await organizationContextService.buildResolvedContext(user.organizationId);
 

@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getTableColumns } from '../utils/dbSchema.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import { generateOutline } from './presentationGeneratorService.js';
@@ -84,7 +85,10 @@ async function createMyWorkToolSession(params: {
   add('organization_id', orgId);
   add('project_id', null);
   add('tool_type', 'MYWORK');
-  add('name', `MyWork ${sourceType}: ${safeTitle}`.slice(0, 255));
+  // Z139 (data-integrity): safeTitle may already carry entities escaped by the
+  // global sanitizer on a prior save of the source idea/notebook. Decode before
+  // composing tool_sessions.name (mirrors the notebook/canvas decode-before-store fix).
+  add('name', decodeHtmlEntities(`MyWork ${sourceType}: ${safeTitle}`.slice(0, 255)));
   add('status', 'APPROVED');
   add('completion_percent', 100);
   add('confidence_avg', 1);

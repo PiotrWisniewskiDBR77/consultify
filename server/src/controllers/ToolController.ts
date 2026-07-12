@@ -15,6 +15,7 @@ import { hasPermission } from '../services/permissionService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
@@ -604,11 +605,17 @@ export class ToolController {
 
       await ensureToolsSchema();
 
-      const { toolType, name, projectId, derivedFrom, snapshotJson } = req.body;
-      if (!toolType || !name) {
+      const { toolType, name: rawName, projectId, derivedFrom, snapshotJson } = req.body;
+      if (!toolType || !rawName) {
         res.status(400).json({ error: 'toolType and name are required' });
         return;
       }
+      // Z139 (data-integrity): the global input-sanitization middleware escapes
+      // HTML entities on every req.body string. Decode back to plain before
+      // storing tool_sessions.name — same fix already applied to notebook/canvas
+      // (server/src/utils/htmlEntities.ts) — so the DB holds plain text instead
+      // of a literal `&amp;` that would otherwise render un-decoded in the UI.
+      const name = decodeHtmlEntities(String(rawName));
 
       const availability = await KnownToolsService.getKnownToolAvailability(String(toolType));
       if (availability.exists && !availability.isActive) {
