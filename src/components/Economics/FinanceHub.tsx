@@ -261,8 +261,7 @@ export const FinanceHub: React.FC = () => {
     },
   });
   const validFinanceTabs = useMemo(
-    () =>
-      ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'] as ModuleTab[],
+    () => ['statements', 'models', 'analysis', 'prediction', 'valuation'] as ModuleTab[],
     []
   );
 
@@ -871,14 +870,6 @@ export const FinanceHub: React.FC = () => {
         label: t('finance.tabs.valuation', 'Enterprise valuation'),
         icon: <Target size={16} />,
         count: valuations.length,
-      },
-      {
-        id: 'investment' as ModuleTab,
-        label: t('finance.tabs.investment', 'Investment analysis'),
-        icon: <Target size={16} />,
-        count: analyses.filter((row: any) =>
-          isInvestmentAnalysisType(row.analysisType || row.analysis_type)
-        ).length,
       },
     ],
     [t, statements.length, models.length, analyses, valuations.length, budgets.length]
