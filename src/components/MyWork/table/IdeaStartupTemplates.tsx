@@ -16,7 +16,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { IdeaWorkspaceSeedIntent } from '../ideaEntryTypes';
@@ -28,6 +28,8 @@ interface IdeaStartupTemplatesProps {
   onClose: () => void;
   onSelect: (payload: IdeaWorkspaceSeedIntent) => void;
 }
+
+type StartAction = 'describe_with_ai' | 'blank_canvas' | 'use_template';
 
 const WORKSPACE_OPTIONS: {
   id: CanvasToolType;
@@ -93,9 +95,12 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
     goal: '',
     constraints: '',
   });
+  // #10-Start (bug#1): klik karty = tylko selekcja, akcja odpala się dopiero
+  // przez przycisk "Start" (lub Enter / podwójny klik jako skrót).
+  const [selectedAction, setSelectedAction] = useState<StartAction | null>(null);
 
   const handleSelect = useCallback(
-    (startMode: 'describe_with_ai' | 'blank_canvas' | 'use_template') => {
+    (startMode: StartAction) => {
       onSelect({
         startMode,
         seedText: heroText.trim(),
@@ -120,10 +125,45 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
       setSelectedWorkspace('mindmap');
       setShowStructuredBrief(false);
       setStructuredBrief({ problem: '', goal: '', constraints: '' });
+      setSelectedAction(null);
       onClose();
     },
     [heroText, selectedWorkspace, showStructuredBrief, structuredBrief, onClose, onSelect]
   );
+
+  const handleCardClick = useCallback((action: StartAction) => {
+    setSelectedAction(action);
+  }, []);
+
+  const handleCardDoubleClick = useCallback(
+    (action: StartAction) => {
+      handleSelect(action);
+    },
+    [handleSelect]
+  );
+
+  const handleStart = useCallback(() => {
+    if (!selectedAction) return;
+    handleSelect(selectedAction);
+  }, [selectedAction, handleSelect]);
+
+  // Reset selection whenever the modal re-opens.
+  useEffect(() => {
+    if (open) setSelectedAction(null);
+  }, [open]);
+
+  // Enter = Start (only while an action card is selected).
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && selectedAction) {
+        e.preventDefault();
+        handleSelect(selectedAction);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, selectedAction, handleSelect]);
 
   const handlePopularStart = useCallback(
     (start: (typeof popularStarts)[number]) => {
@@ -148,13 +188,27 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
   const PrimaryStartButton = ({
     children,
     onClick,
+    onDoubleClick,
     className,
+    selected,
   }: {
     children: React.ReactNode;
     onClick: () => void;
+    onDoubleClick: () => void;
     className: string;
+    selected: boolean;
   }) => (
-    <button type="button" onClick={onClick} className={className}>
+    <button
+      type="button"
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      aria-pressed={selected}
+      className={`${className} ${
+        selected
+          ? 'ring-2 ring-c-focus ring-offset-1 ring-offset-c-surface shadow-lg -translate-y-0.5'
+          : ''
+      }`}
+    >
       {children}
     </button>
   );
@@ -272,7 +326,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             <div className="grid grid-cols-3 gap-3">
             {/* Start with AI */}
             <PrimaryStartButton
-              onClick={() => handleSelect('describe_with_ai')}
+              onClick={() => handleCardClick('describe_with_ai')}
+              onDoubleClick={() => handleCardDoubleClick('describe_with_ai')}
+              selected={selectedAction === 'describe_with_ai'}
               className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-accent bg-c-accent-soft px-3 py-4 text-center transition-all duration-200 hover:border-c-accent hover:shadow-lg hover:-translate-y-0.5"
             >
               <div className="rounded-xl p-2.5 bg-c-accent-soft text-c-accent transition-transform duration-200 group-hover:scale-110">
@@ -296,7 +352,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
 
             {/* Blank canvas */}
             <PrimaryStartButton
-              onClick={() => handleSelect('blank_canvas')}
+              onClick={() => handleCardClick('blank_canvas')}
+              onDoubleClick={() => handleCardDoubleClick('blank_canvas')}
+              selected={selectedAction === 'blank_canvas'}
               className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border-subtle hover:shadow-lg hover:-translate-y-0.5"
             >
               <div className="rounded-xl p-2.5 bg-c-surface text-c-text-muted transition-transform duration-200 group-hover:scale-110">
@@ -320,7 +378,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
 
             {/* Use template */}
             <PrimaryStartButton
-              onClick={() => handleSelect('use_template')}
+              onClick={() => handleCardClick('use_template')}
+              onDoubleClick={() => handleCardDoubleClick('use_template')}
+              selected={selectedAction === 'use_template'}
               className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-success bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-success hover:shadow-lg hover:-translate-y-0.5"
             >
               <div className="rounded-xl p-2.5 text-c-success transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: 'color-mix(in srgb, var(--c-success) 12%, transparent)' }}>
@@ -407,6 +467,18 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Footer — Start action, disabled until a card is selected ── */}
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-c-border-subtle">
+          <button
+            type="button"
+            onClick={handleStart}
+            disabled={!selectedAction}
+            className="rounded-lg bg-c-surface-raised border border-c-border-subtle px-4 py-2 text-[13px] font-semibold text-c-text transition-colors duration-150 hover:bg-c-surface enabled:hover:border-c-focus disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isPl ? 'Start' : 'Start'}
+          </button>
         </div>
       </div>
     </div>
