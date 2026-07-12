@@ -3163,6 +3163,18 @@ export const Api = {
     return res.json();
   },
 
+  /**
+   * Zwornik Delta B (§4.2) — project finance rollup (read-model only).
+   * SSOT: Harvard/wdrozenie-100/_KONCEPT_ZWORNIK_2026-07-10.md.
+   * Backend: `ProjectController.getProjectFinance` / `projectFinanceRollupService.ts`.
+   */
+  getProjectFinance: async (projectId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/finance`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch project finance rollup');
+  },
+
   getMeetings: async (projectId?: string): Promise<any> => {
     const qs = new URLSearchParams();
     if (projectId) qs.set('projectId', projectId);
