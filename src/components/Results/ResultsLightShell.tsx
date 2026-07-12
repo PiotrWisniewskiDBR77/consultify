@@ -88,6 +88,13 @@ export interface ResultsLightRoiItem {
   realizedBenefit: number;
   opexAnnual?: number;
   hasRealized: boolean;
+  /** Faza2 gap #3 — server-computed netto (benefit − opexAnnual). Optional: the
+   *  legacy fallback endpoint doesn't return these yet — callers fall back to
+   *  client-side `realizedBenefit - opexAnnual` when undefined (see RoiTab). */
+  netProjectedBenefit?: number;
+  netRealizedBenefit?: number;
+  roiPercentGross?: number | null;
+  roiPercentNet?: number | null;
 }
 
 export interface ResultsLightRoiSummary {
@@ -96,6 +103,12 @@ export interface ResultsLightRoiSummary {
   totalOpex: number;
   totalCapex: number;
   coveragePercent: number;
+  /** Faza2 gap #3 — portfolio-level netto, server-computed. Optional, same
+   *  legacy-fallback caveat as the item-level fields above. */
+  netTotalProjected?: number;
+  netTotalRealized?: number;
+  roiPercentGross?: number | null;
+  roiPercentNet?: number | null;
 }
 
 export interface ResultsLightKeyResult {
@@ -249,8 +262,11 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
     return { onTarget, below, noData, total: kpis.length };
   }, [kpis]);
 
-  const netRealized = roiSummary.totalRealized - roiSummary.totalOpex;
-  const netProjected = roiSummary.totalProjected - roiSummary.totalOpex;
+  // Prefer server-computed netto (Faza2 gap #3, resultsROIService.ts) — falls
+  // back to client-side (totalX - totalOpex) when the summary comes from the
+  // legacy fallback endpoint that doesn't return net* fields yet.
+  const netRealized = roiSummary.netTotalRealized ?? roiSummary.totalRealized - roiSummary.totalOpex;
+  const netProjected = roiSummary.netTotalProjected ?? roiSummary.totalProjected - roiSummary.totalOpex;
   const netVariancePct =
     netProjected !== 0 ? Math.round(((netRealized - netProjected) / Math.abs(netProjected)) * 1000) / 10 : 0;
 
@@ -909,20 +925,52 @@ function RoiTab({
       },
       {
         id: 'net',
-        label: t('Zrealizowano netto', 'Net realized'),
+        label: t('Korzyść netto', 'Net benefit'),
         width: '150px',
         align: 'right',
         sortable: true,
+        // Prefer server-computed netto (resultsROIService.ts, Faza2 gap #3);
+        // fall back to client-side realizedBenefit - opexAnnual when the
+        // field is absent (legacy fallback endpoint) — never crashes.
         sortAccessor: (row: ResultsLightRoiItem) =>
-          row.hasRealized ? row.realizedBenefit - (row.opexAnnual || 0) : -Infinity,
+          row.hasRealized ? row.netRealizedBenefit ?? row.realizedBenefit - (row.opexAnnual || 0) : -Infinity,
         render: (row: ResultsLightRoiItem) => {
-          const net = row.realizedBenefit - (row.opexAnnual || 0);
+          const net = row.netRealizedBenefit ?? row.realizedBenefit - (row.opexAnnual || 0);
           return (
-            <span className="whitespace-nowrap text-[12px] tabular-nums text-c-text-secondary">
+            <span className="whitespace-nowrap text-right text-[12px] tabular-nums text-c-text-secondary">
               {row.hasRealized ? fmtCompact(net) : '—'}{' '}
               <span className="text-[10.5px] text-c-text-muted">{t('(netto)', '(net)')}</span>
             </span>
           );
+        },
+      },
+      {
+        id: 'roiPercentNet',
+        label: t('ROI netto (%)', 'ROI net (%)'),
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        // roiPercentNet is server-computed (benefit netto / capex * 100), null
+        // when capex <= 0. Absent entirely on the legacy fallback endpoint —
+        // fall back to gross % (labelled) rather than a crash or blank cell.
+        sortAccessor: (row: ResultsLightRoiItem) => row.roiPercentNet ?? row.roiPercentGross ?? -Infinity,
+        render: (row: ResultsLightRoiItem) => {
+          if (row.roiPercentNet != null) {
+            return (
+              <span className="whitespace-nowrap text-right text-[12px] font-semibold tabular-nums text-c-text">
+                {row.roiPercentNet.toFixed(1)}%
+              </span>
+            );
+          }
+          if (row.roiPercentGross != null) {
+            return (
+              <span className="whitespace-nowrap text-right text-[12px] tabular-nums text-c-text-muted">
+                {row.roiPercentGross.toFixed(1)}%{' '}
+                <span className="text-[10.5px]">{t('(brutto)', '(gross)')}</span>
+              </span>
+            );
+          }
+          return <span className="block text-right text-[12px] text-c-text-muted">—</span>;
         },
       },
       {
@@ -1009,6 +1057,18 @@ function RoiTab({
             </div>
             <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
               {t('odchylenie netto', 'net variance')}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-text">
+              {roiSummary.roiPercentNet != null
+                ? `${roiSummary.roiPercentNet.toFixed(1)}%`
+                : roiSummary.totalCapex > 0
+                  ? `${((netRealized / roiSummary.totalCapex) * 100).toFixed(1)}%`
+                  : '—'}
+            </div>
+            <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
+              {t('ROI netto portfela', 'portfolio ROI net')}
             </div>
           </div>
         </div>
