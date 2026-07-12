@@ -16,6 +16,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const publishThreeAxisSnapshotMock = vi.fn();
+const buildThreeAxisReportMock = vi.fn();
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: any) => {
@@ -36,6 +37,7 @@ vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
 
 vi.mock('../../../server/src/services/execution/threeAxisReportService.js', () => ({
   publishThreeAxisSnapshot: (...args: any[]) => publishThreeAxisSnapshotMock(...args),
+  buildThreeAxisReport: (...args: any[]) => buildThreeAxisReportMock(...args),
 }));
 
 import reportBuilderRouter from '../../../server/src/routes/report-builder.routes.js';
@@ -107,5 +109,73 @@ describe('POST /api/report-builder/program-3axis/publish', () => {
     publishThreeAxisSnapshotMock.mockRejectedValue(new Error('boom'));
     const res = await request(app).post('/api/report-builder/program-3axis/publish').send({});
     expect(res.status).toBe(500);
+  });
+});
+
+/**
+ * GET /api/report-builder/program-3axis/live — Faza2 gap #2 (audyt endpointów READ):
+ * threeAxisReportService.buildThreeAxisReport (+ getThreeAxisLiveView) existed with zero
+ * READ-route callers — only the POST publish (snapshot) path above was wired, so the
+ * timeline showed NA before anyone published. This is the additive live-view GET.
+ */
+describe('GET /api/report-builder/program-3axis/live', () => {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/report-builder', reportBuilderRouter);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('own-org read succeeds → 200 with available:true + report, forwards orgId/scope/asOf', async () => {
+    buildThreeAxisReportMock.mockResolvedValue({
+      organizationId: 'org-legit-member',
+      scope: { level: 'organization' },
+      program: { rag: 'AMBER' },
+      rows: [],
+    });
+
+    const res = await request(app)
+      .get('/api/report-builder/program-3axis/live')
+      .query({ projectId: 'proj-1', asOf: '1700000000000' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      success: true,
+      available: true,
+      report: {
+        organizationId: 'org-legit-member',
+        scope: { level: 'organization' },
+        program: { rag: 'AMBER' },
+        rows: [],
+      },
+    });
+    expect(buildThreeAxisReportMock).toHaveBeenCalledWith({
+      organizationId: 'org-legit-member',
+      projectId: 'proj-1',
+      programId: undefined,
+      asOf: 1700000000000,
+    });
+  });
+
+  it('no query params (org-wide) → scope/asOf undefined, still forwards org', async () => {
+    buildThreeAxisReportMock.mockResolvedValue({ scope: { level: 'organization' } });
+
+    const res = await request(app).get('/api/report-builder/program-3axis/live');
+
+    expect(res.status).toBe(200);
+    expect(buildThreeAxisReportMock).toHaveBeenCalledWith({
+      organizationId: 'org-legit-member',
+      projectId: undefined,
+      programId: undefined,
+      asOf: undefined,
+    });
+  });
+
+  it('service throws → fail-soft 200 with available:false, report:null (read endpoint, never 500)', async () => {
+    buildThreeAxisReportMock.mockRejectedValue(new Error('boom'));
+    const res = await request(app).get('/api/report-builder/program-3axis/live');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, available: false, report: null });
   });
 });

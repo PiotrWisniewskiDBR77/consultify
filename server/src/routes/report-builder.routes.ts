@@ -54,7 +54,10 @@ import {
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportContract from '../services/report/reportContract.js';
-import { publishThreeAxisSnapshot } from '../services/execution/threeAxisReportService.js';
+import {
+  buildThreeAxisReport,
+  publishThreeAxisSnapshot,
+} from '../services/execution/threeAxisReportService.js';
 import {
   getCanonicalTemplate,
   proposeOutline,
@@ -370,6 +373,52 @@ router.post(
     } catch (err) {
       logger.error('[ReportBuilder] Error publishing 3-axis program report:', err);
       res.status(500).json({ error: 'Failed to publish 3-axis program report' });
+    }
+  }
+);
+
+/**
+ * GET /api/report-builder/program-3axis/live
+ * Faza2 gap #2 (audyt endpointów READ) — podgląd NA ŻYWO raportu wykonawczego 3 osi
+ * (T=czas × Z=zadania × W=wartość), bez publikacji/snapshotu. `threeAxisReportService`
+ * miał gotowy read-model (`buildThreeAxisReport`) od migracji 913, ale żaden route go
+ * nie wołał — tylko `POST .../publish` (freeze snapshot) był wpięty, więc timeline
+ * pokazywał NA zanim ktoś opublikował. Ten endpoint jest czystym odczytem (fail-soft:
+ * błąd/pusty portfel → program z samymi `null`, nie 500), org-scoped, additive — nie
+ * zmienia zachowania `/program-3axis/publish`. Query: `projectId?`, `programId?`
+ * (domyślnie = cała organizacja, jak w publish), `asOf?` (epoch ms, domyślnie teraz).
+ */
+router.get(
+  '/program-3axis/live',
+  async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { organizationId } = getAuthContext(req);
+      const projectId =
+        typeof req.query.projectId === 'string' && req.query.projectId.trim()
+          ? req.query.projectId.trim()
+          : undefined;
+      const programId =
+        typeof req.query.programId === 'string' && req.query.programId.trim()
+          ? req.query.programId.trim()
+          : undefined;
+      const asOfRaw = typeof req.query.asOf === 'string' ? Number(req.query.asOf) : undefined;
+      const asOf = Number.isFinite(asOfRaw) ? asOfRaw : undefined;
+
+      const report = await buildThreeAxisReport({
+        organizationId,
+        projectId,
+        programId,
+        asOf,
+      });
+
+      res.json({ success: true, available: true, report });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error building live 3-axis program report:', err);
+      res.json({
+        success: true,
+        available: false,
+        report: null,
+      });
     }
   }
 );
