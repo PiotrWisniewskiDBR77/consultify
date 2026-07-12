@@ -2272,6 +2272,77 @@ export class ToolController {
       res.json({ ok: true });
     }
   );
+
+  /**
+   * GET /api/tools/:toolId/history
+   * Was 404 (no route) — ToolDocumentView already calls this to render the
+   * Activity tab. Every mutation on a tool session already writes to the
+   * canonical audit_log (tool_status_changed, tool_review_requested,
+   * tool_approved, tool_sent_back, initiatives_generated, dod_gate_approved,
+   * tool_promoted_to_*, tool_comment_added/deleted, ...) via the local
+   * logAudit() helper — this just reads that trail back out, same
+   * ownership-check + row-shape pattern as listComments above.
+   */
+  static getHistory = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const rows = (await queryHelpers.queryAll(
+        `SELECT
+          al.id,
+          al.action as "eventType",
+          COALESCE(al.created_at, al.timestamp) as "createdAt",
+          COALESCE(NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), ''), u.email, al.actor_name) as "actorName",
+          al.details
+         FROM audit_log al
+         LEFT JOIN users u ON u.id = al.user_id
+         WHERE al.resource_type = 'tool_session' AND al.resource_id = ? AND al.organization_id = ?
+         ORDER BY COALESCE(al.created_at, al.timestamp) DESC`,
+        [toolId, user.organizationId]
+      )) as Array<{
+        id: string;
+        eventType: string;
+        createdAt: string;
+        actorName: string | null;
+        details: string | null;
+      }>;
+
+      const history = rows.map((row) => {
+        let payload: unknown;
+        if (row.details) {
+          try {
+            payload = JSON.parse(row.details);
+          } catch {
+            payload = undefined;
+          }
+        }
+        return {
+          id: row.id,
+          eventType: row.eventType,
+          createdAt: row.createdAt,
+          actorName: row.actorName || undefined,
+          payload,
+        };
+      });
+
+      res.json(history);
+    }
+  );
 }
 
 export default ToolController;

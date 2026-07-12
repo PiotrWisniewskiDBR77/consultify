@@ -60,5 +60,6 @@ router.get('/:toolId/generated-initiatives', ToolController.getGeneratedInitiati
 router.get('/:toolId/comments', ToolController.listComments);
 router.post('/:toolId/comments', ToolController.addComment);
 router.delete('/:toolId/comments/:commentId', ToolController.deleteComment);
+router.get('/:toolId/history', ToolController.getHistory);
 
 export default router;
