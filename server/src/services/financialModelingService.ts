@@ -21,6 +21,8 @@ import {
   shouldBlockReady,
   type PeriodStatements,
 } from './reconciliationService.js';
+import { financialModelToAssumptions, FINANCIAL_MODEL_DRIVERS } from './shared/assumptionsFinancialModelDrivers.js';
+import { auditCoverage, listAssumptions } from './shared/assumptionsRegistry.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1295,6 +1297,56 @@ export async function getModel(modelId: string, orgId?: string): Promise<any> {
       ? JSON.parse(model.assumptions_json)
       : model.assumptions_json;
   return model;
+}
+
+/**
+ * #82f — F5 wiring: `assumptionsRegistry` (Z114) → status realnych driverów tego modelu
+ * (baseline P&L + otwarcie bilansu), do zakładki „Inputs & Assumptions"
+ * (`FinancialModelWorkspace.tsx`). REUŻYWA sygnały już policzone przy seedowaniu
+ * (`seedSource`/`seedStatus.missingBaselineLines`, patrz `assumptionsFinancialModelDrivers.ts`)
+ * — nic nie przelicza, nic nie zgaduje. Read-only, fail-soft (wzorzec
+ * `loadFinanceReportLineageForPack`): błąd → `available:false`, nigdy 500.
+ */
+export async function getModelAssumptionsStatus(
+  modelId: string,
+  orgId: string | undefined
+): Promise<{
+  modelId: string;
+  available: boolean;
+  isGrounded: boolean;
+  seedSource: Record<string, any> | null;
+  assumptions: ReturnType<typeof listAssumptions>;
+  coverage: ReturnType<typeof auditCoverage>;
+} | null> {
+  const model = await getModel(modelId, orgId);
+  if (!model) return null;
+
+  const assumptionsJson = (model.assumptions_json || {}) as Record<string, any>;
+  const seedSource = assumptionsJson.seedSource || null;
+  const seedStatus = assumptionsJson.seedStatus || null;
+  const missingBaselineLines: string[] = Array.isArray(seedStatus?.missingBaselineLines)
+    ? seedStatus.missingBaselineLines
+    : [];
+  const isGrounded =
+    seedSource?.type === 'statement' ||
+    seedSource?.type === 'statement_pack' ||
+    Boolean(model.source_statement_id || model.source_statement_pack_id);
+
+  const rawAssumptions = financialModelToAssumptions({
+    assumptions: assumptionsJson,
+    isGrounded,
+    missingBaselineLines,
+    seedSource,
+  });
+
+  return {
+    modelId,
+    available: true,
+    isGrounded,
+    seedSource,
+    assumptions: listAssumptions(rawAssumptions),
+    coverage: auditCoverage('financial_model.3stmt', FINANCIAL_MODEL_DRIVERS, rawAssumptions),
+  };
 }
 
 export async function listModels(orgId: string): Promise<any[]> {

@@ -109,6 +109,14 @@ interface OutputLine {
   value: number;
 }
 
+/** #82f — jeden driver z assumptionsRegistry (Z114), status/badge do UI. */
+interface AssumptionStatusRow {
+  key: string;
+  status: 'missing' | 'assumed' | 'edited' | 'sourced';
+  needsReview: boolean;
+  provenance?: { source_type?: string; rationale?: string; source_ref?: string };
+}
+
 type Tab = 'inputs' | 'events' | 'outputs' | 'validation';
 
 interface Props {
@@ -140,6 +148,10 @@ async function getModelsListWithFallback() {
     }
     return await Api.get('/api/financial-modeling/models');
   }
+}
+
+async function getModelAssumptionsStatusWithFallback(modelId: string) {
+  return await Api.get(`/api/financial-modeling/models/${modelId}/assumptions-status`);
 }
 
 async function getModelValidationsWithFallback(modelId: string) {
@@ -380,6 +392,8 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 
   // Assumptions
   const [assumptions, setAssumptions] = useState<Record<string, number>>({});
+  // #82f — assumptionsRegistry status (imported/ai_assumed/missing) per driver, keyed by driver key.
+  const [assumptionsStatus, setAssumptionsStatus] = useState<Record<string, AssumptionStatusRow>>({});
 
   // ── Load models ──
   const loadModels = useCallback(async () => {
@@ -403,9 +417,10 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
       setEvents((model as any)?.events || []);
       setAssumptions((model as any)?.assumptions_json || {});
       try {
-        const [outData, valData] = await Promise.all([
+        const [outData, valData, assumptionsStatusData] = await Promise.all([
           getModelOutputsWithFallback(modelId).catch(() => null),
           getModelValidationsWithFallback(modelId).catch(() => null),
+          getModelAssumptionsStatusWithFallback(modelId).catch(() => null),
         ]);
         setOutputs(
           ((outData as any)?.grouped || {}) as Record<string, Record<string, OutputLine[]>>
@@ -419,10 +434,15 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
             warning: number;
           }
         );
+        const statusRows: AssumptionStatusRow[] = Array.isArray((assumptionsStatusData as any)?.assumptions)
+          ? (assumptionsStatusData as any).assumptions
+          : [];
+        setAssumptionsStatus(Object.fromEntries(statusRows.map((row) => [row.key, row])));
       } catch {
         setOutputs({});
         setValidations([]);
         setValidationSummary({ total: 0, pass: 0, fail: 0, warning: 0 });
+        setAssumptionsStatus({});
       }
       setError(null);
       trackFunnelEvent('financial_model_created', { modelId }); // viewed
@@ -596,6 +616,35 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
       >
         {cfg.icon} {status.toUpperCase()}
       </span>
+    );
+  };
+
+  // #82f — status/source label for a driver (assumptionsRegistry Z114), reusing the exact
+  // text style already used for the „Imported from statement" hint (line-under-label,
+  // text-[10px] uppercase tracking-wide), only the color changes per status.
+  const ASSUMPTION_STATUS_LABEL_CLASS: Record<string, string> = {
+    sourced: 'text-blue-600 dark:text-blue-300',
+    edited: 'text-emerald-600 dark:text-emerald-400',
+    assumed: 'text-amber-600 dark:text-amber-400',
+    missing: 'text-slate-500 dark:text-slate-500',
+  };
+  const assumptionStatusLabel = (driverKey: string) => {
+    const row = assumptionsStatus[driverKey];
+    if (!row) return null;
+    const labels: Record<string, string> = {
+      sourced: isPl ? 'Ze źródła' : 'Sourced',
+      edited: isPl ? 'Edytowane' : 'Edited',
+      assumed: isPl ? 'Założenie AI — do przeglądu' : 'AI assumed — needs review',
+      missing: isPl ? 'Brak wartości' : 'Missing',
+    };
+    const cls = ASSUMPTION_STATUS_LABEL_CLASS[row.status] || ASSUMPTION_STATUS_LABEL_CLASS.missing;
+    return (
+      <div
+        className={`mt-1 text-[10px] uppercase tracking-wide ${cls}`}
+        title={row.provenance?.rationale || undefined}
+      >
+        {labels[row.status] || row.status}
+      </div>
     );
   };
 
@@ -944,14 +993,14 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        ['Revenue', baselineAssumptions.revenue],
-                        ['COGS', baselineAssumptions.cogs],
-                        ['OPEX', baselineAssumptions.opex],
-                        ['Depreciation', baselineAssumptions.depreciation],
-                        ['Interest', baselineAssumptions.interest],
-                        ['Tax', baselineAssumptions.tax],
-                        ['CAPEX', baselineAssumptions.capex],
-                      ].map(([label, value]) => (
+                        ['Revenue', baselineAssumptions.revenue, 'baseline.revenue'],
+                        ['COGS', baselineAssumptions.cogs, 'baseline.cogs'],
+                        ['OPEX', baselineAssumptions.opex, 'baseline.opex'],
+                        ['Depreciation', baselineAssumptions.depreciation, 'baseline.depreciation'],
+                        ['Interest', baselineAssumptions.interest, 'baseline.interest'],
+                        ['Tax', baselineAssumptions.tax, 'baseline.tax'],
+                        ['CAPEX', baselineAssumptions.capex, 'baseline.capex'],
+                      ].map(([label, value, driverKey]) => (
                         <div
                           key={String(label)}
                           className="rounded-xl bg-slate-50 dark:bg-navy-800/70 p-3"
@@ -962,6 +1011,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                           <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
                             {formatAmount(Number(value || 0))}
                           </div>
+                          {assumptionStatusLabel(String(driverKey))}
                         </div>
                       ))}
                     </div>
@@ -984,10 +1034,12 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                           <label className="text-sm text-slate-700 dark:text-slate-300">
                             {isPl ? labelPl : label}
                           </label>
-                          {seededInputKeys.has(key) && (
+                          {seededInputKeys.has(key) ? (
                             <div className="mt-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300">
                               {t('finance.model.importedFromStatement', 'Imported from statement')}
                             </div>
+                          ) : (
+                            assumptionStatusLabel(key)
                           )}
                         </div>
                         <input
