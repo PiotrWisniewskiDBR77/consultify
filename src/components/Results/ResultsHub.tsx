@@ -2,14 +2,12 @@ import {
   BarChart3,
   Bell,
   BellOff,
-  BrainCircuit,
   Copy,
   DollarSign,
   ExternalLink,
   FileText,
   Inbox,
   Layers,
-  ListChecks,
   Pencil,
   Plus,
   Target,
@@ -192,14 +190,12 @@ const ResultsControlSelect: React.FC<ResultsControlSelectProps> = ({
 );
 
 const VALID_TABS: ModuleTab[] = [
-  'results_initiatives' as ModuleTab,
   'results_kpi' as ModuleTab,
   'results_reports' as ModuleTab,
   'results_benefits_inbox' as ModuleTab,
   'roi' as ModuleTab,
   'roi_analysis' as ModuleTab,
   'results_strategic' as ModuleTab,
-  'results_ai' as ModuleTab,
 ];
 const VALID_KPI_MODES = ['overview', 'queue', 'catalog', 'scorecards'] as const;
 const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'connectors'] as const;
@@ -216,7 +212,7 @@ export const ResultsHub: React.FC = () => {
   const [activeTab, setActiveTabRaw] = useState<ModuleTab>(
     (VALID_TABS.includes(searchParams.get('tab') as ModuleTab)
       ? searchParams.get('tab')!
-      : 'results_initiatives') as ModuleTab
+      : 'results_kpi') as ModuleTab
   );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
@@ -358,7 +354,7 @@ export const ResultsHub: React.FC = () => {
       .toLowerCase();
     if (!openId || (mode !== 'initiative' && mode !== 'doc')) return;
 
-    setActiveTabRaw('results_initiatives');
+    setActiveTabRaw('results_kpi');
     setActiveDocumentId(openId);
     setDeepLinkHandled(true);
   }, [deepLinkHandled, searchParams, setActiveDocumentId]);
@@ -453,12 +449,6 @@ export const ResultsHub: React.FC = () => {
   const tabs: TabConfig[] = useMemo(
     () => [
       {
-        id: 'results_initiatives' as ModuleTab,
-        label: t('results.tabs.initiatives', 'Initiatives'),
-        icon: <ListChecks size={16} />,
-        count: trackedInitiatives.length,
-      },
-      {
         id: 'results_kpi' as ModuleTab,
         label: t('results.tabs.kpi', 'KPI'),
         icon: <Target size={16} />,
@@ -488,11 +478,6 @@ export const ResultsHub: React.FC = () => {
         id: 'results_strategic' as ModuleTab,
         label: t('results.tabs.strategic', 'Strategic'),
         icon: <Layers size={16} />,
-      }] : []),
-      ...(isResultsFlagEnabled('aiInsights') || isResultsFlagEnabled('portfolioInsights') ? [{
-        id: 'results_ai' as ModuleTab,
-        label: t('results.tabs.ai', 'AI + Portfolio'),
-        icon: <BrainCircuit size={16} />,
       }] : []),
     ],
     [t, kpis.length, trackedInitiatives.length]
