@@ -30,6 +30,17 @@ import {
 import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
 import { useAppStore } from '@/store/useAppStore';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { isResultsLightEnabled } from '@/utils/resultsLightFlag';
+import {
+  ResultsLightShell,
+  type ResultsLightKpi,
+  type ResultsLightObjective,
+  type ResultsLightOkrSummary,
+  type ResultsLightRoiItem,
+  type ResultsLightRoiSummary,
+} from './ResultsLightShell';
 
 import {
   StandardPreview,
@@ -63,6 +74,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { KPICreateModal } from './KPICreateModal';
 import {
+  deriveNeedsEntry,
   filterKpisByLifecycle,
   filterKpisByObservationPhase,
   filterTrackedInitiatives,
@@ -196,6 +208,8 @@ export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const currentUser = useAppStore((state) => state.currentUser);
+  const currentOrganization = useAppStore((state) => state.currentOrganization);
+  const openChatWithContext = useOpenChatWithContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const scopedInitiativeId = String(searchParams.get('initiativeId') || '').trim() || undefined;
 
@@ -1851,6 +1865,201 @@ export const ResultsHub: React.FC = () => {
       </div>
     );
   };
+
+  // ── Fala 1 lekkość: gęsta powłoka Results za flagą (default OFF; podgląd
+  // ?ff_resultsLight=1). ON = zastąpienie 7-tabowego huba jedną lekką
+  // powłoką: KPI · ROI · OKR (owner feedback #81 — initiatives/AI+portfolio
+  // tabs dropped, they duplicate Initiatives/Execution data). OFF = ResultsHub
+  // unchanged. Hooks placed here (before the final return) per rules-of-hooks
+  // — mirrors AssessmentSessionEditorView's DRDLightShell branch.
+  //
+  // Data-source caveats (see final report to Piotr):
+  //  - KPI: mapped directly from the SAME `kpis` (ResultsKPI[]) state the
+  //    legacy hub already loads — status/trend enums match 1:1 (kpiDomain.ts).
+  //  - ROI: fetched from the SAME endpoint ROITrackingView uses
+  //    (V8ResultsApi.getRoiPortfolioSummary(), fallback
+  //    `/benefits/roi/portfolio/summary`). That endpoint has no per-initiative
+  //    `opexAnnual` and no portfolio-level `totalOpex` — both default to 0
+  //    (net-of-opex figure the shell shows collapses to gross realized until
+  //    that field ships).
+  //  - OKR: fetched from the SAME endpoint StrategicLayerPanel uses
+  //    (`/results-strategic/all/okr`, backed by okrService.ts). `cycleLabel` /
+  //    `lastCheckIn` are NOT returned by that endpoint today — left undefined
+  //    (shell renders without the cycle chip / check-in line).
+  const resultsLightModeActive = isResultsLightEnabled();
+  const [lightRoi, setLightRoi] = useState<{
+    items: Array<{
+      initiativeId: string;
+      initiativeName: string;
+      ownerName?: string;
+      projectedBenefit: number;
+      realizedBenefit: number;
+      hasRealized: boolean;
+    }>;
+    summary: { totalProjected: number; totalRealized: number; totalCapex: number } | null;
+  }>({ items: [], summary: null });
+  const [lightOkr, setLightOkr] = useState<{
+    objectives: ResultsLightObjective[];
+    summary: ResultsLightOkrSummary;
+  }>({ objectives: [], summary: { onTrack: 0, atRisk: 0, offTrack: 0, avgScore: 0 } });
+
+  useEffect(() => {
+    if (!resultsLightModeActive) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        let payload: any;
+        try {
+          payload = await V8ResultsApi.getRoiPortfolioSummary();
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) throw error;
+          const res = await Api.get('/benefits/roi/portfolio/summary');
+          payload = (res as any)?.data || res;
+        }
+        if (!cancelled) {
+          setLightRoi({
+            items: Array.isArray(payload?.items) ? payload.items : [],
+            summary: payload?.summary || null,
+          });
+        }
+      } catch {
+        if (!cancelled) setLightRoi({ items: [], summary: null });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [resultsLightModeActive]);
+
+  useEffect(() => {
+    if (!resultsLightModeActive) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await Api.get('/results-strategic/all/okr');
+        const data = (res as any)?.data ?? res;
+        if (!cancelled) {
+          setLightOkr({
+            objectives: Array.isArray(data?.objectives) ? data.objectives : [],
+            summary: data?.summary || { onTrack: 0, atRisk: 0, offTrack: 0, avgScore: 0 },
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setLightOkr({ objectives: [], summary: { onTrack: 0, atRisk: 0, offTrack: 0, avgScore: 0 } });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [resultsLightModeActive]);
+
+  const lightKpis: ResultsLightKpi[] = useMemo(
+    () =>
+      (kpis || []).map((kpi) => ({
+        id: kpi.id,
+        name: kpi.name,
+        initiativeName: kpi.initiativeName,
+        ownerName: kpi.ownerName,
+        actualValue: kpi.currentValue ?? kpi.latestValue ?? null,
+        targetValue: kpi.targetValue ?? null,
+        unit: kpi.unit,
+        status: kpi.status,
+        trend: kpi.trend,
+        needsEntry: deriveNeedsEntry(kpi),
+        measurementFrequency: kpi.measurementFrequency as ResultsLightKpi['measurementFrequency'],
+        baselineValue: kpi.baselineValue ?? null,
+      })),
+    [kpis]
+  );
+
+  const lightRoiItems: ResultsLightRoiItem[] = useMemo(
+    () =>
+      lightRoi.items.map((item) => ({
+        initiativeId: item.initiativeId,
+        initiativeName: item.initiativeName,
+        ownerName: item.ownerName,
+        projectedBenefit: item.projectedBenefit,
+        realizedBenefit: item.realizedBenefit,
+        opexAnnual: 0,
+        hasRealized: item.hasRealized,
+      })),
+    [lightRoi.items]
+  );
+
+  const lightRoiSummary: ResultsLightRoiSummary = useMemo(() => {
+    const s = lightRoi.summary;
+    return {
+      totalProjected: s?.totalProjected ?? 0,
+      totalRealized: s?.totalRealized ?? 0,
+      totalOpex: 0,
+      totalCapex: s?.totalCapex ?? 0,
+      coveragePercent: (s as any)?.coveragePercent ?? 0,
+    };
+  }, [lightRoi.summary]);
+
+  const lightUpdatedLabel = useMemo(() => {
+    const dates = (kpis || [])
+      .map((k) => k.latestMeasurementDate || k.updatedAt)
+      .filter(Boolean)
+      .map((d) => new Date(d as string).getTime())
+      .filter((n) => Number.isFinite(n));
+    if (dates.length === 0) return undefined;
+    return new Date(Math.max(...dates)).toLocaleDateString();
+  }, [kpis]);
+
+  if (resultsLightModeActive) {
+    return (
+      <ErrorBoundary>
+        <>
+          <ResultsLightShell
+            projectName={currentOrganization?.name}
+            updatedLabel={lightUpdatedLabel}
+            kpis={lightKpis}
+            roiItems={lightRoiItems}
+            roiSummary={lightRoiSummary}
+            objectives={lightOkr.objectives}
+            okrSummary={lightOkr.summary}
+            onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
+            onOpenRoiItem={(initiativeId) =>
+              setRoiDrawer({
+                id: initiativeId,
+                name:
+                  lightRoi.items.find((i) => i.initiativeId === initiativeId)?.initiativeName || '',
+              })
+            }
+            onOpenChat={() =>
+              openChatWithContext({
+                entityType: 'results_module',
+                entityId: 'results',
+                entityName: t('results.aiChat', 'Results'),
+                contextData: { organizationName: currentOrganization?.name },
+              })
+            }
+          />
+          {drawerState && (
+            <KPITimeSeriesDrawer
+              kpiId={drawerState.kpiId}
+              initialSection={drawerState.section}
+              onClose={() => setDrawerState(null)}
+              onValueRecorded={() => {
+                void refreshResultsTruth();
+              }}
+            />
+          )}
+          {roiDrawer && (
+            <ROIDetailDrawer
+              initiativeId={roiDrawer.id}
+              initiativeName={roiDrawer.name}
+              onClose={() => setRoiDrawer(null)}
+              onSaved={() => setRoiRefreshNonce((n) => n + 1)}
+            />
+          )}
+        </>
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <>
