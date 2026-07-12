@@ -711,6 +711,26 @@ function getNodeDepth(data: IdeaNodeData) {
   return data._depth ?? 0;
 }
 
+/** #6n: per-type minimap fill so the overview actually reflects map structure (not blank grey dots). */
+function miniMapNodeColor(node: Node): string {
+  const data = (node.data || {}) as Record<string, any>;
+  switch (node.type) {
+    case 'center':
+      return 'var(--c-warning)';
+    case 'branch':
+    case 'idea':
+      return branchColor(data.branchKey, 0).edge;
+    case 'knowledgeCard':
+      return 'var(--c-tag-2)';
+    case 'noteCard':
+      return 'var(--c-tag-9)';
+    case 'evidenceCard':
+      return 'var(--c-tag-8)';
+    default:
+      return 'var(--c-border-strong)';
+  }
+}
+
 function branchColor(key: string, depth?: number) {
   const base = BRANCH_COLORS[key] || BRANCH_COLORS.uncategorized;
   if (depth == null || depth <= 0) return base;
@@ -5501,7 +5521,12 @@ function MindMapInner({
               {alignSnapEnabled && <SmartGuidesOverlay threshold={5} />}
               {showMiniMap && (
                 <MiniMap
+                  nodeColor={miniMapNodeColor}
+                  nodeStrokeColor="var(--c-border-strong)"
                   nodeStrokeWidth={3}
+                  nodeBorderRadius={6}
+                  maskColor="color-mix(in srgb, var(--c-bg) 70%, transparent)"
+                  style={{ width: 180, height: 130 }}
                   zoomable
                   pannable
                   className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
