@@ -72,10 +72,11 @@ export function isInitiativesLightEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  // 2026-07-12: default flipped ON per Piotr's explicit request to review
-  // everything live on demo.consultify.ai. Explicit ?ff_x=0 or localStorage
-  // override still works to force it back OFF.
-  return true;
+  // 2026-07-12 EMERGENCY REVERT: this shell rolled its own list markup instead
+  // of the real <StandardTable> (TRIADA kanon) - visual regression on an
+  // already-approved, frozen list screen. Reverted to OFF until the shell is
+  // rebuilt to embed the real component. See _ODBIOR_NOTATKI_2026-07-12.md.
+  return readEnvFlag();
 }
 
 export const INITIATIVES_LIGHT_FLAG_KEYS = {
