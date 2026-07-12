@@ -611,7 +611,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
   // "Do pokazania klientowi": read = karty read-only (hideActions), główne pola
   // wyłączone, pasek akcji stanu (Reassign/Delay/Mark complete) ukryty.
-  const [readMode, setReadMode] = useState(false);
+  // Z31: karta otwiera się DOMYŚLNIE na READ. Wyjątek: świeżo tworzony task
+  // (brak taskId — jeszcze nie zapisany, więc z definicji pusty) → EDIT od razu.
+  // Drugi wyjątek (task właśnie utworzony i pusty, wiek < 2 min) — patrz loadTask.
+  const [readMode, setReadMode] = useState<boolean>(() => !taskId);
 
   useEffect(() => {
     if (presentationMode === 'c') {
@@ -806,6 +809,17 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setSourceType(task.sourceType || task.source_type || null);
       setSourceId(task.sourceId || task.source_id || null);
       setBlockedByDecisionId(task.blockedByDecisionId || '');
+
+      // Z31: świeżo utworzony task (bez opisu, wiek < 2 min) → otwórz na EDIT,
+      // nie READ (default). Tani sygnał — bez systemu uprawnień (to gate #28).
+      const createdAtMs = task.createdAt ? new Date(task.createdAt).getTime() : NaN;
+      const isFreshAndEmpty =
+        !task.description?.trim() &&
+        !Number.isNaN(createdAtMs) &&
+        Date.now() - createdAtMs < 2 * 60 * 1000;
+      if (isFreshAndEmpty) {
+        setReadMode(false);
+      }
 
       // Set initiative name if found
       if (task.initiativeId) {
@@ -3872,16 +3886,19 @@ Return ONLY the final comment text.`;
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
         id: 'actions',
-        label: isPolish ? 'Akcje' : 'Actions',
+        // Z29/Z30: rozpisane przyciski AI (Assistant/AI-assist) usunięte —
+        // AI dostępne jako JEDEN zwięzły przycisk (brak M3-slotu dla klasy S,
+        // więc żyje na górze tej sekcji, stąd "+ AI" w etykiecie).
+        label: isPolish ? 'Akcje + AI' : 'Actions + AI',
         icon: Sparkles,
         defaultOpen: true,
         children: (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => handleSave()}
               disabled={saving}
-              className="col-span-2 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
             >
               <Save size={14} className="text-c-text-muted" />
               {isPolish ? 'Zapisz' : 'Save'}
@@ -3889,19 +3906,11 @@ Return ONLY the final comment text.`;
             <button
               type="button"
               onClick={handleOpenChat}
+              title={isPolish ? 'AI — asystent do tego zadania' : 'AI — assistant for this task'}
               className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
             >
-              <MessageSquare size={14} className="text-c-text-muted" />
-              {isPolish ? 'Asystent' : 'Assistant'}
-            </button>
-            <button
-              type="button"
-              onClick={() => generateAIComment()}
-              disabled={isGeneratingAIComment}
-              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-            >
               <Sparkles size={14} className="text-c-text-muted" />
-              {isPolish ? 'Uzupełnij AI' : 'AI assist'}
+              AI
             </button>
           </div>
         ),

@@ -866,7 +866,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // "Do pokazania klientowi": read = wszystkie karty/pola read-only, brak pasków
   // akcji (hideActions). ORuje się do isDecisionStageLocked (patrz niżej), więc
   // przewleka się przez WSZYSTKIE istniejące bramki edycji jednym stanem.
-  const [readMode, setReadMode] = useState(false);
+  // Z31 (parytet #37): karta otwiera się DOMYŚLNIE na READ. Wyjątek: świeżo
+  // tworzona decyzja (brak decisionId — jeszcze nie zapisana, z definicji
+  // pusta) → EDIT od razu. Drugi wyjątek (decyzja właśnie utworzona i pusta,
+  // wiek < 2 min) — patrz loadDecision.
+  const [readMode, setReadMode] = useState<boolean>(() => !decisionId);
   // Human edit on a card demotes an AI-draft/done card to `edited` (badge switch).
   const markCardEdited = useCallback((key: DecisionCardKey) => {
     setCardStates((prev) =>
@@ -1697,6 +1701,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setDecisionDate(decision.decisionDate || '');
       setCreatedAt(decision.createdAt || '');
       setUpdatedAt(decision.updatedAt || '');
+
+      // Z31 (parytet #37): świeżo utworzona decyzja (bez opisu, wiek < 2 min)
+      // → otwórz na EDIT, nie READ (default). Tani sygnał — bez systemu
+      // uprawnień (to gate #28).
+      const createdAtMs = decision.createdAt ? new Date(decision.createdAt).getTime() : NaN;
+      const isFreshAndEmpty =
+        !decision.description?.trim() &&
+        !Number.isNaN(createdAtMs) &&
+        Date.now() - createdAtMs < 2 * 60 * 1000;
+      if (isFreshAndEmpty) {
+        setReadMode(false);
+      }
       // Use API data; demo fallback only in demo sessions
       const apiAlternatives = decision.alternatives || [];
       setAlternatives(
@@ -4510,7 +4526,11 @@ Use userId only from this list:
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       id: 'actions',
-      label: isPolish ? 'Akcje' : 'Actions',
+      // Z29/Z30 (parytet #37 z TaskDetailView): rozpisane przyciski AI
+      // (Assistant/AI-assist) usunięte — AI dostępne jako JEDEN zwięzły
+      // przycisk (brak M3-slotu dla klasy S, więc żyje na górze tej sekcji,
+      // stąd "+ AI" w etykiecie).
+      label: isPolish ? 'Akcje + AI' : 'Actions + AI',
       icon: Sparkles,
       defaultOpen: true,
       children: (
@@ -4524,18 +4544,14 @@ Use userId only from this list:
             <Save size={14} className="text-c-text-muted" />
             {isPolish ? 'Zapisz' : 'Save'}
           </button>
-          <button type="button" onClick={handleOpenChat} className={rpBtn}>
-            <MessageSquare size={14} className="text-c-text-muted" />
-            {isPolish ? 'Asystent' : 'Assistant'}
-          </button>
           <button
             type="button"
-            onClick={() => generateAIComment()}
-            disabled={isGeneratingAIComment}
+            onClick={handleOpenChat}
+            title={isPolish ? 'AI — asystent do tej decyzji' : 'AI — assistant for this decision'}
             className={rpBtn}
           >
             <Sparkles size={14} className="text-c-text-muted" />
-            {isPolish ? 'Uzupełnij AI' : 'AI assist'}
+            AI
           </button>
           <button type="button" onClick={() => setShowDelegationModal(true)} className={rpBtn}>
             <Share2 size={14} className="text-c-text-muted" />
