@@ -866,11 +866,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // "Do pokazania klientowi": read = wszystkie karty/pola read-only, brak pasków
   // akcji (hideActions). ORuje się do isDecisionStageLocked (patrz niżej), więc
   // przewleka się przez WSZYSTKIE istniejące bramki edycji jednym stanem.
-  // Z31 (parytet #37): karta otwiera się DOMYŚLNIE na READ. Wyjątek: świeżo
-  // tworzona decyzja (brak decisionId — jeszcze nie zapisana, z definicji
-  // pusta) → EDIT od razu. Drugi wyjątek (decyzja właśnie utworzona i pusta,
-  // wiek < 2 min) — patrz loadDecision.
-  const [readMode, setReadMode] = useState<boolean>(() => !decisionId);
+  // Z31/#31 (parytet #37): karta otwiera się DOMYŚLNIE na READ gdy już istnieje
+  // (decisionId). Wyjątek: świeżo tworzona decyzja (brak decisionId — jeszcze
+  // nie zapisana, z definicji pusta) → EDIT od razu. Drugi wyjątek (decyzja
+  // właśnie utworzona i pusta, wiek < 2 min) — patrz loadDecision.
+  const [readMode, setReadMode] = useState<boolean>(() => Boolean(decisionId));
   // Human edit on a card demotes an AI-draft/done card to `edited` (badge switch).
   const markCardEdited = useCallback((key: DecisionCardKey) => {
     setCardStates((prev) =>

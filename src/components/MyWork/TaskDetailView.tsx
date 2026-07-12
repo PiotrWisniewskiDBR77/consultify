@@ -611,10 +611,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
   // "Do pokazania klientowi": read = karty read-only (hideActions), główne pola
   // wyłączone, pasek akcji stanu (Reassign/Delay/Mark complete) ukryty.
-  // Z31: karta otwiera się DOMYŚLNIE na READ. Wyjątek: świeżo tworzony task
-  // (brak taskId — jeszcze nie zapisany, więc z definicji pusty) → EDIT od razu.
+  // Z31/#31: karta otwiera się DOMYŚLNIE na READ gdy już istnieje (taskId).
+  // Wyjątek: świeżo tworzony task (brak taskId — jeszcze nie zapisany, więc
+  // z definicji pusty) → EDIT od razu.
   // Drugi wyjątek (task właśnie utworzony i pusty, wiek < 2 min) — patrz loadTask.
-  const [readMode, setReadMode] = useState<boolean>(() => !taskId);
+  const [readMode, setReadMode] = useState<boolean>(() => Boolean(taskId));
 
   useEffect(() => {
     if (presentationMode === 'c') {
