@@ -6647,6 +6647,26 @@ export const Api = {
     return handleResponse(res, 'Failed to create tool session');
   },
 
+  /** #64: AI picker — problem description in, top-3 candidate tools out. Fail-soft server-side. */
+  suggestTools: async (payload: {
+    problemDescription: string;
+    lang?: 'en' | 'pl';
+  }): Promise<{
+    suggestions: Array<{
+      toolType: string;
+      name: string;
+      confidence: 'high' | 'medium' | 'low';
+      reasoning: string;
+    }>;
+  }> => {
+    const res = await fetch(`${API_URL}/tools/suggest`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to suggest tools');
+  },
+
   // --- KNOWN TOOLS LIBRARY (T018/T021) ---
   getKnownTools: async (params?: {
     lang?: 'en' | 'pl';
