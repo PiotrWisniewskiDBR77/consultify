@@ -32,7 +32,11 @@ const actionLabels: Record<CanvasActionId, string> = {
   'view-document': 'Document view',
   'view-md': 'Markdown view',
   'create-presentation': 'Create presentation',
-  'create-table': 'Create table',
+  // #86b: this action materializes a spreadsheet resource (see
+  // server/src/routes/work-canvas.routes.ts — outputType 'table' -> 'spreadsheet'),
+  // NOT the idea-table (StandardTable/Idea Table) tool. Doktryna: Tabela(idea)≠Excel
+  // (oblicz) — label must say "sheet", not "table", to avoid promising the wrong tool.
+  'create-table': 'Create sheet',
   'create-report': 'Create report',
   'send-to-idea': 'Send to idea',
   'save-as-note': 'Save as note',
@@ -94,7 +98,7 @@ export function getCanvasActionAvailability(
     return availability(
       actionId,
       'disabled_missing_runtime',
-      'Table output runtime is unavailable.'
+      'Sheet output runtime is unavailable.'
     );
   }
 
