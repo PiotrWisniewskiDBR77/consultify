@@ -1,24 +1,26 @@
 /**
  * MaterialsLightShell — lightweight, dense redesign of the Materials module
  * surface (companion to `DRDLightShell` / `FinanceLightShell` — same
- * doctrine, same shell shape). NEW component; `ReportsAndPresentationsHub.tsx`
- * (the real "Materiały" hub, sidebar id `MODULE_PRESENTATIONS`) is untouched.
- * Gated OFF by default behind `materialsLightFlag.ts` (`?ff_materialsLight=1`)
- * — real wiring into the hub happens in a later step, only after Piotr signs
- * off on the harness screenshot (CLAUDE.md rule #7: no flag-flip as a first
- * look).
+ * doctrine, same shell shape). Wired into `ReportsAndPresentationsHub.tsx`
+ * (the real "Materiały" hub, sidebar id `MODULE_PRESENTATIONS`) behind
+ * `materialsLightFlag.ts` (`?ff_materialsLight=1`), default OFF — flag stays
+ * OFF until Piotr signs off on the harness screenshot (CLAUDE.md rule #7:
+ * no flag-flip as a first look).
  *
  * Composition mirrors FinanceLightShell / DRDLightShell:
  *   1. Compact header strip (breadcrumb · library title · count chip · CTA).
- *   2. Left rail: 3 sections by TYPE ONLY — Prezentacje · Dokumenty · Arkusze.
- *      Owner note #83 (2026-07-11): clean Menu 2 down to types — no separate
- *      All/Mine/Needs-review/Templates entries in the light nav, and no
- *      standalone "Data" tab (#83a: "Data" folds into "Sheets" — one dataset,
- *      one view, per DOKTRYNA_GESTOSCI §4 "zero dwóch zakładek na ten sam
- *      dataset").
+ *   2. Left rail: 5 types — All · Documents · Presentations · Sheets ·
+ *      Template Library (owner #83, 2026-07-12: Menu 2 parity with the
+ *      5-tab Menu 1 set, minus Mine/Needs-review which stay aggregate
+ *      filters, not separate types). No standalone "Data" tab (owner note 83a: "Data"
+ *      folds into "Sheets" — one dataset, one view, per DOKTRYNA_GESTOSCI
+ *      §4 "zero dwóch zakładek na ten sam dataset").
  *   3. Center: the REAL `<StandardTable>` facade (import, not
  *      reimplementation) — one dense list per active type, TRIADA kanon
  *      (sort/filter header, kebab 5-block contract, row-select → bulk).
+ *      "All" is a client-side merge of documents/presentations/sheets
+ *      (matches the heavy hub's `outputs_all` aggregate — Template Library
+ *      is its own catalog, not folded into "All").
  *   4. Right rail: source-type breakdown (mirrors DRDLightShell's "Źródła i
  *      założenia" / FinanceLightShell's "Pochodzenie") + last-activity line.
  *
@@ -37,10 +39,12 @@
  * not here (same split as `finance-light.tsx` vs `FinanceLightShell.tsx`).
  */
 import {
+  BookTemplate,
   Clock,
   Eye,
   FileText,
   FolderOpen,
+  LayoutGrid,
   MessageSquare,
   Plus,
   Presentation,
@@ -63,11 +67,22 @@ import StandardTable, {
 // Finance/DRD siblings.
 // ---------------------------------------------------------------------------
 
-export type MaterialsTab = 'presentations' | 'documents' | 'sheets';
+export type MaterialsTab = 'all' | 'presentations' | 'documents' | 'sheets' | 'templates';
 
 export type MaterialStatus = 'draft' | 'generated' | 'editing' | 'ready' | 'exported' | 'shared' | 'archived';
 
 export type MaterialSourceType = 'tool' | 'assessment' | 'finance' | 'upload';
+
+/** Underlying kind of a merged "All" row — always one of the 3 real content
+ * types (never 'all'/'templates') so click-through can route unambiguously. */
+export type MaterialKind = 'presentations' | 'documents' | 'sheets';
+
+/** Mirrors `TemplateType` (`ReportsAndPresentations/types.ts`) — kept local,
+ * same zero-coupling rule as the rest of this file's lite types. */
+export type MaterialTemplateType = 'report' | 'presentation' | 'sheet';
+
+/** Mirrors `TemplateStatus` (`ReportsAndPresentations/types.ts`). */
+export type MaterialTemplateStatus = 'active' | 'deprecated' | 'archived' | 'draft';
 
 export interface MaterialPresentationLite {
   id: string;
@@ -100,25 +115,97 @@ export interface MaterialSheetLite {
   updatedAt: string;
 }
 
+export interface MaterialTemplateLite {
+  id: string;
+  title: string;
+  type: MaterialTemplateType;
+  status: MaterialTemplateStatus;
+  owner: string;
+  updatedAt: string;
+}
+
+/** Merged row shape for the "All" type — same 3 real content types tagged
+ * with `kind` so open/click-through routes to the correct hub tab. */
+interface MaterialAllRow extends TableRow {
+  id: string;
+  title: string;
+  kind: MaterialKind;
+  status: MaterialStatus;
+  owner: string;
+  updatedAt: string;
+}
+
 interface MaterialsLightShellProps {
   libraryName?: string;
   presentations?: MaterialPresentationLite[];
   documents?: MaterialDocumentLite[];
   sheets?: MaterialSheetLite[];
+  templates?: MaterialTemplateLite[];
   lastUpdatedLabel?: string;
   onNewMaterial?: (tab: MaterialsTab) => void;
   onOpenChat?: () => void;
-  onOpenItem?: (tab: MaterialsTab, id: string) => void;
+  /** Open a document/presentation/sheet row — `tab` is always the row's real
+   * kind, even when the click came from the "All" list (never 'all'). */
+  onOpenItem?: (tab: MaterialKind, id: string) => void;
+  /** Open a Template Library row — separate from `onOpenItem` because
+   * templates resolve via `resolveTemplateUsePath(id, type)`, not the
+   * documents/presentations/sheets artifactId route. */
+  onOpenTemplate?: (id: string, type: MaterialTemplateType) => void;
+  /** Per-type gate for the "Nowy materiał" CTA — mirrors the heavy hub's
+   * `onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}`
+   * (no ad-hoc sheet creation from this surface). Defaults to never disabled. */
+  isNewMaterialDisabled?: (tab: MaterialsTab) => boolean;
 }
 
 const BLUE = 'rgb(var(--c-focus-solid-rgb))';
 const BLUE_SOFT = 'rgb(var(--c-focus-solid-rgb) / 0.10)';
 
 const TAB_ICON: Record<MaterialsTab, React.ReactNode> = {
+  all: <LayoutGrid className="h-[13px] w-[13px]" />,
   presentations: <Presentation className="h-[13px] w-[13px]" />,
   documents: <FileText className="h-[13px] w-[13px]" />,
   sheets: <Table2 className="h-[13px] w-[13px]" />,
+  templates: <BookTemplate className="h-[13px] w-[13px]" />,
 };
+
+const KIND_ICON: Record<MaterialKind, React.ReactNode> = {
+  presentations: <Presentation className="h-3 w-3" />,
+  documents: <FileText className="h-3 w-3" />,
+  sheets: <Table2 className="h-3 w-3" />,
+};
+
+const TEMPLATE_TYPE_LABEL: Record<MaterialTemplateType, { labelPl: string; labelEn: string }> = {
+  report: { labelPl: 'Raport', labelEn: 'Report' },
+  presentation: { labelPl: 'Prezentacja', labelEn: 'Presentation' },
+  sheet: { labelPl: 'Tabela', labelEn: 'Sheet' },
+};
+
+const TEMPLATE_STATUS_META: Record<
+  MaterialTemplateStatus,
+  { labelPl: string; labelEn: string; className: string }
+> = {
+  active: { labelPl: 'Aktywny', labelEn: 'Active', className: 'text-c-success border-c-success/30' },
+  draft: { labelPl: 'Szkic', labelEn: 'Draft', className: 'text-c-text-muted border-c-border' },
+  deprecated: { labelPl: 'Wycofywany', labelEn: 'Deprecated', className: 'text-c-warning border-c-warning/30' },
+  archived: { labelPl: 'Zarchiwizowany', labelEn: 'Archived', className: 'text-c-text-muted border-c-border' },
+};
+
+function TemplateStatusPill({
+  status,
+  isPolish,
+}: {
+  status: MaterialTemplateStatus;
+  isPolish: boolean;
+}): React.ReactElement {
+  const meta = TEMPLATE_STATUS_META[status];
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${meta.className}`}
+    >
+      {isPolish ? meta.labelPl : meta.labelEn}
+    </span>
+  );
+}
 
 const STATUS_META: Record<
   MaterialStatus,
@@ -164,31 +251,73 @@ export const MaterialsLightShell: React.FC<MaterialsLightShellProps> = ({
   presentations = [],
   documents = [],
   sheets = [],
+  templates = [],
   lastUpdatedLabel,
   onNewMaterial,
   onOpenChat,
   onOpenItem,
+  onOpenTemplate,
+  isNewMaterialDisabled,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const t = (pl: string, en: string) => (isPolish ? pl : en);
 
-  const [activeTab, setActiveTab] = useState<MaterialsTab>('presentations');
+  const [activeTab, setActiveTab] = useState<MaterialsTab>('all');
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const TAB_LABEL: Record<MaterialsTab, string> = {
+    all: t('Wszystkie', 'All'),
     presentations: t('Prezentacje', 'Presentations'),
     documents: t('Dokumenty', 'Documents'),
     sheets: t('Arkusze', 'Sheets'),
+    templates: t('Biblioteka szablonów', 'Template Library'),
   };
+  const materialsCount = presentations.length + documents.length + sheets.length;
   const TAB_COUNT: Record<MaterialsTab, number> = {
+    all: materialsCount,
     presentations: presentations.length,
     documents: documents.length,
     sheets: sheets.length,
+    templates: templates.length,
   };
 
-  const totalCount = presentations.length + documents.length + sheets.length;
+  const totalCount = materialsCount;
+
+  // "All" — client-side merge of the 3 real content types, each row tagged
+  // with its original `kind` so click-through/new-material routing never has
+  // to guess. Template Library stays a separate catalog (matches the heavy
+  // hub's `outputs_all` aggregate, which also excludes templates).
+  const allRows: MaterialAllRow[] = useMemo(
+    () => [
+      ...presentations.map((p) => ({
+        id: p.id,
+        title: p.title,
+        kind: 'presentations' as MaterialKind,
+        status: p.status,
+        owner: p.owner,
+        updatedAt: p.updatedAt,
+      })),
+      ...documents.map((d) => ({
+        id: d.id,
+        title: d.title,
+        kind: 'documents' as MaterialKind,
+        status: d.status,
+        owner: d.owner,
+        updatedAt: d.updatedAt,
+      })),
+      ...sheets.map((s) => ({
+        id: s.id,
+        title: s.title,
+        kind: 'sheets' as MaterialKind,
+        status: s.status,
+        owner: s.owner,
+        updatedAt: s.updatedAt,
+      })),
+    ],
+    [presentations, documents, sheets]
+  );
 
   // Reset selection when switching type — selection is per-list, not global
   // (StandardTable MUST #7: checkbox-driven bulk mode is scoped to the
@@ -315,31 +444,137 @@ export const MaterialsLightShell: React.FC<MaterialsLightShellProps> = ({
     [isPolish, t]
   );
 
-  const activeColumns: TableColumn[] =
-    activeTab === 'presentations' ? presentationColumns : activeTab === 'documents' ? documentColumns : sheetColumns;
-  const activeRows: TableRow[] =
-    activeTab === 'presentations' ? presentations : activeTab === 'documents' ? documents : sheets;
-
-  const rowMenu = (row: TableRow): StandardRowMenu => ({
-    primary: [
+  const allColumns: TableColumn[] = useMemo(
+    () => [
+      { id: 'title', label: t('Tytuł', 'Title'), sortable: true, filterable: true },
       {
-        id: 'open',
-        label: t('Otwórz', 'Open'),
-        icon: Eye,
-        onClick: onOpenItem ? () => onOpenItem(activeTab, String(row.id)) : undefined,
+        id: 'kind',
+        label: t('Typ', 'Type'),
+        sortable: true,
+        filterable: true,
+        filterOptions: (['presentations', 'documents', 'sheets'] as MaterialKind[]).map((k) => ({
+          value: k,
+          label: TAB_LABEL[k],
+        })),
+        render: (row: MaterialAllRow) => (
+          <span className="inline-flex items-center gap-1.5 text-c-text-secondary">
+            {KIND_ICON[row.kind]}
+            {TAB_LABEL[row.kind]}
+          </span>
+        ),
       },
+      {
+        id: 'status',
+        label: t('Status', 'Status'),
+        sortable: true,
+        filterable: true,
+        filterOptions: (Object.keys(STATUS_META) as MaterialStatus[]).map((s) => ({
+          value: s,
+          label: isPolish ? STATUS_META[s].labelPl : STATUS_META[s].labelEn,
+        })),
+        render: (row: MaterialAllRow) => <StatusPill status={row.status} isPolish={isPolish} />,
+      },
+      { id: 'owner', label: t('Właściciel', 'Owner'), sortable: true, filterable: true },
+      { id: 'updatedAt', label: t('Aktualizacja', 'Updated'), sortable: true },
     ],
-    universalHandlers: {
-      preview: onOpenItem ? () => onOpenItem(activeTab, String(row.id)) : undefined,
-      editNote: t('Edycja z poziomu edytora materiału', 'Edit from the material editor'),
-    },
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isPolish, t]
+  );
+
+  const templateColumns: TableColumn[] = useMemo(
+    () => [
+      { id: 'title', label: t('Tytuł', 'Title'), sortable: true, filterable: true },
+      {
+        id: 'type',
+        label: t('Typ', 'Type'),
+        sortable: true,
+        filterable: true,
+        filterOptions: (Object.keys(TEMPLATE_TYPE_LABEL) as MaterialTemplateType[]).map((ty) => ({
+          value: ty,
+          label: isPolish ? TEMPLATE_TYPE_LABEL[ty].labelPl : TEMPLATE_TYPE_LABEL[ty].labelEn,
+        })),
+        render: (row: MaterialTemplateLite) => (
+          <span className="text-c-text-secondary">
+            {isPolish ? TEMPLATE_TYPE_LABEL[row.type].labelPl : TEMPLATE_TYPE_LABEL[row.type].labelEn}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('Status', 'Status'),
+        sortable: true,
+        filterable: true,
+        filterOptions: (Object.keys(TEMPLATE_STATUS_META) as MaterialTemplateStatus[]).map((s) => ({
+          value: s,
+          label: isPolish ? TEMPLATE_STATUS_META[s].labelPl : TEMPLATE_STATUS_META[s].labelEn,
+        })),
+        render: (row: MaterialTemplateLite) => <TemplateStatusPill status={row.status} isPolish={isPolish} />,
+      },
+      { id: 'owner', label: t('Właściciel', 'Owner'), sortable: true, filterable: true },
+      { id: 'updatedAt', label: t('Aktualizacja', 'Updated'), sortable: true },
+    ],
+    [isPolish, t]
+  );
+
+  const activeColumns: TableColumn[] =
+    activeTab === 'all'
+      ? allColumns
+      : activeTab === 'presentations'
+        ? presentationColumns
+        : activeTab === 'documents'
+          ? documentColumns
+          : activeTab === 'sheets'
+            ? sheetColumns
+            : templateColumns;
+  const activeRows: TableRow[] =
+    activeTab === 'all'
+      ? allRows
+      : activeTab === 'presentations'
+        ? presentations
+        : activeTab === 'documents'
+          ? documents
+          : activeTab === 'sheets'
+            ? sheets
+            : templates;
+
+  const rowMenu = (row: TableRow): StandardRowMenu => {
+    const openRow = () => {
+      if (activeTab === 'templates') {
+        onOpenTemplate?.(String(row.id), (row as unknown as MaterialTemplateLite).type);
+        return;
+      }
+      const kind: MaterialKind = activeTab === 'all' ? (row as unknown as MaterialAllRow).kind : (activeTab as MaterialKind);
+      onOpenItem?.(kind, String(row.id));
+    };
+    const canOpen = activeTab === 'templates' ? !!onOpenTemplate : !!onOpenItem;
+    return {
+      primary: [
+        {
+          id: 'open',
+          label: t('Otwórz', 'Open'),
+          icon: Eye,
+          onClick: canOpen ? openRow : undefined,
+        },
+      ],
+      universalHandlers: {
+        preview: canOpen ? openRow : undefined,
+        editNote: t('Edycja z poziomu edytora materiału', 'Edit from the material editor'),
+      },
+    };
+  };
 
   // Source-type breakdown for the right rail (presentations tab has real
   // sourceType data; documents/sheets fall back to a report-type / count
   // summary so the panel is never empty — DOKTRYNA_GESTOSCI §2 "żaden panel
   // < 50% wypełnienia").
   const rightRailBreakdown = useMemo(() => {
+    if (activeTab === 'all') {
+      const counts: Record<string, number> = {};
+      for (const r of allRows) counts[r.kind] = (counts[r.kind] || 0) + 1;
+      return (['presentations', 'documents', 'sheets'] as MaterialKind[])
+        .filter((k) => counts[k] > 0)
+        .map((k) => ({ label: TAB_LABEL[k], count: counts[k] }));
+    }
     if (activeTab === 'presentations') {
       const counts: Record<string, number> = {};
       for (const p of presentations) counts[p.sourceType] = (counts[p.sourceType] || 0) + 1;
@@ -357,12 +592,22 @@ export const MaterialsLightShell: React.FC<MaterialsLightShellProps> = ({
         .filter((rt) => counts[rt] > 0)
         .map((rt) => ({ label: REPORT_TYPE_LABEL[rt], count: counts[rt] }));
     }
+    if (activeTab === 'templates') {
+      const counts: Record<string, number> = {};
+      for (const tpl of templates) counts[tpl.type] = (counts[tpl.type] || 0) + 1;
+      return (Object.keys(TEMPLATE_TYPE_LABEL) as MaterialTemplateType[])
+        .filter((ty) => counts[ty] > 0)
+        .map((ty) => ({
+          label: isPolish ? TEMPLATE_TYPE_LABEL[ty].labelPl : TEMPLATE_TYPE_LABEL[ty].labelEn,
+          count: counts[ty],
+        }));
+    }
     const counts: Record<string, number> = {};
     for (const s of sheets) counts[s.status] = (counts[s.status] || 0) + 1;
     return (Object.keys(STATUS_META) as MaterialStatus[])
       .filter((s) => counts[s] > 0)
       .map((s) => ({ label: isPolish ? STATUS_META[s].labelPl : STATUS_META[s].labelEn, count: counts[s] }));
-  }, [activeTab, presentations, documents, sheets, isPolish]);
+  }, [activeTab, allRows, presentations, documents, sheets, templates, isPolish, TAB_LABEL]);
 
   return (
     <div className="flex h-full flex-col bg-c-bg text-c-text">
@@ -393,7 +638,7 @@ export const MaterialsLightShell: React.FC<MaterialsLightShellProps> = ({
         <button
           type="button"
           onClick={onNewMaterial ? () => onNewMaterial(activeTab) : undefined}
-          disabled={!onNewMaterial}
+          disabled={!onNewMaterial || (isNewMaterialDisabled?.(activeTab) ?? false)}
           className="inline-flex items-center gap-2 rounded-lg bg-c-text px-3.5 py-1.5 text-[13px] font-semibold text-c-surface transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           <Plus className="h-4 w-4" />
@@ -409,7 +654,7 @@ export const MaterialsLightShell: React.FC<MaterialsLightShellProps> = ({
             {t('Typy materiałów', 'Material types')}
           </p>
           <div className="flex flex-col gap-0.5">
-            {(['presentations', 'documents', 'sheets'] as MaterialsTab[]).map((tab) => {
+            {(['all', 'documents', 'presentations', 'sheets', 'templates'] as MaterialsTab[]).map((tab) => {
               const on = tab === activeTab;
               return (
                 <button
@@ -491,11 +736,15 @@ export const MaterialsLightShell: React.FC<MaterialsLightShellProps> = ({
           <div className="mb-3 overflow-hidden rounded-xl border border-c-border">
             <div className="flex items-center gap-2 px-3.5 py-3 text-[12.5px] font-semibold text-c-text">
               <FolderOpen className="h-[15px] w-[15px] text-c-text-muted" />
-              {activeTab === 'presentations'
-                ? t('Źródła', 'Sources')
-                : activeTab === 'documents'
-                  ? t('Typy raportów', 'Report types')
-                  : t('Statusy', 'Statuses')}
+              {activeTab === 'all'
+                ? t('Typy materiałów', 'Material types')
+                : activeTab === 'presentations'
+                  ? t('Źródła', 'Sources')
+                  : activeTab === 'documents'
+                    ? t('Typy raportów', 'Report types')
+                    : activeTab === 'templates'
+                      ? t('Typy szablonów', 'Template types')
+                      : t('Statusy', 'Statuses')}
               <span
                 className="ml-auto rounded-full px-1.5 py-px text-[10.5px] font-semibold"
                 style={{ backgroundColor: BLUE_SOFT, color: BLUE }}
