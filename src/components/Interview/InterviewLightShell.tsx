@@ -15,13 +15,18 @@
  *      VIEW SWITCH inside Sesje, not a 4th tab — doktryna gęstości §4:
  *      "redundantne widoki tych samych danych → jeden widok + przełącznik").
  *   3. Center: real engine OUTPUT SHAPES rendered densely, no empty panels:
- *      - Sesje: dense session rows with the AI rubric score (0-20, Oxford
- *        rubric — `INTERVIEW_RUBRIC_CRITERIA` in
- *        `server/src/controllers/InterviewController.ts` #48a) shown as a
- *        5-segment heat bar (mirrors DRDLightShell's maturity bar) +
- *        verdict pill; click a row to expand the full per-criterion
- *        breakdown (owner note #48: odbiór menedżerski needs the rubric
- *        visible, not a black-box score).
+ *      - Sesje: the REAL `<StandardTable>` facade (import, not
+ *        reimplementation — TRIADA kanon, see `scripts/check-list-canon.sh`
+ *        which blocks bespoke list-tables after the 2026-07-12 regression
+ *        where this exact file shipped a hand-rolled grid). Columns: Sesja /
+ *        Respondent / Wynik AI (0-20, Oxford rubric —
+ *        `INTERVIEW_RUBRIC_CRITERIA` in
+ *        `server/src/controllers/InterviewController.ts` #48a) / Werdykt /
+ *        Status — Werdykt+Status use `<StatusChip>`/`<EntityStatusChip>`
+ *        (leading status dot, canon §4.1). The row-description toggle (MUST
+ *        #3) reveals the full per-criterion rubric breakdown (owner note
+ *        #48: odbiór menedżerski needs the rubric visible, not a black-box
+ *        score) — the canonical replacement for the old per-row expand.
  *      - Przypisane: assignment inbox — assignee, due date, status,
  *        one primary action per row (Kontynuuj/Otwórz).
  *      - Insighty: dense insight cards — category, confidence, evidence
@@ -46,20 +51,23 @@
  * not here (same split as `finance-light.tsx` vs `FinanceLightShell.tsx`).
  */
 import {
-  AlertTriangle,
-  CheckCircle2,
   ClipboardList,
   Clock,
   FileText,
   FolderOpen,
   Lightbulb,
   MessageSquare,
-  MinusCircle,
   UserCheck,
-  XCircle,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import StandardTable, {
+  type StandardRowMenu,
+  type TableColumn,
+  type TableRow,
+} from '../standard/StandardTable';
+import { EntityStatusChip, StatusChip, type StatusTone } from '../ui/primitives/chips';
 
 // ---------------------------------------------------------------------------
 // Types — lightweight mirrors of the server engine output shapes
@@ -206,30 +214,21 @@ function rubricTotal(rubric: InterviewRubricCriterionLite[]): number {
   return rubric.reduce((sum, r) => sum + r.score, 0);
 }
 
-const VERDICT_META: Record<
-  InterviewOverallVerdict,
-  { labelPl: string; colorClass: string; icon: React.ReactNode }
-> = {
-  ready_for_approval: {
-    labelPl: 'gotowe do akceptacji',
-    colorClass: 'text-c-success',
-    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-  },
-  needs_improvement: {
-    labelPl: 'do poprawy',
-    colorClass: 'text-c-warning',
-    icon: <AlertTriangle className="h-3.5 w-3.5" />,
-  },
-  insufficient: {
-    labelPl: 'niewystarczające',
-    colorClass: 'text-c-danger',
-    icon: <XCircle className="h-3.5 w-3.5" />,
-  },
-  empty: {
-    labelPl: 'brak odpowiedzi',
-    colorClass: 'text-c-text-muted',
-    icon: <MinusCircle className="h-3.5 w-3.5" />,
-  },
+// Werdykt tone/label — feeds <StatusChip> (canon §4.1, leading status dot).
+// Same semantic mapping as before (ready_for_approval=success/needs_improvement
+// =warning/insufficient=danger/empty=neutral), just carried by the dot now
+// instead of a bespoke icon.
+const VERDICT_LABEL_PL: Record<InterviewOverallVerdict, string> = {
+  ready_for_approval: 'gotowe do akceptacji',
+  needs_improvement: 'do poprawy',
+  insufficient: 'niewystarczające',
+  empty: 'brak odpowiedzi',
+};
+const VERDICT_TONE: Record<InterviewOverallVerdict, StatusTone> = {
+  ready_for_approval: 'success',
+  needs_improvement: 'warning',
+  insufficient: 'danger',
+  empty: 'neutral',
 };
 
 const SESSION_STATUS_LABEL_PL: Record<InterviewSessionStatus, string> = {
@@ -248,13 +247,6 @@ const ASSIGNMENT_STATUS_LABEL_PL: Record<InterviewAssignmentStatus, string> = {
   sent_back: 'Odesłano',
 };
 
-/** Monotonic blue ramp (score 0..4) over the --c-focus-solid token, mirrors DRDLightShell. */
-function rampColor(score: number): string {
-  const ramp = [0.12, 0.3, 0.5, 0.72, 1];
-  const a = ramp[Math.max(0, Math.min(4, score))] ?? 0.12;
-  return `rgb(var(--c-focus-solid-rgb) / ${a})`;
-}
-
 export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
   cycleName,
   sessions = [],
@@ -271,7 +263,9 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
 
   const [activeTab, setActiveTab] = useState<LightTab>('sessions');
   const [sessionView, setSessionView] = useState<SessionView>('active');
-  const [openSessionId, setOpenSessionId] = useState<string | null>(null);
+  // Row highlight for the StandardTable session list (canon selectedRowId —
+  // replaces the old bespoke per-row expand state).
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const activeSessions = useMemo(() => sessions.filter((s) => !s.archived), [sessions]);
   const archivedSessions = useMemo(() => sessions.filter((s) => s.archived), [sessions]);
@@ -382,8 +376,8 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
               sessionView={sessionView}
               setSessionView={setSessionView}
               sessions={visibleSessions}
-              openSessionId={openSessionId}
-              setOpenSessionId={setOpenSessionId}
+              selectedSessionId={selectedSessionId}
+              setSelectedSessionId={setSelectedSessionId}
               t={t}
             />
           )}
@@ -465,17 +459,136 @@ function SessionsTab({
   sessionView,
   setSessionView,
   sessions,
-  openSessionId,
-  setOpenSessionId,
+  selectedSessionId,
+  setSelectedSessionId,
   t,
 }: {
   sessionView: SessionView;
   setSessionView: (v: SessionView) => void;
   sessions: InterviewSessionLite[];
-  openSessionId: string | null;
-  setOpenSessionId: (id: string | null) => void;
+  selectedSessionId: string | null;
+  setSelectedSessionId: (id: string | null) => void;
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
+  // Selection (StandardTable MUST #7) is scoped to this tab — reset happens
+  // implicitly since the component remounts with fresh state per activeTab
+  // switch at the parent (same pattern as Materials/Tools LightShells).
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // ── Columns — real <StandardTable> facade (TRIADA kanon), not a bespoke
+  // grid. Sesja / Respondent / Wynik AI (0-20) / Werdykt / Status — Werdykt
+  // + Status carry the leading status dot via <StatusChip>/<EntityStatusChip>
+  // (canon §4.1), numbers are right-aligned.
+  const sessionColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: t('Sesja', 'Session'),
+        sortable: true,
+        filterable: true,
+        render: (row: InterviewSessionLite) => (
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-medium text-c-text">{row.title}</span>
+            <span className="block truncate text-[11px] text-c-text-muted tabular-nums">
+              {row.questionsAnswered}/{row.questionsTotal} {t('odpowiedzi', 'answers')}
+            </span>
+          </span>
+        ),
+      },
+      {
+        id: 'respondent',
+        label: t('Respondent', 'Respondent'),
+        sortable: true,
+        filterable: true,
+      },
+      {
+        id: 'score',
+        label: t('Wynik AI (0-20)', 'AI score (0-20)'),
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: InterviewSessionLite) => rubricTotal(row.rubric),
+        render: (row: InterviewSessionLite) => (
+          <span className="whitespace-nowrap tabular-nums">
+            <span className="font-semibold text-c-text">{rubricTotal(row.rubric)}</span>
+            <span className="text-c-text-muted">/{RUBRIC_MAX_TOTAL}</span>
+          </span>
+        ),
+      },
+      {
+        id: 'overallVerdict',
+        label: t('Werdykt', 'Verdict'),
+        sortable: true,
+        filterable: true,
+        filterOptions: (Object.keys(VERDICT_LABEL_PL) as InterviewOverallVerdict[]).map((v) => ({
+          value: v,
+          label: VERDICT_LABEL_PL[v],
+        })),
+        render: (row: InterviewSessionLite) =>
+          row.overallVerdict ? (
+            <StatusChip tone={VERDICT_TONE[row.overallVerdict]} label={VERDICT_LABEL_PL[row.overallVerdict]} />
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          ),
+      },
+      {
+        id: 'status',
+        label: t('Status', 'Status'),
+        sortable: true,
+        filterable: true,
+        filterOptions: (Object.keys(SESSION_STATUS_LABEL_PL) as InterviewSessionStatus[]).map((s) => ({
+          value: s,
+          label: SESSION_STATUS_LABEL_PL[s],
+        })),
+        render: (row: InterviewSessionLite) => (
+          <EntityStatusChip status={row.status} label={SESSION_STATUS_LABEL_PL[row.status]} />
+        ),
+      },
+    ],
+    [t]
+  );
+
+  // Kebab (MUST #6): no real open/edit/archive handlers wired at this layer
+  // yet — StandardTable always renders the full 5-block kebab regardless,
+  // with blocks 4/5 disabled + "Coming soon (backend)" note (ANEKS #4).
+  const sessionRowMenu = (_row: TableRow): StandardRowMenu => ({});
+
+  // MUST #3 — row-description toggle reveals the full 5-criterion rubric
+  // breakdown (owner note #48: odbiór menedżerski needs the rubric visible).
+  // This is the canonical replacement for the old per-row expand button.
+  const sessionRowDescription = (row: TableRow): React.ReactNode => {
+    const session = row as unknown as InterviewSessionLite;
+    if (!session.rubric || session.rubric.length === 0) return null;
+    return (
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-c-text-muted">
+            {t('Rozbicie oceny AI (odbiór menedżerski)', 'AI score breakdown (manager review)')}
+          </span>
+          <span className="text-[11px] text-c-text-muted">{session.updatedAtLabel}</span>
+        </div>
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-5">
+          {session.rubric.map((c) => {
+            const meta = RUBRIC_CRITERIA.find((r) => r.key === c.criterion);
+            return (
+              <div key={c.criterion} className="rounded-lg border border-c-border-strong bg-c-surface px-2.5 py-2.5">
+                <span className="block text-[11px] font-semibold text-c-text">{meta?.labelPl || c.criterion}</span>
+                <span className="mt-1 block text-[16px] font-bold tabular-nums" style={{ color: BLUE }}>
+                  {c.score}
+                  <span className="text-[11px] font-normal text-c-text-muted">/{RUBRIC_MAX_PER_CRITERION}</span>
+                </span>
+                {c.justification && (
+                  <span className="mt-1 block text-[11px] leading-snug text-c-text-secondary">
+                    {c.justification}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="mb-1 flex items-end justify-between gap-4">
@@ -484,7 +597,10 @@ function SessionsTab({
             {t('Sesje wywiadów', 'Interview sessions')}
           </h2>
           <div className="mt-0.5 text-[12.5px] text-c-text-muted">
-            {t('Ocena AI wg rubryki 5 kryteriów (0-20) — kliknij sesję po rozbicie', 'AI score per the 5-criterion rubric (0-20) — click a session for the breakdown')}
+            {t(
+              'Ocena AI wg rubryki 5 kryteriów (0-20) — włącz opis wiersza po rozbicie',
+              'AI score per the 5-criterion rubric (0-20) — enable row description for the breakdown'
+            )}
           </div>
         </div>
 
@@ -508,97 +624,22 @@ function SessionsTab({
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-c-border">
-        {sessions.map((session, idx) => {
-          const total = rubricTotal(session.rubric);
-          const open = openSessionId === session.id;
-          const verdict = session.overallVerdict ? VERDICT_META[session.overallVerdict] : null;
-          return (
-            <div key={session.id} className={idx > 0 ? 'border-t border-c-border' : ''}>
-              <button
-                type="button"
-                onClick={() => setOpenSessionId(open ? null : session.id)}
-                className="grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-3.5 px-4 py-3 text-left"
-                style={open ? { backgroundColor: 'var(--c-surface-raised)' } : undefined}
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-[13.5px] font-medium text-c-text">{session.title}</span>
-                  <span className="block truncate text-[11.5px] text-c-text-muted">
-                    {session.respondent} · {session.questionsAnswered}/{session.questionsTotal}{' '}
-                    {t('odpowiedzi', 'answers')}
-                  </span>
-                </span>
-
-                {/* 5-segment rubric heat bar — mirrors DRDLightShell's maturity bar */}
-                <span className="flex gap-[3px]">
-                  {session.rubric.map((c) => (
-                    <span
-                      key={c.criterion}
-                      className="h-1.5 w-[15px] rounded-sm"
-                      style={{ backgroundColor: rampColor(c.score) }}
-                      title={`${c.criterion}: ${c.score}/${RUBRIC_MAX_PER_CRITERION}`}
-                    />
-                  ))}
-                </span>
-
-                <span className="whitespace-nowrap text-right text-[12.5px] tabular-nums">
-                  <span className="font-semibold text-c-text">{total}</span>
-                  <span className="text-c-text-muted">/{RUBRIC_MAX_TOTAL}</span>
-                </span>
-
-                <span className="flex items-center gap-2 whitespace-nowrap">
-                  {verdict && (
-                    <span className={`flex items-center gap-1 text-[11px] font-semibold ${verdict.colorClass}`}>
-                      {verdict.icon}
-                      <span className="hidden xl:inline">{verdict.labelPl}</span>
-                    </span>
-                  )}
-                  <span className="rounded-full border border-c-border bg-c-surface px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-c-text-secondary">
-                    {SESSION_STATUS_LABEL_PL[session.status]}
-                  </span>
-                </span>
-              </button>
-
-              {open && (
-                <div className="border-t border-c-border bg-c-surface-raised px-4 pb-4 pt-3.5">
-                  <div className="mb-2.5 flex items-center justify-between px-0.5">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-c-text-muted">
-                      {t('Rozbicie oceny AI (odbiór menedżerski)', 'AI score breakdown (manager review)')}
-                    </span>
-                    <span className="text-[11px] text-c-text-muted">{session.updatedAtLabel}</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-5">
-                    {session.rubric.map((c) => {
-                      const meta = RUBRIC_CRITERIA.find((r) => r.key === c.criterion);
-                      return (
-                        <div key={c.criterion} className="rounded-lg border border-c-border-strong bg-c-surface px-2.5 py-2.5">
-                          <span className="block text-[11px] font-semibold text-c-text">
-                            {meta?.labelPl || c.criterion}
-                          </span>
-                          <span className="mt-1 block text-[16px] font-bold tabular-nums" style={{ color: BLUE }}>
-                            {c.score}
-                            <span className="text-[11px] font-normal text-c-text-muted">/{RUBRIC_MAX_PER_CRITERION}</span>
-                          </span>
-                          {c.justification && (
-                            <span className="mt-1 block text-[11px] leading-snug text-c-text-secondary">
-                              {c.justification}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {sessions.length === 0 && (
-          <div className="px-4 py-6 text-center text-[12.5px] text-c-text-muted">
-            {t('Brak sesji w tym widoku.', 'No sessions in this view.')}
-          </div>
-        )}
-      </div>
+      <StandardTable
+        columns={sessionColumns}
+        data={sessions}
+        selectedRowId={selectedSessionId}
+        onRowClick={(row) => setSelectedSessionId(String(row.id))}
+        rowMenu={sessionRowMenu}
+        rowDescription={sessionRowDescription}
+        selection={{ selectedIds, onChange: setSelectedIds }}
+        persistKey={`interview-light.sessions.${sessionView}`}
+        defaultSort={{ columnId: 'score', direction: 'desc' }}
+        canvasClassName="mt-4 p-0"
+        empty={{
+          icon: ClipboardList,
+          title: t('Brak sesji w tym widoku.', 'No sessions in this view.'),
+        }}
+      />
     </>
   );
 }
