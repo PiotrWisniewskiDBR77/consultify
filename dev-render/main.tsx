@@ -33,6 +33,7 @@ import InitiativesLightScreen from './screens/initiatives-light';
 import MaterialsLightScreen from './screens/materials-light';
 import NotebookLightScreen from './screens/notebook-light';
 import ResultsLightScreen from './screens/results-light';
+import SpecQDrdAxis5Screen from './screens/spec-q-drd-axis5';
 import StandardQuestionScreen from './screens/standard-question';
 import ToolsLightScreen from './screens/tools-light';
 
@@ -73,6 +74,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'standard-question': {
     label: 'StandardQuestion (SPEC-Q · 4. format: Q-Text + Q-Level drabinka)',
     render: () => <StandardQuestionScreen />,
+  },
+  'spec-q-drd-axis5': {
+    label: 'SPEC-Q · DRD Oś 5 — Kultura Transformacji (5A–5E, drabinki 6-poziomowe)',
+    render: () => <SpecQDrdAxis5Screen />,
   },
 };
 
