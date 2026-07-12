@@ -28,6 +28,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { getIdeaWorkspaceToolLabel, TOOL_CONFIG } from '../IdeaWorkspaceToolbar';
 import type {
   CanvasToolType,
   IdeaWorkspaceSelection,
@@ -60,6 +61,16 @@ interface CanvasLeftToolbarProps {
   onOpenChat: () => void;
   onApplyTemplate: (templateId: string) => void;
   onOpenTemplateGallery: () => void;
+  /**
+   * #6a (zone split, 2026-07-12): switches the active canvas system
+   * (mindmap/whiteboard/process_flow/table). Renders as its own icon group at
+   * the top of the rail — moved here from the top-right IdeaWorkspaceToolbar
+   * widget, same icons/tooltips, just relocated. Optional so existing
+   * embeds that don't need the switcher (none today) keep compiling.
+   */
+  onToolChange?: (tool: CanvasToolType) => void;
+  /** Per-tool "has content" dot, shown on inactive switcher icons. */
+  familyCounts?: Record<string, number>;
   /**
    * UI-L1 (Editor Shell Canon §2 LEWA): the rail must float on the *canvas* edge,
    * not the viewport edge. The toolbar is portaled to `document.body` for z-index
@@ -234,6 +245,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   onOpenChat,
   onApplyTemplate,
   onOpenTemplateGallery,
+  onToolChange,
+  familyCounts,
   canvasContainerRef,
 }) => {
   const { i18n } = useTranslation();
@@ -435,6 +448,43 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       }`}
       style={railLeftPx == null ? undefined : { left: `${railLeftPx}px` }}
     >
+      {/* #6a: canvas tool switcher (RAIL zone) — relocated from the top-right
+          IdeaWorkspaceToolbar widget. Same icons/tooltips (TOOL_CONFIG),
+          just anchored above the rest of the rail so it reads as "which
+          system am I in", with everything below adapting to it. */}
+      {onToolChange && (
+        <>
+          {TOOL_CONFIG.map((tool) => {
+            const Icon = tool.icon;
+            const isActive = activeTool === tool.id;
+            const hasContent = (familyCounts?.[tool.id] ?? 0) > 0;
+            const label = getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl));
+            return (
+              <div key={tool.id} className="relative">
+                <button
+                  data-testid={`canvas-left-toolbar-switch-${tool.id}`}
+                  onClick={() => onToolChange(tool.id)}
+                  title={label}
+                  aria-label={label}
+                  className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+                    isActive
+                      ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
+                      : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
+                  }`}
+                >
+                  <Icon size={15} />
+                </button>
+                {hasContent && !isActive && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-c-info/60 pointer-events-none" />
+                )}
+              </div>
+            );
+          })}
+
+          <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
+        </>
+      )}
+
       {SHARED_TOP.map(renderSlot)}
 
       <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />

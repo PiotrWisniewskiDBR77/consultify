@@ -117,6 +117,7 @@ import {
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
+import { EdgeStylePopover } from './processflow/EdgeStylePopover';
 import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import {
@@ -493,6 +494,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     nodeId?: string;
     edgeId?: string;
   } | null>(null);
+  // #6p: minimal edge-properties popover — opens on a plain click on any
+  // Process Flow edge (color/style/arrow/label), anchored at the click
+  // point. Separate from `contextMenu` (right-click) so a left-click select
+  // doesn't fight the existing selection/property-panel flow.
+  const [edgeStylePopover, setEdgeStylePopover] = useState<{
+    edgeId: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const didPersistRef = useRef(false);
   const selectedNodeId = useMemo(() => nodes.find((node) => node.selected)?.id ?? null, [nodes]);
@@ -755,6 +765,57 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         eds.map((e) => {
           if (e.id !== edgeId) return e;
           const nextEdge = { ...e, data: { ...e.data, conditionType } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo]
+  );
+
+  // #6p: EdgeStylePopover handlers — color / stroke style / arrow direction.
+  // Same shape as the handlers above (pushUndo → map → broadcast) so the new
+  // fields ride the existing autosave/undo/collab plumbing untouched.
+  const handleEdgeColorChange = useCallback(
+    (edgeId: string, color: string | null) => {
+      if (locked) return;
+      pushUndo();
+      setEdges((eds) =>
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge = { ...e, data: { ...e.data, edgeColor: color ?? undefined } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo]
+  );
+
+  const handleEdgeStyleOverrideChange = useCallback(
+    (edgeId: string, styleOverride: 'solid' | 'dashed') => {
+      if (locked) return;
+      pushUndo();
+      setEdges((eds) =>
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge = { ...e, data: { ...e.data, strokeStyleOverride: styleOverride } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo]
+  );
+
+  const handleEdgeArrowChange = useCallback(
+    (edgeId: string, direction: 'none' | 'start' | 'end' | 'both') => {
+      if (locked) return;
+      pushUndo();
+      setEdges((eds) =>
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge = { ...e, data: { ...e.data, arrowDirection: direction } };
           collab.broadcastEdgeUpdate(nextEdge);
           return nextEdge;
         })
@@ -2670,6 +2731,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   y: event.clientY,
                 });
               }}
+              // #6p: click an edge → EdgeStylePopover anchored at the click
+              // point. ReactFlow's own onEdgesChange still runs first and
+              // selects the edge (existing behaviour, drives
+              // ProcessFlowPropertiesPanel too) — this just also surfaces the
+              // quick popover for color/style/arrow/label.
+              onEdgeClick={(event: React.MouseEvent, edge: Edge) => {
+                if (locked) return;
+                setEdgeStylePopover({ edgeId: edge.id, x: event.clientX, y: event.clientY });
+              }}
+              onPaneClick={() => setEdgeStylePopover(null)}
+              onNodeClick={() => setEdgeStylePopover(null)}
+              onMoveStart={() => setEdgeStylePopover(null)}
               {...getIdeasToolInteractionProps('processflow', { locked, connectMode: !locked })}
               snapToGrid={snapToGridEnabled}
               snapGrid={[16, 16]}
@@ -3057,6 +3130,29 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* #6p: minimal edge-properties popover — opens on a click on any
+          Process Flow edge. `edges` (not edgesWithHandlers) is the live
+          source of truth for the edge's persisted data. */}
+      {edgeStylePopover &&
+        (() => {
+          const liveEdge = (edges as Edge[]).find((e) => e.id === edgeStylePopover.edgeId);
+          if (!liveEdge) return null;
+          return (
+            <EdgeStylePopover
+              isPl={!!isPl}
+              edge={liveEdge}
+              locked={locked}
+              x={edgeStylePopover.x}
+              y={edgeStylePopover.y}
+              onLabelChange={handleEdgeLabelChange}
+              onColorChange={handleEdgeColorChange}
+              onStyleChange={handleEdgeStyleOverrideChange}
+              onArrowChange={handleEdgeArrowChange}
+              onClose={() => setEdgeStylePopover(null)}
+            />
+          );
+        })()}
 
       {metricsEditorNode && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/30 px-4">

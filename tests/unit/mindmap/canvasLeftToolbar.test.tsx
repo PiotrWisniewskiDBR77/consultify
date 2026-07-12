@@ -90,4 +90,27 @@ describe('CanvasLeftToolbar', () => {
     expect(buttons.find((b) => b.getAttribute('title') === 'Undo')).toBeTruthy();
     expect(buttons.find((b) => b.getAttribute('title') === 'Redo')).toBeTruthy();
   });
+
+  // #6a (2026-07-12, zone split): the canvas tool switcher relocated here
+  // from the top-right IdeaWorkspaceToolbar widget. It's opt-in via
+  // `onToolChange` so embeds that don't need it (none today) keep working.
+  it('renders the tool switcher (RAIL zone) when onToolChange is provided', () => {
+    render(<CanvasLeftToolbar {...baseProps} onToolChange={vi.fn()} />);
+    expect(screen.getByTestId('canvas-left-toolbar-switch-mindmap')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-left-toolbar-switch-whiteboard')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-left-toolbar-switch-process_flow')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-left-toolbar-switch-table')).toBeInTheDocument();
+  });
+
+  it('omits the tool switcher entirely when onToolChange is not provided', () => {
+    render(<CanvasLeftToolbar {...baseProps} />);
+    expect(screen.queryByTestId('canvas-left-toolbar-switch-mindmap')).toBeNull();
+  });
+
+  it('switching tools calls onToolChange with the clicked tool id', () => {
+    const onToolChange = vi.fn();
+    render(<CanvasLeftToolbar {...baseProps} onToolChange={onToolChange} />);
+    fireEvent.click(screen.getByTestId('canvas-left-toolbar-switch-process_flow'));
+    expect(onToolChange).toHaveBeenCalledWith('process_flow');
+  });
 });

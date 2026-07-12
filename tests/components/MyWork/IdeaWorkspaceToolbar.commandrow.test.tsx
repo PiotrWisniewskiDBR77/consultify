@@ -9,8 +9,6 @@ vi.mock('react-i18next', () => ({
 }));
 
 const baseProps = {
-  activeTool: 'mindmap' as const,
-  onToolChange: vi.fn(),
   onSearch: vi.fn(),
   onShowHelp: vi.fn(),
   onDiscuss: vi.fn(),
@@ -26,13 +24,16 @@ describe('IdeaWorkspaceToolbar — STREFA GÓRNA command row', () => {
     expect(screen.queryByRole('button', { name: /ai context/i })).toBeNull();
   });
 
-  it('keeps the canvas tool switcher as a single segmented control (UI-L13)', () => {
+  // #6a (2026-07-12, zone split): the icon tool-switcher moved out of this
+  // top-right widget into the left rail (CanvasLeftToolbar — see
+  // tests/unit/mindmap/canvasLeftToolbar.test.tsx for its coverage). This
+  // widget is now search + help + Discuss only (M3-prawa).
+  it('no longer renders the canvas tool switcher here (moved to the left rail)', () => {
     render(<IdeaWorkspaceToolbar {...baseProps} discussDisabled={false} />);
-    // One button per canvas tool — no cryptic duplicate mode rows.
-    expect(screen.getByRole('button', { name: /recommendation map/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /whiteboard/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /process flow/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^table$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /recommendation map/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /whiteboard/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /process flow/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^table$/i })).toBeNull();
   });
 
   it('disables Teresa when the map is empty (empty-state affordance, not a dead click)', () => {

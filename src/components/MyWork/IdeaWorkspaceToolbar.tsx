@@ -1,28 +1,20 @@
 /**
- * IdeaWorkspaceToolbar — Floating workspace-system switcher.
+ * IdeaWorkspaceToolbar — top-right global-actions zone (M3-prawa).
  *
- * This control only changes the active work system inside one shared workspace.
- * Panel navigation lives separately in the right-side WorkspacePanelStrip.
+ * #6a (2026-07-12, zone split): this used to also host the icon tool-switcher
+ * (mindmap/whiteboard/process_flow/table). That control moved to the left
+ * rail (`CanvasLeftToolbar`, see TOOL_CONFIG re-exported below for reuse) so
+ * the top strip only carries workspace-global actions: search, keyboard-help,
+ * and the persistent "Discuss with Teresa" entry. Panel navigation lives
+ * separately in the right-side WorkspacePanelStrip.
  */
-import {
-  GitBranch,
-  HelpCircle,
-  Layers,
-  MessagesSquare,
-  Search,
-  StickyNote,
-  Table2,
-  Workflow,
-} from 'lucide-react';
+import { GitBranch, HelpCircle, MessagesSquare, Search, StickyNote, Table2, Workflow } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CanvasToolType } from './ideaSelectionTypes';
 
 export interface IdeaWorkspaceToolbarProps {
-  activeTool: CanvasToolType;
-  onToolChange: (tool: CanvasToolType) => void;
-  familyCounts?: Record<string, number>;
   /** Opens the in-canvas search (also bound to Cmd/Ctrl+F and `/`). */
   onSearch?: () => void;
   /** Opens the keyboard shortcuts help (also bound to `?`). */
@@ -35,7 +27,14 @@ export interface IdeaWorkspaceToolbarProps {
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
-const TOOL_CONFIG: Array<{
+/**
+ * #6a: shared tool-switcher config, now rendered by `CanvasLeftToolbar`
+ * (RAIL zone). Kept here — and exported — because `getIdeaWorkspaceToolLabel`
+ * (used by the focus-mode indicator elsewhere in IdeaMapWorkspace) depends on
+ * it, and the left rail reuses the exact same icons/labels/tooltips so the
+ * switcher is byte-identical, just relocated.
+ */
+export const TOOL_CONFIG: Array<{
   id: CanvasToolType;
   labelPl: string;
   labelEn: string;
@@ -54,9 +53,6 @@ export function getIdeaWorkspaceToolLabel(activeTool: CanvasToolType, isPolish: 
 }
 
 export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
-  activeTool,
-  onToolChange,
-  familyCounts,
   onSearch,
   onShowHelp,
   onDiscuss,
@@ -68,7 +64,6 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   const searchShortcut = isMac ? '⌘F' : 'Ctrl+F';
   const helpLabel = isPl ? 'Skróty klawiszowe' : 'Keyboard shortcuts';
   const discussLabel = isPl ? 'Omów z Teresą' : 'Discuss with Teresa';
-  const hasLeadingActions = Boolean(onSearch || onShowHelp || onDiscuss);
 
   return (
     <div className="absolute top-3 right-3 z-sticky pointer-events-none">
@@ -109,53 +104,6 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
             <span className="hidden md:inline">{discussLabel}</span>
           </button>
         )}
-        {hasLeadingActions && (
-          <span
-            className="mx-0.5 h-5 w-px bg-slate-200/70 dark:bg-navy-700/70"
-            aria-hidden="true"
-          />
-        )}
-
-        {/* Canvas tool switcher */}
-        {TOOL_CONFIG.map((tool) => {
-          const Icon = tool.icon;
-          const isActive = activeTool === tool.id;
-          const hasContent = (familyCounts?.[tool.id] ?? 0) > 0;
-          return (
-            <button
-              key={tool.id}
-              onClick={() => onToolChange(tool.id)}
-              className={`relative flex items-center gap-1.5 h-9 px-3 rounded-hig-xl text-xs font-semibold transition-all ${
-                isActive
-                  ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
-              }`}
-              title={getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl))}
-            >
-              <Icon size={14} />
-              <span className="hidden sm:inline">
-                {getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl))}
-              </span>
-              {hasContent && !isActive && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-c-info/60" />
-              )}
-            </button>
-          );
-        })}
-
-        {/* V51-08: Cross-family indicator */}
-        {(() => {
-          const otherFamilies = TOOL_CONFIG.filter(
-            (t) => t.id !== activeTool && (familyCounts?.[t.id] ?? 0) > 0
-          );
-          if (otherFamilies.length === 0) return null;
-          return (
-            <div className="flex items-center gap-0.5 ml-0.5">
-              <Layers size={10} className="text-slate-600" />
-              <span className="text-[8px] text-slate-600 font-medium">+{otherFamilies.length}</span>
-            </div>
-          );
-        })()}
       </div>
     </div>
   );
