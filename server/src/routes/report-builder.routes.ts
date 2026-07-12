@@ -67,6 +67,7 @@ import { checkQualityGates } from '../services/reportQualityGatesService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -5314,7 +5315,13 @@ router.post(
       if (!section) return res.status(404).json({ error: 'Section not found' });
 
       const sectionContent = section.editedContent || section.generatedContent || '';
-      const initiativeTitle = bodyTitle || section.title || 'Untitled Initiative';
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global input-sanitization middleware escaped on bodyTitle before it
+      // feeds initiatives.title/name below (funnel branch AND raw-insert
+      // fallback — INITIATIVE_FUNNEL_ENABLED is default OFF).
+      const initiativeTitle = decodeHtmlEntities(
+        String(bodyTitle || section.title || 'Untitled Initiative')
+      );
       const initiativeDescription =
         bodyDescription || (sectionContent ? sectionContent.slice(0, 500) : '');
 

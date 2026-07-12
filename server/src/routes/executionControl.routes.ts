@@ -37,6 +37,7 @@ import {
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import { getCapacityTimeline, getLevelingAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
@@ -788,6 +789,10 @@ router.post(
     }
 
     const { title, assigneeId, dueDate } = req.body;
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the
+    // global input-sanitization middleware escaped on this request body
+    // string, before storing tasks.title.
+    const decodedTitle = decodeHtmlEntities(String(title));
     const taskId = `task-clw-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const now = new Date().toISOString();
 
@@ -799,7 +804,7 @@ router.post(
         orgId,
         workaround.initiativeId,
         workaround.raidItemId,
-        title,
+        decodedTitle,
         assigneeId || null,
         dueDate || null,
         userId,
@@ -818,7 +823,7 @@ router.post(
     return res.json({
       task: {
         id: taskId,
-        title,
+        title: decodedTitle,
         assigneeId,
         dueDate,
         raidItemId: workaround.raidItemId,

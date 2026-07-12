@@ -44,6 +44,7 @@ import {
   getCapacityTimeline,
   getInitiativeCapacity,
 } from '../../services/workloadCapacityService.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
@@ -1116,7 +1117,11 @@ router.post('/:id/duplicate', async (req: any, res: any) => {
     const now = new Date().toISOString();
     const newId = uuidv4();
     const baseTitle = String(original.title || original.name || 'Initiative');
-    const newTitle = req.body?.title ? String(req.body.title) : `${baseTitle} (Copy)`;
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the
+    // global sanitizer escaped on a custom title override before storing.
+    const newTitle = req.body?.title
+      ? decodeHtmlEntities(String(req.body.title))
+      : `${baseTitle} (Copy)`;
 
     // SQLite-first: duplicate using actual table columns to avoid NOT NULL surprises.
     let cols: string[] = [];

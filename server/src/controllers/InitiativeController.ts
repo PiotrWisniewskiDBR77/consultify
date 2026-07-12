@@ -63,6 +63,7 @@ import {
 import { gateAiSoftBlocks } from '../types/gateAi.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -673,6 +674,11 @@ export class InitiativeController {
         res.status(400).json({ error: 'Title is required' });
         return;
       }
+      // F15 (data-integrity, continuation of Z139): INITIATIVE_FUNNEL_ENABLED is
+      // default OFF, so this raw-insert branch (not the funnel above) is the
+      // live path on demo today. Decode entities the global sanitizer escaped
+      // on the title before storing initiatives.title/name.
+      const decodedTitle = typeof title === 'string' ? decodeHtmlEntities(title) : title;
 
       // V3-A01: Traceability guard — non-manual sources require sourceId
       const normalizedSourceType = String(sourceType || 'manual')
@@ -707,8 +713,8 @@ export class InitiativeController {
           orgId,
           projectId ?? null,
           programId ?? null,
-          title,
-          title, // name mirrors title (legacy column, NOT NULL in older schemas)
+          decodedTitle,
+          decodedTitle, // name mirrors title (legacy column, NOT NULL in older schemas)
           category ?? null,
           priority ?? 'medium',
           impact ?? 'medium',
@@ -762,7 +768,7 @@ export class InitiativeController {
           id,
           orgId,
           projectId ?? null,
-          title,
+          decodedTitle,
           axis ?? null,
           area ?? null,
           summary ?? null,
@@ -799,7 +805,7 @@ export class InitiativeController {
           resourceId: id,
           after: {
             id,
-            title,
+            title: decodedTitle,
             projectId: projectId ?? null,
             status: status ?? null,
             sourceType: normalizedSourceType,
@@ -812,7 +818,7 @@ export class InitiativeController {
       } catch {
         /* best-effort audit */
       }
-      res.json({ id, name: title, message: 'Initiative created' });
+      res.json({ id, name: decodedTitle, message: 'Initiative created' });
     }
   );
 
@@ -991,7 +997,15 @@ export class InitiativeController {
       for (const [bodyKey, dbCol] of Object.entries(FIELD_MAP)) {
         if (body[bodyKey] !== undefined) {
           const oldVal = (existing as Record<string, unknown>)[dbCol];
-          const newVal = body[bodyKey];
+          // F15 (data-integrity, continuation of Z139): decode HTML entities the
+          // global input-sanitization middleware escaped on the title field
+          // before storing — same pattern as the create funnel
+          // (createInitiativeService.ts). Other scalar fields (dates, ids,
+          // numbers) are left untouched.
+          const newVal =
+            bodyKey === 'title' && typeof body[bodyKey] === 'string'
+              ? decodeHtmlEntities(body[bodyKey] as string)
+              : body[bodyKey];
           if (String(oldVal ?? '') !== String(newVal ?? '')) {
             changes.push({ field: bodyKey, oldValue: oldVal, newValue: newVal });
           }
@@ -1007,7 +1021,9 @@ export class InitiativeController {
       // `name` column exists and `title` is the column actually being written.
       if (body.title !== undefined && titleCol === 'title' && existingCols.has('name')) {
         updates.push('name = ?');
-        params.push(body.title ?? null);
+        params.push(
+          typeof body.title === 'string' ? decodeHtmlEntities(body.title) : (body.title ?? null)
+        );
       }
 
       // Process JSON array fields

@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 
 const router = Router();
 interface AuthRequest extends Request {
@@ -101,8 +102,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
-    const { name, type, format, config } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name required' });
+    const { name: rawName, type, format, config } = req.body;
+    if (!rawName) return res.status(400).json({ error: 'Name required' });
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the
+    // global input-sanitization middleware escaped on this field before
+    // storing reports.name/title.
+    const name = decodeHtmlEntities(String(rawName));
     const id = uuidv4();
     try {
       const result = await dbRun(

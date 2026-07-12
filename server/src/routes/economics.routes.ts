@@ -38,6 +38,7 @@ import {
 } from '../services/valuationDepthProfileService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 
@@ -1594,13 +1595,19 @@ router.post(
     const costOpex = financials?.annual_operating_cost || 0;
     const expectedRoi = financials?.roi_percent ?? null;
 
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the
+    // global sanitizer may have escaped on this title before it feeds
+    // initiatives.title/name below (funnel branch AND raw-insert fallback —
+    // INITIATIVE_FUNNEL_ENABLED is default OFF).
+    const decodedAnalysisName = decodeHtmlEntities(String(analysis.name || ''));
+
     // Uspójnienie F1.3 — przez kanoniczny lejek (DRAFT + name/title + lineage).
     let initiativeId: string;
     if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
       const __r = await funnelCreateInitiative(
         orgId,
         {
-          title: analysis.name,
+          title: decodedAnalysisName,
           projectId: analysis.project_id || null,
           summary: analysis.description || null,
           costCapex,
@@ -1622,7 +1629,7 @@ router.post(
           initiativeId,
           orgId,
           analysis.project_id || null,
-          analysis.name,
+          decodedAnalysisName,
           analysis.description || null,
           normalizeStatusForDb('DRAFT'),
           costCapex,
@@ -2125,7 +2132,11 @@ router.post(
     const created: string[] = [];
 
     for (const ins of insights || []) {
-      const name = String(ins.title || `Initiative from analysis ${analysisId.slice(0, 8)}`);
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global sanitizer may have escaped before this feeds initiatives.name.
+      const name = decodeHtmlEntities(
+        String(ins.title || `Initiative from analysis ${analysisId.slice(0, 8)}`)
+      );
       const summary = String(ins.description || '');
 
       // Uspójnienie F1.3 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').

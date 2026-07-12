@@ -1220,7 +1220,10 @@ router.post(
     const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
 
-    const title = String(req.body?.title || '').trim();
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the global
+    // input-sanitization middleware escaped on this request body string, before
+    // storing tasks.title — mirrors the tool_sessions.name fix.
+    const title = decodeHtmlEntities(String(req.body?.title || '').trim());
     if (!title) {
       res.status(400).json({ error: 'title is required' });
       return;
@@ -1407,7 +1410,10 @@ router.put(
       params.push(val);
     };
 
-    if (typeof req.body?.title === 'string') setIf('title', String(req.body.title).trim());
+    // F15 (data-integrity): decode HTML entities escaped by the global sanitizer
+    // before storing the update — same pattern as the create path above.
+    if (typeof req.body?.title === 'string')
+      setIf('title', decodeHtmlEntities(String(req.body.title).trim()));
     if (typeof req.body?.description === 'string') setIf('description', req.body.description);
     if (typeof req.body?.priority === 'string') setIf('priority', String(req.body.priority).trim());
     if (req.body?.dueDate !== undefined) {
@@ -6475,9 +6481,14 @@ router.post(
     );
     if (!outcomeNode) return res.status(404).json({ error: 'Outcome node not found in graph' });
 
-    const safeTitle = String(outcomeNode.label || idea.title || 'Outcome')
-      .trim()
-      .slice(0, 255);
+    // F15 (data-integrity): outcomeNode.label / idea.title may already carry
+    // entities escaped by the global sanitizer on a prior save. Decode once here
+    // — this value feeds initiatives.name/decisions.title/tasks.title below.
+    const safeTitle = decodeHtmlEntities(
+      String(outcomeNode.label || idea.title || 'Outcome')
+        .trim()
+        .slice(0, 255)
+    );
     const safeBody = String(idea.body || '').trim();
     const safeExpansion = String(idea.aiExpansion || '').trim();
 
@@ -6715,7 +6726,10 @@ router.post(
     if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
     const tags = parseTagsArray(idea?.tags);
-    const safeTitle = String(idea?.title || 'Idea').trim() || 'Idea';
+    // F15 (data-integrity): idea.title may already carry entities escaped by the
+    // global sanitizer on a prior save. Decode once here — this value feeds
+    // initiatives.name/decisions.title/tasks.title/reports.title below.
+    const safeTitle = decodeHtmlEntities(String(idea?.title || 'Idea').trim()) || 'Idea';
     const safeBody = String(idea?.body || '').trim();
     const safeExpansion = String(idea?.aiExpansion || '').trim();
 
@@ -7737,7 +7751,9 @@ router.post(
             insertParams.push(val);
           };
           add('organization_id', orgId);
-          add('title', String(payload.title || 'New Task').slice(0, 500));
+          // F15 (data-integrity): decode entities the global sanitizer escaped
+          // on payload.title before storing tasks.title.
+          add('title', decodeHtmlEntities(String(payload.title || 'New Task').slice(0, 500)));
           add('description', payload.description || null);
           add('status', payload.status || 'todo');
           add('priority', payload.priority || 'medium');
@@ -7775,7 +7791,9 @@ router.post(
             insertParams.push(val);
           };
           add('organization_id', orgId);
-          add('title', String(payload.title || 'New Decision').slice(0, 500));
+          // F15 (data-integrity): decode entities the global sanitizer escaped
+          // on payload.title before storing decisions.title.
+          add('title', decodeHtmlEntities(String(payload.title || 'New Decision').slice(0, 500)));
           add('description', payload.description || null);
           add('status', 'pending');
           add('created_by', userId);

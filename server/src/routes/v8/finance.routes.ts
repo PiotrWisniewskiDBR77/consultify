@@ -109,6 +109,7 @@ import { getFinanceDashboard } from '../../services/v8/financeIntegrationService
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -2206,7 +2207,11 @@ router.post(
     const created: string[] = [];
 
     for (const insight of insights || []) {
-      const name = String(insight.title || `Initiative from analysis ${analysisId.slice(0, 8)}`);
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global sanitizer may have escaped before this feeds initiatives.name.
+      const name = decodeHtmlEntities(
+        String(insight.title || `Initiative from analysis ${analysisId.slice(0, 8)}`)
+      );
       const summary = String(insight.description || '');
 
       // Uspójnienie F1.4 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').

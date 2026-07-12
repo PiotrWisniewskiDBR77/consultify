@@ -1839,11 +1839,16 @@ export class ToolController {
         return;
       }
 
-      const { outputType, title, description } = req.body;
-      if (!outputType || !title) {
+      const { outputType, title: rawOutputTitle, description } = req.body;
+      if (!outputType || !rawOutputTitle) {
         res.status(400).json({ error: 'outputType and title are required' });
         return;
       }
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global input-sanitization middleware escaped on this field before
+      // storing — feeds initiatives.name / generic_assessment_reports.title /
+      // my_ideas.title depending on outputType.
+      const title = decodeHtmlEntities(String(rawOutputTitle));
 
       const validOutputTypes = ['initiative', 'report', 'presentation', 'idea'];
       if (!validOutputTypes.includes(outputType)) {

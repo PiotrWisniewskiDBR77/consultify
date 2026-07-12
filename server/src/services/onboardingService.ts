@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as sqliteAsync from '../database/sqliteAsync.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import aiService from './aiService.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
@@ -452,12 +453,15 @@ class OnboardingService {
     for (const initiative of initiatives) {
       if (acceptedSet && !acceptedSet.has(initiative.id)) continue;
       const id = initiative.id || `init-${uuidv4()}`;
+      // F15 (data-integrity, continuation of Z139): decode HTML entities that
+      // may already be escaped on the plan-snapshot title before storing.
+      const decodedInitTitle = decodeHtmlEntities(String(initiative.title || 'Initiative'));
       // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
       if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
         const __r = await funnelCreateInitiative(
           organizationId,
           {
-            title: initiative.title || 'Initiative',
+            title: decodedInitTitle,
             summary: initiative.summary || '',
             hypothesis: initiative.hypothesis || '',
             sourceType: 'ai_onboarding',
@@ -480,7 +484,7 @@ class OnboardingService {
           [
             id,
             organizationId,
-            initiative.title || 'Initiative',
+            decodedInitTitle,
             initiative.summary || '',
             initiative.hypothesis || '',
             userId,

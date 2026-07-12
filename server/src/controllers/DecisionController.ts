@@ -27,6 +27,7 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -825,6 +826,10 @@ export class DecisionController {
         res.status(400).json({ error: 'Missing required fields' });
         return;
       }
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global input-sanitization middleware escaped on this field before
+      // storing decisions.title.
+      const decodedTitle = decodeHtmlEntities(String(title));
 
       const id = uuidv4();
       const dueDateValue = parseDate(dueDate || undefined);
@@ -916,7 +921,7 @@ export class DecisionController {
           projectIdValue,
           initiativeIdValue,
           taskIdValue,
-          title,
+          decodedTitle,
           description || null,
           normalizedType,
           decisionOwnerId || userId,
@@ -940,7 +945,7 @@ export class DecisionController {
           id,
           orgId,
           projectIdValue,
-          title,
+          decodedTitle,
           description || null,
           pmoDomain || null,
           decisionOwnerId || userId,
@@ -1001,7 +1006,7 @@ export class DecisionController {
                 END,
                 updated_at = CURRENT_TIMESTAMP
                WHERE id = ? AND organization_id = ?`,
-              [id, `${tag} Blocked by decision: ${title}`, entry.impactedId, orgId]
+              [id, `${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
             );
           } else if (entry.impactedType === 'initiative') {
             // Fetch current status before overwriting so we can record an accurate handoff.
@@ -1025,7 +1030,7 @@ export class DecisionController {
                 END,
                 updated_at = CURRENT_TIMESTAMP
                WHERE id = ? AND organization_id = ?`,
-              [`${tag} Blocked by decision: ${title}`, entry.impactedId, orgId]
+              [`${tag} Blocked by decision: ${decodedTitle}`, entry.impactedId, orgId]
             );
 
             // Best-effort handoff audit: <prevStatus> → BLOCKED (decision auto-block).
@@ -1053,7 +1058,7 @@ export class DecisionController {
           resourceType: 'decision',
           resourceId: id,
           after: {
-            title,
+            title: decodedTitle,
             type: normalizedType,
             status: 'pending',
             decisionMakerId: decisionOwnerId || userId,
@@ -1071,15 +1076,15 @@ export class DecisionController {
         organizationId: orgId,
         projectId: projectIdValue,
         eventType: 'decision_required',
-        title: `Decision required: ${title}`,
-        body: `Decision "${title}" requires review${normalizedDueDate ? ` by ${new Date(normalizedDueDate).toLocaleDateString()}` : ''}.`,
+        title: `Decision required: ${decodedTitle}`,
+        body: `Decision "${decodedTitle}" requires review${normalizedDueDate ? ` by ${new Date(normalizedDueDate).toLocaleDateString()}` : ''}.`,
         deepLink: `/decisions/${id}`,
         severity: normalizePriority(normalizedPriority) === 'CRITICAL' ? 'critical' : 'normal',
       }).catch((err: any) =>
         logger.warn('[DecisionController] Communication sync failed:', err?.message)
       );
 
-      res.status(201).json({ id, projectId: projectIdValue, title, status: 'PENDING' });
+      res.status(201).json({ id, projectId: projectIdValue, title: decodedTitle, status: 'PENDING' });
     }
   );
 
@@ -1299,7 +1304,9 @@ export class DecisionController {
       }
       if (title) {
         updates.push('title = ?');
-        params.push(title);
+        // F15 (data-integrity, continuation of Z139): decode HTML entities the
+        // global sanitizer escaped on this field before storing.
+        params.push(decodeHtmlEntities(String(title)));
       }
       if (description !== undefined) {
         updates.push('description = ?');

@@ -38,6 +38,7 @@ import AssessmentPermissionService from '../services/assessmentPermissionService
 import BenchmarkingService from '../services/benchmarkingService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import NotificationService from '../services/notificationService.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
@@ -1229,7 +1230,18 @@ router.post(
       const linkId = uuidv4();
       const batchId = `manual-${initiativeId}`;
 
-      const { title, description, category, priority, risk } = req.body || {};
+      const {
+        title: rawTitle,
+        description,
+        category,
+        priority,
+        risk,
+      } = req.body || {};
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global input-sanitization middleware escaped on this field before
+      // storing initiatives.title/name (funnel branch AND raw-insert fallback —
+      // INITIATIVE_FUNNEL_ENABLED is default OFF).
+      const title = decodeHtmlEntities(String(rawTitle));
 
       // Uspójnienie F1.7 — przez kanoniczny lejek (DRAFT pominięty → normalizowany w lejku;
       // name/title + lineage source_type='assessment'). Linki/batch używają id zwróconego z lejka.

@@ -15,6 +15,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../AuditEventsService.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import { CreateInitiativeSchema } from '../../validators/initiative.validators.js';
 import {
   isRequireInitiativeProjectEnabled,
@@ -130,7 +131,13 @@ export async function createInitiative(
     ? (CreateInitiativeSchema.parse(preInput) as CreateInitiativeInput)
     : preInput;
 
-  const title = (data.title || data.name || '').toString().trim();
+  // F15 (data-integrity, continuation of Z139): decode HTML entities the global
+  // input-sanitization middleware escaped on this field before storing. This is
+  // THE single canonical creation funnel (F1.1 — replaces ~23 formerly scattered
+  // INSERTs), so fixing title here covers initiatives.name/title across nearly
+  // every creation path (wizard, Teresa handoff, candidate accept, report/
+  // assessment import, onboarding, …) in one place.
+  const title = decodeHtmlEntities((data.title || data.name || '').toString().trim());
   if (!title) {
     const err = new Error('Title is required');
     (err as { statusCode?: number }).statusCode = 400;

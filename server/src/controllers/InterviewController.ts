@@ -1629,7 +1629,11 @@ async function createSessionFromTemplate(params: {
   name?: string;
   assignmentId?: string;
 }): Promise<any> {
-  const { user, templateId, projectId, name, assignmentId } = params;
+  const { user, templateId, projectId, name: rawName, assignmentId } = params;
+  // F15 (data-integrity, continuation of Z139): decode HTML entities the
+  // global input-sanitization middleware escaped on this field before
+  // storing interview_sessions.name.
+  const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
 
   const template = await queryHelpers.queryOne(
     `SELECT * FROM interview_library_templates WHERE id = ?`,
@@ -2804,7 +2808,12 @@ export const InterviewController = {
 
   createSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const { name, projectId, templateId } = req.body;
+    const { name: rawSessionName, projectId, templateId } = req.body;
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the
+    // global input-sanitization middleware escaped on this field before it
+    // feeds interview_sessions.name (below AND via createSessionFromTemplate,
+    // which decodes again defensively — decode is idempotent).
+    const name = typeof rawSessionName === 'string' ? decodeHtmlEntities(rawSessionName) : rawSessionName;
 
     // If templateId provided, create from template library (snapshot)
     if (templateId) {
@@ -2918,7 +2927,9 @@ export const InterviewController = {
 
     if (name) {
       updates.push('name = ?');
-      params.push(name);
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global sanitizer escaped on this field before storing.
+      params.push(decodeHtmlEntities(String(name)));
     }
     let normalizedStatus = '';
     if (status) {

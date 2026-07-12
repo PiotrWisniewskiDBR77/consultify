@@ -55,6 +55,7 @@ import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 
 // Apply rate limiting
@@ -1146,8 +1147,16 @@ async function createTaskForFeedback(params: {
 
   const tags = [`feedback:${params.feedbackId}`, `env:${params.appEnv}`];
 
+  // F15 (data-integrity, continuation of Z139): decode HTML entities the global
+  // input-sanitization middleware escaped on the originating feedback title,
+  // before storing tasks.title (this auto-creates a backlog task per ticket).
   const insertCols: string[] = ['id', 'organization_id', 'title', 'description'];
-  const values: unknown[] = [id, params.organizationId, params.title, params.description];
+  const values: unknown[] = [
+    id,
+    params.organizationId,
+    decodeHtmlEntities(params.title),
+    params.description,
+  ];
 
   const optional: Array<[string, unknown]> = [
     ['status', 'todo'],
