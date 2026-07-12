@@ -26,7 +26,6 @@ import {
   Flag,
   Flame,
   GitCompare,
-  GitFork,
   Heart,
   History,
   Layers,
@@ -1139,8 +1138,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // Phase A3 — fullscreen Present mode (read-only deck over canonical sections)
   const [presentOpen, setPresentOpen] = useState(false);
-  // Phase A4 — Fork in-flight guard
-  const [isForking, setIsForking] = useState(false);
 
   // #26 toolbar — uniform outline dropdowns (Export ▾ / ✨ AI ▾)
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -2453,52 +2450,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       handleToggleSectionComplete,
     ]
   );
-
-  // ── Phase A4 — Fork ────────────────────────────────────────────────────────
-  // Creates an independent copy of this insight (new id) and opens it. Reuses
-  // the same `moduleHub.openDocuments.interview` mechanism the source-session
-  // open uses, so the forked insight lands as a fresh tab in the Interview hub.
-  const handleFork = useCallback(async () => {
-    if (!insight || isForking) return;
-    setIsForking(true);
-    try {
-      const newInsight = await V8InterviewApi.forkInsight(insight.id);
-      if (!newInsight?.id) {
-        toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
-        return;
-      }
-      toast.success(isPolish ? 'Utworzono kopię insightu' : 'Insight forked');
-      try {
-        const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
-        const parsed = raw ? JSON.parse(raw) : {};
-        const openDocuments = Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
-        const exists = openDocuments.some((d: any) => d?.id === newInsight.id);
-        const newDoc = {
-          id: newInsight.id,
-          type: 'interview_insight',
-          name: newInsight.title || (isPolish ? 'Insight' : 'Insight'),
-          status: newInsight.status || 'active',
-          data: {
-            id: newInsight.id,
-            name: newInsight.title || 'Insight',
-            status: newInsight.status || 'active',
-          },
-        };
-        const nextDocuments = exists ? openDocuments : [...openDocuments, newDoc];
-        window.sessionStorage.setItem(
-          'moduleHub.openDocuments.interview',
-          JSON.stringify({ openDocuments: nextDocuments, activeDocumentId: newInsight.id })
-        );
-      } catch {
-        // sessionStorage best-effort; navigation still happens below.
-      }
-      navigate(ROUTES.INTERVIEW);
-    } catch {
-      toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
-    } finally {
-      setIsForking(false);
-    }
-  }, [insight, isForking, isPolish, navigate]);
 
   // #25 — best-effort section-filtered markdown. Matches selected section
   // labels (en + pl) against the insight's markdown headings and keeps the
@@ -8863,17 +8814,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <ReadEditToggle readMode={readMode} onChange={setReadMode} />
               </div>
 
-              {/* Slot 6 — Fork · Slot 7 — Present.
-                  Read = Fork ukryte (tworzy edytowalną kopię = afordancja edycji);
-                  Prezentuj zostaje (pokazanie klientowi jest częścią trybu Read). */}
-              {!readMode && (
-                <ToolbarIconButton
-                  icon={<GitFork size={14} />}
-                  tooltip={isPolish ? 'Forkuj' : 'Fork'}
-                  disabled={isForking}
-                  onClick={handleFork}
-                />
-              )}
+              {/* Slot 7 — Present. Fork przeniesiony do kebaba wiersza w tabeli
+                  Insights (InterviewHub → rowMenu), zgodnie z kanonem §9
+                  (akcje obiektu żyją w kebabie, nie w toolbarze edytora). */}
               <ToolbarIconButton
                 icon={<Monitor size={14} />}
                 tooltip={isPolish ? 'Prezentuj' : 'Present'}

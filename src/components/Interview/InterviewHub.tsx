@@ -38,6 +38,7 @@ import {
   FilePlus,
   FileText,
   Gauge,
+  GitFork,
   Grid3X3,
   Inbox,
   LayoutGrid,
@@ -862,6 +863,9 @@ export const InterviewHub: React.FC = () => {
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [selectedInsightIds, setSelectedInsightIds] = useState<Set<string>>(new Set());
+  // Fork in-flight guard (per-row) — przeniesione z InsightViewer toolbara do
+  // kebaba wiersza (#55a); zapobiega podwójnemu forkowi tego samego wiersza.
+  const [forkingInsightIds, setForkingInsightIds] = useState<Set<string>>(new Set());
   const [selectedInitiativeIds, setSelectedInitiativeIds] = useState<Set<string>>(new Set());
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
 
@@ -5391,6 +5395,42 @@ export const InterviewHub: React.FC = () => {
     }
   };
 
+  // #55a — Fork insight (moved from InsightViewer toolbar to the row kebab).
+  // Creates an independent copy of the insight (new id), refreshes the list,
+  // and opens the copy as a new document tab (same mechanism as "Otwórz").
+  const handleForkInsight = async (insightId: string) => {
+    if (forkingInsightIds.has(insightId)) return;
+    setForkingInsightIds((prev) => new Set(prev).add(insightId));
+    try {
+      const newInsight = await V8InterviewApi.forkInsight(insightId);
+      if (!newInsight?.id) {
+        toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
+        return;
+      }
+      toast.success(isPolish ? 'Utworzono kopię insightu' : 'Insight forked');
+      const insightsRes = await V8InterviewApi.listInsights()
+        .then((r) => r.insights)
+        .catch(() => Api.get('/interview/insights').catch(() => []));
+      setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+      handleOpenDocument({
+        id: newInsight.id,
+        type: 'interview_insight',
+        subType: 'interview',
+        name: newInsight.title || (isPolish ? 'Insight' : 'Insight'),
+        status: (newInsight.status || 'active').toUpperCase() as any,
+      });
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
+      console.error('[InterviewHub] Failed to fork insight:', error);
+    } finally {
+      setForkingInsightIds((prev) => {
+        const next = new Set(prev);
+        next.delete(insightId);
+        return next;
+      });
+    }
+  };
+
   // Bulk archive / restore for the current selection.
   const handleBulkSetInsightsArchived = async (archived: boolean) => {
     const ids = Array.from(selectedInsightIds);
@@ -5670,6 +5710,15 @@ export const InterviewHub: React.FC = () => {
                   a.click();
                   URL.revokeObjectURL(url);
                 },
+              },
+              // #55a — przeniesione z toolbara edytora (InsightViewer) do
+              // kebaba wiersza: tworzy niezależną kopię insightu i otwiera ją.
+              {
+                id: 'fork',
+                label: isPolish ? 'Rozgałęź' : 'Fork',
+                icon: GitFork,
+                disabled: forkingInsightIds.has(insight.id),
+                onClick: () => handleForkInsight(insight.id),
               },
             ],
             universalHandlers: {
