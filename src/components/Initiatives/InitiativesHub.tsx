@@ -2280,6 +2280,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 onInitiativeClick={handleInitiativeClick}
                 onStatusChange={handleStatusChange}
                 scope={scope}
+                // #75a — same existing signal that already gates
+                // handleStatusChange (dispatchPilotAccessBlocked above):
+                // pilot/viewer roles have no permission to change an
+                // initiative's status, so disable picking up cards for them
+                // instead of only failing after the drop.
+                canDrag={!isPilotParticipant}
+                dragDisabledReason={t(
+                  'initiatives.kanban.dragDisabled',
+                  "You don't have permission to change this initiative's status."
+                )}
               />
             </TableWithPreviewLayout>
           </div>

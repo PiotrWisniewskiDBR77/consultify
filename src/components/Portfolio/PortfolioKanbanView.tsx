@@ -55,6 +55,13 @@ interface PortfolioKanbanViewProps {
   onStatusChange: (id: string, status: InitiativeStatus) => void;
   /** Controls column set: 'active' = core flow, 'all' = full lifecycle */
   scope?: KanbanScope;
+  /** #75a — permission gate: false disables picking up any card (drag),
+   *  e.g. for pilot/viewer roles without the right to change initiative
+   *  status. Cards stay clickable to open. Default true (no behavior
+   *  change for existing callers). */
+  canDrag?: boolean;
+  /** Tooltip explaining why drag is disabled (shown on card hover). */
+  dragDisabledReason?: string;
 }
 
 // ==========================================
@@ -166,11 +173,23 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
 interface SortableCardProps {
   initiative: PortfolioInitiative;
   onClick: () => void;
+  /** #75a — gate: false when the current user has no permission to change
+   *  initiative status (e.g. pilot/viewer role). Card stays clickable (open
+   *  the initiative) but cannot be picked up for drag. */
+  canDrag?: boolean;
+  /** Tooltip shown on hover when canDrag=false, explaining why. */
+  dragDisabledReason?: string;
 }
 
-const SortableCard: React.FC<SortableCardProps> = ({ initiative, onClick }) => {
+const SortableCard: React.FC<SortableCardProps> = ({
+  initiative,
+  onClick,
+  canDrag = true,
+  dragDisabledReason,
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: initiative.id,
+    disabled: !canDrag,
   });
 
   const style = {
@@ -180,7 +199,13 @@ const SortableCard: React.FC<SortableCardProps> = ({ initiative, onClick }) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...(canDrag ? { ...attributes, ...listeners } : {})}
+      className={canDrag ? undefined : 'cursor-default'}
+      title={canDrag ? undefined : dragDisabledReason}
+    >
       <KanbanCard initiative={initiative} onClick={onClick} isDragging={isDragging} />
     </div>
   );
@@ -196,6 +221,8 @@ interface KanbanColumnProps {
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
   isCompact?: boolean;
+  canDrag?: boolean;
+  dragDisabledReason?: string;
 }
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -204,6 +231,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   initiatives,
   onInitiativeClick,
   isCompact,
+  canDrag = true,
+  dragDisabledReason,
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id });
   const statusStyle = getStatusStyle(id);
@@ -246,6 +275,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
               key={initiative.id}
               initiative={initiative}
               onClick={() => onInitiativeClick(initiative)}
+              canDrag={canDrag}
+              dragDisabledReason={dragDisabledReason}
             />
           ))}
         </SortableContext>
@@ -269,10 +300,19 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
   onInitiativeClick,
   onStatusChange,
   scope = 'active',
+  canDrag = true,
+  dragDisabledReason,
 }) => {
+  const { t } = useTranslation();
   const [activeId, setActiveId] = useState<string | null>(null);
   const columns = useMemo(() => getColumnsForScope(scope), [scope]);
   const isCompact = scope === 'all';
+  const resolvedDragDisabledReason =
+    dragDisabledReason ||
+    t(
+      'initiatives.kanban.dragDisabled',
+      "You don't have permission to change this initiative's status."
+    );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -298,10 +338,15 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
   }, [activeId, initiatives]);
 
   const handleDragStart = (event: DragStartEvent) => {
+    if (!canDrag) return;
     setActiveId(event.active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (!canDrag) {
+      setActiveId(null);
+      return;
+    }
     const { active, over } = event;
     setActiveId(null);
     if (!over) return;
@@ -337,6 +382,8 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
               initiatives={columnData[column.id] || []}
               onInitiativeClick={onInitiativeClick}
               isCompact={isCompact}
+              canDrag={canDrag}
+              dragDisabledReason={resolvedDragDisabledReason}
             />
           ))}
         </div>
