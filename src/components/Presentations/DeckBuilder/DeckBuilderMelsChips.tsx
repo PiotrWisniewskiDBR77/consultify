@@ -10,6 +10,19 @@
  * This is a builder, not a renderer — the shell's `<TopBar>` renders the
  * chips. Caller-supplied handlers may be undefined for actions the deck
  * doesn't surface yet; those chips render as disabled.
+ *
+ * Owner note #84/Z124 (2026-07-12): bar was overloaded — Theme/History/QA/
+ * Governance/Analytics/Audit all rendered flat, equal-weight secondary
+ * chips (no explicit `group` fell back to `secondary` for all of them).
+ * Fix: History/QA/Governance/Analytics/Audit now carry `group: 'overflow'`,
+ * so `<TopBar>`'s existing tier mechanism (`resolveChipGroup` — primary ·
+ * secondary · overflow, editor-shell-canon § 2 STREFA GÓRNA) folds them
+ * behind the single `⋯` menu it already renders (adopted from
+ * `NotebookHamburgerMenu` — see `ChipDescriptor.ts` / `TopBar.tsx`
+ * `OverflowMenu`). Zero functions removed — same handlers, same chips,
+ * just re-tiered. Core bar stays: Internal (confidentiality) · Theme ·
+ * Share · Comments · Agent (Teresa) · Run (Present) — "Save/status" lives
+ * in the shell's separate `presenceSlot` prop, untouched here.
  */
 
 import {
@@ -164,6 +177,7 @@ export function buildDeckBuilderTopBarChips(args: {
       icon: History,
       onClick: handlers.onHistory,
       disabled: !handlers.onHistory,
+      group: 'overflow',
     },
     {
       id: 'qa',
@@ -172,6 +186,7 @@ export function buildDeckBuilderTopBarChips(args: {
       onClick: handlers.onQa,
       disabled: !handlers.onQa,
       dotTone: state.qaDotTone ?? null,
+      group: 'overflow',
     },
     {
       id: 'governance',
@@ -180,6 +195,7 @@ export function buildDeckBuilderTopBarChips(args: {
       onClick: handlers.onGovernance,
       disabled: !handlers.onGovernance,
       dotTone: verdict ? VERDICT_TONE[verdict] : null,
+      group: 'overflow',
     },
     {
       id: 'analytics',
@@ -187,6 +203,7 @@ export function buildDeckBuilderTopBarChips(args: {
       icon: Activity,
       onClick: handlers.onAnalytics,
       disabled: !handlers.onAnalytics || state.analyticsEnabled === false,
+      group: 'overflow',
     },
     {
       id: 'audit',
@@ -194,6 +211,7 @@ export function buildDeckBuilderTopBarChips(args: {
       icon: FileSearch,
       onClick: handlers.onAudit,
       disabled: !handlers.onAudit,
+      group: 'overflow',
     },
     {
       id: 'share',
