@@ -39,6 +39,13 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 /**
  * D10: OKR cascade tables (lazy-DDL so staging+demo provision on first hit —
  * no separate migration deploy needed). objectives → key_results, org-scoped.
+ *
+ * D7 slice (migration 914) extends this with cycles/check-ins + extra columns
+ * on the two base tables. Re-declared here (idempotent ADD COLUMN IF NOT
+ * EXISTS / CREATE TABLE IF NOT EXISTS) so the CRUD routes below are
+ * self-sufficient even on an environment where migration 914 hasn't deployed
+ * yet — mirrors the migration file's own "self-sufficient on a fresh DB"
+ * intent, just in the other direction (route provisions ahead of migration).
  */
 let okrTablesReady = false;
 async function ensureOkrTables(): Promise<void> {
@@ -66,6 +73,55 @@ async function ensureOkrTables(): Promise<void> {
       created_at TIMESTAMPTZ DEFAULT now()
     );
   `);
+  await dbExec(`
+    CREATE TABLE IF NOT EXISTS okr_cycles (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      organization_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      period_quarter INTEGER,
+      period_year INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      dept_id TEXT,
+      team_id TEXT,
+      closed_at TIMESTAMPTZ,
+      created_by TEXT,
+      created_at TIMESTAMPTZ DEFAULT now(),
+      updated_at TIMESTAMPTZ DEFAULT now()
+    );
+  `);
+  await dbExec(`
+    CREATE TABLE IF NOT EXISTS okr_check_ins (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      key_result_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      confidence TEXT,
+      value DOUBLE PRECISION,
+      score DOUBLE PRECISION,
+      note TEXT,
+      checked_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      checked_by TEXT,
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
+  `);
+  await dbExec(`ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS cycle_id TEXT;`);
+  await dbExec(`ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS owner_user_id TEXT;`);
+  await dbExec(`ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS description TEXT;`);
+  await dbExec(
+    `ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft';`
+  );
+  await dbExec(`ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();`);
+  await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kpi_id TEXT;`);
+  await dbExec(
+    `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kr_type TEXT NOT NULL DEFAULT 'metric';`
+  );
+  await dbExec(
+    `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS score DOUBLE PRECISION NOT NULL DEFAULT 0;`
+  );
+  await dbExec(
+    `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'aspirational';`
+  );
+  await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS owner_user_id TEXT;`);
+  await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();`);
   okrTablesReady = true;
 }
 
@@ -167,17 +223,32 @@ router.get(
     }
     await ensureOkrTables();
 
+    // D7 slice: extra columns (cycle_id/owner/description/status,
+    // kpi_id/kr_type/kind/owner/score) are additive passthrough — the pure
+    // cascadeRollup()/okrSummary() functions above only read id/label/
+    // parentId/keyResults, so spreading the extra fields onto the mapped
+    // objects is safe (cascadeRollup spreads `...o` into its return value).
+    // FE edit forms need these to prefill (see OkrObjectiveModal/
+    // OkrKeyResultModal) — the CRUD write endpoints already accept/persist them.
     const objRows = ((await dbAll(
-      `SELECT id, label, parent_id FROM okr_objectives WHERE organization_id = ?`,
+      `SELECT id, label, parent_id, cycle_id, owner_user_id, description, status
+       FROM okr_objectives WHERE organization_id = ?`,
       [orgId],
-    )) as Array<{ id: string; label: string; parent_id: string | null }>) || [];
+    )) as Array<{
+      id: string; label: string; parent_id: string | null;
+      cycle_id: string | null; owner_user_id: string | null;
+      description: string | null; status: string | null;
+    }>) || [];
     const krRows = ((await dbAll(
-      `SELECT id, objective_id, label, baseline, target, current, weight
+      `SELECT id, objective_id, label, baseline, target, current, weight,
+              kpi_id, kr_type, kind, owner_user_id, score
        FROM okr_key_results WHERE organization_id = ?`,
       [orgId],
     )) as Array<{
       id: string; objective_id: string; label: string;
       baseline: number | null; target: number | null; current: number | null; weight: number | null;
+      kpi_id: string | null; kr_type: string | null; kind: string | null;
+      owner_user_id: string | null; score: number | null;
     }>) || [];
 
     const krByObjective = new Map<string, KeyResult[]>();
@@ -190,7 +261,14 @@ router.get(
         target: k.target ?? undefined,
         current: k.current ?? undefined,
         weight: k.weight ?? undefined,
-      });
+        kpiId: k.kpi_id ?? undefined,
+        krType: (k.kr_type as KeyResult['krType']) ?? undefined,
+        kind: (k.kind as KeyResult['kind']) ?? undefined,
+        // extra passthrough for FE edit forms (not part of the pure KeyResult
+        // scoring shape, but plain objects carry them through untouched)
+        ...(k.owner_user_id != null ? { ownerUserId: k.owner_user_id } : {}),
+        ...(k.score != null ? { persistedScore: k.score } : {}),
+      } as KeyResult);
       krByObjective.set(String(k.objective_id), list);
     }
 
@@ -199,7 +277,12 @@ router.get(
       label: o.label,
       parentId: o.parent_id ?? undefined,
       keyResults: krByObjective.get(String(o.id)) ?? [],
-    }));
+      // extra passthrough for FE edit forms (see comment above)
+      ...(o.cycle_id != null ? { cycleId: o.cycle_id } : {}),
+      ...(o.owner_user_id != null ? { ownerUserId: o.owner_user_id } : {}),
+      ...(o.description != null ? { description: o.description } : {}),
+      ...(o.status != null ? { status: o.status } : {}),
+    } as Objective));
 
     const cascaded = cascadeRollup(objectives);
     const summary = okrSummary(objectives);
@@ -221,6 +304,19 @@ function resolveOkrProjectId(req: AuthRequest): string | null {
   }
   return projectId;
 }
+
+// All CRUD writes below share this path prefix — ensure the D7 columns/tables
+// (migration 914) exist before any of them runs, so the route is self-
+// sufficient even if the migration hasn't been deployed separately yet
+// (mirrors the GET /:projectId/okr guard above; ensureOkrTables() is a cheap
+// no-op after the first call in this process).
+router.use(
+  '/:projectId/okr',
+  asyncHandler(async (_req: AuthRequest, _res: Response, next) => {
+    await ensureOkrTables();
+    next();
+  })
+);
 
 function getOkrOrgId(req: AuthRequest, res: Response): string | null {
   const orgId = req.user?.organizationId;

@@ -63,6 +63,12 @@ export interface V8ResultsRoiPortfolioSummaryItem {
   variance: number;
   confidence: string | null;
   hasRealized: boolean;
+  /** Faza2 gap #3 — netto (benefit − opexAnnual). Optional: legacy fallback
+   *  endpoint (`/benefits/roi/portfolio/summary`) does not return these yet. */
+  netProjectedBenefit?: number;
+  netRealizedBenefit?: number;
+  roiPercentGross?: number | null;
+  roiPercentNet?: number | null;
 }
 
 export interface V8ResultsRoiPortfolioSummary {
@@ -75,6 +81,12 @@ export interface V8ResultsRoiPortfolioSummary {
     totalVariance: number;
     initiativeCount: number;
     coveragePercent: number;
+    /** Faza2 gap #3 — portfolio-level netto. Optional, same legacy-fallback caveat. */
+    totalOpexAnnual?: number;
+    netTotalProjected?: number;
+    netTotalRealized?: number;
+    roiPercentGross?: number | null;
+    roiPercentNet?: number | null;
   };
 }
 
