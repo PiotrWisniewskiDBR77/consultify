@@ -10,6 +10,7 @@
 import {
   Activity,
   AlertTriangle,
+  Archive,
   ArrowRight,
   Calendar,
   CheckCircle2,
@@ -38,6 +39,7 @@ import {
   Shield,
   Target,
   TrendingUp,
+  Trash2,
   User,
   Users,
   Workflow,
@@ -3601,6 +3603,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 onRowAction={handleRowAction}
                 getRowActions={(row) =>
                   [
+                    // GÓRA — kontekst (kanon §9.1/§9.3)
                     {
                       id: 'open',
                       label: t('common.open', 'Open'),
@@ -3608,6 +3611,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       variant: 'primary',
                       disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
                       onClick: () => handleRowAction('library_open_full', row),
+                    },
+                    {
+                      id: 'preview',
+                      label: t('common.preview', 'Preview'),
+                      icon: Eye,
+                      onClick: () => setPreviewItemId(row.id),
                     },
                     {
                       id: 'start',
@@ -3632,6 +3641,28 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       divider: true,
                       disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
                       onClick: () => handleRowAction('library_chat', row),
+                    },
+                    // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze obecny,
+                    // wyszarzony gdy brak endpointu (nigdy cicha pominięcie).
+                    {
+                      id: 'archive',
+                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                      icon: Archive,
+                      divider: true,
+                      disabled: true,
+                      description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                      onClick: () => undefined,
+                    },
+                    // DANGER — zawsze ostatnia, oddzielona separatorem.
+                    {
+                      id: 'delete',
+                      label: isPolish ? 'Usuń' : 'Delete',
+                      icon: Trash2,
+                      variant: 'danger',
+                      divider: true,
+                      disabled: true,
+                      description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                      onClick: () => undefined,
                     },
                   ] as RowAction[]
                 }
@@ -3793,6 +3824,82 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               onRowClick={(row) => setPreviewItemId(row.id)}
               onRowDoubleClick={(row) => openFull(row as any)}
               onRowAction={handleRowAction}
+              getRowActions={(row) =>
+                [
+                  // GÓRA — kontekst (kanon §9.1/§9.3)
+                  {
+                    id: 'open',
+                    label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    variant: 'primary',
+                    onClick: () => openFull(row as any),
+                  },
+                  {
+                    id: 'preview',
+                    label: t('common.preview', 'Preview'),
+                    icon: Eye,
+                    onClick: () => setPreviewItemId(row.id),
+                  },
+                  {
+                    id: 'chat',
+                    label: isPolish ? 'Czat' : 'Chat',
+                    icon: MessageSquare,
+                    divider: true,
+                    onClick: () => {
+                      const sessionType = String((row as any)?.sessionType || '').trim();
+                      const isAssessment = (row as any)?.kind === 'assessmentSession';
+                      void (async () => {
+                        try {
+                          const convId = await openChatWithContext({
+                            entityType: isAssessment ? 'assessment' : 'tool',
+                            entityId: sessionType || row.id,
+                            entityName: row?.name || sessionType,
+                            contextData: {
+                              kind: (row as any)?.kind,
+                              toolType: sessionType,
+                              sessionId: row.id,
+                            },
+                          });
+                          await addChatMessage({
+                            conversationId: convId,
+                            role: 'user',
+                            content: isPolish
+                              ? `Pomóż mi dopracować tę sesję („${row?.name || sessionType}"): brakujące pola, ryzyka i następne kroki.`
+                              : `Help me refine this session ("${row?.name || sessionType}"): missing fields, risks, and next steps.`,
+                          } as any);
+                          toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), {
+                            duration: 1500,
+                          });
+                        } catch {
+                          toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+                        }
+                      })();
+                    },
+                  },
+                  // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze obecny,
+                  // wyszarzony gdy brak endpointu (nigdy cicha pominięcie).
+                  {
+                    id: 'archive',
+                    label: isPolish ? 'Archiwizuj' : 'Archive',
+                    icon: Archive,
+                    divider: true,
+                    disabled: true,
+                    description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                    onClick: () => undefined,
+                  },
+                  // DANGER — zawsze ostatnia, oddzielona separatorem.
+                  {
+                    id: 'delete',
+                    label: isPolish ? 'Usuń' : 'Delete',
+                    icon: Trash2,
+                    variant: 'danger',
+                    divider: true,
+                    disabled: true,
+                    description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                    onClick: () => undefined,
+                  },
+                ] as RowAction[]
+              }
               activeFilters={activeFilters}
               onFilterChange={setActiveFilters}
               emptyMessage={t(
@@ -4231,6 +4338,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   ? (row) => {
                       const id = String(row?.id || '').trim();
                       return [
+                        // GÓRA — kontekst (kanon §9.1/§9.3)
                         {
                           id: 'open',
                           label: isPolish ? 'Otwórz' : 'Open',
@@ -4250,6 +4358,29 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           icon: MessageSquare,
                           divider: true,
                           onClick: () => setPreviewItemId(id),
+                        },
+                        // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze
+                        // obecny, wyszarzony gdy brak endpointu (nigdy cicha
+                        // pominięcie).
+                        {
+                          id: 'archive',
+                          label: isPolish ? 'Archiwizuj' : 'Archive',
+                          icon: Archive,
+                          divider: true,
+                          disabled: true,
+                          description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                          onClick: () => undefined,
+                        },
+                        // DANGER — zawsze ostatnia, oddzielona separatorem.
+                        {
+                          id: 'delete',
+                          label: isPolish ? 'Usuń' : 'Delete',
+                          icon: Trash2,
+                          variant: 'danger',
+                          divider: true,
+                          disabled: true,
+                          description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                          onClick: () => undefined,
                         },
                       ] as RowAction[];
                     }
