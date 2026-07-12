@@ -72,7 +72,7 @@ export function isAssessmentLightEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return readEnvFlag();
+  return true; // FLIP 07-12 noc (decyzja Piotra: odbiór na żywym demo, dokończenie przez noc); ?ff_assessmentLight=0 wyłącza per-sesja
 }
 
 export const ASSESSMENT_LIGHT_FLAG_KEYS = {
