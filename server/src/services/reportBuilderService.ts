@@ -44,7 +44,13 @@ export type ReportSourceType =
   // powodu co PROGRAM_3AXIS: 'FINANCIAL_ANALYSIS'/'VALUATION' są starszymi silnikami
   // (financialAnalysisService / raw valuationService), nie tym kompozytem.
   // sourceId = statementPackId (patrz financeReportSectionService.ts).
-  | 'FINANCE_SECTION';
+  | 'FINANCE_SECTION'
+  // D12+D13 (raporty PM na start — `_DECYZJE_PIOTRA_2026-07-12.md`) — 3 pakiety
+  // (Sponsor One-Pager / Steering / PMO Weekly), każdy własny report_type, ten sam
+  // discriminant. Kompozyt nad PROGRAM_3AXIS + istniejące read-modele (ryzyka,
+  // decyzje, capacity, cycle-time) — patrz `programManagementReportsService.ts`.
+  // sourceId = projectId|programId|organizationId (jak PROGRAM_3AXIS).
+  | 'PROGRAM_MANAGEMENT';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'
