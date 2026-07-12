@@ -9,8 +9,11 @@ interface OkrCheckInModalProps {
   projectId?: string;
   keyResultId: string;
   keyResultLabel: string;
-  /** Metric-KR without a live KPI link: check-in `value` becomes the new
-   *  `current` reading server-side. Hidden for KPI-linked KRs (auto-scored). */
+  /** Metric-KR (not milestone): check-in `value` becomes the new `current`
+   *  reading server-side. D7 (manual-only): this applies regardless of
+   *  whether the KR has an informational `kpiId` reference — there is no
+   *  auto-score path. Hidden only for milestone-type KRs (graded via the
+   *  check-in's explicit `score`, not a current/baseline/target reading). */
   isManualMetric: boolean;
   onClose: () => void;
   onSuccess: () => void;

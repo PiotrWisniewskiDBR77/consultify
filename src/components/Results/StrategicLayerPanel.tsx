@@ -232,7 +232,11 @@ const OkrKeyResultRow: React.FC<{
 }> = ({ kr, objectiveId, setOkrModal, onDelete, t }) => {
   const denom = (kr.target - kr.baseline) || 1;
   const pct = Math.max(0, Math.min(100, Math.round(((kr.current - kr.baseline) / denom) * 100)));
-  const isManualMetric = !kr.kpiId && kr.krType !== 'milestone';
+  // D7 (manual-only): every metric-KR takes its "current" reading from
+  // check-ins — `kpiId` (if set) is an informational reference only and no
+  // longer suppresses the manual value field. Only milestone-KRs (scored via
+  // explicit check-in `score`, not baseline/target/current) differ.
+  const isManualMetric = kr.krType !== 'milestone';
   return (
     <div className="flex items-center gap-2 group">
       <span className="w-40 text-xs text-slate-500 dark:text-slate-400 truncate" title={kr.label}>{kr.label}</span>
