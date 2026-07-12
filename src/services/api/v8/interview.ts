@@ -95,6 +95,10 @@ export interface V8InterviewAssignment {
   reviewDecisionMemory?: V8InterviewReviewDecisionMemoryEntry[];
   priority: 'low' | 'medium' | 'high' | 'urgent';
   isTeamAssignment: boolean;
+  /** D18-A — anonymous survey mode. When true, the manager's aiReview above is
+   * already redacted server-side (score/rubric numbers only, no per-answer
+   * feedback/justification text). */
+  isAnonymous?: boolean;
   notes?: string;
   createdBy: string;
   createdAt: string;

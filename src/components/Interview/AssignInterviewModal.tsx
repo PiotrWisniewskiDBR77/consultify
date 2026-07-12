@@ -9,7 +9,7 @@
  * - Walidację scope przydziałów (organizacja vs projekt)
  */
 
-import { AlertTriangle, FileText, UserPlus, Users, X } from 'lucide-react';
+import { AlertTriangle, EyeOff, FileText, UserPlus, Users, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -81,6 +81,9 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   const [priority, setPriority] = useState<Priority>('medium');
   const [notes, setNotes] = useState('');
   const [isTeamAssignment, setIsTeamAssignment] = useState(false);
+  // D18-A — anonymous survey mode. Default false: existing assignment flow is
+  // unchanged unless the manager explicitly opts in here.
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // Data state
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
@@ -224,6 +227,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       setPriority('medium');
       setNotes('');
       setIsTeamAssignment(false);
+      setIsAnonymous(false);
     }
   }, [isOpen, preselectedTemplateId]);
 
@@ -314,6 +318,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         priority,
         notes: notes || undefined,
         projectId: currentProjectId || undefined,
+        isAnonymous,
       });
 
       toast.success(
@@ -502,6 +507,26 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                   rows={3}
                   className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus focus:outline-none resize-none transition-colors"
                 />
+              </div>
+
+              {/* Anonymous responses toggle (D18-A) */}
+              <div className="p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-xl">
+                <Switch
+                  checked={isAnonymous}
+                  onCheckedChange={setIsAnonymous}
+                  aria-label={isPolish ? 'Odpowiedzi anonimowe' : 'Anonymous responses'}
+                  label={
+                    <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                      <EyeOff size={16} className="text-slate-500 dark:text-slate-400" />
+                      {isPolish ? 'Odpowiedzi anonimowe' : 'Anonymous responses'}
+                    </span>
+                  }
+                />
+                <p className="mt-1.5 pl-7 text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Menedżer zobaczy wyłącznie ocenę AI (wynik/rubrykę) — nigdy treści odpowiedzi ani autora pojedynczej odpowiedzi.'
+                    : "The manager will only ever see the AI score/rubric — never the answer content or who gave a specific answer."}
+                </p>
               </div>
 
               {/* Scope Warning */}
