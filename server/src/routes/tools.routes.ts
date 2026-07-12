@@ -18,6 +18,7 @@ import {
   GenerateInitiativesSchema,
   RequestReviewSchema,
   SendBackSchema,
+  SuggestToolSchema,
   UpdateToolSessionSchema,
 } from '../validators/tool.validators.js';
 import { ApproveDoDGateSchema } from '../validators/toolRuntime.validators.js';
@@ -33,6 +34,8 @@ router.post('/', validateBody(CreateToolSessionSchema), ToolController.createToo
 router.get('/', ToolController.listToolSessions);
 /** V4-TOOL-01: Tools hub — sessions + library in one response */
 router.get('/hub', ToolController.getToolsHub);
+/** #64: AI picker — problem description in, top-3 candidate tools out */
+router.post('/suggest', validateBody(SuggestToolSchema), ToolController.suggestTool);
 router.get('/:toolId/dod-check', ToolController.getToolDoDCheck);
 router.get('/:toolId/dod-status', ToolController.getRuntimeDoDStatus);
 router.post(

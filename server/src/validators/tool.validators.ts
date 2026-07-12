@@ -60,9 +60,16 @@ export const SendBackSchema = z.object({
 export const RequestReviewSchema = ToolDecisionSchema;
 export const ApproveToolSchema = ToolDecisionSchema;
 
+// #64: AI picker — "which tool do I pick?" (POST /api/tools/suggest)
+export const SuggestToolSchema = z.object({
+  problemDescription: z.string().min(3).max(500),
+  lang: z.enum(['en', 'pl']).optional(),
+});
+
 export type CreateToolSessionRequest = z.infer<typeof CreateToolSessionSchema>;
 export type UpdateToolSessionRequest = z.infer<typeof UpdateToolSessionSchema>;
 export type GenerateInitiativesRequest = z.infer<typeof GenerateInitiativesSchema>;
 export type SendBackRequest = z.infer<typeof SendBackSchema>;
 export type RequestReviewRequest = z.infer<typeof RequestReviewSchema>;
 export type ApproveToolRequest = z.infer<typeof ApproveToolSchema>;
+export type SuggestToolRequest = z.infer<typeof SuggestToolSchema>;

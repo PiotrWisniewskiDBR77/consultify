@@ -869,6 +869,40 @@ export class ToolController {
   );
 
   /**
+   * #64: AI picker — "which tool do I pick?"
+   * Free-text problem description in, top-3 candidate tools out, each with a
+   * 1-sentence reasoning. Fail-soft: any error resolves to an empty list, the
+   * client falls back to manual tool selection (never a 500).
+   */
+  static suggestTool = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { problemDescription, lang } = req.body as {
+        problemDescription: string;
+        lang?: 'en' | 'pl';
+      };
+
+      try {
+        const { suggestTools } = await import('../services/toolSuggestService.js');
+        const suggestions = await suggestTools(problemDescription, lang || 'en');
+        res.json({ suggestions });
+      } catch (err) {
+        // Fail-open: a suggest error is never a 500 — the picker UI falls back
+        // to manual selection.
+        logger.warn('[ToolController] suggestTool threw unexpectedly, returning empty list', {
+          err,
+        });
+        res.json({ suggestions: [] });
+      }
+    }
+  );
+
+  /**
    * V4-TOOL-02: DoD check — returns what's missing before tool can be approved
    */
   static getToolDoDCheck = asyncHandler(
