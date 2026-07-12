@@ -35,6 +35,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { EmptyState as SharedEmptyState } from '@/components/shared/states';
 
+import { isFinanceFlagEnabled } from '../Economics/financeFeatureFlags';
+import { ModelVersionHistory } from '../Economics/ModelVersionHistory';
 import Api from '../../services/api';
 import {
   shouldFallbackToLegacyFinance,
@@ -1655,6 +1657,17 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                 </div>
               )}
             </div>
+
+            {/* Version history (M16/6.5) — behind ff_modelVersioning, same
+                parity as the previous FinanceModelDocumentView full-view. */}
+            {isFinanceFlagEnabled('modelVersioning') && (
+              <div className="border-t border-slate-200 dark:border-navy-700 p-4">
+                <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('finance.versions.title', 'Version history')}
+                </div>
+                <ModelVersionHistory modelId={selectedModel.id} />
+              </div>
+            )}
           </>
         )}
       </div>
