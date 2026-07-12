@@ -129,7 +129,7 @@ import {
   MENU_3_CHIP_INACTIVE,
   MENU_3_LEFT_CLASS,
 } from '../shared/ModuleMenu3';
-import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
@@ -3601,70 +3601,94 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 onRowClick={(row) => setPreviewItemId(row.id)}
                 onRowDoubleClick={(row) => handleRowAction('library_open_full', row as any)}
                 onRowAction={handleRowAction}
-                getRowActions={(row) =>
+                getRowActionSections={(row) =>
                   [
-                    // GÓRA — kontekst (kanon §9.1/§9.3)
+                    // Blok 1 — GÓRA: akcja główna (kanon ANEKS #4 / §9.1).
                     {
-                      id: 'open',
-                      label: t('common.open', 'Open'),
-                      icon: ExternalLink,
-                      variant: 'primary',
-                      disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
-                      onClick: () => handleRowAction('library_open_full', row),
+                      id: 'primary',
+                      kind: 'open',
+                      actions: [
+                        {
+                          id: 'open',
+                          label: t('common.open', 'Open'),
+                          icon: ExternalLink,
+                          variant: 'primary',
+                          disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
+                          onClick: () => handleRowAction('library_open_full', row),
+                        },
+                      ],
                     },
+                    // Blok 2 — kontekst encji (preview/start/chat).
                     {
-                      id: 'preview',
-                      label: t('common.preview', 'Preview'),
-                      icon: Eye,
-                      onClick: () => setPreviewItemId(row.id),
+                      id: 'context',
+                      kind: 'context',
+                      actions: [
+                        {
+                          id: 'preview',
+                          label: t('common.preview', 'Preview'),
+                          icon: Eye,
+                          onClick: () => setPreviewItemId(row.id),
+                        },
+                        {
+                          id: 'start',
+                          label:
+                            row?.kind === 'assessment'
+                              ? isPolish
+                                ? 'Start assessment'
+                                : 'Start assessment'
+                              : isPolish
+                                ? 'Rozpocznij sesję'
+                                : 'Start session',
+                          icon: Play,
+                          disabled:
+                            !!(row as any)?.isComingSoon ||
+                            ((row as any)?.kind === 'tool' && !(row as any)?.isActive),
+                          onClick: () => handleRowAction('library_start_session', row),
+                        },
+                        {
+                          id: 'chat',
+                          label: isPolish ? 'Czat' : 'Chat',
+                          icon: MessageSquare,
+                          disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
+                          onClick: () => handleRowAction('library_chat', row),
+                        },
+                      ],
                     },
+                    // Blok 4 — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze obecny
+                    // i WIDOCZNY, wyszarzony gdy brak endpointu (nigdy cicha pominięcie —
+                    // #61 fix: legacy `getRowActions` filtrował disabled=true poza widok,
+                    // stąd kebab pokazywał tylko 3 pozycje mimo 5 zadeklarowanych).
                     {
-                      id: 'start',
-                      label:
-                        row?.kind === 'assessment'
-                          ? isPolish
-                            ? 'Start assessment'
-                            : 'Start assessment'
-                          : isPolish
-                            ? 'Rozpocznij sesję'
-                            : 'Start session',
-                      icon: Play,
-                      disabled:
-                        !!(row as any)?.isComingSoon ||
-                        ((row as any)?.kind === 'tool' && !(row as any)?.isActive),
-                      onClick: () => handleRowAction('library_start_session', row),
+                      id: 'universal',
+                      kind: 'manage',
+                      actions: [
+                        {
+                          id: 'archive',
+                          label: isPolish ? 'Archiwizuj' : 'Archive',
+                          icon: Archive,
+                          disabled: true,
+                          description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                          onClick: () => undefined,
+                        },
+                      ],
                     },
+                    // Blok 5 — DANGER, zawsze ostatnia, oddzielona separatorem sekcji.
                     {
-                      id: 'chat',
-                      label: isPolish ? 'Czat' : 'Chat',
-                      icon: MessageSquare,
-                      divider: true,
-                      disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
-                      onClick: () => handleRowAction('library_chat', row),
+                      id: 'danger',
+                      kind: 'danger',
+                      actions: [
+                        {
+                          id: 'delete',
+                          label: isPolish ? 'Usuń' : 'Delete',
+                          icon: Trash2,
+                          variant: 'danger',
+                          disabled: true,
+                          description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                          onClick: () => undefined,
+                        },
+                      ],
                     },
-                    // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze obecny,
-                    // wyszarzony gdy brak endpointu (nigdy cicha pominięcie).
-                    {
-                      id: 'archive',
-                      label: isPolish ? 'Archiwizuj' : 'Archive',
-                      icon: Archive,
-                      divider: true,
-                      disabled: true,
-                      description: t('common.comingSoonBackend', 'Coming soon (backend)'),
-                      onClick: () => undefined,
-                    },
-                    // DANGER — zawsze ostatnia, oddzielona separatorem.
-                    {
-                      id: 'delete',
-                      label: isPolish ? 'Usuń' : 'Delete',
-                      icon: Trash2,
-                      variant: 'danger',
-                      divider: true,
-                      disabled: true,
-                      description: t('common.comingSoonBackend', 'Coming soon (backend)'),
-                      onClick: () => undefined,
-                    },
-                  ] as RowAction[]
+                  ] as RowActionSection[]
                 }
                 activeFilters={activeFilters}
                 onFilterChange={setActiveFilters}
@@ -3824,81 +3848,105 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               onRowClick={(row) => setPreviewItemId(row.id)}
               onRowDoubleClick={(row) => openFull(row as any)}
               onRowAction={handleRowAction}
-              getRowActions={(row) =>
+              getRowActionSections={(row) =>
                 [
-                  // GÓRA — kontekst (kanon §9.1/§9.3)
+                  // Blok 1 — GÓRA: akcja główna (kanon ANEKS #4 / §9.1).
                   {
-                    id: 'open',
-                    label: t('common.open', 'Open'),
-                    icon: ExternalLink,
-                    variant: 'primary',
-                    onClick: () => openFull(row as any),
+                    id: 'primary',
+                    kind: 'open',
+                    actions: [
+                      {
+                        id: 'open',
+                        label: t('common.open', 'Open'),
+                        icon: ExternalLink,
+                        variant: 'primary',
+                        onClick: () => openFull(row as any),
+                      },
+                    ],
                   },
+                  // Blok 2 — kontekst encji (preview/chat).
                   {
-                    id: 'preview',
-                    label: t('common.preview', 'Preview'),
-                    icon: Eye,
-                    onClick: () => setPreviewItemId(row.id),
+                    id: 'context',
+                    kind: 'context',
+                    actions: [
+                      {
+                        id: 'preview',
+                        label: t('common.preview', 'Preview'),
+                        icon: Eye,
+                        onClick: () => setPreviewItemId(row.id),
+                      },
+                      {
+                        id: 'chat',
+                        label: isPolish ? 'Czat' : 'Chat',
+                        icon: MessageSquare,
+                        onClick: () => {
+                          const sessionType = String((row as any)?.sessionType || '').trim();
+                          const isAssessment = (row as any)?.kind === 'assessmentSession';
+                          void (async () => {
+                            try {
+                              const convId = await openChatWithContext({
+                                entityType: isAssessment ? 'assessment' : 'tool',
+                                entityId: sessionType || row.id,
+                                entityName: row?.name || sessionType,
+                                contextData: {
+                                  kind: (row as any)?.kind,
+                                  toolType: sessionType,
+                                  sessionId: row.id,
+                                },
+                              });
+                              await addChatMessage({
+                                conversationId: convId,
+                                role: 'user',
+                                content: isPolish
+                                  ? `Pomóż mi dopracować tę sesję („${row?.name || sessionType}"): brakujące pola, ryzyka i następne kroki.`
+                                  : `Help me refine this session ("${row?.name || sessionType}"): missing fields, risks, and next steps.`,
+                              } as any);
+                              toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), {
+                                duration: 1500,
+                              });
+                            } catch {
+                              toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+                            }
+                          })();
+                        },
+                      },
+                    ],
                   },
+                  // Blok 4 — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze obecny
+                  // i WIDOCZNY, wyszarzony gdy brak endpointu (nigdy cicha pominięcie —
+                  // #61 fix: legacy `getRowActions` filtrował disabled=true poza widok,
+                  // stąd kebab pokazywał tylko 3 pozycje mimo 5 zadeklarowanych).
                   {
-                    id: 'chat',
-                    label: isPolish ? 'Czat' : 'Chat',
-                    icon: MessageSquare,
-                    divider: true,
-                    onClick: () => {
-                      const sessionType = String((row as any)?.sessionType || '').trim();
-                      const isAssessment = (row as any)?.kind === 'assessmentSession';
-                      void (async () => {
-                        try {
-                          const convId = await openChatWithContext({
-                            entityType: isAssessment ? 'assessment' : 'tool',
-                            entityId: sessionType || row.id,
-                            entityName: row?.name || sessionType,
-                            contextData: {
-                              kind: (row as any)?.kind,
-                              toolType: sessionType,
-                              sessionId: row.id,
-                            },
-                          });
-                          await addChatMessage({
-                            conversationId: convId,
-                            role: 'user',
-                            content: isPolish
-                              ? `Pomóż mi dopracować tę sesję („${row?.name || sessionType}"): brakujące pola, ryzyka i następne kroki.`
-                              : `Help me refine this session ("${row?.name || sessionType}"): missing fields, risks, and next steps.`,
-                          } as any);
-                          toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), {
-                            duration: 1500,
-                          });
-                        } catch {
-                          toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
-                        }
-                      })();
-                    },
+                    id: 'universal',
+                    kind: 'manage',
+                    actions: [
+                      {
+                        id: 'archive',
+                        label: isPolish ? 'Archiwizuj' : 'Archive',
+                        icon: Archive,
+                        disabled: true,
+                        description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                        onClick: () => undefined,
+                      },
+                    ],
                   },
-                  // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze obecny,
-                  // wyszarzony gdy brak endpointu (nigdy cicha pominięcie).
+                  // Blok 5 — DANGER, zawsze ostatnia, oddzielona separatorem sekcji.
                   {
-                    id: 'archive',
-                    label: isPolish ? 'Archiwizuj' : 'Archive',
-                    icon: Archive,
-                    divider: true,
-                    disabled: true,
-                    description: t('common.comingSoonBackend', 'Coming soon (backend)'),
-                    onClick: () => undefined,
+                    id: 'danger',
+                    kind: 'danger',
+                    actions: [
+                      {
+                        id: 'delete',
+                        label: isPolish ? 'Usuń' : 'Delete',
+                        icon: Trash2,
+                        variant: 'danger',
+                        disabled: true,
+                        description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                        onClick: () => undefined,
+                      },
+                    ],
                   },
-                  // DANGER — zawsze ostatnia, oddzielona separatorem.
-                  {
-                    id: 'delete',
-                    label: isPolish ? 'Usuń' : 'Delete',
-                    icon: Trash2,
-                    variant: 'danger',
-                    divider: true,
-                    disabled: true,
-                    description: t('common.comingSoonBackend', 'Coming soon (backend)'),
-                    onClick: () => undefined,
-                  },
-                ] as RowAction[]
+                ] as RowActionSection[]
               }
               activeFilters={activeFilters}
               onFilterChange={setActiveFilters}
@@ -4284,105 +4332,140 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               handleOpenDocument(row);
             }}
             onRowAction={handleRowAction}
-            getRowActions={
+            getRowActionSections={
               isInitiativesTab
                 ? (row) => {
                     const id = String(row?.id || '').trim();
                     return [
                       {
-                        id: 'open',
-                        label: isPolish ? 'Otwórz' : 'Open',
-                        icon: ExternalLink,
-                        variant: 'primary',
-                        onClick: () => handleOpenDocument(row),
+                        id: 'primary',
+                        kind: 'open',
+                        actions: [
+                          {
+                            id: 'open',
+                            label: isPolish ? 'Otwórz' : 'Open',
+                            icon: ExternalLink,
+                            variant: 'primary',
+                            onClick: () => handleOpenDocument(row),
+                          },
+                        ],
                       },
                       {
-                        id: 'preview',
-                        label: t('common.preview', 'Preview'),
-                        icon: Eye,
-                        onClick: () => setPreviewItemId(id),
+                        id: 'context',
+                        kind: 'context',
+                        actions: [
+                          {
+                            id: 'preview',
+                            label: t('common.preview', 'Preview'),
+                            icon: Eye,
+                            onClick: () => setPreviewItemId(id),
+                          },
+                          {
+                            id: 'open-initiatives',
+                            label: isPolish ? 'Otwórz w Inicjatywach' : 'Open in Initiatives',
+                            icon: ChevronRight,
+                            onClick: () =>
+                              navigate(
+                                `${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=doc`
+                              ),
+                          },
+                          {
+                            id: 'chat',
+                            label: isPolish ? 'Czat' : 'Chat',
+                            icon: MessageSquare,
+                            onClick: async () => {
+                              const init = (row as any)?._fullData || {};
+                              const convId = await openChatWithContext({
+                                entityType: 'initiative',
+                                entityId: id,
+                                entityName: String(row?.name || row?.title || '') || id,
+                                contextData: init,
+                                pmoContext: { initiativeIds: [id] },
+                              });
+                              await addChatMessage({
+                                conversationId: convId,
+                                role: 'user',
+                                content: isPolish
+                                  ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
+                                  : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.',
+                              } as any);
+                            },
+                          },
+                        ],
                       },
-                      {
-                        id: 'open-initiatives',
-                        label: isPolish ? 'Otwórz w Inicjatywach' : 'Open in Initiatives',
-                        icon: ChevronRight,
-                        onClick: () =>
-                          navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=doc`),
-                      },
-                      {
-                        id: 'chat',
-                        label: isPolish ? 'Czat' : 'Chat',
-                        icon: MessageSquare,
-                        divider: true,
-                        onClick: async () => {
-                          const init = (row as any)?._fullData || {};
-                          const convId = await openChatWithContext({
-                            entityType: 'initiative',
-                            entityId: id,
-                            entityName: String(row?.name || row?.title || '') || id,
-                            contextData: init,
-                            pmoContext: { initiativeIds: [id] },
-                          });
-                          await addChatMessage({
-                            conversationId: convId,
-                            role: 'user',
-                            content: isPolish
-                              ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
-                              : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.',
-                          } as any);
-                        },
-                      },
-                    ] as RowAction[];
+                    ] as RowActionSection[];
                   }
                 : isReportsAndPresentationsTab
                   ? (row) => {
                       const id = String(row?.id || '').trim();
                       return [
-                        // GÓRA — kontekst (kanon §9.1/§9.3)
+                        // Blok 1 — GÓRA: akcja główna (kanon ANEKS #4 / §9.1).
                         {
-                          id: 'open',
-                          label: isPolish ? 'Otwórz' : 'Open',
-                          icon: ExternalLink,
-                          variant: 'primary',
-                          onClick: () => openOutput(row as any),
+                          id: 'primary',
+                          kind: 'open',
+                          actions: [
+                            {
+                              id: 'open',
+                              label: isPolish ? 'Otwórz' : 'Open',
+                              icon: ExternalLink,
+                              variant: 'primary',
+                              onClick: () => openOutput(row as any),
+                            },
+                          ],
                         },
                         {
-                          id: 'preview',
-                          label: t('common.preview', 'Preview'),
-                          icon: Eye,
-                          onClick: () => setPreviewItemId(id),
+                          id: 'context',
+                          kind: 'context',
+                          actions: [
+                            {
+                              id: 'preview',
+                              label: t('common.preview', 'Preview'),
+                              icon: Eye,
+                              onClick: () => setPreviewItemId(id),
+                            },
+                            {
+                              id: 'chat',
+                              label: isPolish ? 'Czat' : 'Chat',
+                              icon: MessageSquare,
+                              onClick: () => setPreviewItemId(id),
+                            },
+                          ],
                         },
+                        // Blok 4 — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze
+                        // obecny i WIDOCZNY, wyszarzony gdy brak endpointu (nigdy
+                        // cicha pominięcie — #61 fix: legacy `getRowActions`
+                        // filtrował disabled=true poza widok).
                         {
-                          id: 'chat',
-                          label: isPolish ? 'Czat' : 'Chat',
-                          icon: MessageSquare,
-                          divider: true,
-                          onClick: () => setPreviewItemId(id),
+                          id: 'universal',
+                          kind: 'manage',
+                          actions: [
+                            {
+                              id: 'archive',
+                              label: isPolish ? 'Archiwizuj' : 'Archive',
+                              icon: Archive,
+                              disabled: true,
+                              description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                              onClick: () => undefined,
+                            },
+                          ],
                         },
-                        // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze
-                        // obecny, wyszarzony gdy brak endpointu (nigdy cicha
-                        // pominięcie).
+                        // Blok 5 — DANGER, zawsze ostatnia, oddzielona separatorem sekcji.
                         {
-                          id: 'archive',
-                          label: isPolish ? 'Archiwizuj' : 'Archive',
-                          icon: Archive,
-                          divider: true,
-                          disabled: true,
-                          description: t('common.comingSoonBackend', 'Coming soon (backend)'),
-                          onClick: () => undefined,
+                          id: 'danger',
+                          kind: 'danger',
+                          actions: [
+                            {
+                              id: 'delete',
+                              label: isPolish ? 'Usuń' : 'Delete',
+                              icon: Trash2,
+                              variant: 'danger',
+                              disabled: true,
+                              description: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                              onClick: () => undefined,
+                            },
+                          ],
                         },
-                        // DANGER — zawsze ostatnia, oddzielona separatorem.
-                        {
-                          id: 'delete',
-                          label: isPolish ? 'Usuń' : 'Delete',
-                          icon: Trash2,
-                          variant: 'danger',
-                          divider: true,
-                          disabled: true,
-                          description: t('common.comingSoonBackend', 'Coming soon (backend)'),
-                          onClick: () => undefined,
-                        },
-                      ] as RowAction[];
+                      ] as RowActionSection[];
                     }
                   : undefined
             }
