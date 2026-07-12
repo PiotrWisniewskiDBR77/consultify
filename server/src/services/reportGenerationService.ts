@@ -1234,9 +1234,26 @@ function drdGroundingQueryForSection(section: SectionRecord): string {
       return 'DRD digital readiness methodology, seven axes, maturity levels, scoring scale';
     case 'summary':
       return 'digital maturity overall assessment, maturity levels, transformation priorities';
+    // 'recommendations' (gap analysis) and 'action_plan' (roadmap) previously shared
+    // one generic query and both returned zero branded chunks in production (verified
+    // live 2026-07-12: 9/9 other narrative sections grounded, 0/2 for these). Split into
+    // two queries, each phrased against the book's own vocabulary for that chapter
+    // (verified via direct cosine-similarity probe against the indexed embeddings on
+    // TROLLEY: old shared query scored ~0.70 top; these score ~0.77-0.80 and land on
+    // the correct branded chunks — the "Tool 3: The Digital Roadmap" chapter and the
+    // "assess your current level / rate against the next higher level" gap passages).
     case 'recommendations':
+      return (
+        'assess the current level of digital maturity in each area and rate your company ' +
+        'against the criteria for the next higher level; identify and prioritize the gaps ' +
+        'to close across all axes'
+      );
     case 'action_plan':
-      return 'digital transformation priorities, maturity improvement, roadmap by axis';
+      return (
+        'Digital Roadmap — Tool 3: build, implement and execute a digital transformation ' +
+        'plan; developing a coherent list of transformation initiatives sequenced across ' +
+        'the six axes'
+      );
     default:
       return `${title || 'digital readiness'} — digital maturity, methodology`;
   }
