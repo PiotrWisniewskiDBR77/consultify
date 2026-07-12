@@ -181,6 +181,10 @@ interface AssessmentFromAPI {
   createdAt?: string;
   updatedAt?: string;
   organizationId?: string;
+  // #69: list endpoint is `SELECT * FROM assessments` (server/AssessmentController.listAssessments),
+  // so raw rows carry snake_case created_by even though this type isn't formally normalized.
+  createdBy?: string;
+  created_by?: string;
 }
 
 interface ReportBuilderReportFromAPI {
@@ -192,6 +196,8 @@ interface ReportBuilderReportFromAPI {
   assessmentType?: string;
   createdAt?: string;
   updatedAt?: string;
+  // #69: /assessment-reports list endpoint already maps r.created_by → createdBy.
+  createdBy?: string;
 }
 
 const ASSESSMENT_HUB_CACHE_KEY = 'assessment.hub.cached-list.v1';
@@ -346,6 +352,38 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [isLoading, setIsLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [hubChatId, setHubChatId] = useState<string | null>(null);
+  const isPolish = !!i18n.language?.startsWith('pl');
+
+  // #69: org users, for resolving createdBy → display name in the Author column
+  // (wzór: DiscoveryToolsHub.tsx, commit 94403b4f57).
+  const [orgUsers, setOrgUsers] = useState<
+    Array<{ id: string; firstName: string; lastName: string }>
+  >([]);
+  useEffect(() => {
+    let cancelled = false;
+    Api.getUsers()
+      .then((fetched) => {
+        if (!cancelled) setOrgUsers(fetched || []);
+      })
+      .catch((err) => console.error('[AssessmentHub] Failed to load users for Author column', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const authorNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of orgUsers) {
+      map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
+    }
+    return map;
+  }, [orgUsers]);
+  const getAuthorLabel = useCallback(
+    (createdBy?: string | null) => {
+      if (!createdBy) return '';
+      return authorNameById.get(createdBy) || createdBy;
+    },
+    [authorNameById]
+  );
 
   // Deep link support:
   // - /assessment?assessmentId=<id>
@@ -635,6 +673,21 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       width: '120px',
       sortable: true,
     };
+    // #69: Author column — wzór DiscoveryToolsHub.tsx (commit 94403b4f57):
+    // resolve row.createdBy against org users, fall back to raw id, then '—'.
+    const authorCol: TableColumn = {
+      id: 'createdBy',
+      label: t('assessment.hub.table.author', isPolish ? 'Autor' : 'Author'),
+      width: '140px',
+      render: (row) => {
+        const label = getAuthorLabel(row?.createdBy);
+        return label ? (
+          <span className="text-sm text-c-text truncate">{label}</span>
+        ) : (
+          <span className="text-sm text-slate-400">—</span>
+        );
+      },
+    };
 
     if (activeTab === 'reports') {
       return [
@@ -669,6 +722,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           },
         },
         progressCol,
+        authorCol,
         updatedCol,
       ];
     }
@@ -726,6 +780,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             return <PriorityChip level={level} label={row.priority || 'medium'} />;
           },
         },
+        authorCol,
         updatedCol,
       ];
     }
@@ -746,9 +801,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         })),
       },
       progressCol,
+      authorCol,
       updatedCol,
     ];
-  }, [activeTab]);
+  }, [activeTab, t, isPolish, getAuthorLabel]);
 
   // Handlers
   const handleOpenDocument = useCallback(
@@ -1080,6 +1136,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           status: mapAssessmentApiStatus(item.status),
           progress: item.progress ?? 0,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
+          createdBy: item.createdBy || item.created_by,
         }));
         break;
       case 'reports': {
@@ -1099,6 +1157,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   : 40,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
           assessmentName: (item as any).assessmentName,
+          createdBy: (item as any).createdBy,
           _isImported: false,
         }));
 
@@ -1133,6 +1192,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           priority: item.priority || 'medium',
           impact: item.impact || 'medium',
           sourceReport: item.reportName || item.report_name || null,
+          // #69: server/InitiativeController.getInitiatives now maps i.created_by → createdBy.
+          createdBy: item.createdBy,
         }));
         break;
       default:
