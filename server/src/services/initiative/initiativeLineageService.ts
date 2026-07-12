@@ -60,6 +60,20 @@ export interface InitiativeFunnel {
     tracking: number;
     conversionPct: number;
   };
+  /**
+   * F5.2 cycle-time (Z94 §3.2/§5.2 delta): average days spent IN a status
+   * before the org's initiatives transitioned OUT of it, derived from
+   * `initiative_status_history`. Only statuses with at least one completed
+   * transition are included. Advisory / read-only — degrades to `[]` on
+   * schema drift or when the history table is empty.
+   */
+  cycleTime: CycleTimeStage[];
+}
+
+export interface CycleTimeStage {
+  status: string;
+  avgDays: number;
+  count: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -86,6 +100,76 @@ async function tableHasColumns(table: string, cols: string[]): Promise<boolean> 
 const EXECUTION_BUCKETS = new Set(['executing', 'blocked']);
 /** Lifecycle buckets that count as "delivered/tracking" (rezultaty) for the funnel. */
 const TRACKING_BUCKETS = new Set(['delivered', 'closed']);
+
+/**
+ * F5.2 cycle-time: average days an org's initiatives dwelt IN each status
+ * before transitioning OUT of it, computed from `initiative_status_history`.
+ *
+ * Grouped and averaged in JS (not SQL) so the computation stays portable
+ * across the SQLite (dev) / Postgres (prod) split without relying on window
+ * functions — history volume per org is small (one row per transition).
+ * Fail-safe: any schema drift or query error degrades to `[]`.
+ */
+async function getCycleTimeByStage(orgId: string): Promise<CycleTimeStage[]> {
+  if (
+    !(await tableHasColumns('initiative_status_history', [
+      'initiative_id',
+      'organization_id',
+      'from_status',
+      'to_status',
+      'created_at',
+    ]))
+  ) {
+    return [];
+  }
+
+  try {
+    const rows = await queryHelpers.queryAll<Record<string, unknown>>(
+      `SELECT initiative_id, from_status, to_status, created_at
+         FROM initiative_status_history
+        WHERE organization_id = ?
+        ORDER BY initiative_id ASC, created_at ASC`,
+      [orgId]
+    );
+
+    // Group transitions per initiative, in order, so we can pair each
+    // transition with the PREVIOUS one to know how long the initiative sat
+    // in the status it is now leaving.
+    const byInitiative = new Map<string, Array<{ status: string; at: number }>>();
+    for (const r of rows || []) {
+      const initId = String(r.initiative_id || '');
+      if (!initId) continue;
+      const at = new Date(String(r.created_at)).getTime();
+      if (!Number.isFinite(at)) continue;
+      const list = byInitiative.get(initId) || [];
+      list.push({ status: String(r.from_status || ''), at });
+      byInitiative.set(initId, list);
+    }
+
+    const dwellByStatus = new Map<string, number[]>();
+    for (const transitions of byInitiative.values()) {
+      for (let i = 1; i < transitions.length; i++) {
+        const enteredAt = transitions[i - 1].at;
+        const leftStatus = transitions[i].status;
+        const leftAt = transitions[i].at;
+        const days = (leftAt - enteredAt) / (1000 * 60 * 60 * 24);
+        if (!Number.isFinite(days) || days < 0 || !leftStatus) continue;
+        const arr = dwellByStatus.get(leftStatus) || [];
+        arr.push(days);
+        dwellByStatus.set(leftStatus, arr);
+      }
+    }
+
+    const out: CycleTimeStage[] = [];
+    for (const [status, days] of dwellByStatus.entries()) {
+      const avgDays = days.reduce((a, b) => a + b, 0) / days.length;
+      out.push({ status, avgDays: Math.round(avgDays * 10) / 10, count: days.length });
+    }
+    return out.sort((a, b) => b.avgDays - a.avgDays);
+  } catch {
+    return [];
+  }
+}
 
 // ---------------------------------------------------------------------------
 // F5.1 — Lineage
@@ -170,6 +254,7 @@ export async function getInitiativeFunnel(orgId: string): Promise<InitiativeFunn
     byStatus: {},
     bySource: {},
     conversion: { created: 0, inExecution: 0, tracking: 0, conversionPct: 0 },
+    cycleTime: [],
   };
   if (!orgId) return empty;
 
@@ -222,10 +307,12 @@ export async function getInitiativeFunnel(orgId: string): Promise<InitiativeFunn
   }
 
   const conversionPct = created > 0 ? Math.round((tracking / created) * 1000) / 10 : 0;
+  const cycleTime = await getCycleTimeByStage(orgId);
 
   return {
     byStatus,
     bySource,
     conversion: { created, inExecution, tracking, conversionPct },
+    cycleTime,
   };
 }

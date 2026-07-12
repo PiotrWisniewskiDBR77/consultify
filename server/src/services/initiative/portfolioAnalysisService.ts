@@ -46,6 +46,10 @@ export interface PortfolioInitiative {
   /** "high" | "medium" | "low" | number-ish — coerced to a 0..1 weight. */
   effort?: string | number | null;
   impact?: string | number | null;
+  /** Charter completeness signals (Z94 §5.4 "ready to launch"). */
+  ownerId?: string | null;
+  budget?: number | null;
+  plannedEndDate?: string | null;
 }
 
 export interface DuplicateMatch {
@@ -97,7 +101,25 @@ export interface PortfolioHealth {
     fillIns: number;
   };
   duplicateClusters: DuplicateCluster[];
+  /**
+   * "Ready to launch" (Z94 §5.4 werdykt zakładki): pre-execution initiatives
+   * (DRAFT/VALIDATED) whose charter is complete (owner + sizing + timeline
+   * assigned) AND that are NOT part of any duplicate cluster. This is a
+   * charter-COMPLETENESS signal, not a full feasibility simulation (that lives
+   * client-side in Analysis › Feasibility) — deliberately conservative so it
+   * never overclaims "ready" for a thin charter.
+   */
+  readyToLaunch: ReadyToLaunchItem[];
 }
+
+export interface ReadyToLaunchItem {
+  id: string;
+  title: string;
+  status: string;
+}
+
+/** Statuses considered "pre-launch" (before execution has started). */
+const PRE_LAUNCH_STATUSES = new Set(['DRAFT', 'VALIDATED']);
 
 // ---------------------------------------------------------------------------
 // Fixed area taxonomy (MECE) — deterministic gap detection
@@ -366,6 +388,26 @@ export function analyzePortfolioHealth(
   // --- duplicate clusters -------------------------------------------------
   const duplicateClusters = buildDuplicateClusters(list, dupThreshold);
 
+  // --- ready to launch (charter completeness, pre-launch only) -----------
+  const duplicateIds = new Set<string>();
+  for (const cl of duplicateClusters) for (const id of cl.ids) duplicateIds.add(id);
+
+  const readyToLaunch: ReadyToLaunchItem[] = list
+    .filter((e) => {
+      const status = String(e.status || 'DRAFT').toUpperCase();
+      if (!PRE_LAUNCH_STATUSES.has(status)) return false;
+      if (duplicateIds.has(String(e.id))) return false;
+      const hasOwner = Boolean(e.ownerId && String(e.ownerId).trim());
+      const hasSizing = Boolean(e.effort != null && e.impact != null) || Boolean(e.budget && e.budget > 0);
+      const hasTimeline = Boolean(e.plannedEndDate && String(e.plannedEndDate).trim());
+      return hasOwner && hasSizing && hasTimeline;
+    })
+    .map((e) => ({
+      id: String(e.id),
+      title: String(e.title || ''),
+      status: String(e.status || 'DRAFT').toUpperCase(),
+    }));
+
   return {
     total,
     byStatus,
@@ -373,6 +415,7 @@ export function analyzePortfolioHealth(
     gaps,
     balance: { grid, quickWins, bigBets, moneyPits, fillIns },
     duplicateClusters,
+    readyToLaunch,
   };
 }
 
@@ -411,7 +454,10 @@ export async function getPortfolioHealth(
               area,
               category,
               effort,
-              impact
+              impact,
+              COALESCE(owner_business_id, owner_execution_id) AS owner_id,
+              estimated_budget,
+              planned_end_date
          FROM initiatives
         WHERE organization_id = ?
           ${terminalFilter}
@@ -432,6 +478,9 @@ export async function getPortfolioHealth(
     category: r.category == null ? null : String(r.category),
     effort: (r.effort as string | number | null) ?? null,
     impact: (r.impact as string | number | null) ?? null,
+    ownerId: r.owner_id == null ? null : String(r.owner_id),
+    budget: r.estimated_budget == null ? null : Number(r.estimated_budget),
+    plannedEndDate: r.planned_end_date == null ? null : String(r.planned_end_date),
   }));
 
   return analyzePortfolioHealth(mapped, opts);
