@@ -152,7 +152,7 @@ export const NavItem: React.FC<NavItemProps> = ({
                     ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300'
                     : item.badge === 'new'
                       ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-primary-500/10 text-primary-400',
+                      : 'bg-slate-200/70 text-slate-600 dark:bg-white/10 dark:text-slate-400', // 'soon' = neutral gray, not accent
                 ].join(' ')}
               >
                 {badgeLabel}
