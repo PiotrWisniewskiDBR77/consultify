@@ -9737,6 +9737,19 @@ Return ONLY the answer text (no markdown fences).`;
           assignments={liteAssignments}
           insights={liteInsights}
           onNewSession={handleNewSession}
+          onOpenInsight={(id) => {
+            // #57 follow-up — route the light shell's Insighty card through the
+            // SAME handleOpenDocument()/activeDocumentId mechanism the legacy
+            // hub already uses. Setting activeDocumentId makes the guard above
+            // (`isInterviewLightEnabled() && !activeDocumentId`) fall through to
+            // the legacy render, which mounts the real <InsightViewer> (V6
+            // section cards + the existing working regenerate CTA) for this
+            // insight. onClose() on InsightViewer clears activeDocumentId,
+            // returning here to the light shell list — no new state, no
+            // duplicated viewer, no visual change to either surface.
+            const insight = insights.find((i) => i.id === id);
+            if (insight) handleViewInsight(insight);
+          }}
         />
       </ErrorBoundary>
     );

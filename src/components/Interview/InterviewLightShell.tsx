@@ -153,6 +153,14 @@ interface InterviewLightShellProps {
   lastUpdatedLabel?: string;
   onNewSession?: () => void;
   onOpenChat?: () => void;
+  // #57 follow-up — the light shell's Insighty tab was presentational-only
+  // (props in, JSX out, no navigation), so once `ff.interview_light` flipped
+  // to default-ON on demo (07-12) the real InsightViewer (Themes/Issues/
+  // Opportunities/Signals/Evidence-Map cards + the working "Wygeneruj" CTA
+  // wired in 55f85f2381) became UNREACHABLE from the live UI — there was no
+  // click-through from a card to the artifact. Optional so this component
+  // still renders standalone in the dev-render harness without a handler.
+  onOpenInsight?: (id: string) => void;
 }
 
 type LightTab = 'sessions' | 'assigned' | 'insights';
@@ -256,6 +264,7 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
   lastUpdatedLabel,
   onNewSession,
   onOpenChat,
+  onOpenInsight,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -382,7 +391,9 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
             />
           )}
           {activeTab === 'assigned' && <AssignedTab assignments={assignments} t={t} />}
-          {activeTab === 'insights' && <InsightsTab insights={insights} t={t} />}
+          {activeTab === 'insights' && (
+            <InsightsTab insights={insights} t={t} onOpenInsight={onOpenInsight} />
+          )}
         </main>
 
         {/* ASIDE */}
@@ -704,9 +715,11 @@ function AssignedTab({
 function InsightsTab({
   insights,
   t,
+  onOpenInsight,
 }: {
   insights: InterviewInsightLite[];
   t: (pl: string, en: string) => string;
+  onOpenInsight?: (id: string) => void;
 }): React.ReactElement {
   return (
     <>
@@ -723,7 +736,25 @@ function InsightsTab({
 
       <div className="mt-4 flex flex-col gap-2.5">
         {insights.map((insight) => (
-          <div key={insight.id} className="rounded-xl border border-c-border bg-c-surface px-4 py-3.5">
+          <div
+            key={insight.id}
+            className={`rounded-xl border border-c-border bg-c-surface px-4 py-3.5 ${
+              onOpenInsight ? 'cursor-pointer transition-colors hover:bg-c-surface-raised' : ''
+            }`}
+            role={onOpenInsight ? 'button' : undefined}
+            tabIndex={onOpenInsight ? 0 : undefined}
+            onClick={onOpenInsight ? () => onOpenInsight(insight.id) : undefined}
+            onKeyDown={
+              onOpenInsight
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onOpenInsight(insight.id);
+                    }
+                  }
+                : undefined
+            }
+          >
             <div className="flex items-start justify-between gap-4">
               <span className="min-w-0">
                 <span className="mb-1 block text-[10.5px] font-semibold uppercase tracking-wide" style={{ color: BLUE }}>
