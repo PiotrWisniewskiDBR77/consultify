@@ -53,6 +53,7 @@ export const ROUTES = {
   },
 
   MY_WORK: '/my-work',
+  PROJECTS: '/projects', // Zwornik (#78): project stakeholder registry + finance rollup
   DASHBOARD: '/chat', // DEPRECATED: Dashboard removed, redirects to Chat
 
   // Assessment Module
@@ -285,6 +286,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.AI_CHAT_V10_RUNTIME]: ROUTES.AI_CHAT_V10_RUNTIME,
   [AppView.APP_INTRO]: ROUTES.APP_INTRO,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
+  [AppView.PROJECTS]: ROUTES.PROJECTS,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.USER_DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.DASHBOARD_OVERVIEW]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -661,6 +663,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE_PUBLIC)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
+  if (normalized.startsWith(ROUTES.PROJECTS)) return AppView.PROJECTS;
   if (normalized.startsWith(ROUTES.INITIATIVES)) return AppView.FULL_STEP2_INITIATIVES;
   if (normalized.startsWith(ROUTES.PORTFOLIO) || normalized.startsWith(ROUTES.ROADMAP)) {
     return AppView.PORTFOLIO_ROADMAP;

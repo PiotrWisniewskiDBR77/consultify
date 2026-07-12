@@ -2,8 +2,9 @@
  * Stakeholder Registry API Module (Zwornik Delta A)
  *
  * SSOT: Harvard/wdrozenie-100/_KONCEPT_ZWORNIK_2026-07-10.md, §3.
- * Backend: server/src/routes/pmo/stakeholders.routes.ts (mounted at
- * `/api/stakeholders` and `/api/pmo/stakeholders`).
+ * Backend: server/src/routes/pmo/stakeholders.routes.ts (mounted ONLY at
+ * `/api/pmo/stakeholders` in Gateway.ts — there is no bare `/api/stakeholders`
+ * mount, so every path below is prefixed `/pmo/stakeholders`).
  *
  * NOTE (TODO, see handoff to nadzorca): no FE view consumes this yet — this
  * module is the typed client contract for the future registry screen and
@@ -143,7 +144,7 @@ export const StakeholderApi = {
 
   listRegistry: async (): Promise<StakeholderRegistryEntry[]> => {
     const data = await apiGet<{ stakeholders: StakeholderRegistryEntry[] }>(
-      '/stakeholders',
+      '/pmo/stakeholders',
       'Failed to fetch stakeholder registry'
     );
     return data.stakeholders;
@@ -151,7 +152,7 @@ export const StakeholderApi = {
 
   getStakeholder: async (id: string): Promise<StakeholderRegistryEntry> => {
     const data = await apiGet<{ stakeholder: StakeholderRegistryEntry }>(
-      `/stakeholders/${id}`,
+      `/pmo/stakeholders/${id}`,
       'Failed to fetch stakeholder'
     );
     return data.stakeholder;
@@ -161,7 +162,7 @@ export const StakeholderApi = {
     input: CreateStakeholderInput
   ): Promise<StakeholderRegistryEntry> => {
     const data = await apiPost<{ stakeholder: StakeholderRegistryEntry }>(
-      '/stakeholders',
+      '/pmo/stakeholders',
       input,
       'Failed to create stakeholder'
     );
@@ -173,7 +174,7 @@ export const StakeholderApi = {
     updates: Partial<CreateStakeholderInput>
   ): Promise<StakeholderRegistryEntry> => {
     const data = await apiPatch<{ stakeholder: StakeholderRegistryEntry }>(
-      `/stakeholders/${id}`,
+      `/pmo/stakeholders/${id}`,
       updates,
       'Failed to update stakeholder'
     );
@@ -181,7 +182,7 @@ export const StakeholderApi = {
   },
 
   deleteStakeholder: async (id: string): Promise<void> => {
-    await apiDelete(`/stakeholders/${id}`, 'Failed to delete stakeholder');
+    await apiDelete(`/pmo/stakeholders/${id}`, 'Failed to delete stakeholder');
   },
 
   // ==========================================
@@ -190,7 +191,7 @@ export const StakeholderApi = {
 
   listEngagements: async (stakeholderId: string): Promise<StakeholderEngagement[]> => {
     const data = await apiGet<{ engagements: StakeholderEngagement[] }>(
-      `/stakeholders/${stakeholderId}/engagements`,
+      `/pmo/stakeholders/${stakeholderId}/engagements`,
       'Failed to fetch engagements'
     );
     return data.engagements;
@@ -202,7 +203,7 @@ export const StakeholderApi = {
     input: UpsertEngagementInput
   ): Promise<{ id: string }> => {
     return apiPost<{ id: string }>(
-      `/stakeholders/${stakeholderId}/engagements`,
+      `/pmo/stakeholders/${stakeholderId}/engagements`,
       input,
       'Failed to save engagement'
     );
@@ -213,7 +214,7 @@ export const StakeholderApi = {
     updates: Partial<UpsertEngagementInput>
   ): Promise<StakeholderEngagement> => {
     const data = await apiPatch<{ engagement: StakeholderEngagement }>(
-      `/stakeholders/engagements/${engagementId}`,
+      `/pmo/stakeholders/engagements/${engagementId}`,
       updates,
       'Failed to update engagement'
     );
@@ -221,7 +222,7 @@ export const StakeholderApi = {
   },
 
   deleteEngagement: async (engagementId: string): Promise<void> => {
-    await apiDelete(`/stakeholders/engagements/${engagementId}`, 'Failed to delete engagement');
+    await apiDelete(`/pmo/stakeholders/engagements/${engagementId}`, 'Failed to delete engagement');
   },
 
   // ==========================================
@@ -232,7 +233,7 @@ export const StakeholderApi = {
     projectId: string
   ): Promise<EffectiveStakeholder[]> => {
     const data = await apiGet<{ stakeholders: EffectiveStakeholder[] }>(
-      `/stakeholders/project/${projectId}/effective`,
+      `/pmo/stakeholders/project/${projectId}/effective`,
       'Failed to fetch project stakeholders'
     );
     return data.stakeholders;
@@ -241,7 +242,7 @@ export const StakeholderApi = {
   /** F12 wizard hook: candidates to prefill the initiative "Stakeholderzy" step. */
   getProjectPrefillCandidates: async (projectId: string): Promise<PrefillCandidate[]> => {
     const data = await apiGet<{ candidates: PrefillCandidate[] }>(
-      `/stakeholders/project/${projectId}/prefill`,
+      `/pmo/stakeholders/project/${projectId}/prefill`,
       'Failed to fetch stakeholder prefill candidates'
     );
     return data.candidates;
@@ -251,7 +252,7 @@ export const StakeholderApi = {
     initiativeId: string
   ): Promise<InitiativeEffectiveStakeholder[]> => {
     const data = await apiGet<{ stakeholders: InitiativeEffectiveStakeholder[] }>(
-      `/stakeholders/initiative/${initiativeId}/effective`,
+      `/pmo/stakeholders/initiative/${initiativeId}/effective`,
       'Failed to fetch initiative effective stakeholders'
     );
     return data.stakeholders;

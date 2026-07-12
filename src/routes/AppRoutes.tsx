@@ -251,6 +251,11 @@ const ProjectIntelligenceView = lazyWithRetry(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
 
+// Projects — Zwornik (#78): stakeholder registry + finance rollup per project.
+const MyProjects = lazyWithRetry(() =>
+  import('@/components/MyWork/MyProjects').then((m) => ({ default: m.MyProjects }))
+);
+
 // Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
 const InterviewHub = lazyWithRetry(() =>
   import('@/components/Interview/InterviewHub').then((m) => ({ default: m.InterviewHub }))
@@ -1194,6 +1199,23 @@ export const AppRoutes: React.FC = () => {
           element={<MyWorkSheetsDeepLinkRedirect />}
         />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
+
+        {/* Projects — Zwornik (#78): stakeholder registry + finance rollup */}
+        <Route
+          path={ROUTES.PROJECTS}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Projects']} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Projects"
+              >
+                <RouteErrorBoundary>
+                  <MyProjects />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
 
         {/* Audit Orchestrator (audit #19 family) — authenticated, inside the
             app shell so it gets nav + bearer token. /audits stays the public
