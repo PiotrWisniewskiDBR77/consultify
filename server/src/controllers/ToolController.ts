@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { checkSimilarInitiatives } from '../services/initiativeSimilarityService.js';
+import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -1948,6 +1949,13 @@ export class ToolController {
             // priority_order column may be absent on legacy schemas
           }
         } else {
+          // D1 (Zwornik §9 Faza 3): live path (funnel flag off) — anchor to
+          // the portfolio project instead of persisting project_id NULL.
+          const anchoredProjectId = await resolveInitiativeProjectId(
+            session.organization_id,
+            session.project_id,
+            { createdBy: user.id ?? null }
+          );
           await queryHelpers.queryRun(
             `INSERT INTO initiatives (
               id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
@@ -1956,7 +1964,7 @@ export class ToolController {
             [
               outputId,
               session.organization_id,
-              session.project_id || null,
+              anchoredProjectId,
               title,
               description || '',
               'DRAFT',

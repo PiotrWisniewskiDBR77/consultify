@@ -25,6 +25,7 @@ import {
 } from '../services/economicsFinancials.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import { exportValuationPptx } from '../services/valuationExportService.js';
 import * as valuationSvc from '../services/valuationService.js';
 import { buildBasketFromResults } from '../services/valuationBasketService.js';
@@ -1621,6 +1622,13 @@ router.post(
       initiativeId = __r.id;
     } else {
       initiativeId = uuidv4();
+      // D1 (Zwornik §9 Faza 3): this raw-insert branch is the LIVE path
+      // (INITIATIVE_FUNNEL_ENABLED defaults off) and did not anchor
+      // project_id — auto-assign the org's system portfolio project instead
+      // of persisting a silent orphan.
+      const anchoredProjectId = await resolveInitiativeProjectId(orgId, analysis.project_id, {
+        createdBy: req.user?.id ?? null,
+      });
       await dbRun(
         `INSERT INTO initiatives (
         id, organization_id, project_id, title, summary, status, cost_capex, cost_opex, expected_roi, created_at, updated_at
@@ -1628,7 +1636,7 @@ router.post(
         [
           initiativeId,
           orgId,
-          analysis.project_id || null,
+          anchoredProjectId,
           decodedAnalysisName,
           analysis.description || null,
           normalizeStatusForDb('DRAFT'),
@@ -2156,6 +2164,11 @@ router.post(
         initiativeId = __r.id;
       } else {
         initiativeId = uuidv4();
+        // D1 (Zwornik §9 Faza 3): live path (funnel flag off) — anchor to the
+        // portfolio project instead of persisting project_id NULL.
+        const anchoredProjectId = await resolveInitiativeProjectId(orgId, analysis.project_id, {
+          createdBy: userId ?? null,
+        });
         await dbRun(
           `INSERT INTO initiatives (
           id, organization_id, project_id, name, summary, status,
@@ -2165,7 +2178,7 @@ router.post(
           [
             initiativeId,
             orgId,
-            analysis.project_id || null,
+            anchoredProjectId,
             name,
             summary || null,
             'step3',

@@ -37,6 +37,7 @@ import AssessmentInitiativeGenerationRunService from '../services/assessmentInit
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import BenchmarkingService from '../services/benchmarkingService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import NotificationService from '../services/notificationService.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
@@ -1281,6 +1282,13 @@ router.post(
           );
         }
       } else {
+        // D1 (Zwornik §9 Faza 3): live path (funnel flag off) — anchor to the
+        // portfolio project instead of persisting project_id NULL.
+        const anchoredProjectId = await resolveInitiativeProjectId(
+          String(assessment.organization_id),
+          assessment.project_id,
+          { createdBy: userId ? String(userId) : null }
+        );
         // Persist initiative (minimal fields; keep consistent with generated initiatives)
         await db.run(
           `INSERT INTO initiatives (
@@ -1291,7 +1299,7 @@ router.post(
           [
             String(initiativeId),
             String(assessment.organization_id),
-            assessment.project_id || null,
+            anchoredProjectId,
             String(title),
             String(title),
             description ? String(description) : null,

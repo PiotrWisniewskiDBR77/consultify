@@ -12,6 +12,7 @@ import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import aiService from './aiService.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from './initiativeProjectPolicyService.js';
 
 // ==========================================
 // TYPES
@@ -477,13 +478,21 @@ class OnboardingService {
           [userId, planId, __r.id, organizationId]
         );
       } else {
+        // D1 (Zwornik §9 Faza 3): this branch is the LIVE path
+        // (INITIATIVE_FUNNEL_ENABLED defaults off) and didn't even select a
+        // project_id column — every AI-onboarding initiative was a silent
+        // orphan. Anchor to the org's system portfolio project instead.
+        const anchoredProjectId = await resolveInitiativeProjectId(organizationId, null, {
+          createdBy: userId ?? null,
+        });
         await this.runAsync(
           `INSERT INTO initiatives
-           (id, organization_id, title, summary, hypothesis, created_by, created_from, created_from_plan_id)
-           VALUES (?, ?, ?, ?, ?, ?, 'AI_ONBOARDING', ?)`,
+           (id, organization_id, project_id, title, summary, hypothesis, created_by, created_from, created_from_plan_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'AI_ONBOARDING', ?)`,
           [
             id,
             organizationId,
+            anchoredProjectId,
             decodedInitTitle,
             initiative.summary || '',
             initiative.hypothesis || '',
