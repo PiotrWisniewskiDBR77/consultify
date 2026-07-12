@@ -1185,6 +1185,30 @@ function redactAiReviewSnapshotForAnonymity(
   };
 }
 
+/**
+ * #48B — lazy-create `interview_answer_history` (migration 923, NOT
+ * auto-applied — mirrors 920's pattern). Runtime self-healing companion so
+ * dev/DB_MANAGED_SCHEMA-off environments don't need the migration to be run
+ * manually; TROLLEY/prod should still get 923 applied via
+ * consultify-promocja-demo. CREATE TABLE IF NOT EXISTS is idempotent and
+ * additive — safe to call on every sendBackAssignment / history read.
+ */
+async function ensureInterviewAnswerHistoryTable(): Promise<void> {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS interview_answer_history (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      assignment_id TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      question_id TEXT NOT NULL,
+      answer_text TEXT,
+      reason TEXT NOT NULL DEFAULT 'send_back',
+      saved_at TIMESTAMP NOT NULL,
+      saved_by TEXT
+    )`
+  );
+}
+
 async function ensureInterviewTemplateV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_templates');
   const missingColumns: Array<{ name: string; sql: string }> = [
@@ -4254,6 +4278,44 @@ export const InterviewController = {
     // It requires a reason and sends the session back to editable state.
 
     const now = new Date().toISOString();
+
+    // #48B — snapshot the current answers BEFORE send-back so a subsequent
+    // re-submit never silently loses what was there before (migration 923,
+    // interview_answer_history). Fail-open: a snapshot hiccup must never
+    // block the send-back itself — history is an audit nicety on top.
+    try {
+      await ensureInterviewAnswerHistoryTable();
+      const answeredQuestions = await queryHelpers.queryAll(
+        `SELECT id, answer_text FROM interview_questions
+          WHERE session_id = ?
+            AND answer_text IS NOT NULL
+            AND answer_text != ''`,
+        [(assignment as any).session_id]
+      );
+      for (const q of answeredQuestions || []) {
+        await queryHelpers.queryRun(
+          `INSERT INTO interview_answer_history
+           (id, organization_id, assignment_id, session_id, question_id, answer_text, reason, saved_at, saved_by)
+           VALUES (?, ?, ?, ?, ?, ?, 'send_back', ?, ?)`,
+          [
+            uuidv4(),
+            admin.organizationId,
+            id,
+            (assignment as any).session_id,
+            (q as any).id,
+            (q as any).answer_text,
+            now,
+            admin.id,
+          ]
+        );
+      }
+    } catch (err) {
+      logger.warn(
+        '[InterviewController] sendBackAssignment: answer-history snapshot skipped (fail-open)',
+        err
+      );
+    }
+
     const missingItemsJson = JSON.stringify(normalizedMissingItems);
     const aiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
     const reviewDecisionMemory = appendInterviewReviewDecisionMemory({
@@ -4379,6 +4441,67 @@ export const InterviewController = {
       },
       session: buildSessionResponse(updatedSession),
     });
+  }),
+
+  /**
+   * #48B — GET /interview/assignments/:id/answer-history
+   * Read-only history of answer snapshots taken on send-back
+   * (interview_answer_history, migration 923). Manager-facing: lets the
+   * reviewer see "previous version" per question after a send-back →
+   * re-submit cycle, without a new screen (tooltip/expand in the existing
+   * review view). Grouped by question_id, newest first within each question.
+   */
+  getAnswerHistory: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT id, session_id FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    await ensureInterviewAnswerHistoryTable();
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT h.id, h.question_id, h.answer_text, h.reason, h.saved_at, h.saved_by,
+              q.question_text
+         FROM interview_answer_history h
+         LEFT JOIN interview_questions q ON q.id = h.question_id
+        WHERE h.assignment_id = ?
+          AND h.organization_id = ?
+        ORDER BY h.question_id, h.saved_at DESC`,
+      [id, admin.organizationId]
+    );
+
+    const byQuestion: Record<
+      string,
+      Array<{
+        id: string;
+        answerText: string | null;
+        reason: string;
+        savedAt: string;
+        savedBy: string | null;
+        questionText: string | null;
+      }>
+    > = {};
+    for (const row of (rows || []) as any[]) {
+      const qid = String(row.question_id);
+      if (!byQuestion[qid]) byQuestion[qid] = [];
+      byQuestion[qid].push({
+        id: row.id,
+        answerText: row.answer_text ?? null,
+        reason: row.reason || 'send_back',
+        savedAt: row.saved_at,
+        savedBy: row.saved_by ?? null,
+        questionText: row.question_text ?? null,
+      });
+    }
+
+    res.json({ assignmentId: id, byQuestion });
   }),
 
   approveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
