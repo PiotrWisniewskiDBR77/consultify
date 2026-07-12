@@ -142,10 +142,10 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
       const startWidth = chatPanelWidth;
 
       const doDrag = (mouseMoveEvent: MouseEvent) => {
-        // Calculate new width: original width + delta
-        // If dragging right, delta is positive, sidebar grows.
+        // Panel is docked on the RIGHT (D17): the resizer sits on its left edge,
+        // so dragging right shrinks the panel — subtract the delta.
         const delta = mouseMoveEvent.clientX - startX;
-        const newWidth = Math.max(280, Math.min(700, startWidth + delta));
+        const newWidth = Math.max(280, Math.min(700, startWidth - delta));
         setChatPanelWidth(newWidth);
       };
 
@@ -237,12 +237,12 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
   return (
     <div className="flex w-full h-full min-h-0 overflow-hidden bg-slate-50 dark:bg-navy-950 relative">
-      {/* Desktop Left Panel: Consultant Chat */}
+      {/* Consultant Chat panel — docked on the RIGHT (D17) via flex order. */}
       {!isChatCollapsed && !hideSidebar && (
         <div
           ref={sidebarRef}
           style={{ width: chatPanelWidth }}
-          className="shrink-0 shadow-sm bg-white dark:bg-navy-900 flex flex-col hidden lg:flex h-full transition-none relative"
+          className="shrink-0 shadow-sm bg-white dark:bg-navy-900 flex flex-col hidden lg:flex h-full transition-none relative lg:order-3 border-l border-slate-200 dark:border-navy-700"
         >
           {/* Collapse button - only for legacy chat panel */}
           {!useUnifiedChat && (
@@ -283,9 +283,9 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
           />
         </div>
       )}
-      {/* Desktop Collapsed Trigger */}
+      {/* Desktop Collapsed Trigger — right-docked (D17) via flex order. */}
       {isChatCollapsed && !hideSidebar && (
-        <div className="hidden lg:flex w-12 shadow-sm bg-white dark:bg-navy-900 flex-col items-center py-4 gap-4 h-full shrink-0">
+        <div className="hidden lg:flex w-12 shadow-sm bg-white dark:bg-navy-900 flex-col items-center py-4 gap-4 h-full shrink-0 lg:order-3 border-l border-slate-200 dark:border-navy-700">
           <button
             onClick={() => toggleChatCollapse()}
             className="w-8 h-8 rounded bg-brand/10 text-brand flex items-center justify-center hover:bg-brand/20 transition-colors"
@@ -309,10 +309,10 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
           </div>
         </div>
       )}
-      {/* Resizer Handle (Only when visible) */}
+      {/* Resizer Handle (Only when visible) — sits left of the right-docked panel. */}
       {!isChatCollapsed && !hideSidebar && (
         <div
-          className={`hidden lg:block w-1 hover:w-1.5 -ml-0.5 z-10 cursor-col-resize bg-transparent hover:bg-brand/50 active:bg-brand transition-all duration-150 relative ${isResizing ? 'bg-brand w-1.5' : ''}`}
+          className={`hidden lg:block w-1 hover:w-1.5 -mr-0.5 z-10 cursor-col-resize bg-transparent hover:bg-brand/50 active:bg-brand transition-all duration-150 relative lg:order-2 ${isResizing ? 'bg-brand w-1.5' : ''}`}
           onMouseDown={startResizing}
         >
           <div className="absolute inset-y-0 left-1/2 w-px bg-slate-200 dark:bg-white/10" />
@@ -378,8 +378,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
         </div>
       )}
 
-      {/* Center Panel: Workspace */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+      {/* Center Panel: Workspace — leftmost (D17) via flex order. */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 relative lg:order-1">
         {/* Focus Mode Selector - Only for legacy ChatPanel (UnifiedChatPanel has built-in) */}
         {!useUnifiedChat && !hideSidebar && !isChatCollapsed && (
           <div className="hidden lg:flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
@@ -461,7 +461,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
       {isArtifactsPanelOpen && artifacts.length > 0 && (
         <div
           className={`
-                        hidden lg:block shrink-0 border-l border-slate-200 dark:border-navy-700
+                        hidden lg:block shrink-0 border-l border-slate-200 dark:border-navy-700 lg:order-4
                         ${isArtifactsFullscreen ? 'fixed inset-0 z-50' : 'w-[400px] max-w-[40vw]'}
                     `}
         >

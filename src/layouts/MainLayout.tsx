@@ -63,6 +63,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const setChatPanelWidth = useAppStore((s) => s.setChatPanelWidth);
   const chatSystemPrompt = useAppStore((s) => s.chatSystemPrompt);
   const chatQuickPrompts = useAppStore((s) => s.chatQuickPrompts);
+  const chatContextActions = useAppStore((s) => s.chatContextActions);
   const { isMobile, safeAreaInsets } = useDeviceType();
 
   const { t } = useTranslation();
@@ -155,8 +156,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       const startWidth = chatPanelWidth;
 
       const doDrag = (moveEvent: MouseEvent) => {
+        // Panel is docked on the RIGHT (D17): dragging the resizer right shrinks
+        // the panel, so subtract the delta.
         const delta = moveEvent.clientX - startX;
-        const newWidth = Math.max(280, Math.min(600, startWidth + delta));
+        const newWidth = Math.max(280, Math.min(600, startWidth - delta));
         setChatPanelWidth(newWidth);
       };
 
@@ -349,12 +352,28 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <div
               className={`flex-1 overflow-hidden relative flex min-h-0 ${noPadding ? '' : 'p-0'}`}
             >
-              {/* Chat Panel - Left Side */}
+              {/* Main Content */}
+              <div
+                id="app-main-content"
+                tabIndex={-1}
+                className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto"
+              >
+                {children}
+              </div>
+
+              {/* Chat Panel — Right Side (D17: the one Teresa panel is always
+                  docked on the right). Renders AFTER the main content so it sits
+                  on the right edge; resizer precedes it and drags leftward. */}
               {shouldShowChatPanel && !isChatCollapsed && (
                 <>
+                  {/* Resizer */}
+                  <div
+                    className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-primary-500/50 active:bg-primary-500 transition-all ${isResizing ? 'bg-primary-500 w-1.5' : ''}`}
+                    onMouseDown={startResizing}
+                  />
                   <div
                     style={{ width: chatPanelWidth }}
-                    className="shrink-0 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-navy-700 hidden lg:flex flex-col h-full relative"
+                    className="shrink-0 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 hidden lg:flex flex-col h-full relative"
                   >
                     <button
                       type="button"
@@ -382,24 +401,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       onKickoffConsumed={clearChatKickoffMessage}
                       systemPrompt={chatSystemPrompt || undefined}
                       quickPrompts={chatQuickPrompts || undefined}
+                      contextActions={chatContextActions || undefined}
                     />
                   </div>
-                  {/* Resizer */}
-                  <div
-                    className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-primary-500/50 active:bg-primary-500 transition-all ${isResizing ? 'bg-primary-500 w-1.5' : ''}`}
-                    onMouseDown={startResizing}
-                  />
                 </>
               )}
-
-              {/* Main Content */}
-              <div
-                id="app-main-content"
-                tabIndex={-1}
-                className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto"
-              >
-                {children}
-              </div>
             </div>
           </TrialExpiredGate>
         </main>

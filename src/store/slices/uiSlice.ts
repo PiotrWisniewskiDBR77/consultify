@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StateCreator } from 'zustand';
 
 import { getRouteFromAppView } from '../../routes/routeConfig';
@@ -5,6 +6,23 @@ import { AppView } from '../../types';
 import { NavigationOptions } from '../../types/workspace';
 import { navigationMonitor, validateNavigation } from '../../utils/navigationGuard';
 import type { AppState } from '../useAppStore';
+
+/**
+ * Contextual command shown as a persistent button INSIDE the one docked Teresa
+ * panel (D17 doctrine: a single AI chat, always on the right). An artifact view
+ * (e.g. InsightViewer) publishes its actions here when it hands the user off to
+ * Teresa, so the former per-artifact "AI Consultant" action menu lives inside
+ * Teresa instead of as a second chat instance. Cleared by the publisher on
+ * unmount so actions never leak into another module's context.
+ */
+export interface ChatContextAction {
+  id: string;
+  label: string;
+  onClick: () => void;
+  icon?: ReactNode;
+  /** Disable + spinner affordance while the action runs (e.g. regenerate). */
+  busy?: boolean;
+}
 
 export interface UISlice {
   currentView: AppView;
@@ -93,6 +111,12 @@ export interface UISlice {
   chatQuickPrompts: string[] | null;
   setChatQuickPrompts: (prompts: string[] | null) => void;
 
+  // Contextual command buttons rendered inside the one docked Teresa panel.
+  // Published by an artifact view when it opens Teresa with that artifact's
+  // context (D17: one chat on the right). See ChatContextAction.
+  chatContextActions: ChatContextAction[] | null;
+  setChatContextActions: (actions: ChatContextAction[] | null) => void;
+
   // Dynamic breadcrumbs override set by My Work hub
   myWorkBreadcrumbs: string[] | null;
   setMyWorkBreadcrumbs: (crumbs: string[] | null) => void;
@@ -135,6 +159,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   myWorkEvent: null,
   chatSystemPrompt: null,
   chatQuickPrompts: null,
+  chatContextActions: null,
 
   setNavigateFn: (fn) => {
     const pending = get().pendingNavigation;
@@ -159,6 +184,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   setChatSystemPrompt: (prompt) => set({ chatSystemPrompt: prompt }),
   setChatQuickPrompts: (prompts) => set({ chatQuickPrompts: prompts }),
+  setChatContextActions: (actions) => set({ chatContextActions: actions }),
 
   myWorkBreadcrumbs: null,
   setMyWorkBreadcrumbs: (crumbs) => set({ myWorkBreadcrumbs: crumbs }),
