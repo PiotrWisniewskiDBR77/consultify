@@ -965,6 +965,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [isDownloadingSourceFile, setIsDownloadingSourceFile] = useState(false);
   const proposalReviewRef = useRef<HTMLDivElement | null>(null);
   const attachmentsSectionRef = useRef<HTMLDivElement | null>(null);
+  // #19 (rewizja 07-12): scroll target for the ⋯ menu's "Verification & review"
+  // item — mirrors the existing attachmentsSectionRef/onOpenAttachments pattern
+  // instead of building a new panel (the N3 lifecycle strip already IS the
+  // verification & review surface, just not reachable from the ⋯ menu before).
+  const verificationStripRef = useRef<HTMLDivElement | null>(null);
   const proposalRequestSeqRef = useRef(0);
 
   // Auto-summary
@@ -1867,6 +1872,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       })
     );
     if (isChatCollapsed) toggleChatCollapse();
+  };
+
+  // Share via email — mirrors WorkspaceTools ShareSection.handleEmail so the ⋯ menu
+  // exposes the same action as the Tools panel (canon: "Note" group parity, audit #19).
+  const handleShareEmail = () => {
+    if (!activePage) return;
+    const noteTitle = title || activePage.title || (isPolish ? 'Notatka' : 'Note');
+    const noteBody = (activePage.contentText || extractText(activePage.contentJson) || '').trim();
+    const subject = encodeURIComponent(noteTitle);
+    const body = encodeURIComponent(
+      `${noteTitle}\n${'—'.repeat(30)}\n\n${noteBody.slice(0, 5000)}\n\n—\n${isPolish ? 'Wysłano z Consultify' : 'Sent from Consultify'}`
+    );
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    trackFunnelEvent('notebook_share_email', {});
+    toast.success(isPolish ? 'Otwarto klienta email' : 'Email client opened');
   };
 
   const handleDeletePage = async () => {
@@ -3086,6 +3106,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   y={hamburgerPos.y}
                   isPolish={!!isPolish}
                   onClose={() => setHamburgerPos(null)}
+                  onSources={() =>
+                    attachmentsSectionRef.current?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    })
+                  }
+                  onVerification={() =>
+                    verificationStripRef.current?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    })
+                  }
+                  onShare={handleShareEmail}
                   onExpandDocument={() => void handleExpandToDocument()}
                   onConvert={(t: NotebookConvertTarget) =>
                     void handleConvertFromPanel(t as ConvertTarget)
@@ -3265,7 +3298,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     </div>
 
                     {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
-                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                    <div ref={verificationStripRef} className="mt-3 flex items-center gap-2 flex-wrap">
                       <select
                         value={
                           (activePage.verificationStatus as NotebookVerificationStatus) ??

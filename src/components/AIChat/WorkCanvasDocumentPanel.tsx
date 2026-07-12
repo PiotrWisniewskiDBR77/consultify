@@ -27,6 +27,7 @@ import {
 import type { TFunction } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import type {
@@ -817,6 +818,7 @@ function WorkCanvasMarkdownDocumentPanel({
   onClose,
 }: WorkCanvasDocumentPanelProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [mode, setMode] = React.useState<CanvasMode>(() => getInitialCanvasMode());
   const [documentState, setDocumentState] = React.useState<CanvasDocumentState>(() =>
     createDocumentState(
@@ -841,6 +843,15 @@ function WorkCanvasMarkdownDocumentPanel({
   );
   const [actionFeedback, setActionFeedback] = React.useState<string | null>(null);
   const [actionFeedbackTone, setActionFeedbackTone] = React.useState<'status' | 'alert'>('status');
+  // #17 (rewizja 07-12): persistent breadcrumb back to the source notebook
+  // page for drafts created via "Expand into document" (notebook-expand
+  // provenance). Unlike the one-time `actionFeedback` notice below, this stays
+  // visible in the header for the lifetime of the mounted draft — Piotr's ask
+  // was "easy return to THIS SPECIFIC note", not a toast that scrolls away.
+  const [expandSourceNote, setExpandSourceNote] = React.useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [activeActionId, setActiveActionId] = React.useState<CanvasActionId | null>(null);
   // Active public share for the loaded draft (mirrors provenance.share).
   const [shareInfo, setShareInfo] = React.useState<CanvasShareInfo | null>(null);
@@ -939,13 +950,19 @@ function WorkCanvasMarkdownDocumentPanel({
           ? (draft.provenance as Record<string, unknown>)
           : null;
       draftOriginProvenanceRef.current = provenance;
-      if (
-        provenance &&
-        String(provenance.source || provenance.originSource || '') === 'notebook-expand' &&
-        !expandSourceNoticeShownRef.current
-      ) {
+      const isNotebookExpand =
+        !!provenance &&
+        String(provenance.source || provenance.originSource || '') === 'notebook-expand';
+      const sourceId = isNotebookExpand ? String(provenance.sourceId || '').trim() : '';
+      // #17: keep (or clear) the persistent "back to note" breadcrumb every
+      // time a draft is (re)hydrated — independent of the one-time toast below,
+      // so switching to an unrelated draft/deck doesn't leave a stale link.
+      setExpandSourceNote(
+        sourceId ? { id: sourceId, title: String(provenance!.sourceTitle || '').trim() } : null
+      );
+      if (isNotebookExpand && !expandSourceNoticeShownRef.current) {
         expandSourceNoticeShownRef.current = true;
-        const sourceTitle = String(provenance.sourceTitle || '').trim();
+        const sourceTitle = String(provenance!.sourceTitle || '').trim();
         setStatusFeedback(
           sourceTitle
             ? `${t('canvas.panel.source.note', 'Source: note')} „${sourceTitle}”`
@@ -2990,6 +3007,35 @@ function WorkCanvasMarkdownDocumentPanel({
   return (
     <div className="flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
       <div className="flex h-[42px] shrink-0 items-center justify-between gap-3 border-b border-slate-200/70 bg-white/70 px-4 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
+        {/* #17 (rewizja 07-12): "z canvasu musi być łatwy powrót do TEJ
+            KONKRETNEJ notatki [nie tylko do listy]" — persistent breadcrumb,
+            visible for the whole time this note-derived draft is open (not a
+            one-time toast). Reuses the existing /my-work/notebook/<pageId>
+            deep-link contract (MyWorkHub `parseMyWorkPathIntent` + NotebookContent
+            `openPageId`) already used by the canvas save-as-note handoff. */}
+        {expandSourceNote ? (
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/my-work/notebook/${encodeURIComponent(expandSourceNote.id)}`)
+            }
+            data-testid="canvas-back-to-source-note"
+            title={
+              expandSourceNote.title
+                ? t('canvas.panel.source.backToNoteTitled', 'Back to note "{{title}}"', {
+                    title: expandSourceNote.title,
+                  })
+                : t('canvas.panel.source.backToNote', 'Back to source note')
+            }
+            className="inline-flex h-8 shrink-0 max-w-[180px] items-center gap-1 rounded-full border border-slate-200 px-2.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+          >
+            <ChevronLeft size={13} className="shrink-0" />
+            <StickyNote size={12} className="shrink-0 opacity-70" />
+            <span className="truncate">
+              {expandSourceNote.title || t('canvas.panel.source.note', 'Source: note')}
+            </span>
+          </button>
+        ) : null}
         <div className="min-w-0 flex-1">
           <label htmlFor="canvas-document-title" className="sr-only">
             Document title
