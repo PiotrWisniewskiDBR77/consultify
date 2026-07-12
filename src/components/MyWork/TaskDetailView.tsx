@@ -80,10 +80,14 @@ import {
   NModeCardState,
   type NModeCardStatus,
 } from '../shared/NModeLayout/NModeCardState';
+// #52 — card-management primitive (show/hide + reorder), same wiring as
+// InsightViewer.tsx (nakładka, see comment at `taskCardLayout` below).
+import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModeSectionWrapper } from '../shared/NModeLayout/NModeSectionWrapper';
 import type { NModeSection } from '../shared/NModeLayout/types';
+import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
 // ── N-Mode Sections (shared, reusable across artifacts) ─────────────────────
 import {
   ActivityLogCanvas,
@@ -3733,6 +3737,66 @@ Return ONLY the final comment text.`;
     readMode,
   ]);
 
+  // ── Card-management primitive (#52, wzorzec N §3.5) ───────────────────────
+  // Same "nakładka" wiring as InsightViewer.tsx: `useCardLayout` (TASK_SPEC)
+  // drives show/hide + reorder OVER the existing single-active-section
+  // switcher (`activeNSection` + NModeLeftNav + NModeCanvas) instead of
+  // replacing it — Task already has the same 2-pane engine Insight has, it
+  // was just missing the card-layout wiring. `applyToSections` filters +
+  // orders `nModeSectionsWithContent` by the live layout in one step (no
+  // separate hiddenSectionIds/order state needed — Task has no legacy
+  // order key to stay back-compat with, unlike Insight).
+  const taskCardLayoutStorageKey = `task:nmode:card-layout:v1:${taskId ?? 'new'}`;
+  const initialTaskCardLayout = useMemo<CardLayout | null>(() => {
+    try {
+      const raw = localStorage.getItem(taskCardLayoutStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      const cleaned = parsed.filter(
+        (c: unknown): c is { id: string; visible: boolean; order: number } =>
+          !!c &&
+          typeof (c as { id?: unknown }).id === 'string' &&
+          typeof (c as { visible?: unknown }).visible === 'boolean' &&
+          typeof (c as { order?: unknown }).order === 'number'
+      );
+      return cleaned.length > 0 ? cleaned : null;
+    } catch {
+      return null;
+    }
+    // Hydrate once per task id; layout state is owned by the hook afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskCardLayoutStorageKey]);
+
+  const persistTaskCardLayout = useCallback(
+    (next: CardLayout) => {
+      try {
+        localStorage.setItem(taskCardLayoutStorageKey, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors; card management still works for this session.
+      }
+    },
+    [taskCardLayoutStorageKey]
+  );
+
+  const taskCardLayout = useCardLayout({
+    artifactType: 'task',
+    initialLayout: initialTaskCardLayout,
+    onLayoutChange: persistTaskCardLayout,
+  });
+
+  const visibleTaskNModeSections = useMemo(
+    () => taskCardLayout.applyToSections(nModeSectionsWithContent),
+    [taskCardLayout, nModeSectionsWithContent]
+  );
+
+  useEffect(() => {
+    if (visibleTaskNModeSections.length === 0) return;
+    if (!visibleTaskNModeSections.some((section) => section.id === activeNSection)) {
+      setActiveNSection(visibleTaskNModeSections[0].id);
+    }
+  }, [visibleTaskNModeSections, activeNSection]);
+
   // ── Dirty tracking + autosave (SaaS online persistence) ───────────────────
   const persistedDraft = useMemo(
     () => ({
@@ -4076,8 +4140,13 @@ Return ONLY the final comment text.`;
 
             {/* ── N-Mode Content ──────────────────────────────── */}
             <div className="col-span-full space-y-4 mt-4">
-              {/* ── Menu 1 (klasa S): Read/Edit toggle "do pokazania klientowi" ── */}
-              <div className="flex items-center justify-end">
+              {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
+              <div className="flex items-center justify-between">
+                {!readMode ? (
+                  <NModeCardManager layout={taskCardLayout} isPolish={isPolish} />
+                ) : (
+                  <div />
+                )}
                 <ReadEditToggle readMode={readMode} onChange={setReadMode} />
               </div>
               {/* Deadline Alert */}
@@ -4469,12 +4538,13 @@ Return ONLY the final comment text.`;
               {/* 2-Pane: LeftNav + Canvas */}
               <div className="flex gap-0 min-h-[60vh]">
                 <NModeLeftNav
-                  sections={nModeSectionsWithContent}
+                  sections={visibleTaskNModeSections}
                   activeSection={activeNSection}
                   onSectionChange={setActiveNSection}
+                  onSectionReorder={(ids) => taskCardLayout.reorderByIds(ids)}
                 />
                 <NModeCanvas
-                  sections={nModeSectionsWithContent}
+                  sections={visibleTaskNModeSections}
                   activeSection={activeNSection}
                   reducedMotion={reducedMotion}
                   motionDuration={motionDuration}
