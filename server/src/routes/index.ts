@@ -65,7 +65,6 @@ export { default as economicsRoutes } from './economics.routes.js';
 export { default as externalAssessmentsRoutes } from './external-assessments.routes.js';
 export { default as featureFlagsRoutes } from './featureFlags.routes.js';
 export { default as feedbackRoutes } from './feedback.routes.js';
-export { default as frameworkRbacRoutes } from './framework-rbac.routes.js';
 export { default as gamificationRoutes } from './gamification.routes.js';
 export { default as gdprRoutes } from './gdpr.routes.js';
 export { default as genericReportsRoutes } from './generic-reports.routes.js';
