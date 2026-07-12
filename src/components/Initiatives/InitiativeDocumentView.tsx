@@ -55,7 +55,6 @@ import {
   Shield,
   ShieldCheck,
   Sparkles,
-  Table2,
   Target,
   Trash2,
   TrendingUp,
@@ -72,6 +71,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
+import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -644,13 +644,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // niżej (jedno źródło prawdy → propaguje do wszystkich afordancji edycji).
   // Default = Edit (readMode=false), żeby nie zmienić istniejącego zachowania.
   const [readMode, setReadMode] = useState(false);
-
-  // F5 — "Make material": one-click deck/report/table via the M17 pipeline.
-  // POST /api/initiatives/:id/materialize { format } → binary blob download.
-  const [showMaterializeMenu, setShowMaterializeMenu] = useState(false);
-  const [materializingFormat, setMaterializingFormat] = useState<
-    null | 'deck' | 'report' | 'table'
-  >(null);
 
   // Suggested changes (Formula §5 / Faza 4) — owner-side mini-gate. The Generator
   // proposes CHANGES to an existing initiative as pending suggested changes; the
@@ -1310,7 +1303,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Wzorzec N — Menu 1 (tożsamość) niesie DOKŁADNIE JEDEN primary = przejście
   // stanu lifecycle (Submit for Review → Approve for Execution → Schedule …),
   // zależny od nextGate. To pierwsza forward-transition (primary, potem secondary).
-  // Reszta akcji (Sekcje/Eksport/Make material/AI/Nowy) mieszka w Menu 3.
+  // Reszta akcji (Sekcje/Eksport/AI/Nowy) mieszka w Menu 3.
   const primaryLifecycleAction = useMemo(
     () => stripStatusActions.find((a) => a.variant === 'primary') || stripStatusActions[0] || null,
     [stripStatusActions]
@@ -9258,62 +9251,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setPresentOpen(true);
   }, []);
 
-  // F5 — "Make material": ask the M17 pipeline to render a deck / report / table
-  // from this initiative's real data and trigger a browser download. The endpoint
-  // returns a binary blob with a Content-Disposition filename.
-  const handleMaterialize = useCallback(
-    async (format: 'deck' | 'report' | 'table') => {
-      if (materializingFormat) return;
-      setShowMaterializeMenu(false);
-      setMaterializingFormat(format);
-      const loadingLabel = t('initiatives.initiativeDocumentView.creatingMaterial');
-      const toastId = toast.loading(loadingLabel);
-      try {
-        const res = await fetch(`${API_URL}/initiatives/${initiativeId}/materialize`, {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify({ format }),
-        });
-        if (!res.ok) {
-          throw new Error(`Materialize failed (HTTP ${res.status})`);
-        }
-        const blob = await res.blob();
-        // Resolve filename from Content-Disposition (RFC5987 first, then plain).
-        const contentDisposition = res.headers.get('Content-Disposition') || '';
-        const encodedMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
-        const plainMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
-        const extByFormat: Record<typeof format, string> = {
-          deck: 'pptx',
-          report: 'pdf',
-          table: 'xlsx',
-        };
-        const fallbackName = `initiative-${initiativeId}-${format}.${extByFormat[format]}`;
-        const filename = encodedMatch?.[1]
-          ? decodeURIComponent(encodedMatch[1])
-          : plainMatch?.[1] || fallbackName;
-        const objectUrl = window.URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = objectUrl;
-        anchor.download = filename;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        window.URL.revokeObjectURL(objectUrl);
-        toast.success(t('initiatives.initiativeDocumentView.materialReady'), { id: toastId });
-      } catch (err) {
-        toast.error(
-          t('initiatives.initiativeDocumentView.failedToCreateMaterial'),
-          { id: toastId }
-        );
-        // eslint-disable-next-line no-console
-        console.error('[InitiativeDocumentView] materialize failed', err);
-      } finally {
-        setMaterializingFormat(null);
-      }
-    },
-    [materializingFormat, isPolish, initiativeId]
-  );
-
   const handleExportNotebook = useCallback(async () => {
     setIsExporting('notebook');
     try {
@@ -10020,7 +9957,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               {/* ── Menu 1 (tożsamość) primary CTA — JEDEN przycisk = przejście stanu
                   lifecycle (Submit for Review → Approve for Execution → Schedule …).
                   Renderowany natywnie przez NModeHeader.primaryAction (patrz wyżej),
-                  NIGDY crimson. Reszta akcji (Sekcje/Eksport/Make material/AI/Nowy)
+                  NIGDY crimson. Reszta akcji (Sekcje/Eksport/AI/Nowy)
                   → Menu 3. */}
 
               <div className="col-span-full space-y-4 mt-4">
@@ -10089,9 +10026,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }
                     return (
                       <div className="flex items-center gap-1 flex-wrap min-h-[36px]">
-                        {/* ── Menu 3 · nawigacja wewn. jako pill (skrót do rail) ──
+                        {/* ── Menu 3 · nawigacja wewn. jako kompaktowy dropdown ──
                             Scope · Plan · Timeline · Finance · Gates → skacze do
-                            reprezentatywnej sekcji grupy. Neutralne, aktywny = c-focus. */}
+                            reprezentatywnej sekcji grupy. #75c: dawny rządek pill-i
+                            zamieniony na Menu3DropdownChip (kanon Menu 3). */}
                         {(() => {
                           const navPills: { id: string; label: { en: string; pl: string } }[] = [
                             { id: 'initiative-definition', label: { en: 'Scope', pl: 'Zakres' } },
@@ -10108,27 +10046,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           );
                           const visiblePills = navPills.filter((p) => availableIds.has(p.id));
                           if (visiblePills.length === 0) return null;
+                          const activePill =
+                            visiblePills.find((p) => p.id === activeNSection) || visiblePills[0];
                           return (
                             <>
-                              <div className="inline-flex items-center gap-0.5 rounded-lg bg-c-surface-raised/60 p-0.5">
-                                {visiblePills.map((pill) => {
-                                  const active = activeNSection === pill.id;
-                                  return (
-                                    <button
-                                      key={pill.id}
-                                      type="button"
-                                      onClick={() => setActiveNSection(pill.id)}
-                                      className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                                        active
-                                          ? 'bg-c-surface text-c-focus shadow-sm'
-                                          : 'text-c-text-secondary hover:text-c-text'
-                                      }`}
-                                    >
-                                      {isPolish ? pill.label.pl : pill.label.en}
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                              <Menu3DropdownChip
+                                data-testid="initiative-nav-pill-chip"
+                                label={isPolish ? activePill.label.pl : activePill.label.en}
+                                active={activeNSection === activePill.id}
+                                ariaLabel={isPolish ? 'Przełącz widok' : 'Switch view'}
+                                items={visiblePills.map((pill) => ({
+                                  id: pill.id,
+                                  label: isPolish ? pill.label.pl : pill.label.en,
+                                  active: activeNSection === pill.id,
+                                  onSelect: () => setActiveNSection(pill.id),
+                                }))}
+                              />
                               <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
                             </>
                           );
@@ -10327,79 +10260,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     >
                                       <ItemIcon size={13} className="shrink-0 opacity-70" />
                                       <span>{isPolish ? item.label.pl : item.label.en}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Slot 3b — Make material ▾ (F5: deck / report / table via M17) */}
-                        <div className="relative">
-                          <ToolbarSubtleButton
-                            icon={
-                              materializingFormat ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : (
-                                <Package size={14} />
-                              )
-                            }
-                            onClick={() => setShowMaterializeMenu((v) => !v)}
-                            aria-expanded={showMaterializeMenu}
-                            disabled={!!materializingFormat}
-                          >
-                            <span>{t('initiatives.makeMaterial', 'Make material')}</span>
-                            <ChevronDown size={12} className="opacity-60" />
-                          </ToolbarSubtleButton>
-                          {showMaterializeMenu && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-40"
-                                onClick={() => setShowMaterializeMenu(false)}
-                              />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
-                                {(
-                                  [
-                                    {
-                                      id: 'deck',
-                                      format: 'deck',
-                                      label: t('initiatives.materialDeck', 'Prezentacja'),
-                                      icon: Presentation,
-                                    },
-                                    {
-                                      id: 'report',
-                                      format: 'report',
-                                      label: t('initiatives.materialReport', 'Raport'),
-                                      icon: FileText,
-                                    },
-                                    {
-                                      id: 'table',
-                                      format: 'table',
-                                      label: t('initiatives.materialTable', 'Tabela'),
-                                      icon: Table2,
-                                    },
-                                  ] as const
-                                ).map((item) => {
-                                  const ItemIcon = item.icon;
-                                  const busy = materializingFormat === item.format;
-                                  return (
-                                    <button
-                                      key={item.id}
-                                      type="button"
-                                      disabled={!!materializingFormat}
-                                      onClick={() => void handleMaterialize(item.format)}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      {busy ? (
-                                        <Loader2
-                                          size={13}
-                                          className="shrink-0 animate-spin opacity-70"
-                                        />
-                                      ) : (
-                                        <ItemIcon size={13} className="shrink-0 opacity-70" />
-                                      )}
-                                      <span>{item.label}</span>
                                     </button>
                                   );
                                 })}
