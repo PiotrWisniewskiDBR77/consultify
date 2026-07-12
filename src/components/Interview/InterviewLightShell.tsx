@@ -53,6 +53,7 @@
 import {
   ClipboardList,
   Clock,
+  Eye,
   FileText,
   FolderOpen,
   Lightbulb,
@@ -161,6 +162,16 @@ interface InterviewLightShellProps {
   // click-through from a card to the artifact. Optional so this component
   // still renders standalone in the dev-render harness without a handler.
   onOpenInsight?: (id: string) => void;
+  // Same gap class as #57/onOpenInsight above — the Sesje row kebab always
+  // returned `{}` (empty menu) and row click only set a local highlight
+  // (`selectedSessionId`, used to reveal the rubric breakdown), with no way
+  // to reach the real session artifact. Optional so the component still
+  // renders standalone in the dev-render harness without a handler.
+  onOpenSession?: (id: string) => void;
+  // AssignedTab's "Rozpocznij/Kontynuuj" button had no onClick at all — a
+  // fully dead primary action. Optional for the same standalone-harness
+  // reason as above.
+  onContinueAssignment?: (id: string) => void;
 }
 
 type LightTab = 'sessions' | 'assigned' | 'insights';
@@ -265,6 +276,8 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
   onNewSession,
   onOpenChat,
   onOpenInsight,
+  onOpenSession,
+  onContinueAssignment,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -387,10 +400,17 @@ export const InterviewLightShell: React.FC<InterviewLightShellProps> = ({
               sessions={visibleSessions}
               selectedSessionId={selectedSessionId}
               setSelectedSessionId={setSelectedSessionId}
+              onOpenSession={onOpenSession}
               t={t}
             />
           )}
-          {activeTab === 'assigned' && <AssignedTab assignments={assignments} t={t} />}
+          {activeTab === 'assigned' && (
+            <AssignedTab
+              assignments={assignments}
+              onContinueAssignment={onContinueAssignment}
+              t={t}
+            />
+          )}
           {activeTab === 'insights' && (
             <InsightsTab insights={insights} t={t} onOpenInsight={onOpenInsight} />
           )}
@@ -472,6 +492,7 @@ function SessionsTab({
   sessions,
   selectedSessionId,
   setSelectedSessionId,
+  onOpenSession,
   t,
 }: {
   sessionView: SessionView;
@@ -479,6 +500,7 @@ function SessionsTab({
   sessions: InterviewSessionLite[];
   selectedSessionId: string | null;
   setSelectedSessionId: (id: string | null) => void;
+  onOpenSession?: (id: string) => void;
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
   // Selection (StandardTable MUST #7) is scoped to this tab — reset happens
@@ -558,10 +580,27 @@ function SessionsTab({
     [t]
   );
 
-  // Kebab (MUST #6): no real open/edit/archive handlers wired at this layer
-  // yet — StandardTable always renders the full 5-block kebab regardless,
-  // with blocks 4/5 disabled + "Coming soon (backend)" note (ANEKS #4).
-  const sessionRowMenu = (_row: TableRow): StandardRowMenu => ({});
+  // Kebab (MUST #6) — previously always `{}` (fully empty menu, no way to
+  // open the session artifact from the kebab at all). Routes "Otwórz" +
+  // universal preview through `onOpenSession` (hub wires it to
+  // `handleViewSession`, same activeDocumentId mechanism as onOpenInsight).
+  // Archive/edit/etc. still have no backend hook at this layer — left out
+  // rather than fabricated (StandardTable disables blocks 4/5 with a "Coming
+  // soon" note per ANEKS #4 when a section is omitted).
+  const sessionRowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('Otwórz', 'Open'),
+        icon: Eye,
+        onClick: () => onOpenSession?.(String(row.id)),
+        disabled: !onOpenSession,
+      },
+    ],
+    universalHandlers: {
+      preview: onOpenSession ? () => onOpenSession(String(row.id)) : undefined,
+    },
+  });
 
   // MUST #3 — row-description toggle reveals the full 5-criterion rubric
   // breakdown (owner note #48: odbiór menedżerski needs the rubric visible).
@@ -640,6 +679,7 @@ function SessionsTab({
         data={sessions}
         selectedRowId={selectedSessionId}
         onRowClick={(row) => setSelectedSessionId(String(row.id))}
+        onRowDoubleClick={(row) => onOpenSession?.(String(row.id))}
         rowMenu={sessionRowMenu}
         rowDescription={sessionRowDescription}
         selection={{ selectedIds, onChange: setSelectedIds }}
@@ -657,9 +697,11 @@ function SessionsTab({
 
 function AssignedTab({
   assignments,
+  onContinueAssignment,
   t,
 }: {
   assignments: InterviewAssignmentLite[];
+  onContinueAssignment?: (id: string) => void;
   t: (pl: string, en: string) => string;
 }): React.ReactElement {
   return (
@@ -695,7 +737,9 @@ function AssignedTab({
             </span>
             <button
               type="button"
-              className="whitespace-nowrap rounded-lg border border-c-border px-2.5 py-1 text-[12px] font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+              onClick={onContinueAssignment ? () => onContinueAssignment(a.id) : undefined}
+              disabled={!onContinueAssignment}
+              className="whitespace-nowrap rounded-lg border border-c-border px-2.5 py-1 text-[12px] font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40"
               style={{ color: BLUE, borderColor: BLUE }}
             >
               {a.status === 'assigned' ? t('Rozpocznij', 'Start') : t('Kontynuuj', 'Continue')}
