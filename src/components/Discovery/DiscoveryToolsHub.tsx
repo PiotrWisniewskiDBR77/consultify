@@ -49,11 +49,20 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { formatRoiDisplay } from '@/utils/safeFormat';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { isToolsLightEnabled } from '@/utils/toolsLightFlag';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
+import {
+  type ToolFrameworkCategory,
+  type ToolFrameworkLite,
+  ToolsLightShell,
+  type ToolOutputLite,
+  type ToolSessionLite,
+} from './ToolsLightShell';
 import {
   type FrameworkId,
   isFrameworkComingSoon,
@@ -4697,6 +4706,191 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   // View modes: Library supports table+grid (segmented icon buttons via ModuleNavBar);
   // other tabs support table only. §2.2 / §2c canon: view toggle must be segmented icons.
   const activeViewModes: ViewMode[] = activeTab === 'library' ? ['table', 'grid'] : ['table'];
+
+  // ── Fala lekkość: gęsta powłoka Tools za flagą (default OFF; podgląd
+  // ?ff_toolsLight=1). ON = zastąpienie ciężkiego hubu (Library/Sessions/
+  // Reports+Initiatives, ~4800 linii) jedną lekką powłoką 3 sekcji
+  // (Biblioteka/Sesje/Raporty — Initiatives fold into Raporty per
+  // ToolsLightShell doctrine). OFF = poniższy return BEZ ZMIAN. Umieszczone
+  // PO wszystkich hookach → zgodne z regułami hooków (wzorzec DRDLightShell).
+  //
+  // CAVEATY (mapowanie, brak realnych danych → default + brak crashu):
+  //   * `author` biblioteki — UnifiedLibraryItem nie niesie autora frameworku
+  //     (to katalog, nie sesja) → '—'.
+  //   * `ladderRungs` (biblioteka) — silnik nie zwraca liczby szczebli per
+  //     framework na poziomie katalogu → 4 (pełna drabinka) dla dostępnych,
+  //     1 dla "coming soon" (przybliżenie, nie realny odczyt).
+  //   * `ladderDepth` (sesja) — brak bezpośredniego pola; przybliżone z
+  //     `progress` (0-100%) skalowanego na 0-4 szczeble.
+  //   * `sources` (sesja) — hub nie ładuje listy źródeł per sesja w tym
+  //     read-modelu → [].
+  //   * `outputsCount` (sesja) — liczone best-effort po dopasowaniu
+  //     `sourceId`/`sourceType` wyjścia do sesji.
+  //   * `frameworkName`/`sourceSessionTitle` (raporty/inicjatywy) — best-effort
+  //     lookup po `sourceId`/`toolType`; '—' gdy nieznalezione.
+  if (isToolsLightEnabled()) {
+    const CATEGORY_TO_LIGHT: Record<ToolCategory, ToolFrameworkCategory> = {
+      strategic: 'Strategy',
+      operational: 'Operations',
+      digital: 'Digital',
+      automation: 'Process Automation',
+      licensed: 'Licensed',
+    };
+
+    const sessionCountByToolType = new Map<string, number>();
+    for (const row of unifiedSessionsData) {
+      const key =
+        row.kind === 'assessmentSession' ? row.assessmentType : String((row as any).apiToolType || '');
+      if (!key) continue;
+      sessionCountByToolType.set(key, (sessionCountByToolType.get(key) || 0) + 1);
+    }
+
+    const lightFrameworks: ToolFrameworkLite[] = libraryCatalogItems.map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: CATEGORY_TO_LIGHT[item.libraryCategory] || 'Strategy',
+      author: '—',
+      sessionsCount: sessionCountByToolType.get(item.toolType) || 0,
+      ladderRungs: item.isComingSoon ? 1 : 4,
+      status: item.isComingSoon ? 'coming_soon' : 'available',
+    }));
+
+    const toLightSessionStatus = (s: ItemStatus): ToolSessionLite['status'] => {
+      switch (s) {
+        case 'DRAFT':
+          return 'draft';
+        case 'PENDING_REVIEW':
+        case 'REVIEW':
+          return 'synthesis';
+        case 'APPROVED':
+        case 'DONE':
+        case 'TRACKING':
+          return 'completed';
+        case 'PLANNING':
+        case 'SCHEDULED':
+        case 'PROMOTED':
+        case 'EXECUTING':
+          return 'in_progress';
+        default:
+          return 'draft';
+      }
+    };
+
+    const formatLightDate = (d?: Date | string): string => {
+      if (!d) return '';
+      try {
+        const date = d instanceof Date ? d : new Date(d);
+        return Number.isFinite(date.getTime()) ? date.toLocaleDateString() : '';
+      } catch {
+        return '';
+      }
+    };
+
+    const lightSessions: ToolSessionLite[] = unifiedSessionsData.map((row) => {
+      const frameworkName =
+        row.kind === 'assessmentSession'
+          ? row.assessmentType
+          : TOOL_META[(row as any).toolType as ToolType]?.name || String((row as any).apiToolType || '');
+      const outputsCount = outputs.filter((o) => o.sourceId === row.id).length;
+      return {
+        id: row.id,
+        title: row.name,
+        frameworkName,
+        status: toLightSessionStatus(row.status),
+        ladderDepth: Math.max(0, Math.min(4, Math.round((row.progress || 0) / 25))) as 0 | 1 | 2 | 3 | 4,
+        owner: getAuthorLabel((row as any).createdBy),
+        updatedAt: formatLightDate(row.updatedAt),
+        outputsCount,
+        sources: [],
+      };
+    });
+
+    const toLightOutputStatus = (s: ItemStatus): ToolOutputLite['status'] => {
+      switch (s) {
+        case 'APPROVED':
+        case 'DONE':
+        case 'TRACKING':
+          return 'generated';
+        case 'ARCHIVED':
+          return 'exported';
+        default:
+          return 'draft';
+      }
+    };
+
+    const sessionTitleById = new Map<string, string>();
+    for (const row of unifiedSessionsData) sessionTitleById.set(row.id, row.name);
+
+    const outputTypeFromKind: Record<OutputKind, ToolOutputLite['outputType']> = {
+      assessment_report: 'report',
+      report_builder: 'report',
+      presentation_deck: 'presentation',
+    };
+
+    const lightOutputsFromOutputs: ToolOutputLite[] = outputs.map((o) => ({
+      id: o.id,
+      title: o.name,
+      outputType: outputTypeFromKind[o.outputKind],
+      sourceSessionTitle: (o.sourceId && sessionTitleById.get(o.sourceId)) || '—',
+      frameworkName: '—',
+      status: toLightOutputStatus(o.status),
+      owner: getAuthorLabel((o._fullData as any)?.createdBy || (o._fullData as any)?.created_by),
+      updatedAt: formatLightDate(o.updatedAt),
+    }));
+
+    const lightOutputsFromInitiatives: ToolOutputLite[] = initiatives.map((i) => ({
+      id: i.id,
+      title: i.name,
+      outputType: 'initiative',
+      sourceSessionTitle: '—',
+      frameworkName: TOOL_META[i.toolType]?.name || i.apiToolType || '—',
+      status: toLightOutputStatus(i.status),
+      owner: getAuthorLabel(i.createdBy),
+      updatedAt: formatLightDate(i.updatedAt),
+    }));
+
+    const lightOutputs: ToolOutputLite[] = [...lightOutputsFromOutputs, ...lightOutputsFromInitiatives];
+
+    return (
+      <ErrorBoundary>
+        <ToolsLightShell
+          libraryName={t('discoveryTools.title', 'Discovery Tools')}
+          frameworks={lightFrameworks}
+          sessions={lightSessions}
+          outputs={lightOutputs}
+          onNewSession={() => setIsAddMenuOpen(true)}
+          onOpenChat={() =>
+            openChatWithContext({
+              entityType: 'tools_module',
+              entityId: activeTab,
+              entityName: t('discoveryTools.title', 'Discovery Tools'),
+              contextData: { activeTab },
+            })
+          }
+          onOpenFramework={(id) => {
+            const item = libraryCatalogItems.find((li) => li.id === id);
+            if (item?.kind === 'assessment') {
+              navigate(`/assessment/${item.toolType.toLowerCase()}`);
+            }
+          }}
+          onOpenSession={(id) => {
+            const row = unifiedSessionsData.find((r) => r.id === id);
+            if (row?.kind === 'assessmentSession') {
+              navigate(`/assessment/${String(row.assessmentType || '').toLowerCase()}/${row.id}`);
+            }
+          }}
+          onOpenOutput={(id) => {
+            const o = outputs.find((out) => out.id === id);
+            if (o?.outputKind === 'assessment_report') navigate(`/assessment-reports/${encodeURIComponent(id)}`);
+            else if (o?.outputKind === 'report_builder') navigate(`/reports/builder/${encodeURIComponent(id)}`);
+            else if (o?.outputKind === 'presentation_deck')
+              navigate(`/presentations/builder/${encodeURIComponent(id)}`);
+            else navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=doc`);
+          }}
+        />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <>
