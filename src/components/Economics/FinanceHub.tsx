@@ -53,13 +53,24 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { ROUTES } from '@/routes/routeConfig';
 import { EmptyState, LoadingState } from '@/components/shared/states';
-import { Api } from '@/services/api';
+import { API_URL, Api, getHeaders } from '@/services/api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
   type V8FinanceDashboard,
 } from '@/services/api/v8/finance';
 import { useAppStore } from '@/store/useAppStore';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { isFinanceLightEnabled } from '@/utils/financeLightFlag';
+import { isFinanceEvBasketEnabled } from '@/utils/financeEvBasketFlag';
+import {
+  FinanceLightShell,
+  type FinanceRatioLite,
+  type FinanceLineageSourceLite,
+  type PredictionPointLite,
+  type StatementLineLite,
+} from './FinanceLightShell';
+import type { EvBasketResult } from './panels/EvBasketFootballField';
 
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
@@ -2830,6 +2841,154 @@ export const FinanceHub: React.FC = () => {
     handleImportWizardComplete,
   ]);
 
+  // ── Fala 1 lekkość: gęsta powłoka Finance za flagą (default OFF; podgląd
+  // ?ff_financeLight=1). ON = zastąpienie 5-tabowego huba (Statements/Models/
+  // Analysis/Prediction/Valuation/Investment) jedną lekką powłoką: Sprawozdania
+  // · Wskaźniki · Wycena · Prognoza. OFF = FinanceHub bez zmian (poniższy
+  // return). Hooks placed here (before ANY early return) per rules-of-hooks —
+  // mirrors AssessmentSessionEditorView's DRDLightShell branch.
+  //
+  // Data-source caveats (see final report to Piotr for the full list):
+  //  - `reconcile` (R1-R8): reconciliationService.ts has NO frontend caller
+  //    anywhere in this codebase yet — always undefined here (shell renders
+  //    "no reconcile results" empty state, not a crash).
+  //  - `ratios`: built from whatever preview ratios are already loaded for the
+  //    currently-selected row (statementPreviewRatios / analysisPreviewRatios).
+  //    Neither shape carries a `family` (liquidity/profitability/…), so every
+  //    ratio is bucketed into 'profitability' as a placeholder family.
+  //  - `evBasket`: fetched from the SAME endpoint ValuationWorkspace already
+  //    uses (`/economics/valuations/:id/basket`), gated by the SAME
+  //    `isFinanceEvBasketEnabled()` flag — if that flag is off, basket stays
+  //    null (shell shows its own empty state).
+  //  - `prediction`: derived from the selected model's forecast lines
+  //    (REVENUE/EBITDA) when a model is open; empty otherwise (no portfolio-
+  //    wide forecast series is loaded by FinanceHub today).
+  const lightModeActive = isFinanceLightEnabled();
+  const lightSelectedValuationId = useMemo(() => {
+    if (activeDocument?.kind === 'valuation') return activeDocument.id;
+    const firstValuation = (valuations || [])[0] as any;
+    return firstValuation?.id ? String(firstValuation.id) : null;
+  }, [activeDocument, valuations]);
+
+  const [lightEvBasket, setLightEvBasket] = useState<EvBasketResult | null>(null);
+  useEffect(() => {
+    if (!lightModeActive || !isFinanceEvBasketEnabled() || !lightSelectedValuationId) {
+      setLightEvBasket(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/economics/valuations/${lightSelectedValuationId}/basket`,
+          { headers: getHeaders() }
+        );
+        if (!res.ok) {
+          if (!cancelled) setLightEvBasket(null);
+          return;
+        }
+        const d = (await res.json()) as { basket?: EvBasketResult | null };
+        if (!cancelled) setLightEvBasket((d?.basket ?? null) as EvBasketResult | null);
+      } catch {
+        if (!cancelled) setLightEvBasket(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lightModeActive, lightSelectedValuationId]);
+
+  const lightStatementLines: StatementLineLite[] = useMemo(() => {
+    const items = statementPreviewDetail?.topLineItems;
+    if (!Array.isArray(items) || items.length === 0) return [];
+    return items.map((item) => ({ label: item.label, value: Number(item.value || 0) }));
+  }, [statementPreviewDetail]);
+
+  const lightRatios: FinanceRatioLite[] = useMemo(() => {
+    const out: FinanceRatioLite[] = [];
+    if (Array.isArray(analysisPreviewRatios)) {
+      for (const r of analysisPreviewRatios) {
+        out.push({
+          code: r.ratio_code,
+          family: 'profitability',
+          labelPl: r.ratio_name,
+          formula: r.category || '',
+          value: r.value === null || r.value === undefined ? null : Number(r.value),
+          unit: 'x',
+          direction: 'higher_better',
+          status: r.value === null || r.value === undefined ? 'skipped' : 'computed',
+        });
+      }
+    } else if (statementPreviewRatios?.topRatios?.length) {
+      for (const r of statementPreviewRatios.topRatios) {
+        out.push({
+          code: r.code,
+          family: 'profitability',
+          labelPl: r.name,
+          formula: '',
+          value: r.value === null || r.value === undefined ? null : Number(r.value),
+          unit: 'x',
+          direction: 'higher_better',
+          status: r.value === null || r.value === undefined ? 'skipped' : 'computed',
+        });
+      }
+    }
+    return out;
+  }, [analysisPreviewRatios, statementPreviewRatios]);
+
+  const lightPrediction: PredictionPointLite[] = useMemo(() => {
+    const table = modelPreviewDetail?.scenarioTables?.[
+      (modelPreviewDetail?.selectedScenario as 'base' | 'optimistic' | 'conservative') || 'base'
+    ]?.['P&L'];
+    if (!Array.isArray(table) || !modelPreviewDetail) return [];
+    const revenueLine = table.find((l) => /revenue/i.test(l.lineCode) || /revenue/i.test(l.lineName));
+    const ebitdaLine = table.find((l) => /ebitda/i.test(l.lineCode) || /ebitda/i.test(l.lineName));
+    const passRatio =
+      predictionValidations && predictionValidations.total > 0
+        ? (predictionValidations.pass / predictionValidations.total) * 100
+        : 70;
+    return (modelPreviewDetail.forecastYears || []).map((year) => ({
+      periodLabel: year,
+      revenue: Number(revenueLine?.values?.[year] || 0),
+      ebitda: Number(ebitdaLine?.values?.[year] || 0),
+      confidencePct: passRatio,
+    }));
+  }, [modelPreviewDetail, predictionValidations]);
+
+  const lightLineageSources: FinanceLineageSourceLite[] = useMemo(() => {
+    const out: FinanceLineageSourceLite[] = [];
+    if (statements.length > 0) {
+      out.push({
+        label: t('finance.tabs.statements', 'Statements'),
+        detail: `${statements.length} ${isPl ? 'pakietów' : 'packs'}`,
+      });
+    }
+    if (models.length > 0) {
+      out.push({
+        label: t('finance.tabs.models', 'Models'),
+        detail: `${models.length} ${isPl ? 'modeli' : 'models'}`,
+      });
+    }
+    if (v8Dashboard) {
+      out.push({
+        label: isPl ? 'Pipeline zasilania (V8)' : 'Ingestion pipeline (V8)',
+        detail: `${v8Dashboard.ingestionPipeline.totalCount} ${isPl ? 'pozycji' : 'items'}`,
+      });
+    }
+    return out;
+  }, [statements.length, models.length, v8Dashboard, t, isPl]);
+
+  const lightLastUpdatedLabel = useMemo(() => {
+    const all = [...statements, ...models, ...analyses, ...valuations] as any[];
+    const dates = all
+      .map((r) => r?.updated_at || r?.updatedAt)
+      .filter(Boolean)
+      .map((d) => new Date(d).getTime())
+      .filter((n) => Number.isFinite(n));
+    if (dates.length === 0) return undefined;
+    return new Date(Math.max(...dates)).toLocaleDateString(isPl ? 'pl-PL' : 'en-US');
+  }, [statements, models, analyses, valuations, isPl]);
+
   // ---- Render ----
   if (!isV8FlagLoading && !isV8FinanceEnabled && !useLegacyFinanceMode) {
     return (
@@ -2857,6 +3016,40 @@ export const FinanceHub: React.FC = () => {
           </p>
         </div>
       </div>
+    );
+  }
+
+  if (lightModeActive) {
+    return (
+      <ErrorBoundary>
+        <FinanceLightShell
+          companyName={currentOrganization?.name}
+          periodLabel={readyStatementRows[0]?.periodLabel}
+          currency={readyStatementRows[0]?.currency || 'PLN'}
+          statementLines={lightStatementLines}
+          ratios={lightRatios}
+          evBasket={lightEvBasket}
+          prediction={lightPrediction}
+          lineageSources={lightLineageSources}
+          lastUpdatedLabel={lightLastUpdatedLabel}
+          onExportReport={
+            activeDocument ? () => handleExport(activeDocument) : undefined
+          }
+          onOpenChat={() =>
+            activeDocument
+              ? handleOpenEntityChat(activeDocument)
+              : openChatWithContext({
+                  entityType: 'finance_module',
+                  entityId: 'finance',
+                  entityName: t('finance.aiChat', 'Finance'),
+                  contextData: {
+                    organizationName: currentOrganization?.name,
+                    teresaPrompt: buildFinanceTeresaPrompt('models', t),
+                  },
+                })
+          }
+        />
+      </ErrorBoundary>
     );
   }
 
