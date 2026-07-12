@@ -17,6 +17,7 @@ import {
   Copy,
   Loader2,
   Save,
+  Sparkles,
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +55,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   saveState,
   lastSavedLabel,
   isDirty = false,
+  onChat,
   onClose,
   statusDotColor,
   presentationMode,
@@ -62,6 +64,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   buildArtifactCode,
   titleInputId,
   primaryAction,
+  showChatButton = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -199,11 +202,28 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             <span>{saveCopy.label}</span>
           </motion.button>
           {lastSavedLabel && effectiveSaveState === 'saved' ? (
-            <span className="hidden items-center gap-1 text-[11px] text-slate-600 dark:text-slate-500 2xl:inline-flex">
+            <span className="hidden items-center gap-1 text-[11px] text-c-text-muted 2xl:inline-flex">
               <Clock3 size={12} />
               {lastSavedLabel}
             </span>
           ) : null}
+
+          {/* AI (#27/#37): header slot for klasa S (Task/Decision — no M3),
+              opt-in via showChatButton so other NModeHeader consumers that
+              already pass onChat (Notification/Initiative/Insight) are
+              unaffected until reviewed separately. */}
+          {showChatButton && onChat && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onChat}
+              className="flex items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm font-medium text-c-text transition-all duration-150 hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              title={isPolish ? 'AI — otwórz asystenta' : 'AI — open assistant'}
+            >
+              <Sparkles size={16} className="text-c-text-muted" />
+              <span>AI</span>
+            </motion.button>
+          )}
 
           {/* Mode Switcher */}
           {showModeSwitcher && (
