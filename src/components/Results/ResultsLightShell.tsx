@@ -40,6 +40,7 @@ import {
   ChevronRight,
   Clock,
   DollarSign,
+  Eye,
   FileText,
   ListChecks,
   MessageSquare,
@@ -50,6 +51,12 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import StandardTable, {
+  type StandardRowMenu,
+  type TableColumn,
+  type TableRow,
+} from '../standard/StandardTable';
 
 // ─── Local shapes (mirror the real engines; see file header) ──────────────
 
@@ -173,6 +180,22 @@ function deriveRoiStatus(item: ResultsLightRoiItem): ResultsLightRoiStatus {
   return 'on-track';
 }
 
+// Direction-agnostic health bar: `status` (from kpiDomain.ts' deriveStatus,
+// which already knows if higher/lower-is-better via isOnTarget) is the
+// source of truth, not a raw ratio — actual/target alone would show a false
+// 100% bar for an over-target "lower is better" KPI like CAC.
+function pctForKpi(kpi: ResultsLightKpi): number {
+  if (kpi.status === 'on-target') return 100;
+  if (kpi.status === 'no-data' || kpi.actualValue == null || !kpi.targetValue) return 0;
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round((Math.min(kpi.actualValue, kpi.targetValue) / Math.max(kpi.actualValue, kpi.targetValue)) * 100)
+    )
+  );
+}
+
 function fmtCurrency(v: number): string {
   return new Intl.NumberFormat('pl-PL', {
     style: 'currency',
@@ -218,7 +241,6 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
   const t = (pl: string, en: string) => (isPolish ? pl : en);
 
   const [section, setSection] = useState<Section>('kpi');
-  const [openKpiId, setOpenKpiId] = useState<string | null>(null);
 
   const kpiCounts = useMemo(() => {
     const onTarget = kpis.filter((k) => k.status === 'on-target').length;
@@ -364,269 +386,19 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
         {/* CENTER */}
         <main className="min-w-0 overflow-y-auto px-6 py-5">
           {section === 'kpi' && (
-            <>
-              <div className="mb-1 flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="m-0 text-[21px] font-semibold tracking-tight text-c-text">KPI</h2>
-                  <div className="mt-0.5 text-[12.5px] text-c-text-muted">
-                    {kpiCounts.total} {t('wskaźników', 'KPIs')}
-                  </div>
-                </div>
-                <div className="flex items-center gap-5">
-                  <div className="text-right">
-                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-success">
-                      {kpiCounts.onTarget}
-                    </div>
-                    <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
-                      {t('w celu', 'on target')}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-warning">
-                      {kpiCounts.below}
-                    </div>
-                    <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
-                      {t('poniżej', 'below')}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-text-secondary">
-                      {kpiCounts.noData}
-                    </div>
-                    <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
-                      {t('brak danych', 'no data')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-1.5">
-                {kpis.map((kpi) => {
-                  const open = openKpiId === kpi.id;
-                  // Direction-agnostic health bar: `status` (from kpiDomain.ts'
-                  // deriveStatus, which already knows if higher/lower-is-better
-                  // via isOnTarget) is the source of truth, not a raw ratio —
-                  // actual/target alone would show a false 100% bar for an
-                  // over-target "lower is better" KPI like CAC.
-                  const pct =
-                    kpi.status === 'on-target'
-                      ? 100
-                      : kpi.status === 'no-data' || kpi.actualValue == null || !kpi.targetValue
-                        ? 0
-                        : Math.max(
-                            0,
-                            Math.min(
-                              100,
-                              Math.round(
-                                (Math.min(kpi.actualValue, kpi.targetValue) /
-                                  Math.max(kpi.actualValue, kpi.targetValue)) *
-                                  100
-                              )
-                            )
-                          );
-                  return (
-                    <div
-                      key={kpi.id}
-                      className={`overflow-hidden rounded-xl border bg-c-surface transition-colors ${
-                        open ? 'border-c-border-strong shadow-sm' : 'border-c-border hover:border-c-border-strong'
-                      }`}
-                      style={open ? { borderColor: BLUE } : undefined}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setOpenKpiId(open ? null : kpi.id)}
-                        className="grid w-full grid-cols-[16px_1fr_120px_auto] items-center gap-3.5 px-4 py-3 text-left"
-                      >
-                        <span className={`h-2 w-2 rounded-full ${KPI_STATUS_DOT[kpi.status]}`} />
-                        <span className="min-w-0">
-                          <span className="block truncate text-[14px] font-medium text-c-text">{kpi.name}</span>
-                          {kpi.initiativeName && (
-                            <span className="block truncate text-[11.5px] text-c-text-muted">
-                              {kpi.initiativeName}
-                            </span>
-                          )}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-[70px] overflow-hidden rounded-full bg-c-surface-raised">
-                            <span
-                              className="block h-full rounded-full"
-                              style={{ width: `${pct}%`, backgroundColor: KPI_STATUS_BAR_COLOR[kpi.status] }}
-                            />
-                          </span>
-                          <span className="w-9 text-right text-[11px] font-semibold text-c-text-secondary tabular-nums">
-                            {pct}%
-                          </span>
-                        </span>
-                        <span className="flex items-center gap-3">
-                          <span className={`min-w-[76px] whitespace-nowrap text-right text-[12px] ${KPI_STATUS_COLOR[kpi.status]}`}>
-                            {kpi.actualValue ?? '—'} → {kpi.targetValue ?? '—'} {kpi.unit || ''}
-                          </span>
-                          {kpi.trend === 'up' ? (
-                            <TrendingUp className="h-3.5 w-3.5 text-c-success" />
-                          ) : kpi.trend === 'down' ? (
-                            <TrendingDown className="h-3.5 w-3.5 text-c-danger" />
-                          ) : (
-                            <Minus className="h-3.5 w-3.5 text-c-text-muted" />
-                          )}
-                          <ChevronRight
-                            className="h-4 w-4 text-c-text-muted transition-transform"
-                            style={open ? { transform: 'rotate(90deg)' } : undefined}
-                          />
-                        </span>
-                      </button>
-
-                      {open && (
-                        <div className="border-t border-c-border bg-c-surface-raised px-4 py-3.5">
-                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12.5px] text-c-text-secondary">
-                            {kpi.baselineValue != null && (
-                              <span>
-                                {t('baza', 'baseline')}:{' '}
-                                <span className="font-semibold text-c-text tabular-nums">{kpi.baselineValue}</span>
-                              </span>
-                            )}
-                            {kpi.ownerName && (
-                              <span>
-                                {t('właściciel', 'owner')}:{' '}
-                                <span className="font-semibold text-c-text">{kpi.ownerName}</span>
-                              </span>
-                            )}
-                            {kpi.measurementFrequency && (
-                              <span>
-                                {t('pomiar', 'measurement')}:{' '}
-                                <span className="font-semibold text-c-text">{kpi.measurementFrequency}</span>
-                              </span>
-                            )}
-                            {kpi.needsEntry && (
-                              <span className="rounded-full bg-c-warning/15 px-2 py-0.5 text-[11px] font-semibold text-c-warning">
-                                {t('brak nowego wpisu', 'needs entry')}
-                              </span>
-                            )}
-                          </div>
-                          {onOpenKpi && (
-                            <button
-                              type="button"
-                              onClick={() => onOpenKpi(kpi.id)}
-                              className="mt-3 text-[12.5px] font-semibold transition-opacity hover:opacity-80"
-                              style={{ color: BLUE }}
-                            >
-                              {t('Otwórz rekord →', 'Open record →')}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {kpis.length === 0 && (
-                  <div className="py-8 text-center text-[13px] text-c-text-muted">
-                    {t('Brak zdefiniowanych KPI.', 'No KPIs defined yet.')}
-                  </div>
-                )}
-              </div>
-            </>
+            <KpiTab kpis={kpis} kpiCounts={kpiCounts} onOpenKpi={onOpenKpi} isPolish={isPolish} t={t} />
           )}
 
           {section === 'roi' && (
-            <>
-              <div className="mb-1 flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="m-0 text-[21px] font-semibold tracking-tight text-c-text">ROI</h2>
-                  <div className="mt-0.5 text-[12.5px] text-c-text-muted">
-                    {roiItems.length} {t('inicjatyw z ROI', 'initiatives with ROI')} ·{' '}
-                    {roiSummary.coveragePercent}% {t('pokrycia', 'coverage')}
-                  </div>
-                </div>
-                <div className="flex items-center gap-5">
-                  <div className="text-right">
-                    <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-text-secondary">
-                      {fmtCompact(roiSummary.totalProjected)}
-                    </div>
-                    <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
-                      {t('plan', 'projected')}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div
-                      className="text-[20px] font-bold tracking-tight tabular-nums"
-                      style={{ color: BLUE }}
-                    >
-                      {fmtCompact(netRealized)}
-                    </div>
-                    <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
-                      {t('zrealizowano netto (po opex)', 'net realized (post-opex)')}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div
-                      className={`text-[20px] font-bold tracking-tight tabular-nums ${
-                        netVariancePct >= 0
-                          ? 'text-c-success'
-                          : 'text-c-danger'
-                      }`}
-                    >
-                      {netVariancePct >= 0 ? '+' : ''}
-                      {netVariancePct}%
-                    </div>
-                    <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
-                      {t('odchylenie netto', 'net variance')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* one compact meta strip — capex/opex, not separate cards */}
-              <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-c-border bg-c-surface px-3.5 py-2 text-[12px] text-c-text-muted">
-                <span>
-                  CAPEX: <span className="font-semibold text-c-text-secondary">{fmtCurrency(roiSummary.totalCapex)}</span>
-                </span>
-                <span>
-                  OPEX ({t('roczny', 'annual')}):{' '}
-                  <span className="font-semibold text-c-text-secondary">{fmtCurrency(roiSummary.totalOpex)}</span>
-                </span>
-                <span>
-                  {t('brutto zrealizowano', 'gross realized')}:{' '}
-                  <span className="font-semibold text-c-text-secondary">
-                    {fmtCurrency(roiSummary.totalRealized)}
-                  </span>
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-1.5">
-                {roiItems.map((item) => {
-                  const rStatus = deriveRoiStatus(item);
-                  const net = item.realizedBenefit - (item.opexAnnual || 0);
-                  return (
-                    <button
-                      key={item.initiativeId}
-                      type="button"
-                      onClick={() => onOpenRoiItem?.(item.initiativeId)}
-                      className="grid w-full grid-cols-[1fr_auto_auto] items-center gap-3.5 rounded-xl border border-c-border bg-c-surface px-4 py-3 text-left transition-colors hover:border-c-border-strong"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-[14px] font-medium text-c-text">
-                          {item.initiativeName}
-                        </span>
-                        {item.ownerName && (
-                          <span className="block truncate text-[11.5px] text-c-text-muted">{item.ownerName}</span>
-                        )}
-                      </span>
-                      <span className="whitespace-nowrap text-right text-[12px] text-c-text-muted">
-                        {fmtCompact(item.projectedBenefit)} → {item.hasRealized ? fmtCompact(net) : '—'}{' '}
-                        <span className="text-[10.5px]">{t('(netto)', '(net)')}</span>
-                      </span>
-                      <span className={`whitespace-nowrap text-[12px] font-semibold ${ROI_STATUS_COLOR[rStatus]}`}>
-                        {rStatus === 'above' ? t('powyżej planu', 'above plan') : rStatus === 'below' ? t('poniżej planu', 'below plan') : t('wg planu', 'on track')}
-                      </span>
-                    </button>
-                  );
-                })}
-                {roiItems.length === 0 && (
-                  <div className="py-8 text-center text-[13px] text-c-text-muted">
-                    {t('Brak inicjatyw z danymi ROI.', 'No initiatives with ROI data yet.')}
-                  </div>
-                )}
-              </div>
-            </>
+            <RoiTab
+              roiItems={roiItems}
+              roiSummary={roiSummary}
+              netRealized={netRealized}
+              netVariancePct={netVariancePct}
+              onOpenRoiItem={onOpenRoiItem}
+              isPolish={isPolish}
+              t={t}
+            />
           )}
 
           {section === 'okr' && (
@@ -821,5 +593,464 @@ export const ResultsLightShell: React.FC<ResultsLightShellProps> = ({
     </div>
   );
 };
+
+// ---------------------------------------------------------------------------
+// Sub-sections (kept in-file — presentational only, not reused elsewhere
+// yet). Rebuilt 2026-07-12 to embed the REAL `<StandardTable>` facade
+// instead of hand-rolled `.map()` rows — that regression (LightShells
+// gluing their own tables) broke the frozen TRIADA canon, see
+// `scripts/check-list-canon.sh` and `InitiativesLightShell.tsx`'s `ListTab`
+// (same rebuild pattern, same day).
+// ---------------------------------------------------------------------------
+
+const KPI_STATUS_LABEL: Record<ResultsLightKpiStatus, { pl: string; en: string }> = {
+  'on-target': { pl: 'W celu', en: 'On target' },
+  below: { pl: 'Poniżej', en: 'Below' },
+  'no-data': { pl: 'Brak danych', en: 'No data' },
+};
+
+/**
+ * KpiTab — "KPI" pane of the Results light shell. Header stats strip
+ * (unchanged from the previous inline JSX) + the REAL `<StandardTable>` for
+ * the KPI rows: KPI (dot + name/initiative) · Cel (current→target) ·
+ * Postęp (progress bar, right-aligned) · Trend (icon) · Status (chip+dot).
+ * The old inline accordion (baseline/owner/measurement/needsEntry) becomes
+ * StandardTable's `rowDescription` (MUST #3, toggleable from the header
+ * settings popover) instead of a hand-rolled expand/collapse button.
+ */
+function KpiTab({
+  kpis,
+  kpiCounts,
+  onOpenKpi,
+  isPolish,
+  t,
+}: {
+  kpis: ResultsLightKpi[];
+  kpiCounts: { onTarget: number; below: number; noData: number; total: number };
+  onOpenKpi?: (kpiId: string) => void;
+  isPolish: boolean;
+  t: (pl: string, en: string) => string;
+}): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: t('KPI', 'KPI'),
+        sortable: true,
+        filterable: true,
+        render: (row: ResultsLightKpi) => (
+          <span className="flex min-w-0 items-center gap-2">
+            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${KPI_STATUS_DOT[row.status]}`} />
+            <span className="min-w-0">
+              <span className="block truncate text-[13px] font-medium text-c-text">{row.name}</span>
+              {row.initiativeName && (
+                <span className="block truncate text-[11px] text-c-text-muted">{row.initiativeName}</span>
+              )}
+            </span>
+          </span>
+        ),
+      },
+      {
+        id: 'target',
+        label: t('Cel', 'Target'),
+        width: '150px',
+        render: (row: ResultsLightKpi) => (
+          <span className={`whitespace-nowrap text-[12px] ${KPI_STATUS_COLOR[row.status]}`}>
+            {row.actualValue ?? '—'} → {row.targetValue ?? '—'} {row.unit || ''}
+          </span>
+        ),
+      },
+      {
+        id: 'progress',
+        label: t('Postęp', 'Progress'),
+        width: '150px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: ResultsLightKpi) => pctForKpi(row),
+        render: (row: ResultsLightKpi) => {
+          const pct = pctForKpi(row);
+          return (
+            <span className="flex items-center justify-end gap-1.5">
+              <span className="h-1.5 w-[64px] overflow-hidden rounded-full bg-c-surface-raised">
+                <span
+                  className="block h-full rounded-full"
+                  style={{ width: `${pct}%`, backgroundColor: KPI_STATUS_BAR_COLOR[row.status] }}
+                />
+              </span>
+              <span className="w-9 text-right text-[11px] font-semibold text-c-text-secondary tabular-nums">
+                {pct}%
+              </span>
+            </span>
+          );
+        },
+      },
+      {
+        id: 'trend',
+        label: t('Trend', 'Trend'),
+        width: '70px',
+        align: 'center',
+        render: (row: ResultsLightKpi) => (
+          <span className="flex items-center justify-center">
+            {row.trend === 'up' ? (
+              <TrendingUp className="h-3.5 w-3.5 text-c-success" />
+            ) : row.trend === 'down' ? (
+              <TrendingDown className="h-3.5 w-3.5 text-c-danger" />
+            ) : (
+              <Minus className="h-3.5 w-3.5 text-c-text-muted" />
+            )}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('Status', 'Status'),
+        width: '130px',
+        filterable: true,
+        filterOptions: (Object.keys(KPI_STATUS_DOT) as ResultsLightKpiStatus[]).map((s) => ({
+          value: s,
+          label: isPolish ? KPI_STATUS_LABEL[s].pl : KPI_STATUS_LABEL[s].en,
+          color: KPI_STATUS_DOT[s],
+        })),
+        render: (row: ResultsLightKpi) => (
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border border-c-border px-2 py-0.5 text-[11px] font-medium ${KPI_STATUS_COLOR[row.status]}`}
+          >
+            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${KPI_STATUS_DOT[row.status]}`} />
+            {isPolish ? KPI_STATUS_LABEL[row.status].pl : KPI_STATUS_LABEL[row.status].en}
+          </span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, isPolish]
+  );
+
+  const rowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: onOpenKpi
+      ? [
+          {
+            id: 'open',
+            label: t('Otwórz rekord', 'Open record'),
+            icon: Eye,
+            onClick: () => onOpenKpi(String(row.id)),
+          },
+        ]
+      : undefined,
+    universalHandlers: {
+      preview: onOpenKpi ? () => onOpenKpi(String(row.id)) : undefined,
+      previewNote: onOpenKpi ? undefined : t('Brak podglądu w tym widoku', 'No preview in this view'),
+      editNote: t('Edycja z poziomu pełnego rekordu KPI', 'Edit from the full KPI record'),
+    },
+  });
+
+  return (
+    <>
+      <div className="mb-1 flex items-end justify-between gap-4">
+        <div>
+          <h2 className="m-0 text-[21px] font-semibold tracking-tight text-c-text">KPI</h2>
+          <div className="mt-0.5 text-[12.5px] text-c-text-muted">
+            {kpiCounts.total} {t('wskaźników', 'KPIs')}
+          </div>
+        </div>
+        <div className="flex items-center gap-5">
+          <div className="text-right">
+            <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-success">
+              {kpiCounts.onTarget}
+            </div>
+            <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
+              {t('w celu', 'on target')}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-warning">
+              {kpiCounts.below}
+            </div>
+            <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
+              {t('poniżej', 'below')}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-text-secondary">
+              {kpiCounts.noData}
+            </div>
+            <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
+              {t('brak danych', 'no data')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <StandardTable
+          columns={columns}
+          data={kpis}
+          onRowClick={onOpenKpi ? (row) => onOpenKpi(String(row.id)) : undefined}
+          onRowDoubleClick={onOpenKpi ? (row) => onOpenKpi(String(row.id)) : undefined}
+          rowMenu={rowMenu}
+          rowDescription={(row: TableRow) => {
+            const hasDetail = row.baselineValue != null || row.ownerName || row.measurementFrequency || row.needsEntry;
+            if (!hasDetail) return null;
+            return (
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[12px] text-c-text-secondary">
+                {row.baselineValue != null && (
+                  <span>
+                    {t('baza', 'baseline')}:{' '}
+                    <span className="font-semibold text-c-text tabular-nums">{row.baselineValue}</span>
+                  </span>
+                )}
+                {row.ownerName && (
+                  <span>
+                    {t('właściciel', 'owner')}: <span className="font-semibold text-c-text">{row.ownerName}</span>
+                  </span>
+                )}
+                {row.measurementFrequency && (
+                  <span>
+                    {t('pomiar', 'measurement')}:{' '}
+                    <span className="font-semibold text-c-text">{row.measurementFrequency}</span>
+                  </span>
+                )}
+                {row.needsEntry && (
+                  <span className="rounded-full bg-c-warning/15 px-2 py-0.5 text-[11px] font-semibold text-c-warning">
+                    {t('brak nowego wpisu', 'needs entry')}
+                  </span>
+                )}
+              </div>
+            );
+          }}
+          selection={{ selectedIds, onChange: setSelectedIds }}
+          persistKey="results-light.kpi"
+          defaultSort={{ columnId: 'name', direction: 'asc' }}
+          canvasClassName="p-0"
+          empty={{
+            title: t('Brak zdefiniowanych KPI', 'No KPIs defined yet'),
+            description: t(
+              'KPI pojawią się tu, gdy zostaną powiązane z inicjatywami.',
+              'KPIs will appear once linked to initiatives.'
+            ),
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
+const ROI_STATUS_DOT: Record<ResultsLightRoiStatus, string> = {
+  'on-track': 'bg-c-text-secondary',
+  above: 'bg-c-success',
+  below: 'bg-c-danger',
+};
+
+const ROI_STATUS_LABEL: Record<ResultsLightRoiStatus, { pl: string; en: string }> = {
+  'on-track': { pl: 'Wg planu', en: 'On track' },
+  above: { pl: 'Powyżej planu', en: 'Above plan' },
+  below: { pl: 'Poniżej planu', en: 'Below plan' },
+};
+
+/**
+ * RoiTab — "ROI" pane. Header stats strip + capex/opex meta strip (unchanged
+ * from the previous inline JSX) + the REAL `<StandardTable>` for ROI rows:
+ * Inicjatywa (name+owner) · Plan (projected, right) · Zrealizowano netto
+ * (net of opex, right) · Status (chip). `TableRow` requires `id`; ROI items
+ * are keyed by `initiativeId` in the engine shape, so rows are the source
+ * items spread with `id: initiativeId` (no data reshaping beyond that).
+ */
+function RoiTab({
+  roiItems,
+  roiSummary,
+  netRealized,
+  netVariancePct,
+  onOpenRoiItem,
+  isPolish,
+  t,
+}: {
+  roiItems: ResultsLightRoiItem[];
+  roiSummary: ResultsLightRoiSummary;
+  netRealized: number;
+  netVariancePct: number;
+  onOpenRoiItem?: (initiativeId: string) => void;
+  isPolish: boolean;
+  t: (pl: string, en: string) => string;
+}): React.ReactElement {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const rows = useMemo(
+    () => roiItems.map((item) => ({ ...item, id: item.initiativeId })),
+    [roiItems]
+  );
+
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'initiativeName',
+        label: t('Inicjatywa', 'Initiative'),
+        sortable: true,
+        filterable: true,
+        render: (row: ResultsLightRoiItem) => (
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-medium text-c-text">{row.initiativeName}</span>
+            {row.ownerName && (
+              <span className="block truncate text-[11px] text-c-text-muted">{row.ownerName}</span>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: 'projectedBenefit',
+        label: t('Plan', 'Projected'),
+        width: '120px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: ResultsLightRoiItem) => row.projectedBenefit,
+        render: (row: ResultsLightRoiItem) => (
+          <span className="text-[12px] tabular-nums text-c-text-muted">{fmtCompact(row.projectedBenefit)}</span>
+        ),
+      },
+      {
+        id: 'net',
+        label: t('Zrealizowano netto', 'Net realized'),
+        width: '150px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: ResultsLightRoiItem) =>
+          row.hasRealized ? row.realizedBenefit - (row.opexAnnual || 0) : -Infinity,
+        render: (row: ResultsLightRoiItem) => {
+          const net = row.realizedBenefit - (row.opexAnnual || 0);
+          return (
+            <span className="whitespace-nowrap text-[12px] tabular-nums text-c-text-secondary">
+              {row.hasRealized ? fmtCompact(net) : '—'}{' '}
+              <span className="text-[10.5px] text-c-text-muted">{t('(netto)', '(net)')}</span>
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: t('Status', 'Status'),
+        width: '150px',
+        filterable: true,
+        filterOptions: (Object.keys(ROI_STATUS_DOT) as ResultsLightRoiStatus[]).map((s) => ({
+          value: s,
+          label: isPolish ? ROI_STATUS_LABEL[s].pl : ROI_STATUS_LABEL[s].en,
+          color: ROI_STATUS_DOT[s],
+        })),
+        sortAccessor: (row: ResultsLightRoiItem) => deriveRoiStatus(row),
+        render: (row: ResultsLightRoiItem) => {
+          const rStatus = deriveRoiStatus(row);
+          return (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border border-c-border px-2 py-0.5 text-[11px] font-medium ${ROI_STATUS_COLOR[rStatus]}`}
+            >
+              <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${ROI_STATUS_DOT[rStatus]}`} />
+              {isPolish ? ROI_STATUS_LABEL[rStatus].pl : ROI_STATUS_LABEL[rStatus].en}
+            </span>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, isPolish]
+  );
+
+  const rowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: onOpenRoiItem
+      ? [
+          {
+            id: 'open',
+            label: t('Otwórz inicjatywę', 'Open initiative'),
+            icon: Eye,
+            onClick: () => onOpenRoiItem(String(row.id)),
+          },
+        ]
+      : undefined,
+    universalHandlers: {
+      preview: onOpenRoiItem ? () => onOpenRoiItem(String(row.id)) : undefined,
+      previewNote: onOpenRoiItem ? undefined : t('Brak podglądu w tym widoku', 'No preview in this view'),
+      editNote: t('Edycja z poziomu pełnej inicjatywy', 'Edit from the full initiative record'),
+    },
+  });
+
+  return (
+    <>
+      <div className="mb-1 flex items-end justify-between gap-4">
+        <div>
+          <h2 className="m-0 text-[21px] font-semibold tracking-tight text-c-text">ROI</h2>
+          <div className="mt-0.5 text-[12.5px] text-c-text-muted">
+            {roiItems.length} {t('inicjatyw z ROI', 'initiatives with ROI')} · {roiSummary.coveragePercent}%{' '}
+            {t('pokrycia', 'coverage')}
+          </div>
+        </div>
+        <div className="flex items-center gap-5">
+          <div className="text-right">
+            <div className="text-[20px] font-bold tracking-tight tabular-nums text-c-text-secondary">
+              {fmtCompact(roiSummary.totalProjected)}
+            </div>
+            <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
+              {t('plan', 'projected')}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[20px] font-bold tracking-tight tabular-nums" style={{ color: BLUE }}>
+              {fmtCompact(netRealized)}
+            </div>
+            <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
+              {t('zrealizowano netto (po opex)', 'net realized (post-opex)')}
+            </div>
+          </div>
+          <div className="text-right">
+            <div
+              className={`text-[20px] font-bold tracking-tight tabular-nums ${
+                netVariancePct >= 0 ? 'text-c-success' : 'text-c-danger'
+              }`}
+            >
+              {netVariancePct >= 0 ? '+' : ''}
+              {netVariancePct}%
+            </div>
+            <div className="text-[10.5px] uppercase tracking-wide text-c-text-muted">
+              {t('odchylenie netto', 'net variance')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* one compact meta strip — capex/opex, not separate cards */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-c-border bg-c-surface px-3.5 py-2 text-[12px] text-c-text-muted">
+        <span>
+          CAPEX: <span className="font-semibold text-c-text-secondary">{fmtCurrency(roiSummary.totalCapex)}</span>
+        </span>
+        <span>
+          OPEX ({t('roczny', 'annual')}):{' '}
+          <span className="font-semibold text-c-text-secondary">{fmtCurrency(roiSummary.totalOpex)}</span>
+        </span>
+        <span>
+          {t('brutto zrealizowano', 'gross realized')}:{' '}
+          <span className="font-semibold text-c-text-secondary">{fmtCurrency(roiSummary.totalRealized)}</span>
+        </span>
+      </div>
+
+      <div className="mt-4">
+        <StandardTable
+          columns={columns}
+          data={rows}
+          onRowClick={onOpenRoiItem ? (row) => onOpenRoiItem(String(row.id)) : undefined}
+          onRowDoubleClick={onOpenRoiItem ? (row) => onOpenRoiItem(String(row.id)) : undefined}
+          rowMenu={rowMenu}
+          selection={{ selectedIds, onChange: setSelectedIds }}
+          persistKey="results-light.roi"
+          defaultSort={{ columnId: 'initiativeName', direction: 'asc' }}
+          canvasClassName="p-0"
+          empty={{
+            title: t('Brak inicjatyw z danymi ROI', 'No initiatives with ROI data yet'),
+            description: t(
+              'ROI pojawi się tu, gdy inicjatywa dostanie przypisany budżet i rezultaty.',
+              'ROI will appear once an initiative gets a budget and results assigned.'
+            ),
+          }}
+        />
+      </div>
+    </>
+  );
+}
 
 export default ResultsLightShell;
