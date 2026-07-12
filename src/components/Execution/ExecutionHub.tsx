@@ -139,6 +139,7 @@ import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
 import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { getArtifactPath } from '@/utils/artifactLinks';
 import { isExecutionLightEnabled } from '@/utils/executionLightFlag';
 import {
   ExecutionLightShell,
@@ -5994,6 +5995,23 @@ Please return:
               | undefined;
             if (initiative) handleOpenDocument(initiative);
           }}
+          onOpenReport={(id) => {
+            // Reuses the existing classic-view report opener (ReportDocumentView,
+            // see handleOpenReport above) — no new report silnik, per PM1 scope
+            // (report-builder/threeAxisReportService belong to a separate D12/D13 pass).
+            const report = enrichedReportCatalog.find((r) => r.id === id);
+            if (report) handleOpenReport(report);
+          }}
+          onOpenDecision={(id) => {
+            // Canonical cross-module artifact deep-link (RouterSync + parseArtifactRef) —
+            // same mechanism ReportDocumentView.tsx uses to jump to another module's record.
+            navigate(getArtifactPath('decision', id));
+          }}
+          // onPublishSnapshot intentionally NOT wired: "Publikuj snapshot" maps to the
+          // report-builder freeze→snapshot flow (report_builder_versions), which is
+          // explicitly owned by a separate D12/D13 pass (threeAxisReportService /
+          // report-builder.routes) — out of scope for this IA-reorg step. Button stays
+          // disabled until that silnik ships an endpoint to call here.
         />
       </ErrorBoundary>
     );
