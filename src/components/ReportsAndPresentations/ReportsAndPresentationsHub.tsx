@@ -25,11 +25,20 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
+import { isMaterialsLightEnabled } from '@/utils/materialsLightFlag';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
+import {
+  type MaterialDocumentLite,
+  type MaterialPresentationLite,
+  MaterialsLightShell,
+  type MaterialSheetLite,
+  type MaterialStatus,
+} from './MaterialsLightShell';
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -1134,6 +1143,88 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         return null;
     }
   };
+
+  // ── Fala lekkość: gęsta powłoka Materiałów za flagą (default OFF; podgląd
+  // ?ff_materialsLight=1). ON = zastąpienie ciężkiego hubu (7 zakładek Menu 1
+  // + Menu 3 filtrowanie) jedną lekką powłoką 3 typów (Prezentacje/Dokumenty/
+  // Arkusze). OFF = poniższy return BEZ ZMIAN. Umieszczone PO wszystkich
+  // hookach → zgodne z regułami hooków (wzorzec DRDLightShell).
+  //
+  // CAVEAT (mapowanie): `sheetRows` (UnifiedOutputRow z registru artefaktów)
+  // nie niesie `rowCount` (liczby wierszy arkusza) — nieobecne w danym
+  // read-modelu, domyślnie 0 zamiast crash/force-fit. `statusKey` sheetów jest
+  // stringiem z registru; rzutowany na MaterialStatus z fallbackiem 'draft'
+  // dla nierozpoznanych wartości.
+  if (isMaterialsLightEnabled()) {
+    const KNOWN_MATERIAL_STATUSES = new Set<MaterialStatus>([
+      'draft',
+      'generated',
+      'editing',
+      'ready',
+      'exported',
+      'shared',
+      'archived',
+    ]);
+    const toMaterialStatus = (raw: unknown): MaterialStatus => {
+      const s = String(raw ?? '').toLowerCase();
+      return KNOWN_MATERIAL_STATUSES.has(s as MaterialStatus) ? (s as MaterialStatus) : 'draft';
+    };
+
+    const lightPresentations: MaterialPresentationLite[] = presentations.map((p) => ({
+      id: p.id,
+      title: p.title,
+      sourceType: p.sourceType,
+      status: toMaterialStatus(p.status),
+      slideCount: p.slideCount ?? 0,
+      owner: p.owner,
+      updatedAt: p.updatedAt,
+    }));
+
+    const lightDocuments: MaterialDocumentLite[] = reports.map((r) => ({
+      id: r.id,
+      title: r.title,
+      reportType: r.reportType,
+      status: toMaterialStatus(r.status),
+      owner: r.owner,
+      updatedAt: r.updatedAt,
+      exportFormats: r.exportFormats || [],
+    }));
+
+    const lightSheets: MaterialSheetLite[] = sheetRows.map((s) => ({
+      id: s.originRecordId || s.artifactId || s.title,
+      title: s.title,
+      status: toMaterialStatus(s.statusKey),
+      rowCount: 0, // CAVEAT: UnifiedOutputRow nie niesie liczby wierszy — brak źródła danych.
+      owner: s.owner,
+      updatedAt: s.updatedAt,
+    }));
+
+    return (
+      <ErrorBoundary>
+        <MaterialsLightShell
+          libraryName={t('rap.hub.entityName', 'Reports & Presentations')}
+          presentations={lightPresentations}
+          documents={lightDocuments}
+          sheets={lightSheets}
+          onNewMaterial={() => handleNewItem()}
+          onOpenChat={() =>
+            openChatWithContext({
+              entityType: 'outputs_module',
+              entityId: activeTab,
+              entityName: t('rap.hub.entityName', 'Reports & Presentations'),
+              contextData: { activeTab },
+            })
+          }
+          onOpenItem={(tab, id) => {
+            const params = new URLSearchParams(location.search || '');
+            params.set('tab', RAP_TAB_TO_QUERY[tab === 'documents' ? 'outputs_documents' : tab === 'sheets' ? 'outputs_sheets' : 'presentations']);
+            params.set('artifactId', id);
+            navigate(`${location.pathname}?${params.toString()}`);
+          }}
+        />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <div className="h-full" data-testid="reports-presentations-hub">
