@@ -101,12 +101,28 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   const conditionType = data?.conditionType || '';
   const conditionColor =
     EDGE_CONDITION_COLORS[conditionType as keyof typeof EDGE_CONDITION_COLORS] || undefined;
-  const edgeStroke = conditionColor || data?.sourceLaneColor || style?.stroke;
+  // #6p: explicit user color override (EdgeStylePopover, `--c-tag-*` swatch)
+  // wins over the semantic condition color / lane color / raw style prop.
+  const edgeStroke = data?.edgeColor || conditionColor || data?.sourceLaneColor || style?.stroke;
 
   const baseW = selected ? 2.5 : 1.5;
   // A2: message flows read as static dashed lines (no marching-ants animation);
   // sequence/conditional keep the animated primary stroke.
   const isMessage = edgeKind === 'message';
+  // #6p: explicit style override (solid/dashed) from the edge popover wins
+  // over the edgeKind-based default; 'solid' forces the dash off even for
+  // message edges, 'dashed' forces it on for sequence/conditional edges.
+  const strokeStyleOverride = data?.strokeStyleOverride as 'solid' | 'dashed' | undefined;
+  const isDashed = strokeStyleOverride ? strokeStyleOverride === 'dashed' : isMessage;
+  // #6p: arrow direction (none/start/end/both) — rendered via per-edge SVG
+  // markers below. Default 'none' keeps every existing flow byte-identical
+  // (no flow has ever had arrowheads) until a user opts in via the popover.
+  const arrowDirection = (data?.arrowDirection as 'none' | 'start' | 'end' | 'both' | undefined) ?? 'none';
+  const showEndArrow = arrowDirection === 'end' || arrowDirection === 'both';
+  const showStartArrow = arrowDirection === 'start' || arrowDirection === 'both';
+  const markerColor = edgeStroke || EDGE_NEUTRAL_STROKE;
+  const markerEndId = `pf-arrow-end-${id}`;
+  const markerStartId = `pf-arrow-start-${id}`;
 
   const handleAddWaypoint = (e: React.MouseEvent) => {
     // F5a A1: double-click on the edge inserts a waypoint at the pointer.
@@ -121,6 +137,39 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   return (
     <g className="group/flowedge">
       <style>{`@keyframes flowEdgeDash { to { stroke-dashoffset: -12; } }`}</style>
+      {/* #6p: arrowhead markers, sized in user-space so they stay a fixed
+          ~7px regardless of stroke width. One pair per edge (unique ids) so
+          concurrent edges don't fight over marker definitions. */}
+      {(showEndArrow || showStartArrow) && (
+        <defs>
+          {showEndArrow && (
+            <marker
+              id={markerEndId}
+              markerWidth={8}
+              markerHeight={8}
+              refX={7}
+              refY={4}
+              orient="auto"
+              markerUnits="userSpaceOnUse"
+            >
+              <path d="M0,0 L8,4 L0,8 Z" fill={markerColor} />
+            </marker>
+          )}
+          {showStartArrow && (
+            <marker
+              id={markerStartId}
+              markerWidth={8}
+              markerHeight={8}
+              refX={1}
+              refY={4}
+              orient="auto-start-reverse"
+              markerUnits="userSpaceOnUse"
+            >
+              <path d="M8,0 L0,4 L8,8 Z" fill={markerColor} />
+            </marker>
+          )}
+        </defs>
+      )}
       {/* Invisible wide hit area — also the double-click target for waypoints */}
       <path
         d={edgePath}
@@ -146,12 +195,15 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
         id={id}
         className="react-flow__edge-path transition-all duration-200"
         d={edgePath}
+        markerEnd={showEndArrow ? `url(#${markerEndId})` : undefined}
+        markerStart={showStartArrow ? `url(#${markerStartId})` : undefined}
         style={{
           ...style,
           stroke: edgeStroke,
           strokeWidth: baseW,
-          // Message flows are visually dashed at the base layer too.
-          strokeDasharray: isMessage ? '6 5' : (style?.strokeDasharray as any),
+          // Message flows are dashed by default; the popover's explicit
+          // style override (#6p) wins when the user has set one.
+          strokeDasharray: isDashed ? '6 5' : (style?.strokeDasharray as any),
         }}
       />
       {/* Marching-ants overlay — sequence/conditional only */}
