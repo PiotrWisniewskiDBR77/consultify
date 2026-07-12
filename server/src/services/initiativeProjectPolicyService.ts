@@ -100,8 +100,50 @@ export async function resolveOrCreateSystemPortfolioProject(
   }
 }
 
+/**
+ * D1 convenience wrapper — combines the flag check + lazy system-portfolio
+ * resolution in ONE call. Mirrors the exact anchoring logic already inlined
+ * in `createInitiativeService.createInitiative` (lines ~173-178), for the
+ * raw-insert call sites that do NOT go through that canonical funnel.
+ *
+ * Why this exists (F15-sweep, 2026-07-12): `createInitiativeService.ts` only
+ * runs when the CALLER opts in via `process.env.INITIATIVE_FUNNEL_ENABLED
+ * === 'true'` — which is OFF by default, so today the "else" raw-insert
+ * fallback in InitiativeController.ts / ToolController.promoteToOutput /
+ * report-builder.routes.ts / assessment-workflow-v2.routes.ts /
+ * economics.routes.ts / v8/finance.routes.ts / onboardingService.ts is the
+ * LIVE path on demo — and none of those branches anchored project_id before
+ * this change (verified: they persisted `analysis.project_id || null`
+ * straight through, so a missing analysis/report/session project_id became a
+ * silent orphan). This wrapper closes that gap without requiring the funnel
+ * flag to flip.
+ *
+ * Fail-soft: any resolution error degrades to the caller's original
+ * `projectId` value (never blocks/throws) — same posture as the funnel.
+ */
+export async function resolveInitiativeProjectId(
+  orgId: string,
+  projectId: string | null | undefined,
+  opts: { createdBy?: string | null } = {}
+): Promise<string | null> {
+  const trimmed = typeof projectId === 'string' ? projectId.trim() : projectId;
+  if (trimmed) return trimmed as string;
+  if (!isRequireInitiativeProjectEnabled()) return null;
+  try {
+    return await resolveOrCreateSystemPortfolioProject(orgId, opts);
+  } catch (err) {
+    logger.warn(
+      `[initiativeProjectPolicyService] resolveInitiativeProjectId degraded to null (ignored): ${
+        (err as Error)?.message || err
+      }`
+    );
+    return null;
+  }
+}
+
 export default {
   SYSTEM_PORTFOLIO_PROJECT_NAME,
   isRequireInitiativeProjectEnabled,
   resolveOrCreateSystemPortfolioProject,
+  resolveInitiativeProjectId,
 };

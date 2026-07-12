@@ -43,6 +43,7 @@ const {
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import { getOrCreateBrandVoice, updateBrandVoice } from '../services/brandVoiceProfileService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
 import notificationService from '../services/notificationService.js';
 import { computeRagForReport } from '../services/ragLogicService.js';
@@ -5365,6 +5366,16 @@ router.post(
         return res.json({ id: initiativeId, title: initiativeTitle, status: 'DRAFT' });
       }
 
+      // D1 (Zwornik §9 Faza 3): this raw-insert branch below is the LIVE path
+      // (INITIATIVE_FUNNEL_ENABLED defaults off) and did not anchor
+      // project_id — auto-assign the org's system portfolio project instead
+      // of persisting a silent orphan.
+      const anchoredProjectId = await resolveInitiativeProjectId(
+        organizationId,
+        reportData.report.projectId,
+        { createdBy: userId || null }
+      );
+
       let initiativeColumns: string[] = [];
       try {
         const info = await dbAll<Array<{ name?: string }>>(`PRAGMA table_info(initiatives)`, []);
@@ -5376,7 +5387,7 @@ router.post(
       const staticColumnMapping: Record<string, unknown> = {
         id: initiativeId,
         organization_id: organizationId,
-        project_id: reportData.report.projectId || null,
+        project_id: anchoredProjectId,
         report_id: id,
         title: initiativeTitle,
         name: initiativeTitle,
@@ -5400,7 +5411,7 @@ router.post(
           [
             initiativeId,
             organizationId,
-            reportData.report.projectId || null,
+            anchoredProjectId,
             initiativeTitle,
             initiativeDescription,
             id,

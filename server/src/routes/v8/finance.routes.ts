@@ -14,6 +14,7 @@ import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../../services/initiativeProjectPolicyService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import {
@@ -2231,6 +2232,13 @@ router.post(
         initiativeId = __r.id;
       } else {
         initiativeId = uuidv4();
+        // D1 (Zwornik §9 Faza 3): live path (funnel flag off) — anchor to the
+        // portfolio project instead of persisting project_id NULL.
+        const anchoredProjectId = await resolveInitiativeProjectId(
+          organizationId,
+          analysis.project_id,
+          { createdBy: req.user?.id ?? null }
+        );
         await dbRun(
           `INSERT INTO initiatives (
           id, organization_id, project_id, name, summary, status,
@@ -2240,7 +2248,7 @@ router.post(
           [
             initiativeId,
             organizationId,
-            analysis.project_id || null,
+            anchoredProjectId,
             name,
             summary || null,
             'step3',

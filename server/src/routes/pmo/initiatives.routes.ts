@@ -44,6 +44,7 @@ import {
   getCapacityTimeline,
   getInitiativeCapacity,
 } from '../../services/workloadCapacityService.js';
+import { resolveInitiativeProjectId } from '../../services/initiativeProjectPolicyService.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -1135,14 +1136,29 @@ router.post('/:id/duplicate', async (req: any, res: any) => {
     }
 
     if (cols.length === 0) {
-      // Fallback minimal insert (best-effort)
+      // Fallback minimal insert (best-effort). D1: still anchor project_id.
+      const fallbackProjectId = await resolveInitiativeProjectId(
+        String(orgId),
+        original.project_id,
+        { createdBy: userId ? String(userId) : null }
+      );
       await queryHelpers.queryRun(
-        `INSERT INTO initiatives (id, organization_id, title, status, created_at, updated_at)
-         VALUES (?, ?, ?, 'DRAFT', ?, ?)`,
-        [newId, String(orgId), newTitle, now, now]
+        `INSERT INTO initiatives (id, organization_id, project_id, title, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'DRAFT', ?, ?)`,
+        [newId, String(orgId), fallbackProjectId, newTitle, now, now]
       );
       return res.status(201).json({ id: newId });
     }
+
+    // D1 (Zwornik §9 Faza 3): duplicate creates a NEW initiative row — if the
+    // ORIGINAL was itself a pre-zwornik orphan (project_id NULL), anchor the
+    // copy to the org's system portfolio project instead of propagating the
+    // orphan.
+    const anchoredProjectId = await resolveInitiativeProjectId(
+      String(orgId),
+      original.project_id,
+      { createdBy: userId ? String(userId) : null }
+    );
 
     const insertCols: string[] = [];
     const insertVals: any[] = [];
@@ -1153,6 +1169,7 @@ router.post('/:id/duplicate', async (req: any, res: any) => {
       else if (c === 'title') insertVals.push(newTitle);
       else if (c === 'name') insertVals.push(newTitle);
       else if (c === 'status') insertVals.push('DRAFT');
+      else if (c === 'project_id') insertVals.push(anchoredProjectId);
       else if (c === 'created_at') insertVals.push(now);
       else if (c === 'updated_at') insertVals.push(now);
       else if (c === 'created_by')
