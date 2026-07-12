@@ -19,6 +19,8 @@ type Menu3Chip = {
   icon?: React.ReactNode;
   badge?: string | number | null;
   active?: boolean;
+  /** #70: 1-sentence explanation shown as a native tooltip (jasność dla usera). */
+  title?: string;
 };
 
 type Menu3Action = {
@@ -46,7 +48,11 @@ export const AssessmentMenu3ActionBar: React.FC<AssessmentMenu3ActionBarProps> =
     <div className={`${MENU_3_INNER_CLASS} ${className}`}>
       <div className={MENU_3_LEFT_CLASS}>
         {chips.map((chip) => (
-          <div key={chip.id} className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}>
+          <div
+            key={chip.id}
+            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            title={chip.title}
+          >
             {chip.icon || <span className={MENU_3_ALL_DOT_CLASS} />}
             <span className="truncate">{chip.label}</span>
             {chip.badge !== undefined && chip.badge !== null ? (

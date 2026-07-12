@@ -315,6 +315,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const activeConversationId = useConversationStore((s) => s.activeConversationId);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
+  const addChatMessage = useConversationStore((s) => s.addMessage);
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -1268,33 +1269,40 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     );
   }, [assessments, navigate]);
 
-  const handleOpenHubChat = useCallback(async () => {
-    try {
-      if (hubChatId && activeConversationId === hubChatId && !isChatCollapsed) {
-        toggleChatCollapse();
-        return;
-      }
-
-      if (hubChatId) {
-        setActiveConversation(hubChatId);
-      } else {
-        const conversation = await createConversation({
-          title: `Assessment Hub: ${tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment'}`,
-          projectId: currentProjectId || undefined,
-          pmoContext: {
-            assessmentId: activeTab === 'list' ? assessments[0]?.id : undefined,
-          },
-        });
-        setHubChatId(conversation.id);
-      }
-
-      setWorkspaceContext(hubWorkspaceContext);
-      if (isChatCollapsed) {
-        toggleChatCollapse();
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to open AI chat');
+  // #70: shared "open/focus the hub chat" plumbing, extracted so AI Triage can
+  // reuse it and additionally post a framing message (see handleOpenHubTriage
+  // below) instead of being a byte-for-byte duplicate of Chat's onClick.
+  // Returns opened=false when this call only un-collapsed an already-active
+  // chat (so the caller can skip posting a message on repeat clicks).
+  const ensureHubChatOpen = useCallback(async (): Promise<{
+    convId: string | null;
+    opened: boolean;
+  }> => {
+    if (hubChatId && activeConversationId === hubChatId && !isChatCollapsed) {
+      toggleChatCollapse();
+      return { convId: hubChatId, opened: false };
     }
+
+    let convId = hubChatId;
+    if (hubChatId) {
+      setActiveConversation(hubChatId);
+    } else {
+      const conversation = await createConversation({
+        title: `Assessment Hub: ${tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment'}`,
+        projectId: currentProjectId || undefined,
+        pmoContext: {
+          assessmentId: activeTab === 'list' ? assessments[0]?.id : undefined,
+        },
+      });
+      convId = conversation.id;
+      setHubChatId(conversation.id);
+    }
+
+    setWorkspaceContext(hubWorkspaceContext);
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+    return { convId, opened: true };
   }, [
     activeConversationId,
     activeTab,
@@ -1310,30 +1318,70 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     toggleChatCollapse,
   ]);
 
+  const handleOpenHubChat = useCallback(async () => {
+    try {
+      await ensureHubChatOpen();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to open AI chat');
+    }
+  }, [ensureHubChatOpen]);
+
+  // #70: "AI Triage" used to be a byte-for-byte duplicate of "Chat" (same
+  // onClick, same active state) — a pill that promised AI prioritization but
+  // did nothing "Chat" didn't already do. Gave it real, distinct behavior:
+  // open the hub chat AND kick it off with a framing prompt that asks the AI
+  // to triage the current tab's list, instead of an empty conversation. Only
+  // sends the message on a genuinely fresh open (not when the click just
+  // un-collapses an already-open chat), so repeat clicks don't spam messages.
+  const handleOpenHubTriage = useCallback(async () => {
+    try {
+      const { convId, opened } = await ensureHubChatOpen();
+      if (!convId || !opened) return;
+      const laneLabel = tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment';
+      await addChatMessage({
+        conversationId: convId,
+        role: 'user',
+        content: isPolish
+          ? `Zrób wstępną ocenę AI listy „${laneLabel}" (${currentData.length} pozycji): co wymaga uwagi najpierw i dlaczego?`
+          : `Give me an AI pre-screen of the "${laneLabel}" list (${currentData.length} items): what needs attention first, and why?`,
+      });
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to open AI pre-screen');
+    }
+  }, [ensureHubChatOpen, tabs, activeTab, addChatMessage, isPolish, currentData.length]);
+
   const hubMenu3Chips = useMemo(
     () => [
       {
+        // #70: was "Reports lane"/"Initiatives lane"/"Assessment lane" — "lane" is
+        // internal jargon that doesn't tell the user what the pill means. Renamed
+        // to plainly name the current tab (matches the visible tab label); the
+        // badge count is explained via tooltip instead of a vague word.
         id: 'active-tab',
-        label:
-          activeTab === 'reports'
-            ? 'Reports lane'
-            : activeTab === 'initiatives'
-              ? 'Initiatives lane'
-              : 'Assessment lane',
+        label: activeTab === 'reports' ? 'Reports' : activeTab === 'initiatives' ? 'Initiatives' : 'Assessment',
         badge: currentData.length,
         active: true,
+        title: isPolish
+          ? 'Aktualnie otwarta zakładka i liczba pozycji na liście.'
+          : 'Currently open tab and the number of items in its list.',
       },
       {
         id: 'status-filter',
         label: statusFilter === 'all' ? 'All statuses' : `Status ${statusFilter}`,
+        title: isPolish
+          ? 'Filtr statusu zastosowany do listy (kliknij status w tabeli, by go ustawić).'
+          : 'Status filter applied to the list (click a status in the table to set it).',
       },
       {
         id: 'documents',
         label: openDocuments.length > 0 ? 'Focused documents' : 'List workspace',
         badge: openDocuments.length || null,
+        title: isPolish
+          ? 'Liczba otwartych dokumentów (assessment/raport/inicjatywa) w tym module.'
+          : 'Number of documents (assessment/report/initiative) currently open in this module.',
       },
     ],
-    [activeTab, currentData.length, openDocuments.length, statusFilter]
+    [activeTab, currentData.length, isPolish, openDocuments.length, statusFilter]
   );
 
   const thirdHubAction = useMemo(() => {
@@ -1345,6 +1393,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => setShowNewReportModal(true),
         active: false,
         disabled: assessments.length === 0,
+        title: isPolish
+          ? 'Wygeneruj nowy raport z ukończonego assessmentu.'
+          : 'Generate a new report from a completed assessment.',
       };
     }
 
@@ -1356,28 +1407,47 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => setShowInitiativesWizard(true),
         active: false,
         disabled: assessments.length === 0,
+        title: isPolish
+          ? 'Wygeneruj paczkę inicjatyw AI na podstawie wniosków z assessmentu.'
+          : 'Generate an AI initiative pack from the assessment findings.',
       };
     }
 
+    // #70: was "Interpretation Draft" — jargon that didn't say what clicking it
+    // does. It jumps straight into the editor of the most recently updated
+    // assessment (assessments[0], server-sorted by updated_at DESC), resuming
+    // the last-visited axis/area/level for DRD. Renamed to say that plainly.
     return {
       id: 'interpretation',
-      label: 'Interpretation Draft',
+      label: isPolish ? 'Wznów ostatni assessment' : 'Resume latest assessment',
       icon: Lightbulb,
       onClick: openInterpretationDraft,
       active: false,
       disabled: assessments.length === 0,
+      title: isPolish
+        ? 'Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.'
+        : 'Opens the editor for your most recently updated assessment, back where you left off.',
     };
-  }, [activeTab, assessments.length, openInterpretationDraft]);
+  }, [activeTab, assessments.length, isPolish, openInterpretationDraft]);
 
   const hubMenu3Actions = useMemo(
     () => [
       {
+        // #70: label kept ("AI Triage" is the example the owner asked for), but
+        // the click now does something Chat doesn't: opens the hub chat AND
+        // posts a framing prompt asking the AI to prioritize the current tab's
+        // list (see handleOpenHubTriage). Previously this button called the
+        // exact same handler as "Chat" next to it — same onClick, same active
+        // state — so it carried zero information beyond a duplicate label.
         id: 'triage',
         label: 'AI Triage',
         icon: Layers,
-        onClick: () => void handleOpenHubChat(),
+        onClick: () => void handleOpenHubTriage(),
         active: isHubChatActive,
         disabled: isLoading,
+        title: isPolish
+          ? 'Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.'
+          : 'Opens AI chat with a ready-made prompt: what in this list needs attention first.',
       },
       {
         id: 'chat',
@@ -1386,10 +1456,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => void handleOpenHubChat(),
         active: isHubChatActive,
         disabled: isLoading,
+        title: isPolish ? 'Otwiera pusty czat AI dla tego huba.' : 'Opens a blank AI chat for this hub.',
       },
       thirdHubAction,
     ],
-    [handleOpenHubChat, isHubChatActive, isLoading, thirdHubAction]
+    [handleOpenHubChat, handleOpenHubTriage, isHubChatActive, isLoading, isPolish, thirdHubAction]
   );
 
   // Triada standard (canon A3/A6): checkbox selection on the 'list' tab

@@ -12,6 +12,9 @@ const { navigateMock, apiMock, tMock } = vi.hoisted(() => ({
     listReportImports: vi.fn(),
     post: vi.fn(),
     delete: vi.fn(),
+    // #69: AssessmentHub now resolves the Author column via Api.getUsers()
+    // (same wzór as DiscoveryToolsHub) — must be mocked or the hub throws.
+    getUsers: vi.fn(),
   },
   // Mirror react-i18next: the second arg may be a fallback string OR an options
   // object ({ defaultValue, ...interpolation }). Returning the raw object would
@@ -135,6 +138,7 @@ describe('AssessmentHub rate limit resilience', () => {
     apiMock.getAssessmentReports.mockResolvedValue([]);
     apiMock.get.mockResolvedValue([]);
     apiMock.listReportImports.mockResolvedValue({ data: [] });
+    apiMock.getUsers.mockResolvedValue([]);
   });
 
   it('keeps the hub usable when the assessment list is rate limited', async () => {
@@ -213,6 +217,8 @@ describe('AssessmentHub rate limit resilience', () => {
 
     expect(await screen.findByText('AI Triage')).toBeInTheDocument();
     expect(screen.getByText('Chat')).toBeInTheDocument();
-    expect(screen.getByText('Interpretation Draft')).toBeInTheDocument();
+    // #70: "Interpretation Draft" was unclear jargon — renamed to say what the
+    // button does (resume the most recently updated assessment's editor).
+    expect(screen.getByText('Resume latest assessment')).toBeInTheDocument();
   });
 });
