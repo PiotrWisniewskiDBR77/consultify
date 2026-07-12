@@ -138,6 +138,17 @@ import { RolloutTab } from './RolloutTab';
 import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
 import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { isExecutionLightEnabled } from '@/utils/executionLightFlag';
+import {
+  ExecutionLightShell,
+  type ExecutionAlertLite,
+  type ExecutionDecisionLite,
+  type ExecutionInitiativeRowLite,
+  type ExecutionProgramSummaryLite,
+  type ExecutionRag,
+  type ExecutionReportLite,
+} from './ExecutionLightShell';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -5641,6 +5652,221 @@ Please return:
     // Summary ('list') -> keep "New initiative".
     return { onNewItem: handleCreateInitiative, newItemLabel: defaultLabel };
   }, [activeTab, handleCreateInitiative, isPilotParticipant, rolloutSubview, t]);
+
+  // ── Fala 1 lekkość: gęsta powłoka Execution za flagą (default OFF; podgląd
+  // ?ff_executionLight=1). ON = zastąpienie Summary/Rollout/Reporting/
+  // Management tabs jedną lekką powłoką: Summary (3-osiowy raport McKinsey) ·
+  // Alerty · Reporting · Management. OFF = ExecutionHub unchanged. Hooks
+  // placed here (before the final return) per rules-of-hooks — mirrors
+  // AssessmentSessionEditorView's DRDLightShell branch.
+  //
+  // Data-source caveat (headline one — see final report to Piotr for the
+  // full list): `threeAxisReportService.ts` / `programRollupService.ts` have
+  // NO frontend caller ANYWHERE in this codebase — the literal T (time-
+  // elapsed) × Z (EV/BAC) × W (value-vs-target) engine is not wired to any
+  // route the frontend calls. Below is a best-effort PROXY built only from
+  // data ExecutionHub already loads:
+  //   - Z (zadania) ← execSnapshot.overview.progressPercent (real, but is a
+  //     simple completion %, not literally EV/BAC).
+  //   - W (wartość) ← execSnapshot.roi summary/items (realized vs projected
+  //     benefit — real ROI engine, but "value" here means financial benefit
+  //     realization, not the generic value_ledger the doc describes).
+  //   - T (czas) ← NOT available from any state ExecutionHub loads → always
+  //     `{ pct: null, dataQuality: 'missing' }`. scheduleHealth/deliveryPromise
+  //     (both need T) are therefore always NA; only impactGap (W/Z) can compute.
+  //   - Alerts ← `riskSignals` (RiskSignalItem[], the SAME real, already-loaded
+  //     state ExecutionTimelineView renders) — 1:1 shape match, not a proxy.
+  //   - Reports ← `enrichedReportCatalog` (the SAME real "11 raportów" catalog
+  //     already rendered in the Reporting tab), rag via the SAME `computeRAG`.
+  //   - Management/decisions ← `decisions` (ExecutionDecision[], the SAME real
+  //     state rendered in the Management tab). No `priority` field exists on
+  //     that type — defaults to 'medium' (caveat).
+  //   - topActions ← built from `actionCenter` counts (blocked / overdue
+  //     decisions / due-soon tasks / missing dates), the SAME real derived
+  //     state already used elsewhere in this hub.
+  const executionLightModeActive = isExecutionLightEnabled();
+
+  const lightAlerts: ExecutionAlertLite[] = useMemo(
+    () =>
+      riskSignals.map((r) => ({
+        id: r.id,
+        type: r.signalType,
+        severity: r.severity as ExecutionAlertLite['severity'],
+        title: r.title,
+        initiativeName: r.initiativeName,
+        rationale: r.description,
+        suggestedAction: r.suggestedAction,
+      })),
+    [riskSignals]
+  );
+
+  const lightReports: ExecutionReportLite[] = useMemo(
+    () =>
+      enrichedReportCatalog.map((r) => ({
+        id: r.id,
+        title: r.title,
+        audience: r.audience,
+        cadence: r.cadence,
+        rag: computeRAG(r),
+        lastRefreshLabel: r.lastRefreshAt || undefined,
+      })),
+    [enrichedReportCatalog]
+  );
+
+  const lightDecisions: ExecutionDecisionLite[] = useMemo(
+    () =>
+      decisions.map((d) => {
+        const overdue = String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate);
+        const status: ExecutionDecisionLite['status'] = overdue
+          ? 'overdue'
+          : String(d.status).toUpperCase() === 'PENDING'
+            ? 'pending'
+            : 'done';
+        return {
+          id: d.id,
+          title: d.title,
+          ownerName: d.ownerName,
+          dueLabel: d.dueDate,
+          priority: 'medium',
+          status,
+          linkedRiskTitle: d.relatedObjectName,
+        };
+      }),
+    [decisions]
+  );
+
+  const lightTopActions: string[] = useMemo(() => {
+    const out: string[] = [];
+    if (actionCenter.blocked.length > 0) {
+      out.push(
+        isPolish
+          ? `${actionCenter.blocked.length} inicjatyw zablokowanych`
+          : `${actionCenter.blocked.length} initiatives blocked`
+      );
+    }
+    if (actionCenter.overdueDecisions.length > 0) {
+      out.push(
+        isPolish
+          ? `${actionCenter.overdueDecisions.length} decyzji po terminie`
+          : `${actionCenter.overdueDecisions.length} decisions overdue`
+      );
+    }
+    if (actionCenter.dueSoonTasks.length > 0) {
+      out.push(
+        isPolish
+          ? `${actionCenter.dueSoonTasks.length} zadań z terminem w 7 dni`
+          : `${actionCenter.dueSoonTasks.length} tasks due within 7 days`
+      );
+    }
+    if (actionCenter.missingDates.length > 0) {
+      out.push(
+        isPolish
+          ? `${actionCenter.missingDates.length} inicjatyw bez dat planu`
+          : `${actionCenter.missingDates.length} initiatives missing planned dates`
+      );
+    }
+    return out;
+  }, [actionCenter, isPolish]);
+
+  const lightInitiativeRows: ExecutionInitiativeRowLite[] = useMemo(() => {
+    const roiByInitiative = new Map((execSnapshot?.roi.items || []).map((r) => [r.initiativeId, r]));
+    return dashboardBaseInitiatives.map((i) => {
+      const roi = roiByInitiative.get(i.id);
+      const zPct = Number((i as any).progressPercent ?? (i as any).progress);
+      const wPct =
+        roi && roi.hasRealized && roi.projectedBenefit > 0
+          ? (roi.realizedBenefit / roi.projectedBenefit) * 100
+          : null;
+      const healthRaw = String(initiativeHealthMap.get(i.id)?.health || '').toUpperCase();
+      const rag: ExecutionRag =
+        healthRaw === 'RED'
+          ? 'RED'
+          : healthRaw === 'AMBER' || healthRaw === 'YELLOW'
+            ? 'AMBER'
+            : healthRaw === 'GREEN'
+              ? 'GREEN'
+              : 'NA';
+      return {
+        id: i.id,
+        name: i.name,
+        ownerName: (i as any).ownerName || (i as any).owner?.name,
+        T: { pct: null, dataQuality: 'missing' },
+        Z: { pct: Number.isFinite(zPct) ? zPct : null, dataQuality: Number.isFinite(zPct) ? 'ok' : 'missing' },
+        W: { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' },
+        rag,
+      };
+    });
+  }, [dashboardBaseInitiatives, execSnapshot, initiativeHealthMap]);
+
+  const lightProgramSummary: ExecutionProgramSummaryLite = useMemo(() => {
+    const zPct = execSnapshot?.overview.progressPercent ?? null;
+    const roiSummary = execSnapshot?.roi.summary;
+    const wPct =
+      roiSummary && roiSummary.totalProjected > 0
+        ? (roiSummary.totalRealized / roiSummary.totalProjected) * 100
+        : null;
+    const impactGapRatio = zPct !== null && zPct !== 0 && wPct !== null ? wPct / zPct : null;
+    const impactGapRag: ExecutionRag =
+      impactGapRatio === null ? 'NA' : impactGapRatio >= 0.95 ? 'GREEN' : impactGapRatio >= 0.85 ? 'AMBER' : 'RED';
+    const healthScore = executionHealth?.healthScore ?? null;
+    const programRag: ExecutionRag =
+      healthScore === null ? 'NA' : healthScore >= 85 ? 'GREEN' : healthScore >= 65 ? 'AMBER' : 'RED';
+    const onTimePct =
+      execSnapshot?.workstreams.items && execSnapshot.workstreams.items.length > 0
+        ? (execSnapshot.workstreams.items.reduce((sum, w) => sum + w.onTrackCount, 0) /
+            Math.max(
+              1,
+              execSnapshot.workstreams.items.reduce((sum, w) => sum + w.initiativeCount, 0)
+            )) *
+          100
+        : null;
+    return {
+      initiativeCount: dashboardBaseInitiatives.length,
+      T: { pct: null, dataQuality: 'missing' },
+      Z: { pct: zPct, dataQuality: zPct === null ? 'missing' : 'ok' },
+      W: { pct: wPct, dataQuality: wPct === null ? 'missing' : 'ok' },
+      scheduleHealth: { ratio: null, rag: 'NA' },
+      impactGap: { ratio: impactGapRatio, rag: impactGapRag },
+      deliveryPromise: { ratio: null, rag: 'NA' },
+      rag: programRag,
+      engagementPct: null,
+      onTimePct,
+      peopleAssigned: 0,
+      peopleCapacity: 0,
+      overdueCount: actionCenter.overdueDecisions.length,
+    };
+  }, [dashboardBaseInitiatives.length, execSnapshot, executionHealth, actionCenter.overdueDecisions.length]);
+
+  if (executionLightModeActive) {
+    return (
+      <ErrorBoundary>
+        <ExecutionLightShell
+          programName={execSnapshot?.project?.name || undefined}
+          periodLabel={execSnapshot?.overview.phaseLabel || undefined}
+          program={lightProgramSummary}
+          initiatives={lightInitiativeRows}
+          alerts={lightAlerts}
+          reports={lightReports}
+          decisions={lightDecisions}
+          topActions={lightTopActions}
+          onOpenChat={() =>
+            openChatWithContext({
+              entityType: 'execution_module',
+              entityId: 'execution',
+              entityName: t('execution.aiChat', 'Execution'),
+              contextData: { projectId: currentProjectId },
+            })
+          }
+          onOpenInitiative={(id) => {
+            const initiative = dashboardBaseInitiatives.find((i) => i.id === id) as
+              | FullInitiative
+              | undefined;
+            if (initiative) handleOpenDocument(initiative);
+          }}
+        />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <>
