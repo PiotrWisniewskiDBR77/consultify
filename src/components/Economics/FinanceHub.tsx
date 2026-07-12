@@ -163,6 +163,28 @@ function sanitizeStatementTitle(raw?: string | null): string {
   return value;
 }
 
+// Build distinct StandardTable filter options (§2 canon) from the currently
+// loaded rows for a categorical field. Options are data-driven so the dropdown
+// never shows values that match zero rows. `labelFor` optionally maps a raw
+// value to a human label (e.g. 'budget' → 'Budget').
+function buildFilterOptions(
+  rows: Array<Record<string, unknown>>,
+  accessor: (row: any) => unknown,
+  labelFor?: (value: string) => string
+): { value: string; label: string }[] {
+  const seen = new Set<string>();
+  const out: { value: string; label: string }[] = [];
+  for (const row of rows) {
+    const raw = accessor(row);
+    if (raw === undefined || raw === null) continue;
+    const value = String(raw).trim();
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    out.push({ value, label: labelFor ? labelFor(value) : value });
+  }
+  return out.sort((a, b) => a.label.localeCompare(b.label));
+}
+
 // Empty-state icon per tab for the shared Models/Analysis/Prediction/Valuation/
 // Investment StandardTable block (canon A4, StandardTableEmpty.icon wants a
 // LucideIcon component, not the pre-rendered ReactNode in KIND_ICONS).
@@ -300,6 +322,17 @@ export const FinanceHub: React.FC = () => {
     filteredRows,
     statusCounts,
   } = useFinanceData(activeTab, searchQuery, activeFilters);
+
+  // #82 — tab-specific column filters (currency/method/analysisType/subtype…) do
+  // not exist on every tab. When the tab changes, drop any non-status filter so a
+  // stale filter can never silently hide all rows on a tab that lacks that column.
+  useEffect(() => {
+    setActiveFilters((prev) =>
+      prev.some((f) => f.column !== 'status')
+        ? prev.filter((f) => f.column === 'status')
+        : prev
+    );
+  }, [activeTab]);
 
   const {
     selectedId,
@@ -889,6 +922,45 @@ export const FinanceHub: React.FC = () => {
     [t]
   );
 
+  // Data-driven filter options (#82 — Finance lists must offer more than one
+  // filterable column). Derived from the *unfiltered* rows of the active tab so
+  // the dropdowns list exactly the values present, no dead options.
+  const currencyFilterOptions = useMemo(
+    () => buildFilterOptions(rowsForActiveTab as any[], (r) => r.currency),
+    [rowsForActiveTab]
+  );
+  const analysisTypeFilterOptions = useMemo(
+    () =>
+      buildFilterOptions(
+        rowsForActiveTab as any[],
+        (r) => r.analysisType,
+        (v) => v.charAt(0).toUpperCase() + v.slice(1)
+      ),
+    [rowsForActiveTab]
+  );
+  const methodFilterOptions = useMemo(
+    () => buildFilterOptions(rowsForActiveTab as any[], (r) => r.method),
+    [rowsForActiveTab]
+  );
+  const sourceTypeFilterOptions = useMemo(
+    () =>
+      buildFilterOptions(
+        rowsForActiveTab as any[],
+        (r) => r.sourceType,
+        (v) => v.charAt(0).toUpperCase() + v.slice(1)
+      ),
+    [rowsForActiveTab]
+  );
+  const predictionSubtypeFilterOptions = useMemo(
+    () =>
+      buildFilterOptions(rowsForActiveTab as any[], (r) => r.predictionType, (v) =>
+        v === 'budget'
+          ? t('finance.prediction.budget', 'Budget')
+          : t('finance.prediction.model', 'Model')
+      ),
+    [rowsForActiveTab, t]
+  );
+
   const baseTypeCol: TableColumn = useMemo(
     () => ({
       id: 'type',
@@ -975,6 +1047,8 @@ export const FinanceHub: React.FC = () => {
           id: 'currency',
           label: t('common.currency', 'Currency'),
           width: '90px',
+          filterable: true,
+          filterOptions: currencyFilterOptions,
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
               <span className="text-sm text-c-text-secondary">{row.currency}</span>
@@ -1065,6 +1139,8 @@ export const FinanceHub: React.FC = () => {
           id: 'analysisType',
           label: t('finance.columns.analysisType', 'Type'),
           width: '140px',
+          filterable: true,
+          filterOptions: analysisTypeFilterOptions,
           render: (row: FinanceRow) =>
             row.kind === 'analysis' || row.kind === 'investment' ? (
               <span className="text-sm text-c-text-secondary capitalize">
@@ -1089,6 +1165,8 @@ export const FinanceHub: React.FC = () => {
           id: 'currency',
           label: t('common.currency', 'Currency'),
           width: '90px',
+          filterable: true,
+          filterOptions: currencyFilterOptions,
           render: (row: FinanceRow) =>
             row.kind === 'analysis' || row.kind === 'investment' ? (
               <span className="text-sm text-c-text-secondary">{row.currency}</span>
@@ -1104,9 +1182,13 @@ export const FinanceHub: React.FC = () => {
       return [
         baseTypeCol,
         {
-          id: 'predictionSubtype',
+          // id = 'predictionType' so the built-in FilterableTable match
+          // (`row[column.id]`) reads the raw 'model' | 'budget' field directly.
+          id: 'predictionType',
           label: t('finance.columns.subtype', 'Subtype'),
           width: '130px',
+          filterable: true,
+          filterOptions: predictionSubtypeFilterOptions,
           render: (row: FinanceRow) => {
             if (row.kind !== 'prediction') return <span className="text-sm text-c-text-muted">—</span>;
             const pRow = row as FinanceModelRow;
@@ -1169,6 +1251,8 @@ export const FinanceHub: React.FC = () => {
         id: 'sourceType',
         label: t('finance.columns.source', 'Source'),
         width: '120px',
+        filterable: true,
+        filterOptions: sourceTypeFilterOptions,
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
             <span className="text-sm text-c-text-secondary capitalize">
@@ -1182,6 +1266,8 @@ export const FinanceHub: React.FC = () => {
         id: 'method',
         label: t('finance.columns.method', 'Method'),
         width: '100px',
+        filterable: true,
+        filterOptions: methodFilterOptions,
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
             <span className="text-sm text-c-text-secondary">{row.method}</span>
@@ -1205,7 +1291,19 @@ export const FinanceHub: React.FC = () => {
       baseStatusCol,
       baseUpdatedCol,
     ];
-  }, [activeTab, baseTypeCol, baseTitleCol, baseStatusCol, baseUpdatedCol, t]);
+  }, [
+    activeTab,
+    baseTypeCol,
+    baseTitleCol,
+    baseStatusCol,
+    baseUpdatedCol,
+    currencyFilterOptions,
+    analysisTypeFilterOptions,
+    methodFilterOptions,
+    sourceTypeFilterOptions,
+    predictionSubtypeFilterOptions,
+    t,
+  ]);
 
   // ---- Grid items ----
   const gridItems: GridItem[] = useMemo(
