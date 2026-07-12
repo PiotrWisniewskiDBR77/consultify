@@ -69,6 +69,7 @@ import { useDemoSession } from '../../hooks/useDemoSession';
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import type { ChatContextAction } from '../../store/slices/uiSlice';
 import { useAIActionsStore } from '../../store/useAIActionsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
@@ -688,6 +689,15 @@ interface UnifiedChatPanelProps {
 
   /** Per-tab quick prompt chips shown above the input */
   quickPrompts?: string[];
+
+  /**
+   * Persistent contextual command buttons (D17): rendered above the input and
+   * ALWAYS visible (unlike quickPrompts, which vanish after the first message).
+   * An artifact view publishes these when it hands off to the one docked Teresa
+   * panel, so its "AI Consultant" actions live inside Teresa. See
+   * ChatContextAction (uiSlice).
+   */
+  contextActions?: ChatContextAction[];
 }
 
 // ============================================================================
@@ -717,6 +727,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   kickoffMessage,
   onKickoffConsumed,
   quickPrompts,
+  contextActions,
 }) => {
   const route = useLocation();
   const navigateToRoute = useNavigate();
@@ -6093,6 +6104,30 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       {t('common.dismiss', 'Dismiss')}
                     </button>
                   </div>
+                </div>
+              )}
+              {/* Persistent contextual command buttons (D17). Unlike quickPrompts
+                  these stay visible after the conversation starts — they are the
+                  artifact's "AI Consultant" actions, now living inside the one
+                  docked Teresa panel instead of a separate chat instance. */}
+              {contextActions && contextActions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+                  {contextActions.map((action) => (
+                    <button
+                      key={action.id}
+                      type="button"
+                      onClick={() => action.onClick()}
+                      disabled={action.busy}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-full border border-c-border-strong bg-c-surface-raised text-c-text-secondary hover:bg-c-surface hover:text-c-text transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                    >
+                      {action.busy ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        action.icon ?? null
+                      )}
+                      <span>{action.label}</span>
+                    </button>
+                  ))}
                 </div>
               )}
               {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
