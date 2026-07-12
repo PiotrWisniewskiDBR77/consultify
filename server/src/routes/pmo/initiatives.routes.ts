@@ -23,6 +23,7 @@ import auditEventsService from '../../services/AuditEventsService.js';
 import blueprintService from '../../services/blueprintService.js';
 import { requireInitiativeWriteAccess } from '../../services/initiative/initiativeGovernanceGuard.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
+import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
 import {
   createWizardSession,
   evaluateShortlistGateForSession,
@@ -1053,6 +1054,39 @@ router.delete('/programs/:programId', requireOrgRole('user'), async (req: any, r
  * Get all initiatives for organization
  */
 router.get('/', InitiativeController.getInitiatives);
+
+/**
+ * GET /api/initiatives/raci-results-summary?ids=id1,id2,id3
+ * Faza2 gap #5 (audyt endpointów READ) — batched READ dla LISTY inicjatyw: RACI
+ * (initiative_stakeholders.raci_type, taki sam wzorzec jak GET /:id/stakeholders) +
+ * powiązane wyniki/KPI (initiative_kpis przez `initiativeKpiAssignmentService` — TEN SAM
+ * czytnik co katalog KPI, NIE tabele v8, zgodnie z istniejącym wzorcem). Additive: NIE
+ * zmienia kształtu `GET /` (getInitiatives) — lista woła to jako osobny, batched follow-up
+ * zamiast N+1 wywołań `/:id/stakeholders` + `/:id/kpis` per wiersz. Fail-soft per id
+ * (obcy/nieznany initiativeId → pusty wpis, nie 500 całego batcha). Max 200 id na wywołanie.
+ * Query: `ids` (wymagane, comma-separated).
+ */
+router.get('/raci-results-summary', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const idsRaw = typeof req.query.ids === 'string' ? req.query.ids : '';
+    const ids = idsRaw
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+    if (ids.length === 0) {
+      return res.json({ summary: {} });
+    }
+    const summary = await getInitiativesRaciResultsSummary(orgId, ids);
+    return res.json({ summary });
+  } catch (err) {
+    logger.error('[Initiatives] Error loading raci-results-summary:', err);
+    return res.status(500).json({ error: 'Failed to load RACI/results summary' });
+  }
+});
 
 /**
  * POST /api/initiatives/:id/duplicate
