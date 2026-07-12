@@ -3175,6 +3175,76 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch project finance rollup');
   },
 
+  /**
+   * Zwornik D3 — assign/unassign a project to a program (`projects.program_id`,
+   * migration 916). Backend: `pmo/projects.routes.ts` PUT /:id/program.
+   */
+  assignProjectProgram: async (projectId: string, programId: string | null): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/program`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ programId }),
+    });
+    return handleResponse(res, 'Failed to assign project to program');
+  },
+
+  // --- PROGRAMS (Zwornik D3 — hierarchia: program → projekty → inicjatywy) ---
+  // Program CRUD already lives at /api/initiatives/programs (V4-INIT-02,
+  // server/src/routes/pmo/initiatives.routes.ts) — this is the frontend client.
+  getPrograms: async (): Promise<any[]> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/programs`, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch programs');
+    return Array.isArray(data?.programs) ? data.programs : [];
+  },
+
+  getProgram: async (programId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/programs/${programId}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch program');
+  },
+
+  getProgramRollup: async (programId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/programs/${programId}/rollup`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch program rollup');
+  },
+
+  createProgram: async (data: {
+    name: string;
+    description?: string;
+    parentProgramId?: string | null;
+    status?: string;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/programs`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create program');
+  },
+
+  updateProgram: async (
+    programId: string,
+    data: { name?: string; description?: string; parentProgramId?: string | null; status?: string }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/programs/${programId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update program');
+  },
+
+  deleteProgram: async (programId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/programs/${programId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete program');
+  },
+
   getMeetings: async (projectId?: string): Promise<any> => {
     const qs = new URLSearchParams();
     if (projectId) qs.set('projectId', projectId);
