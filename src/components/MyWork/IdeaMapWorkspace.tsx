@@ -2661,32 +2661,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
     [activeTool, isPolish]
   );
-  const workspaceNextStepLabel = useMemo(() => {
-    if (selection.type !== 'none') {
-      return t('mindmap.refineTheCurrentSelectionInTools');
-    }
-    if (activePanel !== 'tools') {
-      return t('mindmap.openTheToolsPanelToGive');
-    }
-    switch (activeTool) {
-      case 'mindmap':
-        return t('mindmap.startWithTheCoreProblemAnd');
-      case 'whiteboard':
-        return t('mindmap.sketchOptionsAndClusterTheStrongest');
-      case 'process_flow':
-        return t('mindmap.mapTheMainStepsOwnersAnd');
-      case 'table':
-        return t('mindmap.translateTheIdeaIntoStructuredRows');
-      default:
-        return t('mindmap.giveThisIdeaTheNextConcrete');
-    }
-  }, [activePanel, activeTool, isPolish, selection.type]);
-  // top-14 (56px) keeps the breadcrumb/header card BELOW the tool's top toolbar (~44px) so it
-  // never covers the left toolbar buttons (Create / Draw / Undo / Voting). Previously top-4
-  // overlapped the toolbar, making Create hard to reach on the whiteboard/mindmap canvas.
-  const workspaceHeaderOffsetClass =
-    drillDownStack.length > 0 || focusMode !== 'full' ? 'top-20' : 'top-14';
-
   // ── EditorShell Wave W-1 (flag-gated, default OFF) ──────────────────────
   // When `isMelsCanvasEnabled()` is true, the four canvases render inside the
   // EditorShell (`IdeaCanvasMelsView`, `centerMode='canvas'`) instead of the
@@ -3118,64 +3092,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           </div>
         )}
 
-        <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-sticky max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border-subtle dark:bg-c-surface`}
-        >
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
-            <button
-              type="button"
-              onClick={() => navigate('/my-work')}
-              className="text-[11px] font-semibold text-c-text-secondary hover:underline dark:text-c-text-muted"
-            >
-              {t('mindmap.ideas')}
-            </button>
-            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
-              ›
-            </span>
-            <span
-              className="max-w-[14rem] truncate text-[11px] font-semibold text-c-text-secondary dark:text-c-text"
-              title={title || (t('mindmap.untitled'))}
-            >
-              {title ||
-                safeTitleFromSeed(seedText, isPolish) ||
-                (t('mindmap.untitled'))}
-            </span>
-            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
-              ›
-            </span>
-            <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted">
-              {activeToolLabel}
-            </span>
-            {(() => {
-              const rootNode = graphNodes.find(
-                (n: any) =>
-                  n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id)
-              );
-              const ps = rootNode?.data?.pipelineStage;
-              if (!ps || ps === 'draft') return null;
-              return (
-                <span className="rounded-full bg-c-surface dark:bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:text-c-text border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle">
-                  {ps}
-                </span>
-              );
-            })()}
-            <span className="text-[10px] text-c-text-secondary dark:text-c-text-secondary">
-              {draftSavedLabel}
-            </span>
-          </div>
-          {/*
-           * UI-L14 (Editor Shell Canon §2 GÓRNA): the title already lives in the
-           * breadcrumb above, so we no longer repeat it as a heading. The next-step
-           * hint is an empty-state affordance — it only helps before there's a graph,
-           * so we hide it once the canvas has content instead of hovering over the work.
-           */}
-          {!mapHasNodes && (
-            <div className="mt-2 text-[11px] leading-5 text-c-text-secondary dark:text-c-text-muted">
-              {workspaceNextStepLabel}
-            </div>
-          )}
-        </div>
+        {/* #6b+#6c (Z9): pływająca karta "Ideas › tytuł › tool · Saved Xs ago"
+            USUNIĘTA W CAŁOŚCI — dublet tytułu (już w breadcrumb drill-down
+            powyżej / kontekście) + dublet stanu zapisu (#6b, autosave ma być
+            cichy). Zapis w tle bez zmian (draftSavedLabel dalej liczony i
+            używany w panelu bocznym "Status"). */}
 
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
 
