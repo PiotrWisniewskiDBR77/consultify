@@ -72,10 +72,7 @@ export function isCanvasToolbarV2Enabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  // 2026-07-12: default flipped ON per Piotr's explicit request to review
-  // everything live on demo.consultify.ai. Explicit ?ff_x=0 or localStorage
-  // override still works to force it back OFF.
-  return true;
+  return readEnvFlag();
 }
 
 export const CANVAS_TOOLBAR_V2_FLAG_KEYS = {

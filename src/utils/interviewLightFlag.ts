@@ -72,10 +72,6 @@ export function isInterviewLightEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  // 2026-07-12 EMERGENCY REVERT: this shell rolled its own list markup instead
-  // of the real <StandardTable> (TRIADA kanon) - visual regression on an
-  // already-approved, frozen list screen. Reverted to OFF until the shell is
-  // rebuilt to embed the real component. See _ODBIOR_NOTATKI_2026-07-12.md.
   return readEnvFlag();
 }
 
