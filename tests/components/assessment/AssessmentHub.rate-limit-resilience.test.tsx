@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -12,6 +12,9 @@ const { navigateMock, apiMock, tMock } = vi.hoisted(() => ({
     listReportImports: vi.fn(),
     post: vi.fn(),
     delete: vi.fn(),
+    // #69: AssessmentHub now resolves the Author column via Api.getUsers()
+    // (same wzór as DiscoveryToolsHub) — must be mocked or the hub throws.
+    getUsers: vi.fn(),
   },
   // Mirror react-i18next: the second arg may be a fallback string OR an options
   // object ({ defaultValue, ...interpolation }). Returning the raw object would
@@ -135,6 +138,7 @@ describe('AssessmentHub rate limit resilience', () => {
     apiMock.getAssessmentReports.mockResolvedValue([]);
     apiMock.get.mockResolvedValue([]);
     apiMock.listReportImports.mockResolvedValue({ data: [] });
+    apiMock.getUsers.mockResolvedValue([]);
   });
 
   it('keeps the hub usable when the assessment list is rate limited', async () => {
@@ -213,6 +217,84 @@ describe('AssessmentHub rate limit resilience', () => {
 
     expect(await screen.findByText('AI Triage')).toBeInTheDocument();
     expect(screen.getByText('Chat')).toBeInTheDocument();
-    expect(screen.getByText('Interpretation Draft')).toBeInTheDocument();
+    // #70: "Interpretation Draft" was unclear jargon — renamed to say what the
+    // button does (resume the most recently updated assessment's editor).
+    expect(screen.getByText('Resume latest assessment')).toBeInTheDocument();
+  });
+
+  // #73: reports/initiatives used to open a bespoke `fixed inset-0` backdrop
+  // drawer (Report Slide-Over) or overlay (InitiativeCompactPanel) on row
+  // click — reported as "preview paints across the whole screen" — instead of
+  // the docked StandardTable + StandardPreview aside 'list' already had. These
+  // two tests render the real (non-mocked) StandardTable/StandardPreview and
+  // assert a single contained `<aside>` panel appears on click, not a
+  // full-viewport overlay.
+  it('reports tab: row click opens a docked preview aside, not a full-viewport drawer (#73)', async () => {
+    apiMock.listAssessments.mockResolvedValue({ items: [] });
+    apiMock.getAssessmentReports.mockResolvedValue([
+      {
+        id: 'rep_1',
+        name: 'DBR77 Report',
+        status: 'APPROVED',
+        assessmentType: 'DRD',
+        createdBy: 'user_1',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      },
+    ]);
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/assessment']}>
+        <AssessmentHub initialTab="reports" />
+      </MemoryRouter>
+    );
+
+    const row = await screen.findByText('DBR77 Report');
+    expect(container.querySelector('aside')).toBeNull();
+
+    fireEvent.click(row);
+
+    await waitFor(() => {
+      expect(container.querySelector('aside')).not.toBeNull();
+    });
+    // Exactly one docked preview panel — not a second full-viewport overlay.
+    expect(container.querySelectorAll('aside')).toHaveLength(1);
+    expect(container.querySelector('.fixed.inset-0')).toBeNull();
+  });
+
+  it('initiatives tab: row click opens a docked preview aside, not the compact-panel overlay (#73)', async () => {
+    apiMock.listAssessments.mockResolvedValue({ items: [] });
+    apiMock.get.mockImplementation((url: string) => {
+      if (String(url).startsWith('/initiatives')) {
+        return Promise.resolve([
+          {
+            id: 'init_1',
+            name: 'Automated Changeover Optimization',
+            status: 'DRAFT',
+            priority: 'high',
+            sourceType: 'assessment',
+            sourceId: 'src_1',
+            updatedAt: '2026-04-01T00:00:00.000Z',
+          },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/assessment']}>
+        <AssessmentHub initialTab="initiatives" />
+      </MemoryRouter>
+    );
+
+    const row = await screen.findByText('Automated Changeover Optimization');
+    expect(container.querySelector('aside')).toBeNull();
+
+    fireEvent.click(row);
+
+    await waitFor(() => {
+      expect(container.querySelector('aside')).not.toBeNull();
+    });
+    expect(container.querySelectorAll('aside')).toHaveLength(1);
+    expect(container.querySelector('.fixed.inset-0')).toBeNull();
   });
 });

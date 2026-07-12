@@ -477,6 +477,11 @@ export class InitiativeController {
       const initiatives = rows.map((i: Record<string, unknown>) => ({
         id: i.id,
         organizationId: i.organization_id,
+        // #69: Author column (Assessment ▸ Initiatives) — `SELECT i.*` already pulls
+        // created_by off the row, but this hand-built response shape dropped it before
+        // reaching the client (same class of bug as unifiedSessionsData in
+        // DiscoveryToolsHub.tsx, fixed for assessment sessions in commit 94403b4f57).
+        createdBy: i.created_by,
         projectId: i.project_id,
         name: getMultilingualText((i.name as string) || (i.title as string), lang),
         axis: i.axis,

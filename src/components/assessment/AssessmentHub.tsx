@@ -27,7 +27,6 @@ import {
   Trash2,
   Upload,
   Workflow,
-  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -58,13 +57,11 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
 
-import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
 import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
   ASSESSMENT_STATUSES,
-  FilterableTable,
   FilterChip,
   GridItem,
   GridView,
@@ -181,6 +178,10 @@ interface AssessmentFromAPI {
   createdAt?: string;
   updatedAt?: string;
   organizationId?: string;
+  // #69: list endpoint is `SELECT * FROM assessments` (server/AssessmentController.listAssessments),
+  // so raw rows carry snake_case created_by even though this type isn't formally normalized.
+  createdBy?: string;
+  created_by?: string;
 }
 
 interface ReportBuilderReportFromAPI {
@@ -192,6 +193,8 @@ interface ReportBuilderReportFromAPI {
   assessmentType?: string;
   createdAt?: string;
   updatedAt?: string;
+  // #69: /assessment-reports list endpoint already maps r.created_by → createdBy.
+  createdBy?: string;
 }
 
 const ASSESSMENT_HUB_CACHE_KEY = 'assessment.hub.cached-list.v1';
@@ -309,6 +312,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const activeConversationId = useConversationStore((s) => s.activeConversationId);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
+  const addChatMessage = useConversationStore((s) => s.addMessage);
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -327,15 +331,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Compact panel (preview) state
-  const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  // Report slide-over: assessment report id + (optional) linked report builder id
-  const [slideOverReportId, setSlideOverReportId] = useState<string | null>(null);
-  const [slideOverBuilderReportId, setSlideOverBuilderReportId] = useState<string | null>(null);
-  const [slideOverReportOpen, setSlideOverReportOpen] = useState(false);
-  // canon §7.1: selected row for side-preview (assessment 'list' tab)
+  // #73: canon §7.1 selected-row-for-side-preview state, one per tab (StandardTable
+  // + StandardPreview aside — same pattern as 'list', previously the only tab that
+  // had it). Replaces the old previewInitiativeId/isPreviewOpen (InitiativeCompactPanel
+  // overlay) and slideOverReportId/slideOverBuilderReportId/slideOverReportOpen
+  // (bespoke full-viewport backdrop drawer) — both were reported (#73,
+  // _PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md) to paint over the whole screen instead of
+  // a contained right-hand panel.
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
+  const [selectedReportRowId, setSelectedReportRowId] = useState<string | null>(null);
+  const [selectedInitiativeRowId, setSelectedInitiativeRowId] = useState<string | null>(null);
   // Triada standard §A4/§A6: checkbox selection on the 'list' tab → Menu 3 bulk mode.
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
 
@@ -346,6 +351,38 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [isLoading, setIsLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [hubChatId, setHubChatId] = useState<string | null>(null);
+  const isPolish = !!i18n.language?.startsWith('pl');
+
+  // #69: org users, for resolving createdBy → display name in the Author column
+  // (wzór: DiscoveryToolsHub.tsx, commit 94403b4f57).
+  const [orgUsers, setOrgUsers] = useState<
+    Array<{ id: string; firstName: string; lastName: string }>
+  >([]);
+  useEffect(() => {
+    let cancelled = false;
+    Api.getUsers()
+      .then((fetched) => {
+        if (!cancelled) setOrgUsers(fetched || []);
+      })
+      .catch((err) => console.error('[AssessmentHub] Failed to load users for Author column', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const authorNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of orgUsers) {
+      map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
+    }
+    return map;
+  }, [orgUsers]);
+  const getAuthorLabel = useCallback(
+    (createdBy?: string | null) => {
+      if (!createdBy) return '';
+      return authorNameById.get(createdBy) || createdBy;
+    },
+    [authorNameById]
+  );
 
   // Deep link support:
   // - /assessment?assessmentId=<id>
@@ -635,6 +672,21 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       width: '120px',
       sortable: true,
     };
+    // #69: Author column — wzór DiscoveryToolsHub.tsx (commit 94403b4f57):
+    // resolve row.createdBy against org users, fall back to raw id, then '—'.
+    const authorCol: TableColumn = {
+      id: 'createdBy',
+      label: t('assessment.hub.table.author', isPolish ? 'Autor' : 'Author'),
+      width: '140px',
+      render: (row) => {
+        const label = getAuthorLabel(row?.createdBy);
+        return label ? (
+          <span className="text-sm text-c-text truncate">{label}</span>
+        ) : (
+          <span className="text-sm text-slate-400">—</span>
+        );
+      },
+    };
 
     if (activeTab === 'reports') {
       return [
@@ -669,6 +721,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           },
         },
         progressCol,
+        authorCol,
         updatedCol,
       ];
     }
@@ -726,6 +779,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             return <PriorityChip level={level} label={row.priority || 'medium'} />;
           },
         },
+        authorCol,
         updatedCol,
       ];
     }
@@ -746,9 +800,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         })),
       },
       progressCol,
+      authorCol,
       updatedCol,
     ];
-  }, [activeTab]);
+  }, [activeTab, t, isPolish, getAuthorLabel]);
 
   // Handlers
   const handleOpenDocument = useCallback(
@@ -808,20 +863,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         return;
       }
 
-      // For reports, open in slide-over panel
+      // #73: "Open" (double-click / kebab primary) — for non-imported reports,
+      // navigate straight into the real Report Builder. Previously this opened
+      // the same bespoke "compact summary" slide-over as row single-click (no
+      // Open/Preview distinction at all) — that slide-over is now the
+      // StandardPreview aside's content instead (see renderContent's 'reports'
+      // branch + selectedReportRow), so "Open" needs its own, deeper action.
       if (docType === 'report') {
-        setSlideOverReportId(row.id);
-        setSlideOverBuilderReportId(
-          (row as any).builderReportId || (row as any).builder_report_id || null
-        );
-        setSlideOverReportOpen(true);
-        return;
-      }
-
-      // For initiatives, row click opens quick preview panel
-      if (docType === 'initiative') {
-        setPreviewInitiativeId(row.id);
-        setIsPreviewOpen(true);
+        const builderId = (row as any).builderReportId || (row as any).builder_report_id || row.id;
+        navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`);
         return;
       }
 
@@ -911,12 +961,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const handleRowAction = useCallback(
     async (action: string, row: any) => {
       if (action === 'preview') {
-        // Open compact side panel for quick preview
+        // #73: "Preview" selects the row for the docked StandardPreview aside
+        // (canon §7.1, same as 'list') instead of opening the full document —
+        // this used to be indistinguishable from "Open" on every tab.
         if (activeTab === 'initiatives') {
-          setPreviewInitiativeId(row.id);
-          setIsPreviewOpen(true);
+          setSelectedInitiativeRowId(String(row.id));
+        } else if (activeTab === 'reports') {
+          setSelectedReportRowId(String(row.id));
         } else {
-          handleOpenDocument(row);
+          setSelectedAssessmentId(String(row.id));
         }
       } else if (action === 'view' || action === 'edit') {
         handleOpenDocument(row);
@@ -1010,7 +1063,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           toast.error(e?.message || 'Failed to delete', { id: toastId });
         }
       } else if (action === 'rename') {
-        // "Edit" action — open full editor (vs "Open" = slide-over / preview)
+        // "Edit" action — open full editor (vs "Preview" = docked side panel)
         if (activeTab === 'reports') {
           const builderId =
             (row as any).builderReportId || (row as any).builder_report_id || row.id;
@@ -1040,33 +1093,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     [handleOpenDocument, activeTab, refreshData, navigate]
   );
 
-  // Close compact preview panel
-  const handleClosePreview = useCallback(() => {
-    setIsPreviewOpen(false);
-    setTimeout(() => setPreviewInitiativeId(null), 300);
-  }, []);
-
-  // Open full card from compact panel
-  const handleOpenFullFromPreview = useCallback(
-    (initiative: any) => {
-      handleClosePreview();
-      // Open as document
-      const doc: OpenDocument = {
-        id: initiative.id,
-        type: 'initiative',
-        subType: initiative.sourceType,
-        name: initiative.name || initiative.title,
-        status: initiative.status,
-      };
-      setOpenDocuments((prev) => {
-        if (prev.find((d) => d.id === doc.id)) return prev;
-        return [...prev, doc];
-      });
-      setActiveDocumentId(initiative.id);
-    },
-    [handleClosePreview]
-  );
-
   // Transform API data to display format — each tab uses its own status mapper
   const currentData = useMemo(() => {
     let data: any[] = [];
@@ -1080,6 +1106,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           status: mapAssessmentApiStatus(item.status),
           progress: item.progress ?? 0,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
+          createdBy: item.createdBy || item.created_by,
         }));
         break;
       case 'reports': {
@@ -1099,6 +1127,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   : 40,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
           assessmentName: (item as any).assessmentName,
+          createdBy: (item as any).createdBy,
           _isImported: false,
         }));
 
@@ -1133,6 +1162,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           priority: item.priority || 'medium',
           impact: item.impact || 'medium',
           sourceReport: item.reportName || item.report_name || null,
+          // #69: server/InitiativeController.getInitiatives now maps i.created_by → createdBy.
+          createdBy: item.createdBy,
         }));
         break;
       default:
@@ -1207,33 +1238,40 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     );
   }, [assessments, navigate]);
 
-  const handleOpenHubChat = useCallback(async () => {
-    try {
-      if (hubChatId && activeConversationId === hubChatId && !isChatCollapsed) {
-        toggleChatCollapse();
-        return;
-      }
-
-      if (hubChatId) {
-        setActiveConversation(hubChatId);
-      } else {
-        const conversation = await createConversation({
-          title: `Assessment Hub: ${tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment'}`,
-          projectId: currentProjectId || undefined,
-          pmoContext: {
-            assessmentId: activeTab === 'list' ? assessments[0]?.id : undefined,
-          },
-        });
-        setHubChatId(conversation.id);
-      }
-
-      setWorkspaceContext(hubWorkspaceContext);
-      if (isChatCollapsed) {
-        toggleChatCollapse();
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to open AI chat');
+  // #70: shared "open/focus the hub chat" plumbing, extracted so AI Triage can
+  // reuse it and additionally post a framing message (see handleOpenHubTriage
+  // below) instead of being a byte-for-byte duplicate of Chat's onClick.
+  // Returns opened=false when this call only un-collapsed an already-active
+  // chat (so the caller can skip posting a message on repeat clicks).
+  const ensureHubChatOpen = useCallback(async (): Promise<{
+    convId: string | null;
+    opened: boolean;
+  }> => {
+    if (hubChatId && activeConversationId === hubChatId && !isChatCollapsed) {
+      toggleChatCollapse();
+      return { convId: hubChatId, opened: false };
     }
+
+    let convId = hubChatId;
+    if (hubChatId) {
+      setActiveConversation(hubChatId);
+    } else {
+      const conversation = await createConversation({
+        title: `Assessment Hub: ${tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment'}`,
+        projectId: currentProjectId || undefined,
+        pmoContext: {
+          assessmentId: activeTab === 'list' ? assessments[0]?.id : undefined,
+        },
+      });
+      convId = conversation.id;
+      setHubChatId(conversation.id);
+    }
+
+    setWorkspaceContext(hubWorkspaceContext);
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+    return { convId, opened: true };
   }, [
     activeConversationId,
     activeTab,
@@ -1249,30 +1287,70 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     toggleChatCollapse,
   ]);
 
+  const handleOpenHubChat = useCallback(async () => {
+    try {
+      await ensureHubChatOpen();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to open AI chat');
+    }
+  }, [ensureHubChatOpen]);
+
+  // #70: "AI Triage" used to be a byte-for-byte duplicate of "Chat" (same
+  // onClick, same active state) — a pill that promised AI prioritization but
+  // did nothing "Chat" didn't already do. Gave it real, distinct behavior:
+  // open the hub chat AND kick it off with a framing prompt that asks the AI
+  // to triage the current tab's list, instead of an empty conversation. Only
+  // sends the message on a genuinely fresh open (not when the click just
+  // un-collapses an already-open chat), so repeat clicks don't spam messages.
+  const handleOpenHubTriage = useCallback(async () => {
+    try {
+      const { convId, opened } = await ensureHubChatOpen();
+      if (!convId || !opened) return;
+      const laneLabel = tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment';
+      await addChatMessage({
+        conversationId: convId,
+        role: 'user',
+        content: isPolish
+          ? `Zrób wstępną ocenę AI listy „${laneLabel}" (${currentData.length} pozycji): co wymaga uwagi najpierw i dlaczego?`
+          : `Give me an AI pre-screen of the "${laneLabel}" list (${currentData.length} items): what needs attention first, and why?`,
+      });
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to open AI pre-screen');
+    }
+  }, [ensureHubChatOpen, tabs, activeTab, addChatMessage, isPolish, currentData.length]);
+
   const hubMenu3Chips = useMemo(
     () => [
       {
+        // #70: was "Reports lane"/"Initiatives lane"/"Assessment lane" — "lane" is
+        // internal jargon that doesn't tell the user what the pill means. Renamed
+        // to plainly name the current tab (matches the visible tab label); the
+        // badge count is explained via tooltip instead of a vague word.
         id: 'active-tab',
-        label:
-          activeTab === 'reports'
-            ? 'Reports lane'
-            : activeTab === 'initiatives'
-              ? 'Initiatives lane'
-              : 'Assessment lane',
+        label: activeTab === 'reports' ? 'Reports' : activeTab === 'initiatives' ? 'Initiatives' : 'Assessment',
         badge: currentData.length,
         active: true,
+        title: isPolish
+          ? 'Aktualnie otwarta zakładka i liczba pozycji na liście.'
+          : 'Currently open tab and the number of items in its list.',
       },
       {
         id: 'status-filter',
         label: statusFilter === 'all' ? 'All statuses' : `Status ${statusFilter}`,
+        title: isPolish
+          ? 'Filtr statusu zastosowany do listy (kliknij status w tabeli, by go ustawić).'
+          : 'Status filter applied to the list (click a status in the table to set it).',
       },
       {
         id: 'documents',
         label: openDocuments.length > 0 ? 'Focused documents' : 'List workspace',
         badge: openDocuments.length || null,
+        title: isPolish
+          ? 'Liczba otwartych dokumentów (assessment/raport/inicjatywa) w tym module.'
+          : 'Number of documents (assessment/report/initiative) currently open in this module.',
       },
     ],
-    [activeTab, currentData.length, openDocuments.length, statusFilter]
+    [activeTab, currentData.length, isPolish, openDocuments.length, statusFilter]
   );
 
   const thirdHubAction = useMemo(() => {
@@ -1284,6 +1362,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => setShowNewReportModal(true),
         active: false,
         disabled: assessments.length === 0,
+        title: isPolish
+          ? 'Wygeneruj nowy raport z ukończonego assessmentu.'
+          : 'Generate a new report from a completed assessment.',
       };
     }
 
@@ -1295,28 +1376,47 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => setShowInitiativesWizard(true),
         active: false,
         disabled: assessments.length === 0,
+        title: isPolish
+          ? 'Wygeneruj paczkę inicjatyw AI na podstawie wniosków z assessmentu.'
+          : 'Generate an AI initiative pack from the assessment findings.',
       };
     }
 
+    // #70: was "Interpretation Draft" — jargon that didn't say what clicking it
+    // does. It jumps straight into the editor of the most recently updated
+    // assessment (assessments[0], server-sorted by updated_at DESC), resuming
+    // the last-visited axis/area/level for DRD. Renamed to say that plainly.
     return {
       id: 'interpretation',
-      label: 'Interpretation Draft',
+      label: isPolish ? 'Wznów ostatni assessment' : 'Resume latest assessment',
       icon: Lightbulb,
       onClick: openInterpretationDraft,
       active: false,
       disabled: assessments.length === 0,
+      title: isPolish
+        ? 'Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.'
+        : 'Opens the editor for your most recently updated assessment, back where you left off.',
     };
-  }, [activeTab, assessments.length, openInterpretationDraft]);
+  }, [activeTab, assessments.length, isPolish, openInterpretationDraft]);
 
   const hubMenu3Actions = useMemo(
     () => [
       {
+        // #70: label kept ("AI Triage" is the example the owner asked for), but
+        // the click now does something Chat doesn't: opens the hub chat AND
+        // posts a framing prompt asking the AI to prioritize the current tab's
+        // list (see handleOpenHubTriage). Previously this button called the
+        // exact same handler as "Chat" next to it — same onClick, same active
+        // state — so it carried zero information beyond a duplicate label.
         id: 'triage',
         label: 'AI Triage',
         icon: Layers,
-        onClick: () => void handleOpenHubChat(),
+        onClick: () => void handleOpenHubTriage(),
         active: isHubChatActive,
         disabled: isLoading,
+        title: isPolish
+          ? 'Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.'
+          : 'Opens AI chat with a ready-made prompt: what in this list needs attention first.',
       },
       {
         id: 'chat',
@@ -1325,10 +1425,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => void handleOpenHubChat(),
         active: isHubChatActive,
         disabled: isLoading,
+        title: isPolish ? 'Otwiera pusty czat AI dla tego huba.' : 'Opens a blank AI chat for this hub.',
       },
       thirdHubAction,
     ],
-    [handleOpenHubChat, isHubChatActive, isLoading, thirdHubAction]
+    [handleOpenHubChat, handleOpenHubTriage, isHubChatActive, isLoading, isPolish, thirdHubAction]
   );
 
   // Triada standard (canon A3/A6): checkbox selection on the 'list' tab
@@ -1429,16 +1530,123 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     [selectedListRow, t, handleRowAction, handleOpenDocument]
   );
 
-  // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
+  // #73: same StandardTable+StandardPreview contract as 'list', now for
+  // 'reports' and 'initiatives' — previously these two tabs had no docked
+  // preview at all (single click == full open, no Preview/Open distinction).
+  const selectedReportRow: any = selectedReportRowId
+    ? (currentData.find((r: any) => r.id === selectedReportRowId) ?? null)
+    : null;
+
+  const reportPreviewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedReportRow
+        ? {
+            // Imported PDF reports don't have a linked Report Builder record yet
+            // (still mid-review), so Delete/Duplicate aren't wired for them —
+            // omit rather than offer an action that would silently no-op.
+            resolutions: selectedReportRow._isImported
+              ? []
+              : [
+                  {
+                    id: 'delete',
+                    variant: 'destructive',
+                    label: t('common.delete', 'Delete'),
+                    icon: Trash2,
+                    onClick: () => void handleRowAction('delete', selectedReportRow),
+                  },
+                ],
+            informational: [
+              {
+                id: 'open',
+                variant: 'neutral',
+                label: t('common.open', 'Open'),
+                icon: ExternalLink,
+                shortcut: 'O',
+                onClick: () => handleOpenDocument(selectedReportRow),
+              },
+              ...(selectedReportRow._isImported
+                ? []
+                : [
+                    {
+                      id: 'duplicate',
+                      variant: 'neutral' as const,
+                      label: t('common.duplicate', 'Duplicate'),
+                      icon: Copy,
+                      onClick: () => void handleRowAction('duplicate', selectedReportRow),
+                    },
+                  ]),
+            ],
+          }
+        : undefined,
+    [selectedReportRow, t, handleRowAction, handleOpenDocument]
+  );
+
+  const selectedInitiativeRow: any = selectedInitiativeRowId
+    ? (currentData.find((r: any) => r.id === selectedInitiativeRowId) ?? null)
+    : null;
+
+  const initiativePreviewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedInitiativeRow
+        ? {
+            resolutions: [
+              {
+                id: 'delete',
+                variant: 'destructive',
+                label: t('common.delete', 'Delete'),
+                icon: Trash2,
+                onClick: () => void handleRowAction('delete', selectedInitiativeRow),
+              },
+            ],
+            informational: [
+              {
+                id: 'open',
+                variant: 'neutral',
+                label: t('common.open', 'Open'),
+                icon: ExternalLink,
+                shortcut: 'O',
+                onClick: () => handleOpenDocument(selectedInitiativeRow),
+              },
+              {
+                id: 'duplicate',
+                variant: 'neutral',
+                label: t('common.duplicate', 'Duplicate'),
+                icon: Copy,
+                onClick: () => void handleRowAction('duplicate', selectedInitiativeRow),
+              },
+            ],
+          }
+        : undefined,
+    [selectedInitiativeRow, t, handleRowAction, handleOpenDocument]
+  );
+
+  // Esc closes preview; single-key shortcuts (O) active while preview open
+  // (kanon B.24/B.31) — generalized across all 3 tabs (#73).
   useEffect(() => {
-    if (activeTab !== 'list' || !selectedAssessmentId) return;
-    const shortcuts = standardPreviewShortcuts(listPreviewActions);
+    const selectedRowId =
+      activeTab === 'list'
+        ? selectedAssessmentId
+        : activeTab === 'reports'
+          ? selectedReportRowId
+          : activeTab === 'initiatives'
+            ? selectedInitiativeRowId
+            : null;
+    if (!selectedRowId) return;
+    const actions =
+      activeTab === 'list'
+        ? listPreviewActions
+        : activeTab === 'reports'
+          ? reportPreviewActions
+          : initiativePreviewActions;
+    const shortcuts = standardPreviewShortcuts(actions);
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
         return;
       if (e.key === 'Escape') {
-        setSelectedAssessmentId(null);
+        if (activeTab === 'list') setSelectedAssessmentId(null);
+        else if (activeTab === 'reports') setSelectedReportRowId(null);
+        else if (activeTab === 'initiatives') setSelectedInitiativeRowId(null);
         return;
       }
       const handler = shortcuts[e.key.toUpperCase()];
@@ -1449,7 +1657,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeTab, selectedAssessmentId, listPreviewActions]);
+  }, [
+    activeTab,
+    selectedAssessmentId,
+    selectedReportRowId,
+    selectedInitiativeRowId,
+    listPreviewActions,
+    reportPreviewActions,
+    initiativePreviewActions,
+  ]);
 
   // Render content based on active document or list
   const renderContent = () => {
@@ -1718,17 +1934,258 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       );
     }
 
-    return (
-      <FilterableTable
-        columns={tableColumns}
-        data={currentData}
-        onRowClick={handleOpenDocument}
-        onRowAction={handleRowAction}
-        activeFilters={activeFilters}
-        onFilterChange={setActiveFilters}
-        emptyMessage={emptyStateMessage}
-      />
-    );
+    // #73: 'reports' tab — same StandardTable + StandardPreview contract as
+    // 'list' above (was FilterableTable's implicit fallback kebab — a flat,
+    // unlabeled Open/Preview/Duplicate/Edit/Delete menu with no sections —
+    // and row click opened a bespoke full-viewport backdrop drawer instead of
+    // a docked panel; see _PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md #73).
+    if (activeTab === 'reports') {
+      const selectedRow = selectedReportRow;
+      const previewActions = reportPreviewActions;
+
+      return (
+        <div className="h-full flex overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+            <StandardTable
+              columns={tableColumns}
+              data={currentData}
+              selectedRowId={selectedReportRowId}
+              onRowClick={(row) => setSelectedReportRowId(String((row as any).id))}
+              onRowDoubleClick={(row) => handleOpenDocument(row as any)}
+              rowDescription={() => null}
+              defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+              persistKey="assessment.hub.reports"
+              empty={{
+                icon: FileText,
+                title: t('assessment.reports.emptyState.title', 'No reports yet'),
+                description: emptyStateMessage,
+                actionLabel: t('assessment.reports.emptyState.generate', 'Generate Report'),
+                onAction: () => setShowNewReportModal(true),
+              }}
+              rowMenu={(row): StandardRowMenu => {
+                const isImported = !!(row as any)?._isImported;
+                const builderId =
+                  (row as any)?.builderReportId || (row as any)?.builder_report_id || row.id;
+                return {
+                  primary: [
+                    {
+                      id: 'open',
+                      label: t('common.open', 'Open'),
+                      icon: ExternalLink,
+                      onClick: () => handleOpenDocument(row as any),
+                    },
+                    ...(isImported
+                      ? []
+                      : [
+                          {
+                            id: 'duplicate',
+                            label: t('common.duplicate', 'Duplicate'),
+                            icon: Copy,
+                            onClick: () => void handleRowAction('duplicate', row as any),
+                          },
+                        ]),
+                  ],
+                  universalHandlers: {
+                    preview: () => setSelectedReportRowId(String((row as any).id)),
+                    edit: isImported
+                      ? undefined
+                      : () =>
+                          navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`),
+                    editNote: isImported
+                      ? (isPolish
+                          ? 'Edycja przez przegląd zaimportowanego PDF'
+                          : 'Edit via the imported-PDF review flow')
+                      : undefined,
+                  },
+                  destructive: isImported
+                    ? undefined
+                    : { onClick: () => void handleRowAction('delete', row as any) },
+                };
+              }}
+            />
+          </div>
+
+          {selectedRow ? (
+            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <StandardPreview
+                title={selectedRow.name || 'Report'}
+                onClose={() => setSelectedReportRowId(null)}
+                onOpenFull={() => handleOpenDocument(selectedRow)}
+                meta={{
+                  pills: [
+                    {
+                      label: String(selectedRow.status || 'DRAFT'),
+                      tone: statusChipTone(selectedRow.status),
+                    },
+                  ],
+                  trailing: (
+                    <span className="text-[11px] font-semibold text-c-text-secondary">
+                      {selectedRow.updatedAt
+                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </span>
+                  ),
+                }}
+                details={{
+                  text: [
+                    `${t('assessment.table.type', 'Type')}: ${
+                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
+                      selectedRow.framework ||
+                      '—'
+                    }`,
+                    selectedRow.assessmentName
+                      ? `${t('assessment.reports.source', isPolish ? 'Assessment źródłowy' : 'Source assessment')}: ${selectedRow.assessmentName}`
+                      : null,
+                    `${t('assessment.hub.table.author', isPolish ? 'Autor' : 'Author')}: ${
+                      getAuthorLabel(selectedRow.createdBy) || '—'
+                    }`,
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n'),
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(
+                      `${selectedRow.name} — ${selectedRow.status}`
+                    );
+                  },
+                }}
+                relations={[]}
+                actions={previewActions}
+              >
+                {/* #73: reuse the existing report-summary component (fetches full
+                    report + exports, offers PDF/PPTX/DOCX download + web-preview
+                    link) — same content as before, just moved from a bespoke
+                    fixed-inset-0 backdrop drawer into the canonical docked
+                    StandardPreview aside (the actual "full screen" bug). */}
+                {!selectedRow._isImported && (
+                  <ReportSlideOverContent
+                    assessmentReportId={selectedRow.id}
+                    builderReportId={selectedRow.builderReportId}
+                    onOpenFull={() => handleOpenDocument(selectedRow)}
+                  />
+                )}
+              </StandardPreview>
+            </aside>
+          ) : null}
+        </div>
+      );
+    }
+
+    // #73: 'initiatives' tab — same contract; replaces the InitiativeCompactPanel
+    // overlay (fixed inset-0 backdrop drawer) that used to open on row click.
+    if (activeTab === 'initiatives') {
+      const selectedRow = selectedInitiativeRow;
+      const previewActions = initiativePreviewActions;
+
+      return (
+        <div className="h-full flex overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+            <StandardTable
+              columns={tableColumns}
+              data={currentData}
+              selectedRowId={selectedInitiativeRowId}
+              onRowClick={(row) => setSelectedInitiativeRowId(String((row as any).id))}
+              onRowDoubleClick={(row) => handleOpenDocument(row as any)}
+              rowDescription={() => null}
+              defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+              persistKey="assessment.hub.initiatives"
+              empty={{
+                icon: Lightbulb,
+                title: t('assessment.initiatives.emptyState.title', 'No initiatives yet'),
+                description: emptyStateMessage,
+                actionLabel: t('assessment.initiatives.emptyState.generate', 'Initiative Pack'),
+                onAction: () => setShowInitiativesWizard(true),
+              }}
+              rowMenu={(row): StandardRowMenu => ({
+                primary: [
+                  {
+                    id: 'open',
+                    label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    onClick: () => handleOpenDocument(row as any),
+                  },
+                  {
+                    id: 'duplicate',
+                    label: t('common.duplicate', 'Duplicate'),
+                    icon: Copy,
+                    onClick: () => void handleRowAction('duplicate', row as any),
+                  },
+                ],
+                universalHandlers: {
+                  preview: () => setSelectedInitiativeRowId(String((row as any).id)),
+                  edit: () => handleOpenDocument(row as any),
+                },
+                destructive: {
+                  onClick: () => void handleRowAction('delete', row as any),
+                },
+              })}
+            />
+          </div>
+
+          {selectedRow ? (
+            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <StandardPreview
+                title={selectedRow.name || 'Initiative'}
+                onClose={() => setSelectedInitiativeRowId(null)}
+                onOpenFull={() => handleOpenDocument(selectedRow)}
+                meta={{
+                  pills: [
+                    {
+                      label: String(selectedRow.status || 'DRAFT'),
+                      tone: statusChipTone(selectedRow.status),
+                    },
+                    {
+                      label: String(selectedRow.priority || 'medium'),
+                      tone: 'neutral',
+                    },
+                  ],
+                  trailing: (
+                    <span className="text-[11px] font-semibold text-c-text-secondary">
+                      {selectedRow.updatedAt
+                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </span>
+                  ),
+                }}
+                details={{
+                  text: [
+                    `${t('assessment.table.type', 'Type')}: ${
+                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
+                      selectedRow.framework ||
+                      '—'
+                    }`,
+                    selectedRow.sourceReport
+                      ? `${t('assessment.initiatives.sourceReport', isPolish ? 'Raport źródłowy' : 'Source report')}: ${selectedRow.sourceReport}`
+                      : null,
+                    `${t('assessment.hub.table.author', isPolish ? 'Autor' : 'Author')}: ${
+                      getAuthorLabel(selectedRow.createdBy) || '—'
+                    }`,
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n'),
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(
+                      `${selectedRow.name} — ${selectedRow.status}`
+                    );
+                  },
+                }}
+                relations={[]}
+                actions={previewActions}
+              />
+            </aside>
+          ) : null}
+        </div>
+      );
+    }
+
+    return null;
   };
 
   // Handle PDF file upload
@@ -1935,101 +2392,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onCreated={(reportId) => navigate(`/reports/builder/${reportId}`)}
       />
 
-      {/* Initiative Compact Side Panel (Quick Preview) */}
-      <InitiativeCompactPanel
-        initiative={null}
-        initiativeId={previewInitiativeId || undefined}
-        isOpen={isPreviewOpen}
-        onClose={handleClosePreview}
-        onOpenFull={handleOpenFullFromPreview}
-        onUpdate={() => refreshData()}
-      />
-
-      {/* Report Slide-Over Panel — compact summary */}
-      {slideOverReportOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-50 bg-black/40 transition-opacity"
-            onClick={() => {
-              setSlideOverReportOpen(false);
-              setTimeout(() => {
-                setSlideOverReportId(null);
-                setSlideOverBuilderReportId(null);
-              }, 300);
-            }}
-          />
-          {/* Slide-over panel — compact width */}
-          <div
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden flex flex-col"
-            style={{ animation: 'slideInRight 0.25s ease-out' }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/80">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                  <FileText size={14} className="text-indigo-400" />
-                </div>
-                <h3 className="text-slate-900 dark:text-white font-semibold text-sm">
-                  Report Summary
-                </h3>
-              </div>
-              <button
-                onClick={() => {
-                  setSlideOverReportOpen(false);
-                  setTimeout(() => {
-                    setSlideOverReportId(null);
-                    setSlideOverBuilderReportId(null);
-                  }, 300);
-                }}
-                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            {/* Content — compact report summary (scrollable) */}
-            <div className="flex-1 overflow-auto p-5">
-              {slideOverReportId ? (
-                <ReportSlideOverContent
-                  assessmentReportId={slideOverReportId}
-                  builderReportId={slideOverBuilderReportId || undefined}
-                  onOpenFull={() => {
-                    setSlideOverReportOpen(false);
-                    const targetId = slideOverBuilderReportId || slideOverReportId;
-                    if (targetId) navigate(`/reports/builder/${targetId}`);
-                  }}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-32 text-slate-500 dark:text-slate-400 text-sm">
-                  No report selected
-                </div>
-              )}
-            </div>
-            {/* Sticky footer — Open Full Editor */}
-            {slideOverReportId && (
-              <div className="shrink-0 px-5 py-4 border-t border-slate-200 dark:border-navy-700 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm">
-                <button
-                  onClick={() => {
-                    setSlideOverReportOpen(false);
-                    const targetId = slideOverBuilderReportId || slideOverReportId;
-                    if (targetId) navigate(`/reports/builder/${targetId}`);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 transition-colors"
-                >
-                  Open Full Editor
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-      <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
+      {/* #73: the old Initiative Compact Side Panel overlay and the bespoke
+          Report Slide-Over backdrop drawer (both `fixed inset-0` full-viewport
+          overlays — the reported "preview paints across the whole screen"
+          bug) are gone. Both tabs now use the same docked StandardTable +
+          StandardPreview aside as 'list' — see renderContent() above. */}
     </>
   );
 };
@@ -2231,28 +2598,20 @@ const ReportSlideOverContent: React.FC<{
 
   const statusKey = String(report.status || 'DRAFT').toUpperCase();
   const statusCfg = REPORT_STATUS_CONFIG[statusKey] || REPORT_STATUS_CONFIG.DRAFT;
-  const reportName = report.name || report.title || 'Untitled Report';
+  // #73: title/framework are shown by the wrapping StandardPreview instead
+  // (header title + `details` block) — templateId is still used below in the
+  // "Key details" card.
   const templateId = report.templateId || report.template_id || null;
-  const framework =
-    templateId?.split('_')?.[0]?.toUpperCase() || report.assessmentType?.toUpperCase() || null;
-  const frameworkMeta = framework ? FRAMEWORK_META[framework as AssessmentFramework] : null;
   const sectionCount = report.sections?.length || 0;
 
   return (
     <div className="space-y-4">
-      {/* Report title & framework */}
-      <div>
-        <h4 className="text-slate-900 dark:text-white font-semibold text-base leading-snug mb-1.5">
-          {reportName}
-        </h4>
-        {frameworkMeta && (
-          <div className="flex items-center gap-1.5">
-            <span className={`text-${frameworkMeta.color}-400`}>{frameworkMeta.icon}</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">{frameworkMeta.name}</span>
-          </div>
-        )}
-      </div>
-
+      {/* #73: title+framework header dropped here — this component now renders
+          as StandardPreview's `children` (embedded, not a standalone drawer),
+          and StandardPreview's own header already shows the title; the Type
+          fact is already in StandardPreview's `details` block. Status badge
+          below is kept because it adds a one-line explanation the meta pill
+          doesn't carry. */}
       {/* Status badge — prominent */}
       <div
         className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border ${statusCfg.bgColor}`}
