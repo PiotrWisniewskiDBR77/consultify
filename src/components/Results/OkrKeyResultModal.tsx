@@ -32,10 +32,13 @@ interface OkrKeyResultModalProps {
 
 /**
  * Create/edit a Key Result under an Objective — reuses the KPICreateModal
- * fetch-then-submit pattern. `kpiId` links the KR to a live KPI for
- * auto-score (`(current−baseline)/(target−baseline)`, direction-aware,
- * server-side); when unlinked, the metric-KR falls back to manual
- * baseline/target/current (updated via check-ins).
+ * fetch-then-submit pattern.
+ *
+ * D7 (Piotr, 2026-07-12): "OKRy są indywidualne, zatem ręcznie tylko, one są
+ * niezależne" — Key Results are scored EXCLUSIVELY from the manual
+ * baseline/target/current triple (updated via check-ins), never automatically
+ * from a KPI. `kpiId` is an optional, purely informational reference to a
+ * live KPI for context/navigation — it never feeds the score.
  */
 export const OkrKeyResultModal: React.FC<OkrKeyResultModalProps> = ({
   projectId,
@@ -138,51 +141,55 @@ export const OkrKeyResultModal: React.FC<OkrKeyResultModalProps> = ({
           </div>
 
           <div>
-            <label className={labelCls}>{t('results.okr.linkedKpi', 'Linked KPI (auto-score, optional)')}</label>
+            <label className={labelCls}>{t('results.okr.linkedKpi', 'Related KPI (reference only, optional)')}</label>
             <select className={selectCls} value={kpiId} onChange={(e) => setKpiId(e.target.value)}>
-              <option value="">{t('results.okr.noKpiLink', '— Manual (baseline/target/current) —')}</option>
+              <option value="">{t('results.okr.noKpiLink', '— No related KPI —')}</option>
               {kpis.map((k) => (
                 <option key={k.id} value={k.id}>
                   {k.name}
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {t(
+                'results.okr.linkedKpiHint',
+                'Informational link only — this Key Result is always scored manually via check-ins, never from the KPI value.'
+              )}
+            </p>
           </div>
 
-          {!kpiId && (
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className={labelCls}>{t('results.columns.baseline', 'Baseline')}</label>
-                <input
-                  className={inputCls}
-                  type="number"
-                  value={baseline}
-                  onChange={(e) => setBaseline(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label className={labelCls}>{t('results.columns.target', 'Target')}</label>
-                <input
-                  className={inputCls}
-                  type="number"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                  placeholder="100"
-                />
-              </div>
-              <div>
-                <label className={labelCls}>{t('results.okr.current', 'Current')}</label>
-                <input
-                  className={inputCls}
-                  type="number"
-                  value={current}
-                  onChange={(e) => setCurrent(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={labelCls}>{t('results.columns.baseline', 'Baseline')}</label>
+              <input
+                className={inputCls}
+                type="number"
+                value={baseline}
+                onChange={(e) => setBaseline(e.target.value)}
+                placeholder="0"
+              />
             </div>
-          )}
+            <div>
+              <label className={labelCls}>{t('results.columns.target', 'Target')}</label>
+              <input
+                className={inputCls}
+                type="number"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                placeholder="100"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>{t('results.okr.current', 'Current')}</label>
+              <input
+                className={inputCls}
+                type="number"
+                value={current}
+                onChange={(e) => setCurrent(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
