@@ -2914,9 +2914,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // Decisions: filters live in Command Row (chips). Priority filter lives in the
-    // SAME row as a Menu-3 dropdown chip (S1-U1: single dynamic line — no extra
-    // topbar select above the table).
+    // Decisions: filters live in Command Row (chips). Priority filter (#39):
+    // moved OUT of this row back to the topbar Navigation Bar, left of the
+    // view-mode toggle (table/kanban) — see renderNavigationBar/JSX around
+    // "Decisions View Mode Toggle". Piotr: priority filter must sit directly
+    // left of the view switcher, not down here.
     if (activeTab === 'decisions' && !activeDocumentId && !decisionsBulkUi?.selectedCount) {
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
@@ -2924,16 +2926,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
-
-      const priorityOptions: Array<{ id: DecisionPriorityFilter; label: string }> = [
-        { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
-        { id: 'CRITICAL', label: isPolish ? 'Krytyczne' : 'Critical' },
-        { id: 'HIGH', label: isPolish ? 'Wysoki' : 'High' },
-        { id: 'MEDIUM', label: isPolish ? 'Średni' : 'Medium' },
-        { id: 'LOW', label: isPolish ? 'Niski' : 'Low' },
-      ];
-      const activePriority = priorityOptions.find((p) => p.id === decisionPriorityFilter);
-      const priorityActive = decisionPriorityFilter !== 'all';
 
       return (
         <div className={MENU_3_ROW_CLASS}>
@@ -2961,27 +2953,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               })}
             </div>
             <div className={MENU_3_RIGHT_CLASS}>
-              <Menu3DropdownChip
-                data-testid="mywork-decisions-priority-chip"
-                icon={<Flag size={14} className="text-c-text-muted" />}
-                label={
-                  priorityActive && activePriority
-                    ? `${isPolish ? 'Priorytet' : 'Priority'}: ${activePriority.label}`
-                    : isPolish
-                      ? 'Priorytet'
-                      : 'Priority'
-                }
-                active={priorityActive}
-                ariaLabel={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
-                align="right"
-                items={priorityOptions.map((p) => ({
-                  id: p.id,
-                  label: p.label,
-                  active: decisionPriorityFilter === p.id,
-                  trailing: decisionPriorityFilter === p.id ? '✓' : undefined,
-                  onSelect: () => setDecisionPriorityFilter(p.id),
-                }))}
-              />
+              {/* #39: Priority chip moved to Navigation Bar (left of view-mode
+                  toggle) — see "Decisions View Mode Toggle" in the JSX above
+                  renderCommandRow(). Only the AI action stays in this row. */}
               <button
                 onClick={() => void openTabAiContext('decisions')}
                 className={MENU_3_ACTION_NEUTRAL}
@@ -3850,6 +3824,52 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   })}
                 </div>
               )}
+
+              {/* #39: Priority filter — moved here (left of the view-mode
+                  toggle) per Piotr: filter musi być NA LEWO od przełącznika
+                  widoków. Previously lived in the Command Row (Menu 3) as a
+                  Menu3DropdownChip; same component, same behavior, new spot. */}
+              {activeTab === 'decisions' &&
+                !activeDocumentId &&
+                (() => {
+                  const decisionsPriorityOptions: Array<{
+                    id: DecisionPriorityFilter;
+                    label: string;
+                  }> = [
+                    { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+                    { id: 'CRITICAL', label: isPolish ? 'Krytyczne' : 'Critical' },
+                    { id: 'HIGH', label: isPolish ? 'Wysoki' : 'High' },
+                    { id: 'MEDIUM', label: isPolish ? 'Średni' : 'Medium' },
+                    { id: 'LOW', label: isPolish ? 'Niski' : 'Low' },
+                  ];
+                  const activeDecisionsPriority = decisionsPriorityOptions.find(
+                    (p) => p.id === decisionPriorityFilter
+                  );
+                  const decisionsPriorityActive = decisionPriorityFilter !== 'all';
+                  return (
+                    <Menu3DropdownChip
+                      data-testid="mywork-decisions-priority-chip"
+                      icon={<Flag size={14} className="text-c-text-muted" />}
+                      label={
+                        decisionsPriorityActive && activeDecisionsPriority
+                          ? `${isPolish ? 'Priorytet' : 'Priority'}: ${activeDecisionsPriority.label}`
+                          : isPolish
+                            ? 'Priorytet'
+                            : 'Priority'
+                      }
+                      active={decisionsPriorityActive}
+                      ariaLabel={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
+                      align="left"
+                      items={decisionsPriorityOptions.map((p) => ({
+                        id: p.id,
+                        label: p.label,
+                        active: decisionPriorityFilter === p.id,
+                        trailing: decisionPriorityFilter === p.id ? '✓' : undefined,
+                        onSelect: () => setDecisionPriorityFilter(p.id),
+                      }))}
+                    />
+                  );
+                })()}
 
               {/* Decisions View Mode Toggle (icons; no dropdown) */}
               {activeTab === 'decisions' && !activeDocumentId && (
