@@ -36,6 +36,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
   StandardPreview,
   standardPreviewShortcuts,
@@ -76,6 +77,7 @@ import {
   getHealthInfo,
 } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
+import { isInitiativesLightEnabled } from '@/utils/initiativesLightFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
@@ -133,6 +135,13 @@ import {
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
+import {
+  type InitiativePriorityLite,
+  InitiativesLightShell,
+  type InitiativeSourceTypeLite,
+  type InitiativeStatusLite,
+  type PortfolioInitiativeLite,
+} from './InitiativesLightShell';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { InitiativeCharterWizard } from './Wizard/InitiativeCharterWizard';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
@@ -152,6 +161,100 @@ const unwrapApiList = (response: unknown, listKey?: string): any[] => {
   }
   return [];
 };
+
+// ---------------------------------------------------------------------------
+// InitiativesLightShell adapters (fala lekkości, flag `ff.initiatives_light`,
+// default OFF). Pure functions — map the REAL portfolio-hub data shape
+// (`PortfolioInitiative` from `types/core.ts`, fetched into hub state below)
+// onto the shell's lite prop contracts.
+//
+// KNOWN GAPS (caveats, do not force-fit):
+//   - `results` (KPI current/target) and `stakeholders` (RACI) are NOT part
+//     of the portfolio-list read (`PortfolioInitiative`) — they only exist
+//     at per-initiative DETAIL scope (fetched lazily when a single
+//     initiative is opened, e.g. `InitiativeDocumentView`/stakeholders
+//     section). The hub's list-level state never holds them for every row,
+//     so both arrays are mapped as `[]` here rather than fetched N+1 style
+//     for the whole portfolio. The shell degrades gracefully (empty-state
+//     copy), it does not crash.
+//   - `InitiativeStatus` has 13 real states vs. the lite shell's 5 —
+//     collapsed via `mapInitiativeStatusToLite` below (documented per-branch).
+//   - `sourceType` is a free-form string server-side (`tool`/`tool_session`/
+//     `idea`/`assessment`/`interview`/`interview_insight`/`insight`/
+//     `conclusion`/`conclusion_readout`, see `InitiativeSourceLink.tsx`)
+//     collapsed onto the lite shell's 4-value union via
+//     `mapInitiativeSourceTypeToLite` below; unrecognized/empty values
+//     default to 'idea' (the largest real bucket) rather than crashing.
+function mapInitiativeStatusToLite(status: InitiativeStatus): InitiativeStatusLite {
+  switch (status) {
+    case InitiativeStatus.DRAFT:
+    case InitiativeStatus.PENDING_REVIEW:
+    case InitiativeStatus.REVIEW:
+    case InitiativeStatus.PROMOTED:
+      return 'draft';
+    case InitiativeStatus.PLANNING:
+    case InitiativeStatus.APPROVED:
+    case InitiativeStatus.SCHEDULED:
+      return 'planning';
+    case InitiativeStatus.EXECUTING:
+    case InitiativeStatus.TRACKING:
+      return 'executing';
+    case InitiativeStatus.BLOCKED:
+      return 'blocked';
+    case InitiativeStatus.DONE:
+    case InitiativeStatus.CANCELLED:
+    case InitiativeStatus.ARCHIVED:
+      return 'done';
+    default:
+      return 'draft';
+  }
+}
+
+function mapInitiativeSourceTypeToLite(sourceType?: string | null): InitiativeSourceTypeLite {
+  const t = String(sourceType || '')
+    .trim()
+    .toLowerCase();
+  if (t === 'assessment') return 'assessment';
+  if (t === 'interview' || t === 'interview_insight' || t === 'insight') return 'interview';
+  if (t === 'conclusion_readout') return 'audit';
+  // 'tool' / 'tool_session' / 'idea' / 'conclusion' / unknown / empty — default
+  // to the Idea Workspace bucket (matches getSourceDisplayLabel's own default
+  // grouping for tool/tool_session/idea; 'conclusion' has no lite equivalent
+  // so it falls back here too rather than inventing a 5th bucket).
+  return 'idea';
+}
+
+function ownerNameFromInitiative(initiative: PortfolioInitiative): string {
+  const owner = initiative.ownerBusiness || initiative.ownerExecution;
+  if (!owner) return '—';
+  return `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || '—';
+}
+
+function mapPortfolioInitiativeToLite(
+  initiative: PortfolioInitiative,
+  isPolish: boolean
+): PortfolioInitiativeLite {
+  return {
+    id: initiative.id,
+    name: initiative.name || initiative.title || initiative.id,
+    axis: initiative.axis || '—',
+    status: mapInitiativeStatusToLite(initiative.status),
+    priority: (initiative.priority as InitiativePriorityLite) || 'MEDIUM',
+    progress: initiative.progress ?? 0,
+    sourceType: mapInitiativeSourceTypeToLite(initiative.sourceType),
+    sourceLabel: initiative.sourceType
+      ? getSourceDisplayLabel(initiative.sourceType, isPolish)
+      : isPolish
+        ? 'Brak źródła'
+        : 'No source',
+    ownerName: ownerNameFromInitiative(initiative),
+    budget: initiative.budget ?? 0,
+    expectedRoi: initiative.expectedRoi,
+    // See KNOWN GAPS note above — not available at portfolio-list scope.
+    results: [],
+    stakeholders: [],
+  };
+}
 
 // D1.2: Complete status set — includes execution/done + archived/cancelled for restoration
 const ALLOWED_STATUSES: InitiativeStatus[] =
@@ -225,7 +328,7 @@ interface InitiativesHubProps {
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { currentProjectId, currentUser } = useAppStore();
+  const { currentProjectId, currentUser, currentOrganization } = useAppStore();
   const refreshTrigger = usePortfolioStore((state) => state.refreshTrigger);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -2512,6 +2615,36 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       </div>
     </div>
   );
+
+  // ── Fala lekkości: gęsta powłoka Initiatives za flagą (default OFF;
+  // podgląd ?ff_initiativesLight=1). ON = zastępuje ModuleHub (5 zakładek:
+  // Portfolio/Analysis/Observability/Candidates/Portfolio Health) jedną
+  // lekką powłoką (Lista/Kanban/Kręgosłup). OFF = poniższy return BEZ ZMIAN.
+  // Umieszczone PO wszystkich hookach, przed otwarciem dowolnego dokumentu —
+  // light shell nie ma jeszcze document-view, więc gdy hub ma otwarty
+  // dokument, spadamy na legacy render tak, aby nie gubić otwartych kart.
+  if (isInitiativesLightEnabled() && !activeDocumentId) {
+    const isPolishLite = i18n.language?.startsWith('pl');
+    const liteInitiatives: PortfolioInitiativeLite[] = initiatives.map((i) =>
+      mapPortfolioInitiativeToLite(i, !!isPolishLite)
+    );
+    return (
+      <ErrorBoundary>
+        <InitiativesLightShell
+          portfolioName={currentOrganization?.name ? `${currentOrganization.name} — Portfolio inicjatyw` : undefined}
+          initiatives={liteInitiatives}
+          onCreateInitiative={() => setShowInitiativeWizard(true)}
+          onOpenChat={() =>
+            openChatWithContext({
+              entityType: 'initiative_portfolio',
+              entityId: currentProjectId || 'portfolio',
+              entityName: isPolishLite ? 'Portfolio inicjatyw' : 'Initiative portfolio',
+            })
+          }
+        />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <div className="h-full" data-testid="initiatives-hub">
