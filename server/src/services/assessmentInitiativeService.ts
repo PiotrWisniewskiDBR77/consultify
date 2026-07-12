@@ -12,6 +12,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppError } from '../utils/ErrorHandler.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { validateInitiativeCard } from './cardContentFormulaValidator.js';
 import {
@@ -958,13 +959,22 @@ Return a JSON array with exactly ${count} initiatives in this format:
     for (const initiative of initiatives) {
       let id: string;
 
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global sanitizer escaped on the title before it feeds
+      // initiatives.title/name — funnel branch AND raw-insert fallback
+      // (INITIATIVE_FUNNEL_ENABLED is default OFF).
+      const decodedTitle =
+        typeof initiative.title === 'string'
+          ? decodeHtmlEntities(initiative.title)
+          : initiative.title;
+
       if (funnelEnabled) {
         // Uspójnienie F1.7 — każdy rekord pętli przez kanoniczny lejek (DRAFT pominięty
         // → normalizowany w lejku; name/title + lineage). id↔źródło zachowane per-rekord.
         const __r = await funnelCreateInitiative(
           String(assessment.organization_id),
           {
-            title: initiative.title,
+            title: decodedTitle,
             projectId: assessment.project_id || null,
             description: initiative.description ?? null,
             // status 'DRAFT' POMINIĘTY — lejek normalizuje
@@ -1025,8 +1035,8 @@ Return a JSON array with exactly ${count} initiatives in this format:
         push('id', id);
         push('organization_id', assessment.organization_id);
         push('project_id', anchoredProjectId);
-        push('name', initiative.title);
-        push('title', initiative.title);
+        push('name', decodedTitle);
+        push('title', decodedTitle);
         push('description', initiative.description);
         push('status', 'DRAFT');
         push('priority', initiative.priority);

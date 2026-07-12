@@ -5,6 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { AIPipeline } from './ai/AIPipeline.js';
@@ -266,13 +267,21 @@ export class ToolInitiativeService {
             ? 2
             : 3;
       const axis = (initiative.category || 'Operations').toLowerCase();
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global sanitizer escaped on the title before it feeds
+      // initiatives.title/name — funnel branch AND raw-insert fallback
+      // (INITIATIVE_FUNNEL_ENABLED is default OFF).
+      const decodedTitle =
+        typeof initiative.title === 'string'
+          ? decodeHtmlEntities(initiative.title)
+          : initiative.title;
       // Uspójnienie F1.8 — per-record przez kanoniczny lejek (DRAFT + name/title + lineage).
       let effectiveInitiativeId = initiativeId;
       if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
         const __r = await funnelCreateInitiative(
           toolSession.organization_id,
           {
-            title: initiative.title,
+            title: decodedTitle,
             projectId: toolSession.project_id || null,
             summary: initiative.description,
             axis,
@@ -314,7 +323,7 @@ export class ToolInitiativeService {
             initiativeId,
             toolSession.organization_id,
             anchoredProjectId,
-            initiative.title,
+            decodedTitle,
             initiative.description,
             'DRAFT',
             axis,
@@ -356,7 +365,7 @@ export class ToolInitiativeService {
         ]
       );
 
-      created.push({ id: effectiveInitiativeId, title: initiative.title, status: 'DRAFT' });
+      created.push({ id: effectiveInitiativeId, title: decodedTitle, status: 'DRAFT' });
     }
 
     // Audit log (simple insert into audit_log if exists)

@@ -15,6 +15,7 @@ import {
   mapDbActionStatusToV8Lifecycle,
   V8LifecycleState,
 } from '../types/chatExecutionIntegration.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import AIPolicyEngine from './aiPolicyEngine.js';
 import {
@@ -1157,13 +1158,19 @@ const AIActionExecutor = {
     const { name, description, ownerId, priority } = draftContent;
     const orgId = action.organization_id;
 
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the global
+    // input-sanitization middleware escaped on this AI-supplied name before it
+    // feeds initiatives.name — funnel branch AND the live raw-insert fallback
+    // (INITIATIVE_FUNNEL_ENABLED is default OFF).
+    const decodedName = typeof name === 'string' ? decodeHtmlEntities(name) : name;
+
     // Uspójnienie F1.10 — przez kanoniczny lejek; org_id WYMUSZONY (naprawia bug sierot).
     let initiativeId: string;
     if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
       const __r = await funnelCreateInitiative(
         orgId,
         {
-          title: name,
+          title: decodedName,
           description,
           projectId: action.project_id ?? null,
           ownerBusinessId: ownerId ?? null,
@@ -1181,7 +1188,15 @@ const AIActionExecutor = {
       await dbRun(
         `INSERT INTO initiatives (id, organization_id, project_id, name, description, owner_business_id, priority, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT')`,
-        [initiativeId, orgId, anchoredProjectId, name, description, ownerId, priority || 'MEDIUM']
+        [
+          initiativeId,
+          orgId,
+          anchoredProjectId,
+          decodedName,
+          description,
+          ownerId,
+          priority || 'MEDIUM',
+        ]
       );
     }
 
@@ -1194,7 +1209,7 @@ const AIActionExecutor = {
           organizationId: action.organization_id,
           type: 'AI_ACTION_COMPLETED',
           title: 'Initiative Created by AI',
-          body: `AI has created initiative "${name}" as a draft in your project.`,
+          body: `AI has created initiative "${decodedName}" as a draft in your project.`,
           entityType: 'initiative',
           entityId: initiativeId,
           actionUrl: `/initiatives/${initiativeId}`,
@@ -1206,7 +1221,7 @@ const AIActionExecutor = {
       logger.warn('[AIActionExecutor] Post-initiative notification failed:', notifErr?.message);
     }
 
-    return { initiativeId, name, created: true };
+    return { initiativeId, name: decodedName, created: true };
   },
 
   _executeCreateDecision: async (draftContent: any, action: any) => {

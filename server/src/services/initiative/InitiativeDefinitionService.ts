@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import { IDatabase } from '../../database/IDatabase.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import { createInitiative as funnelCreateInitiative } from './createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../initiativeProjectPolicyService.js';
 
@@ -99,13 +100,19 @@ LIMIT ? OFFSET ? `,
     const orgId = data.organization_id || data.org_id;
     if (!orgId) throw new Error('Organization ID is required');
 
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the global
+    // sanitizer escaped on the title before it feeds initiatives.title/name —
+    // funnel branch AND raw-insert fallback (INITIATIVE_FUNNEL_ENABLED default OFF).
+    const decodedTitle =
+      typeof data.title === 'string' ? decodeHtmlEntities(data.title) : data.title;
+
     // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
     if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
       const ownerId = data.owner_business_id || data.owner_id || null;
       const __r = await funnelCreateInitiative(
         orgId,
         {
-          title: data.title,
+          title: decodedTitle,
           projectId: data.project_id || null,
           axis: data.axis || null,
           area: data.area || null,
@@ -161,10 +168,10 @@ LIMIT ? OFFSET ? `,
     push('organization_id', orgId);
     push('org_id', orgId); // legacy alias — skipped if column absent
     push('project_id', anchoredProjectId);
-    push('title', data.title);
+    push('title', decodedTitle);
     // `name` is a NOT-NULL legacy column that mirrors `title` in the canonical
     // schema; populate it (skipped automatically if the column is absent).
-    push('name', data.title || (data as any).name || 'Untitled');
+    push('name', decodedTitle || (data as any).name || 'Untitled');
     push('axis', data.axis || null);
     push('area', data.area || null);
     push('summary', data.summary || null);

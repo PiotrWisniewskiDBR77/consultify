@@ -8,6 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
@@ -654,12 +655,20 @@ class ReportInitiativeService {
 
     for (const initiative of initiatives) {
       try {
+        // F15 (data-integrity, continuation of Z139): decode HTML entities the
+        // global sanitizer escaped on the title before it feeds
+        // initiatives.title/name — funnel branch AND raw-insert fallback
+        // (INITIATIVE_FUNNEL_ENABLED is default OFF).
+        const decodedTitle =
+          typeof initiative.title === 'string'
+            ? decodeHtmlEntities(initiative.title)
+            : initiative.title;
         // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
         if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
           const __r = await funnelCreateInitiative(
             organizationId,
             {
-              title: initiative.title,
+              title: decodedTitle,
               projectId,
               description: initiative.description,
               priority: initiative.priority,
@@ -700,7 +709,7 @@ class ReportInitiativeService {
               initiative.id,
               projectId,
               organizationId,
-              initiative.title,
+              decodedTitle,
               initiative.description,
               initiative.priority,
               initiative.status,

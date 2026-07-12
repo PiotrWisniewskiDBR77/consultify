@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../../database/Database.js';
+import { decodeHtmlEntities } from '../../../utils/htmlEntities.js';
 import { createInitiative as funnelCreateInitiative } from '../../initiative/createInitiativeService.js';
 import { CommandHandler } from '../CommandBus.js';
 
@@ -19,13 +20,18 @@ export class CreateInitiativeCommand {
 
 export class CreateInitiativeHandler implements CommandHandler<CreateInitiativeCommand> {
   async execute(command: CreateInitiativeCommand): Promise<{ id: string }> {
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the global
+    // sanitizer escaped on the title before it feeds initiatives.title —
+    // funnel branch AND raw-insert fallback (INITIATIVE_FUNNEL_ENABLED default OFF).
+    const decodedTitle =
+      typeof command.title === 'string' ? decodeHtmlEntities(command.title) : command.title;
     // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
     if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
       const orgId = command.organizationId || '';
       const __r = await funnelCreateInitiative(
         orgId,
         {
-          title: command.title,
+          title: decodedTitle,
           description: command.description ?? null,
           projectId: command.projectId ?? null,
           plannedStartDate: command.startDate ?? null,
@@ -51,7 +57,7 @@ export class CreateInitiativeHandler implements CommandHandler<CreateInitiativeC
       [
         id,
         command.projectId,
-        command.title,
+        decodedTitle,
         command.description || null,
         command.startDate || null,
         command.endDate || null,

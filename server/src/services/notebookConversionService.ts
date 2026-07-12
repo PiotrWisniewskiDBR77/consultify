@@ -279,6 +279,10 @@ export async function convertNotebookPage(params: {
     });
   } else if (target === 'initiative') {
     const cols = await requireTableColumns('initiatives');
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the
+    // global sanitizer escaped on the title before it feeds initiatives.title/name
+    // — funnel branch AND raw-insert fallback (INITIATIVE_FUNNEL_ENABLED default OFF).
+    const decodedTitle = decodeHtmlEntities(entityTitle);
     const toolSessionId = await createMyWorkToolSession({
       userId,
       orgId,
@@ -294,7 +298,7 @@ export async function convertNotebookPage(params: {
       const __r = await funnelCreateInitiative(
         orgId,
         {
-          title: entityTitle.slice(0, 255),
+          title: decodedTitle.slice(0, 255),
           summary: entityDesc.slice(0, 5000),
           description: entityDesc.slice(0, 5000),
           ownerExecutionId: userId,
@@ -328,8 +332,8 @@ export async function convertNotebookPage(params: {
 
       add('organization_id', orgId);
       add('project_id', anchoredProjectId);
-      add('name', entityTitle.slice(0, 255));
-      add('title', entityTitle.slice(0, 255));
+      add('name', decodedTitle.slice(0, 255));
+      add('title', decodedTitle.slice(0, 255));
       add('summary', entityDesc.slice(0, 5000));
       add('description', entityDesc.slice(0, 5000));
       add('status', 'DRAFT');
@@ -347,7 +351,7 @@ export async function convertNotebookPage(params: {
     createdEntity = {
       id: initiativeId,
       type: 'initiative',
-      title: entityTitle,
+      title: decodedTitle,
       sourceSessionId: toolSessionId,
     };
 

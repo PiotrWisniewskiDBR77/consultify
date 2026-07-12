@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
+import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { type Conclusion, conclusionService } from '../conclusions/ConclusionService.js';
 import { createInitiative as funnelCreateInitiative } from '../initiative/createInitiativeService.js';
@@ -420,13 +421,20 @@ export class ArtifactConversionService {
     const now = new Date().toISOString();
     const artifactSourceId = conversion.sourceConclusionId || conversion.sourceArtifactId;
 
+    // F15 (data-integrity, continuation of Z139): decode HTML entities the global
+    // sanitizer escaped on the title before it feeds initiatives.title/name —
+    // funnel branch AND both raw-insert fallbacks (INITIATIVE_FUNNEL_ENABLED default OFF).
+    const decodedTitle = decodeHtmlEntities(
+      String(payload.title || conversion.sourceArtifactTitle)
+    );
+
     // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
     let initiativeId: string;
     if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
       const __r = await funnelCreateInitiative(
         params.organizationId,
         {
-          title: String(payload.title || conversion.sourceArtifactTitle),
+          title: decodedTitle,
           projectId: conversion.projectId ?? null,
           summary: String(payload.summary || ''),
           hypothesis: String(payload.hypothesis || ''),
@@ -460,8 +468,8 @@ export class ArtifactConversionService {
             initiativeId,
             params.organizationId,
             anchoredProjectId,
-            String(payload.title || conversion.sourceArtifactTitle),
-            String(payload.title || conversion.sourceArtifactTitle),
+            decodedTitle,
+            decodedTitle,
             String(payload.summary || ''),
             String(payload.hypothesis || ''),
             InitiativeStatus.DRAFT,
@@ -481,7 +489,6 @@ export class ArtifactConversionService {
         // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
         // (Postgres) — this catch-fallback only wrote `title`, which 500s with
         // 23502 (the primary insert above already writes both title and name).
-        const fallbackTitle = String(payload.title || conversion.sourceArtifactTitle);
         await queryHelpers.queryRun(
           `INSERT INTO initiatives (
             id, organization_id, project_id, title, name, summary, hypothesis, status,
@@ -492,8 +499,8 @@ export class ArtifactConversionService {
             initiativeId,
             params.organizationId,
             anchoredProjectId,
-            fallbackTitle,
-            fallbackTitle,
+            decodedTitle,
+            decodedTitle,
             String(payload.summary || ''),
             String(payload.hypothesis || ''),
             InitiativeStatus.DRAFT,

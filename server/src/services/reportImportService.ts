@@ -3,6 +3,7 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import DbPromise from '../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { baseStorageDir } from '../utils/storagePaths.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
@@ -1521,6 +1522,12 @@ Respond in JSON format:
 
     for (const init of initiatives) {
       try {
+        // F15 (data-integrity, continuation of Z139): decode HTML entities the
+        // global sanitizer escaped on the imported title before it feeds
+        // initiatives.title/name — funnel branch AND raw-insert fallback
+        // (INITIATIVE_FUNNEL_ENABLED is default OFF).
+        const decodedTitle =
+          typeof init.title === 'string' ? decodeHtmlEntities(init.title) : init.title;
         // Uspójnienie F1.6 — przez kanoniczny lejek. PENDING_REVIEW jest świadomym
         // statusem importu (ważny w cyklu) → przekazany jawnie; extra kolumny
         // (source_report_id/tags/created_from) ustawiane post-create.
@@ -1528,7 +1535,7 @@ Respond in JSON format:
           const __r = await funnelCreateInitiative(
             organizationId,
             {
-              title: init.title,
+              title: decodedTitle,
               projectId: projectId || importRecord.projectId || null,
               summary: init.description || '',
               description: init.description || '',
@@ -1576,8 +1583,8 @@ Respond in JSON format:
             initiativeId,
             organizationId,
             anchoredProjectId,
-            init.title,
-            init.title,
+            decodedTitle,
+            decodedTitle,
             init.description || '',
             init.description || '',
             init.description || '',
