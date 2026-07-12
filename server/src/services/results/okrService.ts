@@ -28,7 +28,13 @@ export type KeyResult = {
   current?: number;
   /** Relative importance within its Objective. Defaults to 1 when omitted. */
   weight?: number;
-  /** When set, this KR's score is auto-computed from the linked live KPI. */
+  /**
+   * Optional reference to a live KPI, for context/navigation only.
+   * D7 (Piotr, 2026-07-12): "OKRy są indywidualne, zatem ręcznie tylko, one
+   * są niezależne" — Key Results are scored EXCLUSIVELY from manual
+   * check-ins (or the manual baseline/target/current triple). Linking a KPI
+   * here never feeds the score; see `recomputeKeyResultScore` below.
+   */
   kpiId?: string | null;
   krType?: KrType;
   kind?: KrKind;
@@ -207,36 +213,15 @@ export function okrSummary(objectives: Objective[]): OkrSummary {
 }
 
 /**
- * A snapshot of the live KPI row a Key Result may be linked to
- * (`initiative_kpis`: current_value / target_value / baseline_value /
- * direction — added by migration 612). Kept separate from `KeyResult` so the
- * pure scoring functions above stay DB-shape agnostic.
+ * D7 (Piotr, 2026-07-12): "OKRy są indywidualne, zatem ręcznie tylko, one są
+ * niezależne" — Key Results are scored manually only. There used to be a
+ * `scoreKeyResultFromKpi` auto-score path here (KR fed straight from a linked
+ * live KPI's current/target/baseline). It has been removed: `kpi_id` on a
+ * Key Result is now an informational reference only (see `KeyResult.kpiId`
+ * above) and never feeds `recomputeKeyResultScore` below. If a future
+ * decision reverses D7, resurrect from git history (this file, pre
+ * fix/okr-manual-only-d7).
  */
-export type KpiSnapshot = {
-  currentValue?: number | null;
-  targetValue?: number | null;
-  baselineValue?: number | null;
-  /** 'HIGHER_IS_BETTER' (default) or 'LOWER_IS_BETTER'. */
-  direction?: string | null;
-};
-
-/**
- * Progress of a Key Result auto-scored from a linked live KPI, on the same
- * 0–1 scale as `scoreKeyResult`: (current − baseline) / (target − baseline),
- * direction-aware (LOWER_IS_BETTER inverts the range), clamped to [0, 1].
- * Returns 0 when required data is missing or the range is degenerate.
- */
-export function scoreKeyResultFromKpi(kpi: KpiSnapshot | null | undefined): number {
-  if (!kpi || !isNum(kpi.currentValue) || !isNum(kpi.targetValue)) return 0;
-  const baseline = isNum(kpi.baselineValue) ? kpi.baselineValue : 0;
-  const current = kpi.currentValue;
-  const target = kpi.targetValue;
-  const lowerIsBetter = (kpi.direction ?? '').toUpperCase() === 'LOWER_IS_BETTER';
-  const range = lowerIsBetter ? baseline - target : target - baseline;
-  if (range === 0) return 0;
-  const progress = lowerIsBetter ? (baseline - current) / range : (current - baseline) / range;
-  return clamp01(progress);
-}
 
 // ============================================================================
 // I/O — DB CRUD (Faza 1 / D7 slice: OKR management on top of the read-only
@@ -588,13 +573,13 @@ export async function deleteKeyResult(id: string, organizationId: string): Promi
 }
 
 /**
- * Recomputes and persists a single Key Result's `score` column (0.0–1.0):
- *  - `kpi_id` set → auto-score from the linked live KPI
- *    (`initiative_kpis.current_value/target_value/baseline_value/direction`).
- *  - else the latest check-in with an explicit `score` (milestone-KR / manual
+ * Recomputes and persists a single Key Result's `score` column (0.0–1.0),
+ * manual-only (D7, Piotr 2026-07-12 — no auto-score from a linked KPI, even
+ * when `kpi_id` is set; that field is informational-only, see `KeyResult.kpiId`):
+ *  - the latest check-in with an explicit `score` (milestone-KR / manual
  *    grading) wins.
  *  - else falls back to the manual baseline/target/current triple on the KR
- *    itself (`scoreKeyResult`).
+ *    itself (`scoreKeyResult`), kept current by check-ins' `value` write-back.
  * Returns 0 (and leaves the row untouched) if the KR doesn't exist.
  */
 export async function recomputeKeyResultScore(
@@ -602,7 +587,7 @@ export async function recomputeKeyResultScore(
   organizationId: string,
 ): Promise<number> {
   const kr = (await dbGet(
-    `SELECT id, baseline, target, current, weight, kpi_id, kr_type, label
+    `SELECT id, baseline, target, current, weight, kr_type, label
      FROM okr_key_results WHERE id = ? AND organization_id = ?`,
     [keyResultId, organizationId],
   )) as
@@ -612,7 +597,6 @@ export async function recomputeKeyResultScore(
         target: number | null;
         current: number | null;
         weight: number | null;
-        kpi_id: string | null;
         kr_type: string | null;
         label: string;
       }
@@ -620,43 +604,23 @@ export async function recomputeKeyResultScore(
   if (!kr) return 0;
 
   let score = 0;
-  if (kr.kpi_id) {
-    const kpiRow = (await dbGet(
-      `SELECT current_value, target_value, baseline_value, direction
-       FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
-      [kr.kpi_id, organizationId],
-    )) as
-      | { current_value: number | null; target_value: number | null; baseline_value: number | null; direction: string | null }
-      | undefined;
-    score = scoreKeyResultFromKpi(
-      kpiRow
-        ? {
-            currentValue: kpiRow.current_value,
-            targetValue: kpiRow.target_value,
-            baselineValue: kpiRow.baseline_value,
-            direction: kpiRow.direction,
-          }
-        : null,
-    );
+  const latestCheckIn = (await dbGet(
+    `SELECT score FROM okr_check_ins
+     WHERE key_result_id = ? AND score IS NOT NULL
+     ORDER BY checked_at DESC LIMIT 1`,
+    [keyResultId],
+  )) as { score: number | null } | undefined;
+  if (latestCheckIn && isNum(latestCheckIn.score)) {
+    score = clamp01(latestCheckIn.score);
   } else {
-    const latestCheckIn = (await dbGet(
-      `SELECT score FROM okr_check_ins
-       WHERE key_result_id = ? AND score IS NOT NULL
-       ORDER BY checked_at DESC LIMIT 1`,
-      [keyResultId],
-    )) as { score: number | null } | undefined;
-    if (latestCheckIn && isNum(latestCheckIn.score)) {
-      score = clamp01(latestCheckIn.score);
-    } else {
-      score = scoreKeyResult({
-        id: kr.id,
-        label: kr.label,
-        baseline: kr.baseline ?? undefined,
-        target: kr.target ?? undefined,
-        current: kr.current ?? undefined,
-        weight: kr.weight ?? undefined,
-      });
-    }
+    score = scoreKeyResult({
+      id: kr.id,
+      label: kr.label,
+      baseline: kr.baseline ?? undefined,
+      target: kr.target ?? undefined,
+      current: kr.current ?? undefined,
+      weight: kr.weight ?? undefined,
+    });
   }
 
   await dbRun(`UPDATE okr_key_results SET score = ?, updated_at = now() WHERE id = ?`, [score, keyResultId]);
@@ -677,10 +641,10 @@ export async function createCheckIn(input: {
   // Verify the KR belongs to this org before writing (org-scoped tenancy guard —
   // okr_check_ins itself carries organization_id for query isolation, but the
   // FK is only on key_result_id).
-  const kr = (await dbGet(`SELECT id, kpi_id FROM okr_key_results WHERE id = ? AND organization_id = ?`, [
+  const kr = (await dbGet(`SELECT id FROM okr_key_results WHERE id = ? AND organization_id = ?`, [
     input.keyResultId,
     input.organizationId,
-  ])) as { id: string; kpi_id: string | null } | undefined;
+  ])) as { id: string } | undefined;
   if (!kr) return null;
 
   const id = uuidv4();
@@ -699,10 +663,11 @@ export async function createCheckIn(input: {
     ],
   );
 
-  // A metric-KR without a live KPI link treats the check-in's `value` as the
-  // new `current` reading (keeps the manual baseline/target/current triple
-  // that `scoreKeyResult` reads current with each check-in).
-  if (!kr.kpi_id && isNum(input.value)) {
+  // D7 (manual-only): every check-in's `value` — regardless of any
+  // informational `kpi_id` link — becomes the KR's new `current` reading
+  // (keeps the manual baseline/target/current triple that `scoreKeyResult`
+  // reads with each check-in).
+  if (isNum(input.value)) {
     await dbRun(`UPDATE okr_key_results SET current = ?, updated_at = now() WHERE id = ?`, [
       input.value,
       input.keyResultId,
