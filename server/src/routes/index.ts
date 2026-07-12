@@ -96,7 +96,6 @@ export { default as myWorkRoutes } from './my-work.routes.js';
 export { default as oauthRoutes } from './oauthRoutes.routes.js';
 export { default as onboardingRoutes } from './onboarding.routes.js';
 export { default as partnersRoutes } from './partners.routes.js';
-export { default as pdfImportRoutes } from './pdf-import.routes.js';
 export { default as performanceRoutes } from './performance.routes.js';
 export { default as performanceMetricsRoutes } from './performance-metrics.routes.js';
 export { default as permissionRequestsRoutes } from './permissionRequests.routes.js';
