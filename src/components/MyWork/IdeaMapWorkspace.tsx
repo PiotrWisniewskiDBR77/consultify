@@ -3007,14 +3007,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             canvas={
               <>
                 {canvasToolsNode}
-                {/* Four-tool switcher stays floating over the canvas; the
-                    per-tool actions (search / help / discuss) now live in the
-                    shell command-row, so they're omitted here to avoid dupes. */}
-                <IdeaWorkspaceToolbar
-                  activeTool={activeTool}
-                  onToolChange={setActiveTool}
-                  familyCounts={familyCounts}
-                />
+                {/* #6a: the tool switcher now lives solely in the left rail
+                    (floatingLeftRail below, CanvasLeftToolbar); the per-tool
+                    actions (search / help / discuss) live in the shell
+                    command-row (melsCanvasChips). Nothing left to float here. */}
               </>
             }
             floatingLeftRail={floatingLeftRailNode}
@@ -3160,8 +3156,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {/* UI overlays rendered AFTER canvas tools so they appear on top */}
         {floatingLeftRailNode}
 
-        {/* #6e: top chrome (governance badge + tool-switcher/search/help/
-            Discuss with Teresa) hides in fullscreen — cała góra znika. */}
+        {/* #6a/#6e: top chrome (governance badge + global actions: search/
+            help/Discuss with Teresa) hides in fullscreen — cała góra znika.
+            The tool switcher moved to the left rail (floatingLeftRailNode,
+            CanvasLeftToolbar) — this widget is now search+help+Discuss only. */}
         {!isFullscreen && (
           <>
             {/* MM-12: AI Governance badge — opens governance panel */}
@@ -3173,9 +3171,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             </div>
 
             <IdeaWorkspaceToolbar
-              activeTool={activeTool}
-              onToolChange={setActiveTool}
-              familyCounts={familyCounts}
               onSearch={() => setSearchOpen(true)}
               onShowHelp={() => setShortcutsHelpOpen(true)}
               onDiscuss={handleDiscussWithTeresa}
@@ -3408,6 +3403,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }}
         onApplyTemplate={handleApplyTemplate}
         onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
+        onToolChange={setActiveTool}
+        familyCounts={familyCounts}
       />
     );
   }
