@@ -5560,6 +5560,8 @@
       "noResults": "No initiatives match your filters",
       "today": "Today",
       "criticalPath": "Critical Path",
+      "criticalPathEstimate": "Critical path (estimate)",
+      "slackDays": "Slack: {{count}} days",
       "hideCriticalPath": "Hide critical path",
       "showCriticalPath": "Show critical path",
       "scheduleWarning": "Schedule Warning",
