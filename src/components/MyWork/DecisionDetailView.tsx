@@ -87,9 +87,13 @@ import {
   NModeCardState,
   type NModeCardStatus,
 } from '../shared/NModeLayout/NModeCardState';
+// #52 — card-management primitive (show/hide + reorder), same "nakładka"
+// wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
+import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import type { NModeSection } from '../shared/NModeLayout/types';
+import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
 import type {
   ActivityLogEntry as NModeActivityLogEntry,
   ActivityStats,
@@ -1194,6 +1198,65 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     ],
     []
   );
+
+  // ── Card-management primitive (#52, wzorzec N §3.5) ───────────────────────
+  // Same "nakładka" wiring as InsightViewer.tsx / TaskDetailView.tsx:
+  // `useCardLayout` (DECISION_SPEC) drives show/hide + reorder OVER the
+  // existing NModeLeftNav + single-active-section canvas (`activeNotionSection`
+  // conditionals below) instead of replacing it. Decision's canvas renders
+  // content per-id via direct `activeNotionSection === '<id>'` checks (no
+  // `sections[]` array like Task/Insight), so only `notionSections` (the nav
+  // list) needs to be filtered/ordered — the content blocks stay untouched.
+  const decisionCardLayoutStorageKey = `decision:nmode:card-layout:v1:${decisionId ?? 'new'}`;
+  const initialDecisionCardLayout = useMemo<CardLayout | null>(() => {
+    try {
+      const raw = localStorage.getItem(decisionCardLayoutStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      const cleaned = parsed.filter(
+        (c: unknown): c is { id: string; visible: boolean; order: number } =>
+          !!c &&
+          typeof (c as { id?: unknown }).id === 'string' &&
+          typeof (c as { visible?: unknown }).visible === 'boolean' &&
+          typeof (c as { order?: unknown }).order === 'number'
+      );
+      return cleaned.length > 0 ? cleaned : null;
+    } catch {
+      return null;
+    }
+    // Hydrate once per decision id; layout state is owned by the hook afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decisionCardLayoutStorageKey]);
+
+  const persistDecisionCardLayout = useCallback(
+    (next: CardLayout) => {
+      try {
+        localStorage.setItem(decisionCardLayoutStorageKey, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors; card management still works for this session.
+      }
+    },
+    [decisionCardLayoutStorageKey]
+  );
+
+  const decisionCardLayout = useCardLayout({
+    artifactType: 'decision',
+    initialLayout: initialDecisionCardLayout,
+    onLayoutChange: persistDecisionCardLayout,
+  });
+
+  const orderedNotionSections = useMemo(
+    () => decisionCardLayout.applyToSections(notionSections),
+    [decisionCardLayout, notionSections]
+  );
+
+  useEffect(() => {
+    if (orderedNotionSections.length === 0) return;
+    if (!orderedNotionSections.some((section) => section.id === activeNotionSection)) {
+      setActiveNotionSection(orderedNotionSections[0].id);
+    }
+  }, [orderedNotionSections, activeNotionSection]);
 
   const publishPayload = useMemo(
     () => ({
@@ -4809,8 +4872,13 @@ Use userId only from this list:
                ═══════════════════════════════════════════════════════════════════ */}
           {presentationMode === 'n' && (
             <div className="col-span-full space-y-4">
-              {/* ── Menu 1 (klasa S): Read/Edit toggle "do pokazania klientowi" ── */}
-              <div className="flex items-center justify-end">
+              {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
+              <div className="flex items-center justify-between">
+                {!readMode ? (
+                  <NModeCardManager layout={decisionCardLayout} isPolish={isPolish} />
+                ) : (
+                  <div />
+                )}
                 <ReadEditToggle readMode={readMode} onChange={setReadMode} />
               </div>
               {/* ── Origin Badge ──────────────────────────────────── */}
@@ -5011,9 +5079,10 @@ Use userId only from this list:
               {/* ── 2-Pane: LeftNav + Canvas — shared NModeLeftNav ───────── */}
               <div className="flex gap-0 min-h-[60vh]">
                 <NModeLeftNav
-                  sections={notionSections as NModeSection[]}
+                  sections={orderedNotionSections as NModeSection[]}
                   activeSection={activeNotionSection}
                   onSectionChange={setActiveNotionSection}
+                  onSectionReorder={(ids) => decisionCardLayout.reorderByIds(ids)}
                 />
 
                 {/* Canvas (shows selected section only) */}
