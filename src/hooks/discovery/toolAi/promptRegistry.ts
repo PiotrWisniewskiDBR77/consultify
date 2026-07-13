@@ -811,6 +811,58 @@ export function getToolSuggestionPrompt(
 }
 
 /**
+ * Shared four-beat (CONCLUSION_LAYER_STANDARD variant W2) scaffold for the GENERIC
+ * fallback summaries — the branch a strategy tool takes when its grounded
+ * conclusion builder returns null (thin session, nothing scored yet). Historically
+ * these fallbacks emitted a flat `"summary": "string"` plus a top-level
+ * `"insights"` array; the per-tool normalizers (marketForces.ts, valueChain.ts,
+ * portfolioPriority.ts, …) read `summary` as an OBJECT and pull `verdict` /
+ * `tradeoffs` / `keyInsights` / `appliedConclusions` from it — so the old flat
+ * shape silently DROPPED the verdict, trade-offs and insights. This scaffold emits
+ * the same object contract the grounded builders use, so the fallback carries the
+ * full ustalenie → so-what → dowód → implikacja quartet instead of a topic recap.
+ *
+ * Content only: no new registry, no new AI client — it just standardizes the
+ * instruction prose + the `summary` JSON fragment the normalizers already consume.
+ */
+function w2FallbackInstructions(opts: {
+  verdictHint: string;
+  tradeoffHint: string;
+  effectHint: string;
+  isPolish: boolean;
+}): string {
+  const { verdictHint, tradeoffHint, effectHint, isPolish } = opts;
+  return `W2 STRUCTURE (mandatory — a conclusion, not a recap):
+1. "summary.verdict" — answer-first, 1-2 sentences: ${verdictHint}. A thesis, not a topic; lead with the decision, never an average or a list.
+2. "summary.verdictRationale"/"summary.executiveSummary" — 3-4 sentences that RESTATE the verdict, then the why, each claim anchored in a named element above (the "dowód").
+3. "summary.keyInsights" (3) — each an insight staircase in one line: fact from the session -> what it means for THIS company -> what follows for the decision. No insight that would fit any company.
+4. "summary.tradeoffs" (>= 1 at recommendation level) — what we choose AT THE COST of what, and which option we reject and why. ${tradeoffHint} No trade-off = no decision, only a list.
+5. "moves" (3-5) — each a DECISION carrying tradeoff {chosen, deferred, cost} + rejectedAlternative {option, reason} + a firstStep (verb + artifact + role), anchored in the named elements.
+6. "summary.expectedEffect" — ${effectHint}, behaviorally observable, WITH a time horizon; no numbers absent from the elements above.
+
+QUALITY BARS:
+- Numbers exclusively from the elements above; anything unproven flagged "as declared, to be confirmed".
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work in front of the client.
+- Every sentence falsifiable: with opposite elements it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.`;
+}
+
+/**
+ * The `summary` object fragment shared by every generic fallback. Mirrors the
+ * shape the grounded builders emit and the per-tool normalizers consume via
+ * pickW2SummaryFields + executiveSummary/keyInsights/appliedConclusions.
+ */
+const W2_FALLBACK_SUMMARY_JSON = `"summary": {
+    "verdict": "answer-first, 1-2 sentences: the decision this analysis forces",
+    "verdictRationale": {"text": "why — tied to the named elements above", "factRefs": ["element-id"]},
+    "executiveSummary": "3-4 sentences, opens by restating the verdict",
+    "keyInsights": ["insight 1 — fact -> meaning -> implication", "insight 2", "insight 3"],
+    "appliedConclusions": ["what to do first", "what to prioritize", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen": "...", "rejected": "...", "why": "..."}],
+    "expectedEffect": {"text": "...", "horizon": "..."}
+  }`;
+
+/**
  * Final session-summary prompt for every Discovery tool. Same wrapper pattern
  * as getToolSuggestionPrompt above: branches build the raw prompt, the
  * exported function appends GROUNDING_RULES_BOTH once at the end.
@@ -1029,23 +1081,25 @@ Return as JSON:
       .map(([, force]: [string, any]) => `- ${force.name}: ${force.score}/5 (${force.trend})`)
       .join('\n');
 
-    return `Based on this Porter's Five Forces analysis, create a consulting-grade final summary:
+    return `Act as a strategy partner closing this Porter's Five Forces session. You sign the finishing block with your own name in front of the client's board. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
-${forcesSummary}
+=== SCORED FORCES (the only admissible source of facts and pressure numbers) ===
+${forcesSummary || '- no force scored yet'}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Strategic Implications
-3. Applied Conclusions: where to defend margin, where to reposition, what to validate next
-4. 3-5 Recommended Strategic Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'what this five-forces structure means for the client\'s MARGIN decision — lead with the force that squeezes margin hardest (where to defend, where to reposition), not an average of the five',
+  tradeoffHint:
+    'the canonical rejected alternative is "fight every force at once -> spread thin, win none".',
+  effectHint: 'the margin / positioning change',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return as JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"positioning|pricing|partnership|capability-build|defensive-move","rationale":"...","linkedForceIds":["buyerPower"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  ${W2_FALLBACK_SUMMARY_JSON},
+  "moves": [{"title":"...","category":"positioning|pricing|partnership|capability-build|defensive-move","rationale":"why — anchored in the named forces","linkedForceIds":["buyerPower"],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["buyerPower"]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedForceIds": ["buyerPower"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -1077,28 +1131,30 @@ Return as JSON:
             .join('\n')
         : '- (no scored activities to pre-compute lever candidates)';
 
-    return `Based on this Value Chain analysis, create a consulting-grade final summary:
+    return `Act as a strategy partner closing this Value Chain session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
-${activitiesSummary}
+=== SCORED ACTIVITIES (the only admissible source of facts) ===
+${activitiesSummary || '- no activity scored yet'}
 ${vcData?.positioningVerdict ? `Positioning verdict: ${vcData.positioningVerdict.positioning} — ${vcData.positioningVerdict.summary}` : ''}
 
 PRE-COMPUTED LEVER CANDIDATES (high cost x low maturity x value impact — link moves to these):
 ${candidateLines}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Margin Levers (where cost can fall or value can rise) — anchored in the candidate activities above
-3. Applied Conclusions: where to cut cost, where to invest for differentiation, what to validate next
-4. 3-5 Recommended Strategic Moves, each a decision (improve/automate/outsource/integrate) with a trade-off
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'where this value chain makes or loses margin — name the activity that is the biggest cost drain or the biggest untapped differentiation lever, and whether the position is cost-advantage, differentiation, or stuck-in-the-middle',
+  tradeoffHint:
+    'a margin lever is a choice: cutting cost in one activity vs investing to differentiate in another — name what you defer.',
+  effectHint: 'the cost or willingness-to-pay change on the named activities',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 ${buildValueChainMovePromptRules('en')}
 
 Return as JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
+  ${W2_FALLBACK_SUMMARY_JSON},
   "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedActivityIds":["operations"],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["operations"]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedActivityIds": ["operations"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
@@ -1120,23 +1176,25 @@ Return as JSON:
       )
       .join('\n');
 
-    return `Based on this Capability Map, create a consulting-grade final summary:
+    return `Act as a strategy partner closing this Capability Map session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
-${capsSummary}
+=== SCORED CAPABILITIES (the only admissible source of facts) ===
+${capsSummary || '- no capability scored yet'}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Capability Gaps (where maturity is furthest below target on high-importance capabilities)
-3. Applied Conclusions: what to build, what to buy/partner, what to reskill, what to validate next
-4. 3-5 Recommended Strategic Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'which capability gap most blocks the strategy — name the high-importance capability whose maturity is furthest below target, and whether the answer is build, buy, partner or reskill',
+  tradeoffHint:
+    'build vs buy/partner is the core trade-off: building takes time you may not have; buying costs control — name which you sacrifice.',
+  effectHint: 'the maturity or delivery-capacity change on the named capabilities',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return as JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"build|buy|partner|reskill|restructure","rationale":"...","linkedCapabilityIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  ${W2_FALLBACK_SUMMARY_JSON},
+  "moves": [{"title":"...","category":"build|buy|partner|reskill|restructure","rationale":"...","linkedCapabilityIds":["..."],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedCapabilityIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -1154,24 +1212,26 @@ Return as JSON:
       .map((t: any) => `- ${t.title}: ${t.targetMetric} → ${t.targetValue} (${t.horizon}, ${t.importance})`)
       .join('\n');
 
-    return `Based on this Ambition Decomposition, create a consulting-grade final summary:
+    return `Act as a strategy partner closing this Ambition Decomposition session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
+=== AMBITION + THEMES (the only admissible source of facts) ===
 Ambition: ${ambData?.context?.ambitionStatement || 'n/a'}
-${themesSummary}
+${themesSummary || '- no theme defined yet'}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Priorities (which themes to sequence first and why)
-3. Applied Conclusions: where to start, what to enable, what to validate next
-4. 3-5 Recommended Strategic Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'which theme to sequence FIRST and why — name the foundation the rest depend on, not a wish-list of all themes at once',
+  tradeoffHint:
+    'sequencing is the trade-off: starting one theme first defers another — name what waits and the cost of waiting.',
+  effectHint: 'the progress toward the ambition\'s target metric',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return as JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"foundation|accelerator|bet|enabler|quick-win","rationale":"...","linkedThemeIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  ${W2_FALLBACK_SUMMARY_JSON},
+  "moves": [{"title":"...","category":"foundation|accelerator|bet|enabler|quick-win","rationale":"...","linkedThemeIds":["..."],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedThemeIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -1190,23 +1250,25 @@ Return as JSON:
       .map((p: any) => `- ${p.title}: value ${p.valueScore}, effort ${p.effortScore}, fit ${p.strategicFit} → ${p.recommendation}`)
       .join('\n');
 
-    return `Based on this Focus & Trade-offs analysis, create a consulting-grade final summary:
+    return `Act as a strategy partner closing this Focus & Trade-offs session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
-${prioritiesSummary}
+=== SCORED PRIORITIES (the only admissible source of facts) ===
+${prioritiesSummary || '- no priority scored yet'}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Trade-offs (the hardest tensions between competing priorities)
-3. Applied Conclusions: what to commit to, what to sequence later, what to cut, what to validate next
-4. 3-5 Recommended Strategic Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'what the organization must commit to and what it must CUT — name the priority that wins the scarce capacity and the one that is explicitly deprioritized',
+  tradeoffHint:
+    'this tool exists to force the trade-off: committing to one priority cuts or defers another — say which, and the cost of saying no.',
+  effectHint: 'the focus / delivery-capacity change from committing to the chosen priorities',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return as JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"commit|sequence|cut|rebalance|experiment","rationale":"...","linkedPriorityIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  ${W2_FALLBACK_SUMMARY_JSON},
+  "moves": [{"title":"...","category":"commit|sequence|cut|rebalance|experiment","rationale":"...","linkedPriorityIds":["..."],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedPriorityIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -1225,25 +1287,27 @@ Return as JSON:
       .map((p: any) => `- ${p.title}: ${p.message} (${(p.proofPoints || []).length} proof, ${p.audienceResonance})`)
       .join('\n');
 
-    return `Based on this Narrative, create a consulting-grade final summary:
+    return `Act as a strategy partner closing this Narrative session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
+=== CORE MESSAGE + PILLARS (the only admissible source of facts) ===
 Core message: ${narData?.context?.coreMessage || 'n/a'}
 Audience: ${narData?.context?.audience || 'n/a'}
-${pillarsSummary}
+${pillarsSummary || '- no pillar defined yet'}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Storyline Threads (how the pillars connect into a persuasive arc)
-3. Applied Conclusions: how to open, what to prove, what call-to-action, what to validate next
-4. 3-5 Recommended Delivery Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'whether this narrative will land with the named audience and the ONE pillar it must lead with — name the strongest proven pillar and the weakest (thinnest proof) that endangers credibility',
+  tradeoffHint:
+    'a persuasive arc is a choice: leading with one pillar means another moves later or drops — name what you cut to keep the arc tight.',
+  effectHint: 'the audience response / decision the narrative is meant to move',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return as JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"open|build|prove|cta|reframe","rationale":"...","linkedPillarIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  ${W2_FALLBACK_SUMMARY_JSON},
+  "moves": [{"title":"...","category":"open|build|prove|cta|reframe","rationale":"...","linkedPillarIds":["..."],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedPillarIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -1308,22 +1372,25 @@ Return JSON:
       )
       .join('\n');
 
-    return `Summarize portfolio priorities in a consulting-grade way:
+    return `Act as a strategy partner closing this BCG-style Portfolio Prioritization session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
-${itemsSummary || '- no portfolio items yet'}
+=== SCORED PORTFOLIO ITEMS (growth/share/investment — the only admissible source of facts) ===
+${itemsSummary || '- no portfolio item scored yet'}
 
-1. Executive Summary
-2. Top 3 insights
-3. Applied Conclusions
-4. 3-5 resource allocation moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'where the money goes and where it stops — name the item(s) to fund (star / question-mark worth a bet) and the one to harvest or stop, not an even spread across the 2x2',
+  tradeoffHint:
+    'capital is finite: funding a question-mark means starving a cash-cow or killing a dog — name what you defund to fund the bet.',
+  effectHint: 'the portfolio return / resource-concentration change',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return JSON:
 {
-  "summary": "executive summary",
-  "insights": ["..."],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"invest|maintain|test|harvest|stop","rationale":"...","linkedItemIds":[],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  ${W2_FALLBACK_SUMMARY_JSON},
+  "moves": [{"title":"...","category":"invest|maintain|test|harvest|stop","rationale":"...","linkedItemIds":[],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|growth|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": []}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedItemIds": [], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -1344,22 +1411,25 @@ Return JSON:
       )
       .join('\n');
 
-    return `Summarize risks and scenarios in a consulting-grade way:
+    return `Act as a strategy partner closing this Strategic Risk & Uncertainty session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
 
-${riskSummary || '- no explicit risks yet'}
+=== EXPLICIT RISKS (probability / impact — the only admissible source of facts) ===
+${riskSummary || '- no explicit risk scored yet'}
 
-1. Executive Summary
-2. Top 3 insights
-3. Applied Conclusions
-4. 3-5 resilience moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+${w2FallbackInstructions({
+  verdictHint:
+    'which risk most threatens the plan and whether to validate, mitigate or hedge it FIRST — name the top exposure (high P x high I) and the fragile assumption underneath it, not a risk register recap',
+  tradeoffHint:
+    'resilience costs: mitigating one risk spends budget or speed you could aim elsewhere — name the risk you consciously accept to act on the bigger one.',
+  effectHint: 'the exposure reduction (probability or impact) on the named risk',
+  isPolish,
+})}
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return JSON:
 {
-  "summary": "executive summary",
-  "insights": ["..."],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"validate|mitigate|monitor|hedge|escalate","rationale":"...","linkedRiskIds":[],"linkedAssumptionIds":[],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","confidence":4,"firstStep":"..."}],
+  ${W2_FALLBACK_SUMMARY_JSON},
+  "moves": [{"title":"...","category":"validate|mitigate|monitor|hedge|escalate","rationale":"...","linkedRiskIds":[],"linkedAssumptionIds":[],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": []}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedRiskIds": [], "linkedScenarioIds": [], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
