@@ -588,6 +588,64 @@ router.get(
         }
       }
 
+      // ── EXTERNAL CALENDAR EVENTS (v8 P02 bidirectional sync) ──────────────
+      // Events pulled from a connected Google/Outlook account by the v8 sync
+      // runtime land in v8_calendar_items. Surface them here so a connected
+      // calendar actually shows up in My Work. Additive: when no source is
+      // connected the table is empty and nothing changes.
+      if (wantGoogle || wantOutlook) {
+        const itemCols = await getTableColumns('v8_calendar_items');
+        if (itemCols.has('start_at') && itemCols.has('source_system')) {
+          const where: string[] = ['ci.organization_id = ?'];
+          const params: any[] = [orgId];
+          if (itemCols.has('user_id')) {
+            where.push('(ci.user_id = ? OR ci.user_id IS NULL)');
+            params.push(userId);
+          }
+          if (hasRange) {
+            where.push('ci.start_at >= ? AND ci.start_at < ?');
+            params.push(start, end);
+          }
+
+          const itemRows =
+            (await queryHelpers.queryAll<any>(
+              `SELECT ci.calendar_item_id, ci.title, ci.start_at, ci.end_at, ci.all_day,
+                      ci.source_system, ci.item_type
+               FROM v8_calendar_items ci
+               WHERE ${where.join(' AND ')}
+               ORDER BY ci.start_at ASC
+               LIMIT 500`,
+              params
+            )) || [];
+
+          const extColorMap: Record<string, string> = { google: '#059669', outlook: '#4f46e5' };
+
+          for (const ci of itemRows) {
+            const sys = String(ci.source_system || '').toLowerCase();
+            const calSource = sys === 'microsoft' ? 'outlook' : sys === 'google' ? 'google' : null;
+            if (!calSource) continue;
+            if (calSource === 'google' && !wantGoogle) continue;
+            if (calSource === 'outlook' && !wantOutlook) continue;
+
+            const startIso = ci.start_at ? new Date(ci.start_at).toISOString() : null;
+            if (!startIso) continue;
+            const endIso = ci.end_at ? new Date(ci.end_at).toISOString() : null;
+
+            events.push({
+              id: `${calSource}-item-${ci.calendar_item_id}`,
+              title: String(ci.title || '').trim() || 'Event',
+              start: startIso,
+              end: endIso || undefined,
+              allDay: Boolean(ci.all_day),
+              source: calSource as any,
+              sourceId: String(ci.calendar_item_id),
+              color: extColorMap[calSource],
+              status: 'confirmed',
+            });
+          }
+        }
+      }
+
       // ── AI FOCUS TIME SUGGESTIONS ─────────────────────────────────────────
       // Generate ghost blocks for "own work" time in gaps between meetings
       if (hasRange && start && end) {
