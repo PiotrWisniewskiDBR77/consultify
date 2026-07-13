@@ -35,6 +35,7 @@ import {
   Tag,
   Trash2,
   Type,
+  Unlink,
   Users,
   X,
 } from 'lucide-react';
@@ -1147,6 +1148,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     fetchPages();
   }, [fetchPages, refreshTrigger]);
 
+  // #18 — orphan cleanup: page ids with zero link_graph_edges rows (no topics,
+  // no @mentions, no backlinks). Org-scoped fetch, intersected client-side with
+  // whatever `pages` this notebook already loaded — cheap and avoids a second
+  // backend filter dimension per-notebook.
+  const [orphanIds, setOrphanIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let cancelled = false;
+    void Api.getOrphanedNotebookPageIds(200).then((ids) => {
+      if (!cancelled) setOrphanIds(new Set(ids));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTrigger]);
+  const isOrphanedPage = useCallback((p: NotebookPage) => orphanIds.has(p.id), [orphanIds]);
+
   // Sidebar filters & inbox state
   // Status axis (Wszystkie/Inbox/Aktywne) is owned by Menu 3 in the hub — the
   // in-column tab bar that used to duplicate it is gone (N5/U11).
@@ -1157,9 +1174,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   // N5 left-column lenses (independent of the status axis):
   //  • scope — who owns the page (mine vs the rest of the team)
-  //  • view  — flattened "Today" sections (pinned / recent / to-review / fresh)
+  //  • view  — flattened "Today" sections (pinned / recent / to-review / fresh / orphaned)
   type NotebookScopeLens = 'all' | 'mine' | 'team';
-  type NotebookViewLens = 'all' | 'pinned' | 'recent' | 'toReview' | 'fresh';
+  type NotebookViewLens = 'all' | 'pinned' | 'recent' | 'toReview' | 'fresh' | 'orphaned';
   const [scopeLens, setScopeLens] = useState<NotebookScopeLens>('all');
   const [viewLens, setViewLens] = useState<NotebookViewLens>('all');
 
@@ -1191,9 +1208,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       if (lens === 'recent') return isRecentPage(p);
       if (lens === 'toReview') return isToReviewPage(p);
       if (lens === 'fresh') return isFreshPage(p);
+      if (lens === 'orphaned') return isOrphanedPage(p);
       return true;
     },
-    [isRecentPage, isToReviewPage, isFreshPage]
+    [isRecentPage, isToReviewPage, isFreshPage, isOrphanedPage]
   );
 
   // Pages after the status (Menu 3) + scope lens — the base the view chips count against.
@@ -1213,8 +1231,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       recent: scopedPages.filter(isRecentPage).length,
       toReview: scopedPages.filter(isToReviewPage).length,
       fresh: scopedPages.filter(isFreshPage).length,
+      orphaned: scopedPages.filter(isOrphanedPage).length,
     }),
-    [scopedPages, isRecentPage, isToReviewPage, isFreshPage]
+    [scopedPages, isRecentPage, isToReviewPage, isFreshPage, isOrphanedPage]
   );
 
   const teamPagesExist = useMemo(() => pages.some((p) => !isMinePage(p)), [pages, isMinePage]);
@@ -2493,6 +2512,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 icon: <AlertTriangle size={11} />,
               },
               { key: 'fresh', label: isPolish ? 'Świeże' : 'Fresh', icon: <Sparkles size={11} /> },
+              {
+                key: 'orphaned',
+                label: isPolish ? 'Osierocone' : 'Orphaned',
+                icon: <Unlink size={11} />,
+              },
             ] as Array<{ key: NotebookViewLens; label: string; icon: React.ReactNode }>
           ).map((v) => {
             const count = viewCounts[v.key];
@@ -2684,6 +2708,20 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 </span>
                               );
                             })()}
+                            {/* #18 — orphan mark: zero link_graph_edges rows (no topics/mentions/backlinks) */}
+                            {orphanIds.has(p.id) && (
+                              <span
+                                className="inline-flex items-center gap-0.5 rounded-md bg-c-warning/10 text-c-warning px-1.5 py-0.5 text-[11px] font-medium"
+                                title={
+                                  isPolish
+                                    ? 'Brak powiązań — dodaj wzmiankę (@) lub zarchiwizuj'
+                                    : 'No connections — add a mention (@) or archive'
+                                }
+                              >
+                                <Unlink size={9} className="inline" />
+                                {isPolish ? 'Bez powiązań' : 'Unlinked'}
+                              </span>
+                            )}
                             {/* #21 reminder chip — reads capture_metadata.reminder */}
                             <NotebookReminderChip
                               captureMetadata={(p as any).captureMetadata}
