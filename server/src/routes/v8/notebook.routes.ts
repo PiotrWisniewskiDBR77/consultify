@@ -118,6 +118,8 @@ router.get(
       tags,
       has_attachments,
       date_range,
+      // #18 — orphan cleanup lens (sidebar filter): pages with zero link_graph_edges.
+      orphaned: parseBoolQuery(req.query.orphaned),
     };
 
     const data = await notebookSearchService.searchNotebook(organizationId, userId, filters);
