@@ -2916,6 +2916,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   >
                     <Network size={14} />
                   </button>
+                  {/* #33 — contextual AI-CTA on the Note card ("Zapytaj AI" / "Ask AI"),
+                      same doctrine (D17) as TaskDetailView's "Create Ideas",
+                      DecisionDetailView's "Analyze options" and InitiativeDocumentView's
+                      "Propose next steps": ONE docked Teresa panel, pre-seeded with a
+                      note-specific kickoff message (handleAskAI → buildAskAIMessage +
+                      setChatKickoffMessage — the mechanism already used by the hamburger
+                      menu's "Ask AI" entry). Made visible in the action bar (icon-only +
+                      tooltip, matching the History/Expand/Graph buttons above) instead of
+                      being reachable only via the ⋯ hamburger menu. */}
+                  <button
+                    type="button"
+                    onClick={handleAskAI}
+                    title={isPolish ? 'Zapytaj AI o tę notatkę' : 'Ask AI about this note'}
+                    aria-label={isPolish ? 'Zapytaj AI o tę notatkę' : 'Ask AI about this note'}
+                    className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
+                  >
+                    <Sparkles size={14} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => setNotebookRailOpen(!notebookRailOpen)}
