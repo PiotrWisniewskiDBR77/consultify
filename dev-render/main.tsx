@@ -31,7 +31,6 @@ import InsightLightScreen from './screens/insight-light';
 import InterviewLightScreen from './screens/interview-light';
 import InitiativesLightScreen from './screens/initiatives-light';
 import MaterialsLightScreen from './screens/materials-light';
-import NotebookLightScreen from './screens/notebook-light';
 import ResultsLightScreen from './screens/results-light';
 import ToolsLightScreen from './screens/tools-light';
 
@@ -43,7 +42,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'interview-light': { label: 'Interview Light Shell', render: () => <InterviewLightScreen /> },
   'materials-light': { label: 'Materials Light Shell', render: () => <MaterialsLightScreen /> },
   'tools-light': { label: 'Tools Light Shell (Biblioteka · Sesje · Raporty)', render: () => <ToolsLightScreen /> },
-  'notebook-light': { label: 'Notebook Light Shell', render: () => <NotebookLightScreen /> },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,

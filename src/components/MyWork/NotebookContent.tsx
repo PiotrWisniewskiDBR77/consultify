@@ -59,15 +59,8 @@ import type {
   NotebookVerificationStatus,
   NotebookVisibility,
 } from '@/types/myWork';
-import { isNotebookLightEnabled } from '@/utils/notebookLightFlag';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
-import {
-  type NotebookLightBlock,
-  type NotebookLightMaturity,
-  type NotebookLightNoteLite,
-  NotebookLightShell,
-} from './NotebookLightShell';
 import { AI_BLOCK_MIME, type ConvertTarget } from './notebook/AIChatInlinePanel';
 import { AICommandPrompt } from './notebook/AICommandPrompt';
 import { type AICommandType, AIInlineResponse } from './notebook/AIInlineResponse';
@@ -305,95 +298,6 @@ const extractHeadings = (json: any): NotebookHeading[] => {
   }
   return headings.slice(0, 24);
 };
-
-// ── Fala lekkość (Notebook): best-effort TipTap doc → NotebookLightBlock[]
-// converter. NOT a full renderer (no marks/tables/images) — headings,
-// paragraphs and bullet lists only, mirroring what `extractHeadings` /
-// `extractText` already read out of `contentJson`. Anything else (blockquote,
-// codeBlock, task list, embedded refs, images…) degrades to a plain paragraph
-// via `extractText` so no content silently disappears, rather than crashing
-// or fabricating structure the source doc doesn't have.
-const NOTEBOOK_LIGHT_MATURITY: Record<NotebookMaturity, NotebookLightMaturity> = {
-  seed: 'seed',
-  growing: 'growing',
-  mature: 'mature',
-  // CAVEAT: light shell only models 3 maturity tiers; the 4th real tier
-  // ("actionable") folds into "mature" — no light-shell equivalent yet.
-  actionable: 'mature',
-};
-
-function buildLightBlocks(json: any): NotebookLightBlock[] {
-  const blocks: NotebookLightBlock[] = [];
-  try {
-    const topLevel: any[] = Array.isArray(json?.content) ? json.content : [];
-    for (const node of topLevel) {
-      if (!node || typeof node !== 'object') continue;
-      if (node.type === 'heading') {
-        const text = extractText(node);
-        if (text) {
-          const level = Number(node.attrs?.level || 1);
-          const clampedLevel: 1 | 2 | 3 = level <= 1 ? 1 : level === 2 ? 2 : 3;
-          blocks.push({ type: 'heading', level: clampedLevel, text });
-        }
-        continue;
-      }
-      if (node.type === 'bulletList' || node.type === 'orderedList' || node.type === 'taskList') {
-        const items = (Array.isArray(node.content) ? node.content : [])
-          .map((li: any) => extractText(li))
-          .filter(Boolean);
-        if (items.length > 0) blocks.push({ type: 'bullet', items });
-        continue;
-      }
-      const text = extractText(node);
-      if (text) blocks.push({ type: 'paragraph', text });
-    }
-  } catch {
-    return [];
-  }
-  return blocks.slice(0, 60);
-}
-
-function pageToLightNote(
-  page: NotebookPage,
-  pendingProposalsForThisPage: number
-): NotebookLightNoteLite {
-  return {
-    id: page.id,
-    title: page.title || '',
-    maturity: NOTEBOOK_LIGHT_MATURITY[page.maturity] || 'seed',
-    verification: page.verificationStatus || 'unverified',
-    pinned: !!page.pinned,
-    tags: page.tags || [],
-    updatedLabel: relativeTime(page.updatedAt),
-    summary: page.summary || undefined,
-    blocks: buildLightBlocks(page.contentJson),
-    // CAVEAT: capture provenance is a single best-effort entry from
-    // captureMetadata (upload/web-clip/email/API import); attachments are not
-    // folded in here (surfaced separately by NotebookAttachmentsSection in
-    // the legacy shell — not yet in the light shell's aside).
-    sources: page.captureSource
-      ? [
-          {
-            label: page.captureSource,
-            detail:
-              page.captureMetadata?.url ||
-              page.captureMetadata?.fileOriginalname ||
-              page.captureMetadata?.emailFrom ||
-              '',
-          },
-        ]
-      : [],
-    convertedTo: (page.convertedTo || []).map((c) => ({ type: c.type })),
-    // CAVEAT: backlink counts are computed by <NotebookBacklinksBar> per-note
-    // on demand (not preloaded into the pages list) — omitted rather than
-    // faked.
-    backlinksCount: undefined,
-    // CAVEAT: AI proposals are only fetched for the currently open page
-    // (`pendingAIProposals` state) — non-active notes show 0, not a real
-    // per-note count.
-    pendingAIProposals: pendingProposalsForThisPage,
-  };
-}
 
 const buildOutlineDraft = (
   page: NotebookPage,
@@ -2466,58 +2370,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       handleRemoveTag(pageTags[pageTags.length - 1]);
     }
   };
-
-  // ── Fala lekkość: gęsta powłoka Notatnika za flagą (default OFF; podgląd
-  // ?ff_notebookLight=1). ON = zastąpienie ciężkiego chromu (cover bar/tags/
-  // 2 selecty/badge/przycisk/divider/5-ikonowy NotebookProgressChip/mini
-  // outline/AI-proposals card) jedną lekką powłoką (rail notatek + treść +
-  // kebab = jeden dom akcji). OFF = poniższy return BEZ ZMIAN. Umieszczone
-  // PO wszystkich hookach → zgodne z regułami hooków (wzorzec DRDLightShell).
-  // Kebab shell operuje zawsze na aktywnej notatce (activeNote.id === noteId
-  // przekazywany do handlerów), więc handlery poniżej odwołują się wprost do
-  // `activePage`/`handleXxx` istniejących w tym pliku, bez przełączania stanu.
-  //
-  // CAVEATY (mapowanie na propsy, patrz też `pageToLightNote` powyżej):
-  //   * `blocks` — best-effort TipTap→heading/paragraph/bullet, nie pełny
-  //     renderer (marks/tabele/obrazy/embedded-refs spłaszczone do tekstu).
-  //   * `pendingAIProposals` realne tylko dla aktywnej notatki (pozostałe 0).
-  //   * `backlinksCount` pominięty (liczony on-demand przez NotebookBacklinksBar,
-  //     nie preloadowany na listę stron).
-  //   * `onVersionHistory` woła `setShowVersionHistory(true)`, ale ten stan
-  //     steruje panelem w STARYM chromie (nierenderowanym w tej gałęzi) —
-  //     kliknięcie w kebabie nie pokaże jeszcze historii wizualnie w lekkiej
-  //     powłoce (follow-up, nie blocker na ten krok wpięcia).
-  if (isNotebookLightEnabled()) {
-    const lightNotes: NotebookLightNoteLite[] = pages.map((p) =>
-      pageToLightNote(p, p.id === activePage?.id ? pendingAIProposals.length : 0)
-    );
-
-    return (
-      <ErrorBoundary>
-        <NotebookLightShell
-          notebookName={notebookTitle}
-          notes={lightNotes}
-          initialActiveNoteId={activeId || undefined}
-          onSelectNote={(noteId) => setActiveId(noteId)}
-          onNewNote={() => void handleNewPage()}
-          onAskAI={() => onChatOpenChange?.(true)}
-          onConvert={(noteId, target) => {
-            if (noteId !== activePage?.id) setActiveId(noteId);
-            void handleConvertFromPanel(target as ConvertTarget);
-          }}
-          onExpandDocument={(noteId) => {
-            if (noteId !== activePage?.id) setActiveId(noteId);
-            void handleExpandToDocument();
-          }}
-          onVersionHistory={() => setShowVersionHistory(true)}
-          onDeleteNote={(noteId) => {
-            if (noteId !== activePage?.id) setActiveId(noteId);
-            void handleDeletePage();
-          }}
-        />
-      </ErrorBoundary>
-    );
-  }
 
   return (
     <div className="flex h-[calc(100vh-220px)] min-h-[520px] gap-1.5 p-3 overflow-hidden bg-c-bg">
