@@ -58,6 +58,13 @@ interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
   renderBatchPreview?: (ids: Set<string>) => React.ReactNode;
   /** Lookup function to resolve item by ID — required for pinning to render the pinned item */
   getItemById?: (id: string) => T | null;
+  /**
+   * Desktop preview overlay (#4b) — when true, on ≥lg the preview pane floats as a
+   * fixed/absolute panel anchored to the right edge INSTEAD of a flex sibling, so the
+   * table/card grid keeps full width (zero reflow). Mobile is unchanged (already an overlay).
+   * Default false → existing flex-sibling behaviour for every other consumer.
+   */
+  desktopPreviewOverlay?: boolean;
 }
 
 export function TableWithPreviewLayout<T extends PreviewableItem>({
@@ -76,9 +83,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   selectedIds,
   renderBatchPreview,
   getItemById,
+  desktopPreviewOverlay = false,
 }: TableWithPreviewLayoutProps<T>) {
   const { t } = useTranslation();
   const { isMobile, safeAreaInsets } = useDeviceType();
+  // #4b — desktop overlay: float the preview above the table (no reflow). Never on mobile
+  // (mobile already renders a full-screen `fixed inset-0` drawer below).
+  const overlayMode = desktopPreviewOverlay && !isMobile;
   const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -295,7 +306,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     ) : null;
 
   return (
-    <div ref={containerRef} className="flex h-full overflow-hidden gap-1.5" tabIndex={0}>
+    <div ref={containerRef} className="relative flex h-full overflow-hidden gap-1.5" tabIndex={0}>
       {/* Table area */}
       <div
         className="app-table-scrollbar flex-1 min-w-0 overflow-auto pr-2 [scrollbar-gutter:stable]"
@@ -304,7 +315,18 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
         {children}
       </div>
 
-      {/* Pinned preview pane (comparison mode) */}
+      {/* Preview panels — by default inline flex siblings (display:contents keeps the wrapper
+          layout-transparent, identical to the previous behaviour). When desktopPreviewOverlay is
+          on (#4b), the wrapper becomes a right-edge floating overlay so the table keeps full width
+          (zero reflow). Mobile branches inside stay `fixed inset-0` regardless. */}
+      <div
+        className={
+          overlayMode
+            ? 'pointer-events-none absolute inset-y-0 right-0 z-40 flex items-stretch justify-end gap-1.5 pl-3'
+            : 'contents'
+        }
+      >
+        {/* Pinned preview pane (comparison mode) */}
       {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode && !isMobile ? (
         <motion.div
           key={`pinned-${pinnedId}`}
@@ -312,12 +334,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -8 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+          className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
           style={{ width: 'clamp(280px, 22%, 400px)' }}
         >
           <PreviewPaneShell
             title={pinnedItem.title}
             onClose={handleUnpin}
+            className={overlayMode ? 'h-full rounded-2xl shadow-2xl !bg-c-surface' : undefined}
             actions={
               <button
                 onClick={handleUnpin}
@@ -410,12 +433,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
             style={{ width: 'clamp(340px, 28%, 480px)' }}
           >
             <PreviewPaneShell
               title={t('common.batchOperations', 'Batch Operations')}
               onClose={handleClose}
+              className={overlayMode ? 'h-full rounded-2xl shadow-2xl !bg-c-surface' : undefined}
             >
               {renderBatchPreview(selectedIds!)}
             </PreviewPaneShell>
@@ -427,7 +451,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
             style={{ width: 'clamp(340px, 28%, 480px)' }}
           >
             <PreviewPaneShell
@@ -435,12 +459,14 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               onClose={handleClose}
               actions={previewActions}
               footer={renderPreviewFooter?.(selectedItem)}
+              className={overlayMode ? 'h-full rounded-2xl shadow-2xl !bg-c-surface' : undefined}
             >
               {renderPreview(selectedItem)}
             </PreviewPaneShell>
           </motion.div>
         ) : null}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

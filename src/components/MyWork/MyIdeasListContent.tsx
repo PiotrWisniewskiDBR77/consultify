@@ -49,6 +49,7 @@ import {
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { isIdeasPreviewOverlayEnabled } from '@/utils/ideasPreviewOverlayFlag';
 import { ErrorState } from '@/components/ui/primitives';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
@@ -1779,6 +1780,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             onSelect={setPreviewIdeaId}
             previewOpen={Boolean(previewIdeaId)}
             autoOpenPreview={false}
+            desktopPreviewOverlay={isIdeasPreviewOverlayEnabled()}
             onOpenFull={(id) => {
               const idea = sortedIdeas.find((item) => item.id === id);
               if (idea) openIdea(idea.id, idea);
