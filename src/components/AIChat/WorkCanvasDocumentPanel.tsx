@@ -1,8 +1,8 @@
 import type { Editor as TiptapEditor } from '@tiptap/react';
 import {
   CheckSquare,
+  ChevronDown,
   ChevronLeft,
-  ChevronRight,
   Copy,
   Download,
   FileText,
@@ -15,7 +15,6 @@ import {
   Presentation,
   RefreshCw,
   Rocket,
-  RotateCcw,
   Save,
   Share2,
   Sparkles,
@@ -3381,12 +3380,17 @@ function WorkCanvasMarkdownDocumentPanel({
                 className="absolute right-0 z-20 mt-2 max-h-[80vh] w-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
                 data-testid="canvas-diagnostics-menu"
               >
-                <div className="space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
-                  <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Widok canvas
-                  </div>
+                {/* #87d — grupa WIDOK (zwijalna). Restrukturyzacja mega-kebaba:
+                    14 sekcji → 8 nazwanych grup-akordeonów, żeby użytkownik nie
+                    skrolował ściany. Zero utraty funkcji — każda pozycja została,
+                    tylko pogrupowana. */}
+                <details className="group space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10" open>
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.groups.view', 'Widok')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
                   <div
-                    className="mx-2.5 inline-flex rounded-full bg-slate-100 p-1 dark:bg-white/10"
+                    className="mx-2.5 mt-1 inline-flex rounded-full bg-slate-100 p-1 dark:bg-white/10"
                     data-testid="canvas-view-actions"
                   >
                     <button
@@ -3414,12 +3418,13 @@ function WorkCanvasMarkdownDocumentPanel({
                       MD
                     </button>
                   </div>
-                </div>
+                </details>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
-                  <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    {t('canvas.panel.common.title', 'Most common actions')}
-                  </div>
+                <details className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.common.title', 'Most common actions')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
                   {[
                     {
                       title: t('canvas.panel.common.expandTitle', 'Expand selected idea'),
@@ -3522,13 +3527,14 @@ function WorkCanvasMarkdownDocumentPanel({
                       </button>
                     </div>
                   ))}
-                </div>
+                </details>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
-                  <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    {t('canvas.panel.addElement.title', 'Add element')}
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5 px-2.5">
+                <details className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.addElement.title', 'Add element')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="mt-1 grid grid-cols-3 gap-1.5 px-2.5">
                     {(
                       [
                         ['text', t('canvas.panel.addElement.text', 'Text')],
@@ -3569,9 +3575,16 @@ function WorkCanvasMarkdownDocumentPanel({
                       {t('canvas.panel.addElement.submit', 'Add to canvas')}
                     </button>
                   </div>
-                </div>
+                </details>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                {/* #87d — grupa EDYCJA I AI: łączy „AI on selection" + „Manual editing". */}
+                <details className="group mt-3 border-b border-slate-200 dark:border-white/10" open>
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.groups.edit', 'Edycja i AI')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+
+                <div className="mt-1 space-y-1.5 pb-3">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.selection.title', 'AI on selection')}
                   </div>
@@ -3676,12 +3689,14 @@ function WorkCanvasMarkdownDocumentPanel({
                     <span>{t('canvas.versionHistory.title', 'Version history')}</span>
                   </button>
                 </div>
+                </details>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
-                  <div className="flex items-center justify-between gap-2 px-2.5 pb-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                      {t('canvas.panel.templates.title', 'Starter templates')}
-                    </div>
+                <details className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.templates.title', 'Starter templates')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="mt-1 flex items-center justify-end gap-2 px-2.5 pb-1">
                     <button
                       type="button"
                       onClick={() => setIsTemplateBuilderOpen((open) => !open)}
@@ -3754,9 +3769,17 @@ function WorkCanvasMarkdownDocumentPanel({
                       </div>
                     </button>
                   ))}
-                </div>
+                </details>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                {/* #87d — grupa PLIK, EKSPORT I WORKSPACE: Workspace actions +
+                    provenance + dataset + Markdown/eksporty (Word/Excel/PPTX/PDF/Studia). */}
+                <details className="group mt-3 border-b border-slate-200 dark:border-white/10">
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.groups.file', 'Plik, eksport i workspace')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+
+                <div className="mt-1 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.workspaceActions.title', 'Workspace actions')}
                   </div>
@@ -4015,8 +4038,17 @@ function WorkCanvasMarkdownDocumentPanel({
                     <span>{t('canvas.panel.uploadDataset', 'Upload dataset')}</span>
                   </button>
                 </div>
+                </details>
 
-                <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
+                {/* #87d — grupa DIAGNOSTYKA I WORKFLOW: MD file properties +
+                    Capabilities/workflow + ledger. */}
+                <details className="group mt-3 border-b border-slate-200 pb-1 dark:border-white/10">
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.groups.diagnostics', 'Diagnostyka i workflow')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+
+                <div className="mt-1 pt-1">
                   <button
                     type="button"
                     onClick={() => setIsMdPropertiesOpen((open) => !open)}
@@ -4406,10 +4438,12 @@ function WorkCanvasMarkdownDocumentPanel({
                     </div>
                   ) : null}
                 </div>
+                </details>
 
-                <details className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
-                  <summary className="cursor-pointer select-none rounded-xl px-2.5 py-2 font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10">
-                    Zaawansowane
+                <details className="group mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
+                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
+                    <span>{t('canvas.panel.groups.advanced', 'Zaawansowane')}</span>
+                    <ChevronDown size={14} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
                   </summary>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {documentState.markdownProjectionStatus === 'failed' ? (
@@ -4430,12 +4464,17 @@ function WorkCanvasMarkdownDocumentPanel({
                       <RefreshCw size={12} />
                       Reset
                     </button>
+                    {/* #87d — dawny przycisk otwierał DRUGI, prymitywny podgląd
+                        wersji (usunięty jako duplikat). Teraz kieruje do JEDYNEGO
+                        kanonicznego CanvasVersionHistory (popover) — który też
+                        ładuje wersje, więc „Show changes" nadal działa. */}
                     <button
                       type="button"
-                      onClick={() => void loadVersions()}
+                      onClick={() => void openVersionHistory()}
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
                     >
-                      Versions
+                      <History size={12} />
+                      Version history
                     </button>
                     <button
                       type="button"
@@ -4454,83 +4493,10 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                 </details>
 
-                {isVersionsOpen ? (
-                  <div className="mt-3 max-h-56 space-y-2 overflow-auto border-t border-slate-200 pt-3 dark:border-white/10">
-                    {isVersionsLoading ? (
-                      <div className="text-slate-500 dark:text-slate-400">Loading versions...</div>
-                    ) : versions.length === 0 ? (
-                      <div className="text-slate-500 dark:text-slate-400">No versions yet.</div>
-                    ) : (
-                      <>
-                        {/* Prev/Next stepper across the version timeline */}
-                        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-xl bg-slate-100 px-2 py-1.5 dark:bg-white/10">
-                          <button
-                            type="button"
-                            disabled={versionCursor >= versions.length - 1}
-                            onClick={() =>
-                              setVersionCursor((c) => Math.min(c + 1, versions.length - 1))
-                            }
-                            title="Older version"
-                            aria-label="Older version"
-                            className="rounded-full p-1 text-slate-600 hover:text-slate-950 disabled:opacity-30 dark:text-slate-300 dark:hover:text-white"
-                          >
-                            <ChevronLeft size={14} />
-                          </button>
-                          <div className="text-center text-[11px] leading-tight text-slate-600 dark:text-slate-300">
-                            <div className="font-semibold text-slate-700 dark:text-slate-100">
-                              Version {versions.length - versionCursor} / {versions.length}
-                            </div>
-                            <div>
-                              {new Date(versions[versionCursor].createdAt).toLocaleString()}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            disabled={versionCursor <= 0}
-                            onClick={() => setVersionCursor((c) => Math.max(c - 1, 0))}
-                            title="Newer version"
-                            aria-label="Newer version"
-                            className="rounded-full p-1 text-slate-600 hover:text-slate-950 disabled:opacity-30 dark:text-slate-300 dark:hover:text-white"
-                          >
-                            <ChevronRight size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void restoreVersion(versions[versionCursor])}
-                            className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
-                          >
-                            <RotateCcw size={12} />
-                            Restore
-                          </button>
-                        </div>
-                        {versions.map((version, idx) => (
-                          <div
-                            key={version.id}
-                            className={`rounded-xl p-2 text-[11px] dark:bg-white/[0.06] ${
-                              idx === versionCursor
-                                ? 'bg-slate-100 ring-1 ring-primary-400 dark:bg-white/10'
-                                : 'bg-slate-50'
-                            }`}
-                          >
-                            <div className="font-semibold text-slate-700 dark:text-slate-100">
-                              {version.operationType}
-                            </div>
-                            <div className="mt-0.5 text-slate-500 dark:text-slate-300">
-                              {new Date(version.createdAt).toLocaleString()} · {version.summary}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => void restoreVersion(version)}
-                              className="mt-2 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
-                            >
-                              Restore
-                            </button>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                ) : null}
+                {/* #87d — USUNIĘTO prymitywny, drugi podgląd wersji (stepper +
+                    lista Restore). Był duplikatem CanvasVersionHistory (popover,
+                    renderowany z canvas-history-root). Jedyny podgląd wersji =
+                    „Version history" w grupie „Edycja i AI" oraz w „Zaawansowane". */}
               </div>
             ) : null}
           </div>
