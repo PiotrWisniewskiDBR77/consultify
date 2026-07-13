@@ -1119,7 +1119,15 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                             >
                               <RowActionsMenu
                                 iconVariant="vertical"
-                                actions={getRowActions(template)}
+                                // #40 — pure-wiring bridge onto the sectional kebab contract;
+                                // filter replicates the legacy flat-menu semantics exactly
+                                // (disabled items were silently dropped) — zero visible change.
+                                sections={[
+                                  {
+                                    id: 'legacy',
+                                    actions: getRowActions(template).filter((a) => !a.disabled),
+                                  },
+                                ]}
                               />
                             </div>
                           </td>

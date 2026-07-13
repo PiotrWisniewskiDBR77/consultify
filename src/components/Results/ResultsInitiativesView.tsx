@@ -675,7 +675,11 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                       </td>
 
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                        <RowActionsMenu iconVariant="vertical" actions={rowActions(initiative)} />
+                        <RowActionsMenu
+                          // #40 — pure-wiring bridge onto the sectional kebab contract (zero visible change).
+                          iconVariant="vertical"
+                          sections={[{ id: 'legacy', actions: rowActions(initiative) }]}
+                        />
                       </td>
                     </tr>
                   );

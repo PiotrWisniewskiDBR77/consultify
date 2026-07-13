@@ -28,7 +28,11 @@ import { PMOTaskLabel, usePMOStore } from '../../store/usePMOStore';
 import { Task } from '../../types';
 import { ErrorState } from '../ui/primitives/ErrorState';
 import { CardViewStyle, CardViewSwitcher } from '../shared/CardViewSwitcher';
-import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import {
+  type RowAction,
+  type RowActionSection,
+  RowActionsMenu,
+} from '../shared/RowActionsMenu';
 import type { GenericListItem, ListColumn, ListSection } from '../shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '../shared/ViewLayouts';
 
@@ -523,28 +527,36 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           <div className="shrink-0 flex items-center pl-2" onClick={(e) => e.stopPropagation()}>
             <RowActionsMenu
               size="sm"
-              actions={
+              // #40 — pure-wiring bridge onto the sectional kebab contract (zero visible change).
+              sections={
                 [
                   {
-                    id: 'pin',
-                    label: pinnedTaskIds.has(task.id) ? 'Unpin' : 'Pin to top',
-                    icon: Pin,
-                    onClick: () => togglePinTask(task.id),
-                    variant: pinnedTaskIds.has(task.id) ? 'primary' : 'default',
+                    id: 'legacy',
+                    actions: [
+                      {
+                        id: 'pin',
+                        label: pinnedTaskIds.has(task.id) ? 'Unpin' : 'Pin to top',
+                        icon: Pin,
+                        onClick: () => togglePinTask(task.id),
+                        variant: pinnedTaskIds.has(task.id) ? 'primary' : 'default',
+                      },
+                      {
+                        id: 'delete',
+                        label: 'Delete',
+                        icon: Trash2,
+                        onClick: () => {
+                          if (confirm('Are you sure you want to delete this task?')) {
+                            handleDelete(task.id, {
+                              stopPropagation: () => {},
+                            } as React.MouseEvent);
+                          }
+                        },
+                        variant: 'danger',
+                        divider: true,
+                      },
+                    ] satisfies RowAction[],
                   },
-                  {
-                    id: 'delete',
-                    label: 'Delete',
-                    icon: Trash2,
-                    onClick: () => {
-                      if (confirm('Are you sure you want to delete this task?')) {
-                        handleDelete(task.id, { stopPropagation: () => {} } as React.MouseEvent);
-                      }
-                    },
-                    variant: 'danger',
-                    divider: true,
-                  },
-                ] satisfies RowAction[]
+                ] satisfies RowActionSection[]
               }
             />
           </div>
