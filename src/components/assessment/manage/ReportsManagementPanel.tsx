@@ -679,9 +679,10 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 {stats.draft} In Progress
               </span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30">
-              <Eye size={14} className="text-primary-600 dark:text-primary-400" />
-              <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+            {/* Pułapka #1 (kanon): `primary`=crimson; stat informacyjny → niebieski, nie crimson. */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
+              <Eye size={14} className="text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                 {stats.inReview} In Review
               </span>
             </div>

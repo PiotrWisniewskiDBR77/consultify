@@ -1030,13 +1030,14 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 className={cn(
                   'h-10 inline-flex items-center gap-2 px-3 rounded-lg border text-sm font-medium transition-colors',
                   'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700',
+                  // Pułapka #1 (kanon): `primary`=crimson; stan aktywny filtra → neutralny, nie crimson.
                   statusFilter.length > 0 &&
-                    'border-primary-200 dark:border-primary-500/30 bg-primary-50/60 dark:bg-primary-500/10'
+                    'border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/10'
                 )}
               >
                 <Filter
                   size={14}
-                  className={statusFilter.length > 0 ? 'text-primary-600' : 'text-slate-500'}
+                  className={statusFilter.length > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'}
                 />
                 <span className="text-slate-700 dark:text-slate-200">Status</span>
                 <span className="text-slate-500 dark:text-slate-400">{statusFilterLabel}</span>
