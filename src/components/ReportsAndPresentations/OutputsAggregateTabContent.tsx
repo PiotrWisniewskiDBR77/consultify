@@ -57,6 +57,7 @@ import {
 } from '../standard';
 import { resolveArtifactOpenPath } from './artifactNavigation';
 import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
+import { SaveAsTemplateModal, type SaveAsTemplateSource } from './SaveAsTemplateModal';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 import type { ArtifactGovernanceSummary, UnifiedOutputRow } from './types';
 import type { useRapActions } from './useRapData';
@@ -179,6 +180,10 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const [lineageRun, setLineageRun] = useState<any | null>(null);
   const [lineageToolUsage, setLineageToolUsage] = useState<any | null>(null);
   const [lineageOutputs, setLineageOutputs] = useState<any[] | null>(null);
+  // #83b: real "save as template" modal state (replaces window.prompt/confirm).
+  const [saveAsTemplateSource, setSaveAsTemplateSource] = useState<SaveAsTemplateSource | null>(
+    null
+  );
   const translate = useCallback(
     (key: string, fallback?: string) => t(key, { defaultValue: fallback ?? key }),
     [t]
@@ -586,45 +591,12 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           id: 'save_as_template',
           label: t('rap.actions.saveAsTemplate', 'Save as template'),
           icon: BookTemplate,
-          onClick: async () => {
+          onClick: () => {
             const aid = row.artifactId;
             if (!aid) return;
-
-            const defaultName = `${row.title} Template`;
-            const name = window.prompt(t('reports.newTemplateName'), defaultName);
-            if (!name?.trim()) return;
-            const description = window.prompt(t('reports.descriptionOptional'), '');
-            const scopeIsOrg = window.confirm(t('reports.shouldThisBeAnOrganizationTemplate'));
-
-            try {
-              const res = await fetch(`${API_URL}/artifacts/${aid}/save-as-template`, {
-                method: 'POST',
-                headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  name: name.trim(),
-                  description: String(description || '').trim(),
-                  scope: scopeIsOrg ? 'org' : 'user',
-                }),
-              });
-              if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(String(err?.error || 'Failed to save template'));
-              }
-              const payload = (await res.json().catch(() => ({}))) as {
-                data?: { artifactId?: string };
-              };
-              const templateArtifactId =
-                typeof payload?.data?.artifactId === 'string' ? payload.data.artifactId : null;
-              toast.success(t('reports.savedAsTemplate'));
-              const params = new URLSearchParams(location.search || '');
-              params.set('tab', 'templates');
-              if (templateArtifactId) {
-                params.set('artifactId', templateArtifactId);
-              }
-              navigate(`/presentations?${params.toString()}`);
-            } catch (e: any) {
-              toast.error(e?.message ? String(e.message) : t('reports.failed'));
-            }
+            // #83b: real modal (name + type + visibility) replaces the old
+            // window.prompt()/window.confirm() sequence — see SaveAsTemplateModal.
+            setSaveAsTemplateSource({ artifactId: aid, title: row.title, kind: row.kind as 'document' | 'presentation' });
           },
         });
       }
@@ -1095,6 +1067,20 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           </div>
         </DialogContent>
       </Dialog>
+
+      <SaveAsTemplateModal
+        isOpen={!!saveAsTemplateSource}
+        source={saveAsTemplateSource}
+        onClose={() => setSaveAsTemplateSource(null)}
+        onSaved={(templateArtifactId) => {
+          const params = new URLSearchParams(location.search || '');
+          params.set('tab', 'templates');
+          if (templateArtifactId) {
+            params.set('artifactId', templateArtifactId);
+          }
+          navigate(`/presentations?${params.toString()}`);
+        }}
+      />
 
       {/* Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Outputs
           aggregate list (All/Mine/Review share this component) →
