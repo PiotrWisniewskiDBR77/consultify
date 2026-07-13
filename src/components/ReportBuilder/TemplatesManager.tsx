@@ -739,7 +739,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
             {/* Primary Action Button - Unified height */}
             <button
               onClick={() => openEditor()}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-accent text-c-text border border-c-border-subtle hover:brightness-110 shadow-lg transition-all duration-200"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-text text-c-surface border border-c-border-subtle hover:brightness-110 shadow-lg transition-all duration-200"
             >
               <Plus size={14} />
               <span>New Template</span>

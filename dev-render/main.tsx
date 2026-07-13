@@ -41,6 +41,7 @@ import TemplateBuilderDocScreen from './screens/template-builder-doc';
 import TemplateBuilderTableScreen from './screens/template-builder-table';
 import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
+import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
@@ -48,6 +49,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'template-create-wizard': {
     label: '#83c START kreatora szablonu (nazwa → typ → dostępność)',
     render: () => <TemplateCreateWizardScreen />,
+  },
+  'wave3-creators-crimson': {
+    label: 'Fala 3 — ReportBuilder+AIChat+Meeting: crimson-fill CTA sweep (swatch, PO naprawie)',
+    render: () => <Wave3CreatorsCrimsonScreen />,
   },
   'template-library-new-entry': {
     label: 'Wpięcie „Nowy szablon" (Biblioteka wzorców → TemplateBuilderFlow)',

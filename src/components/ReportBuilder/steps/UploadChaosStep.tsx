@@ -335,7 +335,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
       {/* Knowledge Map Card */}
       {knowledgeMap && allDone && (
-        <div className="rounded-2xl border border-c-accent bg-c-accent p-6 space-y-4">
+        <div className="rounded-2xl border border-c-accent-soft bg-c-accent-soft p-6 space-y-4">
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-c-accent" />
             <h3 className="text-base font-bold text-c-text">
@@ -423,8 +423,8 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
               onClick={() => onChoosePath('B')}
               disabled={isLoading}
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
-                bg-c-accent
-                text-c-text font-semibold text-sm
+                bg-c-text
+                text-c-surface font-semibold text-sm
                 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-4 h-4" />

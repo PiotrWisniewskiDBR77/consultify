@@ -72,7 +72,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   strategic: 'from-blue-500 to-indigo-600',
   portfolio: 'from-emerald-500 to-blue-600',
   finance: 'from-amber-500 to-amber-600',
-  steering: 'bg-c-accent',
+  steering: 'from-violet-500 to-violet-600',
   workshop: 'from-blue-500 to-blue-600',
   assessment: 'from-pink-500 to-danger-600',
   general: 'bg-c-surface-raised',
@@ -333,7 +333,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           {/* Header */}
           <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br bg-c-accent to-blue-600 text-c-text rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 text-c-text rounded-lg">
                 <FileText size={20} />
               </div>
               <div>

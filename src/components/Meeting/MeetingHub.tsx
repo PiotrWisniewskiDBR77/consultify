@@ -688,7 +688,7 @@ export const MeetingHub: React.FC = () => {
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-accent text-white hover:opacity-90 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-surface hover:opacity-90 transition-colors"
           >
             <span>{t('meeting.actions.new', 'New meeting')}</span>
           </button>
@@ -997,7 +997,7 @@ export const MeetingHub: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSaveMeeting}
-                  className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
+                  className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
                 >
                   {editingId
                     ? t('meeting.actions.save', 'Save changes')
@@ -1048,7 +1048,7 @@ export const MeetingHub: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddDecision}
-                className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
+                className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
               >
                 {t('meeting.decisions.actions.add', 'Add decision')}
               </button>
@@ -1103,7 +1103,7 @@ export const MeetingHub: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddFollowUp}
-                className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
+                className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
               >
                 {t('meeting.followUp.actions.add', 'Add follow-up')}
               </button>
@@ -1225,7 +1225,7 @@ export const MeetingHub: React.FC = () => {
                   type="button"
                   onClick={handleGenerateNotes}
                   disabled={generatingNotes || !notesTranscript.trim()}
-                  className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:opacity-90"
+                  className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:opacity-90"
                 >
                   <Sparkles className="w-4 h-4" />
                   {generatingNotes
@@ -1368,14 +1368,14 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onAddFollowUp}
-            className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
+            className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
           >
             {t('meeting.addFollowUp2')}
           </button>
           <button
             type="button"
             onClick={onGenerateNotes}
-            className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium inline-flex items-center gap-1.5 hover:opacity-90"
+            className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium inline-flex items-center gap-1.5 hover:opacity-90"
             title={t('meeting.generateAiNotesFromTranscript')}
           >
             <Sparkles className="w-4 h-4" />
@@ -1677,7 +1677,7 @@ const MeetingCalendarView: React.FC<{
                 <span
                   className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] ${
                     isToday
-                      ? 'bg-c-accent font-semibold text-white'
+                      ? 'bg-c-focus-solid font-semibold text-white'
                       : inMonth
                         ? 'text-c-text-secondary'
                         : 'text-c-text-secondary'

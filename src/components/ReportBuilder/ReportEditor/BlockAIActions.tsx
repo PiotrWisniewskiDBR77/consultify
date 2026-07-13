@@ -258,7 +258,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r bg-c-accent to-blue-50 dark:to-blue-900/20 border-b border-c-border-subtle">
+      <div className="flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
           <Wand2 className="w-4 h-4 text-c-accent" />
           <span className="text-sm font-semibold text-c-text">
