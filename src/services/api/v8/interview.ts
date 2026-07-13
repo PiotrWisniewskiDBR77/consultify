@@ -56,6 +56,8 @@ export interface V8InterviewWeakAnswerItem {
   feedback: string;
   fixType: V8InterviewAiFixType;
   isRequired: boolean;
+  /** #48A — soft depth nudge for the respondent, e.g. "This answer could be deeper: Depth". */
+  depthHint?: string;
 }
 
 export interface V8InterviewReviewDecisionMemoryEntry {

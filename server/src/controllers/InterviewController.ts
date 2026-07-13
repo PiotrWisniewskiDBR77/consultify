@@ -299,6 +299,15 @@ type InterviewAiWeakAnswerItem = InterviewMissingItem & {
   fixType: InterviewAiFixType;
   isRequired: boolean;
   rubric: InterviewAiRubricCriterionResult[];
+  /**
+   * #48A — Soft, non-blocking depth nudge for the RESPONDENT (not just the
+   * manager). Present only when the answer was scored ('needs_improvement')
+   * or explicitly flagged 'expand_answer'; names the single weakest rubric
+   * criterion so the hint is concrete ("this answer could be deeper: Depth")
+   * rather than generic. Never set for 'sufficient'/'insufficient'/'unanswered'
+   * — those already have their own hard-floor or positive messaging.
+   */
+  depthHint?: string;
 };
 
 type InterviewAiReviewSnapshot = {
@@ -373,13 +382,39 @@ const normalizeInterviewAiFixType = (
   return 'clarify';
 };
 
+// #48A — Deterministic depth nudge, built from the same rubric the LLM already
+// scored (no extra AI call). Picks the single weakest criterion so the hint
+// names something concrete instead of a generic "improve this answer".
+const buildDepthHint = (
+  verdict: InterviewAiAnswerVerdict,
+  fixType: InterviewAiFixType,
+  rubric: InterviewAiRubricCriterionResult[],
+  lang: 'pl' | 'en'
+): string | undefined => {
+  if (verdict !== 'needs_improvement' && fixType !== 'expand_answer') return undefined;
+  if (!rubric || rubric.length === 0) return undefined;
+
+  const weakest = rubric.reduce((min, r) => (r.score < min.score ? r : min), rubric[0]);
+  const criterionMeta = INTERVIEW_RUBRIC_CRITERIA.find((c) => c.key === weakest.criterion);
+  const criterionLabel = criterionMeta
+    ? lang === 'pl'
+      ? criterionMeta.labelPl
+      : criterionMeta.labelEn
+    : weakest.label;
+
+  return lang === 'pl'
+    ? `Ta odpowiedź może być głębsza: ${criterionLabel}`
+    : `This answer could be deeper: ${criterionLabel}`;
+};
+
 const buildInterviewAiWeakAnswerMap = (
   questions: Array<{
     id: string;
     question_text?: string;
     is_required?: boolean;
   }>,
-  questionEvaluations: InterviewAiQuestionEvaluation[]
+  questionEvaluations: InterviewAiQuestionEvaluation[],
+  lang: 'pl' | 'en' = 'en'
 ): InterviewAiWeakAnswerItem[] => {
   const questionMap = new Map<string, { question_text?: string; is_required?: boolean }>();
   for (const question of questions) {
@@ -403,6 +438,7 @@ const buildInterviewAiWeakAnswerMap = (
         fixType: item.fixType,
         isRequired: Boolean(question?.is_required),
         rubric: item.rubric,
+        depthHint: buildDepthHint(item.verdict, item.fixType, item.rubric, lang),
       };
     })
     .sort((a, b) => {
@@ -548,7 +584,7 @@ const buildInterviewAiReviewSnapshot = (
     recommendations: Array.isArray(raw.recommendations)
       ? raw.recommendations.map((item) => String(item || '').trim()).filter(Boolean)
       : [],
-    weakAnswerMap: buildInterviewAiWeakAnswerMap(questions, questionEvaluations),
+    weakAnswerMap: buildInterviewAiWeakAnswerMap(questions, questionEvaluations, lang),
     rubricVersion: INTERVIEW_RUBRIC_VERSION,
     rubricCriteria: INTERVIEW_RUBRIC_CRITERIA.map((c) => ({
       key: c.key,
@@ -1180,6 +1216,9 @@ function redactAiReviewSnapshotForAnonymity(
             maxScore: r.maxScore,
           }))
         : w.rubric,
+      // #48A — names a rubric criterion only (e.g. "Depth"), never quotes the
+      // raw answer — safe to keep under the anonymity wall like rubric labels.
+      depthHint: w.depthHint,
       // feedback intentionally dropped
     })),
   };

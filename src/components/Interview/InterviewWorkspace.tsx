@@ -634,7 +634,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           category: q.category,
           // never downgrade an item the local heuristic already flagged as hard.
           severity: existing?.severity === 'hard' || aiHard ? 'hard' : 'soft',
+          // #48A — prefer the concrete depth nudge ("this answer could be
+          // deeper: Depth") over the generic LLM feedback sentence when present;
+          // same reason field the modal already renders, no new UI.
           reason:
+            weak.depthHint?.trim() ||
             weak.feedback?.trim() ||
             (isPolish ? 'AI: wymaga doprecyzowania' : 'AI: needs improvement'),
         });
