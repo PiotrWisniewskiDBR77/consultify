@@ -20,7 +20,9 @@ import '../src/index.css';
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
 
+import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
 import AssessmentListScreen from './screens/assessment-list';
+import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
@@ -37,6 +39,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
+  },
+  'assessment-initiatives-panel': {
+    label: '§27-todo: InitiativesManagementPanel (Assessment→Manage→Initiatives) → StandardTable',
+    render: () => <AssessmentInitiativesPanelScreen />,
+  },
+  'assessment-reports-panel': {
+    label: '§27-todo: ReportsManagementPanel (Assessment→Manage→Reports) → StandardTable',
+    render: () => <AssessmentReportsPanelScreen />,
   },
   'canvas-new-doc': {
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
