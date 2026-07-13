@@ -1,12 +1,31 @@
 /**
  * NotebookGraphView — a react-flow graph of a notebook page's connections:
- * its topics (Agent 1 `/api/v8/notebook/topics`) and its backlinks
+ * its topics (`/api/v8/notebook/pages/:id/topics`) and its backlinks
  * (existing `/api/my-work/link-graph/backlinks`).
  *
  * The center node is the current page; topic nodes fan out to the left,
  * backlink (referencing entity) nodes to the right. Both fetches are in
- * try/catch — if Agent 1's topics endpoint isn't live yet, the graph still
- * renders with whatever it could load (or an empty-state).
+ * try/catch — if a fetch fails, the graph still renders with whatever it
+ * could load (or an empty-state).
+ *
+ * #18 fixes (connection graph was "dziwny" — audit findings):
+ *  - Topics used to call `/notebook/topics?pageId=` — that route ignores
+ *    `pageId` and lists ALL org topics, so every note's graph fanned out
+ *    the entire organization's topic list. Now calls the real page-scoped
+ *    route (`/notebook/pages/:id/topics`, added alongside this fix).
+ *  - Backlinks used to query `type=note`, which never matches a real
+ *    `link_graph_edges.target_type` (notes use 'notebook_page'/'notebook'),
+ *    so the right-hand fan was silently always empty. Now queries both.
+ *  - Backlink nodes used to show a raw id prefix ("task: a1b2c3d4"). Now
+ *    resolved to real titles via the same `notebookResolveEmbedChips` path
+ *    NotebookBacklinksBar already uses.
+ *  - Node colors were hardcoded light-mode hex with no dark variant, so the
+ *    graph clashed against the dark theme. Now driven by the `--c-*` CSS
+ *    custom properties (see src/index.css), which already flip per theme.
+ *  - Dropped the MiniMap: production mounts this at a fixed w-72 (288px)
+ *    panel (see NotebookContent), where react-flow's default minimap covers
+ *    a large chunk of the already-small canvas and can overlap nodes. A
+ *    handful of topic/backlink nodes doesn't need a minimap to navigate.
  *
  * Integration: render in the notebook right-rail / "connections" tab (see SLOT
  * comments in NotebookContent owned by Agent 4). Wrap is self-contained
@@ -20,10 +39,11 @@ import ReactFlow, {
   Background,
   Controls,
   type Edge,
-  MiniMap,
   type Node,
   ReactFlowProvider,
 } from 'reactflow';
+
+import { Api } from '@/services/api';
 
 interface TopicLite {
   id: string;
@@ -35,6 +55,7 @@ interface BacklinkLite {
   id: string;
   sourceType: string;
   sourceId: string;
+  title: string;
 }
 
 interface NotebookGraphViewProps {
@@ -52,8 +73,9 @@ const authHeaders = (): Record<string, string> => {
 
 async function fetchTopics(pageId: string): Promise<TopicLite[]> {
   try {
-    // Agent 1 contract (assumed): page-scoped topics. Fall back to org topics list.
-    const res = await fetch(`/api/v8/notebook/topics?pageId=${encodeURIComponent(pageId)}`, {
+    // #18 — page-scoped topics (was calling the org-wide list with an ignored
+    // pageId query param; see route registerNotebookTopicsRoutes GET /pages/:id/topics).
+    const res = await fetch(`/api/v8/notebook/pages/${encodeURIComponent(pageId)}/topics`, {
       headers: { ...authHeaders() },
     });
     if (!res.ok) return [];
@@ -71,25 +93,73 @@ async function fetchTopics(pageId: string): Promise<TopicLite[]> {
   }
 }
 
-async function fetchBacklinks(pageId: string): Promise<BacklinkLite[]> {
+async function fetchBacklinkRefs(
+  pageId: string
+): Promise<Array<{ sourceType: string; sourceId: string }>> {
   try {
-    const res = await fetch(
-      `/api/my-work/link-graph/backlinks?type=note&id=${encodeURIComponent(pageId)}&limit=50`,
-      { headers: { ...authHeaders() } }
-    );
-    if (!res.ok) return [];
-    const json = await res.json().catch(() => ({}));
-    const rows = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
-    return rows
+    // #18 — a note's incoming edges land under target_type 'notebook_page' or
+    // 'notebook' (see link_graph_edges usage in notebookConversionService /
+    // notebookSearchService), never 'note'. Query both, same as
+    // NotebookBacklinksBar's "Mentioned in" strip.
+    const [a, b] = await Promise.all([
+      fetch(
+        `/api/my-work/link-graph/backlinks?type=notebook_page&id=${encodeURIComponent(pageId)}&limit=50`,
+        { headers: { ...authHeaders() } }
+      ),
+      fetch(
+        `/api/my-work/link-graph/backlinks?type=notebook&id=${encodeURIComponent(pageId)}&limit=50`,
+        { headers: { ...authHeaders() } }
+      ),
+    ]);
+    const parse = async (res: Response) => {
+      if (!res.ok) return [];
+      const json = await res.json().catch(() => ({}));
+      return Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+    };
+    const rows = [...(await parse(a)), ...(await parse(b))]
       .map((r: any) => ({
-        id: String(r?.id ?? `${r?.sourceType}-${r?.sourceId}`),
         sourceType: String(r?.sourceType ?? 'ref'),
         sourceId: String(r?.sourceId ?? ''),
       }))
-      .filter((b: BacklinkLite) => b.sourceId);
+      .filter((b: { sourceId: string }) => b.sourceId);
+
+    // De-dupe (a source can appear via both queries).
+    const seen = new Set<string>();
+    return rows.filter((r) => {
+      const k = `${r.sourceType}:${r.sourceId}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
   } catch {
     return [];
   }
+}
+
+async function fetchBacklinks(pageId: string): Promise<BacklinkLite[]> {
+  const refs = await fetchBacklinkRefs(pageId);
+  if (refs.length === 0) return [];
+
+  // #18 — resolve real titles instead of showing a raw id prefix, same path
+  // NotebookBacklinksBar already uses.
+  let titleByKey = new Map<string, string>();
+  try {
+    const resolved = await Api.notebookResolveEmbedChips(
+      refs.slice(0, 20).map((r) => ({ type: r.sourceType, id: r.sourceId }))
+    );
+    titleByKey = new Map(
+      (resolved?.chips || []).map((c) => [`${c.artifactType}:${c.artifactId}`, c.title || ''])
+    );
+  } catch {
+    // Degraded: fall back to id-based labels below.
+  }
+
+  return refs.map((r) => ({
+    id: `${r.sourceType}-${r.sourceId}`,
+    sourceType: r.sourceType,
+    sourceId: r.sourceId,
+    title: titleByKey.get(`${r.sourceType}:${r.sourceId}`) || `${r.sourceType} ${r.sourceId.slice(0, 6)}`,
+  }));
 }
 
 export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
@@ -138,7 +208,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
         position: { x: 0, y: 0 },
         data: { label: centerLabel },
         style: {
-          background: '#1d4ed8',
+          background: 'var(--c-info)',
           color: '#fff',
           border: 'none',
           borderRadius: 12,
@@ -162,9 +232,9 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
           label: topic.pageCount ? `${topic.name} (${topic.pageCount})` : topic.name,
         },
         style: {
-          background: '#eef2ff',
-          color: '#3730a3',
-          border: '1px solid #c7d2fe',
+          background: 'color-mix(in srgb, var(--c-info) 10%, var(--c-surface))',
+          color: 'var(--c-text)',
+          border: '1px solid var(--c-border)',
           borderRadius: 10,
           fontSize: 12,
           padding: 8,
@@ -180,11 +250,11 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
       nodes.push({
         id,
         position: { x: 300, y: offset },
-        data: { label: `${bl.sourceType}: ${bl.sourceId.slice(0, 8)}` },
+        data: { label: bl.title },
         style: {
-          background: '#f1f5f9',
-          color: '#334155',
-          border: '1px solid #e2e8f0',
+          background: 'var(--c-surface-raised)',
+          color: 'var(--c-text-secondary)',
+          border: '1px solid var(--c-border)',
           borderRadius: 10,
           fontSize: 12,
           padding: 8,
@@ -214,7 +284,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
       </div>
 
       <div
-        className="overflow-hidden rounded-xl border border-c-border-subtle bg-slate-50/40 dark:border-white/10 dark:bg-white/[0.02]"
+        className="overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface-raised/40 dark:border-white/10 dark:bg-white/[0.02]"
         style={{ height }}
       >
         {!loading && isEmpty ? (
@@ -235,7 +305,6 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
             >
               <Background gap={16} />
               <Controls showInteractive={false} />
-              <MiniMap pannable zoomable />
             </ReactFlow>
           </ReactFlowProvider>
         )}

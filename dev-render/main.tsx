@@ -29,11 +29,10 @@ import ResultsThreePairsScreen from './screens/results-three-pairs';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
-import ExecSummaryOneLookScreen from './screens/exec-summary-onelook';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
-import StandardGridCardScreen from './screens/standard-grid-card';
+import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
 import TemplateBuilderDeckScreen from './screens/template-builder-deck';
 import TemplateBuilderDocScreen from './screens/template-builder-doc';
@@ -68,13 +67,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: '#81 Results — 3 pary (KPI/ROI/OKR)',
     render: () => <ResultsThreePairsScreen />,
   },
-  'exec-summary-onelook': {
-    label: '#77/Z94 Kokpit menedżera — Summary one-look (McKinsey)',
-    render: () => <ExecSummaryOneLookScreen />,
-  },
   'notatnik-centrum-mysli': {
     label: 'Notatnik = CENTRUM MYŚLI (#16 auto-notatka · #21 przypomnij · #23 presence)',
     render: () => <NotatnikCentrumMysliScreen />,
+  },
+  'notatnik-osierocone-graf': {
+    label: '#18 Notatnik — graf połączeń (naprawiony) + osierocone notatki',
+    render: () => <NotatnikOsieroconeGrafScreen />,
   },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
@@ -111,10 +110,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
     render: () => <StandardKanbanCardScreen />,
-  },
-  'standard-grid-card': {
-    label: '#76a JEDEN kanon karty grid/kafelkowej (StandardGridCard)',
-    render: () => <StandardGridCardScreen />,
   },
   'ideas-teresa-panel': {
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',

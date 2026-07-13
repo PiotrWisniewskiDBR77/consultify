@@ -30,6 +30,8 @@ export interface NotebookSearchFilters {
   date_range?: { from?: string; to?: string };
   author?: string;
   attachment_type?: string;
+  /** #18 — orphan cleanup: pages with zero link_graph_edges rows (no topics/mentions/backlinks). */
+  orphaned?: boolean;
 }
 
 export interface NotebookSearchResult {
@@ -306,6 +308,16 @@ function buildStructuredWhere(
     );
     params.push(at, aid, at, aid);
     filtersApplied.push('linked_artifact');
+  }
+
+  if (filters.orphaned === true) {
+    // #18 — a page is "orphaned" when it has zero link_graph_edges rows in
+    // either direction (no topics, no @mentions out, no backlinks in).
+    // Reuses the exact same connection definition as the connection graph
+    // (NotebookGraphView) and the "Mentioned in" bar (NotebookBacklinksBar).
+    const lc = isPostgres() ? linkCountExpr() : linkCountExprSqlite();
+    conditions.push(`${lc} = 0`);
+    filtersApplied.push('orphaned');
   }
 
   if (filters.attachment_type != null && filters.attachment_type !== '') {
