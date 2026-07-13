@@ -12,10 +12,6 @@ export { ExcelImportWizard } from './ExcelImportWizard';
 export { PDFExportModal } from './PDFExportModal';
 export { VersionHistoryPanel } from './VersionHistoryPanel';
 
-// Light shell (Vegas/Oxford, ff.finance_light — OFF by default, harness-only
-// caller for now; FinanceHub wiring is a later step, see financeLightFlag.ts)
-export { FinanceLightShell } from './FinanceLightShell';
-
 // Financial Analysis Components (Phase 3)
 // NOTE: FinancialMetricsPanel kept — has dedicated test coverage
 // (tests/components/Economics/FinancialMetricsPanel.test.tsx) even though
