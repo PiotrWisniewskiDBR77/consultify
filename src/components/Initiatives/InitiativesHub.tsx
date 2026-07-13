@@ -1044,8 +1044,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         toast.success(t('initiatives.toast.statusUpdated', 'Status updated'));
         fetchData(true);
       } catch (error: any) {
+        // #74: updateInitiativeStatusWriteTruth → Api.patch is fetch-based and
+        // throws a plain Error whose `.message` already carries the backend's
+        // real reason (invalid transition / permission denied / missing
+        // reason). `error.response.data.error` is an axios shape this client
+        // never produces, so it was always undefined and silently hid the
+        // real reason behind a generic toast.
         toast.error(
-          error?.response?.data?.error ||
+          error?.message ||
             t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
         );
       }

@@ -503,8 +503,12 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
         onStatusChange?.();
       } catch (err: any) {
         console.error('[InitiativeFullView] Gate action error:', err);
+        // #74: Api.patch throws a plain Error (fetch-based, not axios) whose
+        // `.message` carries the backend's actual gate/transition reason.
+        // `err.response.data.error` is an axios shape this client never
+        // produces, so it always fell through to the generic fallback.
         toast.error(
-          err?.response?.data?.error ||
+          err?.message ||
             t('initiatives.toast.gateActionError', 'Could not perform {{gate}}', { gate })
         );
       } finally {
