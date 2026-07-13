@@ -53,12 +53,7 @@ import {
   starterIdToCanvasKind,
 } from '@/utils/canvas/canvasDraftAdapter';
 import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
-import { isCanvasToolbarV2Enabled } from '@/utils/canvasToolbarV2Flag';
 
-import {
-  CANVAS_TOOLBAR_V2_ICONS,
-  CanvasToolbarV2,
-} from '../MyWork/canvas/CanvasToolbarV2';
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasArtifactSwitcher, type CanvasMountSelection } from './CanvasArtifactSwitcher';
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
@@ -118,14 +113,6 @@ type PendingDatasetFormat = 'csv' | 'json' | 'xlsx';
 type DatasetAnalysisKind = 'profile_summary' | 'aggregate_numeric' | 'filtered_table';
 type CanvasCapabilityStatus = 'real' | 'partial' | 'scaffold' | 'missing' | 'out_of_scope';
 
-// V2 toolbar only distinguishes real/partial/soon (docs/ui-standards
-// REAL/PARTIAL doctrine simplified for a compact icon badge) — collapse the
-// legacy 5-value status onto that.
-function mapCapabilityToV2(status: CanvasCapabilityStatus): 'real' | 'partial' | 'soon' {
-  if (status === 'real') return 'real';
-  if (status === 'partial') return 'partial';
-  return 'soon';
-}
 type CanvasWorkflowTemplate =
   | 'market_research_to_report'
   | 'meeting_note_to_initiatives'
@@ -2865,145 +2852,6 @@ function WorkCanvasMarkdownDocumentPanel({
     </div>
   ) : null;
 
-  // V2 — lightweight canvas toolbar (Piotr's L→R spec, Harvard/wdrozenie-100/
-  // _PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md #87-#87d). Flag-gated, OFF by
-  // default; the legacy toolbar below stays byte-identical until Piotr signs
-  // off on screenshots (CLAUDE.md #7). Both branches call the SAME
-  // handleCommandAction/exportDocument/setMode/selectTemplate handlers — pure
-  // UI swap, no data-path change.
-  const showCanvasToolbarV2 = isCanvasToolbarV2Enabled();
-  const canvasToolbarV2 = showCanvasToolbarV2 ? (
-    <div className="relative flex min-w-0 shrink-0 items-center" data-testid="canvas-toolbar-v2-root">
-    <CanvasToolbarV2
-      bare
-      onNewCanvasBlank={() => {
-        // No 'blank' entry exists in CanvasStarterId (thoughts/document/
-        // research/decision/plan/presentation only) — closest honest
-        // approximation of "czysty canvas" is the 'document' starter with
-        // its markdown cleared. Real fix = extend CanvasStarterId; out of
-        // scope for a toolbar-only change (flagged in handoff).
-        selectTemplate({ ...starterTemplateById('document'), markdown: '' });
-      }}
-      templates={starterTemplates.map((template) => ({
-        id: template.id,
-        label: template.label,
-        description: template.description,
-        capability: mapCapabilityToV2(template.capability),
-      }))}
-      activeTemplateId={documentState.activeStarterId}
-      onSelectTemplate={(id) => selectTemplate(starterTemplateById(id as CanvasStarterId))}
-      documentActions={[
-        {
-          id: 'presentation',
-          label: 'Prezentacja',
-          icon: CANVAS_TOOLBAR_V2_ICONS.presentation,
-          capability: runtimeCapabilities.canCreatePresentation ? 'real' : 'soon',
-          busy: activeActionId === 'create-presentation',
-          onClick: () => handleCommandAction('create-presentation'),
-        },
-        {
-          id: 'report',
-          label: 'Raport',
-          icon: CANVAS_TOOLBAR_V2_ICONS.report,
-          capability: runtimeCapabilities.canCreateReport ? 'real' : 'soon',
-          busy: activeActionId === 'create-report',
-          onClick: () => handleCommandAction('create-report'),
-        },
-        {
-          // Backend maps outputType 'table' → artifactType 'spreadsheet'
-          // (server/src/routes/work-canvas.routes.ts), i.e. this IS the
-          // Excel action — relabelled here to match Piotr's #87a wording.
-          id: 'excel',
-          label: 'Excel',
-          icon: CANVAS_TOOLBAR_V2_ICONS.excel,
-          capability: runtimeCapabilities.canCreateTable ? 'real' : 'soon',
-          busy: activeActionId === 'create-table',
-          onClick: () => handleCommandAction('create-table'),
-        },
-      ]}
-      ideaActions={[
-        // Backend only exposes ONE generic 'idea' workspace target today
-        // (Api.workCanvasSaveToWorkspace target:'idea') — there is no
-        // per-tool (Mind Map / Process Flow / Whiteboard / Table) routing
-        // yet. All four call the same generic handler and are honestly
-        // badged 'partial' until that backend gap closes (flagged in
-        // handoff, follow-up of Z135).
-        {
-          id: 'mindmap',
-          label: 'Mind Map',
-          icon: CANVAS_TOOLBAR_V2_ICONS.mindMap,
-          capability: 'partial',
-          busy: activeActionId === 'send-to-idea',
-          onClick: () => handleCommandAction('send-to-idea'),
-        },
-        {
-          id: 'process-flow',
-          label: 'Process Flow',
-          icon: CANVAS_TOOLBAR_V2_ICONS.processFlow,
-          capability: 'partial',
-          busy: activeActionId === 'send-to-idea',
-          onClick: () => handleCommandAction('send-to-idea'),
-        },
-        {
-          id: 'whiteboard',
-          label: 'Whiteboard',
-          icon: CANVAS_TOOLBAR_V2_ICONS.whiteboard,
-          capability: 'partial',
-          busy: activeActionId === 'send-to-idea',
-          onClick: () => handleCommandAction('send-to-idea'),
-        },
-        {
-          id: 'idea-table',
-          label: 'Tabela',
-          icon: CANVAS_TOOLBAR_V2_ICONS.ideaTable,
-          capability: 'partial',
-          busy: activeActionId === 'send-to-idea',
-          onClick: () => handleCommandAction('send-to-idea'),
-        },
-        {
-          id: 'note',
-          label: 'Notatka',
-          icon: CANVAS_TOOLBAR_V2_ICONS.note,
-          capability: runtimeCapabilities.canSaveAsNote ? 'real' : 'soon',
-          busy: activeActionId === 'save-as-note',
-          onClick: () => handleCommandAction('save-as-note'),
-        },
-      ]}
-      // No import-Markdown pipeline exists today (file upload only handles
-      // csv/json/xlsx dataset ingestion, see handleUploadFiles) — leave
-      // undefined so the button renders honestly disabled rather than
-      // silently doing nothing.
-      onExportMarkdown={() => void exportDocument('markdown')}
-      view={mode === 'md' ? 'markdown' : 'document'}
-      onToggleView={(next) => setMode(next === 'markdown' ? 'md' : 'document')}
-      onClose={() => handleCommandAction('close')}
-      kebabItems={[
-        {
-          id: 'versions',
-          label: 'Wersje',
-          onClick: () => {
-            if (isHistoryOpen) {
-              setIsHistoryOpen(false);
-              return;
-            }
-            void openVersionHistory();
-          },
-        },
-      ]}
-    />
-    {isHistoryOpen ? (
-      <CanvasVersionHistory
-        versions={versions}
-        isLoading={isVersionsLoading}
-        onClose={() => setIsHistoryOpen(false)}
-        onRestore={async (version) => {
-          await restoreVersion(version);
-        }}
-      />
-    ) : null}
-    </div>
-  ) : null;
-
   return (
     <div className="flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
       <div className="flex h-[42px] shrink-0 items-center justify-between gap-3 border-b border-slate-200/70 bg-white/70 px-4 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
@@ -3054,9 +2902,6 @@ function WorkCanvasMarkdownDocumentPanel({
           />
         </div>
 
-        {showCanvasToolbarV2 ? (
-          canvasToolbarV2
-        ) : (
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <div className="relative" data-testid="canvas-new-menu-root">
             <button
@@ -4358,7 +4203,6 @@ function WorkCanvasMarkdownDocumentPanel({
             ) : null}
           </div>
         </div>
-        )}
       </div>
 
       {actionFeedback ? (

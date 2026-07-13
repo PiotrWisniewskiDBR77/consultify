@@ -21,7 +21,6 @@ import '../src/index.css';
 import i18n from '../src/i18n';
 
 import AssessmentListScreen from './screens/assessment-list';
-import CanvasToolbarScreen from './screens/canvas-toolbar';
 import EvFootballFieldScreen from './screens/ev-football-field';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
@@ -33,10 +32,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
-  },
-  'canvas-toolbar': {
-    label: 'Canvas toolbar V2 (lightweight, spec #87-#87d)',
-    render: () => <CanvasToolbarScreen />,
   },
 };
 
