@@ -9,22 +9,38 @@
  * - Context export to Tools/Assessment
  *
  * @see PROMPT 8 in wdrozenia/PROMPTY_DLA_AGENTOW.md
+ *
+ * SAFETY (2026-07-13): This spec used to authenticate with a hard-coded
+ * REAL account (piotr.wisniewski@dbr77.com / 123456) against the seeded
+ * project-dbr77-001 in the real DBR77 workspace. Every run wrote real
+ * "Interview <date>" sessions/assignments/notes directly into that org
+ * (a3e05d4a-5397-419d-b486-8e44366c0063) — hundreds of garbage records
+ * accumulated this way. It now runs exclusively against the isolated
+ * E2E test-support tenant (server/src/routes/testSupport.routes.ts) and
+ * self-seeds its own project + approved template, so it never depends on
+ * (or touches) any real organization's data.
+ *
+ * REQUIRES: ENABLE_TEST_SUPPORT=true on the backend + a global-setup run
+ * that wrote tests/e2e/_helpers/testSupportState.ts's state file — i.e.
+ * `E2E_USE_WEB_SERVER=true` or `E2E_REQUIRE_TEST_SUPPORT=true` (see
+ * package.json `test:e2e:tier0`). Running via plain `npm run test:e2e`
+ * without those env vars now fails fast (missing state file) instead of
+ * silently falling back to a real account.
  */
 
 import { expect, test } from '@playwright/test';
 
+import { readTestSupportState } from './_helpers/testSupportState';
+import { dismissTourModal, seedE2EAuthWithBootstrap } from './smoke/runtime-gate-helpers';
+
+const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
+
 test.describe('Interview Module - v2.0', () => {
   test.beforeEach(async ({ page }) => {
-    // Login as admin (seeded in dev DB)
-    await page.goto('/login');
-    await page.waitForLoadState('networkidle');
-
-    await page.fill('[data-testid="email-input"]', 'piotr.wisniewski@dbr77.com');
-    await page.fill('[data-testid="password-input"]', '123456');
-    await page.click('[data-testid="login-button"]');
-
-    // App may land on dashboard/home; just ensure we're not on login anymore
-    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30000 });
+    // Isolated E2E tenant (test-support bootstrap) — never the real DBR77 account.
+    await seedE2EAuthWithBootstrap(page);
+    await page.goto('/interview');
+    await dismissTourModal(page);
   });
 
   test('should display interview hub with tabs', async ({ page }) => {
@@ -85,32 +101,62 @@ test.describe('Interview Module - v2.0', () => {
 });
 
 test.describe('Interview API - v2.0', () => {
-  const EMAIL = 'piotr.wisniewski@dbr77.com';
-  const PASSWORD = '123456';
-
   async function login(
     request: any
   ): Promise<{ token: string; userId: string; projectId: string }> {
-    const res = await request.post('/api/auth/login', {
-      data: { email: EMAIL, password: PASSWORD },
-    });
-    expect(res.ok()).toBeTruthy();
-    const json = await res.json();
-    const token = json.token as string;
-    const userId = json.user?.id as string;
+    // Isolated E2E tenant token — never a real login against a real account.
+    const state = readTestSupportState();
+    const token = state.token;
+    const userId = state.userId;
 
-    const projectsRes = await request.get('/api/projects', {
+    // Self-seed an isolated project inside the E2E tenant org — never
+    // project-dbr77-001 or any other real organization's project.
+    const projectResponse = await request.post(`${API_BASE_URL}/api/projects`, {
       headers: { Authorization: `Bearer ${token}` },
+      data: { name: `E2E Interview Project ${Date.now()}` },
     });
-    expect(projectsRes.ok()).toBeTruthy();
-    const projects = await projectsRes.json();
-    const preferred = Array.isArray(projects)
-      ? projects.find((p: any) => p?.id === 'project-dbr77-001')
-      : null;
-    const projectId = (preferred?.id || projects?.[0]?.id) as string;
+    expect(projectResponse.ok()).toBeTruthy();
+    const projectBody = await projectResponse.json();
+    const projectId = String(projectBody?.id || projectBody?.data?.id || '');
     expect(projectId).toBeTruthy();
 
     return { token, userId, projectId };
+  }
+
+  /**
+   * Self-seeds an approved template with a handful of questions, so the
+   * assignment workflow test never depends on whatever templates happen to
+   * be pre-loaded in the environment (system template libraries are not
+   * guaranteed under a MOCK_DB harness).
+   */
+  async function seedApprovedTemplate(request: any, token: string): Promise<string> {
+    const createRes = await request.post(`${API_BASE_URL}/api/interview/templates`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        name: `E2E Template ${Date.now()}`,
+        status: 'approved',
+        category: 'CUSTOM',
+      },
+    });
+    expect(createRes.ok()).toBeTruthy();
+    const template = await createRes.json();
+    const templateId = String(template?.id || '');
+    expect(templateId).toBeTruthy();
+
+    const seedQuestions = [
+      { category: 'strategy', questionText: 'What are your main business goals?' },
+      { category: 'operations', questionText: 'What are your main operational challenges?' },
+      { category: 'digital', questionText: 'How mature is your digital tooling?' },
+    ];
+    for (const q of seedQuestions) {
+      const qRes = await request.post(`${API_BASE_URL}/api/interview/templates/${templateId}/questions`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: q,
+      });
+      expect(qRes.ok()).toBeTruthy();
+    }
+
+    return templateId;
   }
 
   test('should create interview session via API', async ({ request }) => {
@@ -272,15 +318,9 @@ test.describe('Interview API - v2.0', () => {
   }) => {
     const { token, userId, projectId } = await login(request);
 
-    // Pick an approved template from library
-    const templatesRes = await request.get('/api/interview/templates', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(templatesRes.ok()).toBeTruthy();
-    const templates = await templatesRes.json();
-    expect(Array.isArray(templates)).toBeTruthy();
-    expect(templates.length).toBeGreaterThan(0);
-    const templateId = templates[0].id;
+    // Self-seed an approved template in the isolated tenant — never reads
+    // from (or depends on) a shared/global template library.
+    const templateId = await seedApprovedTemplate(request, token);
 
     // Ensure creator has a management role in the selected project (dev DB can seed admin as MEMBER)
     try {
