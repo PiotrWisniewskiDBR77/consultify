@@ -13,6 +13,8 @@ const mockListFindings = vi.fn();
 const mockGetFinding = vi.fn();
 const mockBuildHandoffPayload = vi.fn();
 const mockRecordHandoff = vi.fn();
+const mockCheckSimilarInitiatives = vi.fn();
+const mockCreateInitiative = vi.fn();
 const permissionMockState = vi.hoisted(() => ({
   registeredPermissionKeys: [] as string[],
 }));
@@ -71,7 +73,9 @@ vi.mock('../../../services/v8/insightSignalBridgeService.js', () => ({
 }));
 
 vi.mock('../../../services/organizationContext/OrganizationContextService.js', () => ({
-  organizationContextService: {},
+  organizationContextService: {
+    recordContextSource: vi.fn().mockResolvedValue(undefined),
+  },
   rebuildOrganizationContextSnapshot: vi.fn(),
 }));
 
@@ -89,8 +93,22 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 vi.mock('../../../utils/queryHelpers.js', () => ({
   queryAll: vi.fn().mockResolvedValue([]),
+  queryOne: vi.fn().mockResolvedValue(null),
   queryRun: vi.fn().mockResolvedValue({ changes: 1 }),
   run: vi.fn().mockResolvedValue({ changes: 1 }),
+}));
+
+// #59 — dedup parity for the Insight-handoff "create new initiative" branch.
+vi.mock('../../../services/initiativeSimilarityService.js', () => ({
+  checkSimilarInitiatives: (...args: unknown[]) => mockCheckSimilarInitiatives(...args),
+}));
+
+vi.mock('../../../services/initiativeService.js', () => ({
+  default: { createInitiative: (...args: unknown[]) => mockCreateInitiative(...args) },
+}));
+
+vi.mock('../../../utils/dbSchema.js', () => ({
+  getTableColumns: vi.fn().mockResolvedValue(new Set()),
 }));
 
 import interviewInsightsRoutes, {
@@ -124,6 +142,13 @@ describe('V8 interview insights candidate routes', () => {
     mockGetFinding.mockResolvedValue(null);
     mockBuildHandoffPayload.mockResolvedValue({ payload: { findingId: 'finding_1' } });
     mockRecordHandoff.mockResolvedValue(undefined);
+    mockCheckSimilarInitiatives.mockResolvedValue({
+      results: [{ candidateIndex: 0, matches: [], topScore: 0, verdict: 'new' }],
+      method: 'token-overlap',
+      comparedCount: 0,
+      truncated: false,
+    });
+    mockCreateInitiative.mockResolvedValue({ id: 'init_default' });
   });
 
   it('GET /candidates returns V8 envelope with candidate list', async () => {
@@ -348,5 +373,102 @@ describe('V8 interview insights candidate routes', () => {
     expect(res.body.code).toBe('P10_READBACK_REQUIRED');
     expect(mockBuildHandoffPayload).not.toHaveBeenCalled();
     expect(mockRecordHandoff).not.toHaveBeenCalled();
+  });
+
+  // #59 — Insight→Initiative generator dedup parity (same
+  // checkSimilarInitiatives used by the canonical AI Initiative Wizard and by
+  // the Tools→Initiatives generator, #68b). Informational only: it must never
+  // block the handoff, only annotate the response.
+  it('POST /handoff creates a new initiative and surfaces an informational duplicate warning (#59)', async () => {
+    mockGetFinding.mockResolvedValue({
+      id: 'finding_1',
+      finding_statement: 'Onboarding process lacks a single owner.',
+      confidence_level: 'high',
+      limits: 'Scoped to interview sample.',
+      next_action: 'Assign an owner.',
+      evidence_pointers: [{ isTombstone: false, excerpt: 'No owner assigned.' }],
+      readback_status: 'confirmed_by_client',
+    });
+    mockCheckSimilarInitiatives.mockResolvedValue({
+      results: [
+        {
+          candidateIndex: 0,
+          matches: [{ id: 'init_9', title: 'Assign onboarding owner', status: 'ACTIVE', score: 0.86 }],
+          topScore: 0.86,
+          verdict: 'similar',
+        },
+      ],
+      method: 'embeddings',
+      comparedCount: 1,
+      truncated: false,
+    });
+    mockCreateInitiative.mockResolvedValue({ id: 'init_new_1' });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+      .send({});
+
+    expect(res.status).toBe(200);
+    // Creation is never blocked by the duplicate warning (same doctrine as #68b).
+    expect(mockCreateInitiative).toHaveBeenCalledTimes(1);
+    expect(res.body.data?.initiative?.id).toBe('init_new_1');
+    expect(res.body.data?.initiative?.type).toBe('created');
+    expect(res.body.data?.duplicateWarning?.verdict).toBe('similar');
+    expect(res.body.data?.duplicateWarning?.topMatch?.id).toBe('init_9');
+    expect(mockCheckSimilarInitiatives).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orgId: 'org_1',
+        candidates: [expect.objectContaining({ title: 'Onboarding process lacks a single owner.' })],
+      })
+    );
+    expect(mockRecordHandoff).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST /handoff still creates the initiative when the similarity check itself fails (non-blocking)', async () => {
+    mockGetFinding.mockResolvedValue({
+      id: 'finding_1',
+      finding_statement: 'Onboarding process lacks a single owner.',
+      confidence_level: 'high',
+      limits: 'Scoped to interview sample.',
+      next_action: 'Assign an owner.',
+      evidence_pointers: [{ isTombstone: false, excerpt: 'No owner assigned.' }],
+      readback_status: 'confirmed_by_client',
+    });
+    mockCheckSimilarInitiatives.mockRejectedValue(new Error('embedding service down'));
+    mockCreateInitiative.mockResolvedValue({ id: 'init_new_2' });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(mockCreateInitiative).toHaveBeenCalledTimes(1);
+    expect(res.body.data?.initiative?.id).toBe('init_new_2');
+    expect(res.body.data?.duplicateWarning).toBeNull();
+  });
+
+  it('POST /handoff with an existing target_initiative_id (link mode) skips the similarity check entirely', async () => {
+    mockGetFinding.mockResolvedValue({
+      id: 'finding_1',
+      finding_statement: 'Onboarding process lacks a single owner.',
+      confidence_level: 'high',
+      limits: 'Scoped to interview sample.',
+      next_action: 'Assign an owner.',
+      evidence_pointers: [{ isTombstone: false, excerpt: 'No owner assigned.' }],
+      readback_status: 'confirmed_by_client',
+    });
+    (
+      await import('../../../utils/queryHelpers.js')
+    ).queryOne.mockResolvedValueOnce({ id: 'init_existing' });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+      .send({ target_initiative_id: 'init_existing' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.initiative?.type).toBe('linked');
+    expect(res.body.data?.duplicateWarning).toBeNull();
+    expect(mockCheckSimilarInitiatives).not.toHaveBeenCalled();
+    expect(mockCreateInitiative).not.toHaveBeenCalled();
   });
 });

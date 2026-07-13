@@ -2759,6 +2759,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   : `Initiative ${mode === 'create' ? 'created' : 'linked'}${linkedLabel ? ` (${linkedLabel})` : ''}`
               );
             }
+            // #59 — dedup parity with the Tools→Initiatives generator (#68b):
+            // informational-only warning, shown after success, never blocks
+            // the handoff that already happened.
+            if (res?.duplicateWarning) {
+              const matchTitle = res.duplicateWarning.topMatch?.title || '';
+              toast(
+                isPolish
+                  ? `Uwaga: ta inicjatywa przypomina istniejącą${matchTitle ? ` (${matchTitle})` : ''}. Sprawdź portfolio pod kątem duplikatów.`
+                  : `Heads up: this initiative resembles an existing one${matchTitle ? ` (${matchTitle})` : ''}. Review the portfolio for duplicates.`,
+                { icon: '⚠️', duration: 6000 }
+              );
+            }
             return;
           } catch (err: unknown) {
             lastError = err;
