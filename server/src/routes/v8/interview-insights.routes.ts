@@ -14,6 +14,7 @@ import {
   rebuildOrganizationContextSnapshot,
 } from '../../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../../services/permissionService.js';
+import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
 import { buildInsightAnalysis } from '../../services/v8/interviewInsightAnalysisService.js';
 import {
@@ -924,6 +925,17 @@ router.post(
       targetType?: 'initiative' | 'decision' | 'task';
       url?: string;
     };
+    // #59 — dedup parity with the canonical AI Initiative Wizard (POST
+    // /initiatives/similarity-check) and the Tools→Initiatives generator
+    // (#68b): before materializing a new initiative from a finding, compare
+    // it against the org/project's existing active initiatives. Informational
+    // only, same doctrine as the other two callers of checkSimilarInitiatives
+    // — never blocks creation, isolated try/catch so a similarity-service
+    // outage never fails the handoff.
+    let duplicateWarning: {
+      verdict: 'duplicate' | 'similar';
+      topMatch: { id: string; title: string; status: string; score: number } | null;
+    } | null = null;
 
     if (target_initiative_id) {
       const existing = await queryHelpers.queryOne(
@@ -1041,6 +1053,36 @@ router.post(
             url: `/my-work?taskId=${encodeURIComponent(task.id)}`,
           };
         } else {
+          try {
+            const similarity = await checkSimilarInitiatives({
+              orgId: organizationId,
+              projectId: validProjectId || null,
+              candidates: [{ title, description: summary }],
+            });
+            const r = similarity.results[0];
+            if (r && (r.verdict === 'duplicate' || r.verdict === 'similar')) {
+              duplicateWarning = {
+                verdict: r.verdict,
+                topMatch: r.matches[0]
+                  ? {
+                      id: r.matches[0].id,
+                      title: r.matches[0].title,
+                      status: r.matches[0].status,
+                      score: r.matches[0].score,
+                    }
+                  : null,
+              };
+            }
+          } catch (similarityError: unknown) {
+            logger.warn('[InsightHandoff] similarity-check unavailable (non-blocking):', {
+              findingId,
+              error:
+                similarityError instanceof Error
+                  ? similarityError.message
+                  : String(similarityError),
+            });
+          }
+
           const { default: initiativeService } =
             await import('../../services/initiativeService.js');
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1151,6 +1193,10 @@ router.post(
         initiative: initiativeRef,
         findingId,
         insightId,
+        // #59 — informational duplicate/similar warning against the live
+        // portfolio, null when the created target isn't a new initiative or
+        // when nothing similar was found.
+        duplicateWarning,
       },
       meta: insightsMeta(),
     });

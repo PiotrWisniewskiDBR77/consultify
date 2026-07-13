@@ -957,6 +957,12 @@ export const V8InterviewApi = {
       };
       findingId: string;
       insightId: string;
+      // #59 — informational duplicate/similar warning against the live
+      // initiative portfolio; null when nothing similar was found.
+      duplicateWarning?: {
+        verdict: 'duplicate' | 'similar';
+        topMatch: { id: string; title: string; status: string; score: number } | null;
+      } | null;
     }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}/handoff`,
       payload ?? {}
