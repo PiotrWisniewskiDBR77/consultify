@@ -661,6 +661,17 @@ export interface NotebookPage {
     sourceType?: string | null;
     /** C4 — source draft id accompanying sourceType. */
     sourceId?: string | null;
+    /**
+     * #21 Notatnik-centrum-myśli — "przypomnij mi …" reminder persisted by
+     * notebookService into capture_metadata.reminder (no migration). Surfaced by
+     * <NotebookReminderChip/>.
+     */
+    reminder?: {
+      dueAt?: string | null;
+      term?: string | null;
+      createdAt?: string | null;
+      status?: string | null;
+    } | null;
   } | null;
   attachments?: NotebookAttachment[];
   wordCount?: number;

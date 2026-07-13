@@ -82,6 +82,7 @@ import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
+import { NotebookReminderChip } from './notebook/NotebookReminderChip';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookExportMenu } from './notebook/NotebookExportMenu';
 import { NotebookGraphView } from './notebook/NotebookGraphView';
@@ -2662,6 +2663,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 </span>
                               );
                             })()}
+                            {/* #21 reminder chip — reads capture_metadata.reminder */}
+                            <NotebookReminderChip
+                              captureMetadata={(p as any).captureMetadata}
+                              isPolish={isPolish}
+                              size="sm"
+                            />
                             {p.tags &&
                               p.tags.slice(0, 2).map((tag) => (
                                 <span
@@ -3163,6 +3170,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               </>
                             );
                           })()}
+                          {/* #21 reminder chip — reads capture_metadata.reminder */}
+                          <NotebookReminderChip
+                            captureMetadata={activePage.captureMetadata}
+                            isPolish={isPolish}
+                          />
                         </div>
                       </div>
                     </div>

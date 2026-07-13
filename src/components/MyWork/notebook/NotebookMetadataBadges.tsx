@@ -2,6 +2,8 @@ import React from 'react';
 
 import { getNotebookUploadSourceSummary } from './notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebookConvertedOutputSummary';
+import { NotebookReminderChip } from './NotebookReminderChip';
+import { type NotebookReminderMetadata } from './notebookReminderSummary';
 
 type NotebookConvertedOutputRef = {
   type?: string | null;
@@ -13,6 +15,7 @@ type NotebookCaptureMetadata = {
   fileMimetype?: string | null;
   url?: string | null;
   emailFrom?: string | null;
+  reminder?: NotebookReminderMetadata | null;
 } | null;
 
 interface NotebookMetadataBadgesProps {
@@ -32,8 +35,9 @@ export const NotebookMetadataBadges: React.FC<NotebookMetadataBadgesProps> = ({
 }) => {
   const uploadSource = getNotebookUploadSourceSummary(captureSource, captureMetadata, isPolish);
   const convertedSummary = getNotebookConvertedOutputSummary(convertedTo);
+  const hasReminder = Boolean(captureMetadata?.reminder);
 
-  if (!uploadSource && convertedSummary.total === 0) {
+  if (!uploadSource && convertedSummary.total === 0 && !hasReminder) {
     return null;
   }
 
@@ -56,6 +60,7 @@ export const NotebookMetadataBadges: React.FC<NotebookMetadataBadgesProps> = ({
           {convertedSummary.extraCount > 0 ? ` +${convertedSummary.extraCount}` : ''}
         </span>
       ) : null}
+      <NotebookReminderChip captureMetadata={captureMetadata} isPolish={isPolish} size="sm" />
     </div>
   );
 };
