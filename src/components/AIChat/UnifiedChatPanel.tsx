@@ -44,10 +44,8 @@ import type {
   IdeaWorkspaceSeedIntent,
 } from '@/components/MyWork/ideaEntryTypes';
 import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
-import { isChatLandingLightEnabled } from '@/utils/chatLandingLightFlag';
 import {
   deckTitleFromIntent,
   type DeliverableGenerationPlanItem,
@@ -102,7 +100,6 @@ import {
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
 import { pushRecentAttachment } from './chatRecentAttachments';
-import { ChatLandingLightShell } from './ChatLandingLightShell';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
@@ -5630,72 +5627,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </p>
             </div>
           ) : showFullWelcomeEmptyState ? (
-            // ── Fala lekkość: gęsta powłoka landing czatu za flagą (default
-            // OFF; podgląd ?ff_chatLandingLight=1). ON = zastąpienie
-            // ciężkiego startowego ekranu (wordmark+voice CTA+composer+4
-            // quick-clicks+4 mode-tiles+hint+duplikat "Consultify®" stopki)
-            // jedną minimalną, wyśrodkowaną powłoką (wzorzec OpenAI/Gemini
-            // start screen, owner note #1/#86). OFF = poniższy JSX BEZ ZMIAN.
-            // Dotyczy WYŁĄCZNIE stanu pustego/landing (showFullWelcomeEmptyState
-            // = brak wiadomości w aktywnej konwersacji) — aktywny czat
-            // (hasRenderableMessages) nigdy nie trafia w tę gałąź.
-            //
-            // CAVEAT: `onSuggestionClick`/`onSend` wołają wprost
-            // `handleSendMessage(prompt)` — te same 4 "quick click" prompty co
-            // w starym ekranie (Daily brief/Quick savings/Product idea/Plan
-            // review), BEZ presetów specjalnych trybu z 4 "mode tiles"
-            // (marketResearch/responseStyle/coThinkerMode/deepResearch —
-            // `handleModeTile`). Lekka powłoka nie ma miejsca na te presety w
-            // swoim uproszczonym kontrakcie (`ChatLandingSuggestionLite` nie
-            // niesie pola preset) — utrata trybów specjalnych z landing ekranu
-            // jest świadomym uproszczeniem tej fali, nie crashem/force-fitem.
-            isChatLandingLightEnabled() ? (
-              <ErrorBoundary>
-                <ChatLandingLightShell
-                  userName={currentUser?.firstName}
-                  suggestions={[
-                    {
-                      id: 'brief',
-                      label: t('aiChat.quickClicks.brief.label', 'Daily brief'),
-                      prompt: t(
-                        'aiChat.quickClicks.brief.prompt',
-                        'Give me a short daily brief: priorities, risks, decisions, and next best actions.'
-                      ),
-                      icon: 'document',
-                    },
-                    {
-                      id: 'savings',
-                      label: t('aiChat.quickClicks.savings.label', 'Quick savings'),
-                      prompt: t(
-                        'aiChat.quickClicks.savings.prompt',
-                        'Find quick savings opportunities without reducing quality. Ask me for missing context first.'
-                      ),
-                      icon: 'finance',
-                    },
-                    {
-                      id: 'newProduct',
-                      label: t('aiChat.quickClicks.newProduct.label', 'Product idea'),
-                      prompt: t(
-                        'aiChat.quickClicks.newProduct.prompt',
-                        'Help me shape a new product idea with market, ROI, risks, and first implementation steps.'
-                      ),
-                      icon: 'initiative',
-                    },
-                    {
-                      id: 'planReview',
-                      label: t('aiChat.quickClicks.planReview.label', 'Plan review'),
-                      prompt: t(
-                        'aiChat.quickClicks.planReview.prompt',
-                        'Review my plan like a senior consultant: find gaps, risks, assumptions, and next actions.'
-                      ),
-                      icon: 'diagnose',
-                    },
-                  ]}
-                  placeholder={t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')}
-                  onSend={(text) => handleSendMessage(text)}
-                />
-              </ErrorBoundary>
-            ) : (
             <div
               data-testid="chat-full-welcome"
               className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center"
@@ -5936,7 +5867,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 </p>
               </div>
             </div>
-            )
           ) : showWorkPanelEmptyState ? (
             <div data-testid="chat-work-panel-empty-state" className="min-h-full" />
           ) : showCompactEmptyState ? (
