@@ -11803,7 +11803,26 @@
     },
     "counters": {
       "all": "Wszystkie",
-      "draft": "Szkic"
+      "draft": "Szkic",
+      "review": "Przegląd",
+      "approved": "Zatwierdzone",
+      "rejectedImports": "Odrzucone importy",
+      "recoveryQueue": "Kolejka naprawcza",
+      "readyStatements": "Gotowe sprawozdania"
+    },
+    "v8": {
+      "healthChip": "Kondycja danych",
+      "healthChipAria": "Kondycja danych — szczegóły potoku importu",
+      "ingestion": "Przetworzone importy",
+      "escalations": "Eskalacje",
+      "linkages": "Powiązania",
+      "gates": "Próg bramki",
+      "staleRefreshes": "Nieaktualne dane",
+      "unlinked": "Niepowiązane inicjatywy",
+      "linkHint": "Kliknij, aby powiązać inicjatywę z finansami"
+    },
+    "analyze": {
+      "cta": "Analizuj"
     },
     "importWizard": {
       "completed": "Zakończony",

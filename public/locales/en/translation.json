@@ -11341,7 +11341,26 @@
     },
     "counters": {
       "all": "All",
-      "draft": "Draft"
+      "draft": "Draft",
+      "review": "Review",
+      "approved": "Approved",
+      "rejectedImports": "Rejected Imports",
+      "recoveryQueue": "Recovery Queue",
+      "readyStatements": "Ready Statements"
+    },
+    "v8": {
+      "healthChip": "Data health",
+      "healthChipAria": "Data health — import pipeline details",
+      "ingestion": "Processed imports",
+      "escalations": "Escalations",
+      "linkages": "Linkages",
+      "gates": "Gate pass rate",
+      "staleRefreshes": "Stale data",
+      "unlinked": "Unlinked initiatives",
+      "linkHint": "Click to link an initiative to finance"
+    },
+    "analyze": {
+      "cta": "Analyze"
     },
     "importWizard": {
       "completed": "Completed",

@@ -20,13 +20,17 @@
  */
 
 import {
+  Activity,
+  AlertTriangle,
   BarChart3,
   Calculator,
   ChevronDown,
+  Clock,
   Copy,
   ExternalLink,
   FileText,
   GitBranch,
+  Link2,
   MessageCircle,
   Plus,
   Sparkles,
@@ -92,6 +96,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
 import { getFinanceErrorMessage } from './financeErrorMap';
@@ -1774,31 +1779,70 @@ export const FinanceHub: React.FC = () => {
         active: activeFilters.some((f) => f.column === 'status' && f.value === 'APPROVED'),
       },
     ];
-    const runtimeChips = [
-      {
-        label: t('finance.v8.ingestion', 'V8 Ingestion'),
-        value: v8Dashboard == null ? '—' : String(v8Dashboard.ingestionPipeline?.totalCount ?? '—'),
-        dotClassName: 'bg-blue-400',
-      },
-      {
-        label: t('finance.v8.escalations', 'Escalations'),
-        value: v8Dashboard == null ? '—' : String(v8Dashboard.unresolvedEscalationsCount ?? '—'),
-        dotClassName: 'bg-amber-400',
-      },
-      {
-        label: t('finance.v8.linkages', 'Linkages'),
-        value: v8Dashboard == null ? '—' : String(v8Dashboard.linkageHealth?.totalLinkages ?? '—'),
-        dotClassName: 'bg-blue-400',
-      },
-      {
-        label: t('finance.v8.gates', 'Gate pass'),
-        value:
-          v8Dashboard?.promotionGatePassRate == null
-            ? '—'
-            : `${Math.round(v8Dashboard.promotionGatePassRate * 100)}%`,
-        dotClassName: 'bg-emerald-400',
-      },
-    ];
+    // V8 pipeline health (ingestion/escalations/linkages/gate pass/stale/unlinked) is
+    // system-internal telemetry, not a user filter — it does not belong as loose Menu 3
+    // chips (was previously 4 always-rendered "—" placeholder chips even with V8 off,
+    // plus up to 2 more when on: 6 technical chips cluttering every tab). TRIADA_KANON
+    // §A3/§15.3: collapse rarely-changing / non-filter items into a Menu3DropdownChip.
+    // Gated on isFinanceRuntimeV8 && v8Dashboard so it only appears when the data exists.
+    const v8HealthItems = v8Dashboard
+      ? [
+          {
+            id: 'ingestion',
+            label: t('finance.v8.ingestion', 'Processed imports'),
+            icon: <FileText size={14} />,
+            trailing: String(v8Dashboard.ingestionPipeline?.totalCount ?? '—'),
+            disabled: true,
+            onSelect: () => {},
+          },
+          {
+            id: 'escalations',
+            label: t('finance.v8.escalations', 'Escalations'),
+            icon: <AlertTriangle size={14} />,
+            trailing: String(v8Dashboard.unresolvedEscalationsCount ?? '—'),
+            disabled: true,
+            onSelect: () => {},
+          },
+          {
+            id: 'linkages',
+            label: t('finance.v8.linkages', 'Linkages'),
+            icon: <GitBranch size={14} />,
+            trailing: String(v8Dashboard.linkageHealth?.totalLinkages ?? '—'),
+            disabled: true,
+            onSelect: () => {},
+          },
+          {
+            id: 'gates',
+            label: t('finance.v8.gates', 'Gate pass rate'),
+            icon: <Target size={14} />,
+            trailing:
+              v8Dashboard.promotionGatePassRate == null
+                ? '—'
+                : `${Math.round(v8Dashboard.promotionGatePassRate * 100)}%`,
+            disabled: true,
+            onSelect: () => {},
+          },
+          {
+            id: 'stale',
+            label: t('finance.v8.staleRefreshes', 'Stale data'),
+            icon: <Clock size={14} />,
+            trailing: String(v8Dashboard.staleSourceRefreshesCount ?? 0),
+            disabled: true,
+            dividerBefore: true,
+            onSelect: () => {},
+          },
+          {
+            id: 'unlinked',
+            label: t('finance.v8.unlinked', 'Unlinked initiatives'),
+            icon: <Link2 size={14} />,
+            trailing: String(v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0),
+            danger: (v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0) > 0,
+            onSelect: () => setShowLinkInitiativeModal(true),
+          },
+        ]
+      : [];
+    const v8EscalationsCount = v8Dashboard?.unresolvedEscalationsCount ?? 0;
+    const v8UnlinkedCount = v8Dashboard?.linkageHealth?.unlinkedInitiativesCount ?? 0;
     // Canonical Menu 3 layout: justify-between — presets left, actions right.
     // commandRowRightContent is embedded here because ModuleNavBar's command-row
     // path currently does not render the commandRowRightContent prop.
@@ -1846,36 +1890,19 @@ export const FinanceHub: React.FC = () => {
               </span>
             </button>
           ))}
-          <div className="mx-1 h-5 w-px shrink-0 bg-c-border-subtle" />
-          {runtimeChips.map((chip) => (
-            <div key={chip.label} className={MENU_3_CHIP_INACTIVE}>
-              <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
-              <span>{chip.label}</span>
-              <span className={MENU_3_BADGE_INACTIVE}>{chip.value}</span>
-            </div>
-          ))}
           {isFinanceRuntimeV8 && v8Dashboard && (
             <>
               <div className="mx-1 h-5 w-px shrink-0 bg-c-border-subtle" />
-              <button
-                type="button"
-                onClick={() => setShowLinkInitiativeModal(true)}
-                className={`${MENU_3_CHIP_INACTIVE} hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors`}
-                title={t('finance.v8.linkHint', 'Click to link an initiative to finance')}
-              >
-                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-danger-400" />
-                <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
-                <span className={MENU_3_BADGE_INACTIVE}>
-                  {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
-                </span>
-              </button>
-              <div className={MENU_3_CHIP_INACTIVE}>
-                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400" />
-                <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
-                <span className={MENU_3_BADGE_INACTIVE}>
-                  {v8Dashboard.staleSourceRefreshesCount ?? 0}
-                </span>
-              </div>
+              <Menu3DropdownChip
+                data-testid="finance-v8-health-chip"
+                icon={<Activity size={14} className="text-c-text-muted" />}
+                label={t('finance.v8.healthChip', 'Data health')}
+                badgeCount={v8EscalationsCount > 0 ? v8EscalationsCount : undefined}
+                active={v8EscalationsCount > 0 || v8UnlinkedCount > 0}
+                ariaLabel={t('finance.v8.healthChipAria', 'Data health — import pipeline details')}
+                align="left"
+                items={v8HealthItems}
+              />
             </>
           )}
           {isFinanceRuntimeV8 && (
