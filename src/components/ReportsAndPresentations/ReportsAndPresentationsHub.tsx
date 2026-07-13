@@ -25,26 +25,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
-import { isMaterialsLightEnabled } from '@/utils/materialsLightFlag';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
-import { resolveTemplateUsePath } from './artifactNavigation';
-import {
-  type MaterialDocumentLite,
-  type MaterialKind,
-  type MaterialPresentationLite,
-  MaterialsLightShell,
-  type MaterialSheetLite,
-  type MaterialStatus,
-  type MaterialsTab,
-  type MaterialTemplateLite,
-  type MaterialTemplateStatus,
-  type MaterialTemplateType,
-} from './MaterialsLightShell';
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -1161,145 +1146,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         return null;
     }
   };
-
-  // ── Fala lekkość: gęsta powłoka Materiałów za flagą (default OFF; podgląd
-  // ?ff_materialsLight=1). ON = zastąpienie ciężkiego hubu (7 zakładek Menu 1
-  // + Menu 3 filtrowanie) jedną lekką powłoką 5 typów (All/Documents/
-  // Presentations/Sheets/Template Library — #83 owner note 2026-07-12, Menu 2
-  // parity z Menu 1). OFF = poniższy return BEZ ZMIAN. Umieszczone PO
-  // wszystkich hookach → zgodne z regułami hooków (wzorzec DRDLightShell).
-  //
-  // CAVEAT (mapowanie): `sheetRows` (UnifiedOutputRow z registru artefaktów)
-  // nie niesie `rowCount` (liczby wierszy arkusza) — nieobecne w danym
-  // read-modelu, domyślnie 0 zamiast crash/force-fit. `statusKey` sheetów jest
-  // stringiem z registru; rzutowany na MaterialStatus z fallbackiem 'draft'
-  // dla nierozpoznanych wartości. `templates` (TemplateItem) mapuje 1:1 —
-  // `type`/`status` mają identyczne unie wartości po obu stronach.
-  if (isMaterialsLightEnabled()) {
-    const KNOWN_MATERIAL_STATUSES = new Set<MaterialStatus>([
-      'draft',
-      'generated',
-      'editing',
-      'ready',
-      'exported',
-      'shared',
-      'archived',
-    ]);
-    const toMaterialStatus = (raw: unknown): MaterialStatus => {
-      const s = String(raw ?? '').toLowerCase();
-      return KNOWN_MATERIAL_STATUSES.has(s as MaterialStatus) ? (s as MaterialStatus) : 'draft';
-    };
-
-    const lightPresentations: MaterialPresentationLite[] = presentations.map((p) => ({
-      id: p.id,
-      title: p.title,
-      sourceType: p.sourceType,
-      status: toMaterialStatus(p.status),
-      slideCount: p.slideCount ?? 0,
-      owner: p.owner,
-      updatedAt: p.updatedAt,
-    }));
-
-    const lightDocuments: MaterialDocumentLite[] = reports.map((r) => ({
-      id: r.id,
-      title: r.title,
-      reportType: r.reportType,
-      status: toMaterialStatus(r.status),
-      owner: r.owner,
-      updatedAt: r.updatedAt,
-      exportFormats: r.exportFormats || [],
-    }));
-
-    const lightSheets: MaterialSheetLite[] = sheetRows.map((s) => ({
-      id: s.originRecordId || s.artifactId || s.title,
-      title: s.title,
-      status: toMaterialStatus(s.statusKey),
-      rowCount: 0, // CAVEAT: UnifiedOutputRow nie niesie liczby wierszy — brak źródła danych.
-      owner: s.owner,
-      updatedAt: s.updatedAt,
-    }));
-
-    const lightTemplates: MaterialTemplateLite[] = templates.map((tpl) => ({
-      id: tpl.id,
-      title: tpl.title,
-      type: tpl.type as MaterialTemplateType,
-      status: tpl.status as MaterialTemplateStatus,
-      owner: tpl.createdBy,
-      updatedAt: tpl.updatedAt,
-    }));
-
-    // Row-level "open" — always the row's real kind (documents/presentations/
-    // sheets), even for rows surfaced via the "All" list (MaterialKind never
-    // includes 'all'/'templates' — see MaterialsLightShell doc comment).
-    const openMaterialByKind = (kind: MaterialKind, id: string) => {
-      const params = new URLSearchParams(location.search || '');
-      params.set(
-        'tab',
-        RAP_TAB_TO_QUERY[
-          kind === 'documents' ? 'outputs_documents' : kind === 'sheets' ? 'outputs_sheets' : 'presentations'
-        ]
-      );
-      params.set('artifactId', id);
-      navigate(`${location.pathname}?${params.toString()}`);
-    };
-
-    // "Nowy materiał" — routes directly off the tab the shell just clicked
-    // from (its own internal nav state), NOT the Hub's stale `activeTab`
-    // (which only updates via URL-driven effects and never learns about
-    // clicks inside the light shell's Menu 2 — a known "martwe kliknięcie"
-    // class of bug from earlier flips). Mirrors handleNewItem's per-type
-    // routing 1:1 plus the "All" aggregate → unified launcher fallback.
-    const handleNewMaterialForTab = (tab: MaterialsTab) => {
-      switch (tab) {
-        case 'documents':
-          navigate('/reports/builder');
-          break;
-        case 'presentations':
-          navigate('/presentations/wizard');
-          break;
-        case 'templates':
-          navigate('/reports/builder?tab=templates');
-          break;
-        case 'sheets':
-          // No ad-hoc sheet creation from this surface — mirrors the heavy
-          // hub's `onNewItem={activeTab === 'outputs_sheets' ? undefined : ...}`.
-          // Button stays disabled via `isNewMaterialDisabled` below.
-          break;
-        case 'all':
-        default:
-          if (isDeliverablesLightEnabled()) {
-            setLauncherOpen(true);
-          } else {
-            navigate('/presentations?tab=templates');
-          }
-          break;
-      }
-    };
-
-    return (
-      <ErrorBoundary>
-        <MaterialsLightShell
-          libraryName={t('rap.hub.entityName', 'Reports & Presentations')}
-          presentations={lightPresentations}
-          documents={lightDocuments}
-          sheets={lightSheets}
-          templates={lightTemplates}
-          onNewMaterial={handleNewMaterialForTab}
-          isNewMaterialDisabled={(tab) => tab === 'sheets'}
-          onOpenChat={() =>
-            openChatWithContext({
-              entityType: 'outputs_module',
-              entityId: activeTab,
-              entityName: t('rap.hub.entityName', 'Reports & Presentations'),
-              contextData: { activeTab },
-            })
-          }
-          onOpenItem={openMaterialByKind}
-          onOpenTemplate={(id, type) => navigate(resolveTemplateUsePath(id, type))}
-        />
-      </ErrorBoundary>
-    );
-  }
 
   return (
     <div className="h-full" data-testid="reports-presentations-hub">

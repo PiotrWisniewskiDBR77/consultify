@@ -23,11 +23,9 @@ import i18n from '../src/i18n';
 import AssessmentListScreen from './screens/assessment-list';
 import CanvasToolbarScreen from './screens/canvas-toolbar';
 import EvFootballFieldScreen from './screens/ev-football-field';
-import MaterialsLightScreen from './screens/materials-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
-  'materials-light': { label: 'Materials Light Shell', render: () => <MaterialsLightScreen /> },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,
