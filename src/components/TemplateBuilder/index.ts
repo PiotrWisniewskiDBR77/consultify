@@ -8,4 +8,5 @@ export type { TemplateBuilderProps, TemplateBuilderFlowProps } from './TemplateB
 export { TemplateBuilderShell } from './TemplateBuilderShell';
 export { TemplateCreateWizard } from './TemplateCreateWizard';
 export { saveTemplate } from './templateBuilderApi';
+export { isTemplateBuilderEnabled } from './templateBuilderFlags';
 export * from './templateBuilderModel';
