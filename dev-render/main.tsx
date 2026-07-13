@@ -42,6 +42,7 @@ import TemplateBuilderTableScreen from './screens/template-builder-table';
 import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
+import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -132,6 +133,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'zwornik-projects': {
     label: '#78 Zwornik /projects — Stakeholderzy · Finanse · Zespół · Role · Zadania',
     render: () => <ZwornikProjectsScreen />,
+  },
+  'settings-crimson-neutralized': {
+    label: 'Fala 1 Settings — crimson CTA/toggle/selected → neutralne (PRZED/PO, kanon #1)',
+    render: () => <SettingsCrimsonNeutralizedScreen />,
   },
 };
 
