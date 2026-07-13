@@ -236,7 +236,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           </p>
           <a
             href="/"
-            className="inline-flex items-center px-6 py-3 bg-c-accent hover:opacity-90 text-white rounded-lg transition-opacity"
+            className="inline-flex items-center px-6 py-3 bg-c-text hover:opacity-90 text-c-surface rounded-lg transition-opacity"
           >
             Go to Home
           </a>
@@ -257,7 +257,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           </p>
           <a
             href="/login"
-            className="inline-flex items-center px-6 py-3 bg-c-accent hover:opacity-90 text-white rounded-lg transition-opacity"
+            className="inline-flex items-center px-6 py-3 bg-c-text hover:opacity-90 text-c-surface rounded-lg transition-opacity"
           >
             Log In
           </a>
@@ -270,7 +270,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
     <div className="min-h-screen bg-c-bg flex items-center justify-center p-4 [color-scheme:light]">
       <div className="bg-c-surface rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-c-accent text-white p-6">
+        <div className="bg-navy-900 dark:bg-navy-700 text-white p-6">
           <h1 className="text-2xl font-bold mb-2">Join {invitation?.organizationName}</h1>
           <p className="text-white/80">
             You've been invited to join as a{' '}
@@ -541,7 +541,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 !password ||
                 !acceptedTerms
               }
-              className="flex-1 px-4 py-3 bg-c-accent hover:opacity-90 text-white rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-c-text hover:opacity-90 text-c-surface rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

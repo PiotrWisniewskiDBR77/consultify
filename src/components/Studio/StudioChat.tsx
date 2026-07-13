@@ -270,7 +270,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                             shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all
                             ${
                               input.trim() && !isProcessing
-                                ? 'bg-c-accent hover:bg-c-accent text-white'
+                                ? 'bg-c-text hover:bg-c-text text-c-surface'
                                 : 'bg-c-surface-raised text-c-text-muted cursor-not-allowed'
                             }
                         `}

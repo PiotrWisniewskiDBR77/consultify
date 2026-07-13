@@ -111,9 +111,9 @@ export const FirstRunOnboarding: React.FC = () => {
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i + 1 === STEP_INDEX[step]
-                  ? 'w-8 bg-c-accent'
+                  ? 'w-8 bg-c-text'
                   : i + 1 < STEP_INDEX[step]
-                    ? 'w-3 bg-c-accent'
+                    ? 'w-3 bg-c-text'
                     : 'w-3 bg-c-surface-raised'
               }`}
             />

@@ -41,6 +41,7 @@ import TemplateBuilderDocScreen from './screens/template-builder-doc';
 import TemplateBuilderTableScreen from './screens/template-builder-table';
 import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
+import Wave5InternalCrimsonScreen from './screens/wave5-internal-crimson';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
@@ -132,6 +133,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'zwornik-projects': {
     label: '#78 Zwornik /projects — Stakeholderzy · Finanse · Zespół · Role · Zadania',
     render: () => <ZwornikProjectsScreen />,
+  },
+  'wave5-internal-crimson': {
+    label: 'wave5-internal-crimson: naprawa bg-c-accent w Studio (Export/Link modal) — CTA/toggle/selected-tab',
+    render: () => <Wave5InternalCrimsonScreen />,
   },
 };
 

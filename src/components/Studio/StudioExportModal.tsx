@@ -171,7 +171,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                   onClick={() => setIncludeBackground(!includeBackground)}
                   className={`
                                         w-10 h-6 rounded-full transition-colors relative
-                                        ${includeBackground ? 'bg-c-accent' : 'bg-c-border-strong'}
+                                        ${includeBackground ? 'bg-c-text' : 'bg-c-border-strong'}
                                     `}
                 >
                   <span
@@ -198,7 +198,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                                                     flex-1 py-2 rounded-lg text-sm font-medium transition-colors
                                                     ${
                                                       quality === q
-                                                        ? 'bg-c-accent text-white'
+                                                        ? 'bg-c-text text-c-surface ring-1 ring-c-focus'
                                                         : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised'
                                                     }
                                                 `}
@@ -224,7 +224,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             {exporting ? (
               <>
