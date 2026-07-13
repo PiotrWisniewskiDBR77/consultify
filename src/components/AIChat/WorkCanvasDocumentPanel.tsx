@@ -935,6 +935,9 @@ function WorkCanvasMarkdownDocumentPanel({
   const titleInputRef = React.useRef<HTMLInputElement | null>(null);
   const markdownEditorRef = React.useRef<HTMLTextAreaElement | null>(null);
   const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
+  // #87c — dedicated input for "Import Markdown", separate from uploadInputRef
+  // (which is the CSV/JSON/XLSX dataset + generic chat-attachment uploader).
+  const markdownImportInputRef = React.useRef<HTMLInputElement | null>(null);
   const initialStarterPersistedRef = React.useRef(false);
   // C3 (KROK 6, D-C-2): origin provenance of the loaded draft (e.g. notebook-expand
   // source fields). Persisted saves spread it back so the panel's own provenance
@@ -1963,6 +1966,52 @@ function WorkCanvasMarkdownDocumentPanel({
       markdownProjectionStatus: 'synced',
       projectionError: null,
     }));
+  };
+
+  // #87c — Import Markdown, the counterpart to the existing "Download
+  // Markdown" export. Canvas content is canonical Markdown text already
+  // (contentMd), so import is just "read the file → replace contentMd" —
+  // updateMarkdown is the same setter every other content-replacing path in
+  // this panel uses (manual MD edits, AI stream completion, dataset-driven
+  // rewrites), so rich/md/document view all pick it up consistently.
+  const triggerMarkdownImport = () => {
+    markdownImportInputRef.current?.click();
+  };
+
+  const handleImportMarkdownFile = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    if (!/\.md$/i.test(file.name)) {
+      setAlertFeedback(t('canvas.panel.import.invalidFile', 'Choose a .md (Markdown) file.'));
+      return;
+    }
+    const hasExistingContent = Boolean(
+      (latestContentRef.current || documentState.contentMd || '').trim()
+    );
+    if (
+      hasExistingContent &&
+      typeof window !== 'undefined' &&
+      !window.confirm(
+        t('canvas.panel.import.confirmReplace', {
+          defaultValue: 'Replace the current document content with "{{filename}}"?',
+          filename: file.name,
+        })
+      )
+    ) {
+      return;
+    }
+    try {
+      const text = await file.text();
+      updateMarkdown(text);
+      setStatusFeedback(
+        t('canvas.panel.import.success', {
+          defaultValue: 'Imported {{filename}}.',
+          filename: file.name,
+        })
+      );
+    } catch (error) {
+      setCanvasErrorFeedback(error, 'Failed to import Markdown file.');
+    }
   };
 
   // ── Teresa streams into the document (chat-driven) ──────────────────
@@ -3225,24 +3274,16 @@ function WorkCanvasMarkdownDocumentPanel({
             {renderCommandButton('close')}
           </div>
 
-          {/* B1 — version history popover trigger. */}
+          {/* B1 — version history popover anchor. #87c (rewizja 07-13): the
+              always-visible top-level "Historia" icon was decluttering
+              feedback — trigger moved into the "⋯" kebab (Manual editing
+              section, canvas-history-menu-item) which calls the same
+              openVersionHistory()/isHistoryOpen pair. The wrapper + popover
+              stay HERE (not nested inside the kebab's scrollable dropdown)
+              so CanvasVersionHistory's own `absolute right-0` positioning is
+              unaffected — nesting it inside canvas-diagnostics-menu's
+              `overflow-auto` would risk clipping the 400px popover. */}
           <div className="relative" data-testid="canvas-history-root">
-            <button
-              type="button"
-              onClick={() => {
-                if (isHistoryOpen) {
-                  setIsHistoryOpen(false);
-                  return;
-                }
-                void openVersionHistory();
-              }}
-              aria-label={t('canvas.versionHistory.title', 'Version history')}
-              aria-expanded={isHistoryOpen}
-              title={t('canvas.versionHistory.title', 'Version history')}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
-            >
-              <History size={15} />
-            </button>
             {isHistoryOpen ? (
               <CanvasVersionHistory
                 versions={versions}
@@ -3263,6 +3304,22 @@ function WorkCanvasMarkdownDocumentPanel({
             aria-hidden="true"
             onChange={(event) => {
               void handleUploadFiles(event.target.files);
+              event.target.value = '';
+            }}
+          />
+
+          {/* #87c — Import Markdown. Separate input from uploadInputRef so the
+              accept filter stays scoped to .md and doesn't get swept into the
+              CSV/JSON/XLSX dataset branch of handleUploadFiles. */}
+          <input
+            ref={markdownImportInputRef}
+            type="file"
+            accept=".md,text/markdown"
+            className="hidden"
+            aria-hidden="true"
+            data-testid="canvas-import-markdown-input"
+            onChange={(event) => {
+              void handleImportMarkdownFile(event.target.files);
               event.target.value = '';
             }}
           />
@@ -3600,6 +3657,24 @@ function WorkCanvasMarkdownDocumentPanel({
                     <span>{t('canvas.panel.manualEdit.backToDocument', 'Back to document view')}</span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">Dock</span>
                   </button>
+                  {/* #87c (rewizja 07-13) — "Historia" moved here from the
+                      always-visible main bar (decluttering ask). Same
+                      openVersionHistory()/isHistoryOpen pair as before; the
+                      popover still renders from canvas-history-root above
+                      (kept out of this scrollable dropdown to avoid clipping
+                      the 400px-wide CanvasVersionHistory panel). */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDiagnosticsOpen(false);
+                      void openVersionHistory();
+                    }}
+                    data-testid="canvas-history-menu-item"
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                  >
+                    <History size={14} />
+                    <span>{t('canvas.versionHistory.title', 'Version history')}</span>
+                  </button>
                 </div>
 
                 <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
@@ -3778,6 +3853,18 @@ function WorkCanvasMarkdownDocumentPanel({
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.markdownActions', 'Markdown actions')}
                   </div>
+                  {/* #87c — Import Markdown, the missing counterpart to the
+                      "Download Markdown" export below. Placed first so the
+                      in/out pair reads top-to-bottom. */}
+                  <button
+                    type="button"
+                    onClick={triggerMarkdownImport}
+                    data-testid="canvas-import-markdown"
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                  >
+                    <Upload size={14} />
+                    <span>{t('canvas.panel.import.uploadMarkdown', 'Import Markdown (.md)')}</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => void persistDraft()}
