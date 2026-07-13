@@ -26,6 +26,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
+import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
@@ -258,6 +259,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     [navigate, t]
   );
 
+  // #83c/#83d wpięcie: „Nowy szablon" w Bibliotece wzorców otwiera
+  // TemplateBuilderFlow (wizard→builder) za flagą; OFF ⇒ stare zachowanie
+  // (fail-safe, navigate do /reports/builder?tab=templates).
+  const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
+
   const handleNewItem = useCallback(() => {
     switch (activeTab) {
       case 'outputs_documents':
@@ -267,7 +273,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         navigate('/presentations/wizard');
         break;
       case 'templates':
-        navigate('/reports/builder?tab=templates');
+        if (isTemplateBuilderEnabled()) {
+          setTemplateBuilderOpen(true);
+        } else {
+          navigate('/reports/builder?tab=templates');
+        }
         break;
       case 'outputs_all':
       case 'outputs_mine':
@@ -1187,6 +1197,22 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           setBundleHistoryOpen(true); // rozwiń historię, żeby świeży bundle był widoczny
         }}
       />
+
+      {/* #83c/#83d — „Nowy szablon" (Biblioteka wzorców) → wizard→builder, za flagą
+          isTemplateBuilderEnabled. TemplateBuilderShell jest h-screen (mysli że jest
+          root) — owijamy w fixed inset-0 z-modal, tak jak inne pełnoekranowe nakładki. */}
+      {templateBuilderOpen && (
+        <div className="fixed inset-0 z-modal" data-testid="template-builder-overlay">
+          <TemplateBuilderFlow
+            onClose={() => setTemplateBuilderOpen(false)}
+            onSaved={() => {
+              setTemplateBuilderOpen(false);
+              toast.success(t('rap.templateBuilder.saved', 'Szablon zapisany'));
+              void fetchTemplates();
+            }}
+          />
+        </div>
+      )}
 
       {/* W3.8 / W4.4 — Komplet AI bundle history (only when deliverables premium is enabled) */}
       {isDeliverablesLightEnabled() && (
