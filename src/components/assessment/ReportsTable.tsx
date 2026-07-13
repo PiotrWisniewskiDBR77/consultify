@@ -665,7 +665,12 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                         <div className="flex justify-end">
                           <RowActionsMenu
                             iconVariant="vertical"
-                            actions={(() => {
+                            // #40 — pure-wiring bridge onto the sectional kebab contract;
+                            // filter replicates legacy flat-menu semantics (zero visible change).
+                            sections={[
+                              {
+                                id: 'legacy',
+                                actions: (() => {
                               const actions: RowAction[] = [
                                 {
                                   id: 'view',
@@ -764,7 +769,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                 });
                               }
                               return actions;
-                            })()}
+                                })().filter((a) => !a.disabled),
+                              },
+                            ]}
                           />
                         </div>
                       </td>

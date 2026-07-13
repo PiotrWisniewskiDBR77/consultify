@@ -1128,7 +1128,14 @@ export const InitiativeGatesWorkflowTable: FC = () => {
 
                     {/* ── Actions ⋮ ─────────────────────────────────── */}
                     <td className="px-1 py-2 text-right" onClick={(e) => e.stopPropagation()}>
-                      <RowActionsMenu actions={rowActions} iconVariant="vertical" />
+                      <RowActionsMenu
+                        // #40 — pure-wiring bridge onto the sectional kebab contract;
+                        // filter replicates legacy flat-menu semantics (zero visible change).
+                        sections={[
+                          { id: 'legacy', actions: rowActions.filter((a) => !a.disabled) },
+                        ]}
+                        iconVariant="vertical"
+                      />
                     </td>
                   </motion.tr>
 

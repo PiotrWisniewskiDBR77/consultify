@@ -296,37 +296,45 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
 
                 <RowActionsMenu
                   iconVariant="horizontal"
-                  actions={[
+                  // #40 — pure-wiring bridge onto the sectional kebab contract. Disabled
+                  // items are filtered out here (not passed through to sections) to keep
+                  // the legacy flat-menu semantics exactly — zero visible menu change.
+                  sections={[
                     {
-                      id: 'add',
-                      label: isPl ? 'Dodaj do notatki' : 'Add to note',
-                      icon: Plus,
-                      onClick: () => handleAdd(topic),
-                      variant: 'primary',
-                      disabled: !editor || editingTopic === topic,
-                    },
-                    {
-                      id: 'chat',
-                      label: isPl ? 'Do czata' : 'Send to chat',
-                      icon: MessageSquare,
-                      onClick: () => handleSendToChat(topic),
-                      disabled: editingTopic === topic,
-                    },
-                    {
-                      id: 'edit',
-                      label: isPl ? 'Edytuj' : 'Edit',
-                      icon: Pencil,
-                      onClick: () => handleStartEdit(topic),
-                      disabled: editingTopic !== null,
-                    },
-                    {
-                      id: 'remove',
-                      label: isPl ? 'Usuń' : 'Delete',
-                      icon: Trash2,
-                      onClick: () => handleRemove(topic),
-                      variant: 'danger',
-                      disabled: replacingFor === topic || editingTopic === topic,
-                      divider: true,
+                      id: 'legacy',
+                      actions: [
+                        {
+                          id: 'add',
+                          label: isPl ? 'Dodaj do notatki' : 'Add to note',
+                          icon: Plus,
+                          onClick: () => handleAdd(topic),
+                          variant: 'primary' as const,
+                          disabled: !editor || editingTopic === topic,
+                        },
+                        {
+                          id: 'chat',
+                          label: isPl ? 'Do czata' : 'Send to chat',
+                          icon: MessageSquare,
+                          onClick: () => handleSendToChat(topic),
+                          disabled: editingTopic === topic,
+                        },
+                        {
+                          id: 'edit',
+                          label: isPl ? 'Edytuj' : 'Edit',
+                          icon: Pencil,
+                          onClick: () => handleStartEdit(topic),
+                          disabled: editingTopic !== null,
+                        },
+                        {
+                          id: 'remove',
+                          label: isPl ? 'Usuń' : 'Delete',
+                          icon: Trash2,
+                          onClick: () => handleRemove(topic),
+                          variant: 'danger' as const,
+                          disabled: replacingFor === topic || editingTopic === topic,
+                          divider: true,
+                        },
+                      ].filter((a) => !a.disabled),
                     },
                   ]}
                 />

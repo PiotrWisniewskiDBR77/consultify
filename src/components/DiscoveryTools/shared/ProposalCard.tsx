@@ -109,7 +109,11 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           <ProposalStatusBadge status={status} isPolish={isPolish} />
 
           {menuActions.length > 0 ? (
-            <RowActionsMenu actions={menuActions} iconVariant="vertical" />
+            // #40 — pure-wiring bridge onto the sectional kebab contract (zero visible change).
+            <RowActionsMenu
+              sections={[{ id: 'legacy', actions: menuActions.filter((a) => !a.disabled) }]}
+              iconVariant="vertical"
+            />
           ) : null}
         </div>
       </div>

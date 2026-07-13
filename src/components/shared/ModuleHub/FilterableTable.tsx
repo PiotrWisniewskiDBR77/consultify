@@ -920,12 +920,19 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                 },
                               ] as RowAction[]);
 
-                            if (!actions.length) return null;
+                            // #40 — pure-wiring bridge onto the sectional kebab contract
+                            // (RowActionsMenu.sections), same contract every other table
+                            // uses. Pre-filter `disabled` here to replicate the legacy
+                            // flat-menu semantics EXACTLY (disabled items were silently
+                            // dropped, never shown greyed-out) — zero visible menu change.
+                            const legacySectionActions = actions.filter((a) => !a.disabled);
+
+                            if (!legacySectionActions.length) return null;
 
                             return (
                               <RowActionsMenu
                                 iconVariant="vertical"
-                                actions={actions}
+                                sections={[{ id: 'legacy', actions: legacySectionActions }]}
                                 contextMenuAnchor={contextMenuAnchor}
                                 onContextMenuClose={closeContextMenu}
                               />

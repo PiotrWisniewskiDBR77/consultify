@@ -724,13 +724,24 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               ))}
               {availableActions.length > 2 && (
                 <RowActionsMenu
-                  actions={availableActions.slice(2).map((action) => ({
-                    id: action.id,
-                    label: action.label,
-                    onClick: () => handleGateAction(action.gate),
-                    disabled: isTransitioning,
-                    variant: action.id === 'cancel' ? ('danger' as const) : ('default' as const),
-                  }))}
+                  // #40 — pure-wiring bridge onto the sectional kebab contract; filter
+                  // replicates legacy flat-menu semantics exactly (zero visible change).
+                  sections={[
+                    {
+                      id: 'legacy',
+                      actions: availableActions
+                        .slice(2)
+                        .map((action) => ({
+                          id: action.id,
+                          label: action.label,
+                          onClick: () => handleGateAction(action.gate),
+                          disabled: isTransitioning,
+                          variant:
+                            action.id === 'cancel' ? ('danger' as const) : ('default' as const),
+                        }))
+                        .filter((a) => !a.disabled),
+                    },
+                  ]}
                   size="md"
                 />
               )}
