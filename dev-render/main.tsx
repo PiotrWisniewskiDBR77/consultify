@@ -27,6 +27,7 @@ import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import AssessmentReportsTableScreen from './screens/assessment-reports-table';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
+import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
@@ -102,6 +103,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'canvas-new-doc': {
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
     render: () => <CanvasNewDocScreen />,
+  },
+  'canvas-toolbar-md-history': {
+    label: '#87c naprawa: Import Markdown + Historia przeniesiona do kebaba (#87d wciąż otwarte)',
+    render: () => <CanvasToolbarMdHistoryScreen />,
   },
   'chat-split-teresa-right': {
     label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',
