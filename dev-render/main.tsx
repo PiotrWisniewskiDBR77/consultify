@@ -32,6 +32,7 @@ import EvFootballFieldScreen from './screens/ev-football-field';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
+import StandardGridCardScreen from './screens/standard-grid-card';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
 import TemplateBuilderDeckScreen from './screens/template-builder-deck';
 import TemplateBuilderDocScreen from './screens/template-builder-doc';
@@ -105,6 +106,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
     render: () => <StandardKanbanCardScreen />,
+  },
+  'standard-grid-card': {
+    label: '#76a JEDEN kanon karty grid/kafelkowej (StandardGridCard)',
+    render: () => <StandardGridCardScreen />,
   },
   'ideas-teresa-panel': {
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',
