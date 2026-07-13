@@ -19,11 +19,13 @@
 
 import {
   AlertTriangle,
+  ClipboardList,
   FolderKanban,
   Layers,
   Pencil,
   Plus,
   RefreshCw,
+  Shield,
   Trash2,
   Users,
 } from 'lucide-react';
@@ -74,6 +76,26 @@ interface FinanceRollup {
     delta: number;
     overCommitted: boolean;
   };
+}
+
+/** Zwornik (#78) — project team member (pmo/project-members GET /:projectId). */
+interface ProjectTeamMember {
+  id: string;
+  user_id?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  role?: string | null;
+}
+
+/** Zwornik (#78) — project task slice (GET /api/tasks?projectId=…). */
+interface ProjectTask {
+  id: string;
+  title?: string;
+  status?: string;
+  priority?: string;
+  assignee?: { firstName?: string | null; lastName?: string | null } | null;
+  dueDate?: string | null;
 }
 
 /** Zwornik D3 — program list row (V4-INIT-02 CRUD, /api/initiatives/programs). */
@@ -142,6 +164,23 @@ const stakeholderLabel = (s: EffectiveStakeholder): string =>
     ? `${s.firstName || ''} ${s.lastName || ''}`.trim()
     : s.externalName || s.email || s.externalEmail || '—';
 
+const memberLabel = (m: ProjectTeamMember): string =>
+  m.first_name || m.last_name
+    ? `${m.first_name || ''} ${m.last_name || ''}`.trim()
+    : m.email || '—';
+
+const assigneeLabel = (a: ProjectTask['assignee']): string | null =>
+  a && (a.firstName || a.lastName) ? `${a.firstName || ''} ${a.lastName || ''}`.trim() : null;
+
+/** Task status → tone class (neutral badges; NO crimson — reguła #4). */
+const taskStatusTone = (status?: string): string => {
+  const s = String(status || '').toLowerCase();
+  if (s === 'done' || s === 'completed') return 'bg-c-success/15 text-[var(--c-success)]';
+  if (s === 'in_progress' || s === 'active') return 'bg-c-info/15 text-[var(--c-info)]';
+  if (s === 'blocked') return 'bg-amber-500/15 text-amber-600 dark:text-amber-400';
+  return 'bg-c-surface-raised text-c-text-secondary';
+};
+
 export const MyProjects: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -177,6 +216,13 @@ export const MyProjects: React.FC = () => {
   const [finance, setFinance] = useState<FinanceRollup | null>(null);
   const [financeLoading, setFinanceLoading] = useState(false);
   const [financeError, setFinanceError] = useState<string | null>(null);
+  // ── Zwornik (#78): zespół (członkowie + role) + zadania projektu ─────────
+  const [team, setTeam] = useState<ProjectTeamMember[]>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamError, setTeamError] = useState<string | null>(null);
+  const [tasks, setTasks] = useState<ProjectTask[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [tasksError, setTasksError] = useState<string | null>(null);
 
   const fetchProjects = useCallback(async () => {
     setIsLoading(true);
@@ -268,6 +314,8 @@ export const MyProjects: React.FC = () => {
     if (!previewId) {
       setStakeholders([]);
       setFinance(null);
+      setTeam([]);
+      setTasks([]);
       return;
     }
     let cancelled = false;
@@ -312,6 +360,46 @@ export const MyProjects: React.FC = () => {
         if (!cancelled) setFinanceLoading(false);
       });
 
+    // Zwornik (#78): zespół projektu (członkowie + role).
+    setTeamLoading(true);
+    setTeamError(null);
+    Api.getProjectTeamMembers(previewId)
+      .then((rows: ProjectTeamMember[]) => {
+        if (!cancelled) setTeam(Array.isArray(rows) ? rows : []);
+      })
+      .catch((err: any) => {
+        console.error('[MyProjects] project team error:', err);
+        if (!cancelled)
+          setTeamError(
+            String(
+              err?.message || (isPolish ? 'Nie udało się wczytać zespołu' : 'Failed to load team')
+            )
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setTeamLoading(false);
+      });
+
+    // Zwornik (#78): zadania projektu.
+    setTasksLoading(true);
+    setTasksError(null);
+    Api.getTasks({ projectId: previewId })
+      .then((rows: ProjectTask[]) => {
+        if (!cancelled) setTasks(Array.isArray(rows) ? rows : []);
+      })
+      .catch((err: any) => {
+        console.error('[MyProjects] project tasks error:', err);
+        if (!cancelled)
+          setTasksError(
+            String(
+              err?.message || (isPolish ? 'Nie udało się wczytać zadań' : 'Failed to load tasks')
+            )
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setTasksLoading(false);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -343,6 +431,22 @@ export const MyProjects: React.FC = () => {
   );
 
   const previewProject = previewId ? (projects.find((p) => p.id === previewId) ?? null) : null;
+
+  // Zwornik (#78): przypisania ról — grupowanie członków po roli projektowej
+  // (macierz RACI wymaga osobnego backendu, którego nie ma — pokazujemy realne
+  // przypisania ról z tabeli project_members, bez 404).
+  const roleGroups = useMemo(() => {
+    const map = new Map<string, ProjectTeamMember[]>();
+    for (const m of team) {
+      const key = String(m.role || 'MEMBER').toUpperCase();
+      const arr = map.get(key) || [];
+      arr.push(m);
+      map.set(key, arr);
+    }
+    return Array.from(map.entries())
+      .map(([role, members]) => ({ role, members }))
+      .sort((a, b) => b.members.length - a.members.length);
+  }, [team]);
 
   const programNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -505,6 +609,12 @@ export const MyProjects: React.FC = () => {
                   .catch(() => {});
                 Api.getProjectFinance(previewId)
                   .then(setFinance)
+                  .catch(() => {});
+                Api.getProjectTeamMembers(previewId)
+                  .then((rows: ProjectTeamMember[]) => setTeam(Array.isArray(rows) ? rows : []))
+                  .catch(() => {});
+                Api.getTasks({ projectId: previewId })
+                  .then((rows: ProjectTask[]) => setTasks(Array.isArray(rows) ? rows : []))
                   .catch(() => {});
               }
             },
@@ -1152,6 +1262,161 @@ export const MyProjects: React.FC = () => {
                         </p>
                       ) : null}
                     </div>
+                  )}
+                </div>
+
+                {/* ── Zwornik (#78): Zespół — członkowie projektu ──────────── */}
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users size={14} className="text-c-text-secondary" />
+                    <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
+                      {isPolish ? 'Zespół' : 'Team'}
+                    </h4>
+                    {team.length > 0 ? (
+                      <span className="ml-auto text-[10px] font-semibold text-c-text-muted">
+                        {team.length}
+                      </span>
+                    ) : null}
+                  </div>
+                  {teamLoading ? (
+                    <p className="text-xs text-c-text-muted animate-pulse">
+                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                    </p>
+                  ) : teamError ? (
+                    <p className="text-xs text-danger-500 flex items-center gap-1.5">
+                      <AlertTriangle size={12} /> {teamError}
+                    </p>
+                  ) : team.length === 0 ? (
+                    <p className="text-xs text-c-text-muted">
+                      {isPolish
+                        ? 'Brak członków zespołu dla tego projektu.'
+                        : 'No team members for this project yet.'}
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {team.map((m, idx) => (
+                        <li
+                          key={`${m.id || m.user_id || m.email || idx}`}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="truncate text-c-text">{memberLabel(m)}</span>
+                          {m.role ? (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary">
+                              {String(m.role).toUpperCase()}
+                            </span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* ── Zwornik (#78): Role — przypisania ról projektowych ────── */}
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield size={14} className="text-c-text-secondary" />
+                    <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
+                      {isPolish ? 'Role (przypisania)' : 'Roles (assignments)'}
+                    </h4>
+                  </div>
+                  {teamLoading ? (
+                    <p className="text-xs text-c-text-muted animate-pulse">
+                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                    </p>
+                  ) : teamError ? (
+                    <p className="text-xs text-danger-500 flex items-center gap-1.5">
+                      <AlertTriangle size={12} /> {teamError}
+                    </p>
+                  ) : roleGroups.length === 0 ? (
+                    <p className="text-xs text-c-text-muted">
+                      {isPolish ? 'Brak przypisanych ról.' : 'No roles assigned yet.'}
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {roleGroups.map(({ role, members }) => (
+                        <li
+                          key={role}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <span className="px-1.5 py-0.5 rounded bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary shrink-0">
+                              {role}
+                            </span>
+                            <span className="truncate text-c-text-muted">
+                              {members.map((m) => memberLabel(m)).join(', ')}
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-semibold text-c-text">
+                            {members.length}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* ── Zwornik (#78): Zadania — zadania projektu ─────────────── */}
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ClipboardList size={14} className="text-c-text-secondary" />
+                    <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
+                      {isPolish ? 'Zadania' : 'Tasks'}
+                    </h4>
+                    {tasks.length > 0 ? (
+                      <span className="ml-auto text-[10px] font-semibold text-c-text-muted">
+                        {tasks.length}
+                      </span>
+                    ) : null}
+                  </div>
+                  {tasksLoading ? (
+                    <p className="text-xs text-c-text-muted animate-pulse">
+                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                    </p>
+                  ) : tasksError ? (
+                    <p className="text-xs text-danger-500 flex items-center gap-1.5">
+                      <AlertTriangle size={12} /> {tasksError}
+                    </p>
+                  ) : tasks.length === 0 ? (
+                    <p className="text-xs text-c-text-muted">
+                      {isPolish
+                        ? 'Brak zadań dla tego projektu.'
+                        : 'No tasks for this project yet.'}
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {tasks.slice(0, 12).map((task, idx) => {
+                        const who = assigneeLabel(task.assignee);
+                        return (
+                          <li
+                            key={`${task.id || idx}`}
+                            className="flex items-center justify-between gap-2 text-xs"
+                          >
+                            <span className="truncate text-c-text">{task.title || '—'}</span>
+                            <span className="flex items-center gap-1.5 shrink-0">
+                              {who ? (
+                                <span className="text-[10px] text-c-text-muted">{who}</span>
+                              ) : null}
+                              {task.status ? (
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${taskStatusTone(
+                                    task.status
+                                  )}`}
+                                >
+                                  {String(task.status).replace(/_/g, ' ')}
+                                </span>
+                              ) : null}
+                            </span>
+                          </li>
+                        );
+                      })}
+                      {tasks.length > 12 ? (
+                        <li className="text-[10px] text-c-text-muted pt-1">
+                          {isPolish
+                            ? `+${tasks.length - 12} więcej…`
+                            : `+${tasks.length - 12} more…`}
+                        </li>
+                      ) : null}
+                    </ul>
                   )}
                 </div>
               </StandardPreview>

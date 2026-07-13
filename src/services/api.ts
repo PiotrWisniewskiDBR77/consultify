@@ -3176,6 +3176,21 @@ export const Api = {
   },
 
   /**
+   * Zwornik (#78) — project team members (read-model for the /projects
+   * "Zespół" / "Role" sections). Backend: `pmo/project-members.routes.ts`
+   * GET /:projectId (mounted at `/api/project-members`, Gateway.ts). Returns
+   * flat rows: { id, user_id, role, permissions, joined_at, first_name,
+   * last_name, email, avatar_url }.
+   */
+  getProjectTeamMembers: async (projectId: string): Promise<any[]> => {
+    const res = await fetchWithRetry(`${API_URL}/project-members/${projectId}`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse(res, 'Failed to fetch project team members');
+    return Array.isArray(data) ? data : [];
+  },
+
+  /**
    * Zwornik D3 — assign/unassign a project to a program (`projects.program_id`,
    * migration 916). Backend: `pmo/projects.routes.ts` PUT /:id/program.
    */
