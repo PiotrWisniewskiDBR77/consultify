@@ -22,6 +22,7 @@ import i18n from '../src/i18n';
 
 import AssessmentListScreen from './screens/assessment-list';
 import EvFootballFieldScreen from './screens/ev-football-field';
+import StandardKanbanCardScreen from './screens/standard-kanban-card';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -32,6 +33,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
+  },
+  'standard-kanban-card': {
+    label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
+    render: () => <StandardKanbanCardScreen />,
   },
 };
 
