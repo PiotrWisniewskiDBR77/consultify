@@ -29,6 +29,7 @@ import ResultsThreePairsScreen from './screens/results-three-pairs';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
+import ExecSummaryOneLookScreen from './screens/exec-summary-onelook';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
@@ -65,6 +66,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'results-three-pairs': {
     label: '#81 Results — 3 pary (KPI/ROI/OKR)',
     render: () => <ResultsThreePairsScreen />,
+  },
+  'exec-summary-onelook': {
+    label: '#77/Z94 Kokpit menedżera — Summary one-look (McKinsey)',
+    render: () => <ExecSummaryOneLookScreen />,
   },
   'notatnik-centrum-mysli': {
     label: 'Notatnik = CENTRUM MYŚLI (#16 auto-notatka · #21 przypomnij · #23 presence)',
