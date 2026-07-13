@@ -6,7 +6,7 @@
  * BEFORE the owner sees it (CLAUDE.md #7). Dev-only; never ships to demo.
  *
  * URL params:
- *   ?screen=drd-light   which screen to mount (see SCREENS registry)
+ *   ?screen=assessment-list   which screen to mount (see SCREENS registry)
  *   &lang=pl|en         i18n language (default pl)
  *   &theme=light|dark   applies the app's `.dark` class strategy (default light)
  *
@@ -23,7 +23,6 @@ import i18n from '../src/i18n';
 import AssessmentListScreen from './screens/assessment-list';
 import CanvasToolbarScreen from './screens/canvas-toolbar';
 import ChatLandingScreen from './screens/chat-landing';
-import DrdLightScreen from './screens/drd-light';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import ExecutionLightScreen from './screens/execution-light';
 import FinanceLightScreen from './screens/finance-light';
@@ -34,7 +33,6 @@ import ResultsLightScreen from './screens/results-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
-  'drd-light': { label: 'DRD Light Shell', render: () => <DrdLightScreen /> },
   'finance-light': { label: 'Finance Light Shell', render: () => <FinanceLightScreen /> },
   'insight-light': { label: 'Insight Light Shell', render: () => <InsightLightScreen /> },
   'interview-light': { label: 'Interview Light Shell', render: () => <InterviewLightScreen /> },
@@ -63,7 +61,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
 };
 
 const params = new URLSearchParams(window.location.search);
-const screenKey = params.get('screen') || 'drd-light';
+const screenKey = params.get('screen') || 'assessment-list';
 const lang = params.get('lang') || 'pl';
 const theme = params.get('theme') || 'light';
 
