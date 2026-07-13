@@ -337,7 +337,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
           <button
             onClick={handleApply}
             disabled={totalAccepted === 0}
-            className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-c-accent text-white hover:bg-c-accent transition-colors disabled:opacity-40"
+            className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-c-text text-c-surface hover:opacity-90 transition-colors disabled:opacity-40"
           >
             {isPl ? 'Zastosuj wybrane' : 'Apply selected'}
           </button>

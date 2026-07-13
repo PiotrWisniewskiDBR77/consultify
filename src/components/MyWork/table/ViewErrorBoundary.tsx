@@ -71,7 +71,7 @@ export class ViewErrorBoundary extends React.Component<
           <button
             type="button"
             onClick={onSwitchToGrid}
-            className="rounded-xl bg-c-accent px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-95"
+            className="rounded-xl bg-c-text px-4 py-2 text-xs font-semibold text-c-surface shadow-sm transition hover:brightness-95"
           >
             {switchLabel}
           </button>

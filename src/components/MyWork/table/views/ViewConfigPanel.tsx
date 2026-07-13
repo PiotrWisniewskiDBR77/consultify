@@ -680,7 +680,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                 onSave();
                 onClose();
               }}
-              className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold bg-c-accent text-c-text hover:bg-c-accent transition-colors"
+              className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
             >
               {isPl ? 'Zapisz' : 'Save'}
             </button>

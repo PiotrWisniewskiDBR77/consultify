@@ -269,7 +269,7 @@ export const FormView: React.FC<FormViewProps> = ({
         {onRecordCreate && (
           <button
             onClick={startCreate}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-accent text-c-text hover:bg-c-accent transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
           >
             <Plus size={14} />
             {isPl ? 'Utwórz pierwszy rekord' : 'Create first record'}
@@ -318,7 +318,7 @@ export const FormView: React.FC<FormViewProps> = ({
               </button>
               <button
                 onClick={handleCreate}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-c-accent text-c-text hover:bg-c-accent transition-colors"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
               >
                 {isPl ? 'Zapisz' : 'Save'}
               </button>

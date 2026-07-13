@@ -3014,7 +3014,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     }
                     className={`mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
                       notebookRailOpen
-                        ? 'border-c-accent bg-c-accent text-c-surface'
+                        ? 'border-c-text bg-c-text text-c-surface'
                         : 'border-c-border-subtle bg-c-surface text-c-text-muted hover:bg-c-surface-raised'
                     }`}
                   >
@@ -3862,7 +3862,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 type="button"
                 onClick={() => void handleConfirmOutlineDraft()}
                 disabled={!outlineDraft.title.trim() || !outlineDraft.outline.trim()}
-                className="rounded-xl bg-c-accent px-3 py-2 text-sm font-medium text-c-surface transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-c-text px-3 py-2 text-sm font-medium text-c-surface transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPolish ? 'Utwórz artefakt' : 'Create deliverable'}
               </button>

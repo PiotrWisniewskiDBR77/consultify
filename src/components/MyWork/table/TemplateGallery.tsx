@@ -219,7 +219,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                       <button
                         onClick={() => handleUseTemplate(tpl.id, tpl.name)}
                         disabled={usingId === tpl.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-accent text-white hover:bg-c-accent disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-text text-c-surface hover:opacity-90 disabled:opacity-50 transition-colors"
                       >
                         {usingId === tpl.id ? <Loader2 size={12} className="animate-spin" /> : null}
                         {isPl ? 'Użyj' : 'Use'}

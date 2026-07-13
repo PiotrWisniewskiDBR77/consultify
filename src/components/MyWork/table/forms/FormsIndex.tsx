@@ -257,7 +257,7 @@ export function FormsIndex({
         {!locked && (
           <button
             onClick={handleCreate}
-            className="flex items-center gap-1.5 rounded-xl bg-c-accent px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-accent"
+            className="flex items-center gap-1.5 rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-surface transition-colors hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
             {t('formsIndex.createForm', 'Create Form')}

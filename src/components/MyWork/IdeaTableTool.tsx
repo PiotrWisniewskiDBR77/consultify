@@ -1598,7 +1598,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           saveCurrentView(saveViewName.trim(), columns);
                           setShowSaveViewDialog(false);
                         }}
-                        className="px-3 py-1.5 text-xs rounded-lg bg-c-accent text-white hover:brightness-95 disabled:opacity-40"
+                        className="px-3 py-1.5 text-xs rounded-lg bg-c-text text-c-surface hover:brightness-95 disabled:opacity-40"
                       >
                         {isPl ? 'Zapisz' : 'Save'}
                       </button>
@@ -2497,7 +2497,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
                   _saving || _loading || locked
                     ? 'bg-c-surface-raised text-c-text-muted'
-                    : 'bg-c-accent text-white hover:brightness-95'
+                    : 'bg-c-text text-c-surface hover:brightness-95'
                 }`}
               >
                 {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}

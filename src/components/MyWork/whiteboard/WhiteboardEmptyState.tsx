@@ -60,7 +60,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             </div>
             <button
               onClick={onAddSticky}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-accent text-white hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:brightness-110 transition-all"
             >
               <Plus size={14} />
               {t('myWork.whiteboard.empty.addSticky')}

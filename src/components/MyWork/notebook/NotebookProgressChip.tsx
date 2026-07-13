@@ -110,7 +110,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         onClick={onConvert}
         disabled={!canConvertDeliverable}
         title={canConvertDeliverable ? (isPolish ? 'Konwertuj do raportu' : 'Convert to report') : convertBlockedReason}
-        className={`${pillBase} ${canConvertDeliverable ? 'bg-c-accent text-white hover:brightness-110' : pillDisabled}`}
+        className={`${pillBase} ${canConvertDeliverable ? 'bg-c-text text-c-surface hover:brightness-110' : pillDisabled}`}
       >
         <FileOutput size={11} />
         {isPolish ? 'Konwertuj' : 'Convert'}

@@ -930,7 +930,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={nextStep}
           disabled={!canProceed}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent px-4 py-2 text-sm font-medium text-c-text hover:bg-c-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-surface hover:opacity-90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPl ? 'Dalej' : 'Next'} <ArrowRight size={14} />
         </button>
@@ -938,7 +938,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={handleCreate}
           disabled={isCreating}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent px-4 py-2 text-sm font-medium text-c-text hover:bg-c-accent transition-colors disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-surface hover:opacity-90 transition-colors disabled:opacity-40"
         >
           {isCreating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
           {isPl ? 'Utwórz konektor' : 'Create connector'}

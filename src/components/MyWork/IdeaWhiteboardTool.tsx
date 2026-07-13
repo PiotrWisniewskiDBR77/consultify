@@ -3371,7 +3371,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                   <button
                     type="button"
                     onClick={applyOutlineImport}
-                    className="rounded-xl bg-c-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+                    className="rounded-xl bg-c-text px-3 py-2 text-xs font-semibold text-c-surface hover:brightness-110"
                   >
                     {t('myWork.whiteboard.outlineImport.confirm')}
                   </button>

@@ -406,7 +406,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-accent text-white hover:brightness-95 transition-colors disabled:opacity-40"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-surface hover:brightness-95 transition-colors disabled:opacity-40"
           >
             {saving ? (
               <Loader2 size={12} className="animate-spin" />

@@ -98,7 +98,7 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
         <button
           type="button"
           onClick={onAddRow}
-          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl bg-c-accent px-3 py-2.5 text-xs font-semibold text-white shadow-sm hover:brightness-95 transition-colors"
+          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl bg-c-text px-3 py-2.5 text-xs font-semibold text-c-surface shadow-sm hover:brightness-95 transition-colors"
         >
           <Table2 className="h-3.5 w-3.5 shrink-0" />
           {isPl ? 'Dodaj pierwszy rekord' : 'Add first record'}

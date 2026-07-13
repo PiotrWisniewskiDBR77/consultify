@@ -457,7 +457,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           type="button"
           onClick={handleSave}
           disabled={!canSave || saving}
-          className="flex items-center gap-2 rounded-lg bg-c-accent px-4 py-2 text-sm font-medium text-c-text hover:bg-c-accent disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-surface hover:opacity-90 disabled:opacity-50"
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {isPl ? 'Zapisz' : 'Save'}

@@ -1115,7 +1115,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   onClick={() => setPlatformSheetTab(tab.id)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
                     isActive
-                      ? 'bg-c-accent text-white shadow-sm'
+                      ? 'bg-c-text text-c-surface shadow-sm'
                       : 'text-c-text-muted hover:bg-c-surface-raised'
                   }`}
                 >

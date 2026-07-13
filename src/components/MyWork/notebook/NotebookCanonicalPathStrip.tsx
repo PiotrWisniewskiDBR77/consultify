@@ -168,7 +168,7 @@ function WorkflowStep(props: {
         type="button"
         onClick={props.onClick}
         disabled={props.disabled}
-        className="mt-3 inline-flex items-center gap-1 rounded-full bg-c-accent px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-3 inline-flex items-center gap-1 rounded-full bg-c-text px-2.5 py-1 text-[11px] font-medium text-c-surface transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {props.actionLabel}
         <ArrowRight size={12} />

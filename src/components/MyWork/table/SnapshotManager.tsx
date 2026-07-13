@@ -228,7 +228,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="h-8 px-3 rounded-lg text-xs font-semibold bg-c-accent text-white hover:bg-c-accent transition-colors disabled:opacity-40 flex items-center gap-1"
+                className="h-8 px-3 rounded-lg text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors disabled:opacity-40 flex items-center gap-1"
               >
                 {creating ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
                 {isPl ? 'Utwórz' : 'Create'}
