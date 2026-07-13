@@ -93,10 +93,16 @@ import {
   ResultsWallboardsView,
 } from './ResultsReportingEnterpriseViews';
 import { createResultsShowcaseSnapshot } from './resultsShowcaseData';
-import { ROIAnalysisView } from './ROIAnalysisView';
+import { ROIAnalysisView, type ROIInitiativeItem } from './ROIAnalysisView';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
 import { ROIOpenModal } from './ROIOpenModal';
 import { ROITrackingView } from './ROITrackingView';
+import {
+  ResultsThreePairsView,
+  type ThreePairKpi,
+  type ThreePairObjective,
+  type ThreePairRoi,
+} from './ResultsThreePairsView';
 
 const ResultsInitiativeDocumentView = React.lazy(async () => {
   const module = await import('../Initiatives/InitiativeDocumentView');
@@ -190,7 +196,7 @@ const VALID_KPI_MODES = ['overview', 'queue', 'catalog', 'scorecards'] as const;
 const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'connectors'] as const;
 
 export const ResultsHub: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const currentUser = useAppStore((state) => state.currentUser);
   const currentOrganization = useAppStore((state) => state.currentOrganization);
@@ -250,6 +256,12 @@ export const ResultsHub: React.FC = () => {
   const [roiOpenModal, setRoiOpenModal] = useState(false);
   const [roiDrawer, setRoiDrawer] = useState<{ id: string; name: string } | null>(null);
   const [roiRefreshNonce, setRoiRefreshNonce] = useState(0);
+
+  // #81/OC2 — ResultsThreePairsView data (flag-gated, see resultsFeatureFlags).
+  const threePairsOn = isResultsFlagEnabled('threePairs');
+  const [threePairRoiItems, setThreePairRoiItems] = useState<ROIInitiativeItem[]>([]);
+  const [threePairObjectivesRaw, setThreePairObjectivesRaw] = useState<ThreePairObjective[]>([]);
+  const [showOkrManage, setShowOkrManage] = useState(false);
 
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [trackedInitiatives, setTrackedInitiatives] = useState<ResultsTrackedInitiative[]>([]);
@@ -400,6 +412,68 @@ export const ResultsHub: React.FC = () => {
   useEffect(() => {
     void loadV8Snapshot();
   }, [loadV8Snapshot]);
+
+  // #81/OC2 — ROI portfolio for the "para 2" table. Mirrors ROIAnalysisView's
+  // fetchData 1:1 (same services: V8ResultsApi.getRoiPortfolioSummary with
+  // legacy fallback to /benefits/roi/portfolio/summary), reused here rather
+  // than re-deriving from a different endpoint.
+  const fetchThreePairRoi = useCallback(async () => {
+    if (!threePairsOn) return;
+    try {
+      let items: ROIInitiativeItem[] = [];
+      try {
+        const payload = await V8ResultsApi.getRoiPortfolioSummary();
+        items = (payload.items || []) as ROIInitiativeItem[];
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) throw error;
+        const res = await Api.get('/benefits/roi/portfolio/summary');
+        const data = (res as any)?.data || res;
+        items = Array.isArray(data?.items) ? data.items : [];
+      }
+      setThreePairRoiItems(items);
+    } catch {
+      setThreePairRoiItems([]);
+    }
+  }, [threePairsOn]);
+
+  useEffect(() => {
+    void fetchThreePairRoi();
+  }, [fetchThreePairRoi, roiRefreshNonce]);
+
+  // #81/OC2 — OKR objectives for "para 3". Same endpoint StrategicLayerPanel
+  // uses (/results-strategic/:projectId/okr, projectId="all"); response shape
+  // (Objective { id, label, rollupScore, keyResults[{id,label,baseline,
+  // target,current}] }) already matches ThreePairObjective 1:1.
+  const fetchThreePairObjectives = useCallback(async () => {
+    if (!threePairsOn) return;
+    try {
+      const res = await Api.get('/results-strategic/all/okr');
+      const data: any = (res as any)?.data ?? res;
+      const objectives = Array.isArray(data?.objectives) ? data.objectives : [];
+      setThreePairObjectivesRaw(
+        objectives.map((o: any) => ({
+          id: o.id,
+          label: o.label,
+          rollupScore: o.rollupScore ?? o.score ?? 0,
+          keyResults: Array.isArray(o.keyResults)
+            ? o.keyResults.map((kr: any) => ({
+                id: kr.id,
+                label: kr.label,
+                baseline: kr.baseline ?? 0,
+                target: kr.target ?? 0,
+                current: kr.current ?? 0,
+              }))
+            : [],
+        }))
+      );
+    } catch {
+      setThreePairObjectivesRaw([]);
+    }
+  }, [threePairsOn]);
+
+  useEffect(() => {
+    void fetchThreePairObjectives();
+  }, [fetchThreePairObjectives, showOkrManage]);
 
   useEffect(() => {
     try {
@@ -1839,6 +1913,129 @@ export const ResultsHub: React.FC = () => {
       </div>
     );
   };
+
+  // #81/OC2 — domain → ResultsThreePairsView prop adapters. Reuse existing
+  // types 1:1 (ResultsKPI/InitiativeKPI, ROIInitiativeItem, OKR objective
+  // shape from /results-strategic/:id/okr) — zero new endpoints.
+  const threePairKpis: ThreePairKpi[] = useMemo(
+    () =>
+      kpis.map((k) => ({
+        id: k.id,
+        name: k.name,
+        initiativeName: k.initiativeName ?? null,
+        unit: k.unit ?? null,
+        baseline: k.baselineValue ?? null,
+        target: k.targetValue ?? null,
+        current: k.latestValue ?? null,
+        status: k.status,
+        trend: k.trend,
+      })),
+    [kpis]
+  );
+
+  const threePairRoi: ThreePairRoi[] = useMemo(
+    () =>
+      threePairRoiItems.map((r) => ({
+        initiativeId: r.initiativeId,
+        initiativeName: r.initiativeName,
+        projectedBenefit: r.projectedBenefit,
+        realizedBenefit: r.realizedBenefit,
+        hasRealized: r.hasRealized,
+        ownerName: r.ownerName ?? null,
+      })),
+    [threePairRoiItems]
+  );
+
+  if (threePairsOn) {
+    return (
+      <>
+        <ResultsThreePairsView
+          kpis={threePairKpis}
+          roi={threePairRoi}
+          objectives={threePairObjectivesRaw}
+          isPolish={i18n.language?.startsWith('pl') ?? true}
+          onAddKpi={() => setShowCreateModal(true)}
+          onNewRoi={openRoiPicker}
+          onManageOkr={() => setShowOkrManage(true)}
+          onOpenKpi={(id) => openKpiDrawer(id, 'summary')}
+          onOpenRoi={(initiativeId) => {
+            const item = threePairRoiItems.find((r) => r.initiativeId === initiativeId);
+            setRoiDrawer({ id: initiativeId, name: item?.initiativeName || initiativeId });
+          }}
+          onOpenObjective={() => setShowOkrManage(true)}
+        />
+
+        {showCreateModal && (
+          <KPICreateModal onClose={() => setShowCreateModal(false)} onSuccess={handleCreateSuccess} />
+        )}
+
+        {drawerState && (
+          <KPITimeSeriesDrawer
+            kpiId={drawerState.kpiId}
+            initialSection={drawerState.section}
+            onClose={() => setDrawerState(null)}
+            onValueRecorded={() => {
+              void refreshResultsTruth();
+            }}
+          />
+        )}
+
+        {roiOpenModal && (
+          <ROIOpenModal
+            title={t('results.roi.add', '+ Record ROI')}
+            onClose={() => setRoiOpenModal(false)}
+            onSelect={(i) => {
+              setRoiOpenModal(false);
+              setRoiDrawer({ id: i.id, name: i.name });
+            }}
+          />
+        )}
+
+        {roiDrawer && (
+          <ROIDetailDrawer
+            initiativeId={roiDrawer.id}
+            initiativeName={roiDrawer.name}
+            onClose={() => setRoiDrawer(null)}
+            onSaved={() => {
+              void refreshResultsTruth();
+            }}
+          />
+        )}
+
+        {/* onManageOkr / onOpenObjective: full OKR CRUD lives in StrategicLayerPanel
+            (cycles, check-ins, objective/KR modals) — not yet re-modeled into a
+            dedicated "manage" surface for the 3-pary layout, so it opens as an
+            overlay on top of para 3 rather than duplicating that logic. */}
+        {showOkrManage && (
+          <div
+            className="fixed inset-0 z-50 flex items-stretch justify-end bg-navy-950/40"
+            onClick={() => setShowOkrManage(false)}
+          >
+            <div
+              className="flex h-full w-full max-w-4xl flex-col overflow-y-auto border-l border-c-border-subtle bg-c-surface shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-c-border-subtle px-4 py-3">
+                <h2 className="text-sm font-semibold text-c-text">
+                  {t('results.okr.manageTitle', 'Manage OKR')}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowOkrManage(false)}
+                  className="rounded-full border border-c-border-subtle bg-c-surface-raised px-3 py-1 text-sm font-medium text-c-text hover:bg-c-surface focus:outline-none focus:ring-2 focus:ring-c-focus"
+                >
+                  {t('common.close', 'Close')}
+                </button>
+              </div>
+              <div className="flex-1">
+                <StrategicLayerPanel projectId="all" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
     <>
