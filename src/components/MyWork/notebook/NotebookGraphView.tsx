@@ -22,6 +22,10 @@
  *  - Node colors were hardcoded light-mode hex with no dark variant, so the
  *    graph clashed against the dark theme. Now driven by the `--c-*` CSS
  *    custom properties (see src/index.css), which already flip per theme.
+ *  - Dropped the MiniMap: production mounts this at a fixed w-72 (288px)
+ *    panel (see NotebookContent), where react-flow's default minimap covers
+ *    a large chunk of the already-small canvas and can overlap nodes. A
+ *    handful of topic/backlink nodes doesn't need a minimap to navigate.
  *
  * Integration: render in the notebook right-rail / "connections" tab (see SLOT
  * comments in NotebookContent owned by Agent 4). Wrap is self-contained
@@ -35,7 +39,6 @@ import ReactFlow, {
   Background,
   Controls,
   type Edge,
-  MiniMap,
   type Node,
   ReactFlowProvider,
 } from 'reactflow';
@@ -302,7 +305,6 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
             >
               <Background gap={16} />
               <Controls showInteractive={false} />
-              <MiniMap pannable zoomable />
             </ReactFlow>
           </ReactFlowProvider>
         )}
