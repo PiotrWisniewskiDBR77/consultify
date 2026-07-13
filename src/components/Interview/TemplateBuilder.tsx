@@ -1147,7 +1147,8 @@ JSON schema:
       "allowUrl": true,
       "allowContextNote": true,
       "description": "string",
-      "evidencePrompt": "string"
+      "evidencePrompt": "string",
+      "exampleAnswer": "string"
     }
   ]
 }
@@ -1158,6 +1159,7 @@ Rules:
 - Default all modalities to true unless there is a strong reason not to.
 - Use only the allowed answer types provided in context unless there is a compelling reason to stay within a smaller subset.
 - For select or scale questions, provide answerOptions.
+- exampleAnswer: write one short, concrete, plausible sample answer (1-3 sentences, or a short list for select/scale) that shows the respondent the level of specificity expected. Never invent real company facts — keep it generic/illustrative.
 - Return ${Math.max(1, targetQuestionCount - questionCountTolerance)} to ${targetQuestionCount + questionCountTolerance} questions.`;
 
     const userPrompt = `Language: ${isPolish ? 'Polish' : 'English'}
@@ -1230,6 +1232,10 @@ ${importedSourceText.trim() || '(none)'}`;
           allowContextNote: item.allowContextNote !== false,
           description: String(item.description || '').trim(),
           evidencePrompt: String(item.evidencePrompt || '').trim(),
+          // #47a2 — AI-generated sample answer, same field the author can edit
+          // manually in the question panel; stored as-is (fail-soft: empty if
+          // the model omitted it, never blocks the rest of the draft).
+          exampleAnswer: String(item.exampleAnswer || '').trim(),
           isNew: true,
           isEditing: false,
         };
@@ -1375,6 +1381,7 @@ Rules:
 - Do not invent business facts not present in the brief/source.
 - Default all modalities to true unless there is a strong reason not to.
 - For select or scale questions, provide answerOptions.
+- For "add" items, include a short illustrative exampleAnswer (1-3 sentences, generic, no invented facts).
 
 Schema:
 {
@@ -1393,6 +1400,7 @@ Schema:
       "allowContextNote": true,
       "description": "string",
       "evidencePrompt": "string",
+      "exampleAnswer": "string",
       "rationale": "string"
     }
   ],
@@ -1480,6 +1488,8 @@ ${sourceText || '(none)'}`;
             allowContextNote: item.allowContextNote !== false,
             description: String(item.description || '').trim(),
             evidencePrompt: String(item.evidencePrompt || '').trim(),
+            // #47a2 — AI-suggested sample answer for a newly proposed question.
+            exampleAnswer: String(item.exampleAnswer || '').trim(),
             rationale: String(item.rationale || '').trim(),
           }))
           .filter((item) => item.questionText.length > 0)
@@ -1763,6 +1773,8 @@ ${sourceText || '(none)'}`;
         allowContextNote: item.allowContextNote !== false,
         description: String(item.description || '').trim(),
         evidencePrompt: String(item.evidencePrompt || '').trim(),
+        // #47a2 — carry the AI-suggested sample answer through to the applied question.
+        exampleAnswer: String(item.exampleAnswer || '').trim(),
         isNew: true,
         isEditing: false,
       }));
