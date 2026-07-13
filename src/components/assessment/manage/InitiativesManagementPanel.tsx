@@ -21,14 +21,12 @@ import {
   Flag,
   Lightbulb,
   Loader2,
-  MoreHorizontal,
   Play,
   Plus,
   RefreshCw,
   Search,
   Sparkles,
   Target,
-  Trash2,
   TrendingUp,
   X,
   Zap,
@@ -39,6 +37,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
+import {
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { LoadingState } from '@/components/ui/primitives';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
@@ -131,9 +135,10 @@ const STATUS_CONFIG: Partial<
   },
   [InitiativeStatus.PENDING_REVIEW]: {
     label: 'Pending Review',
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
-    borderColor: 'border-primary-200 dark:border-primary-500/30',
+    // Pułapka #1 (kanon): `primary`=crimson; status informacyjny → niebieski, nie crimson.
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
     icon: Clock,
   },
   [InitiativeStatus.REVIEW]: {
@@ -267,6 +272,16 @@ const STATUS_FILTER_OPTIONS: InitiativeStatus[] = [
   InitiativeStatus.DONE,
   InitiativeStatus.ARCHIVED,
 ];
+
+/** Wspólny formatter daty — 1:1 z dawnym formatDate wiersza tabeli (przed migracją do StandardTable). */
+const formatInitiativeDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('pl-PL', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
 
 // ============================================
 // Generate Modal Component
@@ -416,289 +431,6 @@ const GenerateInitiativesModal: FC<{
         </div>
       </motion.div>
     </div>
-  );
-};
-
-// ============================================
-// Initiative Row Component
-// ============================================
-
-const InitiativeRow: FC<{
-  initiative: Initiative;
-  canManage: boolean;
-  onOpen: (initiativeId: string) => void;
-  onEdit: (initiative: Initiative) => void;
-  onUpdateStatus: (initiativeId: string, status: InitiativeStatus) => Promise<void>;
-  onDelete: (initiativeId: string) => Promise<void>;
-  onDuplicate: (initiative: Initiative) => Promise<void>;
-}> = ({ initiative, canManage, onOpen, onEdit, onUpdateStatus, onDelete, onDuplicate }) => {
-  const [busy, setBusy] = useState(false);
-  const [showActions, setShowActions] = useState(false);
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-
-  const statusConfig = STATUS_CONFIG[initiative.status] || STATUS_CONFIG[InitiativeStatus.DRAFT]!;
-  const priorityConfig = PRIORITY_CONFIG[initiative.priority] || PRIORITY_CONFIG.medium;
-  const StatusIcon = statusConfig.icon;
-
-  const handleStatusChange = async (newStatus: InitiativeStatus) => {
-    setBusy(true);
-    setShowStatusDropdown(false);
-    try {
-      await onUpdateStatus(initiative.id, newStatus);
-    } catch (err) {
-      toast.error('Failed to update status');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm(`Delete initiative "${initiative.title}"?`)) return;
-    setBusy(true);
-    try {
-      await onDelete(initiative.id);
-      toast.success('Initiative deleted');
-    } catch (err) {
-      toast.error('Failed to delete initiative');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleDuplicate = async () => {
-    setBusy(true);
-    try {
-      await onDuplicate(initiative);
-      toast.success('Initiative duplicated');
-    } catch (err) {
-      toast.error('Failed to duplicate initiative');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pl-PL', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  return (
-    <motion.tr
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="group border-b border-slate-200 dark:border-navy-700/50 hover:bg-slate-50/50 dark:hover:bg-navy-800/30 transition-colors"
-    >
-      {/* Title */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-            <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <button
-              onClick={() => onOpen(initiative.id)}
-              className="text-sm font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left truncate block max-w-[200px]"
-            >
-              {initiative.title}
-            </button>
-            {initiative.category && (
-              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {initiative.category}
-              </div>
-            )}
-          </div>
-        </div>
-      </td>
-
-      {/* Priority */}
-      <td className="px-4 py-3">
-        <span
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${priorityConfig.bgColor} ${priorityConfig.color}`}
-        >
-          <Flag size={10} />
-          {priorityConfig.label}
-        </span>
-      </td>
-
-      {/* Status */}
-      <td className="px-4 py-3">
-        <div className="relative">
-          <button
-            onClick={() => canManage && setShowStatusDropdown(!showStatusDropdown)}
-            disabled={!canManage || busy}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${statusConfig.bgColor} ${statusConfig.color} ${statusConfig.borderColor} border ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-          >
-            {busy ? <Loader2 size={12} className="animate-spin" /> : <StatusIcon size={12} />}
-            {statusConfig.label}
-            {canManage && <ChevronDown size={10} />}
-          </button>
-
-          {showStatusDropdown && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowStatusDropdown(false)} />
-              <div className="absolute left-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                {getStatusActions(initiative.status).length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
-                    No actions
-                  </div>
-                ) : (
-                  getStatusActions(initiative.status).map((action) => (
-                    <button
-                      key={action.targetStatus}
-                      onClick={() => handleStatusChange(action.targetStatus)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${
-                        action.variant === 'danger'
-                          ? 'text-danger-600 dark:text-danger-400'
-                          : action.variant === 'primary'
-                            ? 'text-primary-700 dark:text-primary-300'
-                            : 'text-slate-700 dark:text-slate-200'
-                      }`}
-                    >
-                      <ArrowRight size={14} />
-                      {action.label}
-                    </button>
-                  ))
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </td>
-
-      {/* Impact/Effort */}
-      <td className="px-4 py-3">
-        {initiative.impact !== undefined && initiative.effort !== undefined ? (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 text-xs">
-              <TrendingUp size={12} className="text-emerald-500" />
-              <span className="text-slate-600 dark:text-slate-400">{initiative.impact}</span>
-            </div>
-            <span className="text-slate-700 dark:text-slate-400">/</span>
-            <div className="flex items-center gap-1 text-xs">
-              <Target size={12} className="text-blue-500" />
-              <span className="text-slate-600 dark:text-slate-400">{initiative.effort}</span>
-            </div>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
-        )}
-      </td>
-
-      {/* Owner */}
-      <td className="px-4 py-3">
-        {initiative.ownerName || initiative.owner ? (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
-              {(initiative.ownerName || initiative.owner || '?').charAt(0).toUpperCase()}
-            </div>
-            <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
-              {(initiative.ownerName || initiative.owner || '').split(' ')[0]}
-            </span>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
-        )}
-      </td>
-
-      {/* Created */}
-      <td className="px-4 py-3">
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {formatDate(initiative.createdAt)}
-        </span>
-      </td>
-
-      {/* Actions */}
-      <td className="px-4 py-3">
-        <div className="flex items-center justify-end gap-1">
-          <button
-            onClick={() => onOpen(initiative.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
-          >
-            <Eye size={12} />
-            View
-          </button>
-
-          {/* More Actions */}
-          <div className="relative">
-            <button
-              onClick={() => setShowActions(!showActions)}
-              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
-            >
-              <MoreHorizontal size={14} />
-            </button>
-
-            {showActions && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                  <button
-                    onClick={() => {
-                      onOpen(initiative.id);
-                      setShowActions(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Eye size={14} />
-                    View Details
-                  </button>
-                  {canManage && (
-                    <button
-                      onClick={() => {
-                        onEdit(initiative);
-                        setShowActions(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <Edit3 size={14} />
-                      Edit
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      window.location.href = '/initiatives';
-                      setShowActions(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <ExternalLink size={14} />
-                    Open in Initiatives
-                  </button>
-                  {canManage && (
-                    <>
-                      <div className="border-t border-slate-200 dark:border-navy-600 my-1" />
-                      <button
-                        onClick={() => {
-                          handleDuplicate();
-                          setShowActions(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                      >
-                        <Copy size={14} />
-                        Duplicate
-                      </button>
-                      <button
-                        onClick={() => {
-                          handleDelete();
-                          setShowActions(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/10"
-                      >
-                        <Trash2 size={14} />
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </td>
-    </motion.tr>
   );
 };
 
@@ -986,6 +718,209 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     return `${statusFilter.length} selected`;
   }, [statusFilter]);
 
+  // Triada standard (migracja bespoke tabeli, kanon TRIADA reguła #1): kolumny
+  // deklaratywne StandardTable — 1:1 z dawnymi komórkami <InitiativeRow>.
+  const columns: StandardTableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: 'Initiative',
+        width: '260px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          return (
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg shrink-0">
+                <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-c-text truncate">
+                  {initiative.title}
+                </div>
+                {initiative.category && (
+                  <div className="text-xs text-c-text-muted truncate">{initiative.category}</div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'priority',
+        label: 'Priority',
+        width: '110px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          const cfg = PRIORITY_CONFIG[initiative.priority] || PRIORITY_CONFIG.medium;
+          return (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bgColor} ${cfg.color}`}
+            >
+              <Flag size={10} />
+              {cfg.label}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        width: '170px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          const cfg = STATUS_CONFIG[initiative.status] || STATUS_CONFIG[InitiativeStatus.DRAFT]!;
+          const actions = getStatusActions(initiative.status);
+          const canMutate = canManage && actions.length > 0;
+          return (
+            <div className="relative">
+              <EntityStatusChip status={initiative.status} label={cfg.label} />
+              {canMutate && (
+                <select
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      void handleUpdateStatus(initiative.id, e.target.value as InitiativeStatus);
+                    }
+                  }}
+                >
+                  <option value="">{cfg.label}</option>
+                  {actions.map((a) => (
+                    <option key={a.targetStatus} value={a.targetStatus}>
+                      {a.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'impactEffort',
+        label: 'Impact/Effort',
+        width: '110px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          if (initiative.impact === undefined || initiative.effort === undefined) {
+            return <span className="text-xs text-c-text-muted">—</span>;
+          }
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-xs">
+                <TrendingUp size={12} className="text-emerald-500" />
+                <span className="text-c-text-secondary">{initiative.impact}</span>
+              </div>
+              <span className="text-c-text-muted">/</span>
+              <div className="flex items-center gap-1 text-xs">
+                <Target size={12} className="text-blue-500" />
+                <span className="text-c-text-secondary">{initiative.effort}</span>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'owner',
+        label: 'Owner',
+        width: '110px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          const name = initiative.ownerName || initiative.owner;
+          if (!name) return <span className="text-xs text-c-text-muted">—</span>;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white shrink-0">
+                {name.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-xs text-c-text-secondary truncate">{name.split(' ')[0]}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'createdAt',
+        label: 'Created',
+        width: '110px',
+        sortable: true,
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          return (
+            <span className="text-xs text-c-text-muted">
+              {formatInitiativeDate(initiative.createdAt)}
+            </span>
+          );
+        },
+      },
+    ],
+    [canManage, handleUpdateStatus]
+  );
+
+  // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
+  // TYLKO bloki 1-3; StandardTable SAM dokłada bloki 4 (Open preview · Edit ·
+  // Archive) i 5 (Delete). 1:1 z dawnym dropdownem "More Actions" wiersza.
+  const buildRowMenu = useCallback(
+    (initiative: Initiative): StandardRowMenu => ({
+      primary: [
+        {
+          id: 'open-in-initiatives',
+          label: 'Open in Initiatives',
+          icon: ExternalLink,
+          onClick: () => navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`),
+        },
+        ...(canManage
+          ? [
+              {
+                id: 'duplicate',
+                label: 'Duplicate',
+                icon: Copy,
+                onClick: () => {
+                  void (async () => {
+                    try {
+                      await handleDuplicateInitiative(initiative);
+                      toast.success('Initiative duplicated');
+                    } catch {
+                      toast.error('Failed to duplicate initiative');
+                    }
+                  })();
+                },
+              },
+            ]
+          : []),
+      ],
+      statusTransitions: getStatusActions(initiative.status).map((action) => ({
+        id: `status-${action.targetStatus}`,
+        label: action.label,
+        icon: ArrowRight,
+        onClick: () => {
+          void handleUpdateStatus(initiative.id, action.targetStatus);
+        },
+      })),
+      universalHandlers: {
+        preview: () => handleOpenInitiative(initiative.id),
+        edit: canManage ? () => openEditModal(initiative) : undefined,
+        // Brak API archiwizacji inicjatywy z poziomu tego panelu — disabled z
+        // notą (StandardTable dokłada ją sama, blok 4).
+      },
+      destructive: canManage
+        ? {
+            onClick: () => {
+              if (!confirm(`Delete initiative "${initiative.title}"?`)) return;
+              void (async () => {
+                try {
+                  await handleDelete(initiative.id);
+                  toast.success('Initiative deleted');
+                } catch {
+                  toast.error('Failed to delete initiative');
+                }
+              })();
+            },
+          }
+        : {},
+    }),
+    [canManage, navigate, handleDuplicateInitiative, handleUpdateStatus, handleOpenInitiative, openEditModal, handleDelete]
+  );
+
   return (
     <div className="space-y-4">
       {/* Header Card */}
@@ -1250,49 +1185,18 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               )}
             </div>
           ) : (
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full" style={{ minWidth: 800 }}>
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50">
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px]">
-                    Initiative
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[80px]">
-                    Priority
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[120px]">
-                    Status
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
-                    Impact/Effort
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
-                    Owner
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
-                    Created
-                  </th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[120px]">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {filteredInitiatives.map((initiative) => (
-                    <InitiativeRow
-                      key={initiative.id}
-                      initiative={initiative}
-                      canManage={canManage}
-                      onOpen={handleOpenInitiative}
-                      onEdit={openEditModal}
-                      onUpdateStatus={handleUpdateStatus}
-                      onDelete={handleDelete}
-                      onDuplicate={handleDuplicateInitiative}
-                    />
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+            <StandardTable
+              columns={columns}
+              data={filteredInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
+              onRowDoubleClick={(row) =>
+                handleOpenInitiative(String((row as unknown as Initiative).id))
+              }
+              rowDescription={() => null}
+              persistKey="assessment.manage.initiatives.list"
+              density="compact"
+              canvasClassName="p-0"
+              rowMenu={(row) => buildRowMenu(row as unknown as Initiative)}
+            />
           )}
         </div>
 
