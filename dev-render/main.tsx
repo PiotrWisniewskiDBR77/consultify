@@ -34,6 +34,7 @@ import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
+import NotebookQuickCaptureScreen from './screens/notebook-quick-capture';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
 import TemplateBuilderDeckScreen from './screens/template-builder-deck';
 import TemplateBuilderDocScreen from './screens/template-builder-doc';
@@ -79,6 +80,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'notatnik-osierocone-graf': {
     label: '#18 Notatnik — graf połączeń (naprawiony) + osierocone notatki',
     render: () => <NotatnikOsieroconeGrafScreen />,
+  },
+  'notebook-quick-capture': {
+    label: '#12a follow-up — pasek "Wrzuć" (NotebookQuickCapture), crimson-fill neutralizacja',
+    render: () => <NotebookQuickCaptureScreen />,
   },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',

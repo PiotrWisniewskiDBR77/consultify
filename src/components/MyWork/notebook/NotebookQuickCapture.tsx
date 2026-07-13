@@ -125,7 +125,14 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
             ? 'Zapisz jako nową szybką notatkę w notatniku'
             : 'Save as a new quick note in the notebook'
         }
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-c-accent px-3 py-1.5 text-xs font-medium text-white transition-colors hover:brightness-110 disabled:opacity-40"
+        // #12a follow-up — bg-c-accent is the SOLE brand crimson token (index.css);
+        // a full-fill CTA violates CLAUDE.md UI-rule #3 (crimson = critical semantics
+        // only, CTAs must be neutral). bg-c-text/text-c-surface self-invert per theme
+        // (light: #0f172a ink on white; dark: #f4f7fb near-white on navy-900 — see
+        // index.css c-text/c-surface tokens) which already matches the canon "primary
+        // CTA = ciemny wypełniony, w dark jasny inwers" (docs/ui-standards/TRIADA_KANON.md,
+        // MENU_1_PRIMARY_CTA in ModuleMenu3.tsx) — no extra dark: override needed.
+        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-c-text px-3 py-1.5 text-xs font-medium text-c-surface transition-colors hover:brightness-110 disabled:opacity-40"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : null}
         {isPl ? 'Wrzuć' : 'Capture'}
