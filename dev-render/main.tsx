@@ -30,6 +30,7 @@ import CanvasKebabRestructureScreen from './screens/canvas-kebab-restructure';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
+import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
@@ -116,6 +117,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'chat-split-teresa-right': {
     label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',
     render: () => <ChatSplitTeresaRightScreen />,
+  },
+  'crimson-mywork-wave2': {
+    label: 'Crimson Wave #2 (MyWork) — CTA/aktywne bg-c-accent → neutralne (PRZED/PO)',
+    render: () => <CrimsonMyWorkWave2Screen />,
   },
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
