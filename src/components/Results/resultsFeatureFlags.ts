@@ -44,6 +44,15 @@ const FLAGS = {
     localStorage: 'ff.results_portfolio_insights',
     env: 'VITE_RESULTS_PORTFOLIO_INSIGHTS_ENABLED',
   },
+  // #81/OC2 (2026-07-13): new ResultsHub mount (ResultsThreePairsView) — a new
+  // wired *screen*, not just a new panel. NOT covered by the D-D default-on
+  // fallback below (kanon rule #7: Piotr must see a dev-render screenshot
+  // first). Stays default OFF until that odbiór, then flip via env/localStorage.
+  threePairs: {
+    query: 'ff_resultsThreePairs',
+    localStorage: 'ff.results_three_pairs',
+    env: 'VITE_RESULTS_THREE_PAIRS_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsFlag = keyof typeof FLAGS;
@@ -91,6 +100,10 @@ export function isResultsFlagEnabled(flag: ResultsFlag): boolean {
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
+  // threePairs (#81/OC2) is intentionally excluded from the D-D default-on
+  // fallback — it is a whole-screen mount, not a panel add-on, and must clear
+  // Piotr's screenshot odbiór (CLAUDE.md rule #7) before it can default on.
+  if (flag === 'threePairs') return false;
   // D-D (2026-06-29): verified-ready M15 cockpit defaults ON everywhere EXCEPT
   // public production (consultify.ai). Demo/stage/dev → ON (Piotr's odbiór sees
   // the full cockpit without ?ff_ params); prod stays env-gated (D-G = no prod).

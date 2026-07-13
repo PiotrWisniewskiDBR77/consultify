@@ -25,6 +25,7 @@ import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-t
 import AssessmentListScreen from './screens/assessment-list';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import AssessmentReportsTableScreen from './screens/assessment-reports-table';
+import ResultsThreePairsScreen from './screens/results-three-pairs';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
@@ -35,6 +36,10 @@ import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'results-three-pairs': {
+    label: '#81 Results — 3 pary (KPI/ROI/OKR)',
+    render: () => <ResultsThreePairsScreen />,
+  },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,
