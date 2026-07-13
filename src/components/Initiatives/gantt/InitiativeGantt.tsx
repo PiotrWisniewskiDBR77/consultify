@@ -350,7 +350,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
         <div ref={gridRef} className="relative" style={{ minWidth: gridMinWidth }}>
           {todayInRange && (
             <div
-              className="absolute top-0 bottom-0 w-px bg-c-accent z-10 pointer-events-none"
+              className="absolute top-0 bottom-0 w-px bg-c-text z-10 pointer-events-none"
               style={{ left: pct(todayMs) }}
               aria-hidden
             />
