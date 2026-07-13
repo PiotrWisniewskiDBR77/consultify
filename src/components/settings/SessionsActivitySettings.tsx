@@ -109,7 +109,7 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
             active === tab.id
-              ? 'bg-c-accent text-white shadow-sm'
+              ? 'bg-c-text text-c-surface shadow-sm'
               : 'text-c-text-secondary hover:text-c-text hover:bg-c-surface'
           )}
         >

@@ -1505,7 +1505,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           <div className="flex justify-end">
             <button
               onClick={() => setIsWebhookModalOpen(true)}
-              className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium flex items-center gap-2"
             >
               <Plus size={18} />
               Add Webhook
@@ -1704,7 +1704,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     !webhookForm.targetUrl ||
                     webhookForm.eventTypes.length === 0
                   }
-                  className="px-4 py-2 bg-c-accent text-white rounded-lg hover:bg-c-accent disabled:opacity-50 font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-c-text text-c-surface rounded-lg hover:bg-c-text disabled:opacity-50 font-medium flex items-center gap-2"
                 >
                   {connecting && <Loader2 size={16} className="animate-spin" />}
                   {connecting ? 'Creating...' : 'Create Webhook'}

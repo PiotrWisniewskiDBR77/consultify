@@ -185,7 +185,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
     'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-c-accent' : 'bg-c-surface-raised'
+      enabled ? 'bg-c-focus' : 'bg-c-surface-raised'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
     `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
@@ -230,7 +230,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving || !!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-accent"
+          className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-text"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}

@@ -425,7 +425,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 onClick={() => updateSetting('autoSpeakResponses', !settings.autoSpeakResponses)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.autoSpeakResponses ? 'bg-c-accent' : 'bg-c-surface-raised'}
+                            ${settings.autoSpeakResponses ? 'bg-c-focus' : 'bg-c-surface-raised'}
                         `}
               >
                 <span
@@ -446,7 +446,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 onClick={() => updateSetting('showLiveTranscript', !settings.showLiveTranscript)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.showLiveTranscript ? 'bg-c-accent' : 'bg-c-surface-raised'}
+                            ${settings.showLiveTranscript ? 'bg-c-focus' : 'bg-c-surface-raised'}
                         `}
               >
                 <span
@@ -472,7 +472,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
             <button
               onClick={saveSettings}
               disabled={isSaving}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 size={16} className="animate-spin" />

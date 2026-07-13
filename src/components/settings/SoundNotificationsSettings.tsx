@@ -163,7 +163,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            soundEnabled ? 'bg-c-accent' : 'bg-c-surface-raised'
+            soundEnabled ? 'bg-c-focus' : 'bg-c-surface-raised'
           }`}
         >
           <span
@@ -250,7 +250,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>

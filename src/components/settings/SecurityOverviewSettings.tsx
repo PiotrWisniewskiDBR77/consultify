@@ -554,7 +554,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               <button
                 type="submit"
                 disabled={!allReqsMet || !passwordsMatch || passwordLoading}
-                className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-c-text hover:bg-c-text text-c-surface text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
               >
                 {passwordLoading && <Loader2 size={14} className="animate-spin" />}
                 {t('settings.password.update', 'Update Password')}
@@ -716,7 +716,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             <button
               onClick={startMfaSetup}
               disabled={mfaLoading}
-              className="w-full py-3 bg-c-accent hover:bg-c-accent text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-c-text hover:bg-c-text text-c-surface text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {mfaLoading ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -787,7 +787,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                     <button
                       onClick={verifyMfa}
                       disabled={mfaLoading || verificationCode.length !== 6}
-                      className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-c-text hover:bg-c-text text-c-surface text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
                     >
                       {mfaLoading ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -986,7 +986,7 @@ const StepProgress: React.FC<{ current: 1 | 2 | 3 }> = ({ current }) => {
                   isCompleted
                     ? 'bg-emerald-500 text-white'
                     : isActive
-                      ? 'bg-c-accent text-white'
+                      ? 'bg-c-text text-c-surface'
                       : 'bg-c-surface/[0.06] text-c-text-muted'
                 )}
               >
