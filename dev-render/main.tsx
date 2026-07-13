@@ -35,6 +35,7 @@ import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
+import PublicBookingWidgetScreen from './screens/public-booking-widget';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
 import TemplateBuilderDeckScreen from './screens/template-builder-deck';
 import TemplateBuilderDocScreen from './screens/template-builder-doc';
@@ -48,6 +49,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'template-create-wizard': {
     label: '#83c START kreatora szablonu (nazwa → typ → dostępność)',
     render: () => <TemplateCreateWizardScreen />,
+  },
+  'public-booking-widget': {
+    label: '#24c Publiczny widget booking (Calendly-like, niezalogowany) — CTA neutralny',
+    render: () => <PublicBookingWidgetScreen />,
   },
   'template-library-new-entry': {
     label: 'Wpięcie „Nowy szablon" (Biblioteka wzorców → TemplateBuilderFlow)',
