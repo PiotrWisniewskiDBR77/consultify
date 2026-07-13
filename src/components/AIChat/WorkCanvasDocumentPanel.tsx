@@ -53,6 +53,7 @@ import {
   starterIdToCanvasKind,
 } from '@/utils/canvas/canvasDraftAdapter';
 import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
+import { isCanvasNewDocOptionsEnabled } from '@/utils/canvasNewDocOptionsFlag';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasArtifactSwitcher, type CanvasMountSelection } from './CanvasArtifactSwitcher';
@@ -113,6 +114,16 @@ type PendingDatasetFormat = 'csv' | 'json' | 'xlsx';
 type DatasetAnalysisKind = 'profile_summary' | 'aggregate_numeric' | 'filtered_table';
 type CanvasCapabilityStatus = 'real' | 'partial' | 'scaffold' | 'missing' | 'out_of_scope';
 
+// #87a — "Z canvasa" picker row (subset of the full work_canvas_drafts row
+// returned by GET /work-canvas/drafts; only what the picker + seed need).
+interface WorkCanvasDraftSummary {
+  id: string;
+  title: string;
+  kind: string;
+  contentMd?: string | null;
+  updatedAt?: string | null;
+}
+
 type CanvasWorkflowTemplate =
   | 'market_research_to_report'
   | 'meeting_note_to_initiatives'
@@ -131,6 +142,24 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     binary += String.fromCharCode(...chunk);
   }
   return window.btoa(binary);
+}
+
+// #87a — kanoniczny kanał zasiewu promptu do JEDNEJ dokowanej Teresy (D17,
+// parytet z `IdeaTeresaSection`/`InsightViewer`/`AIConsultantPanel`). Teresa
+// jest już dokowana po lewej w tym samym `UnifiedChatPanel` — ten kanwas jest
+// jej prawym panelem, więc "seed" tylko prefilluje composer, NIGDY nie otwiera
+// drugiego czatu.
+function seedTeresaPrompt(prompt: string): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem(
+      'consultify.teresa.pendingPrompt',
+      JSON.stringify({ prompt, ts: Date.now() })
+    );
+    window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
+  } catch {
+    // Non-critical — the document still gets created either way.
+  }
 }
 
 function approveCanvasOperation(operation: WorkCanvasOperation): WorkCanvasOperation {
@@ -818,6 +847,13 @@ function WorkCanvasMarkdownDocumentPanel({
   const [isProjectionRefreshing, setIsProjectionRefreshing] = React.useState(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = React.useState(false);
   const [isNewCanvasMenuOpen, setIsNewCanvasMenuOpen] = React.useState(false);
+  // #87a — "+" New Canvas menu, 3 explicit start options (flag-gated, see
+  // canvasNewDocOptionsFlag). "Z canvasa" lazy-loads the user's other Work
+  // Canvas document drafts on first open of that section.
+  const [otherCanvasDrafts, setOtherCanvasDrafts] = React.useState<WorkCanvasDraftSummary[]>([]);
+  const [isOtherCanvasDraftsLoading, setIsOtherCanvasDraftsLoading] = React.useState(false);
+  const [otherCanvasDraftsError, setOtherCanvasDraftsError] = React.useState<string | null>(null);
+  const [otherCanvasDraftsLoaded, setOtherCanvasDraftsLoaded] = React.useState(false);
   const [isMdPropertiesOpen, setIsMdPropertiesOpen] = React.useState(false);
   const [quickAddElement, setQuickAddElement] = React.useState<CanvasQuickAddElement>('text');
   const [quickAddPrompt, setQuickAddPrompt] = React.useState('');
@@ -1554,12 +1590,29 @@ function WorkCanvasMarkdownDocumentPanel({
     })();
   }, [documentState.activeStarterId, initialStarterId]);
 
-  const selectTemplate = (template: StarterTemplate) => {
+  // #87a — `opts.seedTeresa` prefill the docked Teresa (left side of this same
+  // split view) with a context-aware kickoff prompt via the canonical
+  // pendingPrompt channel. Optional + default-off so the pre-existing kebab
+  // "Starter Templates" call site (unrelated to #87a) keeps its old behavior.
+  const selectTemplate = (
+    template: StarterTemplate,
+    opts?: { seedTeresa?: boolean; teresaPrompt?: string }
+  ) => {
     const next = createDocumentState(template);
     setDocumentState(next);
     // Fresh draft — any share strip from the previous draft is stale.
     setShareInfo(null);
     setMode('document');
+    if (opts?.seedTeresa) {
+      seedTeresaPrompt(
+        opts.teresaPrompt ||
+          t('canvas.panel.newMenu.seedFromTemplate', {
+            defaultValue:
+              'I started a new document "{{title}}" from a template. Help me develop it — suggest what to fill in first.',
+            title: template.title,
+          })
+      );
+    }
     void (async () => {
       const researchSessionId = await createResearchSessionForDraft(next);
       const draftToPersist = researchSessionId ? { ...next, researchSessionId } : next;
@@ -1567,6 +1620,100 @@ function WorkCanvasMarkdownDocumentPanel({
       void persistDraft(draftToPersist);
     })();
   };
+
+  // #87a — option (a) Czysty: blank document, no starter markdown. Reuses the
+  // exact same create/persist path as template selection (zero bespoke).
+  const startBlankDocument = () => {
+    const blankTemplate: StarterTemplate = {
+      id: 'document',
+      label: t('canvas.panel.newMenu.blank', 'Czysty dokument'),
+      title: t('canvas.panel.newMenu.blankTitle', 'Nowy dokument'),
+      description: t('canvas.panel.newMenu.blankDesc', 'Puste — zaczynasz od zera z Teresą.'),
+      capability: 'real',
+      capabilityNote: t(
+        'canvas.panel.newMenu.blankCapabilityNote',
+        'Markdown document, autosave, and Teresa context are production-backed.'
+      ),
+      markdown: '',
+    };
+    selectTemplate(blankTemplate, {
+      seedTeresa: true,
+      teresaPrompt: t(
+        'canvas.panel.newMenu.seedBlank',
+        'I am starting a blank document from scratch. Ask me questions to nail down the goal, context, and a first draft direction.'
+      ),
+    });
+  };
+
+  // #87a — option (c) Z canvasa: lazy-load the user's other Work Canvas
+  // document drafts (GET /work-canvas/drafts, org+owner scoped by the
+  // backend) for the picker. Only fetched once, on first menu open.
+  const loadOtherCanvasDrafts = React.useCallback(async () => {
+    setIsOtherCanvasDraftsLoading(true);
+    setOtherCanvasDraftsError(null);
+    try {
+      const rows = await Api.workCanvasListDrafts(conversationId || undefined);
+      const currentId = String(documentState.draftId || '').trim();
+      const mapped: WorkCanvasDraftSummary[] = (Array.isArray(rows) ? rows : [])
+        .filter((row: any) => row && typeof row === 'object' && String(row.id || '') !== currentId)
+        .filter((row: any) => typeof row.contentMd === 'string' && row.contentMd.trim().length > 0)
+        .slice(0, 20)
+        .map((row: any) => ({
+          id: String(row.id),
+          title: String(row.title || t('canvas.panel.newMenu.untitled', 'Untitled')),
+          kind: String(row.kind || 'document'),
+          contentMd: row.contentMd as string,
+          updatedAt: (row.updatedAt as string | undefined) || null,
+        }));
+      setOtherCanvasDrafts(mapped);
+    } catch (error) {
+      setOtherCanvasDraftsError(
+        error instanceof Error
+          ? error.message
+          : t('canvas.panel.newMenu.fromCanvasError', 'Failed to load your other canvases.')
+      );
+    } finally {
+      setIsOtherCanvasDraftsLoading(false);
+      setOtherCanvasDraftsLoaded(true);
+    }
+  }, [conversationId, documentState.draftId, t]);
+
+  // #87a — option (c) continued: duplicate the picked canvas's markdown into
+  // this brand-new draft (COPY, not live-sync — mirrors the D-C-2 decision
+  // used by notebook-expand / outputs-duplicate).
+  const startFromOtherDraft = (draft: WorkCanvasDraftSummary) => {
+    const fromCanvasTemplate: StarterTemplate = {
+      id: 'document',
+      label: draft.title,
+      title: draft.title,
+      description: '',
+      capability: 'real',
+      capabilityNote: '',
+      markdown: draft.contentMd || '',
+    };
+    setIsNewCanvasMenuOpen(false);
+    selectTemplate(fromCanvasTemplate, {
+      seedTeresa: true,
+      teresaPrompt: t('canvas.panel.newMenu.seedFromCanvas', {
+        defaultValue:
+          'I started this new document from an existing canvas ("{{title}}"). Help me develop it further from here.',
+        title: draft.title,
+      }),
+    });
+  };
+
+  // #87a — lazy-load the "Z canvasa" list the first time the "+" menu opens
+  // (flag ON only; the legacy flag-OFF menu never touches this).
+  React.useEffect(() => {
+    if (!isNewCanvasMenuOpen || !isCanvasNewDocOptionsEnabled()) return;
+    if (otherCanvasDraftsLoaded || isOtherCanvasDraftsLoading) return;
+    void loadOtherCanvasDrafts();
+  }, [
+    isNewCanvasMenuOpen,
+    otherCanvasDraftsLoaded,
+    isOtherCanvasDraftsLoading,
+    loadOtherCanvasDrafts,
+  ]);
 
   const copyMarkdown = async () => {
     await navigator.clipboard?.writeText(documentState.contentMd);
@@ -2917,7 +3064,104 @@ function WorkCanvasMarkdownDocumentPanel({
             >
               <Plus size={15} />
             </button>
-            {isNewCanvasMenuOpen ? (
+            {isNewCanvasMenuOpen && isCanvasNewDocOptionsEnabled() ? (
+              // #87a — 3 explicit start options: Czysty / Z szablonu / Z canvasa.
+              <div
+                data-testid="canvas-new-menu-v2"
+                className="absolute left-0 z-20 mt-2 w-[300px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
+              >
+                {/* (a) Czysty — blank, on top, no preset (#87 doctrine). */}
+                <button
+                  type="button"
+                  data-testid="canvas-new-menu-blank"
+                  onClick={() => {
+                    setIsNewCanvasMenuOpen(false);
+                    startBlankDocument();
+                  }}
+                  className="w-full rounded-xl px-2.5 py-2 text-left text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                >
+                  <span className="font-semibold">
+                    {t('canvas.panel.newMenu.blank', 'Czysty dokument')}
+                  </span>
+                  <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    {t('canvas.panel.newMenu.blankDesc', 'Puste — zaczynasz od zera z Teresą.')}
+                  </div>
+                </button>
+
+                <div className="my-1.5 border-t border-slate-100 dark:border-white/[0.06]" />
+
+                {/* (b) Z szablonu — existing starterTemplates gallery, unchanged content. */}
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                  {t('canvas.panel.newMenu.fromTemplate', 'Z szablonu')}
+                </div>
+                <div className="mt-1 space-y-1">
+                  {starterTemplates.map((template) => (
+                    <button
+                      key={`header-template-${template.id}`}
+                      type="button"
+                      onClick={() => {
+                        setIsNewCanvasMenuOpen(false);
+                        selectTemplate(template, {
+                          seedTeresa: true,
+                          teresaPrompt: t('canvas.panel.newMenu.seedFromTemplate', {
+                            defaultValue:
+                              'I started a new document "{{title}}" from a template. Help me develop it — suggest what to fill in first.',
+                            title: template.title,
+                          }),
+                        });
+                      }}
+                      className={`w-full rounded-xl px-2.5 py-2 text-left transition-colors ${
+                        documentState.activeStarterId === template.id
+                          ? 'bg-slate-100 text-slate-950 dark:bg-white/10 dark:text-white'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold">{template.label}</span>
+                        {renderCapabilityBadge(template.capability)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        {template.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="my-1.5 border-t border-slate-100 dark:border-white/[0.06]" />
+
+                {/* (c) Z canvasa — pick one of the user's other Work Canvas drafts. */}
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                  {t('canvas.panel.newMenu.fromCanvas', 'Z canvasa')}
+                </div>
+                <div className="mt-1 max-h-[180px] space-y-1 overflow-y-auto">
+                  {isOtherCanvasDraftsLoading ? (
+                    <div className="px-2.5 py-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      {t('canvas.panel.newMenu.fromCanvasLoading', 'Loading your canvases…')}
+                    </div>
+                  ) : otherCanvasDraftsError ? (
+                    <div className="px-2.5 py-2 text-[11px] text-danger-600 dark:text-danger-300">
+                      {otherCanvasDraftsError}
+                    </div>
+                  ) : otherCanvasDrafts.length === 0 ? (
+                    <div className="px-2.5 py-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      {t('canvas.panel.newMenu.fromCanvasEmpty', 'No other canvases yet.')}
+                    </div>
+                  ) : (
+                    otherCanvasDrafts.map((draft) => (
+                      <button
+                        key={`header-from-canvas-${draft.id}`}
+                        type="button"
+                        data-testid="canvas-new-menu-from-canvas-item"
+                        onClick={() => startFromOtherDraft(draft)}
+                        className="w-full truncate rounded-xl px-2.5 py-2 text-left text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                      >
+                        <span className="truncate font-semibold">{draft.title}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            ) : isNewCanvasMenuOpen ? (
               <div className="absolute left-0 z-20 mt-2 w-[280px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800">
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                   New Canvas from template

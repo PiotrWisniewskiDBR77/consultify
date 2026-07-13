@@ -15260,6 +15260,21 @@
         "note": "Source: note"
       },
       "newCanvas": "New Canvas",
+      "newMenu": {
+        "blank": "Blank document",
+        "blankTitle": "New document",
+        "blankDesc": "Empty — start from scratch with Teresa.",
+        "blankCapabilityNote": "Markdown document, autosave, and Teresa context are production-backed.",
+        "fromTemplate": "From template",
+        "fromCanvas": "From canvas",
+        "fromCanvasLoading": "Loading your canvases…",
+        "fromCanvasEmpty": "No other canvases yet.",
+        "fromCanvasError": "Failed to load your other canvases.",
+        "untitled": "Untitled",
+        "seedBlank": "I am starting a blank document from scratch. Ask me questions to nail down the goal, context, and a first draft direction.",
+        "seedFromTemplate": "I started a new document \"{{title}}\" from a template. Help me develop it — suggest what to fill in first.",
+        "seedFromCanvas": "I started this new document from an existing canvas (\"{{title}}\"). Help me develop it further from here."
+      },
       "menuAria": "Canvas menu",
       "save": "Save",
       "companyAiChat": "Company AI Chat",

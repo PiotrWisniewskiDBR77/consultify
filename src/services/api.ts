@@ -5487,6 +5487,22 @@ export const Api = {
     return Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
   },
 
+  // #87a — "Z canvasa" picker: list the user's other Work Canvas document
+  // drafts (org+owner scoped by the backend, see GET /work-canvas/drafts) so
+  // the "+" New Canvas menu can offer "start from an existing canvas". The
+  // list rows already carry `contentMd`/`title` (full row), so no follow-up
+  // fetch is needed to seed the new draft's content.
+  workCanvasListDrafts: async (conversationId?: string | null): Promise<any[]> => {
+    const query = conversationId
+      ? `?conversationId=${encodeURIComponent(conversationId)}`
+      : '';
+    const res = await fetch(`${API_URL}/work-canvas/drafts${query}`, {
+      headers: getHeaders(),
+    });
+    const result = await handleResponse(res, 'Failed to list Canvas drafts');
+    return Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+  },
+
   workCanvasGetWorkflows: async (draftId: string): Promise<any[]> => {
     const res = await fetch(
       `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows`,

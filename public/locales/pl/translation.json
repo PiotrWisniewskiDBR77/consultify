@@ -16310,6 +16310,21 @@
         "note": "Źródło: notatka"
       },
       "newCanvas": "Nowy Canvas",
+      "newMenu": {
+        "blank": "Czysty dokument",
+        "blankTitle": "Nowy dokument",
+        "blankDesc": "Puste — zaczynasz od zera z Teresą.",
+        "blankCapabilityNote": "Dokument Markdown, autozapis i kontekst Teresy działają produkcyjnie.",
+        "fromTemplate": "Z szablonu",
+        "fromCanvas": "Z canvasa",
+        "fromCanvasLoading": "Wczytuję Twoje canvasy…",
+        "fromCanvasEmpty": "Brak innych canvasów.",
+        "fromCanvasError": "Nie udało się wczytać innych canvasów.",
+        "untitled": "Bez tytułu",
+        "seedBlank": "Zaczynam czysty dokument od zera. Zadaj mi pytania, żeby ustalić cel, kontekst i kierunek pierwszego szkicu.",
+        "seedFromTemplate": "Zaczęłam/em nowy dokument „{{title}}” z szablonu. Pomóż mi go rozwinąć — zaproponuj, co uzupełnić w pierwszej kolejności.",
+        "seedFromCanvas": "Zaczęłam/em ten nowy dokument na bazie innego canvasu („{{title}}”). Pomóż mi go stąd dalej rozwinąć."
+      },
       "menuAria": "Menu Canvas",
       "save": "Zapisz",
       "companyAiChat": "Firmowy czat AI",
