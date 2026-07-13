@@ -24,6 +24,7 @@ import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-p
 import AssessmentListScreen from './screens/assessment-list';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
+import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
@@ -51,6 +52,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'canvas-new-doc': {
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
     render: () => <CanvasNewDocScreen />,
+  },
+  'chat-split-teresa-right': {
+    label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',
+    render: () => <ChatSplitTeresaRightScreen />,
   },
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',

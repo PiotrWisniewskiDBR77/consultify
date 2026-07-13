@@ -5356,8 +5356,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     (clientX: number) => {
       const rect = splitShellRef.current?.getBoundingClientRect();
       if (!rect?.width) return;
-      const leftPercent = ((clientX - rect.left) / rect.width) * 100;
-      setPersistedWorkCanvasWidth(100 - leftPercent);
+      // D17: artefakt (canvas) po LEWEJ, Teresa po PRAWEJ → divider = prawa krawędź canvasu,
+      // więc szerokość canvasu = odległość dividera od lewej krawędzi shella.
+      const canvasPercent = ((clientX - rect.left) / rect.width) * 100;
+      setPersistedWorkCanvasWidth(canvasPercent);
     },
     [setPersistedWorkCanvasWidth]
   );
@@ -5390,13 +5392,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const handleWorkCanvasEdgeKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
+      // D17: canvas po LEWEJ → divider na jego prawej krawędzi.
+      // ArrowRight rozsuwa divider w prawo = szerszy canvas; ArrowLeft = węższy.
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        setPersistedWorkCanvasWidth(workCanvasWidthPercent + 2);
+        setPersistedWorkCanvasWidth(workCanvasWidthPercent - 2);
       }
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        setPersistedWorkCanvasWidth(workCanvasWidthPercent - 2);
+        setPersistedWorkCanvasWidth(workCanvasWidthPercent + 2);
       }
       if (event.key === 'Home') {
         event.preventDefault();
@@ -5421,7 +5425,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       style={rootStyle}
     >
       <div
-        className={`group/composer flex min-w-0 flex-col h-full transition-[width] duration-200 ${
+        className={`group/composer flex min-w-0 flex-col h-full transition-[width] duration-200 lg:order-2 ${
           showWorkPanel ? 'w-full lg:w-[calc(100%_-_var(--work-canvas-width))]' : 'w-full'
         }`}
       >
@@ -6130,7 +6134,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       {showWorkPanel && (
         <aside
           data-testid="chat-work-panel"
-          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-c-bg shadow-2xl lg:relative lg:z-auto lg:w-[var(--work-canvas-width)] lg:shadow-none"
+          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-c-bg shadow-2xl lg:relative lg:z-auto lg:order-1 lg:w-[var(--work-canvas-width)] lg:shadow-none"
           aria-label={t('aiChat.workPanel.title', 'Canvas work area')}
         >
           <div
@@ -6145,7 +6149,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             onMouseDown={handleWorkCanvasEdgeMouseDown}
             onDoubleClick={() => setPersistedWorkCanvasWidth(DEFAULT_WORK_CANVAS_WIDTH_PERCENT)}
             onKeyDown={handleWorkCanvasEdgeKeyDown}
-            className="group absolute inset-y-0 left-0 z-50 hidden w-4 -translate-x-1/2 cursor-col-resize touch-none outline-none lg:block"
+            className="group absolute inset-y-0 right-0 z-50 hidden w-4 translate-x-1/2 cursor-col-resize touch-none outline-none lg:block"
           >
             <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-c-border transition-colors group-hover:bg-c-border-strong group-focus:bg-c-focus-solid" />
           </div>
