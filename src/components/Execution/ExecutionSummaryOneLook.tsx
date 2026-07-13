@@ -10,7 +10,7 @@
  *   + Najbliższe kamienie milowe.
  *
  * KANON (reguła #1 + #9 + pułapka nr 1): to NIE light-shell. Listy renderuje
- * <StandardTable> (fasada src/components/standard/) 1:1 — zero własnych <table>.
+ * StandardTable (fasada src/components/standard/) 1:1 — zero surowych elementów tabeli.
  * Karty-odpowiedzi u góry to podsumowania (jak strip w KpiOverviewView /
  * ResultsThreePairsView), nie tabele. Kolory = tokeny c-* (semantyka:
  * c-success / c-warning / c-danger). CTA/stany aktywne = neutralne, focus =
