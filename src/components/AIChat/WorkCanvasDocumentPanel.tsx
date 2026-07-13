@@ -2898,7 +2898,7 @@ function WorkCanvasMarkdownDocumentPanel({
             }}
             data-testid="canvas-active-title"
             aria-label="Canvas document title"
-            className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-primary-300 focus:bg-white dark:text-white dark:hover:border-white/10 dark:hover:bg-white/[0.04] dark:focus:border-primary-500/50 dark:focus:bg-white/[0.06]"
+            className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-slate-300 focus:bg-white dark:text-white dark:hover:border-white/10 dark:hover:bg-white/[0.04] dark:focus:border-white/20 dark:focus:bg-white/[0.06]"
           />
         </div>
 
@@ -2955,17 +2955,18 @@ function WorkCanvasMarkdownDocumentPanel({
             {menuOutputActionIds.map((actionId) => renderCommandButton(actionId))}
           </div>
 
-          {/* C4.5 — Promote strip. The workspace-actions cluster IS the
-              differentiator: one-click promotion of Canvas content into Tasks,
-              Decisions, Initiatives, Ideas, Notes. ChatGPT/Claude/Gemini Canvas
-              have no equivalent. Surfacing the label makes the unique value
-              discoverable rather than hidden behind icons. */}
+          {/* C4.5 — Promote group: one-click promotion of Canvas content into
+              Tasks, Decisions, Initiatives, Ideas, Notes. #86/#87: brought to the
+              artifact toolbar canon — crimson is reserved for critical semantics
+              only, so this cluster now uses the same NEUTRAL group language as the
+              output/file groups (was a loud crimson-tinted strip). The "Promote"
+              caption stays; the workspace-action buttons are unchanged. */}
           <div
-            className="flex items-center gap-2 rounded-full border border-crimson-200/70 bg-crimson-50/40 px-2 py-0.5 dark:border-crimson-700/40 dark:bg-crimson-950/30"
+            className="flex items-center gap-2 rounded-full border border-slate-200 px-2 py-0.5 dark:border-white/10"
             data-testid="canvas-promote-strip"
             title="Promote Canvas content into platform entities"
           >
-            <span className="select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-crimson-700 dark:text-crimson-300">
+            <span className="select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
               Promote
             </span>
             <div className="flex items-center gap-1" data-testid="canvas-workspace-actions">
