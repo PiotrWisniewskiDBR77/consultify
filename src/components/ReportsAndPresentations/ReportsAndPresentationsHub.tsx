@@ -11,14 +11,12 @@ import {
   ChevronUp,
   FileText,
   Filter,
-  Inbox,
   LayoutGrid,
   MessageSquare,
   Package2,
   Plus,
   Presentation,
   Table2,
-  User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -169,22 +167,17 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showDrafts]);
 
+  // #83: Menu 2 = 5 TYPES only (owner canon "Menu 2 = types"):
+  // All · Documents · Presentations · Sheets · Template Library. Non-type views
+  // `Mine` / `Needs review` are personal scopes, not artifact types, so they no
+  // longer sit in the tab bar (still reachable via ?tab= deep links + the Filters
+  // dropdown's Visibility/Review facets). `Data` already folded under Sheets.
   const tabs = useMemo(
     () => [
       {
         id: 'outputs_all' as ModuleTab,
         label: t('rap.outputs.tabs.all', 'All'),
         icon: <LayoutGrid size={16} />,
-      },
-      {
-        id: 'outputs_mine' as ModuleTab,
-        label: t('rap.outputs.tabs.mine', 'Mine'),
-        icon: <User size={16} />,
-      },
-      {
-        id: 'outputs_review' as ModuleTab,
-        label: t('rap.outputs.tabs.review', 'Needs review'),
-        icon: <Inbox size={16} />,
       },
       {
         id: 'outputs_documents' as ModuleTab,
