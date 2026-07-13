@@ -67,7 +67,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
         {/* Header */}
         <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary-500/15 text-primary-600 dark:text-primary-300 flex items-center justify-center">
+            <div className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 flex items-center justify-center">
               <BookOpen className="w-4.5 h-4.5" />
             </div>
             <div>
@@ -101,7 +101,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
               placeholder={
                 isPl ? 'Szukaj terminu (np. SWOT, WACC)...' : 'Search a term (e.g. SWOT, WACC)...'
               }
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
