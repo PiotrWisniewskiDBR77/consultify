@@ -92,6 +92,23 @@ export function registerNotebookTopicsRoutes(router: Router): void {
     })
   );
 
+  // ── Topics pinned to a page ─────────────────────────────────────────────────
+  // #18 — was missing: NotebookTopicChips (rail) and NotebookGraphView (Topics
+  // fan) both call this path already; without it they silently degrade to
+  // empty/org-wide results. Read-only, no owner gate (any org member viewing
+  // the note can see its topic chips, matching the pin/unpin owner-only writes).
+  router.get(
+    '/pages/:id/topics',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+      const { organizationId } = getV8Context(req);
+      const pageId = String(req.params.id || '').trim();
+      if (!pageId) return res.status(400).json({ error: 'page id required' });
+
+      const topics = await notebookTopicService.listTopicsForPage(organizationId, pageId);
+      return res.json({ data: topics });
+    })
+  );
+
   // ── Pin a page to a topic ───────────────────────────────────────────────────
   // Body: { topicId?: string, topicName?: string, score?: number, source?: 'ai'|'manual' }
   // If topicName is given (and no topicId), the topic is created/resolved first.
