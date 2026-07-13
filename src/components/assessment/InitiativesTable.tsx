@@ -319,6 +319,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       {
         id: 'name',
         label: 'Initiative',
+        width: '320px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
           return (

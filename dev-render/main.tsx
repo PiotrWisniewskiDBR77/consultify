@@ -21,8 +21,10 @@ import '../src/index.css';
 import i18n from '../src/i18n';
 
 import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
+import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
 import AssessmentListScreen from './screens/assessment-list';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
+import AssessmentReportsTableScreen from './screens/assessment-reports-table';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
@@ -48,6 +50,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-reports-panel': {
     label: '§27-todo: ReportsManagementPanel (Assessment→Manage→Reports) → StandardTable',
     render: () => <AssessmentReportsPanelScreen />,
+  },
+  'assessment-initiatives-table': {
+    label: '§27-todo batch2: InitiativesTable (Assessment→Board→Initiatives) → StandardTable',
+    render: () => <AssessmentInitiativesTableScreen />,
+  },
+  'assessment-reports-table': {
+    label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
+    render: () => <AssessmentReportsTableScreen />,
   },
   'canvas-new-doc': {
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
