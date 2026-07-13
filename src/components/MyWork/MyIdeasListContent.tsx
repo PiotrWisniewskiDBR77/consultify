@@ -57,6 +57,7 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
+import { isIdeasPreviewOverlayEnabled } from '@/utils/ideasPreviewOverlayFlag';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
@@ -1779,6 +1780,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             onSelect={setPreviewIdeaId}
             previewOpen={Boolean(previewIdeaId)}
             autoOpenPreview={false}
+            desktopPreviewOverlay={isIdeasPreviewOverlayEnabled()}
             onOpenFull={(id) => {
               const idea = sortedIdeas.find((item) => item.id === id);
               if (idea) openIdea(idea.id, idea);

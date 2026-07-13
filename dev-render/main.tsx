@@ -30,6 +30,7 @@ import CalendarSyncSettingsScreen from './screens/calendar-sync-settings';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
+import IdeasPreviewOverlayScreen from './screens/ideas-preview-overlay';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
@@ -124,6 +125,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'ideas-teresa-panel': {
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',
     render: () => <IdeasTeresaPanelScreen />,
+  },
+  'ideas-preview-overlay': {
+    label: '#4b Ideas — podgląd desktop jako OVERLAY (zero reflow gridu; ?overlay/?open)',
+    render: () => <IdeasPreviewOverlayScreen />,
   },
   'idea-templates-catalog': {
     label: '#10-AB Baza ~40 startowych szablonów konsultingowych (7 kategorii)',
