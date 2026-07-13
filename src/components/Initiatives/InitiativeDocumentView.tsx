@@ -2869,8 +2869,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         action.targetStatus
       );
       if (!transition || !transition.canCurrentUserExecute) {
+        // #74: this FE preflight normally can't fire — statusActions already
+        // filters buttons down to transitions the user can execute — so it
+        // only trips on stale gateReadiness (role/approver changed since
+        // fetch). Surface WHY instead of a silent generic toast; reuse the
+        // same copy InitiativesHub already ships for this exact case.
         toast.error(
-          t('initiatives.toast.statusUpdateError', 'Failed to update status')
+          t(
+            'initiatives.toast.statusNotAllowed',
+            'You do not have permission or the gate is not available at this stage.'
+          ),
+          { duration: 5000 }
         );
         return;
       }

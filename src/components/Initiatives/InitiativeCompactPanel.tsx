@@ -403,7 +403,15 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         action.targetStatus
       );
       if (!transition || !transition.canCurrentUserExecute) {
-        toast.error(t('initiatives.toast.statusChangeFailed', 'Status change failed'));
+        // #74: surface WHY, not a silent generic toast — reuse the same
+        // copy InitiativesHub/InitiativeDocumentView ship for this case.
+        toast.error(
+          t(
+            'initiatives.toast.statusNotAllowed',
+            'You do not have permission or the gate is not available at this stage.'
+          ),
+          { duration: 5000 }
+        );
         return;
       }
       if (blockingItems.length > 0) {

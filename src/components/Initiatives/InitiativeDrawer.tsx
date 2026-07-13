@@ -293,8 +293,14 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           })
         );
       } catch (error: any) {
+        // #74: Api.patch is fetch-based and throws a plain Error whose
+        // `.message` already carries the backend's real reason (invalid
+        // transition / permission denied / missing reason — see
+        // InitiativeController.updateInitiativeStatus). `error.response.data`
+        // is an axios shape this client never produces, so it was always
+        // undefined and silently hid the real reason behind a generic toast.
         toast.error(
-          error?.response?.data?.error ||
+          error?.message ||
             t('initiatives.toast.statusChangeError', 'Could not change status')
         );
       } finally {
