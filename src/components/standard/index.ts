@@ -51,3 +51,13 @@ export {
   type StandardKanbanCardProps,
   type StandardKanbanChip,
 } from './StandardKanbanCard';
+export {
+  // Komponent karty (wartość) + model danych `StandardGridCard` (typ) — JEDEN
+  // kanon karty grid/kafelkowego (#76a). Nazwa dzielona: wartość=komponent,
+  // typ=dane.
+  StandardGridCard,
+  type StandardGridCardProps,
+  type StandardGridCardChip,
+  type StandardGridCardMetric,
+  type StandardGridCardUrgency,
+} from './StandardGridCard';
