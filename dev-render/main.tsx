@@ -33,10 +33,30 @@ import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
+import TemplateBuilderDeckScreen from './screens/template-builder-deck';
+import TemplateBuilderDocScreen from './screens/template-builder-doc';
+import TemplateBuilderTableScreen from './screens/template-builder-table';
+import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'template-create-wizard': {
+    label: '#83c START kreatora szablonu (nazwa → typ → dostępność)',
+    render: () => <TemplateCreateWizardScreen />,
+  },
+  'template-builder-doc': {
+    label: '#83c/#83d Builder DOKUMENT (Word) — wspólna powłoka MELS',
+    render: () => <TemplateBuilderDocScreen />,
+  },
+  'template-builder-deck': {
+    label: '#83c/#83d Builder PREZENTACJA (Deck) — wspólna powłoka MELS',
+    render: () => <TemplateBuilderDeckScreen />,
+  },
+  'template-builder-table': {
+    label: '#83c/#83d Builder ARKUSZ (Excel) — wspólna powłoka MELS',
+    render: () => <TemplateBuilderTableScreen />,
+  },
   'results-three-pairs': {
     label: '#81 Results — 3 pary (KPI/ROI/OKR)',
     render: () => <ResultsThreePairsScreen />,
