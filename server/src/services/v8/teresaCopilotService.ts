@@ -19,6 +19,7 @@ import type { OperationContract } from '../../types/operationContract.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { ensureRunForAction, recordAIRunEvent } from '../aiRunLedgerService.js';
+import { extractReminder } from './teresaReminderExtraction.js';
 import {
   buildProposalOperationContract,
   updateOperationContractLinks,
@@ -122,6 +123,18 @@ const CHAT_ACTION_KEYWORDS: Array<{
   handoffIntent: string;
   patterns: RegExp[];
 }> = [
+  {
+    // #21 „zapamiętaj / przypomnij mi" — sekretarz zapisuje ustalenie do
+    // Notatnika (opcjonalny termin ekstrahowany osobno). Wpis PIERWSZY, bo
+    // first-match: „przypomnij mi o spotkaniu" ma trafić do Notatnika jako
+    // przypomnienie, nie do Kalendarza.
+    targetModule: 'notebook',
+    handoffIntent: 'remember',
+    patterns: [
+      /\b(remember\s+that|remind\s*me|don'?t\s+forget|note\s+to\s+self)\b/i,
+      /\b(zapami[eę]taj|zapami[eę]tam|przypomnij|przypomnienie|nie\s+zapomnij|zanotuj\s+sobie)\b/i,
+    ],
+  },
   {
     targetModule: 'calendar',
     handoffIntent: 'schedule',
@@ -645,6 +658,17 @@ function buildPreviewLines(
     lines.push(
       trimPreview(notebook.body_preview || 'Draft note will be prepared after approval', 120)
     );
+    const reminder = (notebook.reminder || null) as { dueAt?: string; term?: string } | null;
+    if (reminder && (reminder.dueAt || reminder.term)) {
+      const when = reminder.dueAt
+        ? new Date(reminder.dueAt).toLocaleDateString('pl-PL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+        : reminder.term;
+      lines.push(trimPreview(`Przypomnienie: ${reminder.term ? `${reminder.term} · ` : ''}${when}`, 120));
+    }
   } else if (target === 'calendar') {
     const calendar = (payload.calendar_intent || {}) as Record<string, unknown>;
     lines.push(trimPreview(calendar.what || proposal.handoff_context.user_intent, 120));
@@ -950,11 +974,17 @@ function buildTargetPayloadForChat(params: {
   }
 
   if (targetModule === 'notebook') {
+    // #21: jeśli użytkownik powiedział „przypomnij mi …", wyliczamy termin i
+    // dokładamy go do notatki (persist w capture_metadata.reminder — bez migracji).
+    const reminder = extractReminder(userMessage);
     return {
       notebook_handoff_context: {
         title,
         body_preview: preview,
         source: 'teresa',
+        ...(reminder.dueAt || reminder.term
+          ? { reminder: { dueAt: reminder.dueAt, term: reminder.term } }
+          : {}),
       },
       provenance_markers: { source: 'teresa', user_edit: false, ai_transform: true },
       evidence_pointers: ['chat:teresa'],
@@ -1891,12 +1921,15 @@ async function handleNotebookHandoff(
     try {
       const create = noteMod.createNote ?? noteMod.default?.createNote ?? noteMod.default?.create;
       const nbCtx = (payload.notebook_handoff_context || {}) as Record<string, unknown>;
+      const reminder = (nbCtx.reminder || null) as { dueAt?: string; term?: string } | null;
       const result = await create?.({
         organizationId,
         title: nbCtx.title || 'Teresa handoff note',
         body: nbCtx.body_preview || '',
         source: 'teresa',
         proposalId,
+        // #21: termin przypomnienia ląduje w capture_metadata.reminder (bez migracji).
+        ...(reminder && (reminder.dueAt || reminder.term) ? { reminder } : {}),
       });
       realNoteId = result?.id || result?.noteId || null;
     } catch {

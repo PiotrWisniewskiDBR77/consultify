@@ -1160,9 +1160,15 @@ export async function createNote(params: {
   userId?: string;
   proposalId?: string;
   projectId?: string;
+  /**
+   * #21 Notatnik-centrum-myśli: opcjonalny termin przypomnienia „przypomnij mi …".
+   * Persist w capture_metadata.reminder (kolumna JSON — bez migracji).
+   */
+  reminder?: { dueAt?: string | null; term?: string | null } | null;
 }): Promise<{ id: string; noteId: string; title: string }> {
   const userId = params.userId || 'system';
   const title = params.title || 'Untitled';
+  const hasReminder = Boolean(params.reminder && (params.reminder.dueAt || params.reminder.term));
   const result = await notebookService.ingest(params.organizationId, userId, {
     title,
     contentText: params.body || '',
@@ -1171,6 +1177,16 @@ export async function createNote(params: {
     metadata: {
       externalSource: params.source || 'api',
       proposalId: params.proposalId,
+      ...(hasReminder
+        ? {
+            reminder: {
+              dueAt: params.reminder!.dueAt ?? null,
+              term: params.reminder!.term ?? null,
+              createdAt: new Date().toISOString(),
+              status: 'pending',
+            },
+          }
+        : {}),
     },
   });
   return { id: result.pageId, noteId: result.pageId, title: result.title };
