@@ -264,7 +264,7 @@ const LevelSelector: React.FC<{
               disabled={readOnly}
               className={`flex-1 p-3 rounded-lg text-center transition-all ${
                 currentLevel === level.level
-                  ? 'bg-c-accent text-white'
+                  ? 'bg-c-text text-c-surface'
                   : currentLevel > level.level
                     ? 'bg-c-accent-soft text-c-accent'
                     : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -357,7 +357,7 @@ const PrioritisationAreaCard: React.FC<{
             disabled={readOnly}
             className={`flex-1 h-8 rounded transition-all ${
               state.score === level
-                ? 'bg-c-accent text-white'
+                ? 'bg-c-text text-c-surface'
                 : state.score > level
                   ? 'bg-c-accent-soft'
                   : 'bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -569,7 +569,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               onClick={() => setViewMode('dimensions')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'dimensions'
-                  ? 'bg-c-accent text-white'
+                  ? 'bg-c-text text-c-surface'
                   : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
@@ -580,7 +580,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               onClick={() => setViewMode('prioritisation')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'prioritisation'
-                  ? 'bg-c-accent text-white'
+                  ? 'bg-c-text text-c-surface'
                   : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
@@ -591,7 +591,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               onClick={() => setViewMode('matrix')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'matrix'
-                  ? 'bg-c-accent text-white'
+                  ? 'bg-c-text text-c-surface'
                   : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >

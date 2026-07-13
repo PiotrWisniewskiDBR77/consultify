@@ -18,9 +18,24 @@ fail=0
 for f in $files; do
   [ -f "$f" ] || continue
   case "$f" in src/components/standard/*) continue;; esac
-  # 1) surowe prymitywy tabeli w komponencie = zakaz (mają być w StandardTable)
-  if grep -Eq '<table[ >/]|<thead[ >]|<tbody[ >]|role="table"|role="grid"|role="columnheader"' "$f"; then
-    echo "✗ list-canon: $f — surowa tabela (<table>/<thead>/role=table). Użyj <StandardTable> (kanon TRIADA, reguła #1)." >&2
+  # 1) surowe prymitywy tabeli w komponencie = zakaz (mają być w StandardTable).
+  # Wyjątek: znacznik §27-exempt na otwierającym <table> (archetyp Excel/Platforma-tabel,
+  # patrz docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md) — <thead>/<tbody> dziedziczą
+  # wyjątek TYLKO gdy WSZYSTKIE <table> w pliku są oznaczone (brak mieszania archetypów
+  # w jednym pliku; jeśli choć jeden <table> jest bez znacznika, plik i tak pada).
+  table_lines=$(grep -nE '<table[ >/]' "$f" || true)
+  unmarked_table=$(printf '%s\n' "$table_lines" | grep -v '§27-exempt' || true)
+  if [ -n "$unmarked_table" ]; then
+    echo "✗ list-canon: $f — surowa tabela (<table>) bez §27-exempt. Użyj <StandardTable> (kanon TRIADA, reguła #1)." >&2
+    fail=1
+  fi
+  all_table_exempt=0
+  if [ -n "$table_lines" ] && [ -z "$unmarked_table" ]; then
+    all_table_exempt=1
+  fi
+  other_hits=$(grep -nE '<thead[ >]|<tbody[ >]|role="table"|role="grid"|role="columnheader"' "$f" | grep -v '§27-exempt' || true)
+  if [ -n "$other_hits" ] && [ "$all_table_exempt" != "1" ]; then
+    echo "✗ list-canon: $f — surowa tabela (<thead>/<tbody>/role=table). Użyj <StandardTable> (kanon TRIADA, reguła #1)." >&2
     fail=1
   fi
   # 2) *LightShell / *Hub renderujący listę (grid+kolumny) BEZ importu ze standard/
