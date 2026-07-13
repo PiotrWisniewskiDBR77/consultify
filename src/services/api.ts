@@ -5200,6 +5200,25 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch backlinks');
   },
 
+  /**
+   * #18 — orphan cleanup: page ids with zero link_graph_edges rows (no topics,
+   * no @mentions out, no backlinks in). Backs the "Osierocone/Orphaned" sidebar
+   * lens in NotebookContent. Org-scoped (not per-notebook — the search baseline
+   * has no notebook_id filter), so callers intersect with their own page list.
+   */
+  getOrphanedNotebookPageIds: async (limit = 200): Promise<string[]> => {
+    const qs = new URLSearchParams({ orphaned: 'true', limit: String(limit) });
+    const res = await fetch(`${API_URL}/v8/notebook/search?${qs.toString()}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    const json = await res.json().catch(() => null);
+    const results = json?.data?.results;
+    return Array.isArray(results)
+      ? results.map((r: any) => String(r?.note_id ?? '')).filter(Boolean)
+      : [];
+  },
+
   createLinkGraphEdge: async (payload: {
     source: { type: string; id: string };
     target: { type: string; id: string };
