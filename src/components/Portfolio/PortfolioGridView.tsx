@@ -1,156 +1,118 @@
 /**
  * Portfolio Grid View
  *
- * Simple card grid layout - no drag-and-drop, just clickable initiative cards.
+ * Widok kafelkowy inicjatyw portfolio — renderuje przez JEDEN kanon karty grid
+ * `StandardGridCard` (#76a, analogicznie do #75b `StandardKanbanCard`). Moduł
+ * DEKLARUJE treść (mapowanie `PortfolioInitiative` → `StandardGridCard`),
+ * powłoka NARZUCA wygląd (status-pill, akcent osi przez `--c-tag-*`, cichy
+ * chip priorytetu, klik → preview — bez zmiany kontraktu `onInitiativeClick`).
  */
 
 import { Calendar, DollarSign, TrendingUp } from 'lucide-react';
 import React from 'react';
 
-import { getAxisColor, getPriorityColors, getStatusColors } from '../../config/portfolioColors';
+import { getAxisColor } from '../../config/portfolioColors';
 import { PortfolioInitiative } from '../../types';
 import { formatRoiDisplay } from '../../utils/safeFormat';
+import { StandardGridCard, type StandardGridCard as StandardGridCardData } from '../standard';
+import type { StatusTone } from '../ui/primitives/chips/StatusChip';
+
+// ============================================
+// MAPOWANIE DOMENY → KANON (status/priorytet/oś)
+// ============================================
+
+const STATUS_TONE: Record<string, StatusTone> = {
+  DRAFT: 'neutral',
+  PENDING_REVIEW: 'warning',
+  REVIEW: 'warning',
+  PROMOTED: 'info',
+  PLANNING: 'info',
+  APPROVED: 'success',
+  SCHEDULED: 'info',
+  EXECUTING: 'info',
+  BLOCKED: 'danger',
+  DONE: 'success',
+  TRACKING: 'info',
+  CANCELLED: 'neutral',
+  ARCHIVED: 'neutral',
+};
+
+const PRIORITY_TONE: Record<string, 'danger' | 'warning' | 'accent' | 'neutral'> = {
+  CRITICAL: 'danger',
+  HIGH: 'warning',
+  MEDIUM: 'accent',
+  LOW: 'neutral',
+};
+
+const formatCurrency = (amount: number) => {
+  if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
+  return `$${amount}`;
+};
+
+/** Oś → zmienna CSS kategoryczna (`--c-tag-1..7`), NIGDY primary/crimson. */
+function axisAccentVar(axis: string): string | undefined {
+  const cls = getAxisColor(axis || 'processes').text; // np. 'text-c-tag-2'
+  const varName = cls.replace('text-', '');
+  return varName.startsWith('c-tag-') ? `var(--${varName})` : undefined;
+}
+
+function toGridCard(initiative: PortfolioInitiative): StandardGridCardData {
+  const chips: StandardGridCardData['chips'] = [
+    {
+      id: 'priority',
+      label: initiative.priority,
+      tone: PRIORITY_TONE[initiative.priority] ?? 'neutral',
+    },
+  ];
+  if (initiative.isCriticalPath) {
+    chips.push({ id: 'critical-path', label: 'Critical Path', tone: 'danger' });
+  }
+
+  const owner = initiative.ownerBusiness;
+  const ownerInitials = owner
+    ? `${owner.firstName?.[0] ?? ''}${owner.lastName?.[0] ?? ''}`
+    : undefined;
+
+  const metrics: StandardGridCardData['metrics'] = [
+    { id: 'budget', icon: DollarSign, label: formatCurrency(initiative.budget || 0) },
+  ];
+  if (initiative.expectedRoi && initiative.expectedRoi > 0) {
+    metrics.push({
+      id: 'roi',
+      icon: TrendingUp,
+      label: `${formatRoiDisplay(initiative.expectedRoi)} ROI`,
+      tone: 'success',
+    });
+  }
+  if (initiative.targetQuarter) {
+    metrics.push({ id: 'quarter', icon: Calendar, label: initiative.targetQuarter });
+  }
+
+  return {
+    id: initiative.id,
+    title: initiative.name,
+    subtitle: initiative.projectName,
+    statusLabel: initiative.status,
+    statusTone: STATUS_TONE[initiative.status] ?? 'neutral',
+    accentColorVar: axisAccentVar(initiative.axis),
+    chips,
+    progress: initiative.progress ?? 0,
+    metrics,
+    ownerInitials,
+    ownerAvatarUrl: owner?.avatarUrl,
+    ownerName: owner ? `${owner.firstName ?? ''} ${owner.lastName ?? ''}`.trim() : undefined,
+  };
+}
+
+// ============================================
+// MAIN GRID VIEW
+// ============================================
 
 interface PortfolioGridViewProps {
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
 }
-
-// ============================================
-// INITIATIVE CARD COMPONENT
-// ============================================
-
-interface InitiativeCardProps {
-  initiative: PortfolioInitiative;
-  onClick: () => void;
-}
-
-const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) => {
-  const priorityColors = getPriorityColors(initiative.priority);
-  const statusColors = getStatusColors(initiative.status);
-  const axisColor = getAxisColor(initiative.axis);
-
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
-    return `$${amount}`;
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]
-                p-5 cursor-pointer group hover:shadow-lg hover:border-c-border-strong
-                transition-all duration-200"
-    >
-      {/* Priority bar */}
-      <div className={`h-1.5 -mx-5 -mt-5 mb-4 rounded-t-xl ${priorityColors.bg}`} />
-
-      {/* Header: Name + Status */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex-1 min-w-0">
-          <h4
-            className="font-semibold text-c-text text-base line-clamp-2
-                        group-hover:text-c-text transition-colors"
-          >
-            {initiative.name}
-          </h4>
-          {initiative.projectName && (
-            <p className="text-sm text-c-text-muted mt-1 truncate">
-              {initiative.projectName}
-            </p>
-          )}
-        </div>
-        <span
-          className={`shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg ${statusColors.bg} ${statusColors.text}`}
-        >
-          {initiative.status}
-        </span>
-      </div>
-
-      {/* Axis indicator + Priority */}
-      <div className="flex items-center gap-3 mb-4">
-        <div
-          className={`w-1.5 h-8 rounded-full ${axisColor.bg}`}
-          title={`Axis: ${initiative.axis || 'N/A'}`}
-        />
-        <span
-          className={`px-2.5 py-1 text-xs font-medium rounded-full ${priorityColors.bg} ${priorityColors.text}`}
-        >
-          {initiative.priority}
-        </span>
-        {initiative.isCriticalPath && (
-          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400">
-            Critical Path
-          </span>
-        )}
-      </div>
-
-      {/* Owner */}
-      {initiative.ownerBusiness && (
-        <div className="flex items-center gap-2 mb-4">
-          <div
-            className="w-7 h-7 rounded-full bg-c-surface-raised flex items-center justify-center
-                          text-xs font-medium text-c-text-secondary overflow-hidden"
-          >
-            {initiative.ownerBusiness.avatarUrl ? (
-              <img
-                src={initiative.ownerBusiness.avatarUrl}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              `${initiative.ownerBusiness.firstName?.[0] || ''}${initiative.ownerBusiness.lastName?.[0] || ''}`
-            )}
-          </div>
-          <span className="text-sm text-c-text-secondary truncate">
-            {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
-          </span>
-        </div>
-      )}
-
-      {/* Timeline */}
-      {initiative.targetQuarter && (
-        <div className="flex items-center gap-2 text-sm text-c-text-muted mb-4">
-          <Calendar size={14} />
-          <span>{initiative.targetQuarter}</span>
-        </div>
-      )}
-
-      {/* Progress bar */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between text-sm text-c-text-muted mb-2">
-          <span>Progress</span>
-          <span className="font-medium">{initiative.progress || 0}%</span>
-        </div>
-        <div className="h-2 bg-c-border-subtle rounded-full overflow-hidden">
-          <div
-            className="h-full bg-c-info rounded-full transition-all"
-            style={{ width: `${initiative.progress || 0}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Footer: Budget & ROI */}
-      <div className="flex items-center justify-between pt-3 border-t border-c-border-subtle">
-        <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
-          <DollarSign size={14} />
-          <span className="font-medium">{formatCurrency(initiative.budget || 0)}</span>
-        </div>
-        {initiative.expectedRoi && initiative.expectedRoi > 0 && (
-          <div className="flex items-center gap-1.5 text-sm text-c-success">
-            <TrendingUp size={14} />
-            <span className="font-medium">{formatRoiDisplay(initiative.expectedRoi)} ROI</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ============================================
-// MAIN GRID VIEW
-// ============================================
 
 export const PortfolioGridView: React.FC<PortfolioGridViewProps> = ({
   initiatives,
@@ -160,9 +122,9 @@ export const PortfolioGridView: React.FC<PortfolioGridViewProps> = ({
     <div className="h-full overflow-auto p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {initiatives.map((initiative) => (
-          <InitiativeCard
+          <StandardGridCard
             key={initiative.id}
-            initiative={initiative}
+            card={toGridCard(initiative)}
             onClick={() => onInitiativeClick(initiative)}
           />
         ))}

@@ -100,6 +100,12 @@ export interface StandardGridCard {
   ownerInitials?: string;
   ownerAvatarUrl?: string;
   ownerName?: string;
+  /**
+   * Slot dodatkowych, drobnych akcji ikonowych w lewej strefie stopki (np.
+   * Export/Otwórz źródło) — dla modułów, które trzymają je OBOK kebaba, nie
+   * WEWNĄTRZ niego. Renderujący moduł odpowiada za `stopPropagation`.
+   */
+  customFooterActions?: React.ReactNode;
   /** Kebab (⋮) — ten sam dropdown co StandardTable. Pomiń gdy brak akcji. */
   rowMenuActions?: RowAction[];
   rowMenuSections?: RowActionSection[];
@@ -217,7 +223,7 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
         </div>
       ) : null}
 
-      {/* Stopka: metryki + footerRight + awatar */}
+      {/* Stopka: metryki/akcje (lewo) — footerRight + awatar (prawo) */}
       <div className="mt-auto flex items-center justify-between gap-2 border-t border-c-border-subtle pt-2 mt-2">
         <div className="flex min-w-0 items-center gap-3">
           {card.metrics?.map((metric) => {
@@ -241,26 +247,36 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
               </span>
             );
           })}
+          {card.customFooterActions ? (
+            <span
+              className="inline-flex shrink-0 items-center opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {card.customFooterActions}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           {card.footerRight ? (
             <span className="truncate text-[11px] text-c-text-muted">{card.footerRight}</span>
           ) : null}
+          {card.ownerInitials || card.ownerAvatarUrl ? (
+            <div
+              className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-c-surface-raised text-[10px] font-bold text-c-text-secondary ring-1 ring-c-border-subtle flex items-center justify-center"
+              title={card.ownerName ?? card.ownerInitials}
+            >
+              {card.ownerAvatarUrl ? (
+                <img src={card.ownerAvatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                card.ownerInitials
+              )}
+            </div>
+          ) : hasMenu || card.metrics?.length || card.footerRight ? null : (
+            <div className="h-5 w-5 shrink-0 rounded-full bg-c-surface-raised flex items-center justify-center">
+              <User size={10} className="text-c-text-muted" aria-hidden="true" />
+            </div>
+          )}
         </div>
-        {card.ownerInitials || card.ownerAvatarUrl ? (
-          <div
-            className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-c-surface-raised text-[10px] font-bold text-c-text-secondary ring-1 ring-c-border-subtle flex items-center justify-center"
-            title={card.ownerName ?? card.ownerInitials}
-          >
-            {card.ownerAvatarUrl ? (
-              <img src={card.ownerAvatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              card.ownerInitials
-            )}
-          </div>
-        ) : hasMenu || card.metrics?.length ? null : (
-          <div className="h-5 w-5 shrink-0 rounded-full bg-c-surface-raised flex items-center justify-center">
-            <User size={10} className="text-c-text-muted" aria-hidden="true" />
-          </div>
-        )}
       </div>
     </div>
   );
