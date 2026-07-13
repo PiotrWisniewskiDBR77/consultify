@@ -1,0 +1,288 @@
+/**
+ * TemplateBuilder — kontener wspólnej powłoki builderów (#83c/#83d).
+ *
+ * Trzyma stan draftu, wylicza spis struktury PER TYP i podmienia centrum
+ * (doc/deck/table) — powłoka i raile pozostają wspólne. Zapis → fasada.
+ *
+ * `TemplateBuilderFlow` niżej spina wizard START + builder pod realną app.
+ */
+
+import React, { useCallback, useMemo, useState } from 'react';
+
+import {
+  DOC_BLOCK_LABELS,
+  SHEET_COLUMN_TYPE_LABELS,
+  SLIDE_ARCHETYPE_LABELS,
+  emptyDraft,
+  newDeckSlide,
+  newDocSection,
+  newSheetColumn,
+  type DeckSlide,
+  type DocSection,
+  type SheetColumn,
+  type TemplateDraft,
+  type TemplateScope,
+  type TemplateType,
+} from './templateBuilderModel';
+import { saveTemplate } from './templateBuilderApi';
+import { DeckSlideEditor, DocSectionEditor, SheetColumnEditor } from './TemplateCenterEditors';
+import { TemplateBuilderShell } from './TemplateBuilderShell';
+import { TemplateCreateWizard } from './TemplateCreateWizard';
+import type { StructureListItem } from './TemplateStructureList';
+import type { ThemeOption, TemplateRightTool } from './TemplateRightPanel';
+
+/** Przykładowe motywy org — w realu z themeRegistry/brandIngestion (front do zrobienia w T3). */
+export const DEMO_THEME_OPTIONS: ThemeOption[] = [
+  { value: 'brand-dbr77', label: 'DBR77 (firmowy)' },
+  { value: 'brand-mono', label: 'Monochrom' },
+  { value: 'brand-navy', label: 'Navy Executive' },
+];
+
+export interface TemplateBuilderProps {
+  initialDraft: TemplateDraft;
+  themeOptions?: ThemeOption[];
+  onSaved?: (id: string) => void;
+  onClose?: () => void;
+  /** wstrzyknięcie zapisu (dev-render / testy). Domyślnie żywa fasada. */
+  saveFn?: (draft: TemplateDraft) => Promise<{ id: string }>;
+  persistRailState?: boolean;
+}
+
+export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
+  initialDraft,
+  themeOptions = DEMO_THEME_OPTIONS,
+  onSaved,
+  onClose,
+  saveFn = saveTemplate,
+  persistRailState = true,
+}) => {
+  const [draft, setDraft] = useState<TemplateDraft>(initialDraft);
+  const initialSelected = firstElementId(initialDraft);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelected);
+  const [activeRightTool, setActiveRightTool] = useState<TemplateRightTool | null>('properties');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const patchDraft = useCallback((patch: Partial<TemplateDraft>) => {
+    setDraft((d) => ({ ...d, ...patch }));
+  }, []);
+
+  // ── Spis struktury per typ ────────────────────────────────────────────────
+  const structureItems: StructureListItem[] = useMemo(() => {
+    if (draft.type === 'doc')
+      return draft.doc.map((s, i) => ({
+        id: s.id,
+        label: s.title || 'Bez tytułu',
+        meta: DOC_BLOCK_LABELS[s.block],
+        index: i + 1,
+      }));
+    if (draft.type === 'deck')
+      return draft.deck.map((s, i) => ({
+        id: s.id,
+        label: s.title || 'Bez tytułu',
+        meta: SLIDE_ARCHETYPE_LABELS[s.archetype],
+        index: i + 1,
+      }));
+    return draft.table.map((c, i) => ({
+      id: c.id,
+      label: c.name || 'Bez nazwy',
+      meta: SHEET_COLUMN_TYPE_LABELS[c.type],
+      index: i + 1,
+    }));
+  }, [draft]);
+
+  const addLabel =
+    draft.type === 'doc' ? 'Dodaj sekcję' : draft.type === 'deck' ? 'Dodaj slajd' : 'Dodaj kolumnę';
+
+  // ── Mutacje listy ─────────────────────────────────────────────────────────
+  const handleAdd = useCallback(() => {
+    setDraft((d) => {
+      if (d.type === 'doc') {
+        const el = newDocSection();
+        setSelectedId(el.id);
+        return { ...d, doc: [...d.doc, el] };
+      }
+      if (d.type === 'deck') {
+        const el = newDeckSlide();
+        setSelectedId(el.id);
+        return { ...d, deck: [...d.deck, el] };
+      }
+      const el = newSheetColumn();
+      setSelectedId(el.id);
+      return { ...d, table: [...d.table, el] };
+    });
+  }, []);
+
+  const handleMove = useCallback((id: string, dir: -1 | 1) => {
+    setDraft((d) => {
+      const key = d.type;
+      const arr = [...(d[key] as { id: string }[])];
+      const idx = arr.findIndex((e) => e.id === id);
+      const next = idx + dir;
+      if (idx < 0 || next < 0 || next >= arr.length) return d;
+      [arr[idx], arr[next]] = [arr[next], arr[idx]];
+      return { ...d, [key]: arr } as TemplateDraft;
+    });
+  }, []);
+
+  const handleDelete = useCallback((id: string) => {
+    setDraft((d) => {
+      const key = d.type;
+      const arr = (d[key] as { id: string }[]).filter((e) => e.id !== id);
+      if (arr.length === 0) return d; // zawsze ≥1 element
+      setSelectedId((cur) => (cur === id ? arr[0].id : cur));
+      return { ...d, [key]: arr } as TemplateDraft;
+    });
+  }, []);
+
+  // ── Centrum per typ ───────────────────────────────────────────────────────
+  const centerEditor = useMemo(() => {
+    if (draft.type === 'doc') {
+      const sel = (draft.doc.find((s) => s.id === selectedId) ?? null) as DocSection | null;
+      return (
+        <DocSectionEditor
+          section={sel}
+          onChange={(patch) =>
+            setDraft((d) => ({
+              ...d,
+              doc: d.doc.map((s) => (s.id === selectedId ? { ...s, ...patch } : s)),
+            }))
+          }
+        />
+      );
+    }
+    if (draft.type === 'deck') {
+      const sel = (draft.deck.find((s) => s.id === selectedId) ?? null) as DeckSlide | null;
+      return (
+        <DeckSlideEditor
+          slide={sel}
+          onChange={(patch) =>
+            setDraft((d) => ({
+              ...d,
+              deck: d.deck.map((s) => (s.id === selectedId ? { ...s, ...patch } : s)),
+            }))
+          }
+        />
+      );
+    }
+    const sel = (draft.table.find((c) => c.id === selectedId) ?? null) as SheetColumn | null;
+    return (
+      <SheetColumnEditor
+        column={sel}
+        onChange={(patch) =>
+          setDraft((d) => ({
+            ...d,
+            table: d.table.map((c) => (c.id === selectedId ? { ...c, ...patch } : c)),
+          }))
+        }
+      />
+    );
+  }, [draft, selectedId]);
+
+  // ── Zapis ─────────────────────────────────────────────────────────────────
+  const canSave = draft.name.trim().length > 0;
+  const handleSave = useCallback(async () => {
+    if (!canSave || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await saveFn(draft);
+      onSaved?.(res.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Zapis nie powiódł się');
+    } finally {
+      setSaving(false);
+    }
+  }, [canSave, saving, saveFn, draft, onSaved]);
+
+  return (
+    <>
+      {error && (
+        <div
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-toast rounded-lg border border-c-danger bg-c-danger/10 px-4 py-2 text-sm text-c-danger"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
+      <TemplateBuilderShell
+        draft={draft}
+        onDraftChange={patchDraft}
+        structureItems={structureItems}
+        addLabel={addLabel}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onAdd={handleAdd}
+        onMove={handleMove}
+        onDelete={handleDelete}
+        centerEditor={centerEditor}
+        themeOptions={themeOptions}
+        activeRightTool={activeRightTool}
+        onActiveRightToolChange={setActiveRightTool}
+        onSave={handleSave}
+        saving={saving}
+        canSave={canSave}
+        onBack={onClose}
+        persistRailState={persistRailState}
+      />
+    </>
+  );
+};
+
+function firstElementId(d: TemplateDraft): string | null {
+  if (d.type === 'doc') return d.doc[0]?.id ?? null;
+  if (d.type === 'deck') return d.deck[0]?.id ?? null;
+  return d.table[0]?.id ?? null;
+}
+
+// ── Flow: wizard START + builder ───────────────────────────────────────────
+
+export interface TemplateBuilderFlowProps {
+  initialType?: TemplateType;
+  themeOptions?: ThemeOption[];
+  onSaved?: (id: string) => void;
+  onClose?: () => void;
+  saveFn?: (draft: TemplateDraft) => Promise<{ id: string }>;
+}
+
+/**
+ * Pełny flow #83c: modal START → builder. Reużywalny wszędzie, gdzie user
+ * tworzy szablon (Materials▸Template Library „Nowy", buildery „zapisz jako").
+ */
+export const TemplateBuilderFlow: React.FC<TemplateBuilderFlowProps> = ({
+  initialType,
+  themeOptions,
+  onSaved,
+  onClose,
+  saveFn,
+}) => {
+  const [draft, setDraft] = useState<TemplateDraft | null>(null);
+
+  if (!draft) {
+    return (
+      <TemplateCreateWizard
+        open
+        initialType={initialType}
+        onCancel={() => onClose?.()}
+        onComplete={({ name, type, scope }: { name: string; type: TemplateType; scope: TemplateScope }) =>
+          setDraft(emptyDraft(type, name, scope))
+        }
+      />
+    );
+  }
+
+  return (
+    <TemplateBuilder
+      initialDraft={draft}
+      themeOptions={themeOptions}
+      saveFn={saveFn}
+      onSaved={onSaved}
+      onClose={() => {
+        setDraft(null);
+        onClose?.();
+      }}
+    />
+  );
+};
+
+export default TemplateBuilder;
