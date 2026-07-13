@@ -71,7 +71,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
                 });
                 onLaunchTrial();
               }}
-              className="px-7 py-4 rounded-xl bg-c-accent hover:opacity-90 text-white font-semibold shadow-lg shadow-c-accent/20 transition-opacity flex items-center justify-center gap-2"
+              className="px-7 py-4 rounded-xl bg-c-text hover:opacity-90 text-c-surface font-semibold shadow-lg shadow-c-text/10 transition-opacity flex items-center justify-center gap-2"
             >
               {t('landing.profitHero.ctaPrimary', 'Launch Free Trial')}
               <ArrowRight size={18} />

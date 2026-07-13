@@ -138,7 +138,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
         <p className="mb-4 flex-1 text-sm text-c-text-secondary line-clamp-3">
           {article.summary}
         </p>
-        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:opacity-90">
+        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-c-text px-4 py-2.5 text-sm font-semibold text-c-surface transition-all group-hover:opacity-90">
           {t('landing.knowledge.readMore', 'Read Full Article')}
           <ArrowRight size={14} />
         </span>

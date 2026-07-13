@@ -326,7 +326,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 <button
                   type="button"
                   onClick={openAnna}
-                  className="block w-full py-2.5 px-4 text-sm bg-c-accent hover:bg-c-accent text-white font-medium rounded-lg transition-colors text-center"
+                  className="block w-full py-2.5 px-4 text-sm bg-c-text hover:bg-c-text text-c-surface font-medium rounded-lg transition-colors text-center"
                 >
                   {t('demo.modal.askAnna', 'Talk to Anna')}
                 </button>

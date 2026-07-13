@@ -331,7 +331,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
           <button
             onClick={handleStart}
-            className="w-full py-3 px-6 bg-c-accent text-white font-medium rounded-xl hover:opacity-90 transition-colors
+            className="w-full py-3 px-6 bg-c-text text-c-surface font-medium rounded-xl hover:opacity-90 transition-colors
               flex items-center justify-center gap-2 text-sm"
           >
             {hasDraftAnswers
@@ -516,7 +516,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => void handleCopyFollowUpBrief()}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-c-accent text-white rounded-xl
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-c-text text-c-surface rounded-xl
                     hover:opacity-90 text-sm font-medium transition-colors"
                 >
                   <Copy className="w-4 h-4" />

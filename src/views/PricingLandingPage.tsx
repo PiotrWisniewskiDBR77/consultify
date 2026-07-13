@@ -256,7 +256,7 @@ export const PricingLandingPage: React.FC = () => {
                   }
                   className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black transition ${
                     (pack as { featured?: boolean }).featured
-                      ? 'bg-c-accent text-white hover:opacity-90'
+                      ? 'bg-c-text text-c-surface hover:opacity-90'
                       : 'border border-c-border text-c-text hover:bg-c-surface-raised'
                   }`}
                 >
