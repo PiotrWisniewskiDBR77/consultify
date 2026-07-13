@@ -28,7 +28,6 @@ import FinanceLightScreen from './screens/finance-light';
 import InsightLightScreen from './screens/insight-light';
 import InterviewLightScreen from './screens/interview-light';
 import MaterialsLightScreen from './screens/materials-light';
-import ResultsLightScreen from './screens/results-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -44,7 +43,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
   },
-  'results-light': { label: 'Results Light Shell (KPI · ROI · OKR)', render: () => <ResultsLightScreen /> },
   'execution-light': {
     label: 'Execution Light Shell (Summary · Alerty · Reporting · Management)',
     render: () => <ExecutionLightScreen />,
