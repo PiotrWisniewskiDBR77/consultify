@@ -26,6 +26,7 @@ import AssessmentListScreen from './screens/assessment-list';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import AssessmentReportsTableScreen from './screens/assessment-reports-table';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
+import CalendarSyncSettingsScreen from './screens/calendar-sync-settings';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
@@ -43,6 +44,10 @@ import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'calendar-sync-settings': {
+    label: '#24b UI „Połącz kalendarz" (Ustawienia → Calendar Sync)',
+    render: () => <CalendarSyncSettingsScreen />,
+  },
   'template-create-wizard': {
     label: '#83c START kreatora szablonu (nazwa → typ → dostępność)',
     render: () => <TemplateCreateWizardScreen />,
