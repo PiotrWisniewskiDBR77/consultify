@@ -295,8 +295,8 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     ) : null;
 
   return (
-    <div ref={containerRef} className="flex h-full overflow-hidden gap-1.5" tabIndex={0}>
-      {/* Table area */}
+    <div ref={containerRef} className="relative flex h-full overflow-hidden gap-1.5" tabIndex={0}>
+      {/* Table area — full width always; preview is an overlay, never a flex sibling (Piotr #4b: zero reflow) */}
       <div
         className="app-table-scrollbar flex-1 min-w-0 overflow-auto pr-2 [scrollbar-gutter:stable]"
         style={{ scrollbarGutter: 'stable' }}
@@ -304,143 +304,152 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
         {children}
       </div>
 
-      {/* Pinned preview pane (comparison mode) */}
-      {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode && !isMobile ? (
-        <motion.div
-          key={`pinned-${pinnedId}`}
-          initial={{ opacity: 0, x: 12 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -8 }}
-          transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
-          style={{ width: 'clamp(280px, 22%, 400px)' }}
-        >
-          <PreviewPaneShell
-            title={pinnedItem.title}
-            onClose={handleUnpin}
-            actions={
-              <button
-                onClick={handleUnpin}
-                className="inline-flex items-center justify-center h-7 w-7 rounded-full text-primary-500 bg-primary-50 dark:bg-primary-500/10"
-                title="Unpin"
+      {/* Desktop preview overlay — wysuwany z prawej NAD tabelą (absolute w kontenerze, tabela nigdy się nie zwęża) */}
+      {!isMobile ? (
+        <div className="absolute inset-y-0 right-0 z-30 flex" data-testid="desktop-preview-overlay">
+          {/* Pinned preview pane (comparison mode) */}
+          {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode ? (
+            <motion.div
+              key={`pinned-${pinnedId}`}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="shrink-0 h-full bg-slate-50 dark:bg-navy-950 p-3 shadow-2xl"
+              style={{ width: 'clamp(280px, 22%, 400px)' }}
+            >
+              <PreviewPaneShell
+                title={pinnedItem.title}
+                onClose={handleUnpin}
+                actions={
+                  <button
+                    onClick={handleUnpin}
+                    className="inline-flex items-center justify-center h-7 w-7 rounded-full text-[var(--c-info)] bg-slate-100 dark:bg-white/[0.10]"
+                    title="Unpin"
+                  >
+                    <PinOff size={14} />
+                  </button>
+                }
               >
-                <PinOff size={14} />
-              </button>
-            }
-          >
-            {renderPreview(pinnedItem)}
-          </PreviewPaneShell>
-        </motion.div>
-      ) : null}
+                {renderPreview(pinnedItem)}
+              </PreviewPaneShell>
+            </motion.div>
+          ) : null}
 
-      {/* Preview pane — 20-33% width, min 340px, clamp() for responsiveness */}
-      <AnimatePresence mode="wait">
-        {isMobile && isBatchMode && renderBatchPreview ? (
-          <motion.div
-            key="mobile-batch"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="fixed inset-0 z-[70]"
-            data-testid="mobile-preview-overlay"
-          >
-            <button
-              type="button"
-              onClick={handleClose}
-              className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
-              aria-label={t('common.close', 'Close')}
-              data-testid="mobile-preview-backdrop"
-            />
-            <div
-              className="relative h-full p-3"
-              style={{
-                paddingTop: Math.max(12, safeAreaInsets.top || 0),
-                paddingBottom: Math.max(12, safeAreaInsets.bottom || 0),
-              }}
-            >
-              <PreviewPaneShell
-                title={t('common.batchOperations', 'Batch Operations')}
-                onClose={handleClose}
-                className="h-full rounded-2xl shadow-2xl"
+          {/* Preview pane — 20-33% width, min 340px, clamp() for responsiveness */}
+          <AnimatePresence mode="wait">
+            {isBatchMode && renderBatchPreview ? (
+              <motion.div
+                key="batch"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="shrink-0 h-full bg-slate-50 dark:bg-navy-950 p-3 shadow-2xl"
+                style={{ width: 'clamp(340px, 28%, 480px)' }}
               >
-                {renderBatchPreview(selectedIds!)}
-              </PreviewPaneShell>
-            </div>
-          </motion.div>
-        ) : isMobile && isPreviewOpen && selectedItem ? (
-          <motion.div
-            key={`mobile-${selectedItem.id}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="fixed inset-0 z-[70]"
-            data-testid="mobile-preview-overlay"
-          >
-            <button
-              type="button"
-              onClick={handleClose}
-              className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
-              aria-label={t('common.close', 'Close')}
-              data-testid="mobile-preview-backdrop"
-            />
-            <div
-              className="relative h-full p-3"
-              style={{
-                paddingTop: Math.max(12, safeAreaInsets.top || 0),
-                paddingBottom: Math.max(12, safeAreaInsets.bottom || 0),
-              }}
-            >
-              <PreviewPaneShell
-                title={selectedItem.title}
-                onClose={handleClose}
-                actions={previewActions}
-                footer={renderPreviewFooter?.(selectedItem)}
-                className="h-full rounded-2xl shadow-2xl"
+                <PreviewPaneShell
+                  title={t('common.batchOperations', 'Batch Operations')}
+                  onClose={handleClose}
+                >
+                  {renderBatchPreview(selectedIds!)}
+                </PreviewPaneShell>
+              </motion.div>
+            ) : isPreviewOpen && selectedItem ? (
+              <motion.div
+                key={selectedItem.id}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="shrink-0 h-full bg-slate-50 dark:bg-navy-950 p-3 shadow-2xl"
+                style={{ width: 'clamp(340px, 28%, 480px)' }}
               >
-                {renderPreview(selectedItem)}
-              </PreviewPaneShell>
-            </div>
-          </motion.div>
-        ) : isBatchMode && renderBatchPreview ? (
-          <motion.div
-            key="batch"
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
-            style={{ width: 'clamp(340px, 28%, 480px)' }}
-          >
-            <PreviewPaneShell
-              title={t('common.batchOperations', 'Batch Operations')}
-              onClose={handleClose}
+                <PreviewPaneShell
+                  title={selectedItem.title}
+                  onClose={handleClose}
+                  actions={previewActions}
+                  footer={renderPreviewFooter?.(selectedItem)}
+                >
+                  {renderPreview(selectedItem)}
+                </PreviewPaneShell>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          {isBatchMode && renderBatchPreview ? (
+            <motion.div
+              key="mobile-batch"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="fixed inset-0 z-[70]"
+              data-testid="mobile-preview-overlay"
             >
-              {renderBatchPreview(selectedIds!)}
-            </PreviewPaneShell>
-          </motion.div>
-        ) : isPreviewOpen && selectedItem ? (
-          <motion.div
-            key={selectedItem.id}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
-            style={{ width: 'clamp(340px, 28%, 480px)' }}
-          >
-            <PreviewPaneShell
-              title={selectedItem.title}
-              onClose={handleClose}
-              actions={previewActions}
-              footer={renderPreviewFooter?.(selectedItem)}
+              <button
+                type="button"
+                onClick={handleClose}
+                className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
+                aria-label={t('common.close', 'Close')}
+                data-testid="mobile-preview-backdrop"
+              />
+              <div
+                className="relative h-full p-3"
+                style={{
+                  paddingTop: Math.max(12, safeAreaInsets.top || 0),
+                  paddingBottom: Math.max(12, safeAreaInsets.bottom || 0),
+                }}
+              >
+                <PreviewPaneShell
+                  title={t('common.batchOperations', 'Batch Operations')}
+                  onClose={handleClose}
+                  className="h-full rounded-2xl shadow-2xl"
+                >
+                  {renderBatchPreview(selectedIds!)}
+                </PreviewPaneShell>
+              </div>
+            </motion.div>
+          ) : isPreviewOpen && selectedItem ? (
+            <motion.div
+              key={`mobile-${selectedItem.id}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="fixed inset-0 z-[70]"
+              data-testid="mobile-preview-overlay"
             >
-              {renderPreview(selectedItem)}
-            </PreviewPaneShell>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
+                aria-label={t('common.close', 'Close')}
+                data-testid="mobile-preview-backdrop"
+              />
+              <div
+                className="relative h-full p-3"
+                style={{
+                  paddingTop: Math.max(12, safeAreaInsets.top || 0),
+                  paddingBottom: Math.max(12, safeAreaInsets.bottom || 0),
+                }}
+              >
+                <PreviewPaneShell
+                  title={selectedItem.title}
+                  onClose={handleClose}
+                  actions={previewActions}
+                  footer={renderPreviewFooter?.(selectedItem)}
+                  className="h-full rounded-2xl shadow-2xl"
+                >
+                  {renderPreview(selectedItem)}
+                </PreviewPaneShell>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      )}
     </div>
   );
 }
