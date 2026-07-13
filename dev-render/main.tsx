@@ -23,7 +23,6 @@ import i18n from '../src/i18n';
 import AssessmentListScreen from './screens/assessment-list';
 import CanvasToolbarScreen from './screens/canvas-toolbar';
 import EvFootballFieldScreen from './screens/ev-football-field';
-import ExecutionLightScreen from './screens/execution-light';
 import FinanceLightScreen from './screens/finance-light';
 import MaterialsLightScreen from './screens/materials-light';
 
@@ -38,10 +37,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
-  },
-  'execution-light': {
-    label: 'Execution Light Shell (Summary · Alerty · Reporting · Management)',
-    render: () => <ExecutionLightScreen />,
   },
   'canvas-toolbar': {
     label: 'Canvas toolbar V2 (lightweight, spec #87-#87d)',
