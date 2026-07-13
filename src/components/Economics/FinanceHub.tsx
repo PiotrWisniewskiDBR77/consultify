@@ -270,7 +270,7 @@ export const FinanceHub: React.FC = () => {
   const analyzeMenuRef = useRef<HTMLDivElement | null>(null);
   const openChatWithContext = useOpenChatWithContext();
   const currentOrganization = useAppStore((s) => s.currentOrganization);
-  const { isEnabled: isV8FinanceEnabled, isLoading: isV8FlagLoading } = useV8FeatureFlag('finance');
+  const { isEnabled: isV8FinanceEnabled } = useV8FeatureFlag('finance');
   const { isFeatureBlocked } = usePolicySnapshot();
   const isFinanceBlocked = isFeatureBlocked('finance');
   const isFinanceRuntimeV8 = isV8FinanceEnabled && !useLegacyFinanceMode;
@@ -3087,19 +3087,20 @@ export const FinanceHub: React.FC = () => {
   }, [statements, models, analyses, valuations, isPl]);
 
   // ---- Render ----
-  if (!isV8FlagLoading && !isV8FinanceEnabled && !useLegacyFinanceMode) {
-    return (
-      <div className="flex h-full items-center justify-center text-c-text-muted p-8 text-center">
-        <div>
-          <Calculator size={40} className="mx-auto mb-4 opacity-40" />
-          <p className="text-lg font-medium">
-            {t('finance.v8Disabled', 'Finance module is not enabled for this organization.')}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+  // NOTE (2026-07-13, root-cause fix): previously this returned a blank
+  // "Finance module is not enabled for this organization" screen whenever the
+  // V8 rollout flag `finance` was off — which, per the same Z82 split-brain
+  // pattern already fixed for Results (see 22a436f338 "Results falls back to
+  // legacy KPIs when v8 returns empty-200"), is a V8 rollout flag, NOT an
+  // entitlement gate. useFinanceData() below fetches the legacy
+  // statements/models/analyses/valuations/budgets independently of this flag,
+  // and `isFinanceRuntimeV8` already guards every V8-only affordance further
+  // down (dashboard, degraded banner, lane panel). So when V8-finance is off
+  // (true for every org on demo right now — atelier/DBR77 explicitly
+  // disabled 2026-07-10, and every ephemeral `demo-org-session-*` "Try demo"
+  // org never gets a v8_feature_flags row at all), Finance must fall through
+  // to the legacy-driven UI below instead of going blank. Real entitlement
+  // gating stays on `isFinanceBlocked` just below, untouched.
   if (isFinanceBlocked) {
     return (
       <div className="flex h-full items-center justify-center text-c-text-muted p-8 text-center">
