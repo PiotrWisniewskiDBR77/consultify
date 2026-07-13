@@ -12,37 +12,36 @@
  */
 
 import {
-  AlertCircle,
   ArrowRight,
   CheckCircle2,
   Clock,
-  Download,
-  Edit,
+  Edit3,
   Eye,
   FileOutput,
   FileText,
   Lightbulb,
   Link2,
   Loader2,
-  MoreVertical,
-  Plus,
   RefreshCw,
   Search,
   Send,
   Settings2,
   Sparkles,
-  Trash2,
   Upload,
-  User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+
 import { Api } from '../../services/api';
 import { ImportReportModal } from '../Reports/ImportReportModal';
-import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { LoadingState } from '../ui/primitives';
 
 // ============================================
@@ -110,53 +109,75 @@ const STATUS_CONFIG: Record<
   {
     label: string;
     color: string;
-    icon: React.ReactElement;
+    bgColor: string;
+    borderColor: string;
+    icon: React.FC<{ size?: number; className?: string }>;
   }
 > = {
   DRAFT: {
     label: 'Draft',
-    color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-    icon: <Edit size={14} />,
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    icon: Edit3,
   },
   CONFIGURING: {
     label: 'Configuring',
-    color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-    icon: <Edit size={14} />,
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    icon: Clock,
   },
   GENERATING: {
     label: 'Generating',
-    color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-    icon: <Loader2 size={14} className="animate-spin" />,
+    color: 'text-amber-700 dark:text-amber-300',
+    bgColor: 'bg-amber-50 dark:bg-amber-500/10',
+    borderColor: 'border-amber-200 dark:border-amber-500/30',
+    icon: Loader2,
   },
   GENERATED: {
     label: 'Generated',
-    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    icon: <FileText size={14} />,
+    // Pułapka #1 (kanon): `primary`=crimson; status informacyjny → indygo, nie crimson.
+    color: 'text-indigo-700 dark:text-indigo-300',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
+    borderColor: 'border-indigo-200 dark:border-indigo-500/30',
+    icon: FileText,
   },
   IN_REVIEW: {
     label: 'In Review',
-    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
-    icon: <Eye size={14} />,
+    // Pułapka #1 (kanon): `primary`=crimson; „w przeglądzie" to nie stan krytyczny → niebieski.
+    color: 'text-blue-700 dark:text-blue-300',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
+    icon: Eye,
   },
   APPROVED: {
     label: 'Approved',
-    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    icon: <CheckCircle2 size={14} />,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+    borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    icon: CheckCircle2,
   },
   SENT_INTERNAL: {
     label: 'Sent Internal',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    icon: <Send size={14} />,
+    color: 'text-blue-700 dark:text-blue-300',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
+    icon: Send,
   },
   SENT_EXTERNAL: {
     label: 'Sent External',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    icon: <ArrowRight size={14} />,
+    color: 'text-blue-700 dark:text-blue-300',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
+    icon: ArrowRight,
   },
   UTILIZED: {
     label: 'Utilized',
-    color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-    icon: <Sparkles size={14} />,
+    color: 'text-indigo-700 dark:text-indigo-300',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
+    borderColor: 'border-indigo-200 dark:border-indigo-500/30',
+    icon: Sparkles,
   },
 };
 
@@ -180,7 +201,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
 
   // Fetch reports from Report Builder API
@@ -406,6 +426,224 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     }
   };
 
+  // Triada standard (kanon §1, migracja bespoke tabeli #27-todo): kolumny
+  // deklaratywne StandardTable — 1:1 z dawnymi komórkami <tr>. Ikony/kolor
+  // Report+Author przeniesione na niebieski (Pułapka #1: primary=crimson).
+  const columns: StandardTableColumn[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: isPolish ? 'Raport' : 'Report',
+        width: '260px',
+        render: (row) => {
+          const report = row as unknown as Report;
+          return (
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg shrink-0">
+                <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <button
+                onClick={() => handleOpenReport(report.id, report.name, report.status)}
+                className="font-medium text-navy-900 dark:text-white hover:underline transition-colors text-left truncate"
+              >
+                {report.name}
+              </button>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'author',
+        label: isPolish ? 'Autor' : 'Author',
+        width: '110px',
+        render: (row) => {
+          const report = row as unknown as Report;
+          const name = report.createdByName || report.createdBy || '?';
+          return (
+            <div className="flex items-center gap-2 min-w-0" title={report.createdBy}>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-medium text-white shrink-0">
+                {name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </div>
+              <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
+                {name.split(' ')[0]}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'context',
+        label: isPolish ? 'Kontekst' : 'Context',
+        width: '160px',
+        render: (row) => {
+          const report = row as unknown as Report;
+          return (
+            <div className="flex flex-col min-w-0">
+              <span className="text-slate-600 dark:text-slate-300 truncate">
+                {report.sourceName || '—'}
+              </span>
+              {report.sourceType && (
+                <span className="text-xs text-slate-600 dark:text-slate-500">
+                  {report.sourceType}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        width: '150px',
+        render: (row) => {
+          const report = row as unknown as Report;
+          const cfg = STATUS_CONFIG[report.status] || STATUS_CONFIG.IN_REVIEW;
+          const StatusIcon = cfg.icon;
+          return (
+            <div
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${cfg.bgColor} ${cfg.color} ${cfg.borderColor}`}
+            >
+              <StatusIcon size={12} />
+              {cfg.label}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'updatedAt',
+        label: isPolish ? 'Zaktualizowany' : 'Updated',
+        width: '110px',
+        sortable: true,
+        render: (row) => {
+          const report = row as unknown as Report;
+          return <span className="text-xs text-slate-600 dark:text-slate-500">{formatDate(report.updatedAt)}</span>;
+        },
+      },
+    ],
+    [isPolish]
+  );
+
+  // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
+  // TYLKO bloki 1-3; StandardTable SAM dokłada bloki 4 (Open preview · Edit ·
+  // Archive) i 5 (Delete — brak API kasowania raportu tutaj, disabled z notą).
+  // Grupowanie primary/statusTransitions 1:1 odtwarza dawne sekcje "divider"
+  // dawnego RowActionsMenu (view → workflow → export → share/initiatives).
+  const buildRowMenu = useCallback(
+    (row: Record<string, unknown>): StandardRowMenu => {
+      const report = row as unknown as Report;
+      const openReport = () => handleOpenReport(report.id, report.name, report.status);
+      const exportable = [
+        'GENERATED',
+        'IN_REVIEW',
+        'APPROVED',
+        'SENT_INTERNAL',
+        'SENT_EXTERNAL',
+        'UTILIZED',
+      ].includes(report.status);
+
+      const primary: NonNullable<StandardRowMenu['primary']> = [
+        {
+          id: 'view',
+          label: isPolish ? 'Podgląd raportu' : 'View Report',
+          icon: Eye,
+          onClick: openReport,
+        },
+      ];
+      if (exportable) {
+        primary.push(
+          {
+            id: 'export-pdf',
+            label: isPolish ? 'Eksportuj PDF' : 'Export PDF',
+            icon: FileText,
+            onClick: () => handleExportPDF(report.id, report.name),
+          },
+          {
+            id: 'export-pptx',
+            label: isPolish ? 'Eksportuj PPTX' : 'Export PPTX',
+            icon: FileOutput,
+            onClick: () => handleExportPPTX(report.id, report.name),
+          },
+          {
+            id: 'export-word',
+            label: isPolish ? 'Eksportuj Word' : 'Export Word',
+            icon: FileText,
+            onClick: () => handleExportWord(report.id, report.name),
+          }
+        );
+      }
+      if (['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(report.status)) {
+        primary.push({
+          id: 'share',
+          label: isPolish ? 'Utwórz link' : 'Share link',
+          icon: Link2,
+          onClick: () => handleCreateShareLink(report.id),
+        });
+      }
+      if (report.canGenerateInitiatives && !report.initiativesGenerated) {
+        primary.push({
+          id: 'initiatives',
+          label: isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives',
+          icon: Lightbulb,
+          onClick: () => onCreateInitiatives(report.id),
+        });
+      }
+
+      const statusTransitions: NonNullable<StandardRowMenu['statusTransitions']> = [];
+      if (report.status === 'IN_REVIEW') {
+        statusTransitions.push(
+          {
+            id: 'approve',
+            label: isPolish ? 'Zatwierdź' : 'Approve',
+            icon: CheckCircle2,
+            onClick: () => handleApproveReport(report.id),
+          },
+          {
+            id: 'send-back',
+            label: isPolish ? 'Odeślij do edycji' : 'Send Back',
+            icon: ArrowRight,
+            onClick: () => handleSendBack(report.id),
+          }
+        );
+      }
+      if (report.status === 'APPROVED') {
+        statusTransitions.push({
+          id: 'send-int',
+          label: isPolish ? 'Wyślij wewn.' : 'Send Internal',
+          icon: Send,
+          onClick: () => handleMarkSentInternal(report.id),
+        });
+      }
+      if (report.status === 'SENT_INTERNAL') {
+        statusTransitions.push({
+          id: 'send-ext',
+          label: isPolish ? 'Wyślij zewn.' : 'Send External',
+          icon: ArrowRight,
+          onClick: () => handleMarkSentExternal(report.id),
+        });
+      }
+
+      return {
+        primary,
+        statusTransitions,
+        universalHandlers: {
+          preview: openReport,
+          edit: openReport,
+          // Brak API archiwizacji raportu z poziomu tego widoku — disabled z
+          // notą (StandardTable dokłada ją sama, blok 4).
+        },
+        // Brak API kasowania raportu z poziomu tego globalnego widoku (jak w
+        // oryginalnym RowActionsMenu) — disabled z notą (blok 5).
+        destructive: {},
+      };
+    },
+    [isPolish, onCreateInitiatives]
+  );
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -457,7 +695,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             {showAllStatuses && onCreateTemplate && (
               <button
                 onClick={onCreateTemplate}
-                className="flex items-center gap-2 px-4 py-2.5 border border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                 title={isPolish ? 'Utwórz nowy szablon raportu' : 'Create new report template'}
               >
                 <FileText size={18} />
@@ -466,7 +704,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             )}
             <button
               onClick={() => navigate('/reports/builder?new=true')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white font-medium rounded-lg transition-colors"
               title={isPolish ? 'Utwórz raport z pomocą AI' : 'Create AI-powered report'}
             >
               <Sparkles size={18} />
@@ -479,7 +717,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <div className="flex items-center gap-6 mt-4">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`text-sm ${filterStatus === 'all' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'all' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
             {isPolish ? 'Wszystkie' : 'All'} ({stats.total})
           </button>
@@ -487,13 +725,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             <>
               <button
                 onClick={() => setFilterStatus('draft')}
-                className={`text-sm ${filterStatus === 'draft' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
+                className={`text-sm ${filterStatus === 'draft' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
               >
                 {isPolish ? 'Szkice' : 'Drafts'} ({stats.draft})
               </button>
               <button
                 onClick={() => setFilterStatus('generated')}
-                className={`text-sm ${filterStatus === 'generated' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
+                className={`text-sm ${filterStatus === 'generated' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
               >
                 {isPolish ? 'Wygenerowane' : 'Generated'} ({stats.generated})
               </button>
@@ -501,19 +739,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           )}
           <button
             onClick={() => setFilterStatus('in_review')}
-            className={`text-sm ${filterStatus === 'in_review' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'in_review' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
             {isPolish ? 'W przeglądzie' : 'In Review'} ({stats.inReview})
           </button>
           <button
             onClick={() => setFilterStatus('approved')}
-            className={`text-sm ${filterStatus === 'approved' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'approved' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
             {isPolish ? 'Zatwierdzone' : 'Approved'} ({stats.approved})
           </button>
           <button
             onClick={() => setFilterStatus('sent')}
-            className={`text-sm ${filterStatus === 'sent' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'sent' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
           >
             {isPolish ? 'Wysłane' : 'Sent'} ({stats.sent})
           </button>
@@ -545,13 +783,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
 
       {/* Table */}
       <div className="flex-1 overflow-auto p-4">
-        {isLoading ? (
-          <LoadingState variant="spinner" className="h-64" />
-        ) : filteredReports.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400 mb-2">
-              {searchQuery
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <StandardTable
+            columns={columns}
+            data={filteredReports as unknown as Array<Record<string, unknown> & { id: string }>}
+            loading={isLoading}
+            empty={{
+              title: searchQuery
                 ? isPolish
                   ? 'Brak raportów pasujących do wyszukiwania'
                   : 'No reports match your search'
@@ -561,228 +799,28 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     : 'Brak raportów w przeglądzie'
                   : showAllStatuses
                     ? 'No reports yet'
-                    : 'No reports in review yet'}
-            </p>
-            <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
-              {isPolish
+                    : 'No reports in review yet',
+              description: isPolish
                 ? showAllStatuses
                   ? 'Utwórz nowy raport lub otwórz istniejący z listy.'
                   : 'Raporty pojawią się tutaj po przesłaniu do przeglądu'
                 : showAllStatuses
                   ? 'Create a new report or open an existing one from the list.'
-                  : 'Reports will appear here after being submitted for review'}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
-              <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
-                <tr>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Raport' : 'Report'}
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Autor' : 'Author'}
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Kontekst' : 'Context'}
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Zaktualizowany' : 'Updated'}
-                  </th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Akcje' : 'Actions'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-                {filteredReports.map((report) => {
-                  const statusConfig = STATUS_CONFIG[report.status] || STATUS_CONFIG.IN_REVIEW;
-
-                  return (
-                    <tr
-                      key={report.id}
-                      className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                            <FileText className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                          </div>
-                          <button
-                            onClick={() => handleOpenReport(report.id, report.name, report.status)}
-                            className="font-medium text-navy-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left"
-                          >
-                            {report.name}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div
-                          className="flex items-center gap-2 cursor-default"
-                          title={report.createdBy}
-                        >
-                          <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-700 dark:text-primary-300">
-                            {(report.createdByName || report.createdBy || '?')
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')
-                              .slice(0, 2)
-                              .toUpperCase()}
-                          </div>
-                          <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
-                            {(report.createdByName || report.createdBy || '').split(' ')[0]}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
-                        <div className="flex flex-col">
-                          <span className="text-slate-600 dark:text-slate-300">
-                            {report.sourceName || '—'}
-                          </span>
-                          {report.sourceType && (
-                            <span className="text-xs text-slate-600 dark:text-slate-500">
-                              {report.sourceType}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
-                        >
-                          {statusConfig.icon}
-                          {statusConfig.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
-                        {formatDate(report.updatedAt)}
-                      </td>
-                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end">
-                          <RowActionsMenu
-                            iconVariant="vertical"
-                            // #40 — pure-wiring bridge onto the sectional kebab contract;
-                            // filter replicates legacy flat-menu semantics (zero visible change).
-                            sections={[
-                              {
-                                id: 'legacy',
-                                actions: (() => {
-                              const actions: RowAction[] = [
-                                {
-                                  id: 'view',
-                                  label: isPolish ? 'Podgląd raportu' : 'View Report',
-                                  icon: Eye,
-                                  variant: 'primary',
-                                  onClick: () =>
-                                    handleOpenReport(report.id, report.name, report.status),
-                                },
-                              ];
-                              if (report.status === 'IN_REVIEW') {
-                                actions.push(
-                                  {
-                                    id: 'approve',
-                                    label: isPolish ? 'Zatwierdź' : 'Approve',
-                                    icon: CheckCircle2,
-                                    divider: true,
-                                    onClick: () => handleApproveReport(report.id),
-                                  },
-                                  {
-                                    id: 'send-back',
-                                    label: isPolish ? 'Odeślij do edycji' : 'Send Back',
-                                    icon: ArrowRight,
-                                    onClick: () => handleSendBack(report.id),
-                                  }
-                                );
-                              }
-                              if (report.status === 'APPROVED') {
-                                actions.push({
-                                  id: 'send-int',
-                                  label: isPolish ? 'Wyślij wewn.' : 'Send Internal',
-                                  icon: Send,
-                                  divider: true,
-                                  onClick: () => handleMarkSentInternal(report.id),
-                                });
-                              }
-                              if (report.status === 'SENT_INTERNAL') {
-                                actions.push({
-                                  id: 'send-ext',
-                                  label: isPolish ? 'Wyślij zewn.' : 'Send External',
-                                  icon: ArrowRight,
-                                  divider: true,
-                                  onClick: () => handleMarkSentExternal(report.id),
-                                });
-                              }
-                              const exportable = [
-                                'GENERATED',
-                                'IN_REVIEW',
-                                'APPROVED',
-                                'SENT_INTERNAL',
-                                'SENT_EXTERNAL',
-                                'UTILIZED',
-                              ];
-                              if (exportable.includes(report.status)) {
-                                actions.push(
-                                  {
-                                    id: 'pdf',
-                                    label: isPolish ? 'Eksportuj PDF' : 'Export PDF',
-                                    icon: FileText,
-                                    divider: true,
-                                    onClick: () => handleExportPDF(report.id, report.name),
-                                  },
-                                  {
-                                    id: 'pptx',
-                                    label: isPolish ? 'Eksportuj PPTX' : 'Export PPTX',
-                                    icon: FileText,
-                                    onClick: () => handleExportPPTX(report.id, report.name),
-                                  },
-                                  {
-                                    id: 'word',
-                                    label: isPolish ? 'Eksportuj Word' : 'Export Word',
-                                    icon: FileText,
-                                    onClick: () => handleExportWord(report.id, report.name),
-                                  }
-                                );
-                              }
-                              if (
-                                ['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(
-                                  report.status
-                                )
-                              ) {
-                                actions.push({
-                                  id: 'share',
-                                  label: isPolish ? 'Utwórz link' : 'Share link',
-                                  icon: Link2,
-                                  onClick: () => handleCreateShareLink(report.id),
-                                });
-                              }
-                              if (report.canGenerateInitiatives && !report.initiativesGenerated) {
-                                actions.push({
-                                  id: 'initiatives',
-                                  label: isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives',
-                                  icon: Lightbulb,
-                                  divider: true,
-                                  onClick: () => onCreateInitiatives(report.id),
-                                });
-                              }
-                              return actions;
-                                })().filter((a) => !a.disabled),
-                              },
-                            ]}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  : 'Reports will appear here after being submitted for review',
+              icon: FileOutput,
+            }}
+            onRowDoubleClick={(row) => {
+              const report = row as unknown as Report;
+              handleOpenReport(report.id, report.name, report.status);
+            }}
+            rowMenu={buildRowMenu}
+            persistKey="assessment.reports-table.list"
+            density="compact"
+            canvasClassName="p-0"
+          />
+        </div>
       </div>
+
 
       {/* Import Report Modal */}
       {showImportModal && (
