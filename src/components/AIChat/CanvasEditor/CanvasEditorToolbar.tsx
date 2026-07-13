@@ -47,7 +47,7 @@ const Btn: React.FC<{
     title={title}
     className={`p-1.5 rounded transition-colors ${
       active
-        ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
+        ? 'bg-slate-200 dark:bg-white/[0.12] text-slate-900 dark:text-white'
         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
     } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
   >
