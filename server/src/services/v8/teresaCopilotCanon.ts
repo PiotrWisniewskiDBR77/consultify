@@ -118,6 +118,8 @@ export interface NotebookHandoffPayload {
     title: string;
     body_preview: string;
     source: 'teresa' | 'user_edit' | 'ai_transform';
+    /** #21: opcjonalny termin przypomnienia z „przypomnij mi …". */
+    reminder?: { dueAt: string | null; term: string | null };
   };
   provenance_markers: {
     source: string;
