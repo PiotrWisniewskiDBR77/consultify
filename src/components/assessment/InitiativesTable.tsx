@@ -10,19 +10,22 @@
 import {
   ArrowRight,
   Building2,
-  Edit,
+  Copy,
   Eye,
   Lightbulb,
   MapPin,
-  MoreVertical,
   RefreshCw,
   Search,
   Sparkles,
-  Trash2,
   TrendingUp,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import {
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { getStatusesForModule, getStatusMeta } from '../../services/initiativeLifecycle';
@@ -154,7 +157,6 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [filterProject, setFilterProject] = useState<string>('');
   const [filterLocation, setFilterLocation] = useState<string>('');
-  const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(!!pendingReportId);
   const [viewingInitiativeId, setViewingInitiativeId] = useState<string | null>(null);
@@ -298,6 +300,210 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
   };
 
+  // Open initiative — 1:1 z dawnym inline handlerem (nazwa + strzałka + kebab).
+  const openInitiative = useCallback(
+    (initiative: Initiative) => {
+      if (onOpenInitiative) {
+        onOpenInitiative(initiative.id, initiative.name, initiative.status);
+      } else {
+        setViewingInitiativeId(initiative.id);
+      }
+    },
+    [onOpenInitiative]
+  );
+
+  // Triada standard (kanon §1, migracja bespoke tabeli #27-todo): kolumny
+  // deklaratywne StandardTable — 1:1 z dawnymi komórkami <tr>.
+  const columns: StandardTableColumn[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: 'Initiative',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          return (
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg shrink-0">
+                <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openInitiative(initiative)}
+                    className="font-medium text-navy-900 dark:text-white hover:underline transition-colors text-left truncate"
+                  >
+                    {initiative.name}
+                  </button>
+                  <button
+                    onClick={() => openInitiative(initiative)}
+                    className="p-1 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors shrink-0"
+                    title="Open initiative details"
+                  >
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {initiative.description}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 mt-1">
+                  <span>{initiative.axis}</span>
+                  {initiative.projectName && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Building2 size={10} />
+                        {initiative.projectName}
+                      </span>
+                    </>
+                  )}
+                  {initiative.locationName && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin size={10} />
+                        {initiative.locationName}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        width: '190px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          return (
+            <StatusTransitionDropdown
+              initiativeId={initiative.id}
+              currentStatus={initiative.status}
+              charterCompleteness={initiative.charterCompleteness}
+              onStatusChange={(newStatus, moduleTransition) =>
+                handleStatusChange(initiative.id, newStatus, moduleTransition)
+              }
+              size="sm"
+            />
+          );
+        },
+      },
+      {
+        id: 'completeness',
+        label: 'Completeness',
+        width: '120px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          return <InitiativeCompletenessChecker initiative={initiative} compact className="w-24" />;
+        },
+      },
+      {
+        id: 'owner',
+        label: 'Owner',
+        width: '110px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          const owner = initiative.ownerBusiness;
+          if (!owner) {
+            return <span className="text-xs text-slate-600 dark:text-slate-500 italic">Unassigned</span>;
+          }
+          return (
+            <div
+              className="flex items-center gap-2 cursor-default"
+              title={`${owner.firstName} ${owner.lastName}`}
+            >
+              <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300 overflow-hidden shrink-0">
+                {owner.avatarUrl ? (
+                  <img src={owner.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  `${owner.firstName[0]}${owner.lastName[0]}`
+                )}
+              </div>
+              <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[80px]">
+                {owner.firstName}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'priority',
+        label: 'Priority',
+        width: '100px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          return (
+            <StatusChip
+              label={initiative.priority}
+              tone={PRIORITY_TONE[initiative.priority] ?? 'neutral'}
+            />
+          );
+        },
+      },
+      {
+        id: 'budget',
+        label: 'Budget',
+        width: '130px',
+        render: (row) => {
+          const initiative = row as unknown as Initiative;
+          return (
+            <div className="text-sm">
+              <span className="font-medium text-navy-900 dark:text-white">
+                {formatCurrency(initiative.estimatedBudget)}
+              </span>
+              {initiative.estimatedROI > 0 && (
+                <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                  <TrendingUp size={12} />
+                  <span>{initiative.estimatedROI}x ROI</span>
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [openInitiative, handleStatusChange]
+  );
+
+  // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
+  // TYLKO bloki 1-3; StandardTable SAM dokłada bloki 4 (Open preview · Edit ·
+  // Archive) i 5 (Delete). 1:1 z dawnym dropdownem "More" wiersza — Duplicate
+  // był w oryginale bez handlera (martwy przycisk), więc zostaje disabled z
+  // notą zamiast pozornie działającego CTA.
+  const buildRowMenu = useCallback(
+    (row: Record<string, unknown>): StandardRowMenu => {
+      const initiative = row as unknown as Initiative;
+      const canDelete =
+        initiative.status === InitiativeStatus.DRAFT ||
+        initiative.status === InitiativeStatus.PLANNING;
+      return {
+        primary: [
+          {
+            id: 'view-details',
+            label: 'View Details',
+            icon: Eye,
+            onClick: () => openInitiative(initiative),
+          },
+          {
+            id: 'duplicate',
+            label: 'Duplicate',
+            icon: Copy,
+          },
+        ],
+        universalHandlers: {
+          preview: () => openInitiative(initiative),
+          edit: () => openInitiative(initiative),
+        },
+        destructive: canDelete
+          ? { onClick: () => handleDelete(initiative.id) }
+          : { note: 'Only draft/planning initiatives can be deleted here' },
+      };
+    },
+    [openInitiative, handleDelete]
+  );
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -412,268 +618,25 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
 
       {/* Table */}
       <div className="flex-1 overflow-auto p-4">
-        {isLoading ? (
-          <LoadingState variant="spinner" className="h-64" />
-        ) : filteredInitiatives.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400 mb-2">
-              {searchQuery ? 'No initiatives match your search' : 'No initiatives yet'}
-            </p>
-            <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
-              Generate initiatives from a finalized report
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
-              <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
-                <tr>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Initiative
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Completeness
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Owner
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Priority
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Budget
-                  </th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-                {filteredInitiatives.map((initiative) => {
-                  return (
-                    <tr
-                      key={initiative.id}
-                      className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg shrink-0">
-                            <Lightbulb className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => {
-                                  if (onOpenInitiative) {
-                                    onOpenInitiative(
-                                      initiative.id,
-                                      initiative.name,
-                                      initiative.status
-                                    );
-                                  } else {
-                                    setViewingInitiativeId(initiative.id);
-                                  }
-                                }}
-                                className="font-medium text-navy-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left truncate"
-                              >
-                                {initiative.name}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (onOpenInitiative) {
-                                    onOpenInitiative(
-                                      initiative.id,
-                                      initiative.name,
-                                      initiative.status
-                                    );
-                                  } else {
-                                    setViewingInitiativeId(initiative.id);
-                                  }
-                                }}
-                                className="p-1 text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded transition-colors shrink-0"
-                                title="Open initiative details"
-                              >
-                                <ArrowRight size={14} />
-                              </button>
-                            </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
-                              {initiative.description}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 mt-1">
-                              <span>{initiative.axis}</span>
-                              {initiative.projectName && (
-                                <>
-                                  <span>•</span>
-                                  <span className="flex items-center gap-1">
-                                    <Building2 size={10} />
-                                    {initiative.projectName}
-                                  </span>
-                                </>
-                              )}
-                              {initiative.locationName && (
-                                <>
-                                  <span>•</span>
-                                  <span className="flex items-center gap-1">
-                                    <MapPin size={10} />
-                                    {initiative.locationName}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <StatusTransitionDropdown
-                          initiativeId={initiative.id}
-                          currentStatus={initiative.status}
-                          charterCompleteness={initiative.charterCompleteness}
-                          onStatusChange={(newStatus, moduleTransition) =>
-                            handleStatusChange(initiative.id, newStatus, moduleTransition)
-                          }
-                          size="sm"
-                        />
-                      </td>
-                      <td className="px-4 py-4">
-                        <InitiativeCompletenessChecker
-                          initiative={initiative}
-                          compact
-                          className="w-24"
-                        />
-                      </td>
-                      <td className="px-4 py-4">
-                        {initiative.ownerBusiness ? (
-                          <div
-                            className="flex items-center gap-2 cursor-default"
-                            title={`${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`}
-                          >
-                            <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-700 dark:text-primary-300 overflow-hidden">
-                              {initiative.ownerBusiness.avatarUrl ? (
-                                <img
-                                  src={initiative.ownerBusiness.avatarUrl}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
-                              )}
-                            </div>
-                            <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[80px]">
-                              {initiative.ownerBusiness.firstName}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-slate-600 dark:text-slate-500 italic">
-                            Unassigned
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <StatusChip
-                          label={initiative.priority}
-                          tone={PRIORITY_TONE[initiative.priority] ?? 'neutral'}
-                        />
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="text-sm">
-                          <span className="font-medium text-navy-900 dark:text-white">
-                            {formatCurrency(initiative.estimatedBudget)}
-                          </span>
-                          {initiative.estimatedROI > 0 && (
-                            <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                              <TrendingUp size={12} />
-                              <span>{initiative.estimatedROI}x ROI</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-1">
-                          {/* Edit Button */}
-                          <button
-                            onClick={() => {
-                              if (onOpenInitiative) {
-                                onOpenInitiative(initiative.id, initiative.name, initiative.status);
-                              } else {
-                                setViewingInitiativeId(initiative.id);
-                              }
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
-                          >
-                            <Edit size={14} />
-                            Edit
-                          </button>
-
-                          {/* More menu */}
-                          <div className="relative">
-                            <button
-                              onClick={() =>
-                                setActiveRowMenu(
-                                  activeRowMenu === initiative.id ? null : initiative.id
-                                )
-                              }
-                              className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-
-                            {activeRowMenu === initiative.id && (
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-10">
-                                <button
-                                  onClick={() => {
-                                    if (onOpenInitiative) {
-                                      onOpenInitiative(
-                                        initiative.id,
-                                        initiative.name,
-                                        initiative.status
-                                      );
-                                    } else {
-                                      setViewingInitiativeId(initiative.id);
-                                    }
-                                    setActiveRowMenu(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                >
-                                  <Eye size={14} />
-                                  View Details
-                                </button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2">
-                                  <RefreshCw size={14} />
-                                  Duplicate
-                                </button>
-                                {(initiative.status === InitiativeStatus.DRAFT ||
-                                  initiative.status === InitiativeStatus.PLANNING) && (
-                                  <>
-                                    <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                                    <button
-                                      onClick={() => {
-                                        handleDelete(initiative.id);
-                                        setActiveRowMenu(null);
-                                      }}
-                                      className="w-full text-left px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/10 flex items-center gap-2"
-                                    >
-                                      <Trash2 size={14} />
-                                      Delete
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <StandardTable
+            columns={columns}
+            data={filteredInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
+            loading={isLoading}
+            empty={{
+              title: searchQuery ? 'No initiatives match your search' : 'No initiatives yet',
+              description: 'Generate initiatives from a finalized report',
+              icon: Lightbulb,
+            }}
+            onRowDoubleClick={(row) => openInitiative(row as unknown as Initiative)}
+            rowMenu={buildRowMenu}
+            persistKey="assessment.initiatives-table.list"
+            density="compact"
+            canvasClassName="p-0"
+          />
+        </div>
       </div>
+
 
       {/* Initiative Details Modal */}
       {viewingInitiativeId && (
