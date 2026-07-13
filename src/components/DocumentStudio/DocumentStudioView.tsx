@@ -13,7 +13,7 @@
 import { Layers, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
 import { LoadingState } from '@/components/ui/primitives';
@@ -50,7 +50,16 @@ type Tab = 'generate' | 'templates';
 export const DocumentStudioView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { artifactId: artifactIdFromUrl } = useParams<{ artifactId?: string }>();
+  const { artifactId: artifactIdFromPath } = useParams<{ artifactId?: string }>();
+  // #84b fix: getArtifactPath('report', id) / legacy /wordy deep-links resolve to
+  // `/document-studio?artifactId=X` (query string), while this view historically
+  // only read the `/document-studio/:artifactId` PATH param. Any "Open" coming
+  // from a list/preview/deep-link (Materiały, chat, My Work…) landed on a blank
+  // "new document" intake instead of the real document — dead wiring, not a 404.
+  // Accept both forms; path param wins if somehow both are present.
+  const [searchParams] = useSearchParams();
+  const artifactIdFromQuery = searchParams.get('artifactId');
+  const artifactIdFromUrl = artifactIdFromPath || artifactIdFromQuery || undefined;
 
   const [activeTab, setActiveTab] = useState<Tab>('generate');
   const [phase, setPhase] = useState<Phase>('intake');
@@ -120,6 +129,11 @@ export const DocumentStudioView: React.FC = () => {
         setSchema(result.schema);
         setGenerationWarnings(result.generationWarnings);
         setPhase('document');
+        // Normalize `?artifactId=` entries to the canonical path form so the
+        // URL matches what the generation flow produces (and back/refresh stay sane).
+        if (!artifactIdFromPath) {
+          navigate(`/document-studio/${encodeURIComponent(artifactIdFromUrl)}`, { replace: true });
+        }
       } catch (err) {
         if (cancelled) return;
         setError(
@@ -134,7 +148,7 @@ export const DocumentStudioView: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [artifactIdFromUrl, artifactId]);
+  }, [artifactIdFromUrl, artifactId, artifactIdFromPath, navigate]);
 
   /**
    * C1 — shared progressive-generation runner. Streams the document via SSE
