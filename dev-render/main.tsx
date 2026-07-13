@@ -26,6 +26,7 @@ import AssessmentListScreen from './screens/assessment-list';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import AssessmentReportsTableScreen from './screens/assessment-reports-table';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
+import CanvasKebabRestructureScreen from './screens/canvas-kebab-restructure';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
@@ -107,6 +108,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'canvas-toolbar-md-history': {
     label: '#87c naprawa: Import Markdown + Historia przeniesiona do kebaba (#87d wciąż otwarte)',
     render: () => <CanvasToolbarMdHistoryScreen />,
+  },
+  'canvas-kebab-restructure': {
+    label: '#87d: restrukturyzacja kebaba „⋯" — 14 sekcji → 8 nazwanych grup (PRZED/PO)',
+    render: () => <CanvasKebabRestructureScreen />,
   },
   'chat-split-teresa-right': {
     label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',
