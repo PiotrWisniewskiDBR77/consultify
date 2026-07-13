@@ -102,12 +102,15 @@ test.describe('M02 Canvas — UI capture', () => {
     });
 
     // 06 — Version history popover
+    // #87c (rewizja 07-13): the standalone main-bar "Historia" icon was
+    // decluttered into the "⋯" Canvas menu (Manual editing section) — the
+    // trigger now lives inside canvas-diagnostics-menu, the popover itself
+    // still renders from the unchanged canvas-history-root anchor.
     await step('06-history', async () => {
-      await page
-        .locator('[data-testid="canvas-history-root"]')
-        .first()
-        .getByRole('button', { name: 'Historia wersji' })
-        .click();
+      await page.getByRole('button', { name: 'Canvas menu' }).click();
+      await expect(page.locator('[data-testid="canvas-diagnostics-menu"]').first()).toBeVisible();
+      await page.locator('[data-testid="canvas-history-menu-item"]').first().click();
+      await expect(page.locator('[data-testid="canvas-history-root"]').first()).toBeVisible();
       await page.waitForTimeout(800);
       await shot(page, '06-version-history');
       await page.keyboard.press('Escape');

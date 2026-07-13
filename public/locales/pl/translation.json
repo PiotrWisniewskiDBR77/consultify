@@ -16287,6 +16287,12 @@
         "downloadWord": "Pobierz Word (.docx)",
         "downloadPowerPoint": "Pobierz PowerPoint (.pptx)"
       },
+      "import": {
+        "uploadMarkdown": "Wgraj Markdown (.md)",
+        "confirmReplace": "Zastąpić bieżącą treść dokumentu plikiem \"{{filename}}\"?",
+        "success": "Zaimportowano {{filename}}.",
+        "invalidFile": "Wybierz plik .md (Markdown)."
+      },
       "mdProps": {
         "title": "Właściwości pliku MD",
         "hide": "Ukryj",

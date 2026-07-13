@@ -26,16 +26,15 @@ import AssessmentListScreen from './screens/assessment-list';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import AssessmentReportsTableScreen from './screens/assessment-reports-table';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
-import CalendarSyncSettingsScreen from './screens/calendar-sync-settings';
+import CanvasKebabRestructureScreen from './screens/canvas-kebab-restructure';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
+import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import EvFootballFieldScreen from './screens/ev-football-field';
-import IdeasPreviewOverlayScreen from './screens/ideas-preview-overlay';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
-import NotebookQuickCaptureScreen from './screens/notebook-quick-capture';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
 import TemplateBuilderDeckScreen from './screens/template-builder-deck';
 import TemplateBuilderDocScreen from './screens/template-builder-doc';
@@ -46,10 +45,6 @@ import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
-  'calendar-sync-settings': {
-    label: '#24b UI „Połącz kalendarz" (Ustawienia → Calendar Sync)',
-    render: () => <CalendarSyncSettingsScreen />,
-  },
   'template-create-wizard': {
     label: '#83c START kreatora szablonu (nazwa → typ → dostępność)',
     render: () => <TemplateCreateWizardScreen />,
@@ -82,10 +77,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: '#18 Notatnik — graf połączeń (naprawiony) + osierocone notatki',
     render: () => <NotatnikOsieroconeGrafScreen />,
   },
-  'notebook-quick-capture': {
-    label: '#12a follow-up — pasek "Wrzuć" (NotebookQuickCapture), crimson-fill neutralizacja',
-    render: () => <NotebookQuickCaptureScreen />,
-  },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,
@@ -114,6 +105,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
     render: () => <CanvasNewDocScreen />,
   },
+  'canvas-toolbar-md-history': {
+    label: '#87c naprawa: Import Markdown + Historia przeniesiona do kebaba (#87d wciąż otwarte)',
+    render: () => <CanvasToolbarMdHistoryScreen />,
+  },
+  'canvas-kebab-restructure': {
+    label: '#87d: restrukturyzacja kebaba „⋯" — 14 sekcji → 8 nazwanych grup (PRZED/PO)',
+    render: () => <CanvasKebabRestructureScreen />,
+  },
   'chat-split-teresa-right': {
     label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',
     render: () => <ChatSplitTeresaRightScreen />,
@@ -125,10 +124,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'ideas-teresa-panel': {
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',
     render: () => <IdeasTeresaPanelScreen />,
-  },
-  'ideas-preview-overlay': {
-    label: '#4b Ideas — podgląd desktop jako OVERLAY (zero reflow gridu; ?overlay/?open)',
-    render: () => <IdeasPreviewOverlayScreen />,
   },
   'idea-templates-catalog': {
     label: '#10-AB Baza ~40 startowych szablonów konsultingowych (7 kategorii)',

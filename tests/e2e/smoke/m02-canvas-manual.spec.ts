@@ -219,8 +219,17 @@ test.describe('M02 §1 Top bar', () => {
     const draft = await createWorkCanvasDraft(page.request, token, { title: 'History M02' });
     await openDraft(page, draft);
 
+    // #87c (rewizja 07-13): "Historia" moved off the always-visible main bar
+    // into the "⋯" Canvas menu (Manual editing section) — open the kebab
+    // first, then trigger from canvas-history-menu-item. The popover itself
+    // still renders at the unchanged canvas-history-root anchor.
+    await page.getByRole('button', { name: 'Canvas menu' }).click();
+    await expect
+      .soft(page.locator('[data-testid="canvas-diagnostics-menu"]').first())
+      .toBeVisible();
+    await page.locator('[data-testid="canvas-history-menu-item"]').first().click();
+
     const historyRoot = page.locator('[data-testid="canvas-history-root"]').first();
-    await historyRoot.getByRole('button', { name: 'Historia wersji' }).click();
     // Popover renders (list or empty-state) without crashing.
     await page.waitForTimeout(1500);
     await expect.soft(historyRoot).toBeVisible();
