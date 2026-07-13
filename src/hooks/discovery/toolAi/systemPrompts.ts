@@ -100,6 +100,24 @@ When generating initiatives, focus on:
 - Reducing substitute threat
 - Improving bargaining power`;
 
+// Framework-neutral strategy persona for the strategic Discovery tools that are
+// NOT Porter (Value Chain, Capability Map, Ambition Decomposer, Focus & Trade-offs,
+// Narrative Engine). Previously these all borrowed PORTER_SYSTEM_PROMPT, so the
+// system role framed a value-chain or capability session as "Five Forces" — a
+// framework mismatch. This carries the SAME four-beat conclusion discipline as the
+// SWOT persona (insight staircase + mandatory trade-off + falsifiability) without
+// binding it to any one framework; the per-tool user prompts supply the framework.
+const STRATEGIC_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
+
+You are a partner at a consulting firm (HBS, MBA, 10 years of practice) guiding the user through a strategy analysis. You sign every conclusion with your own name in front of the client's board. Do not behave like a template filler — interrogate the inputs, decompose vague claims, and force decisions.
+
+CONCLUSION DISCIPLINE (CONCLUSION_LAYER_STANDARD, variant W2):
+- Insight staircase on every material item: fact (from the session inputs, with a reference) -> interpretation (what it means for THIS company) -> implication (what follows for the decision). Never stop at description.
+- Numbers and facts EXCLUSIVELY from the session inputs — never compute, never invent, never quote outside statistics. No evidence -> mark "declared, unconfirmed" or "to be established (where/when)".
+- The finishing block opens with an answer-first verdict (a thesis, not a topic) and carries >= 1 recommendation-level trade-off: what we choose AT THE COST of what, plus the rejected alternative and why.
+- Every recommended move carries: a rationale anchored in named element ids, a mandatory trade-off (chosen / deferred / at what cost), an accountable role and a first step (verb + artifact + role), and an expected effect with a time horizon.
+- Zero filler that fits any company. Every conclusion falsifiable: with opposite data it would read differently. Zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion").`;
+
 const GROWTH_PATHS_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through the Ansoff Matrix (Growth Paths).
@@ -163,11 +181,11 @@ const SYSTEM_PROMPT_MAP: Partial<Record<ToolType, string>> = {
   'growth-paths': GROWTH_PATHS_SYSTEM_PROMPT,
   'portfolio-priority': PORTFOLIO_SYSTEM_PROMPT,
   'risk-uncertainty': RISK_SYSTEM_PROMPT,
-  'value-chain': PORTER_SYSTEM_PROMPT,
-  'ambition-decomposer': PORTER_SYSTEM_PROMPT,
-  'focus-tradeoff': PORTER_SYSTEM_PROMPT,
-  'capability-mapper': PORTER_SYSTEM_PROMPT,
-  'narrative-engine': PORTER_SYSTEM_PROMPT,
+  'value-chain': STRATEGIC_SYSTEM_PROMPT,
+  'ambition-decomposer': STRATEGIC_SYSTEM_PROMPT,
+  'focus-tradeoff': STRATEGIC_SYSTEM_PROMPT,
+  'capability-mapper': STRATEGIC_SYSTEM_PROMPT,
+  'narrative-engine': STRATEGIC_SYSTEM_PROMPT,
   'sop-builder': OPERATIONAL_SYSTEM_PROMPT,
   'a3-problem-solving': OPERATIONAL_SYSTEM_PROMPT,
   'smed-planner': OPERATIONAL_SYSTEM_PROMPT,
