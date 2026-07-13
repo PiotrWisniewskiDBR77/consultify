@@ -69,7 +69,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
 import {
   StandardPreview,
@@ -113,7 +112,6 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
-import { isInterviewLightEnabled } from '@/utils/interviewLightFlag';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
 
@@ -130,14 +128,6 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
-import {
-  type InterviewAssignmentLite,
-  type InterviewAssignmentStatus as LiteAssignmentStatus,
-  InterviewLightShell,
-  type InterviewInsightLite,
-  type InterviewSessionLite,
-  type InterviewSessionStatus as LiteSessionStatus,
-} from './InterviewLightShell';
 import {
   InterviewAssignmentPreviewBody,
   InterviewAssignmentPreviewFooter,
@@ -521,125 +511,6 @@ function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSe
     assignmentStatus: session.assignmentStatus
       ? normalizeInterviewAssignmentStatus(session.assignmentStatus)
       : session.assignmentStatus,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// InterviewLightShell adapters (fala lekkości, flag `ff.interview_light`,
-// default OFF). Pure functions — map the REAL hub data shapes (fetched from
-// V8InterviewApi/Api above) onto the shell's lite prop contracts. Kept
-// side-effect-free/exported-free (module-private) so they can sit next to the
-// existing normalize* helpers.
-//
-// KNOWN GAP (caveat, do not force-fit): `InterviewLightShell`'s per-session
-// `rubric` (5 named criteria: concreteness/evidence/depth/measurability/
-// coherence, 0-4 each) mirrors `INTERVIEW_RUBRIC_CRITERIA` from
-// InterviewController.ts #48a, but that per-criterion breakdown is NOT
-// exposed to the frontend today — only a single assignment-level
-// `aiReview.overallScore` (1-5 float) + `overallVerdict` + a `weakAnswerMap`
-// keyed by QUESTION (not by the 5 canonical criteria). We therefore map the
-// verdict (when a matching assignment exists) but leave `rubric: []` rather
-// than inventing per-criterion scores — the heat bar/breakdown degrade to
-// empty instead of showing fabricated numbers.
-function mapLiteSessionStatus(session: InterviewSession): LiteSessionStatus {
-  const raw = String(session.assignmentStatus || session.status || '').toLowerCase();
-  if (
-    raw === 'assigned' ||
-    raw === 'in_progress' ||
-    raw === 'submitted' ||
-    raw === 'sent_back' ||
-    raw === 'approved' ||
-    raw === 'completed'
-  ) {
-    return raw as LiteSessionStatus;
-  }
-  return 'in_progress';
-}
-
-function mapLiteAssignmentStatus(status: InterviewAssignment['status']): LiteAssignmentStatus {
-  // Lite shell's assignment status union has no 'approved'/'completed' — both
-  // read as "done" from an inbox-triage point of view, closest lite state is
-  // 'submitted' (caveat: collapses two terminal states into one label).
-  if (status === 'approved' || status === 'completed') return 'submitted';
-  return status;
-}
-
-function mapInterviewSessionToLite(
-  session: InterviewSession,
-  isArchivedScope: boolean,
-  assignmentBySessionId: Map<string, InterviewAssignment>
-): InterviewSessionLite {
-  const matchedAssignment = assignmentBySessionId.get(session.id);
-  const updatedRaw =
-    session.lastActivityAt ||
-    session.submittedAt ||
-    session.completedAt ||
-    session.startedAt ||
-    '';
-  return {
-    id: session.id,
-    title: session.name || session.templateName || session.id,
-    respondent: session.respondentName || session.assigneeName || session.assigneeEmail || '—',
-    status: mapLiteSessionStatus(session),
-    // Hub fetches one lifecycle bucket at a time (active|archived|trash), it
-    // does not tag each row with an `archived` boolean — caveat: reflects the
-    // CURRENTLY LOADED scope, not a real per-row flag (see readme note above
-    // wiring block).
-    archived: isArchivedScope,
-    updatedAtLabel: updatedRaw ? new Date(updatedRaw).toLocaleDateString() : '—',
-    questionsAnswered: session.answeredQuestions ?? 0,
-    questionsTotal: session.totalQuestions ?? 0,
-    rubric: [], // see KNOWN GAP note above — no per-criterion data at this layer
-    overallVerdict: matchedAssignment?.aiReview?.overallVerdict ?? null,
-  };
-}
-
-function mapInterviewAssignmentToLite(assignment: InterviewAssignment): InterviewAssignmentLite {
-  const overdue =
-    !!assignment.dueAt &&
-    new Date(assignment.dueAt).getTime() < Date.now() &&
-    assignment.status !== 'submitted' &&
-    assignment.status !== 'approved' &&
-    assignment.status !== 'completed';
-  return {
-    id: assignment.id,
-    title: assignment.template?.name || 'Wywiad',
-    assignee: assignment.assignee?.name || assignment.assignee?.email || assignment.assigneeUserId,
-    dueLabel: assignment.dueAt ? new Date(assignment.dueAt).toLocaleDateString() : '—',
-    overdue,
-    status: mapLiteAssignmentStatus(assignment.status),
-  };
-}
-
-function mapInterviewInsightToLite(
-  insight: InterviewInsight,
-  sessionTitleById: Map<string, string>
-): InterviewInsightLite {
-  // `confidence` is a free-text/categorical server field (not a 0-100
-  // number) — caveat: approximated via a fixed high/medium/low mapping,
-  // default 50 when absent/unrecognized, rather than fabricating precision.
-  const confidenceRaw = String(insight.confidence || '').toLowerCase().trim();
-  const confidenceNumeric = Number(confidenceRaw);
-  const confidencePct = !Number.isNaN(confidenceNumeric) && confidenceRaw !== ''
-    ? Math.max(0, Math.min(100, confidenceNumeric))
-    : confidenceRaw === 'high'
-      ? 85
-      : confidenceRaw === 'medium'
-        ? 55
-        : confidenceRaw === 'low'
-          ? 25
-          : 50;
-  return {
-    id: insight.id,
-    title: insight.title || 'Insight',
-    category: insight.category || insight.type || insight.insightType || 'Ogólne',
-    summary: insight.description || insight.content || insight.sourceQuote || '',
-    confidencePct,
-    // No dedicated "evidence count" field server-side — caveat: approximated
-    // via `sourceSessionCount` (number of sessions the insight was distilled
-    // from), falling back to 1 when a source quote exists, else 0.
-    evidenceCount: insight.sourceSessionCount ?? (insight.sourceQuote ? 1 : 0),
-    sourceSessionTitle: (insight.sessionId && sessionTitleById.get(insight.sessionId)) || '—',
   };
 }
 
@@ -9728,86 +9599,6 @@ Return ONLY the answer text (no markdown fences).`;
       selectedInitiativeIds,
     ]
   );
-
-  // ── Fala lekkości: gęsta powłoka Interview za flagą (default OFF; podgląd
-  // ?ff_interviewLight=1). ON = zastępuje 7-zakładkowy hub jedną lekką
-  // powłoką (Sesje/Przypisane/Insighty). OFF = poniższy return BEZ ZMIAN.
-  // Umieszczone PO wszystkich hookach (zgodne z regułami hooków), ale przed
-  // otwarciem dowolnego dokumentu (activeDocumentId) — light shell nie ma
-  // jeszcze document-view, więc gdy hub ma otwarty dokument, spadamy na
-  // legacy render tak, aby nie gubić otwartych kart.
-  if (isInterviewLightEnabled() && !activeDocumentId) {
-    const combinedAssignments = (() => {
-      const byId = new Map<string, InterviewAssignment>();
-      for (const a of myAssignments) byId.set(a.id, a);
-      for (const a of managedAssignments) byId.set(a.id, a);
-      return Array.from(byId.values());
-    })();
-    const assignmentBySessionId = new Map<string, InterviewAssignment>(
-      combinedAssignments.filter((a) => !!a.sessionId).map((a) => [a.sessionId as string, a])
-    );
-    const sessionTitleById = new Map<string, string>(
-      sessions.map((s) => [s.id, s.name || s.templateName || s.id])
-    );
-    const isArchivedScope = sessionLifecycle === 'archived';
-    const liteSessions = sessions.map((s) =>
-      mapInterviewSessionToLite(s, isArchivedScope, assignmentBySessionId)
-    );
-    const liteAssignments = combinedAssignments.map(mapInterviewAssignmentToLite);
-    const liteInsights = insights.map((i) => mapInterviewInsightToLite(i, sessionTitleById));
-    return (
-      <ErrorBoundary>
-        <InterviewLightShell
-          cycleName={currentOrganization?.name ? `${currentOrganization.name} · Interview` : undefined}
-          sessions={liteSessions}
-          assignments={liteAssignments}
-          insights={liteInsights}
-          onNewSession={handleNewSession}
-          onOpenChat={() =>
-            openChatWithContext({
-              entityType: 'interview_module',
-              entityId: currentProjectId || 'interview',
-              entityName: isPolish ? 'Wywiady' : 'Interview',
-            })
-          }
-          onOpenInsight={(id) => {
-            // #57 follow-up — route the light shell's Insighty card through the
-            // SAME handleOpenDocument()/activeDocumentId mechanism the legacy
-            // hub already uses. Setting activeDocumentId makes the guard above
-            // (`isInterviewLightEnabled() && !activeDocumentId`) fall through to
-            // the legacy render, which mounts the real <InsightViewer> (V6
-            // section cards + the existing working regenerate CTA) for this
-            // insight. onClose() on InsightViewer clears activeDocumentId,
-            // returning here to the light shell list — no new state, no
-            // duplicated viewer, no visual change to either surface.
-            const insight = insights.find((i) => i.id === id);
-            if (insight) handleViewInsight(insight);
-          }}
-          onOpenSession={(id) => {
-            // Same #57-pattern fix, applied to Sesje: the kebab's "Otwórz" and
-            // the row double-click route through handleViewSession, which
-            // opens the real interview_session document (identical mechanism
-            // to onOpenInsight above).
-            const session = sessions.find((s) => s.id === id);
-            if (session) handleViewSession(session);
-          }}
-          onContinueAssignment={(id) => {
-            // AssignedTab's Rozpocznij/Kontynuuj button was fully dead (no
-            // onClick at all). openInterviewAssignmentFull is the legacy
-            // hub's single entry point for this action — starts the
-            // assignment (assignee, not yet started) or opens its session
-            // (already started) exactly like the Przypisane/Zarządzane
-            // tables in the full hub.
-            const assignment = combinedAssignments.find((a) => a.id === id);
-            if (assignment) {
-              const isManagerView = managedAssignments.some((a) => a.id === id);
-              void openInterviewAssignmentFull(assignment, isManagerView);
-            }
-          }}
-        />
-      </ErrorBoundary>
-    );
-  }
 
   return (
     <div className="h-full" data-testid="interview-hub">

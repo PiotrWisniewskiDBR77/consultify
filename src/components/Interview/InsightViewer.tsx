@@ -61,7 +61,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
@@ -133,19 +132,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
-import { isInsightLightEnabled } from '@/utils/insightLightFlag';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
-import {
-  type InsightEvidenceMapEntryLite,
-  type InsightIssueLite,
-  InsightLightShell,
-  type InsightOpportunityLite,
-  type InsightPropertyLite,
-  type InsightSourceLite,
-  type InsightStatusLite,
-  type InsightThemeLite,
-} from './InsightLightShell';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -312,73 +300,6 @@ interface SourceSession {
   completedAt?: string;
   respondentRole?: string;
   department?: string;
-}
-
-// ---------------------------------------------------------------------------
-// InsightLightShell adapters (fala lekkości, flag `ff.insight_light`, default
-// OFF). Pure functions — map the REAL V6 engine output shapes (`Insight`,
-// `SourceSession` fetched above) onto the shell's lite prop contracts.
-//
-// Field-shape notes (no fabrication, only real-data reshaping):
-//   - themes/issues/opportunities: `evidence_refs: string[]` collapses to
-//     `evidenceCount: number` (the lite shell shows a count chip, not the raw
-//     ref list); `sourceLabel` is left undefined — the engine does not tag an
-//     individual theme/issue/opportunity with a single source session label,
-//     only the evidence_refs array (pointer ids, not human labels).
-//   - signals: shape is IDENTICAL between engine and lite type (title/
-//     description/type) — passed through unchanged.
-//   - evidenceMap: snake_case engine fields map 1:1 to the lite camelCase
-//     fields.
-//   - status: the lite shell's status pill conflates the engine's two
-//     lifecycle axes (`status`: generating/completed/failed and
-//     `reviewStatus`: draft/in_review/published). Mapped as: generating/
-//     failed pass through; otherwise fall back to `reviewStatus` (default
-//     'draft') since 'completed' isn't a lite-shell status value.
-function mapInsightThemeToLite(theme: InsightTheme): InsightThemeLite {
-  return {
-    title: theme.title,
-    description: theme.description,
-    strength: theme.strength,
-    confidence: theme.confidence,
-    evidenceCount: theme.evidence_refs?.length ?? 0,
-  };
-}
-
-function mapInsightIssueToLite(issue: InsightIssue): InsightIssueLite {
-  return {
-    title: issue.title,
-    description: issue.description,
-    severity: issue.severity,
-    confidence: issue.confidence,
-    evidenceCount: issue.evidence_refs?.length ?? 0,
-  };
-}
-
-function mapInsightOpportunityToLite(opp: InsightOpportunity): InsightOpportunityLite {
-  return {
-    title: opp.title,
-    description: opp.description,
-    impact: opp.impact,
-    confidence: opp.confidence,
-    evidenceCount: opp.evidence_refs?.length ?? 0,
-  };
-}
-
-function mapInsightEvidenceEntryToLite(
-  entry: InsightEvidenceMapEntry
-): InsightEvidenceMapEntryLite {
-  return {
-    questionText: entry.question_text,
-    answerSnippet: entry.answer_snippet,
-    linkedThemes: entry.linked_themes || [],
-    linkedIssues: entry.linked_issues || [],
-  };
-}
-
-function mapInsightStatusToLite(insight: Insight): InsightStatusLite {
-  if (insight.status === 'generating') return 'generating';
-  if (insight.status === 'failed') return 'failed';
-  return (insight.reviewStatus as InsightStatusLite) || 'draft';
 }
 
 interface SourceSessionSummary {
@@ -8252,72 +8173,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           {isPolish ? 'Wróć' : 'Go back'}
         </button>
       </div>
-    );
-  }
-
-  // ── Fala lekkości: gęsta powłoka Insight za flagą (default OFF; podgląd
-  // ?ff_insightLight=1). ON = zastępuje ciężki N-mode 2-pane layout jedną
-  // lekką powłoką (Tematy/Problemy/Szanse/Sygnały/Mapa dowodów). OFF =
-  // dalszy render BEZ ZMIAN. Placed after the existing isLoading/error early
-  // returns (no new hooks below this point — matches the pre-existing
-  // hook-order boundary already established by those returns) and only when
-  // `insight` actually loaded — otherwise falls through to the legacy render
-  // exactly like the isLoading/error guard above already handles the gap.
-  if (isInsightLightEnabled() && insight) {
-    const liteProperties: InsightPropertyLite[] = [
-      { label: isPolish ? 'Typ analizy' : 'Analysis type', value: isPolish ? typeMeta.labelPl : typeMeta.label },
-      {
-        label: isPolish ? 'Status przeglądu' : 'Review status',
-        value: insight.reviewStatus || (isPolish ? 'szkic' : 'draft'),
-      },
-      { label: isPolish ? 'Tokeny' : 'Tokens', value: String(insight.tokensUsed ?? 0) },
-      {
-        label: isPolish ? 'Czas generowania' : 'Generation time',
-        value:
-          typeof insight.generationTimeMs === 'number'
-            ? `${(insight.generationTimeMs / 1000).toFixed(1)}s`
-            : '—',
-      },
-      {
-        label: isPolish ? 'Utworzono' : 'Created',
-        value: insight.createdAt ? new Date(insight.createdAt).toLocaleDateString() : '—',
-      },
-    ];
-    const liteSources: InsightSourceLite[] = sourceSessions.map((session) => ({
-      label: session.name,
-      detail: session.respondentRole || session.department || session.templateName || '',
-    }));
-    return (
-      <ErrorBoundary>
-        <InsightLightShell
-          insightTitle={insight.title}
-          analysisTypeLabel={isPolish ? typeMeta.labelPl : typeMeta.label}
-          status={mapInsightStatusToLite(insight)}
-          sourceSessionCount={insight.sourceSessionCount ?? sourceSessions.length}
-          themes={(insight.themes || []).map(mapInsightThemeToLite)}
-          issues={(insight.issues || []).map(mapInsightIssueToLite)}
-          opportunities={(insight.opportunities || []).map(mapInsightOpportunityToLite)}
-          signals={insight.signals || []}
-          evidenceMap={(insight.evidenceMap || []).map(mapInsightEvidenceEntryToLite)}
-          properties={liteProperties}
-          sources={liteSources}
-          lastUpdatedLabel={
-            insight.updatedAt
-              ? `${isPolish ? 'Zaktualizowano' : 'Updated'} ${new Date(insight.updatedAt).toLocaleDateString()}`
-              : undefined
-          }
-          onExportReport={() => {
-            void handleExportReportMarkdown();
-          }}
-          onOpenChat={() =>
-            openChatWithContext({
-              entityType: 'insight',
-              entityId: insight.id,
-              entityName: insight.title,
-            })
-          }
-        />
-      </ErrorBoundary>
     );
   }
 
