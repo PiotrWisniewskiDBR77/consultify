@@ -21,6 +21,7 @@ import '../src/index.css';
 import i18n from '../src/i18n';
 
 import AssessmentListScreen from './screens/assessment-list';
+import CanvasNewDocScreen from './screens/canvas-new-doc';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
@@ -35,6 +36,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
+  },
+  'canvas-new-doc': {
+    label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
+    render: () => <CanvasNewDocScreen />,
   },
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
