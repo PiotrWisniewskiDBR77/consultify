@@ -100,10 +100,9 @@ export function isResultsFlagEnabled(flag: ResultsFlag): boolean {
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
-  // threePairs (#81/OC2) is intentionally excluded from the D-D default-on
-  // fallback — it is a whole-screen mount, not a panel add-on, and must clear
-  // Piotr's screenshot odbiór (CLAUDE.md rule #7) before it can default on.
-  if (flag === 'threePairs') return false;
+  // threePairs (#81/OC2): Piotr ZAAKCEPTOWAŁ redesign na zrzucie harness 07-13
+  // (CLAUDE.md rule #7 spełniona) → dołączony do D-D default-on (demo/stage/dev),
+  // prod pozostaje OFF. Opt-out: ?ff_resultsThreePairs=0.
   // D-D (2026-06-29): verified-ready M15 cockpit defaults ON everywhere EXCEPT
   // public production (consultify.ai). Demo/stage/dev → ON (Piotr's odbiór sees
   // the full cockpit without ?ff_ params); prod stays env-gated (D-G = no prod).
