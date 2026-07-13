@@ -34,13 +34,25 @@ function goldInsight(): InsightCardData {
     title: 'Brak triage zapytań wydłuża lead-time w segmencie kluczowym',
     executive_summary: PL_SUMMARY_60_130,
     themes: [
-      { title: 'Brak triage', description: longThemeDesc('Brak triage'), evidence_refs: ['a1'], strength: 'strong' },
-      { title: 'Rosnący lead-time', description: longThemeDesc('Lead-time'), evidence_refs: ['a2'], strength: 'strong' },
-      { title: 'Utrata szans', description: longThemeDesc('Utrata szans'), evidence_refs: ['a3'], strength: 'moderate' },
+      // strong ⇒ ≥2 evidence_refs (§3.2); tytuły = action-title z czasownikiem.
+      { title: 'Brak triage wydłuża obsługę zapytań kluczowych', description: longThemeDesc('Brak triage'), evidence_refs: ['a1', 'a2'], strength: 'strong' },
+      { title: 'Rosnący lead-time obniża konwersję w segmencie kluczowym', description: longThemeDesc('Lead-time'), evidence_refs: ['a2', 'a3'], strength: 'strong' },
+      { title: 'Utrata szans sprzedażowych rośnie bez priorytetyzacji', description: longThemeDesc('Utrata szans'), evidence_refs: ['a3'], strength: 'moderate' },
     ],
     issues: [
-      { title: 'Kolejka bez priorytetów', description: 'Zapytania nie są priorytetyzowane.', severity: 'high', evidence_refs: ['a1'] },
-      { title: 'Brak mierzenia', description: 'Nikt nie mierzy czasu obsługi.', severity: 'medium', evidence_refs: ['a2'] },
+      // severity=high uzasadnione kosztem/skutkiem (§3.3); tytuł ≥4 słowa.
+      {
+        title: 'Brak priorytetów w kolejce wydłuża obsługę',
+        description: 'Zapytania nie są priorytetyzowane, przez co lead-time rośnie i firma traci sprzedaż w segmencie kluczowym.',
+        severity: 'high',
+        evidence_refs: ['a1'],
+      },
+      {
+        title: 'Brak mierzenia czasu obsługi ukrywa wąskie gardło',
+        description: 'Nikt nie mierzy czasu obsługi, więc nie widać, gdzie utyka proces.',
+        severity: 'medium',
+        evidence_refs: ['a2'],
+      },
     ],
     opportunities: [],
     signals: [],
@@ -173,6 +185,171 @@ describe('validateInsightCard (§A2/§B3)', () => {
     expect(() => validateInsightCard(null)).not.toThrow();
     expect(() => validateInsightCard(undefined)).not.toThrow();
     expect(validateInsightCard({}).pass).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// 13-TYPE FORMULA — §5.2 per-type thresholds (PASS uses §3 wzorzec, FAIL uses
+// §3 anti-wzorzec). Each block is a self-documenting test of one doctrine rule.
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('validateInsightCard — §5 per-type formula', () => {
+  it('title_is_thesis: flags a bare topic title (§3.2 anti-wzorzec)', () => {
+    const card = goldInsight();
+    // "Planowanie produkcji" = temat, nie teza (≤3 słowa, brak czasownika).
+    (card.themes as any[])[0].title = 'Planowanie produkcji';
+    expect(validateInsightCard(card).violationCodes).toContain('insight.title_is_thesis');
+  });
+
+  it('title_is_thesis: passes an action-title carrying a verb (§3.2 wzorzec)', () => {
+    const v = validateInsightCard(goldInsight());
+    expect(v.violationCodes).not.toContain('insight.title_is_thesis');
+  });
+
+  it('theme_strength_grounded: strength=strong with <2 refs fails (§3.2)', () => {
+    const card = goldInsight();
+    (card.themes as any[])[0].evidence_refs = ['a1']; // strong ale 1 ref
+    expect(validateInsightCard(card).violationCodes).toContain('insight.theme_strength_grounded');
+  });
+
+  it('summary_sowhat: summary with no number nor value-driver fails (§3.1)', () => {
+    const card = goldInsight();
+    card.executive_summary =
+      'Zespół pracuje nad usprawnieniami i chce działać lepiej niż dotychczas. ' +
+      'Wiele rzeczy wymaga uwagi. Trzeba się temu przyjrzeć spokojnie i dokładnie.';
+    expect(validateInsightCard(card).violationCodes).toContain('insight.summary_sowhat');
+  });
+
+  it('issue_severity_justified: high severity without a cost/consequence fails (§3.3)', () => {
+    const card = goldInsight();
+    (card.issues as any[])[0] = {
+      title: 'Problem z danymi jest poważny dla firmy',
+      description: 'Dane bywają niespójne.',
+      severity: 'high',
+      evidence_refs: ['a1'],
+    };
+    expect(validateInsightCard(card).violationCodes).toContain('insight.issue_severity_justified');
+  });
+
+  it('opp_measurable: opportunity without a number and no opt-out fails (§3.4)', () => {
+    const card = goldInsight();
+    card.opportunities = [
+      { title: 'Automatyzacja procesów da duże korzyści', description: 'Można wiele zautomatyzować.', impact: 'high' },
+    ];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.opp_measurable');
+  });
+
+  it('opp_measurable: measurable opportunity passes (§3.4 wzorzec)', () => {
+    const card = goldInsight();
+    card.opportunities = [
+      {
+        title: 'Triage S/M/L skróci medianę lead-time do ≤20 dni',
+        description: '60% zleceń to powtarzalne „S"; rozdzielenie ścieżek skróci lead-time z 34 do 20 dni w 6 mies.',
+        impact: 'high',
+        evidence_refs: ['a1'],
+      },
+    ];
+    expect(validateInsightCard(card).violationCodes).not.toContain('insight.opp_measurable');
+  });
+
+  it('signal_type_valid: an unknown signal type fails (§3.9)', () => {
+    const card = goldInsight();
+    card.signals = [
+      { title: 'Coś się dzieje w organizacji między ludźmi a systemem', description: 'x'.repeat(200), type: 'random' },
+    ];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.signal_type_valid');
+  });
+
+  it('snippet_verbatim: an analyst paraphrase snippet fails (§3.14)', () => {
+    const card = goldInsight();
+    (card.evidence_map as any[])[0].answer_snippet = 'Respondent opisał proces planowania jako suboptymalny.';
+    expect(validateInsightCard(card).violationCodes).toContain('insight.snippet_verbatim');
+  });
+
+  it('tension_two_sided: a one-sided tension fails (§3.10)', () => {
+    const card = goldInsight();
+    card.tensions = [{ title: 'Dobrzy vs źli pracownicy', description: 'Jedna strona ma rację.' }];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.tension_two_sided');
+  });
+
+  it('tension_two_sided: a two-sided grounded tension passes (§3.10 wzorzec)', () => {
+    const card = goldInsight();
+    card.tensions = [
+      {
+        title: 'Standaryzacja globalna vs elastyczność lokalna',
+        description: 'Oba prawdziwe — program musi rozstrzygnąć, gdzie standaryzować.',
+        pole_a: 'COO: bez wspólnych procesów nie ma skali (H3)',
+        pole_b: 'Kier. Brno: elastyczność to nasza przewaga (H12)',
+      },
+    ];
+    expect(validateInsightCard(card).violationCodes).not.toContain('insight.tension_two_sided');
+  });
+
+  it('pattern_multisource: a single-source "pattern" fails (§3.11)', () => {
+    const card = goldInsight();
+    card.patterns = [{ title: 'Ludzie narzekają na IT', description: 'Jeden rozmówca to powiedział.' }];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.pattern_multisource');
+  });
+
+  it('model_heldby: a mental model without held_by/implication fails (§3.12)', () => {
+    const card = goldInsight();
+    card.mental_models = [{ model: 'Pracownicy boją się zmian', description: 'Stereotyp.' }];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.model_heldby');
+  });
+
+  it('power_implication: an org-chart power entry without stance/implication fails (§3.13)', () => {
+    const card = goldInsight();
+    card.power_dynamics = [{ actor: 'Zarząd', description: 'Zarząd ma władzę decyzyjną.' }];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.power_implication');
+  });
+
+  it('qc_multivoice: quotes from a single role fail (§3.15)', () => {
+    const card = goldInsight();
+    card.quote_comparison = [
+      { title: 'Kto jest właścicielem lead-time?', quotes: [{ role: 'COO', quote: 'To produkcja.' }] },
+    ];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.qc_multivoice');
+  });
+
+  it('readout_sections: a readout missing the six-step chain fails (§3.5)', () => {
+    const card = goldInsight();
+    card.consulting_readout = `${'Ściana tekstu bez nagłówków. '.repeat(60)}`;
+    expect(validateInsightCard(card).violationCodes).toContain('insight.readout_sections');
+  });
+
+  it('finding_quote/quote_attribution: SOFT in tools, HARD on the report path (§D20)', () => {
+    const card = goldInsight();
+    card.key_findings = [{ title: 'Firma stoi przed wyzwaniami', description: 'Ogólnik.' }];
+    card.quote_bank = [{ quote: 'Tak, mamy pewne wyzwania.' }]; // brak atrybucji
+
+    const tools = validateInsightCard(card); // ścieżka narzędzi
+    expect(tools.violationCodes).toContain('insight.finding_quote');
+    expect(tools.violations.find((x) => x.code === 'insight.finding_quote')?.severity).toBe('soft');
+    expect(tools.violations.find((x) => x.code === 'insight.quote_attribution')?.severity).toBe('soft');
+
+    const report = validateInsightCard(card, { reportPath: true }); // ścieżka raportu klienta
+    expect(report.violations.find((x) => x.code === 'insight.finding_quote')?.severity).toBe('hard');
+    expect(report.violations.find((x) => x.code === 'insight.quote_attribution')?.severity).toBe('hard');
+    expect(report.pass).toBe(false);
+  });
+
+  it('finding_quote: a finding WITH an attributed verbatim quote passes (§3.6 wzorzec)', () => {
+    const card = goldInsight();
+    card.key_findings = [
+      {
+        title: 'Największym hamulcem jest warstwa planowania, nie technologia',
+        description: 'SAP jest wdrożony i omijany.',
+        quote: 'Mój Excel wie więcej niż SAP.',
+        role: 'planista, Wrocław (H7)',
+      },
+    ];
+    expect(validateInsightCard(card, { reportPath: true }).violationCodes).not.toContain('insight.finding_quote');
+  });
+
+  it('reco_measurable: a recommendation without effect+horizon fails (§3.7)', () => {
+    const card = goldInsight();
+    card.recommendations = [{ title: 'Usprawnić planowanie', description: 'Trzeba to poprawić.' }];
+    expect(validateInsightCard(card).violationCodes).toContain('insight.reco_measurable');
   });
 });
 

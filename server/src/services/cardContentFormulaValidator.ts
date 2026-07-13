@@ -186,6 +186,175 @@ function descOf(item: unknown): string {
   return str(o.description ?? o.desc ?? o.detail ?? o.text);
 }
 
+function rec(item: unknown): Record<string, unknown> {
+  return item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// §3/§5 per-type predicates (13-type formula). Deterministic, tolerant, cheap.
+// Each mirrors an anti-pattern from _FORMULA_TRESCI_INSIGHT §3 so the code IS
+// the checklist. Kept permissive (SOFT) to avoid false positives on thin cards.
+// ────────────────────────────────────────────────────────────────────────────
+
+/** §5.1 title_is_thesis — connectors/relations that make a title a thesis. */
+const TITLE_CONNECTOR_RE = /(\bvs\b|\bversus\b|\bkontra\b|\bniż\b|\bbo\b|\bponieważ\b|\bprzez\b)|[⟷↔⇔→⟶]/i;
+
+/** Curated finite verbs common in consulting theses (3rd person present). */
+const THESIS_VERBS = new Set([
+  'rośnie', 'rosną', 'spada', 'spadają', 'blokuje', 'blokują', 'wydłuża', 'wydłużają',
+  'skraca', 'skróci', 'skrócą', 'napędza', 'napędzają', 'utknie', 'utyka', 'omija', 'omijają',
+  'rozjeżdża', 'hamuje', 'wygrywa', 'traci', 'tracą', 'kosztuje', 'zabije', 'wykolei',
+  'odblokuje', 'przewiduje', 'decyduje', 'obniża', 'podnosi', 'zwiększa', 'zmniejsza',
+  'ujawnia', 'wyjaśnia', 'utrudnia', 'ogranicza', 'wymusza', 'skupia', 'koreluje', 'żyje',
+  'powtarza', 'napędzana', 'blokada', 'skaluje', 'grzęźnie', 'ugrzęźnie',
+]);
+
+/** A single token reads as a verb (infinitive on -ć, or a curated finite verb). */
+function tokenIsVerb(w: string): boolean {
+  return (w.length >= 4 && /ć$/.test(w)) || THESIS_VERBS.has(w);
+}
+
+/**
+ * §5.1 — a title is a THESIS (not a bare topic) when it carries a verb or a
+ * relation. Heuristic per the doctrine: FAIL only when the title is ≤3 words AND
+ * has no verb and no relation ("Planowanie produkcji", "Problemy z danymi").
+ * Titles with ≥4 words are assumed to carry enough substance to pass.
+ */
+function titleIsThesis(title: string): boolean {
+  const t = String(title || '').trim();
+  if (!t) return true; // absence handled by *.title_present
+  if (TITLE_CONNECTOR_RE.test(t)) return true;
+  const ws = words(t);
+  if (ws.length >= 4) return true;
+  return ws.some(tokenIsVerb);
+}
+
+/** §5.2 summary_sowhat — a number OR a value-driver keyword present. */
+const VALUE_DRIVER_RE =
+  /(lead-?time|otif|copq|marż|koszt|sprzedaż|przychod|konwersj|cykl|jakoś|wydajno|churn|nps|sla|ebitda|roi|oszczędno|udział|marża|przestój|downtime)/i;
+function summaryHasSoWhat(text: string): boolean {
+  return hasQuantification(text) || VALUE_DRIVER_RE.test(text);
+}
+
+/** §5.2 issue_severity_justified — high severity must name a cost/consequence. */
+const COST_MARKER_RE =
+  /(kosztuje|koszt|mln|tys|\bzł\b|€|\$|%|blokuje|blokad|hamuje|ryzyk|utrat|strat|traci|przegran|opóźni|kar[aoy]|niezgodn|downtime|przestój|value-?driver|value driver|sprzedaż|marż|lead-?time|otif|copq|hamulec|wykolei|zabije)/i;
+function severityIsHigh(item: unknown): boolean {
+  const s = str(rec(item).severity ?? rec(item).impact).toLowerCase();
+  return s === 'high' || s === 'wysoki' || s === 'wysoka' || s === 'krytyczny';
+}
+function costJustified(text: string): boolean {
+  return COST_MARKER_RE.test(text);
+}
+
+/** §5.2 opp_measurable — each opportunity carries a number/target or opt-out. */
+function opportunityMeasurable(item: unknown): boolean {
+  const t = `${titleOf(item)} ${descOf(item)}`;
+  return hasQuantification(t) || /pominięto/i.test(t);
+}
+
+/** §5.2 signal_type_valid — allowed types. */
+const SIGNAL_TYPES = new Set(['tension', 'gap', 'contradiction', 'emerging_pattern']);
+
+/** §3.14 snippet_verbatim — a snippet must be a raw voice, not an analyst paraphrase. */
+const PARAPHRASE_MARKER_RE =
+  /^\s*(respondent|rozmówc[ay]|rozmowc[ay]|badan[ya]|uczestnik|klient|osoba)\s+(opisa|wskaza|podkreśl|zwróci|stwierdzi|zauważ|mówi|twierdzi|sugeruj|przyzna|okre[śs]l)/i;
+function snippetLooksParaphrased(snippet: string): boolean {
+  return PARAPHRASE_MARKER_RE.test(String(snippet || '').trim());
+}
+
+/** §3.10 tension_two_sided — both sides grounded (2+ refs, or explicit A/B poles). */
+function tensionTwoSided(item: unknown): boolean {
+  const o = rec(item);
+  const a = str(o.pole_a ?? o.side_a ?? o.a ?? o.left).trim();
+  const b = str(o.pole_b ?? o.side_b ?? o.b ?? o.right).trim();
+  if (a && b) return true;
+  if (refsOf(item).length >= 2) return true;
+  // Two distinct H# references inside the prose count as two-sided evidence.
+  const hrefs = new Set((`${titleOf(item)} ${descOf(item)}`.match(/\bH\d+\b/gi) || []).map((x) => x.toUpperCase()));
+  return hrefs.size >= 2;
+}
+
+/** §3.11 pattern_multisource — reach ≥2 sources/sessions. */
+function patternMultiSource(item: unknown): boolean {
+  const o = rec(item);
+  if (o.crossSessionPattern === true || o.cross_session_pattern === true) return true;
+  if (refsOf(item).length >= 2) return true;
+  const scope = Number(o.source_count ?? o.session_count ?? o.reach ?? o.sources ?? 0);
+  if (scope >= 2) return true;
+  return /\b([2-9]|\d\d)\s*(źród|sesj|zakład|respond|rozm|osob|głos|dział)/i.test(descOf(item));
+}
+
+/** §3.12 model_heldby — a mental model names WHO holds it + an implication. */
+function modelGrounded(item: unknown): boolean {
+  const o = rec(item);
+  const heldBy = asArray(o.held_by ?? o.heldBy ?? o.holders).length > 0 || str(o.held_by ?? o.heldBy).trim().length > 0;
+  const impl =
+    str(o.implication ?? o.implications ?? o.so_what ?? o.soWhat).trim().length > 0 ||
+    /implikacj|program musi|dopóki|zanim|inaczej/i.test(descOf(item));
+  return heldBy && impl;
+}
+
+/** §3.13 power_implication — each actor carries a stance + a program implication. */
+function powerGrounded(item: unknown): boolean {
+  const o = rec(item);
+  const stance = str(o.stance ?? o.postawa ?? o.position ?? o.attitude).trim().length > 0;
+  const impl =
+    str(o.implication ?? o.implikacja ?? o.so_what).trim().length > 0 ||
+    /implikacj|sponsor|blokad|ryzyk|weto|sojusznik|zaadres/i.test(descOf(item));
+  return stance && impl;
+}
+
+/** §3.15 qc_multivoice — ≥2 quotes from DIFFERENT roles on one axis + a so-what. */
+function quoteComparisonMultivoice(item: unknown): boolean {
+  const o = rec(item);
+  const quotes = asArray(o.quotes ?? o.cytaty ?? o.voices ?? o.items ?? o.entries);
+  if (quotes.length < 2) return false;
+  const roles = new Set(
+    quotes
+      .map((q) => str(rec(q).role ?? rec(q).rola ?? rec(q).speaker ?? rec(q).actor).toLowerCase().trim())
+      .filter(Boolean)
+  );
+  const soWhat =
+    str(o.so_what ?? o.soWhat ?? o.implication ?? o.takeaway).trim().length > 0 || descOf(item).trim().length > 0;
+  return roles.size >= 2 && soWhat;
+}
+
+/** A quote carries attribution: a role field, an H#, an evidence_ref, or "— Author". */
+function quoteHasAttribution(q: unknown): boolean {
+  const o = rec(q);
+  if (str(o.role ?? o.rola ?? o.speaker ?? o.attribution ?? o.author ?? o.source).trim()) return true;
+  if (refsOf(q).length > 0) return true;
+  const text = typeof q === 'string' ? q : str(o.quote ?? o.text ?? o.cytat ?? o.excerpt);
+  return /\bH\d+\b/i.test(text) || /—\s*\S+/.test(text) || /\(\s*[^)]*\bH\d+\b[^)]*\)/i.test(text);
+}
+
+/** §3.6 finding_quote — a key finding must carry ≥1 attributed verbatim quote. */
+function findingHasQuote(item: unknown): boolean {
+  const o = rec(item);
+  const single = str(o.quote ?? o.cytat ?? o.evidence_quote ?? o.verbatim).trim();
+  if (single && quoteHasAttribution({ quote: single, role: o.role ?? o.rola, evidence_refs: o.evidence_refs })) {
+    return true;
+  }
+  const quotes = asArray(o.quotes ?? o.cytaty);
+  return quotes.length > 0 && quotes.some(quoteHasAttribution);
+}
+
+/** §3.7 reco_measurable — a recommendation carries a measurable effect + horizon. */
+const HORIZON_RE = /(\bmies\b|miesi[aą]c|tygod|kwarta[łl]|\bQ[1-4]\b|\bdni\b|\bdzień\b|\blat\b|\brok\b|\broku\b|0-1|1-3|3-6|6-12|\bdo\b\s*\d)/i;
+function recommendationMeasurable(item: unknown): boolean {
+  const o = rec(item);
+  const t = `${titleOf(item)} ${descOf(item)} ${str(o.expected_effect ?? o.effect ?? o.efekt)} ${str(o.horizon ?? o.horyzont ?? o.timeframe)}`;
+  return hasQuantification(t) && HORIZON_RE.test(t);
+}
+
+/** §3.5 readout_sections — the six-step chain of headings. */
+const READOUT_SECTION_STEMS = ['obserwacj', 'mechanizm', 'dowod', 'wpływ', 'rekomendacj'];
+function readoutHasSections(text: string): boolean {
+  const low = String(text || '').toLowerCase();
+  return READOUT_SECTION_STEMS.every((s) => low.includes(s));
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Scoring helper — start at 100, subtract per violation, floor at 0.
 // ────────────────────────────────────────────────────────────────────────────
@@ -228,7 +397,37 @@ export interface InsightCardData {
   material_quality?: unknown;
   materialQuality?: unknown;
   content?: unknown;
+  // ── Advanced §3 collections (13-type formula). Validated ONLY when present.
+  // In the live V6 pipeline the InsightViewer DERIVES these from the six core
+  // fields (themes→key-findings, issues+opportunities→recommendations,
+  // signals→tensions/patterns…), so real cards may omit them — the per-type
+  // checks stay tolerant (absent collection → skipped, never a violation).
+  consulting_readout?: unknown;
+  consultingReadout?: unknown;
+  key_findings?: unknown;
+  keyFindings?: unknown;
+  recommendations?: unknown;
+  tensions?: unknown;
+  patterns?: unknown;
+  mental_models?: unknown;
+  mentalModels?: unknown;
+  power_dynamics?: unknown;
+  powerDynamics?: unknown;
+  quote_comparison?: unknown;
+  quoteComparison?: unknown;
+  quote_bank?: unknown;
+  quoteBank?: unknown;
   [k: string]: unknown;
+}
+
+/**
+ * Options for the Insight validator. `reportPath: true` = this card is on the
+ * "do raportu klienta" path (§D20 hybrid gate): the verbatim-quote checks
+ * (`finding_quote`, `quote_attribution`) become HARD (blocking). In tools /
+ * normal generation they stay SOFT — a visible quality flag, never a block.
+ */
+export interface ValidateInsightOptions {
+  reportPath?: boolean;
 }
 
 /**
@@ -248,20 +447,38 @@ const MATERIAL_QUALITY_REQUIRED: string[][] = [
   ['recommended_followups'],
 ];
 
-export function validateInsightCard(card: InsightCardData | null | undefined): FormulaVerdict {
+export function validateInsightCard(
+  card: InsightCardData | null | undefined,
+  options: ValidateInsightOptions = {}
+): FormulaVerdict {
   const violations: FormulaViolation[] = [];
   const c = card || {};
   const P = 'insight';
+  // §D20 hybrid gate: verbatim-quote checks are HARD only on the client-report
+  // path; in tools/normal generation they are SOFT (a quality flag, not a block).
+  const quoteSeverity: ViolationSeverity = options.reportPath ? 'hard' : 'soft';
 
   const title = str(c.title);
   const summary = str(c.executive_summary ?? c.executiveSummary);
   const themes = asArray(c.themes);
   const issues = asArray(c.issues);
   const opportunities = asArray(c.opportunities);
+  const signals = asArray(c.signals);
   const evidenceMap = asArray(c.evidence_map ?? c.evidenceMap);
   const missingData = asArray(c.missing_data ?? c.missingData);
   const materialQuality = c.material_quality ?? c.materialQuality;
   const content = str(c.content);
+
+  // Advanced §3 collections — validated only when the card actually carries them.
+  const consultingReadout = str(c.consulting_readout ?? c.consultingReadout);
+  const keyFindings = asArray(c.key_findings ?? c.keyFindings);
+  const recommendations = asArray(c.recommendations);
+  const tensions = asArray(c.tensions);
+  const patterns = asArray(c.patterns);
+  const mentalModels = asArray(c.mental_models ?? c.mentalModels);
+  const powerDynamics = asArray(c.power_dynamics ?? c.powerDynamics);
+  const quoteComparison = asArray(c.quote_comparison ?? c.quoteComparison);
+  const quoteBank = asArray(c.quote_bank ?? c.quoteBank);
 
   // Aggregate visible prose for language / filler scans.
   const proseFields: { name: string; text: string }[] = [
@@ -275,11 +492,30 @@ export function validateInsightCard(card: InsightCardData | null | undefined): F
   // §A2 Tytuł — required, ≤14 words.
   if (!title.trim()) {
     violations.push({ code: `${P}.title_present`, severity: 'hard', message: 'Brak tytułu wniosku.' });
-  } else if (words(title).length > 14) {
+  } else {
+    if (words(title).length > 14) {
+      violations.push({
+        code: `${P}.title_len`,
+        severity: 'soft',
+        message: `Tytuł ma ${words(title).length} słów (max 14).`,
+      });
+    }
+    // §5.1 title_is_thesis — the card title must be a thesis, not a bare topic.
+    if (!titleIsThesis(title)) {
+      violations.push({
+        code: `${P}.title_is_thesis`,
+        severity: 'soft',
+        message: 'Tytuł jest TEMATEM, nie tezą (brak czasownika/relacji) — §3.2.',
+      });
+    }
+  }
+
+  // §5.2 summary_sowhat — the summary must carry a number or a value-driver.
+  if (summary.trim() && !summaryHasSoWhat(summary)) {
     violations.push({
-      code: `${P}.title_len`,
+      code: `${P}.summary_sowhat`,
       severity: 'soft',
-      message: `Tytuł ma ${words(title).length} słów (max 14).`,
+      message: 'Podsumowanie bez „so-what": brak liczby lub value-drivera (§3.1).',
     });
   }
 
@@ -331,6 +567,23 @@ export function validateInsightCard(card: InsightCardData | null | undefined): F
         message: `Motyw #${i + 1} nie ma evidence_refs (ugruntowanie §A8).`,
       });
     }
+    // §5.2 theme_strength_grounded — strength=strong wymaga ≥2 evidence_refs.
+    const strength = str(rec(t).strength).toLowerCase();
+    if ((strength === 'strong' || strength === 'silny' || strength === 'silna') && refsOf(t).length < 2) {
+      violations.push({
+        code: `${P}.theme_strength_grounded`,
+        severity: 'soft',
+        message: `Motyw #${i + 1}: strength="strong" wymaga ≥2 evidence_refs (§3.2).`,
+      });
+    }
+    // §5.1 title_is_thesis per motyw.
+    if (titleOf(t).trim() && !titleIsThesis(titleOf(t))) {
+      violations.push({
+        code: `${P}.title_is_thesis`,
+        severity: 'soft',
+        message: `Motyw #${i + 1}: tytuł jest tematem, nie tezą (§3.2).`,
+      });
+    }
   });
 
   // §B3 issues_count — ≥2; each with severity + ≥1 evidence_ref.
@@ -355,6 +608,59 @@ export function validateInsightCard(card: InsightCardData | null | undefined): F
         code: `${P}.issue_evidence`,
         severity: 'soft',
         message: `Problem #${i + 1} nie ma evidence_refs.`,
+      });
+    }
+    // §5.2 issue_severity_justified — severity=high musi nieść koszt/skutek w opisie.
+    if (severityIsHigh(it) && !costJustified(`${titleOf(it)} ${descOf(it)}`)) {
+      violations.push({
+        code: `${P}.issue_severity_justified`,
+        severity: 'soft',
+        message: `Problem #${i + 1}: severity="high" bez uzasadnienia kosztu/skutku (§3.3).`,
+      });
+    }
+    // §5.1 title_is_thesis per problem.
+    if (titleOf(it).trim() && !titleIsThesis(titleOf(it))) {
+      violations.push({
+        code: `${P}.title_is_thesis`,
+        severity: 'soft',
+        message: `Problem #${i + 1}: tytuł jest tematem, nie tezą (§3.3).`,
+      });
+    }
+  });
+
+  // §5.2 opportunities — each must carry a measurable target (or explicit opt-out).
+  opportunities.forEach((op, i) => {
+    if (!opportunityMeasurable(op)) {
+      violations.push({
+        code: `${P}.opp_measurable`,
+        severity: 'soft',
+        message: `Szansa #${i + 1} bez mierzalnego celu/liczby (§3.4) — dodaj liczbę lub „— Pominięto:".`,
+      });
+    }
+    if (titleOf(op).trim() && !titleIsThesis(titleOf(op))) {
+      violations.push({
+        code: `${P}.title_is_thesis`,
+        severity: 'soft',
+        message: `Szansa #${i + 1}: tytuł jest kategorią, nie tezą (§3.4).`,
+      });
+    }
+  });
+
+  // §5.2 signals — type ∈ {tension,gap,contradiction,emerging_pattern} ∧ opis ≥25 słów.
+  signals.forEach((s, i) => {
+    const type = str(rec(s).type).toLowerCase().trim();
+    if (type && !SIGNAL_TYPES.has(type)) {
+      violations.push({
+        code: `${P}.signal_type_valid`,
+        severity: 'soft',
+        message: `Sygnał #${i + 1}: nieznany type="${type}" (§3.9).`,
+      });
+    }
+    if (words(descOf(s)).length < 25) {
+      violations.push({
+        code: `${P}.signal_desc_len`,
+        severity: 'soft',
+        message: `Sygnał #${i + 1} ma opis <25 słów (§3.9).`,
       });
     }
   });
@@ -387,6 +693,14 @@ export function validateInsightCard(card: InsightCardData | null | undefined): F
         code: `${P}.evidence_snippet_len`,
         severity: 'soft',
         message: `Fragment dowodu #${i + 1} ma ${snippet.length} znaków (max 120).`,
+      });
+    }
+    // §3.14 snippet_verbatim — a snippet must be the raw voice, not an analyst paraphrase.
+    if (snippet.trim() && snippetLooksParaphrased(snippet)) {
+      violations.push({
+        code: `${P}.snippet_verbatim`,
+        severity: 'soft',
+        message: `Fragment dowodu #${i + 1} wygląda na parafrazę analityka, nie cytat źródła (§3.14).`,
       });
     }
   });
@@ -452,6 +766,125 @@ export function validateInsightCard(card: InsightCardData | null | undefined): F
       break;
     }
   }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Advanced §3 types (§5.2). These fire ONLY when the card carries the
+  // collection — real V6 cards derive them client-side, so absence = no-op.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // §3.5 consulting-readout — six-step chain + 350–700 words.
+  if (consultingReadout.trim()) {
+    if (!readoutHasSections(consultingReadout)) {
+      violations.push({
+        code: `${P}.readout_sections`,
+        severity: 'soft',
+        message: 'Readout bez łańcucha nagłówków Obserwacja→Mechanizm→Dowody→Wpływ→Rekomendacja (§3.5).',
+      });
+    }
+    const rw = words(consultingReadout).length;
+    if (rw < 350 || rw > 700) {
+      violations.push({
+        code: `${P}.readout_len`,
+        severity: 'soft',
+        message: `Readout ma ${rw} słów (oczekiwane 350–700, §3.5).`,
+      });
+    }
+  }
+
+  // §3.6 key-findings — EACH finding needs an attributed verbatim quote.
+  keyFindings.forEach((kf, i) => {
+    if (!findingHasQuote(kf)) {
+      violations.push({
+        code: `${P}.finding_quote`,
+        severity: quoteSeverity,
+        message: `Kluczowy wniosek #${i + 1} nie ma dosłownego cytatu z atrybucją (H#/rola) (§3.6, EACH_ITEM).`,
+      });
+    }
+    if (titleOf(kf).trim() && !titleIsThesis(titleOf(kf))) {
+      violations.push({
+        code: `${P}.title_is_thesis`,
+        severity: 'soft',
+        message: `Kluczowy wniosek #${i + 1}: teza generyczna, nie action-title (§3.6).`,
+      });
+    }
+  });
+
+  // §3.7 recommendations — measurable effect + horizon.
+  recommendations.forEach((r, i) => {
+    if (!recommendationMeasurable(r)) {
+      violations.push({
+        code: `${P}.reco_measurable`,
+        severity: 'soft',
+        message: `Rekomendacja #${i + 1} bez mierzalnego efektu + horyzontu (§3.7).`,
+      });
+    }
+  });
+
+  // §3.10 tensions — both sides grounded.
+  tensions.forEach((t, i) => {
+    if (!tensionTwoSided(t)) {
+      violations.push({
+        code: `${P}.tension_two_sided`,
+        severity: 'soft',
+        message: `Napięcie #${i + 1}: brak dowodu po OBU stronach trade-offu (§3.10).`,
+      });
+    }
+  });
+
+  // §3.11 patterns — reach ≥2 sources.
+  patterns.forEach((p, i) => {
+    if (!patternMultiSource(p)) {
+      violations.push({
+        code: `${P}.pattern_multisource`,
+        severity: 'soft',
+        message: `Wzorzec #${i + 1}: brak zasięgu ≥2 źródła/sesje — to anegdota, nie wzorzec (§3.11).`,
+      });
+    }
+  });
+
+  // §3.12 mental-models — held_by + implication.
+  mentalModels.forEach((m, i) => {
+    if (!modelGrounded(m)) {
+      violations.push({
+        code: `${P}.model_heldby`,
+        severity: 'soft',
+        message: `Model myślowy #${i + 1}: brak held_by lub implikacji dla programu (§3.12).`,
+      });
+    }
+  });
+
+  // §3.13 power-dynamics — stance + program implication.
+  powerDynamics.forEach((pd, i) => {
+    if (!powerGrounded(pd)) {
+      violations.push({
+        code: `${P}.power_implication`,
+        severity: 'soft',
+        message: `Dynamika władzy #${i + 1}: brak postawy lub implikacji dla sponsora (§3.13).`,
+      });
+    }
+  });
+
+  // §3.15 quote-comparison — ≥2 voices from different roles + so-what.
+  quoteComparison.forEach((qc, i) => {
+    if (!quoteComparisonMultivoice(qc)) {
+      violations.push({
+        code: `${P}.qc_multivoice`,
+        severity: 'soft',
+        message: `Porównanie cytatów #${i + 1}: potrzebne ≥2 cytaty z RÓŻNYCH ról + so-what (§3.15).`,
+      });
+    }
+  });
+
+  // §3.Z(19) quote-bank — EACH quote needs H#/role attribution.
+  quoteBank.forEach((q, i) => {
+    if (!quoteHasAttribution(q)) {
+      violations.push({
+        code: `${P}.quote_attribution`,
+        severity: quoteSeverity,
+        message: `Cytat #${i + 1} w banku cytatów bez atrybucji H#/rola (§3.Z).`,
+      });
+    }
+  });
 
   return buildVerdict('insight', violations);
 }
@@ -620,10 +1053,11 @@ export function validateInitiativeCard(
 
 export function validateCard(
   kind: CardKind,
-  card: InsightCardData | InitiativeCardInput | null | undefined
+  card: InsightCardData | InitiativeCardInput | null | undefined,
+  options: ValidateInsightOptions = {}
 ): FormulaVerdict {
   return kind === 'insight'
-    ? validateInsightCard(card as InsightCardData)
+    ? validateInsightCard(card as InsightCardData, options)
     : validateInitiativeCard(card as InitiativeCardInput);
 }
 

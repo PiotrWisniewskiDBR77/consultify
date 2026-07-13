@@ -3,6 +3,87 @@ import crypto from 'node:crypto';
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { validateInsightCard } from './cardContentFormulaValidator.js';
+
+/** Prefix marking a readiness reason that comes from the §D20 verbatim-citation gate. */
+const CITATION_GATE_PREFIX = 'CITATION_GATE:';
+
+/** An analyst paraphrase, not a source voice — mirrors validator §3.14. */
+const CITATION_PARAPHRASE_RE =
+  /^\s*(respondent|rozmówc[ay]|rozmowc[ay]|badan[ya]|uczestnik|klient|osoba)\s+(opisa|wskaza|podkreśl|zwróci|stwierdzi|zauważ|mówi|twierdzi|sugeruj|przyzna|okre[śs]l)/i;
+
+/**
+ * §D20 hybrid citation gate — HARD only on the client-report path. A finding that
+ * reaches the client report must be backed by a VERBATIM quote: at least one of its
+ * evidence_refs must resolve to an evidence_map entry with a non-empty, non-
+ * paraphrased answer_snippet. Returns the list of blocking reasons (empty = clean).
+ *
+ * This is deliberately answer_id-linked (reliable) rather than title-matched, and it
+ * ALSO folds in any hard `finding_quote` / `quote_attribution` violations the shared
+ * validator raises when the card carries explicit key_findings / quote_bank fields.
+ */
+export function evaluateReportCitationGate(insight: ReportPackSourceInsight): string[] {
+  const reasons: string[] = [];
+  const themes = Array.isArray(insight.themes) ? insight.themes : [];
+  const issues = Array.isArray(insight.issues) ? insight.issues : [];
+  const evidenceMap = Array.isArray(insight.evidenceMap) ? insight.evidenceMap : [];
+
+  // Verbatim snippet index: answer_id → true when its snippet is a real quote.
+  const verbatimByAnswerId = new Map<string, boolean>();
+  for (const entry of evidenceMap) {
+    const id = String((entry as Record<string, unknown>).answer_id || '').trim();
+    if (!id) continue;
+    const snippet = String((entry as Record<string, unknown>).answer_snippet || '').trim();
+    const verbatim = snippet.length > 0 && !CITATION_PARAPHRASE_RE.test(snippet);
+    verbatimByAnswerId.set(id, verbatim || verbatimByAnswerId.get(id) === true);
+  }
+
+  const refsOf = (item: unknown): string[] => {
+    const o = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+    const raw = o.evidence_refs ?? o.evidenceRefs ?? o.evidence;
+    return Array.isArray(raw) ? raw.map((r) => String(r || '').trim()).filter(Boolean) : [];
+  };
+  const titleOf = (item: unknown): string => {
+    const o = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+    return String(o.title || o.name || '').trim();
+  };
+
+  const findings = [...themes, ...issues];
+  const uncited = findings.filter((f) => !refsOf(f).some((ref) => verbatimByAnswerId.get(ref) === true));
+  for (const f of uncited) {
+    reasons.push(
+      `${CITATION_GATE_PREFIX} Wniosek „${titleOf(f) || '(bez tytułu)'}" nie ma dosłownego cytatu w mapie dowodów (§D20 — wymóg na ścieżce raportu klienta).`
+    );
+  }
+
+  // Fold in the shared validator's hard quote checks (fire only if the card carries
+  // explicit key_findings / quote_bank collections).
+  try {
+    const verdict = validateInsightCard(
+      {
+        title: insight.title,
+        executive_summary: insight.executiveSummary,
+        themes,
+        issues,
+        opportunities: insight.opportunities,
+        signals: insight.signals,
+        evidence_map: evidenceMap,
+        key_findings: (insight as Record<string, unknown>).keyFindings ?? (insight as Record<string, unknown>).key_findings,
+        quote_bank: (insight as Record<string, unknown>).quoteBank ?? (insight as Record<string, unknown>).quote_bank,
+      },
+      { reportPath: true }
+    );
+    for (const v of verdict.violations) {
+      if (v.severity === 'hard' && (v.code === 'insight.finding_quote' || v.code === 'insight.quote_attribution')) {
+        reasons.push(`${CITATION_GATE_PREFIX} ${v.message}`);
+      }
+    }
+  } catch {
+    /* validator is fail-soft; never let it break report-pack assembly */
+  }
+
+  return reasons;
+}
 
 export type InterviewReportWorksheetStatus = 'generated' | 'partial' | 'empty' | 'degraded';
 
@@ -813,9 +894,13 @@ export function buildInterviewReportPackDraft(
   const completenessScore = Math.round(
     worksheets.reduce((sum, item) => sum + item.completenessScore, 0) / worksheets.length
   );
-  const degradedReasons = worksheets.flatMap((item) =>
+  const worksheetDegradedReasons = worksheets.flatMap((item) =>
     item.status === 'degraded' ? item.warnings : []
   );
+  // §D20 — verbatim-citation gate reasons ride along on the draft (prefixed) so the
+  // report-path readiness evaluator can turn them into HARD blockers.
+  const citationReasons = evaluateReportCitationGate(insight);
+  const degradedReasons = [...worksheetDegradedReasons, ...citationReasons];
 
   return {
     id: `irp_${insight.id}`,
@@ -896,6 +981,16 @@ export function evaluateInterviewReportPackReadiness(
       severity: 'blocker',
       message: `Report pack completeness is ${reportPack.completenessScore}%, below the 80% review gate.`,
     });
+  }
+
+  // §D20 hybrid gate — verbatim-citation failures BLOCK the client-report path.
+  for (const reason of reportPack.degradedReasons || []) {
+    if (reason.startsWith(CITATION_GATE_PREFIX)) {
+      blockers.push({
+        severity: 'blocker',
+        message: reason.slice(CITATION_GATE_PREFIX.length).trim(),
+      });
+    }
   }
 
   const status: InterviewReportPackReadinessStatus =

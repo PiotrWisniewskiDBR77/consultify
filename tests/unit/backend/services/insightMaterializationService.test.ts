@@ -56,15 +56,16 @@ function goodCandidateJson(): string {
     title: 'Wdrożenie triage zapytań skraca kolejkę o 30% w 2 kwartały',
     executive_summary: GOOD_SUMMARY,
     themes: [
-      { title: 'Brak triage', description: longDesc('Brak triage'), evidence_refs: ['q1'], strength: 'strong' },
-      { title: 'Brak SLA', description: longDesc('Brak SLA'), evidence_refs: ['q2'], strength: 'strong' },
-      { title: 'Ręczne narzędzia', description: longDesc('Ręczne narzędzia'), evidence_refs: ['q3'], strength: 'moderate' },
+      // strong ⇒ ≥2 evidence_refs (§3.2); action-title z czasownikiem.
+      { title: 'Brak triage wydłuża kolejkę zapytań kluczowych', description: longDesc('Brak triage'), evidence_refs: ['q1', 'q2'], strength: 'strong' },
+      { title: 'Brak SLA obniża przewidywalność obsługi zapytań', description: longDesc('Brak SLA'), evidence_refs: ['q2', 'q3'], strength: 'strong' },
+      { title: 'Ręczne narzędzia planowania ukrywają wąskie gardło', description: longDesc('Ręczne narzędzia'), evidence_refs: ['q3'], strength: 'moderate' },
     ],
     issues: [
-      { title: 'Kolejka bez priorytetów', description: 'Zapytania nie są priorytetyzowane.', severity: 'high', evidence_refs: ['q1'] },
-      { title: 'Brak mierzenia', description: 'Nikt nie mierzy czasu obsługi.', severity: 'medium', evidence_refs: ['q2'] },
+      { title: 'Kolejka bez priorytetów wydłuża czas obsługi', description: 'Zapytania nie są priorytetyzowane, przez co kolejka rośnie i firma traci sprzedaż w segmencie kluczowym.', severity: 'high', evidence_refs: ['q1'] },
+      { title: 'Brak mierzenia czasu obsługi ukrywa wąskie gardło', description: 'Nikt nie mierzy czasu obsługi, więc nie wiadomo, gdzie utyka proces.', severity: 'medium', evidence_refs: ['q2'] },
     ],
-    opportunities: [{ title: 'Integracja z CRM', description: 'Zastąpienie arkusza integracją z CRM.', evidence_refs: ['q3'] }],
+    opportunities: [{ title: 'Integracja z CRM skróci obsługę zapytań o 30%', description: 'Zastąpienie arkusza integracją z CRM skróci czas obsługi o 30% w 2 kwartały.', evidence_refs: ['q3'] }],
     signals: [],
     evidence_map: [
       { item_id: 'q1', answer_snippet: 'brak priorytetyzacji zapytań' },
