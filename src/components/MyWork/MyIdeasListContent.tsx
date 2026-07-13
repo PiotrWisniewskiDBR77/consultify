@@ -49,7 +49,6 @@ import {
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
-import { isIdeasPreviewOverlayEnabled } from '@/utils/ideasPreviewOverlayFlag';
 import { ErrorState } from '@/components/ui/primitives';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
@@ -58,6 +57,7 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
+import { isIdeasPreviewOverlayEnabled } from '@/utils/ideasPreviewOverlayFlag';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
