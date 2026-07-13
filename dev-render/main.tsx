@@ -26,6 +26,7 @@ import EvFootballFieldScreen from './screens/ev-football-field';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
+import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -52,6 +53,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'idea-templates-catalog': {
     label: '#10-AB Baza ~40 startowych szablonów konsultingowych (7 kategorii)',
     render: () => <IdeaTemplatesCatalogScreen />,
+  },
+  'zwornik-projects': {
+    label: '#78 Zwornik /projects — Stakeholderzy · Finanse · Zespół · Role · Zadania',
+    render: () => <ZwornikProjectsScreen />,
   },
 };
 
