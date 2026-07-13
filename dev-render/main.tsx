@@ -32,7 +32,6 @@ import InterviewLightScreen from './screens/interview-light';
 import InitiativesLightScreen from './screens/initiatives-light';
 import MaterialsLightScreen from './screens/materials-light';
 import ResultsLightScreen from './screens/results-light';
-import ToolsLightScreen from './screens/tools-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -41,7 +40,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'insight-light': { label: 'Insight Light Shell', render: () => <InsightLightScreen /> },
   'interview-light': { label: 'Interview Light Shell', render: () => <InterviewLightScreen /> },
   'materials-light': { label: 'Materials Light Shell', render: () => <MaterialsLightScreen /> },
-  'tools-light': { label: 'Tools Light Shell (Biblioteka · Sesje · Raporty)', render: () => <ToolsLightScreen /> },
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,
