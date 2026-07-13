@@ -21,14 +21,56 @@ import {
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { User } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
+import { StandardKanbanCard } from '../../components/standard';
+import type {
+  StandardKanbanCard as StandardKanbanCardData,
+  StandardKanbanChip,
+  StandardKanbanUrgency,
+} from '../../components/standard';
+import { getStatusStyle } from '../../constants/statusColors';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
+import type { ChipTone } from '../../components/ui/primitives/chips/chipBase';
+import type { HealthLevel } from '../../utils/initiativeHelpers';
 import type { InitiativeStatus, PortfolioInitiative } from '../../types';
 import { getHealthInfo, getNextStep } from '../../utils/initiativeHelpers';
+
+/** Priorytet → tone chipa (kanon A9: kolor tylko w kropce; crimson = tylko krytyczny). */
+function priorityTone(priority?: string): ChipTone {
+  switch ((priority || '').toUpperCase()) {
+    case 'CRITICAL':
+    case 'URGENT':
+      return 'danger';
+    case 'HIGH':
+      return 'warning';
+    case 'MEDIUM':
+      return 'info';
+    default:
+      return 'neutral';
+  }
+}
+
+/** Priorytet → pasek pilności karty (bursztyn/czerwony/brak). */
+function priorityUrgency(priority?: string): StandardKanbanUrgency {
+  switch ((priority || '').toUpperCase()) {
+    case 'CRITICAL':
+    case 'URGENT':
+      return 'critical';
+    case 'HIGH':
+      return 'pending';
+    default:
+      return 'none';
+  }
+}
+
+const HEALTH_TONE: Record<HealthLevel, ChipTone> = {
+  green: 'success',
+  amber: 'warning',
+  red: 'danger',
+  grey: 'neutral',
+};
 
 export type ExecutionKanbanScope = 'active' | 'all';
 
@@ -58,78 +100,48 @@ function getColumns(scope: ExecutionKanbanScope): { id: InitiativeStatus; label:
 const KanbanCard: React.FC<{
   initiative: PortfolioInitiative;
   onClick: () => void;
-  isDragging?: boolean;
-}> = ({ initiative, onClick, isDragging }) => {
+}> = ({ initiative, onClick }) => {
   const { t } = useTranslation();
-  const priorityStyle = getPriorityStyle(initiative.priority);
   const health = getHealthInfo(initiative);
   const nextStep = getNextStep(initiative.status);
   const owner = initiative.ownerBusiness || initiative.ownerExecution;
+  const ownerName = owner ? `${owner.firstName ?? ''} ${owner.lastName ?? ''}`.trim() : undefined;
 
-  return (
-    <div
-      onClick={onClick}
-      className={`
-        bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]
-        p-3 cursor-pointer group transition-all
-        hover:bg-c-surface-raised
-        ${isDragging ? 'shadow-hig-xl dark:shadow-hig-dark-xl scale-[1.02] rotate-1' : ''}
-      `}
-    >
-      <h4 className="font-medium text-sm text-c-text line-clamp-2 mb-2 leading-snug">
-        {initiative.name}
-      </h4>
+  // Moduł DEKLARUJE treść; kanon karty NARZUCA wygląd (#75b).
+  const chips: StandardKanbanChip[] = [
+    {
+      id: 'priority',
+      label: initiative.priority || t('initiatives.kanban.noPriority', 'N/A'),
+      tone: priorityTone(initiative.priority),
+    },
+    { id: 'health', label: health.label, tone: HEALTH_TONE[health.level] },
+  ];
 
-      <div className="flex items-center gap-2 mb-2">
-        <span
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
-          {initiative.priority || 'N/A'}
-        </span>
-        <div className="flex items-center gap-1">
-          <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-c-text-muted">{health.label}</span>
+  const card: StandardKanbanCardData = {
+    id: initiative.id,
+    columnId: initiative.status,
+    title: initiative.name,
+    chips,
+    urgency: priorityUrgency(initiative.priority),
+    ownerInitials: owner
+      ? `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
+      : undefined,
+    ownerAvatarUrl: owner?.avatarUrl,
+    ownerName: ownerName || t('initiatives.kanban.noOwner', 'Unassigned'),
+    footer: nextStep ? (
+      <>
+        <div className="text-[10px] text-c-text-muted mb-1 uppercase tracking-wider font-medium">
+          {t('initiatives.kanban.nextGate', 'Next gate')}
         </div>
-      </div>
+        <div className="text-xs text-c-text-secondary font-medium truncate">{nextStep.label}</div>
+        {nextStep.role ? (
+          <div className="text-[10px] text-c-text-muted mt-0.5">{nextStep.role}</div>
+        ) : null}
+      </>
+    ) : undefined,
+  };
 
-      {owner ? (
-        <div className="flex items-center gap-1.5 mb-2">
-          <div className="w-4 h-4 rounded-full bg-c-surface-raised flex items-center justify-center text-[8px] font-medium text-c-text-secondary overflow-hidden flex-shrink-0">
-            {owner.avatarUrl ? (
-              <img src={owner.avatarUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
-            )}
-          </div>
-          <span className="text-[11px] text-c-text-secondary truncate">
-            {owner.firstName} {owner.lastName}
-          </span>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5 mb-2 text-[11px] text-c-text-muted">
-          <User size={12} />
-          <span>{t('initiatives.kanban.noOwner', 'Unassigned')}</span>
-        </div>
-      )}
-
-      {nextStep && (
-        <div className="pt-2 border-t border-c-border-subtle">
-          <div className="text-[10px] text-c-text-muted mb-1 uppercase tracking-wider font-medium">
-            {t('initiatives.kanban.nextGate', 'Next gate')}
-          </div>
-          <div className="text-xs text-c-text-secondary font-medium truncate">
-            {nextStep.label}
-          </div>
-          {nextStep.role && (
-            <div className="text-[10px] text-c-text-muted mt-0.5">
-              {nextStep.role}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return <StandardKanbanCard card={card} onClick={onClick} />;
 };
 
 const SortableCard: React.FC<{
@@ -153,7 +165,7 @@ const SortableCard: React.FC<{
       {...(draggable ? attributes : {})}
       {...(draggable ? listeners : {})}
     >
-      <KanbanCard initiative={initiative} onClick={onClick} isDragging={isDragging} />
+      <KanbanCard initiative={initiative} onClick={onClick} />
     </div>
   );
 };
@@ -305,7 +317,7 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
       </div>
       <DragOverlay>
         {activeInitiative && (
-          <KanbanCard initiative={activeInitiative} onClick={() => {}} isDragging />
+          <KanbanCard initiative={activeInitiative} onClick={() => {}} />
         )}
       </DragOverlay>
     </DndContext>
