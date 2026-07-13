@@ -29,7 +29,6 @@ import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
-import { isMindmapConsolidatedPanel } from '@/utils/melsMindmapPanelFlag';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
@@ -94,8 +93,10 @@ import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
-import { IdeaMapConsolidatedPanel } from './IdeaMapConsolidatedPanel';
 import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
+import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
+import { IdeaTeresaSection } from './IdeaTeresaSection';
+import { useIdeasTeresaBridge } from './canvas/useIdeasTeresaBridge';
 import {
   buildIdeaCanvasRightRailTools,
   buildIdeaCanvasTopBarChips,
@@ -1017,6 +1018,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     window.addEventListener('idea-workspace-quick-action', handler);
     return () => window.removeEventListener('idea-workspace-quick-action', handler);
   }, [handleQuickAction, realId]);
+
+  // ── Most Teresa ⇄ Ideas (kierunek Ideas → Teresa). D16/D17: panel idei = panel
+  // Teresy. Kierunek Chat → Ideas jest już obsłużony przez dedykowany listener
+  // powyżej (z precyzyjnym filtrowaniem, aby uniknąć podwójnego wykonania), więc
+  // NIE przekazujemy `onQuickAction` — hook rejestruje wtedy 0 nasłuchów i służy
+  // wyłącznie do emisji statusów (potwierdzenia) z powrotem do Teresy.
+  const { emitStatus: emitTeresaStatus } = useIdeasTeresaBridge({
+    ideaId: realId,
+    toolType: activeTool === 'process_flow' ? 'processflow' : activeTool,
+  });
 
   const dispatchWorkspaceInsert = useCallback(
     (
@@ -2668,16 +2679,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
   // legacy render is byte-for-byte unchanged.
   const melsCanvasEnabled = isMelsCanvasEnabled();
-  // ── Oś P (SPEC-A) — consolidated Mind Map right panel (flag-gated, default OFF).
-  // When ON *and* the Mind Map tool is active, the three legacy right drawers
-  // (tools/context/ai) are replaced by one <IdeaMapConsolidatedPanel>
-  // (ArtifactRightPanel accordion). Flag OFF → three legacy drawers unchanged.
-  const mindmapConsolidatedPanel = isMindmapConsolidatedPanel();
-  // Scoped to the legacy (non-mels) render path + the Mind Map tool only. When
-  // the mels-canvas shell is ON it already owns the right rail, so the two flags
-  // never stack a duplicate inspector.
-  const useConsolidatedMindmapPanel =
-    mindmapConsolidatedPanel && activeTool === 'mindmap' && !melsCanvasEnabled;
   const melsCanvasChips = useMemo(
     () =>
       melsCanvasEnabled
@@ -3413,54 +3414,69 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return (
       <>
       {/*
-        Oś P (SPEC-A, flag `ff.mels_mindmap_panel`, default OFF): when ON *and*
-        the Mind Map tool is active, the three legacy drawers below are replaced
-        by ONE <IdeaMapConsolidatedPanel> (ArtifactRightPanel accordion). It only
-        mounts when one of the three panels would be open — matching the legacy
-        self-hide (each drawer returns null when its `open` is false). Flag OFF →
-        this block is inert and the three drawers render byte-for-byte as before.
+        ★ D16/D17 — JEDEN prawy panel idei (dok Teresy) = `<IdeaRightPanel>`
+        (accordion ArtifactRightPanel): Właściwości · Kontekst · Teresa. Zastępuje
+        archaiczny przełącznik 3 OSOBNYCH szuflad (#6q) dla WSZYSTKICH 4 narzędzi
+        — bez flagi (default). Montuje się gdy pasek otworzy dowolną sekcję
+        (parytet z self-hide szuflad: canvas rozszerza się po zamknięciu).
+        Reużywa te same panele co legacy (IdeaWorkspaceTools/IdeaContextPanel/
+        IdeaAISuggestionsPanel) jako `embedded` sekcje — ZERO bespoke. Trzecia
+        karta JEST Teresą (komendy + strumień sugestii), nie osobny „AI Suggestions".
+        Ścieżka mels-canvas (eksperymentalna, default OFF) zostaje na starych
+        szufladach — nietknięta.
       */}
-      {useConsolidatedMindmapPanel &&
-        (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (
-          <IdeaMapConsolidatedPanel
-            activePanel={
-              toolsPanelOpen ? 'tools' : contextPanelOpen ? 'context' : 'ai_suggestions'
-            }
+      {!melsCanvasEnabled && (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (
+        <IdeaRightPanel
+          isPolish={isPolish}
+          activeSection={
+            toolsPanelOpen ? 'properties' : contextPanelOpen ? 'context' : 'teresa'
+          }
+          propertiesContent={
+            <IdeaWorkspaceTools
+              {...ideaWorkspaceToolsSharedProps}
+              open
+              embedded
+              onClose={() => handlePanelChange(null)}
+            />
+          }
+          contextContent={
+            <IdeaContextPanel
+              {...ideaContextPanelSharedProps}
+              open
+              embedded
+              onClose={() => handlePanelChange(null)}
+            />
+          }
+          teresaContent={
+            <IdeaTeresaSection
+              isPolish={isPolish}
+              aiSuggestionsProps={ideaAISuggestionsPanelSharedProps}
+              onDiscuss={() => {
+                emitTeresaStatus('discuss', 'started');
+                handleDiscussWithTeresa();
+              }}
+            />
+          }
+        />
+      )}
+
+      {/* Ścieżka mels-canvas (default OFF): legacy szuflady bez zmian. Tools jest
+          renderowany embedded w rail shellu (renderMelsCanvasRightRailPanel), więc
+          tu tylko Kontekst + Sugestie jako przesuwane szuflady — parytet z dawnym
+          zachowaniem sprzed konsolidacji. */}
+      {melsCanvasEnabled && (
+        <>
+          <IdeaContextPanel
+            {...ideaContextPanelSharedProps}
+            open={contextPanelOpen}
             onClose={() => handlePanelChange(null)}
-            toolsProps={ideaWorkspaceToolsSharedProps}
-            contextProps={ideaContextPanelSharedProps}
-            aiSuggestionsProps={ideaAISuggestionsPanelSharedProps}
           />
-        )}
-
-      {/* Tools panel sidebar — legacy sliding drawer. Under the EditorShell
-          flag this same inspector is rendered `embedded` in the shell right
-          rail (renderMelsCanvasRightRailPanel), so we suppress this drawer to
-          avoid a duplicate panel. Under the Oś-P consolidated-panel flag the
-          Mind Map tool suppresses it too (rendered as an accordion section
-          above instead). Both paths consume ideaWorkspaceToolsSharedProps. */}
-      {!melsCanvasEnabled && !useConsolidatedMindmapPanel && (
-        <IdeaWorkspaceTools
-          {...ideaWorkspaceToolsSharedProps}
-          open={toolsPanelOpen}
-          onClose={() => handlePanelChange(null)}
-        />
-      )}
-
-      {!useConsolidatedMindmapPanel && (
-        <IdeaContextPanel
-          {...ideaContextPanelSharedProps}
-          open={contextPanelOpen}
-          onClose={() => handlePanelChange(null)}
-        />
-      )}
-
-      {!useConsolidatedMindmapPanel && (
-        <IdeaAISuggestionsPanel
-          {...ideaAISuggestionsPanelSharedProps}
-          open={aiPanelOpen}
-          onClose={() => handlePanelChange(null)}
-        />
+          <IdeaAISuggestionsPanel
+            {...ideaAISuggestionsPanelSharedProps}
+            open={aiPanelOpen}
+            onClose={() => handlePanelChange(null)}
+          />
+        </>
       )}
 
       {/* MM-12: AI Governance Panel */}
