@@ -100,7 +100,6 @@ import {
 } from '../Initiatives/InitiativePreviewV3';
 import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import {
-  FilterableTable,
   FilterChip,
   GridItem,
   GridView,
@@ -111,6 +110,11 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+// #63: ekrany listowe Tools = kanoniczny StandardTable (Triada), NIE surowy
+// FilterableTable. StandardTable dokłada pstryczek „Edit Columns" (Settings2 →
+// TableSettingsPopover), checkbox zaznaczania, per-kolumnowe lejki filtrów,
+// 5-blokowy kebab sekcyjny i stany empty/loading — 1:1 jak Interview/Assessment.
+import { StandardTable } from '@/components/standard';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -722,26 +726,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [selectedLibraryIds, setSelectedLibraryIds] = useState<Set<string>>(new Set());
   const [selectedSessionsIds, setSelectedSessionsIds] = useState<Set<string>>(new Set());
   const [selectedReportsIds, setSelectedReportsIds] = useState<Set<string>>(new Set());
-  const makeTableSelection = (
-    ids: Set<string>,
-    setIds: React.Dispatch<React.SetStateAction<Set<string>>>,
-    rows: Array<{ id: string }>,
-  ) => ({
-    selectedIds: ids,
-    onToggleRow: (id: string) =>
-      setIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      }),
-    onToggleAll: () =>
-      setIds((prev) =>
-        rows.length > 0 && prev.size >= rows.length ? new Set<string>() : new Set(rows.map((r) => r.id)),
-      ),
-    isAllSelected: ids.size > 0 && ids.size >= rows.length,
-    isIndeterminate: ids.size > 0 && ids.size < rows.length,
-  });
   const [previewFullSession, setPreviewFullSession] = useState<any | null>(null);
   const [previewFullLoading, setPreviewFullLoading] = useState(false);
   const [previewFullAssessment, setPreviewFullAssessment] = useState<any | null>(null);
@@ -3657,15 +3641,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             {hasLibrarySearchNoResults ? (
               renderLibrarySearchEmptyState()
             ) : (
-              <FilterableTable
+              <StandardTable
+                persistKey="tools.library"
                 columns={libraryColumns}
-                selection={makeTableSelection(selectedLibraryIds, setSelectedLibraryIds, filteredLibraryItems as Array<{ id: string }>)}
+                selection={{ selectedIds: selectedLibraryIds, onChange: setSelectedLibraryIds }}
                 data={filteredLibraryItems}
                 selectedRowId={previewItemId}
                 onRowClick={(row) => setPreviewItemId(row.id)}
                 onRowDoubleClick={(row) => handleRowAction('library_open_full', row as any)}
-                onRowAction={handleRowAction}
-                getRowActionSections={(row) =>
+                rowActions={(row) =>
                   [
                     // Blok 1 — GÓRA: akcja główna (kanon ANEKS #4 / §9.1).
                     {
@@ -3756,7 +3740,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 }
                 activeFilters={activeFilters}
                 onFilterChange={setActiveFilters}
-                emptyMessage={libraryEmptyMessage}
+                empty={{ title: libraryEmptyMessage }}
                 canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
                 density="compact"
               />
@@ -3904,15 +3888,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               );
             }}
           >
-            <FilterableTable
+            <StandardTable
+              persistKey="tools.sessions"
               columns={sessionsColumns}
-              selection={makeTableSelection(selectedSessionsIds, setSelectedSessionsIds, unifiedSessionsData as Array<{ id: string }>)}
+              selection={{ selectedIds: selectedSessionsIds, onChange: setSelectedSessionsIds }}
               data={unifiedSessionsData as any}
               selectedRowId={previewItemId}
               onRowClick={(row) => setPreviewItemId(row.id)}
               onRowDoubleClick={(row) => openFull(row as any)}
-              onRowAction={handleRowAction}
-              getRowActionSections={(row) =>
+              rowActions={(row) =>
                 [
                   // Blok 1 — GÓRA: akcja główna (kanon ANEKS #4 / §9.1).
                   {
@@ -4014,10 +3998,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               }
               activeFilters={activeFilters}
               onFilterChange={setActiveFilters}
-              emptyMessage={t(
-                'tools.hub.empty.sessions',
-                'No active sessions yet. Start from Library and a new session will appear here automatically.'
-              )}
+              empty={{
+                title: t(
+                  'tools.hub.empty.sessions',
+                  'No active sessions yet. Start from Library and a new session will appear here automatically.'
+                ),
+              }}
               canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
               density="compact"
             />
@@ -4383,10 +4369,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             );
           }}
         >
-          <FilterableTable
+          <StandardTable
+            persistKey={isInitiativesTab ? 'tools.initiatives' : 'tools.outputs'}
             columns={columns}
-            selection={makeTableSelection(selectedReportsIds, setSelectedReportsIds, currentData as Array<{ id: string }>)}
+            selection={{ selectedIds: selectedReportsIds, onChange: setSelectedReportsIds }}
             data={currentData}
+            selectedRowId={previewItemId}
             onRowClick={(row) => setPreviewItemId(row.id)}
             onRowDoubleClick={(row) => {
               if (isReportsAndPresentationsTab) {
@@ -4395,8 +4383,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               }
               handleOpenDocument(row);
             }}
-            onRowAction={handleRowAction}
-            getRowActionSections={
+            rowActions={
               isInitiativesTab
                 ? (row) => {
                     const id = String(row?.id || '').trim();
@@ -4535,7 +4522,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             }
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
-            emptyMessage={emptyMessage}
+            empty={{ title: emptyMessage }}
             canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
             density="compact"
           />
