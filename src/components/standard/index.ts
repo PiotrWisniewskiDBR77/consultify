@@ -42,6 +42,12 @@ export {
   StandardKanban,
   type StandardKanbanProps,
   type StandardKanbanColumn,
-  type StandardKanbanCard,
   type StandardKanbanUrgency,
 } from './StandardKanban';
+export {
+  // Komponent karty (wartość) + model danych `StandardKanbanCard` (typ) — JEDEN
+  // kanon karty kanban (#75b). Nazwa dzielona: wartość=komponent, typ=dane.
+  StandardKanbanCard,
+  type StandardKanbanCardProps,
+  type StandardKanbanChip,
+} from './StandardKanbanCard';
