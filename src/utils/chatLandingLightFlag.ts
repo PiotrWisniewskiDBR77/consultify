@@ -73,7 +73,7 @@ export function isChatLandingLightEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return true; // FLIP 07-12 noc (decyzja Piotra: odbiór na żywym demo, dokończenie przez noc); ?ff_chatLandingLight=0 wyłącza per-sesja
+  return readEnvFlag();
 }
 
 export const CHAT_LANDING_LIGHT_FLAG_KEYS = {

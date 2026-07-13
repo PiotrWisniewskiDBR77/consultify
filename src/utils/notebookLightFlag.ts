@@ -72,7 +72,7 @@ export function isNotebookLightEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return true; // FLIP 07-12 noc (decyzja Piotra: odbiór na żywym demo, dokończenie przez noc); ?ff_notebookLight=0 wyłącza per-sesja
+  return readEnvFlag();
 }
 
 export const NOTEBOOK_LIGHT_FLAG_KEYS = {
