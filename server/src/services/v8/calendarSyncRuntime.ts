@@ -29,6 +29,18 @@ const SYNC_WINDOW_DAYS_FORWARD = 90;
 const BACKOFF_SKIP_MS = 5 * 60 * 1000;
 
 /**
+ * P02 §2.3.12 bridge — map a canonical calendar provider to the connector id
+ * used by the shared integrationOAuthEngine token store (integration_oauth_tokens).
+ * This lets a calendar the user connected through the Settings → Calendar Sync UI
+ * (which stores an encrypted OAuth token under these connector ids) feed the v8
+ * bidirectional sync runtime. Returns null for providers with no OAuth connector.
+ */
+const PROVIDER_TO_OAUTH_CONNECTOR: Partial<Record<CalendarSource['provider'], string>> = {
+  google: 'google_calendar',
+  microsoft: 'outlook_calendar',
+};
+
+/**
  * Main tick: sync all connected/degraded sources for an organization.
  * Called by cron every 5 minutes.
  */
@@ -364,6 +376,26 @@ async function buildConnectionRef(source: CalendarSource): Promise<ConnectionRef
       logger.debug(
         `${LOG_PREFIX} v8_connection_credentials fallback unavailable for ${source.provider}`
       );
+    }
+  }
+
+  // Bridge: fall back to the shared OAuth token store (integration_oauth_tokens)
+  // populated by the Settings → Calendar Sync connect flow. getValidAccessToken
+  // transparently refreshes an expired token when a refresh_token is present.
+  if (!accessToken && source.userId) {
+    const connectorId = PROVIDER_TO_OAUTH_CONNECTOR[source.provider];
+    if (connectorId) {
+      try {
+        const { getValidAccessToken } = await import('../integrationOAuthEngine.js');
+        const oauthToken = await getValidAccessToken(source.userId, connectorId);
+        if (oauthToken) {
+          accessToken = oauthToken;
+        }
+      } catch (err) {
+        logger.debug(
+          `${LOG_PREFIX} integration_oauth_tokens bridge unavailable for ${source.provider}: ${(err as Error).message}`
+        );
+      }
     }
   }
 
