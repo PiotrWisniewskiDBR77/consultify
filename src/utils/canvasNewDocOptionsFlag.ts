@@ -34,13 +34,12 @@ function parseFlag(raw: string | null | undefined): boolean | null {
   return null;
 }
 
-function readEnvFlag(): boolean {
+function readEnvFlag(): boolean | null {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parseFlag(meta?.env?.[ENV_KEY]);
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -67,7 +66,11 @@ export function isCanvasNewDocOptionsEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return readEnvFlag();
+  const fromEnv = readEnvFlag();
+  if (fromEnv !== null) return fromEnv;
+  // #87a zaakceptowany przez Piotra 07-13 (zrzuty light+dark) → default ON.
+  // Opt-out: ?ff_canvasNewDocOptions=0 lub localStorage ff.canvas_new_doc_options=0.
+  return true;
 }
 
 export const CANVAS_NEW_DOC_OPTIONS_FLAG_KEYS = {
