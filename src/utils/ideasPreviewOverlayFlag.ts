@@ -31,13 +31,12 @@ function parseFlag(raw: string | null | undefined): boolean | null {
   return null;
 }
 
-function readEnvFlag(): boolean {
+function readEnvFlag(): boolean | null {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parseFlag(meta?.env?.[ENV_KEY]);
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -64,7 +63,11 @@ export function isIdeasPreviewOverlayEnabled(): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return readEnvFlag();
+  const fromEnv = readEnvFlag();
+  if (fromEnv !== null) return fromEnv;
+  // #4b zaakceptowany przez Piotra 07-13 (zrzuty light+dark, zero-reflow dowód) → default ON.
+  // Opt-out: ?ff_ideasPreviewOverlay=0.
+  return true;
 }
 
 export const IDEAS_PREVIEW_OVERLAY_FLAG_KEYS = {
