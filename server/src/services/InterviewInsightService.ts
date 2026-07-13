@@ -14,6 +14,10 @@ import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { llmService } from './ai/llmService.js';
 import {
+  buildInsightRepairHints,
+  buildInsightTypeGuidanceBlock,
+} from './ai/insightTypePromptRegistry.js';
+import {
   buildRepairBriefFromVerdict,
   type FormulaVerdict,
   validateInsightCard,
@@ -1924,11 +1928,19 @@ CROSS-SESSION ANALYSIS (${sessionCount} respondents):
       return `Organization/Project documents retrieved as RAG chunks (use only these fragments; do not assume full document access):\n${chunksText}`;
     })();
 
+    // Z60/#57 — per-type content formula (§3): thesis-titles, quote-ready evidence,
+    // measurable so-whats, correctly-typed signals. This is what makes the six emitted
+    // fields feed McKinsey-grade derived sections (Key Findings, Recommendations,
+    // Tensions, Patterns, Quote Comparison). SSOT: _FORMULA_TRESCI_INSIGHT §3.
+    const insightTypeGuidance = buildInsightTypeGuidanceBlock();
+
     let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
 
 ${BCG_P10_PROMPT_DOCTRINE}
 
 ${INSIGHT_SECTION_BCG_GUIDANCE}
+
+${insightTypeGuidance}
 
 Insight Scope:
 ${scopeBlock}
@@ -2283,8 +2295,12 @@ Rules:
           );
           try {
             const repairBrief = buildRepairBriefFromVerdict(formulaVerdict);
+            // Z60/#57 — append per-type §3 hints so the repair fixes the SPECIFIC
+            // weakness (e.g. bare topic title, unmeasured recommendation) rather
+            // than regenerating blindly.
+            const typeHints = buildInsightRepairHints(formulaVerdict.violationCodes);
             const repairResponse = await llmService.generateResponse({
-              prompt: `${repairBrief}\n\n--- POPRZEDNIA KARTA (JSON do poprawy) ---\n${JSON.stringify(
+              prompt: `${repairBrief}${typeHints ? `\n\n${typeHints}` : ''}\n\n--- POPRZEDNIA KARTA (JSON do poprawy) ---\n${JSON.stringify(
                 parsedV6Data
               )}\n\nZwróć WYŁĄCZNIE poprawiony obiekt JSON w tym samym kontrakcie pól.`,
               temperature: 0.2,
