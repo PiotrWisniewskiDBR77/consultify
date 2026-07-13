@@ -23,6 +23,9 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import type { CanvasTemplateGovernanceMeta } from './canvas/canvasOsContract';
+// #10-AB: baza ~40 startowych szablonów konsultingowych (7 kategorii). Import
+// value; moduł importuje z tego pliku wyłącznie TYP (erased) → brak cyklu runtime.
+import { CONSULTING_TEMPLATES } from './ideaConsultingTemplates';
 import type { CanvasToolType } from './ideaSelectionTypes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 
@@ -40,6 +43,13 @@ export interface TemplateDefinition {
   edges: any[];
   extensions: Record<string, unknown>;
   governance?: CanvasTemplateGovernanceMeta;
+  /**
+   * #10-AB: fine-grained consulting catalog group (7 kategorii biznesowych)
+   * ponad grubą `governance.category`. Używane przez galerię-akcept (dev-render)
+   * do grupowania startowych szablonów konsultingowych. Opcjonalne — nie dotyczy
+   * legacy szablonów canvas.
+   */
+  catalogGroup?: string;
 }
 
 // ── Process Flow templates ───────────────────────────────────────────────────
@@ -1869,6 +1879,8 @@ const ALL_TEMPLATES = [
   ...MINDMAP_TEMPLATES,
   ...EXTRA_MINDMAP_TEMPLATES,
   ...WHITEBOARD_TEMPLATES,
+  // #10-AB: baza ~40 startowych szablonów konsultingowych (7 kategorii biznesowych).
+  ...CONSULTING_TEMPLATES,
 ];
 
 export function findIdeaTemplate(templateId: string): TemplateDefinition | null {
