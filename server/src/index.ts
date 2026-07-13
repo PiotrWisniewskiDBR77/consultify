@@ -1992,6 +1992,17 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Presentation collab WebSocket not available:', err?.message);
     }
 
+    // #23: Notebook presence WebSocket /ws/notebook/:noteId (mirror of the deck
+    // gateway). Fail-open: if it does not attach, the Notebook still works fully
+    // in solo mode (FE useNotebookPresence just reports `disconnected`).
+    try {
+      const { attachNotebookCollabWs } = await import('./gateways/notebookCollabWs.gateway.js');
+      attachNotebookCollabWs(server);
+      logger.info('[Server] Notebook collab WebSocket /ws/notebook/:noteId initialized');
+    } catch (err: any) {
+      logger.warn('[Server] Notebook collab WebSocket not available:', err?.message);
+    }
+
     // Table Platform real-time collaboration (Socket.IO /table-platform namespace)
     try {
       const { Server: SocketIOServer } = await import('socket.io');

@@ -83,6 +83,8 @@ import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { NotebookReminderChip } from './notebook/NotebookReminderChip';
+import { NotebookPresenceStack } from './notebook/NotebookPresenceStack';
+import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookExportMenu } from './notebook/NotebookExportMenu';
 import { NotebookGraphView } from './notebook/NotebookGraphView';
@@ -773,6 +775,25 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
   const attemptedOpenPageRef = useRef<string | null>(null);
+
+  // #23 Notatnik-centrum-myśli — live presence for the open note. Reuses the Deck
+  // presence protocol (/ws/notebook/:noteId). Fail-open to solo: no token /
+  // gateway down → renders nothing, never blocks editing.
+  const presenceUser = useMemo(
+    () =>
+      currentUser
+        ? {
+            userId: currentUserId,
+            name:
+              [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ').trim() ||
+              currentUser.email ||
+              'User',
+            avatarUrl: currentUser.avatarUrl,
+          }
+        : null,
+    [currentUser, currentUserId]
+  );
+  const notebookPresence = useNotebookPresence(activePage?.id ?? null, presenceUser, true);
 
   // Keep the ref in sync so autosave can read the freshest updatedAt token.
   useEffect(() => {
@@ -3176,6 +3197,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             isPolish={isPolish}
                           />
                         </div>
+                      </div>
+                      {/* #23 live presence — avatars of others viewing this note */}
+                      <div className="mt-1 shrink-0">
+                        <NotebookPresenceStack
+                          users={notebookPresence.connectedUsers}
+                          localUserId={currentUserId}
+                          connectionStatus={notebookPresence.connectionStatus}
+                          isPolish={isPolish}
+                        />
                       </div>
                     </div>
 
