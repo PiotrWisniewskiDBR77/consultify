@@ -1873,6 +1873,16 @@ const EXTRA_MINDMAP_TEMPLATES: TemplateDefinition[] = [
   },
 ];
 
+// #10-AB dedup: kuratorowane szablony konsultingowe (cx-*) zastępują legacy-duble.
+// Retirujemy legacy o tym samym frameworku (definicje zostają w kodzie — filtr jest odwracalny).
+const RETIRED_LEGACY_TEMPLATE_IDS = new Set<string>([
+  'mm-swot',     // → cx-swot
+  'mm-porter5',  // → cx-porter5
+  'wb-bmc',      // → cx-bmc
+  'wb-cjm',      // → cx-cjm
+  'mm-okr',      // → cx-okr-planning
+]);
+
 const ALL_TEMPLATES = [
   ...PROCESS_FLOW_TEMPLATES,
   ...TYPED_PROCESS_FLOW_TEMPLATES,
@@ -1881,7 +1891,7 @@ const ALL_TEMPLATES = [
   ...WHITEBOARD_TEMPLATES,
   // #10-AB: baza ~40 startowych szablonów konsultingowych (7 kategorii biznesowych).
   ...CONSULTING_TEMPLATES,
-];
+].filter((template) => !RETIRED_LEGACY_TEMPLATE_IDS.has(template.id));
 
 export function findIdeaTemplate(templateId: string): TemplateDefinition | null {
   return ALL_TEMPLATES.find((template) => template.id === templateId) || null;
