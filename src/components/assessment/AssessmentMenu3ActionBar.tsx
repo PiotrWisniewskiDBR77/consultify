@@ -21,6 +21,14 @@ type Menu3Chip = {
   active?: boolean;
   /** #70: 1-sentence explanation shown as a native tooltip (jasność dla usera). */
   title?: string;
+  /**
+   * #71: when set, the chip renders as a real `<button>` (TRIADA_KANON.md §A3
+   * "filtry z licznikami, aktywny chip wypełniony") instead of a static,
+   * non-interactive `<div>` — wzór: DiscoveryToolsHub CommandRowContent status
+   * chip row. Chips without onClick stay decorative `<div>`s (back-compat for
+   * existing non-filter callers, e.g. AssessmentSessionEditorView).
+   */
+  onClick?: () => void;
 };
 
 type Menu3Action = {
@@ -47,21 +55,41 @@ export const AssessmentMenu3ActionBar: React.FC<AssessmentMenu3ActionBarProps> =
   return (
     <div className={`${MENU_3_INNER_CLASS} ${className}`}>
       <div className={MENU_3_LEFT_CLASS}>
-        {chips.map((chip) => (
-          <div
-            key={chip.id}
-            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-            title={chip.title}
-          >
-            {chip.icon || <span className={MENU_3_ALL_DOT_CLASS} />}
-            <span className="truncate">{chip.label}</span>
-            {chip.badge !== undefined && chip.badge !== null ? (
-              <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-                {chip.badge}
-              </span>
-            ) : null}
-          </div>
-        ))}
+        {chips.map((chip) => {
+          const content = (
+            <>
+              {chip.icon || <span className={MENU_3_ALL_DOT_CLASS} />}
+              <span className="truncate">{chip.label}</span>
+              {chip.badge !== undefined && chip.badge !== null ? (
+                <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                  {chip.badge}
+                </span>
+              ) : null}
+            </>
+          );
+          if (chip.onClick) {
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={chip.onClick}
+                title={chip.title}
+                className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+              >
+                {content}
+              </button>
+            );
+          }
+          return (
+            <div
+              key={chip.id}
+              className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+              title={chip.title}
+            >
+              {content}
+            </div>
+          );
+        })}
       </div>
 
       <div className={MENU_3_RIGHT_CLASS}>
