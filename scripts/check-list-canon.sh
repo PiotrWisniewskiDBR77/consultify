@@ -37,6 +37,22 @@ for f in $files; do
       fi
       ;;
   esac
+  # 3) previewStyles.ts — pill regression guard (#36, decyzja Piotra D21 07-12:
+  # akcje w preview = pill/rounded-full, NIE rounded-lg; to już raz się cofnęło).
+  if [ "$base" = "previewStyles.ts" ]; then
+    if grep -A2 "export const PREVIEW_PILL_BASE" "$f" | grep -q 'rounded-lg'; then
+      echo "✗ list-canon: $f — PREVIEW_PILL_BASE używa rounded-lg. Kanon preview = pill (rounded-full), decyzja D21 (kanon TABLE_AND_PREVIEW_CANON.md §7.0, pułapka #36)." >&2
+      fail=1
+    fi
+  fi
+  # 4) bespoke inline pill classes on preview action buttons outside previewStyles.ts
+  case "$f" in
+    src/components/shared/PreviewPane/*|src/components/shared/artifact-actions/*)
+      if [ "$base" != "previewStyles.ts" ] && grep -Eq 'className="[^"]*rounded-lg[^"]*"[^)]*onClick' "$f"; then
+        echo "⚠ list-canon: $f — możliwy bespoke przycisk (rounded-lg) w warstwie preview. Użyj actionPillClass()/PreviewActionBar (kanon §7.3b)." >&2
+      fi
+      ;;
+  esac
 done
-if [ $fail -eq 0 ]; then echo "✓ list-canon: brak własnych tabel poza StandardTable"; fi
+if [ $fail -eq 0 ]; then echo "✓ list-canon: brak własnych tabel poza StandardTable, brak regresji pilla preview"; fi
 exit $fail

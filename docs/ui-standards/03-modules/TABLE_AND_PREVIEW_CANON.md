@@ -4,7 +4,7 @@ doc_kind: AUTHOR_CANON
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-06-06
+last_updated: 2026-07-13
 supersedes_as_index:
   - docs/ui-standards/03-modules/app-table-standard.md
   - docs/ui-standards/03-modules/table-preview-pane-standard.md
@@ -20,6 +20,7 @@ supersedes_as_index:
 > **Rola:** Ten dokument **konsoliduje i rozstrzyga** 6 wcześniejszych, częściowo sprzecznych standardów tabel (patrz front‑matter `supersedes_as_index`). Te dokumenty pozostają jako materiał szczegółowy, ale **w razie konfliktu obowiązuje TEN plik.**
 > **Siostra:** kanon menu — `13_MENU_2_MODULE_TOPBAR.md`, `14_MENU_3_COMMAND_ROW.md`, `module-hub-standard.md`. Tabela żyje POD Menu 2/3 i z nimi nie konkuruje.
 > **Złote referencje wizualne:** `docs/ui-standards/assets/app-table-golden-reference-{dark,light}-2026-05-02.png`.
+> **Skill:** przy pracy nad preview pane wołaj `consultify-preview` — punkt wejścia z checklistą, SSOT treści = §7 tego pliku (skrót 6 bloków: §7.0).
 
 ---
 
@@ -207,6 +208,24 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 ---
 
 ## 7) Preview pane
+
+### 7.0 Kanon podglądu — skrót (6 bloków, MUST)
+> Ten podrozdział to **jedyne** źródło prawdy dla „jak wygląda preview" — reużywalny standard, nie
+> opis per-moduł. Skill `consultify-preview` woła TEN kanon. Sześć bloków, góra→dół, kolejność sztywna
+> (pełne wartości/klasy w §7.1–§7.3b niżej):
+
+| # | Blok | Co to jest | Szczegóły |
+|---|---|---|---|
+| 1 | **Nagłówek** | sticky, tytuł + pin/kopiuj + „Open" (JEDYNE Open w całym preview) + „×" | §7.3 pkt 1 |
+| 2 | **Meta** | pasek statusu/typu/daty/sesji — stan, nie treść | §7.3 pkt 2 |
+| 3 | **Treść (Details)** | centrum, scrollowalne, bogaty domyślny szablon, licznik słów, **kebab lokalny** (Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·Export·Pobierz) | §7.3 pkt 3 |
+| 4 | **What's-next / „Co dalej"** (create-strip) | tylko gdy encja jest źródłem cross-module; zwarty pasek `Dokumenty` / `W aplikacji`, ikona+hue = moduł docelowy | §7.3a, §7.3 pkt 4.3 |
+| 5 | **Akcje = pill** | `h-9 rounded-full`, przez `PreviewActionBar`+`actionPillClass()`; anty-duplikacja (nie dubluj Open/eksport) — opcjonalny, pomiń jeśli nic nie zostaje | §7.3b, §7.3 pkt 4.4 |
+| 6 | **Kebab lokalny ≠ kebab wiersza** | kebab z bloku 3 (Details) jest osobnym kontraktem od `RowActionsMenu` wiersza tabeli/karty (§9) — nie mylić ani nie duplikować pozycji | §7.3 pkt 3 vs §9 |
+
+**MUST:** AI (chipy Podsumuj/Zasuguj) i Relations to osobne, opcjonalne karty stopki MIĘDZY blokiem 3 i blokiem 4 — pełna kolejność stopki: AI → Relations → Co dalej → Akcje (§7.3 pkt 4). Blok bez danych = **ukryty**, nie pusty box; kolejność obecnych bloków się nie zmienia.
+
+**Pułapka #36 (rozstrzygnięta, Piotr 07-12 — D21):** przyciski akcji w podglądzie = **pill** (`rounded-full`), „taki jak Google i Apple" — NIE `rounded-lg`. SSOT klas: `src/components/shared/PreviewPane/previewStyles.ts` (`PREVIEW_PILL_BASE`). Każda nowa/edytowana akcja w stopce podglądu **MUSI** iść przez `PreviewActionBar`/`actionPillClass()` — zero bespoke `bg-*`/`rounded-lg` inline (poprzedni `rounded-lg` tutaj był regresją względem już ustanowionego kanonu pill z TRIADA_KANON.md A8/C9).
 
 ### 7.1 Zachowanie
 **MUST:** domyślnie **zamknięty**. Single‑click = select + open preview. Double‑click/Enter = full detail (N‑mode/workspace). Esc = zamknij (tabela wraca do `flex-1`). J/K (opcjonalnie) = nawigacja wierszy z auto‑update preview. Bulk‑select nie zamyka preview.
