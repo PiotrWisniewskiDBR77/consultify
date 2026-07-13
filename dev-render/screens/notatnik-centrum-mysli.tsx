@@ -6,101 +6,68 @@
  *
  *  #16  Teresa PROAKTYWNIE proponuje notatkę z rozmowy — karta propozycji
  *       („Zapisałam kluczowe ustalenia jako notatkę", approve/reject/execute).
- *       Nieautonomiczne (D4): Teresa PROPONUJE, człowiek zatwierdza.
+ *       Nieautonomiczne (D4): Teresa PROPONUJE, człowiek zatwierdza. (mock)
  *  #21  Sekretarz „zapamiętaj / przypomnij mi …" → notatka z TERMINEM.
- *       Karta propozycji pokazuje linię „Przypomnienie: jutro · 14.07.2026",
- *       a gotowa notatka po lewej ma chip przypomnienia (dzwonek + termin).
- *  #23  Współobecność (presence P/T/O) — awatary osób oglądających notatkę
- *       (mock wzorowany na table CollaborationPresence, paleta c-tag-*).
+ *       Gotowa notatka po lewej ma chip przypomnienia — renderowany PRAWDZIWYM
+ *       komponentem <NotebookReminderChip/> czytającym capture_metadata.reminder.
+ *  #23  Współobecność — awatary osób oglądających notatkę renderowane PRAWDZIWYM
+ *       komponentem <NotebookPresenceStack/> (ten sam, którego używa żywy notatnik;
+ *       tu zasilony mockowaną rostrą zamiast żywym /ws/notebook/:noteId).
  *
- * TREŚĆ mockowana (realne panele ciągną store/API/logowanie), ale POWŁOKA i
- * tokeny c-* (light+dark), focus=c-focus, ZERO crimson — 1:1 z kanonem.
- * Backend #21 (teresaReminderExtraction + handleNotebookHandoff→createNote) jest
- * realny; ta story odwzorowuje jego efekt wizualny do odbioru Piotra.
+ * Różnica vs poprzednia wersja: chip i presence NIE są już lokalnymi atrapami —
+ * to REALNE komponenty produkcyjne, więc zrzut dowodzi żywego renderu, nie makiety.
+ * Panele Teresy (#16) pozostają ilustracją (ciągną store/API/logowanie).
  */
-import {
-  Bell,
-  Check,
-  FileText,
-  Link2,
-  Play,
-  Sparkles,
-  UserRound,
-  X,
-} from 'lucide-react';
+import { Check, FileText, Link2, Play, Sparkles, UserRound, X } from 'lucide-react';
 import React from 'react';
 
-// ── presence: awatary współobecnych (mock #23) ─────────────────────────────
-type Presence = { initials: string; name: string; tag: number };
+import { NotebookPresenceStack } from '../../src/components/MyWork/notebook/NotebookPresenceStack';
+import { NotebookReminderChip } from '../../src/components/MyWork/notebook/NotebookReminderChip';
 
-function PresenceStack({ users, isPl }: { users: Presence[]; isPl: boolean }): React.ReactElement {
-  return (
-    <div
-      className="flex items-center gap-2"
-      aria-label={isPl ? 'Osoby oglądające notatkę' : 'People viewing the note'}
-    >
-      <div className="flex -space-x-2">
-        {users.map((u) => (
-          <span
-            key={u.initials}
-            title={u.name}
-            className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-c-surface text-[10px] font-semibold text-white"
-            style={{ background: `var(--c-tag-${u.tag})` }}
-          >
-            {u.initials}
-          </span>
-        ))}
-      </div>
-      <span className="text-[11px] text-c-text-muted">
-        {isPl ? `${users.length} osoby tu teraz` : `${users.length} viewing now`}
-      </span>
-    </div>
-  );
-}
+// Mock roster zasilająca PRAWDZIWY <NotebookPresenceStack/> (w produkcji przychodzi
+// z /ws/notebook/:noteId przez useNotebookPresence). Kolory = paleta c-tag-* → hex.
+const SELF_ID = 'u-self';
+const PRESENCE_USERS = [
+  { userId: 'u-piotr', name: 'Piotr Wiśniewski', color: '#3b8ea5' },
+  { userId: 'u-teresa', name: 'Teresa Asystent', color: '#ae6429' },
+  { userId: 'u-maria', name: 'Maria Kowalska', color: '#10b981' },
+];
 
-// ── reminder chip (#21) ────────────────────────────────────────────────────
-function ReminderChip({ label }: { label: string }): React.ReactElement {
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full border border-c-warning px-2.5 py-1 text-[12px] font-medium text-c-warning"
-      style={{ background: 'rgba(var(--c-warning-rgb), 0.10)' }}
-    >
-      <Bell size={13} strokeWidth={2} />
-      {label}
-    </span>
-  );
-}
+// Mock capture_metadata zasilające PRAWDZIWY <NotebookReminderChip/>.
+const REMINDER_METADATA = {
+  reminder: { dueAt: '2026-07-14T09:00:00', term: 'jutro', status: 'pending' },
+};
 
 // ── LEWA: Notatnik = artefakt „centrum myśli" ──────────────────────────────
 function NotebookArtifactMock({ isPl }: { isPl: boolean }): React.ReactElement {
-  const presence: Presence[] = [
-    { initials: 'PW', name: 'Piotr W. (właściciel)', tag: 1 },
-    { initials: 'T', name: 'Teresa (asystent)', tag: 4 },
-    { initials: 'MK', name: 'Maria K.', tag: 6 },
-  ];
   return (
     <div className="flex h-full flex-col bg-c-surface">
-      {/* pasek artefaktu + presence */}
+      {/* pasek artefaktu + presence (#23, prawdziwy komponent) */}
       <div className="flex h-[42px] items-center gap-2 border-b border-c-border-subtle bg-c-surface/50 px-4 backdrop-blur-sm">
         <FileText size={15} className="text-c-text-muted" />
         <span className="truncate text-sm font-semibold text-c-text">
           {isPl ? 'Ustalenia z rozmowy — wejście na rynek DE' : 'Chat findings — DE market entry'}
         </span>
         <div className="ml-auto">
-          <PresenceStack users={presence} isPl={isPl} />
+          <NotebookPresenceStack
+            users={PRESENCE_USERS}
+            localUserId={SELF_ID}
+            connectionStatus="connected"
+            isPolish={isPl}
+          />
         </div>
       </div>
 
       {/* treść notatki */}
       <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
         <div className="mx-auto max-w-[560px]">
-          {/* meta: proweniencja + reminder */}
+          {/* meta: proweniencja (#16) + reminder (#21, prawdziwy komponent) */}
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-[12px] text-c-text-muted">
               <Sparkles size={13} className="text-c-info" />
               {isPl ? 'Utworzone przez Teresę z rozmowy' : 'Created by Teresa from chat'}
             </span>
-            <ReminderChip label={isPl ? 'Przypomnienie: jutro · 14.07 · 09:00' : 'Reminder: tomorrow · Jul 14 · 09:00'} />
+            <NotebookReminderChip captureMetadata={REMINDER_METADATA} isPolish={isPl} />
           </div>
 
           <h1 className="mb-3 text-xl font-bold text-c-text">
@@ -162,11 +129,10 @@ function ProposalCard({
     <div className="rounded-2xl border border-c-border bg-c-surface-raised p-3 shadow-sm">
       <div className="mb-2 flex items-center gap-2">
         <span
-          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold text-c-warning"
           style={{
-            borderColor: 'rgba(var(--c-warning-rgb), 0.35)',
-            background: 'rgba(var(--c-warning-rgb), 0.10)',
-            color: 'var(--c-warning)',
+            borderColor: 'color-mix(in srgb, var(--c-warning) 35%, transparent)',
+            background: 'color-mix(in srgb, var(--c-warning) 10%, transparent)',
           }}
         >
           <Sparkles size={11} />
