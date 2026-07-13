@@ -121,6 +121,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
+import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import {
   buildReportMarkdown,
@@ -1888,6 +1889,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Tab configuration
   const tabs = useMemo(
     () => [
+      // #77 / Z94 — Kokpit menedżera „pełna wizja McKinsey" (za flagą OFF do akceptu).
+      ...(summaryOneLookEnabled
+        ? [
+            {
+              id: 'summary' as ModuleTab,
+              label: t('execution.tabs.summary', 'Kokpit'),
+              icon: <LayoutDashboard size={16} />,
+            },
+          ]
+        : []),
       {
         id: 'list' as ModuleTab,
         label: t('execution.tabs.execution', 'Portfolio'),
@@ -1915,7 +1926,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         count: (stats.blocked ?? 0) + (actionQueueItems?.length ?? 0),
       },
     ],
-    [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions, actionQueueItems]
+    [
+      t,
+      filteredInitiatives.length,
+      stats.blocked,
+      tasks.length,
+      decisions,
+      actionQueueItems,
+      summaryOneLookEnabled,
+    ]
   );
 
   // Handle inline status change from table/grid
@@ -3268,6 +3287,138 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       dueSoonTasks,
     };
   }, [dashboardBaseInitiatives, decisions, tasks]);
+
+  // ── #77 / Z94 — Kokpit menedżera „pełna wizja McKinsey" (Summary one-look).
+  // Bezstanowe props mapowane 1:1 z istniejących źródeł (execSnapshot / portfolio
+  // Metrics / actionCenter / capacityAlerts) — ZERO nowego backendu, zero
+  // zmyślonych liczb (integrity: brak danych → null/empty-state w widoku).
+  const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+  const summaryOneLookProps = useMemo(() => {
+    const wsItems = execSnapshot?.workstreams?.items ?? [];
+    const wsOnTrack = wsItems.reduce((s, w) => s + (w.onTrackCount || 0), 0);
+    const wsAtRisk = wsItems.reduce((s, w) => s + (w.atRiskCount || 0), 0);
+    const wsDelayed = wsItems.reduce((s, w) => s + (w.delayedCount || 0), 0);
+    const wsTotal = wsOnTrack + wsAtRisk + wsDelayed;
+
+    // On-time %: preferuj workstreamy (silnik), inaczej portfolioMetrics.
+    const totalInit = wsTotal || dashboardBaseInitiatives.length;
+    const onTrack = wsTotal ? wsOnTrack : portfolioMetrics.onTrackCount;
+    const delayed = wsTotal ? wsDelayed : portfolioMetrics.blockedCount;
+    const atRisk = wsTotal ? wsAtRisk : Math.max(totalInit - onTrack - delayed, 0);
+    const onTimePercent =
+      totalInit > 0 ? Math.round((onTrack / totalInit) * 100) : null;
+
+    // Obłożenie: brak twardego silnika utilization → utilizationPercent=null
+    // (empty-state). Przeciążenia z capacityAlerts, headcount z unikalnych
+    // wykonawców zadań, unassigned z workstreamów.
+    const criticalCapacity = capacityAlerts.filter((a) => a.severity === 'critical').length;
+    const headcount = new Set(
+      tasks.map((tk) => (tk as any).assigneeId || (tk as any).assignee_id).filter(Boolean)
+    ).size;
+
+    const roi = execSnapshot?.roi?.summary ?? null;
+
+    const risks = (execSnapshot?.risks?.topRisks ?? []).slice(0, 3).map((r) => ({
+      id: r.id,
+      title: r.title,
+      probability: r.probability,
+      impact: r.impact,
+      score: r.score,
+      ownerName: null,
+      dueDate: r.dueDate,
+      mitigationStatus: r.mitigationStatus,
+    }));
+
+    const ageDays = (iso?: string | null): number | null => {
+      if (!iso) return null;
+      const d = new Date(iso).getTime();
+      if (Number.isNaN(d)) return null;
+      return Math.max(0, Math.round((Date.now() - d) / 86_400_000));
+    };
+
+    const blockerDecisions = actionCenter.blocked.map((i) => ({
+      id: `blk:${i.id}`,
+      title: i.name || 'Blocked initiative',
+      kind: 'blocker' as const,
+      ownerName: (i as any).ownerName ?? null,
+      ageDays: null,
+      context: t('execution.summary.blockedInitiative', 'Zablokowana inicjatywa'),
+    }));
+    const overdueDecisionItems = actionCenter.overdueDecisions.map((d) => ({
+      id: `dec:${d.id}`,
+      title: (d as any).title || (d as any).name || 'Decision',
+      kind: 'overdue' as const,
+      ownerName: (d as any).ownerName ?? null,
+      ageDays: ageDays((d as any).dueDate),
+      context: null,
+    }));
+    const pendingDecisionItems = decisions
+      .filter(
+        (d) => String(d.status).toUpperCase() === 'PENDING' && !isPastDue((d as any).dueDate)
+      )
+      .slice(0, 6)
+      .map((d) => ({
+        id: `pend:${d.id}`,
+        title: (d as any).title || (d as any).name || 'Decision',
+        kind: 'decision' as const,
+        ownerName: (d as any).ownerName ?? null,
+        ageDays: ageDays((d as any).createdAt),
+        context: null,
+      }));
+
+    const milestones = (execSnapshot?.overview?.nextMilestones ?? []).map((m) => ({
+      id: m.id,
+      initiativeName: m.initiativeName,
+      name: m.name,
+      targetDate: m.targetDate,
+      status: m.status,
+    }));
+
+    return {
+      health: {
+        healthScore: portfolioMetrics.healthScore ?? null,
+        progressPercent:
+          execSnapshot?.overview?.progressPercent ?? portfolioMetrics.avgProgress ?? null,
+        phaseLabel: execSnapshot?.overview?.phaseLabel ?? null,
+      },
+      onTime: {
+        onTimePercent,
+        onTrackCount: onTrack,
+        atRiskCount: atRisk,
+        delayedCount: delayed,
+        totalInitiatives: totalInit,
+      },
+      value: roi
+        ? {
+            totalProjected: roi.totalProjected,
+            totalRealized: roi.totalRealized,
+            totalVariance: roi.totalVariance,
+            coveragePercent: roi.coveragePercent,
+            initiativeCount: roi.initiativeCount,
+          }
+        : null,
+      people: {
+        utilizationPercent: null,
+        overallocatedCount: criticalCapacity,
+        underutilizedCount: 0,
+        unassignedInitiatives: execSnapshot?.workstreams?.unassignedInitiatives ?? 0,
+        headcount,
+      },
+      topRisks: risks,
+      decisions: [...blockerDecisions, ...overdueDecisionItems, ...pendingDecisionItems],
+      milestones,
+      generatedAt: execSnapshot?.generatedAt ?? null,
+    };
+  }, [
+    execSnapshot,
+    portfolioMetrics,
+    actionCenter,
+    capacityAlerts,
+    decisions,
+    tasks,
+    dashboardBaseInitiatives,
+    t,
+  ]);
 
   const activeExecutionInitiativeIds = useMemo(() => {
     return new Set(
@@ -5340,6 +5491,26 @@ Please return:
 
     if (isLoading) {
       return <HubWorkAreaLoading />;
+    }
+
+    if (summaryOneLookEnabled && activeTab === ('summary' as ModuleTab)) {
+      return (
+        <ExecutionSummaryOneLook
+          health={summaryOneLookProps.health}
+          onTime={summaryOneLookProps.onTime}
+          value={summaryOneLookProps.value}
+          people={summaryOneLookProps.people}
+          topRisks={summaryOneLookProps.topRisks}
+          decisions={summaryOneLookProps.decisions}
+          milestones={summaryOneLookProps.milestones}
+          currency="PLN"
+          isPolish={isPolish}
+          generatedAt={summaryOneLookProps.generatedAt}
+          onOpenEntity={(type, id) => {
+            if (handleOpenSidePanel) handleOpenSidePanel({ id, name: id } as any);
+          }}
+        />
+      );
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {

@@ -37,6 +37,14 @@ const FLAGS = {
     localStorage: 'ff.exec_benefits',
     env: 'VITE_EXEC_BENEFITS_ENABLED',
   },
+  // #77 / Z94 — Kokpit menedżera „pełna wizja McKinsey" (Summary one-look).
+  // Nowa zakładka jednego spojrzenia (on-time / wartość vs plan / obłożenie /
+  // TOP ryzyka / decyzje-do-podjęcia). Default OFF do akceptu Piotra (reguła #7).
+  summaryOneLook: {
+    query: 'ff_summaryOneLook',
+    localStorage: 'ff.exec_summary_onelook',
+    env: 'VITE_EXEC_SUMMARY_ONELOOK_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
