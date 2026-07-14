@@ -85,7 +85,10 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
         setValues(initial);
       })
       .catch((e) => {
-        if (!cancelled) setError(e.message || t('ideas.table.publicForm.failedToLoadForm', 'Failed to load form'));
+        if (!cancelled)
+          setError(
+            e.message || t('ideas.table.publicForm.failedToLoadForm', 'Failed to load form')
+          );
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -506,9 +509,13 @@ function validateFieldType(fieldType: string, value: unknown, label: string): st
     case 'currency':
     case 'percent':
       if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
-        return i18n.t('ideas.table.publicForm.mustBeValidNumber', '{{label}} must be a valid number', {
-          label,
-        });
+        return i18n.t(
+          'ideas.table.publicForm.mustBeValidNumber',
+          '{{label}} must be a valid number',
+          {
+            label,
+          }
+        );
       }
       break;
 
