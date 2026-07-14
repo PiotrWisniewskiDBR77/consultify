@@ -336,7 +336,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
             <div className="flex-1 relative">
               <input
                 type="file"
-                accept=".pdf,.txt,.md"
+                accept=".pdf,.txt,.md,.csv,.docx,.xlsx,.xls,.pptx"
                 onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               />
@@ -347,7 +347,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'sup
                   </span>
                 ) : (
                   <span className="text-slate-500 dark:text-slate-400 text-sm">
-                    Drag & drop PDF, TXT, MD here or click to select
+                    Drag & drop PDF, DOCX, XLSX, PPTX, TXT, MD, CSV here or click to select
                   </span>
                 )}
               </div>
