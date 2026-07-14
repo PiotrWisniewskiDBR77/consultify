@@ -104,3 +104,31 @@ CREATE INDEX IF NOT EXISTS idx_v8_transitions_run
   ON v8_run_state_transitions(run_id);
 CREATE INDEX IF NOT EXISTS idx_v8_transitions_time
   ON v8_run_state_transitions(transitioned_at);
+
+-- ==========================================
+-- 4. FRESH-DB PARITY catch-up (2026-07-14)
+-- ==========================================
+-- 20260323_v8_chat_execution.sql sorts BEFORE this file, so on a fresh replay its
+-- FK constraints could not be created inline (referenced tables did not exist yet).
+-- Re-add them here idempotently (same default constraint names). No-op on DBs where
+-- the constraints already exist (staging/prod).
+DO $$ BEGIN
+  IF to_regclass('public.v8_chat_execution_handoffs') IS NOT NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'v8_chat_execution_handoffs_context_snapshot_id_fkey') THEN
+      ALTER TABLE v8_chat_execution_handoffs
+        ADD CONSTRAINT v8_chat_execution_handoffs_context_snapshot_id_fkey
+        FOREIGN KEY (context_snapshot_id) REFERENCES v8_context_snapshots(snapshot_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'v8_chat_execution_handoffs_execution_run_id_fkey') THEN
+      ALTER TABLE v8_chat_execution_handoffs
+        ADD CONSTRAINT v8_chat_execution_handoffs_execution_run_id_fkey
+        FOREIGN KEY (execution_run_id) REFERENCES v8_execution_runs(run_id);
+    END IF;
+  END IF;
+  IF to_regclass('public.v8_chat_action_proposals') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'v8_chat_action_proposals_underlying_proposal_id_fkey') THEN
+    ALTER TABLE v8_chat_action_proposals
+      ADD CONSTRAINT v8_chat_action_proposals_underlying_proposal_id_fkey
+      FOREIGN KEY (underlying_proposal_id) REFERENCES v8_action_proposals(proposal_id);
+  END IF;
+END $$;
