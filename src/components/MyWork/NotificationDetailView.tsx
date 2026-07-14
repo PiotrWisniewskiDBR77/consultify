@@ -375,12 +375,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
         loadSourceEntity();
       } else {
-        toast.error(isPolish ? 'Nie znaleziono powiadomienia' : 'Notification not found');
+        toast.error(t('myWork.notificationDetail.toastError', 'Notification not found'));
       }
     } catch (error) {
       console.error('Failed to load notification', error);
       toast.error(
-        isPolish ? 'Nie udało się załadować powiadomienia' : 'Failed to load notification'
+        t('myWork.notificationDetail.failedToLoadNotification', 'Failed to load notification')
       );
     } finally {
       setLoading(false);
@@ -445,12 +445,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     setActionChecklist([
       {
         id: '1',
-        text: isPolish ? 'Przejrzyj powiadomienie' : 'Review notification',
+        text: t('myWork.notificationDetail.text', 'Review notification'),
         completed: false,
       },
       {
         id: '2',
-        text: isPolish ? 'Podejmij odpowiednią akcję' : 'Take appropriate action',
+        text: t('myWork.notificationDetail.text2', 'Take appropriate action'),
         completed: false,
       },
     ]);
@@ -478,11 +478,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         setLastSavedWorksheetSnapshot(worksheetSnapshot);
         setLastWorksheetSavedAt(new Date().toISOString());
         if (!silent) {
-          toast.success(isPolish ? 'Zapisano' : 'Saved');
+          toast.success(t('myWork.notificationDetail.toastSuccess', 'Saved'));
         }
       } catch (e: any) {
         if (!silent) {
-          toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+          toast.error(t('myWork.notificationDetail.toastError2', 'Failed to save'));
         }
       } finally {
         setWorksheetSaving(false);
@@ -577,20 +577,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const handleDelete = async () => {
     if (
       !confirm(
-        isPolish
-          ? 'Czy na pewno chcesz usunąć to powiadomienie?'
-          : 'Are you sure you want to delete this notification?'
+        t('myWork.notificationDetail.areYouSureYou', 'Are you sure you want to delete this notification?')
       )
     )
       return;
     try {
       await Api.deleteNotification(notificationId);
-      toast.success(isPolish ? 'Powiadomienie usunięte' : 'Notification deleted');
+      toast.success(t('myWork.notificationDetail.toastSuccess2', 'Notification deleted'));
       onClose();
     } catch (error) {
       console.error('Failed to delete notification', error);
       toast.error(
-        isPolish ? 'Nie udało się usunąć powiadomienia' : 'Failed to delete notification'
+        t('myWork.notificationDetail.failedToDeleteNotification', 'Failed to delete notification')
       );
     }
   };
@@ -598,11 +596,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const handleMuteThis = async () => {
     try {
       await Api.dismissNotification(notificationId);
-      toast.success(isPolish ? 'Wyciszono powiadomienie' : 'Notification muted');
+      toast.success(t('myWork.notificationDetail.toastSuccess3', 'Notification muted'));
       onClose();
     } catch (error) {
       console.error('Failed to dismiss notification', error);
-      toast.error(isPolish ? 'Nie udało się wyciszyć' : 'Failed to mute');
+      toast.error(t('myWork.notificationDetail.toastError3', 'Failed to mute'));
     }
   };
 
@@ -620,7 +618,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       onClose();
     } catch (error) {
       console.error('Failed to mute type', error);
-      toast.error(isPolish ? 'Nie udało się wyciszyć typu' : 'Failed to mute type');
+      toast.error(t('myWork.notificationDetail.toastError4', 'Failed to mute type'));
     }
   };
 
@@ -636,10 +634,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         tags: ['from-notification'],
         status: 'inbox',
       });
-      toast.success(isPolish ? 'Zapisano jako notatkę' : 'Saved as note');
+      toast.success(t('myWork.notificationDetail.toastSuccess4', 'Saved as note'));
     } catch (error) {
       console.error('Failed to save as note', error);
-      toast.error(isPolish ? 'Nie udało się zapisać jako notatkę' : 'Failed to save as note');
+      toast.error(t('myWork.notificationDetail.toastError5', 'Failed to save as note'));
     } finally {
       setSavingAsNote(false);
     }
@@ -650,10 +648,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     try {
       await Api.markNotificationRead(notificationId);
       setNotification({ ...notification, isRead: true, readAt: new Date().toISOString() });
-      toast.success(isPolish ? 'Oznaczono jako przeczytane' : 'Marked as read');
+      toast.success(t('myWork.notificationDetail.toastSuccess5', 'Marked as read'));
     } catch (error) {
       console.error('Failed to mark as read', error);
-      toast.error(isPolish ? 'Nie udało się oznaczyć jako przeczytane' : 'Failed to mark as read');
+      toast.error(t('myWork.notificationDetail.toastError6', 'Failed to mark as read'));
     }
   };
 
@@ -675,7 +673,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       projectId: notification.projectId || null,
       projectName: notification.projectName || null,
     });
-    toast.success(isPolish ? 'Otwarto czat' : 'Chat opened');
+    toast.success(t('myWork.notificationDetail.toastSuccess6', 'Chat opened'));
   };
 
   const handleAskAI = () => {
@@ -783,9 +781,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         const aiRes = await Api.post('/ai/chat', {
           message: prompt,
           history: [],
-          systemInstruction: isPolish
-            ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON. Bez komentarzy, bez markdown. Pisz kontekstowo — nie generycznie.'
-            : 'You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.',
+          systemInstruction: t('myWork.notificationDetail.systemInstruction', 'You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.'),
           roleName: 'Notification Context Builder',
         });
 
@@ -822,16 +818,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         if (!silent) {
           setActiveNSection('whats-happening');
           toast.success(
-            isPolish ? 'AI wypełniło kontekst powiadomienia' : 'AI filled notification context'
+            t('myWork.notificationDetail.aIFilledNotificationContext', 'AI filled notification context')
           );
         }
       } catch (err) {
         console.error('[NotificationDetailView] Analyze with AI failed:', err);
         if (!silent) {
           toast.error(
-            isPolish
-              ? 'Nie udało się wypełnić kontekstu przez AI'
-              : 'Failed to fill context with AI'
+            t('myWork.notificationDetail.failedToFillContext', 'Failed to fill context with AI')
           );
         }
       } finally {
@@ -861,10 +855,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       setCommentsCount((prev) => prev + 1);
       setNewCommentText('');
       commentInputRef.current?.focus();
-      toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
+      toast.success(t('myWork.notificationDetail.toastSuccess7', 'Comment added'));
     } catch (error) {
       console.error('Failed to add comment', error);
-      toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      toast.error(t('myWork.notificationDetail.toastError7', 'Failed to add comment'));
     } finally {
       setSubmittingComment(false);
     }
@@ -872,15 +866,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   const handleDeleteComment = useCallback(
     async (commentId: string) => {
-      if (!confirm(isPolish ? 'Usunąć ten komentarz?' : 'Delete this comment?')) return;
+      if (!confirm(t('myWork.notificationDetail.confirm', 'Delete this comment?'))) return;
       try {
         await Api.deleteNotificationComment(notificationId, commentId);
         setComments((prev) => prev.filter((c) => c.id !== commentId));
         setCommentsCount((prev) => Math.max(0, prev - 1));
-        toast.success(isPolish ? 'Komentarz usunięty' : 'Comment deleted');
+        toast.success(t('myWork.notificationDetail.toastSuccess8', 'Comment deleted'));
       } catch (error) {
         console.error('Failed to delete comment', error);
-        toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+        toast.error(t('myWork.notificationDetail.toastError8', 'Failed to delete comment'));
       }
     },
     [notificationId, isPolish]
@@ -902,7 +896,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         );
       } catch (error) {
         console.error('Failed to snooze', error);
-        toast.error(isPolish ? 'Nie udało się odłożyć' : 'Failed to snooze');
+        toast.error(t('myWork.notificationDetail.toastError9', 'Failed to snooze'));
       }
     },
     [notificationId, isPolish]
@@ -969,12 +963,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return isPolish ? 'Przed chwilą' : 'Just now';
+    if (diffMins < 1) return t('myWork.notificationDetail.justNow', 'Just now');
     if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
     if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
     if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
 
-    return date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+    return date.toLocaleDateString(t('myWork.notificationDetail.dateToLocaleDateString', 'en-US'), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -1054,56 +1048,38 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         ? `To opóźnienie${daysOverdue > 0 ? ` (${daysOverdue} dni)` : ''} może wpłynąć na powiązane zadania${blockingCount > 0 ? ` i blokuje ${blockingCount} innych zadań` : ''}.`
         : `This delay${daysOverdue > 0 ? ` (${daysOverdue} days)` : ''} may impact related tasks${blockingCount > 0 ? ` and blocks ${blockingCount} other task(s)` : ''}.`;
     } else if (type.includes('BLOCKED')) {
-      impact = isPolish
-        ? 'Zablokowane zadanie wstrzymuje postęp w projekcie.'
-        : 'Blocked task is halting project progress.';
+      impact = t('myWork.notificationDetail.blockedTaskIsHalting', 'Blocked task is halting project progress.');
     } else if (type.includes('DECISION')) {
       const deadlineDays = Number(data.deadline_days || 0);
       impact = isPolish
         ? `Decyzja jest wymagana${deadlineDays > 0 ? ` w ciągu ${deadlineDays} dni` : ''} do kontynuowania prac.`
         : `Decision is required${deadlineDays > 0 ? ` within ${deadlineDays} days` : ''} to continue work.`;
     } else if (type.includes('AI_RISK')) {
-      impact = isPolish
-        ? 'AI wykryło potencjalne ryzyko wymagające uwagi.'
-        : 'AI detected a potential risk that requires attention.';
+      impact = t('myWork.notificationDetail.aIDetectedAPotential', 'AI detected a potential risk that requires attention.');
     } else if (type.includes('AI_RECOMMENDATION')) {
       const savings = data.savings_annual as string;
       impact = savings
         ? isPolish
           ? `AI zidentyfikowało potencjalne oszczędności: ${savings}/rok.`
           : `AI identified potential savings of ${savings}/year.`
-        : isPolish
-          ? 'AI ma rekomendację optymalizacji.'
-          : 'AI has an optimization recommendation.';
+        : t('myWork.notificationDetail.aIHasAnOptimization', 'AI has an optimization recommendation.');
     } else {
-      impact = isPolish
-        ? 'To powiadomienie wymaga Twojej uwagi.'
-        : 'This notification requires your attention.';
+      impact = t('myWork.notificationDetail.thisNotificationRequiresYour', 'This notification requires your attention.');
     }
 
     let recommendation: string;
     if (enrichedRecommendation) {
       recommendation = enrichedRecommendation;
     } else if (type.includes('OVERDUE')) {
-      recommendation = isPolish
-        ? 'Zalecane: Natychmiast zaktualizuj status lub deleguj zadanie.'
-        : 'Recommended: Immediately update status or delegate the task.';
+      recommendation = t('myWork.notificationDetail.recommendedImmediatelyUpdateStatus', 'Recommended: Immediately update status or delegate the task.');
     } else if (type.includes('BLOCKED')) {
-      recommendation = isPolish
-        ? 'Zalecane: Rozwiąż blokadę lub eskaluj do przełożonego.'
-        : 'Recommended: Resolve blocker or escalate to manager.';
+      recommendation = t('myWork.notificationDetail.recommendedResolveBlockerOr', 'Recommended: Resolve blocker or escalate to manager.');
     } else if (type.includes('DECISION')) {
-      recommendation = isPolish
-        ? 'Zalecane: Przeanalizuj opcje i podejmij decyzję.'
-        : 'Recommended: Analyze options and make a decision.';
+      recommendation = t('myWork.notificationDetail.recommendedAnalyzeOptionsAnd', 'Recommended: Analyze options and make a decision.');
     } else if (type.includes('AI')) {
-      recommendation = isPolish
-        ? 'Zalecane: Przejrzyj rekomendację AI i zdecyduj.'
-        : 'Recommended: Review AI recommendation and decide.';
+      recommendation = t('myWork.notificationDetail.recommendedReviewAIRecommendation', 'Recommended: Review AI recommendation and decide.');
     } else {
-      recommendation = isPolish
-        ? 'Zalecane: Przejrzyj i podejmij odpowiednią akcję.'
-        : 'Recommended: Review and take appropriate action.';
+      recommendation = t('myWork.notificationDetail.recommendedReviewAndTake', 'Recommended: Review and take appropriate action.');
     }
 
     const priLabel = priorityMap[computedPriority] || priorityMap.MEDIUM;
@@ -1345,7 +1321,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           if (notification.projectName && notification.projectId) {
             relatedNotifItems.push({
               id: notification.projectId,
-              type: isPolish ? 'Projekt' : 'Project',
+              type: t('myWork.notificationDetail.type', 'Project'),
               title: notification.projectName,
             });
           }
@@ -1353,7 +1329,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           if (contract.contextLine) {
             relatedNotifItems.push({
               id: '_ctx',
-              type: isPolish ? 'Kontekst' : 'Context',
+              type: t('myWork.notificationDetail.type2', 'Context'),
               title: contract.contextLine,
             });
           }
@@ -1381,7 +1357,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             ? 'AI'
             : isSystemCreated
               ? 'System'
-              : notification.data?.createdByName || (isPolish ? 'Użytkownik' : 'User');
+              : notification.data?.createdByName || (t('myWork.notificationDetail.user', 'User'));
           const CreatorIcon = isAICreated ? Bot : isSystemCreated ? Monitor : Users;
           const creatorColor = isAICreated
             ? 'text-primary-500 bg-primary-500/10 border-primary-400/40'
@@ -1403,12 +1379,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                    {isPolish ? 'Co się dzieje' : "What's Happening"}
+                    {t('myWork.notificationDetail.whatSHappening', 'What\'s Happening')}
                   </h2>
                   {isAnalyzingWorksheet && (
                     <span className="inline-flex items-center gap-1.5 text-[11px] text-primary-500 dark:text-primary-400 animate-pulse">
                       <Loader2 size={12} className="animate-spin" />
-                      {isPolish ? 'AI analizuje...' : 'AI analyzing...'}
+                      {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
                     </span>
                   )}
                 </div>
@@ -1432,13 +1408,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* 1) Related to — source entity, project, context (clickable) */}
               <div className="space-y-2">
                 <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                  {isPolish ? 'Wynika z' : 'Related to'}
+                  {t('myWork.notificationDetail.relatedTo', 'Related to')}
                 </label>
                 {relatedNotifItems.length === 0 ? (
                   <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
-                    {isPolish
-                      ? 'Brak powiązania — powiadomienie systemowe'
-                      : 'No linked source — system notification'}
+                    {t('myWork.notificationDetail.noLinkedSourceSystem', 'No linked source — system notification')}
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -1473,9 +1447,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigator.clipboard.writeText(item.id);
-                                toast.success(isPolish ? 'Skopiowano ID' : 'ID copied');
+                                toast.success(t('myWork.notificationDetail.toastSuccess9', 'ID copied'));
                               }}
-                              title={isPolish ? 'Kopiuj ID' : 'Copy ID'}
+                              title={t('myWork.notificationDetail.title', 'Copy ID')}
                             >
                               {String(item.id).length > 24
                                 ? `${String(item.id).slice(0, 24)}...`
@@ -1497,11 +1471,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Opis' : 'Description'}
+                    {t('myWork.notificationDetail.description', 'Description')}
                   </label>
                   <AIFieldEnhancer
                     fieldKey="notif-description"
-                    sectionLabel={isPolish ? 'Opis' : 'Description'}
+                    sectionLabel={t('myWork.notificationDetail.sectionLabel', 'Description')}
                     currentValue={descriptionDraft}
                     onApply={setDescriptionDraft}
                     artifactContext={{
@@ -1519,9 +1493,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   rows={3}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[48px]"
                   placeholder={
-                    isPolish
-                      ? 'Opis powiadomienia — co się wydarzyło...'
-                      : 'What happened — describe the notification event...'
+                    t('myWork.notificationDetail.whatHappenedDescribeThe', 'What happened — describe the notification event...')
                   }
                 />
               </div>
@@ -1530,11 +1502,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Dlaczego to ważne' : 'Why it matters'}
+                    {t('myWork.notificationDetail.whyItMatters', 'Why it matters')}
                   </label>
                   <AIFieldEnhancer
                     fieldKey="notif-why-important"
-                    sectionLabel={isPolish ? 'Dlaczego to ważne' : 'Why It Matters'}
+                    sectionLabel={t('myWork.notificationDetail.sectionLabel2', 'Why It Matters')}
                     currentValue={whyImportantDraft}
                     onApply={setWhyImportantDraft}
                     artifactContext={{
@@ -1552,9 +1524,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   rows={2}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
                   placeholder={
-                    isPolish
-                      ? 'Wyjaśnij wpływ i konsekwencje...'
-                      : 'Explain the impact and consequences...'
+                    t('myWork.notificationDetail.explainTheImpactAnd', 'Explain the impact and consequences...')
                   }
                 />
               </div>
@@ -1563,7 +1533,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {blockedDraft.trim() && (
                 <div className="space-y-1.5">
                   <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Co jest blokowane' : 'What is blocked'}
+                    {t('myWork.notificationDetail.whatIsBlocked', 'What is blocked')}
                   </label>
                   <textarea
                     value={blockedDraft}
@@ -1571,9 +1541,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     rows={2}
                     className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
                     placeholder={
-                      isPolish
-                        ? 'Co jest blokowane przez ten problem...'
-                        : 'What is blocked by this issue...'
+                      t('myWork.notificationDetail.whatIsBlockedBy', 'What is blocked by this issue...')
                     }
                   />
                 </div>
@@ -1599,14 +1567,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Analiza AI' : 'AI Analysis'}
+                  {t('myWork.notificationDetail.aIAnalysis', 'AI Analysis')}
                 </h2>
                 <button
                   onClick={handleAskAI}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                 >
                   <Sparkles size={13} />
-                  {isPolish ? 'Zapytaj AI' : 'Ask AI'}
+                  {t('myWork.notificationDetail.askAI', 'Ask AI')}
                 </button>
               </div>
 
@@ -1625,11 +1593,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               : 'bg-slate-500/10 text-slate-500'
                       }`}
                     >
-                      {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
+                      {t('myWork.notificationDetail.priority', 'Priority')}: {aiAnalysis.priority}
                     </span>
                     {aiAnalysis.confidence && (
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
-                        {isPolish ? 'Pewność' : 'Confidence'}: {aiAnalysis.confidence}
+                        {t('myWork.notificationDetail.confidence', 'Confidence')}: {aiAnalysis.confidence}
                       </span>
                     )}
                     {aiAnalysis.aiGenerated && (
@@ -1642,7 +1610,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   {/* Impact */}
                   <div className="space-y-2">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                      {isPolish ? 'Wpływ' : 'Impact'}
+                      {t('myWork.notificationDetail.impact', 'Impact')}
                     </label>
                     <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                       {aiAnalysis.impact}
@@ -1652,7 +1620,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   {/* Recommendation callout */}
                   <div className="space-y-2">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                      {isPolish ? 'Rekomendacja' : 'Recommendation'}
+                      {t('myWork.notificationDetail.recommendation', 'Recommendation')}
                     </label>
                     <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-500/10 border border-primary-200/40 dark:border-primary-500/20">
                       <div className="flex items-start gap-2">
@@ -1670,7 +1638,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors text-sm font-medium"
                   >
                     <MessageSquare size={14} />
-                    {isPolish ? 'Zapytaj AI o więcej szczegółów' : 'Ask AI for more details'}
+                    {t('myWork.notificationDetail.askAIForMore', 'Ask AI for more details')}
                   </button>
                 </>
               )}
@@ -1682,7 +1650,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Brak danych do analizy' : 'No data for analysis'}
+                    {t('myWork.notificationDetail.noDataForAnalysis', 'No data for analysis')}
                   </p>
                 </div>
               )}
@@ -1700,14 +1668,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             <div className="space-y-6">
               {/* Section title */}
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                {isPolish ? 'Oczekiwana akcja' : 'Expected Action'}
+                {t('myWork.notificationDetail.expectedAction', 'Expected Action')}
               </h2>
 
               {/* Expected action text — label + AI right-aligned */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Co należy zrobić' : 'What needs to be done'}
+                    {t('myWork.notificationDetail.whatNeedsToBe', 'What needs to be done')}
                   </label>
                   <AIFieldEnhancer
                     fieldKey="notification-expected-action"
@@ -1729,7 +1697,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   onChange={(e) => setExpectedActionDraft(e.target.value)}
                   rows={2}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
-                  placeholder={isPolish ? 'Oczekiwana akcja...' : 'Expected action...'}
+                  placeholder={t('myWork.notificationDetail.placeholder', 'Expected action...')}
                 />
               </div>
 
@@ -1737,7 +1705,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                    {t('myWork.notificationDetail.checklist', 'Checklist')}
                   </label>
                   <AIFieldEnhancer
                     fieldKey="notification-checklist"
@@ -1780,9 +1748,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
                     />
                     <p className="text-xs text-slate-600 dark:text-slate-500">
-                      {isPolish
-                        ? 'Brak kroków — kliknij AI, aby wygenerować checklistę'
-                        : 'No steps — click AI to generate a checklist'}
+                      {t('myWork.notificationDetail.noStepsClickAI', 'No steps — click AI to generate a checklist')}
                     </p>
                   </div>
                 ) : (
@@ -1862,7 +1828,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Komentarze' : 'Comments'}
+                  {t('myWork.notificationDetail.comments', 'Comments')}
                   {comments.length > 0 && (
                     <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
                       ({comments.length})
@@ -1874,7 +1840,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                 >
                   <Sparkles size={13} />
-                  {isPolish ? 'AI komentarz' : 'AI comment'}
+                  {t('myWork.notificationDetail.aIComment', 'AI comment')}
                 </button>
               </div>
 
@@ -1891,9 +1857,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     }
                   }}
                   placeholder={
-                    isPolish
-                      ? 'Napisz komentarz... (Cmd+Enter aby wysłać)'
-                      : 'Write a comment... (Cmd+Enter to send)'
+                    t('myWork.notificationDetail.writeACommentCmd', 'Write a comment... (Cmd+Enter to send)')
                   }
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 dark:focus:border-primary-500 transition-all"
                   rows={3}
@@ -1909,7 +1873,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     ) : (
                       <MessageSquare size={12} />
                     )}
-                    {isPolish ? 'Dodaj' : 'Add'}
+                    {t('myWork.notificationDetail.add', 'Add')}
                   </button>
                 </div>
               </div>
@@ -1926,14 +1890,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
-                    {isPolish ? 'Brak komentarzy' : 'No comments yet'}
+                    {t('myWork.notificationDetail.noCommentsYet', 'No comments yet')}
                   </p>
                   <button
                     onClick={handleOpenChat}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:border-primary-400 dark:hover:border-primary-400/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 transition-colors text-sm font-medium"
                   >
                     <MessageSquare size={14} />
-                    {isPolish ? 'Otwórz czat z kontekstem' : 'Open contextual chat'}
+                    {t('myWork.notificationDetail.openContextualChat', 'Open contextual chat')}
                   </button>
                 </div>
               ) : (
@@ -1962,7 +1926,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             <button
                               onClick={() => handleDeleteComment(comment.id)}
                               className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-all"
-                              title={isPolish ? 'Usuń' : 'Delete'}
+                              title={t('myWork.notificationDetail.title2', 'Delete')}
                             >
                               <Trash2 size={12} className="text-danger-400" />
                             </button>
@@ -2026,7 +1990,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           if (realEntries.length === 0 && !activityLogLoading) {
             fallbackEntries.push({
               id: 'created',
-              description: isPolish ? 'Powiadomienie utworzone' : 'Notification created',
+              description: t('myWork.notificationDetail.description2', 'Notification created'),
               timestamp: notification.createdAt,
               icon: <Bell size={14} className="text-slate-600" />,
               iconBg: 'bg-slate-100 dark:bg-navy-800',
@@ -2034,7 +1998,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             if (notification.readAt) {
               fallbackEntries.push({
                 id: 'read',
-                description: isPolish ? 'Oznaczono jako przeczytane' : 'Marked as read',
+                description: t('myWork.notificationDetail.description3', 'Marked as read'),
                 timestamp: notification.readAt,
                 icon: <MailOpen size={14} className="text-emerald-500" />,
                 iconBg: 'bg-emerald-100 dark:bg-emerald-500/20',
@@ -2060,7 +2024,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Historia aktywności' : 'Activity Log'}
+                  {t('myWork.notificationDetail.activityLog', 'Activity Log')}
                   {allEntries.length > 0 && (
                     <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
                       ({allEntries.length})
@@ -2072,7 +2036,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
                   <History size={13} />
-                  {isPolish ? 'Odśwież' : 'Refresh'}
+                  {t('myWork.notificationDetail.refresh', 'Refresh')}
                 </button>
               </div>
 
@@ -2080,7 +2044,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
                   <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                    {isPolish ? 'Wpisy' : 'Entries'}
+                    {t('myWork.notificationDetail.entries', 'Entries')}
                   </p>
                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                     {allEntries.length}
@@ -2088,7 +2052,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </div>
                 <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
                   <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                    {isPolish ? 'Komentarze' : 'Comments'}
+                    {t('myWork.notificationDetail.comments2', 'Comments')}
                   </p>
                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                     {comments.length}
@@ -2096,20 +2060,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </div>
                 <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
                   <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                    {isPolish ? 'Status' : 'Status'}
+                    {t('myWork.notificationDetail.status', 'Status')}
                   </p>
                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                     {isSnoozed
-                      ? isPolish
-                        ? 'Odłożone'
-                        : 'Snoozed'
+                      ? t('myWork.notificationDetail.snoozed', 'Snoozed')
                       : notification.isRead
-                        ? isPolish
-                          ? 'Przeczytane'
-                          : 'Read'
-                        : isPolish
-                          ? 'Nowe'
-                          : 'New'}
+                        ? t('myWork.notificationDetail.read', 'Read')
+                        : t('myWork.notificationDetail.new', 'New')}
                   </p>
                 </div>
               </div>
@@ -2123,7 +2081,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 <div className="py-10 text-center">
                   <History size={28} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
                   <p className="text-sm text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Brak aktywności' : 'No activity yet'}
+                    {t('myWork.notificationDetail.noActivityYet', 'No activity yet')}
                   </p>
                 </div>
               ) : (
@@ -2195,12 +2153,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400 bg-white dark:bg-navy-950">
         <Bell size={48} className="mb-4 opacity-50" />
-        <p>{isPolish ? 'Nie znaleziono powiadomienia' : 'Notification not found'}</p>
+        <p>{t('myWork.notificationDetail.notificationNotFound', 'Notification not found')}</p>
         <button
           onClick={onClose}
           className="mt-4 px-4 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
         >
-          {isPolish ? 'Wróć' : 'Go Back'}
+          {t('myWork.notificationDetail.goBack', 'Go Back')}
         </button>
       </div>
     );
@@ -2290,16 +2248,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             <Bell size={12} />
           )}
           {isSnoozed
-            ? isPolish
-              ? 'Odłożone'
-              : 'Snoozed'
+            ? t('myWork.notificationDetail.snoozed2', 'Snoozed')
             : notification.isRead
-              ? isPolish
-                ? 'Przeczytane'
-                : 'Read'
-              : isPolish
-                ? 'Nowe'
-                : 'Unread'}
+              ? t('myWork.notificationDetail.read2', 'Read')
+              : t('myWork.notificationDetail.unread', 'Unread')}
         </div>
       ),
     },
@@ -2315,7 +2267,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         <div className="max-w-6xl mx-auto space-y-0">
           {/* ── Header — shared NModeHeader ─────────────────────────────── */}
           <NModeHeader
-            title={notification.title || (isPolish ? 'Powiadomienie' : 'Notification')}
+            title={notification.title || (t('myWork.notificationDetail.notification', 'Notification'))}
             onTitleChange={() => {}}
             titleReadOnly={true}
             artifactId={notificationId}
@@ -2399,7 +2351,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <MailOpen size={13} />
-                    {isPolish ? 'Przeczytane' : 'Mark Read'}
+                    {t('myWork.notificationDetail.markRead', 'Mark Read')}
                   </button>
 
                   {/* Save as note */}
@@ -2413,7 +2365,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     ) : (
                       <FileText size={13} />
                     )}
-                    {isPolish ? 'Zapisz jako notatkę' : 'Save as note'}
+                    {t('myWork.notificationDetail.saveAsNote', 'Save as note')}
                   </button>
 
                   {/* Snooze */}
@@ -2428,22 +2380,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     >
                       <Clock size={13} />
                       {isSnoozed
-                        ? isPolish
-                          ? 'Odłożone'
-                          : 'Snoozed'
-                        : isPolish
-                          ? 'Odłóż'
-                          : 'Snooze'}
+                        ? t('myWork.notificationDetail.snoozed3', 'Snoozed')
+                        : t('myWork.notificationDetail.snooze', 'Snooze')}
                     </button>
 
                     {/* Snooze dropdown */}
                     {showSnoozeMenu && (
                       <div className="absolute top-full left-0 mt-1 w-48 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl z-50 py-1">
                         {[
-                          { preset: '1h', label: isPolish ? '1 godzinę' : '1 hour' },
-                          { preset: '4h', label: isPolish ? '4 godziny' : '4 hours' },
-                          { preset: '1d', label: isPolish ? '1 dzień' : '1 day' },
-                          { preset: '3d', label: isPolish ? '3 dni' : '3 days' },
+                          { preset: '1h', label: t('myWork.notificationDetail.label', '1 hour') },
+                          { preset: '4h', label: t('myWork.notificationDetail.label2', '4 hours') },
+                          { preset: '1d', label: t('myWork.notificationDetail.label3', '1 day') },
+                          { preset: '3d', label: t('myWork.notificationDetail.label4', '3 days') },
                         ].map((option) => (
                           <button
                             key={option.preset}
@@ -2457,8 +2405,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         {isSnoozed && snoozedUntil && (
                           <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/40">
                             <p className="text-[10px] text-slate-600 dark:text-slate-500">
-                              {isPolish ? 'Odłożono do' : 'Snoozed until'}:{' '}
-                              {new Date(snoozedUntil).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+                              {t('myWork.notificationDetail.snoozedUntil', 'Snoozed until')}:{' '}
+                              {new Date(snoozedUntil).toLocaleString(t('myWork.notificationDetail.toLocaleString', 'en-US'))}
                             </p>
                           </div>
                         )}
@@ -2473,7 +2421,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     >
                       <BellOff size={13} />
-                      {isPolish ? 'Wycisz' : 'Mute'}
+                      {t('myWork.notificationDetail.mute', 'Mute')}
                       <ChevronDown size={13} className="opacity-70" />
                     </button>
 
@@ -2487,7 +2435,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                         >
                           <BellOff size={12} className="text-slate-600 shrink-0" />
-                          {isPolish ? 'Wycisz to' : 'Mute this'}
+                          {t('myWork.notificationDetail.muteThis', 'Mute this')}
                         </button>
                         <button
                           onClick={() => {
@@ -2497,7 +2445,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                         >
                           <BellOff size={12} className="text-slate-600 shrink-0" />
-                          {isPolish ? 'Wycisz podobne (typ)' : 'Mute similar (type)'}
+                          {t('myWork.notificationDetail.muteSimilarType', 'Mute similar (type)')}
                         </button>
                       </div>
                     )}
@@ -2509,7 +2457,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
                   >
                     <Trash2 size={13} />
-                    {isPolish ? 'Usuń' : 'Delete'}
+                    {t('myWork.notificationDetail.delete', 'Delete')}
                   </button>
 
                   {/* Section-specific AI actions */}
@@ -2526,7 +2474,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       ) : (
                         <Sparkles size={13} />
                       )}
-                      {isPolish ? 'Analizuj z AI' : 'Analyze with AI'}
+                      {t('myWork.notificationDetail.analyzeWithAI', 'Analyze with AI')}
                     </button>
                   )}
                 </div>
@@ -2572,7 +2520,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <Info size={18} className="text-blue-500 dark:text-blue-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {isPolish ? 'Co się dzieje' : "What's happening"}
+                          {t('myWork.notificationDetail.whatSHappening2', 'What\'s happening')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2603,7 +2551,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </div>
                             <div>
                               <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-1">
-                                {isPolish ? 'Dlaczego to ważne' : 'Why it matters'}
+                                {t('myWork.notificationDetail.whyItMatters2', 'Why it matters')}
                               </div>
                               <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                                 {contract.whyImportant}
@@ -2611,7 +2559,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </div>
                             <div>
                               <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-1">
-                                {isPolish ? 'Co jest blokowane' : 'What is blocked'}
+                                {t('myWork.notificationDetail.whatIsBlocked2', 'What is blocked')}
                               </div>
                               <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                                 {contract.blocked}
@@ -2642,7 +2590,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {isPolish ? 'Analiza AI' : 'AI Analysis'}
+                          {t('myWork.notificationDetail.aIAnalysis2', 'AI Analysis')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2667,11 +2615,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               <span
                                 className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-danger-500/10 text-danger-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}
                               >
-                                {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
+                                {t('myWork.notificationDetail.priority2', 'Priority')}: {aiAnalysis.priority}
                               </span>
                               {aiAnalysis.confidence && (
                                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
-                                  {isPolish ? 'Pewność' : 'Confidence'}: {aiAnalysis.confidence}
+                                  {t('myWork.notificationDetail.confidence2', 'Confidence')}: {aiAnalysis.confidence}
                                 </span>
                               )}
                               {aiAnalysis.aiGenerated && (
@@ -2696,9 +2644,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors text-sm font-medium"
                             >
                               <MessageSquare size={14} />
-                              {isPolish
-                                ? 'Zapytaj AI o więcej szczegółów'
-                                : 'Ask AI for more details'}
+                              {t('myWork.notificationDetail.askAIForMore2', 'Ask AI for more details')}
                             </button>
                           </div>
                         </motion.div>
@@ -2725,7 +2671,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {isPolish ? 'Oczekiwana akcja' : 'Expected Action'}
+                          {t('myWork.notificationDetail.expectedAction2', 'Expected Action')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2751,7 +2697,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <div className="p-5 space-y-4">
                             <div className="flex items-center justify-between">
                               <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                                {isPolish ? 'Co należy zrobić' : 'What needs to be done'}
+                                {t('myWork.notificationDetail.whatNeedsToBe2', 'What needs to be done')}
                               </label>
                               <AIFieldEnhancer
                                 fieldKey="c-notification-expected-action"
@@ -2774,12 +2720,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               onChange={(e) => setExpectedActionDraft(e.target.value)}
                               rows={3}
                               className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
-                              placeholder={isPolish ? 'Oczekiwana akcja...' : 'Expected action...'}
+                              placeholder={t('myWork.notificationDetail.placeholder2', 'Expected action...')}
                             />
 
                             <div className="flex items-center justify-between pt-1">
                               <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                                {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                                {t('myWork.notificationDetail.checklist2', 'Checklist')}
                               </label>
                               <div className="flex items-center gap-2">
                                 <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 tabular-nums">
@@ -2845,7 +2791,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <MessageCircle size={18} className="text-amber-500 dark:text-amber-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {isPolish ? 'Komentarze' : 'Comments'}
+                          {t('myWork.notificationDetail.comments3', 'Comments')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2869,14 +2815,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         >
                           <div className="p-5 space-y-3">
                             <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-3">
-                              {isPolish ? 'Brak komentarzy' : 'No comments yet'}
+                              {t('myWork.notificationDetail.noCommentsYet2', 'No comments yet')}
                             </p>
                             <button
                               onClick={handleOpenChat}
                               className="w-full px-4 py-2.5 rounded-xl border border-dashed border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:border-primary-400 dark:hover:border-primary-400/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 transition-colors text-sm flex items-center justify-center gap-2"
                             >
                               <MessageSquare size={14} />
-                              {isPolish ? 'Otwórz czat z kontekstem' : 'Open contextual chat'}
+                              {t('myWork.notificationDetail.openContextualChat2', 'Open contextual chat')}
                             </button>
                           </div>
                         </motion.div>
@@ -2900,7 +2846,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <History size={18} className="text-slate-500 dark:text-slate-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {isPolish ? 'Historia aktywności' : 'Activity Log'}
+                          {t('myWork.notificationDetail.activityLog2', 'Activity Log')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2929,7 +2875,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               </div>
                               <div>
                                 <p className="text-sm text-slate-700 dark:text-slate-300">
-                                  {isPolish ? 'Powiadomienie utworzone' : 'Notification created'}
+                                  {t('myWork.notificationDetail.notificationCreated', 'Notification created')}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {formatDate(notification.createdAt)}
@@ -2943,7 +2889,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 </div>
                                 <div>
                                   <p className="text-sm text-slate-700 dark:text-slate-300">
-                                    {isPolish ? 'Oznaczono jako przeczytane' : 'Marked as read'}
+                                    {t('myWork.notificationDetail.markedAsRead', 'Marked as read')}
                                   </p>
                                   <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {formatDate(notification.readAt)}
@@ -2999,7 +2945,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <div className="p-4 space-y-3">
                             <div>
                               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                                {isPolish ? 'Typ' : 'Type'}
+                                {t('myWork.notificationDetail.type3', 'Type')}
                               </label>
                               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                                 <TypeIcon size={14} className={typeConfig.color} />
@@ -3010,7 +2956,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </div>
                             <div>
                               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                                {isPolish ? 'Priorytet' : 'Severity'}
+                                {t('myWork.notificationDetail.severity', 'Severity')}
                               </label>
                               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                                 <div
@@ -3023,7 +2969,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </div>
                             <div>
                               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                                {isPolish ? 'Kategoria' : 'Category'}
+                                {t('myWork.notificationDetail.category', 'Category')}
                               </label>
                               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
@@ -3035,7 +2981,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               (notification.data as any)?.projectName) && (
                               <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                                  {isPolish ? 'Projekt' : 'Project'}
+                                  {t('myWork.notificationDetail.project', 'Project')}
                                 </label>
                                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                                   <FolderOpen size={14} className="text-indigo-400" />
@@ -3048,7 +2994,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             )}
                             <div>
                               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                                {isPolish ? 'Utworzono' : 'Created'}
+                                {t('myWork.notificationDetail.created', 'Created')}
                               </label>
                               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                                 <Clock size={14} className="text-slate-600" />
@@ -3064,14 +3010,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                   className="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors flex items-center justify-center gap-2 text-sm"
                                 >
                                   <BellOff size={14} />
-                                  <span>{isPolish ? 'Wycisz' : 'Mute'}</span>
+                                  <span>{t('myWork.notificationDetail.mute2', 'Mute')}</span>
                                 </button>
                                 <button
                                   onClick={handleDelete}
                                   className="flex-1 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
                                 >
                                   <Trash2 size={14} />
-                                  <span>{isPolish ? 'Usuń' : 'Delete'}</span>
+                                  <span>{t('myWork.notificationDetail.delete2', 'Delete')}</span>
                                 </button>
                               </div>
                             </div>
@@ -3097,7 +3043,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <Users size={18} className="text-blue-500 dark:text-blue-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                          {t('myWork.notificationDetail.stakeholders', 'Stakeholders')}
                         </span>
                       </div>
                       <motion.div
@@ -3125,7 +3071,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                     {sourceEntity.assignee}
                                   </p>
                                   <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Przypisany' : 'Assignee'}
+                                    {t('myWork.notificationDetail.assignee', 'Assignee')}
                                   </p>
                                 </div>
                               </div>
@@ -3140,16 +3086,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                     {sourceEntity.decider}
                                   </p>
                                   <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Decydent' : 'Decider'}
+                                    {t('myWork.notificationDetail.decider', 'Decider')}
                                   </p>
                                 </div>
                               </div>
                             )}
                             {!sourceEntity?.assignee && !sourceEntity?.decider && (
                               <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-2">
-                                {isPolish
-                                  ? 'Brak przypisanych interesariuszy'
-                                  : 'No stakeholders assigned'}
+                                {t('myWork.notificationDetail.noStakeholdersAssigned', 'No stakeholders assigned')}
                               </p>
                             )}
                           </div>
@@ -3172,7 +3116,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             <Info size={18} className="text-amber-500 dark:text-amber-400" />
                           </div>
                           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                            {isPolish ? 'Dlaczego to dostałeś' : 'Why you got it'}
+                            {t('myWork.notificationDetail.whyYouGotIt', 'Why you got it')}
                           </span>
                         </div>
                       </div>
