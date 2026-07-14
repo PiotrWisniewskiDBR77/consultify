@@ -1102,7 +1102,7 @@ router.get('/raci-results-summary', async (req: any, res: any) => {
  * wymusza status startowy `DRAFT` + nowy UUID + org-scope + created_by (niżej).
  * Przejście przez createInitiativeService zgubiłoby skopiowane pola/lineage.
  */
-router.post('/:id/duplicate', async (req: any, res: any) => {
+router.post('/:id/duplicate', requireInitiativeCapability('initiative.create', { shadow: true }), async (req: any, res: any) => {
   try {
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
@@ -2542,7 +2542,7 @@ router.post(
  * POST /api/initiatives/:id/unblock
  * Unblock initiative
  */
-router.post('/:id/unblock', InitiativeController.unblockInitiative);
+router.post('/:id/unblock', requireInitiativeCapability('initiative.unblock', { shadow: true }), InitiativeController.unblockInitiative);
 
 /**
  * POST /api/initiatives/:id/complete
@@ -2558,7 +2558,7 @@ router.post(
  * POST /api/initiatives/:id/move
  * Move initiative to different project
  */
-router.post('/:id/move', InitiativeController.moveInitiative);
+router.post('/:id/move', requireInitiativeCapability('initiative.update', { shadow: true }), InitiativeController.moveInitiative);
 
 /**
  * POST /api/pmo/initiatives/bulk-assign
@@ -2568,13 +2568,13 @@ router.post('/:id/move', InitiativeController.moveInitiative);
  * Declared as a literal path (not `/:id/...`) so it never collides with the
  * single-initiative routes above.
  */
-router.post('/bulk-assign', InitiativeController.bulkAssignInitiatives);
+router.post('/bulk-assign', requireInitiativeCapability('initiative.update', { shadow: true }), InitiativeController.bulkAssignInitiatives);
 
 /**
  * POST /api/initiatives/:id/archive
  * Archive initiative
  */
-router.post('/:id/archive', InitiativeController.archiveInitiative);
+router.post('/:id/archive', requireInitiativeCapability('initiative.status.change', { shadow: true }), InitiativeController.archiveInitiative);
 
 // ==========================================
 // V4-EXEC-04: INITIATIVE CAPACITY
@@ -2638,7 +2638,7 @@ router.post('/:id/kpis', InitiativeController.createInitiativeKpi);
  * PUT /api/initiatives/:id/kpis/:kpiId
  * Update KPI assignment for an initiative
  */
-router.put('/:id/kpis/:kpiId', InitiativeController.updateInitiativeKpi);
+router.put('/:id/kpis/:kpiId', requireInitiativeCapability('kpi.update', { shadow: true }), InitiativeController.updateInitiativeKpi);
 
 /**
  * DELETE /api/initiatives/:id/kpis/:kpiId
@@ -2886,8 +2886,8 @@ router.get('/:id/history', InitiativeController.getHistory);
 // ==========================================
 
 router.get('/:id/comments', InitiativeController.getInitiativeComments);
-router.post('/:id/comments', InitiativeController.addInitiativeComment);
-router.delete('/:id/comments/:commentId', InitiativeController.deleteInitiativeComment);
+router.post('/:id/comments', requireInitiativeCapability('initiative.comment', { shadow: true }), InitiativeController.addInitiativeComment);
+router.delete('/:id/comments/:commentId', requireInitiativeCapability('initiative.comment', { shadow: true }), InitiativeController.deleteInitiativeComment);
 
 // ==========================================
 // INITIATIVE TASK DEPENDENCIES (aggregated)

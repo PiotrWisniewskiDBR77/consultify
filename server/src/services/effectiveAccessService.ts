@@ -85,6 +85,8 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'project.workstreams.manage',
       'task.create',
       'task.assign',
+      'task.reassign',
+      'task.unassign',
       'task.update',
       'task.status.update',
       'task.close',
@@ -137,6 +139,10 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'task.status.update.assigned',
       'task.comment.assigned',
       'task.escalate.assigned',
+      // 2026-07-14 (Faza A, spec model role PM #25/#28/#30/#35): an assignee may
+      // drop themselves from a task they hold — never reassign it to someone
+      // else (that stays a Leader/PMO action, see task.reassign above).
+      'task.unassign.assigned',
       'interview.assignment.start.assigned',
       'interview.assignment.answer.assigned',
       'interview.assignment.submit.assigned',
@@ -173,6 +179,8 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'project.workstreams.manage',
       'task.create',
       'task.assign',
+      'task.reassign',
+      'task.unassign',
       'task.update',
       'task.status.update',
       'task.close',

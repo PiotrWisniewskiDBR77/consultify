@@ -1172,6 +1172,7 @@ router.post('/:id/assign', requireAudit, requireTaskCapability('task.assign', { 
 router.post(
   '/:id/reassign',
   requireAudit,
+  requireTaskCapability('task.reassign', { shadow: true }),
   validateBody(ReassignTaskSchema),
   TaskController.reassignTask
 );
@@ -1180,7 +1181,12 @@ router.post(
  * POST /api/tasks/:id/unassign
  * Unassign task
  */
-router.post('/:id/unassign', requireAudit, TaskController.unassignTask);
+router.post(
+  '/:id/unassign',
+  requireAudit,
+  requireTaskCapability('task.unassign', { shadow: true }),
+  TaskController.unassignTask
+);
 
 /**
  * POST /api/tasks/:id/escalate
