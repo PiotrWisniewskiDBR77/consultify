@@ -21914,6 +21914,22 @@
         "share": "Share",
         "createView": "Create view",
         "personalView": "Personal view"
+      },
+      "voiceImageInput": {
+        "browserNoSpeechSupport": "Browser does not support speech recognition.",
+        "voiceInputTitle": "Voice Input",
+        "imageToIdeasTitle": "Image → Ideas",
+        "voice": "Voice",
+        "image": "Image",
+        "recordingClickToStop": "Recording… click to stop",
+        "clickToStartDictating": "Click to start dictating",
+        "dropImageOrPaste": "Drop image, paste screenshot (Ctrl+V) or",
+        "chooseFile": "Choose file",
+        "analyzing": "Analyzing…",
+        "parseIdeas": "Parse ideas",
+        "recordOrUploadThenParse": "Record voice or upload image, then click \"Parse\"",
+        "selected": "selected",
+        "addNIdeas": "Add {{count}} ideas"
       }
     },
     "mindmap": {
