@@ -2077,7 +2077,56 @@
       "noSavedItems": "Brak zapisanych elementów",
       "useSaveBTo": "Użyj Zapisz (B) aby odłożyć elementy na później.",
       "inboxIsEmptyZero": "Inbox jest pusty — zero zaległości!",
-      "everythingProcessedGreatJob": "Wszystko przetworzone. Świetna robota!"
+      "everythingProcessedGreatJob": "Wszystko przetworzone. Świetna robota!",
+      "urgency": {
+        "critical": "Krytyczna",
+        "high": "Wysoka",
+        "normal": "Normalna",
+        "low": "Niska"
+      },
+      "statusFilter": {
+        "open": "Otwarte",
+        "done": "Zrobione",
+        "saved": "Zapisane",
+        "dismissed": "Odrzucone"
+      },
+      "typeFilter": {
+        "assignment": "Przypisanie",
+        "mention": "Wzmianka",
+        "escalation": "Eskalacja",
+        "review": "Przegląd",
+        "decision": "Decyzja",
+        "aiInsight": "Wgląd AI",
+        "system": "System",
+        "billing": "Rozliczenia",
+        "project": "Projekt"
+      },
+      "sectionFilter": {
+        "decisionsRequired": "Wymagane decyzje",
+        "approvalsGates": "Akceptacje i bramki",
+        "assignedTasks": "Przypisane zadania",
+        "blockedEscalations": "Zablokowane / eskalacje",
+        "overdueSlaBreach": "Po terminie / naruszenie SLA",
+        "systemNotifications": "Powiadomienia systemowe",
+        "mentionsFyi": "Wzmianki i FYI",
+        "aiInsights": "Wglądy AI",
+        "other": "Inne"
+      },
+      "sourceFilter": {
+        "system": "System",
+        "ai": "AI",
+        "userTeam": "Użytkownik / Zespół"
+      },
+      "columns": {
+        "title": "Tytuł",
+        "status": "Status",
+        "urgency": "Pilność",
+        "type": "Typ",
+        "section": "Sekcja",
+        "source": "Źródło",
+        "received": "Otrzymano",
+        "sla": "SLA"
+      }
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
@@ -2490,7 +2539,47 @@
       "actions": "Akcje",
       "label9": "Ustawienia widoku",
       "columnsHeading": "Widoczne kolumny",
-      "showRowDescription": "Pokaż opis / uzasadnienie"
+      "showRowDescription": "Pokaż opis / uzasadnienie",
+      "columns": {
+        "actions": "Akcje",
+        "assignee": "Osoba przypisana",
+        "dueDate": "Termin",
+        "priority": "Priorytet",
+        "status": "Status",
+        "task": "Zadanie"
+      },
+      "priorityBadge": {
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "low": "Niski",
+        "medium": "Średni",
+        "normal": "Normalny"
+      },
+      "status": {
+        "blocked": "Zablokowane",
+        "cancelled": "Anulowane",
+        "done": "Zrobione",
+        "inProgress": "W trakcie",
+        "inProgressShort": "W trakcie",
+        "inReview": "W przeglądzie",
+        "pendingApproval": "Oczekuje na akceptację",
+        "review": "Przegląd",
+        "todo": "Do zrobienia"
+      },
+      "toast": {
+        "completeTasksFailed": "Nie udało się ukończyć zadań",
+        "deleteTaskFailed": "Nie udało się usunąć zadania",
+        "deleteTasksFailed": "Nie udało się usunąć zadań",
+        "priorityBulkUpdated": "Priorytet → {{priority}} ({{count}})",
+        "prioritySetTo": "Priorytet ustawiony na {{priority}}",
+        "taskCompleted": "Zadanie ukończone",
+        "taskDeleted": "Zadanie usunięte",
+        "taskReopened": "Zadanie wznowione",
+        "tasksCompletedCount": "Ukończono {{count}} zadań",
+        "tasksDeletedCount": "Usunięto {{count}} zadań",
+        "updatePriorityFailed": "Nie udało się zaktualizować priorytetu",
+        "updateTaskFailed": "Nie udało się zaktualizować zadania"
+      }
     },
     "notificationsContent": {
       "recently": "Niedawno",

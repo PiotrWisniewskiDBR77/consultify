@@ -2842,7 +2842,56 @@
       "noSavedItems": "No saved items",
       "useSaveBTo": "Use Save (B) to bookmark items for later.",
       "inboxIsEmptyZero": "Inbox is empty — zero backlog!",
-      "everythingProcessedGreatJob": "Everything processed. Great job!"
+      "everythingProcessedGreatJob": "Everything processed. Great job!",
+      "urgency": {
+        "critical": "Critical",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      },
+      "statusFilter": {
+        "open": "Open",
+        "done": "Done",
+        "saved": "Saved",
+        "dismissed": "Dismissed"
+      },
+      "typeFilter": {
+        "assignment": "Assignment",
+        "mention": "Mention",
+        "escalation": "Escalation",
+        "review": "Review",
+        "decision": "Decision",
+        "aiInsight": "AI Insight",
+        "system": "System",
+        "billing": "Billing",
+        "project": "Project"
+      },
+      "sectionFilter": {
+        "decisionsRequired": "Decisions required",
+        "approvalsGates": "Approvals & gates",
+        "assignedTasks": "Assigned tasks",
+        "blockedEscalations": "Blocked / escalations",
+        "overdueSlaBreach": "Overdue / SLA breach",
+        "systemNotifications": "System notifications",
+        "mentionsFyi": "Mentions & FYI",
+        "aiInsights": "AI Insights",
+        "other": "Other"
+      },
+      "sourceFilter": {
+        "system": "System",
+        "ai": "AI",
+        "userTeam": "User / Team"
+      },
+      "columns": {
+        "title": "Title",
+        "status": "Status",
+        "urgency": "Urgency",
+        "type": "Type",
+        "section": "Section",
+        "source": "Source",
+        "received": "Received",
+        "sla": "SLA"
+      }
     },
     "notificationDetail": {
       "toastError": "Notification not found",
@@ -3255,7 +3304,47 @@
       "actions": "Actions",
       "label9": "View settings",
       "columnsHeading": "Visible columns",
-      "showRowDescription": "Show row description"
+      "showRowDescription": "Show row description",
+      "columns": {
+        "actions": "Actions",
+        "assignee": "Assignee",
+        "dueDate": "Due Date",
+        "priority": "Priority",
+        "status": "Status",
+        "task": "Task"
+      },
+      "priorityBadge": {
+        "critical": "Critical",
+        "high": "High",
+        "low": "Low",
+        "medium": "Medium",
+        "normal": "Normal"
+      },
+      "status": {
+        "blocked": "Blocked",
+        "cancelled": "Cancelled",
+        "done": "Done",
+        "inProgress": "In progress",
+        "inProgressShort": "In Progress",
+        "inReview": "In review",
+        "pendingApproval": "Pending approval",
+        "review": "Review",
+        "todo": "To Do"
+      },
+      "toast": {
+        "completeTasksFailed": "Failed to complete tasks",
+        "deleteTaskFailed": "Failed to delete task",
+        "deleteTasksFailed": "Failed to delete tasks",
+        "priorityBulkUpdated": "Priority → {{priority}} ({{count}})",
+        "prioritySetTo": "Priority set to {{priority}}",
+        "taskCompleted": "Task completed",
+        "taskDeleted": "Task deleted",
+        "taskReopened": "Task reopened",
+        "tasksCompletedCount": "{{count}} tasks completed",
+        "tasksDeletedCount": "{{count}} tasks deleted",
+        "updatePriorityFailed": "Failed to update priority",
+        "updateTaskFailed": "Failed to update task"
+      }
     },
     "notificationsContent": {
       "recently": "Recently",
