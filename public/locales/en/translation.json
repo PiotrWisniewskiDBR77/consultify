@@ -5249,22 +5249,6 @@
       "createInitiativeFromFinding": "Create initiative from finding",
       "findingStatement": "Finding statement",
       "confidenceLevel": {
-        "0": "C",
-        "1": "o",
-        "2": "n",
-        "3": "f",
-        "4": "i",
-        "5": "d",
-        "6": "e",
-        "7": "n",
-        "8": "c",
-        "9": "e",
-        "10": " ",
-        "11": "l",
-        "12": "e",
-        "13": "v",
-        "14": "e",
-        "15": "l",
         "high": "High confidence",
         "medium": "Medium confidence",
         "low": "Hypothesis",
@@ -5420,7 +5404,8 @@
         "in_review": "In Review",
         "published": "Published",
         "failed": "Failed"
-      }
+      },
+      "confidenceLevelLabel": "Confidence level"
     },
     "templateBuilder": {
       "freeTextAnswer": "Free text answer…",

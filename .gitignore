@@ -296,3 +296,4 @@ vts-wave2-credentials*.csv
 # QA headless auth — NEVER commit (dev tokens)
 docs/qa/.auth.b64
 docs/qa/screens/review/
+dev-render/.vite-cache/

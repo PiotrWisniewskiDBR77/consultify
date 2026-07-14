@@ -763,7 +763,7 @@ export const MyProjects: React.FC = () => {
       <StandardModuleBar
         breadcrumbs={[
           { label: t('sidebar.myWork', 'My Work') },
-          { label: t('myWork.projects', t('myWork.projects.projects', 'Projects')) },
+          { label: t('myWork.projects.projects', 'Projects') },
         ]}
         tabs={[
           { id: 'projects', label: t('myWork.projects.label10', 'Projects') },

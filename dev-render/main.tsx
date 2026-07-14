@@ -32,6 +32,7 @@ import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import EvFootballFieldScreen from './screens/ev-football-field';
+import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
@@ -138,6 +139,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
     render: () => <StandardKanbanCardScreen />,
+  },
+  'i18n-fala1-smoke': {
+    label: 'Smoke i18n fala 1 — realne TemplateBuilder (M10) / FormulaEditor (M08); &part=interview|ideas',
+    render: () => <I18nFala1SmokeScreen />,
   },
   'ideas-teresa-panel': {
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',

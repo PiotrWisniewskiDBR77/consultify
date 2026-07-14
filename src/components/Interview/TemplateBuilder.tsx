@@ -686,17 +686,17 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     return allowedAnswerTypes
       .map(
         (type) =>
-          ANSWER_TYPES.find((item) => item.id === type)?.[t('interview.templateBuilder.labelen')] || type
+          ANSWER_TYPES.find((item) => item.id === type)?.[isPolish ? 'labelPl' : 'labelEn'] || type
       )
       .join(', ');
-  }, [allowedAnswerTypes, isPolish]);
+  }, [allowedAnswerTypes, isPolish, t]);
 
   const areaTagsLabel = useMemo(() => {
     if (areaTags.length === 0) {
       return t('interview.templateBuilder.selectAreas');
     }
     return areaTags.map((tag) => getTemplateAreaTagLabel(tag, t)).join(', ');
-  }, [areaTags, isPolish]);
+  }, [areaTags, isPolish, t]);
 
   const toggleAllowedAnswerType = useCallback((type: AnswerType) => {
     setTemplate((prev) => {

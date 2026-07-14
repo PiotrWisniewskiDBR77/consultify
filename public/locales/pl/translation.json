@@ -4484,21 +4484,6 @@
       "createInitiativeFromFinding": "Utwórz inicjatywę z finding",
       "findingStatement": "Stwierdzenie finding",
       "confidenceLevel": {
-        "0": "P",
-        "1": "o",
-        "2": "z",
-        "3": "i",
-        "4": "o",
-        "5": "m",
-        "6": " ",
-        "7": "p",
-        "8": "e",
-        "9": "w",
-        "10": "n",
-        "11": "o",
-        "12": "ś",
-        "13": "c",
-        "14": "i",
         "high": "Wysoka pewność",
         "medium": "Średnia pewność",
         "low": "Hipoteza",
@@ -4654,7 +4639,8 @@
         "in_review": "W recenzji",
         "published": "Opublikowano",
         "failed": "Błąd"
-      }
+      },
+      "confidenceLevelLabel": "Poziom pewności"
     },
     "templateBuilder": {
       "freeTextAnswer": "Pole tekstowe na odpowiedź…",

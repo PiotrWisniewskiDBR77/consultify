@@ -8513,7 +8513,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {t('interview.insightViewer.confidenceLevel')}
+                      {t('interview.insightViewer.confidenceLevelLabel', 'Confidence level')}
                     </label>
                     <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
                       {handoffFinding.confidence || 'medium'}

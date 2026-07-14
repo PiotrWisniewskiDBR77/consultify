@@ -54,7 +54,7 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
     },
     {
       key: 'projects',
-      label: t('myWork.projects', 'Projects'),
+      label: t('myWork.projects.projects', 'Projects'),
       icon: FolderKanban,
       activeColor: 'bg-slate-800 dark:bg-white/15 text-white',
       comingSoon: true,
