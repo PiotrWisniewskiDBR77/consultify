@@ -163,7 +163,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   initiativeId,
   initiativeTasks = [],
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // ── State ────────────────────────────────────────────────────
@@ -326,7 +326,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     if (!addDirection || addingTaskId) return;
     const baseId = effectiveTaskId;
     if (!baseId) {
-      toast.error(isPolish ? 'Wybierz zadanie źródłowe' : 'Select a source task first');
+      toast.error(t('myWork.dependencies.toastError', 'Select a source task first'));
       return;
     }
     setAddingTaskId(targetTask.id);
@@ -361,25 +361,23 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
           setSuccessors((prev) => [newDep, ...prev]);
         }
 
-        toast.success(isPolish ? 'Zależność dodana' : 'Dependency added');
+        toast.success(t('myWork.dependencies.toastSuccess', 'Dependency added'));
         closeModal();
         if (taskId) fetchDependencies();
         await onRefreshExternalDependencies?.();
       } else {
-        toast.error(isPolish ? 'Nie udało się dodać zależności' : 'Failed to add dependency');
+        toast.error(t('myWork.dependencies.toastError2', 'Failed to add dependency'));
       }
     } catch (err: any) {
       const msg = String(err?.response?.data?.error || err?.message || '').toLowerCase();
       if (msg.includes('circular')) {
         toast.error(
-          isPolish
-            ? 'Nie można dodać — powstałaby zależność cykliczna'
-            : 'Cannot add — would create a circular dependency'
+          t('myWork.dependencies.cannotAddWouldCreate', 'Cannot add — would create a circular dependency')
         );
       } else if (msg.includes('already exists') || msg.includes('już istnieje')) {
-        toast.error(isPolish ? 'Ta zależność już istnieje' : 'This dependency already exists');
+        toast.error(t('myWork.dependencies.toastError3', 'This dependency already exists'));
       } else {
-        toast.error(isPolish ? 'Nie udało się dodać zależności' : 'Failed to add dependency');
+        toast.error(t('myWork.dependencies.toastError4', 'Failed to add dependency'));
       }
     } finally {
       setAddingTaskId(null);
@@ -391,7 +389,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     const baseTaskId = effectiveTaskId || dep.sourceTaskId;
     if (!baseTaskId) {
       toast.error(
-        isPolish ? 'Brak kontekstu zadania do usunięcia zależności' : 'Missing task context'
+        t('myWork.dependencies.missingTaskContext', 'Missing task context')
       );
       return;
     }
@@ -400,10 +398,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
       // Remove from both lists (initiative aggregation can render same dep.id in both arrays)
       setPredecessors((prev) => prev.filter((d) => d.id !== dep.id));
       setSuccessors((prev) => prev.filter((d) => d.id !== dep.id));
-      toast.success(isPolish ? 'Zależność usunięta' : 'Dependency removed');
+      toast.success(t('myWork.dependencies.toastSuccess2', 'Dependency removed'));
       await onRefreshExternalDependencies?.();
     } catch {
-      toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to remove');
+      toast.error(t('myWork.dependencies.toastError5', 'Failed to remove'));
     }
   };
 
@@ -411,7 +409,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     const baseTaskId = effectiveTaskId || dep.sourceTaskId;
     if (!baseTaskId) {
       toast.error(
-        isPolish ? 'Brak kontekstu zadania do skopiowania zależności' : 'Missing task context'
+        t('myWork.dependencies.missingTaskContext2', 'Missing task context')
       );
       return;
     }
@@ -423,21 +421,21 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
         lagDays: dep.lagDays,
       });
       if (res?.success) {
-        toast.success(isPolish ? 'Dodano duplikat' : 'Duplicate added');
+        toast.success(t('myWork.dependencies.toastSuccess3', 'Duplicate added'));
         if (taskId) fetchDependencies();
         await onRefreshExternalDependencies?.();
       } else {
         toast.error(
-          isPolish ? 'Nie udało się zduplikować zależności' : 'Failed to duplicate dependency'
+          t('myWork.dependencies.failedToDuplicateDependency', 'Failed to duplicate dependency')
         );
       }
     } catch (err: any) {
       const msg = String(err?.message || '').toLowerCase();
       if (msg.includes('already exists')) {
-        toast.error(isPolish ? 'Taka zależność już istnieje' : 'This dependency already exists');
+        toast.error(t('myWork.dependencies.toastError6', 'This dependency already exists'));
       } else {
         toast.error(
-          isPolish ? 'Nie udało się zduplikować zależności' : 'Failed to duplicate dependency'
+          t('myWork.dependencies.failedToDuplicateDependency2', 'Failed to duplicate dependency')
         );
       }
     }
@@ -470,7 +468,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     const baseTaskId = effectiveTaskId || editingDependency.sourceTaskId;
     if (!baseTaskId) {
       toast.error(
-        isPolish ? 'Brak kontekstu zadania do edycji zależności' : 'Missing task context'
+        t('myWork.dependencies.missingTaskContext3', 'Missing task context')
       );
       return;
     }
@@ -495,13 +493,13 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
         lagDays,
         notes: noteText || undefined,
       });
-      toast.success(isPolish ? 'Zależność zaktualizowana' : 'Dependency updated');
+      toast.success(t('myWork.dependencies.toastSuccess4', 'Dependency updated'));
       closeModal();
       if (taskId) fetchDependencies();
       await onRefreshExternalDependencies?.();
     } catch {
       toast.error(
-        isPolish ? 'Nie udało się zaktualizować zależności' : 'Failed to update dependency'
+        t('myWork.dependencies.failedToUpdateDependency', 'Failed to update dependency')
       );
     }
   };
@@ -525,14 +523,14 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-              {isPolish ? 'Zależności' : 'Dependencies'}
+              {t('myWork.dependencies.dependencies', 'Dependencies')}
             </h2>
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
               {visibleDependencies.length}
             </span>
             {isShowingSampleData && (
               <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
-                {isPolish ? 'dane przykładowe' : 'sample data'}
+                {t('myWork.dependencies.sampleData', 'sample data')}
               </span>
             )}
           </div>
@@ -542,7 +540,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
               <Plus size={12} />
-              {isPolish ? 'Dodaj zależność' : 'Add dependency'}
+              {t('myWork.dependencies.addDependency', 'Add dependency')}
             </button>
           )}
         </div>
@@ -562,12 +560,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 />
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                {isPolish ? 'Brak zależności' : 'No dependencies yet'}
+                {t('myWork.dependencies.noDependenciesYet', 'No dependencies yet')}
               </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                {isPolish
-                  ? 'Użyj przycisku powyżej, aby dodać zależność do innego zadania.'
-                  : 'Use the button above to add a dependency to another task.'}
+                {t('myWork.dependencies.useTheButtonAbove', 'Use the button above to add a dependency to another task.')}
               </p>
             </div>
           ) : (
@@ -578,14 +574,14 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
                       <th className="text-left py-2.5 pl-3 pr-2">
-                        {isPolish ? 'Kierunek' : 'Direction'}
+                        {t('myWork.dependencies.direction', 'Direction')}
                       </th>
-                      <th className="text-left py-2.5 pr-2">{isPolish ? 'Zadanie' : 'Task'}</th>
-                      <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-                      <th className="text-left py-2.5 pr-2">{isPolish ? 'Lag' : 'Lag'}</th>
-                      <th className="text-left py-2.5 pr-2">{isPolish ? 'Status' : 'Status'}</th>
+                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.task', 'Task')}</th>
+                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.type', 'Type')}</th>
+                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.lag', 'Lag')}</th>
+                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.status', 'Status')}</th>
                       <th className="text-left py-2.5 pr-2">
-                        {isPolish ? 'Priorytet' : 'Priority'}
+                        {t('myWork.dependencies.priority', 'Priority')}
                       </th>
                       <th className="text-right py-2.5 pr-3"></th>
                     </tr>
@@ -614,12 +610,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                             >
                               {isPredecessor ? <ArrowDown size={11} /> : <ArrowUp size={11} />}
                               {isPredecessor
-                                ? isPolish
-                                  ? 'Poprzednik'
-                                  : 'Predecessor'
-                                : isPolish
-                                  ? 'Następnik'
-                                  : 'Successor'}
+                                ? t('myWork.dependencies.predecessor', 'Predecessor')
+                                : t('myWork.dependencies.successor', 'Successor')}
                             </span>
                           </td>
                           <td className="py-2.5 pr-2">
@@ -634,7 +626,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                 <button
                                   onClick={() => onOpenTask(dep.taskId)}
                                   className="text-slate-700 dark:text-slate-300 truncate hover:text-indigo-500 dark:hover:text-indigo-400 hover:underline transition-colors text-left"
-                                  title={isPolish ? 'Otwórz zadanie' : 'Open task'}
+                                  title={t('myWork.dependencies.title', 'Open task')}
                                 >
                                   {dep.taskTitle}
                                 </button>
@@ -653,7 +645,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                               )}
                               {isBlocking && (
                                 <span
-                                  title={isPolish ? 'Blokuje ten task' : 'Blocking this task'}
+                                  title={t('myWork.dependencies.title2', 'Blocking this task')}
                                   className="shrink-0"
                                 >
                                   <AlertTriangle size={13} className="text-amber-500" />
@@ -690,7 +682,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                 setOpenMenuId((prev) => (prev === dep.id ? null : dep.id));
                               }}
                               className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                              title={isPolish ? 'Akcje' : 'Actions'}
+                              title={t('myWork.dependencies.title3', 'Actions')}
                             >
                               <MoreVertical size={14} />
                             </button>
@@ -699,7 +691,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                               <div className="absolute right-3 top-9 z-30 w-44 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 backdrop-blur-lg p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
                                 {isShowingSampleData && (
                                   <div className="px-2.5 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 italic">
-                                    {isPolish ? 'Dane przykładowe' : 'Sample data'}
+                                    {t('myWork.dependencies.sampleData2', 'Sample data')}
                                   </div>
                                 )}
                                 {onOpenTask && (
@@ -714,7 +706,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                       size={13}
                                       className="text-slate-500 dark:text-slate-400"
                                     />
-                                    {isPolish ? 'Otwórz kartę' : 'Open card'}
+                                    {t('myWork.dependencies.openCard', 'Open card')}
                                   </button>
                                 )}
                                 {!readOnly && (
@@ -729,7 +721,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                       size={13}
                                       className="text-slate-500 dark:text-slate-400"
                                     />
-                                    {isPolish ? 'Edytuj' : 'Edit'}
+                                    {t('myWork.dependencies.edit', 'Edit')}
                                   </button>
                                 )}
                                 {!readOnly && (
@@ -744,7 +736,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                       size={13}
                                       className="text-slate-500 dark:text-slate-400"
                                     />
-                                    {isPolish ? 'Kopiuj' : 'Copy'}
+                                    {t('myWork.dependencies.copy', 'Copy')}
                                   </button>
                                 )}
                                 {!readOnly && (
@@ -758,7 +750,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                       className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
                                     >
                                       <Trash2 size={13} />
-                                      {isPolish ? 'Kasuj' : 'Delete'}
+                                      {t('myWork.dependencies.delete', 'Delete')}
                                     </button>
                                   </>
                                 )}
@@ -780,9 +772,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                   <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
                     <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                     <span>
-                      {isPolish
-                        ? 'To zadanie ma nieukończone poprzedniki — może być zablokowane.'
-                        : 'This task has incomplete predecessors — it may be blocked.'}
+                      {t('myWork.dependencies.thisTaskHasIncomplete', 'This task has incomplete predecessors — it may be blocked.')}
                     </span>
                   </div>
                 </div>
@@ -791,7 +781,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               {/* ── Legend ─────────────────────────────── */}
               <div className="pt-2 border-t border-slate-200 dark:border-navy-700/50">
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1.5">
-                  {isPolish ? 'Typy zależności:' : 'Dependency types:'}
+                  {t('myWork.dependencies.dependencyTypes', 'Dependency types:')}
                 </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   {(Object.keys(DEP_TYPE_LABELS) as DependencyType[]).map((dt) => (
@@ -849,21 +839,13 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                   <div>
                     <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
                       {editingDependency
-                        ? isPolish
-                          ? 'Edytuj zależność'
-                          : 'Edit Dependency'
-                        : isPolish
-                          ? 'Nowa zależność'
-                          : 'New Dependency'}
+                        ? t('myWork.dependencies.editDependency', 'Edit Dependency')
+                        : t('myWork.dependencies.newDependency', 'New Dependency')}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">
                       {editingDependency
-                        ? isPolish
-                          ? 'Zmień ustawienia tej zależności'
-                          : 'Modify settings for this dependency'
-                        : isPolish
-                          ? 'Skonfiguruj i wybierz zadanie do powiązania'
-                          : 'Configure and select a task to link'}
+                        ? t('myWork.dependencies.modifySettingsForThis', 'Modify settings for this dependency')
+                        : t('myWork.dependencies.configureAndSelectA', 'Configure and select a task to link')}
                     </p>
                   </div>
                 </div>
@@ -881,7 +863,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {!taskId && initiativeTasks.length > 0 && !editingDependency && (
                   <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-2 block">
-                      {isPolish ? 'Zadanie źródłowe' : 'Source task'}
+                      {t('myWork.dependencies.sourceTask', 'Source task')}
                     </label>
                     <select
                       value={selectedSourceTaskId || ''}
@@ -900,7 +882,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {editingDependency && (
                   <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2 block">
-                      {isPolish ? 'Powiązane zadanie' : 'Linked Task'}
+                      {t('myWork.dependencies.linkedTask', 'Linked Task')}
                     </label>
                     <div className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/30 px-3.5 py-2.5 group/card">
                       <div
@@ -943,7 +925,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                             onOpenTask(editingDependency.taskId);
                           }}
                           className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors opacity-60 group-hover/card:opacity-100"
-                          title={isPolish ? 'Otwórz zadanie' : 'Open task'}
+                          title={t('myWork.dependencies.title4', 'Open task')}
                         >
                           <ExternalLink size={14} />
                         </button>
@@ -955,7 +937,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {/* ── Section: Direction ────────────────── */}
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
-                    {isPolish ? 'Kierunek' : 'Direction'}
+                    {t('myWork.dependencies.direction2', 'Direction')}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -977,12 +959,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <span
                         className={`text-xs font-semibold ${addDirection === 'predecessor' ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400'}`}
                       >
-                        {isPolish ? 'Poprzednik' : 'Predecessor'}
+                        {t('myWork.dependencies.predecessor2', 'Predecessor')}
                       </span>
                       <span
                         className={`text-[10px] leading-tight ${addDirection === 'predecessor' ? 'text-blue-500/70 dark:text-blue-400/60' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                       >
-                        {isPolish ? 'To zadanie zależy od innego' : 'This task depends on another'}
+                        {t('myWork.dependencies.thisTaskDependsOn', 'This task depends on another')}
                       </span>
                     </button>
                     <button
@@ -1004,12 +986,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <span
                         className={`text-xs font-semibold ${addDirection === 'successor' ? 'text-amber-700 dark:text-amber-300' : 'text-slate-600 dark:text-slate-400'}`}
                       >
-                        {isPolish ? 'Następnik' : 'Successor'}
+                        {t('myWork.dependencies.successor2', 'Successor')}
                       </span>
                       <span
                         className={`text-[10px] leading-tight ${addDirection === 'successor' ? 'text-amber-500/70 dark:text-amber-400/60' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                       >
-                        {isPolish ? 'Inne zadanie zależy od tego' : 'Another task depends on this'}
+                        {t('myWork.dependencies.anotherTaskDependsOn', 'Another task depends on this')}
                       </span>
                     </button>
                   </div>
@@ -1018,7 +1000,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {/* ── Section: Relationship Type ───────── */}
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
-                    {isPolish ? 'Typ relacji' : 'Relationship Type'}
+                    {t('myWork.dependencies.relationshipType', 'Relationship Type')}
                   </label>
                   <div className="grid grid-cols-4 gap-2">
                     {(Object.keys(DEP_TYPE_LABELS) as DependencyType[]).map((dt) => (
@@ -1055,7 +1037,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {/* ── Section: Lag / Lead ───────────────── */}
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
-                    {isPolish ? 'Opóźnienie / Wyprzedzenie' : 'Lag / Lead'}
+                    {t('myWork.dependencies.lagLead', 'Lag / Lead')}
                   </label>
                   <div className="flex items-center gap-2">
                     <button
@@ -1082,7 +1064,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <Plus size={14} />
                     </button>
                     <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
-                      {isPolish ? 'dni' : 'days'}
+                      {t('myWork.dependencies.days', 'days')}
                     </span>
                   </div>
 
@@ -1105,9 +1087,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           ? isPolish
                             ? `⚡ ${Math.abs(lagDays)} ${Math.abs(lagDays) === 1 ? 'dzień' : 'dni'} wyprzedzenia (overlap)`
                             : `⚡ ${Math.abs(lagDays)} day${Math.abs(lagDays) === 1 ? '' : 's'} lead (overlap)`
-                          : isPolish
-                            ? '→ Brak opóźnienia — zadania łączą się bezpośrednio'
-                            : '→ No delay — tasks connect directly'}
+                          : t('myWork.dependencies.noDelayTasksConnect', '→ No delay — tasks connect directly')}
                     </span>
                   </div>
 
@@ -1115,9 +1095,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-500">
                       <AlertTriangle size={12} />
                       <span>
-                        {isPolish
-                          ? 'Duże opóźnienie — upewnij się, że jest poprawne'
-                          : 'Large lag value — make sure this is correct'}
+                        {t('myWork.dependencies.largeLagValueMake', 'Large lag value — make sure this is correct')}
                       </span>
                     </div>
                   )}
@@ -1127,14 +1105,14 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 flex items-center gap-1.5">
                     <MessageSquare size={11} />
-                    {isPolish ? 'Notatki' : 'Notes'}
+                    {t('myWork.dependencies.notes', 'Notes')}
                     <span className="text-[9px] font-normal text-slate-700 dark:text-slate-400 ml-1">
-                      ({isPolish ? 'opcjonalne' : 'optional'})
+                      ({t('myWork.dependencies.optional', 'optional')})
                     </span>
                     <span className="ml-auto">
                       <AIFieldEnhancer
                         fieldKey="dependencies.notes"
-                        sectionLabel={isPolish ? 'Zależność — notatki' : 'Dependency — notes'}
+                        sectionLabel={t('myWork.dependencies.sectionLabel', 'Dependency — notes')}
                         currentValue={noteText}
                         onApply={setNoteText}
                         artifactContext={{
@@ -1152,9 +1130,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder={
-                      isPolish
-                        ? 'Dodaj kontekst, warunki lub uwagi do tej zależności...'
-                        : 'Add context, conditions, or notes about this dependency...'
+                      t('myWork.dependencies.addContextConditionsOr', 'Add context, conditions, or notes about this dependency...')
                     }
                     rows={2}
                     className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 transition-all resize-none"
@@ -1165,7 +1141,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {!editingDependency && (
                   <div className="px-6 py-4">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
-                      {isPolish ? 'Wybierz zadanie' : 'Select Task'}
+                      {t('myWork.dependencies.selectTask', 'Select Task')}
                     </label>
                     <div className="relative">
                       <Search
@@ -1177,7 +1153,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         value={searchQuery}
                         onChange={(e) => handleSearchChange(e.target.value)}
                         placeholder={
-                          isPolish ? 'Wpisz nazwę zadania...' : 'Type task name to search...'
+                          t('myWork.dependencies.typeTaskNameTo', 'Type task name to search...')
                         }
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 transition-all"
                         autoFocus
@@ -1250,10 +1226,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           className="mx-auto text-slate-700 dark:text-slate-400 mb-2"
                         />
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Nie znaleziono zadań' : 'No tasks found'}
+                          {t('myWork.dependencies.noTasksFound', 'No tasks found')}
                         </p>
                         <p className="text-[11px] text-slate-700 dark:text-slate-400 mt-0.5">
-                          {isPolish ? 'Spróbuj innej frazy' : 'Try a different search term'}
+                          {t('myWork.dependencies.tryADifferentSearch', 'Try a different search term')}
                         </p>
                       </div>
                     )}
@@ -1261,9 +1237,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     {/* Empty state */}
                     {!searchQuery && searchResults.length === 0 && !isSearching && (
                       <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 py-2">
-                        {isPolish
-                          ? 'Zacznij wpisywać, aby wyszukać zadanie do powiązania'
-                          : 'Start typing to search for a task to link'}
+                        {t('myWork.dependencies.startTypingToSearch', 'Start typing to search for a task to link')}
                       </p>
                     )}
 
@@ -1272,10 +1246,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700/40">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Połączone zadania' : 'Connected Tasks'}
+                            {t('myWork.dependencies.connectedTasks', 'Connected Tasks')}
                           </span>
                           <span className="text-[10px] text-slate-700 dark:text-slate-400">
-                            {isPolish ? 'szybkie dodawanie' : 'quick add'}
+                            {t('myWork.dependencies.quickAdd', 'quick add')}
                           </span>
                         </div>
                         <div className="space-y-0.5 rounded-xl border border-slate-200 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-800/20 p-1.5">
@@ -1319,22 +1293,20 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               {editingDependency && (
                 <div className="px-6 py-3.5 border-t border-slate-200 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {isPolish
-                      ? 'Zmiany zostaną zapisane natychmiast'
-                      : 'Changes will be saved immediately'}
+                    {t('myWork.dependencies.changesWillBeSaved', 'Changes will be saved immediately')}
                   </p>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={closeModal}
                       className="px-4 py-2 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
+                      {t('myWork.dependencies.cancel', 'Cancel')}
                     </button>
                     <button
                       onClick={handleEditDependency}
                       className="px-5 py-2 rounded-lg text-xs font-semibold bg-indigo-500 text-white hover:bg-indigo-600 shadow-sm shadow-indigo-500/20 transition-all hover:shadow-md hover:shadow-indigo-500/25"
                     >
-                      {isPolish ? 'Zapisz zmiany' : 'Save Changes'}
+                      {t('myWork.dependencies.saveChanges', 'Save Changes')}
                     </button>
                   </div>
                 </div>

@@ -82,7 +82,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
   expanded = false,
   onToggleExpand,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [isAddingLink, setIsAddingLink] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,9 +187,9 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
         setSearchQuery('');
         setSearchResults([]);
         setIsAddingLink(false);
-        toast.success(isPolish ? 'Powiązanie dodane' : 'Link added');
+        toast.success(t('myWork.linkedItems.toastSuccess', 'Link added'));
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się dodać powiązania' : 'Failed to add link');
+        toast.error(t('myWork.linkedItems.toastError', 'Failed to add link'));
       }
     },
     [onAdd, isPolish]
@@ -199,9 +199,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
     async (itemId: string) => {
       if (
         !confirm(
-          isPolish
-            ? 'Czy na pewno chcesz usunąć to powiązanie?'
-            : 'Are you sure you want to remove this link?'
+          t('myWork.linkedItems.areYouSureYou', 'Are you sure you want to remove this link?')
         )
       ) {
         return;
@@ -209,9 +207,9 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
 
       try {
         await onRemove(itemId);
-        toast.success(isPolish ? 'Powiązanie usunięte' : 'Link removed');
+        toast.success(t('myWork.linkedItems.toastSuccess2', 'Link removed'));
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się usunąć powiązania' : 'Failed to remove link');
+        toast.error(t('myWork.linkedItems.toastError2', 'Failed to remove link'));
       }
     },
     [onRemove, isPolish]
@@ -224,7 +222,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
     try {
       new URL(externalUrl);
     } catch {
-      toast.error(isPolish ? 'Nieprawidłowy format URL' : 'Invalid URL format');
+      toast.error(t('myWork.linkedItems.toastError3', 'Invalid URL format'));
       return;
     }
 
@@ -241,9 +239,9 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       setExternalUrl('');
       setExternalTitle('');
       setIsAddingExternal(false);
-      toast.success(isPolish ? 'Link zewnętrzny dodany' : 'External link added');
+      toast.success(t('myWork.linkedItems.toastSuccess3', 'External link added'));
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
+      toast.error(t('myWork.linkedItems.toastError4', 'Failed to add link'));
     }
   }, [externalUrl, externalTitle, onAdd, isPolish]);
 
@@ -272,7 +270,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
           <div className="p-2 rounded-xl bg-primary-500/10 dark:bg-primary-500/20">
             <LinkIcon size={18} className="text-primary-500 dark:text-primary-400" />
           </div>
-          <span className="text-sm font-semibold">{isPolish ? 'Powiązania' : 'Linked Items'}</span>
+          <span className="text-sm font-semibold">{t('myWork.linkedItems.linkedItems', 'Linked Items')}</span>
         </div>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
@@ -316,7 +314,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                               : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
                           }`}
                         >
-                          {isPolish ? 'Wszystkie' : 'All'}
+                          {t('myWork.linkedItems.all', 'All')}
                         </button>
                         {allowedTypes.map((type) => (
                           <button
@@ -347,7 +345,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             setSearchQuery(e.target.value);
                             handleSearch(e.target.value);
                           }}
-                          placeholder={isPolish ? 'Szukaj elementów...' : 'Search items...'}
+                          placeholder={t('myWork.linkedItems.placeholder', 'Search items...')}
                           className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
                           autoFocus
                         />
@@ -385,7 +383,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
 
                       {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
                         <p className="mt-3 text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                          {isPolish ? 'Brak wyników' : 'No results found'}
+                          {t('myWork.linkedItems.noResultsFound', 'No results found')}
                         </p>
                       )}
                     </div>
@@ -404,14 +402,14 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                       <div className="space-y-3">
                         <div>
                           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            {isPolish ? 'Tytuł linku' : 'Link Title'}
+                            {t('myWork.linkedItems.linkTitle', 'Link Title')}
                           </label>
                           <input
                             type="text"
                             value={externalTitle}
                             onChange={(e) => setExternalTitle(e.target.value)}
                             placeholder={
-                              isPolish ? 'Np. Dokumentacja projektu' : 'e.g., Project documentation'
+                              t('myWork.linkedItems.eGProjectDocumentation', 'e.g., Project documentation')
                             }
                             className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
                             autoFocus
@@ -419,13 +417,13 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            {isPolish ? 'URL' : 'URL'}
+                            {t('myWork.linkedItems.uRL', 'URL')}
                           </label>
                           <input
                             type="url"
                             value={externalUrl}
                             onChange={(e) => setExternalUrl(e.target.value)}
-                            placeholder={isPolish ? 'https://example.com' : 'https://example.com'}
+                            placeholder={t('myWork.linkedItems.placeholder2', 'https://example.com')}
                             className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
                           />
                         </div>
@@ -435,7 +433,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             disabled={!externalUrl.trim() || !externalTitle.trim()}
                             className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            {isPolish ? 'Dodaj link' : 'Add Link'}
+                            {t('myWork.linkedItems.addLink', 'Add Link')}
                           </button>
                           <button
                             onClick={() => {
@@ -445,7 +443,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             }}
                             className="px-3 py-2 rounded-lg text-sm font-medium bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
                           >
-                            {isPolish ? 'Anuluj' : 'Cancel'}
+                            {t('myWork.linkedItems.cancel', 'Cancel')}
                           </button>
                         </div>
                       </div>
@@ -458,7 +456,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
               {items.length === 0 ? (
                 <div className="text-center py-6 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   <LinkIcon size={32} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">{isPolish ? 'Brak powiązań' : 'No linked items'}</p>
+                  <p className="text-sm">{t('myWork.linkedItems.noLinkedItems', 'No linked items')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -514,7 +512,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
-                                  title={isPolish ? 'Otwórz w nowej karcie' : 'Open in new tab'}
+                                  title={t('myWork.linkedItems.title', 'Open in new tab')}
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <ExternalLink
@@ -527,7 +525,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                                 <button
                                   onClick={() => handleRemoveItem(item.id)}
                                   className="p-1.5 rounded hover:bg-danger-50 dark:hover:bg-danger-500/20 transition-colors"
-                                  title={isPolish ? 'Usuń powiązanie' : 'Remove link'}
+                                  title={t('myWork.linkedItems.title2', 'Remove link')}
                                 >
                                   <Trash2
                                     size={14}

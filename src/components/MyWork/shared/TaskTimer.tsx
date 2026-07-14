@@ -39,7 +39,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
   compact = false,
   showHistory = true,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [isRunning, setIsRunning] = useState(false);
@@ -97,7 +97,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
       });
     }, 1000);
 
-    toast.success(isPolish ? '⏱️ Timer uruchomiony' : '⏱️ Timer started', { duration: 2000 });
+    toast.success(t('myWork.taskTimer.toastSuccess', '⏱️ Timer started'), { duration: 2000 });
   }, [isRunning, isPolish, onTimerStart, onTimeUpdate]);
 
   // Pause timer
@@ -110,7 +110,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
       intervalRef.current = null;
     }
 
-    toast.success(isPolish ? '⏸️ Timer wstrzymany' : '⏸️ Timer paused', { duration: 2000 });
+    toast.success(t('myWork.taskTimer.toastSuccess2', '⏸️ Timer paused'), { duration: 2000 });
   }, [isRunning, isPolish]);
 
   // Stop timer and save entry
@@ -153,7 +153,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     setSessionTime(0);
     startTimeRef.current = null;
 
-    toast.success(isPolish ? '🔄 Timer zresetowany' : '🔄 Timer reset', { duration: 2000 });
+    toast.success(t('myWork.taskTimer.toastSuccess3', '🔄 Timer reset'), { duration: 2000 });
   }, [isRunning, pauseTimer, isPolish]);
 
   // Cleanup on unmount
@@ -179,7 +179,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
                 : 'text-slate-600 hover:text-primary-500 hover:bg-primary-500/10'
             }
           `}
-          title={isRunning ? (isPolish ? 'Pauza' : 'Pause') : isPolish ? 'Start' : 'Start'}
+          title={isRunning ? (t('myWork.taskTimer.pause', 'Pause')) : t('myWork.taskTimer.start', 'Start')}
         >
           {isRunning ? <Pause size={14} /> : <Play size={14} />}
         </button>
@@ -201,7 +201,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
           <button
             onClick={stopTimer}
             className="p-1 rounded text-slate-600 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
-            title={isPolish ? 'Zapisz' : 'Log time'}
+            title={t('myWork.taskTimer.title', 'Log time')}
           >
             <Square size={12} />
           </button>
@@ -218,12 +218,12 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
           <Timer size={16} />
           <span className="text-sm font-medium">
-            {isPolish ? 'Śledzenie czasu' : 'Time Tracking'}
+            {t('myWork.taskTimer.timeTracking', 'Time Tracking')}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Łącznie:' : 'Total:'} {formatDuration(elapsedTime)}
+            {t('myWork.taskTimer.total', 'Total:')} {formatDuration(elapsedTime)}
           </span>
         </div>
       </div>
@@ -256,7 +256,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-c-text text-c-bg font-medium hover:bg-c-text-secondary transition-colors"
           >
             <Play size={18} />
-            <span>{isPolish ? 'Start' : 'Start'}</span>
+            <span>{t('myWork.taskTimer.start2', 'Start')}</span>
           </button>
         )}
 
@@ -267,14 +267,14 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-500/30 transition-colors"
             >
               <Pause size={18} />
-              <span>{isPolish ? 'Pauza' : 'Pause'}</span>
+              <span>{t('myWork.taskTimer.pause2', 'Pause')}</span>
             </button>
             <button
               onClick={stopTimer}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium hover:bg-emerald-500/30 transition-colors"
             >
               <Square size={18} />
-              <span>{isPolish ? 'Zapisz' : 'Log'}</span>
+              <span>{t('myWork.taskTimer.log', 'Log')}</span>
             </button>
           </>
         )}
@@ -286,19 +286,19 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-c-text text-c-bg font-medium hover:bg-c-text-secondary transition-colors"
             >
               <Play size={18} />
-              <span>{isPolish ? 'Kontynuuj' : 'Resume'}</span>
+              <span>{t('myWork.taskTimer.resume', 'Resume')}</span>
             </button>
             <button
               onClick={stopTimer}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium hover:bg-emerald-500/30 transition-colors"
             >
               <Square size={18} />
-              <span>{isPolish ? 'Zapisz' : 'Log'}</span>
+              <span>{t('myWork.taskTimer.log2', 'Log')}</span>
             </button>
             <button
               onClick={resetTimer}
               className="p-2.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-              title={isPolish ? 'Resetuj' : 'Reset'}
+              title={t('myWork.taskTimer.title2', 'Reset')}
             >
               <RotateCcw size={18} />
             </button>
@@ -315,7 +315,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
           >
             <span className="flex items-center gap-2">
               <Clock size={14} />
-              {isPolish ? 'Historia' : 'History'} ({entries.length})
+              {t('myWork.taskTimer.history', 'History')} ({entries.length})
             </span>
             <motion.span animate={{ rotate: showEntries ? 180 : 0 }} className="text-slate-600">
               ▼
@@ -339,14 +339,14 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
                       <div className="flex items-center gap-2">
                         <Clock size={12} className="text-slate-600" />
                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {entry.startTime.toLocaleTimeString(isPolish ? 'pl-PL' : 'en-US', {
+                          {entry.startTime.toLocaleTimeString(t('myWork.taskTimer.entryStartTimeToLocaleTimeString', 'en-US'), {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                           {entry.endTime && (
                             <>
                               {' → '}
-                              {entry.endTime.toLocaleTimeString(isPolish ? 'pl-PL' : 'en-US', {
+                              {entry.endTime.toLocaleTimeString(t('myWork.taskTimer.entryEndTimeToLocaleTimeString', 'en-US'), {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}

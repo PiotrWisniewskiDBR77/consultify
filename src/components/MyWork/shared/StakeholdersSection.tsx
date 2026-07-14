@@ -139,7 +139,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
   onRemove,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -225,7 +225,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
             <Users size={18} className="text-blue-500 dark:text-blue-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Interesariusze (RACI)' : 'Stakeholders (RACI)'}
+            {t('myWork.stakeholders.stakeholdersRACI', 'Stakeholders (RACI)')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -322,12 +322,8 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                       }`}
                                       title={
                                         stakeholder.notificationSettings.enabled
-                                          ? isPolish
-                                            ? 'Powiadomienia włączone'
-                                            : 'Notifications enabled'
-                                          : isPolish
-                                            ? 'Powiadomienia wyłączone'
-                                            : 'Notifications disabled'
+                                          ? t('myWork.stakeholders.notificationsEnabled', 'Notifications enabled')
+                                          : t('myWork.stakeholders.notificationsDisabled', 'Notifications disabled')
                                       }
                                     >
                                       {stakeholder.notificationSettings.enabled ? (
@@ -349,7 +345,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                           ? 'text-primary-500 bg-primary-500/10'
                                           : 'text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-700'
                                       }`}
-                                      title={isPolish ? 'Ustawienia' : 'Settings'}
+                                      title={t('myWork.stakeholders.title', 'Settings')}
                                     >
                                       <Settings size={14} />
                                     </button>
@@ -359,7 +355,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                       <button
                                         onClick={() => onRemove(stakeholder.id)}
                                         className="p-1.5 rounded-lg text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/20 transition-colors opacity-0 group-hover:opacity-100"
-                                        title={isPolish ? 'Usuń' : 'Remove'}
+                                        title={t('myWork.stakeholders.title2', 'Remove')}
                                       >
                                         <Trash2 size={14} />
                                       </button>
@@ -380,7 +376,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                         {/* Notification Triggers */}
                                         <div>
                                           <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-                                            {isPolish ? 'Powiadamiaj gdy:' : 'Notify when:'}
+                                            {t('myWork.stakeholders.notifyWhen', 'Notify when:')}
                                           </label>
                                           <div className="flex flex-wrap gap-1.5">
                                             {Object.entries(NOTIFICATION_TRIGGERS).map(
@@ -460,7 +456,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                             />
                                             <Bell size={12} className="text-slate-600" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
-                                              {isPolish ? 'W aplikacji' : 'In-app'}
+                                              {t('myWork.stakeholders.inApp', 'In-app')}
                                             </span>
                                           </label>
                                         </div>
@@ -470,7 +466,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                           <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                                             <Check size={12} />
                                             <span>
-                                              {isPolish ? 'Potwierdzono' : 'Acknowledged'}{' '}
+                                              {t('myWork.stakeholders.acknowledged', 'Acknowledged')}{' '}
                                               {new Date(
                                                 stakeholder.acknowledgedAt
                                               ).toLocaleDateString()}
@@ -492,7 +488,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           className="ml-6 py-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500"
                         >
                           <div className="w-4 h-4 rounded-full border-2 border-dashed border-slate-300 dark:border-navy-600" />
-                          <span className="italic">{isPolish ? 'Brak' : 'None'}</span>
+                          <span className="italic">{t('myWork.stakeholders.none', 'None')}</span>
                         </motion.div>
                       )}
                     </div>
@@ -512,14 +508,14 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                            {isPolish ? 'Osoba' : 'Person'}
+                            {t('myWork.stakeholders.person', 'Person')}
                           </label>
                           <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
                             className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                           >
-                            <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
+                            <option value="">{t('myWork.stakeholders.select', 'Select...')}</option>
                             {availableToAdd.map((user) => (
                               <option key={user.id} value={user.id}>
                                 {user.name}
@@ -529,7 +525,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                            {isPolish ? 'Rola' : 'Role'}
+                            {t('myWork.stakeholders.role', 'Role')}
                           </label>
                           <select
                             value={selectedRole}
@@ -551,7 +547,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           ? ROLE_CONFIG[selectedRole].description.pl
                           : ROLE_CONFIG[selectedRole].description.en}
                         <span className="block mt-1 text-[10px] text-slate-600">
-                          {isPolish ? 'Domyślne powiadomienia: ' : 'Default notifications: '}
+                          {t('myWork.stakeholders.defaultNotifications', 'Default notifications: ')}
                           {ROLE_CONFIG[selectedRole].defaultTriggers
                             .map((t) =>
                               isPolish ? NOTIFICATION_TRIGGERS[t].pl : NOTIFICATION_TRIGGERS[t].en
@@ -565,14 +561,14 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           onClick={() => setShowAddForm(false)}
                           className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
                         >
-                          {isPolish ? 'Anuluj' : 'Cancel'}
+                          {t('myWork.stakeholders.cancel', 'Cancel')}
                         </button>
                         <button
                           onClick={handleAdd}
                           disabled={!selectedUserId}
                           className="px-4 py-2 text-xs font-medium bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          {isPolish ? 'Dodaj' : 'Add'}
+                          {t('myWork.stakeholders.add', 'Add')}
                         </button>
                       </div>
                     </motion.div>
@@ -587,12 +583,8 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                       <Plus size={16} />
                       <span className="text-sm">
                         {availableToAdd.length === 0
-                          ? isPolish
-                            ? 'Wszyscy użytkownicy dodani'
-                            : 'All users added'
-                          : isPolish
-                            ? 'Dodaj interesariusza'
-                            : 'Add stakeholder'}
+                          ? t('myWork.stakeholders.allUsersAdded', 'All users added')
+                          : t('myWork.stakeholders.addStakeholder', 'Add stakeholder')}
                       </span>
                     </motion.button>
                   )}
