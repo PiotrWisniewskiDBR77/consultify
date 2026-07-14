@@ -1882,6 +1882,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [activeTab, t, viewMode]
   );
 
+  // #77 / Z94 — flaga kokpitu; MUSI być zadeklarowana PRZED `tabs` (useMemo woła
+  // fabrykę synchronicznie w renderze → użycie przed deklaracją = ReferenceError/TDZ).
+  const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+
   // Tab configuration
   const tabs = useMemo(
     () => [
@@ -3281,7 +3285,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Bezstanowe props mapowane 1:1 z istniejących źródeł (execSnapshot / portfolio
   // Metrics / actionCenter / capacityAlerts) — ZERO nowego backendu, zero
   // zmyślonych liczb (integrity: brak danych → null/empty-state w widoku).
-  const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+  // (deklaracja flagi `summaryOneLookEnabled` przeniesiona wyżej — przed `tabs`).
   const summaryOneLookProps = useMemo(() => {
     const wsItems = execSnapshot?.workstreams?.items ?? [];
     const wsOnTrack = wsItems.reduce((s, w) => s + (w.onTrackCount || 0), 0);
