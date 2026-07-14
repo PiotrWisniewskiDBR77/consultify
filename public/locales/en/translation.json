@@ -3071,7 +3071,20 @@
       "noRolesAssignedYet": "No roles assigned yet.",
       "tasks": "Tasks",
       "loading6": "Loading…",
-      "noTasksForThis": "No tasks for this project yet."
+      "noTasksForThis": "No tasks for this project yet.",
+      "emptyState": {
+        "title": "No projects yet",
+        "description": "Projects created in the Initiatives module will appear here."
+      },
+      "loadError": "Failed to load projects",
+      "table": {
+        "name": "Project",
+        "status": "Status",
+        "program": "Program",
+        "members": "Members",
+        "initiatives": "Initiatives",
+        "created": "Created"
+      }
     },
     "decisionsPanel": {
       "critical": "Critical",
@@ -19409,7 +19422,9 @@
         "generateCommentTitle": "Generate AI comment",
         "aiComments": "AI comments",
         "analyzeConsequencesTitle": "Run AI consequence analysis",
-        "analyzeConsequences": "Analyze consequences"
+        "analyzeConsequences": "Analyze consequences",
+        "analyzeOptions": "Analyze options",
+        "analyzeOptionsTitle": "Discuss and analyze these options with Teresa"
       },
       "scope": {
         "title": "Decision Scope",
@@ -20256,7 +20271,13 @@
     "saved": "Saved",
     "actions": {
       "reject": "Reject",
-      "delete": "Delete"
+      "delete": "Delete",
+      "approve": "Approve",
+      "apply": "Apply",
+      "dismiss": "Dismiss",
+      "reassign": "Reassign",
+      "discuss": "Discuss",
+      "markRead": "Mark as read"
     },
     "error": "Error",
     "col": {

@@ -2306,7 +2306,20 @@
       "noRolesAssignedYet": "Brak przypisanych ról.",
       "tasks": "Zadania",
       "loading6": "Wczytywanie…",
-      "noTasksForThis": "Brak zadań dla tego projektu."
+      "noTasksForThis": "Brak zadań dla tego projektu.",
+      "emptyState": {
+        "title": "Brak projektów",
+        "description": "Projekty utworzone w module Initiatives pojawią się tutaj."
+      },
+      "loadError": "Nie udało się wczytać projektów",
+      "table": {
+        "name": "Projekt",
+        "status": "Status",
+        "program": "Program",
+        "members": "Zespół",
+        "initiatives": "Inicjatywy",
+        "created": "Utworzono"
+      }
     },
     "decisionsPanel": {
       "critical": "Krytyczny",
@@ -20464,7 +20477,9 @@
         "generateCommentTitle": "Generuj komentarz przez AI",
         "aiComments": "AI komentarze",
         "analyzeConsequencesTitle": "Uruchom analizę konsekwencji przez AI",
-        "analyzeConsequences": "Analizuj konsekwencje"
+        "analyzeConsequences": "Analizuj konsekwencje",
+        "analyzeOptions": "Analizuj opcje",
+        "analyzeOptionsTitle": "Omów i przeanalizuj te opcje z Teresą"
       },
       "scope": {
         "title": "Zakres decyzji",
@@ -21333,7 +21348,13 @@
     "saved": "Zapisane",
     "actions": {
       "reject": "Odrzuć",
-      "delete": "Usuń"
+      "delete": "Usuń",
+      "approve": "Zatwierdź",
+      "apply": "Zastosuj",
+      "dismiss": "Pomiń",
+      "reassign": "Przypisz ponownie",
+      "discuss": "Omów",
+      "markRead": "Oznacz jako przeczytane"
     },
     "error": "Błąd",
     "col": {
