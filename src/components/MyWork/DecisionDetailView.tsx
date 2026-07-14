@@ -84,6 +84,7 @@ import { Api } from '../../services/api';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { CapabilityGate } from '../shared/CapabilityGate';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
 // wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
 import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
@@ -8474,18 +8475,23 @@ Use userId only from this list:
                   <div className="space-y-4 lg:sticky lg:top-28 self-start">
                     {decisionId && isPending && (
                       <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={handleApprove}
-                          className="px-3 py-2 rounded-xl border border-emerald-400/50 text-emerald-500 hover:bg-emerald-500/10 text-sm font-medium"
-                        >
-                          {t('decisions.detail.actions.approve', 'Approve')}
-                        </button>
-                        <button
-                          onClick={handleReject}
-                          className="px-3 py-2 rounded-xl border border-danger-400/50 text-danger-500 hover:bg-danger-500/10 text-sm font-medium"
-                        >
-                          {t('decisions.detail.actions.reject', 'Reject')}
-                        </button>
+                        {/* FAZA C: bramka decision.approve (fail-open, shadow = bez zmian) */}
+                        <CapabilityGate capability="decision.approve" gateMode="disable">
+                          <button
+                            onClick={handleApprove}
+                            className="px-3 py-2 rounded-xl border border-emerald-400/50 text-emerald-500 hover:bg-emerald-500/10 text-sm font-medium"
+                          >
+                            {t('decisions.detail.actions.approve', 'Approve')}
+                          </button>
+                        </CapabilityGate>
+                        <CapabilityGate capability="decision.approve" gateMode="disable">
+                          <button
+                            onClick={handleReject}
+                            className="px-3 py-2 rounded-xl border border-danger-400/50 text-danger-500 hover:bg-danger-500/10 text-sm font-medium"
+                          >
+                            {t('decisions.detail.actions.reject', 'Reject')}
+                          </button>
+                        </CapabilityGate>
                         <button
                           onClick={handleRequestMoreInfo}
                           className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"

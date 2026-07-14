@@ -80,6 +80,7 @@ import tokenBillingRoutes from './routes/billing/tokenBilling.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
+import capabilityEffectiveRoutes from './routes/capabilityEffective.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import clientErrorRoutes from './routes/client-errors.routes.js';
@@ -691,6 +692,10 @@ export class ApiGateway {
       app.use('/api/notifications', notificationRoutes);
       app.use('/api/analytics', analyticsRoutes);
       app.use('/api/feedback', feedbackRoutes);
+      // Faza C (model ról PM): read-only effective-capabilities endpoint for the
+      // frontend gate infrastructure. Mounted BEFORE the capability catalog so
+      // `/api/capabilities/effective` never falls through to catalog handlers.
+      app.use('/api/capabilities/effective', capabilityEffectiveRoutes);
       app.use('/api/capabilities', capabilityRoutes);
       app.use('/api/competency', competencyRoutes);
       app.use('/api/cv-matching', cvMatchingRoutes);

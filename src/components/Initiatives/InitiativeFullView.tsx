@@ -53,8 +53,28 @@ import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { formatRoiDisplay } from '@/utils/safeFormat';
 
+import { CapabilityGate } from '../shared/CapabilityGate';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
+
+// FAZA C (model ról PM): gate → capability z katalogu backendu
+// (effectiveAccessService). Fallback = generyczna zmiana statusu.
+const GATE_CAPABILITIES: Record<string, string> = {
+  SUBMIT_FOR_REVIEW: 'initiative.submit',
+  APPROVE_TO_INITIATIVE: 'initiative.approve_to_review',
+  SEND_BACK: 'initiative.send_back',
+  ACCEPT: 'initiative.promote',
+  APPROVE: 'initiative.approve',
+  SCHEDULE: 'initiative.schedule',
+  START: 'initiative.start',
+  COMPLETE: 'initiative.complete',
+  BLOCK: 'initiative.block',
+  UNBLOCK: 'initiative.unblock',
+  CANCEL: 'initiative.cancel',
+};
+
+const capabilityForGate = (gate: string): string =>
+  GATE_CAPABILITIES[gate] ?? 'initiative.status.change';
 
 // Status metadata for UI
 const STATUS_META: Record<
@@ -719,15 +739,18 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             {/* Actions */}
             <div className="flex items-center gap-2">
               {availableActions.slice(0, 2).map((action) => (
-                <button
-                  key={action.id}
-                  onClick={() => handleGateAction(action.gate)}
-                  disabled={isTransitioning}
-                  className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 ${action.color} disabled:opacity-50`}
-                >
-                  {isTransitioning ? <Loader2 size={16} className="animate-spin" /> : action.icon}
-                  {action.label}
-                </button>
+                // FAZA C: bramka capability (fail-open — w trybie shadow renderuje
+                // 1:1 jak dotąd; filtruje dopiero CAPABILITY_ENFORCE=enforce).
+                <CapabilityGate key={action.id} capability={capabilityForGate(action.gate)}>
+                  <button
+                    onClick={() => handleGateAction(action.gate)}
+                    disabled={isTransitioning}
+                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 ${action.color} disabled:opacity-50`}
+                  >
+                    {isTransitioning ? <Loader2 size={16} className="animate-spin" /> : action.icon}
+                    {action.label}
+                  </button>
+                </CapabilityGate>
               ))}
               {availableActions.length > 2 && (
                 <RowActionsMenu

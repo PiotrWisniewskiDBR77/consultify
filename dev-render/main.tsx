@@ -28,6 +28,7 @@ import AssessmentReportsTableScreen from './screens/assessment-reports-table';
 import CanvasKebabRestructureScreen from './screens/canvas-kebab-restructure';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
+import CapabilityGateDemoScreen from './screens/capability-gate-demo';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import EvFootballFieldScreen from './screens/ev-football-field';
@@ -52,6 +53,10 @@ import ZwornikProjectsScreen from './screens/zwornik-projects';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'capability-gate-demo': {
+    label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',
+    render: () => <CapabilityGateDemoScreen />,
+  },
   'template-create-wizard': {
     label: '#83c START kreatora szablonu (nazwa → typ → dostępność)',
     render: () => <TemplateCreateWizardScreen />,
