@@ -3167,7 +3167,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         window.dispatchEvent(
           new CustomEvent('idea-workspace-quick-action', {
-            detail: { action: pfAction },
+            // pf_create carries the raw prompt so the process-flow AI
+            // generator (flow_generator) has content to work from — see
+            // useProcessFlowQuickActions.ts / IdeaProcessFlowTool.createFromPrompt.
+            detail: { action: pfAction, prompt: text },
           })
         );
 

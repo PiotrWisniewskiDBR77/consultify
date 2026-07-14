@@ -705,6 +705,20 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     onApply: handleApplyAIProposal,
   });
 
+  // F-processflow-dead-actions: chat "stwórz proces X" (pf_create) — reuses
+  // the real flow_generator AI pipeline above (same one the AI panel's
+  // "Generate" button calls) instead of a no-op. Opens the panel so the
+  // resulting proposal is visible/reviewable, matching the panel's own
+  // accept/reject flow (Decision 5 in useProcessFlowAIProposal.ts).
+  const createFromPrompt = useCallback(
+    (prompt: string) => {
+      if (locked || !prompt.trim()) return;
+      setShowAIPanel(true);
+      createProposal(prompt);
+    },
+    [locked, createProposal]
+  );
+
   // ── Selection tracking ─────────────────────────────────────────────────
   const handleSelectionUpdate = useCallback(
     (nds: Node[]) => {
@@ -1743,32 +1757,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [collab, locked, setLanes]
   );
 
-  // ── Quick action listener (extracted to useProcessFlowQuickActions) ─────
-  useProcessFlowQuickActions({
-    open,
-    ideaId,
-    isPl,
-    nodes,
-    handlers: {
-      addNode,
-      insertAutomationTrigger,
-      addLane,
-      insertBetween,
-      splitPath,
-      deleteSelected,
-      duplicateSelected,
-      undo,
-      redo,
-      openMetricsEditor,
-      runSavingsAnalysis,
-    },
-    setters: {
-      setFlowMode,
-      setSemanticKit,
-      setNodes,
-    },
-  });
-
   // ── Validate ───────────────────────────────────────────────────────────
 
   const runValidation = useCallback(() => {
@@ -1862,6 +1850,36 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       setSummaryLoading(false);
     }
   }, [edges, i18n.language, ideaId, isPl, lanes, locked, nodes, summaryLoading]);
+
+  // ── Quick action listener (extracted to useProcessFlowQuickActions) ─────
+  // Placed after handleAICoach/createFromPrompt so both are defined before
+  // being referenced here.
+  useProcessFlowQuickActions({
+    open,
+    ideaId,
+    isPl,
+    nodes,
+    handlers: {
+      addNode,
+      insertAutomationTrigger,
+      addLane,
+      insertBetween,
+      splitPath,
+      deleteSelected,
+      duplicateSelected,
+      undo,
+      redo,
+      openMetricsEditor,
+      runSavingsAnalysis,
+      createFromPrompt,
+      runProcessCoach: handleAICoach,
+    },
+    setters: {
+      setFlowMode,
+      setSemanticKit,
+      setNodes,
+    },
+  });
 
   // ── Accept ghost node → convert to real node ──────────────────────────
 

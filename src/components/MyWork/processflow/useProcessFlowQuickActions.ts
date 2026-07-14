@@ -18,6 +18,20 @@ export interface ProcessFlowQuickActionHandlers {
   redo: () => void;
   openMetricsEditor: () => void;
   runSavingsAnalysis: () => void;
+  /**
+   * F-processflow-dead-actions: generates a whole process from a free-text
+   * prompt (chat "stwórz proces X" / pf_create). Wired to the real
+   * `flow_generator` AI pipeline (useProcessFlowAIProposal.createProposal) —
+   * NOT a stub. Opens the AI proposal panel with the result for review.
+   */
+  createFromPrompt: (prompt: string) => void;
+  /**
+   * F-processflow-dead-actions: bottleneck/optimization analysis for
+   * pf_analyze. Wired to the real `process_coach` AI pipeline (handleAICoach
+   * / runProcessCoach) — the same handler already used by the toolbar's AI
+   * Coach button.
+   */
+  runProcessCoach: () => void;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -38,10 +52,15 @@ export interface UseProcessFlowQuickActionsOpts {
 export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts): void {
   const { open, ideaId, isPl, nodes, handlers, setters } = opts;
 
-  const quickActionRef = useRef<(action: string) => void>(() => {});
+  const quickActionRef = useRef<(action: string, detail?: Record<string, unknown>) => void>(
+    () => {}
+  );
 
-  quickActionRef.current = (action: string) => {
+  quickActionRef.current = (action: string, detail?: Record<string, unknown>) => {
     if (action === 'pf_add_action') handlers.addNode('action');
+    // pf_add_step: chat-detector alias for "add a step" — same shape as
+    // pf_add_action (an actionable process step). See processFlowIntentDetector.ts.
+    if (action === 'pf_add_step') handlers.addNode('action');
     if (action === 'pf_add_decision') handlers.addNode('decision');
     if (action === 'pf_add_start') handlers.addNode('start');
     if (action === 'pf_add_end') handlers.addNode('end');
@@ -105,6 +124,19 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
       handlers.runSavingsAnalysis();
     }
 
+    // pf_create: chat "stwórz proces X" — generate a whole flow from the
+    // prompt text carried in the event detail (real flow_generator pipeline).
+    if (action === 'pf_create') {
+      const prompt = typeof detail?.prompt === 'string' ? detail.prompt : '';
+      handlers.createFromPrompt(prompt);
+    }
+
+    // pf_analyze: chat "analizuj/optymalizuj proces" — real bottleneck/
+    // optimization analysis (same pipeline as the toolbar's AI Coach button).
+    if (action === 'pf_analyze') {
+      handlers.runProcessCoach();
+    }
+
     if (action === 'pf_undo') handlers.undo();
     if (action === 'pf_redo') handlers.redo();
     if (action === 'pf_delete') handlers.deleteSelected();
@@ -115,7 +147,7 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     if (!open) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.action) quickActionRef.current(detail.action);
+      if (detail?.action) quickActionRef.current(detail.action, detail);
     };
     window.addEventListener('idea-workspace-quick-action', handler);
     return () => window.removeEventListener('idea-workspace-quick-action', handler);
