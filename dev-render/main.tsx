@@ -33,6 +33,9 @@ import CapabilityGateDemoScreen from './screens/capability-gate-demo';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
+||||||| 61c7c571ac
+import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
+import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
@@ -74,6 +77,15 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'public-booking-widget': {
     label: '#24c Publiczny widget booking (Calendly-like, niezalogowany) — CTA neutralny',
     render: () => <PublicBookingWidgetScreen />,
+  },
+  'document-studio-blocks-i18n': {
+    label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
+    render: () => <DocumentStudioBlocksI18nScreen />,
+  },
+||||||| 61c7c571ac
+  'document-studio-m1-share-primary': {
+    label: 'M18 #2 — Document Studio M1: "Udostępnij" primary, Export DOCX obok (kanon Formuły)',
+    render: () => <DocumentStudioM1SharePrimaryScreen />,
   },
   'document-studio-blocks-i18n': {
     label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
@@ -260,6 +272,28 @@ function Fallback(): React.ReactElement {
   );
 }
 
+class DebugBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <pre style={{ padding: 24, whiteSpace: 'pre-wrap', color: 'red' }}>
+          {String(this.state.error.stack || this.state.error.message)}
+        </pre>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 createRoot(mount).render(
-  <React.StrictMode>{entry ? entry.render() : <Fallback />}</React.StrictMode>
+  <React.StrictMode>
+    <DebugBoundary>{entry ? entry.render() : <Fallback />}</DebugBoundary>
+  </React.StrictMode>
 );

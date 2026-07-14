@@ -630,7 +630,12 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
     setLoading(true);
     setError(null);
     try {
-      setLinks(await listDocumentStudioShareLinks(artifactId));
+      // Guard against a non-array response (found while wiring the M1
+      // "Udostępnij" primary chip to this panel — an unexpected/empty API
+      // body previously reached `setLinks(undefined)` and crashed the whole
+      // panel on the very next render via `links.length`).
+      const result = await listDocumentStudioShareLinks(artifactId);
+      setLinks(Array.isArray(result) ? result : []);
     } catch (err) {
       setError(
         err instanceof Error
@@ -656,7 +661,8 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
         label: label.trim() || undefined,
       });
       setCreatedToken(link.token);
-      setLinks(await listDocumentStudioShareLinks(artifactId));
+      const refreshed = await listDocumentStudioShareLinks(artifactId);
+      setLinks(Array.isArray(refreshed) ? refreshed : []);
       toast.success(t('documentStudio.documentPanel.shareLinkCreated', 'Share link created'));
     } catch (err) {
       setError(
@@ -1854,6 +1860,25 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     }
   };
 
+  // Selected overflow tool id (drives the panel once the user picks a row
+  // from the `more` menu, or when the M1 "Udostępnij" chip below jumps
+  // straight to Share). `ExecutiveModuleShell` owns the rail's `activeToolId`
+  // internally and does not expose it, so this stays deliberately sticky
+  // across `more` re-opens (last pick shown again) rather than reaching into
+  // shell internals to auto-reset it. The explicit "back to menu" affordance
+  // (`renderOverflowToolPanel`) always lets the user return to the full list.
+  const [overflowSelection, setOverflowSelection] = useState<string | null>(null);
+
+  // M1 primary action (kanon ARTIFACT_ANATOMY_STANDARD §Archetyp B: "Udostępnij"
+  // jest primary w M1). The chip lives in the top bar while ShareLinksPanel is a
+  // rail tool folded behind `more`; controlled rail state lets the chip jump
+  // straight to it instead of leaving the user to hunt through the overflow menu.
+  const [activeRailToolId, setActiveRailToolId] = useState<string | null>(null);
+  const handleOpenShare = useCallback(() => {
+    setOverflowSelection('share');
+    setActiveRailToolId('more');
+  }, []);
+
   const topBarChips = useMemo<TopBarChipDescriptor[]>(
     () => [
       {
@@ -1887,9 +1912,14 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         ),
       },
       {
+        // Kanon ARTIFACT_ANATOMY_STANDARD §Archetyp B (Dokument): M1 PRIMARY =
+        // "Udostępnij". Export DOCX is a secondary M1 action next to it, not
+        // the primary CTA — Export lives in the PANEL Akcje group too.
         id: 'share',
         label: t('documentStudio.panel.chipShare', 'Share'),
         icon: Share2,
+        kind: 'primary',
+        onClick: handleOpenShare,
         tooltip: t(
           'documentStudio.panel.chipShareTooltip',
           'Open share-link management from the right rail.'
@@ -1907,12 +1937,11 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           ? t('documentStudio.panel.chipExporting', 'Exporting')
           : t('documentStudio.panel.chipExportDocx', 'Export DOCX'),
         icon: Download,
-        kind: 'primary',
         disabled: exporting !== null,
         onClick: () => void handleExport('docx'),
       },
     ],
-    [exporting, handleExport, policy?.canOverrideQa, qaBlock, t]
+    [exporting, handleExport, handleOpenShare, policy?.canOverrideQa, qaBlock, t]
   );
 
   // Right-rail tool inventory (13 total). Kanon powłoki: ≤5 "primary"
@@ -2004,15 +2033,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     ],
     [t]
   );
-
-  // Selected overflow tool id (drives the panel once the user picks a
-  // row from the `more` menu). `ExecutiveModuleShell` owns the rail's
-  // `activeToolId` internally and does not expose it, so this stays
-  // deliberately sticky across `more` re-opens (last pick shown again)
-  // rather than reaching into shell internals to auto-reset it. The
-  // explicit "back to menu" affordance (`renderOverflowToolPanel`)
-  // always lets the user return to the full list.
-  const [overflowSelection, setOverflowSelection] = useState<string | null>(null);
 
   const rightRailTools = useMemo<RightRailToolDescriptor[]>(
     () => [
@@ -2407,6 +2427,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       }
       rightRailTools={rightRailTools}
       renderRightRailPanel={renderRightRailPanel}
+      activeRightRailToolId={activeRailToolId}
+      onActiveRightRailToolChange={setActiveRailToolId}
       canvas={canvas}
       defaultLeftWidth={260}
       defaultRightWidth={340}
