@@ -230,7 +230,7 @@ Każdy plik w `Harvard/wdrozenie-100/` = pełna teczka 8 warstw (00 nagłówek �
 | M21 Meeting | 78 | — |
 | M22 AI OS | 70 | — |
 | M23 Organizacja | 75 | — |
-| M24 Admin | 65 | — |
+| M24 Admin | 70 | re-audyt 2026-07-14 (`M24-admin.md` §RE-AUDYT): 6 paneli (health doszedł), inwentarz 159 plików non-test/33 żywe, i18n/§27 dług doprecyzowany |
 | M26 Portal Partnerski | 78 | — |
 | M27 SuperAdmin | ~55 | zablokowany — bez konta superadmin, weryfikacja niepełna |
 | A1 Affiliate (stub) | — | **ZAMKNIĘTE** (bez zmian vs 06-19: descoped, orphan view do `rm`) |
