@@ -33,15 +33,12 @@ import CapabilityGateDemoScreen from './screens/capability-gate-demo';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
-||||||| 61c7c571ac
-import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
 import DocumentStudioM1SharePrimaryScreen from './screens/document-studio-m1-share-primary';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
-||||||| 61c7c571ac
 import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
@@ -82,7 +79,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
     render: () => <DocumentStudioBlocksI18nScreen />,
   },
-||||||| 61c7c571ac
   'document-studio-m1-share-primary': {
     label: 'M18 #2 — Document Studio M1: "Udostępnij" primary, Export DOCX obok (kanon Formuły)',
     render: () => <DocumentStudioM1SharePrimaryScreen />,
