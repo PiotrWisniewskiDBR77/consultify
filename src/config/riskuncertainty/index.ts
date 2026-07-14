@@ -3,10 +3,13 @@
  *
  * SSOT for the Risk & Uncertainty methodology content and its deterministic
  * synthesis engine. Cloned from the Ansoff config pattern (src/config/ansoff):
- *   - deepeningLadder.ts  : per-dimension depth staircase + partner-grade proposal bank (PL/EN)
- *   - moveValidator.ts    : risk exposure scoring, ranking, and W2 resilience move sequencing
- *   - conclusionPrompts.ts: AI prompt builders grounded in the engine output
- *   - raidHandoff.ts      : Risk → Initiative RAID handoff with tool-session provenance
+ *   - deepeningLadder.ts     : per-dimension depth staircase + partner-grade proposal bank (PL/EN)
+ *   - moveValidator.ts       : risk exposure scoring, ranking, and W2 resilience move sequencing
+ *   - riskMatrixEngine.ts    : 2x2 probability x impact zone classification + response map (O3)
+ *   - riskInsightStaircase.ts: fact->interpretation->implication staircase + invented-number guard
+ *                              + risk-vs-uncertainty (known/unknown-unknown) discipline (O3)
+ *   - conclusionPrompts.ts   : AI prompt builders grounded in the engine output
+ *   - raidHandoff.ts         : Risk → Initiative RAID handoff with tool-session provenance
  *
  * This closes the 19th consulting tool. The RAID handoff means the tool is NOT
  * a silo: identified risks/assumptions carry a source back-reference into an
@@ -24,6 +27,8 @@ export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
 export * from './raidHandoff';
+export * from './riskInsightStaircase';
+export * from './riskMatrixEngine';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
