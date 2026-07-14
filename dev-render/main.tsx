@@ -128,7 +128,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AssessmentListScreen />,
   },
   'assessment-menu3-status-chips': {
-    label: '#71 REALNY AssessmentHub — Menu 3 klikalne chipy statusu (ff assessmentMenu3StatusChips forced ON)',
+    label:
+      '#71 REALNY AssessmentHub — Menu 3 klikalne chipy statusu (ff assessmentMenu3StatusChips forced ON)',
     render: () => <AssessmentMenu3StatusChipsScreen />,
   },
   'assessment-initiatives-panel': {
