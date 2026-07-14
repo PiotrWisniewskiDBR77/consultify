@@ -1,7 +1,7 @@
 {
   "_comment": "VEGAS V7.7 hardcoded-color ratchet baseline. Regenerate: npm run check:colors:update",
-  "generatedAt": "2026-07-14T17:21:14.474Z",
-  "total": 92478,
+  "generatedAt": "2026-07-14T17:59:53.177Z",
+  "total": 92480,
   "files": {
     "src/App.tsx": 5,
     "src/components/access/AccessBlockedModal.tsx": 18,
@@ -698,7 +698,7 @@
     "src/components/Interview/EvidencePanel.tsx": 95,
     "src/components/Interview/InsightCreatorModal.tsx": 220,
     "src/components/Interview/InsightViewer.tsx": 970,
-    "src/components/Interview/InterviewHub.tsx": 466,
+    "src/components/Interview/InterviewHub.tsx": 468,
     "src/components/Interview/InterviewSingleQuestionRuntime.tsx": 383,
     "src/components/Interview/InterviewWorkspace.tsx": 142,
     "src/components/Interview/NewSessionModal.tsx": 91,

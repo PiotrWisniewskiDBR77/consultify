@@ -9980,7 +9980,7 @@ Return ONLY the answer text (no markdown fences).`;
       {/* I1-I3 Faza 1 — unified "+ Nowy" launcher (Insight/Initiative charter/
           Decision). No defaultType here — Interview mixes Insight generation
           (this hub) and Initiative (portfolio wizard above, out of scope per
-          ADR #68b), so the full Krok 0 chooser stays. */}
+          ADR 68b), so the full Krok 0 chooser stays. */}
       {isUnifiedCreateLauncherEnabled() && (
         <UnifiedCreateLauncher
           isOpen={showUnifiedLauncher}
