@@ -2831,7 +2831,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     allNodes={effectiveNodes}
                     containerRef={tableContainerRef}
                   />
-                  <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ 
+                  <table /* §27-exempt: archetyp D Platforma-tabel (kolumny/kolejność/agregacje user-defined, jak GridView) — decyzja Piotra 07-13 w _ROZLICZENIE_1-88 ("zły archetyp do StandardTable, ZOSTAW"); przetagowane z §27-todo 07-14 */
                     className="w-full text-left"
                     style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
                   >
@@ -3035,7 +3035,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
                         {isPl ? 'Połączenia' : 'Edges'} ({edges.length})
                       </div>
-                      <table className="w-full text-left">
+                      <table /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left">
                         <thead>
                           <tr className="border-b border-c-border-subtle">
                             <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
