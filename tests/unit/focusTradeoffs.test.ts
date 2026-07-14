@@ -238,3 +238,35 @@ describe('Focus & Trade-offs engine — bridges', () => {
     expect(ranking.ordered[0]).toBe(sequence[0].priorityId);
   });
 });
+
+describe('Focus & Trade-offs engine — O3 additions wired into the conclusion prompt', () => {
+  it('includes the opportunity-cost matrix and the anti-focus check block', () => {
+    const data = buildData([
+      prio('a', { valueScore: 5, strategicFit: 5, effortScore: 1, evidence: ['a'] }),
+      prio('b', { valueScore: 4, strategicFit: 4, effortScore: 2, evidence: ['b'] }),
+    ]);
+    const prompt = buildFocusConclusionPrompt(data, false)!;
+    expect(prompt).toContain('OPPORTUNITY-COST MATRIX');
+    expect(prompt).toContain('ANTI-FOCUS CHECK');
+    expect(prompt).toContain('staircase.fact');
+  });
+
+  it('flags the anti-focus check in the prompt when every priority is pursue and none is rejected', () => {
+    const data = buildData([
+      prio('a', { valueScore: 5, strategicFit: 5, effortScore: 1, recommendation: 'pursue' }),
+      prio('b', { valueScore: 4, strategicFit: 4, effortScore: 2, recommendation: 'pursue' }),
+    ]);
+    const prompt = buildFocusConclusionPrompt(data, false)!;
+    expect(prompt).toContain('ANTI-FOCUS CHECK (FLAGGED)');
+    expect(prompt).toContain('No-strategy flag');
+  });
+
+  it('shows the anti-focus check as clear when a priority is explicitly dropped', () => {
+    const data = buildData([
+      prio('a', { valueScore: 5, strategicFit: 5, effortScore: 1, recommendation: 'pursue' }),
+      prio('b', { valueScore: 1, strategicFit: 1, effortScore: 5, recommendation: 'drop' }),
+    ]);
+    const prompt = buildFocusConclusionPrompt(data, false)!;
+    expect(prompt).toContain('ANTI-FOCUS CHECK (clear)');
+  });
+});

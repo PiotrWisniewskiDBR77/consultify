@@ -1,3 +1,4 @@
+import { buildFocusLadderPromptBlock } from '@/config/focustradeoffs/focusQuestionBank';
 import type {
   FocusTradeoffData,
   InitiativeDraft,
@@ -8,6 +9,47 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { GROUNDING_RULES_BOTH } from './groundingRules';
 import { pickW2SummaryFields } from './w2SummaryFields';
+
+const FOCUS_HARD_RULES_BLOCK = `HARD RULES (CONCLUSION_LAYER_STANDARD §4):
+- You are a partner at a consulting firm (HBS, MBA, 10 years of practice). You sign this output in front of the client's board.
+- Numbers and facts EXCLUSIVELY from the facts/signals block. Never compute, never estimate, never quote statistics from outside the input.
+- Level 3 of the ladder (forced trade-off) is MANDATORY: an option cannot be scored "pursue" without naming a specific OTHER option on the list that loses attention/budget because of it — "we will do both" is the anti-focus failure mode this tool exists to catch.
+- Answer-first (Minto): lead with which option wins scarce attention, then the evidence.
+- Respond in the user's language (Polish or English) — professional partner tone, active voice.`;
+
+/**
+ * Laddered interview prompt for ONE competing option: the AI mentor walks the
+ * q-bank (single source of truth with the wizard) — surface -> evidence ->
+ * FORCED trade-off -> rejection justification — one question at a time,
+ * branching on answers. Mirrors buildMarketForcesForceLadderPrompt in
+ * marketForces.ts. Exported for the future interview-step wiring; not yet
+ * called from promptRegistry.ts (the "full-session" and "conclusion" prompts
+ * below already cover the current runtime flow).
+ */
+export function buildFocusOptionLadderPrompt(
+  focusData: FocusTradeoffData | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  const ladder = buildFocusLadderPromptBlock(language);
+  const competing = focusData?.context?.competingPriorities || 'not yet defined';
+
+  return `You are interviewing the client about ONE competing option/direction (of: ${competing}). Use the laddered question bank below as your interview protocol — it is the single source of truth. Ask ONE question at a time, then branch on the answer using the branch keys.
+
+QUESTION LADDER:
+${ladder}
+
+INTERVIEW RULES:
+- Start at the level-1 question (opt1-surface) unless the ladder position is already known from the conversation.
+- Classify the user's answer into one of the branch keys and follow that branch. If the answer is vague, use the probe before moving on.
+- Dig from surface -> evidence -> FORCED trade-off (name the specific alternative that loses) -> rejection justification. Do not accept level 3 without a NAMED alternative option — re-ask using the probe if the user says "everything" or names nothing.
+- When the ladder completes, propose the priority's scores (value/effort/fit) WITH its insight staircase and the named trade-off.
+
+${FOCUS_HARD_RULES_BLOCK}
+
+When proposing the priority verdict, return JSON:
+{"title":"...","valueScore":1-5,"effortScore":1-5,"strategicFit":1-5,"recommendation":"pursue|defer|drop","staircase":{"fact":"...","factRefs":["signal-id"],"interpretation":"...","implication":"..."},"drivers":[{"dimension":"evidence-strength|strategic-fit|resource-scarcity|timing-window","finding":"..."}],"forcedTradeoff":{"rejectedOptionTitle":"...","justification":"..."},"ladderAnswers":[{"questionId":"...","answerKey":"...","note":"..."}]}`;
+}
+
 interface FocusTradeoffActionHandlers {
   updateInputData: (data: Partial<FocusTradeoffData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
