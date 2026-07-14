@@ -235,7 +235,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
         className="bg-c-surface-raised rounded-xl shadow-2xl border border-c-border-subtle overflow-hidden pointer-events-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-c-accent text-white">
+        <div className="flex items-center justify-between px-4 py-3 bg-navy-900 dark:bg-navy-700 text-white">
           <div className="flex items-center gap-2">
             <Lightbulb size={18} />
             <span className="font-semibold">{title[lang]}</span>

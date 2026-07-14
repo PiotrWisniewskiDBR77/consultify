@@ -45,6 +45,7 @@ import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
 import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
 import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
+import Wave5InternalCrimsonScreen from './screens/wave5-internal-crimson';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
 import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 
@@ -157,6 +158,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'wave4-choices-crimson': {
     label: 'Fala 4: bg-c-accent CTA/wybor → neutralne (Assessment/Initiatives/Execution/Results/Decisions)',
     render: () => <Wave4ChoicesCrimsonScreen />,
+  },
+  'wave5-internal-crimson': {
+    label: 'wave5-internal-crimson: naprawa bg-c-accent w Studio (Export/Link modal) — CTA/toggle/selected-tab',
+    render: () => <Wave5InternalCrimsonScreen />,
   },
 };
 

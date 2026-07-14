@@ -215,10 +215,10 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
                 <div
                   className={`
                                     w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
-                                    ${getSelectedId() === item.id ? 'border-c-accent bg-c-accent' : 'border-c-border-strong'}
+                                    ${getSelectedId() === item.id ? 'border-c-text bg-c-text' : 'border-c-border-strong'}
                                 `}
                 >
-                  {getSelectedId() === item.id && <Check size={12} className="text-white" />}
+                  {getSelectedId() === item.id && <Check size={12} className="text-c-surface" />}
                 </div>
                 <span className="text-sm text-c-text truncate flex-1">{item.name}</span>
               </button>
@@ -256,7 +256,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg text-sm font-medium transition-colors"
           >
             <Link2 size={14} />
             Save Links

@@ -213,7 +213,7 @@ export const PricingPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2 px-4 h-9 bg-c-accent hover:brightness-95 text-c-text rounded-full text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 h-9 bg-c-text hover:brightness-95 text-c-surface rounded-full text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Price Snapshot

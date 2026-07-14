@@ -98,7 +98,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-c-accent px-6 py-4">
+        <div className="bg-navy-900 dark:bg-navy-700 px-6 py-4">
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-white" />
             <div>
@@ -163,7 +163,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                 <button
                   onClick={initSetup}
                   disabled={loading}
-                  className="flex-1 px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-c-text text-c-surface rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('mfa.setup.continue', 'Continue')}
@@ -211,7 +211,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
 
               <button
                 onClick={() => setStep('verify')}
-                className="w-full px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition"
+                className="w-full px-4 py-2 bg-c-text text-c-surface rounded-lg hover:opacity-90 transition"
               >
                 {t('mfa.setup.next', "I've scanned the code")}
               </button>
@@ -248,7 +248,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                 <button
                   onClick={verifyAndEnable}
                   disabled={loading || verificationCode.length !== 6}
-                  className="flex-1 px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-c-text text-c-surface rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('mfa.setup.verify', 'Verify & Enable')}

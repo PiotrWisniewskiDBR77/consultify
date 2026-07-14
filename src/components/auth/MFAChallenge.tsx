@@ -173,7 +173,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-c-accent px-6 py-4 text-center">
+        <div className="bg-navy-900 dark:bg-navy-700 px-6 py-4 text-center">
           <Shield className="w-10 h-10 text-white mx-auto mb-2" />
           <h2 className="text-lg font-semibold text-white">
             {t('mfa.challenge.title', 'Two-Factor Authentication')}
@@ -270,7 +270,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
               <button
                 onClick={verifyBackupCode}
                 disabled={loading || !backupCode.trim()}
-                className="w-full px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 bg-c-text text-c-surface rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('mfa.challenge.verify', 'Verify')}

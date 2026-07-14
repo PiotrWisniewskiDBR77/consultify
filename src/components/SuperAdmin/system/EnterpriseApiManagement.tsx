@@ -774,7 +774,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                     selectedKeyUsage.usage.usage.map((day, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center">
                         <div
-                          className="w-full bg-c-accent rounded-t-sm"
+                          className="w-full bg-c-text rounded-t-sm"
                           style={{
                             height: `${Math.max(5, (day.requests / Math.max(1, ...selectedKeyUsage.usage.usage.map((d) => d.requests))) * 100)}%`,
                           }}

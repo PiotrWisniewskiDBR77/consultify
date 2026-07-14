@@ -444,7 +444,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'commissions'
-              ? 'bg-c-accent text-c-text'
+              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
               : 'text-c-text-secondary hover:text-c-text'
           )}
         >
@@ -455,7 +455,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'payouts'
-              ? 'bg-c-accent text-c-text'
+              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
               : 'text-c-text-secondary hover:text-c-text'
           )}
         >
@@ -466,7 +466,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'attribution'
-              ? 'bg-c-accent text-c-text'
+              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
               : 'text-c-text-secondary hover:text-c-text'
           )}
         >
@@ -477,7 +477,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'expiring'
-              ? 'bg-c-accent text-c-text'
+              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
               : 'text-c-text-secondary hover:text-c-text'
           )}
         >
@@ -494,7 +494,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'analytics'
-              ? 'bg-c-accent text-c-text'
+              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
               : 'text-c-text-secondary hover:text-c-text'
           )}
         >
