@@ -4004,6 +4004,15 @@
         "approved": "Approved",
         "completed": "Completed"
       }
+    },
+    "categorySidebar": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "progress": "Progress",
+      "categories": "categories",
+      "questions": "questions",
+      "ans": "ans.",
+      "factsOnlyNoRecommendations": "Facts only - no recommendations"
     }
   },
   "assessment": {

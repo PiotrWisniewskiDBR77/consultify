@@ -3238,6 +3238,15 @@
         "approved": "Zatwierdzony",
         "completed": "Zakończony"
       }
+    },
+    "categorySidebar": {
+      "completed": "Zakończona",
+      "inProgress": "W trakcie",
+      "progress": "Postęp",
+      "categories": "kategorii",
+      "questions": "pytań",
+      "ans": "odp.",
+      "factsOnlyNoRecommendations": "Tylko fakty - bez rekomendacji"
     }
   },
   "assessment": {
