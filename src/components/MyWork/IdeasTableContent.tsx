@@ -941,7 +941,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       },
                       {
                         id: 'flow',
-                        label: 'Process Flow',
+                        label: isPolish ? 'Diagram procesu' : 'Process Flow',
                         icon: Workflow,
                         onClick: () => onOpenIdeaInProcessFlow(idea),
                       },
@@ -953,14 +953,14 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     actions: [
                       {
                         id: 'ai_chat',
-                        label: 'AI Chat',
+                        label: isPolish ? 'Czat AI' : 'AI Chat',
                         icon: MessageSquare,
                         onClick: () => onOpenIdeaAiChat?.(idea),
                         disabled: !onOpenIdeaAiChat,
                       },
                       {
                         id: 'ai_insights',
-                        label: 'AI Insights',
+                        label: isPolish ? 'Wglądy AI' : 'AI Insights',
                         icon: Bot,
                         onClick: () => onOpenIdeaAiInsights?.(idea),
                         disabled: !onOpenIdeaAiInsights,
@@ -1001,7 +1001,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       },
                       {
                         id: 'convert_team_chat',
-                        label: 'Team Chat',
+                        label: isPolish ? 'Czat zespołu' : 'Team Chat',
                         icon: MessageSquarePlus,
                         onClick: () =>
                           onConvertIdeaToTarget
