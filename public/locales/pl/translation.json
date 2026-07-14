@@ -7906,6 +7906,15 @@
       "overCapacity": "przeciążenie: {{count}} > limit {{wipLimit}}",
       "empty": "Pusto"
     },
+    "initiativeGeneratorModal": {
+      "proposeInitiative": "Zaproponuj inicjatywę",
+      "proposals": "Propozycje",
+      "coverageAndWaves": "Pokrycie i fale",
+      "close": "Zamknij",
+      "loadingGrid": "Wczytuję siatkę inicjatyw…",
+      "changeSaved": "Zapisano propozycję zmiany.",
+      "recordedLocally": "Zarejestrowano lokalnie (backend wkrótce)."
+    },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Powiązane modele finansowe",
       "openInFinance": "Otwórz w module Finanse",

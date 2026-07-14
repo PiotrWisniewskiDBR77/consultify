@@ -80,9 +80,8 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
   onCreated,
   isPolish: isPolishProp,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
-  const tr = (pl: string, en: string) => (isPolish ? pl : en);
 
   const [view, setView] = useState<'board' | 'charter'>('board');
   const [boardTab, setBoardTab] = useState<'proposals' | 'coverage'>('proposals');
@@ -209,7 +208,7 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-3.5 dark:border-white/[0.08]">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
             <span aria-hidden className="inline-block h-5 w-1.5 rounded-full bg-navy-900" />
-            {tr('Zaproponuj inicjatywę', 'Propose initiative')}
+            {t('initiatives.initiativeGeneratorModal.proposeInitiative')}
           </h2>
           <div className="flex items-center gap-3">
             <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-white/[0.1]">
@@ -225,15 +224,15 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
                   }`}
                 >
                   {tabKey === 'proposals'
-                    ? tr('Propozycje', 'Proposals')
-                    : tr('Pokrycie i fale', 'Coverage & waves')}
+                    ? t('initiatives.initiativeGeneratorModal.proposals')
+                    : t('initiatives.initiativeGeneratorModal.coverageAndWaves')}
                 </button>
               ))}
             </div>
             <button
               type="button"
               onClick={onClose}
-              aria-label={tr('Zamknij', 'Close')}
+              aria-label={t('initiatives.initiativeGeneratorModal.close')}
               className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06]"
             >
               <X size={20} />
@@ -243,7 +242,7 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
         <div className="min-h-0 flex-1 overflow-auto p-4">
           {loading ? (
             <div className="flex h-full items-center justify-center text-sm text-slate-500">
-              {tr('Wczytuję siatkę inicjatyw…', 'Loading the initiative grid…')}
+              {t('initiatives.initiativeGeneratorModal.loadingGrid')}
             </div>
           ) : boardTab === 'coverage' ? (
             <InitiativeCoverageWaveView
@@ -272,11 +271,8 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
                 }).then((res) =>
                   toast(
                     res.persisted
-                      ? tr('Zapisano propozycję zmiany.', 'Suggested change saved.')
-                      : tr(
-                          'Zarejestrowano lokalnie (backend wkrótce).',
-                          'Recorded locally (backend pending).'
-                        )
+                      ? t('initiatives.initiativeGeneratorModal.changeSaved')
+                      : t('initiatives.initiativeGeneratorModal.recordedLocally')
                   )
                 );
               }}

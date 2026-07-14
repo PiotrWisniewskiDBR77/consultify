@@ -8671,6 +8671,15 @@
       "overCapacity": "over capacity: {{count}} > limit {{wipLimit}}",
       "empty": "Empty"
     },
+    "initiativeGeneratorModal": {
+      "proposeInitiative": "Propose initiative",
+      "proposals": "Proposals",
+      "coverageAndWaves": "Coverage & waves",
+      "close": "Close",
+      "loadingGrid": "Loading the initiative grid…",
+      "changeSaved": "Suggested change saved.",
+      "recordedLocally": "Recorded locally (backend pending)."
+    },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Linked finance models",
       "openInFinance": "Open in Finance",
