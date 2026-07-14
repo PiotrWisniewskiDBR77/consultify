@@ -45,8 +45,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
   locked,
   onAddNodes,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
 
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,7 +66,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
           id: s.id || `int-${idx}`,
           text: s.text || '',
           category: s.category || 'finding',
-          source: s.source || (isPl ? 'Wywiady' : 'Interviews'),
+          source: s.source || t('ideas.mindmap.interviews', 'Interviews'),
           confidence: s.confidence,
         }));
         setInsights(mapped);
@@ -78,7 +77,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [i18n.language, ideaId, ideaTitle, isPl]);
+  }, [i18n.language, ideaId, ideaTitle, t]);
 
   useEffect(() => {
     if (open && insights.length === 0) {
@@ -107,13 +106,13 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
     );
 
     toast.success(
-      isPl
-        ? `Dodano ${selectedInsights.length} insightów`
-        : `Added ${selectedInsights.length} insights`,
+      t('ideas.mindmap.addedNInsights', 'Added {{count}} insights', {
+        count: selectedInsights.length,
+      }),
       { duration: 1500 }
     );
     onClose();
-  }, [insights, isPl, onAddNodes, onClose, selected]);
+  }, [insights, onAddNodes, onClose, selected, t]);
 
   if (!open) return null;
 
@@ -124,7 +123,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
           <div className="flex items-center gap-2">
             <MessageSquare size={16} className="text-c-text-secondary" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Wywiady → Mapa' : 'Interviews → Map'}
+              {t('ideas.mindmap.interviewsMap', 'Interviews → Map')}
             </h3>
           </div>
           <button
@@ -140,7 +139,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-text-secondary" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Szukam insightów...' : 'Finding insights...'}
+                {t('ideas.mindmap.findingInsights', 'Finding insights...')}
               </span>
             </div>
           ) : insights.length === 0 ? (
@@ -150,7 +149,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
-                {isPl ? 'Brak insightów do zaimportowania' : 'No insights to import'}
+                {t('ideas.mindmap.noInsightsImport', 'No insights to import')}
               </p>
             </div>
           ) : (
@@ -196,7 +195,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.mindmap.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleApply}
@@ -204,7 +203,9 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface dark:bg-c-surface-raised text-c-text dark:text-c-text-secondary hover:bg-c-surface dark:hover:bg-c-surface-raised transition-all disabled:opacity-40"
           >
             <Zap size={12} />
-            {isPl ? `Importuj ${selected.size} insightów` : `Import ${selected.size} insights`}
+            {t('ideas.mindmap.importNInsights', 'Import {{count}} insights', {
+              count: selected.size,
+            })}
           </button>
         </div>
       </div>

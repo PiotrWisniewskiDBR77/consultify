@@ -55,7 +55,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
   onClose,
   nodes,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const ideaNodes = useMemo(() => {
@@ -115,11 +115,11 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
         </button>
         <BarChart3 size={16} className="text-c-warning" />
         <h2 className="text-sm font-bold text-c-text dark:text-c-text">
-          {isPl ? 'Lejek pomysłów' : 'Idea Funnel'}
+          {t('ideas.mindmap.ideaFunnel', 'Idea Funnel')}
         </h2>
         <span className="text-[10px] text-c-text-secondary ml-auto">
-          {total} {isPl ? 'pomysłów' : 'ideas'} · {overallConversion}%{' '}
-          {isPl ? 'konwersja' : 'conversion'}
+          {total} {t('ideas.mindmap.ideas', 'ideas')} · {overallConversion}%{' '}
+          {t('ideas.mindmap.conversion', 'conversion')}
         </span>
       </div>
 
@@ -148,7 +148,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
                             {isPl ? stage.labelPl : stage.labelEn}
                           </div>
                           <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted mt-0.5">
-                            {count} {isPl ? 'pomysłów' : 'ideas'} ({pct}%)
+                            {count} {t('ideas.mindmap.ideas', 'ideas')} ({pct}%)
                           </div>
                         </div>
                         <div className="text-right">
@@ -184,7 +184,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
           <div className="mt-8 pt-6 border-t border-c-border-subtle dark:border-c-border-subtle">
             <h3 className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted mb-3 flex items-center gap-2">
               <TrendingUp size={14} />
-              {isPl ? 'Konwersja per gałąź' : 'Conversion per branch'}
+              {t('ideas.mindmap.conversionPerBranch', 'Conversion per branch')}
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {branchStats.map(([bk, stats]) => (

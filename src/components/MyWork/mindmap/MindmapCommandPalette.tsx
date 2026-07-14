@@ -291,7 +291,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
   onClose,
   onAction,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [query, setQuery] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -381,7 +381,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isPl ? 'Szukaj akcji…' : 'Search actions…'}
+              placeholder={t('ideas.mindmap.searchActions', 'Search actions…')}
               className="flex-1 bg-transparent text-sm text-c-text-secondary dark:text-c-text placeholder-c-text-muted outline-none"
             />
             <kbd className="hidden sm:flex items-center px-1.5 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded text-[10px] font-mono text-c-text-secondary dark:text-c-text-muted">
@@ -392,7 +392,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
           <div ref={listRef} className="max-h-[360px] overflow-y-auto p-1.5">
             {filtered.length === 0 ? (
               <div className="py-8 text-center text-sm text-c-text-secondary dark:text-c-text-secondary">
-                {isPl ? 'Brak wyników' : 'No results'}
+                {t('ideas.mindmap.noResults', 'No results')}
               </div>
             ) : (
               Array.from(grouped.entries()).map(([cat, { items, startIdx }]) => (
@@ -442,19 +442,19 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
               <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">
                 ↑↓
               </kbd>
-              {isPl ? 'Nawiguj' : 'Navigate'}
+              {t('ideas.mindmap.navigate', 'Navigate')}
             </span>
             <span className="flex items-center gap-1">
               <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">
                 ↵
               </kbd>
-              {isPl ? 'Wykonaj' : 'Execute'}
+              {t('ideas.mindmap.execute', 'Execute')}
             </span>
             <span className="flex items-center gap-1">
               <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">
                 esc
               </kbd>
-              {isPl ? 'Zamknij' : 'Close'}
+              {t('ideas.mindmap.close', 'Close')}
             </span>
           </div>
         </div>

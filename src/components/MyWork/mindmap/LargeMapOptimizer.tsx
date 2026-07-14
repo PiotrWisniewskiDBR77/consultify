@@ -19,8 +19,7 @@ export const LargeMapOptimizer: React.FC<LargeMapOptimizerProps> = ({
   edgeCount,
   onToggleSimplifiedMode,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [simplified, setSimplified] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -58,21 +57,17 @@ export const LargeMapOptimizer: React.FC<LargeMapOptimizerProps> = ({
     >
       {level === 'critical' ? <AlertTriangle size={14} /> : <Zap size={14} />}
       <span>
-        {isPl ? `${nodeCount} węzłów — ` : `${nodeCount} nodes — `}
+        {t('ideas.mindmap.nNodesDash', '{{count}} nodes — ', { count: nodeCount })}
         {simplified
-          ? isPl
-            ? 'tryb uproszczony aktywny'
-            : 'simplified mode active'
-          : isPl
-            ? 'rozważ tryb uproszczony'
-            : 'consider simplified mode'}
+          ? t('ideas.mindmap.simplifiedModeActive', 'simplified mode active')
+          : t('ideas.mindmap.considerSimplifiedMode', 'consider simplified mode')}
       </span>
       {!simplified && (
         <button
           onClick={toggleSimplified}
           className="px-2 py-0.5 rounded-lg bg-c-surface-raised dark:bg-c-bg hover:bg-c-surface-raised dark:hover:bg-c-bg transition-colors"
         >
-          {isPl ? 'Włącz' : 'Enable'}
+          {t('ideas.mindmap.enable', 'Enable')}
         </button>
       )}
       {simplified && (
@@ -80,7 +75,7 @@ export const LargeMapOptimizer: React.FC<LargeMapOptimizerProps> = ({
           onClick={toggleSimplified}
           className="px-2 py-0.5 rounded-lg bg-c-surface-raised dark:bg-c-bg hover:bg-c-surface-raised dark:hover:bg-c-bg transition-colors"
         >
-          {isPl ? 'Wyłącz' : 'Disable'}
+          {t('ideas.mindmap.disable', 'Disable')}
         </button>
       )}
       <button onClick={() => setDismissed(true)} className="ml-1 opacity-50 hover:opacity-100">

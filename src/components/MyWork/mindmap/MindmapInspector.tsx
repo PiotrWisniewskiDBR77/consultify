@@ -106,7 +106,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
   onSetLayoutMode,
   onApplyTheme,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
   const [tab, setTab] = useState<InspectorTab>('style');
   const [autoLayout, setAutoLayout] = useState(true);
@@ -145,13 +145,13 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
         <div className="space-y-3">
           {!selectedNodeId ? (
             <div className="text-[11px] text-c-text-secondary dark:text-c-text-secondary italic py-4 text-center">
-              {isPl ? 'Zaznacz węzeł, aby edytować styl' : 'Select a node to edit its style'}
+              {t('ideas.mindmap.selectNodeEditItsStyle', 'Select a node to edit its style')}
             </div>
           ) : (
             <>
               {/* Branch style */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>{isPl ? 'Linia gałęzi' : 'Branch style'}</span>
+                <span className={CTRL_LABEL}>{t('ideas.mindmap.branchStyle', 'Branch style')}</span>
                 <div className="flex gap-1">
                   {BRANCH_STYLES.map((s) => (
                     <button
@@ -167,7 +167,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Node width */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>{isPl ? 'Szerokość' : 'Node width'}</span>
+                <span className={CTRL_LABEL}>{t('ideas.mindmap.nodeWidth', 'Node width')}</span>
                 <input
                   type="range"
                   min={120}
@@ -186,7 +186,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Font size */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>{isPl ? 'Rozmiar czcionki' : 'Font size'}</span>
+                <span className={CTRL_LABEL}>{t('ideas.mindmap.fontSize', 'Font size')}</span>
                 <div className="flex gap-1">
                   {FONT_SIZES.map((fs) => (
                     <button
@@ -202,7 +202,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Font weight */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>{isPl ? 'Pogrubienie' : 'Bold'}</span>
+                <span className={CTRL_LABEL}>{t('ideas.mindmap.bold', 'Bold')}</span>
                 <button
                   onClick={() => patchNode({ style: { ...nodeStyle, bold: !nodeStyle.bold } })}
                   className={nodeStyle.bold ? PILL_ACTIVE : PILL_BTN}
@@ -213,7 +213,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Text color */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>{isPl ? 'Kolor tekstu' : 'Text color'}</span>
+                <span className={CTRL_LABEL}>{t('ideas.mindmap.textColor', 'Text color')}</span>
                 <div className="flex gap-1.5">
                   {NODE_COLOR_PALETTE.map((c) => (
                     <button
@@ -232,7 +232,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
               {/* Background opacity */}
               <div className={CTRL_ROW}>
-                <span className={CTRL_LABEL}>{isPl ? 'Krycie tła' : 'Bg opacity'}</span>
+                <span className={CTRL_LABEL}>{t('ideas.mindmap.bgOpacity', 'Bg opacity')}</span>
                 <input
                   type="range"
                   min={0}
@@ -259,7 +259,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
           {/* Structure type */}
           <div>
             <div className="text-[10px] font-medium text-c-text-secondary dark:text-c-text-secondary mb-1.5 uppercase tracking-wide">
-              {isPl ? 'Typ struktury' : 'Structure type'}
+              {t('ideas.mindmap.structureType', 'Structure type')}
             </div>
             <div className="flex gap-1.5 flex-wrap">
               {STRUCTURES.map((s) => (
@@ -277,7 +277,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
           {/* Layout mode */}
           <div>
             <div className="text-[10px] font-medium text-c-text-secondary dark:text-c-text-secondary mb-1.5 uppercase tracking-wide">
-              {isPl ? 'Tryb układu' : 'Layout mode'}
+              {t('ideas.mindmap.layoutMode', 'Layout mode')}
             </div>
             <div className="flex gap-1.5">
               {LAYOUT_MODES.map((m) => (
@@ -301,7 +301,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
               className="w-3.5 h-3.5 rounded accent-c-accent"
             />
             <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
-              {isPl ? 'Auto-layout przy zmianach' : 'Auto-layout on changes'}
+              {t('ideas.mindmap.autoLayoutChanges', 'Auto-layout on changes')}
             </span>
           </label>
         </div>
@@ -331,7 +331,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                 onClick={() => onApplyTheme(theme.id)}
                 className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
               >
-                {isPl ? 'Zastosuj' : 'Apply'}
+                {t('ideas.mindmap.apply', 'Apply')}
               </button>
             </div>
           ))}

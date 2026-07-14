@@ -111,7 +111,7 @@ export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
 /* ── Global MapHealthScore widget ─────────────────────────────────── */
 
 export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, visible = true }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [expanded, setExpanded] = useState(false);
 
@@ -174,7 +174,10 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
         labelPl: 'Balans',
         labelEn: 'Balance',
         score: balanceScore,
-        detail: isPl ? `Min: ${minCount}, Max: ${maxCount}` : `Min: ${minCount}, Max: ${maxCount}`,
+        detail: t('ideas.mindmap.minMaxDetail', 'Min: {{min}}, Max: {{max}}', {
+          min: minCount,
+          max: maxCount,
+        }),
       },
       {
         key: 'depth',
@@ -264,7 +267,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
           </svg>
           <div className="flex-1 text-left">
             <div className="text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted">
-              {isPl ? 'Zdrowie mapy' : 'Map Health'}
+              {t('ideas.mindmap.mapHealth', 'Map Health')}
             </div>
             <div className={`text-[13px] font-bold ${scoreColor}`}>{overallScore}%</div>
           </div>
