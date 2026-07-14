@@ -1284,6 +1284,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install server dependencies
+        # tests/integration/routes/** importują server/src, którego zależności
+        # (socket.io, cheerio) żyją TYLKO w server/package.json. Bez tego kroku
+        # ~112 plików routes/ crashuje na imporcie (ERR_MODULE_NOT_FOUND) — to
+        # gros z 220 failing plików wykrytych 2026-07-14 (nie regresja, dług
+        # nigdy nieodpalany na demo). Ten sam wzorzec co job Runtime Smoke.
+        run: npm ci --prefix server
+
       - name: Install bc + jq (for numeric comparison + JSON)
         run: sudo apt-get update && sudo apt-get install -y bc jq
 
