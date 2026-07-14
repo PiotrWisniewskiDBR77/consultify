@@ -3861,7 +3861,12 @@ function MindMapInner({
             e.id === targetEdge.id ? { ...e, style: { ...e.style, strokeDasharray: dasharray } } : e
           )
         );
-        toast.success(`Style: ${nextStyle}`, { duration: 800 });
+        toast.success(
+          t('myWork.ideaMap.toast.styleChanged', 'Style: {{style}}', { style: nextStyle }),
+          {
+            duration: 800,
+          }
+        );
       }
 
       if (action === 'edge_edit_relation' && relationEdge) {
@@ -4679,7 +4684,10 @@ function MindMapInner({
           const current = ctxNode.data?.shape || 'default';
           const nextIdx = (shapes.indexOf(current) + 1) % shapes.length;
           updateNodeData(ctxNode.id, (data) => ({ ...data, shape: shapes[nextIdx] }));
-          toast.success(`Shape: ${shapes[nextIdx]}`, { duration: 800 });
+          toast.success(
+            t('myWork.ideaMap.toast.shapeChanged', 'Shape: {{shape}}', { shape: shapes[nextIdx] }),
+            { duration: 800 }
+          );
         }
       }
       if (action === 'ctx_connect_to_selected' && ctxNode) {

@@ -4619,6 +4619,12 @@
         "taskDeleted": "Task deleted",
         "deleteFailed": "Failed to delete task"
       }
+    },
+    "ideaMap": {
+      "toast": {
+        "styleChanged": "Style: {{style}}",
+        "shapeChanged": "Shape: {{shape}}"
+      }
     }
   },
   "step1": {

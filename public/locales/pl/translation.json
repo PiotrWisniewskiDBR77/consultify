@@ -3854,6 +3854,12 @@
         "taskDeleted": "Zadanie usunięte",
         "deleteFailed": "Nie udało się usunąć zadania"
       }
+    },
+    "ideaMap": {
+      "toast": {
+        "styleChanged": "Styl: {{style}}",
+        "shapeChanged": "Kształt: {{shape}}"
+      }
     }
   },
   "step1": {
