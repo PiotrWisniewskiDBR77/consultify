@@ -15266,6 +15266,129 @@
         "latestLogs": "NAJNOWSZE LOGI DIAGNOSTYCZNE",
         "clear": "Wyczyść",
         "errorLabel": "Błąd: {{error}}"
+      },
+      "accessLimits": {
+        "tiers": {
+          "budget": {
+            "name": "Budżetowy",
+            "description": "Dostęp tylko do ekonomicznych modeli (GPT-4o-mini, DeepSeek)"
+          },
+          "standard": {
+            "name": "Standardowy",
+            "description": "Dostęp do modeli standardowych i budżetowych (GPT-4o, Claude 3.5 Sonnet)"
+          },
+          "premium": {
+            "name": "Premium",
+            "description": "Pełny dostęp do wszystkich modeli, w tym rozumujących (o1, Claude 3 Opus)"
+          },
+          "availableModels": "Dostępne modele:",
+          "more": "+{{count}} więcej"
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia dostępu i limitów"
+        },
+        "errors": {
+          "save": "Nie udało się zapisać ustawień"
+        },
+        "title": "Dostęp i limity",
+        "description": "Zarządzaj poziomami dostępu AI, limitami użycia i kontrolą budżetu",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "subTabs": {
+          "limits": "Limity użycia",
+          "tiers": "Poziomy użytkowników",
+          "costs": "Panel kosztów"
+        },
+        "usageLimits": {
+          "title": "Limity użycia",
+          "description": "Ustaw dzienne i miesięczne limity użycia AI",
+          "maxCallsPerDay": "Maks. wywołań AI dziennie",
+          "maxCallsPerDayDescription": "Dzienny limit na użytkownika",
+          "maxTokensPerMonth": "Maks. tokenów miesięcznie",
+          "maxTokensPerMonthDescription": "Miesięczny budżet tokenów dla organizacji"
+        },
+        "budgetControl": {
+          "title": "Kontrola budżetu",
+          "description": "Ustaw limity wydatków i działania automatyczne",
+          "monthlyBudget": "Budżet miesięczny (USD)",
+          "unlimitedPlaceholder": "0 = bez limitu",
+          "hardLimit": "Twardy limit (USD)",
+          "noHardLimitPlaceholder": "0 = brak twardego limitu",
+          "freezeOnLimit": "Zablokuj po przekroczeniu limitu",
+          "freezeOnLimitDescription": "Automatycznie wyłącz AI po przekroczeniu budżetu"
+        },
+        "budgetAlerts": {
+          "title": "Alerty budżetowe",
+          "description": "Skonfiguruj automatyczne alerty przy osiągnięciu określonych progów wydatków",
+          "warning": "Alert ostrzegawczy",
+          "critical": "Alert krytyczny",
+          "emergency": "Alert awaryjny",
+          "notifyAt": "Powiadom administratorów przy {{threshold}}% wykorzystania budżetu",
+          "emailPlaceholder": "Email alertu (opcjonalnie)",
+          "addEmail": "Dodaj email"
+        },
+        "summary": {
+          "thisMonth": "Ten miesiąc",
+          "ofBudget": "z budżetu ${{budget}}",
+          "tokenUsage": "Zużycie tokenów",
+          "ofLimit": "z limitu {{limit}}k",
+          "avgDailyCalls": "Śr. dziennych wywołań",
+          "perUserMax": "na użytkownika (maks. {{max}})"
+        },
+        "autoTier": {
+          "title": "Automatyczne przypisywanie poziomu",
+          "description": "Automatycznie awansuj lub degraduj użytkowników na podstawie ich miesięcznego zużycia tokenów",
+          "enable": "Włącz automatyczne przypisywanie",
+          "enableDescription": "Automatycznie dostosowuj poziomy użytkowników co miesiąc na podstawie zużycia",
+          "direction": "Kierunek przypisywania",
+          "promoteOnly": "Tylko awans",
+          "demoteOnly": "Tylko degradacja",
+          "both": "Oba (awans i degradacja)",
+          "maxTier": "Maksymalny poziom auto-przypisania",
+          "budgetOnly": "Tylko budżetowy",
+          "upToStandard": "Do standardowego",
+          "upToPremium": "Do premium",
+          "allTiers": "Wszystkie poziomy (wł. rozumowanie)",
+          "maxTierNote": "Użytkownicy nie zostaną automatycznie awansowani powyżej tego poziomu",
+          "thresholdsTitle": "Progi tokenów",
+          "thresholdBudget": "0 - 1000 tokenów/miesiąc",
+          "thresholdStandard": "1001 - 50 000 tokenów/miesiąc",
+          "thresholdPremium": "50 001 - 200 000 tokenów/miesiąc",
+          "reasoning": "Rozumowanie",
+          "thresholdReasoning": "200 001+ tokenów/miesiąc",
+          "previewChanges": "Podgląd zmian",
+          "notifyUsers": "Powiadom użytkowników o zmianie poziomu",
+          "notifyUsersDescription": "Wyślij powiadomienie email, gdy poziom zostanie automatycznie zmieniony"
+        },
+        "userTiers": {
+          "title": "Przypisania poziomów użytkowników",
+          "description": "Przypisz poziomy dostępu AI poszczególnym użytkownikom",
+          "columns": {
+            "user": "Użytkownik",
+            "currentTier": "Aktualny poziom",
+            "usage7d": "Użycie (7d)",
+            "cost7d": "Koszt (7d)",
+            "actions": "Akcje"
+          },
+          "requestsCount": "{{count}} żądań",
+          "viewDetails": "Zobacz szczegóły"
+        },
+        "costDashboard": {
+          "totalSpend7d": "Łączne wydatki (7d)",
+          "avgCostPerRequest": "Śr. koszt/żądanie",
+          "totalRequests": "Łączna liczba żądań",
+          "totalTokens": "Łączna liczba tokenów",
+          "attributionTitle": "Przypisanie kosztów",
+          "attributionDescription": "Zobacz, którzy użytkownicy i projekty generują najwięcej kosztów AI",
+          "columns": {
+            "entity": "Podmiot",
+            "type": "Typ",
+            "requests": "Żądania",
+            "tokens": "Tokeny",
+            "cost": "Koszt",
+            "percentOfTotal": "% całości"
+          }
+        }
       }
     }
   },

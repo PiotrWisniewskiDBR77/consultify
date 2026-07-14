@@ -14615,6 +14615,129 @@
         "latestLogs": "LATEST DIAGNOSTIC LOGS",
         "clear": "Clear",
         "errorLabel": "Error: {{error}}"
+      },
+      "accessLimits": {
+        "tiers": {
+          "budget": {
+            "name": "Budget",
+            "description": "Access to budget-friendly models only (GPT-4o-mini, DeepSeek)"
+          },
+          "standard": {
+            "name": "Standard",
+            "description": "Access to standard + budget models (GPT-4o, Claude 3.5 Sonnet)"
+          },
+          "premium": {
+            "name": "Premium",
+            "description": "Full access to all models including reasoning (o1, Claude 3 Opus)"
+          },
+          "availableModels": "Available models:",
+          "more": "+{{count}} more"
+        },
+        "toasts": {
+          "saved": "Access & Limits settings saved"
+        },
+        "errors": {
+          "save": "Failed to save settings"
+        },
+        "title": "Access & Limits",
+        "description": "Manage AI access tiers, usage limits, and budget controls",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "subTabs": {
+          "limits": "Usage Limits",
+          "tiers": "User Tiers",
+          "costs": "Cost Dashboard"
+        },
+        "usageLimits": {
+          "title": "Usage Limits",
+          "description": "Set daily and monthly limits for AI usage",
+          "maxCallsPerDay": "Max AI Calls per Day",
+          "maxCallsPerDayDescription": "Daily limit per user",
+          "maxTokensPerMonth": "Max Tokens per Month",
+          "maxTokensPerMonthDescription": "Monthly token budget for the organization"
+        },
+        "budgetControl": {
+          "title": "Budget Control",
+          "description": "Set spending limits and automatic actions",
+          "monthlyBudget": "Monthly Budget (USD)",
+          "unlimitedPlaceholder": "0 = unlimited",
+          "hardLimit": "Hard Limit (USD)",
+          "noHardLimitPlaceholder": "0 = no hard limit",
+          "freezeOnLimit": "Freeze on Limit",
+          "freezeOnLimitDescription": "Automatically disable AI when budget is exceeded"
+        },
+        "budgetAlerts": {
+          "title": "Budget Alerts",
+          "description": "Configure automatic alerts when spending reaches certain thresholds",
+          "warning": "Warning Alert",
+          "critical": "Critical Alert",
+          "emergency": "Emergency Alert",
+          "notifyAt": "Notify admins at {{threshold}}% budget usage",
+          "emailPlaceholder": "Alert email (optional)",
+          "addEmail": "Add Email"
+        },
+        "summary": {
+          "thisMonth": "This Month",
+          "ofBudget": "of ${{budget}} budget",
+          "tokenUsage": "Token Usage",
+          "ofLimit": "of {{limit}}k limit",
+          "avgDailyCalls": "Avg Daily Calls",
+          "perUserMax": "per user (max {{max}})"
+        },
+        "autoTier": {
+          "title": "Automatic Tier Assignment",
+          "description": "Automatically promote or demote users based on their monthly token usage",
+          "enable": "Enable Auto-Assignment",
+          "enableDescription": "Automatically adjust user tiers monthly based on usage",
+          "direction": "Assignment Direction",
+          "promoteOnly": "Promote Only",
+          "demoteOnly": "Demote Only",
+          "both": "Both (Promote & Demote)",
+          "maxTier": "Maximum Auto-Assign Tier",
+          "budgetOnly": "Budget Only",
+          "upToStandard": "Up to Standard",
+          "upToPremium": "Up to Premium",
+          "allTiers": "All Tiers (incl. Reasoning)",
+          "maxTierNote": "Users won't be auto-promoted beyond this tier",
+          "thresholdsTitle": "Token Thresholds",
+          "thresholdBudget": "0 - 1,000 tokens/month",
+          "thresholdStandard": "1,001 - 50,000 tokens/month",
+          "thresholdPremium": "50,001 - 200,000 tokens/month",
+          "reasoning": "Reasoning",
+          "thresholdReasoning": "200,001+ tokens/month",
+          "previewChanges": "Preview Changes",
+          "notifyUsers": "Notify Users on Tier Change",
+          "notifyUsersDescription": "Send email notification when tier is automatically changed"
+        },
+        "userTiers": {
+          "title": "User Tier Assignments",
+          "description": "Assign AI access tiers to individual users",
+          "columns": {
+            "user": "User",
+            "currentTier": "Current Tier",
+            "usage7d": "Usage (7d)",
+            "cost7d": "Cost (7d)",
+            "actions": "Actions"
+          },
+          "requestsCount": "{{count}} requests",
+          "viewDetails": "View Details"
+        },
+        "costDashboard": {
+          "totalSpend7d": "Total Spend (7d)",
+          "avgCostPerRequest": "Avg Cost/Request",
+          "totalRequests": "Total Requests",
+          "totalTokens": "Total Tokens",
+          "attributionTitle": "Cost Attribution",
+          "attributionDescription": "See which users and projects generate the most AI costs",
+          "columns": {
+            "entity": "Entity",
+            "type": "Type",
+            "requests": "Requests",
+            "tokens": "Tokens",
+            "cost": "Cost",
+            "percentOfTotal": "% of Total"
+          }
+        }
       }
     }
   },

@@ -25,40 +25,13 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
 import { SettingsCard, SettingsSlider, SettingsToggle } from '../../AISettings';
-
-// User tier definitions
-const USER_TIERS = [
-  {
-    id: 'BUDGET',
-    name: 'Budget',
-    description: 'Access to budget-friendly models only (GPT-4o-mini, DeepSeek)',
-    icon: Zap,
-    color: 'text-emerald-400',
-    models: ['gpt-4o-mini', 'deepseek-chat', 'qwen-turbo'],
-  },
-  {
-    id: 'STANDARD',
-    name: 'Standard',
-    description: 'Access to standard + budget models (GPT-4o, Claude 3.5 Sonnet)',
-    icon: Star,
-    color: 'text-blue-400',
-    models: ['gpt-4o', 'claude-3.5-sonnet', 'gpt-4o-mini', 'deepseek-chat'],
-  },
-  {
-    id: 'PREMIUM',
-    name: 'Premium',
-    description: 'Full access to all models including reasoning (o1, Claude 3 Opus)',
-    icon: Crown,
-    color: 'text-amber-400',
-    models: ['o1-mini', 'o1-preview', 'claude-3-opus', 'gpt-4o', 'claude-3.5-sonnet'],
-  },
-];
 
 interface UserTierAssignment {
   userId: string;
@@ -80,6 +53,44 @@ interface CostAttribution {
 }
 
 export const AccessLimitsTab: React.FC = () => {
+  const { t } = useTranslation();
+  // User tier definitions
+  const USER_TIERS = [
+    {
+      id: 'BUDGET',
+      name: t('admin.aiControlCenter.accessLimits.tiers.budget.name', 'Budget'),
+      description: t(
+        'admin.aiControlCenter.accessLimits.tiers.budget.description',
+        'Access to budget-friendly models only (GPT-4o-mini, DeepSeek)'
+      ),
+      icon: Zap,
+      color: 'text-emerald-400',
+      models: ['gpt-4o-mini', 'deepseek-chat', 'qwen-turbo'],
+    },
+    {
+      id: 'STANDARD',
+      name: t('admin.aiControlCenter.accessLimits.tiers.standard.name', 'Standard'),
+      description: t(
+        'admin.aiControlCenter.accessLimits.tiers.standard.description',
+        'Access to standard + budget models (GPT-4o, Claude 3.5 Sonnet)'
+      ),
+      icon: Star,
+      color: 'text-blue-400',
+      models: ['gpt-4o', 'claude-3.5-sonnet', 'gpt-4o-mini', 'deepseek-chat'],
+    },
+    {
+      id: 'PREMIUM',
+      name: t('admin.aiControlCenter.accessLimits.tiers.premium.name', 'Premium'),
+      description: t(
+        'admin.aiControlCenter.accessLimits.tiers.premium.description',
+        'Full access to all models including reasoning (o1, Claude 3 Opus)'
+      ),
+      icon: Crown,
+      color: 'text-amber-400',
+      models: ['o1-mini', 'o1-preview', 'claude-3-opus', 'gpt-4o', 'claude-3.5-sonnet'],
+    },
+  ];
+
   const { currentOrganization } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -162,12 +173,14 @@ export const AccessLimitsTab: React.FC = () => {
         const updated = await res.json();
         setSettings(updated);
         setHasChanges(false);
-        toast.success('Access & Limits settings saved');
+        toast.success(
+          t('admin.aiControlCenter.accessLimits.toasts.saved', 'Access & Limits settings saved')
+        );
       } else {
         throw new Error('Save failed');
       }
     } catch (error) {
-      toast.error('Failed to save settings');
+      toast.error(t('admin.aiControlCenter.accessLimits.errors.save', 'Failed to save settings'));
     }
     setSaving(false);
   };
@@ -188,10 +201,13 @@ export const AccessLimitsTab: React.FC = () => {
         <div>
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <DollarSign className="text-success-600 dark:text-emerald-400" size={20} />
-            Access & Limits
+            {t('admin.aiControlCenter.accessLimits.title', 'Access & Limits')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Manage AI access tiers, usage limits, and budget controls
+            {t(
+              'admin.aiControlCenter.accessLimits.description',
+              'Manage AI access tiers, usage limits, and budget controls'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -201,7 +217,7 @@ export const AccessLimitsTab: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-xs text-warning-700 dark:text-amber-400 bg-warning-500/10 px-3 py-1.5 rounded-full border border-warning-500/30 dark:border-transparent"
             >
-              Unsaved changes
+              {t('admin.aiControlCenter.accessLimits.unsavedChanges', 'Unsaved changes')}
             </motion.span>
           )}
           <button
@@ -214,7 +230,7 @@ export const AccessLimitsTab: React.FC = () => {
             }`}
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Changes
+            {t('admin.aiControlCenter.accessLimits.saveChanges', 'Save Changes')}
           </button>
         </div>
       </div>
@@ -230,7 +246,7 @@ export const AccessLimitsTab: React.FC = () => {
           }`}
         >
           <AlertTriangle size={14} className="inline mr-2" />
-          Usage Limits
+          {t('admin.aiControlCenter.accessLimits.subTabs.limits', 'Usage Limits')}
         </button>
         <button
           onClick={() => setActiveSubTab('tiers')}
@@ -241,7 +257,7 @@ export const AccessLimitsTab: React.FC = () => {
           }`}
         >
           <Users size={14} className="inline mr-2" />
-          User Tiers
+          {t('admin.aiControlCenter.accessLimits.subTabs.tiers', 'User Tiers')}
         </button>
         <button
           onClick={() => setActiveSubTab('costs')}
@@ -252,7 +268,7 @@ export const AccessLimitsTab: React.FC = () => {
           }`}
         >
           <BarChart2 size={14} className="inline mr-2" />
-          Cost Dashboard
+          {t('admin.aiControlCenter.accessLimits.subTabs.costs', 'Cost Dashboard')}
         </button>
       </div>
 
@@ -260,15 +276,24 @@ export const AccessLimitsTab: React.FC = () => {
       {activeSubTab === 'limits' && settings && (
         <div className="space-y-6">
           <SettingsCard
-            title="Usage Limits"
-            description="Set daily and monthly limits for AI usage"
+            title={t('admin.aiControlCenter.accessLimits.usageLimits.title', 'Usage Limits')}
+            description={t(
+              'admin.aiControlCenter.accessLimits.usageLimits.description',
+              'Set daily and monthly limits for AI usage'
+            )}
             icon={AlertTriangle}
             iconColor="text-amber-400"
           >
             <div className="space-y-6">
               <SettingsSlider
-                label="Max AI Calls per Day"
-                description="Daily limit per user"
+                label={t(
+                  'admin.aiControlCenter.accessLimits.usageLimits.maxCallsPerDay',
+                  'Max AI Calls per Day'
+                )}
+                description={t(
+                  'admin.aiControlCenter.accessLimits.usageLimits.maxCallsPerDayDescription',
+                  'Daily limit per user'
+                )}
                 value={settings.maxAICallsPerDay}
                 onChange={(v) => updateSetting('maxAICallsPerDay', v)}
                 min={10}
@@ -278,8 +303,14 @@ export const AccessLimitsTab: React.FC = () => {
               />
 
               <SettingsSlider
-                label="Max Tokens per Month"
-                description="Monthly token budget for the organization"
+                label={t(
+                  'admin.aiControlCenter.accessLimits.usageLimits.maxTokensPerMonth',
+                  'Max Tokens per Month'
+                )}
+                description={t(
+                  'admin.aiControlCenter.accessLimits.usageLimits.maxTokensPerMonthDescription',
+                  'Monthly token budget for the organization'
+                )}
                 value={settings.maxTokensPerMonth}
                 onChange={(v) => updateSetting('maxTokensPerMonth', v)}
                 min={50000}
@@ -292,8 +323,11 @@ export const AccessLimitsTab: React.FC = () => {
           </SettingsCard>
 
           <SettingsCard
-            title="Budget Control"
-            description="Set spending limits and automatic actions"
+            title={t('admin.aiControlCenter.accessLimits.budgetControl.title', 'Budget Control')}
+            description={t(
+              'admin.aiControlCenter.accessLimits.budgetControl.description',
+              'Set spending limits and automatic actions'
+            )}
             icon={DollarSign}
             iconColor="text-emerald-400"
           >
@@ -301,7 +335,10 @@ export const AccessLimitsTab: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
-                    Monthly Budget (USD)
+                    {t(
+                      'admin.aiControlCenter.accessLimits.budgetControl.monthlyBudget',
+                      'Monthly Budget (USD)'
+                    )}
                   </label>
                   <input
                     type="number"
@@ -310,26 +347,41 @@ export const AccessLimitsTab: React.FC = () => {
                       updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)
                     }
                     className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
-                    placeholder="0 = unlimited"
+                    placeholder={t(
+                      'admin.aiControlCenter.accessLimits.budgetControl.unlimitedPlaceholder',
+                      '0 = unlimited'
+                    )}
                   />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
-                    Hard Limit (USD)
+                    {t(
+                      'admin.aiControlCenter.accessLimits.budgetControl.hardLimit',
+                      'Hard Limit (USD)'
+                    )}
                   </label>
                   <input
                     type="number"
                     value={settings.hardLimitUSD}
                     onChange={(e) => updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)}
                     className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
-                    placeholder="0 = no hard limit"
+                    placeholder={t(
+                      'admin.aiControlCenter.accessLimits.budgetControl.noHardLimitPlaceholder',
+                      '0 = no hard limit'
+                    )}
                   />
                 </div>
               </div>
 
               <SettingsToggle
-                label="Freeze on Limit"
-                description="Automatically disable AI when budget is exceeded"
+                label={t(
+                  'admin.aiControlCenter.accessLimits.budgetControl.freezeOnLimit',
+                  'Freeze on Limit'
+                )}
+                description={t(
+                  'admin.aiControlCenter.accessLimits.budgetControl.freezeOnLimitDescription',
+                  'Automatically disable AI when budget is exceeded'
+                )}
                 checked={settings.freezeOnLimit}
                 onChange={(v) => updateSetting('freezeOnLimit', v)}
                 icon={AlertTriangle}
@@ -340,17 +392,41 @@ export const AccessLimitsTab: React.FC = () => {
 
           {/* Budget Alerts Configuration */}
           <SettingsCard
-            title="Budget Alerts"
-            description="Configure automatic alerts when spending reaches certain thresholds"
+            title={t('admin.aiControlCenter.accessLimits.budgetAlerts.title', 'Budget Alerts')}
+            description={t(
+              'admin.aiControlCenter.accessLimits.budgetAlerts.description',
+              'Configure automatic alerts when spending reaches certain thresholds'
+            )}
             icon={AlertTriangle}
             iconColor="text-danger-400"
           >
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { threshold: 70, label: 'Warning Alert', color: 'warning' },
-                  { threshold: 85, label: 'Critical Alert', color: 'warning' },
-                  { threshold: 95, label: 'Emergency Alert', color: 'danger' },
+                  {
+                    threshold: 70,
+                    label: t(
+                      'admin.aiControlCenter.accessLimits.budgetAlerts.warning',
+                      'Warning Alert'
+                    ),
+                    color: 'warning',
+                  },
+                  {
+                    threshold: 85,
+                    label: t(
+                      'admin.aiControlCenter.accessLimits.budgetAlerts.critical',
+                      'Critical Alert'
+                    ),
+                    color: 'warning',
+                  },
+                  {
+                    threshold: 95,
+                    label: t(
+                      'admin.aiControlCenter.accessLimits.budgetAlerts.emergency',
+                      'Emergency Alert'
+                    ),
+                    color: 'danger',
+                  },
                 ].map((alert) => (
                   <div
                     key={alert.threshold}
@@ -369,7 +445,13 @@ export const AccessLimitsTab: React.FC = () => {
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400">{alert.label}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Notify admins at {alert.threshold}% budget usage
+                      {t(
+                        'admin.aiControlCenter.accessLimits.budgetAlerts.notifyAt',
+                        'Notify admins at {{threshold}}% budget usage',
+                        {
+                          threshold: alert.threshold,
+                        }
+                      )}
                     </p>
                   </div>
                 ))}
@@ -377,11 +459,14 @@ export const AccessLimitsTab: React.FC = () => {
               <div className="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-navy-700">
                 <input
                   type="email"
-                  placeholder="Alert email (optional)"
+                  placeholder={t(
+                    'admin.aiControlCenter.accessLimits.budgetAlerts.emailPlaceholder',
+                    'Alert email (optional)'
+                  )}
                   className="flex-1 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-navy-900 dark:text-white text-sm"
                 />
                 <button className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg">
-                  Add Email
+                  {t('admin.aiControlCenter.accessLimits.budgetAlerts.addEmail', 'Add Email')}
                 </button>
               </div>
             </div>
@@ -392,28 +477,48 @@ export const AccessLimitsTab: React.FC = () => {
             <div className="admin-metric">
               <div className="flex items-center gap-2">
                 <TrendingUp size={14} className="text-slate-500 dark:text-slate-400" />
-                <span className="admin-metric-label">This Month</span>
+                <span className="admin-metric-label">
+                  {t('admin.aiControlCenter.accessLimits.summary.thisMonth', 'This Month')}
+                </span>
               </div>
               <p className="admin-metric-value">$24.50</p>
-              <p className="admin-metric-subtitle">of ${settings.monthlyBudgetUSD || '∞'} budget</p>
+              <p className="admin-metric-subtitle">
+                {t('admin.aiControlCenter.accessLimits.summary.ofBudget', 'of ${{budget}} budget', {
+                  budget: settings.monthlyBudgetUSD || '∞',
+                })}
+              </p>
             </div>
             <div className="admin-metric">
               <div className="flex items-center gap-2">
                 <Zap size={14} className="text-slate-500 dark:text-slate-400" />
-                <span className="admin-metric-label">Token Usage</span>
+                <span className="admin-metric-label">
+                  {t('admin.aiControlCenter.accessLimits.summary.tokenUsage', 'Token Usage')}
+                </span>
               </div>
               <p className="admin-metric-value">125k</p>
               <p className="admin-metric-subtitle">
-                of {(settings.maxTokensPerMonth / 1000).toFixed(0)}k limit
+                {t('admin.aiControlCenter.accessLimits.summary.ofLimit', 'of {{limit}}k limit', {
+                  limit: (settings.maxTokensPerMonth / 1000).toFixed(0),
+                })}
               </p>
             </div>
             <div className="admin-metric">
               <div className="flex items-center gap-2">
                 <Clock size={14} className="text-slate-500 dark:text-slate-400" />
-                <span className="admin-metric-label">Avg Daily Calls</span>
+                <span className="admin-metric-label">
+                  {t('admin.aiControlCenter.accessLimits.summary.avgDailyCalls', 'Avg Daily Calls')}
+                </span>
               </div>
               <p className="admin-metric-value">45</p>
-              <p className="admin-metric-subtitle">per user (max {settings.maxAICallsPerDay})</p>
+              <p className="admin-metric-subtitle">
+                {t(
+                  'admin.aiControlCenter.accessLimits.summary.perUserMax',
+                  'per user (max {{max}})',
+                  {
+                    max: settings.maxAICallsPerDay,
+                  }
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -439,7 +544,10 @@ export const AccessLimitsTab: React.FC = () => {
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/5">
                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                      Available models:
+                      {t(
+                        'admin.aiControlCenter.accessLimits.tiers.availableModels',
+                        'Available models:'
+                      )}
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {tier.models.slice(0, 3).map((m) => (
@@ -452,7 +560,9 @@ export const AccessLimitsTab: React.FC = () => {
                       ))}
                       {tier.models.length > 3 && (
                         <span className="px-2 py-0.5 text-slate-600 dark:text-slate-400 text-xs">
-                          +{tier.models.length - 3} more
+                          {t('admin.aiControlCenter.accessLimits.tiers.more', '+{{count}} more', {
+                            count: tier.models.length - 3,
+                          })}
                         </span>
                       )}
                     </div>
@@ -466,17 +576,26 @@ export const AccessLimitsTab: React.FC = () => {
           <div className="admin-card p-4 mb-6">
             <h3 className="font-semibold text-c-text flex items-center gap-2 mb-4">
               <TrendingUp size={18} className="text-emerald-400" />
-              Automatic Tier Assignment
+              {t('admin.aiControlCenter.accessLimits.autoTier.title', 'Automatic Tier Assignment')}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
-              Automatically promote or demote users based on their monthly token usage
+              {t(
+                'admin.aiControlCenter.accessLimits.autoTier.description',
+                'Automatically promote or demote users based on their monthly token usage'
+              )}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <SettingsToggle
-                  label="Enable Auto-Assignment"
-                  description="Automatically adjust user tiers monthly based on usage"
+                  label={t(
+                    'admin.aiControlCenter.accessLimits.autoTier.enable',
+                    'Enable Auto-Assignment'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.accessLimits.autoTier.enableDescription',
+                    'Automatically adjust user tiers monthly based on usage'
+                  )}
                   checked={settings?.autoTierEnabled || false}
                   onChange={(v) => updateSetting('autoTierEnabled' as any, v)}
                   icon={TrendingUp}
@@ -485,78 +604,147 @@ export const AccessLimitsTab: React.FC = () => {
 
                 <div>
                   <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
-                    Assignment Direction
+                    {t(
+                      'admin.aiControlCenter.accessLimits.autoTier.direction',
+                      'Assignment Direction'
+                    )}
                   </label>
                   <select
                     value={(settings as any)?.autoTierDirection || 'both'}
                     onChange={(e) => updateSetting('autoTierDirection' as any, e.target.value)}
                     className="w-full bg-c-surface-raised/50 border border-c-border-subtle rounded-lg p-2 text-c-text"
                   >
-                    <option value="up">Promote Only</option>
-                    <option value="down">Demote Only</option>
-                    <option value="both">Both (Promote & Demote)</option>
+                    <option value="up">
+                      {t('admin.aiControlCenter.accessLimits.autoTier.promoteOnly', 'Promote Only')}
+                    </option>
+                    <option value="down">
+                      {t('admin.aiControlCenter.accessLimits.autoTier.demoteOnly', 'Demote Only')}
+                    </option>
+                    <option value="both">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.both',
+                        'Both (Promote & Demote)'
+                      )}
+                    </option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
-                    Maximum Auto-Assign Tier
+                    {t(
+                      'admin.aiControlCenter.accessLimits.autoTier.maxTier',
+                      'Maximum Auto-Assign Tier'
+                    )}
                   </label>
                   <select
                     value={(settings as any)?.autoTierMaxTier || 'PREMIUM'}
                     onChange={(e) => updateSetting('autoTierMaxTier' as any, e.target.value)}
                     className="w-full bg-c-surface-raised/50 border border-c-border-subtle rounded-lg p-2 text-c-text"
                   >
-                    <option value="BUDGET">Budget Only</option>
-                    <option value="STANDARD">Up to Standard</option>
-                    <option value="PREMIUM">Up to Premium</option>
-                    <option value="REASONING">All Tiers (incl. Reasoning)</option>
+                    <option value="BUDGET">
+                      {t('admin.aiControlCenter.accessLimits.autoTier.budgetOnly', 'Budget Only')}
+                    </option>
+                    <option value="STANDARD">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.upToStandard',
+                        'Up to Standard'
+                      )}
+                    </option>
+                    <option value="PREMIUM">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.upToPremium',
+                        'Up to Premium'
+                      )}
+                    </option>
+                    <option value="REASONING">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.allTiers',
+                        'All Tiers (incl. Reasoning)'
+                      )}
+                    </option>
                   </select>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Users won't be auto-promoted beyond this tier
+                    {t(
+                      'admin.aiControlCenter.accessLimits.autoTier.maxTierNote',
+                      "Users won't be auto-promoted beyond this tier"
+                    )}
                   </p>
                 </div>
               </div>
 
               <div className="bg-black/20 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-c-text mb-3">Token Thresholds</h4>
+                <h4 className="text-sm font-medium text-c-text mb-3">
+                  {t(
+                    'admin.aiControlCenter.accessLimits.autoTier.thresholdsTitle',
+                    'Token Thresholds'
+                  )}
+                </h4>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-emerald-400">Budget</span>
+                    <span className="text-emerald-400">
+                      {t('admin.aiControlCenter.accessLimits.tiers.budget.name', 'Budget')}
+                    </span>
                     <span className="text-slate-600 dark:text-slate-500">
-                      0 - 1,000 tokens/month
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.thresholdBudget',
+                        '0 - 1,000 tokens/month'
+                      )}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-blue-400">Standard</span>
+                    <span className="text-blue-400">
+                      {t('admin.aiControlCenter.accessLimits.tiers.standard.name', 'Standard')}
+                    </span>
                     <span className="text-slate-600 dark:text-slate-500">
-                      1,001 - 50,000 tokens/month
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.thresholdStandard',
+                        '1,001 - 50,000 tokens/month'
+                      )}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-amber-400">Premium</span>
+                    <span className="text-amber-400">
+                      {t('admin.aiControlCenter.accessLimits.tiers.premium.name', 'Premium')}
+                    </span>
                     <span className="text-slate-600 dark:text-slate-500">
-                      50,001 - 200,000 tokens/month
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.thresholdPremium',
+                        '50,001 - 200,000 tokens/month'
+                      )}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
-                    <span className="text-primary-400">Reasoning</span>
+                    <span className="text-primary-400">
+                      {t('admin.aiControlCenter.accessLimits.autoTier.reasoning', 'Reasoning')}
+                    </span>
                     <span className="text-slate-600 dark:text-slate-500">
-                      200,001+ tokens/month
+                      {t(
+                        'admin.aiControlCenter.accessLimits.autoTier.thresholdReasoning',
+                        '200,001+ tokens/month'
+                      )}
                     </span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/5">
                   <button className="w-full px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 text-sm rounded-lg transition-colors">
-                    Preview Changes
+                    {t(
+                      'admin.aiControlCenter.accessLimits.autoTier.previewChanges',
+                      'Preview Changes'
+                    )}
                   </button>
                 </div>
               </div>
             </div>
 
             <SettingsToggle
-              label="Notify Users on Tier Change"
-              description="Send email notification when tier is automatically changed"
+              label={t(
+                'admin.aiControlCenter.accessLimits.autoTier.notifyUsers',
+                'Notify Users on Tier Change'
+              )}
+              description={t(
+                'admin.aiControlCenter.accessLimits.autoTier.notifyUsersDescription',
+                'Send email notification when tier is automatically changed'
+              )}
               checked={(settings as any)?.autoTierNotify ?? true}
               onChange={(v) => updateSetting('autoTierNotify' as any, v)}
               icon={AlertTriangle}
@@ -569,10 +757,13 @@ export const AccessLimitsTab: React.FC = () => {
             <div className="px-4 py-3 border-b border-[var(--admin-border)]">
               <h3 className="text-sm font-medium text-c-text flex items-center gap-2">
                 <UserCheck size={14} className="text-slate-500 dark:text-slate-400" />
-                User Tier Assignments
+                {t('admin.aiControlCenter.accessLimits.userTiers.title', 'User Tier Assignments')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Assign AI access tiers to individual users
+                {t(
+                  'admin.aiControlCenter.accessLimits.userTiers.description',
+                  'Assign AI access tiers to individual users'
+                )}
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -581,11 +772,30 @@ export const AccessLimitsTab: React.FC = () => {
               >
                 <thead className="bg-black/20 text-xs uppercase text-slate-500 dark:text-slate-400">
                   <tr>
-                    <th className="px-6 py-3">User</th>
-                    <th className="px-6 py-3">Current Tier</th>
-                    <th className="px-6 py-3">Usage (7d)</th>
-                    <th className="px-6 py-3">Cost (7d)</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.accessLimits.userTiers.columns.user', 'User')}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.userTiers.columns.currentTier',
+                        'Current Tier'
+                      )}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.userTiers.columns.usage7d',
+                        'Usage (7d)'
+                      )}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.userTiers.columns.cost7d',
+                        'Cost (7d)'
+                      )}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.accessLimits.userTiers.columns.actions', 'Actions')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -611,12 +821,21 @@ export const AccessLimitsTab: React.FC = () => {
                         </select>
                       </td>
                       <td className="px-6 py-4 text-slate-600">
-                        {user.usage.toLocaleString()} requests
+                        {t(
+                          'admin.aiControlCenter.accessLimits.userTiers.requestsCount',
+                          '{{count}} requests',
+                          {
+                            count: user.usage.toLocaleString(),
+                          }
+                        )}
                       </td>
                       <td className="px-6 py-4 text-slate-600">${user.cost.toFixed(2)}</td>
                       <td className="px-6 py-4">
                         <button className="text-primary-400 hover:text-primary-300 text-sm">
-                          View Details
+                          {t(
+                            'admin.aiControlCenter.accessLimits.userTiers.viewDetails',
+                            'View Details'
+                          )}
                         </button>
                       </td>
                     </tr>
@@ -634,19 +853,36 @@ export const AccessLimitsTab: React.FC = () => {
           {/* Cost Summary - Clean minimal cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="admin-metric">
-              <p className="admin-metric-label">Total Spend (7d)</p>
+              <p className="admin-metric-label">
+                {t(
+                  'admin.aiControlCenter.accessLimits.costDashboard.totalSpend7d',
+                  'Total Spend (7d)'
+                )}
+              </p>
               <p className="text-2xl font-semibold text-c-text mt-1">$27.15</p>
             </div>
             <div className="admin-metric">
-              <p className="admin-metric-label">Avg Cost/Request</p>
+              <p className="admin-metric-label">
+                {t(
+                  'admin.aiControlCenter.accessLimits.costDashboard.avgCostPerRequest',
+                  'Avg Cost/Request'
+                )}
+              </p>
               <p className="text-2xl font-semibold text-c-text mt-1">$0.034</p>
             </div>
             <div className="admin-metric">
-              <p className="admin-metric-label">Total Requests</p>
+              <p className="admin-metric-label">
+                {t(
+                  'admin.aiControlCenter.accessLimits.costDashboard.totalRequests',
+                  'Total Requests'
+                )}
+              </p>
               <p className="text-2xl font-semibold text-c-text mt-1">821</p>
             </div>
             <div className="admin-metric">
-              <p className="admin-metric-label">Total Tokens</p>
+              <p className="admin-metric-label">
+                {t('admin.aiControlCenter.accessLimits.costDashboard.totalTokens', 'Total Tokens')}
+              </p>
               <p className="text-2xl font-semibold text-c-text mt-1">291k</p>
             </div>
           </div>
@@ -656,22 +892,52 @@ export const AccessLimitsTab: React.FC = () => {
             <div className="px-4 py-3 border-b border-[var(--admin-border)]">
               <h3 className="text-sm font-medium text-c-text flex items-center gap-2">
                 <Percent size={14} className="text-slate-500 dark:text-slate-400" />
-                Cost Attribution
+                {t(
+                  'admin.aiControlCenter.accessLimits.costDashboard.attributionTitle',
+                  'Cost Attribution'
+                )}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                See which users and projects generate the most AI costs
+                {t(
+                  'admin.aiControlCenter.accessLimits.costDashboard.attributionDescription',
+                  'See which users and projects generate the most AI costs'
+                )}
               </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-black/20 text-xs uppercase text-slate-500 dark:text-slate-400">
                   <tr>
-                    <th className="px-6 py-3">Entity</th>
-                    <th className="px-6 py-3">Type</th>
-                    <th className="px-6 py-3">Requests</th>
-                    <th className="px-6 py-3">Tokens</th>
-                    <th className="px-6 py-3">Cost</th>
-                    <th className="px-6 py-3">% of Total</th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.costDashboard.columns.entity',
+                        'Entity'
+                      )}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.accessLimits.costDashboard.columns.type', 'Type')}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.costDashboard.columns.requests',
+                        'Requests'
+                      )}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.costDashboard.columns.tokens',
+                        'Tokens'
+                      )}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.accessLimits.costDashboard.columns.cost', 'Cost')}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.accessLimits.costDashboard.columns.percentOfTotal',
+                        '% of Total'
+                      )}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
