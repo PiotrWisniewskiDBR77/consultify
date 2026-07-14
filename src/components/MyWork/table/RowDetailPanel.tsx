@@ -146,7 +146,6 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   platformTableId,
 }) => {
   const { t, i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
 
   const isPlatform = fields?.some((f) => 'fieldType' in f) ?? false;
 
@@ -492,7 +491,6 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   }, [
     authorDisplayName,
     currentUserId,
-    isPl,
     isPlatform,
     locked,
     newComment,
@@ -550,7 +548,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     } catch {
       toast.error(t('ideas.table.failedToUpdateComment', 'Failed to update comment'));
     }
-  }, [editingCommentId, editingCommentText, isPl, locked, node, onFieldChange]);
+  }, [editingCommentId, editingCommentText, locked, node, onFieldChange]);
 
   const handleDeleteComment = useCallback(
     async (commentId: string) => {
@@ -567,7 +565,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         toast.error(t('ideas.table.failedToDeleteComment', 'Failed to delete comment'));
       }
     },
-    [isPl, node, onFieldChange]
+    [node, onFieldChange]
   );
 
   const toggleWatch = useCallback(async () => {
@@ -584,7 +582,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     } finally {
       setWatchLoading(false);
     }
-  }, [isPl, node?.id, resolvedPlatformTableId, watchLoading]);
+  }, [node?.id, resolvedPlatformTableId, watchLoading]);
 
   const handleAddAttachmentLink = useCallback(() => {
     if (!node || locked) return;
@@ -599,7 +597,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     };
     const prev = node.data?.attachments || [];
     onFieldChange(node.id, 'attachments', [...prev, att]);
-  }, [isPl, locked, node, onFieldChange]);
+  }, [locked, node, onFieldChange]);
 
   const handleRemoveAttachment = useCallback(
     (attId: string) => {
@@ -642,7 +640,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         setAttachmentUploading(false);
       }
     },
-    [isPl, locked, node, onFieldChange, resolvedAttachmentFieldId]
+    [locked, node, onFieldChange, resolvedAttachmentFieldId]
   );
 
   const handlePlatformAttachmentFileChange = useCallback(
@@ -670,7 +668,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         toast.error(t('ideas.table.failedToDeleteAttachment', 'Failed to delete attachment'));
       }
     },
-    [isPl, locked, node, onFieldChange]
+    [locked, node, onFieldChange]
   );
 
   const handleColorChange = useCallback(
@@ -708,7 +706,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     } finally {
       setAiLoading(false);
     }
-  }, [connectedEdges, i18n.language, ideaId, isPl, node]);
+  }, [connectedEdges, i18n.language, ideaId, node]);
 
   const getNodeLabel = (id: string) => allNodes.find((x) => x.id === id)?.data?.label || id;
 

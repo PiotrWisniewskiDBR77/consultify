@@ -21754,6 +21754,20 @@
         "templateUpdated": "Template updated",
         "templateCreated": "Template created",
         "failedToSaveTemplate": "Failed to save template"
+      },
+      "refineDialog": {
+        "suggestionAddPriority": "Add a priority field",
+        "suggestionChangeStatus": "Change status options to: New, Active, Closed",
+        "suggestionAddRelatedTable": "Add a related table",
+        "suggestionRemoveFields": "Remove unnecessary fields",
+        "refineProposal": "Refine Proposal",
+        "versionN": "Version {{n}}",
+        "currentProposal": "Current proposal",
+        "describeChangesPlaceholder": "Describe changes, e.g., \"Add a priority field\", \"Change status options\"…",
+        "cmdEnterToSend": "⌘+Enter to send",
+        "refinementHistory": "Refinement history",
+        "processing": "Processing…",
+        "refine": "Refine"
       }
     },
     "mindmap": {

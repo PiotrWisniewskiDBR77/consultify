@@ -22830,6 +22830,20 @@
         "templateUpdated": "Szablon zaktualizowany",
         "templateCreated": "Szablon utworzony",
         "failedToSaveTemplate": "Nie udało się zapisać szablonu"
+      },
+      "refineDialog": {
+        "suggestionAddPriority": "Dodaj pole priorytet",
+        "suggestionChangeStatus": "Zmień opcje statusu na: Nowy, Aktywny, Zamknięty",
+        "suggestionAddRelatedTable": "Dodaj tabelę powiązaną",
+        "suggestionRemoveFields": "Usuń niepotrzebne pola",
+        "refineProposal": "Doprecyzuj propozycję",
+        "versionN": "Wersja {{n}}",
+        "currentProposal": "Aktualna propozycja",
+        "describeChangesPlaceholder": "Opisz zmiany, np. \"Dodaj pole priorytet\", \"Zmień opcje statusu\"…",
+        "cmdEnterToSend": "⌘+Enter wyślij",
+        "refinementHistory": "Historia doprecyzowań",
+        "processing": "Przetwarzanie…",
+        "refine": "Doprecyzuj"
       }
     },
     "mindmap": {
