@@ -290,7 +290,9 @@ function execSummarySplit(
 
   // Headline spans full width (pominięty gdy zdeduplikowany z tytułem slajdu).
   if (hasHeadline) {
-    elements.push(headlineElement(props.headline, { x: p.x, y: p.y, w: p.w, h: headlineH }, tokens));
+    elements.push(
+      headlineElement(props.headline, { x: p.x, y: p.y, w: p.w, h: headlineH }, tokens)
+    );
   }
   const bodyY = p.y + (hasHeadline ? headlineH + gap : 0);
   const bodyH = p.y + p.h - bodyY;

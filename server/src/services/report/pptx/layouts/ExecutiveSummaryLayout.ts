@@ -98,8 +98,7 @@ export function ExecutiveSummaryLayout(
   // Action-title (beat-Gamma): the slide's thesis (key_message) becomes the title,
   // consistent with every other layout. The generic label is only a fallback.
   const titleText =
-    slide.key_message ||
-    (meta.language === 'pl' ? 'Podsumowanie Wykonawcze' : 'Executive Summary');
+    slide.key_message || (meta.language === 'pl' ? 'Podsumowanie Wykonawcze' : 'Executive Summary');
   elements.push(SlideTitle({ text: titleText }, tokens));
   elements.push(PageNumber({}, tokens));
 

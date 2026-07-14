@@ -17,7 +17,12 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { Badge } from '../../../server/src/services/report/pptx/atomics/Badge.js';
+import { KpiValue } from '../../../server/src/services/report/pptx/atomics/KpiValue.js';
+import { PageNumber } from '../../../server/src/services/report/pptx/atomics/PageNumber.js';
+import { TrendIndicator } from '../../../server/src/services/report/pptx/atomics/TrendIndicator.js';
 import { corporateTokens as tokens } from '../../../server/src/services/report/pptx/designTokens.js';
+import { ExecutiveSummaryLayout } from '../../../server/src/services/report/pptx/layouts/ExecutiveSummaryLayout.js';
 import { KeyMessagesLayout } from '../../../server/src/services/report/pptx/layouts/KeyMessagesLayout.js';
 import { KpiDashboardLayout } from '../../../server/src/services/report/pptx/layouts/KpiDashboardLayout.js';
 import { NextStepsLayout } from '../../../server/src/services/report/pptx/layouts/NextStepsLayout.js';
@@ -265,5 +270,147 @@ describe('SectionIntroLayout topology parity', () => {
       SectionIntroLayout(slide(), META, tokens, ctx('divider_centered', 'stacked')).elements
     );
     expect(JSON.stringify(noCtx)).toEqual(JSON.stringify(centered));
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Polish fixes from DECK PPTX proof 2026-07-14 (part C: S/M finishing zgrzyty)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Capture every addText(text, opts) call and the slideNumber assignment. */
+function captureText(el: { apply: (s: any) => void }): { text: any; opts: any }[] {
+  const out: { text: any; opts: any }[] = [];
+  const slide: any = {
+    addText: (t: any, o: any) => out.push({ text: t, opts: o }),
+    addShape: () => {},
+    addTable: () => {},
+    addImage: () => {},
+    addChart: () => {},
+    set slideNumber(v: any) {
+      out.push({ text: '__slideNumber__', opts: v });
+    },
+  };
+  el.apply(slide);
+  return out;
+}
+
+/** Collect every string passed to addText across a whole layout's elements. */
+function allTexts(elements: { apply: (s: any) => void }[]): string[] {
+  const out: string[] = [];
+  const slide: any = {
+    addText: (t: any) => {
+      if (typeof t === 'string') out.push(t);
+    },
+    addShape: () => {},
+    addTable: () => {},
+    addImage: () => {},
+    addChart: () => {},
+    set slideNumber(_v: any) {},
+  };
+  for (const el of elements) el.apply(slide);
+  return out;
+}
+
+describe('KpiValue — unit spacing + one-line fit', () => {
+  const pos = { x: 0, y: 0, w: 1.82, h: 1.1 };
+
+  it('word unit gets a separator ("21 days", never "21days")', () => {
+    const [{ text }] = captureText(KpiValue({ value: '21', unit: 'days', position: pos }, tokens));
+    expect(String(text)).not.toBe('21days');
+    expect(String(text).replace(/ /g, ' ')).toBe('21 days');
+  });
+
+  it('symbol unit stays glued ("38%")', () => {
+    const [{ text }] = captureText(KpiValue({ value: '38', unit: '%', position: pos }, tokens));
+    expect(String(text)).toBe('38%');
+  });
+
+  it('a capital-heavy long value shrinks below the base font to fit one line', () => {
+    const [{ opts }] = captureText(KpiValue({ value: 'PLN 41M', position: pos }, tokens));
+    expect(opts.fontSize).toBeLessThan(tokens.fontSizes.kpiValue);
+    expect(opts.wrap).toBe(false);
+  });
+
+  it('a short value keeps the full base font size', () => {
+    const [{ opts }] = captureText(KpiValue({ value: '24', unit: '%', position: pos }, tokens));
+    expect(opts.fontSize).toBe(tokens.fontSizes.kpiValue);
+  });
+});
+
+describe('TrendIndicator — zero delta is "no change"', () => {
+  const pos = { x: 0, y: 0, w: 1, h: 0.3 };
+
+  it('flat trend with a zero delta renders an em dash, not "◆ 0"', () => {
+    const [{ text }] = captureText(TrendIndicator({ trend: 'flat', delta: '0', position: pos }, tokens));
+    expect(String(text)).toBe('—');
+    expect(String(text)).not.toContain('◆');
+    expect(String(text)).not.toContain('0');
+  });
+
+  it('flat trend with no delta also renders an em dash', () => {
+    const [{ text }] = captureText(TrendIndicator({ trend: 'flat', position: pos }, tokens));
+    expect(String(text)).toBe('—');
+  });
+
+  it('a real non-zero delta still renders arrow + value', () => {
+    const [{ text }] = captureText(TrendIndicator({ trend: 'up', delta: '+38%', position: pos }, tokens));
+    expect(String(text)).toContain('+38%');
+    expect(String(text)).toContain('▲');
+  });
+});
+
+describe('Badge — single-token label never wraps', () => {
+  it('CRITICAL renders on one line (wrap:false + shrink-to-fit)', () => {
+    const caps = captureText(
+      Badge({ text: 'CRITICAL', position: { x: 0, y: 0, w: 0.65, h: 0.2 } }, tokens)
+    );
+    const label = caps.find((c) => c.text === 'CRITICAL');
+    expect(label).toBeDefined();
+    expect(label!.opts.wrap).toBe(false);
+    expect(label!.opts.fit).toBe('shrink');
+  });
+});
+
+describe('PageNumber — never overflows the right edge', () => {
+  it('slide-number box ends at or before 100% of the slide width', () => {
+    const caps = captureText(PageNumber({}, tokens));
+    const sn = caps.find((c) => c.text === '__slideNumber__');
+    expect(sn).toBeDefined();
+    const xPct = parseFloat(String(sn!.opts.x));
+    const wPct = parseFloat(String(sn!.opts.w));
+    expect(xPct + wPct).toBeLessThanOrEqual(100);
+    expect(sn!.opts.align).toBe('right');
+  });
+});
+
+describe('ExecutiveSummaryLayout — no double title', () => {
+  const execSlide = (headline: string): UnifiedSlide =>
+    ({
+      intent: 'executive_summary',
+      key_message:
+        'Revenue can double in 12 months if operations are industrialised first',
+      content: {
+        type: 'executive_summary',
+        headline,
+        kpis: [{ name: 'Growth', value: '38', unit: '%', trend: 'up', status: 'good' }],
+        key_findings: ['Finding one', 'Finding two'],
+        recommendation: 'Do the three-wave programme.',
+      },
+    }) as unknown as UnifiedSlide;
+
+  it('drops the panel headline when it restates the action title', () => {
+    const dup = 'Revenue doubles in 12 months if operations are industrialised';
+    const texts = allTexts(ExecutiveSummaryLayout(execSlide(dup), META, tokens).elements);
+    expect(texts).not.toContain(dup);
+    // The action title (key_message) is still present.
+    expect(
+      texts.some((t) => t.startsWith('Revenue can double in 12 months'))
+    ).toBe(true);
+  });
+
+  it('keeps a genuinely distinct headline', () => {
+    const distinct = 'Margin recovery is the real prize, not top-line growth';
+    const texts = allTexts(ExecutiveSummaryLayout(execSlide(distinct), META, tokens).elements);
+    expect(texts).toContain(distinct);
   });
 });

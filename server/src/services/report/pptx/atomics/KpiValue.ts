@@ -36,7 +36,7 @@ export function KpiValue(props: KpiValueProps, tokens: DesignTokens): RenderedEl
   const advanceOf = (ch: string): number => {
     if (ch === ' ' || ch === ' ') return 0.3;
     if ('mwMW'.includes(ch)) return 0.85;
-    if ('iIlj.,:;\'|'.includes(ch)) return 0.3;
+    if ("iIlj.,:;'|".includes(ch)) return 0.3;
     if (ch >= 'A' && ch <= 'Z') return 0.68;
     if ('%$&@'.includes(ch)) return 0.8;
     return 0.55; // digits + lowercase
