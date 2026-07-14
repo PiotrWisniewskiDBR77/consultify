@@ -3831,6 +3831,14 @@
       "copyId": "Kopiuj ID",
       "generateInsights": "Generuj wnioski",
       "aiAvailableAfterCompletion": "AI dostępne po zakończeniu sesji"
+    },
+    "assignmentPreview": {
+      "progress": "Postęp",
+      "assignee": "Przydzielony do",
+      "start": "Rozpocznij",
+      "continue": "Kontynuuj",
+      "fixResubmit": "Popraw",
+      "noLinkedDocuments": "Brak powiązań"
     }
   },
   "assessment": {

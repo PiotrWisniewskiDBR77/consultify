@@ -4597,6 +4597,14 @@
       "copyId": "Copy ID",
       "generateInsights": "Generate insights",
       "aiAvailableAfterCompletion": "AI available after completion"
+    },
+    "assignmentPreview": {
+      "progress": "Progress",
+      "assignee": "Assignee",
+      "start": "Start",
+      "continue": "Continue",
+      "fixResubmit": "Fix & resubmit",
+      "noLinkedDocuments": "No linked documents"
     }
   },
   "assessment": {
