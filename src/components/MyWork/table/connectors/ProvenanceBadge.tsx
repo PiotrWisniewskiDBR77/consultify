@@ -125,8 +125,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
   recordId,
   provenanceChain,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [showChain, setShowChain] = useState(false);
 
   if (!source) return null;
@@ -204,7 +203,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
         >
           <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
             <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
-              {isPl ? 'Łańcuch pochodzenia' : 'Provenance Chain'}
+              {t('ideas.table.provenanceChain', 'Provenance Chain')}
             </span>
             <button
               onClick={() => setShowChain(false)}

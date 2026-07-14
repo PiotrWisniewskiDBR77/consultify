@@ -102,8 +102,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
   onUndo,
   undoLoading = false,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const stats = useMemo(() => {
     const total = operations.length;
@@ -125,15 +124,9 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
   const statusLabel = stats.allDone
     ? stats.hasErrors
-      ? isPl
-        ? 'Zakończono z błędami'
-        : 'Completed with errors'
-      : isPl
-        ? 'Zakończono pomyślnie'
-        : 'Completed successfully'
-    : isPl
-      ? 'Wykonywanie…'
-      : 'Executing…';
+      ? t('ideas.table.completedWithErrors', 'Completed with errors')
+      : t('ideas.table.completedSuccessfully', 'Completed successfully')
+    : t('ideas.table.executing', 'Executing…');
 
   return (
     <div className="rounded-2xl border border-c-accent bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
@@ -246,7 +239,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
             className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {undoLoading ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-            {isPl ? 'Cofnij zmiany' : 'Undo changes'}
+            {t('ideas.table.undoChanges', 'Undo changes')}
           </button>
         </div>
       )}
@@ -256,9 +249,10 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
         <div className="px-4 py-3 border-t border-danger-200/60 dark:border-danger-800/40 bg-danger-50/50 dark:bg-danger-950/20">
           <p className="text-xs text-danger-700 dark:text-danger-300 font-medium">
-            {isPl
-              ? `${stats.failed} z ${stats.total} operacji nie powiodło się`
-              : `${stats.failed} of ${stats.total} operations failed`}
+            {t('ideas.table.operationsFailedCount', '{{failed}} of {{total}} operations failed', {
+              failed: stats.failed,
+              total: stats.total,
+            })}
           </p>
         </div>
       )}

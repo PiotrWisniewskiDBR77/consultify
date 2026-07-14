@@ -177,8 +177,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
   cardSize,
   onRecordClick,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const displayColumns = useMemo(() => {
     const visible = new Set(visibleFieldIds);
@@ -196,9 +195,9 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
         <div className="w-16 h-16 rounded-2xl bg-c-surface-raised flex items-center justify-center">
           <Image size={28} className="text-c-text-muted" />
         </div>
-        <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No records'}</span>
+        <span className="text-sm font-medium">{t('ideas.table.noRecords', 'No records')}</span>
         <span className="text-xs text-c-text-secondary">
-          {isPl ? 'Dodaj pierwszy rekord, aby zobaczyć galerię' : 'Add a record to see the gallery'}
+          {t('ideas.table.addARecordToSeeTheGallery', 'Add a record to see the gallery')}
         </span>
       </div>
     );

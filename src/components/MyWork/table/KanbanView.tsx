@@ -31,8 +31,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   onAddRow,
   onNodeClick,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [dragNodeId, setDragNodeId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
@@ -232,7 +231,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                   className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-c-border-subtle text-[10px] text-c-text-muted hover:text-c-text-secondary hover:border-c-border-strong transition-colors"
                 >
                   <Plus size={12} />
-                  {isPl ? 'Dodaj' : 'Add'}
+                  {t('ideas.table.add', 'Add')}
                 </button>
               )}
             </div>

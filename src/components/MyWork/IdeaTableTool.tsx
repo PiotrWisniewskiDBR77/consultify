@@ -223,7 +223,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   onGraphChange,
   onTableContextChange,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
   const currentOrganization = useAppStore((state) => state.currentOrganization);
@@ -792,14 +792,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       if (!usePlatform) return;
       setPlatformTableOverrideId(tableId);
       setExpandedRecordId(null);
-      toast(isPl ? 'Przełączono tabelę' : 'Switched table');
+      toast(t('ideas.table.switchedTable', 'Switched table'));
     },
     [usePlatform, isPl]
   );
 
   const handleTabCreateTable = useCallback(async () => {
     if (!usePlatform) return;
-    const name = window.prompt(isPl ? 'Nazwa nowej tabeli:' : 'New table name:');
+    const name = window.prompt(t('ideas.table.newTableName', 'New table name:'));
     if (!name?.trim()) return;
     try {
       const bases = await TablePlatformApi.listBases(ideaId);
@@ -809,10 +809,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       const created = await TablePlatformApi.createTable(baseId, name.trim());
       if (created) {
         setBaseTables((prev) => [...prev, { id: String((created as any).id), name: name.trim() }]);
-        toast.success(isPl ? 'Tabela utworzona' : 'Table created');
+        toast.success(t('ideas.table.tableCreated', 'Table created'));
       }
     } catch {
-      toast.error(isPl ? 'Nie udało się utworzyć tabeli' : 'Failed to create table');
+      toast.error(t('ideas.table.failedToCreateTable', 'Failed to create table'));
     }
   }, [usePlatform, ideaId, isPl]);
 
@@ -830,7 +830,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           return t;
         })
       );
-      toast.success(isPl ? 'Nazwa zmieniona' : 'Renamed');
+      toast.success(t('ideas.table.renamed', 'Renamed'));
       TablePlatformApi.updateTable(_tableId, { name: trimmedName }).catch(() => {
         setBaseTables((prev) =>
           prev.map((t) =>
@@ -838,7 +838,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           )
         );
         toast.error(
-          isPl ? 'Nie udało się zapisać nazwy tabeli' : 'Failed to save table name'
+          t('ideas.table.failedToSaveTableName', 'Failed to save table name')
         );
       });
     },
@@ -849,12 +849,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     async (tableId: string) => {
       const sourceTable = baseTables.find((t) => t.id === tableId);
       const suggestedName = sourceTable?.name
-        ? `${sourceTable.name} ${isPl ? 'Kopia' : 'Copy'}`
-        : isPl
-          ? 'Nowa kopia'
-          : 'New copy';
+        ? `${sourceTable.name} ${t('ideas.table.copy', 'Copy')}`
+        : t('ideas.table.newCopy', 'New copy');
       const name = window.prompt(
-        isPl ? 'Nazwa duplikatu tabeli:' : 'Duplicate table name:',
+        t('ideas.table.duplicateTableName', 'Duplicate table name:'),
         suggestedName
       );
       if (!name?.trim()) return;
@@ -868,9 +866,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         setBaseTables((prev) => [...prev, { id: duplicatedId, name: duplicatedName }]);
         setPlatformTableOverrideId(duplicatedId);
         setExpandedRecordId(null);
-        toast.success(isPl ? 'Tabela zduplikowana' : 'Table duplicated');
+        toast.success(t('ideas.table.tableDuplicated', 'Table duplicated'));
       } catch {
-        toast.error(isPl ? 'Nie udało się zduplikować tabeli' : 'Failed to duplicate table');
+        toast.error(t('ideas.table.failedToDuplicateTable', 'Failed to duplicate table'));
       }
     },
     [baseTables, isPl]
@@ -880,18 +878,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     async (tableId: string) => {
       if (
         !window.confirm(
-          isPl
-            ? 'Czy na pewno chcesz usunąć tę tabelę?'
-            : 'Are you sure you want to delete this table?'
+          t('ideas.table.areYouSureYouWantToDeleteThisTable', 'Are you sure you want to delete this table?')
         )
       )
         return;
       try {
         await TablePlatformApi.deleteTable(tableId);
         setBaseTables((prev) => prev.filter((t) => t.id !== tableId));
-        toast.success(isPl ? 'Tabela usunięta' : 'Table deleted');
+        toast.success(t('ideas.table.tableDeleted', 'Table deleted'));
       } catch {
-        toast.error(isPl ? 'Nie udało się usunąć tabeli' : 'Failed to delete table');
+        toast.error(t('ideas.table.failedToDeleteTable', 'Failed to delete table'));
       }
     },
     [isPl]
@@ -1001,7 +997,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         .filter((n) => n.id !== removeId)
         .map((n) => (n.id === keepId ? { ...n, data: mergedData } : n));
       nodesUndo.push(next);
-      toast.success(isPl ? 'Pomysły scalone' : 'Ideas merged');
+      toast.success(t('ideas.table.ideasMerged', 'Ideas merged'));
     },
     [isPl, nodes, nodesUndo]
   );
@@ -1016,7 +1012,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         return { ...n, data: { ...(n.data || {}), score: s.score, rank: s.rank } };
       });
       nodesUndo.push(next);
-      toast.success(isPl ? 'Ranking zastosowany' : 'Ranking applied');
+      toast.success(t('ideas.table.rankingApplied', 'Ranking applied'));
     },
     [isPl, nodes, nodesUndo]
   );
@@ -1090,7 +1086,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         const text = String(ev.target?.result || '');
         const { headers, rows } = parseCSV(text);
         if (headers.length === 0) {
-          toast.error(isPl ? 'Pusty plik CSV' : 'Empty CSV file');
+          toast.error(t('ideas.table.emptyCsvFile', 'Empty CSV file'));
           return;
         }
         const { nodes: newNodes, newColumns } = csvToNodes(headers, rows, columns);
@@ -1099,7 +1095,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         }
         nodesUndo.push([...nodes, ...newNodes]);
         toast.success(
-          isPl ? `Zaimportowano ${newNodes.length} wierszy` : `Imported ${newNodes.length} rows`
+          t('ideas.table.importedRowsCsv', 'Imported {{count}} rows', { count: newNodes.length })
         );
         trackFunnelEvent('ideas_table_csv_imported', { ideaId, rowCount: newNodes.length });
       };
@@ -1136,9 +1132,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onConvertProp(target);
       }
 
-      const msg = isPl
-        ? `Konwertowano ${selectedRowIds.size} wierszy do: ${target}`
-        : `Converted ${selectedRowIds.size} rows to: ${target}`;
+      const msg = t('ideas.table.convertedRowsTo', 'Converted {{count}} rows to: {{target}}', {
+        count: selectedRowIds.size,
+        target,
+      });
       toast.success(msg);
       trackFunnelEvent('ideas_table_bulk_convert', {
         ideaId,
@@ -1206,13 +1203,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     try {
       const result = await TablePlatformApi.undoRecordEdit(ideaId);
       if (result) {
-        toast.success(isPl ? 'Cofnięto zmianę' : 'Undo successful');
+        toast.success(t('ideas.table.undoSuccessful', 'Undo successful'));
         platformIntegration.refresh?.();
       } else {
-        toast(isPl ? 'Brak zmian do cofnięcia' : 'Nothing to undo');
+        toast(t('ideas.table.nothingToUndo', 'Nothing to undo'));
       }
     } catch {
-      toast.error(isPl ? 'Nie udało się cofnąć' : 'Undo failed');
+      toast.error(t('ideas.table.undoFailed', 'Undo failed'));
     }
   }, [usePlatform, ideaId, isPl, nodesUndo, platformIntegration]);
 
@@ -1370,7 +1367,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       handleCellExpand(row.id, col.key, rect);
                     }}
                     className="opacity-0 group-hover/cell:opacity-60 hover:!opacity-100 p-0.5 rounded transition-opacity flex-shrink-0"
-                    title={isPl ? 'Rozwiń' : 'Expand'}
+                    title={t('ideas.table.expand', 'Expand')}
                   >
                     <Maximize2 size={9} className="text-c-text-muted" />
                   </button>
@@ -1389,7 +1386,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       ref={tableRef}
       role="region"
       aria-label={
-        isPl ? 'Tabela pomysłów z operacjami zbiorczymi' : 'Ideas table with bulk operations'
+        t('ideas.table.ideasTableWithBulkOperations', 'Ideas table with bulk operations')
       }
     >
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -1413,7 +1410,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               }}
               onCopyToClipboard={() => {
                 copyTableToClipboard(_cols, effectiveNodes);
-                toast.success(isPl ? 'Skopiowano' : 'Copied');
+                toast.success(t('ideas.table.copied', 'Copied'));
               }}
               onAddRowWithTemplate={() => handleAddRowWithTemplate()}
               onBulkConvert={handleBulkConvert}
@@ -1470,7 +1467,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           ) : (
             <div className="flex flex-wrap items-center gap-1 md:gap-2 px-2 md:px-4 py-2 border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
               <div className="text-xs font-semibold text-c-text-secondary mr-2">
-                {isPl ? 'Tabela' : 'Table'}
+                {t('ideas.table.table', 'Table')}
               </div>
 
               {/* Collaboration Presence */}
@@ -1552,7 +1549,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       setShowSaveViewDialog(true);
                     }}
                     className="p-1 rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
-                    title={isPl ? 'Zapisz widok' : 'Save view'}
+                    title={t('ideas.table.saveView', 'Save view')}
                   >
                     <Plus size={12} />
                   </button>
@@ -1570,13 +1567,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <h3 className="text-sm font-semibold mb-2 text-c-text">
-                      {isPl ? 'Zapisz widok' : 'Save view'}
+                      {t('ideas.table.saveView', 'Save view')}
                     </h3>
                     <input
                       autoFocus
                       value={saveViewName}
                       onChange={(e) => setSaveViewName(e.target.value)}
-                      placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
+                      placeholder={t('ideas.table.viewName', 'View name…')}
                       className="w-full h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-c-focus mb-3"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && saveViewName.trim()) {
@@ -1590,7 +1587,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         onClick={() => setShowSaveViewDialog(false)}
                         className="px-3 py-1.5 text-xs rounded-lg text-c-text-muted hover:bg-c-surface-raised"
                       >
-                        {isPl ? 'Anuluj' : 'Cancel'}
+                        {t('ideas.table.cancel', 'Cancel')}
                       </button>
                       <button
                         disabled={!saveViewName.trim()}
@@ -1600,7 +1597,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         }}
                         className="px-3 py-1.5 text-xs rounded-lg bg-c-text text-c-surface hover:brightness-95 disabled:opacity-40"
                       >
-                        {isPl ? 'Zapisz' : 'Save'}
+                        {t('ideas.table.save', 'Save')}
                       </button>
                     </div>
                   </div>
@@ -1626,7 +1623,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         setViewContextMenu(null);
                       }}
                     >
-                      {isPl ? 'Zmień nazwę' : 'Rename'}
+                      {t('ideas.table.rename', 'Rename')}
                     </button>
                     <button
                       className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
@@ -1642,21 +1639,21 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             width: c.width,
                           })),
                         });
-                        toast.success(isPl ? 'Widok zaktualizowany' : 'View updated');
+                        toast.success(t('ideas.table.viewUpdated', 'View updated'));
                         setViewContextMenu(null);
                       }}
                     >
-                      {isPl ? 'Aktualizuj' : 'Update'}
+                      {t('ideas.table.update', 'Update')}
                     </button>
                     <button
                       className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
                       onClick={() => {
                         deleteSavedView(viewContextMenu.viewId);
-                        toast.success(isPl ? 'Widok usunięty' : 'View deleted');
+                        toast.success(t('ideas.table.viewDeleted', 'View deleted'));
                         setViewContextMenu(null);
                       }}
                     >
-                      {isPl ? 'Usuń' : 'Delete'}
+                      {t('ideas.table.delete', 'Delete')}
                     </button>
                   </div>
                 </div>
@@ -1673,7 +1670,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <input
                   value={filterInput}
                   onChange={(e) => setFilterInput(e.target.value)}
-                  placeholder={isPl ? 'Filtruj…' : 'Filter…'}
+                  placeholder={t('ideas.table.filter', 'Filter…')}
                   className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 {filterInput && (
@@ -1748,22 +1745,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     ? 'bg-c-surface-raised text-c-text'
                     : 'text-c-text-muted hover:bg-c-surface-raised'
                 }`}
-                title={isPl ? 'Grupuj' : 'Group'}
+                title={t('ideas.table.group', 'Group')}
               >
                 <Group size={12} />
-                <span className="hidden sm:inline">{isPl ? 'Grupuj' : 'Group'}</span>
+                <span className="hidden sm:inline">{t('ideas.table.group', 'Group')}</span>
               </button>
 
               {/* V5-IDEA-24: View layout switcher — FROZEN order: table → kanban → timeline → calendar → matrix → grid */}
               <div className="flex items-center rounded-lg border border-c-border-subtle overflow-hidden">
                 {(
                   [
-                    { id: 'table', icon: Table2, label: isPl ? 'Tabela' : 'Table' },
+                    { id: 'table', icon: Table2, label: t('ideas.table.table', 'Table') },
                     { id: 'kanban', icon: KanbanSquare, label: 'Kanban' },
                     { id: 'timeline', icon: GanttChart, label: 'Timeline / Gantt' },
-                    { id: 'calendar', icon: Calendar, label: isPl ? 'Kalendarz' : 'Calendar' },
+                    { id: 'calendar', icon: Calendar, label: t('ideas.table.calendar', 'Calendar') },
                     { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
-                    { id: 'grid', icon: Grid3X3, label: isPl ? 'Galeria' : 'Gallery' },
+                    { id: 'grid', icon: Grid3X3, label: t('ideas.table.gallery', 'Gallery') },
                   ] as const
                 ).map((v) => (
                   <button
@@ -1784,7 +1781,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <button
                 onClick={() => setShowAIAssistant(true)}
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                title={isPl ? 'Asystent AI (/)' : 'AI Assistant (/)'}
+                title={t('ideas.table.aiAssistant', 'AI Assistant (/)')}
               >
                 <Sparkles size={12} />
               </button>
@@ -1807,7 +1804,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowAICategorize(true)}
                     className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+                    title={t('ideas.table.aiCategorize', 'AI Categorize')}
                   >
                     <Layers size={12} />
                   </button>
@@ -1817,7 +1814,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowScoringModel(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Model scoringowy' : 'Scoring Model'}
+                  title={t('ideas.table.scoringModel', 'Scoring Model')}
                 >
                   <Trophy size={12} />
                 </button>
@@ -1826,7 +1823,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowExportPresentation(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
+                  title={t('ideas.table.exportToPresentation', 'Export to Presentation')}
                 >
                   <Presentation size={12} />
                 </button>
@@ -1835,7 +1832,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowPipeline(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
+                  title={t('ideas.table.ideaPipeline', 'Idea Pipeline')}
                 >
                   <Rocket size={12} />
                 </button>
@@ -1844,7 +1841,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowCopilot(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'AI Copilot' : 'AI Copilot'}
+                  title={t('ideas.table.aiCopilot', 'AI Copilot')}
                 >
                   <Brain size={12} />
                 </button>
@@ -1853,7 +1850,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowVoiceInput(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
+                  title={t('ideas.table.voiceImage', 'Voice / Image')}
                 >
                   <Mic size={12} />
                 </button>
@@ -1862,7 +1859,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowCrossRelations(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
+                  title={t('ideas.table.crossTableRelations', 'Cross-table Relations')}
                 >
                   <Network size={12} />
                 </button>
@@ -1872,7 +1869,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowHeatmap(!showHeatmap)}
                     className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-c-warning bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)]' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                    title={isPl ? 'Heatmapa' : 'Heatmap'}
+                    title={t('ideas.table.heatmap', 'Heatmap')}
                   >
                     <Flame size={12} />
                   </button>
@@ -1891,7 +1888,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowAuditTrail((p) => !p)}
                   className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                  title={isPl ? 'Historia zmian' : 'History'}
+                  title={t('ideas.table.history', 'History')}
                 >
                   <History size={12} />
                 </button>
@@ -1900,7 +1897,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowActivityFeed((p) => !p)}
                   className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                  title={isPl ? 'Aktywność' : 'Activity'}
+                  title={t('ideas.table.activity', 'Activity')}
                 >
                   <Activity size={12} />
                 </button>
@@ -1909,7 +1906,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowKeyboardShortcuts(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
+                  title={t('ideas.table.keyboardShortcuts', 'Keyboard shortcuts (?)')}
                 >
                   <Keyboard size={12} />
                 </button>
@@ -1919,7 +1916,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowTemplateGallery(true)}
                     className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={isPl ? 'Szablony' : 'Templates'}
+                    title={t('ideas.table.templates', 'Templates')}
                   >
                     <LayoutTemplate size={12} />
                   </button>
@@ -1930,7 +1927,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowDistributionBuilder(true)}
                     className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={isPl ? 'Dystrybucja' : 'Distribute'}
+                    title={t('ideas.table.distribute', 'Distribute')}
                   >
                     <Send size={12} />
                   </button>
@@ -1941,10 +1938,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowFrameworkGen(true)}
                     className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                    title={isPl ? 'Generator frameworków' : 'Framework Generator'}
+                    title={t('ideas.table.frameworkGenerator', 'Framework Generator')}
                   >
                     <LayoutGrid size={12} />
-                    <span className="hidden lg:inline">{isPl ? 'Framework' : 'Framework'}</span>
+                    <span className="hidden lg:inline">{t('ideas.table.framework', 'Framework')}</span>
                   </button>
                 )}
 
@@ -1952,7 +1949,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowConditionalFmt(true)}
                   className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                  title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
+                  title={t('ideas.table.conditionalFormatting', 'Conditional Formatting')}
                 >
                   <Paintbrush size={12} />
                 </button>
@@ -1962,7 +1959,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowColorPalette(!showColorPalette)}
                     className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                    title={isPl ? 'Paleta kolorów' : 'Color Palette'}
+                    title={t('ideas.table.colorPalette', 'Color Palette')}
                   >
                     <Palette size={12} />
                   </button>
@@ -1989,7 +1986,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           : 'text-c-text-muted hover:text-c-text-secondary'
                       }`}
                     >
-                      {isPl ? 'Dane' : 'Data'}
+                      {t('ideas.table.data', 'Data')}
                     </button>
                     <button
                       onClick={() => setPlatformTab('forms')}
@@ -1999,7 +1996,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           : 'text-c-text-muted hover:text-c-text-secondary'
                       }`}
                     >
-                      {isPl ? 'Formularze' : 'Forms'}
+                      {t('ideas.table.forms', 'Forms')}
                     </button>
                     <button
                       onClick={() => setPlatformTab('interfaces')}
@@ -2009,7 +2006,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           : 'text-c-text-muted hover:text-c-text-secondary'
                       }`}
                     >
-                      {isPl ? 'Interfejsy' : 'Interfaces'}
+                      {t('ideas.table.interfaces', 'Interfaces')}
                     </button>
                     <button
                       onClick={() => setPlatformTab('models')}
@@ -2019,7 +2016,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           : 'text-c-text-muted hover:text-c-text-secondary'
                       }`}
                     >
-                      {isPl ? 'Modele' : 'Models'}
+                      {t('ideas.table.models', 'Models')}
                     </button>
                     <button
                       onClick={() => setPlatformTab('workflow')}
@@ -2029,7 +2026,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           : 'text-c-text-muted hover:text-c-text-secondary'
                       }`}
                     >
-                      {isPl ? 'Workflow' : 'Workflow'}
+                      {t('ideas.table.workflow', 'Workflow')}
                     </button>
                   </div>
                 )}
@@ -2039,7 +2036,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowInterfaceDesigner(true)}
                     className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                    title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+                    title={t('ideas.table.interfaceDesigner', 'Interface Designer')}
                   >
                     <Layout size={12} />
                   </button>
@@ -2050,7 +2047,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowFormBuilder(true)}
                     className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:text-c-text-secondary"
-                    title={isPl ? 'Kreator formularzy' : 'Form Builder'}
+                    title={t('ideas.table.formBuilder', 'Form Builder')}
                   >
                     <FileText size={12} />
                   </button>
@@ -2066,16 +2063,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           ? 'text-c-accent bg-c-accent-soft'
                           : 'text-c-text-muted hover:bg-c-surface-raised'
                       }`}
-                      title={isPl ? 'Narzędzia' : 'Tools'}
+                      title={t('ideas.table.tools', 'Tools')}
                     >
                       <Grid3X3 size={12} />
-                      <span className="hidden lg:inline">{isPl ? 'Narzędzia' : 'Tools'}</span>
+                      <span className="hidden lg:inline">{t('ideas.table.tools', 'Tools')}</span>
                       <ChevronDown size={10} />
                     </button>
                     {showToolsMenu && (
                       <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto">
                         <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                          {isPl ? 'Workflow' : 'Workflow'}
+                          {t('ideas.table.workflow', 'Workflow')}
                         </div>
                         <button
                           onClick={() => {
@@ -2085,7 +2082,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Rocket size={14} className="text-c-tag-9" />
-                          {isPl ? 'Automatyzacje' : 'Automations'}
+                          {t('ideas.table.automations', 'Automations')}
                         </button>
                         <button
                           onClick={() => {
@@ -2095,7 +2092,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Link2 size={14} className="text-c-tag-1" />
-                          {isPl ? 'Synchronizacja danych' : 'Data Sync'}
+                          {t('ideas.table.dataSync', 'Data Sync')}
                         </button>
                         <button
                           onClick={() => {
@@ -2105,7 +2102,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Webhook size={14} className="text-c-tag-2" />
-                          {isPl ? 'Webhook Relay' : 'Webhook Relays'}
+                          {t('ideas.table.webhookRelays', 'Webhook Relays')}
                         </button>
                         <button
                           onClick={() => {
@@ -2115,7 +2112,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Network size={14} className="text-c-tag-12" />
-                          {isPl ? 'Udostępnianie' : 'Sharing & Permissions'}
+                          {t('ideas.table.sharingPermissions', 'Sharing & Permissions')}
                         </button>
                         <button
                           onClick={() => {
@@ -2125,11 +2122,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Send size={14} className="text-c-tag-4" />
-                          {isPl ? 'Dystrybucja' : 'Distribution'}
+                          {t('ideas.table.distribution', 'Distribution')}
                         </button>
                         <div className="border-t border-c-border-subtle my-1" />
                         <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                          {isPl ? 'Budowanie' : 'Build'}
+                          {t('ideas.table.build', 'Build')}
                         </div>
                         <button
                           onClick={() => {
@@ -2139,7 +2136,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <FileText size={14} className="text-c-tag-1" />
-                          {isPl ? 'Formularze' : 'Forms'}
+                          {t('ideas.table.forms', 'Forms')}
                         </button>
                         <button
                           onClick={() => {
@@ -2149,7 +2146,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Layout size={14} className="text-c-text-muted" />
-                          {isPl ? 'Interfejsy' : 'Interfaces'}
+                          {t('ideas.table.interfaces', 'Interfaces')}
                         </button>
                         <button
                           onClick={() => {
@@ -2159,7 +2156,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <LayoutTemplate size={14} className="text-c-tag-6" />
-                          {isPl ? 'Szablony' : 'Templates'}
+                          {t('ideas.table.templates', 'Templates')}
                         </button>
                         <button
                           onClick={() => {
@@ -2169,7 +2166,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Download size={14} className="text-c-tag-10" />
-                          {isPl ? 'Konektory' : 'Connectors'}
+                          {t('ideas.table.connectors', 'Connectors')}
                         </button>
                         <div className="border-t border-c-border-subtle my-1" />
                         <button
@@ -2180,7 +2177,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
                         >
                           <Layers size={14} className="text-c-tag-3" />
-                          {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
+                          {t('ideas.table.consultifyLink', 'Consultify Link')}
                         </button>
                       </div>
                     )}
@@ -2195,26 +2192,26 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     onClick={() => setShowAICategorize(true)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                   >
-                    <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+                    <Layers size={14} /> {t('ideas.table.aiCategorize', 'AI Categorize')}
                   </button>
                 )}
                 <button
                   onClick={() => setShowScoringModel(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
+                  <Trophy size={14} /> {t('ideas.table.scoring', 'Scoring')}
                 </button>
                 <button
                   onClick={() => setShowExportPresentation(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
+                  <Presentation size={14} /> {t('ideas.table.presentation', 'Presentation')}
                 </button>
                 <button
                   onClick={() => setShowPipeline(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
+                  <Rocket size={14} /> {t('ideas.table.pipeline', 'Pipeline')}
                 </button>
                 <button
                   onClick={() => setShowCopilot(true)}
@@ -2226,37 +2223,37 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={() => setShowVoiceInput(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
+                  <Mic size={14} /> {t('ideas.table.voiceImage', 'Voice / Image')}
                 </button>
                 <button
                   onClick={() => setShowCrossRelations(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
+                  <Network size={14} /> {t('ideas.table.relations', 'Relations')}
                 </button>
                 <button
                   onClick={() => setShowHeatmap(!showHeatmap)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
+                  <Flame size={14} /> {t('ideas.table.heatmap', 'Heatmap')}
                 </button>
                 <button
                   onClick={() => setShowAuditTrail((p) => !p)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <History size={14} /> {isPl ? 'Historia' : 'History'}
+                  <History size={14} /> {t('ideas.table.history2', 'History')}
                 </button>
                 <button
                   onClick={() => setShowActivityFeed((p) => !p)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
+                  <Activity size={14} /> {t('ideas.table.activity', 'Activity')}
                 </button>
                 <button
                   onClick={() => setShowConditionalFmt(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
+                  <Paintbrush size={14} /> {t('ideas.table.formatting', 'Formatting')}
                 </button>
                 {!locked && (
                   <button
@@ -2271,7 +2268,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     onClick={() => setShowTemplateGallery(true)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                   >
-                    <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
+                    <LayoutTemplate size={14} /> {t('ideas.table.templates', 'Templates')}
                   </button>
                 )}
               </MobileToolbarMenu>
@@ -2282,17 +2279,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowConnectorWizard(true)}
                     className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary bg-c-surface-raised hover:bg-c-surface-raised transition-colors"
-                    title={isPl ? 'Importuj dane' : 'Import data'}
+                    title={t('ideas.table.importData', 'Import data')}
                   >
                     <Network size={12} />
-                    {isPl ? 'Import' : 'Import'}
+                    {t('ideas.table.import', 'Import')}
                   </button>
                 )}
                 {connectors.connectors.length > 0 && (
                   <button
                     onClick={() => setShowConnectorList((v) => !v)}
                     className="relative p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={isPl ? 'Konektory' : 'Connectors'}
+                    title={t('ideas.table.connectors', 'Connectors')}
                   >
                     <Layers size={12} />
                     {connectors.connectors.some((c) => c.lastRunStatus === 'running') && (
@@ -2307,7 +2304,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowWebhookRelays(true)}
                     className="p-1.5 rounded-lg text-c-text-muted hover:text-c-accent transition-colors"
-                    title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}
+                    title={t('ideas.table.webhookRelaysZapierMake', 'Webhook Relays (Zapier/Make)')}
                   >
                     <Webhook size={12} />
                   </button>
@@ -2323,7 +2320,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => csvInputRef.current?.click()}
                     className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={isPl ? 'Importuj CSV' : 'Import CSV'}
+                    title={t('ideas.table.importCsv', 'Import CSV')}
                   >
                     <Upload size={12} />
                   </button>
@@ -2334,17 +2331,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     downloadCSV(csv, `idea-${ideaId}.csv`);
                   }}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Eksportuj CSV' : 'Export CSV'}
+                  title={t('ideas.table.exportCsv', 'Export CSV')}
                 >
                   <Download size={12} />
                 </button>
                 <button
                   onClick={() => {
                     copyTableToClipboard(_cols, effectiveNodes);
-                    toast.success(isPl ? 'Skopiowano' : 'Copied');
+                    toast.success(t('ideas.table.copied', 'Copied'));
                   }}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
+                  title={t('ideas.table.copyToClipboard', 'Copy to clipboard')}
                 >
                   <ClipboardCopy size={12} />
                 </button>
@@ -2355,7 +2352,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowColumnConfig(!showColumnConfig)}
                   className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                  title={isPl ? 'Kolumny' : 'Columns'}
+                  title={t('ideas.table.columns', 'Columns')}
                 >
                   <Columns3 size={12} />
                 </button>
@@ -2385,7 +2382,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-c-text-muted hover:bg-c-surface-raised transition-colors"
                       >
                         <Plus size={12} />
-                        {isPl ? 'Nowa kolumna' : 'New column'}
+                        {t('ideas.table.newColumn', 'New column')}
                       </button>
                     </div>
                   </div>
@@ -2418,7 +2415,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               {_selIds.size > 0 && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-bold text-c-text-secondary bg-c-surface-raised px-2 py-0.5 rounded-lg">
-                    {_selIds.size} {isPl ? 'zaznaczonych' : 'selected'}
+                    {_selIds.size} {t('ideas.table.selected', 'selected')}
                   </span>
                   {!locked && (
                     <>
@@ -2428,29 +2425,23 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-c-success bg-[color-mix(in_srgb,var(--c-success)_12%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-success)_20%,transparent)] transition-colors"
                         >
                           <ArrowRight size={11} />
-                          {isPl ? 'Konwertuj' : 'Convert'}
+                          {t('ideas.table.convert', 'Convert')}
                           <ChevronDown size={9} />
                         </button>
                         {showBulkConvertMenu && (
                           <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1">
-                            {(['initiative', 'task', 'decision'] as const).map((t) => (
+                            {(['initiative', 'task', 'decision'] as const).map((bulkTarget) => (
                               <button
-                                key={t}
-                                onClick={() => handleBulkConvert(t)}
+                                key={bulkTarget}
+                                onClick={() => handleBulkConvert(bulkTarget)}
                                 className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors capitalize"
                               >
                                 →{' '}
-                                {t === 'initiative'
-                                  ? isPl
-                                    ? 'Inicjatywa'
-                                    : 'Initiative'
-                                  : t === 'task'
-                                    ? isPl
-                                      ? 'Zadanie'
-                                      : 'Task'
-                                    : isPl
-                                      ? 'Decyzja'
-                                      : 'Decision'}
+                                {bulkTarget === 'initiative'
+                                  ? t('ideas.table.bulkConvertInitiative', 'Initiative')
+                                  : bulkTarget === 'task'
+                                    ? t('ideas.table.bulkConvertTask', 'Task')
+                                    : t('ideas.table.bulkConvertDecision', 'Decision')}
                               </button>
                             ))}
                           </div>
@@ -2461,7 +2452,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-c-danger bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-danger)_20%,transparent)] transition-colors"
                       >
                         <Trash2 size={11} />
-                        {isPl ? 'Usuń' : 'Delete'}
+                        {t('ideas.table.delete', 'Delete')}
                       </button>
                     </>
                   )}
@@ -2474,15 +2465,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={_addRow}
                     className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                    title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
+                    title={t('ideas.table.addBlankRow', 'Add blank row')}
                   >
                     <Plus size={12} />
-                    {isPl ? 'Wiersz' : 'Row'}
+                    {t('ideas.table.row', 'Row')}
                   </button>
                   <button
                     onClick={handleAddRowWithTemplate}
                     className="px-1 py-1.5 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors border-l border-c-border-subtle"
-                    title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
+                    title={t('ideas.table.addFromTemplate', 'Add from template')}
                   >
                     <ChevronDown size={10} />
                   </button>
@@ -2501,7 +2492,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 }`}
               >
                 {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {_saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
+                {_saving ? (t('ideas.table.saving', 'Saving…')) : t('ideas.table.save', 'Save')}
               </button>
             </div>
           )}
@@ -2560,12 +2551,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <div className="px-3 md:px-4 pt-3">
               <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-sm text-c-text-muted">
                 <div className="font-medium text-c-text">
-                  {isPl ? 'Tryb tylko do odczytu' : 'Read-only mode'}
+                  {t('ideas.table.readOnlyMode', 'Read-only mode')}
                 </div>
                 <div className="mt-1 text-xs text-c-text-muted">
-                  {isPl
-                    ? 'Możesz przeglądać tabelę, ale edycja i zapis są obecnie zablokowane.'
-                    : 'You can review the table, but editing and saving are currently disabled.'}
+                  {t('ideas.table.youCanReviewTheTableButEditingAndSavingAreCurrentlyDisabled', 'You can review the table, but editing and saving are currently disabled.')}
                 </div>
               </div>
             </div>
@@ -2577,17 +2566,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 icon={Table2}
                 dashed={false}
                 message={
-                  isPl
-                    ? 'Widok tabeli jest chwilowo niedostępny.'
-                    : 'Table view is temporarily unavailable.'
+                  t('ideas.table.tableViewIsTemporarilyUnavailable', 'Table view is temporarily unavailable.')
                 }
                 hint={
-                  isPl
-                    ? 'To nie oznacza, że tabela jest pusta. Spróbuj ponownie wczytać dane i sprawdź jeszcze raz.'
-                    : 'This does not mean the table is empty. Retry loading the data and check again.'
+                  t('ideas.table.thisDoesNotMeanTheTableIsEmptyRetryLoadingTheDataAndCheckAga', 'This does not mean the table is empty. Retry loading the data and check again.')
                 }
                 action={{
-                  label: isPl ? 'Ponów' : 'Retry',
+                  label: t('ideas.table.retry', 'Retry'),
                   onClick: () => {
                     void effectiveRefresh();
                   },
@@ -2631,7 +2616,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     tables={[
                       {
                         id: platformTableId ?? ideaId,
-                        name: isPl ? 'Bieżąca tabela' : 'Current table',
+                        name: t('ideas.table.currentTable', 'Current table'),
                         fields: _cols.map((c) => ({ id: c.key, name: c.header })),
                       },
                     ]}
@@ -2947,7 +2932,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 colSpan={_visCols.length + 2}
                                 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted"
                               >
-                                {groupKey || (isPl ? '(brak wartości)' : '(empty)')}{' '}
+                                {groupKey || (t('ideas.table.empty', '(empty)'))}{' '}
                                 <span className="text-c-text-muted font-normal ml-1">
                                   ({rows.length})
                                 </span>
@@ -2961,12 +2946,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
                             <div className="mx-auto max-w-xl text-c-text-muted">
                               <div className="text-sm font-semibold mb-1">
-                                {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
+                                {t('ideas.table.thisTableIsStillEmpty', 'This table is still empty')}
                               </div>
                               <div className="text-[11px] leading-relaxed">
-                                {isPl
-                                  ? 'Zacznij od struktury: wybierz framework, dodaj pierwszy wiersz lub użyj szablonu. AI zostaw na moment, gdy model tabeli będzie już wiarygodny.'
-                                  : 'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'}
+                                {t('ideas.table.startWithStructureChooseAFrameworkAddTheFirstRowOrUseATempla', 'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.')}
                               </div>
                               {!locked && (
                                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -2975,21 +2958,21 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
                                   >
                                     <Plus size={14} />
-                                    {isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
+                                    {t('ideas.table.addBlankRow', 'Add blank row')}
                                   </button>
                                   <button
                                     onClick={handleAddRowWithTemplate}
                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                                   >
                                     <Layers size={14} />
-                                    {isPl ? 'Użyj szablonu wiersza' : 'Use row template'}
+                                    {t('ideas.table.useRowTemplate', 'Use row template')}
                                   </button>
                                   <button
                                     onClick={() => setShowFrameworkGen(true)}
                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning hover:bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] transition-colors"
                                   >
                                     <LayoutGrid size={14} />
-                                    {isPl ? 'Zbuduj framework' : 'Build framework'}
+                                    {t('ideas.table.buildFramework', 'Build framework')}
                                   </button>
                                 </div>
                               )}
@@ -3033,16 +3016,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   {edges.length > 0 && (
                     <div className="border-t border-c-border-subtle mt-4">
                       <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-                        {isPl ? 'Połączenia' : 'Edges'} ({edges.length})
+                        {t('ideas.table.edges', 'Edges')} ({edges.length})
                       </div>
                       <table /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left">
                         <thead>
                           <tr className="border-b border-c-border-subtle">
                             <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
-                              {isPl ? 'Źródło' : 'Source'}
+                              {t('ideas.table.source', 'Source')}
                             </th>
                             <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
-                              {isPl ? 'Cel' : 'Target'}
+                              {t('ideas.table.target', 'Target')}
                             </th>
                             <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted w-28">
                               Kind
@@ -3129,7 +3112,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     setColContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Zmień nazwę' : 'Rename'}
+                  {t('ideas.table.rename', 'Rename')}
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
@@ -3138,7 +3121,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     setColContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Sortuj' : 'Sort'}
+                  {t('ideas.table.sort', 'Sort')}
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
@@ -3147,18 +3130,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     setColContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Ukryj kolumnę' : 'Hide column'}
+                  {t('ideas.table.hideColumn', 'Hide column')}
                 </button>
                 <div className="h-px bg-c-surface-raised my-1" />
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
                   onClick={() => {
                     deleteColumn(colContextMenu.colKey);
-                    toast.success(isPl ? 'Kolumna usunięta' : 'Column deleted');
+                    toast.success(t('ideas.table.columnDeleted', 'Column deleted'));
                     setColContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Usuń kolumnę' : 'Delete column'}
+                  {t('ideas.table.deleteColumn', 'Delete column')}
                 </button>
               </div>
             </div>
@@ -3185,7 +3168,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     setRowContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Edytuj' : 'Edit'}
+                  {t('ideas.table.edit', 'Edit')}
                 </button>
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
@@ -3200,7 +3183,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     setRowContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Dodaj notatkę' : 'Add note'}
+                  {t('ideas.table.addNote', 'Add note')}
                 </button>
                 {!locked && (
                   <>
@@ -3212,17 +3195,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         setRowContextMenu(null);
                       }}
                     >
-                      {isPl ? 'Powiel wiersz' : 'Duplicate row'}
+                      {t('ideas.table.duplicateRow', 'Duplicate row')}
                     </button>
                     <button
                       className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
                       onClick={() => {
                         effectiveHandleDeleteRow(rowContextMenu.rowId);
-                        toast.success(isPl ? 'Wiersz usunięty' : 'Row deleted');
+                        toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
                         setRowContextMenu(null);
                       }}
                     >
-                      {isPl ? 'Usuń wiersz' : 'Delete row'}
+                      {t('ideas.table.deleteRow', 'Delete row')}
                     </button>
                   </>
                 )}
@@ -3267,7 +3250,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           if (onConvertProp) {
             onConvertProp(target);
           } else {
-            toast.success(isPl ? `Konwersja do: ${target}` : `Convert to: ${target}`);
+            toast.success(t('ideas.table.convertTo', 'Convert to: {{target}}', { target }));
           }
           setDetailNodeId(null);
         }}
@@ -3391,7 +3374,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onClose={() => setShowExportPresentation(false)}
         nodes={processedRowsWithRollups}
         columns={_cols}
-        ideaTitle={extensions?.title ? String(extensions.title) : isPl ? 'Pomysły' : 'Ideas'}
+        ideaTitle={extensions?.title ? String(extensions.title) : t('ideas.table.ideas', 'Ideas')}
         viewLayout={_vl}
       />
 
@@ -3405,9 +3388,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onConvertToInitiative={(nodeId) => {
           if (onConvertProp) onConvertProp('initiative');
           else
-            toast.success(
-              isPl ? `Konwersja pomysłu do inicjatywy` : `Converting idea to initiative`
-            );
+            toast.success(t('ideas.table.convertingIdeaToInitiative', 'Converting idea to initiative'));
         }}
       />
 
@@ -3491,7 +3472,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
               <h3 className="text-sm font-semibold text-c-text">
-                {isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+                {t('ideas.table.interfaceDesigner', 'Interface Designer')}
               </h3>
               <button
                 onClick={() => setShowInterfaceDesigner(false)}
@@ -3513,7 +3494,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               tables={[
                 {
                   id: platformTableId ?? ideaId,
-                  name: isPl ? 'Bieżąca tabela' : 'Current table',
+                  name: t('ideas.table.currentTable', 'Current table'),
                   fields: _cols.map((c) => ({ id: c.key, name: c.header })),
                 },
               ]}
@@ -3539,7 +3520,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               form={{
                 id: `form-${ideaId}`,
                 table_id: ideaId,
-                name: isPl ? 'Nowy formularz' : 'New Form',
+                name: t('ideas.table.newForm', 'New Form'),
                 description: null,
                 slug: `form-${ideaId}`,
                 is_published: false,
@@ -3559,7 +3540,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 updatedAt: '',
               }))}
               onSave={async () => {
-                toast.success(isPl ? 'Formularz zapisany' : 'Form saved');
+                toast.success(t('ideas.table.formSaved', 'Form saved'));
                 setShowFormBuilder(false);
               }}
               onDelete={async () => {
@@ -3577,7 +3558,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClose={() => setExpandedRecordId(null)}
           recordId={expandedRecordId}
           tableId={platformTableId ?? ideaId}
-          tableName={isPl ? 'Bieżąca tabela' : 'Current table'}
+          tableName={t('ideas.table.currentTable', 'Current table')}
           onOpenAuditTrail={(recId) => {
             setDetailNodeId(recId);
             setShowAuditTrail(true);
@@ -3592,7 +3573,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           workspaceId={ideaId}
           onClose={() => setShowTemplateGallery(false)}
           onTemplateUsed={() => {
-            toast.success(isPl ? 'Szablon zastosowany' : 'Template applied');
+            toast.success(t('ideas.table.templateApplied', 'Template applied'));
           }}
         />
       )}
@@ -3779,22 +3760,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   setShowConnectorWizard(true);
                 }}
                 onEdit={() => {
-                  toast(isPl ? 'Edycja konektora — wkrótce' : 'Edit connector — coming soon');
+                  toast(t('ideas.table.editConnectorComingSoon', 'Edit connector — coming soon'));
                 }}
                 onDelete={async (c) => {
                   try {
                     await connectors.remove(c.id);
-                    toast.success(isPl ? 'Konektor usunięty' : 'Connector deleted');
+                    toast.success(t('ideas.table.connectorDeleted', 'Connector deleted'));
                   } catch {
-                    toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+                    toast.error(t('ideas.table.failedToDelete', 'Failed to delete'));
                   }
                 }}
                 onRun={async (c) => {
                   try {
                     await connectors.run(c.id);
-                    toast.success(isPl ? 'Import uruchomiony' : 'Import started');
+                    toast.success(t('ideas.table.importStarted', 'Import started'));
                   } catch {
-                    toast.error(isPl ? 'Nie udało się uruchomić' : 'Failed to start');
+                    toast.error(t('ideas.table.failedToStart', 'Failed to start'));
                   }
                 }}
                 onViewHistory={(c) => setConnectorHistoryTarget(c)}

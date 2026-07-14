@@ -17,8 +17,8 @@ interface IdeaCompletenessWidgetProps {
 
 interface MetricItem {
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  labelKey: string;
   labelEn: string;
-  labelPl: string;
   value: string | number;
   color: string;
 }
@@ -29,8 +29,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
   title,
   seedText,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const metrics = useMemo(() => {
     const nodeCount = nodes.length;
@@ -53,16 +52,10 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
 
     const readiness =
       completeness >= 80
-        ? isPl
-          ? 'Gotowe'
-          : 'Ready'
+        ? t('ideas.table.ready', 'Ready')
         : completeness >= 50
-          ? isPl
-            ? 'W trakcie'
-            : 'In progress'
-          : isPl
-            ? 'Początek'
-            : 'Starting';
+          ? t('ideas.table.inProgress', 'In progress')
+          : t('ideas.table.starting', 'Starting');
 
     const readinessColor =
       completeness >= 80
@@ -74,29 +67,29 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
     const items: MetricItem[] = [
       {
         icon: Layers,
+        labelKey: 'nodes',
         labelEn: 'Nodes',
-        labelPl: 'Węzły',
         value: nodeCount,
         color: 'text-blue-500',
       },
       {
         icon: GitBranch,
+        labelKey: 'edges',
         labelEn: 'Edges',
-        labelPl: 'Połączenia',
         value: edgeCount,
         color: 'text-c-accent',
       },
       {
         icon: Target,
+        labelKey: 'branches',
         labelEn: 'Branches',
-        labelPl: 'Gałęzie',
         value: branchNodes.length,
         color: 'text-indigo-500',
       },
       {
         icon: BarChart3,
+        labelKey: 'completeness',
         labelEn: 'Completeness',
-        labelPl: 'Kompletność',
         value: `${completeness}%`,
         color:
           completeness >= 80
@@ -108,13 +101,13 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
     ];
 
     return { items, completeness, readiness, readinessColor };
-  }, [edges, isPl, nodes, seedText, title]);
+  }, [edges, nodes, seedText, title, t]);
 
   return (
     <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-          {isPl ? 'Kompletność pomysłu' : 'Idea Completeness'}
+          {t('ideas.table.ideaCompleteness', 'Idea Completeness')}
         </span>
         <span className={`text-[10px] font-bold ${metrics.readinessColor}`}>
           {metrics.readiness}
@@ -144,7 +137,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
               <Icon size={12} className={item.color} />
               <div>
                 <div className="text-[10px] text-c-text-muted">
-                  {isPl ? item.labelPl : item.labelEn}
+                  {t(`ideas.table.metric.${item.labelKey}`, item.labelEn)}
                 </div>
                 <div className="text-xs font-bold text-c-text tabular-nums">
                   {item.value}
@@ -159,9 +152,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
       {metrics.completeness >= 60 && (
         <div className="mt-3 flex items-center gap-1.5 text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 rounded-lg px-2 py-1.5">
           <CheckCircle2 size={12} />
-          {isPl
-            ? 'Pomysł jest gotowy do konwersji na inicjatywę'
-            : 'Idea is ready for conversion to initiative'}
+          {t('ideas.table.ideaIsReadyForConversionToInitiative', 'Idea is ready for conversion to initiative')}
         </div>
       )}
     </div>

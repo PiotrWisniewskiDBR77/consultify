@@ -26,8 +26,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
   onFieldChange,
   groupBy,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -61,12 +60,12 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
     if (!groupBy) return null;
     const groups: Record<string, TableNode[]> = {};
     for (const n of nodes) {
-      const key = String(n.data?.[groupBy] || (isPl ? 'Inne' : 'Other'));
+      const key = String(n.data?.[groupBy] || t('ideas.table.other', 'Other'));
       if (!groups[key]) groups[key] = [];
       groups[key].push(n);
     }
     return groups;
-  }, [groupBy, isPl, nodes]);
+  }, [groupBy, nodes, t]);
 
   const renderCard = (node: TableNode, idx: number) => {
     const color = getColor(node, idx);
@@ -178,7 +177,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
   if (nodes.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <p className="text-sm text-c-text-muted">{isPl ? 'Brak karteczek' : 'No sticky notes'}</p>
+        <p className="text-sm text-c-text-muted">{t('ideas.table.noStickyNotes', 'No sticky notes')}</p>
       </div>
     );
   }
