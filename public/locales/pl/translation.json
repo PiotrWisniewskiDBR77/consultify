@@ -22891,6 +22891,23 @@
         "noChangesToApply": "Brak zmian do zastosowania",
         "refreshFailed": "Odświeżanie nie powiodło się",
         "selectRowFirst": "Najpierw zaznacz wiersz"
+      },
+      "smartSuggestions": {
+        "incompleteRowsTitle": "Niekompletne wiersze",
+        "incompleteRowsDetail": "{{count}} wiersz(y) ma mniej niż 30% wypełnionych pól. Rozważ uzupełnienie lub użyj AI do auto-fill.",
+        "aiAutoFill": "AI Auto-fill",
+        "dominantPatternTitle": "Dominujący wzorzec: {{header}}",
+        "dominantPatternDetail": "{{pct}}% wierszy ma wartość \"{{value}}\". Rozważ dodanie większej różnorodności.",
+        "addRatingColumnTitle": "Dodaj kolumnę oceny",
+        "addRatingColumnDetail": "Masz wiele pomysłów — dodanie kolumny oceny pozwoli priorytetyzować najlepsze.",
+        "addColumn": "Dodaj kolumnę",
+        "summaryTitle": "Podsumowanie",
+        "summaryDetail": "{{count}} pomysłów w {{categories}} kategoriach. Średnia kompletność: {{pct}}%.",
+        "tryKanbanTitle": "Spróbuj widoku Kanban",
+        "tryKanbanDetail": "Przy tej liczbie pomysłów widok Kanban może pomóc w organizacji.",
+        "aiSuggestion": "Sugestia AI",
+        "apply": "Zastosuj",
+        "closeBar": "Zamknij pasek"
       }
     },
     "mindmap": {

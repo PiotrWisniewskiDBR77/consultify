@@ -21815,6 +21815,23 @@
         "noChangesToApply": "No changes to apply",
         "refreshFailed": "Refresh failed",
         "selectRowFirst": "Select a row first"
+      },
+      "smartSuggestions": {
+        "incompleteRowsTitle": "Incomplete rows",
+        "incompleteRowsDetail": "{{count}} row(s) with less than 30% filled fields. Consider filling them or use AI auto-fill.",
+        "aiAutoFill": "AI Auto-fill",
+        "dominantPatternTitle": "Dominant pattern: {{header}}",
+        "dominantPatternDetail": "{{pct}}% of rows have value \"{{value}}\". Consider adding more diversity.",
+        "addRatingColumnTitle": "Add a rating column",
+        "addRatingColumnDetail": "You have many ideas — adding a rating column will help prioritize the best ones.",
+        "addColumn": "Add column",
+        "summaryTitle": "Summary",
+        "summaryDetail": "{{count}} ideas across {{categories}} categories. Average completeness: {{pct}}%.",
+        "tryKanbanTitle": "Try Kanban view",
+        "tryKanbanDetail": "With this many ideas, Kanban view might help organize them better.",
+        "aiSuggestion": "AI Suggestion",
+        "apply": "Apply",
+        "closeBar": "Close bar"
       }
     },
     "mindmap": {
