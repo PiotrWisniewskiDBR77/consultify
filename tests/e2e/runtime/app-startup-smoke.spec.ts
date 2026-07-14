@@ -11,6 +11,11 @@ import { expect, test } from '@playwright/test';
 const apiUrl = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
 test.describe('Runtime Smoke: App startup', () => {
+  // The suite-wide storageState (global test-support setup) authenticates every
+  // test, so /login would redirect into the authenticated app shell. This test
+  // intentionally asserts the UNAUTHENTICATED experience — reset storage state.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('frontend serves login page', async ({ page }) => {
     await page.goto('/login');
 
