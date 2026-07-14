@@ -3817,6 +3817,20 @@
         "completed": "Gotowe",
         "failed": "Błąd"
       }
+    },
+    "sessionPreview": {
+      "session": "Sesja",
+      "progress": "Postęp",
+      "answers": "Odpowiedzi",
+      "started": "Start",
+      "lastActivity": "Aktywność",
+      "owner": "Owner",
+      "collapse": "Zwiń",
+      "expand": "Rozwiń",
+      "copyStats": "Kopiuj metryki",
+      "copyId": "Kopiuj ID",
+      "generateInsights": "Generuj wnioski",
+      "aiAvailableAfterCompletion": "AI dostępne po zakończeniu sesji"
     }
   },
   "assessment": {

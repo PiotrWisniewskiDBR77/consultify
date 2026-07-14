@@ -4583,6 +4583,20 @@
         "completed": "Completed",
         "failed": "Failed"
       }
+    },
+    "sessionPreview": {
+      "session": "Session",
+      "progress": "Progress",
+      "answers": "Answers",
+      "started": "Started",
+      "lastActivity": "Last activity",
+      "owner": "Owner",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "copyStats": "Copy stats",
+      "copyId": "Copy ID",
+      "generateInsights": "Generate insights",
+      "aiAvailableAfterCompletion": "AI available after completion"
     }
   },
   "assessment": {

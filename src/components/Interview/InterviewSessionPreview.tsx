@@ -1,5 +1,6 @@
 import { Calendar, ChevronRight, Copy, Sparkles } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   type ActionRow,
@@ -52,17 +53,18 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   onCopyStats,
   onCopyId,
 }) => {
+  const { t } = useTranslation();
   const started = session.startedAt ? new Date(session.startedAt).toLocaleDateString() : '—';
   const last = session.lastActivityAt ? new Date(session.lastActivityAt).toLocaleDateString() : '—';
 
   const pills: MetaPill[] = [
     {
-      label: isPolish ? 'Sesja' : 'Session',
+      label: t('interview.sessionPreview.session'),
       className:
         'bg-c-info/10 text-[var(--c-info)] border-c-info/20',
     },
     {
-      label: `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,
+      label: `${t('interview.sessionPreview.progress')}: ${progress}%`,
       className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
     },
     {
@@ -73,10 +75,10 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   ];
 
   const detailsText = [
-    `${isPolish ? 'Odpowiedzi' : 'Answers'}: ${session.answeredQuestions}/${session.totalQuestions}`,
-    `${isPolish ? 'Start' : 'Started'}: ${started}`,
-    `${isPolish ? 'Aktywność' : 'Last activity'}: ${last}`,
-    session.ownerId ? `${isPolish ? 'Owner' : 'Owner'}: ${session.ownerId}` : null,
+    `${t('interview.sessionPreview.answers')}: ${session.answeredQuestions}/${session.totalQuestions}`,
+    `${t('interview.sessionPreview.started')}: ${started}`,
+    `${t('interview.sessionPreview.lastActivity')}: ${last}`,
+    session.ownerId ? `${t('interview.sessionPreview.owner')}: ${session.ownerId}` : null,
   ]
     .filter(Boolean)
     .join('\n');
@@ -84,18 +86,18 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   const customActions: DetailsAction[] = [
     {
       id: 'toggle',
-      label: detailsExpanded ? (isPolish ? 'Zwiń' : 'Collapse') : isPolish ? 'Rozwiń' : 'Expand',
+      label: detailsExpanded ? (t('interview.sessionPreview.collapse')) : t('interview.sessionPreview.expand'),
       onClick: onToggleDetailsExpanded,
     },
     {
       id: 'copy-stats',
-      label: isPolish ? 'Kopiuj metryki' : 'Copy stats',
+      label: t('interview.sessionPreview.copyStats'),
       icon: Copy,
       onClick: onCopyStats,
     },
     {
       id: 'copy-id',
-      label: isPolish ? 'Kopiuj ID' : 'Copy ID',
+      label: t('interview.sessionPreview.copyId'),
       icon: Copy,
       onClick: onCopyId,
     },
@@ -107,7 +109,7 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
       <div className="flex items-center gap-2">
         <EntityStatusChip
           status={session.status}
-          label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+          label={t(`interview.hub.sessionStatusLabel.${session.status}`, statusConfig.label.en)}
         />
       </div>
       <PreviewMetaCard pills={pills} />
@@ -156,6 +158,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
   onGenerateInsight,
   onCopyId,
 }) => {
+  const { t } = useTranslation();
   const relationItems: RelationItem[] = relations.map((r) => ({
     label: r.label,
     tone: r.tone ?? 'text-[var(--c-text-secondary)]',
@@ -166,7 +169,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
     ...(canRunAi && onGenerateInsight
       ? [
           {
-            label: isPolish ? 'Generuj wnioski' : 'Generate insights',
+            label: t('interview.sessionPreview.generateInsights'),
             icon: Sparkles,
             onClick: () => onGenerateInsight('summary'),
             colorScheme: 'neutral' as const,
@@ -175,7 +178,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
         ]
       : []),
     {
-      label: isPolish ? 'Kopiuj ID' : 'Copy ID',
+      label: t('interview.sessionPreview.copyId'),
       icon: Copy,
       onClick: onCopyId,
       colorScheme: 'neutral' as const,
@@ -193,7 +196,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
           onRunHint={onRunAiHint}
           disabled={!canRunAi}
           disabledTooltip={
-            isPolish ? 'AI dostępne po zakończeniu sesji' : 'AI available after completion'
+            t('interview.sessionPreview.aiAvailableAfterCompletion')
           }
         />
       </div>
