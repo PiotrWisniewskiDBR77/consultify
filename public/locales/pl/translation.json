@@ -7881,6 +7881,31 @@
       "accept": "Akceptuj",
       "reject": "Odrzuć"
     },
+    "initiativeProposalBoard": {
+      "title": "Tablica propozycji",
+      "counts": "{{newCount}} nowych · {{changeCount}} zmian",
+      "zeroNewNotice": "0 nowych inicjatyw to nie porażka — ten przebieg porządkuje siatkę (wzmacnia, łączy, sygnalizuje).",
+      "emptyProposals": "Brak propozycji do rozpatrzenia",
+      "createDraft": "Utwórz draft",
+      "proposeChange": "Zaproponuj zmianę",
+      "dismiss": "Odrzuć",
+      "coverageGaps": "Luki pokrycia (cele bez inicjatyw):",
+      "overlapsMece": "Nakładania (MECE):",
+      "sourceEvidence": "Dowód źródłowy",
+      "noSourceContent": "Brak treści źródła.",
+      "noSource": "Brak źródła."
+    },
+    "initiativeCoverageWaveView": {
+      "coverageMece": "Pokrycie (MECE)",
+      "overlapsCount": "{{count}} nakładań",
+      "cleanMece": "Brak luk pokrycia i nakładań — siatka jest MECE.",
+      "goalsWithNoInitiative": "Cele bez inicjatywy",
+      "overlappingScopesDetected": "Wykryto nakładania zakresów (naruszenie MECE):",
+      "waves": "Fale",
+      "acceptedCountLimit": "{{count}} zaakceptowanych · limit {{wipLimit}}/fala",
+      "overCapacity": "przeciążenie: {{count}} > limit {{wipLimit}}",
+      "empty": "Pusto"
+    },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Powiązane modele finansowe",
       "openInFinance": "Otwórz w module Finanse",

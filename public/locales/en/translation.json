@@ -8646,6 +8646,31 @@
       "accept": "Accept",
       "reject": "Reject"
     },
+    "initiativeProposalBoard": {
+      "title": "Proposal board",
+      "counts": "{{newCount}} new · {{changeCount}} changes",
+      "zeroNewNotice": "0 new initiatives is not a failure — this run tidies the grid (reinforces, links, flags).",
+      "emptyProposals": "No proposals to review",
+      "createDraft": "Create draft",
+      "proposeChange": "Propose change",
+      "dismiss": "Dismiss",
+      "coverageGaps": "Coverage gaps (goals with no initiative):",
+      "overlapsMece": "Overlaps (MECE):",
+      "sourceEvidence": "Source evidence",
+      "noSourceContent": "No source content.",
+      "noSource": "No source."
+    },
+    "initiativeCoverageWaveView": {
+      "coverageMece": "Coverage (MECE)",
+      "overlapsCount": "{{count}} overlaps",
+      "cleanMece": "No coverage gaps and no overlaps — the grid is MECE.",
+      "goalsWithNoInitiative": "Goals with no initiative",
+      "overlappingScopesDetected": "Overlapping scopes detected (MECE violation):",
+      "waves": "Waves",
+      "acceptedCountLimit": "{{count}} accepted · limit {{wipLimit}}/wave",
+      "overCapacity": "over capacity: {{count}} > limit {{wipLimit}}",
+      "empty": "Empty"
+    },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Linked finance models",
       "openInFinance": "Open in Finance",

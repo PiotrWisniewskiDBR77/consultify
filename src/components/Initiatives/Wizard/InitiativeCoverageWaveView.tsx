@@ -96,9 +96,8 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
   wipLimit = 3,
   isPolish: isPolishProp,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
-  const tr = (pl: string, en: string) => (isPolish ? pl : en);
 
   const buckets = useMemo(() => {
     const map: Record<WaveId, AcceptedItem[]> = { now: [], next: [], later: [] };
@@ -117,11 +116,11 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
         <div className="mb-2 flex items-center gap-2">
           <ShieldCheck size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {tr('Pokrycie (MECE)', 'Coverage (MECE)')}
+            {t('initiatives.initiativeCoverageWaveView.coverageMece')}
           </h3>
           {overlapCount > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-[11px] font-semibold text-danger-700 dark:bg-danger-500/15 dark:text-danger-300">
-              {tr(`${overlapCount} nakładań`, `${overlapCount} overlaps`)}
+              {t('initiatives.initiativeCoverageWaveView.overlapsCount', { count: overlapCount })}
             </span>
           )}
         </div>
@@ -129,12 +128,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
         {isClean ? (
           <div className="flex items-start gap-2 rounded-xl border border-emerald-300/50 bg-emerald-50/70 px-3.5 py-2.5 text-xs text-slate-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-slate-300">
             <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-500" />
-            <span>
-              {tr(
-                'Brak luk pokrycia i nakładań — siatka jest MECE.',
-                'No coverage gaps and no overlaps — the grid is MECE.'
-              )}
-            </span>
+            <span>{t('initiatives.initiativeCoverageWaveView.cleanMece')}</span>
           </div>
         ) : (
           <div className="space-y-2">
@@ -142,7 +136,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
               <div className="rounded-xl border border-amber-300/50 bg-amber-50/70 px-3.5 py-2.5 dark:border-amber-500/20 dark:bg-amber-500/10">
                 <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
                   <AlertTriangle size={14} className="shrink-0" />
-                  {tr('Cele bez inicjatywy', 'Goals with no initiative')}
+                  {t('initiatives.initiativeCoverageWaveView.goalsWithNoInitiative')}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {coverage.gaps.map((gap) => (
@@ -158,10 +152,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
             )}
             {overlapCount > 0 && (
               <div className="rounded-xl border border-danger-300/50 bg-danger-50/70 px-3.5 py-2.5 text-xs text-danger-700 dark:border-danger-500/20 dark:bg-danger-500/10 dark:text-danger-300">
-                {tr(
-                  'Wykryto nakładania zakresów (naruszenie MECE):',
-                  'Overlapping scopes detected (MECE violation):'
-                )}{' '}
+                {t('initiatives.initiativeCoverageWaveView.overlappingScopesDetected')}{' '}
                 <span className="font-semibold">{overlapCount}</span>
               </div>
             )}
@@ -174,13 +165,13 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
         <div className="mb-2 flex items-center gap-2">
           <Layers size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {tr('Fale', 'Waves')}
+            {t('initiatives.initiativeCoverageWaveView.waves')}
           </h3>
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {tr(
-              `${accepted.length} zaakceptowanych · limit ${wipLimit}/fala`,
-              `${accepted.length} accepted · limit ${wipLimit}/wave`
-            )}
+            {t('initiatives.initiativeCoverageWaveView.acceptedCountLimit', {
+              count: accepted.length,
+              wipLimit,
+            })}
           </span>
         </div>
 
@@ -207,10 +198,10 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
                   <div className="mb-2 flex items-start gap-1.5 rounded-lg border border-danger-300/50 bg-danger-50/70 px-2 py-1.5 text-[11px] font-medium text-danger-700 dark:border-danger-500/20 dark:bg-danger-500/10 dark:text-danger-300">
                     <AlertTriangle size={12} className="mt-0.5 shrink-0" />
                     <span>
-                      {tr(
-                        `przeciążenie: ${items.length} > limit ${wipLimit}`,
-                        `over capacity: ${items.length} > limit ${wipLimit}`
-                      )}
+                      {t('initiatives.initiativeCoverageWaveView.overCapacity', {
+                        count: items.length,
+                        wipLimit,
+                      })}
                     </span>
                   </div>
                 )}
@@ -219,7 +210,9 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
                   {items.length === 0 ? (
                     <div className="flex h-full min-h-[60px] flex-col items-center justify-center text-slate-300 dark:text-navy-600">
                       <Rocket size={18} className="mb-1 opacity-50" />
-                      <span className="text-[11px] text-slate-400">{tr('Pusto', 'Empty')}</span>
+                      <span className="text-[11px] text-slate-400">
+                        {t('initiatives.initiativeCoverageWaveView.empty')}
+                      </span>
                     </div>
                   ) : (
                     items.map((item, idx) => (

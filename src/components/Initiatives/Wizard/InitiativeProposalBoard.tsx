@@ -123,9 +123,8 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
   onDismiss,
   isPolish: isPolishProp,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
-  const tr = (pl: string, en: string) => (isPolish ? pl : en);
 
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const visible = proposals.map((p, i) => ({ p, i })).filter(({ i }) => !dismissed.has(i));
@@ -148,25 +147,20 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
         <div className="mb-3 flex items-center gap-2">
           <Sparkles size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {tr('Tablica propozycji', 'Proposal board')}
+            {t('initiatives.initiativeProposalBoard.title')}
           </h3>
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {tr(
-              `${counts.newCount} nowych · ${counts.changeCount} zmian`,
-              `${counts.newCount} new · ${counts.changeCount} changes`
-            )}
+            {t('initiatives.initiativeProposalBoard.counts', {
+              newCount: counts.newCount,
+              changeCount: counts.changeCount,
+            })}
           </span>
         </div>
 
         {counts.newCount === 0 && (
           <div className="mb-3 flex items-start gap-2 rounded-xl border border-emerald-300/50 bg-emerald-50/70 px-3.5 py-2.5 text-xs text-slate-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-slate-300">
             <ShieldCheck size={15} className="mt-0.5 shrink-0 text-emerald-500" />
-            <span>
-              {tr(
-                '0 nowych inicjatyw to nie porażka — ten przebieg porządkuje siatkę (wzmacnia, łączy, sygnalizuje).',
-                '0 new initiatives is not a failure — this run tidies the grid (reinforces, links, flags).'
-              )}
-            </span>
+            <span>{t('initiatives.initiativeProposalBoard.zeroNewNotice')}</span>
           </div>
         )}
 
@@ -174,9 +168,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
           {visible.length === 0 ? (
             <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 text-slate-400 dark:border-navy-700">
               <Inbox size={28} className="mb-2 opacity-60" />
-              <p className="text-sm">
-                {tr('Brak propozycji do rozpatrzenia', 'No proposals to review')}
-              </p>
+              <p className="text-sm">{t('initiatives.initiativeProposalBoard.emptyProposals')}</p>
             </div>
           ) : (
             visible.map(({ p, i }) => {
@@ -211,7 +203,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                         onClick={() => onAcceptNew?.(p)}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-semibold text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
                       >
-                        {tr('Utwórz draft', 'Create draft')}
+                        {t('initiatives.initiativeProposalBoard.createDraft')}
                         <ArrowRight size={13} />
                       </button>
                     ) : (
@@ -224,7 +216,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                           ? isPolish
                             ? changeAction.pl
                             : changeAction.en
-                          : tr('Zaproponuj zmianę', 'Propose change')}
+                          : t('initiatives.initiativeProposalBoard.proposeChange')}
                       </button>
                     )}
                     <button
@@ -232,7 +224,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                       onClick={() => dismiss(i, p)}
                       className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
                     >
-                      {tr('Odrzuć', 'Dismiss')}
+                      {t('initiatives.initiativeProposalBoard.dismiss')}
                     </button>
                   </div>
                 </div>
@@ -246,16 +238,13 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
           <div className="mt-3 space-y-1.5 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-xs dark:border-navy-700/60 dark:bg-navy-950/30">
             {coverage.gaps.length > 0 && (
               <div className="text-amber-700 dark:text-amber-300">
-                {tr(
-                  'Luki pokrycia (cele bez inicjatyw):',
-                  'Coverage gaps (goals with no initiative):'
-                )}{' '}
+                {t('initiatives.initiativeProposalBoard.coverageGaps')}{' '}
                 <span className="font-medium">{coverage.gaps.join(', ')}</span>
               </div>
             )}
             {coverage.overlaps.length > 0 && (
               <div className="text-danger-700 dark:text-danger-300">
-                {tr('Nakładania (MECE):', 'Overlaps (MECE):')}{' '}
+                {t('initiatives.initiativeProposalBoard.overlapsMece')}{' '}
                 <span className="font-medium">{coverage.overlaps.length}</span>
               </div>
             )}
@@ -267,7 +256,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
       <aside className="hidden w-72 shrink-0 flex-col rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-navy-700/60 dark:bg-navy-950/30 lg:flex">
         <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           <FileText size={13} />
-          {tr('Dowód źródłowy', 'Source evidence')}
+          {t('initiatives.initiativeProposalBoard.sourceEvidence')}
         </div>
         {source ? (
           <>
@@ -275,11 +264,13 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
               {source.label}
             </div>
             <div className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              {source.content || tr('Brak treści źródła.', 'No source content.')}
+              {source.content || t('initiatives.initiativeProposalBoard.noSourceContent')}
             </div>
           </>
         ) : (
-          <p className="text-xs text-slate-400">{tr('Brak źródła.', 'No source.')}</p>
+          <p className="text-xs text-slate-400">
+            {t('initiatives.initiativeProposalBoard.noSource')}
+          </p>
         )}
       </aside>
     </div>
