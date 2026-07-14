@@ -30,17 +30,18 @@ interface NotebookPresenceState {
   connectionStatus: NotebookPresenceStatus;
 }
 
-// Palette parity with the notebook UI tag tokens (c-tag-*), resolved to concrete
-// hex so avatars keep contrast against ring-c-surface. Deterministic per user.
+// Palette parity with the notebook UI tag tokens (c-tag-1..8) — CSS custom
+// properties, so avatars stay legible and theme-adaptive (light/dark) against
+// ring-c-surface instead of a hardcoded light-only hex set. Deterministic per user.
 const PRESENCE_COLORS = [
-  '#3b8ea5',
-  '#ae6429',
-  '#10b981',
-  '#3b82f6',
-  '#6366f1',
-  '#ec4899',
-  '#84cc16',
-  '#a855f7',
+  'var(--c-tag-1)',
+  'var(--c-tag-2)',
+  'var(--c-tag-3)',
+  'var(--c-tag-4)',
+  'var(--c-tag-5)',
+  'var(--c-tag-6)',
+  'var(--c-tag-7)',
+  'var(--c-tag-8)',
 ];
 
 function getColorForUser(userId: string): string {

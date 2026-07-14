@@ -15,6 +15,8 @@ import {
   type NotebookExportPage,
 } from '@/utils/notebookExport';
 
+import i18n from '../../../i18n';
+
 interface NotebookExportMenuProps {
   page: NotebookExportPage;
   isPolish?: boolean;
@@ -23,12 +25,12 @@ interface NotebookExportMenuProps {
   disabled?: boolean;
 }
 
-const labels = (isPolish: boolean) => ({
-  trigger: isPolish ? 'Eksport' : 'Export',
+const labels = () => ({
+  trigger: i18n.t('notebook.exportMenu.label', 'Export'),
   markdown: 'Markdown (.md)',
   pdf: 'PDF (.pdf)',
-  docx: isPolish ? 'Word (.docx) — beta' : 'Word (.docx) — beta',
-  ariaMenu: isPolish ? 'Opcje eksportu notatki' : 'Note export options',
+  docx: i18n.t('notebook.exportMenu.label2', 'Word (.docx) — beta'),
+  ariaMenu: i18n.t('notebook.exportMenu.label3', 'Note export options'),
 });
 
 export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
@@ -40,7 +42,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<NotebookExportFormat | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const t = labels(isPolish);
+  const exportLabels = labels();
 
   useEffect(() => {
     if (!open) return;
@@ -87,13 +89,13 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
         className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-c-text dark:hover:bg-white/[0.08]"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-        <span>{t.trigger}</span>
+        <span>{exportLabels.trigger}</span>
       </button>
 
       {open && (
         <div
           role="menu"
-          aria-label={t.ariaMenu}
+          aria-label={exportLabels.ariaMenu}
           className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-1 shadow-lg dark:border-white/10 dark:bg-navy-900"
         >
           <button
@@ -104,7 +106,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
             onClick={() => run('markdown')}
           >
             <FileText className="h-4 w-4 text-c-text-muted" />
-            {t.markdown}
+            {exportLabels.markdown}
           </button>
           <button
             type="button"
@@ -114,7 +116,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
             onClick={() => run('pdf')}
           >
             <FileType className="h-4 w-4 text-c-text-muted" />
-            {t.pdf}
+            {exportLabels.pdf}
           </button>
           <button
             type="button"
@@ -124,7 +126,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
             onClick={() => run('docx')}
           >
             <FileType className="h-4 w-4 text-c-text-muted" />
-            {t.docx}
+            {exportLabels.docx}
           </button>
         </div>
       )}

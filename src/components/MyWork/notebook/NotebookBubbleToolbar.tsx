@@ -59,20 +59,18 @@ const MarkBtn: React.FC<MarkBtnProps> = ({ icon: Icon, onClick, isActive, title,
 );
 
 export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ editor }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
-  const t = (en: string, pl: string) => (isPolish ? pl : en);
+  const { t } = useTranslation();
 
   const setLink = useCallback(() => {
     const previous = editor.getAttributes('link').href as string | undefined;
-    const url = window.prompt(t('Link URL', 'Adres linku'), previous || '');
+    const url = window.prompt(t('notebook.bubbleToolbar.linkUrl', 'Link URL'), previous || '');
     if (url === null) return; // cancelled
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }, [editor, isPolish]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editor, t]);
 
   return (
     <BubbleMenu
@@ -95,51 +93,51 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         icon={Bold}
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
-        title={t('Bold', 'Pogrubienie')}
-        ariaLabel={t('Bold', 'Pogrubienie')}
+        title={t('notebook.bubbleToolbar.bold', 'Bold')}
+        ariaLabel={t('notebook.bubbleToolbar.bold', 'Bold')}
       />
       <MarkBtn
         icon={Italic}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
-        title={t('Italic', 'Kursywa')}
-        ariaLabel={t('Italic', 'Kursywa')}
+        title={t('notebook.bubbleToolbar.italic', 'Italic')}
+        ariaLabel={t('notebook.bubbleToolbar.italic', 'Italic')}
       />
       <MarkBtn
         icon={UnderlineIcon}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive('underline')}
-        title={t('Underline', 'Podkreślenie')}
-        ariaLabel={t('Underline', 'Podkreślenie')}
+        title={t('notebook.bubbleToolbar.underline', 'Underline')}
+        ariaLabel={t('notebook.bubbleToolbar.underline', 'Underline')}
       />
       <MarkBtn
         icon={Strikethrough}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive('strike')}
-        title={t('Strikethrough', 'Przekreślenie')}
-        ariaLabel={t('Strikethrough', 'Przekreślenie')}
+        title={t('notebook.bubbleToolbar.strikethrough', 'Strikethrough')}
+        ariaLabel={t('notebook.bubbleToolbar.strikethrough', 'Strikethrough')}
       />
       <div className="mx-0.5 h-5 w-px bg-c-surface-raised" />
       <MarkBtn
         icon={CodeIcon}
         onClick={() => editor.chain().focus().toggleCode().run()}
         isActive={editor.isActive('code')}
-        title={t('Inline code', 'Kod w linii')}
-        ariaLabel={t('Inline code', 'Kod w linii')}
+        title={t('notebook.bubbleToolbar.inlineCode', 'Inline code')}
+        ariaLabel={t('notebook.bubbleToolbar.inlineCode', 'Inline code')}
       />
       <MarkBtn
         icon={Highlighter}
         onClick={() => editor.chain().focus().toggleHighlight().run()}
         isActive={editor.isActive('highlight')}
-        title={t('Highlight', 'Podświetlenie')}
-        ariaLabel={t('Highlight', 'Podświetlenie')}
+        title={t('notebook.bubbleToolbar.highlight', 'Highlight')}
+        ariaLabel={t('notebook.bubbleToolbar.highlight', 'Highlight')}
       />
       <MarkBtn
         icon={LinkIcon}
         onClick={setLink}
         isActive={editor.isActive('link')}
-        title={t('Link', 'Link')}
-        ariaLabel={t('Link', 'Link')}
+        title={t('notebook.bubbleToolbar.link', 'Link')}
+        ariaLabel={t('notebook.bubbleToolbar.link', 'Link')}
       />
     </BubbleMenu>
   );

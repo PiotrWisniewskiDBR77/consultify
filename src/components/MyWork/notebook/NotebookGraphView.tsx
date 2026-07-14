@@ -35,6 +35,7 @@ import 'reactflow/dist/style.css';
 
 import { Loader2, Network } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Background,
   Controls,
@@ -171,20 +172,19 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
   className = '',
   height = 360,
 }) => {
+  const { t } = useTranslation();
   const [topics, setTopics] = useState<TopicLite[]>([]);
   const [backlinks, setBacklinks] = useState<BacklinkLite[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const t = useMemo(
+  const labels = useMemo(
     () => ({
-      title: isPolish ? 'Graf powiązań' : 'Connection graph',
-      empty: isPolish
-        ? 'Brak tematów ani powiązań dla tej notatki.'
-        : 'No topics or backlinks for this note yet.',
-      topics: isPolish ? 'Tematy' : 'Topics',
-      backlinks: isPolish ? 'Powiązania' : 'Backlinks',
+      title: t('notebook.graphView.title', 'Connection graph'),
+      empty: t('notebook.graphView.label', 'No topics or backlinks for this note yet.'),
+      topics: t('notebook.graphView.label2', 'Topics'),
+      backlinks: t('notebook.graphView.label3', 'Backlinks'),
     }),
-    [isPolish]
+    [t]
   );
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
   }, [pageId]);
 
   const { nodes, edges } = useMemo<{ nodes: Node[]; edges: Edge[] }>(() => {
-    const centerLabel = String(pageTitle || '').trim() || (isPolish ? 'Notatka' : 'Note');
+    const centerLabel = String(pageTitle || '').trim() || t('notebook.graphView.label4', 'Note');
     const nodes: Node[] = [
       {
         id: 'center',
@@ -211,7 +211,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
         data: { label: centerLabel },
         style: {
           background: 'var(--c-info)',
-          color: '#fff',
+          color: 'var(--c-tag-foreground)',
           border: 'none',
           borderRadius: 12,
           fontWeight: 600,
@@ -267,7 +267,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
     });
 
     return { nodes, edges };
-  }, [topics, backlinks, pageTitle, isPolish]);
+  }, [topics, backlinks, pageTitle, t]);
 
   const isEmpty = topics.length === 0 && backlinks.length === 0;
 
@@ -275,12 +275,12 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
     <div className={`flex flex-col gap-2 ${className}`}>
       <div className="flex items-center gap-2 text-[13px] font-semibold text-c-text">
         <Network className="h-4 w-4 text-c-text-muted" />
-        <span>{t.title}</span>
+        <span>{labels.title}</span>
         {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-c-text-muted" />}
         {!loading && (
           <span className="text-[11px] font-normal text-c-text-muted">
-            {topics.length} {t.topics.toLowerCase()} • {backlinks.length}{' '}
-            {t.backlinks.toLowerCase()}
+            {topics.length} {labels.topics.toLowerCase()} • {backlinks.length}{' '}
+            {labels.backlinks.toLowerCase()}
           </span>
         )}
       </div>
@@ -291,7 +291,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
       >
         {!loading && isEmpty ? (
           <div className="flex h-full items-center justify-center px-4 text-center text-[12px] text-c-text-muted">
-            {t.empty}
+            {labels.empty}
           </div>
         ) : (
           <ReactFlowProvider>

@@ -5,6 +5,7 @@
  */
 import { ChevronRight, Eye, FileOutput, Lightbulb, Paperclip, Radar, Sparkles } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface NotebookProgressChipProps {
   isPolish: boolean;
@@ -31,6 +32,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
   onHandoffRadar,
   onHandoffInitiatives,
 }) => {
+  const { t } = useTranslation();
   const pillBase =
     'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors';
   const pillActive = 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised';
@@ -44,11 +46,11 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
       <button
         type="button"
         onClick={onOpenAttachments}
-        title={isPolish ? 'Dodaj źródła i załączniki' : 'Add sources and attachments'}
+        title={t('notebook.progressChip.title', 'Add sources and attachments')}
         className={`${pillBase} ${pillActive}`}
       >
         <Paperclip size={11} />
-        {isPolish ? 'Źródła' : 'Sources'}
+        {t('notebook.progressChip.label', 'Sources')}
       </button>
 
       {sep}
@@ -57,7 +59,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
       <button
         type="button"
         onClick={onCreateAIProposal}
-        title={isPolish ? 'Uruchom propozycję AI' : 'Run AI proposal'}
+        title={t('notebook.progressChip.title2', 'Run AI proposal')}
         className={`${pillBase} ${pillActive}`}
       >
         <Sparkles size={11} />
@@ -73,12 +75,8 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         disabled={!hasPendingAIProposals}
         title={
           hasPendingAIProposals
-            ? isPolish
-              ? 'Masz propozycje do review'
-              : 'You have proposals to review'
-            : isPolish
-              ? 'Najpierw utwórz propozycję AI'
-              : 'Create an AI proposal first'
+            ? t('notebook.progressChip.label2', 'You have proposals to review')
+            : t('notebook.progressChip.label3', 'Create an AI proposal first')
         }
         className={`${pillBase} ${hasPendingAIProposals ? pillHighlight : pillDisabled}`}
       >
@@ -98,15 +96,13 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         disabled={!canConvertDeliverable}
         title={
           canConvertDeliverable
-            ? isPolish
-              ? 'Konwertuj do raportu'
-              : 'Convert to report'
+            ? t('notebook.progressChip.label4', 'Convert to report')
             : convertBlockedReason
         }
         className={`${pillBase} ${canConvertDeliverable ? 'bg-c-text text-c-surface hover:brightness-110' : pillDisabled}`}
       >
         <FileOutput size={11} />
-        {isPolish ? 'Konwertuj' : 'Convert'}
+        {t('notebook.progressChip.label5', 'Convert')}
       </button>
 
       {/* Handoff buttons */}
@@ -117,7 +113,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
             <button
               type="button"
               onClick={onHandoffRadar}
-              title={isPolish ? 'Prześlij do Radaru' : 'Send to Radar'}
+              title={t('notebook.progressChip.title3', 'Send to Radar')}
               className={`${pillBase} ${pillActive}`}
             >
               <Radar size={11} />
@@ -128,11 +124,11 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
             <button
               type="button"
               onClick={onHandoffInitiatives}
-              title={isPolish ? 'Prześlij do Inicjatyw' : 'Send to Initiatives'}
+              title={t('notebook.progressChip.title4', 'Send to Initiatives')}
               className={`${pillBase} ${pillActive}`}
             >
               <Lightbulb size={11} />
-              {isPolish ? 'Inicjatywy' : 'Initiatives'}
+              {t('notebook.progressChip.label6', 'Initiatives')}
             </button>
           )}
         </>

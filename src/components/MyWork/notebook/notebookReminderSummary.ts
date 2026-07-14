@@ -8,6 +8,8 @@
  * (PL/EN date) for <NotebookReminderChip/>. Pure, no side effects, no writes.
  */
 
+import i18n from '../../../i18n';
+
 export interface NotebookReminderMetadata {
   dueAt?: string | null;
   term?: string | null;
@@ -58,7 +60,7 @@ export function getNotebookReminderSummary(
   // Nothing meaningful to show.
   if (!formattedDate && !term) return null;
 
-  const prefix = isPolish ? 'Przypomnienie' : 'Reminder';
+  const prefix = i18n.t('notebook.reminderSummary.prefix', 'Reminder');
   const when = formattedDate || term!;
   const label = `${prefix}: ${when}`;
   const title = term && formattedDate ? `${prefix}: ${term} · ${formattedDate}` : label;

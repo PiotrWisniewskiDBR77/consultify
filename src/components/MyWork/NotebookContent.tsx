@@ -61,6 +61,7 @@ import type {
   NotebookVisibility,
 } from '@/types/myWork';
 
+import i18n from '../../i18n';
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { AI_BLOCK_MIME, type ConvertTarget } from './notebook/AIChatInlinePanel';
 import { AICommandPrompt } from './notebook/AICommandPrompt';
@@ -249,9 +250,10 @@ const wordCount = (text: string): number => {
 };
 
 const getDeliverableGuardMessage = (isPolish: boolean) =>
-  isPolish
-    ? 'Najpierw dopracuj notatkę: dodaj więcej treści albo czytelny outline, zanim przekonwertujesz ją do deliverable.'
-    : 'Refine the note first: add more content or a clearer outline before converting it into a deliverable.';
+  i18n.t(
+    'notebook.notebookContent.label',
+    'Refine the note first: add more content or a clearer outline before converting it into a deliverable.'
+  );
 
 const extractText = (json: any): string => {
   try {
@@ -326,36 +328,23 @@ const buildOutlineDraft = (
   }
 
   if (target === 'presentation') {
-    return isPolish
-      ? [
-          '- Kontekst i cel',
-          '- Najważniejsze obserwacje',
-          '- Implikacje biznesowe',
-          '- Następne kroki',
-        ].join('\n')
-      : [
-          '- Context and goal',
-          '- Key observations',
-          '- Business implications',
-          '- Next steps',
-        ].join('\n');
+    return i18n.t(
+      'notebook.notebookContent.outlinePresentation',
+      '- Context and goal\n- Key observations\n- Business implications\n- Next steps'
+    );
   }
 
   if (target === 'assessment') {
-    return isPolish
-      ? ['- Zakres oceny', '- Główne pytania', '- Evidence do zebrania', '- Obszary ryzyka'].join(
-          '\n'
-        )
-      : ['- Assessment scope', '- Core questions', '- Evidence to collect', '- Risk areas'].join(
-          '\n'
-        );
+    return i18n.t(
+      'notebook.notebookContent.outlineAssessment',
+      '- Assessment scope\n- Core questions\n- Evidence to collect\n- Risk areas'
+    );
   }
 
-  return isPolish
-    ? ['- Executive summary', '- Analiza problemu', '- Opcje działania', '- Rekomendacje'].join(
-        '\n'
-      )
-    : ['- Executive summary', '- Problem analysis', '- Options', '- Recommendations'].join('\n');
+  return i18n.t(
+    'notebook.notebookContent.outlineDefault',
+    '- Executive summary\n- Problem analysis\n- Options\n- Recommendations'
+  );
 };
 
 /* ------------------------------------------------------------------ */
@@ -367,23 +356,22 @@ const EDITOR_STYLES = `
 .ProseMirror {
   line-height: 1.75;
   font-size: 1rem;
-  color: #1e293b;
-  caret-color: #1E3A5F;
+  color: var(--c-text);
+  caret-color: #1E3A5F; /* celowy kolor edytora, brak tokenu (marka navy, nie c-info) */
 }
-.dark .ProseMirror { color: #e2e8f0; caret-color: #8EAACF; }
+.dark .ProseMirror { caret-color: #8EAACF; /* celowy kolor edytora, brak tokenu */ }
 .ProseMirror h1 { font-size: 1.625rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
 .ProseMirror h2 { font-size: 1.325rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
 .ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.3rem; }
 .ProseMirror > * + * { margin-top: 0.4rem; }
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: #94a3b8;
+  color: var(--c-text-muted);
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
   font-style: italic;
 }
-.dark .ProseMirror p.is-editor-empty:first-child::before { color: #475569; }
 
 /* Block hover with subtle left accent */
 .ProseMirror > *:not(table) {
@@ -411,7 +399,7 @@ const EDITOR_STYLES = `
   padding: 0.25rem 0;
 }
 .ProseMirror ul[data-type="taskList"] li label input[type="checkbox"] {
-  accent-color: #1E3A5F;
+  accent-color: #1E3A5F; /* celowy kolor edytora, brak tokenu */
   margin-top: 0.35rem;
   width: 16px;
   height: 16px;
@@ -429,10 +417,15 @@ const EDITOR_STYLES = `
   backdrop-filter: blur(4px);
 }
 .nb-callout:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+/* Gradient tints (2 lekkie stopnie na wariant) celowo zostają — brak w tokenach
+   odpowiednika "soft tint" dla warning/success/danger (jest tylko --c-accent-soft
+   dla crimson). Border-color: info=niebieski i purple=fiolet celowo zostają
+   literalne — c-info w tokenach to fiolet (#3b2883), więc "info" niebieski i
+   "purple" fiolet nie mają jednoznacznego bezstratnego odpowiednika c-*. */
 .nb-callout[data-variant="info"]     { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #f0f7ff 100%); }
-.nb-callout[data-variant="warning"]  { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef9e7 100%); }
-.nb-callout[data-variant="success"]  { border-color: #22c55e; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); }
-.nb-callout[data-variant="critical"] { border-color: #f43f5e; background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
+.nb-callout[data-variant="warning"]  { border-color: var(--c-warning); background: linear-gradient(135deg, #fffbeb 0%, #fef9e7 100%); }
+.nb-callout[data-variant="success"]  { border-color: var(--c-success); background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); }
+.nb-callout[data-variant="critical"] { border-color: var(--c-danger); background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
 .nb-callout[data-variant="purple"]   { border-color: #a855f7; background: linear-gradient(135deg, #faf5ff 0%, #f5f0ff 100%); }
 .dark .nb-callout[data-variant="info"]     { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.04)); }
 .dark .nb-callout[data-variant="warning"]  { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04)); }
@@ -442,26 +435,22 @@ const EDITOR_STYLES = `
 
 /* Details / Toggle — refined */
 .nb-details {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   border-radius: 0.75rem;
   margin: 0.75rem 0;
   overflow: hidden;
   transition: all 0.2s ease;
 }
-.nb-details:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-color: #cbd5e1; }
-.dark .nb-details { border-color: rgba(255,255,255,0.08); }
-.dark .nb-details:hover { border-color: rgba(255,255,255,0.14); }
+.nb-details:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-color: var(--c-border); }
 .nb-summary {
   cursor: pointer;
   font-weight: 600;
   padding: 0.625rem 0.875rem;
-  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  background: var(--c-surface-raised);
   user-select: text;
   transition: background 0.15s;
 }
-.nb-summary:hover { background: linear-gradient(180deg, #f1f5f9, #e2e8f0); }
-.dark .nb-summary { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); }
-.dark .nb-summary:hover { background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04)); }
+.nb-summary:hover { background: var(--c-border-subtle); }
 .nb-details-content { padding: 0.625rem 0.875rem 0.875rem; }
 
 /* Table — refined styling */
@@ -471,29 +460,28 @@ const EDITOR_STYLES = `
   margin: 0.75rem 0;
   border-radius: 0.75rem;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
 }
-.dark .ProseMirror table { border-color: rgba(255,255,255,0.08); }
 .ProseMirror th,
 .ProseMirror td {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   padding: 0.5rem 0.875rem;
   text-align: left;
   vertical-align: top;
 }
-.dark .ProseMirror th,
-.dark .ProseMirror td { border-color: rgba(255,255,255,0.08); }
 .ProseMirror th {
   font-weight: 600;
   font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
-  color: #64748b;
+  background: var(--c-surface-raised);
+  color: var(--c-text-muted);
 }
-.dark .ProseMirror th { background: rgba(255,255,255,0.04); color: #94a3b8; }
 
-/* Code block — polished */
+/* Code block — polished. Background is INTENTIONALLY always-dark (code-editor
+   convention) regardless of app theme, so these colors are NOT tokenized —
+   var(--c-text) would go near-black in light mode and break contrast on the
+   fixed-dark surface. celowy kolor edytora, brak tokenu. */
 .ProseMirror pre {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   color: #e2e8f0;
@@ -507,34 +495,34 @@ const EDITOR_STYLES = `
 }
 .ProseMirror code:not(pre code) {
   background: rgba(30,58,95,0.08);
-  color: #1E3A5F;
+  color: #1E3A5F; /* celowy kolor edytora, brak tokenu (marka navy) */
   padding: 0.15em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
-.dark .ProseMirror code:not(pre code) { background: rgba(142,170,207,0.15); color: #AECAEF; }
+.dark .ProseMirror code:not(pre code) { background: rgba(142,170,207,0.15); color: #AECAEF; /* celowy, brak tokenu */ }
 
 /* Horizontal rule — gradient */
 .ProseMirror hr {
   border: none;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+  background: linear-gradient(90deg, transparent, var(--c-border) 20%, var(--c-border) 80%, transparent);
   margin: 2rem 0;
 }
-.dark .ProseMirror hr { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.1) 80%, transparent); }
 
 /* Blockquote */
 .ProseMirror blockquote {
-  border-left: 3px solid #1E3A5F;
+  border-left: 3px solid #1E3A5F; /* celowy kolor edytora, brak tokenu (marka navy) */
   padding-left: 1rem;
   margin: 0.75rem 0;
-  color: #64748b;
+  color: var(--c-text-muted);
   font-style: italic;
 }
-.dark .ProseMirror blockquote { border-left-color: #6E8AAF; color: #94a3b8; }
+.dark .ProseMirror blockquote { border-left-color: #6E8AAF; /* celowy, brak tokenu */ }
 
-/* Link */
+/* Link — celowy kolor edytora (marka navy), brak tokenu: c-info to fiolet,
+   nie ma odpowiednika dla niebieskiego linku edytora. */
 .ProseMirror .nb-link,
 .ProseMirror a {
   color: #1E3A5F;
@@ -561,8 +549,8 @@ const EDITOR_STYLES = `
 
 /* Lists */
 .ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; }
-.ProseMirror li::marker { color: #1E3A5F; }
-.dark .ProseMirror li::marker { color: #8EAACF; }
+.ProseMirror li::marker { color: #1E3A5F; /* celowy kolor edytora, brak tokenu */ }
+.dark .ProseMirror li::marker { color: #8EAACF; /* celowy, brak tokenu */ }
 
 /* Focus ring on editor */
 .ProseMirror:focus { outline: none; }
@@ -630,16 +618,14 @@ const EDITOR_STYLES = `
   height: auto;
   border-radius: 0.75rem;
   margin: 0.75rem 0;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   display: block;
 }
-.dark .ProseMirror img.nb-image,
-.dark .ProseMirror img { border-color: rgba(255,255,255,0.08); }
 .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid #1E3A5F;
+  outline: 2px solid #1E3A5F; /* celowy kolor edytora, brak tokenu */
   outline-offset: 2px;
 }
-.dark .ProseMirror img.ProseMirror-selectednode { outline-color: #6E8AAF; }
+.dark .ProseMirror img.ProseMirror-selectednode { outline-color: #6E8AAF; /* celowy, brak tokenu */ }
 
 /* Bookmark card (rich link preview) */
 .ProseMirror a.nb-bookmark {
@@ -647,31 +633,27 @@ const EDITOR_STYLES = `
   align-items: stretch;
   gap: 0;
   margin: 0.75rem 0;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   border-radius: 0.75rem;
   overflow: hidden;
   text-decoration: none;
-  background: #ffffff;
+  background: var(--c-surface);
   transition: border-color 0.15s, background 0.15s;
   cursor: pointer;
 }
-.ProseMirror a.nb-bookmark:hover { border-color: #cbd5e1; background: #f8fafc; }
-.dark .ProseMirror a.nb-bookmark { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.02); }
-.dark .ProseMirror a.nb-bookmark:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); }
-.ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline: 2px solid #1E3A5F; outline-offset: 2px; }
-.dark .ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline-color: #6E8AAF; }
+.ProseMirror a.nb-bookmark:hover { border-color: var(--c-border); background: var(--c-surface-raised); }
+.ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline: 2px solid #1E3A5F; outline-offset: 2px; /* celowy kolor edytora, brak tokenu */ }
+.dark .ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline-color: #6E8AAF; /* celowy, brak tokenu */ }
 .ProseMirror .nb-bookmark-body { flex: 1 1 auto; min-width: 0; padding: 0.7rem 0.85rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .ProseMirror .nb-bookmark-title {
-  font-weight: 600; font-size: 0.9rem; color: #0f172a;
+  font-weight: 600; font-size: 0.9rem; color: var(--c-text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.dark .ProseMirror .nb-bookmark-title { color: #e2e8f0; }
 .ProseMirror .nb-bookmark-desc {
-  font-size: 0.8rem; color: #64748b; line-height: 1.35;
+  font-size: 0.8rem; color: var(--c-text-muted); line-height: 1.35;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.dark .ProseMirror .nb-bookmark-desc { color: #94a3b8; }
-.ProseMirror .nb-bookmark-link { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem; font-size: 0.72rem; color: #94a3b8; }
+.ProseMirror .nb-bookmark-link { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem; font-size: 0.72rem; color: var(--c-text-muted); }
 .ProseMirror img.nb-bookmark-favicon { width: 14px; height: 14px; margin: 0; border: none; border-radius: 3px; display: inline-block; flex: none; }
 .ProseMirror .nb-bookmark-thumb { flex: none; width: 120px; align-self: stretch; }
 .ProseMirror .nb-bookmark-thumb img { width: 120px; height: 100%; object-fit: cover; margin: 0; border: none; border-radius: 0; display: block; }
@@ -693,7 +675,10 @@ const EDITOR_STYLES = `
 }
 .ProseMirror pre.nb-code-block:hover::after { opacity: 1; }
 
-/* Syntax highlighting (lowlight / highlight.js token classes) — dark code surface */
+/* Syntax highlighting (lowlight / highlight.js token classes) — dark code surface.
+   celowe kolory edytora, brak tokenu: paleta musi zostać czytelna na STAŁE
+   ciemnym tle bloku kodu niezależnie od motywu aplikacji (c-chart-* zmieniają
+   się light/dark i nie gwarantują kontrastu na navy). */
 .ProseMirror pre .hljs-comment,
 .ProseMirror pre .hljs-quote { color: #64748b; font-style: italic; }
 .ProseMirror pre .hljs-keyword,
@@ -827,9 +812,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       } catch {
         if (!cancelled) {
           toast.error(
-            isPolish
-              ? 'Nie udało się otworzyć wskazanej notatki'
-              : 'Failed to open the requested note'
+            t('notebook.notebookContent.toastError', 'Failed to open the requested note')
           );
         }
       }
@@ -925,9 +908,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         TaskList,
         TaskItem.configure({ nested: true }),
         Placeholder.configure({
-          placeholder: isPolish
-            ? 'Zacznij pisać… Wpisz / aby wstawić blok'
-            : 'Start writing… Type / to insert a block',
+          placeholder: t(
+            'notebook.notebookContent.label2',
+            'Start writing… Type / to insert a block'
+          ),
         }),
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
         UnderlineExt,
@@ -1299,7 +1283,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       // "Mentioned in" list — so we don't bump backlinksRefresh here. Just nudge
       // the side Context panel.
       emitMyWorkEvent({ type: 'item:updated', entityType: 'notebook', entityId: activePage.id });
-      toast.success(isPolish ? 'Powiązano' : 'Linked');
+      toast.success(t('notebook.notebookContent.toastSuccess', 'Linked'));
     },
     [editor, activePage, mentionState.triggerPos, mentionState.query, isPolish, emitMyWorkEvent]
   );
@@ -1324,9 +1308,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, summary: cleaned } : p)));
           }
         },
-        isPolish
-          ? 'Podaj streszczenie notatki w 1-2 zwięzłych zdaniach (max 120 znaków). Odpowiedz TYLKO streszczeniem, bez żadnych komentarzy.'
-          : 'Provide a summary in 1-2 concise sentences (max 120 chars). Respond ONLY with the summary, no commentary.',
+        t(
+          'notebook.notebookContent.label3',
+          'Provide a summary in 1-2 concise sentences (max 120 chars). Respond ONLY with the summary, no commentary.'
+        ),
         undefined,
         undefined,
         isPolish ? 'pl' : 'en',
@@ -1424,9 +1409,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               );
             }
             toast.error(
-              isPolish
-                ? 'Ta strona została zmieniona w innym miejscu. Odśwież, aby scalić — Twoje zmiany nie zostały nadpisane.'
-                : 'This page was changed elsewhere. Reload to merge — your edits were not overwritten.',
+              t(
+                'notebook.notebookContent.toastError2',
+                'This page was changed elsewhere. Reload to merge — your edits were not overwritten.'
+              ),
               { duration: 8000 }
             );
           } else {
@@ -1535,9 +1521,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ? isPolish
             ? template.defaultTitlePl
             : template.defaultTitle
-          : isPolish
-            ? 'Nowa strona'
-            : 'New page';
+          : t('notebook.notebookContent.label5', 'New page');
         const contentJson = template?.contentJson || { type: 'doc', content: [] };
 
         const created = await Api.createNotebookPage({
@@ -1562,7 +1546,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
         await fetchPages();
         if (created?.id) setActiveId(created.id);
-        toast.success(isPolish ? 'Utworzono stronę' : 'Page created');
+        toast.success(t('notebook.notebookContent.toastSuccess2', 'Page created'));
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Failed to create notebook page', e);
@@ -1614,7 +1598,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 .focus()
                 .deleteRange({ from: pos, to: pos + node.nodeSize })
                 .run();
-              toast.success(isPolish ? 'Usunięto blok' : 'Block deleted');
+              toast.success(t('notebook.notebookContent.toastSuccess3', 'Block deleted'));
               return;
             }
           }
@@ -1668,9 +1652,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           entityType: 'task',
           entityId: createdId || activePage.id,
         });
-        toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
+        toast.success(t('notebook.notebookContent.toastSuccess4', 'Task created'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
+        toast.error(t('notebook.notebookContent.toastError3', 'Failed to create task'));
       }
     };
 
@@ -1704,9 +1688,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           entityType: 'decision',
           entityId: createdId || activePage.id,
         });
-        toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
+        toast.success(t('notebook.notebookContent.toastSuccess5', 'Decision created'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się utworzyć decyzji' : 'Failed to create decision');
+        toast.error(t('notebook.notebookContent.toastError4', 'Failed to create decision'));
       }
     };
 
@@ -1741,9 +1725,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           entityType: 'idea',
           entityId: createdId || activePage.id,
         });
-        toast.success(isPolish ? 'Pomysł zapisany' : 'Idea saved');
+        toast.success(t('notebook.notebookContent.toastSuccess6', 'Idea saved'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się zapisać pomysłu' : 'Failed to save idea');
+        toast.error(t('notebook.notebookContent.toastError5', 'Failed to save idea'));
       }
     };
 
@@ -1772,9 +1756,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             (t) => (
               <div className="flex items-center gap-2">
                 <span className="text-sm">
-                  {isPolish
-                    ? `Ta notatka wygląda jak ${typeLabel}. Konwertować?`
-                    : `This note looks like ${typeLabel}. Convert?`}
+                  {i18n.t(
+                    'notebook.notebookContent.classifyPrompt',
+                    'This note looks like {{typeLabel}}. Convert?',
+                    {
+                      typeLabel,
+                    }
+                  )}
                 </span>
                 <button
                   onClick={() => {
@@ -1791,7 +1779,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   }}
                   className="px-2 py-0.5 text-xs font-semibold rounded bg-c-surface-raised text-c-text hover:bg-c-surface-raised"
                 >
-                  {isPolish ? 'Konwertuj' : 'Convert'}
+                  {i18n.t('notebook.notebookContent.label6', 'Convert')}
                 </button>
               </div>
             ),
@@ -1825,15 +1813,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // exposes the same action as the Tools panel (canon: "Note" group parity, audit #19).
   const handleShareEmail = () => {
     if (!activePage) return;
-    const noteTitle = title || activePage.title || (isPolish ? 'Notatka' : 'Note');
+    const noteTitle = title || activePage.title || t('notebook.notebookContent.label7', 'Note');
     const noteBody = (activePage.contentText || extractText(activePage.contentJson) || '').trim();
     const subject = encodeURIComponent(noteTitle);
     const body = encodeURIComponent(
-      `${noteTitle}\n${'—'.repeat(30)}\n\n${noteBody.slice(0, 5000)}\n\n—\n${isPolish ? 'Wysłano z Consultify' : 'Sent from Consultify'}`
+      `${noteTitle}\n${'—'.repeat(30)}\n\n${noteBody.slice(0, 5000)}\n\n—\n${t('notebook.notebookContent.label8', 'Sent from Consultify')}`
     );
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
     trackFunnelEvent('notebook_share_email', {});
-    toast.success(isPolish ? 'Otwarto klienta email' : 'Email client opened');
+    toast.success(t('notebook.notebookContent.toastSuccess7', 'Email client opened'));
   };
 
   const handleDeletePage = async () => {
@@ -1841,7 +1829,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     try {
       await Api.deleteNotebookPage(activePage.id);
       await fetchPages();
-      toast.success(isPolish ? 'Usunięto stronę' : 'Page deleted');
+      toast.success(t('notebook.notebookContent.toastSuccess8', 'Page deleted'));
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to delete notebook page', e);
@@ -1863,9 +1851,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       link.remove();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error(
-        isPolish ? 'Nie udało się pobrać pliku źródłowego' : 'Failed to download source file'
-      );
+      toast.error(t('notebook.notebookContent.toastError6', 'Failed to download source file'));
     } finally {
       setIsDownloadingSourceFile(false);
     }
@@ -1880,7 +1866,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
       } catch (error) {
         console.error('Failed to upload notebook attachments', error);
-        toast.error(isPolish ? 'Nie udało się wgrać załączników' : 'Failed to upload attachments');
+        toast.error(t('notebook.notebookContent.toastError7', 'Failed to upload attachments'));
       }
     },
     [activePage?.id, isPolish]
@@ -1895,7 +1881,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       if (!editor) return;
       if (!file.type.startsWith('image/')) return;
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(isPolish ? 'Obraz jest zbyt duży (max 5 MB)' : 'Image is too large (max 5 MB)');
+        toast.error(t('notebook.notebookContent.toastError8', 'Image is too large (max 5 MB)'));
         return;
       }
       const reader = new FileReader();
@@ -1910,7 +1896,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           .run();
       };
       reader.onerror = () => {
-        toast.error(isPolish ? 'Nie udało się wczytać obrazu' : 'Failed to load image');
+        toast.error(t('notebook.notebookContent.toastError9', 'Failed to load image'));
       };
       reader.readAsDataURL(file);
 
@@ -1943,7 +1929,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       if (!editor) return;
       const url = rawUrl.trim();
       if (!/^https?:\/\//i.test(url)) return;
-      const toastId = toast.loading(isPolish ? 'Pobieram podgląd…' : 'Fetching preview…');
+      const toastId = toast.loading(
+        t('notebook.notebookContent.toastLoading', 'Fetching preview…')
+      );
       fetch(`/api/link-preview?url=${encodeURIComponent(url)}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((meta) => {
@@ -2020,7 +2008,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         if (!res.ok) throw new Error(String(res.status));
       } catch {
         setCoverUrl(previous); // rollback
-        toast.error(isPolish ? 'Nie udało się zapisać okładki' : 'Failed to save cover');
+        toast.error(t('notebook.notebookContent.toastError10', 'Failed to save cover'));
       }
     },
     [activePage?.id, coverUrl, isPolish]
@@ -2032,9 +2020,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     (file: File) => {
       if (!file.type.startsWith('image/')) return;
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(
-          isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)'
-        );
+        toast.error(t('notebook.notebookContent.toastError11', 'Cover is too large (max 5 MB)'));
         return;
       }
       const reader = new FileReader();
@@ -2067,7 +2053,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
       } catch (error) {
         console.error('Failed to delete notebook attachment', error);
-        toast.error(isPolish ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment');
+        toast.error(t('notebook.notebookContent.toastError12', 'Failed to delete attachment'));
       }
     },
     [activePage?.id, isPolish]
@@ -2092,9 +2078,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         console.error('Failed to refresh notebook AI proposals', error);
         setProposalLoadError(true);
         setPendingAIProposals([]);
-        toast.error(
-          isPolish ? 'Nie udało się odświeżyć propozycji AI' : 'Failed to refresh AI proposals'
-        );
+        toast.error(t('notebook.notebookContent.toastError13', 'Failed to refresh AI proposals'));
       }
     },
     [isPolish]
@@ -2112,7 +2096,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const submitNotebookAIProposal = useCallback(
     async (text: string, rationale: string, label?: string) => {
       if (!activePage) return;
-      const titleLabel = label || (isPolish ? 'Komentarz AI' : 'AI comment');
+      const titleLabel = label || t('notebook.notebookContent.label9', 'AI comment');
       const paragraphs = text
         .split(/\n\n+/)
         .map((part) => part.trim())
@@ -2138,12 +2122,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           },
         });
         await refreshAIProposals(activePage.id);
-        toast.success(isPolish ? 'Propozycja AI gotowa do review' : 'AI proposal ready for review');
+        toast.success(t('notebook.notebookContent.toastSuccess9', 'AI proposal ready for review'));
       } catch (error) {
         console.error('Failed to create notebook AI proposal', error);
-        toast.error(
-          isPolish ? 'Nie udało się utworzyć propozycji AI' : 'Failed to create AI proposal'
-        );
+        toast.error(t('notebook.notebookContent.toastError14', 'Failed to create AI proposal'));
       }
     },
     [activePage, isPolish, refreshAIProposals]
@@ -2157,23 +2139,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         await Promise.all([refreshAIProposals(activePage.id), fetchPages()]);
         toast.success(
           action === 'accepted'
-            ? isPolish
-              ? 'Propozycja została zaakceptowana'
-              : 'Proposal accepted'
-            : isPolish
-              ? 'Propozycja została odrzucona'
-              : 'Proposal rejected'
+            ? t('notebook.notebookContent.label10', 'Proposal accepted')
+            : t('notebook.notebookContent.label11', 'Proposal rejected')
         );
       } catch (error) {
         console.error('Failed to resolve notebook AI proposal', error);
         toast.error(
           action === 'accepted'
-            ? isPolish
-              ? 'Nie udało się zaakceptować propozycji'
-              : 'Failed to accept proposal'
-            : isPolish
-              ? 'Nie udało się odrzucić propozycji'
-              : 'Failed to reject proposal'
+            ? t('notebook.notebookContent.label12', 'Failed to accept proposal')
+            : t('notebook.notebookContent.label13', 'Failed to reject proposal')
         );
       }
     },
@@ -2200,7 +2174,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         }
         setOutlineDraft({
           target,
-          title: activePage.title || (isPolish ? 'Nowy artefakt' : 'New deliverable'),
+          title: activePage.title || t('notebook.notebookContent.label14', 'New deliverable'),
           outline: buildOutlineDraft(activePage, target, isPolish),
           assessmentType: 'DRD',
         });
@@ -2212,26 +2186,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         const result = await Api.convertNotebookPage(activePage.id, apiTarget);
         const label =
           apiTarget === 'task'
-            ? isPolish
-              ? 'zadanie'
-              : 'task'
+            ? t('notebook.notebookContent.label15', 'task')
             : apiTarget === 'decision'
-              ? isPolish
-                ? 'decyzję'
-                : 'decision'
+              ? t('notebook.notebookContent.label16', 'decision')
               : apiTarget === 'report'
-                ? isPolish
-                  ? 'raport'
-                  : 'report'
+                ? t('notebook.notebookContent.label17', 'report')
                 : apiTarget === 'presentation'
-                  ? isPolish
-                    ? 'prezentację'
-                    : 'presentation'
-                  : isPolish
-                    ? 'inicjatywę'
-                    : 'initiative';
+                  ? t('notebook.notebookContent.label18', 'presentation')
+                  : t('notebook.notebookContent.label19', 'initiative');
         toast.success(
-          isPolish ? `Utworzono ${label}: ${result.title}` : `Created ${apiTarget}: ${result.title}`
+          t('notebook.notebookContent.convertedToast', 'Created {{target}}: {{title}}', {
+            target: label,
+            title: result.title,
+          })
         );
         emitMyWorkEvent({
           type: 'item:converted',
@@ -2290,12 +2257,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         contentText: activePage.contentText,
       });
       toast.success(
-        isPolish ? 'Utworzono szkic dokumentu w Canvas' : 'Document draft created in Canvas'
+        t('notebook.notebookContent.toastSuccess10', 'Document draft created in Canvas')
       );
       navigate(chatUrl);
     } catch (error: any) {
       console.error('Failed to expand note into Canvas document', error);
-      toast.error(isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document');
+      toast.error(t('notebook.notebookContent.toastError15', 'Failed to create the document'));
     } finally {
       setIsExpandingToDocument(false);
     }
@@ -2305,15 +2272,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     if (!activePage) return;
     try {
       await Api.convertNotebookPage(activePage.id, 'initiative', {
-        title: activePage.title || (isPolish ? 'Inicjatywa z notatki' : 'Initiative from note'),
+        title: activePage.title || t('notebook.notebookContent.label20', 'Initiative from note'),
         description: activePage.contentText?.trim() || undefined,
       });
-      toast.success(isPolish ? 'Inicjatywa utworzona' : 'Initiative created');
+      toast.success(t('notebook.notebookContent.toastSuccess11', 'Initiative created'));
       trackFunnelEvent('notebook_handoff', { target: 'initiatives', noteId: activePage.id });
     } catch (err: any) {
       toast.error(
-        err?.message ||
-          (isPolish ? 'Nie udało się utworzyć inicjatywy' : 'Failed to create initiative')
+        err?.message || t('notebook.notebookContent.label21', 'Failed to create initiative')
       );
     }
   }, [activePage, isPolish]);
@@ -2329,18 +2295,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       });
       const label =
         target === 'report'
-          ? isPolish
-            ? 'raport'
-            : 'report'
+          ? t('notebook.notebookContent.label22', 'report')
           : target === 'presentation'
-            ? isPolish
-              ? 'prezentację'
-              : 'presentation'
-            : isPolish
-              ? 'ocenę'
-              : 'assessment';
+            ? t('notebook.notebookContent.label23', 'presentation')
+            : t('notebook.notebookContent.label24', 'assessment');
       toast.success(
-        isPolish ? `Utworzono ${label}: ${result.title}` : `Created ${target}: ${result.title}`
+        t('notebook.notebookContent.convertedToast2', 'Created {{target}}: {{title}}', {
+          target: label,
+          title: result.title,
+        })
       );
       emitMyWorkEvent({
         type: 'item:converted',
@@ -2361,7 +2324,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       );
       setOutlineDraft(null);
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Konwersja nie powiodła się' : 'Conversion failed'));
+      toast.error(err?.message || t('notebook.notebookContent.label25', 'Conversion failed'));
     }
   }, [activePage, emitMyWorkEvent, isPolish, outlineDraft]);
 
@@ -2436,7 +2399,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {isPolish ? 'Wszystkie notatniki' : 'All notebooks'}
+                    {t('notebook.notebookContent.label26', 'All notebooks')}
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -2449,7 +2412,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {notebookTitle || t('myWork.notebook.title', 'Notebook')}
                 </div>
                 <div className="text-[10px] text-c-text-secondary">
-                  {filteredPages.length} {isPolish ? 'stron' : 'pages'}
+                  {filteredPages.length} {t('notebook.notebookContent.label27', 'pages')}
                 </div>
               </div>
             </div>
@@ -2480,9 +2443,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             <div className="inline-flex w-full items-center rounded-lg bg-c-surface-raised p-0.5">
               {(
                 [
-                  { key: 'all', label: isPolish ? 'Wszystkie' : 'All' },
-                  { key: 'mine', label: isPolish ? 'Moje' : 'Mine' },
-                  { key: 'team', label: isPolish ? 'Zespół' : 'Team' },
+                  { key: 'all', label: t('notebook.notebookContent.label28', 'All') },
+                  { key: 'mine', label: t('notebook.notebookContent.label29', 'Mine') },
+                  { key: 'team', label: t('notebook.notebookContent.label30', 'Team') },
                 ] as Array<{ key: NotebookScopeLens; label: string }>
               ).map((s) => (
                 <button
@@ -2505,18 +2468,30 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 border-b border-c-border-subtle">
           {(
             [
-              { key: 'all', label: isPolish ? 'Wszystkie' : 'All', icon: null },
-              { key: 'pinned', label: isPolish ? 'Przypięte' : 'Pinned', icon: <Pin size={11} /> },
-              { key: 'recent', label: isPolish ? 'Ostatnie' : 'Recent', icon: <Clock size={11} /> },
+              { key: 'all', label: t('notebook.notebookContent.label31', 'All'), icon: null },
+              {
+                key: 'pinned',
+                label: t('notebook.notebookContent.label32', 'Pinned'),
+                icon: <Pin size={11} />,
+              },
+              {
+                key: 'recent',
+                label: t('notebook.notebookContent.label33', 'Recent'),
+                icon: <Clock size={11} />,
+              },
               {
                 key: 'toReview',
-                label: isPolish ? 'Do przeglądu' : 'To review',
+                label: t('notebook.notebookContent.label34', 'To review'),
                 icon: <AlertTriangle size={11} />,
               },
-              { key: 'fresh', label: isPolish ? 'Świeże' : 'Fresh', icon: <Sparkles size={11} /> },
+              {
+                key: 'fresh',
+                label: t('notebook.notebookContent.label35', 'Fresh'),
+                icon: <Sparkles size={11} />,
+              },
               {
                 key: 'orphaned',
-                label: isPolish ? 'Osierocone' : 'Orphaned',
+                label: t('notebook.notebookContent.label36', 'Orphaned'),
                 icon: <Unlink size={11} />,
               },
             ] as Array<{ key: NotebookViewLens; label: string; icon: React.ReactNode }>
@@ -2565,10 +2540,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   return (
                     <>
                       <div className="text-sm font-medium text-c-text-muted">
-                        {isPolish ? 'Brak pasujących stron' : 'No matching pages'}
+                        {t('notebook.notebookContent.label37', 'No matching pages')}
                       </div>
                       <div className="text-[11px] text-c-text-secondary mt-1">
-                        {isPolish ? 'Zmień filtr powyżej' : 'Try a different filter above'}
+                        {t('notebook.notebookContent.label38', 'Try a different filter above')}
                       </div>
                     </>
                   );
@@ -2579,7 +2554,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       {t('myWork.notebook.empty', 'No pages yet')}
                     </div>
                     <div className="text-[11px] text-c-text-secondary mt-1">
-                      {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
+                      {t('notebook.notebookContent.label39', 'Create your first page')}
                     </div>
                   </>
                 );
@@ -2635,7 +2610,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 isActive ? 'text-c-text' : 'text-c-text'
                               }`}
                             >
-                              {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                              {p.title || t('notebook.notebookContent.label40', 'Untitled')}
                             </span>
                             {timeAgo && (
                               <span className="text-[10px] text-c-text-muted shrink-0 tabular-nums">
@@ -2659,7 +2634,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               <Badge
                                 variant="outline"
                                 className="border-emerald-300/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0 text-[9px]"
-                                title={isPolish ? 'Zweryfikowana' : 'Verified'}
+                                title={t('notebook.notebookContent.title', 'Verified')}
                               >
                                 <CheckCircle2 size={9} className="inline" />
                               </Badge>
@@ -2668,7 +2643,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               <Badge
                                 variant="outline"
                                 className="border-amber-300/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0 text-[9px]"
-                                title={isPolish ? 'Nieaktualna' : 'Stale'}
+                                title={t('notebook.notebookContent.title2', 'Stale')}
                               >
                                 <AlertTriangle size={9} className="inline" />
                               </Badge>
@@ -2710,14 +2685,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             {orphanIds.has(p.id) && (
                               <span
                                 className="inline-flex items-center gap-0.5 rounded-md bg-c-warning/10 text-c-warning px-1.5 py-0.5 text-[11px] font-medium"
-                                title={
-                                  isPolish
-                                    ? 'Brak powiązań — dodaj wzmiankę (@) lub zarchiwizuj'
-                                    : 'No connections — add a mention (@) or archive'
-                                }
+                                title={t(
+                                  'notebook.notebookContent.title3',
+                                  'No connections — add a mention (@) or archive'
+                                )}
                               >
                                 <Unlink size={9} className="inline" />
-                                {isPolish ? 'Bez powiązań' : 'Unlinked'}
+                                {t('notebook.notebookContent.label41', 'Unlinked')}
                               </span>
                             )}
                             {/* #21 reminder chip — reads capture_metadata.reminder */}
@@ -2754,7 +2728,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             handleSetStatus(p.id, 'active');
                           }}
                           className="p-1 rounded text-blue-500 hover:bg-blue-500/10 transition-colors"
-                          title={isPolish ? 'Zacznij pracować' : 'Start working'}
+                          title={t('notebook.notebookContent.title4', 'Start working')}
                         >
                           <Play size={10} />
                         </button>
@@ -2775,7 +2749,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           handleTogglePin(p.id);
                         }}
                         className={`p-1 rounded transition-colors ${p.pinned ? 'text-amber-500 bg-amber-500/10' : 'text-c-text-secondary hover:text-amber-500 hover:bg-amber-500/10'}`}
-                        title={isPolish ? 'Przypnij' : 'Pin'}
+                        title={t('notebook.notebookContent.title5', 'Pin')}
                       >
                         <Pin size={10} />
                       </button>
@@ -2786,7 +2760,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             handleSetStatus(p.id, 'archived');
                           }}
                           className="p-1 rounded text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
-                          title={isPolish ? 'Archiwizuj' : 'Archive'}
+                          title={t('notebook.notebookContent.title6', 'Archive')}
                         >
                           <Archive size={10} />
                         </button>
@@ -2800,7 +2774,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   onClick={loadMore}
                   className="w-full py-2 text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
                 >
-                  {isPolish ? 'Załaduj więcej' : 'Load more'}
+                  {t('notebook.notebookContent.label42', 'Load more')}
                 </button>
               )}
             </>
@@ -2833,14 +2807,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <div className="text-center">
                 <AlertTriangle size={36} className="mx-auto mb-3 text-c-text-muted" />
                 <p className="mb-3 text-sm text-c-text-secondary">
-                  {isPolish ? 'Nie udało się wczytać notatek.' : 'Failed to load notes.'}
+                  {t('notebook.notebookContent.label43', 'Failed to load notes.')}
                 </p>
                 <button
                   type="button"
                   onClick={() => void fetchPages()}
                   className="text-sm font-medium text-c-text-secondary hover:underline"
                 >
-                  {isPolish ? 'Spróbuj ponownie' : 'Retry'}
+                  {t('notebook.notebookContent.label44', 'Retry')}
                 </button>
               </div>
             </div>
@@ -2853,12 +2827,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     <Pen size={28} className="text-white" />
                   </div>
                   <h2 className="text-xl font-bold text-c-text mb-1">
-                    {isPolish ? 'Living Notebook' : 'Living Notebook'}
+                    {t('notebook.notebookContent.label45', 'Living Notebook')}
                   </h2>
                   <p className="text-sm text-c-text-muted max-w-xs mx-auto">
-                    {isPolish
-                      ? 'Twoje notatki rosną, łączą się i pomagają podejmować decyzje'
-                      : 'Your notes grow, connect, and help you make better decisions'}
+                    {t(
+                      'notebook.notebookContent.label46',
+                      'Your notes grow, connect, and help you make better decisions'
+                    )}
                   </p>
                 </div>
 
@@ -2867,26 +2842,26 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {[
                     {
                       icon: '📝',
-                      label: isPolish ? 'Pusta strona' : 'Blank page',
-                      desc: isPolish ? 'Zacznij od zera' : 'Start from scratch',
+                      label: t('notebook.notebookContent.label47', 'Blank page'),
+                      desc: t('notebook.notebookContent.label48', 'Start from scratch'),
                       id: 'blank',
                     },
                     {
                       icon: '🧠',
-                      label: isPolish ? 'Obserwacja strategiczna' : 'Strategic observation',
-                      desc: isPolish ? 'Zapisz insight' : 'Capture an insight',
+                      label: t('notebook.notebookContent.label49', 'Strategic observation'),
+                      desc: t('notebook.notebookContent.label50', 'Capture an insight'),
                       id: 'strategic',
                     },
                     {
                       icon: '⚠️',
-                      label: isPolish ? 'Analiza ryzyka' : 'Risk analysis',
-                      desc: isPolish ? 'Oceń zagrożenie' : 'Assess a threat',
+                      label: t('notebook.notebookContent.label51', 'Risk analysis'),
+                      desc: t('notebook.notebookContent.label52', 'Assess a threat'),
                       id: 'risk',
                     },
                     {
                       icon: '💬',
-                      label: isPolish ? 'Notatki ze spotkania' : 'Meeting notes',
-                      desc: isPolish ? 'Ustal i zapisz' : 'Capture & align',
+                      label: t('notebook.notebookContent.label53', 'Meeting notes'),
+                      desc: t('notebook.notebookContent.label54', 'Capture & align'),
                       id: 'meeting',
                     },
                   ].map((tmpl) => (
@@ -2915,12 +2890,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-c-accent">
-                      {isPolish ? 'AI jest gotowe do pomocy' : 'AI is ready to assist'}
+                      {t('notebook.notebookContent.label55', 'AI is ready to assist')}
                     </div>
                     <div className="text-[11px] text-c-accent mt-0.5">
-                      {isPolish
-                        ? 'Wpisz / w edytorze aby zapytać, rozwinąć lub zakwestionować pomysł'
-                        : 'Type / in the editor to ask, expand, or challenge your ideas'}
+                      {t(
+                        'notebook.notebookContent.label56',
+                        'Type / in the editor to ask, expand, or challenge your ideas'
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2945,8 +2921,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   />
                   <button
                     onClick={() => setShowVersionHistory((v) => !v)}
-                    title={isPolish ? 'Historia wersji' : 'Version history'}
-                    aria-label={isPolish ? 'Historia wersji' : 'Version history'}
+                    title={t('notebook.notebookContent.title7', 'Version history')}
+                    aria-label={t('notebook.notebookContent.ariaLabel', 'Version history')}
                     className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
                   >
                     <History size={14} />
@@ -2956,12 +2932,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     onClick={() => void handleExpandToDocument()}
                     disabled={isExpandingToDocument}
                     data-testid="notebook-expand-to-document"
-                    title={
-                      isPolish
-                        ? 'Rozwiń w dokument — utwórz dokument w Canvas z kopią notatki'
-                        : 'Expand into document — create a Canvas doc from this note'
-                    }
-                    aria-label={isPolish ? 'Rozwiń w dokument' : 'Expand into document'}
+                    title={t(
+                      'notebook.notebookContent.title8',
+                      'Expand into document — create a Canvas doc from this note'
+                    )}
+                    aria-label={t('notebook.notebookContent.ariaLabel2', 'Expand into document')}
                     className="ml-auto shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors disabled:opacity-60 disabled:cursor-wait"
                   >
                     <FileText size={14} className={isExpandingToDocument ? 'animate-pulse' : ''} />
@@ -2969,8 +2944,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {/* N4 (U12): connection graph — icon-only + tooltip, monochrome active */}
                   <button
                     onClick={() => setShowGraphView((v) => !v)}
-                    title={isPolish ? 'Graf powiązań' : 'Connection graph'}
-                    aria-label={isPolish ? 'Graf powiązań' : 'Connection graph'}
+                    title={t('notebook.notebookContent.title9', 'Connection graph')}
+                    aria-label={t('notebook.notebookContent.ariaLabel3', 'Connection graph')}
                     className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
                   >
                     <Network size={14} />
@@ -2987,8 +2962,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   <button
                     type="button"
                     onClick={handleAskAI}
-                    title={isPolish ? 'Zapytaj AI o tę notatkę' : 'Ask AI about this note'}
-                    aria-label={isPolish ? 'Zapytaj AI o tę notatkę' : 'Ask AI about this note'}
+                    title={t('notebook.notebookContent.title10', 'Ask AI about this note')}
+                    aria-label={t('notebook.notebookContent.ariaLabel4', 'Ask AI about this note')}
                     className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
                   >
                     <Sparkles size={14} />
@@ -2998,12 +2973,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     onClick={() => setNotebookRailOpen(!notebookRailOpen)}
                     title={
                       notebookRailOpen
-                        ? isPolish
-                          ? 'Zamknij panel boczny'
-                          : 'Close side panel'
-                        : isPolish
-                          ? 'Otwórz panel boczny (narzędzia AI + kontekst)'
-                          : 'Open side panel (AI tools + context)'
+                        ? t('notebook.notebookContent.label57', 'Close side panel')
+                        : t(
+                            'notebook.notebookContent.label58',
+                            'Open side panel (AI tools + context)'
+                          )
                     }
                     className={`mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
                       notebookRailOpen
@@ -3020,8 +2994,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       const r = e.currentTarget.getBoundingClientRect();
                       setHamburgerPos({ x: Math.max(8, r.right - 240), y: r.bottom + 4 });
                     }}
-                    title={isPolish ? 'Menu notatki' : 'Note menu'}
-                    aria-label={isPolish ? 'Menu notatki' : 'Note menu'}
+                    title={t('notebook.notebookContent.title11', 'Note menu')}
+                    aria-label={t('notebook.notebookContent.ariaLabel5', 'Note menu')}
                     className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
                   >
                     <MoreHorizontal size={16} />
@@ -3155,7 +3129,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             setTitle(e.target.value);
                             scheduleSave({ title: e.target.value });
                           }}
-                          placeholder={isPolish ? 'Bez tytułu' : 'Untitled'}
+                          placeholder={t('notebook.notebookContent.placeholder', 'Untitled')}
                           className="w-full bg-transparent text-3xl font-semibold tracking-tight text-c-text outline-none placeholder:text-c-text-muted"
                         />
                         {/* Tags inline */}
@@ -3181,7 +3155,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             onChange={(e) => setTagInput(e.target.value)}
                             onKeyDown={handleTagKeyDown}
                             onBlur={handleAddTag}
-                            placeholder={isPolish ? '+ tag' : '+ tag'}
+                            placeholder={t('notebook.notebookContent.placeholder2', '+ tag')}
                             className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-c-text-secondary outline-none placeholder:text-c-text-muted"
                           />
                           {(() => {
@@ -3209,14 +3183,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                     onClick={() => void handleDownloadSourceFile()}
                                     disabled={isDownloadingSourceFile}
                                     className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-0.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-info hover:text-c-info disabled:cursor-not-allowed disabled:opacity-60"
-                                    title={
-                                      isPolish
-                                        ? 'Pobierz oryginalny plik źródłowy'
-                                        : 'Download original source file'
-                                    }
+                                    title={t(
+                                      'notebook.notebookContent.title12',
+                                      'Download original source file'
+                                    )}
                                   >
                                     <Paperclip size={11} />
-                                    {isPolish ? 'Pobierz źródło' : 'Download source'}
+                                    {t('notebook.notebookContent.label59', 'Download source')}
                                   </button>
                                 ) : null}
                               </>
@@ -3259,7 +3232,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             )
                           );
                         }}
-                        title={isPolish ? 'Weryfikacja' : 'Verification'}
+                        title={t('notebook.notebookContent.title13', 'Verification')}
                         className={`text-[11px] px-2.5 py-1 rounded-md border cursor-pointer transition-colors ${
                           (activePage.verificationStatus as NotebookVerificationStatus) ===
                           'verified'
@@ -3271,13 +3244,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         }`}
                       >
                         <option value="unverified">
-                          {isPolish ? '○ Nieweryfikowana' : '○ Unverified'}
+                          {t('notebook.notebookContent.label60', '○ Unverified')}
                         </option>
                         <option value="verified">
-                          {isPolish ? '✓ Zweryfikowana' : '✓ Verified'}
+                          {t('notebook.notebookContent.label61', '✓ Verified')}
                         </option>
                         <option value="disputed">
-                          {isPolish ? '! Zakwestionowana' : '! Disputed'}
+                          {t('notebook.notebookContent.label62', '! Disputed')}
                         </option>
                       </select>
                       <select
@@ -3291,25 +3264,33 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             )
                           );
                         }}
-                        title={isPolish ? 'Cykl recenzji' : 'Review cadence'}
+                        title={t('notebook.notebookContent.title14', 'Review cadence')}
                         className="text-[11px] px-2.5 py-1 rounded-md border bg-c-surface-raised border-c-border-subtle text-c-text-secondary cursor-pointer"
                       >
-                        <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-                        <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-                        <option value="quarterly">{isPolish ? 'Co kwartał' : 'Quarterly'}</option>
-                        <option value="never">{isPolish ? 'Nigdy' : 'Never'}</option>
+                        <option value="weekly">
+                          {t('notebook.notebookContent.label63', 'Weekly')}
+                        </option>
+                        <option value="monthly">
+                          {t('notebook.notebookContent.label64', 'Monthly')}
+                        </option>
+                        <option value="quarterly">
+                          {t('notebook.notebookContent.label65', 'Quarterly')}
+                        </option>
+                        <option value="never">
+                          {t('notebook.notebookContent.label66', 'Never')}
+                        </option>
                       </select>
                       {(activePage.staleAt || activePage.lastReviewedAt) && (
                         <span className="text-[11px]">
                           {activePage.staleAt ? (
                             <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
                               <AlertTriangle size={11} />
-                              {isPolish ? 'Nieaktualna' : 'Stale'}
+                              {t('notebook.notebookContent.label67', 'Stale')}
                             </span>
                           ) : activePage.lastReviewedAt ? (
                             <span className="inline-flex items-center gap-1 text-c-text-muted">
                               <CheckCircle2 size={11} className="text-emerald-500" />
-                              {isPolish ? 'Sprawdzono' : 'Reviewed'}{' '}
+                              {t('notebook.notebookContent.label68', 'Reviewed')}{' '}
                               {relativeTime(activePage.lastReviewedAt)}
                             </span>
                           ) : null}
@@ -3344,7 +3325,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised text-[11px] font-medium transition-colors"
                       >
                         <RefreshCw size={10} />
-                        {isPolish ? 'Oznacz sprawdzone' : 'Mark reviewed'}
+                        {t('notebook.notebookContent.label69', 'Mark reviewed')}
                       </button>
                     </div>
 
@@ -3387,7 +3368,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {headingOutline.length > 0 && (
                     <div className="mb-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-3">
                       <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-                        {isPolish ? 'Mini outline' : 'Mini outline'}
+                        {t('notebook.notebookContent.label70', 'Mini outline')}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {headingOutline.map((heading, index) => (
@@ -3422,9 +3403,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
                   {proposalLoadError ? (
                     <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
-                      {isPolish
-                        ? 'Nie udało się załadować propozycji AI dla tej notatki. Odśwież stronę lub spróbuj ponownie za chwilę.'
-                        : 'Could not load AI proposals for this note. Refresh the page or try again in a moment.'}
+                      {t(
+                        'notebook.notebookContent.label71',
+                        'Could not load AI proposals for this note. Refresh the page or try again in a moment.'
+                      )}
                     </div>
                   ) : null}
 
@@ -3436,12 +3418,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-xs font-semibold text-c-text-secondary">
-                            {isPolish ? 'AI propose -> accept' : 'AI propose -> accept'}
+                            {t('notebook.notebookContent.label72', 'AI propose -> accept')}
                           </div>
                           <div className="text-[11px] text-c-text-secondary">
-                            {isPolish
-                              ? `${pendingAIProposals.length} propozycje czekają na review`
-                              : `${pendingAIProposals.length} proposals waiting for review`}
+                            {t(
+                              'notebook.notebookContent.pendingProposalsCount',
+                              '{{count}} proposals waiting for review',
+                              { count: pendingAIProposals.length }
+                            )}
                           </div>
                         </div>
                       </div>
@@ -3452,7 +3436,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2"
                           >
                             <div className="text-[11px] font-medium text-c-text-secondary">
-                              {proposal.rationale || (isPolish ? 'Propozycja AI' : 'AI proposal')}
+                              {proposal.rationale ||
+                                t('notebook.notebookContent.label73', 'AI proposal')}
                             </div>
                             <div className="mt-1 text-[11px] text-c-text-muted line-clamp-2">
                               {extractText(proposal.blockContent)}
@@ -3465,7 +3450,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 }
                                 className="rounded-md bg-c-text px-2.5 py-1 text-[11px] font-medium text-c-surface transition-colors hover:brightness-110"
                               >
-                                {isPolish ? 'Akceptuj' : 'Accept'}
+                                {t('notebook.notebookContent.label74', 'Accept')}
                               </button>
                               <button
                                 type="button"
@@ -3474,7 +3459,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 }
                                 className="rounded-md bg-c-surface px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                               >
-                                {isPolish ? 'Odrzuć' : 'Reject'}
+                                {t('notebook.notebookContent.label75', 'Reject')}
                               </button>
                             </div>
                           </div>
@@ -3560,35 +3545,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       void submitNotebookAIProposal(
                         text,
                         aiCommand === 'ask'
-                          ? isPolish
-                            ? 'Odpowiedź AI do notatki'
-                            : 'AI answer for note'
+                          ? t('notebook.notebookContent.label76', 'AI answer for note')
                           : aiCommand === 'expand'
-                            ? isPolish
-                              ? 'Rozwinięcie AI'
-                              : 'AI expansion'
+                            ? t('notebook.notebookContent.label77', 'AI expansion')
                             : aiCommand === 'challenge'
-                              ? isPolish
-                                ? 'Pytania krytyczne AI'
-                                : 'AI challenge questions'
-                              : isPolish
-                                ? 'Plan działań AI'
-                                : 'AI action plan',
+                              ? t('notebook.notebookContent.label78', 'AI challenge questions')
+                              : t('notebook.notebookContent.label79', 'AI action plan'),
                         aiCommand === 'ask'
-                          ? isPolish
-                            ? 'Odpowiedź AI'
-                            : 'AI answer'
+                          ? t('notebook.notebookContent.label80', 'AI answer')
                           : aiCommand === 'expand'
-                            ? isPolish
-                              ? 'Rozwinięcie AI'
-                              : 'AI expansion'
+                            ? t('notebook.notebookContent.label81', 'AI expansion')
                             : aiCommand === 'challenge'
-                              ? isPolish
-                                ? 'Pytania krytyczne AI'
-                                : 'AI challenge'
-                              : isPolish
-                                ? 'Plan działań AI'
-                                : 'AI action plan'
+                              ? t('notebook.notebookContent.label82', 'AI challenge')
+                              : t('notebook.notebookContent.label83', 'AI action plan')
                       );
                       setAiCommand(null);
                     }}
@@ -3670,7 +3639,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary">
                 <Network size={13} />
-                {isPolish ? 'Graf powiązań' : 'Connection graph'}
+                {t('notebook.notebookContent.label84', 'Connection graph')}
               </div>
               <button
                 onClick={() => setShowGraphView(false)}
@@ -3750,7 +3719,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           await fetchPages();
           if (page?.id) setActiveId(page.id);
           toast.success(
-            isPolish ? 'Plik wgrano, utworzono notatkę' : 'File uploaded, note created'
+            t('notebook.notebookContent.toastSuccess12', 'File uploaded, note created')
           );
         }}
       />
@@ -3772,12 +3741,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-c-text">
-                  {isPolish ? 'Outline first' : 'Outline first'}
+                  {t('notebook.notebookContent.label85', 'Outline first')}
                 </div>
                 <div className="mt-1 text-xs text-c-text-muted">
-                  {isPolish
-                    ? 'Przejrzyj i popraw outline przed utworzeniem artefaktu.'
-                    : 'Review and edit the outline before creating the deliverable.'}
+                  {t(
+                    'notebook.notebookContent.label86',
+                    'Review and edit the outline before creating the deliverable.'
+                  )}
                 </div>
               </div>
               <button
@@ -3792,7 +3762,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             <div className="mt-4 space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-medium text-c-text-secondary">
-                  {isPolish ? 'Tytuł' : 'Title'}
+                  {t('notebook.notebookContent.label87', 'Title')}
                 </label>
                 <input
                   value={outlineDraft.title}
@@ -3806,7 +3776,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               {outlineDraft.target === 'assessment' && (
                 <div>
                   <label className="mb-1 block text-xs font-medium text-c-text-secondary">
-                    {isPolish ? 'Typ oceny' : 'Assessment type'}
+                    {t('notebook.notebookContent.label88', 'Assessment type')}
                   </label>
                   <select
                     value={outlineDraft.assessmentType}
@@ -3833,7 +3803,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
               <div>
                 <label className="mb-1 block text-xs font-medium text-c-text-secondary">
-                  {isPolish ? 'Outline' : 'Outline'}
+                  {t('notebook.notebookContent.label89', 'Outline')}
                 </label>
                 <textarea
                   value={outlineDraft.outline}
@@ -3852,7 +3822,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 onClick={() => setOutlineDraft(null)}
                 className="rounded-xl border border-c-border-subtle px-3 py-2 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('notebook.notebookContent.label90', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -3860,7 +3830,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 disabled={!outlineDraft.title.trim() || !outlineDraft.outline.trim()}
                 className="rounded-xl bg-c-text px-3 py-2 text-sm font-medium text-c-surface transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isPolish ? 'Utwórz artefakt' : 'Create deliverable'}
+                {t('notebook.notebookContent.label91', 'Create deliverable')}
               </button>
             </div>
           </div>

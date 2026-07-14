@@ -77,8 +77,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   canConvertDeliverable,
   convertBlockedReason,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   if (!open || !activePage) return null;
 
@@ -101,13 +100,13 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
     <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03]/70 bg-c-surface dark:border-white/[0.06] dark:bg-navy-950">
       {/* Rail header with tabs */}
       <div className="flex items-center gap-1 border-b border-c-border-subtle/60 px-2 py-1.5 dark:border-white/[0.06]">
-        {tabBtn('work', <Wrench size={11} />, isPolish ? 'Praca' : 'Work')}
-        {tabBtn('context', <Layers size={11} />, isPolish ? 'Kontekst' : 'Context')}
+        {tabBtn('work', <Wrench size={11} />, t('notebook.rightRail.work', 'Work'))}
+        {tabBtn('context', <Layers size={11} />, t('notebook.rightRail.context', 'Context'))}
         <button
           type="button"
           onClick={onClose}
           className="ml-auto rounded-md p-1 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text dark:hover:bg-white/[0.06] dark:hover:text-c-text"
-          title={isPolish ? 'Zamknij panel' : 'Close panel'}
+          title={t('notebook.rightRail.closePanel', 'Close panel')}
         >
           <X size={14} />
         </button>

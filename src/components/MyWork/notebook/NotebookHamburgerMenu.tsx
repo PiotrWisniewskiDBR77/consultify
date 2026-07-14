@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
+import i18n from '../../../i18n';
+
 /**
  * Target entity types the note can be converted into (canon: "Convert to" group).
  * Mirrors the conversion targets surfaced elsewhere in MyWork (initiative/task/decision/idea)
@@ -131,7 +133,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   if (onExport) {
     items.push({
       id: 'export',
-      label: pl ? 'Eksportuj' : 'Export',
+      label: i18n.t('notebook.hamburgerMenu.export', 'Export'),
       icon: <Download size={14} />,
       onClick: onExport,
     });
@@ -139,7 +141,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   if (onSources) {
     items.push({
       id: 'sources',
-      label: pl ? 'Źródła i załączniki' : 'Sources & attachments',
+      label: i18n.t('notebook.hamburgerMenu.sourcesAttachments', 'Sources & attachments'),
       icon: <Paperclip size={14} />,
       onClick: onSources,
     });
@@ -147,7 +149,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   if (onVerification) {
     items.push({
       id: 'verification',
-      label: pl ? 'Weryfikacja i przegląd' : 'Verification & review',
+      label: i18n.t('notebook.hamburgerMenu.verificationReview', 'Verification & review'),
       icon: <ShieldCheck size={14} />,
       onClick: onVerification,
     });
@@ -155,7 +157,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   if (onShare) {
     items.push({
       id: 'share',
-      label: pl ? 'Udostępnij' : 'Share',
+      label: i18n.t('notebook.hamburgerMenu.share', 'Share'),
       icon: <Share2 size={14} />,
       onClick: onShare,
     });
@@ -163,7 +165,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   if (onExpandDocument) {
     items.push({
       id: 'expand-document',
-      label: pl ? 'Rozwiń do dokumentu' : 'Expand into document',
+      label: i18n.t('notebook.hamburgerMenu.expandDocument', 'Expand into document'),
       icon: <Maximize2 size={14} />,
       onClick: onExpandDocument,
     });
@@ -190,7 +192,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   if (onAskAI) {
     items.push({
       id: 'ask-ai',
-      label: pl ? 'Zapytaj AI' : 'Ask AI',
+      label: i18n.t('notebook.hamburgerMenu.askAi', 'Ask AI'),
       icon: <Sparkles size={14} />,
       onClick: onAskAI,
       separatorBefore: true,
@@ -201,7 +203,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   if (onDelete) {
     items.push({
       id: 'delete',
-      label: pl ? 'Usuń notatkę' : 'Delete note',
+      label: i18n.t('notebook.hamburgerMenu.deleteNote', 'Delete note'),
       icon: <Trash2 size={14} />,
       onClick: onDelete,
       danger: true,
@@ -214,8 +216,8 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
 }
 
 /** Heading label shown above the "Convert to" group (rendered inline before first convert item). */
-function convertHeading(pl: boolean): string {
-  return pl ? 'Konwertuj na' : 'Convert to';
+function convertHeading(_pl: boolean): string {
+  return i18n.t('notebook.hamburgerMenu.convertTo', 'Convert to');
 }
 
 /**
