@@ -23,10 +23,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
-import { Card, CardWithHeader } from '../components/shared/Card';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { Card, CardWithHeader } from '../components/shared/Card';
 
 interface Threat {
   id: string;

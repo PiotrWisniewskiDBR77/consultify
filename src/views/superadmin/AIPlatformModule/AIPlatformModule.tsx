@@ -38,13 +38,13 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { AICoreRuntimePanel } from '../components/AI/AICoreRuntimePanel';
-import { PromptOsRuntimeSummaryPanel } from '../components/AI/PromptOsRuntimeSummaryPanel';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { AICoreRuntimePanel } from '../components/AI/AICoreRuntimePanel';
+import { PromptOsRuntimeSummaryPanel } from '../components/AI/PromptOsRuntimeSummaryPanel';
 import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
 import { CustomReportsTab } from './Analytics/CustomReportsTab';
 import { LLMObservatoryTab } from './Analytics/LLMObservatoryTab';

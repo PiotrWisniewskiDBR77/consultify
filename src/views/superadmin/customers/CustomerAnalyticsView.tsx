@@ -6,11 +6,11 @@ import { BarChart3, Building2, Loader2, TrendingDown, TrendingUp, Users } from '
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
-import { Card } from '../components/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { Card } from '../components/shared/Card';
 
 interface OrgMetrics {
   org_id: string;

@@ -15,11 +15,11 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
-import { Card } from '../components/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { Card } from '../components/shared/Card';
 
 interface Playbook {
   id: string;

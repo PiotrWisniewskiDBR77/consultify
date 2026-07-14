@@ -12,18 +12,17 @@
  * - Usage analytics and insights
  */
 
-import { Activity, BarChart2, Braces, DollarSign, List, Radar, Shield } from 'lucide-react';
+import { Activity, BarChart2, Braces, DollarSign, Radar, Shield } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { ChatTracesViewer } from '../../components/Admin/AI/ChatTracesViewer';
+import { AIMissionControl } from '../../components/Admin/AIMissionControl';
+import { InfoButton } from '../../components/shared/InfoButton';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { PromptOsRuntimeSummaryPanel } from './components/AI/PromptOsRuntimeSummaryPanel';
 import { UsageAnalyticsDashboard } from './components/AI/UsageAnalyticsDashboard';
 import { AICostDashboard } from './components/AICostDashboard';
-import { AIMissionControl } from '../../components/Admin/AIMissionControl';
 import { AIPerformanceDashboard } from './components/AIPerformanceDashboard';
 import { SLADashboard } from './components/SLADashboard';
-import { InfoButton } from '../../components/shared/InfoButton';
-import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 
 interface AIOperationsModuleProps {
   initialTab?: string;
@@ -62,12 +61,6 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
       label: 'Analytics',
       icon: <BarChart2 size={16} />,
       description: 'Usage analytics and insights',
-    },
-    {
-      id: 'traces',
-      label: 'Traces',
-      icon: <List size={16} />,
-      description: 'Per-run chat traces & basic evals',
     },
     {
       id: 'prompt-os-runtime',
@@ -109,12 +102,6 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
             <UsageAnalyticsDashboard />
           </div>
         );
-      case 'traces':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <ChatTracesViewer />
-          </div>
-        );
       case 'prompt-os-runtime':
         return (
           <div className="p-6 overflow-y-auto h-full">
@@ -139,8 +126,6 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
         return 'superadmin-ai-sla';
       case 'analytics':
         return 'superadmin-ai-analytics';
-      case 'traces':
-        return 'superadmin-ai-traces';
       case 'prompt-os-runtime':
         return 'superadmin-ai-operations';
       default:

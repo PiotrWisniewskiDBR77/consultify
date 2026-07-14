@@ -2,10 +2,10 @@ import { RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../../../components/Admin/AdminState';
+import { Button } from '../../../../components/ui/primitives/Button';
 import { V8AICoreApi } from '../../../../services/api/v8/ai-core';
 import { normalizeApiErrorMessage } from '../../../../utils/apiError';
-import { Button } from '../../../../components/ui/primitives/Button';
-import { DegradedState } from '../../../../components/Admin/AdminState';
 
 type AICoreEnvironment = {
   healthy?: boolean;

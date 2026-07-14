@@ -17,8 +17,8 @@ import { Api } from '../../services/api';
 import { User, UserRole } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { isSuperAdminRole } from '../../utils/roleGuards';
-import { DegradedState, UnavailableState } from '../Admin/AdminState';
 import { UserAssignmentsPanel } from '../../views/superadmin/components/UserAssignmentsPanel';
+import { DegradedState, UnavailableState } from '../Admin/AdminState';
 
 export interface UserManagementCoreProps {
   mode: 'org-admin' | 'platform';

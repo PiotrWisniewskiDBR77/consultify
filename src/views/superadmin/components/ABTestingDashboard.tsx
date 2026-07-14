@@ -38,9 +38,9 @@ import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState, StatusChip, type StatusTone } from '@/components/ui/primitives';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
-import { DegradedState } from '../../../components/Admin/AdminState';
 
 interface ExperimentVariant {
   id: string;

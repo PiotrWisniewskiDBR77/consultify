@@ -7,12 +7,12 @@ import { Clock, Loader2, Mail, MessageSquare, Plus, Send, Users } from 'lucide-r
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
-import { Card } from '../components/shared/Card';
 import { CommunicationSurfaceModelPanel } from '../../../components/shared/CommunicationSurfaceModelPanel';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { Card } from '../components/shared/Card';
 
 interface Communication {
   id: string;

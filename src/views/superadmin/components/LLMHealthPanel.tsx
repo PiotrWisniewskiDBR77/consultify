@@ -23,9 +23,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { LoadingState } from '@/components/ui/primitives';
 
-import { normalizeApiErrorMessage } from '../../../utils/apiError';
-import { InfoButton } from '../../../components/shared/InfoButton';
 import { DegradedState } from '../../../components/Admin/AdminState';
+import { InfoButton } from '../../../components/shared/InfoButton';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface HealthError {
   title: string;

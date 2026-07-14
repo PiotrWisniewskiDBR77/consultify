@@ -14,12 +14,12 @@
 import { BookOpen, FileText, FlaskConical, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { ABTestingDashboard } from './components/ABTestingDashboard';
-import { PromptManagementUI } from './components/PromptManagementUI';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
-import { AdminKnowledgeView } from './components/AdminKnowledgeView';
 import { AIIntelligenceView } from './AIIntelligenceView';
+import { ABTestingDashboard } from './components/ABTestingDashboard';
+import { AdminKnowledgeView } from './components/AdminKnowledgeView';
+import { PromptManagementUI } from './components/PromptManagementUI';
 
 interface AIDevelopmentModuleProps {
   initialTab?: string;

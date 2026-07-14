@@ -11,10 +11,10 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '../../services/api';
 import { Button } from './components/shared/Button';
 import { Card, Section } from './components/shared/Card';
 import { SectionHeader } from './components/shared/PageHeader';
-import { Api } from '../../services/api';
 
 export const SuperAdminMetricsView: React.FC = () => {
   const [loading, setLoading] = useState(true);

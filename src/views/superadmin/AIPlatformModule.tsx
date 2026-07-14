@@ -21,20 +21,20 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { AIMissionControl } from '../../components/Admin/AIMissionControl';
+import { ModelTierAssignments } from '../../components/SuperAdmin/ModelTierAssignments';
+import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { AIIntelligenceView } from './AIIntelligenceView';
+import { AIUseCaseControlPlane } from './AIPlatformModule/Executive/AIUseCaseControlPlane';
 import { ABTestingDashboard } from './components/ABTestingDashboard';
+import { AdminKnowledgeView } from './components/AdminKnowledgeView';
 import { UsageAnalyticsDashboard } from './components/AI/UsageAnalyticsDashboard';
 import { AICostDashboard } from './components/AICostDashboard';
-import { AIMissionControl } from '../../components/Admin/AIMissionControl';
 import { AIPerformanceDashboard } from './components/AIPerformanceDashboard';
 import { LLMHealthPanel } from './components/LLMHealthPanel';
 import { PromptManagementUI } from './components/PromptManagementUI';
 import { SLADashboard } from './components/SLADashboard';
-import { ModelTierAssignments } from '../../components/SuperAdmin/ModelTierAssignments';
-import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
-import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
-import { AdminKnowledgeView } from './components/AdminKnowledgeView';
-import { AIIntelligenceView } from './AIIntelligenceView';
-import { AIUseCaseControlPlane } from './AIPlatformModule/Executive/AIUseCaseControlPlane';
 import { LLMManagementView } from './LLMManagementView';
 
 interface AIPlatformModuleProps {
