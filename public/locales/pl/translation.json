@@ -3661,6 +3661,42 @@
       "failedToLoadUsersX": "Nie udało się załadować użytkowników: {{msg}}",
       "createdSeparateAssignmentsCount": "Utworzono {{count}} osobne przydziały",
       "interviewAssignedToCount": "Wywiad przydzielony do {{count}} osób"
+    },
+    "newSessionModal": {
+      "pleaseSelectATemplate": "Wybierz szablon",
+      "pleaseSetADueDate": "Podaj termin",
+      "pleaseSelectAtLeastOne": "Wybierz przynajmniej jedną osobę",
+      "sessionCreated": "Sesja utworzona",
+      "interviewAssigned": "Przydzielono wywiad",
+      "failedToCreate": "Nie udalo sie utworzyc",
+      "createInterview": "Utwórz wywiad",
+      "startForYourselfOrAssign": "Rozpocznij dla siebie lub przydziel zespolowi",
+      "mode": "Tryb",
+      "forMyself": "Dla siebie",
+      "assignToTeam": "Przydziel zespolowi",
+      "template": "Szablon",
+      "questions": "pytań",
+      "selectTemplate": "Wybierz szablon...",
+      "assignees": "Przypisani",
+      "loading": "Ladowanie...",
+      "noTeamMembersAvailable": "Brak dostepnych czlonkow zespolu",
+      "teamLead": "Lider zespolu",
+      "selectLead": "Wybierz lidera...",
+      "dueDate": "Termin",
+      "priority": "Priorytet",
+      "notesOptional": "Notatki (opcjonalnie)",
+      "addInstructionsForAssignees": "Dodaj instrukcje dla przypisanych...",
+      "cancel": "Anuluj",
+      "creating": "Tworzenie...",
+      "start": "Rozpocznij",
+      "assign": "Przydziel",
+      "createdSeparateAssignmentsCount": "Utworzono {{count}} osobne przydziały",
+      "priorityLabel": {
+        "low": "Niski",
+        "medium": "Sredni",
+        "high": "Wysoki",
+        "urgent": "Pilny"
+      }
     }
   },
   "assessment": {

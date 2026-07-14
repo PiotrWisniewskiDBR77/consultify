@@ -4427,6 +4427,42 @@
       "failedToLoadUsersX": "Failed to load users: {{msg}}",
       "createdSeparateAssignmentsCount": "Created {{count}} separate assignments",
       "interviewAssignedToCount": "Interview assigned to {{count}} user(s)"
+    },
+    "newSessionModal": {
+      "pleaseSelectATemplate": "Please select a template",
+      "pleaseSetADueDate": "Please set a due date",
+      "pleaseSelectAtLeastOne": "Please select at least one assignee",
+      "sessionCreated": "Session created",
+      "interviewAssigned": "Interview assigned",
+      "failedToCreate": "Failed to create",
+      "createInterview": "Create Interview",
+      "startForYourselfOrAssign": "Start for yourself or assign to team",
+      "mode": "Mode",
+      "forMyself": "For myself",
+      "assignToTeam": "Assign to team",
+      "template": "Template",
+      "questions": "questions",
+      "selectTemplate": "Select template...",
+      "assignees": "Assignees",
+      "loading": "Loading...",
+      "noTeamMembersAvailable": "No team members available",
+      "teamLead": "Team Lead",
+      "selectLead": "Select lead...",
+      "dueDate": "Due Date",
+      "priority": "Priority",
+      "notesOptional": "Notes (optional)",
+      "addInstructionsForAssignees": "Add instructions for assignees...",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "start": "Start",
+      "assign": "Assign",
+      "createdSeparateAssignmentsCount": "Created {{count}} separate assignments",
+      "priorityLabel": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      }
     }
   },
   "assessment": {
