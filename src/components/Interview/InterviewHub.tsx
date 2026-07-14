@@ -538,7 +538,7 @@ const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-c-success transiti
 // both, so a draft never reads as "Active" again.
 function getTemplateStatusChip(
   status: string | undefined,
-  isPolish: boolean
+  t: (key: string) => string
 ): { label: string; className: string } {
   const s = String(status || 'draft').toLowerCase();
   if (s === 'approved' || s === 'published') {
@@ -1403,13 +1403,10 @@ export const InterviewHub: React.FC = () => {
       setSelectedAssignmentIds(new Set());
       if (done > 0) {
         toast.success(
-          action === 'archive'
-            ? isPolish
-              ? `Zarchiwizowano ${done}`
-              : `${done} archived`
-            : isPolish
-              ? `Przywrócono ${done}`
-              : `${done} restored`
+          t(
+            action === 'archive' ? 'interview.hub.archivedCount' : 'interview.hub.restoredCount',
+            { count: done }
+          )
         );
       } else {
         toast.error(t('interview.hub.couldNotCompleteTheAction'));
@@ -2097,9 +2094,9 @@ export const InterviewHub: React.FC = () => {
     () =>
       (['draft', 'in_review', 'approved', 'archived'] as const).map((s) => ({
         value: s,
-        label: getTemplateStatusChip(s, isPolish).label,
+        label: getTemplateStatusChip(s, t).label,
       })),
-    [isPolish]
+    [t]
   );
 
   // Templates for the table — column-level filtering now lives inside
@@ -2493,11 +2490,7 @@ export const InterviewHub: React.FC = () => {
   const handleDeleteTemplate = useCallback(
     async (template: InterviewTemplate) => {
       if (
-        !confirm(
-          isPolish
-            ? `Czy na pewno chcesz usunąć szablon "${template.name}"?`
-            : `Are you sure you want to delete template "${template.name}"?`
-        )
+        !confirm(t('interview.hub.confirmDeleteTemplate', { name: template.name }))
       ) {
         return;
       }
@@ -2590,13 +2583,9 @@ export const InterviewHub: React.FC = () => {
           })
         );
         toast.success(
-          isPolish
-            ? nextDefault
-              ? 'Ustawiono jako domyślny szablon'
-              : 'Usunięto status domyślnego szablonu'
-            : nextDefault
-              ? 'Set as default template'
-              : 'Default template unset'
+          nextDefault
+            ? t('interview.hub.setAsDefaultTemplate')
+            : t('interview.hub.defaultTemplateUnset')
         );
       } catch (error) {
         toast.error(
@@ -2936,13 +2925,9 @@ export const InterviewHub: React.FC = () => {
       if (escalateBusyId) return;
       if (assignment.escalatedAt || assignment.escalationTarget) {
         toast(
-          isPolish
-            ? `Już eskalowano${
-                assignment.escalationTarget?.name ? ` do: ${assignment.escalationTarget.name}` : ''
-              }`
-            : `Already escalated${
-                assignment.escalationTarget?.name ? ` to ${assignment.escalationTarget.name}` : ''
-              }`,
+          assignment.escalationTarget?.name
+            ? t('interview.hub.alreadyEscalatedTo', { name: assignment.escalationTarget.name })
+            : t('interview.hub.alreadyEscalated'),
           { icon: 'ℹ️' }
         );
         return;
@@ -4506,9 +4491,9 @@ export const InterviewHub: React.FC = () => {
             <DueChip
               label={
                 overdue
-                  ? isPolish
-                    ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
-                    : `${absDays}d overdue`
+                  ? absDays === 1
+                    ? t('interview.hub.overdueDaysOne', { count: absDays })
+                    : t('interview.hub.overdueDaysOther', { count: absDays })
                   : dateLabel
               }
               risk={overdue ? 'overdue' : 'none'}
@@ -5248,13 +5233,9 @@ export const InterviewHub: React.FC = () => {
       setInsights((prev) => prev.filter((i) => !idSet.has(i.id)));
       setSelectedInsightIds(new Set());
       toast.success(
-        archived
-          ? isPolish
-            ? `Zarchiwizowano (${ids.length})`
-            : `Archived (${ids.length})`
-          : isPolish
-            ? `Przywrócono (${ids.length})`
-            : `Restored (${ids.length})`
+        t(archived ? 'interview.hub.archivedCountParen' : 'interview.hub.restoredCountParen', {
+          count: ids.length,
+        })
       );
     } catch (error) {
       toast.error(t('interview.hub.operationPartiallyFailed'));
@@ -5827,7 +5808,7 @@ export const InterviewHub: React.FC = () => {
           <div className="inline-flex items-center gap-1.5">
             <EntityStatusChip
               status={String(row.status || 'draft')}
-              label={getTemplateStatusChip(row.status, isPolish).label}
+              label={getTemplateStatusChip(row.status, t).label}
             />
             {row.isDefault && (
               <span
@@ -6235,9 +6216,10 @@ export const InterviewHub: React.FC = () => {
         const absDays = Math.abs(days);
         return {
           days,
-          label: isPolish
-            ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
-            : `${absDays}d overdue`,
+          label:
+            absDays === 1
+              ? t('interview.hub.overdueDaysOne', { count: absDays })
+              : t('interview.hub.overdueDaysOther', { count: absDays }),
           colorClass:
             'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
@@ -6795,9 +6777,7 @@ Return ONLY the answer text (no markdown fences).`;
                 const pct = Math.round(Math.max(0, Math.min(1, (score - 1) / 4)) * 100);
                 const tone =
                   pct >= 75 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
-                const title = isPolish
-                  ? `Ocena jakości AI wg rubryki (konkretność/dowody/głębia/mierzalność/spójność): ${score.toFixed(1)}/5`
-                  : `AI quality score per rubric (concreteness/evidence/depth/measurability/coherence): ${score.toFixed(1)}/5`;
+                const title = t('interview.hub.aiQualityScoreTitle', { score: score.toFixed(1) });
                 return (
                   <span
                     className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
@@ -7316,9 +7296,7 @@ Return ONLY the answer text (no markdown fences).`;
                 sourceLabel={sourceLabel}
                 dateStr={
                   createdRelative
-                    ? isPolish
-                      ? `Utworzono ${createdRelative}`
-                      : `Created ${createdRelative}`
+                    ? t('interview.hub.createdRelative', { relative: createdRelative })
                     : dateStr
                 }
                 detailsText={detailsText}
@@ -9539,9 +9517,9 @@ Return ONLY the answer text (no markdown fences).`;
             </div>
             <div className="p-4">
               <p className="text-sm text-c-text-muted mb-4">
-                {isPolish
-                  ? `Czy na pewno chcesz wysłać przypomnienie do ${selectedAssignment.assignee?.name || 'użytkownika'}?`
-                  : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`}
+                {t('interview.hub.confirmSendReminderTo', {
+                  name: selectedAssignment.assignee?.name || t('interview.hub.theUserFallback'),
+                })}
               </p>
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
                 <div className="text-sm text-c-text font-medium">
