@@ -13,6 +13,10 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
 const ProjectController = ProjectControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+import {
+  requireAnyProjectCapability,
+  requireProjectCapability,
+} from '../../middleware/effectiveCapability.middleware.js';
 import { checkPlanLimit } from '../../middleware/planLimits.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
@@ -108,49 +112,56 @@ router.get('/:id/finance', ProjectController.getProjectFinance);
  * Program CRUD itself already lives at /api/initiatives/programs (V4-INIT-02,
  * see initiatives.routes.ts) — this is only the missing project-side link.
  */
-router.put('/:id/program', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+  '/:id/program',
+  requireOrgRole('user'),
+  requireAnyProjectCapability(['project.settings.manage', 'project.settings.update'], undefined, {
+    shadow: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.params;
-    const { programId } = req.body || {};
+      const { id } = req.params;
+      const { programId } = req.body || {};
 
-    const project = await queryHelpers.queryOne(
-      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
-      [id, String(orgId)]
-    );
-    if (!project) return res.status(404).json({ error: 'Project not found' });
-
-    if (programId) {
-      const program = await queryHelpers.queryOne(
-        `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
-        [String(programId), String(orgId)]
+      const project = await queryHelpers.queryOne(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [id, String(orgId)]
       );
-      if (!program) return res.status(400).json({ error: 'Program not found' });
-    }
+      if (!project) return res.status(404).json({ error: 'Project not found' });
 
-    await queryHelpers.queryRun(
-      `UPDATE projects SET program_id = ? WHERE id = ? AND organization_id = ?`,
-      [programId || null, id, String(orgId)]
-    );
+      if (programId) {
+        const program = await queryHelpers.queryOne(
+          `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+          [String(programId), String(orgId)]
+        );
+        if (!program) return res.status(400).json({ error: 'Program not found' });
+      }
 
-    return res.json({ id, programId: programId || null });
-  } catch (err: any) {
-    const msg = String(err?.message || err);
-    if (/program_id/i.test(msg) && /column/i.test(msg)) {
-      logger.warn(
-        `[ProjectsRoute] PUT /:id/program — projects.program_id column missing (migration 916 not applied): ${msg}`
+      await queryHelpers.queryRun(
+        `UPDATE projects SET program_id = ? WHERE id = ? AND organization_id = ?`,
+        [programId || null, id, String(orgId)]
       );
-      return res.status(503).json({
-        error:
-          'projects.program_id not available yet on this database (migration 916 not applied).',
-      });
+
+      return res.json({ id, programId: programId || null });
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      if (/program_id/i.test(msg) && /column/i.test(msg)) {
+        logger.warn(
+          `[ProjectsRoute] PUT /:id/program — projects.program_id column missing (migration 916 not applied): ${msg}`
+        );
+        return res.status(503).json({
+          error:
+            'projects.program_id not available yet on this database (migration 916 not applied).',
+        });
+      }
+      logger.error('[ProjectsRoute] PUT /:id/program failed:', err);
+      return res.status(500).json({ error: 'Failed to assign project to program' });
     }
-    logger.error('[ProjectsRoute] PUT /:id/program failed:', err);
-    return res.status(500).json({ error: 'Failed to assign project to program' });
   }
-});
+);
 
 // ==========================================
 // PROJECT TEAM (CANONICAL MEMBERSHIP)
@@ -166,40 +177,87 @@ router.get('/:id/members', ProjectController.getProjectMembers);
  * POST /api/projects/:id/members
  * Add project member (canonical)
  */
-router.post('/:id/members', ProjectController.addProjectMember);
+router.post(
+  '/:id/members',
+  requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
+    shadow: true,
+  }),
+  ProjectController.addProjectMember
+);
 
 /**
  * PATCH /api/projects/:id/members/:userId
  * Update project member fields (role/invoked/consultant overlay)
  */
-router.patch('/:id/members/:userId', ProjectController.updateProjectMember);
+router.patch(
+  '/:id/members/:userId',
+  requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
+    shadow: true,
+  }),
+  ProjectController.updateProjectMember
+);
 
 /**
  * DELETE /api/projects/:id/members/:userId
  * Remove project member
  */
-router.delete('/:id/members/:userId', ProjectController.removeProjectMember);
+router.delete(
+  '/:id/members/:userId',
+  requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
+    shadow: true,
+  }),
+  ProjectController.removeProjectMember
+);
 
 // ==========================================
 // STEERING BOARD (OPTIONAL)
 // ==========================================
 
 router.get('/:id/steering-board', ProjectController.getSteeringBoard);
-router.put('/:id/steering-board', ProjectController.updateSteeringBoard);
-router.post('/:id/steering-board/members', ProjectController.addSteeringBoardMember);
-router.delete('/:id/steering-board/members/:userId', ProjectController.removeSteeringBoardMember);
+router.put(
+  '/:id/steering-board',
+  requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
+    shadow: true,
+  }),
+  ProjectController.updateSteeringBoard
+);
+router.post(
+  '/:id/steering-board/members',
+  requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
+    shadow: true,
+  }),
+  ProjectController.addSteeringBoardMember
+);
+router.delete(
+  '/:id/steering-board/members/:userId',
+  requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
+    shadow: true,
+  }),
+  ProjectController.removeSteeringBoardMember
+);
 
 /**
  * PUT /api/projects/:id
  * Update project
  */
-router.put('/:id', validateBody(UpdateProjectSchema), ProjectController.updateProject);
+router.put(
+  '/:id',
+  requireAnyProjectCapability(['project.settings.manage', 'project.settings.update'], undefined, {
+    shadow: true,
+  }),
+  validateBody(UpdateProjectSchema),
+  ProjectController.updateProject
+);
 
 /**
  * DELETE /api/projects/:id
  * Delete project
  */
-router.delete('/:id', ProjectController.deleteProject);
+router.delete(
+  '/:id',
+  requireProjectCapability('project.delete', undefined, { shadow: true }),
+  ProjectController.deleteProject
+);
 
 // ==========================================
 // PROJECT NOTIFICATION SETTINGS
@@ -217,6 +275,9 @@ router.get('/:id/notification-settings', ProjectController.getNotificationSettin
  */
 router.put(
   '/:id/notification-settings',
+  requireAnyProjectCapability(['project.settings.manage', 'project.settings.update'], undefined, {
+    shadow: true,
+  }),
   validateBody(ProjectNotificationSettingsSchema),
   ProjectController.updateNotificationSettings
 );
@@ -235,7 +296,14 @@ router.get('/:id/ai-role', ProjectController.getAIRole);
  * PUT /api/projects/:id/ai-role
  * Update AI role for project (Admin only)
  */
-router.put('/:id/ai-role', validateBody(UpdateAIRoleSchema), ProjectController.updateAIRole);
+router.put(
+  '/:id/ai-role',
+  requireAnyProjectCapability(['project.settings.manage', 'project.settings.update'], undefined, {
+    shadow: true,
+  }),
+  validateBody(UpdateAIRoleSchema),
+  ProjectController.updateAIRole
+);
 
 // ==========================================
 // REGULATORY MODE
@@ -253,6 +321,9 @@ router.get('/:id/regulatory-mode', ProjectController.getRegulatoryMode);
  */
 router.put(
   '/:id/regulatory-mode',
+  requireAnyProjectCapability(['project.settings.manage', 'project.settings.update'], undefined, {
+    shadow: true,
+  }),
   validateBody(UpdateRegulatoryModeSchema),
   ProjectController.updateRegulatoryMode
 );
@@ -265,13 +336,22 @@ router.put(
  * POST /api/projects/:id/archive
  * Archive a completed or cancelled project
  */
-router.post('/:id/archive', validateBody(ArchiveProjectSchema), ProjectController.archiveProject);
+router.post(
+  '/:id/archive',
+  requireProjectCapability('project.archive', undefined, { shadow: true }),
+  validateBody(ArchiveProjectSchema),
+  ProjectController.archiveProject
+);
 
 /**
  * POST /api/projects/:id/unarchive
  * Restore an archived project
  */
-router.post('/:id/unarchive', ProjectController.unarchiveProject);
+router.post(
+  '/:id/unarchive',
+  requireProjectCapability('project.archive', undefined, { shadow: true }),
+  ProjectController.unarchiveProject
+);
 
 // ==========================================
 // MY MEMBERSHIPS
@@ -291,13 +371,21 @@ router.get('/:id/pmo-roles', ProjectController.getPMORoles);
  * POST /api/projects/:id/pmo-roles
  * Assign PMO role to user in project
  */
-router.post('/:id/pmo-roles', ProjectController.assignPMORole);
+router.post(
+  '/:id/pmo-roles',
+  requireProjectCapability('project.roles.assign', undefined, { shadow: true }),
+  ProjectController.assignPMORole
+);
 
 /**
  * DELETE /api/projects/:id/pmo-roles/:assignmentId
  * Remove PMO role assignment
  */
-router.delete('/:id/pmo-roles/:assignmentId', ProjectController.removePMORole);
+router.delete(
+  '/:id/pmo-roles/:assignmentId',
+  requireProjectCapability('project.roles.assign', undefined, { shadow: true }),
+  ProjectController.removePMORole
+);
 
 // ==========================================
 // LOCATIONS

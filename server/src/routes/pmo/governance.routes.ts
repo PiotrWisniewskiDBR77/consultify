@@ -7,6 +7,7 @@ import { Router } from 'express';
 
 import GovernanceController from '../../controllers/GovernanceController.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import { requireProjectCapability } from '../../middleware/effectiveCapability.middleware.js';
 
 const router = Router();
 
@@ -23,7 +24,16 @@ router.get('/change-requests', GovernanceController.getChangeRequests);
  * POST /api/governance/change-requests
  * Create a new change request
  */
-router.post('/change-requests', GovernanceController.createChangeRequest);
+router.post(
+  '/change-requests',
+  // Faza B (2026-07-14): shadow-only capability telemetry. allowWithoutProject
+  // because change requests may arrive without an explicit project context.
+  requireProjectCapability('change.request.submit', undefined, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  GovernanceController.createChangeRequest
+);
 
 /**
  * GET /api/governance/policies

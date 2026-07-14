@@ -29,6 +29,10 @@ import { Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  requireInitiativeCapability,
+  requireProjectCapability,
+} from '../middleware/effectiveCapability.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { addChampion, listChampions, removeChampion } from '../services/changeChampionsService.js';
 import { createPir, finalizePir, getPir } from '../services/pirService.js';
@@ -64,6 +68,7 @@ const requireOrg = (req: AuthRequest, res: Response): string | null => {
  */
 router.post(
   '/raid/issues/:issueId/link/:riskId',
+  requireProjectCapability('risk.manage', undefined, { shadow: true, allowWithoutProject: true }),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;
@@ -81,6 +86,7 @@ router.post(
  */
 router.post(
   '/raid/risks/:riskId/materialize',
+  requireProjectCapability('risk.manage', undefined, { shadow: true, allowWithoutProject: true }),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;
@@ -141,6 +147,7 @@ router.get(
 
 router.post(
   '/pir/:initiativeId',
+  requireInitiativeCapability('initiative.pir.manage', { shadow: true }),
   validateBody(PirCreateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -156,6 +163,12 @@ router.post(
 
 router.post(
   '/pir/:id/finalize',
+  // :id is the PIR id (not an initiative) — project resolution may miss, so
+  // allowWithoutProject keeps the shadow verdict evaluable at org level.
+  requireInitiativeCapability('initiative.pir.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;
@@ -190,6 +203,10 @@ router.get(
 
 router.post(
   '/champions',
+  requireInitiativeCapability('change.champion.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   validateBody(ChampionCreateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -201,6 +218,10 @@ router.post(
 
 router.delete(
   '/champions/:id',
+  requireInitiativeCapability('change.champion.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;
