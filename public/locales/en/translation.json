@@ -15151,6 +15151,144 @@
         "completionRate": "completion rate",
         "recentFeedback": "Recent Feedback",
         "lastUpdated": "Last updated"
+      },
+      "orgAISettings": {
+        "validation": {
+          "maxCallsPerDay": "Daily AI call limit must be at least 1.",
+          "maxTokensPerMonth": "Monthly token limit must be at least 1.",
+          "negativeBudget": "Budget limits cannot be negative.",
+          "budgetExceedsHardLimit": "Monthly budget cannot be higher than the hard limit.",
+          "atLeastOneRole": "At least one AI role must remain active.",
+          "defaultRoleMustBeActive": "Default AI role must be one of the active roles."
+        },
+        "levels": {
+          "advisory": {
+            "title": "Advisory",
+            "description": "AI can only explain and suggest. No modifications."
+          },
+          "assisted": {
+            "title": "Assisted",
+            "description": "AI can create drafts that require approval."
+          },
+          "proactive": {
+            "title": "Proactive",
+            "description": "AI can execute low-risk actions automatically."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI operates autonomously within governance rules."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Advisor",
+            "description": "Provides guidance and recommendations"
+          },
+          "pmoManager": {
+            "title": "PMO Manager",
+            "description": "Manages project methodology"
+          },
+          "executor": {
+            "title": "Executor",
+            "description": "Executes approved actions"
+          },
+          "educator": {
+            "title": "Educator",
+            "description": "Teaches and explains concepts"
+          }
+        },
+        "errors": {
+          "load": "Failed to load organization AI settings",
+          "saveNotConfirmed": "Organization AI settings save was not confirmed by the server",
+          "save": "Failed to save organization AI settings"
+        },
+        "toasts": {
+          "saved": "Organization AI settings saved"
+        },
+        "tabs": {
+          "policy": "Policy & Roles",
+          "limits": "Limits & Budget",
+          "features": "Features",
+          "audit": "Audit Log"
+        },
+        "unavailableTitle": "Organization AI settings unavailable",
+        "noSettingsFound": "No AI Settings Found",
+        "noSettingsDescription": "This organization doesn't have AI settings configured yet. Please contact support or check your permissions.",
+        "retryLoading": "Retry Loading",
+        "title": "Organization AI Settings",
+        "configureFor": "Configure AI behavior for {{orgName}}",
+        "yourOrganization": "your organization",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "policyLevel": {
+          "title": "AI Policy Level",
+          "description": "Controls what actions AI can perform"
+        },
+        "maxAllowed": "Max Allowed",
+        "activeRoles": {
+          "title": "Active AI Roles",
+          "description": "Select which AI personas are available to users"
+        },
+        "defaultRole": "Default Role",
+        "defaultProactivity": {
+          "title": "Default Proactivity",
+          "description": "Default AI proactivity level for new users"
+        },
+        "usageLimits": {
+          "title": "Usage Limits",
+          "description": "Set daily and monthly limits for AI usage",
+          "maxCallsPerDay": "Max AI Calls per Day",
+          "maxCallsPerDayDescription": "Daily limit per user",
+          "maxTokensPerMonth": "Max Tokens per Month",
+          "maxTokensPerMonthDescription": "Monthly token budget for the organization"
+        },
+        "budgetControl": {
+          "title": "Budget Control",
+          "description": "Set spending limits and automatic actions",
+          "monthlyBudget": "Monthly Budget (USD)",
+          "unlimitedPlaceholder": "0 = unlimited",
+          "hardLimit": "Hard Limit (USD)",
+          "noHardLimitPlaceholder": "0 = no hard limit",
+          "freezeOnLimit": "Freeze on Limit",
+          "freezeOnLimitDescription": "Automatically disable AI when budget is exceeded"
+        },
+        "features": {
+          "title": "AI Features",
+          "description": "Enable or disable specific AI capabilities for your organization",
+          "artifacts": {
+            "label": "Artifacts Panel",
+            "description": "Allow AI to generate structured content (code, documents, diagrams)"
+          },
+          "thinkingSteps": {
+            "label": "Thinking Steps (Chain of Thought)",
+            "description": "Show AI reasoning process with expandable thinking blocks"
+          },
+          "focusModes": {
+            "label": "Focus Modes",
+            "description": "Allow users to filter AI context (PMO Docs, Project Data, Research)"
+          },
+          "webSearch": {
+            "label": "Web Search",
+            "description": "Allow AI to search the internet for current information"
+          },
+          "voice": {
+            "label": "Voice Conversations",
+            "description": "Enable voice input and output for AI interactions"
+          },
+          "auditSettings": "Audit Settings",
+          "auditAll": {
+            "label": "Audit All AI Requests",
+            "description": "Log every AI interaction for compliance (increases storage)"
+          },
+          "auditPolicy": {
+            "label": "Audit Policy Changes",
+            "description": "Track all changes to AI settings"
+          }
+        },
+        "auditLog": {
+          "title": "Settings Change History",
+          "description": "View all changes made to AI settings"
+        }
       }
     }
   },

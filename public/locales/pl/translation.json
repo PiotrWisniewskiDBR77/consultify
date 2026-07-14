@@ -15802,6 +15802,144 @@
         "completionRate": "wskaźnik ukończenia",
         "recentFeedback": "Ostatnie Opinie",
         "lastUpdated": "Ostatnia aktualizacja"
+      },
+      "orgAISettings": {
+        "validation": {
+          "maxCallsPerDay": "Dzienny limit wywołań AI musi wynosić co najmniej 1.",
+          "maxTokensPerMonth": "Miesięczny limit tokenów musi wynosić co najmniej 1.",
+          "negativeBudget": "Limity budżetu nie mogą być ujemne.",
+          "budgetExceedsHardLimit": "Budżet miesięczny nie może być wyższy niż twardy limit.",
+          "atLeastOneRole": "Co najmniej jedna rola AI musi pozostać aktywna.",
+          "defaultRoleMustBeActive": "Domyślna rola AI musi być jedną z aktywnych ról."
+        },
+        "levels": {
+          "advisory": {
+            "title": "Doradczy",
+            "description": "AI może jedynie wyjaśniać i sugerować. Brak modyfikacji."
+          },
+          "assisted": {
+            "title": "Wspomagany",
+            "description": "AI może tworzyć wersje robocze wymagające zatwierdzenia."
+          },
+          "proactive": {
+            "title": "Proaktywny",
+            "description": "AI może automatycznie wykonywać działania niskiego ryzyka."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI działa autonomicznie w ramach zasad zarządzania."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Doradca",
+            "description": "Dostarcza wskazówek i rekomendacji"
+          },
+          "pmoManager": {
+            "title": "Kierownik PMO",
+            "description": "Zarządza metodyką projektu"
+          },
+          "executor": {
+            "title": "Wykonawca",
+            "description": "Wykonuje zatwierdzone działania"
+          },
+          "educator": {
+            "title": "Edukator",
+            "description": "Naucza i wyjaśnia koncepcje"
+          }
+        },
+        "errors": {
+          "load": "Nie udało się załadować ustawień AI organizacji",
+          "saveNotConfirmed": "Zapis ustawień AI organizacji nie został potwierdzony przez serwer",
+          "save": "Nie udało się zapisać ustawień AI organizacji"
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia AI organizacji"
+        },
+        "tabs": {
+          "policy": "Polityka i role",
+          "limits": "Limity i budżet",
+          "features": "Funkcje",
+          "audit": "Dziennik audytu"
+        },
+        "unavailableTitle": "Ustawienia AI organizacji niedostępne",
+        "noSettingsFound": "Nie znaleziono ustawień AI",
+        "noSettingsDescription": "Ta organizacja nie ma jeszcze skonfigurowanych ustawień AI. Skontaktuj się z pomocą techniczną lub sprawdź swoje uprawnienia.",
+        "retryLoading": "Spróbuj ponownie",
+        "title": "Ustawienia AI organizacji",
+        "configureFor": "Skonfiguruj zachowanie AI dla {{orgName}}",
+        "yourOrganization": "Twojej organizacji",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "policyLevel": {
+          "title": "Poziom polityki AI",
+          "description": "Kontroluje, jakie działania może wykonywać AI"
+        },
+        "maxAllowed": "Maksymalny dozwolony",
+        "activeRoles": {
+          "title": "Aktywne role AI",
+          "description": "Wybierz, które persony AI są dostępne dla użytkowników"
+        },
+        "defaultRole": "Rola domyślna",
+        "defaultProactivity": {
+          "title": "Domyślna proaktywność",
+          "description": "Domyślny poziom proaktywności AI dla nowych użytkowników"
+        },
+        "usageLimits": {
+          "title": "Limity użycia",
+          "description": "Ustaw dzienne i miesięczne limity użycia AI",
+          "maxCallsPerDay": "Maks. wywołań AI dziennie",
+          "maxCallsPerDayDescription": "Dzienny limit na użytkownika",
+          "maxTokensPerMonth": "Maks. tokenów miesięcznie",
+          "maxTokensPerMonthDescription": "Miesięczny budżet tokenów dla organizacji"
+        },
+        "budgetControl": {
+          "title": "Kontrola budżetu",
+          "description": "Ustaw limity wydatków i działania automatyczne",
+          "monthlyBudget": "Budżet miesięczny (USD)",
+          "unlimitedPlaceholder": "0 = bez limitu",
+          "hardLimit": "Twardy limit (USD)",
+          "noHardLimitPlaceholder": "0 = brak twardego limitu",
+          "freezeOnLimit": "Zablokuj po przekroczeniu limitu",
+          "freezeOnLimitDescription": "Automatycznie wyłącz AI po przekroczeniu budżetu"
+        },
+        "features": {
+          "title": "Funkcje AI",
+          "description": "Włącz lub wyłącz określone możliwości AI dla organizacji",
+          "artifacts": {
+            "label": "Panel artefaktów",
+            "description": "Zezwól AI na generowanie ustrukturyzowanej treści (kod, dokumenty, diagramy)"
+          },
+          "thinkingSteps": {
+            "label": "Kroki rozumowania (Chain of Thought)",
+            "description": "Pokaż proces rozumowania AI z rozwijanymi blokami myślenia"
+          },
+          "focusModes": {
+            "label": "Tryby skupienia",
+            "description": "Zezwól użytkownikom na filtrowanie kontekstu AI (dokumenty PMO, dane projektu, badania)"
+          },
+          "webSearch": {
+            "label": "Wyszukiwanie w sieci",
+            "description": "Zezwól AI na wyszukiwanie aktualnych informacji w internecie"
+          },
+          "voice": {
+            "label": "Rozmowy głosowe",
+            "description": "Włącz wejście i wyjście głosowe dla interakcji z AI"
+          },
+          "auditSettings": "Ustawienia audytu",
+          "auditAll": {
+            "label": "Audytuj wszystkie żądania AI",
+            "description": "Rejestruj każdą interakcję z AI dla zgodności (zwiększa zużycie pamięci)"
+          },
+          "auditPolicy": {
+            "label": "Audytuj zmiany polityki",
+            "description": "Śledź wszystkie zmiany ustawień AI"
+          }
+        },
+        "auditLog": {
+          "title": "Historia zmian ustawień",
+          "description": "Zobacz wszystkie zmiany wprowadzone w ustawieniach AI"
+        }
       }
     }
   },
