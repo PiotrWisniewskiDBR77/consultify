@@ -66,9 +66,10 @@ describe('NotebookProgressChip', () => {
     expect(screen.getByText('Initiatives')).toBeInTheDocument();
   });
 
-  it('renders Polish labels when isPolish', () => {
+  it('renders step labels via t() (language-driven, not isPolish prop)', () => {
+    // i18n(M04): labels moved from isPolish-ternary to t(); test env resolves EN defaultValues.
     render(<NotebookProgressChip {...baseProps} isPolish />);
-    expect(screen.getByText('Źródła')).toBeInTheDocument();
-    expect(screen.getByText('Konwertuj')).toBeInTheDocument();
+    expect(screen.getByText('Sources')).toBeInTheDocument();
+    expect(screen.getByText('Convert')).toBeInTheDocument();
   });
 });

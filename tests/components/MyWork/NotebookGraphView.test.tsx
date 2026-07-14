@@ -62,9 +62,10 @@ describe('NotebookGraphView', () => {
     expect(await screen.findByText(/No topics or backlinks/i)).toBeInTheDocument();
   });
 
-  it('renders the Polish title when isPolish', async () => {
+  it('renders the title via t() (language-driven, not isPolish prop)', async () => {
+    // i18n(M04): title moved from isPolish-ternary to t(); test env resolves EN defaultValue.
     (global as any).fetch = vi.fn(async () => ({ ok: true, json: async () => ({ data: [] }) }));
     render(<NotebookGraphView pageId="p1" isPolish />);
-    expect(await screen.findByText('Graf powiązań')).toBeInTheDocument();
+    expect(await screen.findByText('Connection graph')).toBeInTheDocument();
   });
 });

@@ -51,9 +51,10 @@ describe('NotebookExportMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
-  it('renders Polish trigger label when isPolish', () => {
+  it('renders the trigger label via t() (language-driven, not isPolish prop)', () => {
+    // i18n(M04): label moved from isPolish-ternary to t(); test env resolves EN defaultValue.
     render(<NotebookExportMenu page={page} isPolish />);
-    expect(screen.getByText('Eksport')).toBeInTheDocument();
+    expect(screen.getByText('Export')).toBeInTheDocument();
   });
 
   it('disables the trigger when disabled', () => {

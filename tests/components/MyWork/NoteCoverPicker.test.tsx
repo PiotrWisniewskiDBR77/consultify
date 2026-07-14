@@ -46,9 +46,11 @@ describe('CoverImageBar', () => {
     expect(onRemove).toHaveBeenCalled();
   });
 
-  it('renders Polish labels when isPolish', () => {
+  it('renders the add-cover label via t() (language-driven, not isPolish prop)', () => {
+    // i18n(M04): label moved from isPolish-ternary to t(); the global test mock
+    // returns the EN defaultValue, so PL/EN switching is exercised at runtime, not here.
     render(<CoverImageBar coverUrl={null} onPick={vi.fn()} onRemove={vi.fn()} isPolish />);
-    expect(screen.getByText('Dodaj okładkę')).toBeInTheDocument();
+    expect(screen.getByText('Add cover')).toBeInTheDocument();
   });
 });
 

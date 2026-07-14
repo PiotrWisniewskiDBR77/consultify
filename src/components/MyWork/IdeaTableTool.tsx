@@ -223,7 +223,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   onGraphChange,
   onTableContextChange,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t: tRaw, i18n } = useTranslation();
+  // Hooki tabeli przyjmują wąską sygnaturę (key, fallback?) => string — TFunction
+  // z i18next nie jest do niej przypisywalny wprost, stąd stabilny wrapper.
+  const t = useCallback(
+    (key: string, fallback?: string): string => tRaw(key, { defaultValue: fallback ?? key }),
+    [tRaw]
+  );
   const isPl = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
   const currentOrganization = useAppStore((state) => state.currentOrganization);
