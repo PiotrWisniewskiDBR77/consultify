@@ -372,13 +372,16 @@ describe('M24 follow-up Story B — health-panel routes ignore spoofed org selec
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// Story C — FINDING: scim_group_mappings is never filtered by organization_id
-// in adminP32.routes.ts, despite the real Postgres table carrying that
-// column (migration 656_v4_scim_enhanced.sql). Marked it.fails — DO NOT FIX
-// here; this is a security finding for Piotr's decision.
+// Story C — regression guard for the 2026-07-14 finding: scim_group_mappings
+// was read and deleted with no organization_id predicate (cross-org leak +
+// IDOR delete), despite the real Postgres table carrying that column
+// (migration 656_v4_scim_enhanced.sql). Fixed the same day in
+// adminP32.routes.ts (readScimSummary / createScimGroupMapping /
+// deleteScimGroupMapping). These tests fail again if the org filter is ever
+// dropped.
 // ════════════════════════════════════════════════════════════════════════════
 
-describe('M24 follow-up Story C — FINDING: scim_group_mappings cross-org leak/IDOR', () => {
+describe('M24 follow-up Story C — scim_group_mappings must stay org-scoped', () => {
   let app: express.Express;
 
   beforeEach(async () => {
@@ -401,17 +404,20 @@ describe('M24 follow-up Story C — FINDING: scim_group_mappings cross-org leak/
     app.use('/api/adminp32', adminP32Router);
   });
 
-  it.fails(
-    'FINDING C1: GET /identity/scim leaks org-beta group mappings to an org-alpha admin ' +
-      '(readScimSummary() queries scim_group_mappings with no WHERE organization_id — ' +
-      'adminP32.routes.ts ~line 1469-1474)',
+  it(
+    'C1 regression guard: GET /identity/scim never surfaces another org’s group ' +
+      'mappings (readScimSummary() must query scim_group_mappings WITH ' +
+      'WHERE organization_id — was a live cross-org leak until 2026-07-14)',
     async () => {
-      // Simulate the REAL (unfiltered) DB behaviour: the group-mappings query
-      // returns rows from every organization, because the application-level
-      // SQL has no WHERE organization_id clause (unlike the scim_tokens and
-      // scim_conflict_log queries in the same function, which DO filter).
-      dbAllMock.mockImplementation((query: string) => {
+      // Behave like a real, correctly-populated DB: the org-beta row is only
+      // reachable through an UNFILTERED query. If the SQL carries the
+      // organization_id predicate bound to the caller's org, the row is
+      // invisible — exactly how Postgres would answer.
+      dbAllMock.mockImplementation((query: string, params: unknown[] = []) => {
         if (typeof query === 'string' && query.includes('scim_group_mappings')) {
+          const scopedToCaller =
+            query.includes('organization_id') && (params ?? []).includes(ORG_A);
+          if (scopedToCaller) return Promise.resolve([]);
           return Promise.resolve([
             {
               id: 'mapping-org-b-secret',
@@ -432,29 +438,35 @@ describe('M24 follow-up Story C — FINDING: scim_group_mappings cross-org leak/
         (m: any) => m.external_group_name
       );
       // A correctly org-scoped endpoint must NEVER surface org-beta's mapping
-      // to an org-alpha caller. This assertion is expected to FAIL today.
+      // to an org-alpha caller. Fails again if the WHERE clause is dropped.
       expect(mappingNames).not.toContain('org-beta-finance-team');
     }
   );
 
-  it.fails(
-    'FINDING C2: DELETE /identity/scim/group-mappings/:id deletes by id only — no ' +
-      'organization_id ownership check (deleteScimGroupMapping() — adminP32.routes.ts ~line 1535-1536), ' +
-      'so an org-alpha admin can delete another org’s SCIM group mapping by id',
+  it(
+    'C2 regression guard: DELETE /identity/scim/group-mappings/:id must bind the ' +
+      'actor’s organization_id (deleteScimGroupMapping() — was an unscoped cross-org ' +
+      'IDOR delete until 2026-07-14)',
     async () => {
       const res = await request(app).delete(
         '/api/adminp32/identity/scim/group-mappings/mapping-org-b-secret'
       );
 
       expect(res.status).toBe(200);
-      // The real code calls: DELETE FROM scim_group_mappings WHERE id = ?
-      // with no organization_id predicate. A correctly scoped delete would
-      // include the actor's orgId as a bind parameter. This assertion is
-      // expected to FAIL today, proving the delete is unscoped.
-      expect(dbRunMock).toHaveBeenCalledWith(
-        expect.stringContaining('organization_id'),
-        expect.arrayContaining([ORG_A])
+      // The scoped delete must run:
+      //   DELETE FROM scim_group_mappings WHERE id = ? AND organization_id = ?
+      // with the caller's orgId as a bind parameter. Fails again if the
+      // ownership predicate is dropped.
+      const deleteCalls = dbRunMock.mock.calls.filter(
+        ([query]: [string]) =>
+          typeof query === 'string' &&
+          query.includes('DELETE FROM scim_group_mappings')
       );
+      expect(deleteCalls.length).toBeGreaterThan(0);
+      for (const [query, params] of deleteCalls) {
+        expect(query).toContain('organization_id');
+        expect(params).toContain(ORG_A);
+      }
     }
   );
 });

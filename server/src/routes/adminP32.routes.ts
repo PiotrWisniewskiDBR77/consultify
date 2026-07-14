@@ -1428,6 +1428,7 @@ async function readScimSummary(orgId: string) {
   )`);
   await dbRun(`CREATE TABLE IF NOT EXISTS scim_group_mappings (
     id TEXT PRIMARY KEY,
+    organization_id TEXT,
     external_group_id TEXT,
     external_group_name TEXT,
     internal_role TEXT,
@@ -1439,6 +1440,7 @@ async function readScimSummary(orgId: string) {
   )`);
   await dbRun(`CREATE TABLE IF NOT EXISTS scim_sync_logs (
     id TEXT PRIMARY KEY,
+    organization_id TEXT,
     operation TEXT,
     resource_type TEXT,
     resource_id TEXT,
@@ -1468,14 +1470,14 @@ async function readScimSummary(orgId: string) {
     ),
     dbAll<any>(
       `SELECT id, external_group_name, internal_role, is_active, member_count
-       FROM scim_group_mappings ORDER BY created_at DESC`,
-      [],
+       FROM scim_group_mappings WHERE organization_id = ? ORDER BY created_at DESC`,
+      [orgId],
       { fallback: true }
     ),
     dbAll<any>(
       `SELECT id, operation, resource_type, status, error_message, created_at
-       FROM scim_sync_logs ORDER BY created_at DESC LIMIT 20`,
-      [],
+       FROM scim_sync_logs WHERE organization_id = ? ORDER BY created_at DESC LIMIT 20`,
+      [orgId],
       { fallback: true }
     ),
     dbAll<any>(
@@ -1513,15 +1515,16 @@ async function deleteScimToken(orgId: string, id: string) {
 }
 
 async function createScimGroupMapping(
+  orgId: string,
   externalGroupName: string,
   externalGroupId: string,
   internalRole: string
 ) {
   const id = uuidv4();
   await dbRun(
-    `INSERT INTO scim_group_mappings (id, external_group_id, external_group_name, internal_role)
-     VALUES (?, ?, ?, ?)`,
-    [id, externalGroupId, externalGroupName, internalRole || 'member']
+    `INSERT INTO scim_group_mappings (id, organization_id, external_group_id, external_group_name, internal_role)
+     VALUES (?, ?, ?, ?, ?)`,
+    [id, orgId, externalGroupId, externalGroupName, internalRole || 'member']
   );
   return {
     id,
@@ -1532,8 +1535,8 @@ async function createScimGroupMapping(
   };
 }
 
-async function deleteScimGroupMapping(id: string) {
-  await dbRun(`DELETE FROM scim_group_mappings WHERE id = ?`, [id]);
+async function deleteScimGroupMapping(orgId: string, id: string) {
+  await dbRun(`DELETE FROM scim_group_mappings WHERE id = ? AND organization_id = ?`, [id, orgId]);
 }
 
 async function readRiskSummary(orgId: string) {
@@ -2182,6 +2185,7 @@ router.post(
     const actor = await getAdminActor(req, res, ['security:write']);
     if (!actor) return;
     const mapping = await createScimGroupMapping(
+      actor.orgId,
       String(req.body?.externalGroupName || ''),
       String(req.body?.externalGroupId || ''),
       String(req.body?.internalRole || 'member')
@@ -2200,7 +2204,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res) => {
     const actor = await getAdminActor(req, res, ['security:write']);
     if (!actor) return;
-    await deleteScimGroupMapping(req.params.id);
+    await deleteScimGroupMapping(actor.orgId, req.params.id);
     await adminAuditService.logAction({
       adminId: actor.actorId,
       actionType: 'delete_scim_group_mapping',
