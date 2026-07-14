@@ -283,7 +283,9 @@ export const KPIAttributionPanel: React.FC = () => {
                       className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: COLORS[i % COLORS.length] }}
                     />
-                    <span className="text-c-text-secondary dark:text-c-text-secondary">{c.initiativeName}</span>
+                    <span className="text-c-text-secondary dark:text-c-text-secondary">
+                      {c.initiativeName}
+                    </span>
                   </div>
                 ))}
                 {attribution.unexplainedPercent > 2 && (
@@ -323,9 +325,7 @@ export const KPIAttributionPanel: React.FC = () => {
                     <ConfBadge level={c.confidence} />
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-bold text-c-text">
-                      {c.contributionPercent}%
-                    </span>
+                    <span className="text-sm font-bold text-c-text">{c.contributionPercent}%</span>
                     <span className="text-sm text-c-text-muted">
                       ({c.contributionValue > 0 ? '+' : ''}
                       {c.contributionValue.toFixed(2)})
@@ -334,7 +334,9 @@ export const KPIAttributionPanel: React.FC = () => {
                 </button>
                 {expandedContrib === c.initiativeId && (
                   <div className="px-4 pb-4 space-y-2 border-t border-c-border dark:border-c-border pt-3">
-                    <p className="text-sm text-c-text-secondary dark:text-c-text-secondary">{c.explanation}</p>
+                    <p className="text-sm text-c-text-secondary dark:text-c-text-secondary">
+                      {c.explanation}
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {c.signals.map((s, i) => (
                         <span

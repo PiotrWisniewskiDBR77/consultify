@@ -5,8 +5,8 @@
  * fixed inset-0 z-modal → TemplateBuilderFlow). Nie mockuje całego Huba
  * (routing/store/API) — tylko sam punkt wejścia + flaga.
  */
-import React, { useState } from 'react';
 import { BookTemplate, Plus } from 'lucide-react';
+import React, { useState } from 'react';
 
 import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
 

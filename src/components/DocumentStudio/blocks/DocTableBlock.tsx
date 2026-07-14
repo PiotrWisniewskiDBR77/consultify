@@ -25,7 +25,11 @@ const CELL_PADDING = '8px 12px';
 /** Risk level → background/foreground. Keeps the textual label (never replaces). */
 function riskCellStyle(value: string): React.CSSProperties | undefined {
   const v = value.toLowerCase().trim();
-  if (/^(high|critical|severe|wysoki|wysoka|krytyczny|krytyczna)$/.test(v) || v === '5' || v === '4') {
+  if (
+    /^(high|critical|severe|wysoki|wysoka|krytyczny|krytyczna)$/.test(v) ||
+    v === '5' ||
+    v === '4'
+  ) {
     return { background: '#fde8ea', color: '#9b1c2e', fontWeight: 600 };
   }
   if (/^(medium|moderate|średni|sredni|średnia|srednia)$/.test(v) || v === '3') {
@@ -44,7 +48,9 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
   const riskColIndexes = new Set<number>();
   if (riskSemantics) {
     columns.forEach((c, i) => {
-      if (/(likelihood|probab|impact|severity|risk|prawdopod|wpływ|wplyw|ryzyko|istotno)/i.test(c)) {
+      if (
+        /(likelihood|probab|impact|severity|risk|prawdopod|wpływ|wplyw|ryzyko|istotno)/i.test(c)
+      ) {
         riskColIndexes.add(i);
       }
     });
@@ -95,10 +101,7 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
         )}
         <tbody>
           {rows.map((row, rIdx) => (
-            <tr
-              key={rIdx}
-              style={{ background: rIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}
-            >
+            <tr key={rIdx} style={{ background: rIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
               {(columns.length > 0 ? columns : row).map((_, cIdx) => {
                 const value = row[cIdx] ?? '';
                 const risk = riskColIndexes.has(cIdx) ? riskCellStyle(value) : undefined;

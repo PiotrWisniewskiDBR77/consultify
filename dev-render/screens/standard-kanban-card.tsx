@@ -13,11 +13,11 @@
 import { Flag, Layers } from 'lucide-react';
 import React from 'react';
 
-import { StandardKanban, StandardKanbanCard } from '../../src/components/standard';
 import type {
   StandardKanbanCard as StandardKanbanCardData,
   StandardKanbanColumn,
 } from '../../src/components/standard';
+import { StandardKanban, StandardKanbanCard } from '../../src/components/standard';
 
 const COLUMNS: StandardKanbanColumn[] = [
   { id: 'scheduled', label: 'Zaplanowane', tone: 'info', onCreate: () => {}, createLabel: 'Dodaj' },
@@ -105,8 +105,8 @@ export default function StandardKanbanCardScreen(): React.ReactElement {
           #75b — JEDEN kanon karty kanban (StandardKanbanCard)
         </h1>
         <p className="text-xs text-c-text-muted mt-1">
-          Fasada StandardKanban (natywny DnD — przeciągnij między kolumnami). Ciche chipy z tonem
-          w kropce, pasek pilności ~3px, footer „następna bramka", termin overdue = czerwony.
+          Fasada StandardKanban (natywny DnD — przeciągnij między kolumnami). Ciche chipy z tonem w
+          kropce, pasek pilności ~3px, footer „następna bramka", termin overdue = czerwony.
         </p>
       </div>
 
@@ -116,9 +116,7 @@ export default function StandardKanbanCardScreen(): React.ReactElement {
           cards={(colId) => board.filter((c) => c.columnId === colId)}
           onCardClick={(c) => console.log('click', c.id)}
           onDrop={(cardId, colId) =>
-            setBoard((prev) =>
-              prev.map((c) => (c.id === cardId ? { ...c, columnId: colId } : c))
-            )
+            setBoard((prev) => prev.map((c) => (c.id === cardId ? { ...c, columnId: colId } : c)))
           }
         />
       </div>

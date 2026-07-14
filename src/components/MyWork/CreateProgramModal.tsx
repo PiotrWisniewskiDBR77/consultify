@@ -90,7 +90,7 @@ export const CreateProgramModal: React.FC<CreateProgramModalProps> = ({
       onClose();
     } catch (err: any) {
       toast.error(
-        err?.message || (t('myWork.createProgramModal.failedToSaveProgram', 'Failed to save program'))
+        err?.message || t('myWork.createProgramModal.failedToSaveProgram', 'Failed to save program')
       );
     } finally {
       setIsSubmitting(false);
@@ -110,7 +110,10 @@ export const CreateProgramModal: React.FC<CreateProgramModalProps> = ({
                   : t('myWork.createProgramModal.newProgram', 'New program')}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 text-sm">
-                {t('myWork.createProgramModal.aProgramGroupsMultiple', 'A program groups multiple projects under a shared rollup.')}
+                {t(
+                  'myWork.createProgramModal.aProgramGroupsMultiple',
+                  'A program groups multiple projects under a shared rollup.'
+                )}
               </p>
             </div>
             <button
@@ -130,9 +133,10 @@ export const CreateProgramModal: React.FC<CreateProgramModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={
-                  t('myWork.createProgramModal.eGDigitalTransformation', 'e.g. Digital Transformation 2026')
-                }
+                placeholder={t(
+                  'myWork.createProgramModal.eGDigitalTransformation',
+                  'e.g. Digital Transformation 2026'
+                )}
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm placeholder-slate-500"
                 autoFocus
               />
@@ -204,7 +208,9 @@ export const CreateProgramModal: React.FC<CreateProgramModalProps> = ({
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
-              {isEdit ? (t('myWork.createProgramModal.save', 'Save')) : t('myWork.createProgramModal.create', 'Create')}
+              {isEdit
+                ? t('myWork.createProgramModal.save', 'Save')
+                : t('myWork.createProgramModal.create', 'Create')}
             </button>
           </div>
         </div>

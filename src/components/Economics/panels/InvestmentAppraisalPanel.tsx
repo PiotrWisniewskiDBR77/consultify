@@ -100,10 +100,10 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
   fetcher,
 }) => {
   const [cashflows, setCashflows] = useState<number[]>(
-    initialCashFlows && initialCashFlows.length > 0 ? initialCashFlows : DEFAULT_CASHFLOWS,
+    initialCashFlows && initialCashFlows.length > 0 ? initialCashFlows : DEFAULT_CASHFLOWS
   );
   const [discountRate, setDiscountRate] = useState<number>(
-    typeof discountRatePct === 'number' ? discountRatePct : 10,
+    typeof discountRatePct === 'number' ? discountRatePct : 10
   );
   const [result, setResult] = useState<AppraisalResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -279,7 +279,10 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
           </div>
 
           {/* Metric tiles */}
-          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="appraise-metrics">
+          <div
+            className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3"
+            data-testid="appraise-metrics"
+          >
             {metrics.map((m) => (
               <div
                 key={m.key}

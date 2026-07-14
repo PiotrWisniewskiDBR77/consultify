@@ -110,21 +110,86 @@ const FINANCE_BY_PROJECT: Record<string, any> = {
 
 const TEAM_BY_PROJECT: Record<string, any[]> = {
   p1: [
-    { id: 'm1', user_id: 'u1', first_name: 'Piotr', last_name: 'Wiśniewski', email: 'piotr@dbr77.com', role: 'OWNER' },
-    { id: 'm2', user_id: 'u2', first_name: 'Marta', last_name: 'Zielińska', email: 'marta@dbr77.com', role: 'MANAGER' },
-    { id: 'm3', user_id: 'u3', first_name: 'Tomasz', last_name: 'Nowak', email: 'tomasz@dbr77.com', role: 'LEAD' },
-    { id: 'm4', user_id: 'u4', first_name: 'Kasia', last_name: 'Lewandowska', email: 'kasia@dbr77.com', role: 'MEMBER' },
-    { id: 'm5', user_id: 'u5', first_name: 'Jan', last_name: 'Wójcik', email: 'jan@dbr77.com', role: 'MEMBER' },
+    {
+      id: 'm1',
+      user_id: 'u1',
+      first_name: 'Piotr',
+      last_name: 'Wiśniewski',
+      email: 'piotr@dbr77.com',
+      role: 'OWNER',
+    },
+    {
+      id: 'm2',
+      user_id: 'u2',
+      first_name: 'Marta',
+      last_name: 'Zielińska',
+      email: 'marta@dbr77.com',
+      role: 'MANAGER',
+    },
+    {
+      id: 'm3',
+      user_id: 'u3',
+      first_name: 'Tomasz',
+      last_name: 'Nowak',
+      email: 'tomasz@dbr77.com',
+      role: 'LEAD',
+    },
+    {
+      id: 'm4',
+      user_id: 'u4',
+      first_name: 'Kasia',
+      last_name: 'Lewandowska',
+      email: 'kasia@dbr77.com',
+      role: 'MEMBER',
+    },
+    {
+      id: 'm5',
+      user_id: 'u5',
+      first_name: 'Jan',
+      last_name: 'Wójcik',
+      email: 'jan@dbr77.com',
+      role: 'MEMBER',
+    },
   ],
 };
 
 const TASKS_BY_PROJECT: Record<string, any[]> = {
   p1: [
-    { id: 't1', title: 'Zdefiniować kartę Zwornika', status: 'done', priority: 'high', assignee: { firstName: 'Tomasz', lastName: 'Nowak' } },
-    { id: 't2', title: 'Rollup finansowy — walidacja z kontrolerem', status: 'in_progress', priority: 'high', assignee: { firstName: 'Marta', lastName: 'Zielińska' } },
-    { id: 't3', title: 'Rejestr interesariuszy — import z org', status: 'in_progress', priority: 'medium', assignee: { firstName: 'Kasia', lastName: 'Lewandowska' } },
-    { id: 't4', title: 'Macierz ról projektowych', status: 'todo', priority: 'medium', assignee: null },
-    { id: 't5', title: 'Uzgodnić budżety inicjatyw', status: 'blocked', priority: 'high', assignee: { firstName: 'Jan', lastName: 'Wójcik' } },
+    {
+      id: 't1',
+      title: 'Zdefiniować kartę Zwornika',
+      status: 'done',
+      priority: 'high',
+      assignee: { firstName: 'Tomasz', lastName: 'Nowak' },
+    },
+    {
+      id: 't2',
+      title: 'Rollup finansowy — walidacja z kontrolerem',
+      status: 'in_progress',
+      priority: 'high',
+      assignee: { firstName: 'Marta', lastName: 'Zielińska' },
+    },
+    {
+      id: 't3',
+      title: 'Rejestr interesariuszy — import z org',
+      status: 'in_progress',
+      priority: 'medium',
+      assignee: { firstName: 'Kasia', lastName: 'Lewandowska' },
+    },
+    {
+      id: 't4',
+      title: 'Macierz ról projektowych',
+      status: 'todo',
+      priority: 'medium',
+      assignee: null,
+    },
+    {
+      id: 't5',
+      title: 'Uzgodnić budżety inicjatyw',
+      status: 'blocked',
+      priority: 'high',
+      assignee: { firstName: 'Jan', lastName: 'Wójcik' },
+    },
     { id: 't6', title: 'Przegląd kwartalny Q3', status: 'todo', priority: 'low', assignee: null },
   ],
 };

@@ -303,7 +303,7 @@ const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
   placeholder,
   isPolish,
 }) => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -354,7 +354,9 @@ const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
           className="absolute -bottom-4 right-4 inline-flex items-center gap-1 px-1 py-0.5 text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
         >
           {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-          {isExpanded ? (t('initiatives.initiativeDocumentView.less')) : t('initiatives.initiativeDocumentView.more')}
+          {isExpanded
+            ? t('initiatives.initiativeDocumentView.less')
+            : t('initiatives.initiativeDocumentView.more')}
         </button>
       )}
     </div>
@@ -620,14 +622,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [sectionAiState, setSectionAiState] = useState<
     Record<string, 'ai-draft' | 'edited' | 'done'>
   >({});
-  const setSectionState = useCallback(
-    (sectionId: string, next: 'ai-draft' | 'edited' | 'done') => {
-      setSectionAiState((prev) =>
-        prev[sectionId] === next ? prev : { ...prev, [sectionId]: next }
-      );
-    },
-    []
-  );
+  const setSectionState = useCallback((sectionId: string, next: 'ai-draft' | 'edited' | 'done') => {
+    setSectionAiState((prev) => (prev[sectionId] === next ? prev : { ...prev, [sectionId]: next }));
+  }, []);
   // Ref to the per-section AI dispatcher (runSectionAi), so the section-content
   // memo can trigger regeneration WITHOUT taking runSectionAi (declared later) as
   // a dependency — avoids use-before-declaration + keeps the memo stable.
@@ -1324,8 +1321,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // prawdy dla WSZYSTKICH afordancji edycji (readOnly pól, hideActions pasków,
   // onEdit/onAccept, empty-state „wypełnij", Archiwizuj/Usuń). Uprawnienie serwera
   // dalej obowiązuje (AND), więc read-mode nigdy nie „odblokuje" edycji.
-  const canEditCards =
-    !!gateReadiness?.capabilities?.cards?.canEditCards && !readMode;
+  const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards && !readMode;
   const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
   // Document-interior lifecycle affordances (Archive / Delete). Visible only to
   // users with write access; server re-enforces (archive: lifecycle, delete:
@@ -2920,8 +2916,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       await commitStatusTransition(action.targetStatus);
     } catch (e: any) {
       toast.error(
-        e?.message ||
-          t('initiatives.toast.statusUpdateError', 'Failed to update status')
+        e?.message || t('initiatives.toast.statusUpdateError', 'Failed to update status')
       );
     } finally {
       setIsMutating(false);
@@ -2958,8 +2953,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       await commitStatusTransition(pending.targetStatus, reason);
     } catch (e: any) {
       toast.error(
-        e?.message ||
-          t('initiatives.toast.statusUpdateError', 'Failed to update status')
+        e?.message || t('initiatives.toast.statusUpdateError', 'Failed to update status')
       );
     } finally {
       setIsMutating(false);
@@ -2982,9 +2976,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         toast.success(t('initiatives.nowWatching2'));
       }
     } catch (e: any) {
-      toast.error(
-        e?.message || t('initiatives.toast.watchError', 'Failed to change watching')
-      );
+      toast.error(e?.message || t('initiatives.toast.watchError', 'Failed to change watching'));
     } finally {
       setIsMutating(false);
     }
@@ -3327,9 +3319,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowCreateTask(false);
       toast.success(t('initiatives.taskCreated2'));
     } catch (e: any) {
-      toast.error(
-        e?.message || t('initiatives.toast.createTaskError', 'Failed to create task')
-      );
+      toast.error(e?.message || t('initiatives.toast.createTaskError', 'Failed to create task'));
     } finally {
       setIsMutating(false);
     }
@@ -3410,9 +3400,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowCreateRaid(false);
       toast.success(t('initiatives.raidItemAdded2'));
     } catch (e: any) {
-      toast.error(
-        e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item')
-      );
+      toast.error(e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item'));
     } finally {
       setIsMutating(false);
     }
@@ -4347,9 +4335,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return null;
       }
     } catch (e: any) {
-      toast.error(
-        e?.message || t('initiatives.toast.aiGenerationError', 'AI generation failed')
-      );
+      toast.error(e?.message || t('initiatives.toast.aiGenerationError', 'AI generation failed'));
       return null;
     } finally {
       setIsGeneratingAI(null);
@@ -4439,9 +4425,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setMarketContextDraft((prev) => upsertFinancialBlock(prev, section, text, isPolish));
         toast.success(t('initiatives.aiGeneratedAFinancialDraftReview2'));
       } catch (e: any) {
-        toast.error(
-          e?.message || t('initiatives.toast.aiGenerationError', 'AI generation failed')
-        );
+        toast.error(e?.message || t('initiatives.toast.aiGenerationError', 'AI generation failed'));
       } finally {
         setIsGeneratingAI(null);
       }
@@ -4474,8 +4458,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       fetchAll();
     } catch (e: any) {
       toast.error(
-        e?.message ||
-          t('initiatives.toast.approvalRequestError', 'Failed to send approval request')
+        e?.message || t('initiatives.toast.approvalRequestError', 'Failed to send approval request')
       );
     } finally {
       setIsMutating(false);
@@ -6442,9 +6425,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onChange={(e) => onUpdate(item.id, { text: e.target.value })}
                 placeholder={placeholder}
                 className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder:text-c-text-muted ${
-                  item.done
-                    ? 'line-through text-c-text-secondary'
-                    : 'text-c-text-secondary'
+                  item.done ? 'line-through text-c-text-secondary' : 'text-c-text-secondary'
                 }`}
               />
               <AIFieldEnhancer
@@ -7110,9 +7091,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         key={key}
                         className="p-2.5 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-c-border-subtle"
                       >
-                        <p className="text-[10px] text-c-text-muted capitalize mb-1">
-                          {key}
-                        </p>
+                        <p className="text-[10px] text-c-text-muted capitalize mb-1">{key}</p>
                         <div className="h-1.5 rounded-full bg-c-surface-raised overflow-hidden">
                           <div
                             className="h-full rounded-full bg-c-surface"
@@ -7498,9 +7477,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-c-text">
-                  {t('initiatives.gates2')}
-                </h2>
+                <h2 className="text-lg font-semibold text-c-text">{t('initiatives.gates2')}</h2>
               </div>
 
               {/* Full lifecycle gate workflow table (13 stages) */}
@@ -7517,9 +7494,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 {t('initiatives.suggestedChanges2')}
               </h2>
               {suggestedChangesLoading ? (
-                <p className="text-sm text-c-text-muted">
-                  {t('initiatives.loading2')}
-                </p>
+                <p className="text-sm text-c-text-muted">{t('initiatives.loading2')}</p>
               ) : (
                 <div className="min-h-[200px]">
                   <SuggestedChangesPanel
@@ -8033,10 +8008,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <tbody className="divide-y divide-c-border-subtle">
                     {localKpis.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={9}
-                          className="py-8 text-center text-xs text-c-text-muted"
-                        >
+                        <td colSpan={9} className="py-8 text-center text-xs text-c-text-muted">
                           {t('initiatives.noKpisDefinedYetClickNew2')}
                         </td>
                       </tr>
@@ -8060,15 +8032,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 ? t('initiatives.realization2')
                                 : t('initiatives.postImplementation2')}
                           </td>
-                          <td className="py-2 pr-2 text-c-text-muted">
-                            {kpi.unit || '—'}
-                          </td>
-                          <td className="py-2 pr-2 text-c-text-muted">
-                            {kpi.baseline || '—'}
-                          </td>
-                          <td className="py-2 pr-2 text-c-text-muted">
-                            {kpi.current || '—'}
-                          </td>
+                          <td className="py-2 pr-2 text-c-text-muted">{kpi.unit || '—'}</td>
+                          <td className="py-2 pr-2 text-c-text-muted">{kpi.baseline || '—'}</td>
+                          <td className="py-2 pr-2 text-c-text-muted">{kpi.current || '—'}</td>
                           <td className="py-2 pr-2 text-c-text-muted">
                             {kpi.realizationTarget || '—'}
                           </td>
@@ -8143,12 +8109,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-c-text">
-                  {t('initiatives.watchers2')}
-                </h2>
-                <span className="text-xs text-c-text-muted">
-                  {watchers.length}
-                </span>
+                <h2 className="text-lg font-semibold text-c-text">{t('initiatives.watchers2')}</h2>
+                <span className="text-xs text-c-text-muted">{watchers.length}</span>
               </div>
               {watchers.length === 0 ? (
                 <div className="p-5 rounded-xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 text-sm text-c-text-muted">
@@ -8243,9 +8205,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <div className="text-[11px] font-medium text-c-text truncate">
                           {getSourceDisplayLabel(bl.sourceType, isPolish)}
                         </div>
-                        <div className="text-[10px] text-c-text-muted truncate">
-                          {bl.sourceId}
-                        </div>
+                        <div className="text-[10px] text-c-text-muted truncate">{bl.sourceId}</div>
                       </div>
                       <button
                         onClick={() => openBacklinkItem(bl.sourceType, bl.sourceId)}
@@ -8422,9 +8382,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         case 'change-log': {
           component = (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-c-text">
-                {t('initiatives.changeLog2')}
-              </h2>
+              <h2 className="text-lg font-semibold text-c-text">{t('initiatives.changeLog2')}</h2>
               {canEditCards && (
                 <div className="flex items-center gap-2">
                   <input
@@ -8468,11 +8426,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm text-c-text-secondary">{e.change}</div>
-                        {e.reason && (
-                          <div className="text-xs text-c-text-muted">
-                            {e.reason}
-                          </div>
-                        )}
+                        {e.reason && <div className="text-xs text-c-text-muted">{e.reason}</div>}
                         {e.user && (
                           <div className="text-[11px] text-c-text-muted mt-0.5">{e.user}</div>
                         )}
@@ -8589,9 +8543,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         case 'hypothesis': {
           component = (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-c-text">
-                {t('initiatives.hypothesis2')}
-              </h2>
+              <h2 className="text-lg font-semibold text-c-text">{t('initiatives.hypothesis2')}</h2>
               <p className="text-xs text-c-text-muted">
                 {t('initiatives.theValueHypothesisWhatWeBelieve2')}
               </p>
@@ -8636,16 +8588,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {owners.map((o, i) => (
-                    <div
-                      key={i}
-                      className="rounded-xl border border-c-border-subtle p-3"
-                    >
+                    <div key={i} className="rounded-xl border border-c-border-subtle p-3">
                       <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
                         {o.role}
                       </div>
-                      <div className="text-sm font-medium text-c-text mt-0.5">
-                        {o.name}
-                      </div>
+                      <div className="text-sm font-medium text-c-text mt-0.5">{o.name}</div>
                     </div>
                   ))}
                 </div>
@@ -8817,9 +8764,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   }
                 : undefined
             }
-            onAccept={
-              canEditCards ? () => setSectionState(section.id, 'done') : undefined
-            }
+            onAccept={canEditCards ? () => setSectionState(section.id, 'done') : undefined}
           >
             {component}
           </NModeCardState>
@@ -9456,103 +9401,105 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // actual write. Card state is advisory (human still reviews & accepts).
       setSectionState(sectionId, 'ai-draft');
       switch (sectionId) {
-      case 'tasks':
-        requestTasksAi('analyze');
-        return;
-      case 'decisions':
-        requestDecisionsAi('analyze');
-        return;
-      case 'comments':
-        requestCommentsAi();
-        return;
-      case 'resources':
-        requestResourcesAi();
-        return;
-      case 'timeline':
-        requestTimelineAi();
-        return;
-      case 'dependencies':
-        requestDependenciesAi();
-        return;
-      case 'kpi':
-      case 'kpis':
-        requestKpisAi();
-        return;
-      case 'team':
-        requestTeamAi();
-        return;
-      case 'target-state-scope':
-      case 'targetState':
-        requestTargetStateAi();
-        return;
-      case 'gates':
-        requestGatesAi();
-        return;
-      case 'risk-raid':
-        requestRaidAi();
-        return;
-      case 'initiative-definition':
-        await handleGenerateScopeCard();
-        return;
-      case 'financial-analysis':
-      case 'financial-impact':
-        await handleGenerateFinancial(sectionId);
-        return;
-      // K4 — AI-fill for sections previously no-op
-      case 'hypothesis': {
-        const res = await handleGenerateAI('hypothesis');
-        if (res?.parsedContent || res?.content) {
-          const text = String(res.parsedContent || res.content).trim();
-          setHypothesisDraft(text);
-          void persistInitiativeField(
-            { hypothesisStatement: text },
-            { hypothesisStatement: text, hypothesis_statement: text }
-          );
-        }
-        return;
-      }
-      case 'lessons-learned': {
-        const res = await handleGenerateAI('lessons-learned');
-        if (res?.parsedContent || res?.content) {
-          const text = String(res.parsedContent || res.content).trim();
-          setLessonsDraft(text);
-          void persistInitiativeField(
-            { lessonsLearned: text },
-            { lessonsLearned: text, lessons_learned: text }
-          );
-        }
-        return;
-      }
-      case 'okr': {
-        const res = await handleGenerateAI('okr');
-        if (res?.parsedContent || res?.content) {
-          const raw = res.parsedContent ?? res.content;
-          let objectives: Array<{ objective: string; keyResults: string[]; confidence: string }> =
-            [];
-          try {
-            const parsed = typeof raw === 'object' ? raw : JSON.parse(String(raw));
-            const arr = Array.isArray(parsed)
-              ? parsed
-              : (parsed as any).objectives ?? (parsed as any).okrs ?? [];
-            objectives = arr.map((o: any) => ({
-              objective: typeof o === 'string' ? o : (o.objective ?? o.title ?? ''),
-              keyResults: Array.isArray(o?.keyResults) ? o.keyResults : [],
-              confidence: (o?.confidence ?? 'MEDIUM').toUpperCase(),
-            }));
-          } catch {
-            objectives = [{ objective: String(raw).trim(), keyResults: [], confidence: 'MEDIUM' }];
+        case 'tasks':
+          requestTasksAi('analyze');
+          return;
+        case 'decisions':
+          requestDecisionsAi('analyze');
+          return;
+        case 'comments':
+          requestCommentsAi();
+          return;
+        case 'resources':
+          requestResourcesAi();
+          return;
+        case 'timeline':
+          requestTimelineAi();
+          return;
+        case 'dependencies':
+          requestDependenciesAi();
+          return;
+        case 'kpi':
+        case 'kpis':
+          requestKpisAi();
+          return;
+        case 'team':
+          requestTeamAi();
+          return;
+        case 'target-state-scope':
+        case 'targetState':
+          requestTargetStateAi();
+          return;
+        case 'gates':
+          requestGatesAi();
+          return;
+        case 'risk-raid':
+          requestRaidAi();
+          return;
+        case 'initiative-definition':
+          await handleGenerateScopeCard();
+          return;
+        case 'financial-analysis':
+        case 'financial-impact':
+          await handleGenerateFinancial(sectionId);
+          return;
+        // K4 — AI-fill for sections previously no-op
+        case 'hypothesis': {
+          const res = await handleGenerateAI('hypothesis');
+          if (res?.parsedContent || res?.content) {
+            const text = String(res.parsedContent || res.content).trim();
+            setHypothesisDraft(text);
+            void persistInitiativeField(
+              { hypothesisStatement: text },
+              { hypothesisStatement: text, hypothesis_statement: text }
+            );
           }
-          if (objectives.length) {
-            const now = Date.now();
-            const newItems = objectives.map((o, i) => ({ id: `okr-ai-${now}-${i}`, ...o }));
-            const next = [...newItems, ...okrItems];
-            void persistInitiativeField({ okrs: next }, { okrs: next });
-          }
+          return;
         }
-        return;
-      }
-      default:
-        await handleGenerateAI(sectionId);
+        case 'lessons-learned': {
+          const res = await handleGenerateAI('lessons-learned');
+          if (res?.parsedContent || res?.content) {
+            const text = String(res.parsedContent || res.content).trim();
+            setLessonsDraft(text);
+            void persistInitiativeField(
+              { lessonsLearned: text },
+              { lessonsLearned: text, lessons_learned: text }
+            );
+          }
+          return;
+        }
+        case 'okr': {
+          const res = await handleGenerateAI('okr');
+          if (res?.parsedContent || res?.content) {
+            const raw = res.parsedContent ?? res.content;
+            let objectives: Array<{ objective: string; keyResults: string[]; confidence: string }> =
+              [];
+            try {
+              const parsed = typeof raw === 'object' ? raw : JSON.parse(String(raw));
+              const arr = Array.isArray(parsed)
+                ? parsed
+                : ((parsed as any).objectives ?? (parsed as any).okrs ?? []);
+              objectives = arr.map((o: any) => ({
+                objective: typeof o === 'string' ? o : (o.objective ?? o.title ?? ''),
+                keyResults: Array.isArray(o?.keyResults) ? o.keyResults : [],
+                confidence: (o?.confidence ?? 'MEDIUM').toUpperCase(),
+              }));
+            } catch {
+              objectives = [
+                { objective: String(raw).trim(), keyResults: [], confidence: 'MEDIUM' },
+              ];
+            }
+            if (objectives.length) {
+              const now = Date.now();
+              const newItems = objectives.map((o, i) => ({ id: `okr-ai-${now}-${i}`, ...o }));
+              const next = [...newItems, ...okrItems];
+              void persistInitiativeField({ okrs: next }, { okrs: next });
+            }
+          }
+          return;
+        }
+        default:
+          await handleGenerateAI(sectionId);
       }
     },
     [
@@ -9720,7 +9667,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 primaryAction={
                   primaryLifecycleAction
                     ? {
-                        label: { en: primaryLifecycleAction.label, pl: primaryLifecycleAction.labelPl },
+                        label: {
+                          en: primaryLifecycleAction.label,
+                          pl: primaryLifecycleAction.labelPl,
+                        },
                         icon: ArrowRight,
                         onClick: () => void handleStatusAction(primaryLifecycleAction),
                         disabled: isMutating,
@@ -9889,9 +9839,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-c-text">
-                              {x.title}
-                            </span>
+                            <span className="text-sm font-medium text-c-text">{x.title}</span>
                             <span className="text-[10px] px-2 py-0.5 rounded bg-c-surface-raised dark:bg-navy-700/60 text-c-text-secondary">
                               {String(x.type || '').toUpperCase()}
                             </span>
@@ -9907,9 +9855,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             </p>
                           ) : null}
                           {x.rationale ? (
-                            <p className="text-[11px] text-c-text-muted mt-1">
-                              {x.rationale}
-                            </p>
+                            <p className="text-[11px] text-c-text-muted mt-1">{x.rationale}</p>
                           ) : null}
                         </div>
                       </label>
@@ -9992,7 +9938,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 primaryAction={
                   primaryLifecycleAction
                     ? {
-                        label: { en: primaryLifecycleAction.label, pl: primaryLifecycleAction.labelPl },
+                        label: {
+                          en: primaryLifecycleAction.label,
+                          pl: primaryLifecycleAction.labelPl,
+                        },
                         icon: ArrowRight,
                         onClick: () => void handleStatusAction(primaryLifecycleAction),
                         disabled: isMutating,
@@ -10152,9 +10101,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             })
                                           }
                                           className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-c-surface-raised/60 ${
-                                            isEmpty
-                                              ? 'text-c-text-muted'
-                                              : 'text-c-text-secondary'
+                                            isEmpty ? 'text-c-text-muted' : 'text-c-text-secondary'
                                           }`}
                                         >
                                           <span
@@ -10201,46 +10148,46 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             Read = ukryte: dodawanie zadań/decyzji/RAID to edycja,
                             a Podgląd ma być czysty do pokazania klientowi. */}
                         {!readMode && (
-                        <div className="relative">
-                          <ToolbarSubtleButton
-                            icon={<Plus size={14} />}
-                            onClick={() => setShowNewMenu((v) => !v)}
-                            disabled={newMenuActions.length === 0}
-                            aria-expanded={showNewMenu}
-                            title={
-                              newMenuActions.length === 0
-                                ? t('initiatives.noCreateActionsAvailableInThis2')
-                                : undefined
-                            }
-                          >
-                            <span>{t('initiatives.new2')}</span>
-                            <ChevronDown size={12} className="opacity-60" />
-                          </ToolbarSubtleButton>
-                          {showNewMenu && newMenuActions.length > 0 && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-40"
-                                onClick={() => setShowNewMenu(false)}
-                              />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
-                                {newMenuActions.map((item) => (
-                                  <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setShowNewMenu(false);
-                                      item.onClick();
-                                    }}
-                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised/60 transition-colors"
-                                  >
-                                    <Plus size={13} className="shrink-0 opacity-70" />
-                                    <span>{isPolish ? item.label.pl : item.label.en}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
+                          <div className="relative">
+                            <ToolbarSubtleButton
+                              icon={<Plus size={14} />}
+                              onClick={() => setShowNewMenu((v) => !v)}
+                              disabled={newMenuActions.length === 0}
+                              aria-expanded={showNewMenu}
+                              title={
+                                newMenuActions.length === 0
+                                  ? t('initiatives.noCreateActionsAvailableInThis2')
+                                  : undefined
+                              }
+                            >
+                              <span>{t('initiatives.new2')}</span>
+                              <ChevronDown size={12} className="opacity-60" />
+                            </ToolbarSubtleButton>
+                            {showNewMenu && newMenuActions.length > 0 && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setShowNewMenu(false)}
+                                />
+                                <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
+                                  {newMenuActions.map((item) => (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setShowNewMenu(false);
+                                        item.onClick();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised/60 transition-colors"
+                                    >
+                                      <Plus size={13} className="shrink-0 opacity-70" />
+                                      <span>{isPolish ? item.label.pl : item.label.en}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         )}
 
                         {/* Slot 3 — Export ▾ (destination selector) */}
@@ -10630,9 +10577,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         onChange={() => toggleExportSection(section.id)}
                         className="rounded border-c-border-strong text-teal-600 focus:ring-teal-500"
                       />
-                      <span className="text-sm text-c-text-secondary">
-                        {sectionLabel(section)}
-                      </span>
+                      <span className="text-sm text-c-text-secondary">{sectionLabel(section)}</span>
                     </label>
                   );
                 })}

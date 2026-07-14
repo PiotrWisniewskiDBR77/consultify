@@ -1244,7 +1244,9 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       )}
 
       <div className="overflow-x-auto overflow-y-visible rounded-xl border border-slate-200 dark:border-navy-700/40">
-        <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm table-fixed">
+        <table
+          /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm table-fixed"
+        >
           <colgroup>
             <col style={{ width: '4%' }} />
             <col style={{ width: '38%' }} />

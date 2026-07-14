@@ -131,9 +131,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: typeColor }}
           />
-          <span className="text-[11px] font-bold text-c-text flex-1">
-            {column.header}
-          </span>
+          <span className="text-[11px] font-bold text-c-text flex-1">{column.header}</span>
           <span className="text-[8px] font-bold uppercase tracking-wider text-c-text-secondary px-1.5 py-0.5 rounded bg-c-surface-raised">
             {column.type}
           </span>
@@ -198,9 +196,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                           }
                         }}
                         className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                          isSelected
-                            ? 'border-transparent'
-                            : 'border-c-border-subtle'
+                          isSelected ? 'border-transparent' : 'border-c-border-subtle'
                         }`}
                         style={isSelected ? { backgroundColor: optColor } : {}}
                       >
@@ -210,9 +206,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                         className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: optColor }}
                       />
-                      <span className="text-[11px] text-c-text flex-1">
-                        {opt}
-                      </span>
+                      <span className="text-[11px] text-c-text flex-1">{opt}</span>
                       {!locked && (
                         <button
                           onClick={() => handleRemoveOption(opt)}
@@ -309,7 +303,9 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 className="w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5 text-sm font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
               {column.type === 'currency' && (
-                <p className="text-[9px] text-c-text-secondary mt-1.5">{isPl ? 'Waluta' : 'Currency'}</p>
+                <p className="text-[9px] text-c-text-secondary mt-1.5">
+                  {isPl ? 'Waluta' : 'Currency'}
+                </p>
               )}
             </div>
           )}
@@ -322,9 +318,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   key={star}
                   onClick={() => !locked && onChange(star === value ? 0 : star)}
                   className={`text-2xl transition-transform hover:scale-110 ${
-                    star <= (Number(value) || 0)
-                      ? 'text-amber-400'
-                      : 'text-c-text-secondary'
+                    star <= (Number(value) || 0) ? 'text-amber-400' : 'text-c-text-secondary'
                   }`}
                 >
                   ★
@@ -347,9 +341,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   disabled={locked}
                   className="flex-1 accent-c-info"
                 />
-                <span className="text-sm font-bold text-c-text w-10 text-right">
-                  {value || 0}%
-                </span>
+                <span className="text-sm font-bold text-c-text w-10 text-right">{value || 0}%</span>
               </div>
               <div className="h-2 rounded-full bg-c-border-subtle overflow-hidden">
                 <div

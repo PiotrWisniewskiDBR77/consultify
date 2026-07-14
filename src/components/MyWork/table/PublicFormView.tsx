@@ -184,9 +184,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
       <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <div className="mx-4 max-w-md rounded-2xl border border-rose-200 bg-c-surface p-8 text-center dark:border-rose-800">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-rose-500" />
-          <h2 className="mb-2 text-lg font-semibold text-c-text">
-            Form not found
-          </h2>
+          <h2 className="mb-2 text-lg font-semibold text-c-text">Form not found</h2>
           <p className="text-sm text-c-text-muted">{error}</p>
         </div>
       </div>
@@ -228,9 +226,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
         <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 shadow-sm">
           {/* Header */}
           <h1 className="mb-1 text-2xl font-bold text-c-text">{form.name}</h1>
-          {form.description && (
-            <p className="mb-8 text-sm text-c-text-muted">{form.description}</p>
-          )}
+          {form.description && <p className="mb-8 text-sm text-c-text-muted">{form.description}</p>}
 
           {/* Error banner */}
           {error && (
@@ -268,9 +264,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-c-text-secondary">
-          Powered by Table Platform
-        </p>
+        <p className="mt-4 text-center text-xs text-c-text-secondary">Powered by Table Platform</p>
       </div>
     </div>
   );
@@ -295,9 +289,7 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
         {label}
         {config.required && <span className="ml-1 text-rose-500">*</span>}
       </label>
-      {config.helpText && (
-        <p className="mb-1.5 text-xs text-c-text-secondary">{config.helpText}</p>
-      )}
+      {config.helpText && <p className="mb-1.5 text-xs text-c-text-secondary">{config.helpText}</p>}
       <FieldInput
         fieldType={field.field_type}
         options={field.options}

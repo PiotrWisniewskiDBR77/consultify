@@ -21,9 +21,9 @@
  * across orgs) instead of failing the whole batch.
  */
 
-import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
 
 const RACI_BUCKET_KEYS = ['responsible', 'accountable', 'consulted', 'informed'] as const;
 type RaciBucketKey = (typeof RACI_BUCKET_KEYS)[number] | 'unspecified';
@@ -101,10 +101,9 @@ export async function getInitiativesRaciResultsSummary(
   organizationId: string,
   initiativeIds: string[]
 ): Promise<Record<string, InitiativeRaciResultsEntry>> {
-  const ids = Array.from(new Set((initiativeIds || []).map((id) => String(id || '').trim()).filter(Boolean))).slice(
-    0,
-    MAX_IDS
-  );
+  const ids = Array.from(
+    new Set((initiativeIds || []).map((id) => String(id || '').trim()).filter(Boolean))
+  ).slice(0, MAX_IDS);
 
   const out: Record<string, InitiativeRaciResultsEntry> = {};
   for (const id of ids) out[id] = emptyEntry(id);
@@ -136,7 +135,9 @@ export async function getInitiativesRaciResultsSummary(
       const entry = out[String(row.initiative_id)];
       if (!entry) continue;
       const raciTypeLower = String(row.raci_type || '').toLowerCase();
-      const bucketKey: RaciBucketKey = (RACI_BUCKET_KEYS as readonly string[]).includes(raciTypeLower)
+      const bucketKey: RaciBucketKey = (RACI_BUCKET_KEYS as readonly string[]).includes(
+        raciTypeLower
+      )
         ? (raciTypeLower as RaciBucketKey)
         : 'unspecified';
       const name = row.user_id
@@ -189,7 +190,9 @@ export async function getInitiativesRaciResultsSummary(
     }
   };
 
-  await Promise.all(Array.from({ length: Math.min(KPI_READ_CONCURRENCY, ids.length) }, () => worker()));
+  await Promise.all(
+    Array.from({ length: Math.min(KPI_READ_CONCURRENCY, ids.length) }, () => worker())
+  );
 
   return out;
 }

@@ -69,14 +69,26 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     google: {
       available: false,
       statusLabel: t('myWork.calendarView.statusLabel', 'Coming soon'),
-      helper: t('myWork.calendarView.helper', 'Google Calendar integration is in preparation — two-way connection is not available yet.'),
-      nextStep: t('myWork.calendarView.nextStep', 'In the meantime, subscribe to the Consultify ICS feed in your calendar.'),
+      helper: t(
+        'myWork.calendarView.helper',
+        'Google Calendar integration is in preparation — two-way connection is not available yet.'
+      ),
+      nextStep: t(
+        'myWork.calendarView.nextStep',
+        'In the meantime, subscribe to the Consultify ICS feed in your calendar.'
+      ),
     },
     outlook: {
       available: false,
       statusLabel: t('myWork.calendarView.statusLabel2', 'Coming soon'),
-      helper: t('myWork.calendarView.helper2', 'Outlook integration is in preparation — two-way connection is not available yet.'),
-      nextStep: t('myWork.calendarView.nextStep2', 'In the meantime, subscribe to the Consultify ICS feed in your calendar.'),
+      helper: t(
+        'myWork.calendarView.helper2',
+        'Outlook integration is in preparation — two-way connection is not available yet.'
+      ),
+      nextStep: t(
+        'myWork.calendarView.nextStep2',
+        'In the meantime, subscribe to the Consultify ICS feed in your calendar.'
+      ),
     },
   });
   const [dayLoad, setDayLoad] = useState<CalendarConflictResponse | null>(null);
@@ -114,7 +126,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             helper: isPolish
               ? `${providerLabel} jest już na ścieżce governed, ale konfiguracja lub autoryzacja nie jest jeszcze domknięta.`
               : `${providerLabel} is on the governed path, but configuration or authorization is not complete yet.`,
-            nextStep: t('myWork.calendarView.nextStep3', 'Finish configuration or authorization in Integrations.'),
+            nextStep: t(
+              'myWork.calendarView.nextStep3',
+              'Finish configuration or authorization in Integrations.'
+            ),
           };
         case 'reauth':
           return {
@@ -132,7 +147,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             helper: isPolish
               ? `${providerLabel} ma aktywny błąd i nie powinno być traktowane jak gotowe źródło kalendarza.`
               : `${providerLabel} has an active error and should not be treated as a ready calendar source.`,
-            nextStep: t('myWork.calendarView.nextStep5', 'Review the status and logs in Integrations.'),
+            nextStep: t(
+              'myWork.calendarView.nextStep5',
+              'Review the status and logs in Integrations.'
+            ),
           };
         default:
           return {
@@ -141,7 +159,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             helper: isPolish
               ? `Integracja ${providerLabel} jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.`
               : `${providerLabel} integration is in preparation — two-way connection is not available yet.`,
-            nextStep: t('myWork.calendarView.nextStep6', 'In the meantime, subscribe to the Consultify ICS feed in your calendar.'),
+            nextStep: t(
+              'myWork.calendarView.nextStep6',
+              'In the meantime, subscribe to the Consultify ICS feed in your calendar.'
+            ),
           };
       }
     },
@@ -174,7 +195,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       return {
         variant: 'success' as const,
         title: t('myWork.calendarView.title3', 'Day looks clear'),
-        body: t('myWork.calendarView.body2', 'The selected date does not yet show tasks or decisions demanding attention.'),
+        body: t(
+          'myWork.calendarView.body2',
+          'The selected date does not yet show tasks or decisions demanding attention.'
+        ),
       };
     }
 
@@ -290,7 +314,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           setDayLoad(null);
           setDayLoadError(
             err?.status === 503
-              ? t('myWork.calendarView.dayLoadPreviewIs', 'Day-load preview is temporarily unavailable, but the calendar still shows current items.')
+              ? t(
+                  'myWork.calendarView.dayLoadPreviewIs',
+                  'Day-load preview is temporarily unavailable, but the calendar still shows current items.'
+                )
               : t('myWork.calendarView.failedToReadThe', 'Failed to read the selected day load.')
           );
         }
@@ -367,12 +394,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <EmptyStateInline
               icon={AlertTriangle}
               dashed={false}
-              message={
-                t('myWork.calendarView.calendarViewIsTemporarily', 'Calendar view is temporarily unavailable.')
-              }
-              hint={
-                t('myWork.calendarView.thisDoesNotMean', 'This does not mean the day is empty. Refresh the data and try again.')
-              }
+              message={t(
+                'myWork.calendarView.calendarViewIsTemporarily',
+                'Calendar view is temporarily unavailable.'
+              )}
+              hint={t(
+                'myWork.calendarView.thisDoesNotMean',
+                'This does not mean the day is empty. Refresh the data and try again.'
+              )}
               action={{
                 label: t('myWork.calendarView.label', 'Retry'),
                 onClick: refetch,

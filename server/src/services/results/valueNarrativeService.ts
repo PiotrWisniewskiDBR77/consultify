@@ -98,23 +98,23 @@ export function buildNarrative(input: ValueNarrativeInput): ValueNarrative {
 
   paragraphs.push(
     `Na ten moment zabankowano ${formatPln(banked)} potwierdzonej wartości, co stanowi ` +
-      `${formatPct(pctOfTarget)} celu transformacji wynoszącego ${formatPln(totalTarget)}.`,
+      `${formatPct(pctOfTarget)} celu transformacji wynoszącego ${formatPln(totalTarget)}.`
   );
 
   paragraphs.push(
     `W realizacji pozostaje ${formatPln(inFlight)} wartości, która jest aktywnie wdrażana ` +
-      `i powinna zasilić wynik w kolejnych okresach.`,
+      `i powinna zasilić wynik w kolejnych okresach.`
   );
 
   if (atRisk > 0) {
     paragraphs.push(
       `Zagrożone jest ${formatPln(atRisk)} planowanej wartości — wymaga to interwencji ` +
-        `zarządczej, aby uniknąć ubytku w realizacji celu.`,
+        `zarządczej, aby uniknąć ubytku w realizacji celu.`
     );
   } else {
     paragraphs.push(
       `Na chwilę obecną żadna wartość nie jest oznaczona jako zagrożona — ryzyko realizacji ` +
-        `pozostaje pod kontrolą.`,
+        `pozostaje pod kontrolą.`
     );
   }
 
@@ -138,7 +138,7 @@ export function buildNarrative(input: ValueNarrativeInput): ValueNarrative {
   if (decisions.length > 0) {
     bullets.push(
       `Rekomendacje: ${addCount} × DOŁÓŻ, ${killCount} × ZABIJ ` +
-        `(łącznie ${decisions.length} rekomendacji do decyzji zarządu).`,
+        `(łącznie ${decisions.length} rekomendacji do decyzji zarządu).`
     );
   }
 

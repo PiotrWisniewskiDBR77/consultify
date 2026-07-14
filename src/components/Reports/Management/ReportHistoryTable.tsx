@@ -242,7 +242,9 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
       {/* Table */}
       <div className="overflow-x-auto">
         {loading ? (
-          <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full">
+          <table
+            /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full"
+          >
             <thead>
               <tr className="bg-c-surface-raised">
                 <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider">
@@ -278,9 +280,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
           <div className="p-8 text-center">
             <FileText size={48} className="mx-auto text-c-text-muted mb-3" />
             <p className="text-c-text-muted">No reports found.</p>
-            <p className="text-sm text-c-text-muted">
-              Generate your first report to see it here.
-            </p>
+            <p className="text-sm text-c-text-muted">Generate your first report to see it here.</p>
           </div>
         ) : (
           <table className="w-full">
@@ -314,19 +314,12 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                 const typeBadge =
                   reportTypeLabels[report.reportType] || reportTypeLabels.TEAM_MEETING;
                 return (
-                  <tr
-                    key={report.id}
-                    className="hover:bg-c-surface-raised transition-colors"
-                  >
+                  <tr key={report.id} className="hover:bg-c-surface-raised transition-colors">
                     <td className="px-4 py-3">
                       <div>
-                        <div className="font-medium text-c-text">
-                          {report.title}
-                        </div>
+                        <div className="font-medium text-c-text">{report.title}</div>
                         {report.projectName && (
-                          <div className="text-sm text-c-text-muted">
-                            {report.projectName}
-                          </div>
+                          <div className="text-sm text-c-text-muted">{report.projectName}</div>
                         )}
                       </div>
                     </td>

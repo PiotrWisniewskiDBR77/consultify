@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import * as audit from './auditService.js';
-import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import {
   computeModel,
@@ -12,6 +11,7 @@ import {
   type PeriodOutput,
   persistComputeResult,
 } from './financialModelingService.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
 export type ValuationSourceType = 'financial_model' | 'financial_analysis' | 'budget' | 'manual';

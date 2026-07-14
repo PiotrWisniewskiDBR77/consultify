@@ -106,9 +106,7 @@ export const SharedConversationView: React.FC = () => {
         {status === 'password' && (
           <div className="mx-auto max-w-sm py-16 text-center">
             <Lock size={28} className="mx-auto text-c-text-muted" />
-            <div className="mt-3 text-base font-semibold text-c-text">
-              Password protected
-            </div>
+            <div className="mt-3 text-base font-semibold text-c-text">Password protected</div>
             <div className="mt-4 flex gap-2">
               <input
                 type="password"
@@ -132,9 +130,7 @@ export const SharedConversationView: React.FC = () => {
 
         {status === 'ok' && data && (
           <>
-            <h1 className="text-2xl font-semibold text-c-text">
-              {data.title || 'Conversation'}
-            </h1>
+            <h1 className="text-2xl font-semibold text-c-text">{data.title || 'Conversation'}</h1>
             {data.description && (
               <p className="mt-1 text-sm text-c-text-muted">{data.description}</p>
             )}

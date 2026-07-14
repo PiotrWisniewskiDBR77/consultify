@@ -247,7 +247,9 @@ export const ModuleAccessControlView: React.FC = () => {
           Active Grants
         </div>
         <div className="overflow-x-auto">
-          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-sm">
+          <table
+            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-sm"
+          >
             <thead>
               <tr className="border-b border-slate-200 dark:border-navy-800">
                 <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-slate-500">

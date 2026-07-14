@@ -291,9 +291,7 @@ export const OrgSetupWizard: React.FC = () => {
                   className="w-full rounded-xl border-2 border-c-border-subtle bg-c-surface px-4 py-3 text-lg text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   autoFocus
                 />
-                <p className="mt-2 text-sm text-c-text-muted">
-                  To jedyne pole wymagane na start.
-                </p>
+                <p className="mt-2 text-sm text-c-text-muted">To jedyne pole wymagane na start.</p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -453,9 +451,7 @@ export const OrgSetupWizard: React.FC = () => {
                   size={20}
                 />
                 <div>
-                  <h2 className="font-semibold text-c-text">
-                    Pamięć organizacji
-                  </h2>
+                  <h2 className="font-semibold text-c-text">Pamięć organizacji</h2>
                   <p className="mt-1 text-sm text-c-text-secondary">
                     System będzie zapamiętywał kontekst organizacji, ustalenia i wnioski zespołu,
                     żeby kolejne interakcje miały ciągłość.

@@ -180,7 +180,11 @@ export const SubscriptionsPanel: React.FC = () => {
         text: 'text-amber-400',
       },
       canceled: { icon: <XCircle size={14} />, bg: 'bg-danger-500/20', text: 'text-danger-400' },
-      unpaid: { icon: <AlertTriangle size={14} />, bg: 'bg-danger-500/20', text: 'text-danger-400' },
+      unpaid: {
+        icon: <AlertTriangle size={14} />,
+        bg: 'bg-danger-500/20',
+        text: 'text-danger-400',
+      },
       paused: {
         icon: <Pause size={14} />,
         bg: 'bg-slate-500/20',
@@ -274,7 +278,10 @@ export const SubscriptionsPanel: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {filteredSubscriptions.map((sub) => (
-            <div key={sub.id} className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
+            <div
+              key={sub.id}
+              className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-700 flex items-center justify-center">

@@ -26,9 +26,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
 import { FilterableTable, type FilterChip } from '@/components/shared/ModuleHub';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
+import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
@@ -525,9 +525,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <TrendingUp className="w-5 h-5 text-primary-500" />
                 {pageCopy.runtimeTitle}
               </h3>
-              <p className="text-sm text-c-text-muted mt-1">
-                {pageCopy.runtimeSubtitle}
-              </p>
+              <p className="text-sm text-c-text-muted mt-1">{pageCopy.runtimeSubtitle}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -560,9 +558,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <div className="text-xs uppercase tracking-wide text-c-text-muted">
                   {card.label}
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-c-text">
-                  {card.value}
-                </div>
+                <div className="mt-2 text-2xl font-semibold text-c-text">{card.value}</div>
                 <div className="mt-1 text-sm text-c-text-muted">{card.detail}</div>
               </div>
             ))}
@@ -802,9 +798,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">
-                  Campaign Name*
-                </label>
+                <label className="text-xs text-c-text-secondary mb-1 block">Campaign Name*</label>
                 <input
                   ref={campaignNameInputRef}
                   type="text"
@@ -815,9 +809,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">
-                  UTM Source
-                </label>
+                <label className="text-xs text-c-text-secondary mb-1 block">UTM Source</label>
                 <input
                   type="text"
                   value={newCampaign.utmSource}
@@ -829,9 +821,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">
-                  UTM Medium
-                </label>
+                <label className="text-xs text-c-text-secondary mb-1 block">UTM Medium</label>
                 <input
                   type="text"
                   value={newCampaign.utmMedium}
@@ -843,9 +833,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">
-                  UTM Campaign
-                </label>
+                <label className="text-xs text-c-text-secondary mb-1 block">UTM Campaign</label>
                 <input
                   type="text"
                   value={newCampaign.utmCampaign}
@@ -888,9 +876,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               label: t('partner.referrals.campaign', 'Campaign'),
               render: (campaign) => (
                 <div className="min-w-0">
-                  <p className="font-medium text-c-text truncate">
-                    {campaign.name}
-                  </p>
+                  <p className="font-medium text-c-text truncate">{campaign.name}</p>
                   <p className="text-xs text-c-text-muted truncate">
                     {campaign.utmSource && `${campaign.utmSource}`}
                     {campaign.utmMedium && ` / ${campaign.utmMedium}`}
@@ -904,9 +890,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               width: '90px',
               align: 'right',
               render: (campaign) => (
-                <span className="text-sm font-medium text-c-text">
-                  {campaign.clickCount}
-                </span>
+                <span className="text-sm font-medium text-c-text">{campaign.clickCount}</span>
               ),
             },
             {
@@ -915,9 +899,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               width: '90px',
               align: 'right',
               render: (campaign) => (
-                <span className="text-sm text-c-text">
-                  {campaign.signupCount}
-                </span>
+                <span className="text-sm text-c-text">{campaign.signupCount}</span>
               ),
             },
             {

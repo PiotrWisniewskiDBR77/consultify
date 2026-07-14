@@ -129,7 +129,7 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
       toast.success(isPolish ? `Przekonwertowano na ${target}` : `Converted to ${target}`);
       onConverted?.(target, createdId);
     } catch (err: any) {
-      toast.error(err?.message || (t('myWork.convertToMenu.conversionFailed', 'Conversion failed')));
+      toast.error(err?.message || t('myWork.convertToMenu.conversionFailed', 'Conversion failed'));
     } finally {
       setConverting(null);
     }
@@ -161,7 +161,7 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
     } catch (err: any) {
       toast.error(
         err?.message ||
-          (t('myWork.convertToMenu.failedToCreateInitiative', 'Failed to create initiative'))
+          t('myWork.convertToMenu.failedToCreateInitiative', 'Failed to create initiative')
       );
     } finally {
       setConverting(null);

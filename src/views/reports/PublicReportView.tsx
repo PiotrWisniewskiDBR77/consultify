@@ -93,12 +93,8 @@ export const PublicReportView: React.FC = () => {
           <div className="w-16 h-16 bg-danger-100 dark:bg-danger-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock className="w-8 h-8 text-danger-500" />
           </div>
-          <h1 className="text-2xl font-bold text-c-text mb-2">
-            {t('reports.linkExpired')}
-          </h1>
-          <p className="text-c-text-secondary mb-6">
-            {t('reports.linkExpiredDescription')}
-          </p>
+          <h1 className="text-2xl font-bold text-c-text mb-2">{t('reports.linkExpired')}</h1>
+          <p className="text-c-text-secondary mb-6">{t('reports.linkExpiredDescription')}</p>
           <div className="flex items-center justify-center gap-2 text-sm text-c-text-muted">
             <Lock className="w-4 h-4" />
             <span>{t('reports.requestNewLink')}</span>
@@ -113,9 +109,7 @@ export const PublicReportView: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
           <AlertTriangle className="w-16 h-16 text-danger-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-c-text mb-2">
-            {t('reports.error')}
-          </h1>
+          <h1 className="text-xl font-bold text-c-text mb-2">{t('reports.error')}</h1>
           <p className="text-c-text-secondary">{error}</p>
         </div>
       </div>

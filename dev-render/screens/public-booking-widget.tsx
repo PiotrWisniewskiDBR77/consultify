@@ -14,7 +14,9 @@ function buildMockDays() {
   const base = new Date();
   let added = 0;
   for (let off = 1; off <= 10 && added < 4; off++) {
-    const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + off));
+    const d = new Date(
+      Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + off)
+    );
     const dow = d.getUTCDay();
     if (dow === 0 || dow === 6) continue;
     // Symuluj zajętość: pomiń godziny 11 i 14 dla pierwszego dnia.

@@ -13,12 +13,11 @@
  * with rationale/tradeOff/rejectedVariant on every move (W2).
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { RiskUncertaintyData } from '@/store/useToolStore';
 
 import { localizeLadder } from './index';
-import { rankRisks, buildW2MoveSequence } from './moveValidator';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+import { buildW2MoveSequence, rankRisks } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

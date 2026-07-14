@@ -27,9 +27,9 @@
 
 import {
   AUTOMATION_PHASES,
+  type AutomationPhaseId,
   automationPhaseLabel,
   type Bilingual,
-  type AutomationPhaseId,
 } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
@@ -351,7 +351,11 @@ export function buildW2MoveSequence(session: AutomationSession): SequencedMove[]
       en: 'We reject reworking all phases in parallel: without a finished first gain the team loses the standard and the effect reverts.',
     },
     expectedImpact:
-      primaryScore.attractiveness >= 2.5 ? 'high' : primaryScore.attractiveness >= 1.7 ? 'medium' : 'low',
+      primaryScore.attractiveness >= 2.5
+        ? 'high'
+        : primaryScore.attractiveness >= 1.7
+          ? 'medium'
+          : 'low',
     estimatedEffort:
       primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
     validation: VALID,

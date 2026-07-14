@@ -1209,9 +1209,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             <div className="text-xs font-semibold text-c-text truncate">
                               {it.label}: {it.value}
                             </div>
-                            <div className="text-[11px] text-c-text-muted mt-0.5">
-                              {u.reason}
-                            </div>
+                            <div className="text-[11px] text-c-text-muted mt-0.5">{u.reason}</div>
                           </div>
                         </label>
                       ));
@@ -1289,9 +1287,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                   <div className="text-xs font-semibold text-c-text truncate">
                                     {a.gateRole} → {name}
                                   </div>
-                                  <div className="text-[11px] text-c-text-muted">
-                                    {a.reason}
-                                  </div>
+                                  <div className="text-[11px] text-c-text-muted">{a.reason}</div>
                                 </div>
                               </label>
                             );
@@ -1356,9 +1352,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                   <div className="text-xs font-semibold text-c-text truncate">
                                     {r.gateRole} → {name}
                                   </div>
-                                  <div className="text-[11px] text-c-text-muted">
-                                    {r.reason}
-                                  </div>
+                                  <div className="text-[11px] text-c-text-muted">{r.reason}</div>
                                 </div>
                               </label>
                             );
@@ -1420,9 +1414,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             <div className="text-xs font-semibold text-c-text truncate">
                               {title}
                             </div>
-                            <div className="text-[11px] text-c-text-muted mt-0.5">
-                              {u.reason}
-                            </div>
+                            <div className="text-[11px] text-c-text-muted mt-0.5">{u.reason}</div>
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-c-text-secondary">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
                                 <span className="text-c-text-muted">Owner:</span>{' '}
@@ -1495,9 +1487,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             <div className="text-xs font-semibold text-c-text truncate">
                               {title}
                             </div>
-                            <div className="text-[11px] text-c-text-muted mt-0.5">
-                              {u.reason}
-                            </div>
+                            <div className="text-[11px] text-c-text-muted mt-0.5">{u.reason}</div>
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-c-text-secondary">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
                                 <span className="text-c-text-muted">Owner:</span>{' '}
@@ -1523,9 +1513,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               {/* RAID updates */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-c-text">
-                    RAID
-                  </span>
+                  <span className="text-xs font-semibold text-c-text">RAID</span>
                 </div>
                 {aiProposal.raid.update.length === 0 ? (
                   <EmptyStateInline
@@ -1570,14 +1558,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             <div className="text-xs font-semibold text-c-text truncate">
                               {title}
                             </div>
-                            <div className="text-[11px] text-c-text-muted mt-0.5">
-                              {u.reason}
-                            </div>
+                            <div className="text-[11px] text-c-text-muted mt-0.5">{u.reason}</div>
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-c-text-secondary">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-c-text-muted">
-                                  Severity:
-                                </span>{' '}
+                                <span className="text-c-text-muted">Severity:</span>{' '}
                                 <span className="font-medium">{u.severity || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
@@ -1940,9 +1924,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     <div className="text-[10px] font-semibold text-c-text-muted uppercase mb-1">
                       {t('initiatives.gateReadinessSection.summary')}
                     </div>
-                    <p className="text-xs text-c-text-secondary">
-                      {aiReadinessResult.summary}
-                    </p>
+                    <p className="text-xs text-c-text-secondary">{aiReadinessResult.summary}</p>
                   </div>
                 </div>
 
@@ -1979,9 +1961,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-c-text">
-                              {f.message}
-                            </div>
+                            <div className="text-xs font-medium text-c-text">{f.message}</div>
                             {f.suggestedAction && (
                               <div className="mt-1 text-[11px] text-c-text-muted">
                                 <span className="font-medium">

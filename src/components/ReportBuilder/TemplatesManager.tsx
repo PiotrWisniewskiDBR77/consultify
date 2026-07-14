@@ -44,8 +44,8 @@ import {
 
 import { Api } from '../../services/api';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { PREVIEW_SELECTED_ROW_CLASS, SELECTED_ROW_CLASS } from '../shared/selectionTokens';
 import { ReportEditor } from './ReportEditor/ReportEditor';
-import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS } from '../shared/selectionTokens';
 
 // ==========================================
 // TYPES
@@ -798,7 +798,10 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
             </div>
           ) : (
             <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-x-auto">
-              <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full" style={{ minWidth: 900 }}>
+              <table
+                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+                style={{ minWidth: 900 }}
+              >
                 <thead>
                   <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
                     {/* Select All */}
@@ -830,9 +833,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                     >
                       <div className="flex items-center gap-1">
                         <span
-                          className={
-                            (tableFilters.type as string[])?.length ? 'text-c-accent' : ''
-                          }
+                          className={(tableFilters.type as string[])?.length ? 'text-c-accent' : ''}
                         >
                           Type
                         </span>

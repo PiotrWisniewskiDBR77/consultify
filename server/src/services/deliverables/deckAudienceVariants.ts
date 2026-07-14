@@ -73,7 +73,7 @@ export function buildAudienceVariant(
   // Tier 2 dropped first. Stable selection by (tier asc, original order asc).
   const ranked = sorted
     .map((p, pos) => ({ p, pos, tier: priorityTier(p.layoutIntent) }))
-    .sort((a, b) => (a.tier - b.tier) || (a.pos - b.pos));
+    .sort((a, b) => a.tier - b.tier || a.pos - b.pos);
 
   const keepPositions = new Set<number>();
   for (const r of ranked) {

@@ -20,8 +20,8 @@ import {
 } from '../../services/results/kpiReportSnapshotService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
-  pullAndReconcileInitiative,
   type KpiDriverMapping,
+  pullAndReconcileInitiative,
 } from '../../services/v8/resultsFinanceReconciliationService.js';
 import {
   getReconciliationOverview,
@@ -1922,7 +1922,11 @@ router.get(
       signalType: 'deviation' as const,
       severity: String(d.severity || 'medium').toLowerCase() as KpiSignal['severity'],
       summary: String(d.deviation_summary || `Deviation on KPI ${d.kpi_id}`),
-      detectedAt: d.detected_at ? new Date(d.detected_at).toISOString() : (d.created_at ? new Date(d.created_at).toISOString() : ''),
+      detectedAt: d.detected_at
+        ? new Date(d.detected_at).toISOString()
+        : d.created_at
+          ? new Date(d.created_at).toISOString()
+          : '',
     }));
 
     return res.json({ data: { signals, count: signals.length }, meta: p04Meta() });

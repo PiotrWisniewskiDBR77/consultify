@@ -92,7 +92,9 @@ function AssumptionRow({
 }) {
   const badge = ASSUMPTION_BADGE[assumption.source_type] ?? ASSUMPTION_BADGE.ai_assumed;
   const valueText =
-    typeof assumption.value === 'object' ? JSON.stringify(assumption.value) : String(assumption.value);
+    typeof assumption.value === 'object'
+      ? JSON.stringify(assumption.value)
+      : String(assumption.value);
   return (
     <div className="flex flex-col gap-1 py-1.5">
       <div className="flex items-center justify-between gap-2">
@@ -141,7 +143,9 @@ export const EvidencePanelSection: React.FC<EvidencePanelSectionProps> = ({
   }, [artifactType, artifactId]);
 
   if (loading) {
-    return <p className="text-xs text-c-text-muted py-1.5">{isPolish ? 'Ładowanie…' : 'Loading…'}</p>;
+    return (
+      <p className="text-xs text-c-text-muted py-1.5">{isPolish ? 'Ładowanie…' : 'Loading…'}</p>
+    );
   }
 
   const hasSources = (envelope?.sources.length ?? 0) > 0;

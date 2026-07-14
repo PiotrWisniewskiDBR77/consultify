@@ -346,7 +346,9 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
           <div
             className={cn(
               'absolute left-0 right-0 p-4',
-              settings.theme === 'dark' ? 'bg-c-surface-raised text-c-text' : 'bg-white text-navy-900',
+              settings.theme === 'dark'
+                ? 'bg-c-surface-raised text-c-text'
+                : 'bg-white text-navy-900',
               settings.position === 'bottom' && 'bottom-0',
               settings.position === 'top' && 'top-0',
               settings.position === 'center' &&

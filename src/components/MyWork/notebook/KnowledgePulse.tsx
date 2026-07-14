@@ -238,9 +238,7 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
                         key={item.id}
                         className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
                       >
-                        <div className="text-xs font-medium text-c-text truncate">
-                          {item.title}
-                        </div>
+                        <div className="text-xs font-medium text-c-text truncate">{item.title}</div>
                         {item.status && (
                           <div className="mt-0.5 text-[10px] text-c-text-muted capitalize">
                             {item.status}

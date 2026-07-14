@@ -13,14 +13,12 @@ import {
   type DecisionPlaybook,
   validateRequiredFields,
 } from '../services/decisionPlaybookService.js';
-import decisionService, {
-  type DecisionSectionKey,
-} from '../services/decisionService.js';
-import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
+import decisionService, { type DecisionSectionKey } from '../services/decisionService.js';
 import {
   type DecisionWorkflowStatus,
   validateDecisionWorkflowTransition,
 } from '../services/decisionWorkflowService.js';
+import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import NotificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -121,9 +119,7 @@ function buildStructuredFields(row: DecisionRow): {
       : null);
 
   const recommendation =
-    typeof row.recommendation === 'string' && row.recommendation.trim()
-      ? row.recommendation
-      : null;
+    typeof row.recommendation === 'string' && row.recommendation.trim() ? row.recommendation : null;
 
   return {
     alternatives,
@@ -290,8 +286,7 @@ const refreshInitiativeDecisionBlock = async (input: {
 
   // Only record handoff when the initiative was actually blocked (conditional SQL won't fire for others)
   const wasBlocked =
-    initiative.status != null &&
-    String(initiative.status).toUpperCase() === 'BLOCKED';
+    initiative.status != null && String(initiative.status).toUpperCase() === 'BLOCKED';
 
   await queryHelpers.queryRun(
     `UPDATE initiatives SET
@@ -504,9 +499,9 @@ export class DecisionController {
           const structured = buildStructuredFields(row);
           const hasStructure = Boolean(
             (structured.alternatives && structured.alternatives.length) ||
-              (structured.riskImpact && structured.riskImpact.length) ||
-              structured.consequencesOfInaction ||
-              structured.recommendation
+            (structured.riskImpact && structured.riskImpact.length) ||
+            structured.consequencesOfInaction ||
+            structured.recommendation
           );
 
           return {
@@ -1011,10 +1006,12 @@ export class DecisionController {
           } else if (entry.impactedType === 'initiative') {
             // Fetch current status before overwriting so we can record an accurate handoff.
             const preBlockRow = await queryHelpers
-              .queryOne<{ status?: string }>(
-                `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
-                [entry.impactedId, orgId]
-              )
+              .queryOne<{
+                status?: string;
+              }>(`SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`, [
+                entry.impactedId,
+                orgId,
+              ])
               .catch(() => null);
             const preBlockStatus = preBlockRow?.status
               ? String(preBlockRow.status).toUpperCase()
@@ -1041,9 +1038,7 @@ export class DecisionController {
                 preBlockStatus,
                 'BLOCKED',
                 userId
-              ).catch((e) =>
-                logger.warn('[decision] recordStageHandoff failed (auto-block):', e)
-              );
+              ).catch((e) => logger.warn('[decision] recordStageHandoff failed (auto-block):', e));
             }
           }
         }
@@ -1084,7 +1079,9 @@ export class DecisionController {
         logger.warn('[DecisionController] Communication sync failed:', err?.message)
       );
 
-      res.status(201).json({ id, projectId: projectIdValue, title: decodedTitle, status: 'PENDING' });
+      res
+        .status(201)
+        .json({ id, projectId: projectIdValue, title: decodedTitle, status: 'PENDING' });
     }
   );
 
@@ -1910,8 +1907,7 @@ export class DecisionController {
       }
 
       const language = req.body?.language === 'en' ? 'en' : 'pl';
-      const context =
-        typeof req.body?.context === 'string' ? req.body.context : undefined;
+      const context = typeof req.body?.context === 'string' ? req.body.context : undefined;
 
       try {
         const result = await decisionService.generateSection(id, sectionKey, {
@@ -1920,10 +1916,7 @@ export class DecisionController {
         });
         res.json(result);
       } catch (err: any) {
-        logger.error(
-          '[DecisionController] generateSection failed:',
-          err?.message || err
-        );
+        logger.error('[DecisionController] generateSection failed:', err?.message || err);
         res.status(503).json({
           error: 'AI decision section generation failed',
           code: 'FEATURE_UNAVAILABLE',
@@ -1959,7 +1952,9 @@ export class DecisionController {
 
       const reason =
         typeof (req.body as any)?.reason === 'string'
-          ? String((req.body as any).reason).trim().slice(0, 500)
+          ? String((req.body as any).reason)
+              .trim()
+              .slice(0, 500)
           : undefined;
 
       const decision = await queryHelpers.queryOne<{

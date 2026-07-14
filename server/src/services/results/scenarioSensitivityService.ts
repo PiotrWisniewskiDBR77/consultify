@@ -142,7 +142,7 @@ export function paybackPeriod(cashflows: number[]): number | null {
       // Interpolacja w obrębie okresu t (prev < 0, cf > 0).
       if (cf > 0 && prev < 0) {
         const fraction = -prev / cf;
-        return (t - 1) + fraction;
+        return t - 1 + fraction;
       }
       return t;
     }

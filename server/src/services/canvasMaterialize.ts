@@ -190,9 +190,8 @@ export async function materializeWorkspaceTarget(
       // SAME path the client PUT /my-work/my-ideas/:id/map route uses, so the
       // stored shape matches every other read path in the app (list views,
       // metrics, cross-tool transforms) — NOT the ad-hoc star-map shape below.
-      const { validateAndNormalizeGraph } = await import(
-        '../validators/ideaWorkspaceGraph.validators.js'
-      );
+      const { validateAndNormalizeGraph } =
+        await import('../validators/ideaWorkspaceGraph.validators.js');
       const validation = validateAndNormalizeGraph({
         nodes: graph.nodes,
         edges: graph.edges,

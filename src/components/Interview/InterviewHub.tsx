@@ -71,14 +71,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
 import {
-  StandardPreview,
-  standardPreviewShortcuts,
-  type StandardPreviewActions,
-  type StandardRowMenu,
-  StandardTable,
-  type TableColumn as StandardTableColumn,
-} from '@/components/standard';
-import {
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -95,6 +87,14 @@ import {
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TeresaMark } from '@/components/shared/TeresaMark';
+import {
+  StandardPreview,
+  type StandardPreviewActions,
+  standardPreviewShortcuts,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
 import { Badge, type BadgeVariant } from '@/components/ui/primitives';
 import { AssigneeCell, ProgressCell } from '@/components/ui/primitives/cells';
 import {
@@ -136,13 +136,10 @@ import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoDa
 import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
 import { InterviewInitiativePreviewFooter } from './InterviewInitiativePreview';
 import {
-  type InterviewPipelineStep,
-  InterviewPipelineStepper,
-} from './InterviewPipelineStepper';
-import {
   InterviewInsightPreviewBody,
   InterviewInsightPreviewFooter,
 } from './InterviewInsightPreview';
+import { type InterviewPipelineStep, InterviewPipelineStepper } from './InterviewPipelineStepper';
 import {
   InterviewSessionPreviewBody,
   InterviewSessionPreviewFooter,
@@ -516,8 +513,7 @@ function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSe
 
 type OpenDocument = SharedOpenDocument;
 
-const INTERVIEW_TABLE_SELECTED_ROW_CLASS =
-  'bg-c-accent-soft shadow-[inset_2px_0_0_var(--c-info)]';
+const INTERVIEW_TABLE_SELECTED_ROW_CLASS = 'bg-c-accent-soft shadow-[inset_2px_0_0_var(--c-info)]';
 const INTERVIEW_TABLE_HOVER_ROW_CLASS = 'hover:bg-c-surface-raised';
 const INTERVIEW_TABLE_ICON_SURFACE_CLASS =
   'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-c-border bg-c-surface-raised text-c-text-muted';
@@ -1047,9 +1043,7 @@ export const InterviewHub: React.FC = () => {
       } else {
         console.error('[InterviewHub] Failed to load sessions:', sessionsRes.reason);
         setSessions([]);
-        setSessionsLoadError(
-          t('interview.hub.failedToLoadSessionsTry')
-        );
+        setSessionsLoadError(t('interview.hub.failedToLoadSessionsTry'));
       }
 
       if (insightsRes.status === 'fulfilled') {
@@ -1065,11 +1059,7 @@ export const InterviewHub: React.FC = () => {
           console.error('[InterviewHub] Failed to load insights:', insightsRes.reason);
         }
         setInsights([]);
-        setInsightsLoadError(
-          isForbidden
-            ? null
-            : t('interview.hub.failedToLoadInsightsTry')
-        );
+        setInsightsLoadError(isForbidden ? null : t('interview.hub.failedToLoadInsightsTry'));
       }
 
       if (initiativesRes.status === 'fulfilled') {
@@ -1078,9 +1068,7 @@ export const InterviewHub: React.FC = () => {
       } else {
         console.error('[InterviewHub] Failed to load initiatives:', initiativesRes.reason);
         setInterviewInitiatives([]);
-        setInitiativesLoadError(
-          t('interview.hub.failedToLoadInterviewInitiatives')
-        );
+        setInitiativesLoadError(t('interview.hub.failedToLoadInterviewInitiatives'));
       }
 
       if (templatesRes.status === 'fulfilled') {
@@ -1162,9 +1150,7 @@ export const InterviewHub: React.FC = () => {
       setInsightsLoadError(null);
     } catch (error) {
       console.error('[InterviewHub] Failed to load insights:', error);
-      setInsightsLoadError(
-        t('interview.hub.failedToLoadInsightsTry')
-      );
+      setInsightsLoadError(t('interview.hub.failedToLoadInsightsTry'));
     }
   }, [isPolish, unwrapApiList, insightScope]);
 
@@ -1187,9 +1173,7 @@ export const InterviewHub: React.FC = () => {
       setInitiativesLoadError(null);
     } catch (error) {
       console.error('[InterviewHub] Failed to load interview initiatives:', error);
-      setInitiativesLoadError(
-        t('interview.hub.failedToLoadInterviewInitiatives')
-      );
+      setInitiativesLoadError(t('interview.hub.failedToLoadInterviewInitiatives'));
     }
   }, [isPolish, unwrapApiList]);
 
@@ -1258,9 +1242,7 @@ export const InterviewHub: React.FC = () => {
       (a) => ids.includes(a.id) && a.status === 'submitted'
     );
     if (approvable.length === 0) {
-      toast.error(
-        t('interview.hub.noSubmittedAssignmentsToApprove')
-      );
+      toast.error(t('interview.hub.noSubmittedAssignmentsToApprove'));
       return;
     }
     setBulkActionBusy(true);
@@ -1311,9 +1293,7 @@ export const InterviewHub: React.FC = () => {
       (a) => ids.includes(a.id) && a.status === 'submitted'
     );
     if (eligible.length === 0) {
-      toast.error(
-        t('interview.hub.noSubmittedAssignmentsToSend')
-      );
+      toast.error(t('interview.hub.noSubmittedAssignmentsToSend'));
       return;
     }
     const reason = t('interview.hub.returnedForRevisionBulkAction');
@@ -1403,10 +1383,9 @@ export const InterviewHub: React.FC = () => {
       setSelectedAssignmentIds(new Set());
       if (done > 0) {
         toast.success(
-          t(
-            action === 'archive' ? 'interview.hub.archivedCount' : 'interview.hub.restoredCount',
-            { count: done }
-          )
+          t(action === 'archive' ? 'interview.hub.archivedCount' : 'interview.hub.restoredCount', {
+            count: done,
+          })
         );
       } else {
         toast.error(t('interview.hub.couldNotCompleteTheAction'));
@@ -1568,9 +1547,7 @@ export const InterviewHub: React.FC = () => {
         setMyAssignments([]);
         setManagedAssignments([]);
         setOverdueAssignments([]);
-        setAssignmentsLoadError(
-          t('interview.hub.failedToLoadInterviewAssignments')
-        );
+        setAssignmentsLoadError(t('interview.hub.failedToLoadInterviewAssignments'));
       } finally {
         setAssignmentsLoading(false);
       }
@@ -2004,9 +1981,7 @@ export const InterviewHub: React.FC = () => {
       .join('\n');
     return [
       t('interview.hub.createTransformationInitiativesFromInterview'),
-      insightLines
-        ? `\n${t('interview.hub.topInsights')}:\n${insightLines}`
-        : '',
+      insightLines ? `\n${t('interview.hub.topInsights')}:\n${insightLines}` : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -2321,9 +2296,7 @@ export const InterviewHub: React.FC = () => {
     try {
       const projectId = await ensureProjectId();
       if (!projectId) {
-        toast.error(
-          t('interview.hub.selectAProjectBeforeCreating')
-        );
+        toast.error(t('interview.hub.selectAProjectBeforeCreating'));
         return;
       }
       toast.loading(t('interview.hub.creatingInterviewSession'), {
@@ -2350,19 +2323,13 @@ export const InterviewHub: React.FC = () => {
       });
       setActiveDocumentId(doc.id);
 
-      toast.success(
-        t('interview.hub.newInterviewSessionStarted'),
-        {
-          id: toastId,
-        }
-      );
+      toast.success(t('interview.hub.newInterviewSessionStarted'), {
+        id: toastId,
+      });
     } catch (error) {
       console.error('[InterviewHub] Failed to create session:', error);
       toast.error(
-        getSafeInterviewErrorMessage(
-          error,
-          t('interview.hub.failedToCreateSessionPlease')
-        ),
+        getSafeInterviewErrorMessage(error, t('interview.hub.failedToCreateSessionPlease')),
         { id: toastId, duration: 6000 }
       );
     }
@@ -2447,7 +2414,7 @@ export const InterviewHub: React.FC = () => {
         id: templateId,
         type: 'interview_template',
         subType: 'interview',
-        name: template?.name || (t('interview.hub.template')),
+        name: template?.name || t('interview.hub.template'),
         status: (template?.status || 'draft').toUpperCase() as any,
       });
     },
@@ -2489,9 +2456,7 @@ export const InterviewHub: React.FC = () => {
 
   const handleDeleteTemplate = useCallback(
     async (template: InterviewTemplate) => {
-      if (
-        !confirm(t('interview.hub.confirmDeleteTemplate', { name: template.name }))
-      ) {
+      if (!confirm(t('interview.hub.confirmDeleteTemplate', { name: template.name }))) {
         return;
       }
 
@@ -2588,9 +2553,7 @@ export const InterviewHub: React.FC = () => {
             : t('interview.hub.defaultTemplateUnset')
         );
       } catch (error) {
-        toast.error(
-          t('interview.hub.failedToChangeDefaultTemplate')
-        );
+        toast.error(t('interview.hub.failedToChangeDefaultTemplate'));
         console.error('[InterviewHub] Failed to toggle template default:', error);
       }
     },
@@ -2695,11 +2658,7 @@ export const InterviewHub: React.FC = () => {
         setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to send back:', error);
-        safeToastError(
-          error,
-          t('interview.hub.failedToSendBack'),
-          isPolish
-        );
+        safeToastError(error, t('interview.hub.failedToSendBack'), isPolish);
       }
     },
     [
@@ -2733,11 +2692,7 @@ export const InterviewHub: React.FC = () => {
         setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to approve assignment:', error);
-        safeToastError(
-          error,
-          t('interview.hub.failedToApproveInterview'),
-          isPolish
-        );
+        safeToastError(error, t('interview.hub.failedToApproveInterview'), isPolish);
       }
     },
     [
@@ -2789,11 +2744,7 @@ export const InterviewHub: React.FC = () => {
       setOverdueAssignments(overdueRes);
     } catch (error: any) {
       console.error('[InterviewHub] Failed to change due date:', error);
-      safeToastError(
-        error,
-        t('interview.hub.failedToChangeDueDate'),
-        isPolish
-      );
+      safeToastError(error, t('interview.hub.failedToChangeDueDate'), isPolish);
     } finally {
       setManageAssignmentBusy(false);
     }
@@ -2852,9 +2803,7 @@ export const InterviewHub: React.FC = () => {
       }
       setSelectedAssignmentIds(new Set());
       setBulkActionBusy(false);
-      toast.success(
-        t('interview.hub.delayedByDaysCount', { days, done })
-      );
+      toast.success(t('interview.hub.delayedByDaysCount', { days, done }));
     },
     [
       selectedAssignmentIds,
@@ -2892,11 +2841,7 @@ export const InterviewHub: React.FC = () => {
         setManagedAssignments(managedRes);
         setOverdueAssignments(overdueRes);
       } catch (error) {
-        safeToastError(
-          error,
-          t('interview.hub.failedToDelay'),
-          isPolish
-        );
+        safeToastError(error, t('interview.hub.failedToDelay'), isPolish);
       }
     },
     [isPolish, loadMyAssignments, loadManagedAssignments, loadOverdueAssignments]
@@ -2969,9 +2914,7 @@ export const InterviewHub: React.FC = () => {
       .map((s) => getManagedAssignmentForSession(s))
       .filter((a): a is InterviewAssignment => Boolean(a));
     if (targets.length === 0) {
-      toast.error(
-        t('interview.hub.noSubmittedSessionsToApprove')
-      );
+      toast.error(t('interview.hub.noSubmittedSessionsToApprove'));
       return;
     }
     setBulkActionBusy(true);
@@ -3030,9 +2973,7 @@ export const InterviewHub: React.FC = () => {
       .map((s) => getManagedAssignmentForSession(s))
       .filter((a): a is InterviewAssignment => Boolean(a));
     if (targets.length === 0) {
-      toast.error(
-        t('interview.hub.noSubmittedSessionsToSend')
-      );
+      toast.error(t('interview.hub.noSubmittedSessionsToSend'));
       return;
     }
     const reason = (
@@ -3115,11 +3056,7 @@ export const InterviewHub: React.FC = () => {
         handleViewSession(s as InterviewSession);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to open session by id:', error);
-        safeToastError(
-          error,
-          t('interview.hub.failedToOpenSession'),
-          isPolish
-        );
+        safeToastError(error, t('interview.hub.failedToOpenSession'), isPolish);
       }
     },
     [isPolish, handleViewSession]
@@ -3160,9 +3097,7 @@ export const InterviewHub: React.FC = () => {
         setActiveTab('insights');
       } catch (error) {
         toast.dismiss();
-        toast.error(
-          t('interview.hub.failedToGenerateInsights')
-        );
+        toast.error(t('interview.hub.failedToGenerateInsights'));
         console.error('[InterviewHub] Failed to generate insight:', error);
       }
     },
@@ -3183,9 +3118,7 @@ export const InterviewHub: React.FC = () => {
         if (status === 'PENDING_REVIEW') {
           toast.success(t('interview.hub.initiativeSentToReview'));
         } else if (status === 'REVIEW') {
-          toast.success(
-            t('interview.hub.initiativeApprovedAndMovedTo')
-          );
+          toast.success(t('interview.hub.initiativeApprovedAndMovedTo'));
           if (options?.openInInitiatives) {
             navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
           }
@@ -3299,7 +3232,9 @@ export const InterviewHub: React.FC = () => {
                     className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <Clock size={14} />
-                    {d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d })}
+                    {d === 1
+                      ? t('interview.hub.plusDaysOne', { count: d })
+                      : t('interview.hub.plusDaysOther', { count: d })}
                   </button>
                 ))}
               </div>
@@ -4174,9 +4109,7 @@ export const InterviewHub: React.FC = () => {
         );
         setSelectedInitiativeIds(new Set());
         await loadInterviewInitiatives();
-        toast.success(
-          t('interview.hub.updatedCountParen', { count: targetIds.length })
-        );
+        toast.success(t('interview.hub.updatedCountParen', { count: targetIds.length }));
       };
 
       if (selectedCount > 0) {
@@ -4335,8 +4268,7 @@ export const InterviewHub: React.FC = () => {
       },
       sent_back: {
         label: { en: 'Sent Back', pl: 'Do poprawy' },
-        bgColor:
-          'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
+        bgColor: 'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         textColor: 'text-c-danger',
         dotColor: 'bg-c-danger',
       },
@@ -4639,7 +4571,10 @@ export const InterviewHub: React.FC = () => {
                     icon: Clock,
                     submenu: [1, 3, 7].map((d) => ({
                       id: `delay-${d}`,
-                      label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
+                      label:
+                        d === 1
+                          ? t('interview.hub.plusDaysOne', { count: d })
+                          : t('interview.hub.plusDaysOther', { count: d }),
                       icon: Clock,
                       onClick: () => void handleDelayAssignment(linkedAssignment, d),
                     })),
@@ -4653,9 +4588,7 @@ export const InterviewHub: React.FC = () => {
                   ? () => handleSessionLifecycleAction(session, 'archive')
                   : undefined,
               archiveNote:
-                sessionLifecycle === 'active'
-                  ? undefined
-                  : t('interview.hub.useRestoreAbove'),
+                sessionLifecycle === 'active' ? undefined : t('interview.hub.useRestoreAbove'),
               // Brak endpointu edycji sesji — disabled z notą (StandardTable dokłada ją sama).
             },
             destructive:
@@ -4804,7 +4737,10 @@ export const InterviewHub: React.FC = () => {
                       onClick: () => {},
                       submenu: [1, 3, 7].map((d) => ({
                         id: `delay-${d}`,
-                        label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
+                        label:
+                          d === 1
+                            ? t('interview.hub.plusDaysOne', { count: d })
+                            : t('interview.hub.plusDaysOther', { count: d }),
                         icon: Clock,
                         onClick: () => void handleDelayAssignment(linkedAssignment, d),
                       })),
@@ -4937,7 +4873,10 @@ export const InterviewHub: React.FC = () => {
               {/* canon §4.1/§8.1: status via EntityStatusChip (statusChipTone → c.*) */}
               <EntityStatusChip
                 status={workflowStatus}
-                label={t(`interview.hub.sessionStatusLabel.${workflowStatus}`, statusConfig.label.en)}
+                label={t(
+                  `interview.hub.sessionStatusLabel.${workflowStatus}`,
+                  statusConfig.label.en
+                )}
               />
               <span className="text-xs text-slate-600 dark:text-slate-400">
                 {session.dueAt
@@ -5134,11 +5073,7 @@ export const InterviewHub: React.FC = () => {
 
   // Handle delete insight
   const handleDeleteInsight = async (insightId: string) => {
-    if (
-      !confirm(
-        t('interview.hub.areYouSureYouWant')
-      )
-    ) {
+    if (!confirm(t('interview.hub.areYouSureYouWant'))) {
       return;
     }
     try {
@@ -5167,15 +5102,11 @@ export const InterviewHub: React.FC = () => {
         return next;
       });
       toast.success(
-        archived
-          ? t('interview.hub.insightArchived')
-          : t('interview.hub.insightRestored')
+        archived ? t('interview.hub.insightArchived') : t('interview.hub.insightRestored')
       );
     } catch (error) {
       toast.error(
-        archived
-          ? t('interview.hub.failedToArchive')
-          : t('interview.hub.failedToRestore')
+        archived ? t('interview.hub.failedToArchive') : t('interview.hub.failedToRestore')
       );
       console.error('[InterviewHub] Failed to set insight archived:', error);
     }
@@ -5202,7 +5133,7 @@ export const InterviewHub: React.FC = () => {
         id: newInsight.id,
         type: 'interview_insight',
         subType: 'interview',
-        name: newInsight.title || (t('interview.hub.insight')),
+        name: newInsight.title || t('interview.hub.insight'),
         status: (newInsight.status || 'active').toUpperCase() as any,
       });
     } catch (error) {
@@ -5255,9 +5186,10 @@ export const InterviewHub: React.FC = () => {
     const insightStatusCopy = (
       insight: (typeof rows)[number]
     ): { label: { en: string; pl: string }; statusKey: string; labelKey: string } => {
-      const status = (insight.reviewStatus === 'in_review' || insight.reviewStatus === 'published'
-        ? insight.reviewStatus
-        : insight.status) || 'completed';
+      const status =
+        (insight.reviewStatus === 'in_review' || insight.reviewStatus === 'published'
+          ? insight.reviewStatus
+          : insight.status) || 'completed';
       const configs: Record<string, { label: { en: string; pl: string }; statusKey: string }> = {
         draft: { label: { en: 'Draft', pl: 'Szkic' }, statusKey: 'DRAFT' },
         generating: { label: { en: 'Generating', pl: 'Generowanie' }, statusKey: 'GENERATING' },
@@ -5335,7 +5267,10 @@ export const InterviewHub: React.FC = () => {
           return (
             <EntityStatusChip
               status={statusCopy.statusKey}
-              label={t(`interview.hub.insightStatusLabel.${statusCopy.labelKey}`, statusCopy.label.en)}
+              label={t(
+                `interview.hub.insightStatusLabel.${statusCopy.labelKey}`,
+                statusCopy.label.en
+              )}
             />
           );
         },
@@ -5356,7 +5291,8 @@ export const InterviewHub: React.FC = () => {
           return (
             <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
               <ClipboardList size={11} />
-              {sessionCount} {sessionCount === 1 ? (t('interview.hub.session')) : t('interview.hub.sessions2')}
+              {sessionCount}{' '}
+              {sessionCount === 1 ? t('interview.hub.session') : t('interview.hub.sessions2')}
             </span>
           );
         },
@@ -5422,7 +5358,9 @@ export const InterviewHub: React.FC = () => {
         }}
         rowDescription={(row) => {
           const insight = row as unknown as (typeof rows)[number];
-          const raw = String(insight.description || insight.content || insight.sourceQuote || '').trim();
+          const raw = String(
+            insight.description || insight.content || insight.sourceQuote || ''
+          ).trim();
           return stripInsightMarkdownPreview(raw) || null;
         }}
         defaultSort={{ columnId: 'date', direction: 'desc' }}
@@ -5432,9 +5370,7 @@ export const InterviewHub: React.FC = () => {
           icon: Lightbulb,
           title: t('interview.hub.noInsightsYet'),
           description: t('interview.hub.insightsAreGeneratedAutomaticallyBy'),
-          actionLabel: canCreateInsights
-            ? t('interview.hub.generateAiInsights')
-            : undefined,
+          actionLabel: canCreateInsights ? t('interview.hub.generateAiInsights') : undefined,
           onAction: canCreateInsights
             ? () => {
                 setSelectedSessionsForInsight([]);
@@ -5514,15 +5450,12 @@ export const InterviewHub: React.FC = () => {
               },
             ],
             universalHandlers: {
-              preview: () => (opts?.onRowClick ? opts.onRowClick(insight.id) : handleViewInsight(insight)),
+              preview: () =>
+                opts?.onRowClick ? opts.onRowClick(insight.id) : handleViewInsight(insight),
               edit: undefined,
               editNote: t('interview.hub.aiGeneratedReadOnly'),
-              archive: isArchived
-                ? undefined
-                : () => handleSetInsightArchived(insight.id, true),
-              archiveNote: isArchived
-                ? t('interview.hub.useRestoreBelow')
-                : undefined,
+              archive: isArchived ? undefined : () => handleSetInsightArchived(insight.id, true),
+              archiveNote: isArchived ? t('interview.hub.useRestoreBelow') : undefined,
             },
             statusTransitions: isArchived
               ? [
@@ -5561,9 +5494,7 @@ export const InterviewHub: React.FC = () => {
           onClick: async () => {
             const projectId = await ensureProjectId();
             if (!projectId) {
-              toast.error(
-                t('interview.hub.selectAProjectBeforeCreating')
-              );
+              toast.error(t('interview.hub.selectAProjectBeforeCreating'));
               return;
             }
             Api.post(`/interview/templates/${template.id}/use`, {
@@ -5645,7 +5576,7 @@ export const InterviewHub: React.FC = () => {
           label: t('interview.hub.editTemplate'),
           icon: Edit2,
           disabled: !canAssign,
-          description: !canAssign ? (t('interview.hub.managerOnly')) : undefined,
+          description: !canAssign ? t('interview.hub.managerOnly') : undefined,
           onClick: () => canAssign && handleEditTemplate(template.id),
         },
         ...(canAssign && !template.isDefault
@@ -5861,7 +5792,7 @@ export const InterviewHub: React.FC = () => {
           icon: FileText,
           title: t('interview.hub.noTemplatesYet'),
           description: t('interview.hub.createATemplateToSpeed'),
-          actionLabel: canAssign ? (t('interview.hub.newTemplate2')) : undefined,
+          actionLabel: canAssign ? t('interview.hub.newTemplate2') : undefined,
           onAction: canAssign ? handleNewTemplate : undefined,
         }}
         rowActions={(row) => buildTemplateRowSections(row as unknown as InterviewTemplate)}
@@ -5877,9 +5808,7 @@ export const InterviewHub: React.FC = () => {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FileText size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
-          <p className="text-sm text-c-text-muted">
-            {t('interview.hub.noTemplatesFound')}
-          </p>
+          <p className="text-sm text-c-text-muted">{t('interview.hub.noTemplatesFound')}</p>
           {canAssign && (
             <button
               onClick={handleNewTemplate}
@@ -6130,7 +6059,7 @@ export const InterviewHub: React.FC = () => {
   // Triada standard.)
 
   const getAssignmentTitle = useCallback(
-    (a: InterviewAssignment) => a.template?.name || (t('interview.hub.interview')),
+    (a: InterviewAssignment) => a.template?.name || t('interview.hub.interview'),
     [isPolish]
   );
   const getAssignmentDescription = useCallback(
@@ -6220,29 +6149,33 @@ export const InterviewHub: React.FC = () => {
             absDays === 1
               ? t('interview.hub.overdueDaysOne', { count: absDays })
               : t('interview.hub.overdueDaysOther', { count: absDays }),
-          colorClass:
-            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
+          colorClass: 'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
       }
       if (days === 0) {
         return {
           days,
           label: t('interview.hub.today'),
-          colorClass:
-            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
+          colorClass: 'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
       }
       if (days <= 3) {
         return {
           days,
-          label: days === 1 ? t('interview.hub.daysLeftOne', { count: days }) : t('interview.hub.daysLeftOther', { count: days }),
+          label:
+            days === 1
+              ? t('interview.hub.daysLeftOne', { count: days })
+              : t('interview.hub.daysLeftOther', { count: days }),
           colorClass:
             'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
         };
       }
       return {
         days,
-        label: days === 1 ? t('interview.hub.daysLeftOne', { count: days }) : t('interview.hub.daysLeftOther', { count: days }),
+        label:
+          days === 1
+            ? t('interview.hub.daysLeftOne', { count: days })
+            : t('interview.hub.daysLeftOther', { count: days }),
         colorClass:
           'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
       };
@@ -6255,9 +6188,7 @@ export const InterviewHub: React.FC = () => {
       try {
         const projectId = await ensureProjectId();
         if (!projectId) {
-          toast.error(
-            t('interview.hub.selectAProjectBeforeStarting')
-          );
+          toast.error(t('interview.hub.selectAProjectBeforeStarting'));
           return;
         }
         toast.loading(t('interview.hub.startingInterview'));
@@ -6283,9 +6214,7 @@ export const InterviewHub: React.FC = () => {
           });
         } else {
           console.warn('[InterviewHub] No session in result:', result);
-          toast.error(
-            t('interview.hub.noSessionInServerResponse')
-          );
+          toast.error(t('interview.hub.noSessionInServerResponse'));
         }
 
         // Refresh assignments
@@ -6298,11 +6227,7 @@ export const InterviewHub: React.FC = () => {
       } catch (error: any) {
         toast.dismiss();
         console.error('[InterviewHub] Failed to start assignment:', error);
-        safeToastError(
-          error,
-          t('interview.hub.failedToStartInterview'),
-          isPolish
-        );
+        safeToastError(error, t('interview.hub.failedToStartInterview'), isPolish);
       }
     },
     [
@@ -6352,21 +6277,14 @@ export const InterviewHub: React.FC = () => {
 
         // Manager view: if not started, show info
         if (isManagerView && !assignment.sessionId) {
-          toast(
-            t('interview.hub.interviewHasNotBeenStarted'),
-            { duration: 4000, icon: 'ℹ️' }
-          );
+          toast(t('interview.hub.interviewHasNotBeenStarted'), { duration: 4000, icon: 'ℹ️' });
           return;
         }
 
         console.warn('[InterviewHub] No action taken for assignment:', assignment);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to open assignment:', error);
-        safeToastError(
-          error,
-          t('interview.hub.failedToOpenAssignment'),
-          isPolish
-        );
+        safeToastError(error, t('interview.hub.failedToOpenAssignment'), isPolish);
       }
     },
     [handleOpenDocument, interviewDemoData.sessionDetailsById, isPolish, startInterviewAssignment]
@@ -6592,7 +6510,10 @@ Return ONLY the answer text (no markdown fences).`;
           onClick: () => {},
           submenu: [1, 3, 7].map((d) => ({
             id: `delay-${d}`,
-            label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
+            label:
+              d === 1
+                ? t('interview.hub.plusDaysOne', { count: d })
+                : t('interview.hub.plusDaysOther', { count: d }),
             icon: Clock,
             onClick: () => void handleDelayAssignment(assignment, d),
           })),
@@ -6623,9 +6544,9 @@ Return ONLY the answer text (no markdown fences).`;
     showAssignee: boolean = false
   ) => {
     const getAssignmentTemplateValue = (a: InterviewAssignment) =>
-      a.template?.name || (t('interview.hub.interview'));
+      a.template?.name || t('interview.hub.interview');
     const getAssignmentAssigneeValue = (a: InterviewAssignment) =>
-      a.assignee?.name || a.assignee?.email || (t('interview.hub.unknown'));
+      a.assignee?.name || a.assignee?.email || t('interview.hub.unknown');
 
     const assignmentColumns: StandardTableColumn[] = [
       {
@@ -6704,7 +6625,10 @@ Return ONLY the answer text (no markdown fences).`;
           return statusOrder[row.status] ?? 99;
         },
         render: (row: InterviewAssignment) => (
-          <Badge variant={getAssignmentStatusBadgeVariant(String(row.status || 'assigned'))} size="md">
+          <Badge
+            variant={getAssignmentStatusBadgeVariant(String(row.status || 'assigned'))}
+            size="md"
+          >
             {getAssignmentStatusLabel(row.status)}
           </Badge>
         ),
@@ -6800,13 +6724,13 @@ Return ONLY the answer text (no markdown fences).`;
                     title={
                       row.escalationTarget?.name ||
                       row.escalationTarget?.email ||
-                      (t('interview.hub.escalated'))
+                      t('interview.hub.escalated')
                     }
                   >
                     <ArrowUpRight size={11} />
                     {row.escalationTarget?.name ||
                       row.escalationTarget?.email ||
-                      (t('interview.hub.escalated'))}
+                      t('interview.hub.escalated')}
                   </span>
                 ) : (
                   <span className="text-xs text-c-text-muted">—</span>
@@ -6842,7 +6766,6 @@ Return ONLY the answer text (no markdown fences).`;
       />
     );
   };
-
 
   // canon §8 / §8.1: LOCAL card grid for Inbox & Assigned — mirrors renderSessionsGrid.
   // Neutral surface (NO border-l status accent), EntityStatusChip status, single-click →
@@ -6968,12 +6891,8 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <EmptyState
           variant="error"
-          title={
-            t('interview.hub.couldNotLoadYourInterviews')
-          }
-          description={
-            t('interview.hub.somethingWentWrongLoadingYour')
-          }
+          title={t('interview.hub.couldNotLoadYourInterviews')}
+          description={t('interview.hub.somethingWentWrongLoadingYour')}
           onRetry={() => window.location.reload()}
         />
       );
@@ -7427,7 +7346,7 @@ Return ONLY the answer text (no markdown fences).`;
       // PreviewableItem requires title:string — coalesce from title/name.
       const withInitiativeTitle = (it: InterviewInitiativeDraft) => ({
         ...it,
-        title: it.title || it.name || (t('interview.hub.initiative')),
+        title: it.title || it.name || t('interview.hub.initiative'),
       });
 
       // Side-preview body for an initiative (canon §7.3: meta → details).
@@ -7526,7 +7445,7 @@ Return ONLY the answer text (no markdown fences).`;
                       className="group flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[12px] text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.05]"
                     >
                       <span className="truncate">
-                        {item.title || item.name || (t('interview.hub.untitled'))}
+                        {item.title || item.name || t('interview.hub.untitled')}
                       </span>
                       <ExternalLink
                         size={11}
@@ -7647,9 +7566,7 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {rows.map((initiative) => {
                         const cardTitle =
-                          initiative.title ||
-                          initiative.name ||
-                          (t('interview.hub.initiative'));
+                          initiative.title || initiative.name || t('interview.hub.initiative');
                         const status = String(initiative.status || 'DRAFT').toUpperCase();
                         const m = statusMeta(status);
                         const isSelected = selectedInterviewInitiativeId === initiative.id;
@@ -7700,9 +7617,7 @@ Return ONLY the answer text (no markdown fences).`;
                             </p>
                             {/* 3 DESCRIPTION */}
                             {desc ? (
-                              <p className="line-clamp-2 text-xs text-c-text-muted">
-                                {desc}
-                              </p>
+                              <p className="line-clamp-2 text-xs text-c-text-muted">{desc}</p>
                             ) : null}
                             {/* 4 STATS FOOTER */}
                             <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-white/[0.05] dark:text-slate-400">
@@ -7713,9 +7628,7 @@ Return ONLY the answer text (no markdown fences).`;
                                   : t('interview.hub.noPriority')}
                               </span>
                               <span>
-                                {src
-                                  ? t('interview.hub.1Insight')
-                                  : t('interview.hub.noSource')}
+                                {src ? t('interview.hub.1Insight') : t('interview.hub.noSource')}
                               </span>
                               <span>{dateStr}</span>
                             </div>
@@ -7850,9 +7763,9 @@ Return ONLY the answer text (no markdown fences).`;
                         render: (row: InterviewInitiativeDraft) => (
                           <span
                             className="truncate block text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100"
-                            title={row.title || row.name || (t('interview.hub.initiative'))}
+                            title={row.title || row.name || t('interview.hub.initiative')}
                           >
-                            {row.title || row.name || (t('interview.hub.initiative'))}
+                            {row.title || row.name || t('interview.hub.initiative')}
                           </span>
                         ),
                       },
@@ -7953,9 +7866,7 @@ Return ONLY the answer text (no markdown fences).`;
                     ]}
                     data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
                     selectedRowId={selectedInterviewInitiativeId}
-                    onRowClick={(row) =>
-                      setSelectedInterviewInitiativeId(String((row as any).id))
-                    }
+                    onRowClick={(row) => setSelectedInterviewInitiativeId(String((row as any).id))}
                     onRowDoubleClick={(row) => {
                       navigate(
                         `/initiatives?open=${encodeURIComponent(String((row as any).id))}&mode=doc`
@@ -7963,13 +7874,14 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     rowDescription={(row) => {
                       const initiative = row as unknown as InterviewInitiativeDraft;
-                      return (
-                        (initiative.description || '').replace(/^#\s.+$/m, '').trim() || null
-                      );
+                      return (initiative.description || '').replace(/^#\s.+$/m, '').trim() || null;
                     }}
                     defaultSort={{ columnId: 'date', direction: 'desc' }}
                     persistKey="interview.initiatives.list"
-                    selection={{ selectedIds: selectedInitiativeIds, onChange: setSelectedInitiativeIds }}
+                    selection={{
+                      selectedIds: selectedInitiativeIds,
+                      onChange: setSelectedInitiativeIds,
+                    }}
                     empty={{
                       icon: Rocket,
                       title:
@@ -8244,7 +8156,7 @@ Return ONLY the answer text (no markdown fences).`;
           width: '160px',
           render: (row: InterviewAssignment) => (
             <span className="text-xs font-semibold text-c-text-secondary">
-              {row.template?.name || (t('interview.hub.interview'))}
+              {row.template?.name || t('interview.hub.interview')}
             </span>
           ),
         },
@@ -8286,7 +8198,8 @@ Return ONLY the answer text (no markdown fences).`;
           label: t('interview.hub.daysToDue2'),
           width: '160px',
           sortable: true,
-          sortAccessor: (row: InterviewAssignment) => (row.dueAt ? new Date(row.dueAt).getTime() : 0),
+          sortAccessor: (row: InterviewAssignment) =>
+            row.dueAt ? new Date(row.dueAt).getTime() : 0,
           render: (row: InterviewAssignment) => {
             const dtd = getAssignmentDaysToDue(row.dueAt);
             if (!dtd) return <span className="text-c-text-muted">—</span>;
@@ -8360,7 +8273,10 @@ Return ONLY the answer text (no markdown fences).`;
             time: [1, 3, 7].map((d) => ({
               id: `delay-${d}`,
               variant: 'warning' as const,
-              label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
+              label:
+                d === 1
+                  ? t('interview.hub.plusDaysOne', { count: d })
+                  : t('interview.hub.plusDaysOther', { count: d }),
               icon: Clock,
               onClick: () => void handleDelayAssignment(selectedRow, d),
             })),
@@ -8387,7 +8303,10 @@ Return ONLY the answer text (no markdown fences).`;
                 rowDescription={() => null}
                 defaultSort={{ columnId: 'dueAt', direction: 'asc' }}
                 persistKey="interview.inbox.list"
-                selection={{ selectedIds: selectedAssignmentIds, onChange: setSelectedAssignmentIds }}
+                selection={{
+                  selectedIds: selectedAssignmentIds,
+                  onChange: setSelectedAssignmentIds,
+                }}
                 empty={{
                   icon: Inbox,
                   title: t('interview.hub.noAssignments'),
@@ -8435,7 +8354,10 @@ Return ONLY the answer text (no markdown fences).`;
                         icon: Clock,
                         submenu: [1, 3, 7].map((d) => ({
                           id: `delay-${d}`,
-                          label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
+                          label:
+                            d === 1
+                              ? t('interview.hub.plusDaysOne', { count: d })
+                              : t('interview.hub.plusDaysOther', { count: d }),
                           icon: Clock,
                           onClick: () => void handleDelayAssignment(a, d),
                         })),
@@ -8490,8 +8412,9 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   details={{
                     text:
-                      String(previewDetailsOverride ?? selectedRow.template?.description ?? '').trim() ||
-                      (t('interview.hub.noDescription')),
+                      String(
+                        previewDetailsOverride ?? selectedRow.template?.description ?? ''
+                      ).trim() || t('interview.hub.noDescription'),
                     onCopy: () => {
                       const text = String(
                         previewDetailsOverride ?? selectedRow.template?.description ?? ''
@@ -8572,7 +8495,7 @@ Return ONLY the answer text (no markdown fences).`;
                     statusColor={statusColor}
                     progress={progress}
                     daysToDue={dtd}
-                    detailsText={detailsText || (t('interview.hub.noDescription'))}
+                    detailsText={detailsText || t('interview.hub.noDescription')}
                     detailsMenuOpen={previewDetailsMenuOpen}
                     onToggleDetailsMenu={() => setPreviewDetailsMenuOpen((v) => !v)}
                     onDetailsAction={(action) => {
@@ -8743,7 +8666,7 @@ Return ONLY the answer text (no markdown fences).`;
                     statusColor={statusColor}
                     progress={progress}
                     daysToDue={dtd}
-                    detailsText={detailsText || (t('interview.hub.noDescription'))}
+                    detailsText={detailsText || t('interview.hub.noDescription')}
                     detailsMenuOpen={previewDetailsMenuOpen}
                     onToggleDetailsMenu={() => setPreviewDetailsMenuOpen((v) => !v)}
                     onDetailsAction={(action) => {
@@ -8907,9 +8830,7 @@ Return ONLY the answer text (no markdown fences).`;
                       {insight.createdAt && (
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
-                          {new Date(insight.createdAt).toLocaleDateString(
-                            t('interview.hub.enUs')
-                          )}
+                          {new Date(insight.createdAt).toLocaleDateString(t('interview.hub.enUs'))}
                         </span>
                       )}
                       {findingsCount > 0 && (
@@ -9552,11 +9473,7 @@ Return ONLY the answer text (no markdown fences).`;
                       setSelectedAssignment(null);
                     } catch (error: any) {
                       console.error('[InterviewHub] Failed to send reminder from modal:', error);
-                      safeToastError(
-                        error,
-                        t('interview.hub.failedToSendReminder'),
-                        isPolish
-                      );
+                      safeToastError(error, t('interview.hub.failedToSendReminder'), isPolish);
                     }
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
@@ -9674,9 +9591,7 @@ Return ONLY the answer text (no markdown fences).`;
                 name="reason"
                 required
                 rows={4}
-                placeholder={
-                  t('interview.hub.describeWhatNeedsToBe')
-                }
+                placeholder={t('interview.hub.describeWhatNeedsToBe')}
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-c-text placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition resize-none"
               />
               <div className="flex gap-3 mt-4">
@@ -9732,7 +9647,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="text-xs text-slate-500 mt-1">
                   {selectedAssignment.assignee?.name ||
                     selectedAssignment.assignee?.email ||
-                    (t('interview.hub.unknown'))}
+                    t('interview.hub.unknown')}
                 </div>
               </div>
 
@@ -9790,10 +9705,7 @@ Return ONLY the answer text (no markdown fences).`;
                               <span className="min-w-0">
                                 <span className="font-medium">{w.label}</span>
                                 {w.feedback ? (
-                                  <span className="text-c-text-muted">
-                                    {' '}
-                                    — {w.feedback}
-                                  </span>
+                                  <span className="text-c-text-muted"> — {w.feedback}</span>
                                 ) : null}
                               </span>
                             </li>
@@ -9868,7 +9780,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="text-xs text-slate-500 mt-1">
                   {selectedAssignment.assignee?.name ||
                     selectedAssignment.assignee?.email ||
-                    (t('interview.hub.unknown'))}
+                    t('interview.hub.unknown')}
                 </div>
               </div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
@@ -9943,23 +9855,17 @@ Return ONLY the answer text (no markdown fences).`;
                       ).length
                     }
                   </div>
-                  <div className="text-sm text-c-text-muted">
-                    {t('interview.hub.approved')}
-                  </div>
+                  <div className="text-sm text-c-text-muted">{t('interview.hub.approved')}</div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-blue-400">
                     {sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length}
                   </div>
-                  <div className="text-sm text-c-text-muted">
-                    {t('interview.hub.inProgress2')}
-                  </div>
+                  <div className="text-sm text-c-text-muted">{t('interview.hub.inProgress2')}</div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-amber-400">{insights.length}</div>
-                  <div className="text-sm text-c-text-muted">
-                    {t('interview.hub.aiInsights2')}
-                  </div>
+                  <div className="text-sm text-c-text-muted">{t('interview.hub.aiInsights2')}</div>
                 </div>
               </div>
 
@@ -9973,33 +9879,25 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="text-xl font-bold text-blue-400">
                       {managedAssignments.length}
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {t('interview.hub.managed')}
-                    </div>
+                    <div className="text-xs text-slate-500">{t('interview.hub.managed')}</div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-c-danger">
                       {overdueAssignments.length}
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {t('interview.hub.overdue2')}
-                    </div>
+                    <div className="text-xs text-slate-500">{t('interview.hub.overdue2')}</div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-emerald-400">
                       {managedAssignments.filter((a) => a.status === 'completed').length}
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {t('interview.hub.completed2')}
-                    </div>
+                    <div className="text-xs text-slate-500">{t('interview.hub.completed2')}</div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-amber-400">
                       {managedAssignments.filter((a) => a.status === 'submitted').length}
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {t('interview.hub.pendingReview')}
-                    </div>
+                    <div className="text-xs text-slate-500">{t('interview.hub.pendingReview')}</div>
                   </div>
                 </div>
               </div>

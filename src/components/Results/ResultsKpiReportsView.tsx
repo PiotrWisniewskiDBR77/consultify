@@ -133,10 +133,10 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         width: '18%',
         render: (row) => (
           <div>
-            <div className="text-sm font-medium text-c-text">
-              {formatTemplateLabel(row.type)}
+            <div className="text-sm font-medium text-c-text">{formatTemplateLabel(row.type)}</div>
+            <div className="mt-1 text-xs text-c-text-muted dark:text-c-text-muted">
+              KPI scorecard
             </div>
-            <div className="mt-1 text-xs text-c-text-muted dark:text-c-text-muted">KPI scorecard</div>
           </div>
         ),
       },
@@ -652,7 +652,8 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               },
               {
                 label: String(item.status || 'DRAFT'),
-                className: 'bg-c-surface-raised/10 text-c-text-secondary dark:text-c-text-secondary',
+                className:
+                  'bg-c-surface-raised/10 text-c-text-secondary dark:text-c-text-secondary',
               },
               {
                 label: t('results.kpiReports.relation.kpis', '{{count}} KPI', {
@@ -675,17 +676,13 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                       <div className="text-c-text-muted dark:text-c-text-muted">
                         {t('common.period', 'Period')}
                       </div>
-                      <div className="text-c-text">
-                        {String(item.period || '—')}
-                      </div>
+                      <div className="text-c-text">{String(item.period || '—')}</div>
                     </div>
                     <div className="text-right">
                       <div className="text-c-text-muted dark:text-c-text-muted">
                         {t('common.updated', 'Updated')}
                       </div>
-                      <div className="text-c-text">
-                        {String(item.updatedAt || '—')}
-                      </div>
+                      <div className="text-c-text">{String(item.updatedAt || '—')}</div>
                     </div>
                   </div>
                 </PreviewMetaCard>
@@ -1167,9 +1164,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                         className="mt-1 rounded border-c-border-strong bg-c-surface-raised dark:bg-c-surface-raised text-c-focus-solid focus:ring-c-focus"
                       />
                       <div className="min-w-0">
-                        <div className="text-sm font-medium text-c-text truncate">
-                          {a.title}
-                        </div>
+                        <div className="text-sm font-medium text-c-text truncate">{a.title}</div>
                         <div className="text-xs text-c-text-muted dark:text-c-text-muted mt-0.5">
                           {a.kpiName || a.kpiId}
                           {a.dueDate ? ` · ${t('common.due', 'Due')}: ${a.dueDate}` : ''}

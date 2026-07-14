@@ -39,7 +39,9 @@ type CreateDecisionContext = {
  * model output never poisons a column with null.
  */
 function levelToScore(level: unknown): number {
-  const v = String(level || '').trim().toLowerCase();
+  const v = String(level || '')
+    .trim()
+    .toLowerCase();
   if (v === 'low' || v === 'niskie' || v === 'niski') return 2;
   if (v === 'high' || v === 'wysokie' || v === 'wysoki') return 5;
   if (v === 'medium' || v === 'średnie' || v === 'sredni' || v === 'średni') return 3;
@@ -76,7 +78,7 @@ function stripLeadingHeaderGlitch(v: string): string {
   // Gdy liczba „**" jest NIEPARZYSTA, ocalał osierocony marker → usuń PIERWSZY
   // (to zamknięcie nagłówka, który już zdjęliśmy z przodu). Zbalansowane „**bold**"
   // (parzyste) zostaje NIETKNIĘTE.
-  if (((s.match(/\*\*/g) || []).length) % 2 === 1) {
+  if ((s.match(/\*\*/g) || []).length % 2 === 1) {
     s = s.replace(/\*\*/, '');
   }
 
@@ -120,11 +122,18 @@ function stripMetaLabels(v: string): string {
     //     Zdejmij TYLKO gdy zawartość bolda zaczyna się od znanej meta-etykiety
     //     (chroni realny bold merytoryczny typu „**Kluczowy wniosek: X**").
     const boldHead = s.match(/^\*\*\s*([^*]+?)\s*\*\*\s*[:.\-–—]*\s*(?:\n+|\s+|$)/);
-    if (boldHead && META_LABEL.test(boldHead[1]) && /^\s*(?:konsekwencje|rekomendacja|horyzont|opis|kontekst|uzasadnienie|consequences|recommendation|realization|context|rationale)/i.test(boldHead[1].trim())) {
+    if (
+      boldHead &&
+      META_LABEL.test(boldHead[1]) &&
+      /^\s*(?:konsekwencje|rekomendacja|horyzont|opis|kontekst|uzasadnienie|consequences|recommendation|realization|context|rationale)/i.test(
+        boldHead[1].trim()
+      )
+    ) {
       // „**Horyzont realizacji: 45 dni**" niesie DANE (45 dni) — nie zdejmuj gdy po
       // dwukropku w BOLDZIE jest wartość merytoryczna; wtedy tylko odbolduj (usuń **).
       const inner = boldHead[1].trim();
-      const hasInlineValue = /:/.test(inner) && inner.split(/:/).slice(1).join(':').trim().length > 0;
+      const hasInlineValue =
+        /:/.test(inner) && inner.split(/:/).slice(1).join(':').trim().length > 0;
       if (hasInlineValue) {
         // Odbolduj nagłówek zachowując „Etykieta: wartość" jako zwykły tekst
         // (spacja przed resztą, by nie skleić „45 dni" z następną frazą).
@@ -139,7 +148,11 @@ function stripMetaLabels(v: string): string {
     // (b) Wiodąca „Etykieta:" / „# Etykieta" (bez bolda) będąca SAMOTNYM meta-nagłówkiem
     //     na starcie linii, po której idzie treść.
     const plainHead = s.match(/^#{0,3}\s*([^\n:]{3,40})\s*[:.\-–—]\s*(?:\n+|\s+)/);
-    if (plainHead && META_LABEL.test(plainHead[1]) && plainHead[1].trim().split(/\s+/).length <= 4) {
+    if (
+      plainHead &&
+      META_LABEL.test(plainHead[1]) &&
+      plainHead[1].trim().split(/\s+/).length <= 4
+    ) {
       s = s.slice(plainHead[0].length).trim();
       continue;
     }
@@ -172,7 +185,7 @@ function splitConsequencesAndRecommendation(prose: string): {
   if (!text) return { consequences: '', recommendation: '', rationale: '' };
   // Tolerant marker: optional markdown bold/heading around Rekomendacja/Recommendation.
   const markerMatch = text.match(
-    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(?:rekomendacja|recommendation|rekomenduj[eę]?)\b\s*(?:\*\*)?\s*[:.\s\-–—]*/i,
+    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(?:rekomendacja|recommendation|rekomenduj[eę]?)\b\s*(?:\*\*)?\s*[:.\s\-–—]*/i
   );
   if (markerMatch && markerMatch.index !== undefined) {
     const recStart = markerMatch.index + markerMatch[0].length;
@@ -203,7 +216,7 @@ function splitRecommendationAndRationale(body: string): {
   // Jawny marker uzasadnienia? Grupa 1 = SAM wyraz-marker (bez otoczki), grupa 2 =
   // separator tuż po nim. Dzielimy tak, by móc ZACHOWAĆ początek zdania rationale.
   const why = text.match(
-    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(uzasadnienie|rationale|dlaczego|why|bo|poniewa[żz])\b(\*\*)?([:.\s\-–—]*)/i,
+    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(uzasadnienie|rationale|dlaczego|why|bo|poniewa[żz])\b(\*\*)?([:.\s\-–—]*)/i
   );
   if (why && why.index !== undefined && why.index > 0) {
     const recommendation = stripLeadingHeaderGlitch(text.slice(0, why.index).trim());
@@ -294,9 +307,7 @@ function deriveFalsifier(assumption: string, language: 'pl' | 'en'): string {
   }
   if (days) {
     const d = num(days);
-    return en
-      ? `The deadline slipping beyond ${d} days.`
-      : `Termin przekraczający ${d} dni.`;
+    return en ? `The deadline slipping beyond ${d} days.` : `Termin przekraczający ${d} dni.`;
   }
   if (money) {
     const mv = num(money);
@@ -313,14 +324,12 @@ function deriveFalsifier(assumption: string, language: 'pl' | 'en'): string {
     .split(/\s+/)
     .slice(0, 8)
     .join(' ');
-  return en
-    ? `Evidence contradicting "${lead}".`
-    : `Dowód sprzeczny z tezą „${lead}".`;
+  return en ? `Evidence contradicting "${lead}".` : `Dowód sprzeczny z tezą „${lead}".`;
 }
 
 function extractAssumptions(
   text: string,
-  language: 'pl' | 'en',
+  language: 'pl' | 'en'
 ): Array<{ assumption: string; confidence: string; whatWouldChangeIt: string }> {
   const s = String(text || '').trim();
   if (!s) return [];
@@ -494,7 +503,7 @@ function looseJsonField(text: string, key: string): any[] | null {
 async function fillDecisionStructuralFields(
   decisionId: string,
   orgId: string,
-  language: 'pl' | 'en',
+  language: 'pl' | 'en'
 ): Promise<void> {
   try {
     const [{ default: decisionService }, queryHelpers, { getTableColumns }] = await Promise.all([
@@ -517,19 +526,23 @@ async function fillDecisionStructuralFields(
     let consequences = '';
     let recommendation = '';
     let rationale = '';
-    const assumptions: Array<{ assumption: string; confidence: string; whatWouldChangeIt: string }> = [];
+    const assumptions: Array<{
+      assumption: string;
+      confidence: string;
+      whatWouldChangeIt: string;
+    }> = [];
 
     if (altRes.status === 'fulfilled') {
       // ROBUST: parsedContent → artifact:comparison → loose JSON (PROBLEM #2).
       alternatives = extractAlternatives(
         altRes.value.parsedContent as any,
-        String(altRes.value.content || ''),
+        String(altRes.value.content || '')
       );
     } else {
       logger.error(
         `[create_decision] alternatives fill failed id=${decisionId}: ${
           altRes.reason instanceof Error ? altRes.reason.message : String(altRes.reason)
-        }`,
+        }`
       );
     }
 
@@ -537,7 +550,7 @@ async function fillDecisionStructuralFields(
       // ROBUST: parsedContent → artifact:matrix → loose JSON (PROBLEM #2).
       const risks = extractRisks(
         riskRes.value.parsedContent as any,
-        String(riskRes.value.content || ''),
+        String(riskRes.value.content || '')
       );
       if (risks && risks.length) {
         // BCG §2: risk/impact as a MATRIX with 1-5 scores, not just words.
@@ -551,7 +564,7 @@ async function fillDecisionStructuralFields(
       logger.error(
         `[create_decision] risk fill failed id=${decisionId}: ${
           riskRes.reason instanceof Error ? riskRes.reason.message : String(riskRes.reason)
-        }`,
+        }`
       );
     }
 
@@ -564,7 +577,7 @@ async function fillDecisionStructuralFields(
       logger.error(
         `[create_decision] consequences fill failed id=${decisionId}: ${
           consRes.reason instanceof Error ? consRes.reason.message : String(consRes.reason)
-        }`,
+        }`
       );
     }
 
@@ -625,7 +638,7 @@ async function fillDecisionStructuralFields(
       await queryHelpers.queryRun(
         `UPDATE decisions SET decision_rationale = ?
          WHERE id = ? AND organization_id = ? AND (decision_rationale IS NULL OR decision_rationale = '')`,
-        [rationaleForColumn, decisionId, orgId],
+        [rationaleForColumn, decisionId, orgId]
       );
     }
 
@@ -633,7 +646,7 @@ async function fillDecisionStructuralFields(
       vals.push(decisionId, orgId);
       await queryHelpers.queryRun(
         `UPDATE decisions SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
-        vals,
+        vals
       );
     }
 
@@ -648,13 +661,13 @@ async function fillDecisionStructuralFields(
         ]
           .filter(Boolean)
           .join(', ') +
-        ')',
+        ')'
     );
   } catch (err) {
     logger.error(
       `[create_decision] structural fill FAILED id=${decisionId}: ${
         err instanceof Error ? err.message : String(err)
-      }`,
+      }`
     );
   }
 }

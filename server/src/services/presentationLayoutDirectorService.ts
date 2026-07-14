@@ -21,14 +21,14 @@
  *   - never >2 consecutive identical layouts — enforced in post-processing.
  */
 
-import type { SlideIntent, UnifiedReportMeta, UnifiedSlide } from './report/pptx/types.js';
+import logger from '../utils/Logger.js';
 import {
   DELIVERABLE_GENERATION_PURPOSE,
-  resolveDeliverableTier,
   deliverableModelConfig,
+  resolveDeliverableTier,
 } from './deliverableGenerationTier.js';
 import { resolveDeliverableDefaults } from './deliverables/deliverableDefaults.js';
-import logger from '../utils/Logger.js';
+import type { SlideIntent, UnifiedReportMeta, UnifiedSlide } from './report/pptx/types.js';
 
 // ── Defaults (czytane RAZ przy starcie; nie hardcode) ────────────────────────
 const DECK_DEFAULTS = resolveDeliverableDefaults('deck');
@@ -256,9 +256,19 @@ export interface SlideLayoutPlan {
 
 /** Union of supported chart specs for slides (W1.5 / F11.1 / W7.5). */
 export type SlideChartSpec =
-  | { type: 'bar_series'; labels: string[]; series: Array<{ name: string; values: number[]; color?: string }> }
-  | { type: 'rag'; items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }> }
-  | { type: 'marimekko'; columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }> }
+  | {
+      type: 'bar_series';
+      labels: string[];
+      series: Array<{ name: string; values: number[]; color?: string }>;
+    }
+  | {
+      type: 'rag';
+      items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }>;
+    }
+  | {
+      type: 'marimekko';
+      columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }>;
+    }
   | { type: 'harvey_balls'; rows: Array<{ label: string; level: number; note?: string }> };
 
 export interface SlideCompositionRegion {
@@ -500,7 +510,11 @@ function normalizeComposition(raw: unknown): SlideComposition | null {
         if (Array.isArray(rawTypes)) {
           for (const bt of rawTypes) {
             if (blockTypes.length >= MAX_BLOCK_TYPES_PER_REGION) break;
-            if (typeof bt === 'string' && COMPOSITION_BLOCK_SET.has(bt) && !blockTypes.includes(bt)) {
+            if (
+              typeof bt === 'string' &&
+              COMPOSITION_BLOCK_SET.has(bt) &&
+              !blockTypes.includes(bt)
+            ) {
               blockTypes.push(bt);
             }
           }
@@ -513,7 +527,11 @@ function normalizeComposition(raw: unknown): SlideComposition | null {
     }
 
     // Nothing survived normalization → treat as absent.
-    if (out.layoutVariantId === undefined && out.emphasis === undefined && out.regions === undefined) {
+    if (
+      out.layoutVariantId === undefined &&
+      out.emphasis === undefined &&
+      out.regions === undefined
+    ) {
       return null;
     }
     return out;
@@ -550,7 +568,7 @@ async function planViaLlm(
     'the listed areas and block primitives. Keep it minimal (1–4 regions); do not overfill.\n' +
     '  - emphasis: ONE word for what the slide leads with (e.g. data, narrative, visual, comparison).\n' +
     'The composition must reflect the ACTUAL content of that slide — vary it slide-to-slide. If a slide ' +
-    "is genuinely trivial, a single full-area region is fine.";
+    'is genuinely trivial, a single full-area region is fine.';
 
   const userPrompt =
     `Deck language: ${meta?.language ?? 'en'}. Template: ${meta?.template ?? 'corporate'}. ` +
@@ -630,8 +648,7 @@ async function planViaLlm(
       paletteId,
       imageBrief:
         typeof raw.imageBrief === 'string' && raw.imageBrief.trim() ? raw.imageBrief.trim() : null,
-      reasoning:
-        (typeof raw.reasoning === 'string' && raw.reasoning) || 'LLM layout plan',
+      reasoning: (typeof raw.reasoning === 'string' && raw.reasoning) || 'LLM layout plan',
       // If a field was invalid we patched it deterministically, but the plan
       // still originates from the LLM call.
       source: usedFallbackField ? 'deterministic' : 'llm',

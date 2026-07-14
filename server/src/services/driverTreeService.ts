@@ -132,9 +132,7 @@ function topoOrder(index: Map<string, DriverNode>): string[] {
     if (node && node.kind === 'formula' && node.operands) {
       for (const dep of node.operands) {
         if (!index.has(dep)) {
-          throw new Error(
-            `Driver node "${id}" references unknown operand "${dep}"`,
-          );
+          throw new Error(`Driver node "${id}" references unknown operand "${dep}"`);
         }
         const c = color.get(dep);
         if (c === GREY) {
@@ -200,25 +198,25 @@ export function evaluateTree(nodes: DriverNode[]): EvaluateResult {
 export function propagateChange(
   nodes: DriverNode[],
   changedId: string,
-  newValue: number,
-): { before: Record<string, number>; after: Record<string, number>; delta: Record<string, number> } {
+  newValue: number
+): {
+  before: Record<string, number>;
+  after: Record<string, number>;
+  delta: Record<string, number>;
+} {
   const index = indexNodes(nodes);
   const target = index.get(changedId);
   if (!target) {
     throw new Error(`Cannot propagate change: unknown node "${changedId}"`);
   }
   if (target.kind !== 'input') {
-    throw new Error(
-      `Cannot propagate change: node "${changedId}" is a formula, not an input`,
-    );
+    throw new Error(`Cannot propagate change: node "${changedId}" is a formula, not an input`);
   }
 
   const before = evaluateTree(nodes).values;
 
   // Apply the change to a shallow-cloned node list (no mutation of inputs).
-  const mutated = nodes.map((n) =>
-    n.id === changedId ? { ...n, value: newValue } : n,
-  );
+  const mutated = nodes.map((n) => (n.id === changedId ? { ...n, value: newValue } : n));
   const after = evaluateTree(mutated).values;
 
   const delta: Record<string, number> = {};
@@ -242,10 +240,7 @@ export function propagateChange(
  *
  * @param values Optional precomputed values; falls back to {@link evaluateTree}.
  */
-export function treeToChartData(
-  nodes: DriverNode[],
-  values?: Record<string, number>,
-): ChartData {
+export function treeToChartData(nodes: DriverNode[], values?: Record<string, number>): ChartData {
   const index = indexNodes(nodes);
   const resolved = values ?? evaluateTree(nodes).values;
 
@@ -261,8 +256,7 @@ export function treeToChartData(
   // Guard against the chart recursion re-entering a cycle.
   const buildNode = (id: string, seen: Set<string>): DriverChartNode => {
     const node = index.get(id)!;
-    const childIds =
-      node.kind === 'formula' && node.operands ? node.operands : [];
+    const childIds = node.kind === 'formula' && node.operands ? node.operands : [];
     const nextSeen = new Set(seen).add(id);
     const children = childIds
       .filter((childId) => !seen.has(childId) && index.has(childId))

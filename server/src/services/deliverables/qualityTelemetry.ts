@@ -52,9 +52,7 @@ function median(nums: number[]): number {
   if (nums.length === 0) return 0;
   const sorted = [...nums].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0
-    ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
-    : sorted[mid];
+  return sorted.length % 2 === 0 ? Math.round((sorted[mid - 1] + sorted[mid]) / 2) : sorted[mid];
 }
 
 /** Normalizuje issue do klucza grupującego (ucina liczby/szczegóły → wzorzec). */
@@ -73,9 +71,14 @@ function issueKey(issue: string): string {
  */
 export function aggregateQualityTelemetry(records: TelemetryRecord[]): QualityTelemetry {
   const empty: QualityTelemetry = {
-    count: 0, averageScore: 0, medianScore: 0,
-    gradeDistribution: { ...EMPTY_GRADES }, cappedRate: 0, goodRate: 0,
-    topRecurringIssues: [], trendDelta: 0,
+    count: 0,
+    averageScore: 0,
+    medianScore: 0,
+    gradeDistribution: { ...EMPTY_GRADES },
+    cappedRate: 0,
+    goodRate: 0,
+    topRecurringIssues: [],
+    trendDelta: 0,
   };
   if (!Array.isArray(records) || records.length === 0) return empty;
 
@@ -136,7 +139,7 @@ export function aggregateQualityTelemetry(records: TelemetryRecord[]): QualityTe
  * Fail-soft per wiersz (zły JSON → scorecard null).
  */
 export function recordsFromRows(
-  rows: Array<{ quality_json?: unknown; created_at?: string | number }>,
+  rows: Array<{ quality_json?: unknown; created_at?: string | number }>
 ): TelemetryRecord[] {
   if (!Array.isArray(rows)) return [];
   return rows.map((r) => {

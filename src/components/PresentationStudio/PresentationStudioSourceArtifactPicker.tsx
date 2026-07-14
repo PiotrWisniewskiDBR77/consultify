@@ -27,7 +27,6 @@ import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
-
 import type {
   PresentationStudioSourceArtifactItem,
   PresentationStudioSourceArtifactList,

@@ -389,9 +389,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                       className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
                     >
                       <div>
-                        <code className="text-sm font-mono text-c-accent">
-                          {flag.key}
-                        </code>
+                        <code className="text-sm font-mono text-c-accent">{flag.key}</code>
                         {flag.description && (
                           <p className="text-xs text-c-text-muted mt-0.5">
                             {getFeatureFlagDescription(flag)}

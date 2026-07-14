@@ -165,10 +165,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
           <div
             className={`p-2 rounded-lg ${enabled ? 'bg-c-accent-soft dark:bg-c-accent-soft' : 'bg-c-surface'}`}
           >
-            <Icon
-              size={18}
-              className={enabled ? 'text-c-accent' : 'text-c-text-secondary'}
-            />
+            <Icon size={18} className={enabled ? 'text-c-accent' : 'text-c-text-secondary'} />
           </div>
           <div>
             <p className="font-medium text-c-text">{title}</p>
@@ -279,9 +276,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
           <Smile size={20} className="text-amber-500" />
           AI Personality
         </h3>
-        <p className="text-sm text-c-text-muted">
-          Choose how AI communicates with you
-        </p>
+        <p className="text-sm text-c-text-muted">Choose how AI communicates with you</p>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {personalities.map((p) => {
@@ -299,9 +294,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                 <Icon
                   size={24}
                   className={
-                    settings.personality === p.id
-                      ? 'text-amber-600'
-                      : 'text-c-text-secondary'
+                    settings.personality === p.id ? 'text-amber-600' : 'text-c-text-secondary'
                   }
                 />
                 <p className="font-medium text-c-text mt-2 text-sm">{p.label}</p>

@@ -12,9 +12,9 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { Callout } from '@/components/shared/NModeBlocks';
 
-import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 import BenefitsRegisterPanel from './BenefitsRegisterPanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
+import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 
 interface ManagerLaneCount {
   total: number;
@@ -337,9 +337,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                         className="text-c-text-secondary group-hover:text-c-text-secondary transition-colors mt-1"
                       />
                     </div>
-                    <h3 className="text-sm font-semibold text-c-text mb-1">
-                      {tile.title}
-                    </h3>
+                    <h3 className="text-sm font-semibold text-c-text mb-1">{tile.title}</h3>
                     <p className="text-[11px] text-c-text-muted leading-relaxed mb-3">
                       {tile.description}
                     </p>

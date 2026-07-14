@@ -238,10 +238,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
                 className="inline-flex items-center gap-1 px-3 py-1 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-full text-sm"
               >
                 {skill}
-                <button
-                  onClick={() => handleRemoveSkill(skill)}
-                  className="hover:text-c-accent"
-                >
+                <button onClick={() => handleRemoveSkill(skill)} className="hover:text-c-accent">
                   <X size={14} />
                 </button>
               </span>

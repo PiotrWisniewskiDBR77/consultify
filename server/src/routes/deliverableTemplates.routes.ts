@@ -15,16 +15,16 @@ import { Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import type { DeliverableTemplateType } from '../services/deliverableTemplateService.js';
 import {
-  listDeliverableTemplates,
   createDeliverableTemplate,
-  updateDeliverableTemplate,
   deleteDeliverableTemplate,
   getDeliverableTemplate,
+  listDeliverableTemplates,
   TemplateForbiddenError,
   TemplateNotFoundError,
+  updateDeliverableTemplate,
 } from '../services/deliverableTemplateService.js';
-import type { DeliverableTemplateType } from '../services/deliverableTemplateService.js';
 import { suggestTemplate } from '../services/deliverableTemplateSuggestService.js';
 import logger from '../utils/Logger.js';
 

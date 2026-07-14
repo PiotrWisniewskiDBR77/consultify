@@ -30,14 +30,14 @@ import { z } from 'zod';
 
 import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import { addChampion, listChampions, removeChampion } from '../services/changeChampionsService.js';
+import { createPir, finalizePir, getPir } from '../services/pirService.js';
 import {
   assumptionSignals,
   issueSignals,
   linkIssueToRisk,
   materializeRiskToIssue,
 } from '../services/raidGovernanceService.js';
-import { addChampion, listChampions, removeChampion } from '../services/changeChampionsService.js';
-import { createPir, finalizePir, getPir } from '../services/pirService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();

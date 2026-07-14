@@ -81,7 +81,10 @@ const BulletList: React.FC<{ items: string[]; color: string; label: string }> = 
       </h4>
       <ul className="space-y-1">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-c-text-secondary dark:text-c-text">
+          <li
+            key={i}
+            className="flex items-start gap-2 text-sm text-c-text-secondary dark:text-c-text"
+          >
             <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${color} shrink-0`} />
             {item}
           </li>

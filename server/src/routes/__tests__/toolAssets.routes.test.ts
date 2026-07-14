@@ -48,8 +48,7 @@ async function importRouter() {
 
 function findPutLayer(router: any) {
   const layer = router.stack.find(
-    (entry: any) =>
-      entry.route?.path === '/:toolSlug/:assetType' && entry.route?.methods?.put
+    (entry: any) => entry.route?.path === '/:toolSlug/:assetType' && entry.route?.methods?.put
   );
   expect(layer).toBeDefined();
   return layer;

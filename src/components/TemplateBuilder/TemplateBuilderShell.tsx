@@ -20,9 +20,9 @@ import type { TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleSh
 import type { RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 
 import {
+  elementCount,
   SCOPE_LABELS,
   TEMPLATE_TYPE_LABELS,
-  elementCount,
   type TemplateDraft,
 } from './templateBuilderModel';
 import {
@@ -31,10 +31,7 @@ import {
   type TemplateRightTool,
   type ThemeOption,
 } from './TemplateRightPanel';
-import {
-  TemplateStructureList,
-  type StructureListItem,
-} from './TemplateStructureList';
+import { type StructureListItem, TemplateStructureList } from './TemplateStructureList';
 
 export interface TemplateBuilderShellProps {
   draft: TemplateDraft;
@@ -144,7 +141,10 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
   );
 
   return (
-    <div className="h-screen flex flex-col bg-c-surface overflow-hidden" data-testid="template-builder-shell">
+    <div
+      className="h-screen flex flex-col bg-c-surface overflow-hidden"
+      data-testid="template-builder-shell"
+    >
       <div className="flex-1 flex min-h-0 overflow-hidden">
         <div className="flex-1 min-w-0 flex flex-col">
           <ExecutiveModuleShell

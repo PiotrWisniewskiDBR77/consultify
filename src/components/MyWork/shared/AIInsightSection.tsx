@@ -187,15 +187,15 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
               {/* Insights List */}
               {insights.length === 0 ? (
                 <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <Brain
-                    size={32}
-                    className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
-                  />
+                  <Brain size={32} className="mx-auto mb-2 text-slate-700 dark:text-slate-400" />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {t('myWork.aiInsight.noAIInsightsYet', 'No AI insights yet')}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-                    {t('myWork.aiInsight.clickGenerateInsightsTo', 'Click "Generate Insights" to get recommendations')}
+                    {t(
+                      'myWork.aiInsight.clickGenerateInsightsTo',
+                      'Click "Generate Insights" to get recommendations'
+                    )}
                   </p>
                 </div>
               ) : (
@@ -261,7 +261,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                                   className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium ${typeConfig.bgColor} ${typeConfig.color} hover:brightness-95 transition-colors`}
                                 >
                                   <Target size={12} />
-                                  {insight.actionText || (t('myWork.aiInsight.apply', 'Apply'))}
+                                  {insight.actionText || t('myWork.aiInsight.apply', 'Apply')}
                                 </button>
                               )}
                               {onDismissInsight && (
@@ -284,7 +284,10 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
               {/* AI Disclaimer */}
               <div className="text-center pt-2">
                 <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                  {t('myWork.aiInsight.aIGeneratedInsightsVerify', 'AI-generated insights. Verify before applying.')}
+                  {t(
+                    'myWork.aiInsight.aIGeneratedInsightsVerify',
+                    'AI-generated insights. Verify before applying.'
+                  )}
                 </p>
               </div>
             </div>

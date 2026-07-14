@@ -122,7 +122,13 @@ export function defaultNumberFormat(
 // ---------------------------------------------------------------------------
 
 export function alignmentForType(type: string | undefined): 'left' | 'right' | 'center' {
-  if (type === 'number' || type === 'currency' || type === 'percent' || type === 'date' || type === 'rating') {
+  if (
+    type === 'number' ||
+    type === 'currency' ||
+    type === 'percent' ||
+    type === 'date' ||
+    type === 'rating'
+  ) {
     return 'right';
   }
   if (type === 'boolean') return 'center';
@@ -147,11 +153,7 @@ export function computeColumnWidth(col: ColumnDef, sheet: Sheet, sampleRows = 20
     const cell = sheet.rows[i]?.cells?.[col.key];
     if (!cell) continue;
     const raw =
-      cell.formula != null
-        ? String(cell.formula)
-        : cell.value != null
-          ? String(cell.value)
-          : '';
+      cell.formula != null ? String(cell.formula) : cell.value != null ? String(cell.value) : '';
     if (raw.length > max) max = raw.length;
   }
   const typeFloor =
@@ -447,11 +449,7 @@ export function inferCurrency(schema: WorkbookSchema): CurrencyHint {
  * lacks. Header on row 1, data rows 2..(1+rowCount). No-op for empty sheets or
  * single-column sheets (autofilter on one column is noise). Fail-soft.
  */
-export function addAutoFilter(
-  ws: ExcelJS.Worksheet,
-  columnCount: number,
-  rowCount: number
-): void {
+export function addAutoFilter(ws: ExcelJS.Worksheet, columnCount: number, rowCount: number): void {
   if (columnCount < 2 || rowCount < 1) return;
   const lastCol = colLetter(columnCount);
   try {

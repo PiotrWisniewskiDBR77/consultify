@@ -125,9 +125,7 @@ export const BusinessCasesPage: React.FC = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-primary-600">
               The company
             </p>
-            <h2 className="mt-4 text-3xl font-black text-c-text sm:text-4xl">
-              AluForm Group
-            </h2>
+            <h2 className="mt-4 text-3xl font-black text-c-text sm:text-4xl">AluForm Group</h2>
             <p className="mt-5 text-base leading-8 text-c-text-secondary">
               AluForm Group is a European manufacturer of precision metal and aluminum components
               supplying HVAC, white goods, and automotive tier-1 supply chains. With five production
@@ -242,9 +240,7 @@ export const BusinessCasesPage: React.FC = () => {
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-danger-100 text-danger-600 dark:bg-danger-500/10 dark:text-danger-400">
                     <Icon size={18} />
                   </div>
-                  <p className="text-sm leading-7 text-c-text-secondary">
-                    {item.text}
-                  </p>
+                  <p className="text-sm leading-7 text-c-text-secondary">{item.text}</p>
                 </div>
               );
             })}
@@ -324,12 +320,8 @@ export const BusinessCasesPage: React.FC = () => {
                   >
                     <Icon size={22} />
                   </div>
-                  <h3 className="mt-5 text-xl font-black text-c-text">
-                    {stream.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-7 text-c-text-secondary">
-                    {stream.body}
-                  </p>
+                  <h3 className="mt-5 text-xl font-black text-c-text">{stream.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-c-text-secondary">{stream.body}</p>
                   <div className="mt-5 space-y-2.5 border-t border-c-border-subtle pt-5 dark:border-white/10">
                     {stream.bullets.map((b) => (
                       <div key={b} className="flex items-start gap-2.5">
@@ -388,15 +380,11 @@ export const BusinessCasesPage: React.FC = () => {
                 <span className="text-4xl font-black text-slate-200 dark:text-white/10">
                   {w.num}
                 </span>
-                <h3 className="mt-3 text-xl font-black text-c-text">
-                  {w.title}
-                </h3>
+                <h3 className="mt-3 text-xl font-black text-c-text">{w.title}</h3>
                 <p className="mt-1 text-sm font-semibold text-blue-600 dark:text-blue-400">
                   {w.sub}
                 </p>
-                <p className="mt-4 text-sm leading-7 text-c-text-secondary">
-                  {w.body}
-                </p>
+                <p className="mt-4 text-sm leading-7 text-c-text-secondary">{w.body}</p>
               </div>
             ))}
           </div>
@@ -442,9 +430,7 @@ export const BusinessCasesPage: React.FC = () => {
                     className="flex items-center justify-between gap-3 rounded-2xl bg-c-surface/70 px-4 py-3 dark:bg-black/10"
                   >
                     <span className="text-sm text-c-text-secondary">{r.label}</span>
-                    <span className="shrink-0 text-sm font-black text-c-text">
-                      {r.value}
-                    </span>
+                    <span className="shrink-0 text-sm font-black text-c-text">{r.value}</span>
                   </div>
                 ))}
               </div>
@@ -469,9 +455,7 @@ export const BusinessCasesPage: React.FC = () => {
                     className="flex items-center justify-between gap-3 rounded-2xl bg-c-surface px-4 py-3 dark:bg-black/10"
                   >
                     <span className="text-sm text-c-text-secondary">{r.label}</span>
-                    <span className="shrink-0 text-sm font-black text-c-text">
-                      {r.value}
-                    </span>
+                    <span className="shrink-0 text-sm font-black text-c-text">{r.value}</span>
                   </div>
                 ))}
               </div>
@@ -489,9 +473,7 @@ export const BusinessCasesPage: React.FC = () => {
                     <p className="text-[11px] font-bold uppercase tracking-widest text-c-text-muted">
                       {k.label}
                     </p>
-                    <p className="mt-2 text-2xl font-black text-c-text">
-                      {k.value}
-                    </p>
+                    <p className="mt-2 text-2xl font-black text-c-text">{k.value}</p>
                   </div>
                 ))}
               </div>
@@ -574,16 +556,12 @@ export const BusinessCasesPage: React.FC = () => {
                   >
                     <Icon size={20} />
                   </div>
-                  <h3 className="mt-5 text-lg font-black text-c-text">
-                    {item.title}
-                  </h3>
+                  <h3 className="mt-5 text-lg font-black text-c-text">{item.title}</h3>
                   <div className="mt-4 space-y-2.5">
                     {item.bullets.map((b) => (
                       <div key={b} className="flex items-start gap-2">
                         <CheckCircle2 size={14} className={`mt-0.5 shrink-0 ${item.accent}`} />
-                        <span className="text-sm leading-6 text-c-text-secondary">
-                          {b}
-                        </span>
+                        <span className="text-sm leading-6 text-c-text-secondary">{b}</span>
                       </div>
                     ))}
                   </div>
@@ -602,9 +580,7 @@ export const BusinessCasesPage: React.FC = () => {
             "We went from eight weeks of manual reconciliation to a ten-day decision cycle — and for
             the first time the board could see the same numbers the plant managers see."
           </blockquote>
-          <p className="mt-6 text-base font-semibold text-c-text-muted">
-            COO, AluForm Group
-          </p>
+          <p className="mt-6 text-base font-semibold text-c-text-muted">COO, AluForm Group</p>
         </motion.div>
       </section>
 

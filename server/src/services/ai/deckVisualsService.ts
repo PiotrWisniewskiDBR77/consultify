@@ -10,9 +10,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
-import { selectStockImageProvider } from '../deliverables/stockImageProvider.js';
-import { routeImage } from '../deliverables/imageRouter.js';
 import logger from '../../utils/Logger.js';
+import { routeImage } from '../deliverables/imageRouter.js';
+import { selectStockImageProvider } from '../deliverables/stockImageProvider.js';
 import type { SlideVisualSpec, UnifiedReportMeta } from '../report/pptx/types.js';
 
 type VisualPriority = 'quality' | 'cost';
@@ -383,8 +383,9 @@ export async function generateWithGemini(params: {
   if (!apiKey) throw new Error('Gemini API key missing (GEMINI_API_KEY)');
 
   const base =
-    String(params.endpoint || '').trim().replace(/\/+$/, '') ||
-    'https://generativelanguage.googleapis.com/v1beta';
+    String(params.endpoint || '')
+      .trim()
+      .replace(/\/+$/, '') || 'https://generativelanguage.googleapis.com/v1beta';
   const timeoutMs = typeof params.timeoutMs === 'number' ? params.timeoutMs : 60_000;
 
   const requestedModel = String(params.model || '').trim() || 'gemini-2.5-flash-image';
@@ -626,14 +627,13 @@ async function generateImageVisual(params: {
     priority,
     dataClass,
   });
-  const selection: ImageProviderSelection | null =
-    dbSelection
-      ? {
-          provider: dbSelection.provider,
-          apiKey: dbSelection.apiKey,
-          modelId: dbSelection.modelId,
-        }
-      : resolveDefaultImageProvider();
+  const selection: ImageProviderSelection | null = dbSelection
+    ? {
+        provider: dbSelection.provider,
+        apiKey: dbSelection.apiKey,
+        modelId: dbSelection.modelId,
+      }
+    : resolveDefaultImageProvider();
 
   const stockQuery = String(params.styleHint || params.label || params.prompt || '').slice(0, 200);
 

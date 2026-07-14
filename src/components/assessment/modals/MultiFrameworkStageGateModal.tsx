@@ -380,9 +380,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                     ? 'Approve Assessment'
                     : 'Reject Assessment'}
               </h2>
-              <p className="text-sm text-c-text-muted">
-                {framework} Assessment Stage Gate
-              </p>
+              <p className="text-sm text-c-text-muted">{framework} Assessment Stage Gate</p>
             </div>
           </div>
           <button
@@ -405,9 +403,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
             {isValidating ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-c-info" />
-                <span className="ml-2 text-c-text-muted">
-                  Validating assessment...
-                </span>
+                <span className="ml-2 text-c-text-muted">Validating assessment...</span>
               </div>
             ) : (
               <div className="space-y-2">
@@ -449,9 +445,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                           {check.label}
                         </span>
                         {check.message && (
-                          <p className="text-xs text-c-text-muted mt-0.5">
-                            {check.message}
-                          </p>
+                          <p className="text-xs text-c-text-muted mt-0.5">{check.message}</p>
                         )}
                       </div>
                     </div>
@@ -499,12 +493,8 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                           className="w-4 h-4 rounded border-c-border-subtle"
                         />
                         <div>
-                          <div className="font-medium text-c-text">
-                            {reviewer.name}
-                          </div>
-                          <div className="text-xs text-c-text-muted">
-                            {reviewer.email}
-                          </div>
+                          <div className="font-medium text-c-text">{reviewer.name}</div>
+                          <div className="text-xs text-c-text-muted">{reviewer.email}</div>
                         </div>
                       </div>
                       {reviewer.canApprove && (
@@ -530,9 +520,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
               <div className="flex items-start gap-3">
                 <Shield className="w-5 h-5 text-c-warning mt-0.5" />
                 <div>
-                  <p className="font-medium text-c-warning">
-                    Special Approval Required
-                  </p>
+                  <p className="font-medium text-c-warning">Special Approval Required</p>
                   <p className="text-sm text-c-warning mt-1">
                     {framework} approval requires a certified {requirements.requiredRoleLabel}. Your
                     credentials will be verified.

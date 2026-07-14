@@ -19,6 +19,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -155,10 +156,7 @@ export async function listStages(
 /**
  * Fetch a single stage by id, org-scoped.
  */
-export async function getStage(
-  organizationId: string,
-  id: string
-): Promise<RolloutStage | null> {
+export async function getStage(organizationId: string, id: string): Promise<RolloutStage | null> {
   if (!organizationId || !id) return null;
   const row = await dbGet<Record<string, any>>(
     'SELECT id, organization_id, project_id, name, wave_type, sequence, ' +

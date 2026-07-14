@@ -333,8 +333,7 @@ function sanitizeNode(node: Node): Node {
 }
 
 function sanitizeEdge(edge: Edge): Edge {
-  const data =
-    edge.data && typeof edge.data === 'object' ? stripFunctions(edge.data) : edge.data;
+  const data = edge.data && typeof edge.data === 'object' ? stripFunctions(edge.data) : edge.data;
   return { ...edge, data };
 }
 

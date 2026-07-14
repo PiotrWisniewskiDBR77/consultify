@@ -43,23 +43,14 @@ vi.mock('../../database/Database.js', () => ({
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
   requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
-  requireRole:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  requireRole: () => (_req: any, _res: any, next: () => void) => next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  requireOrgRole:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
+  requireOrgRole: () => (_req: any, _res: any, next: () => void) => next(),
   validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
 }));
 
@@ -68,18 +59,9 @@ vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/validation.middleware.js', () => ({
-  validateBody:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  validateParams:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  validateQuery:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  validateBody: () => (_req: any, _res: any, next: () => void) => next(),
+  validateParams: () => (_req: any, _res: any, next: () => void) => next(),
+  validateQuery: () => (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/demoGuard.middleware.js', () => ({

@@ -79,7 +79,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       // Tables
       table: ({ children }: any) => (
         <div className="overflow-x-auto mb-4 rounded-lg border border-slate-200 dark:border-navy-700">
-          <table /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */  className="min-w-full divide-y divide-slate-200 dark:divide-navy-700">
+          <table
+            /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */ className="min-w-full divide-y divide-slate-200 dark:divide-navy-700"
+          >
             {children}
           </table>
         </div>

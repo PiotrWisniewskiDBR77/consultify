@@ -425,10 +425,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
 
       {/* Search */}
       <div className="relative">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
-          size={18}
-        />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted" size={18} />
         <input
           type="text"
           value={searchTerm}
@@ -481,9 +478,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-c-text">
-                            {group.name}
-                          </h3>
+                          <h3 className="font-semibold text-c-text">{group.name}</h3>
                           {group.isDefault && (
                             <span className="px-2 py-0.5 bg-c-surface-raised text-c-text-muted text-xs rounded-full">
                               Default
@@ -491,9 +486,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                           )}
                         </div>
                         {group.description && (
-                          <p className="text-sm text-c-text-muted mt-0.5">
-                            {group.description}
-                          </p>
+                          <p className="text-sm text-c-text-muted mt-0.5">{group.description}</p>
                         )}
                         <div className="flex items-center gap-4 mt-2 text-xs text-c-text-muted">
                           <span className="flex items-center gap-1">
@@ -557,9 +550,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {group.memberIds.length === 0 ? (
-                              <span className="text-sm text-c-text-muted">
-                                No members yet
-                              </span>
+                              <span className="text-sm text-c-text-muted">No members yet</span>
                             ) : (
                               group.memberIds.map((memberId) => {
                                 const user = users.find((u) => u.id === memberId);
@@ -591,9 +582,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {group.permissions?.length === 0 ? (
-                              <span className="text-sm text-c-text-muted">
-                                No permissions set
-                              </span>
+                              <span className="text-sm text-c-text-muted">No permissions set</span>
                             ) : (
                               group.permissions?.map((perm, idx: number) => (
                                 <span
@@ -731,7 +720,9 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                     Permissions
                   </label>
                   <div className="border border-c-border-subtle rounded-lg overflow-hidden">
-                    <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-sm">
+                    <table
+                      /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-sm"
+                    >
                       <thead className="bg-c-surface-raised">
                         <tr>
                           <th className="px-4 py-2 text-left text-c-text-secondary font-medium">
@@ -751,9 +742,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                         {PERMISSION_RESOURCES.map((resource) => (
                           <tr key={resource.id}>
                             <td className="px-4 py-2">
-                              <div className="font-medium text-c-text">
-                                {resource.label}
-                              </div>
+                              <div className="font-medium text-c-text">{resource.label}</div>
                               <div className="text-xs text-c-text-muted">
                                 {resource.description}
                               </div>
@@ -851,16 +840,12 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                               </span>
                               {isLeader && <Crown size={14} className="text-amber-500" />}
                             </div>
-                            <span className="text-xs text-c-text-muted">
-                              {user.email}
-                            </span>
+                            <span className="text-xs text-c-text-muted">{user.email}</span>
                           </div>
                         </div>
                         <div
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            isMember
-                              ? 'bg-primary-600 border-primary-600'
-                              : 'border-c-border'
+                            isMember ? 'bg-primary-600 border-primary-600' : 'border-c-border'
                           }`}
                         >
                           {isMember && <Check size={14} className="text-c-text" />}

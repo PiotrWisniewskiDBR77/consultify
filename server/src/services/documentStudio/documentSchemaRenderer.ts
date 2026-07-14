@@ -21,7 +21,9 @@ function cellToString(cell: unknown): string {
     if ('value' in (cell as object)) return cellToString((cell as { value?: unknown }).value);
     return '';
   }
-  return String(cell).replace(/\s*\|\s*/g, ' / ').replace(/\n+/g, ' ');
+  return String(cell)
+    .replace(/\s*\|\s*/g, ' / ')
+    .replace(/\n+/g, ' ');
 }
 
 /**
@@ -76,7 +78,9 @@ function normalizeTableContent(content: unknown): { columns: string[]; rows: str
       ? value.headers
       : [];
   const columns = rawColumns.map((c) => cellToString(c));
-  const rows = rawRows.map((row) => (Array.isArray(row) ? row.map((cell) => cellToString(cell)) : [cellToString(row)]));
+  const rows = rawRows.map((row) =>
+    Array.isArray(row) ? row.map((cell) => cellToString(cell)) : [cellToString(row)]
+  );
   return { columns, rows };
 }
 

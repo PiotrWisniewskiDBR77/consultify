@@ -22,12 +22,12 @@ import { z } from 'zod';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import { persistCards } from '../services/ai/tools/generateInitiative.js';
 import {
   defaultDeps,
   generateFullInitiative,
   proposeCards,
 } from '../services/initiative/initiativeGeneratorBrain.js';
-import { persistCards } from '../services/ai/tools/generateInitiative.js';
 import initiativeGenerationService from '../services/initiativeGenerationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -76,7 +76,7 @@ router.post(
     const { type, sourceType, brief } = req.body as z.infer<typeof ProposeCardsSchema>;
     const result = proposeCards(type, sourceType, brief ? { brief } : undefined);
     return res.status(200).json(result);
-  }),
+  })
 );
 
 // POST /initiatives/:id/generate-full — fast track fill of one initiative.
@@ -108,7 +108,7 @@ router.post(
     } catch (persistErr: any) {
       logger.warn(
         '[initiativeGenerator] generate-full persist/hydrate failed (ignored):',
-        persistErr?.message || persistErr,
+        persistErr?.message || persistErr
       );
     }
 
@@ -121,7 +121,7 @@ router.post(
     });
 
     return res.status(200).json(result);
-  }),
+  })
 );
 
 // POST /initiatives/:id/generate-section-card — R2: emit ONE section as a CardSpec
@@ -136,8 +136,9 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const initiativeId = String(req.params.id);
 
-    const { sectionKey, initiativeName, brief, language, maxRegen } =
-      req.body as z.infer<typeof GenerateSectionCardSchema>;
+    const { sectionKey, initiativeName, brief, language, maxRegen } = req.body as z.infer<
+      typeof GenerateSectionCardSchema
+    >;
 
     const result = await initiativeGenerationService.generateSectionCardSpec(
       sectionKey,
@@ -148,7 +149,7 @@ router.post(
         ...(brief ? { summary: brief } : {}),
       },
       orgId,
-      typeof maxRegen === 'number' ? { maxRegen } : undefined,
+      typeof maxRegen === 'number' ? { maxRegen } : undefined
     );
 
     logger.info('[initiativeGenerator] generate-section-card', {
@@ -160,7 +161,7 @@ router.post(
     });
 
     return res.status(200).json(result);
-  }),
+  })
 );
 
 export default router;

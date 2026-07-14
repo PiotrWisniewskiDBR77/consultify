@@ -70,7 +70,7 @@ describe('ExportService', () => {
       );
     });
 
-    it("prefixes leading + / @ / - formula triggers with apostrophe", () => {
+    it('prefixes leading + / @ / - formula triggers with apostrophe', () => {
       // No comma/quote/newline → apostrophe-prefixed but not RFC-wrapped.
       expect(escapeCsvValue('+SUM(A1:A2)')).toBe("'+SUM(A1:A2)");
       expect(escapeCsvValue('@cmd')).toBe("'@cmd");

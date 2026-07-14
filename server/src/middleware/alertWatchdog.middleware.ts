@@ -12,7 +12,16 @@ import type { NextFunction, Request, Response } from 'express';
 
 import logger from '../utils/Logger.js';
 
-type SystemAlertNotifier = { sendSystemAlert: (opts: { title: string; message: string; severity: string; source: string; throttleKey: string; throttleMs: number }) => Promise<void> };
+type SystemAlertNotifier = {
+  sendSystemAlert: (opts: {
+    title: string;
+    message: string;
+    severity: string;
+    source: string;
+    throttleKey: string;
+    throttleMs: number;
+  }) => Promise<void>;
+};
 let _systemAlertNotifier: SystemAlertNotifier | null = null;
 async function getSystemAlertNotifier(): Promise<SystemAlertNotifier | null> {
   if (_systemAlertNotifier) return _systemAlertNotifier;

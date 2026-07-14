@@ -16,7 +16,7 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
-import { run as dbRun, all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const LOG_PREFIX = '[Execution:RolloutBaseline]';

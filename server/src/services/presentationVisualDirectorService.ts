@@ -370,9 +370,7 @@ export async function planDeckVisualsTiered(params: {
       // (c) Carry B1's layout recommendation as a NON-destructive debug label.
       //     `slide.intent` is deliberately left untouched (renderer coherence).
       const out: UnifiedSlide =
-        next.length || repaletted.length
-          ? { ...s, visuals: next }
-          : { ...s };
+        next.length || repaletted.length ? { ...s, visuals: next } : { ...s };
       if (plan?.layoutIntent) {
         (out as any)._b1LayoutIntent = plan.layoutIntent;
       }

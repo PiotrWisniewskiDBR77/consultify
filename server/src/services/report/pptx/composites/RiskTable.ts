@@ -137,10 +137,7 @@ export function RiskTable(props: RiskTableProps, tokens: DesignTokens): Rendered
   // table doesn't become absurdly tall.
   const totalRows = dataRows.length + 1; // +1 header
   const naturalRowH = 0.4;
-  const fittedRowH = Math.min(
-    1.0,
-    Math.max(naturalRowH, p.h / totalRows)
-  );
+  const fittedRowH = Math.min(1.0, Math.max(naturalRowH, p.h / totalRows));
 
   elements.push({
     kind: 'table',

@@ -117,13 +117,8 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-          <h3 className="font-semibold text-c-text">
-            {isPl ? 'Opcje Sekcji' : 'Section Options'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-c-text-secondary hover:text-c-text-secondary"
-          >
+          <h3 className="font-semibold text-c-text">{isPl ? 'Opcje Sekcji' : 'Section Options'}</h3>
+          <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -290,13 +285,8 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-          <h3 className="font-semibold text-c-text">
-            {isPl ? 'Dodaj Sekcję' : 'Add Section'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-c-text-secondary hover:text-c-text-secondary"
-          >
+          <h3 className="font-semibold text-c-text">{isPl ? 'Dodaj Sekcję' : 'Add Section'}</h3>
+          <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -553,9 +543,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
             {/* Section Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-c-text truncate">
-                  {section.title}
-                </span>
+                <span className="font-medium text-c-text truncate">{section.title}</span>
                 {section.required && (
                   <span className="text-xs text-c-text-secondary">(required)</span>
                 )}

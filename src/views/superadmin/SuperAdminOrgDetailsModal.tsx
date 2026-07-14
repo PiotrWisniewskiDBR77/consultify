@@ -346,7 +346,9 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             </div>
             <div className="bg-c-surface rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Billing Email</p>
-              <p className="font-medium text-c-text truncate">{formatText(billing.billing_email)}</p>
+              <p className="font-medium text-c-text truncate">
+                {formatText(billing.billing_email)}
+              </p>
             </div>
             <div className="bg-c-surface rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Next Invoice</p>
@@ -415,7 +417,9 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             </h4>
           </div>
           <div className="max-h-56 overflow-y-auto">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left border-collapse">
+            <table
+              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left border-collapse"
+            >
               <thead className="bg-slate-50 dark:bg-navy-900 text-slate-500 dark:text-slate-400 text-xs uppercase sticky top-0">
                 <tr>
                   <th className="p-3 font-medium">Date</th>

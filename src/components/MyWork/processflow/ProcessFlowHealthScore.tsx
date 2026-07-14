@@ -199,9 +199,7 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
                 <div className="text-[10px] font-medium text-c-text-secondary truncate">
                   {isPl ? m.labelPl : m.labelEn}
                 </div>
-                <div className="text-[9px] text-c-text-muted truncate">
-                  {m.detail}
-                </div>
+                <div className="text-[9px] text-c-text-muted truncate">{m.detail}</div>
               </div>
               <span className={`text-[10px] font-bold tabular-nums ${scoreColor(m.score)}`}>
                 {m.score}%

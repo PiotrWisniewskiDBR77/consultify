@@ -36,9 +36,7 @@ describe('diffTextSegments', () => {
     expect(segments.filter((s) => s.kind === 'removed').map((s) => s.value.trim())).toEqual([
       'quick',
     ]);
-    expect(segments.filter((s) => s.kind === 'added').map((s) => s.value.trim())).toEqual([
-      'slow',
-    ]);
+    expect(segments.filter((s) => s.kind === 'added').map((s) => s.value.trim())).toEqual(['slow']);
     // Reconstruction invariants:
     const before = segments
       .filter((s) => s.kind !== 'added')

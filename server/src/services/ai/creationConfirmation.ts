@@ -40,7 +40,7 @@ type Lang = 'pl' | 'en';
 export function buildCreationConfirmation(
   kind: CreationKind,
   title: string,
-  language: Lang,
+  language: Lang
 ): string {
   const t = String(title || '').trim();
   const q = (s: string) => (language === 'en' ? `"${s}"` : `„${s}”`);

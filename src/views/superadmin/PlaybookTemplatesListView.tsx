@@ -338,7 +338,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
-          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full divide-y divide-slate-200 dark:divide-white/10">
+          <table
+            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full divide-y divide-slate-200 dark:divide-white/10"
+          >
             <thead className="bg-slate-50 dark:bg-navy-900/20">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">

@@ -114,7 +114,19 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [annualBenefits, defaultAnalysisType, discountRatePct, horizon, initialInvestment, isInvestmentCase, onCreated, selectedStatementPack, selectedStatementPackId, t, title]);
+  }, [
+    annualBenefits,
+    defaultAnalysisType,
+    discountRatePct,
+    horizon,
+    initialInvestment,
+    isInvestmentCase,
+    onCreated,
+    selectedStatementPack,
+    selectedStatementPackId,
+    t,
+    title,
+  ]);
 
   return (
     <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">

@@ -76,9 +76,7 @@ export async function loadLifecycleStatesForOrg(
       [organizationId]
     );
     if (!Array.isArray(rows) || rows.length === 0) return [];
-    return rows
-      .map(rowToState)
-      .filter((s): s is DocumentLifecycleState => s !== null);
+    return rows.map(rowToState).filter((s): s is DocumentLifecycleState => s !== null);
   } catch (err) {
     logger.warn('[DocumentStudio][LifecycleDao] loadLifecycleStatesForOrg failed', {
       organizationId,

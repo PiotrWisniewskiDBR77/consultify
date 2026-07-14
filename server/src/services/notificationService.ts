@@ -4,7 +4,6 @@
  */
 
 import crypto from 'crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
@@ -387,9 +386,7 @@ class NotificationService {
           kind,
           title: input.title || input.body || input.type,
           detail:
-            input.body && input.body !== input.title
-              ? String(input.body).slice(0, 200)
-              : undefined,
+            input.body && input.body !== input.title ? String(input.body).slice(0, 200) : undefined,
           orgId: input.organizationId,
           urgent,
         });
@@ -1246,9 +1243,7 @@ class NotificationService {
    */
   private computeDedupeKey(input: SendNotificationInput): string {
     const type = String(input.type || '').toLowerCase();
-    const entityType = String(
-      input.relatedObjectType || input.entityType || ''
-    ).toLowerCase();
+    const entityType = String(input.relatedObjectType || input.entityType || '').toLowerCase();
     const entityId = String(input.relatedObjectId || input.entityId || '');
     const explicit = String(input.dedupeKey || '').trim();
 
@@ -1302,15 +1297,7 @@ class NotificationService {
           `INSERT INTO notification_dedup
             (dedupe_key, user_id, notification_id, type, organization_id, created_at, expires_at)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            key,
-            input.userId,
-            notificationId,
-            input.type,
-            input.organizationId,
-            nowIso,
-            expiresAt,
-          ]
+          [key, input.userId, notificationId, input.type, input.organizationId, nowIso, expiresAt]
         );
         // Fresh claim — this is the first (and only) send for this window.
         return null;

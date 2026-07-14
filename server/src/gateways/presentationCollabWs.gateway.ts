@@ -223,12 +223,15 @@ async function ensureFreshOrgContext(
   }
 
   if (fresh.organizationId !== ctx.organizationId) {
-    logger.warn('[PresentationCollabWs] Org context changed mid-connection — closing stale socket', {
-      userId: user.userId,
-      deckId: ws.deckId,
-      boundOrg: ctx.organizationId,
-      activeOrg: fresh.organizationId,
-    });
+    logger.warn(
+      '[PresentationCollabWs] Org context changed mid-connection — closing stale socket',
+      {
+        userId: user.userId,
+        deckId: ws.deckId,
+        boundOrg: ctx.organizationId,
+        activeOrg: fresh.organizationId,
+      }
+    );
     if (ws.readyState === 1) {
       try {
         ws.send(JSON.stringify({ type: 'error', code: 'ORG_CONTEXT_CHANGED' }));
@@ -412,11 +415,7 @@ export function attachPresentationCollabWs(server: HttpServer): void {
           case 'deck:change': {
             // Presence gateway carries no shared document state; we relay change
             // pings so peers can invalidate/refresh, but never persist here.
-            broadcast(
-              deckId,
-              { type: 'deck:change', userId: user.userId, change: msg.change },
-              ws
-            );
+            broadcast(deckId, { type: 'deck:change', userId: user.userId, change: msg.change }, ws);
             break;
           }
 

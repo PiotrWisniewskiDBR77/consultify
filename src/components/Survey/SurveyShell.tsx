@@ -549,16 +549,12 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                 <span className="text-c-text-muted text-xs">
                   {t('survey.estimatedTime', 'Est. time')}
                 </span>
-                <p className="font-medium text-c-text-secondary">
-                  ~{estimatedMinutes} min
-                </p>
+                <p className="font-medium text-c-text-secondary">~{estimatedMinutes} min</p>
               </div>
             )}
             <div>
               <span className="text-c-text-muted text-xs">{t('survey.language', 'Language')}</span>
-              <p className="font-medium text-c-text-secondary">
-                {language.toUpperCase()}
-              </p>
+              <p className="font-medium text-c-text-secondary">{language.toUpperCase()}</p>
             </div>
           </div>
         </aside>

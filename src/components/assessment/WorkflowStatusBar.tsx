@@ -212,7 +212,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         {actualStatus === 'REJECTED' && (
           <div className="flex items-center gap-2 px-3 py-1 bg-danger-100 dark:bg-danger-900/20 rounded-full">
             <XCircle size={14} className="text-danger-500" />
-            <span className="text-xs font-medium text-danger-600 dark:text-danger-400">Odrzucony</span>
+            <span className="text-xs font-medium text-danger-600 dark:text-danger-400">
+              Odrzucony
+            </span>
           </div>
         )}
 

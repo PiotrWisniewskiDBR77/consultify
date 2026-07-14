@@ -66,10 +66,7 @@ const sanitize = (n: unknown): number => {
  * rate is a fraction (0.1 = 10%).
  */
 export function npv(rate: number, cashFlows: number[]): number {
-  return cashFlows.reduce(
-    (acc, cf, t) => acc + cf / Math.pow(1 + rate, t),
-    0,
-  );
+  return cashFlows.reduce((acc, cf, t) => acc + cf / Math.pow(1 + rate, t), 0);
 }
 
 /**
@@ -125,7 +122,7 @@ export function discountedPayback(rate: number, cashFlows: number[]): number | n
       // Interpolate within year t: fraction of the year needed to break even.
       const needed = -prev;
       const fraction = discounted !== 0 ? needed / discounted : 0;
-      return round2((t - 1) + Math.max(0, Math.min(1, fraction)));
+      return round2(t - 1 + Math.max(0, Math.min(1, fraction)));
     }
   }
   return null;
@@ -163,10 +160,7 @@ const fmtMoney = (n: number): string =>
  * Generate a complete one-pager business case for a single initiative,
  * discounting at the supplied WACC (percent, e.g. 12 = 12%).
  */
-export function generateOnePager(
-  initiative: InitiativeEconomics,
-  waccPct: number,
-): OnePager {
+export function generateOnePager(initiative: InitiativeEconomics, waccPct: number): OnePager {
   const wacc = sanitize(waccPct);
   const rate = wacc / 100;
   const capex = sanitize(initiative.capex);
@@ -220,7 +214,7 @@ export function generateOnePager(
  */
 export function compareInitiatives(
   initiatives: InitiativeEconomics[],
-  waccPct: number,
+  waccPct: number
 ): ComparisonRow[] {
   const pagers = (initiatives || []).map((i) => generateOnePager(i, waccPct));
 

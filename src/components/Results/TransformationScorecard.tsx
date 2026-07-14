@@ -119,7 +119,9 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
   );
 
   if (failed)
-    return wrap(<p className="text-sm text-c-text-muted">Value narrative temporarily unavailable.</p>);
+    return wrap(
+      <p className="text-sm text-c-text-muted">Value narrative temporarily unavailable.</p>
+    );
   if (loading && !data) return wrap(<p className="text-sm text-c-text-muted">Loading value…</p>);
   if (!data || (data.scorecard?.itemCount ?? 0) === 0)
     return wrap(
@@ -136,9 +138,7 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
   return wrap(
     <>
-      <h3 className="mb-3 text-sm font-semibold text-c-text">
-        Transformation value
-      </h3>
+      <h3 className="mb-3 text-sm font-semibold text-c-text">Transformation value</h3>
 
       <div className="grid grid-cols-3 gap-3" data-testid="scorecard-header">
         <Stat label="Banked" value={fmt(sc.banked)} tone="emerald" />
@@ -198,11 +198,11 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
                   >
                     {ACTION_LABEL[d.action] || d.action}
                   </span>
-                  <span className="truncate text-xs text-c-text-secondary">
-                    {d.name || d.id}
-                  </span>
+                  <span className="truncate text-xs text-c-text-secondary">{d.name || d.id}</span>
                 </div>
-                <span className="shrink-0 text-[11px] text-c-text-muted">{fmt(d.valueAtStake)}</span>
+                <span className="shrink-0 text-[11px] text-c-text-muted">
+                  {fmt(d.valueAtStake)}
+                </span>
               </li>
             ))}
           </ul>
@@ -218,11 +218,7 @@ const Stat: React.FC<{ label: string; value: string; tone: 'emerald' | 'blue' | 
   tone,
 }) => {
   const color =
-    tone === 'emerald'
-      ? 'text-emerald-600'
-      : tone === 'blue'
-        ? 'text-blue-600'
-        : 'text-red-600';
+    tone === 'emerald' ? 'text-emerald-600' : tone === 'blue' ? 'text-blue-600' : 'text-red-600';
   return (
     <div className="rounded-lg border border-c-border-subtle p-2">
       <p className="text-[10px] uppercase tracking-wide text-c-text-muted">{label}</p>

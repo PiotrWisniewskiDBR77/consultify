@@ -23,24 +23,24 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
-  createEconomicsLinkage,
-  getLinkagesByInitiative,
-} from '../services/v8/financeIntegrationService.js';
-import {
   getInitiativeFunnel,
   getInitiativeLineage,
 } from '../services/initiative/initiativeLineageService.js';
-import { proposeCandidates as runPropose } from '../services/initiative/proposeEngineService.js';
 import {
   checkPortfolioMece,
   type MeceExistingInitiative,
 } from '../services/initiative/portfolioMeceService.js';
+import { proposeCandidates as runPropose } from '../services/initiative/proposeEngineService.js';
 import {
   createSuggestedChange,
   listSuggestedChanges,
   resolveSuggestedChange,
   type SuggestedChangeStatus,
 } from '../services/initiative/suggestedChangesService.js';
+import {
+  createEconomicsLinkage,
+  getLinkagesByInitiative,
+} from '../services/v8/financeIntegrationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -277,7 +277,9 @@ router.post(
       res.status(404).json({ error: 'Initiative not found' });
       return;
     }
-    const { financeModelRef, linkageType, status } = req.body as z.infer<typeof CreateLinkageSchema>;
+    const { financeModelRef, linkageType, status } = req.body as z.infer<
+      typeof CreateLinkageSchema
+    >;
     const linkage = await createEconomicsLinkage({
       organizationId: orgId,
       initiativeId,

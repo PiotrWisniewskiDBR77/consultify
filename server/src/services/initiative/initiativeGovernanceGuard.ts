@@ -41,27 +41,9 @@ export type InitiativeGovernanceGate = 'SUBMIT_REVIEW' | 'APPROVE' | 'REJECT';
  *   workflow gates. A bare TEAM_MEMBER / pilot participant may not.
  */
 const GATE_PERMITTED_ROLES: Record<InitiativeGovernanceGate, ReadonlySet<string>> = {
-  SUBMIT_REVIEW: new Set([
-    'ADMIN',
-    'INITIATIVE_OWNER',
-    'PROJECT_MANAGER',
-    'PROJECT_LEAD',
-    'PMO',
-  ]),
-  APPROVE: new Set([
-    'ADMIN',
-    'PROJECT_SPONSOR',
-    'STEERING_COMMITTEE',
-    'PORTFOLIO_OWNER',
-    'PMO',
-  ]),
-  REJECT: new Set([
-    'ADMIN',
-    'PROJECT_SPONSOR',
-    'STEERING_COMMITTEE',
-    'PORTFOLIO_OWNER',
-    'PMO',
-  ]),
+  SUBMIT_REVIEW: new Set(['ADMIN', 'INITIATIVE_OWNER', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'PMO']),
+  APPROVE: new Set(['ADMIN', 'PROJECT_SPONSOR', 'STEERING_COMMITTEE', 'PORTFOLIO_OWNER', 'PMO']),
+  REJECT: new Set(['ADMIN', 'PROJECT_SPONSOR', 'STEERING_COMMITTEE', 'PORTFOLIO_OWNER', 'PMO']),
 };
 
 export interface GovernanceGuardDecision {

@@ -82,7 +82,11 @@ function normalizePortfolioSummary(
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
-  'on-track': { bg: 'bg-c-surface-raised/10', text: 'text-c-text-secondary', dot: 'bg-c-border-strong' },
+  'on-track': {
+    bg: 'bg-c-surface-raised/10',
+    text: 'text-c-text-secondary',
+    dot: 'bg-c-border-strong',
+  },
   below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
@@ -185,7 +189,9 @@ const ColumnFilterDropdown: React.FC<{
                     className="rounded border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface-raised text-c-focus-solid focus:ring-c-focus"
                   />
                   {o.color && <span className={`w-2 h-2 rounded-full ${o.color}`} />}
-                  <span className="text-sm text-c-text-secondary dark:text-c-text-secondary">{o.label}</span>
+                  <span className="text-sm text-c-text-secondary dark:text-c-text-secondary">
+                    {o.label}
+                  </span>
                 </label>
               ))}
             </div>
@@ -430,7 +436,11 @@ export const ROIAnalysisView: React.FC = () => {
   }, []);
 
   const statusFilterOptions: FilterOption[] = [
-    { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-c-border-strong' },
+    {
+      value: 'on-track',
+      label: t('results.roi.statusOnTrack', 'On track'),
+      color: 'bg-c-border-strong',
+    },
     { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-danger-500' },
     { value: 'above', label: t('results.roi.statusAbove', 'Above plan'), color: 'bg-emerald-500' },
   ];
@@ -539,7 +549,6 @@ export const ROIAnalysisView: React.FC = () => {
       {filteredItems.length > 0 && (
         <div className="rounded-xl bg-white dark:bg-c-surface border border-slate-200/70 dark:border-c-border p-4">
           <h3 className="text-sm font-medium text-slate-600 dark:text-c-text-secondary mb-3">
-
             {t('results.roiAnalysis.contributionsChart', 'Initiative Contributions to ROI')}
           </h3>
           {(() => {
@@ -726,7 +735,9 @@ export const ROIAnalysisView: React.FC = () => {
                           <LockBadge lockState={lockState} />
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-c-text-muted">{item.ownerName || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-c-text-muted">
+                        {item.ownerName || '—'}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <div className="relative">
                           <button

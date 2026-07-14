@@ -272,9 +272,7 @@ function renderCoverPage(
         >
           {title}
         </h1>
-        {subtitle && (
-          <p className="text-lg text-c-text-secondary mb-8 max-w-2xl">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-lg text-c-text-secondary mb-8 max-w-2xl">{subtitle}</p>}
         <div className="flex items-center gap-3 text-c-text-secondary text-sm mt-4">
           {company && <span className="font-medium">{company}</span>}
           {company && date && <span>·</span>}
@@ -312,24 +310,16 @@ const SmartContentRenderer: React.FC<{
       if (parsed.type === 'assessment_matrix' && Array.isArray(parsed.axes)) {
         return (
           <div className="not-prose">
-            <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-sm border-collapse">
+            <table
+              /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-sm border-collapse"
+            >
               <thead>
                 <tr className="border-b-2 border-c-border-subtle">
-                  <th className="text-left py-3 px-4 font-semibold text-c-text">
-                    Axis
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold text-c-text">
-                    Score
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold text-c-text">
-                    Max
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold text-c-text">
-                    Gap
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-c-text w-40">
-                    Progress
-                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-c-text">Axis</th>
+                  <th className="text-center py-3 px-4 font-semibold text-c-text">Score</th>
+                  <th className="text-center py-3 px-4 font-semibold text-c-text">Max</th>
+                  <th className="text-center py-3 px-4 font-semibold text-c-text">Gap</th>
+                  <th className="text-left py-3 px-4 font-semibold text-c-text w-40">Progress</th>
                 </tr>
               </thead>
               <tbody>
@@ -338,13 +328,8 @@ const SmartContentRenderer: React.FC<{
                     ? Math.round((axis.score / parsed.scaleMax) * 100)
                     : 0;
                   return (
-                    <tr
-                      key={axis.axisId || i}
-                      className="border-b border-c-border-subtle"
-                    >
-                      <td className="py-3 px-4 font-medium text-c-text">
-                        {axis.axisName}
-                      </td>
+                    <tr key={axis.axisId || i} className="border-b border-c-border-subtle">
+                      <td className="py-3 px-4 font-medium text-c-text">{axis.axisName}</td>
                       <td
                         className="py-3 px-4 text-center font-semibold"
                         style={{ color: styling.primaryColor }}
@@ -932,9 +917,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <div className="truncate text-xs font-medium text-c-text">
                     {getSourceDisplayLabel(bl.sourceType, isPl)}
                   </div>
-                  <div className="truncate text-[11px] text-c-text-secondary">
-                    {bl.sourceId}
-                  </div>
+                  <div className="truncate text-[11px] text-c-text-secondary">{bl.sourceId}</div>
                 </div>
                 <button
                   type="button"
@@ -2562,9 +2545,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                         <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center text-c-text text-sm font-bold">
                           {chapters.filter((c) => c.key !== '__ungrouped__').indexOf(chapter) + 1}
                         </div>
-                        <h2 className="text-lg font-bold text-c-text flex-1">
-                          {chapter.title}
-                        </h2>
+                        <h2 className="text-lg font-bold text-c-text flex-1">{chapter.title}</h2>
                         <span className="text-xs text-c-text-secondary">
                           {chapter.blocks.filter((b) => b.enabled).length}{' '}
                           {isPl ? 'bloków' : 'blocks'}

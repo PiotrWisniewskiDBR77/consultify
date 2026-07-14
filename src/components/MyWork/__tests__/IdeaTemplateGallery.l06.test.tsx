@@ -61,9 +61,7 @@ describe('IdeaTemplateGallery — L-06 confirm before overwrite', () => {
   it('shows a confirm dialog and does NOT overwrite until confirmed', async () => {
     render(<IdeaTemplateGallery {...baseProps} existingNodeCount={5} />);
     fireEvent.click(firstApplyButton());
-    await waitFor(() =>
-      expect(screen.getByText('Replace existing elements?')).toBeTruthy()
-    );
+    await waitFor(() => expect(screen.getByText('Replace existing elements?')).toBeTruthy());
     // Destructive write must not have happened yet.
     expect(syncMyIdeaMap).not.toHaveBeenCalled();
   });
@@ -71,9 +69,7 @@ describe('IdeaTemplateGallery — L-06 confirm before overwrite', () => {
   it('overwrites only after the user confirms', async () => {
     render(<IdeaTemplateGallery {...baseProps} existingNodeCount={5} />);
     fireEvent.click(firstApplyButton());
-    await waitFor(() =>
-      expect(screen.getByText('Replace existing elements?')).toBeTruthy()
-    );
+    await waitFor(() => expect(screen.getByText('Replace existing elements?')).toBeTruthy());
     fireEvent.click(screen.getByText('Replace'));
     await waitFor(() => expect(syncMyIdeaMap).toHaveBeenCalledTimes(1));
   });
@@ -81,13 +77,9 @@ describe('IdeaTemplateGallery — L-06 confirm before overwrite', () => {
   it('does not overwrite when the user cancels', async () => {
     render(<IdeaTemplateGallery {...baseProps} existingNodeCount={5} />);
     fireEvent.click(firstApplyButton());
-    await waitFor(() =>
-      expect(screen.getByText('Replace existing elements?')).toBeTruthy()
-    );
+    await waitFor(() => expect(screen.getByText('Replace existing elements?')).toBeTruthy());
     fireEvent.click(screen.getByText('Cancel'));
-    await waitFor(() =>
-      expect(screen.queryByText('Replace existing elements?')).toBeNull()
-    );
+    await waitFor(() => expect(screen.queryByText('Replace existing elements?')).toBeNull());
     expect(syncMyIdeaMap).not.toHaveBeenCalled();
   });
 });

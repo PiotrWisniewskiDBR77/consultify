@@ -43,11 +43,7 @@ function presentValueOfFlows(cashflows: number[], ratePct: number): number {
  * @param ratePct          discount rate in percent (PARAMETER, never hardcoded)
  * @param initialInvestment period-0 outlay (positive)
  */
-export function npv(
-  cashflows: number[],
-  ratePct: number,
-  initialInvestment: number,
-): number {
+export function npv(cashflows: number[], ratePct: number, initialInvestment: number): number {
   return presentValueOfFlows(cashflows, ratePct) - initialInvestment;
 }
 
@@ -59,10 +55,7 @@ export function npv(
  * @param cashflows        net cash flows for periods 1..N
  * @param initialInvestment period-0 outlay (positive)
  */
-export function irr(
-  cashflows: number[],
-  initialInvestment: number,
-): number | null {
+export function irr(cashflows: number[], initialInvestment: number): number | null {
   if (cashflows.length === 0) return null;
 
   // NPV as a function of decimal rate r.
@@ -121,7 +114,7 @@ export function mirr(
   cashflows: number[],
   financeRatePct: number,
   reinvestRatePct: number,
-  initialInvestment: number,
+  initialInvestment: number
 ): number {
   const n = cashflows.length;
   if (n === 0) return NaN;
@@ -164,10 +157,7 @@ export function mirr(
  * @param cashflows        net cash flows for periods 1..N
  * @param initialInvestment period-0 outlay (positive)
  */
-export function payback(
-  cashflows: number[],
-  initialInvestment: number,
-): number {
+export function payback(cashflows: number[], initialInvestment: number): number {
   if (initialInvestment <= 0) return 0;
   let cumulative = 0;
   for (let i = 0; i < cashflows.length; i++) {
@@ -196,7 +186,7 @@ export function payback(
 export function discountedPayback(
   cashflows: number[],
   ratePct: number,
-  initialInvestment: number,
+  initialInvestment: number
 ): number {
   if (initialInvestment <= 0) return 0;
   const r = toRate(ratePct);
@@ -226,7 +216,7 @@ export function discountedPayback(
 export function profitabilityIndex(
   cashflows: number[],
   ratePct: number,
-  initialInvestment: number,
+  initialInvestment: number
 ): number {
   if (initialInvestment <= 0) return Infinity;
   return presentValueOfFlows(cashflows, ratePct) / initialInvestment;
@@ -267,28 +257,14 @@ export interface AppraisalResult {
  * (here we use discountRatePct for both, a standard default).
  */
 export function appraise(input: AppraisalInput): AppraisalResult {
-  const { cashflows, initialInvestment, discountRatePct, hurdleRatePct } =
-    input;
+  const { cashflows, initialInvestment, discountRatePct, hurdleRatePct } = input;
 
   const npvValue = npv(cashflows, discountRatePct, initialInvestment);
   const irrValue = irr(cashflows, initialInvestment);
-  const mirrValue = mirr(
-    cashflows,
-    discountRatePct,
-    discountRatePct,
-    initialInvestment,
-  );
+  const mirrValue = mirr(cashflows, discountRatePct, discountRatePct, initialInvestment);
   const paybackValue = payback(cashflows, initialInvestment);
-  const discountedPaybackValue = discountedPayback(
-    cashflows,
-    discountRatePct,
-    initialInvestment,
-  );
-  const piValue = profitabilityIndex(
-    cashflows,
-    discountRatePct,
-    initialInvestment,
-  );
+  const discountedPaybackValue = discountedPayback(cashflows, discountRatePct, initialInvestment);
+  const piValue = profitabilityIndex(cashflows, discountRatePct, initialInvestment);
 
   let verdict: AppraisalVerdict;
 

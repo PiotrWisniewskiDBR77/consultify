@@ -157,7 +157,9 @@ export const UsageStatsPanel: React.FC = () => {
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
+          <table
+            /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+          >
             <thead>
               <tr className="border-b border-slate-200 dark:border-white/5">
                 <th className="text-left p-4 text-xs text-slate-500 dark:text-slate-400 uppercase">

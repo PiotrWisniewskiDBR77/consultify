@@ -77,7 +77,7 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
                 toast.dismiss(toastInstance.id);
                 navigate(ROUTES.APP_INTRO);
               }}
- className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
             >
               {t('help.onboarding.cta.toast.start', 'Open intro')}
             </button>

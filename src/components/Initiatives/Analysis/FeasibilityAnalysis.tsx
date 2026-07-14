@@ -382,9 +382,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
               {t('initiatives.analysis.feasibility.aiProposals', 'AI optimization proposals')}
             </h3>
-            <span className="text-xs text-c-info dark:text-c-info">
-              ({aiOptProposals.length})
-            </span>
+            <span className="text-xs text-c-info dark:text-c-info">({aiOptProposals.length})</span>
           </div>
           <button
             onClick={closeWorkspacePanels}
@@ -525,9 +523,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
       <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HelpCircle size={16} className="text-c-info dark:text-c-info" />
-          <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
-            AI Score Explainer
-          </h3>
+          <h3 className="text-sm font-semibold text-c-info dark:text-c-info">AI Score Explainer</h3>
         </div>
         <button
           onClick={closeWorkspacePanels}
@@ -700,7 +696,9 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
 
       {/* Feasibility matrix — sortable, filterable, with explainer */}
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-sm">
+        <table
+          /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-sm"
+        >
           <thead className="sticky top-0 z-10">
             <tr className="bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
               <th className="w-8 px-4 py-2.5" />

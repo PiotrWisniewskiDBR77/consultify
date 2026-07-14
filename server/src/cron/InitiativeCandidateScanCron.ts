@@ -44,7 +44,7 @@ async function buildOrgPortfolioSummary(orgId: string): Promise<string | undefin
       `SELECT name, status FROM initiatives
        WHERE organization_id = ? AND status NOT IN ('ARCHIVED','CANCELLED')
        ORDER BY updated_at DESC LIMIT 15`,
-      [orgId],
+      [orgId]
     );
     if (Array.isArray(rows) && rows.length) {
       return rows.map((o) => `${o?.name || '—'} [${o?.status || '—'}]`).join('; ');
@@ -66,7 +66,7 @@ export async function runCandidateScan(): Promise<CandidateScanResult> {
 
   try {
     const rows = await queryHelpers.queryAll<{ organization_id: string }>(
-      `SELECT DISTINCT organization_id FROM initiatives WHERE organization_id IS NOT NULL`,
+      `SELECT DISTINCT organization_id FROM initiatives WHERE organization_id IS NOT NULL`
     );
     for (const r of rows || []) {
       const orgId = String(r?.organization_id || '');

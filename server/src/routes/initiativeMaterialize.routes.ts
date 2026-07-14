@@ -18,13 +18,13 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
+  type MaterializeFormat,
   materializeInitiative,
   materializePortfolio,
-  type MaterializeFormat,
 } from '../services/initiative/initiativeMaterializeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -45,7 +45,7 @@ async function orgName(orgId: string): Promise<string | undefined> {
   try {
     const row = await queryHelpers.queryOne<{ name?: string }>(
       `SELECT name FROM organizations WHERE id = ? LIMIT 1`,
-      [orgId],
+      [orgId]
     );
     return row?.name?.trim() || undefined;
   } catch {
@@ -66,17 +66,22 @@ router.post(
     const company = await orgName(orgId);
     const result = await materializePortfolio(queryHelpers, orgId, format, { company });
     if (!result) {
-      return res
-        .status(422)
-        .json({ error: 'materialize_failed', message: 'Portfel jest pusty lub generacja materiału nie powiodła się.' });
+      return res.status(422).json({
+        error: 'materialize_failed',
+        message: 'Portfel jest pusty lub generacja materiału nie powiodła się.',
+      });
     }
 
-    logger.info('[initiativeMaterialize] portfolio generated', { orgId, format, bytes: result.buffer.length });
+    logger.info('[initiativeMaterialize] portfolio generated', {
+      orgId,
+      format,
+      bytes: result.buffer.length,
+    });
     res.setHeader('Content-Type', result.mimeType);
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.setHeader('Content-Length', String(result.buffer.length));
     return res.status(200).send(result.buffer);
-  }),
+  })
 );
 
 // POST /initiatives/:id/materialize — one initiative → file
@@ -90,20 +95,28 @@ router.post(
     const format = req.body.format as MaterializeFormat;
 
     const company = await orgName(orgId);
-    const result = await materializeInitiative(queryHelpers, initiativeId, format, { orgId, company });
+    const result = await materializeInitiative(queryHelpers, initiativeId, format, {
+      orgId,
+      company,
+    });
     if (!result) {
       // Fail-soft: initiative missing OR generation degraded → 422 (no buffer).
-      return res
-        .status(422)
-        .json({ error: 'materialize_failed', message: 'Nie udało się wygenerować materiału (brak inicjatywy lub dane niewystarczające).' });
+      return res.status(422).json({
+        error: 'materialize_failed',
+        message: 'Nie udało się wygenerować materiału (brak inicjatywy lub dane niewystarczające).',
+      });
     }
 
-    logger.info('[initiativeMaterialize] generated', { initiativeId, format, bytes: result.buffer.length });
+    logger.info('[initiativeMaterialize] generated', {
+      initiativeId,
+      format,
+      bytes: result.buffer.length,
+    });
     res.setHeader('Content-Type', result.mimeType);
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.setHeader('Content-Length', String(result.buffer.length));
     return res.status(200).send(result.buffer);
-  }),
+  })
 );
 
 export default router;

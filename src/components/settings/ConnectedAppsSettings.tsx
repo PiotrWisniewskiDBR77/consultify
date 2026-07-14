@@ -1149,9 +1149,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm text-c-text">
-                                {app.name}
-                              </span>
+                              <span className="font-medium text-sm text-c-text">{app.name}</span>
                               {isConnected && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
                                   <Check size={8} /> {t('common.connected', 'Connected')}

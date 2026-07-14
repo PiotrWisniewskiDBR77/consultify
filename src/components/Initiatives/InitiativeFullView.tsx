@@ -426,7 +426,8 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'schedule',
           label: 'Schedule',
           gate: 'SCHEDULE',
-          color: 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
+          color:
+            'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
           icon: <Calendar size={16} />,
         });
         break;
@@ -497,7 +498,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       try {
         await Api.patch(`/initiatives/${initiative.id}/gate`, { gate });
         toast.success(
-          t('initiatives.toast.gateActionSuccess', 'Action "{{gate}}" completed successfully', { gate })
+          t('initiatives.toast.gateActionSuccess', 'Action "{{gate}}" completed successfully', {
+            gate,
+          })
         );
         await fetchInitiative();
         onStatusChange?.();

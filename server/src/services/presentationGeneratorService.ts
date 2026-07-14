@@ -16,9 +16,11 @@ import {
   saveContextPackSnapshot,
 } from './contextPackBuilder.js';
 import {
-  isTemplateInventoryLeak,
   contentLeaksTemplateInventory,
+  isTemplateInventoryLeak,
 } from './deliverableContentGuard.js';
+import { resolveDeliverableTier } from './deliverableGenerationTier.js';
+import { runBundleContentGate } from './deliverables/bundleContentGate.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
@@ -32,6 +34,7 @@ import {
   buildBrandLayoutSystem,
 } from './presentationBrandLayoutService.js';
 import { deckDocumentFromUnifiedJson } from './presentationDeckDocumentService.js';
+import { generateDeckVariants } from './presentationLayoutVariantsService.js';
 import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
 import { applyIntentDensityDefaults } from './presentationStudioIntentDensityDefaultsService.js';
@@ -45,8 +48,6 @@ import {
 } from './presentationTemplateRuntimeService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
 import { planDeckVisuals, planDeckVisualsTiered } from './presentationVisualDirectorService.js';
-import { generateDeckVariants } from './presentationLayoutVariantsService.js';
-import { resolveDeliverableTier } from './deliverableGenerationTier.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
   SlideIntent,
@@ -60,7 +61,6 @@ import {
   buildTransformationReadDeckPack,
 } from './transformationReadDeckPackService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
-import { runBundleContentGate } from './deliverables/bundleContentGate.js';
 
 // ============================================================
 // TYPES
@@ -228,25 +228,58 @@ export function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
   // no real artifact exists) is effectively a blank-brief narrative deck — so the
   // arc must fire on "no rich source", not merely "no source at all".
   const RICH_SOURCE_TYPES = new Set([
-    'initiative_portfolio', 'execution_status', 'kpi_roi', 'raid', 'assessment', 'tool_session',
+    'initiative_portfolio',
+    'execution_status',
+    'kpi_roi',
+    'raid',
+    'assessment',
+    'tool_session',
   ]);
   const hasRichSource =
     Array.isArray(setup.sourceArtifacts) &&
     setup.sourceArtifacts.some((s) => RICH_SOURCE_TYPES.has(String((s as any).type)));
   if (!hasRichSource) {
     const arc: OutlineItem[] = [
-      { intent: 'root_cause', title: pl ? 'Problem i kontekst' : 'Problem & Context',
-        keyMessage: pl ? 'Jaki problem rozwiązujemy i dlaczego teraz' : 'The problem we solve and why now', enabled: true },
-      { intent: 'single_insight', title: pl ? 'Podejście i metodyka' : 'Approach & Methodology',
-        keyMessage: pl ? 'Jak podchodzimy do problemu' : 'How we approach the problem', enabled: true },
-      { intent: 'performance_overview', title: pl ? 'Wyniki i analiza' : 'Findings & Analysis',
-        keyMessage: pl ? 'Co pokazują dane i analiza' : 'What the data and analysis show', enabled: true },
-      { intent: 'recommendation_portfolio', title: pl ? 'Rekomendacje' : 'Recommendations',
-        keyMessage: pl ? 'Co rekomendujemy i dlaczego' : 'What we recommend and why', enabled: true },
-      { intent: 'roadmap', title: pl ? 'Roadmapa wdrożenia' : 'Implementation Roadmap',
-        keyMessage: pl ? 'Plan realizacji w czasie' : 'Phased execution plan', enabled: true },
-      { intent: 'risk_management', title: pl ? 'Ryzyka i mitygacje' : 'Risks & Mitigations',
-        keyMessage: pl ? 'Kluczowe ryzyka i plan ich ograniczenia' : 'Key risks and how we mitigate them', enabled: true },
+      {
+        intent: 'root_cause',
+        title: pl ? 'Problem i kontekst' : 'Problem & Context',
+        keyMessage: pl
+          ? 'Jaki problem rozwiązujemy i dlaczego teraz'
+          : 'The problem we solve and why now',
+        enabled: true,
+      },
+      {
+        intent: 'single_insight',
+        title: pl ? 'Podejście i metodyka' : 'Approach & Methodology',
+        keyMessage: pl ? 'Jak podchodzimy do problemu' : 'How we approach the problem',
+        enabled: true,
+      },
+      {
+        intent: 'performance_overview',
+        title: pl ? 'Wyniki i analiza' : 'Findings & Analysis',
+        keyMessage: pl ? 'Co pokazują dane i analiza' : 'What the data and analysis show',
+        enabled: true,
+      },
+      {
+        intent: 'recommendation_portfolio',
+        title: pl ? 'Rekomendacje' : 'Recommendations',
+        keyMessage: pl ? 'Co rekomendujemy i dlaczego' : 'What we recommend and why',
+        enabled: true,
+      },
+      {
+        intent: 'roadmap',
+        title: pl ? 'Roadmapa wdrożenia' : 'Implementation Roadmap',
+        keyMessage: pl ? 'Plan realizacji w czasie' : 'Phased execution plan',
+        enabled: true,
+      },
+      {
+        intent: 'risk_management',
+        title: pl ? 'Ryzyka i mitygacje' : 'Risks & Mitigations',
+        keyMessage: pl
+          ? 'Kluczowe ryzyka i plan ich ograniczenia'
+          : 'Key risks and how we mitigate them',
+        enabled: true,
+      },
     ];
     items.push(...arc);
   }
@@ -1794,10 +1827,7 @@ export const NARRATIVE_REWRITE_INTENTS: SlideIntent[] = [
  * intent? A free-text instruction unlocks every slide; absent an instruction
  * we keep the historical narrative-only gate. Exported for unit testing.
  */
-export function shouldRunNarrativeRewrite(
-  intent: SlideIntent,
-  instruction?: string
-): boolean {
+export function shouldRunNarrativeRewrite(intent: SlideIntent, instruction?: string): boolean {
   const hasInstruction = typeof instruction === 'string' && instruction.trim().length > 0;
   if (hasInstruction) return true;
   return NARRATIVE_REWRITE_INTENTS.includes(intent);

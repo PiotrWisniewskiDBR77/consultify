@@ -39,7 +39,7 @@ const DEFAULT_TYPES = [
 ];
 
 export const Wave5ArtifactRuntimePanel: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
 
@@ -258,16 +258,29 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
           {t('aios.wave5ArtifactRuntimePanel.artifactsUnavailable')}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-          {isPolish
-            ? <>Środowisko uruchomieniowe artefaktów wymaga ustawienia <code className="font-mono">ENABLE_V8_GLOBAL=true</code> na serwerze. Skontaktuj się z administratorem, aby włączyć tę funkcję.</>
-            : <>The Artifacts runtime requires <code className="font-mono">ENABLE_V8_GLOBAL=true</code>{' '}on the server. Contact your administrator to enable this feature.</>}
+          {isPolish ? (
+            <>
+              Środowisko uruchomieniowe artefaktów wymaga ustawienia{' '}
+              <code className="font-mono">ENABLE_V8_GLOBAL=true</code> na serwerze. Skontaktuj się z
+              administratorem, aby włączyć tę funkcję.
+            </>
+          ) : (
+            <>
+              The Artifacts runtime requires{' '}
+              <code className="font-mono">ENABLE_V8_GLOBAL=true</code> on the server. Contact your
+              administrator to enable this feature.
+            </>
+          )}
         </p>
         <pre className="mt-2 text-[10px] text-slate-400 dark:text-slate-600 whitespace-pre-wrap max-w-xs">
           {loadError}
         </pre>
         <button
           type="button"
-          onClick={() => { setLoadError(null); load(); }}
+          onClick={() => {
+            setLoadError(null);
+            load();
+          }}
           className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
         >
           {t('aios.wave5ArtifactRuntimePanel.retry')}
@@ -311,7 +324,9 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 onChange={(event) => setGenerationKind(event.target.value as typeof generationKind)}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               >
-                <option value="executive_report">{t('aios.wave5ArtifactRuntimePanel.executiveReport')}</option>
+                <option value="executive_report">
+                  {t('aios.wave5ArtifactRuntimePanel.executiveReport')}
+                </option>
                 <option value="board_deck">{t('aios.wave5ArtifactRuntimePanel.boardDeck')}</option>
                 <option value="kpi_table">{t('aios.wave5ArtifactRuntimePanel.kpiTable')}</option>
               </select>
@@ -453,7 +468,8 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                     {selected.title}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    {selected.artifactType} · {selected.status} · {t('aios.wave5ArtifactRuntimePanel.version')} {selected.version}
+                    {selected.artifactType} · {selected.status} ·{' '}
+                    {t('aios.wave5ArtifactRuntimePanel.version')} {selected.version}
                   </p>
                 </div>
                 <button

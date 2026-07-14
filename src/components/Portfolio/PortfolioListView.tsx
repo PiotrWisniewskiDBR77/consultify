@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
 import {
   DueChip,
   PriorityChip,
@@ -45,7 +46,6 @@ import {
   getNextStep,
 } from '../../utils/initiativeHelpers';
 import { PortfolioAiPanel } from './PortfolioAiPanel';
-import { SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 /** Map raw initiative priority → PriorityChip level (canon §4.2 — dot carries the signal). */
 const PRIORITY_LEVEL: Record<string, PriorityLevel> = {
@@ -396,7 +396,10 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   return (
     <div className={canvasClassName}>
       <div className="bg-c-surface backdrop-blur border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-x-auto">
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: 1080 }}>
+        <table
+          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full table-fixed"
+          style={{ minWidth: 1080 }}
+        >
           <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur border-b border-c-border-subtle">
             <tr>
               <th className="w-10 px-4 py-2">
@@ -449,9 +452,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                 <tr
                   key={initiative.id}
                   className={`group cursor-pointer transition-colors ${
-                    selected
-                      ? SELECTED_ROW_CLASS
-                      : 'hover:bg-c-surface-raised'
+                    selected ? SELECTED_ROW_CLASS : 'hover:bg-c-surface-raised'
                   } ${terminal ? 'opacity-50' : ''}`}
                   onClick={() => onInitiativeClick(initiative)}
                   onDoubleClick={() => onOpenFull?.(initiative)}
@@ -553,9 +554,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${health.dotClass}`} />
-                      <span className="text-xs text-c-text-muted">
-                        {health.label}
-                      </span>
+                      <span className="text-xs text-c-text-muted">{health.label}</span>
                     </div>
                   </td>
 
@@ -568,13 +567,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                           nextStep.role ? `${nextStep.label} (${nextStep.role})` : nextStep.label
                         }
                       >
-                        <span className="font-medium text-c-text-secondary">
-                          {nextStep.label}
-                        </span>
+                        <span className="font-medium text-c-text-secondary">{nextStep.label}</span>
                         {nextStep.role && (
-                          <span className="text-c-text-muted ml-1">
-                            ({nextStep.role})
-                          </span>
+                          <span className="text-c-text-muted ml-1">({nextStep.role})</span>
                         )}
                       </div>
                     ) : (

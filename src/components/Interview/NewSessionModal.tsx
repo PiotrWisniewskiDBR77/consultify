@@ -165,9 +165,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
     }
 
     if (mode === 'team' && selectedAssignees.length === 0) {
-      toast.error(
-        t('interview.newSessionModal.pleaseSelectAtLeastOne')
-      );
+      toast.error(t('interview.newSessionModal.pleaseSelectAtLeastOne'));
       return;
     }
 
@@ -207,7 +205,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error('[NewSessionModal] Failed to create:', err);
-      toast.error(err?.message || (t('interview.newSessionModal.failedToCreate')));
+      toast.error(err?.message || t('interview.newSessionModal.failedToCreate'));
     } finally {
       setIsSubmitting(false);
     }
@@ -315,7 +313,8 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                       </span>
                       {selectedTemplate.questionCount && (
                         <span className="ml-2 text-xs text-slate-500">
-                          ({selectedTemplate.questionCount} {t('interview.newSessionModal.questions')})
+                          ({selectedTemplate.questionCount}{' '}
+                          {t('interview.newSessionModal.questions')})
                         </span>
                       )}
                     </div>
@@ -488,7 +487,10 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[priority].color}`}
                     >
-                      {t(`interview.newSessionModal.priorityLabel.${priority}`, PRIORITY_CONFIG[priority].label)}
+                      {t(
+                        `interview.newSessionModal.priorityLabel.${priority}`,
+                        PRIORITY_CONFIG[priority].label
+                      )}
                     </span>
                     <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                   </button>
@@ -511,7 +513,10 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                           <span
                             className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[p].color}`}
                           >
-                            {t(`interview.newSessionModal.priorityLabel.${p}`, PRIORITY_CONFIG[p].label)}
+                            {t(
+                              `interview.newSessionModal.priorityLabel.${p}`,
+                              PRIORITY_CONFIG[p].label
+                            )}
                           </span>
                           {priority === p && <Check size={16} className="text-c-info" />}
                         </button>
@@ -531,9 +536,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={
-                    t('interview.newSessionModal.addInstructionsForAssignees')
-                  }
+                  placeholder={t('interview.newSessionModal.addInstructionsForAssignees')}
                   rows={3}
                   className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm placeholder-slate-500 resize-none"
                 />

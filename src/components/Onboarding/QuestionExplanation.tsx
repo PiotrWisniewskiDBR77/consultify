@@ -112,24 +112,18 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
               <Icon size={16} className="text-c-accent" />
             </div>
             <div>
-              <h4 className="font-semibold text-c-text text-sm mb-1">
-                {content.title}
-              </h4>
+              <h4 className="font-semibold text-c-text text-sm mb-1">{content.title}</h4>
               <p className="text-c-text-secondary dark:text-c-text-muted text-sm">{content.why}</p>
             </div>
           </div>
 
           <div className="grid gap-2 text-sm">
             <div className="flex gap-2">
-              <span className="font-medium text-c-text-secondary shrink-0">
-                Wpływ:
-              </span>
+              <span className="font-medium text-c-text-secondary shrink-0">Wpływ:</span>
               <span className="text-c-text-secondary dark:text-c-text-muted">{content.impact}</span>
             </div>
             <div className="flex gap-2">
-              <span className="font-medium text-c-text-secondary shrink-0">
-                Przykład:
-              </span>
+              <span className="font-medium text-c-text-secondary shrink-0">Przykład:</span>
               <span className="text-c-text-muted italic">{content.example}</span>
             </div>
           </div>

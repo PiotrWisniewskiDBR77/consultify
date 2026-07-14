@@ -258,19 +258,14 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             className="flex-1 bg-transparent border-0 outline-none text-sm text-c-text placeholder-c-text-muted"
           />
           {loading && <Loader2 size={16} className="animate-spin text-c-accent" />}
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-c-surface-raised">
             <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
         {lastResult && (
           <div className="px-4 py-3 border-t border-c-border-subtle bg-c-accent-soft">
-            <p className="text-xs text-c-text leading-relaxed">
-              {lastResult}
-            </p>
+            <p className="text-xs text-c-text leading-relaxed">{lastResult}</p>
           </div>
         )}
 

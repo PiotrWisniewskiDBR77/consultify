@@ -177,7 +177,8 @@ const STRENGTH_QUESTIONS: SwotQuestionNode[] = [
     id: 's3-scope',
     quadrant: 'strengths',
     level: 3,
-    intentEn: 'Distinguish a niche strength from a core competency — they fund different strategies.',
+    intentEn:
+      'Distinguish a niche strength from a core competency — they fund different strategies.',
     intentPl: 'Odróżnić siłę niszową od core competency — finansują różne strategie.',
     textEn:
       'Does this strength hold across your whole business, or only in one segment, one geography, one client type? Where exactly does it stop working?',
@@ -213,8 +214,10 @@ const STRENGTH_QUESTIONS: SwotQuestionNode[] = [
     id: 's4-durability',
     quadrant: 'strengths',
     level: 4,
-    intentEn: 'Test imitability — a strength a funded competitor copies in a year is a head start, not a moat.',
-    intentPl: 'Test kopiowalności — siła, którą dofinansowany konkurent skopiuje w rok, to przewaga startowa, nie fosa.',
+    intentEn:
+      'Test imitability — a strength a funded competitor copies in a year is a head start, not a moat.',
+    intentPl:
+      'Test kopiowalności — siła, którą dofinansowany konkurent skopiuje w rok, to przewaga startowa, nie fosa.',
     textEn:
       'If a competitor with money decided today to replicate this, how long would it take them — and what actually protects it: assets, relationships, know-how, scale, brand?',
     textPl:
@@ -298,14 +301,16 @@ const WEAKNESS_QUESTIONS: SwotQuestionNode[] = [
     textPl:
       'Czy korzeń tej słabości tkwi w procesach (jak płynie praca), narzędziach (czym ludzie pracują), kompetencjach (kto wykonuje pracę), czy w bodźcach i nastawieniu (dlaczego ludzie tak się zachowują)? Wskaż dominujący — każdy wymaga innej naprawy.',
     probeEn: 'If you answer "all of them", pick the one you would fix first and say why.',
-    probePl: 'Jeśli odpowiedź brzmi „wszystkie", wybierz ten, który naprawiłbyś pierwszy — i powiedz dlaczego.',
+    probePl:
+      'Jeśli odpowiedź brzmi „wszystkie", wybierz ten, który naprawiłbyś pierwszy — i powiedz dlaczego.',
     answerOptions: [
       {
         key: 'process',
         labelEn: 'Processes — how work flows',
         labelPl: 'Procesy — jak płynie praca',
         consultantSignalEn: 'Process root — fix = redesign + ownership, not motivation talks.',
-        consultantSignalPl: 'Korzeń procesowy — lek = przeprojektowanie + właściciel, nie pogadanki motywacyjne.',
+        consultantSignalPl:
+          'Korzeń procesowy — lek = przeprojektowanie + właściciel, nie pogadanki motywacyjne.',
       },
       {
         key: 'tools',
@@ -344,7 +349,8 @@ const WEAKNESS_QUESTIONS: SwotQuestionNode[] = [
     quadrant: 'weaknesses',
     level: 3,
     intentEn: 'Price the weakness — unpriced weaknesses lose every prioritization meeting.',
-    intentPl: 'Wycenić słabość — niewycenione słabości przegrywają każde spotkanie priorytetyzacyjne.',
+    intentPl:
+      'Wycenić słabość — niewycenione słabości przegrywają każde spotkanie priorytetyzacyjne.',
     textEn:
       'What does this weakness cost per year — in lost deals, extra hours, churn, rework? Even an order of magnitude anchored in one real number from your business.',
     textPl:
@@ -388,14 +394,17 @@ const WEAKNESS_QUESTIONS: SwotQuestionNode[] = [
         labelEn: 'It compounds — growth makes it worse',
         labelPl: 'Kumuluje się — wzrost ją pogarsza',
         consultantSignalEn: 'Scaling blocker — candidate for repair (WO) before growth moves.',
-        consultantSignalPl: 'Bloker skalowania — kandydat do naprawy (WO) przed ruchami wzrostowymi.',
+        consultantSignalPl:
+          'Bloker skalowania — kandydat do naprawy (WO) przed ruchami wzrostowymi.',
       },
       {
         key: 'stable',
         labelEn: 'It stays roughly flat',
         labelPl: 'Pozostaje mniej więcej płaska',
-        consultantSignalEn: 'Chronic but stable — may be consciously tolerated; name that as a decision.',
-        consultantSignalPl: 'Przewlekła, ale stabilna — można ją świadomie tolerować; nazwij to jako decyzję.',
+        consultantSignalEn:
+          'Chronic but stable — may be consciously tolerated; name that as a decision.',
+        consultantSignalPl:
+          'Przewlekła, ale stabilna — można ją świadomie tolerować; nazwij to jako decyzję.',
       },
     ],
     branches: { compounding: null, stable: null },
@@ -432,8 +441,10 @@ const OPPORTUNITY_QUESTIONS: SwotQuestionNode[] = [
         key: 'assumed-change',
         labelEn: 'We assume it based on general trends',
         labelPl: 'Zakładamy ją na bazie ogólnych trendów',
-        consultantSignalEn: 'Hypothesis — keep, but the first move must be a validation, not an investment.',
-        consultantSignalPl: 'Hipoteza — zostaw, ale pierwszym ruchem musi być walidacja, nie inwestycja.',
+        consultantSignalEn:
+          'Hypothesis — keep, but the first move must be a validation, not an investment.',
+        consultantSignalPl:
+          'Hipoteza — zostaw, ale pierwszym ruchem musi być walidacja, nie inwestycja.',
       },
     ],
     branches: {
@@ -446,7 +457,8 @@ const OPPORTUNITY_QUESTIONS: SwotQuestionNode[] = [
     id: 'o2-right-to-win',
     quadrant: 'opportunities',
     level: 2,
-    intentEn: 'Opportunities are not for everyone — test whether THIS company has a right to win it.',
+    intentEn:
+      'Opportunities are not for everyone — test whether THIS company has a right to win it.',
     intentPl: 'Szanse nie są dla wszystkich — sprawdź, czy TA firma ma prawo ją wygrać.',
     textEn:
       'Why would you win this opportunity rather than the three competitors who see the same thing? Which of your confirmed strengths does it connect to?',
@@ -628,7 +640,8 @@ const THREAT_QUESTIONS: SwotQuestionNode[] = [
         labelEn: 'Slow-burning or limited in depth',
         labelPl: 'Wolno narastające lub płytkie',
         consultantSignalEn: 'Monitored threat — assign an owner and an indicator, not a program.',
-        consultantSignalPl: 'Zagrożenie monitorowane — przypisz właściciela i wskaźnik, nie program.',
+        consultantSignalPl:
+          'Zagrożenie monitorowane — przypisz właściciela i wskaźnik, nie program.',
       },
     ],
     branches: { 'fast-severe': 't4-exposure', 'slow-or-mild': 't4-exposure' },

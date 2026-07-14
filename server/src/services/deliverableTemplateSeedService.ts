@@ -9,8 +9,8 @@
  * Ta funkcja jest alternatywną ścieżką do uruchomienia ręcznego.
  */
 
-import { queryRun } from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import { queryRun } from '../utils/queryHelpers.js';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Static seed data (źródło prawdy dla unit testów)
@@ -74,10 +74,42 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
     is_system: true,
     is_public: true,
     sections: [
-      { key: 'executive_summary', type: 'summary', title: 'Streszczenie wykonawcze', order: 0, required: true, defaultLength: 'short', purpose: 'Kluczowe wyniki i rekomendacje w skrócie' },
-      { key: 'methodology', type: 'methodology', title: 'Metodologia', order: 1, required: true, defaultLength: 'short', purpose: 'Zakres i podejście badawcze' },
-      { key: 'findings', type: 'findings', title: 'Wyniki', order: 2, required: true, defaultLength: 'long', purpose: 'Szczegółowe ustalenia według obszarów' },
-      { key: 'recommendations', type: 'recommendations', title: 'Rekomendacje', order: 3, required: true, defaultLength: 'medium', purpose: 'Priorytety działań i plan wdrożenia' },
+      {
+        key: 'executive_summary',
+        type: 'summary',
+        title: 'Streszczenie wykonawcze',
+        order: 0,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Kluczowe wyniki i rekomendacje w skrócie',
+      },
+      {
+        key: 'methodology',
+        type: 'methodology',
+        title: 'Metodologia',
+        order: 1,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Zakres i podejście badawcze',
+      },
+      {
+        key: 'findings',
+        type: 'findings',
+        title: 'Wyniki',
+        order: 2,
+        required: true,
+        defaultLength: 'long',
+        purpose: 'Szczegółowe ustalenia według obszarów',
+      },
+      {
+        key: 'recommendations',
+        type: 'recommendations',
+        title: 'Rekomendacje',
+        order: 3,
+        required: true,
+        defaultLength: 'medium',
+        purpose: 'Priorytety działań i plan wdrożenia',
+      },
     ],
   },
   {
@@ -90,10 +122,42 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
     is_system: true,
     is_public: true,
     sections: [
-      { key: 'context', type: 'context', title: 'Kontekst', order: 0, required: true, defaultLength: 'short', purpose: 'Sytuacja i tło decyzji' },
-      { key: 'problem', type: 'findings', title: 'Problem', order: 1, required: true, defaultLength: 'short', purpose: 'Kluczowe wyzwanie do rozwiązania' },
-      { key: 'options', type: 'list', title: 'Opcje', order: 2, required: true, defaultLength: 'medium', purpose: 'Warianty rozwiązania z analizą' },
-      { key: 'recommendation', type: 'recommendations', title: 'Rekomendacja', order: 3, required: true, defaultLength: 'short', purpose: 'Rekomendowana opcja z uzasadnieniem' },
+      {
+        key: 'context',
+        type: 'context',
+        title: 'Kontekst',
+        order: 0,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Sytuacja i tło decyzji',
+      },
+      {
+        key: 'problem',
+        type: 'findings',
+        title: 'Problem',
+        order: 1,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Kluczowe wyzwanie do rozwiązania',
+      },
+      {
+        key: 'options',
+        type: 'list',
+        title: 'Opcje',
+        order: 2,
+        required: true,
+        defaultLength: 'medium',
+        purpose: 'Warianty rozwiązania z analizą',
+      },
+      {
+        key: 'recommendation',
+        type: 'recommendations',
+        title: 'Rekomendacja',
+        order: 3,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Rekomendowana opcja z uzasadnieniem',
+      },
     ],
   },
   {
@@ -106,11 +170,51 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
     is_system: true,
     is_public: true,
     sections: [
-      { key: 'status_summary', type: 'summary', title: 'Streszczenie statusu', order: 0, required: true, defaultLength: 'short', purpose: 'Status RAG, kluczowe osiągnięcia i alerty' },
-      { key: 'scope', type: 'context', title: 'Zakres i cele', order: 1, required: true, defaultLength: 'short', purpose: 'Cele okresu i zakres prac' },
-      { key: 'progress', type: 'findings', title: 'Postęp i osiągnięcia', order: 2, required: true, defaultLength: 'long', purpose: 'Co zrobiono względem planu' },
-      { key: 'risks', type: 'list', title: 'Ryzyka i blokery', order: 3, required: true, defaultLength: 'medium', purpose: 'Otwarte ryzyka, blokery, plan mitygacji' },
-      { key: 'next_steps', type: 'recommendations', title: 'Następne kroki', order: 4, required: true, defaultLength: 'short', purpose: 'Priorytety i decyzje na kolejny okres' },
+      {
+        key: 'status_summary',
+        type: 'summary',
+        title: 'Streszczenie statusu',
+        order: 0,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Status RAG, kluczowe osiągnięcia i alerty',
+      },
+      {
+        key: 'scope',
+        type: 'context',
+        title: 'Zakres i cele',
+        order: 1,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Cele okresu i zakres prac',
+      },
+      {
+        key: 'progress',
+        type: 'findings',
+        title: 'Postęp i osiągnięcia',
+        order: 2,
+        required: true,
+        defaultLength: 'long',
+        purpose: 'Co zrobiono względem planu',
+      },
+      {
+        key: 'risks',
+        type: 'list',
+        title: 'Ryzyka i blokery',
+        order: 3,
+        required: true,
+        defaultLength: 'medium',
+        purpose: 'Otwarte ryzyka, blokery, plan mitygacji',
+      },
+      {
+        key: 'next_steps',
+        type: 'recommendations',
+        title: 'Następne kroki',
+        order: 4,
+        required: true,
+        defaultLength: 'short',
+        purpose: 'Priorytety i decyzje na kolejny okres',
+      },
     ],
   },
 ];
@@ -180,7 +284,11 @@ export const DBR77_TABLE_TEMPLATES: TableTemplateSeed[] = [
     schema_snapshot: {
       fields: [
         { name: 'Ryzyko', type: 'text' },
-        { name: 'Prawdopodobieństwo', type: 'singleSelect', options: ['Niskie', 'Średnie', 'Wysokie'] },
+        {
+          name: 'Prawdopodobieństwo',
+          type: 'singleSelect',
+          options: ['Niskie', 'Średnie', 'Wysokie'],
+        },
         { name: 'Wpływ', type: 'singleSelect', options: ['Niski', 'Średni', 'Wysoki'] },
         { name: 'Właściciel', type: 'text' },
         { name: 'Status', type: 'singleSelect', options: ['Otwarty', 'W trakcie', 'Zamknięty'] },
@@ -283,5 +391,7 @@ export async function seedDbr77Templates(): Promise<void> {
     }
   }
 
-  logger.info(`${TAG} DBR77 template seed complete (doc:${DBR77_DOC_TEMPLATES.length}, deck:${DBR77_DECK_TEMPLATES.length}, table:${DBR77_TABLE_TEMPLATES.length})`);
+  logger.info(
+    `${TAG} DBR77 template seed complete (doc:${DBR77_DOC_TEMPLATES.length}, deck:${DBR77_DECK_TEMPLATES.length}, table:${DBR77_TABLE_TEMPLATES.length})`
+  );
 }

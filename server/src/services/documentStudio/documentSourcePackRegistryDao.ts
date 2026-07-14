@@ -22,11 +22,7 @@
 
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import type {
-  SourcePack,
-  SourcePackAuditEntry,
-  SourcePackStatus,
-} from './documentStudioTypes.js';
+import type { SourcePack, SourcePackAuditEntry, SourcePackStatus } from './documentStudioTypes.js';
 
 interface PackRow {
   pack_id: string;

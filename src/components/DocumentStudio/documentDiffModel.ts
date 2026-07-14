@@ -80,10 +80,7 @@ function lookupBlockType(
   return block?.type ?? null;
 }
 
-function classifyBlockKind(
-  before: string,
-  after: string
-): DocumentBlockDiffEntry['kind'] {
+function classifyBlockKind(before: string, after: string): DocumentBlockDiffEntry['kind'] {
   const hasBefore = before.trim().length > 0;
   const hasAfter = after.trim().length > 0;
   if (!hasBefore && hasAfter) return 'added';

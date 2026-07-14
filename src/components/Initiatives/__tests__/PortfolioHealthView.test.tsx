@@ -21,7 +21,7 @@ vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
-import { PortfolioHealthView, type PortfolioHealth } from '../PortfolioHealthView';
+import { type PortfolioHealth, PortfolioHealthView } from '../PortfolioHealthView';
 
 const sample: PortfolioHealth = {
   total: 4,

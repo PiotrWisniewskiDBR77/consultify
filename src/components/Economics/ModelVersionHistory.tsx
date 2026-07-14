@@ -74,15 +74,16 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
   }, [modelId, selectedFrom, selectedTo, t]);
 
   if (loading) {
-    return (
-      <div className="p-4 text-sm text-slate-500">{t('common.loading', 'Loading…')}</div>
-    );
+    return <div className="p-4 text-sm text-slate-500">{t('common.loading', 'Loading…')}</div>;
   }
 
   if (versions.length === 0) {
     return (
       <div className="p-4 text-sm text-slate-400">
-        {t('finance.versions.empty', 'No saved versions yet. Approve a model to create a snapshot.')}
+        {t(
+          'finance.versions.empty',
+          'No saved versions yet. Approve a model to create a snapshot.'
+        )}
       </div>
     );
   }

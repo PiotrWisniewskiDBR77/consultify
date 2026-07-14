@@ -399,7 +399,9 @@ export const AdminSettingsConsultants: React.FC = () => {
 
       {/* Consultants Table */}
       <div className="admin-card rounded-xl overflow-hidden">
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left text-sm">
+        <table
+          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left text-sm"
+        >
           <thead className="bg-c-bg dark:bg-c-surface/[0.02] text-c-text-muted font-medium border-b border-c-border-subtle">
             <tr>
               <th className="px-6 py-4 w-8"></th>
@@ -462,9 +464,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                               ? `${consultant.firstName} ${consultant.lastName}`
                               : consultant.email}
                           </p>
-                          <p className="text-xs text-c-text-muted">
-                            {consultant.email}
-                          </p>
+                          <p className="text-xs text-c-text-muted">{consultant.email}</p>
                         </div>
                       </div>
                     </td>
@@ -599,10 +599,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                     Consultant Email
                   </label>
                   <div className="relative">
-                    <Mail
-                      className="absolute left-3 top-2.5 text-c-text-muted"
-                      size={18}
-                    />
+                    <Mail className="absolute left-3 top-2.5 text-c-text-muted" size={18} />
                     <input
                       type="email"
                       required
@@ -629,11 +626,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                       Select a project...
                     </option>
                     {projects.map((project) => (
-                      <option
-                        key={project.id}
-                        value={project.id}
-                        className="bg-c-surface"
-                      >
+                      <option key={project.id} value={project.id} className="bg-c-surface">
                         {project.name}
                       </option>
                     ))}
@@ -717,9 +710,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                 />
                                 <div>
                                   <span className="text-sm text-c-text">{perm.label}</span>
-                                  <p className="text-xs text-c-text-muted">
-                                    {perm.description}
-                                  </p>
+                                  <p className="text-xs text-c-text-muted">{perm.description}</p>
                                 </div>
                               </label>
                             ))}
@@ -775,9 +766,7 @@ export const AdminSettingsConsultants: React.FC = () => {
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-semibold text-c-text">Add to Project</h3>
-                <p className="text-sm text-c-text-muted mt-1">
-                  {selectedConsultant.email}
-                </p>
+                <p className="text-sm text-c-text-muted mt-1">{selectedConsultant.email}</p>
               </div>
               <button
                 onClick={() => setShowAddProjectModal(false)}
@@ -890,9 +879,7 @@ const PermissionsModal: React.FC<{
         <div className="p-6 border-b border-white/10 flex justify-between items-center flex-shrink-0">
           <div>
             <h3 className="text-lg font-semibold text-c-text">Edit Permissions</h3>
-            <p className="text-sm text-c-text-muted mt-1">
-              {projectAccess.projectName}
-            </p>
+            <p className="text-sm text-c-text-muted mt-1">{projectAccess.projectName}</p>
           </div>
           <button
             onClick={onClose}
@@ -966,9 +953,7 @@ const PermissionsModal: React.FC<{
                         >
                           {perm.label}
                         </span>
-                        <p className="text-xs text-c-text-muted">
-                          {perm.description}
-                        </p>
+                        <p className="text-xs text-c-text-muted">{perm.description}</p>
                       </div>
                     </label>
                   ))}

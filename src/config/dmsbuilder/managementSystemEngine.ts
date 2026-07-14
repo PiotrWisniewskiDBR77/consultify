@@ -19,12 +19,7 @@
  * only on a minimal read-model (DmsSession), not on the full store.
  */
 
-import {
-  DMS_LAYERS,
-  dmsLayerLabel,
-  type Bilingual,
-  type DmsLayerId,
-} from './deepeningLadder';
+import { type Bilingual, DMS_LAYERS, type DmsLayerId, dmsLayerLabel } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
 
@@ -109,7 +104,10 @@ const scoreLayer = (layer: DmsLayerId, session: DmsSession): LayerScore => {
     }
     case 'cadence': {
       // cadence is inferred from KPI update frequency being defined.
-      const withFreq = ratio(kpis.filter((k) => (k.frequency || '').trim().length > 0).length, kpiCount);
+      const withFreq = ratio(
+        kpis.filter((k) => (k.frequency || '').trim().length > 0).length,
+        kpiCount
+      );
       present = kpiCount > 0 && withFreq > 0;
       maturity = present ? clamp(round1(withFreq * 3), 0, 3) : 0;
       gap = {

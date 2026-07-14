@@ -119,7 +119,10 @@ export const Select: React.FC<SelectProps> = ({
                         onChange(option.value);
                         setOpen(false);
                       }}
-                      className={cn(OPTION_CLASS, isSelected && 'bg-slate-100 dark:bg-white/[0.07]')}
+                      className={cn(
+                        OPTION_CLASS,
+                        isSelected && 'bg-slate-100 dark:bg-white/[0.07]'
+                      )}
                     >
                       {option.icon}
                       <span className="min-w-0 flex-1 truncate">{option.label}</span>

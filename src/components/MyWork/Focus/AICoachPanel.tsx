@@ -69,10 +69,7 @@ export const AICoachPanel: React.FC = () => {
           >
             <RefreshCw size={12} className={`text-c-info ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded hover:bg-c-info/10"
-          >
+          <button onClick={() => setExpanded(!expanded)} className="p-1 rounded hover:bg-c-info/10">
             {expanded ? (
               <ChevronUp size={14} className="text-c-info" />
             ) : (
@@ -90,9 +87,7 @@ export const AICoachPanel: React.FC = () => {
             </div>
           ) : result ? (
             <>
-              <p className="text-xs font-medium text-c-info dark:text-c-info">
-                {result.summary}
-              </p>
+              <p className="text-xs font-medium text-c-info dark:text-c-info">{result.summary}</p>
               {result.overcommitWarning && (
                 <div className="px-2.5 py-1.5 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200/50 dark:border-danger-800/30 text-xs text-danger-700 dark:text-danger-300">
                   {result.overcommitWarning}

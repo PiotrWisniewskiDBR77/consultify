@@ -12,7 +12,7 @@ import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import React from 'react';
 
 import { QUOTE_NODE_NAME } from '../nodeNames';
-import { payloadBlockAttributes, parseNodePayload } from './payloadAttrs';
+import { parseNodePayload, payloadBlockAttributes } from './payloadAttrs';
 
 const QuoteNodeComponent: React.FC<{
   node: { attrs: Record<string, unknown> };
@@ -30,7 +30,9 @@ const QuoteNodeComponent: React.FC<{
         <blockquote className="border-l-4 border-c-accent bg-c-accent-soft0 px-4 py-2 italic text-c-text">
           {text}
           {payload?.cite ? (
-            <cite className="mt-1 block text-xs not-italic text-c-text-secondary">— {payload.cite}</cite>
+            <cite className="mt-1 block text-xs not-italic text-c-text-secondary">
+              — {payload.cite}
+            </cite>
           ) : null}
         </blockquote>
       ) : (

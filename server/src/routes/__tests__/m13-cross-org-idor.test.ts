@@ -54,18 +54,14 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
-  requireOrgRole:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
+  requireOrgAccess: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
+  requireOrgRole: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
 }));
 
 vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
@@ -124,7 +120,9 @@ vi.mock('../../services/blueprintService.js', () => ({
 }));
 
 // ── Heavy collaborators we never exercise (import-time satisfaction only) ─────
-vi.mock('../../controllers/InitiativeController.js', () => ({ default: new Proxy({}, { get: () => (_req: any, _res: any) => {} }) }));
+vi.mock('../../controllers/InitiativeController.js', () => ({
+  default: new Proxy({}, { get: () => (_req: any, _res: any) => {} }),
+}));
 vi.mock('../../controllers/StaffingPlanController.js', () => ({
   StaffingPlanController: new Proxy({}, { get: () => (_req: any, _res: any) => {} }),
   default: {},
@@ -148,7 +146,9 @@ vi.mock('../../services/initiative/initiativeWizardService.js', () => ({
   triageCandidate: vi.fn(),
 }));
 vi.mock('../../services/initiativeGenerationService.js', () => ({ default: {} }));
-vi.mock('../../services/initiativeSimilarityService.js', () => ({ checkSimilarInitiatives: vi.fn() }));
+vi.mock('../../services/initiativeSimilarityService.js', () => ({
+  checkSimilarInitiatives: vi.fn(),
+}));
 vi.mock('../../services/workloadCapacityService.js', () => ({
   getCapacityTimeline: vi.fn(),
   getInitiativeCapacity: vi.fn(),
@@ -340,9 +340,8 @@ describe('M13 — linkDecisionToInitiative rejects a foreign-org decision', () =
   it('throws 404 when the decision is not in the caller org', async () => {
     // initiative lookup (org-scoped) succeeds, decision lookup (org-scoped) fails.
     mockQueryFirst.mockResolvedValueOnce({ id: 'init-a' }).mockResolvedValueOnce(null);
-    const { initiativeGovernanceService } = await import(
-      '../../services/initiativeGovernanceService.js'
-    );
+    const { initiativeGovernanceService } =
+      await import('../../services/initiativeGovernanceService.js');
     await expect(
       initiativeGovernanceService.linkDecisionToInitiative(ORG_A, 'init-a', 'dec-from-org-b')
     ).rejects.toMatchObject({ status: 404 });

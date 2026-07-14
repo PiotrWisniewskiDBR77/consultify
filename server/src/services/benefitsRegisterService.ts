@@ -156,7 +156,9 @@ export async function createBenefit(
     throw new Error('createBenefit: name is required');
   }
   if (!data.initiativeId) {
-    throw new Error('createBenefit: initiativeId is required (initiative_benefits.initiative_id is NOT NULL)');
+    throw new Error(
+      'createBenefit: initiativeId is required (initiative_benefits.initiative_id is NOT NULL)'
+    );
   }
 
   const id = uuidv4();
@@ -239,8 +241,7 @@ export async function handoffFromClosure(
 
   const kpiName = (kpiDelta?.kpiName || '').trim() || null;
   const name =
-    (kpiDelta?.name || '').trim() ||
-    (kpiName ? `Benefit: ${kpiName}` : 'Initiative benefit');
+    (kpiDelta?.name || '').trim() || (kpiName ? `Benefit: ${kpiName}` : 'Initiative benefit');
 
   // Dedupe against an existing handoff row for the same KPI on this initiative.
   const existing = await dbGet<BenefitRecord>(

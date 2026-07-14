@@ -342,7 +342,9 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
           </div>
 
           <div className="overflow-x-auto">
-            <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
+            <table
+              /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full"
+            >
               <thead>
                 <tr className="bg-slate-50 dark:bg-navy-900">
                   <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[200px]">

@@ -3,11 +3,7 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import {
-  createOkrObjective,
-  updateOkrObjective,
-  type OkrCycle,
-} from '@/services/api/okrStrategic';
+import { createOkrObjective, type OkrCycle, updateOkrObjective } from '@/services/api/okrStrategic';
 
 export interface OkrObjectiveModalObjective {
   id: string;
@@ -74,8 +70,7 @@ export const OkrObjectiveModal: React.FC<OkrObjectiveModalProps> = ({
         onSuccess();
       } catch (error: any) {
         toast.error(
-          error?.message ||
-            t('results.okr.objectiveSaveFailed', 'Failed to save the objective')
+          error?.message || t('results.okr.objectiveSaveFailed', 'Failed to save the objective')
         );
       } finally {
         setSaving(false);
@@ -133,7 +128,11 @@ export const OkrObjectiveModal: React.FC<OkrObjectiveModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>{t('results.okr.cycle', 'Cycle')}</label>
-              <select className={selectCls} value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
+              <select
+                className={selectCls}
+                value={cycleId}
+                onChange={(e) => setCycleId(e.target.value)}
+              >
                 <option value="">{t('results.okr.noCycle', '— No cycle —')}</option>
                 {cycles.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -144,7 +143,11 @@ export const OkrObjectiveModal: React.FC<OkrObjectiveModalProps> = ({
             </div>
             <div>
               <label className={labelCls}>{t('results.okr.parent', 'Parent objective')}</label>
-              <select className={selectCls} value={parentId} onChange={(e) => setParentId(e.target.value)}>
+              <select
+                className={selectCls}
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+              >
                 <option value="">{t('results.okr.noParent', '— Top-level —')}</option>
                 {objectiveOptions
                   .filter((o) => o.id !== objective?.id)

@@ -83,10 +83,7 @@ function digitsOf(s: string): string {
  * Porównuje tylko liczby o kształcie metryki (waluta/dziesiętne/sufiks) — gołe
  * cyfry z etykiety nie są kandydatami, więc mało false-positives.
  */
-export function auditFactConsistency(
-  factBook: FactBook,
-  text: string
-): FactContradiction[] {
+export function auditFactConsistency(factBook: FactBook, text: string): FactContradiction[] {
   const out: FactContradiction[] = [];
   const haystack = String(text ?? '');
   const lower = haystack.toLowerCase();

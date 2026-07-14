@@ -67,7 +67,8 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
 
 function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () => void }) {
   // canon §7.3b: action pills use the shared actionPillClass SSOT (h-9, border, palette schemes).
-  const scheme = action.variant === 'primary' ? 'primary' : action.variant === 'danger' ? 'red' : 'neutral';
+  const scheme =
+    action.variant === 'primary' ? 'primary' : action.variant === 'danger' ? 'red' : 'neutral';
   return (
     <button type="button" onClick={onClick} className={actionPillClass(scheme)}>
       {action.label}
@@ -115,13 +116,9 @@ export function ProblemPreview({
           </button>
         </div>
 
-        <h3 className="mt-3 text-sm font-semibold text-c-text leading-snug">
-          {problem.title}
-        </h3>
+        <h3 className="mt-3 text-sm font-semibold text-c-text leading-snug">{problem.title}</h3>
 
-        <p className="mt-1.5 text-xs text-c-text-secondary leading-relaxed">
-          {problem.rootCause}
-        </p>
+        <p className="mt-1.5 text-xs text-c-text-secondary leading-relaxed">{problem.rootCause}</p>
       </div>
 
       {/* ─── Body ─── */}
@@ -138,9 +135,7 @@ export function ProblemPreview({
           >
             {SOURCE_ICONS[problem.sourceEntityType] || <Info size={14} />}
             <div className="min-w-0 flex-1 text-left">
-              <p className="text-xs font-medium text-c-text truncate">
-                {problem.sourceEntityName}
-              </p>
+              <p className="text-xs font-medium text-c-text truncate">{problem.sourceEntityName}</p>
               <p className="text-[10px] text-c-text-muted">
                 {problem.sourceEntityType.replace(/_/g, ' ')}
               </p>
@@ -168,7 +163,9 @@ export function ProblemPreview({
                       {problem.daysOverdue} days overdue
                     </span>
                   ) : problem.daysOverdue < 0 ? (
-                    <span className="text-c-text-muted">In {Math.abs(problem.daysOverdue)} days</span>
+                    <span className="text-c-text-muted">
+                      In {Math.abs(problem.daysOverdue)} days
+                    </span>
                   ) : (
                     <span className="text-amber-600 dark:text-amber-400">Due today</span>
                   )
@@ -209,9 +206,7 @@ export function ProblemPreview({
                   className="w-full flex items-center gap-2 p-2 rounded-lg border border-c-border-subtle hover:bg-c-surface-raised transition-colors group text-left"
                 >
                   {SOURCE_ICONS[ent.type] || <Link2 size={12} />}
-                  <span className="text-xs text-c-text-secondary truncate flex-1">
-                    {ent.name}
-                  </span>
+                  <span className="text-xs text-c-text-secondary truncate flex-1">{ent.name}</span>
                   <ChevronRight
                     size={12}
                     className="text-c-text-secondary group-hover:text-blue-500 shrink-0"

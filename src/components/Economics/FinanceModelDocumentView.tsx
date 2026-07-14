@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 
 import { V8FinanceApi, type V8FinanceModelOutputsResult } from '../../services/api/v8/finance';
 import { StatusChip } from '../ui/primitives';
+import { isFinanceFlagEnabled } from './financeFeatureFlags';
 import {
   type FinanceModelForecastLine,
   type FinanceModelPreviewDetail,
   type FinanceModelRow,
 } from './financeTypes';
-import { isFinanceFlagEnabled } from './financeFeatureFlags';
 import { ModelVersionHistory } from './ModelVersionHistory';
 
 type ServerOutputLine = {

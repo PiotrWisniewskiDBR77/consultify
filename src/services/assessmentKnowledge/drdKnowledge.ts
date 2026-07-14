@@ -11,11 +11,12 @@
  * - You can override specific area+level entries in DRD_KNOWLEDGE_OVERRIDES over time.
  */
 import { DRD_STRUCTURE, DRDArea, DRDLevel } from '@/services/drdStructure';
+
 import { DRD_OVERRIDES_AXIS_1_2 } from './drdKnowledgeOverridesAxis1And2';
-import { DRD_OVERRIDES_AXIS_3_4 } from './drdKnowledgeOverridesAxis3And4';
-import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 } from './drdKnowledgeOverridesAxis5To7';
 import { DRD_OVERRIDES_AXIS_1_2_EN } from './drdKnowledgeOverridesAxis1And2.en';
+import { DRD_OVERRIDES_AXIS_3_4 } from './drdKnowledgeOverridesAxis3And4';
 import { DRD_OVERRIDES_AXIS_3_4_EN } from './drdKnowledgeOverridesAxis3And4.en';
+import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 } from './drdKnowledgeOverridesAxis5To7';
 import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7_EN } from './drdKnowledgeOverridesAxis5To7.en';
 
 export type DRDLevelKnowledge = {
@@ -300,7 +301,7 @@ export function getDRDKnowledge(
   // For EN, prefer the EN override but fall back to the PL override (then base)
   // per-field, so a missing EN key never yields an empty result.
   const enOverride = lang === 'en' ? DRD_KNOWLEDGE_OVERRIDES_EN[key] : undefined;
-  const override = lang === 'en' ? enOverride ?? plOverride : plOverride;
+  const override = lang === 'en' ? (enOverride ?? plOverride) : plOverride;
   if (!override) return base;
 
   return {
@@ -308,10 +309,7 @@ export function getDRDKnowledge(
       (override.questions as any) ||
       (lang === 'en' ? (plOverride?.questions as any) : undefined) ||
       base.questions,
-    example:
-      override.example ||
-      (lang === 'en' ? plOverride?.example : undefined) ||
-      base.example,
+    example: override.example || (lang === 'en' ? plOverride?.example : undefined) || base.example,
     suggestedTechnologies:
       override.suggestedTechnologies ||
       (lang === 'en' ? plOverride?.suggestedTechnologies : undefined) ||

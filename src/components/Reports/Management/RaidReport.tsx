@@ -33,7 +33,9 @@ const renderSectionTable = (title: string, items: RaidReportContent['risks'], ac
       <h3 className="text-lg font-semibold text-navy-900 dark:text-white">{title}</h3>
     </div>
     <div className="overflow-x-auto">
-      <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full">
+      <table
+        /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full"
+      >
         <thead>
           <tr className="bg-slate-50 dark:bg-navy-800/50 text-xs uppercase text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3 text-left">Title</th>

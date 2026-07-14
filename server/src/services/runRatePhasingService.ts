@@ -76,8 +76,7 @@ export interface InYearVsFullYear {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const clamp = (value: number, lo: number, hi: number): number =>
-  Math.min(hi, Math.max(lo, value));
+const clamp = (value: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, value));
 
 const num = (value: unknown, fallback = 0): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -153,7 +152,7 @@ export function phasingCurve(input: PhasingInput): PhasingCurve {
 
 export function inYearVsFullYear(
   benefit: BenefitInput,
-  monthsRemainingInYear: number,
+  monthsRemainingInYear: number
 ): InYearVsFullYear {
   const { runRate: fullYearRunRate } = splitBenefit(benefit);
   const months = clamp(num(monthsRemainingInYear, 0), 0, 12);

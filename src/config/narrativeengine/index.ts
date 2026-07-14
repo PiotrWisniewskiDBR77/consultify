@@ -9,15 +9,15 @@
  */
 
 import {
+  type LadderRung,
   NARRATIVE_DEEPENING_LADDER,
   NARRATIVE_LADDER_RUNG_ORDER,
-  type LadderRung,
   type ResonanceBand,
 } from './deepeningLadder';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {

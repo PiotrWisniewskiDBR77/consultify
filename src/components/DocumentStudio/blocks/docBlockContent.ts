@@ -16,11 +16,7 @@
  *  - Pure: no React, no side effects.
  */
 
-import type {
-  DocumentChartBlockContent,
-  DocumentChartKind,
-  DocumentChartSeries,
-} from '../types';
+import type { DocumentChartBlockContent, DocumentChartKind, DocumentChartSeries } from '../types';
 
 // ---------------------------------------------------------------------------
 // Small tolerant coercion helpers (never throw)

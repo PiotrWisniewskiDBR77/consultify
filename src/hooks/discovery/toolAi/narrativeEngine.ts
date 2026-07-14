@@ -6,9 +6,8 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 interface NarrativeEngineActionHandlers {
   updateInputData: (data: Partial<NarrativeEngineData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
@@ -238,8 +237,7 @@ export function applyNarrativeEnginePendingAction({
                 : 'medium',
               drivers: Array.isArray(pillar.drivers) ? pillar.drivers.filter(Boolean) : [],
               evidence: Array.isArray(pillar.evidence) ? pillar.evidence.filter(Boolean) : [],
-              implication:
-                typeof pillar.implication === 'string' ? pillar.implication : undefined,
+              implication: typeof pillar.implication === 'string' ? pillar.implication : undefined,
               confidence: typeof pillar.confidence === 'number' ? pillar.confidence : 3,
               proposalStatus,
             })),

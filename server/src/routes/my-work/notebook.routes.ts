@@ -12,7 +12,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../../utils/htmlEntities.js';
+import { enrichPage } from '../../services/notebookAIEnrichService.js';
 import {
   addNotebookAttachmentsToPage,
   NotebookAttachmentMutationError,
@@ -35,9 +35,9 @@ import {
   resolveStoredNotebookSourceFile,
   toPublicNotebookCaptureMetadata,
 } from '../../services/notebookSourceFileService.js';
-import { enrichPage } from '../../services/notebookAIEnrichService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns, hasColumn } from '../../utils/dbSchema.js';
+import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { requireTables, requireUser } from './_helpers.js';
@@ -490,7 +490,8 @@ router.get(
       // hasColumn check (cache drift / generated-column edge), retry without the FTS
       // predicate rather than 500. Re-throw anything that is NOT a missing-column error.
       const msg = String(err?.message || err || '');
-      const isMissingFts = /search_vector/i.test(msg) && /does not exist|undefined column|42703/i.test(msg);
+      const isMissingFts =
+        /search_vector/i.test(msg) && /does not exist|undefined column|42703/i.test(msg);
       if (q && isMissingFts) {
         searchDegraded = true;
         const like = `%${q}%`;

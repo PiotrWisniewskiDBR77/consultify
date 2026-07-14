@@ -115,9 +115,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ) : (
               <Presentation size={14} className="text-c-text-muted shrink-0" />
             )}
-            <span className="text-sm font-medium text-c-text truncate">
-              {row.title}
-            </span>
+            <span className="text-sm font-medium text-c-text truncate">{row.title}</span>
           </div>
         ),
       },
@@ -339,7 +337,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 variant: 'neutral',
                 label: t('rap.actions.clone', 'Klonuj'),
                 icon: Copy,
-                onClick: () => navigate(resolveTemplateClonePath(selectedItem.id, selectedItem.type)),
+                onClick: () =>
+                  navigate(resolveTemplateClonePath(selectedItem.id, selectedItem.type)),
               },
               {
                 id: 'ask_ai',
@@ -454,9 +453,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               key={f.key}
               className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4"
             >
-              <h4 className="text-sm font-semibold text-c-text">
-                {f.title}
-              </h4>
+              <h4 className="text-sm font-semibold text-c-text">{f.title}</h4>
               <p className="text-xs text-c-text-muted mt-1">{f.desc}</p>
               <div className="flex gap-1 mt-2">
                 {f.categories.map((c) => (
@@ -561,19 +558,32 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             meta={{
               pills: [
                 ...(typeMeta
-                  ? [{ label: isPolish ? typeMeta.labelPl : typeMeta.label, tone: 'neutral' as const }]
+                  ? [
+                      {
+                        label: isPolish ? typeMeta.labelPl : typeMeta.label,
+                        tone: 'neutral' as const,
+                      },
+                    ]
                   : []),
                 ...(statusMeta
-                  ? [{ label: isPolish ? statusMeta.labelPl : statusMeta.label, tone: statusMeta.tone }]
+                  ? [
+                      {
+                        label: isPolish ? statusMeta.labelPl : statusMeta.label,
+                        tone: statusMeta.tone,
+                      },
+                    ]
                   : []),
               ] as MetaPill[],
               trailing: (
                 <span className="text-[11px] font-semibold text-c-text-secondary">
-                  {new Date(selectedItem.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {new Date(selectedItem.updatedAt).toLocaleDateString(
+                    isPolish ? 'pl-PL' : 'en-US',
+                    {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    }
+                  )}
                 </span>
               ),
             }}

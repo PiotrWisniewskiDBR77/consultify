@@ -114,7 +114,8 @@ export const PROMPT_REGISTRY: PromptAsset[] = [
     owner: 'content-quality',
     path: 'server/src/ai/persona.ts',
     exportName: 'buildChallengeInstructions',
-    description: "Strategic challenge mode — when Teresa must push back on the client's data/claims.",
+    description:
+      "Strategic challenge mode — when Teresa must push back on the client's data/claims.",
     languages: ['pl', 'en'],
     lastReviewed: '2026-07-03',
   },
@@ -125,7 +126,8 @@ export const PROMPT_REGISTRY: PromptAsset[] = [
     owner: 'content-quality',
     path: 'server/src/ai/persona.ts',
     exportName: 'buildCitationInstructions',
-    description: 'Inline citation rules — cite only system-provided sources, no fabricated markers.',
+    description:
+      'Inline citation rules — cite only system-provided sources, no fabricated markers.',
     languages: ['pl', 'en'],
     lastReviewed: '2026-06-01',
   },
@@ -136,7 +138,8 @@ export const PROMPT_REGISTRY: PromptAsset[] = [
     owner: 'content-quality',
     path: 'server/src/ai/persona.ts',
     exportName: 'buildArtifactInstructions',
-    description: 'When/how to wrap chat output as downloadable artifacts (doc, table, diagram, matrix...).',
+    description:
+      'When/how to wrap chat output as downloadable artifacts (doc, table, diagram, matrix...).',
     languages: ['pl', 'en'],
     lastReviewed: '2026-06-01',
   },
@@ -147,7 +150,8 @@ export const PROMPT_REGISTRY: PromptAsset[] = [
     owner: 'content-quality',
     path: 'server/src/ai/persona.ts',
     exportName: 'buildAgencyModel',
-    description: 'Copilot-not-autopilot contract: propose vs fake-execute, honesty about reach, routing to modules.',
+    description:
+      'Copilot-not-autopilot contract: propose vs fake-execute, honesty about reach, routing to modules.',
     languages: ['pl', 'en'],
     lastReviewed: '2026-06-01',
   },

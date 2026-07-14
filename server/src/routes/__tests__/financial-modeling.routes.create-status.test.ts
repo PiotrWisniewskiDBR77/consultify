@@ -101,7 +101,7 @@ describe('POST /models — create error → HTTP status mapping', () => {
     expect(res.status).toBe(404);
   });
 
-  it("keeps a (not-found-free) statement-readiness error at 400", async () => {
+  it('keeps a (not-found-free) statement-readiness error at 400', async () => {
     mockCreateModel.mockRejectedValue(
       new Error('Statement must be statement-ready before it can seed a model')
     );
@@ -113,9 +113,7 @@ describe('POST /models — create error → HTTP status mapping', () => {
 
   it('still returns 201 on success', async () => {
     mockCreateModel.mockResolvedValue('new-model-id');
-    const res = await request(createApp())
-      .post('/api/financial-modeling/models')
-      .send(validBody);
+    const res = await request(createApp()).post('/api/financial-modeling/models').send(validBody);
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ success: true, id: 'new-model-id' });
   });

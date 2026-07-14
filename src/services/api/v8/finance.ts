@@ -644,7 +644,12 @@ export const V8FinanceApi = {
 
   // M16/6.5 — Model version history + diff
   getModelVersions: (modelId: string) =>
-    v8Get<{ data: { versions: unknown[]; count: number } }>(`/finance/models/${encodeURIComponent(modelId)}/versions`),
+    v8Get<{ data: { versions: unknown[]; count: number } }>(
+      `/finance/models/${encodeURIComponent(modelId)}/versions`
+    ),
   getModelVersionDiff: (modelId: string, from: string, to: string) =>
-    v8Get<{ data: { diff: unknown } }>(`/finance/models/${encodeURIComponent(modelId)}/versions/diff`, { from, to }),
+    v8Get<{ data: { diff: unknown } }>(
+      `/finance/models/${encodeURIComponent(modelId)}/versions/diff`,
+      { from, to }
+    ),
 };

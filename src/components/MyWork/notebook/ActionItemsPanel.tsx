@@ -186,9 +186,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
                         {item.priority}
                       </span>
                       {item.suggestedDue && (
-                        <span className="text-[9px] text-c-text-muted">
-                          {item.suggestedDue}
-                        </span>
+                        <span className="text-[9px] text-c-text-muted">{item.suggestedDue}</span>
                       )}
                     </div>
                   </div>

@@ -126,9 +126,7 @@ const FieldShell: React.FC<{ label: string; children: React.ReactNode }> = ({
   children,
 }) => (
   <label className="space-y-1.5">
-    <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-      {label}
-    </span>
+    <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{label}</span>
     {children}
   </label>
 );
@@ -196,9 +194,7 @@ const KpiMultiSelect: React.FC<{
     <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
       <div className="max-h-44 overflow-y-auto space-y-2">
         {options.length === 0 ? (
-          <div className="text-sm text-c-text-muted">
-            No KPI available in current scope.
-          </div>
+          <div className="text-sm text-c-text-muted">No KPI available in current scope.</div>
         ) : (
           options.map((option) => (
             <label
@@ -212,9 +208,7 @@ const KpiMultiSelect: React.FC<{
                 className="mt-0.5 rounded border-c-border-strong"
               />
               <span className="min-w-0">
-                <span className="block text-sm text-c-text-secondary">
-                  {option.name}
-                </span>
+                <span className="block text-sm text-c-text-secondary">{option.name}</span>
                 <span className="block text-xs text-c-text-muted">
                   {option.initiativeName || 'Standalone KPI'}
                 </span>
@@ -335,9 +329,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
           const item = row._raw as ScheduleItem;
           return (
             <div>
-              <div className="text-sm font-medium text-c-text">
-                {item.reportName}
-              </div>
+              <div className="text-sm font-medium text-c-text">{item.reportName}</div>
               <div className="mt-1 text-xs text-c-text-muted">
                 {item.kpiIds.length} KPI · {item.sendAt || 'No send time'}
               </div>
@@ -1109,9 +1101,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
           const item = row._raw as ConnectorItem;
           return (
             <div>
-              <div className="text-sm font-medium text-c-text">
-                {item.connectorName}
-              </div>
+              <div className="text-sm font-medium text-c-text">{item.connectorName}</div>
               <div className="mt-1 text-xs text-c-text-muted">
                 {item.targetKpiIds.length} KPI · {item.connectorType}
               </div>

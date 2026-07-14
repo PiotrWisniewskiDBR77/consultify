@@ -12,8 +12,8 @@
  * never a 500.
  */
 
-import KnownToolsService from './KnownToolsService.js';
 import logger from '../utils/Logger.js';
+import KnownToolsService from './KnownToolsService.js';
 
 export interface ToolSuggestion {
   toolType: string;

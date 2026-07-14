@@ -210,7 +210,12 @@ const attachmentService = {
    * Generate thumbnails for image attachments.
    * Uses sharp if available; otherwise stores placeholder paths for frontend fallback.
    */
-  async generateThumbnail(attachmentId: string, sourceBuffer: Buffer, storageKey: string, mimeType: string): Promise<void> {
+  async generateThumbnail(
+    attachmentId: string,
+    sourceBuffer: Buffer,
+    storageKey: string,
+    mimeType: string
+  ): Promise<void> {
     if (!IMAGE_MIME_TYPES.has(mimeType)) return;
 
     const db = getDatabase();
@@ -225,11 +230,23 @@ const attachmentService = {
     try {
       const sharp = (await import('sharp')).default;
 
-      const smallBuf = await (sharp(sourceBuffer).resize(100, 100, { fit: 'inside' }) as any).toBuffer();
-      const largeBuf = await (sharp(sourceBuffer).resize(400, 400, { fit: 'inside' }) as any).toBuffer();
+      const smallBuf = await (
+        sharp(sourceBuffer).resize(100, 100, { fit: 'inside' }) as any
+      ).toBuffer();
+      const largeBuf = await (
+        sharp(sourceBuffer).resize(400, 400, { fit: 'inside' }) as any
+      ).toBuffer();
 
-      await storage.putObject({ key: toStorageKey(smallKey), body: smallBuf, contentType: mimeType });
-      await storage.putObject({ key: toStorageKey(largeKey), body: largeBuf, contentType: mimeType });
+      await storage.putObject({
+        key: toStorageKey(smallKey),
+        body: smallBuf,
+        contentType: mimeType,
+      });
+      await storage.putObject({
+        key: toStorageKey(largeKey),
+        body: largeBuf,
+        contentType: mimeType,
+      });
       // Persist resolvable URLs (works for both local and signed-S3 providers).
       smallPath = await storage.getUrl(toStorageKey(smallKey));
       largePath = await storage.getUrl(toStorageKey(largeKey));

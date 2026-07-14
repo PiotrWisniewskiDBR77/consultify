@@ -276,10 +276,7 @@ const BetaSuccessStories: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {stories.map((story, index) => (
-          <div
-            key={index}
-            className="bg-c-surface rounded-xl border border-c-border-subtle p-6"
-          >
+          <div key={index} className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
             <div className="flex items-start gap-4 mb-4">
               <div className="w-16 h-16 rounded-lg overflow-hidden bg-c-surface shadow-sm flex-shrink-0">
                 <img
@@ -307,10 +304,7 @@ const BetaSuccessStories: React.FC = () => {
               </p>
               <ul className="space-y-1">
                 {story.results.map((result, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-2 text-sm text-c-text-secondary"
-                  >
+                  <li key={i} className="flex items-center gap-2 text-sm text-c-text-secondary">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     {result}
                   </li>
@@ -406,9 +400,7 @@ const TierProgressionSection: React.FC = () => {
                 <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
                   {tier.commission}
                 </p>
-                <p className="text-xs text-c-text-muted mt-1">
-                  {tier.requirement}
-                </p>
+                <p className="text-xs text-c-text-muted mt-1">{tier.requirement}</p>
               </div>
             </div>
           ))}
@@ -679,9 +671,7 @@ const OnboardingChecklistSection: React.FC = () => {
                   </span>
                 </div>
 
-                <p className="text-sm text-c-text-secondary mb-2">
-                  {step.description}
-                </p>
+                <p className="text-sm text-c-text-secondary mb-2">{step.description}</p>
 
                 <div className="flex items-start gap-1 text-sm text-c-text-muted mb-3">
                   <HelpCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -998,9 +988,7 @@ const AcademyPreviewSection: React.FC = () => {
                         {course.title}
                       </h3>
                       {expandedCourse === index && (
-                        <p className="text-sm text-c-text-secondary mt-1">
-                          {course.description}
-                        </p>
+                        <p className="text-sm text-c-text-secondary mt-1">{course.description}</p>
                       )}
                     </div>
                   </div>
@@ -1147,9 +1135,7 @@ const ContactPartnerManagerSection: React.FC = () => {
             <p className="font-medium text-navy-900 dark:text-white">
               {t('partner.home.contact.linkedin', 'Połącz się na LinkedIn')}
             </p>
-            <p className="text-xs text-c-text-muted">
-              {PARTNER_CONTACT.linkedinHandle}
-            </p>
+            <p className="text-xs text-c-text-muted">{PARTNER_CONTACT.linkedinHandle}</p>
           </div>
           <ExternalLink className="w-4 h-4 text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
@@ -1269,9 +1255,7 @@ const FAQSection: React.FC = () => {
 
             {openFaq === index && (
               <div className="px-4 pb-4">
-                <p className="text-sm text-c-text-secondary leading-relaxed">
-                  {faq.answer}
-                </p>
+                <p className="text-sm text-c-text-secondary leading-relaxed">{faq.answer}</p>
               </div>
             )}
           </div>
@@ -1334,10 +1318,7 @@ const FooterResourcesSection: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {columns.map((column, index) => (
-        <div
-          key={index}
-          className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
-        >
+        <div key={index} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <div className="flex items-center gap-2 mb-4">
             <column.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             <h3 className="font-semibold text-navy-900 dark:text-white">{column.title}</h3>

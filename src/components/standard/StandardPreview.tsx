@@ -258,7 +258,8 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
           <PreviewRelations
             items={relations}
             emptyLabel={
-              relationsEmptyLabel ?? t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
+              relationsEmptyLabel ??
+              t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
             }
           />
         ) : null}

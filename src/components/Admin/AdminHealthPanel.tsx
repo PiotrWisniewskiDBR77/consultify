@@ -1,7 +1,15 @@
-import { AlertTriangle, CheckCircle2, HelpCircle, Loader2, Play, RefreshCw, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  HelpCircle,
+  Loader2,
+  Play,
+  RefreshCw,
+  XCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { Button } from '../ui/primitives/Button';
@@ -27,14 +35,12 @@ interface Summary {
   overall: ProbeStatus;
 }
 
-const STATUS_META: Record<
-  ProbeStatus,
-  { icon: React.ElementType; dotVar: string; label: string }
-> = {
-  pass: { icon: CheckCircle2, dotVar: 'var(--c-success)', label: 'Passing' },
-  fail: { icon: XCircle, dotVar: 'var(--c-danger)', label: 'Failing' },
-  unknown: { icon: HelpCircle, dotVar: 'var(--c-info)', label: 'Not run' },
-};
+const STATUS_META: Record<ProbeStatus, { icon: React.ElementType; dotVar: string; label: string }> =
+  {
+    pass: { icon: CheckCircle2, dotVar: 'var(--c-success)', label: 'Passing' },
+    fail: { icon: XCircle, dotVar: 'var(--c-danger)', label: 'Failing' },
+    unknown: { icon: HelpCircle, dotVar: 'var(--c-info)', label: 'Not run' },
+  };
 
 function StatusDot({ status }: { status: ProbeStatus }) {
   return (
@@ -96,34 +102,44 @@ export const AdminHealthPanel: React.FC = () => {
     }
   }, []);
 
-  const runOne = useCallback(
-    async (probeId: string) => {
-      try {
-        setRunningProbe(probeId);
-        const data = await Api.runHealthPanelProbe(probeId);
-        const updated: ProbeResult | undefined = data?.result;
-        if (updated) {
-          setResults((prev) =>
-            prev.map((r) => (r.probeId === probeId ? { ...r, ...updated } : r))
-          );
-        }
-      } catch (error: any) {
-        toast.error(error?.message || 'Failed to run probe');
-      } finally {
-        setRunningProbe(null);
+  const runOne = useCallback(async (probeId: string) => {
+    try {
+      setRunningProbe(probeId);
+      const data = await Api.runHealthPanelProbe(probeId);
+      const updated: ProbeResult | undefined = data?.result;
+      if (updated) {
+        setResults((prev) => prev.map((r) => (r.probeId === probeId ? { ...r, ...updated } : r)));
       }
-    },
-    []
-  );
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to run probe');
+    } finally {
+      setRunningProbe(null);
+    }
+  }, []);
 
   const overall = summary?.overall || 'unknown';
   const overallMeta = STATUS_META[overall];
 
   const stats = useMemo(
     () => [
-      { key: 'passed', label: t('admin.health.passing', { defaultValue: 'Passing' }), value: summary?.passed ?? 0, dot: 'pass' as ProbeStatus },
-      { key: 'failed', label: t('admin.health.failing', { defaultValue: 'Failing' }), value: summary?.failed ?? 0, dot: 'fail' as ProbeStatus },
-      { key: 'unknown', label: t('admin.health.notRun', { defaultValue: 'Not run' }), value: summary?.unknown ?? 0, dot: 'unknown' as ProbeStatus },
+      {
+        key: 'passed',
+        label: t('admin.health.passing', { defaultValue: 'Passing' }),
+        value: summary?.passed ?? 0,
+        dot: 'pass' as ProbeStatus,
+      },
+      {
+        key: 'failed',
+        label: t('admin.health.failing', { defaultValue: 'Failing' }),
+        value: summary?.failed ?? 0,
+        dot: 'fail' as ProbeStatus,
+      },
+      {
+        key: 'unknown',
+        label: t('admin.health.notRun', { defaultValue: 'Not run' }),
+        value: summary?.unknown ?? 0,
+        dot: 'unknown' as ProbeStatus,
+      },
     ],
     [summary, t]
   );
@@ -235,7 +251,8 @@ export const AdminHealthPanel: React.FC = () => {
                             className="mt-1.5 rounded-md px-2 py-1 text-xs"
                             style={{
                               color: 'var(--c-danger)',
-                              backgroundColor: 'color-mix(in srgb, var(--c-danger) 8%, transparent)',
+                              backgroundColor:
+                                'color-mix(in srgb, var(--c-danger) 8%, transparent)',
                             }}
                           >
                             {probe.errorMessage}
@@ -246,9 +263,7 @@ export const AdminHealthPanel: React.FC = () => {
                             {t('admin.health.lastRun', { defaultValue: 'Last run' })}:{' '}
                             {formatRanAt(probe.ranAt)}
                           </span>
-                          {probe.durationMs != null && (
-                            <span>{probe.durationMs} ms</span>
-                          )}
+                          {probe.durationMs != null && <span>{probe.durationMs} ms</span>}
                         </div>
                       </div>
                     </div>

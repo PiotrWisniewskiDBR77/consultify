@@ -24,8 +24,16 @@ import type {
 // Option labels stay in English here as defaults; they are translated at render
 // time via t(labelKey, label). Keys are shared with the Template Architect view.
 const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey | ''; labelKey: string; label: string }[] = [
-  { value: '', labelKey: 'documentStudio.docType.autoDetect', label: 'Auto-detect from description' },
-  { value: 'executive_memo', labelKey: 'documentStudio.docType.executiveMemo', label: 'Executive Memo' },
+  {
+    value: '',
+    labelKey: 'documentStudio.docType.autoDetect',
+    label: 'Auto-detect from description',
+  },
+  {
+    value: 'executive_memo',
+    labelKey: 'documentStudio.docType.executiveMemo',
+    label: 'Executive Memo',
+  },
   {
     value: 'project_status_report',
     labelKey: 'documentStudio.docType.projectStatusReport',
@@ -36,7 +44,11 @@ const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey | ''; labelKey: string; la
     labelKey: 'documentStudio.docType.steeringCommitteeReport',
     label: 'Steering Committee Report',
   },
-  { value: 'ai_audit_report', labelKey: 'documentStudio.docType.aiAuditReport', label: 'AI Audit Report' },
+  {
+    value: 'ai_audit_report',
+    labelKey: 'documentStudio.docType.aiAuditReport',
+    label: 'AI Audit Report',
+  },
   {
     value: 'interview_summary_report',
     labelKey: 'documentStudio.docType.interviewSummaryReport',
@@ -47,7 +59,11 @@ const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey | ''; labelKey: string; la
     labelKey: 'documentStudio.docType.workshopSummary',
     label: 'Workshop Summary',
   },
-  { value: 'business_case', labelKey: 'documentStudio.docType.businessCase', label: 'Business Case' },
+  {
+    value: 'business_case',
+    labelKey: 'documentStudio.docType.businessCase',
+    label: 'Business Case',
+  },
   {
     value: 'risk_register_report',
     labelKey: 'documentStudio.docType.riskRegisterReport',
@@ -60,7 +76,11 @@ const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey | ''; labelKey: string; la
     label: 'Implementation Plan',
   },
   { value: 'board_report', labelKey: 'documentStudio.docType.boardReport', label: 'Board Report' },
-  { value: 'sales_proposal', labelKey: 'documentStudio.docType.salesProposal', label: 'Sales Proposal' },
+  {
+    value: 'sales_proposal',
+    labelKey: 'documentStudio.docType.salesProposal',
+    label: 'Sales Proposal',
+  },
   {
     value: 'client_final_report',
     labelKey: 'documentStudio.docType.clientFinalReport',
@@ -211,7 +231,10 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="">
-              {t('documentStudio.intake.noTemplateOption', 'No template — Mode 1 (free generation)')}
+              {t(
+                'documentStudio.intake.noTemplateOption',
+                'No template — Mode 1 (free generation)'
+              )}
             </option>
             {approvedTemplates?.map((t) => (
               <option key={t.templateId} value={t.templateId}>
@@ -222,7 +245,8 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           {selectedTemplate ? (
             <span className="text-xs text-c-text-secondary">
               {t('documentStudio.intake.templateModeSummary', {
-                defaultValue: 'Mode 3 active. {{sections}} sections, {{confidentiality}} confidentiality.',
+                defaultValue:
+                  'Mode 3 active. {{sections}} sections, {{confidentiality}} confidentiality.',
                 sections: selectedTemplate.sectionBlueprint.length,
                 confidentiality: selectedTemplate.confidentiality.replace(/_/g, ' '),
               })}
@@ -247,10 +271,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {selectedTemplate.requiredInputs.map((requirement) => (
-              <li
-                key={requirement}
-                className="flex items-start gap-2 text-c-text"
-              >
+              <li key={requirement} className="flex items-start gap-2 text-c-text">
                 <span
                   aria-hidden
                   className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-sky-500"
@@ -413,7 +434,12 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       ) : null}
 
       <div className="flex items-center justify-end gap-2 pt-2">
-        <Button type="submit" variant="primary" disabled={!isValid} data-testid="docstudio-generate-btn">
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={!isValid}
+          data-testid="docstudio-generate-btn"
+        >
           {loading ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />

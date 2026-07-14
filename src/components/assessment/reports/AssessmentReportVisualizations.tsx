@@ -38,10 +38,7 @@ import {
 } from 'recharts';
 
 import { getDrdLevelDescriptor } from '../../../services/drdMaturityLevels';
-import {
-  useAssessmentChartColors,
-  type AssessmentChartColors,
-} from './assessmentChartTokens';
+import { type AssessmentChartColors, useAssessmentChartColors } from './assessmentChartTokens';
 
 // ============================================
 // TYPES
@@ -244,10 +241,8 @@ const RadarTooltip: React.FC<{
 
   const gap = Math.round((p.target - p.current) * 10) / 10;
   // Level descriptors only exist for DRD; other frameworks show numbers only.
-  const currentDesc =
-    framework === 'DRD' ? getDrdLevelDescriptor(p.axisId, p.current) : null;
-  const targetDesc =
-    framework === 'DRD' ? getDrdLevelDescriptor(p.axisId, p.target) : null;
+  const currentDesc = framework === 'DRD' ? getDrdLevelDescriptor(p.axisId, p.current) : null;
+  const targetDesc = framework === 'DRD' ? getDrdLevelDescriptor(p.axisId, p.target) : null;
 
   return (
     <div
@@ -394,12 +389,7 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
           />
           <Tooltip
             content={
-              <RadarTooltip
-                colors={colors}
-                framework={data.framework}
-                isPolish={isPolish}
-                t={t}
-              />
+              <RadarTooltip colors={colors} framework={data.framework} isPolish={isPolish} t={t} />
             }
           />
         </RechartsRadar>

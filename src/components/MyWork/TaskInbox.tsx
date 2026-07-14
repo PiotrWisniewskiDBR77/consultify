@@ -26,15 +26,11 @@ import { Virtuoso } from 'react-virtuoso';
 import { Api } from '../../services/api';
 import { PMOTaskLabel, usePMOStore } from '../../store/usePMOStore';
 import { Task } from '../../types';
-import { ErrorState } from '../ui/primitives/ErrorState';
 import { CardViewStyle, CardViewSwitcher } from '../shared/CardViewSwitcher';
-import {
-  type RowAction,
-  type RowActionSection,
-  RowActionsMenu,
-} from '../shared/RowActionsMenu';
+import { type RowAction, type RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu';
 import type { GenericListItem, ListColumn, ListSection } from '../shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '../shared/ViewLayouts';
+import { ErrorState } from '../ui/primitives/ErrorState';
 
 // PMO Priority Categories
 type PMOCategory =

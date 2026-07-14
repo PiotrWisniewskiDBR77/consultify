@@ -132,7 +132,9 @@ const AIObservabilityDashboard: React.FC = () => {
   }
 
   if (!metrics) {
-    return <div className="text-c-text-muted text-center py-12">No observability data available</div>;
+    return (
+      <div className="text-c-text-muted text-center py-12">No observability data available</div>
+    );
   }
 
   return (
@@ -284,7 +286,9 @@ const AIObservabilityDashboard: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-c-text-muted text-sm">Avg Chunks Used</span>
-              <span className="text-c-text font-medium">{metrics.rag.avgChunksUsed.toFixed(1)}</span>
+              <span className="text-c-text font-medium">
+                {metrics.rag.avgChunksUsed.toFixed(1)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-c-text-muted text-sm">Retrieval Latency</span>

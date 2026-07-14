@@ -19,8 +19,8 @@ import { validateBody } from '../middleware/validation.middleware.js';
 import { createInitiativeFromAudit } from '../services/initiative/auditInitiativeService.js';
 import { getPortfolioHealth } from '../services/initiative/portfolioAnalysisService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -64,7 +64,7 @@ router.post(
         message: err?.message || 'Nie udało się utworzyć inicjatywy z audytu.',
       });
     }
-  }),
+  })
 );
 
 // GET /initiatives/portfolio-health — zdrowie portfela (MECE/luki/duplikaty/balans) (F4).
@@ -76,7 +76,7 @@ router.get(
     // getPortfolioHealth jest fail-safe (degraduje do pustego portfela, nigdy nie rzuca).
     const health = await getPortfolioHealth(queryHelpers as never, orgId);
     return res.status(200).json(health);
-  }),
+  })
 );
 
 export default router;

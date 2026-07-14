@@ -354,7 +354,9 @@ export const LoginAttemptsPanel: React.FC = () => {
         </div>
       ) : (
         <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl overflow-hidden">
-          <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
+          <table
+            /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full"
+          >
             <thead>
               <tr className="border-b border-white/[0.06]">
                 <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
@@ -379,7 +381,10 @@ export const LoginAttemptsPanel: React.FC = () => {
             </thead>
             <tbody>
               {filteredAttempts.map((attempt) => (
-                <tr key={attempt.id} className="border-b border-white/[0.04] hover:bg-c-surface-raised/50">
+                <tr
+                  key={attempt.id}
+                  className="border-b border-white/[0.04] hover:bg-c-surface-raised/50"
+                >
                   <td className="p-4">
                     {attempt.success ? (
                       <div className="flex items-center gap-2 text-emerald-400">

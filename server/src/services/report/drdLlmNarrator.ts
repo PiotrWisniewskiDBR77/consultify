@@ -28,11 +28,11 @@
  */
 
 import {
-  deterministicNarrator,
   type ConclusionConfidence,
   type ConclusionEvidenceRef,
   type ConclusionInput,
   type ConclusionOutput,
+  deterministicNarrator,
   type DrdNarrator,
 } from './drdConclusionContract.js';
 
@@ -216,10 +216,7 @@ export interface FactRefsValidation {
  * either an evidence `ref` (area/axis id) or a top-level facts key. At least one
  * valid factRef must back the theses.
  */
-export function validateFactRefs(
-  factRefs: string[],
-  input: ConclusionInput
-): FactRefsValidation {
+export function validateFactRefs(factRefs: string[], input: ConclusionInput): FactRefsValidation {
   const known = new Set<string>();
   for (const e of input.evidence) known.add(String(e.ref));
   for (const k of Object.keys(input.facts)) known.add(k);
@@ -231,7 +228,11 @@ export function validateFactRefs(
     if (known.has(ref)) valid++;
     else dangling.push(ref);
   }
-  return { ok: dangling.length === 0 && valid > 0, dangling: [...new Set(dangling)], hasAny: valid > 0 };
+  return {
+    ok: dangling.length === 0 && valid > 0,
+    dangling: [...new Set(dangling)],
+    hasAny: valid > 0,
+  };
 }
 
 /** Flatten the model's factRefs (array-of-arrays or flat) into a string list. */
@@ -407,10 +408,7 @@ export function validateNarrative(
 }
 
 /** Merge input evidence with any additional valid factRefs the model cited. */
-function buildEvidence(
-  base: ConclusionEvidenceRef[],
-  factRefs: string[]
-): ConclusionEvidenceRef[] {
+function buildEvidence(base: ConclusionEvidenceRef[], factRefs: string[]): ConclusionEvidenceRef[] {
   const byRef = new Map<string, ConclusionEvidenceRef>();
   for (const e of base) byRef.set(String(e.ref), e);
   const out: ConclusionEvidenceRef[] = [...base];

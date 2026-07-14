@@ -49,10 +49,7 @@ export const RiskScoreCell: React.FC<RiskScoreCellProps> = ({ value, fieldOption
 
   if (value == null || value === '') {
     return (
-      <span
-        className="text-xs text-c-text-muted px-1"
-        data-testid="risk-score-empty"
-      >
+      <span className="text-xs text-c-text-muted px-1" data-testid="risk-score-empty">
         —
       </span>
     );

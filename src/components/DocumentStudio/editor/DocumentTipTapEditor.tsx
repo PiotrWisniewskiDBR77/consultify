@@ -31,16 +31,16 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { DocumentInlineAIMenu } from '../inline-ai';
 import {
   DocumentManualSaveConflictError,
   getDocumentStudioArtifact,
   saveDocumentStudioManualContent,
 } from '../api';
-import { getDocumentEditorExtensions } from './documentEditorExtensions';
-import { proseMirrorToSchema, type PMDoc } from './tipTapToSchema';
-import { schemaToProseMirror } from './schemaToTipTap';
+import { DocumentInlineAIMenu } from '../inline-ai';
 import type { DocumentSchema } from '../types';
+import { getDocumentEditorExtensions } from './documentEditorExtensions';
+import { schemaToProseMirror } from './schemaToTipTap';
+import { type PMDoc, proseMirrorToSchema } from './tipTapToSchema';
 
 const SAVE_DEBOUNCE_MS = 500;
 

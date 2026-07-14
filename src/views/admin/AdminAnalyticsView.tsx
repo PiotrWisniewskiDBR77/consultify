@@ -41,6 +41,7 @@ import {
 } from 'recharts';
 
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import { Api } from '../../services/api';
 
 // Removed mock data generators - using real API data only
@@ -492,9 +493,7 @@ export const AdminAnalyticsView: React.FC = () => {
                   <h3 className="text-base font-bold text-navy-900 dark:text-white mb-2">
                     {idea.title}
                   </h3>
-                  <p className="text-c-text-muted text-sm mb-4 line-clamp-3">
-                    {idea.description}
-                  </p>
+                  <p className="text-c-text-muted text-sm mb-4 line-clamp-3">{idea.description}</p>
                   <div className="flex justify-between items-center pt-3 border-t border-white/5">
                     <div className="flex space-x-2">
                       <button
@@ -563,10 +562,7 @@ export const AdminAnalyticsView: React.FC = () => {
           <div className="divide-y divide-white/5">
             {observations.length > 0 ? (
               observations.map((obs) => (
-                <div
-                  key={obs.id}
-                  className="p-5 hover:bg-c-surface-raised/20 transition-colors"
-                >
+                <div key={obs.id} className="p-5 hover:bg-c-surface-raised/20 transition-colors">
                   <div className="flex items-start">
                     <div
                       className={`mt-1 p-2 rounded-lg mr-4 ${

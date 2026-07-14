@@ -20,9 +20,9 @@ import {
 } from './deepeningLadder';
 import type { DmsSession, EscalationRule, KpiItem } from './managementSystemEngine';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './managementSystemEngine';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
@@ -65,9 +65,7 @@ const truthy = (raw: unknown): boolean =>
  * present => hasTargetLevel; `description` present => hasResponse; the item flag
  * `frequency` containing "verif" (or a boolean `verifiesEffect`) => verifiesEffect.
  */
-export function toDmsSession(
-  sections: Record<string, unknown[]> | undefined
-): DmsSession {
+export function toDmsSession(sections: Record<string, unknown[]> | undefined): DmsSession {
   const rawKpis = (sections?.['kpis'] || []) as Array<Record<string, unknown>>;
   const rawEscalation = (sections?.['escalation'] || []) as Array<Record<string, unknown>>;
 

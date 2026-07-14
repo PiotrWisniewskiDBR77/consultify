@@ -171,7 +171,7 @@ function issue(
   code: CardIssueCode,
   severity: CardIssueSeverity,
   blockIndex: number | null,
-  message: string,
+  message: string
 ): CardIssue {
   return { code, severity, blockIndex, message };
 }
@@ -208,8 +208,12 @@ export function validateCardSpec(spec: CardSpec | null | undefined): CardIssue[]
   blocks.forEach((block, i) => {
     if (!block || typeof block !== 'object' || !BLOCK_TYPE_SET.has((block as CardBlock).type)) {
       issues.push(
-        issue('CB-04-UNKNOWN-BLOCK-TYPE', 'CRITICAL', i,
-          `Nieznany typ bloku: ${(block as { type?: unknown })?.type ?? 'undefined'}.`),
+        issue(
+          'CB-04-UNKNOWN-BLOCK-TYPE',
+          'CRITICAL',
+          i,
+          `Nieznany typ bloku: ${(block as { type?: unknown })?.type ?? 'undefined'}.`
+        )
       );
       return;
     }
@@ -218,8 +222,14 @@ export function validateCardSpec(spec: CardSpec | null | undefined): CardIssue[]
       case 'heading':
       case 'paragraph': {
         if (!isNonEmptyString(block.text)) {
-          issues.push(issue('CB-05-EMPTY-BLOCK-CONTENT', 'MAJOR', i,
-            `Blok ${block.type} bez treści (\`text\`).`));
+          issues.push(
+            issue(
+              'CB-05-EMPTY-BLOCK-CONTENT',
+              'MAJOR',
+              i,
+              `Blok ${block.type} bez treści (\`text\`).`
+            )
+          );
         }
         break;
       }
@@ -232,17 +242,21 @@ export function validateCardSpec(spec: CardSpec | null | undefined): CardIssue[]
       case 'bullet_list': {
         const items = Array.isArray(block.items) ? block.items.filter(isNonEmptyString) : [];
         if (items.length === 0) {
-          issues.push(issue('CB-05-EMPTY-BLOCK-CONTENT', 'MAJOR', i,
-            'Lista punktowana bez pozycji.'));
+          issues.push(
+            issue('CB-05-EMPTY-BLOCK-CONTENT', 'MAJOR', i, 'Lista punktowana bez pozycji.')
+          );
         }
         break;
       }
       case 'kpi_strip': {
         const tiles = Array.isArray(block.tiles) ? block.tiles : [];
-        const valid = tiles.filter((t) => t && isNonEmptyString(t.label) && isNonEmptyString(t.value));
+        const valid = tiles.filter(
+          (t) => t && isNonEmptyString(t.label) && isNonEmptyString(t.value)
+        );
         if (valid.length === 0) {
-          issues.push(issue('CB-08-KPI-EMPTY', 'MAJOR', i,
-            'kpi_strip bez poprawnych kafelków (label+value).'));
+          issues.push(
+            issue('CB-08-KPI-EMPTY', 'MAJOR', i, 'kpi_strip bez poprawnych kafelków (label+value).')
+          );
         }
         break;
       }
@@ -256,8 +270,14 @@ export function validateCardSpec(spec: CardSpec | null | undefined): CardIssue[]
         } else {
           const mismatched = rows.some((r) => !Array.isArray(r) || r.length !== columns.length);
           if (mismatched) {
-            issues.push(issue('CB-06-TABLE-SHAPE', 'MAJOR', i,
-              `Wiersze tabeli nie pasują do ${columns.length} kolumn.`));
+            issues.push(
+              issue(
+                'CB-06-TABLE-SHAPE',
+                'MAJOR',
+                i,
+                `Wiersze tabeli nie pasują do ${columns.length} kolumn.`
+              )
+            );
           }
         }
         break;
@@ -265,11 +285,21 @@ export function validateCardSpec(spec: CardSpec | null | undefined): CardIssue[]
       case 'chart': {
         const series = Array.isArray(block.series) ? block.series : [];
         const valid = series.filter(
-          (s) => s && isNonEmptyString(s.label) && typeof s.value === 'number' && Number.isFinite(s.value),
+          (s) =>
+            s &&
+            isNonEmptyString(s.label) &&
+            typeof s.value === 'number' &&
+            Number.isFinite(s.value)
         );
         if (valid.length === 0) {
-          issues.push(issue('CB-07-CHART-EMPTY', 'MAJOR', i,
-            'Wykres bez poprawnej serii danych (label+liczba).'));
+          issues.push(
+            issue(
+              'CB-07-CHART-EMPTY',
+              'MAJOR',
+              i,
+              'Wykres bez poprawnej serii danych (label+liczba).'
+            )
+          );
         }
         break;
       }

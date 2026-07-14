@@ -59,7 +59,6 @@ type QuadrantSpec = {
   y: number;
 };
 
-
 const QUADRANTS: QuadrantSpec[] = [
   {
     key: 'MY_DEVELOPMENT',

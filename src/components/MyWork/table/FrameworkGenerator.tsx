@@ -408,10 +408,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
               {isPl ? 'Generator frameworków' : 'Framework Generator'}
             </h3>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-c-surface-raised">
             <X size={16} className="text-c-text-secondary" />
           </button>
         </div>

@@ -119,9 +119,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
           ]}
           onRunHint={() => {}}
           disabled
-          disabledTooltip={
-            t('interview.initiativePreview.aiForInitiativesComingSoon')
-          }
+          disabledTooltip={t('interview.initiativePreview.aiForInitiativesComingSoon')}
         />
       </div>
 

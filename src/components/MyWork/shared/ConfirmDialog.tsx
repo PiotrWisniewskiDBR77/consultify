@@ -68,7 +68,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     default: {
       iconBg: 'bg-slate-100 dark:bg-white/10',
       iconColor: 'text-slate-600 dark:text-slate-300',
-      confirmBg: 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:ring-navy-900/40',
+      confirmBg:
+        'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:ring-navy-900/40',
       defaultIcon: null,
     },
   };

@@ -198,9 +198,13 @@ function ModuleLinkSection({
         <div className="flex items-center gap-4 px-4 py-2 bg-c-surface border-t border-c-border-subtle">
           <span className="text-[10px] text-c-text-muted">
             {status.linked ? (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-success border border-c-success text-c-success">{isPl ? 'Aktywne' : 'Active'}</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-success border border-c-success text-c-success">
+                {isPl ? 'Aktywne' : 'Active'}
+              </span>
             ) : (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised border border-c-border-subtle text-c-text-muted">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised border border-c-border-subtle text-c-text-muted">
+                {isPl ? 'Nieaktywne' : 'Inactive'}
+              </span>
             )}
           </span>
           {status.lastSync && (
@@ -419,16 +423,16 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
           (['results', 'finance', 'execution', 'initiatives'] as ModuleKey[])
             .filter((mk) => !isBetaClosed((MODULE_CONFIG[mk] as any).betaModuleId))
             .map((mk) => (
-            <ModuleLinkSection
-              key={mk}
-              moduleKey={mk}
-              isPl={isPl}
-              status={statuses[mk]}
-              tables={tables}
-              modelId={selectedModelId || null}
-              onSyncComplete={loadData}
-            />
-          ))
+              <ModuleLinkSection
+                key={mk}
+                moduleKey={mk}
+                isPl={isPl}
+                status={statuses[mk]}
+                tables={tables}
+                modelId={selectedModelId || null}
+                onSyncComplete={loadData}
+              />
+            ))
         )}
       </div>
     </div>

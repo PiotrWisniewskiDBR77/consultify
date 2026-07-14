@@ -82,8 +82,10 @@ export function buildBenefitSignals(items: BenefitInput[]): BenefitSignal[] {
     if (!flagged && !belowThreshold) continue;
 
     const highValue = isFiniteNumber(item.valueAtStake) && item.valueAtStake >= HIGH_VALUE_AT_STAKE;
-    const criticalRealization = realization !== undefined && realization < REALIZATION_CRITICAL_THRESHOLD;
-    const severity: BenefitSignalSeverity = criticalRealization || highValue ? 'critical' : 'warning';
+    const criticalRealization =
+      realization !== undefined && realization < REALIZATION_CRITICAL_THRESHOLD;
+    const severity: BenefitSignalSeverity =
+      criticalRealization || highValue ? 'critical' : 'warning';
 
     const label = item.name && item.name.trim().length > 0 ? item.name.trim() : 'Korzyść';
     const title = `${label} zagrożona (${formatRealization(realization)})`;

@@ -187,10 +187,9 @@ const metadataService = {
             'SELECT * FROM tp_bases WHERE workspace_id = $1 AND organization_id = $2 ORDER BY created_at ASC',
             [workspaceId, organizationId]
           )
-        : await db.query(
-            'SELECT * FROM tp_bases WHERE workspace_id = $1 ORDER BY created_at ASC',
-            [workspaceId]
-          );
+        : await db.query('SELECT * FROM tp_bases WHERE workspace_id = $1 ORDER BY created_at ASC', [
+            workspaceId,
+          ]);
       return result.rows;
     } catch (e) {
       logger.error('[MetadataService] listBases failed', {

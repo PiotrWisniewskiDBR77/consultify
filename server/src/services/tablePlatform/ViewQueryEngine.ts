@@ -692,7 +692,9 @@ function buildFormulaFilterClause(
       formula,
       error: reason,
     });
-    throw new ValidationError(`invalid filterByFormula (parse error): ${reason} — formula: ${formula}`);
+    throw new ValidationError(
+      `invalid filterByFormula (parse error): ${reason} — formula: ${formula}`
+    );
   }
 }
 

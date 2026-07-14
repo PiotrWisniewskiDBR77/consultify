@@ -64,11 +64,7 @@ class AdminAuditServiceClass {
     // the fetch window. We now persist orgId to its real column AND keep it in
     // metadata for backward compatibility with legacy rows/readers.
     const organizationId = String(
-      data.organizationId ||
-        data.orgId ||
-        details.orgId ||
-        details.organizationId ||
-        ''
+      data.organizationId || data.orgId || details.orgId || details.organizationId || ''
     ).trim();
     // `resource_type` is NOT NULL in the strict (migration 236) schema, so a
     // missing value throws and silently drops the audit row. Default it.
@@ -113,12 +109,8 @@ class AdminAuditServiceClass {
     if (!log?.metadata_json) return '';
     try {
       const meta =
-        typeof log.metadata_json === 'string'
-          ? JSON.parse(log.metadata_json)
-          : log.metadata_json;
-      return String(
-        meta?.orgId || meta?.organizationId || meta?.details?.orgId || ''
-      ).trim();
+        typeof log.metadata_json === 'string' ? JSON.parse(log.metadata_json) : log.metadata_json;
+      return String(meta?.orgId || meta?.organizationId || meta?.details?.orgId || '').trim();
     } catch {
       return '';
     }

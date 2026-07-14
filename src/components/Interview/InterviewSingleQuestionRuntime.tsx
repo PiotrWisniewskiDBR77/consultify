@@ -111,10 +111,7 @@ function buildDefaultOptions(question: InterviewQuestion, t: (key: string) => st
     return question.answerOptions;
   }
   if (QUESTION_INPUT_TYPES.yesNo.has(normalized)) {
-    return [
-      t('interview.singleQuestionRuntime.yes'),
-      t('interview.singleQuestionRuntime.no'),
-    ];
+    return [t('interview.singleQuestionRuntime.yes'), t('interview.singleQuestionRuntime.no')];
   }
   if (QUESTION_INPUT_TYPES.rating.has(normalized)) {
     return ['1', '2', '3', '4', '5'];
@@ -525,9 +522,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     async (question: InterviewQuestion | null) => {
       if (!question) return;
       if (voiceNeedsApproval) {
-        toast.error(
-          t('interview.singleQuestionRuntime.pleaseApproveTheTranscriptBefore')
-        );
+        toast.error(t('interview.singleQuestionRuntime.pleaseApproveTheTranscriptBefore'));
         return;
       }
       const ok = await persistCurrentQuestion();
@@ -988,18 +983,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 voiceTranscriptStatus: 'approved',
                 status: 'in_progress',
               });
-              toast.success(
-                t('interview.singleQuestionRuntime.transcriptAddedBrowser')
-              );
+              toast.success(t('interview.singleQuestionRuntime.transcriptAddedBrowser'));
             } else {
               // Nothing to save: server STT failed AND the browser produced no
               // transcript (no speech captured, or Web Speech unsupported). No
               // data is lost here — there simply was no text. Tell the user
               // plainly so they type the answer instead of assuming it vanished.
               console.error('[InterviewSingleQuestionRuntime] Voice transcription failed:', error);
-              toast.error(
-                t('interview.singleQuestionRuntime.noSpeechWasRecognisedType')
-              );
+              toast.error(t('interview.singleQuestionRuntime.noSpeechWasRecognisedType'));
             }
           } finally {
             setIsTranscribing(false);
@@ -1011,9 +1002,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
       setIsRecording(true);
     } catch (error) {
-      toast.error(
-        t('interview.singleQuestionRuntime.microphoneAccessIsUnavailable')
-      );
+      toast.error(t('interview.singleQuestionRuntime.microphoneAccessIsUnavailable'));
       console.error('[InterviewSingleQuestionRuntime] Recording failed:', error);
     }
   }, [
@@ -1133,7 +1122,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <span className={answerDraft ? '' : 'text-slate-600 dark:text-slate-500'}>
-              {answerDraft || (t('interview.singleQuestionRuntime.selectAnOption'))}
+              {answerDraft || t('interview.singleQuestionRuntime.selectAnOption')}
             </span>
             <ChevronDown
               size={16}
@@ -1216,9 +1205,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500'
             : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white'
         }`}
-        placeholder={
-          t('interview.singleQuestionRuntime.writeTheAnswerOrRecord')
-        }
+        placeholder={t('interview.singleQuestionRuntime.writeTheAnswerOrRecord')}
       />
     );
   }, [
@@ -1634,7 +1621,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50'
                 }`}
               >
-                <span className="truncate">{t(`interview.workspace.categoryLabel.${cat}`, catConfig.labelEn)}</span>
+                <span className="truncate">
+                  {t(`interview.workspace.categoryLabel.${cat}`, catConfig.labelEn)}
+                </span>
                 <span
                   className={`text-[10px] tabular-nums shrink-0 ${isDone ? 'text-emerald-500' : ''}`}
                 >
@@ -1836,9 +1825,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       type="button"
                       onClick={openGuidance}
                       title={t('interview.singleQuestionRuntime.howToAnswer')}
-                      aria-label={
-                        t('interview.singleQuestionRuntime.showGuidanceAndExample')
-                      }
+                      aria-label={t('interview.singleQuestionRuntime.showGuidanceAndExample')}
                       aria-expanded={guidanceOpen}
                       className={`relative shrink-0 mt-1 inline-flex items-center justify-center w-8 h-8 rounded-full border transition-colors ${
                         guidanceOpen
@@ -1868,49 +1855,45 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   {(() => {
                     const history = answerHistoryByQuestionId?.[currentQuestion.id];
                     if (!history || history.length === 0) return null;
-                      const isOpen = historyOpenId === currentQuestion.id;
-                      return (
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setHistoryOpenId(isOpen ? null : currentQuestion.id)
-                            }
-                            aria-expanded={isOpen}
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                            title={
-                              t('interview.singleQuestionRuntime.answerContentSavedBeforeIt')
-                            }
-                          >
-                            <History size={12} />
-                            {t('interview.singleQuestionRuntime.previousVersionCount', {
-                              count: history.length,
-                            })}
-                            <ChevronDown
-                              size={12}
-                              className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                            />
-                          </button>
-                          {isOpen && (
-                            <div className="mt-2 space-y-2 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50 dark:bg-navy-900/60 p-3">
-                              {history.map((entry) => (
-                                <div key={entry.id} className="space-y-1">
-                                  <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                                    {new Date(entry.savedAt).toLocaleString(
-                                      t('interview.singleQuestionRuntime.enUs')
-                                    )}
-                                  </div>
-                                  <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
-                                    {entry.answerText?.trim() ||
-                                      (t('interview.singleQuestionRuntime.noAnswer'))}
-                                  </p>
+                    const isOpen = historyOpenId === currentQuestion.id;
+                    return (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setHistoryOpenId(isOpen ? null : currentQuestion.id)}
+                          aria-expanded={isOpen}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                          title={t('interview.singleQuestionRuntime.answerContentSavedBeforeIt')}
+                        >
+                          <History size={12} />
+                          {t('interview.singleQuestionRuntime.previousVersionCount', {
+                            count: history.length,
+                          })}
+                          <ChevronDown
+                            size={12}
+                            className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                        {isOpen && (
+                          <div className="mt-2 space-y-2 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50 dark:bg-navy-900/60 p-3">
+                            {history.map((entry) => (
+                              <div key={entry.id} className="space-y-1">
+                                <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                  {new Date(entry.savedAt).toLocaleString(
+                                    t('interview.singleQuestionRuntime.enUs')
+                                  )}
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                                  {entry.answerText?.trim() ||
+                                    t('interview.singleQuestionRuntime.noAnswer')}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Guidance reveal — static instruction + example, with AI deep-dive fallback */}
                   {guidanceOpen && (
@@ -1938,7 +1921,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
                       <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-100/90">
                         {questionGuidance?.instruction ||
-                          (t('interview.singleQuestionRuntime.answerSpecificallyInYourOwn'))}
+                          t('interview.singleQuestionRuntime.answerSpecificallyInYourOwn')}
                       </p>
 
                       {questionGuidance?.expected && (
@@ -2071,10 +2054,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           : 'bg-c-info/10 dark:bg-c-info/10 border-c-info/80 dark:border-c-info/15 shadow-sm shadow-c-info/5'
                       }`}
                     >
-                      <Sparkles
-                        size={13}
-                        className="shrink-0 text-c-info dark:text-c-info"
-                      />
+                      <Sparkles size={13} className="shrink-0 text-c-info dark:text-c-info" />
                       <span className="text-xs text-c-info dark:text-c-info">
                         {t('interview.singleQuestionRuntime.expectedFormat2')}{' '}
                         <span className="font-medium">{currentQuestion.expectedAnswerShape}</span>
@@ -2348,7 +2328,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   }`}
                                 >
                                   <span className="text-xs">{item.icon}</span>
-                                  {t(`interview.singleQuestionRuntime.aiImproveMode.${item.mode}`, item.labelEn)}
+                                  {t(
+                                    `interview.singleQuestionRuntime.aiImproveMode.${item.mode}`,
+                                    item.labelEn
+                                  )}
                                 </button>
                               ))}
                             </div>
@@ -2442,9 +2425,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 <button
                                   type="button"
                                   disabled
-                                  title={
-                                    t('interview.singleQuestionRuntime.removeFromTheEvidencePanel')
-                                  }
+                                  title={t(
+                                    'interview.singleQuestionRuntime.removeFromTheEvidencePanel'
+                                  )}
                                   className="absolute top-1 right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/50 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity cursor-not-allowed"
                                   aria-label={t('interview.singleQuestionRuntime.remove')}
                                 >
@@ -2470,9 +2453,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               <button
                                 type="button"
                                 disabled
-                                title={
-                                  t('interview.singleQuestionRuntime.removeFromTheEvidencePanel')
-                                }
+                                title={t(
+                                  'interview.singleQuestionRuntime.removeFromTheEvidencePanel'
+                                )}
                                 className="inline-flex items-center justify-center text-slate-400 dark:text-slate-500 cursor-not-allowed"
                                 aria-label={t('interview.singleQuestionRuntime.remove')}
                               >
@@ -2510,9 +2493,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 status: currentQuestion.answerText ? 'answered' : 'in_progress',
                               });
                             }
-                            toast.success(
-                              t('interview.singleQuestionRuntime.transcriptDiscarded')
-                            );
+                            toast.success(t('interview.singleQuestionRuntime.transcriptDiscarded'));
                           }}
                           className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
                             immersive
@@ -2578,9 +2559,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
                         : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
                     }`}
-                    placeholder={
-                      t('interview.singleQuestionRuntime.commentNuanceClarificationForThis')
-                    }
+                    placeholder={t(
+                      'interview.singleQuestionRuntime.commentNuanceClarificationForThis'
+                    )}
                   />
 
                   {/* Action buttons row — platform chip standard (h-8 rounded-full) */}
@@ -2677,7 +2658,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               <span className="truncate max-w-[140px]">
                                 {cleanEvidenceLabel(
                                   item,
-                                  isArtifact ? (t('interview.singleQuestionRuntime.artifact')) : 'Link'
+                                  isArtifact
+                                    ? t('interview.singleQuestionRuntime.artifact')
+                                    : 'Link'
                                 )}
                               </span>
                             </span>
@@ -2725,7 +2708,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               )}
               <span className="text-slate-600 dark:text-navy-700 mx-1">|</span>
               <span className="text-[11px] text-slate-600 dark:text-slate-500">
-                Esc={t('interview.singleQuestionRuntime.save')} · Enter={t('interview.singleQuestionRuntime.next')}
+                Esc={t('interview.singleQuestionRuntime.save')} · Enter=
+                {t('interview.singleQuestionRuntime.next')}
               </span>
             </div>
 

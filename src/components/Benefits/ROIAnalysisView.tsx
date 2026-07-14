@@ -237,7 +237,9 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
 
   return (
     <div className="overflow-x-auto">
-      <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
+      <table
+        /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
+      >
         <thead>
           <tr className="text-left text-xs text-slate-600 border-b border-navy-700">
             <th className="pb-3 font-medium">Initiative</th>

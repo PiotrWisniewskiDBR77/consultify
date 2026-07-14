@@ -136,8 +136,7 @@ interface OperationalActionHandlers {
 // surface the final summary from flow.results, NOT data.summary. Populate both so
 // the finalize output is never silently dropped for either UI shape.
 const buildFlowResults = (parsed: Record<string, any>): ToolFlowResults => {
-  const summaryObj =
-    parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
+  const summaryObj = parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
   const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
   const keyFindings = Array.isArray(summaryObj?.keyInsights)
     ? summaryObj.keyInsights.filter(Boolean)
@@ -145,7 +144,10 @@ const buildFlowResults = (parsed: Record<string, any>): ToolFlowResults => {
       ? parsed.insights.filter(Boolean)
       : [];
   const titlesWhere = (pred: (i: any) => boolean) =>
-    initiatives.filter(pred).map((i: any) => String(i.title || '')).filter(Boolean);
+    initiatives
+      .filter(pred)
+      .map((i: any) => String(i.title || ''))
+      .filter(Boolean);
   return {
     executiveSummary:
       typeof summaryObj?.executiveSummary === 'string'
@@ -177,8 +179,7 @@ const buildSummary = (
   parsed: Record<string, any>,
   toolType: ToolType
 ): OperationalToolData['summary'] => {
-  const summaryObj =
-    parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
+  const summaryObj = parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
   const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
   return {
     ...pickW2SummaryFields(summaryObj),

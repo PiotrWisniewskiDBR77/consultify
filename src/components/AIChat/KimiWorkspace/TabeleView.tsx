@@ -169,7 +169,10 @@ export const TabeleView: React.FC = () => {
       const fullPreview = await loadTabelePreviewByTableId(resolvedTableId, {
         titleFallback: t('tabele.defaultTitle', 'Operational table'),
         ...(workspaceIdForProposals ? { workspaceIdForProposals } : {}),
-      }).catch((err: unknown) => { previewLoadError = err; return null; });
+      }).catch((err: unknown) => {
+        previewLoadError = err;
+        return null;
+      });
 
       if (cancelled) return;
 
@@ -177,7 +180,9 @@ export const TabeleView: React.FC = () => {
       if (fullPreview) {
         setReopenPreview(fullPreview);
       } else {
-        const is503 = (previewLoadError as any)?.status === 503 || (previewLoadError as any)?.statusCode === 503;
+        const is503 =
+          (previewLoadError as any)?.status === 503 ||
+          (previewLoadError as any)?.statusCode === 503;
         setReopenPreview({
           type: 'tabele',
           title: t('tabele.defaultTitle', 'Operational table'),

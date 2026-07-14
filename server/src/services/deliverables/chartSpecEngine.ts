@@ -62,7 +62,13 @@ export function buildWaterfall(items: WaterfallInput[]): WaterfallSpec {
     }
     min = Math.min(min, start, end);
     max = Math.max(max, start, end);
-    return { label: it.label, start: Math.min(start, end), end: Math.max(start, end), value: it.value, kind };
+    return {
+      label: it.label,
+      start: Math.min(start, end),
+      end: Math.max(start, end),
+      value: it.value,
+      kind,
+    };
   });
   return { type: 'waterfall', bars, domain: { min, max } };
 }

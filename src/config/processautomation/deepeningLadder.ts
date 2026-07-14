@@ -23,12 +23,7 @@
 
 export type AutomationPhaseId = 'map' | 'standardize' | 'automate' | 'sustain';
 
-export const AUTOMATION_PHASES: AutomationPhaseId[] = [
-  'map',
-  'standardize',
-  'automate',
-  'sustain',
-];
+export const AUTOMATION_PHASES: AutomationPhaseId[] = ['map', 'standardize', 'automate', 'sustain'];
 
 export type Bilingual = { pl: string; en: string };
 

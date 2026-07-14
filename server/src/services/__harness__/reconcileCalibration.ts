@@ -30,10 +30,10 @@
  */
 
 import {
-  reconcileStatements,
   type PeriodStatements,
   type ReconcileCheck,
   type ReconcilePack,
+  reconcileStatements,
 } from '../reconciliationService.js';
 
 // ── Pack (a): CLEAN — every statement ties out exactly ─────────────────────

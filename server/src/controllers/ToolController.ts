@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
-import { checkSimilarInitiatives } from '../services/initiativeSimilarityService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
+import { checkSimilarInitiatives } from '../services/initiativeSimilarityService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -1652,7 +1652,8 @@ export class ToolController {
         } catch (similarityError: unknown) {
           logger.warn('[ToolController] similarity-check unavailable (non-blocking):', {
             toolId,
-            error: similarityError instanceof Error ? similarityError.message : String(similarityError),
+            error:
+              similarityError instanceof Error ? similarityError.message : String(similarityError),
           });
         }
 

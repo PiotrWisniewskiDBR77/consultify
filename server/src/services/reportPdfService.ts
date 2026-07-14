@@ -104,9 +104,7 @@ function asLines(value: unknown): string[] {
 /** Coerce the tolerant input into a single deterministic shape for drawing. */
 function normalizeReport(input: ReportPdfInput): NormalizedReport {
   const title = (input.title ?? input.initiativeName ?? 'Status Report').toString().trim();
-  const period = (input.period ?? input.periodLabel ?? input.periodType ?? '—')
-    .toString()
-    .trim();
+  const period = (input.period ?? input.periodLabel ?? input.periodType ?? '—').toString().trim();
 
   let sections: ReportPdfSection[] = [];
   if (Array.isArray(input.sections)) {

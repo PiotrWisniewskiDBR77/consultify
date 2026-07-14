@@ -164,9 +164,7 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
           className="mt-2 flex items-center gap-2 rounded-lg bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)] border border-c-info/25 px-2.5 py-1.5"
         >
           <Sparkles size={12} className="text-c-info shrink-0" />
-          <span className="flex-1 text-[11px] text-c-info truncate">
-            {suggestion.label}
-          </span>
+          <span className="flex-1 text-[11px] text-c-info truncate">{suggestion.label}</span>
           <span className="text-[10px] text-c-info/70 tabular-nums shrink-0">
             {Math.round(suggestion.confidence * 100)}%
           </span>

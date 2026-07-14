@@ -75,10 +75,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
             <Share2 size={16} className="text-c-accent" />
             <h3 className="font-semibold text-sm">{isPl ? 'Udostępnij widok' : 'Share View'}</h3>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
             <X size={14} />
           </button>
         </div>

@@ -52,8 +52,8 @@ const localize = (text: Bilingual, isPolish: boolean) => (isPolish ? text.pl : t
 const isEvidenced = (item: OperationalItem): boolean =>
   Boolean(
     (item.target && item.target.trim()) ||
-      (item.threshold && item.threshold.trim()) ||
-      typeof item.durationMinutes === 'number'
+    (item.threshold && item.threshold.trim()) ||
+    typeof item.durationMinutes === 'number'
   );
 
 const sectionItems = (data: OperationalToolData, section: A3SectionId): OperationalItem[] =>
@@ -81,7 +81,15 @@ const scoreSection = (data: OperationalToolData, section: A3SectionId): SectionS
   const items = sectionItems(data, section);
   const label = SECTION_LABEL[section];
   if (items.length === 0) {
-    return { section, label, itemCount: 0, severity: 0, evidenceRatio: 0, evidenceBacked: 0, score: 0 };
+    return {
+      section,
+      label,
+      itemCount: 0,
+      severity: 0,
+      evidenceRatio: 0,
+      evidenceBacked: 0,
+      score: 0,
+    };
   }
 
   const severity =
@@ -118,7 +126,9 @@ export interface A3Readiness {
 export function assessA3(data: OperationalToolData): A3Readiness {
   const scores = A3_SECTIONS.map((section) => scoreSection(data, section));
 
-  const emptySection = A3_SECTIONS.find((s) => (scores.find((x) => x.section === s)!.itemCount === 0));
+  const emptySection = A3_SECTIONS.find(
+    (s) => scores.find((x) => x.section === s)!.itemCount === 0
+  );
   const staircaseComplete = !emptySection;
 
   const populated = scores.filter((s) => s.itemCount > 0);
@@ -197,7 +207,12 @@ export function validateW2Move(move: W2MoveInput): W2ValidationResult {
   return { valid: missing.length === 0 && weak.length === 0, missing, weak };
 }
 
-export type A3MoveCategory = 'contain' | 'eliminate-root' | 'prevent-recur' | 'validate-first' | 'standardize';
+export type A3MoveCategory =
+  | 'contain'
+  | 'eliminate-root'
+  | 'prevent-recur'
+  | 'validate-first'
+  | 'standardize';
 
 export interface SequencedMove {
   order: number;
@@ -355,14 +370,19 @@ export function buildW2MoveSequence(data: OperationalToolData): SequencedMove[] 
 }
 
 /** Flatten a SequencedMove into the store's OperationalItem shape (localized). */
-export function toOperationalItem(seq: SequencedMove, isPolish: boolean, id: string): OperationalItem {
+export function toOperationalItem(
+  seq: SequencedMove,
+  isPolish: boolean,
+  id: string
+): OperationalItem {
   return {
     id,
     title: localize(seq.title, isPolish),
-    description: `${localize(seq.rationale, isPolish)} ${localize(seq.tradeOff, isPolish)} ${localize(
-      seq.rejectedVariant,
-      isPolish
-    )}`.trim(),
+    description:
+      `${localize(seq.rationale, isPolish)} ${localize(seq.tradeOff, isPolish)} ${localize(
+        seq.rejectedVariant,
+        isPolish
+      )}`.trim(),
     impact: seq.expectedImpact,
     effort: seq.estimatedEffort,
     category: seq.category,

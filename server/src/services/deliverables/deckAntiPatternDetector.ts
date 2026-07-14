@@ -63,9 +63,22 @@ const MIN_DECK_SLIDES = 4;
 const MAX_DECK_SLIDES = 18;
 
 const GENERIC_TITLES_PL = new Set([
-  'agenda', 'overview', 'wprowadzenie', 'wstęp', 'wnioski', 'podsumowanie',
-  'slajd', 'tytuł', 'slide', 'title', 'toc', 'spis treści', 'thank you',
-  'dziękuję', 'q&a', 'pytania',
+  'agenda',
+  'overview',
+  'wprowadzenie',
+  'wstęp',
+  'wnioski',
+  'podsumowanie',
+  'slajd',
+  'tytuł',
+  'slide',
+  'title',
+  'toc',
+  'spis treści',
+  'thank you',
+  'dziękuję',
+  'q&a',
+  'pytania',
 ]);
 
 const CTA_INTENTS = new Set(['next_steps', 'recommendation_single', 'recommendation_portfolio']);
@@ -76,7 +89,7 @@ function hit(
   code: AntiPatternCode,
   severity: AntiPatternSeverity,
   slideIndex: number | null,
-  message: string,
+  message: string
 ): AntiPatternHit {
   return { code, severity, slideIndex, message };
 }
@@ -95,7 +108,7 @@ function isGenericTitle(title: string | null | undefined): boolean {
  */
 export function detectDeckAntiPatterns(
   plans: SlidePlan[],
-  opts?: { maxBullets?: number; minSlides?: number; maxSlides?: number },
+  opts?: { maxBullets?: number; minSlides?: number; maxSlides?: number }
 ): AntiPatternReport {
   const hits: AntiPatternHit[] = [];
 
@@ -109,26 +122,50 @@ export function detectDeckAntiPatterns(
 
   // AP-07 / AP-08 — deck length
   if (plans.length < minSlides) {
-    hits.push(hit('AP-07-TOO-SHORT', 'CRITICAL', null,
-      `Deck ma tylko ${plans.length} slajdy (min ${minSlides}) — brak struktury narracyjnej.`));
+    hits.push(
+      hit(
+        'AP-07-TOO-SHORT',
+        'CRITICAL',
+        null,
+        `Deck ma tylko ${plans.length} slajdy (min ${minSlides}) — brak struktury narracyjnej.`
+      )
+    );
   }
   if (plans.length > maxSlides) {
-    hits.push(hit('AP-08-TOO-LONG', 'WARNING', null,
-      `Deck ma ${plans.length} slajdów (max ${maxSlides}) — przekracza uwagę zarządu.`));
+    hits.push(
+      hit(
+        'AP-08-TOO-LONG',
+        'WARNING',
+        null,
+        `Deck ma ${plans.length} slajdów (max ${maxSlides}) — przekracza uwagę zarządu.`
+      )
+    );
   }
 
   // AP-05 — brak cover jako pierwszego slajdu
   const firstIntent = plans[0]?.layoutIntent;
   if (firstIntent !== 'cover') {
-    hits.push(hit('AP-05-NO-COVER', 'CRITICAL', 0,
-      `Pierwszy slajd ma intencję "${firstIntent ?? 'brak'}" — musi być "cover".`));
+    hits.push(
+      hit(
+        'AP-05-NO-COVER',
+        'CRITICAL',
+        0,
+        `Pierwszy slajd ma intencję "${firstIntent ?? 'brak'}" — musi być "cover".`
+      )
+    );
   }
 
   // AP-06 — brak CTA w deck
   const hasCta = plans.some((p) => CTA_INTENTS.has(p.layoutIntent ?? ''));
   if (!hasCta) {
-    hits.push(hit('AP-06-NO-CTA', 'WARNING', null,
-      'Deck nie zawiera slajdu CTA (next_steps / recommendation_single / recommendation_portfolio).'));
+    hits.push(
+      hit(
+        'AP-06-NO-CTA',
+        'WARNING',
+        null,
+        'Deck nie zawiera slajdu CTA (next_steps / recommendation_single / recommendation_portfolio).'
+      )
+    );
   }
 
   // Per-slide checks
@@ -140,15 +177,27 @@ export function detectDeckAntiPatterns(
 
     // AP-04 — duplicate adjacent intent (pominięcie cover → cover częsty łańcuch)
     if (i > 0 && intent === prevIntent && intent !== 'cover') {
-      hits.push(hit('AP-04-DUPLICATE-INTENT', 'WARNING', idx,
-        `Dwa sąsiednie slajdy mają tę samą intencję "${intent}" (idx ${idx - 1} i ${idx}).`));
+      hits.push(
+        hit(
+          'AP-04-DUPLICATE-INTENT',
+          'WARNING',
+          idx,
+          `Dwa sąsiednie slajdy mają tę samą intencję "${intent}" (idx ${idx - 1} i ${idx}).`
+        )
+      );
     }
     prevIntent = intent;
 
     // AP-02 — generyczny tytuł
     if (isGenericTitle(plan.title)) {
-      hits.push(hit('AP-02-GENERIC-TITLE', 'WARNING', idx,
-        `Slajd ${idx} ma generyczny tytuł "${plan.title}" — unikaj: Agenda, Overview, Wnioski.`));
+      hits.push(
+        hit(
+          'AP-02-GENERIC-TITLE',
+          'WARNING',
+          idx,
+          `Slajd ${idx} ma generyczny tytuł "${plan.title}" — unikaj: Agenda, Overview, Wnioski.`
+        )
+      );
     }
 
     // AP-03 — brak tezy (pominięcie cover, next_steps, appendix)
@@ -156,16 +205,28 @@ export function detectDeckAntiPatterns(
     if (!skipKeyMessageCheck.has(intent)) {
       const km = plan.keyMessage?.trim() ?? '';
       if (km.length < MIN_KEY_MESSAGE_LENGTH) {
-        hits.push(hit('AP-03-NO-KEY-MESSAGE', 'WARNING', idx,
-          `Slajd ${idx} (${intent}) ma zbyt krótką tezę: "${km.substring(0, 40)}" (<${MIN_KEY_MESSAGE_LENGTH} znaków).`));
+        hits.push(
+          hit(
+            'AP-03-NO-KEY-MESSAGE',
+            'WARNING',
+            idx,
+            `Slajd ${idx} (${intent}) ma zbyt krótką tezę: "${km.substring(0, 40)}" (<${MIN_KEY_MESSAGE_LENGTH} znaków).`
+          )
+        );
       }
     }
 
     // AP-01 — zbyt wiele punktorów
     const bullets = plan.bullets ?? [];
     if (bullets.length > maxBullets) {
-      hits.push(hit('AP-01-TOO-MANY-BULLETS', 'CRITICAL', idx,
-        `Slajd ${idx} (${intent}) ma ${bullets.length} punktorów (max ${maxBullets}) — rozdziel na 2 slajdy.`));
+      hits.push(
+        hit(
+          'AP-01-TOO-MANY-BULLETS',
+          'CRITICAL',
+          idx,
+          `Slajd ${idx} (${intent}) ma ${bullets.length} punktorów (max ${maxBullets}) — rozdziel na 2 slajdy.`
+        )
+      );
     }
   }
 

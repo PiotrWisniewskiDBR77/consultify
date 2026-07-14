@@ -352,9 +352,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
             variant="error"
             title={pl ? 'Nie udało się wczytać notatników' : 'Failed to load notebooks'}
             description={
-              pl
-                ? 'Sprawdź połączenie i spróbuj ponownie.'
-                : 'Check your connection and try again.'
+              pl ? 'Sprawdź połączenie i spróbuj ponownie.' : 'Check your connection and try again.'
             }
             onRetry={() => void load()}
           />
@@ -362,7 +360,9 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
           searchQuery || scopeFilter !== 'all' || Object.keys(tableFilters).length ? (
             <SharedEmptyState
               variant="filter"
-              title={pl ? 'Brak notatników pasujących do filtrów' : 'No notebooks match your filters'}
+              title={
+                pl ? 'Brak notatników pasujących do filtrów' : 'No notebooks match your filters'
+              }
               description={
                 pl
                   ? 'Zmień frazę wyszukiwania lub zakres, aby zobaczyć więcej.'
@@ -416,9 +416,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                       )}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-c-text">
-                        {nb.title}
-                      </div>
+                      <div className="truncate text-sm font-semibold text-c-text">{nb.title}</div>
                       <div className="truncate text-[11px] leading-4 text-c-text-muted">
                         {nb.pageCount} {pl ? 'notatek' : 'notes'} ·{' '}
                         {formatRelative(nb.updatedAt, pl)}

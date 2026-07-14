@@ -127,9 +127,7 @@ export const ModelDeploymentSection: React.FC = () => {
                   <Icon size={16} />
                 </div>
                 <p className="text-sm font-black text-c-text">{point.title}</p>
-                <p className="mt-2 text-sm leading-6 text-c-text-secondary">
-                  {point.body}
-                </p>
+                <p className="mt-2 text-sm leading-6 text-c-text-secondary">{point.body}</p>
               </motion.div>
             );
           })}

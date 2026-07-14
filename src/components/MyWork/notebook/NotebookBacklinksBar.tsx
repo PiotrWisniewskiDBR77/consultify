@@ -63,8 +63,12 @@ export const NotebookBacklinksBar: React.FC<NotebookBacklinksBarProps> = ({
           Api.getLinkGraphBacklinks({ type: 'notebook_page', id: noteId, limit: 50 }),
         ]);
         const rows = [
-          ...(aRes.status === 'fulfilled' && Array.isArray(aRes.value) ? (aRes.value as any[]) : []),
-          ...(bRes.status === 'fulfilled' && Array.isArray(bRes.value) ? (bRes.value as any[]) : []),
+          ...(aRes.status === 'fulfilled' && Array.isArray(aRes.value)
+            ? (aRes.value as any[])
+            : []),
+          ...(bRes.status === 'fulfilled' && Array.isArray(bRes.value)
+            ? (bRes.value as any[])
+            : []),
         ]
           .map((x: any) => ({ type: String(x?.sourceType || ''), id: String(x?.sourceId || '') }))
           .filter((x) => x.type && x.id);

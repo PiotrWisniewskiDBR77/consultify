@@ -28,9 +28,7 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
         {t('presentations.builder.bottomBar.of', 'of')} {totalCards}
       </span>
 
-      <span className="text-xs font-medium text-c-text-secondary truncate flex-1">
-        {cardTitle}
-      </span>
+      <span className="text-xs font-medium text-c-text-secondary truncate flex-1">{cardTitle}</span>
 
       <button
         onClick={onQuickEdits}
@@ -43,9 +41,7 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
       <button
         onClick={onToggleNotes}
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs ${
-          notesOpen
-            ? 'bg-c-accent-soft text-c-text'
-            : 'text-c-text-muted hover:bg-c-surface-raised'
+          notesOpen ? 'bg-c-accent-soft text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'
         }`}
       >
         <FileText size={12} />

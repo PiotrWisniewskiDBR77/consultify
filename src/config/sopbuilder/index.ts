@@ -9,15 +9,15 @@
  */
 
 import {
+  type LadderRung,
   SOP_DEEPENING_LADDER,
   SOP_LADDER_RUNG_ORDER,
   type SopSectionId,
-  type LadderRung,
 } from './deepeningLadder';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {

@@ -160,9 +160,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
             <LayoutDashboard size={28} className="text-blue-500" />
             {t('settings.appearance.layout.title', 'Layout Preferences')}
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">
-            Configure your workspace layout
-          </p>
+          <p className="text-c-text-muted text-sm mt-1">Configure your workspace layout</p>
         </div>
         <button
           onClick={handleSave}
@@ -218,9 +216,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
 
           {/* Sidebar Position */}
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Position
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">Position</label>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { id: 'left', label: 'Left', icon: PanelLeft },
@@ -321,9 +317,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       {/* Default View */}
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">Startup View</h3>
-        <p className="text-sm text-c-text-muted">
-          Choose which view to show when you log in
-        </p>
+        <p className="text-sm text-c-text-muted">Choose which view to show when you log in</p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {defaultViews.map((view) => (
@@ -345,9 +339,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       {/* Toolbar Items */}
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">Toolbar Items</h3>
-        <p className="text-sm text-c-text-muted">
-          Choose which items appear in the header toolbar
-        </p>
+        <p className="text-sm text-c-text-muted">Choose which items appear in the header toolbar</p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {availableToolbarItems.map((item) => (
@@ -361,9 +353,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
               }`}
             >
               <span className="text-xl">{item.icon}</span>
-              <p className="text-sm font-medium text-c-text mt-1">
-                {item.label}
-              </p>
+              <p className="text-sm font-medium text-c-text mt-1">{item.label}</p>
             </button>
           ))}
         </div>
@@ -372,9 +362,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       {/* Quick Access */}
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">Quick Access Menu</h3>
-        <p className="text-sm text-c-text-muted">
-          Customize quick actions in the + menu
-        </p>
+        <p className="text-sm text-c-text-muted">Customize quick actions in the + menu</p>
 
         <div className="flex flex-wrap gap-2">
           {availableQuickAccessItems.map((item) => (

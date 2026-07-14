@@ -47,7 +47,7 @@ const DEFAULT_INTERVIEW_QUESTION_TEMPLATES = [
     id: 'tpl_strategy_1',
     category: 'strategy',
     questionText:
-      "Walk me through your top 2-3 business objectives for the next 2-3 years — and for each, what specifically has to change operationally for you to get there?",
+      'Walk me through your top 2-3 business objectives for the next 2-3 years — and for each, what specifically has to change operationally for you to get there?',
     sortOrder: 1,
     isRequired: 1,
   },
@@ -79,7 +79,7 @@ const DEFAULT_INTERVIEW_QUESTION_TEMPLATES = [
     id: 'tpl_people_1',
     category: 'people',
     questionText:
-      "Tell me about the last time your team had to learn a new tool or system. How long did it take to reach full productivity, and what made it hard?",
+      'Tell me about the last time your team had to learn a new tool or system. How long did it take to reach full productivity, and what made it hard?',
     sortOrder: 1,
     isRequired: 1,
   },
@@ -568,8 +568,7 @@ const buildInterviewAiReviewSnapshot = (
       requiredBlocked = true;
     }
   }
-  const overallScore =
-    weightTotal > 0 ? Math.round((weightedSum / weightTotal) * 10) / 10 : 0;
+  const overallScore = weightTotal > 0 ? Math.round((weightedSum / weightTotal) * 10) / 10 : 0;
   const overallVerdict: InterviewAiOverallVerdict =
     overallScore >= 3.5 && !requiredBlocked
       ? 'ready_for_approval'
@@ -1562,7 +1561,9 @@ const buildEvidenceResponse = (row: any) => {
  * answered, confidence self-rating, required/allow-* flags). Used when the
  * session is anonymous and the viewer is not the respondent.
  */
-const redactQuestionResponseForAnonymity = (q: NonNullable<ReturnType<typeof buildQuestionResponse>>) => ({
+const redactQuestionResponseForAnonymity = (
+  q: NonNullable<ReturnType<typeof buildQuestionResponse>>
+) => ({
   ...q,
   answerText: '',
   answerPayload: {},
@@ -2797,7 +2798,11 @@ ${questionsForPrompt}`;
     };
   });
 
-  return buildInterviewAiReviewSnapshot({ questionEvaluations, recommendations }, questions, langCode);
+  return buildInterviewAiReviewSnapshot(
+    { questionEvaluations, recommendations },
+    questions,
+    langCode
+  );
 }
 
 /**
@@ -3082,7 +3087,8 @@ export const InterviewController = {
     // global input-sanitization middleware escaped on this field before it
     // feeds interview_sessions.name (below AND via createSessionFromTemplate,
     // which decodes again defensively — decode is idempotent).
-    const name = typeof rawSessionName === 'string' ? decodeHtmlEntities(rawSessionName) : rawSessionName;
+    const name =
+      typeof rawSessionName === 'string' ? decodeHtmlEntities(rawSessionName) : rawSessionName;
 
     // If templateId provided, create from template library (snapshot)
     if (templateId) {
@@ -4451,12 +4457,12 @@ export const InterviewController = {
     // string from both spreads below — it would otherwise bypass the
     // redacted `aiReview` field.
     const sendBackWallActive = isAnonymityWallActive(updated, admin.id, 'assignee_user_id');
-    const {
-      ai_review_snapshot_json: _sendBackRawAiReviewJson,
-      ...updatedWithoutRawAiReview
-    } = (updated as any) || {};
+    const { ai_review_snapshot_json: _sendBackRawAiReviewJson, ...updatedWithoutRawAiReview } =
+      (updated as any) || {};
     const sendBackAiReview = sendBackWallActive
-      ? redactAiReviewSnapshotForAnonymity(parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json))
+      ? redactAiReviewSnapshotForAnonymity(
+          parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json)
+        )
       : parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json);
 
     res.json({
@@ -4673,7 +4679,11 @@ export const InterviewController = {
     // D18-A hard wall — approveAssignment is always called by the reviewer
     // (never the respondent); redact + strip the raw snapshot JSON the same
     // way as sendBackAssignment above.
-    const approveWallActive = isAnonymityWallActive(updatedAssignment, reviewer.id, 'assignee_user_id');
+    const approveWallActive = isAnonymityWallActive(
+      updatedAssignment,
+      reviewer.id,
+      'assignee_user_id'
+    );
     const {
       ai_review_snapshot_json: _approveRawAiReviewJson,
       ...updatedAssignmentWithoutRawAiReview
@@ -5712,7 +5722,9 @@ export const InterviewController = {
         return;
       }
       logger.error('[InterviewController] useTemplate error:', err);
-      res.status(500).json({ error: 'Failed to use template', code: 'INTERVIEW_USE_TEMPLATE_FAILED' });
+      res
+        .status(500)
+        .json({ error: 'Failed to use template', code: 'INTERVIEW_USE_TEMPLATE_FAILED' });
     }
   }),
 
@@ -8470,14 +8482,21 @@ ${JSON.stringify(questions || [], null, 2)}
       `SELECT organization_id FROM interview_insights WHERE id = ?`,
       [id]
     );
-    if (!orgRow) { res.status(404).json({ error: 'Insight not found' }); return; }
+    if (!orgRow) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
     const userOrgId = String(req.user?.organizationId || (req as any).organizationId || '');
     if (String((orgRow as any).organization_id) !== userOrgId) {
-      res.status(403).json({ error: 'Forbidden' }); return;
+      res.status(403).json({ error: 'Forbidden' });
+      return;
     }
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const insight = await interviewInsightService.getById(id);
-    if (!insight) { res.status(404).json({ error: 'Insight not found' }); return; }
+    if (!insight) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
     res.json(insight);
   }),
 
@@ -8665,16 +8684,23 @@ ${JSON.stringify(questions || [], null, 2)}
       `SELECT organization_id FROM interview_insights WHERE id = ?`,
       [id]
     );
-    if (!orgRow) { res.status(404).json({ error: 'Insight not found' }); return; }
+    if (!orgRow) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
     const userOrgId = String(req.user?.organizationId || (req as any).organizationId || '');
     if (String((orgRow as any).organization_id) !== userOrgId) {
-      res.status(403).json({ error: 'Forbidden' }); return;
+      res.status(403).json({ error: 'Forbidden' });
+      return;
     }
 
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const deleted = await interviewInsightService.deleteInsight(id);
 
-    if (!deleted) { res.status(404).json({ error: 'Insight not found' }); return; }
+    if (!deleted) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
     res.json({ success: true });
   }),
 

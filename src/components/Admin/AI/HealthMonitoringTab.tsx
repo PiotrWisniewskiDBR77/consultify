@@ -479,7 +479,9 @@ export const HealthMonitoringTab: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {res.error && <div className="text-danger-400 ml-4 mt-1">Error: {res.error}</div>}
+                    {res.error && (
+                      <div className="text-danger-400 ml-4 mt-1">Error: {res.error}</div>
+                    )}
                     {res.details?.warning && (
                       <div className="text-amber-400 ml-4 mt-1">⚠️ {res.details.warning}</div>
                     )}
@@ -603,7 +605,9 @@ export const HealthMonitoringTab: React.FC = () => {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-left border-collapse">
+            <table
+              /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-left border-collapse"
+            >
               <thead>
                 <tr className="bg-slate-50 dark:bg-black/20 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
                   <th className="px-4 py-3">Status</th>

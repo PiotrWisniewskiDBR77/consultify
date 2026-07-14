@@ -321,9 +321,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             onChange={(e) => setCommentText(e.target.value)}
             rows={4}
             className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={
-              t('interview.evidencePanel.addAContextualComment')
-            }
+            placeholder={t('interview.evidencePanel.addAContextualComment')}
             autoFocus
           />
           <div className="flex justify-end gap-2">
@@ -350,7 +348,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       {/* Evidence List */}
       <div className="space-y-2">
         {filteredEvidence.map((item) => {
-          const displayName = item.name || item.title || (t('interview.evidencePanel.untitled'));
+          const displayName = item.name || item.title || t('interview.evidencePanel.untitled');
           const uploadedAt = item.uploadedAt || item.createdAt || '';
           const mimeType = item.mimeType || item.fileType;
           const FileIcon =
@@ -410,7 +408,10 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     <span
                       className={`px-1.5 py-0.5 text-xs rounded shrink-0 ${categoryConfig.bgColor} ${categoryConfig.color}`}
                     >
-                      {t(`interview.workspace.categoryLabel.${item.category}`, categoryConfig.labelEn)}
+                      {t(
+                        `interview.workspace.categoryLabel.${item.category}`,
+                        categoryConfig.labelEn
+                      )}
                     </span>
                   )}
                 </div>

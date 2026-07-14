@@ -370,9 +370,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
         <div className="admin-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign size={14} className="text-c-text-muted" />
-            <span className="text-xs text-c-text-muted uppercase tracking-wider">
-              Total Budget
-            </span>
+            <span className="text-xs text-c-text-muted uppercase tracking-wider">Total Budget</span>
           </div>
           <p className="text-2xl font-semibold text-c-text">${totalBudget.toFixed(2)}</p>
           <p className="text-xs text-c-text-muted">per month</p>
@@ -394,9 +392,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
         <div className="admin-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <Building2 size={14} className="text-c-text-muted" />
-            <span className="text-xs text-c-text-muted uppercase tracking-wider">
-              Cost Centers
-            </span>
+            <span className="text-xs text-c-text-muted uppercase tracking-wider">Cost Centers</span>
           </div>
           <p className="text-2xl font-semibold text-c-text">{costCenters.length}</p>
           <p className="text-xs text-c-text-muted">
@@ -407,9 +403,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
         <div className="admin-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle size={14} className="text-c-text-muted" />
-            <span className="text-xs text-c-text-muted uppercase tracking-wider">
-              Over Budget
-            </span>
+            <span className="text-xs text-c-text-muted uppercase tracking-wider">Over Budget</span>
           </div>
           <p className="text-2xl font-semibold text-c-text">
             {costCenters.filter((cc) => cc.percentage_used >= 90).length}
@@ -497,7 +491,9 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
           Cost Centers
         </h3>
         <div className="overflow-x-auto">
-          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
+          <table
+            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+          >
             <thead>
               <tr className="border-b border-white/[0.05]">
                 <th className="text-left text-xs font-medium text-c-text-muted uppercase tracking-wider py-3 px-4">
@@ -525,7 +521,10 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
             </thead>
             <tbody>
               {costCenters.map((center) => (
-                <tr key={center.id} className="border-b border-white/[0.03] hover:bg-c-surface/[0.02]">
+                <tr
+                  key={center.id}
+                  className="border-b border-white/[0.03] hover:bg-c-surface/[0.02]"
+                >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                       {center.type === 'department' && (
@@ -538,9 +537,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="text-sm text-c-text-muted font-mono">
-                      {center.code}
-                    </span>
+                    <span className="text-sm text-c-text-muted font-mono">{center.code}</span>
                   </td>
                   <td className="py-3 px-4">
                     <span className="text-xs bg-slate-200 dark:bg-slate-700 text-c-text-secondary px-2 py-0.5 rounded capitalize">

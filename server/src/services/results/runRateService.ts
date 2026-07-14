@@ -36,7 +36,7 @@ export function annualizedRunRate(realizedInPeriod: number, periodMonths: number
  */
 export function inYearValue(
   monthlyRealized: Array<{ month: string; value: number }>,
-  year: number,
+  year: number
 ): number {
   if (!Array.isArray(monthlyRealized)) return 0;
   return monthlyRealized.reduce((sum, point) => {
@@ -117,6 +117,6 @@ export function valueTimingSplit(items: Array<ValueTimingItem>): ValueTimingSpli
       acc.totalRunRate += annualizedRunRate(realized, months);
       return acc;
     },
-    { totalRunRate: 0, totalRealized: 0 },
+    { totalRunRate: 0, totalRealized: 0 }
   );
 }

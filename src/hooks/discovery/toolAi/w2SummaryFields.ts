@@ -49,7 +49,10 @@ export function pickW2SummaryFields(summaryObj: unknown): W2SummaryFields {
       : null;
   const effectText = effect ? nonEmpty(effect.text) : null;
   if (effectText) {
-    fields.expectedEffect = { text: effectText, horizon: (effect && nonEmpty(effect.horizon)) || '' };
+    fields.expectedEffect = {
+      text: effectText,
+      horizon: (effect && nonEmpty(effect.horizon)) || '',
+    };
   }
 
   return fields;

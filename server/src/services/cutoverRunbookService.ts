@@ -114,10 +114,7 @@ export function evaluateRollbackTriggers(
 ): RollbackEvaluation {
   const reasons: string[] = [];
 
-  if (
-    typeof metrics.errorRatePct === 'number' &&
-    metrics.errorRatePct > thresholds.errorRatePct
-  ) {
+  if (typeof metrics.errorRatePct === 'number' && metrics.errorRatePct > thresholds.errorRatePct) {
     reasons.push(
       `Error rate ${metrics.errorRatePct}% exceeds threshold ${thresholds.errorRatePct}%`
     );
@@ -319,9 +316,9 @@ export async function advanceStep(
     [status, now, orgId, stepId]
   );
 
-  const row = await dbGet<any>(
-    `SELECT * FROM cutover_steps WHERE organization_id = ? AND id = ?`,
-    [orgId, stepId]
-  );
+  const row = await dbGet<any>(`SELECT * FROM cutover_steps WHERE organization_id = ? AND id = ?`, [
+    orgId,
+    stepId,
+  ]);
   return row ? mapStepRow(row) : null;
 }

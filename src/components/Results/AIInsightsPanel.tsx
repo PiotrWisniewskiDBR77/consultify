@@ -9,8 +9,8 @@
  * The whole panel sits behind the resultsFeatureFlags('aiInsights') flag in ResultsHub.
  */
 import {
-  AlertTriangle,
   Activity,
+  AlertTriangle,
   BrainCircuit,
   FileText,
   LineChart,
@@ -22,6 +22,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import { RagPill } from './ResultsUIPrimitives';
 
 interface ValueNarrative {
@@ -60,12 +61,42 @@ const RCA_PLAYBOOK: Array<{
   actionFallback: string;
   ownerFallback: string;
 }> = [
-  { key: 'dataQuality', catFallback: 'Data quality', actionFallback: 'Fix the measurement source', ownerFallback: 'Data Owner' },
-  { key: 'adoption', catFallback: 'Adoption', actionFallback: 'Strengthen communication/training', ownerFallback: 'Change Manager' },
-  { key: 'scope', catFallback: 'Scope', actionFallback: 'Revalidate scope', ownerFallback: 'Initiative Owner' },
-  { key: 'capacity', catFallback: 'Resources', actionFallback: 'Reallocate resources', ownerFallback: 'Resource Manager' },
-  { key: 'measurement', catFallback: 'Measurement', actionFallback: 'Verify the KPI definition', ownerFallback: 'KPI Owner' },
-  { key: 'external', catFallback: 'External', actionFallback: 'Update assumptions', ownerFallback: 'Sponsor' },
+  {
+    key: 'dataQuality',
+    catFallback: 'Data quality',
+    actionFallback: 'Fix the measurement source',
+    ownerFallback: 'Data Owner',
+  },
+  {
+    key: 'adoption',
+    catFallback: 'Adoption',
+    actionFallback: 'Strengthen communication/training',
+    ownerFallback: 'Change Manager',
+  },
+  {
+    key: 'scope',
+    catFallback: 'Scope',
+    actionFallback: 'Revalidate scope',
+    ownerFallback: 'Initiative Owner',
+  },
+  {
+    key: 'capacity',
+    catFallback: 'Resources',
+    actionFallback: 'Reallocate resources',
+    ownerFallback: 'Resource Manager',
+  },
+  {
+    key: 'measurement',
+    catFallback: 'Measurement',
+    actionFallback: 'Verify the KPI definition',
+    ownerFallback: 'KPI Owner',
+  },
+  {
+    key: 'external',
+    catFallback: 'External',
+    actionFallback: 'Update assumptions',
+    ownerFallback: 'Sponsor',
+  },
 ];
 
 function fmtPLN(v: number): string {
@@ -94,15 +125,16 @@ const PremiumNote: React.FC<{
         {premiumLabel}
       </span>
     </div>
-    <div className="text-xs text-slate-500 dark:text-slate-400 space-y-2">
-      {children}
-    </div>
+    <div className="text-xs text-slate-500 dark:text-slate-400 space-y-2">{children}</div>
   </section>
 );
 
 const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
   const { t } = useTranslation();
-  const [narrative, setNarrative] = useState<{ narrative: ValueNarrative; executiveSummary: string } | null>(null);
+  const [narrative, setNarrative] = useState<{
+    narrative: ValueNarrative;
+    executiveSummary: string;
+  } | null>(null);
   const [counterfactual, setCounterfactual] = useState<CounterfactualResult | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -111,15 +143,20 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
     Promise.allSettled([
       Api.get(`/results-extended/${projectId}/narrative`),
       Api.get(`/results-extended/${projectId}/counterfactual`),
-    ]).then(([n, c]) => {
-      if (n.status === 'fulfilled') setNarrative((n.value as any)?.data ?? n.value);
-      if (c.status === 'fulfilled') setCounterfactual((c.value as any)?.data ?? c.value);
-    }).finally(() => setLoading(false));
+    ])
+      .then(([n, c]) => {
+        if (n.status === 'fulfilled') setNarrative((n.value as any)?.data ?? n.value);
+        if (c.status === 'fulfilled') setCounterfactual((c.value as any)?.data ?? c.value);
+      })
+      .finally(() => setLoading(false));
   }, [projectId]);
 
   if (loading) {
     return (
-      <div data-testid="ai-insights-loading" className="flex items-center justify-center py-12 text-slate-400 text-sm">
+      <div
+        data-testid="ai-insights-loading"
+        className="flex items-center justify-center py-12 text-slate-400 text-sm"
+      >
         <BrainCircuit size={16} className="mr-2 animate-pulse" />
         {t('common.loading', 'Loading...')}
       </div>
@@ -131,7 +168,6 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
 
   return (
     <div data-testid="ai-insights-panel" className="space-y-6">
-
       {/* Executive narrative (6.3) */}
       <section>
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
@@ -162,16 +198,21 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                 {nar.statusLabel.toLowerCase().includes('zagrożon') ||
                 nar.statusLabel.toLowerCase().includes('ryzyko') ||
                 nar.statusLabel.toLowerCase().includes('at risk') ||
-                nar.statusLabel.toLowerCase().includes('risk')
-                  ? <TrendingDown size={12} className="text-amber-500" />
-                  : <TrendingUp size={12} className="text-emerald-500" />}
+                nar.statusLabel.toLowerCase().includes('risk') ? (
+                  <TrendingDown size={12} className="text-amber-500" />
+                ) : (
+                  <TrendingUp size={12} className="text-emerald-500" />
+                )}
                 {nar.statusLabel}
               </div>
             )}
           </div>
         ) : (
           <div className="text-sm text-slate-400 py-4 text-center">
-            {t('results.ai.noNarrative', 'No data for the narrative — add ROI targets for initiatives.')}
+            {t(
+              'results.ai.noNarrative',
+              'No data for the narrative — add ROI targets for initiatives.'
+            )}
           </div>
         )}
       </section>
@@ -185,30 +226,45 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         {counterfactual ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
-              <div className="text-xs text-slate-500 dark:text-slate-400">{t('results.ai.realized', 'Realized')}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('results.ai.realized', 'Realized')}
+              </div>
               <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                 {fmtPLN(counterfactual.totalRealized)}
               </div>
             </div>
             <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
-              <div className="text-xs text-slate-500 dark:text-slate-400">{t('results.ai.counterfactualProjected', 'Without the initiative (proj.)')}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('results.ai.counterfactualProjected', 'Without the initiative (proj.)')}
+              </div>
               <div className="text-xl font-bold text-slate-600 dark:text-slate-300">
                 {fmtPLN(counterfactual.counterfactualProjected)}
               </div>
             </div>
             <div className="rounded-xl border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20 p-4">
-              <div className="text-xs text-slate-500 dark:text-slate-400">{t('results.ai.attributableDelta', 'Attributable to the initiative')}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('results.ai.attributableDelta', 'Attributable to the initiative')}
+              </div>
               <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
                 {fmtPLN(counterfactual.attributable)}
               </div>
-              <div className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${CONFIDENCE_BADGE[counterfactual.confidenceLabel] ?? ''}`}>
-                {t('results.ai.confidence', 'confidence')}: {t(`results.ai.confLevel.${counterfactual.confidenceLabel}`, counterfactual.confidenceLabel)}
+              <div
+                className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${CONFIDENCE_BADGE[counterfactual.confidenceLabel] ?? ''}`}
+              >
+                {t('results.ai.confidence', 'confidence')}:{' '}
+                {t(
+                  `results.ai.confLevel.${counterfactual.confidenceLabel}`,
+                  counterfactual.confidenceLabel
+                )}
               </div>
             </div>
           </div>
         ) : (
           <div className="text-sm text-slate-400 py-4 text-center">
-            {t('results.ai.noCounterfactual', 'No historical measurements for counterfactual analysis.')}
+            {t(
+              'results.ai.noCounterfactual',
+              'No historical measurements for counterfactual analysis.'
+            )}
           </div>
         )}
       </section>
@@ -222,7 +278,7 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <p>
           {t(
             'results.ai.anomalyCopy',
-            'Automatic detection of outliers in the KPI measurement series — using z-score (|z| > 2) and IQR (outside Q1−1.5·IQR / Q3+1.5·IQR). A point flagged by both methods or at |z| ≥ 3 is marked as severe.',
+            'Automatic detection of outliers in the KPI measurement series — using z-score (|z| > 2) and IQR (outside Q1−1.5·IQR / Q3+1.5·IQR). A point flagged by both methods or at |z| ≥ 3 is marked as severe.'
           )}
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -235,7 +291,7 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <p className="text-[11px] text-slate-400">
           {t(
             'results.ai.anomalyServerNote',
-            'Anomalies are computed server-side (kpiAnomalyService engine) — results will appear here once the KPI measurements endpoint is connected.',
+            'Anomalies are computed server-side (kpiAnomalyService engine) — results will appear here once the KPI measurements endpoint is connected.'
           )}
         </p>
       </PremiumNote>
@@ -249,7 +305,7 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <p>
           {t(
             'results.ai.forecastCopy',
-            'Linear regression (least squares) on each KPI measurement history: value forecast, estimated time to reach the target (ETA), and an early-warning alert when the trend misses the target before the deadline.',
+            'Linear regression (least squares) on each KPI measurement history: value forecast, estimated time to reach the target (ETA), and an early-warning alert when the trend misses the target before the deadline.'
           )}
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -262,13 +318,16 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             {t('results.ai.forecastAtRisk', 'Target at risk')}
           </span>
           <span className="text-[11px] text-slate-400">
-            {t('results.ai.forecastConfidence', 'Confidence: low / medium / high (from the number of measurements + R² fit)')}
+            {t(
+              'results.ai.forecastConfidence',
+              'Confidence: low / medium / high (from the number of measurements + R² fit)'
+            )}
           </span>
         </div>
         <p className="text-[11px] text-slate-400">
           {t(
             'results.ai.forecastMinPoints',
-            'Requires min. 6 measurements per KPI. kpiForecastService engine — available after configuring AI premium.',
+            'Requires min. 6 measurements per KPI. kpiForecastService engine — available after configuring AI premium.'
           )}
         </p>
       </PremiumNote>
@@ -282,7 +341,7 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <p>
           {t(
             'results.ai.rcaCopy',
-            'For each KPI deviation, a heuristic engine (no LLM, deterministic) generates root-cause hypotheses based on signals: deviation, trend, adoption, data freshness, scope change, resource overload — and maps them to concrete corrective actions with an owner.',
+            'For each KPI deviation, a heuristic engine (no LLM, deterministic) generates root-cause hypotheses based on signals: deviation, trend, adoption, data freshness, scope change, resource overload — and maps them to concrete corrective actions with an owner.'
           )}
         </p>
         <ul className="space-y-1.5 pt-1">
@@ -303,11 +362,10 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <p className="text-[11px] text-slate-400">
           {t(
             'results.ai.rcaServerNote',
-            'Suggestions are computed server-side (deviationRcaSuggestService engine) — they will appear here for detected deviations once the RCA endpoint is connected.',
+            'Suggestions are computed server-side (deviationRcaSuggestService engine) — they will appear here for detected deviations once the RCA endpoint is connected.'
           )}
         </p>
       </PremiumNote>
-
     </div>
   );
 };

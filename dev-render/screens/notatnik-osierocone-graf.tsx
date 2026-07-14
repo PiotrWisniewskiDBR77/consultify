@@ -56,9 +56,27 @@ const BACKLINK_REFS_CONNECTED = [
   { sourceType: 'decision', sourceId: 'dec-3333333333' },
 ];
 const EMBED_CHIPS_CONNECTED = [
-  { artifactType: 'initiative', artifactId: 'ini-1111111111', title: 'Ekspansja DE — inicjatywa', snippet: '', permissionOk: true },
-  { artifactType: 'task', artifactId: 'tsk-2222222222', title: 'Zweryfikuj bariery regulacyjne', snippet: '', permissionOk: true },
-  { artifactType: 'decision', artifactId: 'dec-3333333333', title: 'Wybór wariantu B', snippet: '', permissionOk: true },
+  {
+    artifactType: 'initiative',
+    artifactId: 'ini-1111111111',
+    title: 'Ekspansja DE — inicjatywa',
+    snippet: '',
+    permissionOk: true,
+  },
+  {
+    artifactType: 'task',
+    artifactId: 'tsk-2222222222',
+    title: 'Zweryfikuj bariery regulacyjne',
+    snippet: '',
+    permissionOk: true,
+  },
+  {
+    artifactType: 'decision',
+    artifactId: 'dec-3333333333',
+    title: 'Wybór wariantu B',
+    snippet: '',
+    permissionOk: true,
+  },
 ];
 
 function GraphCard({
@@ -124,14 +142,39 @@ function GraphColumn({ isPl }: { isPl: boolean }): React.ReactElement {
       <div className="text-sm font-bold text-c-text">
         {isPl ? 'Graf połączeń — po naprawie #18' : 'Connection graph — after #18 fix'}
       </div>
-      <GraphCard title={isPl ? 'Notatka z tematami + backlinkami (tytuły)' : 'Note with topics + backlinks (titled)'}>
-        <NotebookGraphView pageId="note-connected" pageTitle="Ustalenia z rozmowy — wejście na rynek DE" isPolish={isPl} height={260} />
+      <GraphCard
+        title={
+          isPl
+            ? 'Notatka z tematami + backlinkami (tytuły)'
+            : 'Note with topics + backlinks (titled)'
+        }
+      >
+        <NotebookGraphView
+          pageId="note-connected"
+          pageTitle="Ustalenia z rozmowy — wejście na rynek DE"
+          isPolish={isPl}
+          height={260}
+        />
       </GraphCard>
-      <GraphCard title={isPl ? 'Notatka tylko z tematem (brak backlinków)' : 'Note with topic only (no backlinks)'}>
-        <NotebookGraphView pageId="note-topics-only" pageTitle="Szkic — regulacje DE" isPolish={isPl} height={220} />
+      <GraphCard
+        title={
+          isPl ? 'Notatka tylko z tematem (brak backlinków)' : 'Note with topic only (no backlinks)'
+        }
+      >
+        <NotebookGraphView
+          pageId="note-topics-only"
+          pageTitle="Szkic — regulacje DE"
+          isPolish={isPl}
+          height={220}
+        />
       </GraphCard>
       <GraphCard title={isPl ? 'Notatka osierocona (pusty stan)' : 'Orphaned note (empty state)'}>
-        <NotebookGraphView pageId="note-empty" pageTitle="Luźna myśl bez kontekstu" isPolish={isPl} height={180} />
+        <NotebookGraphView
+          pageId="note-empty"
+          pageTitle="Luźna myśl bez kontekstu"
+          isPolish={isPl}
+          height={180}
+        />
       </GraphCard>
     </div>
   );
@@ -140,19 +183,48 @@ function GraphColumn({ isPl }: { isPl: boolean }): React.ReactElement {
 // PRAWA — mock sidebara notatnika: pasek soczewek (z 'Osierocone' aktywnym) +
 // wiersze listy, struktura/klasy skopiowane z NotebookContent.tsx (#18 commit).
 function SidebarColumn({ isPl }: { isPl: boolean }): React.ReactElement {
-  const lenses: Array<{ key: string; label: string; icon: React.ReactNode; count: number; active?: boolean }> = [
+  const lenses: Array<{
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    count: number;
+    active?: boolean;
+  }> = [
     { key: 'all', label: isPl ? 'Wszystkie' : 'All', icon: null, count: 0 },
     { key: 'pinned', label: isPl ? 'Przypięte' : 'Pinned', icon: <Pin size={11} />, count: 2 },
     { key: 'recent', label: isPl ? 'Ostatnie' : 'Recent', icon: <Clock size={11} />, count: 5 },
-    { key: 'toReview', label: isPl ? 'Do przeglądu' : 'To review', icon: <AlertTriangle size={11} />, count: 1 },
+    {
+      key: 'toReview',
+      label: isPl ? 'Do przeglądu' : 'To review',
+      icon: <AlertTriangle size={11} />,
+      count: 1,
+    },
     { key: 'fresh', label: isPl ? 'Świeże' : 'Fresh', icon: <Sparkles size={11} />, count: 3 },
-    { key: 'orphaned', label: isPl ? 'Osierocone' : 'Orphaned', icon: <Unlink size={11} />, count: 4, active: true },
+    {
+      key: 'orphaned',
+      label: isPl ? 'Osierocone' : 'Orphaned',
+      icon: <Unlink size={11} />,
+      count: 4,
+      active: true,
+    },
   ];
 
   const rows = [
-    { title: isPl ? 'Luźna myśl bez kontekstu' : 'Loose thought, no context', orphaned: true, time: isPl ? '2 dni temu' : '2d ago' },
-    { title: isPl ? 'Szybka notatka ze spotkania' : 'Quick meeting scratch note', orphaned: true, time: isPl ? '5 dni temu' : '5d ago' },
-    { title: isPl ? 'Ustalenia z rozmowy — wejście na rynek DE' : 'Chat findings — DE market entry', orphaned: false, time: isPl ? '3 godz. temu' : '3h ago' },
+    {
+      title: isPl ? 'Luźna myśl bez kontekstu' : 'Loose thought, no context',
+      orphaned: true,
+      time: isPl ? '2 dni temu' : '2d ago',
+    },
+    {
+      title: isPl ? 'Szybka notatka ze spotkania' : 'Quick meeting scratch note',
+      orphaned: true,
+      time: isPl ? '5 dni temu' : '5d ago',
+    },
+    {
+      title: isPl ? 'Ustalenia z rozmowy — wejście na rynek DE' : 'Chat findings — DE market entry',
+      orphaned: false,
+      time: isPl ? '3 godz. temu' : '3h ago',
+    },
   ];
 
   return (
@@ -196,8 +268,12 @@ function SidebarColumn({ isPl }: { isPl: boolean }): React.ReactElement {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-blue-400" />
-                    <span className="flex-1 truncate text-[13px] font-semibold text-c-text">{r.title}</span>
-                    <span className="shrink-0 text-[10px] tabular-nums text-c-text-muted">{r.time}</span>
+                    <span className="flex-1 truncate text-[13px] font-semibold text-c-text">
+                      {r.title}
+                    </span>
+                    <span className="shrink-0 text-[10px] tabular-nums text-c-text-muted">
+                      {r.time}
+                    </span>
                   </div>
                   <div className="mt-1.5 flex items-center gap-1 flex-wrap">
                     <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
@@ -207,7 +283,11 @@ function SidebarColumn({ isPl }: { isPl: boolean }): React.ReactElement {
                     {r.orphaned && (
                       <span
                         className="inline-flex items-center gap-0.5 rounded-md bg-c-warning/10 text-c-warning px-1.5 py-0.5 text-[11px] font-medium"
-                        title={isPl ? 'Brak powiązań — dodaj wzmiankę (@) lub zarchiwizuj' : 'No connections — add a mention (@) or archive'}
+                        title={
+                          isPl
+                            ? 'Brak powiązań — dodaj wzmiankę (@) lub zarchiwizuj'
+                            : 'No connections — add a mention (@) or archive'
+                        }
                       >
                         <Unlink size={9} className="inline" />
                         {isPl ? 'Bez powiązań' : 'Unlinked'}

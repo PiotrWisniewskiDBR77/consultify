@@ -124,7 +124,10 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {competitors.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Trophy size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <Trophy
+                size={36}
+                className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
+              />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'AI przeanalizuje krajobraz konkurencyjny dla Twojego pomysłu.'
@@ -191,7 +194,10 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                             {isPl ? 'Mocne' : 'Strengths'}
                           </div>
                           {comp.strengths.map((s, i) => (
-                            <div key={i} className="text-[9px] text-c-text-secondary dark:text-c-text-muted">
+                            <div
+                              key={i}
+                              className="text-[9px] text-c-text-secondary dark:text-c-text-muted"
+                            >
                               + {s}
                             </div>
                           ))}
@@ -203,7 +209,10 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                             {isPl ? 'Slabe' : 'Weaknesses'}
                           </div>
                           {comp.weaknesses.map((w, i) => (
-                            <div key={i} className="text-[9px] text-c-text-secondary dark:text-c-text-muted">
+                            <div
+                              key={i}
+                              className="text-[9px] text-c-text-secondary dark:text-c-text-muted"
+                            >
                               - {w}
                             </div>
                           ))}

@@ -29,7 +29,9 @@ interface PublicFormFieldInputProps {
 
 export function PublicFormFieldInput({ field, value, onChange, error }: PublicFormFieldInputProps) {
   const base = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info ${
-    error ? 'border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)]' : 'border-c-border-subtle bg-c-surface'
+    error
+      ? 'border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)]'
+      : 'border-c-border-subtle bg-c-surface'
   }`;
 
   switch (field.fieldType) {
@@ -169,7 +171,9 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
               </label>
             );
           })}
-          {options.length === 0 && <p className="text-xs text-c-text-secondary">No options configured</p>}
+          {options.length === 0 && (
+            <p className="text-xs text-c-text-secondary">No options configured</p>
+          )}
         </div>
       );
     }

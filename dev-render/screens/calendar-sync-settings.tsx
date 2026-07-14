@@ -29,8 +29,20 @@ const PROVIDERS: MockProvider[] = [
       calendarName: 'Główny kalendarz',
     },
   },
-  { id: 'outlook_calendar', name: 'Outlook Calendar', icon: '📆', connected: false, connection: null },
-  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', icon: '🍎', connected: false, connection: null },
+  {
+    id: 'outlook_calendar',
+    name: 'Outlook Calendar',
+    icon: '📆',
+    connected: false,
+    connection: null,
+  },
+  {
+    id: 'apple_calendar',
+    name: 'Apple Calendar (iCal)',
+    icon: '🍎',
+    connected: false,
+    connection: null,
+  },
 ];
 
 const CalendarSyncSettingsScreen: React.FC = () => {
@@ -126,7 +138,9 @@ const CalendarSyncSettingsScreen: React.FC = () => {
           <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
             <div>
               <p className="font-medium text-c-text">Synchronizuj spotkania</p>
-              <p className="text-sm text-c-text-muted">Dodawaj spotkania projektowe do kalendarza</p>
+              <p className="text-sm text-c-text-muted">
+                Dodawaj spotkania projektowe do kalendarza
+              </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input

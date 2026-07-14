@@ -14,9 +14,9 @@ import {
   getDocumentStudioAuditTrail,
   rejectDocumentStudioProposal,
 } from './api';
-import { TransformativeConfirmDialog } from './TransformativeConfirmDialog';
 import { proposalToSchemaDiff } from './documentDiffModel';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
+import { TransformativeConfirmDialog } from './TransformativeConfirmDialog';
 import type {
   DocumentAuditEntry,
   DocumentEditorProposal,
@@ -462,17 +462,13 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
                 <div className="mb-1 font-semibold text-c-text-muted">
                   {t('documentStudio.editor.before', 'Before')}
                 </div>
-                <pre className="whitespace-pre-wrap text-c-text">
-                  {pendingProposal.diff.before}
-                </pre>
+                <pre className="whitespace-pre-wrap text-c-text">{pendingProposal.diff.before}</pre>
               </div>
               <div className="rounded-md border border-c-border-subtle p-2">
                 <div className="mb-1 font-semibold text-c-text-muted">
                   {t('documentStudio.editor.after', 'After')}
                 </div>
-                <pre className="whitespace-pre-wrap text-c-text">
-                  {pendingProposal.diff.after}
-                </pre>
+                <pre className="whitespace-pre-wrap text-c-text">{pendingProposal.diff.after}</pre>
               </div>
             </div>
           </details>

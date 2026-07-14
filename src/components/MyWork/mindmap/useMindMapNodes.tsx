@@ -211,10 +211,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     (anchorNodeId?: string) => {
       if (locked) return;
       if (nodes.length >= MAX_MINDMAP_NODES) {
-        toast.error(
-          i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }),
-          { id: 'mm-limit' }
-        );
+        toast.error(i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }), {
+          id: 'mm-limit',
+        });
         return;
       }
       const selected =
@@ -334,10 +333,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     (anchorNodeId?: string) => {
       if (locked) return;
       if (nodes.length >= MAX_MINDMAP_NODES) {
-        toast.error(
-          i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }),
-          { id: 'mm-limit' }
-        );
+        toast.error(i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }), {
+          id: 'mm-limit',
+        });
         return;
       }
       const selected =

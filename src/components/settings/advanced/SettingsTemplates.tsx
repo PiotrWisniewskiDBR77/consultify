@@ -337,12 +337,8 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{template.icon}</span>
                     <div>
-                      <h4 className="font-semibold text-c-text">
-                        {template.name}
-                      </h4>
-                      <p className="text-sm text-c-text-muted">
-                        {template.description}
-                      </p>
+                      <h4 className="font-semibold text-c-text">{template.name}</h4>
+                      <p className="text-sm text-c-text-muted">{template.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

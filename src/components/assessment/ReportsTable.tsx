@@ -521,7 +521,11 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         sortable: true,
         render: (row) => {
           const report = row as unknown as Report;
-          return <span className="text-xs text-slate-600 dark:text-slate-500">{formatDate(report.updatedAt)}</span>;
+          return (
+            <span className="text-xs text-slate-600 dark:text-slate-500">
+              {formatDate(report.updatedAt)}
+            </span>
+          );
         },
       },
     ],
@@ -820,7 +824,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           />
         </div>
       </div>
-
 
       {/* Import Report Modal */}
       {showImportModal && (

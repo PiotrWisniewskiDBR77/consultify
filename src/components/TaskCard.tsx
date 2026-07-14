@@ -71,14 +71,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         {task.priority === 'urgent' && <AlertCircle size={14} className="text-danger-500" />}
       </div>
 
-      <h4 className="text-c-text text-sm font-medium mb-1 line-clamp-2">
-        {task.title}
-      </h4>
+      <h4 className="text-c-text text-sm font-medium mb-1 line-clamp-2">{task.title}</h4>
 
       {task.why && (
-        <p className="text-xs text-c-text-muted italic mb-3 line-clamp-2">
-          "{task.why}"
-        </p>
+        <p className="text-xs text-c-text-muted italic mb-3 line-clamp-2">"{task.why}"</p>
       )}
 
       <div className="flex items-center justify-between text-xs text-c-text-secondary mt-3">

@@ -37,10 +37,10 @@ import {
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
-import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import { getCapacityTimeline, getLevelingAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 
 const router = Router();
 

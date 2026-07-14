@@ -276,7 +276,10 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
             {t('presentations.qualityGates.title', 'Quality Gates')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary text-sm">
+        <button
+          onClick={onClose}
+          className="text-c-text-secondary hover:text-c-text-secondary text-sm"
+        >
           ✕
         </button>
       </div>
@@ -298,7 +301,9 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
             )}
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                report.canExport ? 'bg-green-500/10 text-green-600' : 'bg-danger-500/10 text-danger-600'
+                report.canExport
+                  ? 'bg-green-500/10 text-green-600'
+                  : 'bg-danger-500/10 text-danger-600'
               }`}
             >
               {report.canExport ? 'Export OK' : 'Export Blocked'}

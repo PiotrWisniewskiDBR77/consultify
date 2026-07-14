@@ -131,9 +131,7 @@ export function evaluateFilterRule(
       return Number.isFinite(num) && Number.isFinite(ruleNum) && num <= ruleNum;
     case 'between': {
       // value: [min, max] or "min,max"
-      const parts = Array.isArray(rule.value)
-        ? rule.value
-        : toStr(rule.value).split(',');
+      const parts = Array.isArray(rule.value) ? rule.value : toStr(rule.value).split(',');
       const min = Number(parts[0]);
       const max = Number(parts[1]);
       if (!Number.isFinite(num) || !Number.isFinite(min) || !Number.isFinite(max)) return false;

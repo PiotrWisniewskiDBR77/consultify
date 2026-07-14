@@ -289,9 +289,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-c-text flex-1 min-w-0">
-                    {topic}
-                  </p>
+                  <p className="text-sm text-c-text flex-1 min-w-0">{topic}</p>
                 )}
 
                 <RowActionsMenu

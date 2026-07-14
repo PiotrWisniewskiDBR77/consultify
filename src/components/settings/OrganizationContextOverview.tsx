@@ -202,9 +202,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
                 <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">
                   {item.label}
                 </div>
-                <div className="mt-1 text-lg font-semibold text-c-text-secondary">
-                  {item.value}
-                </div>
+                <div className="mt-1 text-lg font-semibold text-c-text-secondary">{item.value}</div>
               </div>
             ))}
           </div>
@@ -256,9 +254,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
               key: 'valuePreview',
               header: isPolish ? 'Value' : 'Value',
               render: (row) => (
-                <span className="text-xs text-c-text-secondary">
-                  {row.valuePreview}
-                </span>
+                <span className="text-xs text-c-text-secondary">{row.valuePreview}</span>
               ),
             },
             {

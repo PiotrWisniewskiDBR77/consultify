@@ -973,7 +973,9 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
 
       {/* Users Table */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden">
-        <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-left text-sm text-slate-600 dark:text-slate-500">
+        <table
+          /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full text-left text-sm text-slate-600 dark:text-slate-500"
+        >
           <thead className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-200 uppercase text-xs font-semibold">
             <tr>
               <th className="px-6 py-4">User</th>

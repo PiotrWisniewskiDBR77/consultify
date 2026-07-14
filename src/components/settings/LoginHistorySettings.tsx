@@ -82,7 +82,12 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
       ) : loadError ? (
         <div className="flex items-center gap-2 rounded-md border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
           <AlertTriangle size={16} />
-          <span>{t('settings.security.loginHistoryError', 'Unable to load login history. Please try again.')}</span>
+          <span>
+            {t(
+              'settings.security.loginHistoryError',
+              'Unable to load login history. Please try again.'
+            )}
+          </span>
           <button
             type="button"
             onClick={fetchHistory}
@@ -101,9 +106,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
               <div className="flex items-center gap-4">
                 {getStatusIcon(event.status || 'success')}
                 <div>
-                  <p className="font-medium text-c-text">
-                    {event.device || 'Unknown Device'}
-                  </p>
+                  <p className="font-medium text-c-text">{event.device || 'Unknown Device'}</p>
                   <p className="text-sm text-c-text-muted">
                     {event.location || 'Unknown Location'} · {event.ip || 'Unknown IP'}
                   </p>

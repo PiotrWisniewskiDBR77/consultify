@@ -21,10 +21,16 @@
  * żeby uniknąć wciągania całego drzewa zależności Hub-ów) — same klasy/DOM
  * skopiowane z prawdziwych miejsc, więc zrzut wiernie pokazuje realny wygląd.
  */
-import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
+import React from 'react';
 
-function Row({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className="mb-8">
       <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted mb-2">
@@ -35,7 +41,13 @@ function Row({ label, children }: { label: string; children: React.ReactNode }):
   );
 }
 
-function Frame({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function Frame({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4">
       <div className="text-[11px] font-medium text-c-text-muted mb-3">{label}</div>
@@ -51,14 +63,17 @@ export function Wave4ChoicesCrimsonScreen(): React.ReactElement {
         Fala 4 — bg-c-accent CTA/wybor → neutralne
       </h1>
       <p className="text-sm text-c-text-muted mb-8">
-        Assessment (SIRI/ADMA/modals) · Initiatives · Execution · Results · Decisions.
-        Kolory PO = dokładne klasy wprowadzone w commicie.
+        Assessment (SIRI/ADMA/modals) · Initiatives · Execution · Results · Decisions. Kolory PO =
+        dokładne klasy wprowadzone w commicie.
       </p>
 
       {/* A) Selected-option checkbox-circle */}
       <Row label="A · Selected-option (checkbox-circle w karcie wyboru — GenerateInitiativesModal/NewReportModal)">
         <Frame label="PRZED — bg-c-accent border-c-accent (crimson fill)">
-          <div className="w-full text-left p-3 rounded-lg border-2 border-c-accent bg-c-accent-soft" style={{ width: 220 }}>
+          <div
+            className="w-full text-left p-3 rounded-lg border-2 border-c-accent bg-c-accent-soft"
+            style={{ width: 220 }}
+          >
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full flex items-center justify-center border-2 bg-c-accent border-c-accent">
                 <CheckCircle2 size={12} className="text-white" />
@@ -68,7 +83,10 @@ export function Wave4ChoicesCrimsonScreen(): React.ReactElement {
           </div>
         </Frame>
         <Frame label="PO — bg-c-text border-c-accent (neutralne wypełnienie)">
-          <div className="w-full text-left p-3 rounded-lg border-2 border-c-accent bg-c-accent-soft" style={{ width: 220 }}>
+          <div
+            className="w-full text-left p-3 rounded-lg border-2 border-c-accent bg-c-accent-soft"
+            style={{ width: 220 }}
+          >
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full flex items-center justify-center border-2 bg-c-text border-c-accent">
                 <CheckCircle2 size={12} className="text-c-surface" />
@@ -126,12 +144,18 @@ export function Wave4ChoicesCrimsonScreen(): React.ReactElement {
       {/* D) Status-semantic reinterpretation (ConclusionSummary gap bar) */}
       <Row label="D · Status-semantic (ConclusionSummary — pasek „poniżej progu FoF”: accent→warning, spójne z tekstem)">
         <Frame label="PRZED — bg-c-accent (mylące, tekst obok już używał text-c-warning)">
-          <div className="relative h-2.5 rounded-full bg-c-border-subtle overflow-hidden" style={{ width: 220 }}>
+          <div
+            className="relative h-2.5 rounded-full bg-c-border-subtle overflow-hidden"
+            style={{ width: 220 }}
+          >
             <div className="h-full rounded-full bg-c-accent" style={{ width: '58%' }} />
           </div>
         </Frame>
         <Frame label="PO — bg-c-warning (spójne z text-c-warning tej samej kondycji)">
-          <div className="relative h-2.5 rounded-full bg-c-border-subtle overflow-hidden" style={{ width: 220 }}>
+          <div
+            className="relative h-2.5 rounded-full bg-c-border-subtle overflow-hidden"
+            style={{ width: 220 }}
+          >
             <div className="h-full rounded-full bg-c-warning" style={{ width: '58%' }} />
           </div>
         </Frame>

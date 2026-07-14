@@ -18,7 +18,7 @@
  * specific missing field so the UI (or AI) can repair them.
  */
 
-import type { NarrativeMove, NarrativePillar, NarrativeEngineData } from '@/store/useToolStore';
+import type { NarrativeEngineData, NarrativeMove, NarrativePillar } from '@/store/useToolStore';
 
 import { type Bilingual, type ResonanceBand } from './deepeningLadder';
 
@@ -61,7 +61,7 @@ const proofStrengthFrom = (count: number): number => (count >= 2 ? 3 : count ===
 const scorePillar = (p: NarrativePillar): PillarScore => {
   const band = asBand(p.audienceResonance);
   const resonance = LEVEL_SCORE[band];
-  const proofCount = (p.proofPoints?.filter((pp) => pp && pp.trim()).length || 0);
+  const proofCount = p.proofPoints?.filter((pp) => pp && pp.trim()).length || 0;
   const proofStrength = proofStrengthFrom(proofCount);
   const score = round1(resonance * proofStrength);
 
@@ -101,7 +101,8 @@ export function rankPillars(data: NarrativeEngineData): NarrativeRanking {
     .map((s) => s.id);
 
   const top = scores.find((s) => s.id === ordered[0]);
-  const bottom = ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
+  const bottom =
+    ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
 
   const rationale: Bilingual = top
     ? {

@@ -30,6 +30,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 
+import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import {
   type BulkAction,
   BulkActionBar,
@@ -44,7 +45,6 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssigneeCell } from '../ui/primitives/cells/AssigneeCell';
@@ -236,9 +236,7 @@ export const PresentationsHub: React.FC = () => {
       {
         id: 'title',
         label: t('presentations.columns.title', 'Title'),
-        render: (row) => (
-          <span className="text-sm font-medium text-c-text">{row.title}</span>
-        ),
+        render: (row) => <span className="text-sm font-medium text-c-text">{row.title}</span>,
       },
       {
         id: 'sourceType',
@@ -285,9 +283,7 @@ export const PresentationsHub: React.FC = () => {
           .filter(Boolean)
           .filter((o) => o !== '—')
           .map((owner) => ({ value: owner, label: owner })),
-        render: (row) => (
-          <AssigneeCell name={row.createdBy === '—' ? null : row.createdBy} />
-        ),
+        render: (row) => <AssigneeCell name={row.createdBy === '—' ? null : row.createdBy} />,
       },
       {
         id: 'createdAt',
@@ -444,12 +440,7 @@ export const PresentationsHub: React.FC = () => {
 
   const handleDeleteDeck = useCallback(
     async (deck: PresentationDeck) => {
-      if (
-        !window.confirm(
-          t('presentations.deleteConfirm', { title: deck.title })
-        )
-      )
-        return;
+      if (!window.confirm(t('presentations.deleteConfirm', { title: deck.title }))) return;
       try {
         await Api.delete(`/presentations/decks/${deck.id}`);
         toast.success(t('presentations.deleteSuccess', 'Deck deleted'));
@@ -630,7 +621,11 @@ export const PresentationsHub: React.FC = () => {
     if (isLoading) {
       return (
         <div className="p-6">
-          <LoadingState template="card" count={6} label={t('presentations.loading', 'Loading decks…')} />
+          <LoadingState
+            template="card"
+            count={6}
+            label={t('presentations.loading', 'Loading decks…')}
+          />
         </div>
       );
     }
@@ -685,14 +680,10 @@ export const PresentationsHub: React.FC = () => {
                     <dt className="text-c-text-muted">
                       {t('presentations.columns.owner', 'Owner')}
                     </dt>
-                    <dd className="text-c-text-secondary truncate">
-                      {item.createdBy || '—'}
-                    </dd>
+                    <dd className="text-c-text-secondary truncate">{item.createdBy || '—'}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-c-text-muted">
-                      {t('presentations.columns.date', 'Date')}
-                    </dt>
+                    <dt className="text-c-text-muted">{t('presentations.columns.date', 'Date')}</dt>
                     <dd className="text-c-text-secondary">
                       {new Date(item.createdAt).toLocaleDateString(
                         lang === 'pl' ? 'pl-PL' : 'en-US',
@@ -704,9 +695,7 @@ export const PresentationsHub: React.FC = () => {
                     <dt className="text-c-text-muted">
                       {t('presentations.columns.slides', 'Slides')}
                     </dt>
-                    <dd className="text-c-text-secondary">
-                      {Number(item.slideCount ?? 0)}
-                    </dd>
+                    <dd className="text-c-text-secondary">{Number(item.slideCount ?? 0)}</dd>
                   </div>
                 </dl>
               </div>
@@ -776,10 +765,7 @@ export const PresentationsHub: React.FC = () => {
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 text-center">
-                  <Presentation
-                    size={48}
-                    className="mx-auto text-c-text-muted mb-4"
-                  />
+                  <Presentation size={48} className="mx-auto text-c-text-muted mb-4" />
                   <p className="text-c-text-secondary mb-4">
                     {t(
                       'presentations.openInBuilder',

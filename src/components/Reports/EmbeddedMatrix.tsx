@@ -156,7 +156,9 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
       </h4>
 
       <div className="overflow-x-auto">
-        <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="w-full text-sm">
+        <table
+          /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full text-sm"
+        >
           <thead>
             <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-700">
               <th className="pb-2 font-medium">{t('reports.axis', 'Axis')}</th>

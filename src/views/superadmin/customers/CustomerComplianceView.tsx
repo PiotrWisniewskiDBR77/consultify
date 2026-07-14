@@ -209,7 +209,9 @@ const CustomerComplianceView: React.FC = () => {
                 {t('superadmin.customers.compliance.table.empty')}
               </div>
             ) : (
-              <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
+              <table
+                /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
+              >
                 <thead>
                   <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-white/10">
                     <th className="pb-3">

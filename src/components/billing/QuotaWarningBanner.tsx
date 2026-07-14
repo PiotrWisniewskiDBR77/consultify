@@ -56,7 +56,9 @@ export const QuotaWarningBanner: React.FC<QuotaWarningBannerProps> = ({
       <div className="flex-1">
         <p
           className={`text-sm font-medium ${
-            isCritical ? 'text-danger-800 dark:text-danger-200' : 'text-amber-800 dark:text-amber-200'
+            isCritical
+              ? 'text-danger-800 dark:text-danger-200'
+              : 'text-amber-800 dark:text-amber-200'
           }`}
         >
           {getMessage()}

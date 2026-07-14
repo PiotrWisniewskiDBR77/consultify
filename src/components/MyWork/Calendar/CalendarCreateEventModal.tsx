@@ -82,7 +82,10 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           setConflicts(null);
           setConflictsError(
             error?.status === 503
-              ? t('myWork.calendarCreateEvent.dayLoadPreviewIs', 'Day-load preview is temporarily unavailable, but you can still create the task.')
+              ? t(
+                  'myWork.calendarCreateEvent.dayLoadPreviewIs',
+                  'Day-load preview is temporarily unavailable, but you can still create the task.'
+                )
               : t('myWork.calendarCreateEvent.failedToCheckDay', 'Failed to check day load.')
           );
         }
@@ -152,9 +155,10 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
       onClose={onClose}
       size="lg"
       title={t('myWork.calendarCreateEvent.title', 'Add to calendar')}
-      description={
-        t('myWork.calendarCreateEvent.inV1CalendarCreation', 'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.')
-      }
+      description={t(
+        'myWork.calendarCreateEvent.inV1CalendarCreation',
+        'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
+      )}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={saving}>
@@ -178,7 +182,10 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             {t('myWork.calendarCreateEvent.artifactTypeTask', 'Artifact type: Task')}
           </div>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('myWork.calendarCreateEvent.decisionsAndInitiativesFrom', 'Decisions and initiatives from calendar are prepared for a later phase.')}
+            {t(
+              'myWork.calendarCreateEvent.decisionsAndInitiativesFrom',
+              'Decisions and initiatives from calendar are prepared for a later phase.'
+            )}
           </p>
         </div>
 
@@ -219,9 +226,10 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            placeholder={
-              t('myWork.calendarCreateEvent.shortContextOrDefinition', 'Short context or definition of done...')
-            }
+            placeholder={t(
+              'myWork.calendarCreateEvent.shortContextOrDefinition',
+              'Short context or definition of done...'
+            )}
             className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
@@ -272,7 +280,10 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               <div className="mt-1 text-xs opacity-80">
                 {conflictsError ||
                   conflicts?.suggestion ||
-                  (t('myWork.calendarCreateEvent.theFormChecksExisting', 'The form checks existing tasks and decisions for the selected day.'))}
+                  t(
+                    'myWork.calendarCreateEvent.theFormChecksExisting',
+                    'The form checks existing tasks and decisions for the selected day.'
+                  )}
               </div>
 
               {totalExistingItems > 0 && (

@@ -69,7 +69,8 @@ const TONE_CLASS: Record<'slate' | 'amber' | 'danger', string> = {
     'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-300',
   amber:
     'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-600/60 dark:bg-amber-900/30 dark:text-amber-200',
-  danger: 'border-danger-300 bg-danger-50 text-danger-800 dark:border-danger-600/60 dark:bg-danger-900/30 dark:text-danger-200',
+  danger:
+    'border-danger-300 bg-danger-50 text-danger-800 dark:border-danger-600/60 dark:bg-danger-900/30 dark:text-danger-200',
 };
 
 export const InputCharCounter: React.FC<InputCharCounterProps> = ({

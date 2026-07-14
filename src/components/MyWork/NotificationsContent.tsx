@@ -51,11 +51,11 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificationSnooze';
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
-import i18n from '@/i18n';
 import {
   clearMutedNotificationTypesForSession,
   getMutedNotificationTypes,
@@ -119,7 +119,9 @@ const formatRelativeTime = (dateString: string, isPolish: boolean = false): stri
   if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
   if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
-  return date.toLocaleDateString(i18n.t('myWork.notificationsContent.dateToLocaleDateString', 'en-US'));
+  return date.toLocaleDateString(
+    i18n.t('myWork.notificationsContent.dateToLocaleDateString', 'en-US')
+  );
 };
 
 // Time group types
@@ -428,11 +430,7 @@ const NotificationTableRow: React.FC<{
       <td className="px-3 py-2.5 w-full" style={{ minWidth: 300 }}>
         <div className="flex flex-col">
           <span
-            className={`text-sm ${
-              isRead
-                ? 'text-c-text-secondary'
-                : 'text-c-text font-medium'
-            }`}
+            className={`text-sm ${isRead ? 'text-c-text-secondary' : 'text-c-text font-medium'}`}
           >
             {notification.title}
           </span>
@@ -476,7 +474,7 @@ const NotificationTableRow: React.FC<{
           {isSnoozed && (
             <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded">
               <Clock size={10} />
-              {snoozedUntilLabel || (i18n.t('myWork.notificationsContent.snoozed', 'Snoozed'))}
+              {snoozedUntilLabel || i18n.t('myWork.notificationsContent.snoozed', 'Snoozed')}
             </span>
           )}
 
@@ -514,8 +512,14 @@ const NotificationTableRow: React.FC<{
                     <div className="fixed inset-0 z-40" onClick={() => setShowSnoozeMenu(false)} />
                     <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-c-surface-raised rounded-lg shadow-lg border border-c-border min-w-[100px]">
                       {[
-                        { preset: '1h' as SnoozePreset, label: i18n.t('myWork.notificationsContent.label', '1 hour') },
-                        { preset: '4h' as SnoozePreset, label: i18n.t('myWork.notificationsContent.label2', '4 hours') },
+                        {
+                          preset: '1h' as SnoozePreset,
+                          label: i18n.t('myWork.notificationsContent.label', '1 hour'),
+                        },
+                        {
+                          preset: '4h' as SnoozePreset,
+                          label: i18n.t('myWork.notificationsContent.label2', '4 hours'),
+                        },
                         {
                           preset: '1d' as SnoozePreset,
                           label: i18n.t('myWork.notificationsContent.label3', '1 day'),
@@ -634,7 +638,10 @@ const NotificationTableRow: React.FC<{
                       label: i18n.t('myWork.notificationsContent.label10', 'Edit'),
                       icon: Eye,
                       disabled: true,
-                      description: i18n.t('myWork.notificationsContent.description', 'Coming soon (backend)'),
+                      description: i18n.t(
+                        'myWork.notificationsContent.description',
+                        'Coming soon (backend)'
+                      ),
                       onClick: () => {},
                     },
                     {
@@ -642,7 +649,10 @@ const NotificationTableRow: React.FC<{
                       label: i18n.t('myWork.notificationsContent.label11', 'Archive'),
                       icon: Archive,
                       disabled: true,
-                      description: i18n.t('myWork.notificationsContent.description2', 'Coming soon (backend)'),
+                      description: i18n.t(
+                        'myWork.notificationsContent.description2',
+                        'Coming soon (backend)'
+                      ),
                       onClick: () => {},
                     },
                   ],
@@ -1082,7 +1092,10 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                     <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-c-surface-raised border border-c-border shadow-xl overflow-hidden">
                       <div className="px-3 py-2 border-b border-slate-200/60 dark:border-white/[0.03] flex items-center justify-between">
                         <span className="text-xs font-semibold text-c-text-secondary">
-                          {t('myWork.notificationsContent.mutedTypesSession', 'Muted types (session)')}
+                          {t(
+                            'myWork.notificationsContent.mutedTypesSession',
+                            'Muted types (session)'
+                          )}
                         </span>
                         <button
                           onClick={() => setMutedTypesOpen(false)}
@@ -1193,7 +1206,9 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                 >
                   <div className="flex items-center gap-1">
                     <span
-                      className={(tableFilters.type as string[])?.length ? 'text-c-text-secondary' : ''}
+                      className={
+                        (tableFilters.type as string[])?.length ? 'text-c-text-secondary' : ''
+                      }
                     >
                       Type
                     </span>

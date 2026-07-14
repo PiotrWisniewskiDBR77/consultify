@@ -6,42 +6,19 @@
  * własny chrome / własne tabele / własne preview = błąd implementacji.
  */
 export {
-  StandardModuleBar,
-  type StandardModuleBarProps,
-  type StandardBreadcrumb,
-  type StandardModuleTab,
-  type StandardCounterChip,
-  type StandardBulkAction,
-  type StandardBulkState,
-  type StandardPrimaryCta,
-} from './StandardModuleBar';
-export {
-  StandardTable,
-  type StandardTableProps,
-  type StandardTableEmpty,
-  type StandardTableSelection,
-  type StandardRowMenu,
-  type StandardRowMenuAction,
-  type TableColumn,
-  type TableRow,
-  type RowAction,
-  type RowActionSection,
-} from './StandardTable';
-export {
-  StandardPreview,
-  standardPreviewShortcuts,
-  type StandardPreviewProps,
-  type StandardPreviewAction,
-  type StandardPreviewActions,
-  type StandardPreviewMeta,
-  type StandardPreviewDetails,
-  type MetaPill,
-  type RelationItem,
-} from './StandardPreview';
+  // Komponent karty (wartość) + model danych `StandardGridCard` (typ) — JEDEN
+  // kanon karty grid/kafelkowego (#76a). Nazwa dzielona: wartość=komponent,
+  // typ=dane.
+  StandardGridCard,
+  type StandardGridCardChip,
+  type StandardGridCardMetric,
+  type StandardGridCardProps,
+  type StandardGridCardUrgency,
+} from './StandardGridCard';
 export {
   StandardKanban,
-  type StandardKanbanProps,
   type StandardKanbanColumn,
+  type StandardKanbanProps,
   type StandardKanbanUrgency,
 } from './StandardKanban';
 export {
@@ -52,12 +29,35 @@ export {
   type StandardKanbanChip,
 } from './StandardKanbanCard';
 export {
-  // Komponent karty (wartość) + model danych `StandardGridCard` (typ) — JEDEN
-  // kanon karty grid/kafelkowego (#76a). Nazwa dzielona: wartość=komponent,
-  // typ=dane.
-  StandardGridCard,
-  type StandardGridCardProps,
-  type StandardGridCardChip,
-  type StandardGridCardMetric,
-  type StandardGridCardUrgency,
-} from './StandardGridCard';
+  type StandardBreadcrumb,
+  type StandardBulkAction,
+  type StandardBulkState,
+  type StandardCounterChip,
+  StandardModuleBar,
+  type StandardModuleBarProps,
+  type StandardModuleTab,
+  type StandardPrimaryCta,
+} from './StandardModuleBar';
+export {
+  type MetaPill,
+  type RelationItem,
+  StandardPreview,
+  type StandardPreviewAction,
+  type StandardPreviewActions,
+  type StandardPreviewDetails,
+  type StandardPreviewMeta,
+  type StandardPreviewProps,
+  standardPreviewShortcuts,
+} from './StandardPreview';
+export {
+  type RowAction,
+  type RowActionSection,
+  type StandardRowMenu,
+  type StandardRowMenuAction,
+  StandardTable,
+  type StandardTableEmpty,
+  type StandardTableProps,
+  type StandardTableSelection,
+  type TableColumn,
+  type TableRow,
+} from './StandardTable';

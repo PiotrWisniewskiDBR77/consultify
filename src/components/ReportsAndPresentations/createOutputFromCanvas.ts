@@ -63,6 +63,7 @@ export async function createOutputFromCanvasDraft(
     id: resourceId,
     title: String(resource?.title || '').trim() || 'Untitled output',
     url: typeof resource?.url === 'string' ? resource.url : undefined,
-    metadata: resource?.metadata && typeof resource.metadata === 'object' ? resource.metadata : undefined,
+    metadata:
+      resource?.metadata && typeof resource.metadata === 'object' ? resource.metadata : undefined,
   };
 }

@@ -72,7 +72,11 @@ const resolveEngagementBodyProjectId = async (req: any): Promise<string | null> 
 // ==========================================
 
 router.get('/', StakeholderRegistryController.list);
-router.post('/', requireStakeholderWrite(async () => null), StakeholderRegistryController.create);
+router.post(
+  '/',
+  requireStakeholderWrite(async () => null),
+  StakeholderRegistryController.create
+);
 router.get('/:id', StakeholderRegistryController.getOne);
 router.patch(
   '/:id',

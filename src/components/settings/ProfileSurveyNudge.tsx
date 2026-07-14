@@ -261,7 +261,9 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                       >
                         <Building
                           size={16}
-                          className={department === dept ? 'text-c-accent' : 'text-c-text-secondary'}
+                          className={
+                            department === dept ? 'text-c-accent' : 'text-c-text-secondary'
+                          }
                         />
                         {dept}
                       </button>
@@ -307,7 +309,9 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                       >
                         <Calendar
                           size={16}
-                          className={tenure === opt.value ? 'text-c-accent' : 'text-c-text-secondary'}
+                          className={
+                            tenure === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
+                          }
                         />
                         {opt.label}
                       </button>

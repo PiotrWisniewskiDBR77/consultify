@@ -149,13 +149,9 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
           <div className="text-[10px] text-c-text-muted mb-1 uppercase tracking-wider font-medium">
             {t('initiatives.kanban.nextGate', 'Next gate')}
           </div>
-          <div className="text-xs text-c-text-secondary font-medium truncate">
-            {nextStep.label}
-          </div>
+          <div className="text-xs text-c-text-secondary font-medium truncate">{nextStep.label}</div>
           {nextStep.role && (
-            <div className="text-[10px] text-c-text-muted mt-0.5">
-              {nextStep.role}
-            </div>
+            <div className="text-[10px] text-c-text-muted mt-0.5">{nextStep.role}</div>
           )}
         </div>
       )}
@@ -282,9 +278,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </SortableContext>
 
         {initiatives.length === 0 && (
-          <div className="p-3 text-center text-c-text-muted text-xs">
-            Drop initiatives here
-          </div>
+          <div className="p-3 text-center text-c-text-muted text-xs">Drop initiatives here</div>
         )}
       </div>
     </div>

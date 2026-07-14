@@ -48,31 +48,54 @@ const THEMES: Record<ThemeId, DeliverableTheme> = {
     label: 'Executive',
     description: 'McKinsey-grade: serif headlines, navy + teal. Domyślny dla decków zarządczych.',
     fontPair: { heading: 'Merriweather', body: 'Inter' },
-    palette: { dominant: '#0C447C', supporting: '#5F5E5A', accent: '#1D9E75', neutralText: '#2C2C2A' },
+    palette: {
+      dominant: '#0C447C',
+      supporting: '#5F5E5A',
+      accent: '#1D9E75',
+      neutralText: '#2C2C2A',
+    },
   },
   // Tech/startup: czysty humanistyczny sans (Inter head+body), indygo + cyan.
   modern: {
     id: 'modern',
     label: 'Modern',
-    description: 'Tech/startup: czysty sans Inter (head+body), indygo + cyan. Dla produktowych i GTM.',
+    description:
+      'Tech/startup: czysty sans Inter (head+body), indygo + cyan. Dla produktowych i GTM.',
     fontPair: { heading: 'Inter', body: 'Inter' },
-    palette: { dominant: '#4338CA', supporting: '#64748B', accent: '#06B6D4', neutralText: '#1E293B' },
+    palette: {
+      dominant: '#4338CA',
+      supporting: '#64748B',
+      accent: '#06B6D4',
+      neutralText: '#1E293B',
+    },
   },
   // Korporacyjny/Office-natywny: Calibri (head+body), granat + burnt orange.
   corporate: {
     id: 'corporate',
     label: 'Corporate',
-    description: 'Office-natywny/B2B: Calibri (head+body), granat + burnt orange. Dla raportów operacyjnych.',
+    description:
+      'Office-natywny/B2B: Calibri (head+body), granat + burnt orange. Dla raportów operacyjnych.',
     fontPair: { heading: 'Calibri', body: 'Calibri' },
-    palette: { dominant: '#1F3A5F', supporting: '#6B7280', accent: '#C2410C', neutralText: '#111827' },
+    palette: {
+      dominant: '#1F3A5F',
+      supporting: '#6B7280',
+      accent: '#C2410C',
+      neutralText: '#111827',
+    },
   },
   // Tradycyjny raport: elegancki serif (EB Garamond head + Georgia body), forest + amber.
   classic: {
     id: 'classic',
     label: 'Classic',
-    description: 'Tradycyjny raport: serif EB Garamond + Georgia, forest + amber. Dla prestiżowych.',
+    description:
+      'Tradycyjny raport: serif EB Garamond + Georgia, forest + amber. Dla prestiżowych.',
     fontPair: { heading: 'EB Garamond', body: 'Georgia' },
-    palette: { dominant: '#14532D', supporting: '#78716C', accent: '#B45309', neutralText: '#1C1917' },
+    palette: {
+      dominant: '#14532D',
+      supporting: '#78716C',
+      accent: '#B45309',
+      neutralText: '#1C1917',
+    },
   },
   // Lekki/przyjazny: Lato head + Source Sans 3 body, slate + blue, dużo światła.
   clean: {
@@ -80,7 +103,12 @@ const THEMES: Record<ThemeId, DeliverableTheme> = {
     label: 'Clean',
     description: 'Lekki/przyjazny: Lato + Source Sans 3, slate + blue. Dla data-heavy i tabel.',
     fontPair: { heading: 'Lato', body: 'Source Sans 3' },
-    palette: { dominant: '#334155', supporting: '#94A3B8', accent: '#2563EB', neutralText: '#0F172A' },
+    palette: {
+      dominant: '#334155',
+      supporting: '#94A3B8',
+      accent: '#2563EB',
+      neutralText: '#0F172A',
+    },
   },
 };
 

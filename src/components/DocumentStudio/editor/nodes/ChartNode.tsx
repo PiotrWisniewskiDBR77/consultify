@@ -14,7 +14,7 @@ import React from 'react';
 import { DocChartBlock, narrowChartContent } from '@/components/DocumentStudio/blocks';
 
 import { CHART_NODE_NAME } from '../nodeNames';
-import { payloadBlockAttributes, parseNodePayload } from './payloadAttrs';
+import { parseNodePayload, payloadBlockAttributes } from './payloadAttrs';
 
 const ChartNodeComponent: React.FC<{
   node: { attrs: Record<string, unknown> };

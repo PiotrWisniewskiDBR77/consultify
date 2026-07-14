@@ -1,10 +1,9 @@
+import type { TFunction } from 'i18next';
 import { Calculator, ChevronRight, Copy, ExternalLink, Link2, MessageSquare } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-
-import type { TFunction } from 'i18next';
 
 import {
   type ActionRow,
@@ -20,7 +19,7 @@ import {
 import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { ROUTES } from '@/routes/routeConfig';
 import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
-import { type InitiativeEconomicsLink, InitiativeApi } from '@/services/api/initiatives.api';
+import { InitiativeApi, type InitiativeEconomicsLink } from '@/services/api/initiatives.api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
@@ -63,7 +62,10 @@ const humanizeKey = (raw: string): string => {
  * Tone stays owned by statusChipTone(); this only supplies the text.
  */
 const initiativeStatusLabel = (t: TFunction, raw: string): string => {
-  const key = raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const key = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
   const map: Record<string, string> = {
     draft: t('preview.statuses.draft', 'Draft'),
     pending_review: t('initiatives.status.pendingReview', 'Pending review'),
@@ -193,7 +195,7 @@ export const InitiativePreviewV3Body: React.FC<{
     const actions: DetailsAction[] = [
       {
         id: 'toggle',
-        label: expanded ? (t('initiatives.collapse2')) : t('initiatives.expand2'),
+        label: expanded ? t('initiatives.collapse2') : t('initiatives.expand2'),
         onClick: toggleExpanded,
       },
       {
@@ -254,15 +256,11 @@ export const InitiativePreviewV3Body: React.FC<{
       <PreviewMetaCard pills={metaPills}>
         <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
           <div>
-            <div className="text-c-text-muted">
-              {t('initiatives.created2')}
-            </div>
+            <div className="text-c-text-muted">{t('initiatives.created2')}</div>
             <div className="text-c-text">{createdAt}</div>
           </div>
           <div className="text-right">
-            <div className="text-c-text-muted">
-              {t('initiatives.lastModified2')}
-            </div>
+            <div className="text-c-text-muted">{t('initiatives.lastModified2')}</div>
             <div className="text-c-text">{updatedAt}</div>
           </div>
         </div>
@@ -377,7 +375,7 @@ function getLinkageTypeLabel(
  * card stays clean for initiatives without a finance link.
  */
 const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language === 'pl';
@@ -520,7 +518,7 @@ export const InitiativePreviewV3Footer: React.FC<{
   extraActionsSlot,
   extraActionsAfterSlot,
 }) => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -555,10 +553,7 @@ export const InitiativePreviewV3Footer: React.FC<{
   );
 
   const handleRegenerate = useCallback(
-    () =>
-      onOpenChat?.(
-        t('initiatives.initiativePreviewV3.generate3QuickHintsWhatTo')
-      ),
+    () => onOpenChat?.(t('initiatives.initiativePreviewV3.generate3QuickHintsWhatTo')),
     [isPolish, onOpenChat]
   );
 

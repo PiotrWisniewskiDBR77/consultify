@@ -124,10 +124,7 @@ export interface InitiativeEvmSource {
  * - AC = actualCost.
  * Returns null when there is no cost baseline (BAC ≤ 0) — EVM is undefined.
  */
-export function deriveInitiativeEvm(
-  src: InitiativeEvmSource,
-  asOf: number
-): EvmResult | null {
+export function deriveInitiativeEvm(src: InitiativeEvmSource, asOf: number): EvmResult | null {
   const bac = Number(src.bac) || 0;
   if (bac <= 0) return null;
 

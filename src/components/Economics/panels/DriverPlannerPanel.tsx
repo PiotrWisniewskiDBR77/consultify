@@ -89,8 +89,7 @@ const DEFAULT_TREE: DriverNode = {
 // Pure helpers (exported for unit testing)
 // ---------------------------------------------------------------------------
 
-const isFiniteNum = (n: unknown): n is number =>
-  typeof n === 'number' && Number.isFinite(n);
+const isFiniteNum = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 
 const APPLY: Record<DriverOp, (acc: number, v: number, i: number) => number> = {
   add: (acc, v) => acc + v,

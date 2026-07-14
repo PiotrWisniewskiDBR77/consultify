@@ -255,7 +255,10 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('kimi.tabeleShell.sourcePack.searchPlaceholder', 'Search records by content')}
+            placeholder={t(
+              'kimi.tabeleShell.sourcePack.searchPlaceholder',
+              'Search records by content'
+            )}
             className="w-full rounded-md border border-c-border-subtle bg-c-surface py-1.5 pl-7 pr-2 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-border"
             data-testid="source-pack-search-input"
             aria-label={t('kimi.tabeleShell.sourcePack.searchAriaLabel', 'Search records')}
@@ -307,7 +310,10 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             className="rounded-md border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary"
             data-testid="source-pack-candidates-empty"
           >
-            {t('kimi.tabeleShell.sourcePack.noCandidates', 'No candidate records match your filters.')}
+            {t(
+              'kimi.tabeleShell.sourcePack.noCandidates',
+              'No candidate records match your filters.'
+            )}
           </div>
         ) : (
           <ul className="space-y-2" data-testid="source-pack-candidate-list">
@@ -342,7 +348,10 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
           <textarea
             value={packDescription}
             onChange={(e) => setPackDescription(e.target.value)}
-            placeholder={t('kimi.tabeleShell.sourcePack.descriptionPlaceholder', 'Optional description')}
+            placeholder={t(
+              'kimi.tabeleShell.sourcePack.descriptionPlaceholder',
+              'Optional description'
+            )}
             rows={2}
             maxLength={2000}
             className="w-full resize-none rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
@@ -372,7 +381,8 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
         </h4>
         {packsLoading ? (
           <div className="flex items-center gap-1 px-2 py-1 text-xs text-c-text-secondary">
-            <Loader2 className="h-3 w-3 animate-spin" /> {t('kimi.tabeleShell.sourcePack.loading', 'Loading…')}
+            <Loader2 className="h-3 w-3 animate-spin" />{' '}
+            {t('kimi.tabeleShell.sourcePack.loading', 'Loading…')}
           </div>
         ) : savedPacks.length === 0 ? (
           <div
@@ -390,10 +400,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
                 data-testid="source-pack-saved-card"
               >
                 <div className="min-w-0 flex-1">
-                  <p
-                    className="truncate text-xs font-medium text-c-text"
-                    title={p.name}
-                  >
+                  <p className="truncate text-xs font-medium text-c-text" title={p.name}>
                     {p.name}
                   </p>
                   <p className="text-[11px] text-c-text-secondary">
@@ -410,7 +417,10 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
                     onClick={() => onUseInAiEditor(p)}
                     className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-[11px] text-c-text hover:bg-c-surface-raised"
                     data-testid="source-pack-use-in-ai"
-                    aria-label={t('kimi.tabeleShell.sourcePack.useInAiEditorAriaLabel', 'Use pack in AI Editor')}
+                    aria-label={t(
+                      'kimi.tabeleShell.sourcePack.useInAiEditorAriaLabel',
+                      'Use pack in AI Editor'
+                    )}
                   >
                     <Sparkles className="h-3 w-3" /> {t('kimi.tabeleShell.sourcePack.use', 'Use')}
                   </button>

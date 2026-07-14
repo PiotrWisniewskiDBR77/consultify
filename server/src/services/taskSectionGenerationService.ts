@@ -18,7 +18,7 @@
  */
 
 import logger from '../utils/Logger.js';
-import { validateCardContent, type CardContentValidationResult } from './cardContentValidator.js';
+import { type CardContentValidationResult, validateCardContent } from './cardContentValidator.js';
 
 export type TaskSectionKey = 'strategy' | 'execution' | 'evidence' | 'dependencies';
 
@@ -107,9 +107,9 @@ export const TASK_SECTION_PROMPTS: Record<TaskSectionKey, SectionPrompt> = {
       '{"description": "zadanie sformułowane jako REZULTAT (nie tylko czynność), 2-4 zdania answer-first", ' +
       '"why": "po co to zadanie — jawny link do celu inicjatywy / wartości biznesowej, 1-2 zdania", ' +
       '"expectedOutcome": "mierzalny STAN KOŃCOWY, nie czynność — MUSI zawierać: liczbę + jednostkę + kierunek zmiany ' +
-      '(np. \'ranking 3 maszyn z payback <18 mies, redukcja przestojów >15%\'), 1-2 zdania"}. ' +
-      'expectedOutcome ZAKAZ: czasowniki-aktywności jako outcome (\'identyfikacja X\', \'szacowanie Y\', \'przegląd Z\', ' +
-      '\'analiza...\', \'zebranie danych...\') — to są kroki WYKONANIA, nie efekt końcowy. Napisz co JEST PRAWDĄ po zakończeniu, ' +
+      "(np. 'ranking 3 maszyn z payback <18 mies, redukcja przestojów >15%'), 1-2 zdania\"}. " +
+      "expectedOutcome ZAKAZ: czasowniki-aktywności jako outcome ('identyfikacja X', 'szacowanie Y', 'przegląd Z', " +
+      "'analiza...', 'zebranie danych...') — to są kroki WYKONANIA, nie efekt końcowy. Napisz co JEST PRAWDĄ po zakończeniu, " +
       'mierzalnie (liczba+jednostka+kierunek: spadek/wzrost/próg). Jeśli liczba jest szacunkiem/benchmarkiem bez twardego źródła ' +
       'z kontekstu zadania — oznacz ją jawnie („szacunek:", „benchmark, do walidacji:", „założenie:"), NIGDY nie podawaj liczby ' +
       'branżowej jako faktu. Nie mieszaj warstw: description=CO, why=PO CO, expectedOutcome=EFEKT MIERZALNY. Return valid JSON.',
@@ -143,11 +143,7 @@ export const TASK_SECTION_PROMPTS: Record<TaskSectionKey, SectionPrompt> = {
 
 // ── Interpolacja kontekstu ───────────────────────────────────────────────────
 
-function buildUserPrompt(
-  sectionKey: TaskSectionKey,
-  ctx: TaskContext,
-  isPolish: boolean
-): string {
+function buildUserPrompt(sectionKey: TaskSectionKey, ctx: TaskContext, isPolish: boolean): string {
   const prompt = TASK_SECTION_PROMPTS[sectionKey];
   const label: Record<TaskSectionKey, string> = {
     strategy: isPolish ? 'STRATEGIA' : 'STRATEGY',
@@ -160,7 +156,8 @@ function buildUserPrompt(
   if (ctx.title) contextLines.push(`- Tytuł zadania: ${ctx.title}`);
   if (ctx.description) contextLines.push(`- Obecny opis: ${ctx.description}`);
   if (ctx.why) contextLines.push(`- Why (istniejące): ${ctx.why}`);
-  if (ctx.expectedOutcome) contextLines.push(`- Oczekiwany efekt (istniejący): ${ctx.expectedOutcome}`);
+  if (ctx.expectedOutcome)
+    contextLines.push(`- Oczekiwany efekt (istniejący): ${ctx.expectedOutcome}`);
   if (ctx.taskType) contextLines.push(`- Typ zadania: ${ctx.taskType}`);
   if (ctx.priority) contextLines.push(`- Priorytet: ${ctx.priority}`);
   if (ctx.ownerName) {
@@ -251,8 +248,7 @@ export async function generateTaskSection(
 
   const content = String(result?.content || '');
   const usage = (result?.usage || {}) as Record<string, number>;
-  const tokensUsed =
-    usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+  const tokensUsed = usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
   const model = String(result?.model || result?.modelId || 'llm-premium');
 
   const wantsJson = TASK_SECTION_PROMPTS[sectionKey].json;

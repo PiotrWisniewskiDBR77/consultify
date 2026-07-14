@@ -379,7 +379,9 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                   {t('admin.team.import.expectedFormat', 'Expected Format')}
                 </h4>
                 <div className="overflow-x-auto">
-                  <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="text-xs">
+                  <table
+                    /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="text-xs"
+                  >
                     <thead>
                       <tr className="text-slate-500 dark:text-slate-400">
                         <th className="pr-4 text-left">email*</th>

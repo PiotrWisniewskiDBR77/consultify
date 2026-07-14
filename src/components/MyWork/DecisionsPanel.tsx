@@ -734,15 +734,11 @@ const DecisionCard: React.FC<{
         </div>
 
         {/* Title */}
-        <h4 className="text-sm font-semibold text-c-text mb-2 line-clamp-2">
-          {decision.title}
-        </h4>
+        <h4 className="text-sm font-semibold text-c-text mb-2 line-clamp-2">{decision.title}</h4>
 
         {/* Description */}
         {decision.description && (
-          <p className="text-xs text-c-text-muted line-clamp-2 mb-3">
-            {decision.description}
-          </p>
+          <p className="text-xs text-c-text-muted line-clamp-2 mb-3">{decision.description}</p>
         )}
 
         {/* Info Grid */}
@@ -753,10 +749,7 @@ const DecisionCard: React.FC<{
               <div className="w-6 h-6 rounded-md bg-c-surface-raised flex items-center justify-center shrink-0">
                 <FolderKanban size={12} className="text-c-text-secondary" />
               </div>
-              <span
-                className="text-c-text-secondary truncate"
-                title={decision.projectName}
-              >
+              <span className="text-c-text-secondary truncate" title={decision.projectName}>
                 {decision.projectName}
               </span>
             </div>
@@ -768,10 +761,7 @@ const DecisionCard: React.FC<{
               <div className="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
                 <MapPin size={12} className="text-blue-600 dark:text-blue-400" />
               </div>
-              <span
-                className="text-c-text-secondary truncate"
-                title={decision.locationName}
-              >
+              <span className="text-c-text-secondary truncate" title={decision.locationName}>
                 {decision.locationName}
               </span>
             </div>
@@ -783,9 +773,7 @@ const DecisionCard: React.FC<{
               <div className="w-6 h-6 rounded-full bg-c-surface-raised flex items-center justify-center shrink-0 text-[10px] font-bold text-c-text-secondary">
                 {decision.ownerName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-c-text-secondary truncate">
-                {decision.ownerName}
-              </span>
+              <span className="text-c-text-secondary truncate">{decision.ownerName}</span>
             </div>
           )}
 
@@ -1249,9 +1237,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               <FileQuestion size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-c-text">
-                {t('decisions.title', 'Decisions')}
-              </h3>
+              <h3 className="font-bold text-c-text">{t('decisions.title', 'Decisions')}</h3>
               <p className="text-xs text-c-text-muted">
                 {myDecisionsCount + awaitingCount} {t('decisions.pending', 'pending')}
                 {urgentCount > 0 && (
@@ -1369,13 +1355,13 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                       setShowFilters(false);
                     }}
                     className={`w-full px-4 py-2 text-left text-sm hover:bg-c-surface flex items-center gap-2 ${
-                      filterType === filter
-                        ? 'text-c-text font-medium'
-                        : 'text-c-text-secondary'
+                      filterType === filter ? 'text-c-text font-medium' : 'text-c-text-secondary'
                     }`}
                   >
                     {filter === 'all' && <Tag size={14} />}
-                    {filter === 'overdue' && <AlertTriangle size={14} className="text-danger-500" />}
+                    {filter === 'overdue' && (
+                      <AlertTriangle size={14} className="text-danger-500" />
+                    )}
                     {filter === 'thisWeek' && <Calendar size={14} className="text-blue-500" />}
                     {filter === 'blocking' && <Bell size={14} className="text-amber-500" />}
                     {filter === 'all'
@@ -1399,9 +1385,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                       setShowFilters(false);
                     }}
                     className={`w-full px-4 py-2 text-left text-sm hover:bg-c-surface flex items-center gap-2 ${
-                      filterType === filter
-                        ? 'text-c-text font-medium'
-                        : 'text-c-text-secondary'
+                      filterType === filter ? 'text-c-text font-medium' : 'text-c-text-secondary'
                     }`}
                   >
                     {filter === 'critical' && <Zap size={14} className="text-danger-500" />}
@@ -1487,10 +1471,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                   </>
                 ) : (
                   <>
-                    <Hourglass
-                      size={32}
-                      className="mx-auto mb-2 text-c-text-muted"
-                    />
+                    <Hourglass size={32} className="mx-auto mb-2 text-c-text-muted" />
                     <p className="text-sm font-medium">
                       {t('decisions.noAwaitingOthers', 'No decisions pending from others')}
                     </p>

@@ -259,9 +259,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
 
       {/* Register Selector */}
       <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
-        <label className="mb-1 block text-sm font-medium text-c-text">
-          {t.register}
-        </label>
+        <label className="mb-1 block text-sm font-medium text-c-text">{t.register}</label>
         <p className="mb-3 text-xs text-c-text-secondary">{t.registerDesc}</p>
         <div className="space-y-2">
           {REGISTER_OPTIONS.map((opt) => (
@@ -291,9 +289,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-c-text">
-              {t.preferredWords}
-            </label>
+            <label className="mb-1 block text-sm font-medium text-c-text">{t.preferredWords}</label>
             <p className="mb-2 text-xs text-c-text-secondary">{t.preferredDesc}</p>
             <textarea
               value={preferredWords}
@@ -308,9 +304,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-c-text">
-              {t.forbiddenWords}
-            </label>
+            <label className="mb-1 block text-sm font-medium text-c-text">{t.forbiddenWords}</label>
             <p className="mb-2 text-xs text-c-text-secondary">{t.forbiddenDesc}</p>
             <textarea
               value={forbiddenWords}

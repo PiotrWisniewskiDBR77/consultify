@@ -112,9 +112,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-        <p className="text-c-text-muted animate-pulse">
-          Synchronizing project intelligence...
-        </p>
+        <p className="text-c-text-muted animate-pulse">Synchronizing project intelligence...</p>
       </div>
     );
   }
@@ -407,9 +405,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     <div className="text-navy-900 dark:text-white font-bold">
                       {project.owner_first_name} {project.owner_last_name}
                     </div>
-                    <div className="text-xs text-c-text-muted">
-                      Account Executive
-                    </div>
+                    <div className="text-xs text-c-text-muted">Account Executive</div>
                   </div>
                 </div>
               </div>
@@ -480,9 +476,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <h4 className="font-bold text-c-text mb-1 group-hover:text-primary-400 transition-colors">
                         {item.title}
                       </h4>
-                      <p className="text-xs text-c-text-muted mb-4">
-                        {item.description}
-                      </p>
+                      <p className="text-xs text-c-text-muted mb-4">{item.description}</p>
                       <div className="flex items-center gap-3">
                         <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-bold rounded uppercase">
                           {item.status}

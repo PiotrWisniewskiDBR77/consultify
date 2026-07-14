@@ -50,6 +50,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
 import {
   generateReportDocument,
@@ -60,9 +61,9 @@ import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { LoadingState } from '@/components/shared/states';
 import {
-  standardPreviewShortcuts,
   StandardPreview,
   type StandardPreviewActions,
+  standardPreviewShortcuts,
   type StandardRowMenu,
   StandardTable,
 } from '@/components/standard';
@@ -88,9 +89,9 @@ import {
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
+import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
-import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 
 import { useAppStore } from '../../store/useAppStore';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
@@ -119,9 +120,10 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
+import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
 import { ExecutionManagementView } from './ExecutionManagementView';
-import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import {
   buildReportMarkdown,
@@ -132,14 +134,12 @@ import {
   type ReportDataContext,
   type ReportDef,
 } from './executionReports';
+import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
+import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
-import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
-import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
-import { isExecutionFlagEnabled } from './executionFeatureFlags';
-import { getArtifactPath } from '@/utils/artifactLinks';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -363,9 +363,7 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <GripVertical size={14} className="text-c-text-muted flex-shrink-0" />
-          <h4 className="text-sm font-medium text-c-text line-clamp-2">
-            {task.title}
-          </h4>
+          <h4 className="text-sm font-medium text-c-text line-clamp-2">{task.title}</h4>
         </div>
         {isPastDue(task.dueDate) && (
           <span className="text-[10px] text-danger-400 uppercase tracking-wide flex-shrink-0">
@@ -374,9 +372,7 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
         )}
       </div>
       {task.initiativeName && (
-        <div className="text-xs text-c-text-muted mb-2 ml-6">
-          {task.initiativeName}
-        </div>
+        <div className="text-xs text-c-text-muted mb-2 ml-6">{task.initiativeName}</div>
       )}
       <div className="flex items-center justify-between text-xs text-c-text-muted ml-6">
         <span className="capitalize">{task.priority}</span>
@@ -2064,14 +2060,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         );
       }
     },
-    [
-      isPilotParticipant,
-      summarySelectedIds,
-      confirmBulk,
-      t,
-      activeTab,
-      clearSummarySelection,
-    ]
+    [isPilotParticipant, summarySelectedIds, confirmBulk, t, activeTab, clearSummarySelection]
   );
 
   // Table columns
@@ -2103,9 +2092,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2">
               <Target size={14} className="text-blue-400" />
-              <span className="font-mono text-xs font-bold text-c-text-secondary">
-                {code}
-              </span>
+              <span className="font-mono text-xs font-bold text-c-text-secondary">{code}</span>
             </div>
           );
         },
@@ -2206,9 +2193,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
               </div>
-              <span className="text-xs text-c-text-muted w-8 text-right">
-                {progress}%
-              </span>
+              <span className="text-xs text-c-text-muted w-8 text-right">{progress}%</span>
             </div>
           );
         },
@@ -2459,9 +2444,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }))
       .filter(
         (pair) =>
-          typeof pair.budget === 'number' &&
-          pair.budget > 0 &&
-          typeof pair.actual === 'number'
+          typeof pair.budget === 'number' && pair.budget > 0 && typeof pair.actual === 'number'
       );
 
     let budgetHealth: number | null = null;
@@ -2657,7 +2640,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const buildInitiativeRowMenu = useCallback(
     (init: FullInitiative): StandardRowMenu => {
       const hasDue = Boolean(init.plannedEndDate || init.slaDeadline);
-      const statusActions = isPilotParticipant ? [] : getStatusActions(init.status as InitiativeStatus);
+      const statusActions = isPilotParticipant
+        ? []
+        : getStatusActions(init.status as InitiativeStatus);
       return {
         primary: [
           {
@@ -2931,7 +2916,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 </div>
               </div>
               {activeTask.initiativeName && (
-                <div className="text-xs text-c-text-muted mb-2 ml-6">{activeTask.initiativeName}</div>
+                <div className="text-xs text-c-text-muted mb-2 ml-6">
+                  {activeTask.initiativeName}
+                </div>
               )}
               <div className="flex items-center justify-between text-xs text-c-text-muted ml-6">
                 <span className="capitalize">{activeTask.priority}</span>
@@ -3138,124 +3125,126 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           )}
         </Callout>
       )}
-    <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
-      <PortfolioHealthScore
-        score={portfolioMetrics.healthScore}
-        breakdown={portfolioMetrics.breakdown}
-        trend={portfolioMetrics.overdueDecisions > 0 ? 'down' : 'up'}
-        loading={portfolioMetrics.isHealthLoading}
-      />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
+      <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
+        <PortfolioHealthScore
+          score={portfolioMetrics.healthScore}
+          breakdown={portfolioMetrics.breakdown}
+          trend={portfolioMetrics.overdueDecisions > 0 ? 'down' : 'up'}
+          loading={portfolioMetrics.isHealthLoading}
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-c-text-muted uppercase tracking-wide">
+                  {t('execution.portfolio.onTrack')}
+                </p>
+                <p className="text-2xl font-semibold text-c-text">
+                  {portfolioMetrics.onTrackCount}
+                </p>
+              </div>
+              <CheckCircle2 className="text-emerald-400" />
+            </div>
+          </div>
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-c-text-muted uppercase tracking-wide">
+                  {t('execution.portfolio.blocked')}
+                </p>
+                <p className="text-2xl font-semibold text-c-text">
+                  {portfolioMetrics.blockedCount}
+                </p>
+              </div>
+              <AlertTriangle className="text-danger-400" />
+            </div>
+          </div>
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-c-text-muted uppercase tracking-wide">
+                  {t('execution.portfolio.overdueDecisions')}
+                </p>
+                <p className="text-2xl font-semibold text-c-text">
+                  {portfolioMetrics.overdueDecisions}
+                </p>
+              </div>
+              <Scale className="text-amber-400" />
+            </div>
+          </div>
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-c-text-muted uppercase tracking-wide">
+                  {t('execution.portfolio.avgProgress')}
+                </p>
+                <p className="text-2xl font-semibold text-c-text">
+                  {portfolioMetrics.avgProgress}%
+                </p>
+              </div>
+              <Target className="text-blue-400" />
+            </div>
+          </div>
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-c-text-muted uppercase tracking-wide">
+                  {t('execution.portfolio.budgetHealth')}
+                </p>
+                <p className="text-2xl font-semibold text-c-text">
+                  {portfolioMetrics.budgetHealth === null
+                    ? '—'
+                    : `${portfolioMetrics.budgetHealth}%`}
+                </p>
+              </div>
+              <LayoutDashboard className="text-c-text-muted" />
+            </div>
+          </div>
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-c-text-muted uppercase tracking-wide">
+                  {t('execution.portfolio.decisionSla')}
+                </p>
+                <p className="text-2xl font-semibold text-c-text">
+                  {portfolioMetrics.totalDecisions === 0
+                    ? '—'
+                    : `${portfolioMetrics.totalDecisions - portfolioMetrics.overdueDecisions}/${portfolioMetrics.totalDecisions}`}
+                </p>
+              </div>
+              <Clock className="text-amber-400" />
+            </div>
+          </div>
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4 sm:col-span-2 lg:col-span-3">
+            <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-c-text-muted uppercase tracking-wide">
-                {t('execution.portfolio.onTrack')}
+                {t('execution.portfolio.escalationsGates')}
               </p>
-              <p className="text-2xl font-semibold text-c-text">
-                {portfolioMetrics.onTrackCount}
-              </p>
+              <span className="text-xs text-c-text-muted">
+                {portfolioMetrics.stageGate?.gateType ||
+                  t('execution.portfolio.noGateInfo', 'No gate info')}
+              </span>
             </div>
-            <CheckCircle2 className="text-emerald-400" />
+            {portfolioMetrics.blockers.length === 0 ? (
+              <p className="text-sm text-c-text-muted">
+                {t('execution.portfolio.noActiveEscalations')}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {portfolioMetrics.blockers.slice(0, 4).map((blocker, idx) => (
+                  <div
+                    key={`${blocker.type}-${idx}`}
+                    className="flex items-start gap-2 text-sm text-c-text-secondary"
+                  >
+                    <AlertTriangle className="text-danger-400 mt-0.5" size={14} />
+                    <span>{blocker.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-c-text-muted uppercase tracking-wide">
-                {t('execution.portfolio.blocked')}
-              </p>
-              <p className="text-2xl font-semibold text-c-text">
-                {portfolioMetrics.blockedCount}
-              </p>
-            </div>
-            <AlertTriangle className="text-danger-400" />
-          </div>
-        </div>
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-c-text-muted uppercase tracking-wide">
-                {t('execution.portfolio.overdueDecisions')}
-              </p>
-              <p className="text-2xl font-semibold text-c-text">
-                {portfolioMetrics.overdueDecisions}
-              </p>
-            </div>
-            <Scale className="text-amber-400" />
-          </div>
-        </div>
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-c-text-muted uppercase tracking-wide">
-                {t('execution.portfolio.avgProgress')}
-              </p>
-              <p className="text-2xl font-semibold text-c-text">
-                {portfolioMetrics.avgProgress}%
-              </p>
-            </div>
-            <Target className="text-blue-400" />
-          </div>
-        </div>
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-c-text-muted uppercase tracking-wide">
-                {t('execution.portfolio.budgetHealth')}
-              </p>
-              <p className="text-2xl font-semibold text-c-text">
-                {portfolioMetrics.budgetHealth === null ? '—' : `${portfolioMetrics.budgetHealth}%`}
-              </p>
-            </div>
-            <LayoutDashboard className="text-c-text-muted" />
-          </div>
-        </div>
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-c-text-muted uppercase tracking-wide">
-                {t('execution.portfolio.decisionSla')}
-              </p>
-              <p className="text-2xl font-semibold text-c-text">
-                {portfolioMetrics.totalDecisions === 0
-                  ? '—'
-                  : `${portfolioMetrics.totalDecisions - portfolioMetrics.overdueDecisions}/${portfolioMetrics.totalDecisions}`}
-              </p>
-            </div>
-            <Clock className="text-amber-400" />
-          </div>
-        </div>
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4 sm:col-span-2 lg:col-span-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-c-text-muted uppercase tracking-wide">
-              {t('execution.portfolio.escalationsGates')}
-            </p>
-            <span className="text-xs text-c-text-muted">
-              {portfolioMetrics.stageGate?.gateType ||
-                t('execution.portfolio.noGateInfo', 'No gate info')}
-            </span>
-          </div>
-          {portfolioMetrics.blockers.length === 0 ? (
-            <p className="text-sm text-c-text-muted">
-              {t('execution.portfolio.noActiveEscalations')}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {portfolioMetrics.blockers.slice(0, 4).map((blocker, idx) => (
-                <div
-                  key={`${blocker.type}-${idx}`}
-                  className="flex items-start gap-2 text-sm text-c-text-secondary"
-                >
-                  <AlertTriangle className="text-danger-400 mt-0.5" size={14} />
-                  <span>{blocker.message}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
-    </div>
     </div>
   );
 
@@ -3305,8 +3294,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const onTrack = wsTotal ? wsOnTrack : portfolioMetrics.onTrackCount;
     const delayed = wsTotal ? wsDelayed : portfolioMetrics.blockedCount;
     const atRisk = wsTotal ? wsAtRisk : Math.max(totalInit - onTrack - delayed, 0);
-    const onTimePercent =
-      totalInit > 0 ? Math.round((onTrack / totalInit) * 100) : null;
+    const onTimePercent = totalInit > 0 ? Math.round((onTrack / totalInit) * 100) : null;
 
     // Obłożenie: brak twardego silnika utilization → utilizationPercent=null
     // (empty-state). Przeciążenia z capacityAlerts, headcount z unikalnych
@@ -3353,9 +3341,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       context: null,
     }));
     const pendingDecisionItems = decisions
-      .filter(
-        (d) => String(d.status).toUpperCase() === 'PENDING' && !isPastDue((d as any).dueDate)
-      )
+      .filter((d) => String(d.status).toUpperCase() === 'PENDING' && !isPastDue((d as any).dueDate))
       .slice(0, 6)
       .map((d) => ({
         id: `pend:${d.id}`,
@@ -3493,16 +3479,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           title={t('execution.tasks.openInitiative', 'Open related initiative')}
         >
           <div className="min-w-0">
-            <div className="text-sm font-medium text-c-text truncate">
-              {task.title}
-            </div>
+            <div className="text-sm font-medium text-c-text truncate">{task.title}</div>
             <div className="text-xs text-c-text-muted truncate mt-0.5">
               {task.initiativeName || '—'}
             </div>
           </div>
           <div className="text-right text-xs text-c-text-muted shrink-0">
             <div>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</div>
-            {overdue ? <div className="text-danger-400">{t('execution.badges.overdue')}</div> : null}
+            {overdue ? (
+              <div className="text-danger-400">{t('execution.badges.overdue')}</div>
+            ) : null}
           </div>
         </button>
       );
@@ -3541,10 +3527,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return (
       <div className="p-4 space-y-4">
         {tasksFailed && (
-          <Callout
-            variant="warning"
-            title={t('execution.tasks.failed', 'Tasks unavailable')}
-          >
+          <Callout variant="warning" title={t('execution.tasks.failed', 'Tasks unavailable')}>
             {t(
               'execution.tasks.failedDesc',
               'Tasks could not be loaded. The buckets below are empty because of a load failure, not because there are no tasks — this is a degraded state.'
@@ -3683,9 +3666,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           className="w-full text-left p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle hover:border-c-border-strong hover:bg-c-surface/60 transition-colors"
           title={t('execution.decisionsBuckets.openInitiative', 'Open related initiative')}
         >
-          <div className="text-sm font-medium text-c-text truncate">
-            {d.title}
-          </div>
+          <div className="text-sm font-medium text-c-text truncate">{d.title}</div>
           <div className="text-xs text-c-text-muted truncate mt-0.5">
             {d.relatedObjectName || '—'}
           </div>
@@ -4062,9 +4043,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   {row.count}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-c-text-muted leading-relaxed">
-                {row.description}
-              </p>
+              <p className="mt-2 text-xs text-c-text-muted leading-relaxed">{row.description}</p>
             </button>
           ))}
         </div>
@@ -4704,12 +4683,8 @@ Please return:
                 {r.icon}
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-c-text truncate">
-                  {r.title}
-                </div>
-                <div className="text-[10px] text-c-text-muted truncate">
-                  {r.audience}
-                </div>
+                <div className="text-sm font-medium text-c-text truncate">{r.title}</div>
+                <div className="text-[10px] text-c-text-muted truncate">{r.audience}</div>
               </div>
             </div>
           );
@@ -4823,12 +4798,8 @@ Please return:
                   {report.icon}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-c-text">
-                    {report.title}
-                  </div>
-                  <div className="text-[10px] text-c-text-muted">
-                    {report.audience}
-                  </div>
+                  <div className="text-sm font-semibold text-c-text">{report.title}</div>
+                  <div className="text-[10px] text-c-text-muted">{report.audience}</div>
                 </div>
               </div>
             </div>
@@ -4858,9 +4829,7 @@ Please return:
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 Scope
               </div>
-              <p className="text-xs text-c-text-secondary leading-relaxed">
-                {report.scope}
-              </p>
+              <p className="text-xs text-c-text-secondary leading-relaxed">{report.scope}</p>
             </div>
 
             {/* Data sources */}
@@ -4915,9 +4884,7 @@ Please return:
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 RAG / Confidence Logic
               </div>
-              <p className="text-[11px] text-c-text-muted leading-relaxed">
-                {report.ragLogic}
-              </p>
+              <p className="text-[11px] text-c-text-muted leading-relaxed">{report.ragLogic}</p>
             </div>
 
             {/* Follow-up actions */}
@@ -5006,7 +4973,13 @@ Please return:
       const rag = selectedReport ? computeRAG(selectedReport) : null;
       const ragConf = rag ? RAG_CONFIG[rag] : null;
       const ragTone: 'success' | 'warning' | 'danger' | 'neutral' =
-        rag === 'green' ? 'success' : rag === 'amber' ? 'warning' : rag === 'red' ? 'danger' : 'neutral';
+        rag === 'green'
+          ? 'success'
+          : rag === 'amber'
+            ? 'warning'
+            : rag === 'red'
+              ? 'danger'
+              : 'neutral';
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -5014,7 +4987,11 @@ Please return:
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
               <StandardTable
                 columns={reportColumns}
-                data={filteredReportCatalog as unknown as Array<Record<string, unknown> & { id: string }>}
+                data={
+                  filteredReportCatalog as unknown as Array<
+                    Record<string, unknown> & { id: string }
+                  >
+                }
                 selectedRowId={selectedReportPreviewId}
                 onRowClick={(row) => setReportPreviewId(String((row as any).id))}
                 onRowDoubleClick={(row) => {
@@ -5064,7 +5041,8 @@ Please return:
                   details={{
                     text: [
                       `${t('execution.reportCatalog.col.data', 'Live Data')}: ${
-                        selectedReport.highlights.map((h) => `${h.label}: ${h.value}`).join(', ') || '—'
+                        selectedReport.highlights.map((h) => `${h.label}: ${h.value}`).join(', ') ||
+                        '—'
                       }`,
                       `${t('execution.reportCatalog.col.sections', 'Sections')}: ${selectedReport.sections.length}`,
                       '',
@@ -5175,9 +5153,7 @@ Please return:
                             {report.cadence}
                           </span>
                           <span className="text-[10px] text-c-text-muted">·</span>
-                          <span className="text-[10px] text-c-text-muted">
-                            {report.audience}
-                          </span>
+                          <span className="text-[10px] text-c-text-muted">{report.audience}</span>
                         </div>
                       </div>
                     </div>
@@ -5466,9 +5442,7 @@ Please return:
               ? t('execution.hub.transportBlockedTitle', 'Requests temporarily blocked')
               : t('execution.hub.loadErrorTitle', 'Failed to load implementation data')}
           </h3>
-          <p className="mb-6 max-w-md text-sm text-c-text-muted">
-            {initiativesLoadError}
-          </p>
+          <p className="mb-6 max-w-md text-sm text-c-text-muted">{initiativesLoadError}</p>
           <button
             type="button"
             onClick={() => {
@@ -5641,7 +5615,9 @@ Please return:
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
               <StandardTable
                 columns={columns}
-                data={summaryInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
+                data={
+                  summaryInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
+                }
                 selectedRowId={summaryPreviewInitiativeId}
                 onRowClick={(row) => setSummaryPreviewInitiativeId(String((row as any).id))}
                 onRowDoubleClick={(row) => {
@@ -5680,7 +5656,9 @@ Please return:
                   meta={{
                     pills: [
                       {
-                        label: STATUS_METADATA[selectedRow.status as InitiativeStatus]?.label || String(selectedRow.status),
+                        label:
+                          STATUS_METADATA[selectedRow.status as InitiativeStatus]?.label ||
+                          String(selectedRow.status),
                         tone: statusChipTone(String(selectedRow.status)),
                       },
                       {

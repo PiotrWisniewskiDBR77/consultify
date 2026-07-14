@@ -431,9 +431,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
             </div>
             <div>
               <p className="text-2xl font-bold text-primary-600">{stats.new}</p>
-              <p className="text-xs text-c-text-muted">
-                {t('admin.feedback.stats.new', 'Nowych')}
-              </p>
+              <p className="text-xs text-c-text-muted">{t('admin.feedback.stats.new', 'Nowych')}</p>
             </div>
           </div>
         </div>
@@ -537,9 +535,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       {loading ? (
         <div className="p-12 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-brand border-t-transparent rounded-full mx-auto" />
-          <p className="mt-4 text-c-text-muted">
-            {t('common.loading', 'Ładowanie...')}
-          </p>
+          <p className="mt-4 text-c-text-muted">{t('common.loading', 'Ładowanie...')}</p>
         </div>
       ) : filteredFeedback.length === 0 ? (
         <div className="p-12 text-center bg-c-surface rounded-xl border border-c-border-subtle">
@@ -594,9 +590,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                       )}
                     </div>
 
-                    <p className="text-c-text-secondary line-clamp-2 text-sm">
-                      {item.message}
-                    </p>
+                    <p className="text-c-text-secondary line-clamp-2 text-sm">{item.message}</p>
 
                     <div className="flex items-center gap-4 mt-2 text-xs text-c-text-muted">
                       <span className="flex items-center gap-1">

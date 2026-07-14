@@ -67,10 +67,8 @@ const DailyStatCard: React.FC<{
     blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/30',
     orange:
       'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/30',
-    slate:
-      'bg-c-surface-raised text-c-text-secondary border-c-border-subtle',
-    purple:
-      'bg-c-info/10 text-c-info border-c-info/20',
+    slate: 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle',
+    purple: 'bg-c-info/10 text-c-info border-c-info/20',
   };
 
   const iconBgClasses = {
@@ -92,11 +90,7 @@ const DailyStatCard: React.FC<{
         <div>
           <p className="text-2xl font-bold text-c-text">
             {value}
-            {suffix && (
-              <span className="text-sm font-normal text-c-text-muted ml-1">
-                {suffix}
-              </span>
-            )}
+            {suffix && <span className="text-sm font-normal text-c-text-muted ml-1">{suffix}</span>}
           </p>
           <p className="text-xs text-c-text-muted">{label}</p>
         </div>
@@ -217,9 +211,7 @@ const FocusTaskCard: React.FC<{
             <div className="flex-1 min-w-0">
               {/* Initiative */}
               {task.initiativeName && (
-                <span className="text-[10px] text-c-info font-medium">
-                  {task.initiativeName}
-                </span>
+                <span className="text-[10px] text-c-info font-medium">{task.initiativeName}</span>
               )}
 
               {/* Title */}
@@ -287,9 +279,7 @@ const TimeBlockSection: React.FC<{
   const completedCount = tasks.filter((t) => t.isCompleted).length;
 
   return (
-    <div
-      className={`rounded-xl overflow-hidden border border-c-border-subtle ${config.gradient}`}
-    >
+    <div className={`rounded-xl overflow-hidden border border-c-border-subtle ${config.gradient}`}>
       {/* Header */}
       <button
         onClick={onToggle}
@@ -732,9 +722,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                 {t('myWork.focus.aiSuggestions', 'AI Suggestions')}
               </h3>
             </div>
-            <p className="text-sm text-c-text-secondary mb-3">
-              {suggestions.reasoning}
-            </p>
+            <p className="text-sm text-c-text-secondary mb-3">{suggestions.reasoning}</p>
             <div className="space-y-2">
               {suggestions.suggestedTasks.slice(0, 3).map((suggestion) => (
                 <div
@@ -742,12 +730,8 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                   className="flex items-center justify-between p-3 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03]"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-c-text truncate">
-                      {suggestion.title}
-                    </p>
-                    <p className="text-xs text-c-text-muted truncate">
-                      {suggestion.reason}
-                    </p>
+                    <p className="text-sm font-medium text-c-text truncate">{suggestion.title}</p>
+                    <p className="text-xs text-c-text-muted truncate">{suggestion.reason}</p>
                   </div>
                   <button
                     onClick={() => onAddToFocus?.(suggestion.taskId, suggestion.suggestedTimeBlock)}
@@ -771,9 +755,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               {t('myWork.focus.executionScore', 'Execution Score')}
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-c-text">
-                {executionScore}
-              </span>
+              <span className="text-3xl font-bold text-c-text">{executionScore}</span>
               <span className="text-sm text-c-text-muted">/ 100</span>
             </div>
           </div>

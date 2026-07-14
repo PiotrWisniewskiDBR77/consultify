@@ -755,9 +755,11 @@ router.post(
     // kpi_deviation_actions), so without this gate a foreign-org caseId would attach an
     // action to another org's deviation case. Reject when the parent case is not owned.
     if (!deviationCase) {
-      return res
-        .status(404)
-        .json({ success: false, error: 'Deviation case not found', code: 'RESULTS_DEVIATION_CASE_NOT_FOUND' });
+      return res.status(404).json({
+        success: false,
+        error: 'Deviation case not found',
+        code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
+      });
     }
 
     const id = uuidv4().replace(/-/g, '');
@@ -1315,9 +1317,7 @@ router.post(
       notes,
     } = req.body || {};
     if (!initiativeId || !kpiId) {
-      return res
-        .status(400)
-        .json({ success: false, error: 'initiativeId and kpiId are required' });
+      return res.status(400).json({ success: false, error: 'initiativeId and kpiId are required' });
     }
     // SEC-3 (L-04): initiative_kpi_mappings is UNIQUE(initiative_id, kpi_id) (globally
     // unique, not per-org), so the ON CONFLICT UPSERT below could overwrite another org's

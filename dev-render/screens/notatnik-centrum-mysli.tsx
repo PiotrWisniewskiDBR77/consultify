@@ -145,7 +145,10 @@ function ProposalCard({
       <p className="mb-1 text-sm font-semibold text-c-text">{title}</p>
       <ul className="mb-3 flex flex-col gap-1">
         {lines.map((l, i) => (
-          <li key={i} className="flex items-start gap-1.5 text-[12px] leading-snug text-c-text-secondary">
+          <li
+            key={i}
+            className="flex items-start gap-1.5 text-[12px] leading-snug text-c-text-secondary"
+          >
             <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-c-text-muted" />
             {l}
           </li>
@@ -213,10 +216,17 @@ function TeresaChatMock({ isPl }: { isPl: boolean }): React.ReactElement {
             </p>
             <ProposalCard
               isPl={isPl}
-              title={isPl ? 'Notatka: Ustalenia z rozmowy — wejście na rynek DE' : 'Note: Chat findings — DE market entry'}
+              title={
+                isPl
+                  ? 'Notatka: Ustalenia z rozmowy — wejście na rynek DE'
+                  : 'Note: Chat findings — DE market entry'
+              }
               lines={
                 isPl
-                  ? ['Wariant B wybrany jako ścieżka wejścia', 'TAM DE = 3,2× rynek krajowy (4/6 wywiadów)']
+                  ? [
+                      'Wariant B wybrany jako ścieżka wejścia',
+                      'TAM DE = 3,2× rynek krajowy (4/6 wywiadów)',
+                    ]
                   : ['Variant B chosen as entry path', 'DE TAM = 3.2× home market (4/6 interviews)']
               }
             />
@@ -243,11 +253,21 @@ function TeresaChatMock({ isPl }: { isPl: boolean }): React.ReactElement {
             </p>
             <ProposalCard
               isPl={isPl}
-              title={isPl ? 'Notatka: Telefon do klienta — regulacje DE' : 'Note: Call client — DE regulations'}
+              title={
+                isPl
+                  ? 'Notatka: Telefon do klienta — regulacje DE'
+                  : 'Note: Call client — DE regulations'
+              }
               lines={
                 isPl
-                  ? ['Zadzwonić do klienta w sprawie barier regulacyjnych', 'Przypomnienie: jutro · 14.07.2026 · 09:00']
-                  : ['Call the client about regulatory barriers', 'Reminder: tomorrow · Jul 14, 2026 · 09:00']
+                  ? [
+                      'Zadzwonić do klienta w sprawie barier regulacyjnych',
+                      'Przypomnienie: jutro · 14.07.2026 · 09:00',
+                    ]
+                  : [
+                      'Call the client about regulatory barriers',
+                      'Reminder: tomorrow · Jul 14, 2026 · 09:00',
+                    ]
               }
             />
           </div>
@@ -259,7 +279,9 @@ function TeresaChatMock({ isPl }: { isPl: boolean }): React.ReactElement {
         <div className="flex items-end gap-2 rounded-2xl border border-c-border bg-c-surface px-3 py-2 focus-within:ring-2 focus-within:ring-c-focus">
           <textarea
             rows={1}
-            placeholder={isPl ? 'Napisz do Teresy… („zapamiętaj że…", „przypomnij mi…")' : 'Message Teresa…'}
+            placeholder={
+              isPl ? 'Napisz do Teresy… („zapamiętaj że…", „przypomnij mi…")' : 'Message Teresa…'
+            }
             className="min-h-[24px] flex-1 resize-none bg-transparent text-sm text-c-text placeholder:text-c-text-muted focus:outline-none"
           />
           <button

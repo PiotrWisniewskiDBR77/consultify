@@ -119,9 +119,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       if (!token) {
         // Even the share-link failed; the membership row (if created) still stands.
         if (!degraded) {
-          toast.success(
-            t('presentations.builder.share.inviteAdded', 'Collaborator added')
-          );
+          toast.success(t('presentations.builder.share.inviteAdded', 'Collaborator added'));
           setInviteEmail('');
         }
         return;
@@ -143,7 +141,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
       toast.success(
         degraded
-          ? t('presentations.builder.share.inviteSent', 'Invite ready — link copied and email opened')
+          ? t(
+              'presentations.builder.share.inviteSent',
+              'Invite ready — link copied and email opened'
+            )
           : t(
               'presentations.builder.share.inviteAddedAndSent',
               'Collaborator added — link copied and email opened'

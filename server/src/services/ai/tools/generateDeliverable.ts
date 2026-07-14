@@ -26,12 +26,6 @@ import {
 import { createNote } from '../../notebookService.js';
 import { hasPresentationCapability } from '../../presentationAccessPolicyService.js';
 import {
-  buildIdeasTableSkeleton,
-  buildProcessFlowSkeleton,
-  buildWhiteboardSkeleton,
-  type CanvasSkeletonGraph,
-} from '../canvasToolSkeletons.js';
-import {
   generateMindmapGraph,
   generateNoteContent,
   generateProcessFlowGraph,
@@ -39,6 +33,12 @@ import {
   generateWhiteboardGraph,
   type LlmGraph,
 } from '../canvasGraphLlm.js';
+import {
+  buildIdeasTableSkeleton,
+  buildProcessFlowSkeleton,
+  buildWhiteboardSkeleton,
+  type CanvasSkeletonGraph,
+} from '../canvasToolSkeletons.js';
 import { buildMindmapSkeleton, type MindmapSkeletonGraph } from '../mindmapSkeleton.js';
 
 type DeliverableKind =
@@ -209,9 +209,7 @@ export async function generateDeliverable(
     );
     const graph: MindmapSkeletonGraph | LlmGraph =
       llmGraph ?? buildMindmapSkeleton(intent, params.title);
-    logger.info(
-      `[generate_deliverable] mindmap graph source=${llmGraph ? 'llm' : 'skeleton'}`
-    );
+    logger.info(`[generate_deliverable] mindmap graph source=${llmGraph ? 'llm' : 'skeleton'}`);
     // Materialize a REAL my_ideas/my_idea_maps row server-side (mirrors the
     // note branch below) so persistence is not FE-contingent — the FE mount
     // path (IdeaMapWorkspace.hydrate) simply loads this id instead of creating
@@ -232,7 +230,11 @@ export async function generateDeliverable(
           projectId: null,
           sourceDraftId: conversationId || `chat-mindmap-${Date.now()}`,
           sourceConversationId: conversationId,
-          graph: { nodes: graph.nodes, edges: graph.edges, extensions: (graph as LlmGraph).extensions },
+          graph: {
+            nodes: graph.nodes,
+            edges: graph.edges,
+            extensions: (graph as LlmGraph).extensions,
+          },
           preferredTool: 'mindmap',
           sourceType: 'teresa_chat',
         },
@@ -342,7 +344,11 @@ export async function generateDeliverable(
           projectId: null,
           sourceDraftId: conversationId || `chat-${preferredSystem}-${Date.now()}`,
           sourceConversationId: conversationId,
-          graph: { nodes: graph.nodes, edges: graph.edges, extensions: (graph as LlmGraph).extensions },
+          graph: {
+            nodes: graph.nodes,
+            edges: graph.edges,
+            extensions: (graph as LlmGraph).extensions,
+          },
           preferredTool: preferredSystem,
           sourceType: 'teresa_chat',
         },
@@ -430,9 +436,7 @@ export async function generateDeliverable(
       // an empty shell). Fail-soft to the raw intent if generation fails.
       const proseBody = await generateNoteContent(intent, params.title, language === 'pl');
       const noteBody = proseBody || intent;
-      logger.info(
-        `[generate_deliverable] note content source=${proseBody ? 'llm' : 'intent'}`
-      );
+      logger.info(`[generate_deliverable] note content source=${proseBody ? 'llm' : 'intent'}`);
 
       const created = await createNote({
         organizationId: orgId,

@@ -157,9 +157,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-semibold text-c-text">
-                      {label}
-                    </span>
+                    <span className="text-[12px] font-semibold text-c-text">{label}</span>
                     {source.confidence_contribution != null && (
                       <span
                         className="text-[10px] tabular-nums text-c-text-muted"

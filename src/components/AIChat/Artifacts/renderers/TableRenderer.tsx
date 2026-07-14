@@ -202,7 +202,9 @@ export const TableRenderer: React.FC<TableRendererProps> = ({ content, className
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
-        <table /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */  className="min-w-full divide-y divide-slate-200 dark:divide-navy-700">
+        <table
+          /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */ className="min-w-full divide-y divide-slate-200 dark:divide-navy-700"
+        >
           <thead className="bg-slate-50 dark:bg-navy-800 sticky top-0 z-10">
             <tr>
               {tableData.headers.map((header, index) => (

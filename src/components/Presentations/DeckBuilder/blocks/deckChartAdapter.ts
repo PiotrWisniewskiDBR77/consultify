@@ -177,9 +177,10 @@ function readSeries(content: Record<string, unknown>): {
 // ── Ported pure math ─────────────────────────────────────────────────────────
 
 /** Waterfall — ported from chartSpecEngine.buildWaterfall. */
-function buildWaterfall(
-  items: { label: string; value: number; isTotal?: boolean }[]
-): { bars: WaterfallBar[]; domain: { min: number; max: number } } {
+function buildWaterfall(items: { label: string; value: number; isTotal?: boolean }[]): {
+  bars: WaterfallBar[];
+  domain: { min: number; max: number };
+} {
   let running = 0;
   let min = 0;
   let max = 0;
@@ -269,10 +270,7 @@ function toHarveyLevel(value: number): HarveyLevel {
 
 // ── Advanced-type builders (each fail-open to null) ──────────────────────────
 
-function adaptWaterfall(
-  content: Record<string, unknown>,
-  title?: string
-): WaterfallSpec | null {
+function adaptWaterfall(content: Record<string, unknown>, title?: string): WaterfallSpec | null {
   const items = asArray(content.items ?? content.data ?? content.bars)
     .map((it) => {
       const obj = (it ?? {}) as Record<string, unknown>;
@@ -370,7 +368,8 @@ function adaptMarimekko(content: Record<string, unknown>, title?: string): Marim
   const { rects, columnBounds } = computeMarimekko(columns);
   if (rects.length === 0) return null;
   const segmentNames: string[] = [];
-  for (const r of rects) if (!segmentNames.includes(r.segmentName)) segmentNames.push(r.segmentName);
+  for (const r of rects)
+    if (!segmentNames.includes(r.segmentName)) segmentNames.push(r.segmentName);
   return { type: 'marimekko', title, rects, columnBounds, segmentNames };
 }
 
@@ -382,7 +381,11 @@ function adaptHarvey(content: Record<string, unknown>, title?: string): HarveySp
       const level = num(obj.level ?? obj.value);
       if (level === null) return null;
       const lvl = toHarveyLevel(level);
-      const ball: HarveyBall = { label: str(obj.label ?? obj.name), level: lvl, fillFraction: lvl / 4 };
+      const ball: HarveyBall = {
+        label: str(obj.label ?? obj.name),
+        level: lvl,
+        fillFraction: lvl / 4,
+      };
       if (obj.note != null) ball.note = str(obj.note);
       return ball;
     })

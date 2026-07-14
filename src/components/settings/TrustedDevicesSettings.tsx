@@ -352,9 +352,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-c-text">
-                        {device.name}
-                      </h4>
+                      <h4 className="font-semibold text-c-text">{device.name}</h4>
                       {device.isCurrent && (
                         <StatusChip
                           tone="success"

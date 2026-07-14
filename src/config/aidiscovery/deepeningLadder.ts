@@ -76,7 +76,7 @@ export const AI_DEEPENING_LADDER: Record<AiPhaseId, LadderRung[]> = {
       label: { pl: 'Dowód', en: 'Evidence' },
       question: {
         pl: 'Skąd wiecie, że ten ból jest realny i częsty — z obserwacji procesu i liczby przypadków, czy z pojedynczej frustracji jednej osoby?',
-        en: 'How do you know this pain is real and frequent — from process observation and case counts, or from one person\'s single frustration?',
+        en: "How do you know this pain is real and frequent — from process observation and case counts, or from one person's single frustration?",
       },
       rationale: {
         pl: 'AI opłaca się tylko przy powtarzalnym, częstym problemie — anegdota o jednym trudnym przypadku nie uzasadnia budowy modelu.',
@@ -102,11 +102,11 @@ export const AI_DEEPENING_LADDER: Record<AiPhaseId, LadderRung[]> = {
       label: { pl: 'Ryzyko i zdolności', en: 'Risk & capability' },
       question: {
         pl: 'Czy istnieje właściciel biznesowy tego przypadku, który przyjmie wynik modelu i podejmie na jego podstawie decyzję — czy to projekt bez adresata?',
-        en: 'Is there a business owner for this use case who will accept the model\'s output and act on it — or is it a project with no recipient?',
+        en: "Is there a business owner for this use case who will accept the model's output and act on it — or is it a project with no recipient?",
       },
       rationale: {
         pl: 'Model bez właściciela decyzji trafia do szuflady — najczęstsza przyczyna śmierci projektu AI to nie technologia, lecz brak odbiorcy wyniku.',
-        en: 'A model with no decision owner ends up in a drawer — the most common cause of an AI project\'s death is not the technology but the absence of a recipient for the output.',
+        en: "A model with no decision owner ends up in a drawer — the most common cause of an AI project's death is not the technology but the absence of a recipient for the output.",
       },
     },
   ],
@@ -184,7 +184,7 @@ export const AI_DEEPENING_LADDER: Record<AiPhaseId, LadderRung[]> = {
       label: { pl: 'Dowód', en: 'Evidence' },
       question: {
         pl: 'Czy szacunek wartości opiera się na obecnym koszcie procesu (baseline), czy na optymistycznym założeniu o skuteczności modelu?',
-        en: 'Is the value estimate based on the current process cost (a baseline), or on an optimistic assumption about the model\'s accuracy?',
+        en: "Is the value estimate based on the current process cost (a baseline), or on an optimistic assumption about the model's accuracy?",
       },
       rationale: {
         pl: 'Wartość liczona od życzeniowej skuteczności modelu zawsze zawodzi — dowodem jest baseline procesu, od którego liczymy realną poprawę.',

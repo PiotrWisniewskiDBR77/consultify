@@ -18,8 +18,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { ProjectGovernance } from '../../components/Admin/ProjectGovernance';
-import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { useUserCan } from '../../hooks/useUserCan';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -285,7 +285,9 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
       ) : (
         /* List View */
         <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden shadow-sm dark:shadow-xl">
-          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left border-collapse">
+          <table
+            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left border-collapse"
+          >
             <thead>
               <tr className="bg-c-bg dark:bg-c-surface/5 text-c-text-secondary text-xs uppercase tracking-wider font-semibold border-b border-c-border-subtle">
                 <th className="px-6 py-4">Project</th>

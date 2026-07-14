@@ -818,9 +818,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             </div>
 
             <div className="mt-4 rounded-2xl bg-white/[0.04] p-4">
-              <div className={TEXT_L1}>
-                {isPolish ? 'Kontekst' : 'Context'}
-              </div>
+              <div className={TEXT_L1}>{isPolish ? 'Kontekst' : 'Context'}</div>
               <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
               <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-600">
                 <div>
@@ -947,9 +945,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
 
             <div className="mt-4 space-y-3 rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-200">
               <div>
-                <div className={TEXT_L1}>
-                  {isPolish ? 'Źródło' : 'Source'}
-                </div>
+                <div className={TEXT_L1}>{isPolish ? 'Źródło' : 'Source'}</div>
                 <div className="mt-1 font-medium text-white">{source.title}</div>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">

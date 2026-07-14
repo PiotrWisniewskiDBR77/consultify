@@ -186,7 +186,10 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                     {t('myWork.implementationIdeas.noIdeasYet', 'No ideas yet')}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-                    {t('myWork.implementationIdeas.addIdeasOnHow', 'Add ideas on how to implement this task')}
+                    {t(
+                      'myWork.implementationIdeas.addIdeasOnHow',
+                      'Add ideas on how to implement this task'
+                    )}
                   </p>
                 </div>
               ) : (
@@ -247,7 +250,10 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                                 className="w-full text-sm font-medium bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none truncate"
-                                placeholder={t('myWork.implementationIdeas.placeholder', 'Idea name...')}
+                                placeholder={t(
+                                  'myWork.implementationIdeas.placeholder',
+                                  'Idea name...'
+                                )}
                                 readOnly={readOnly}
                               />
                               <div className="flex items-center gap-2 mt-1">
@@ -322,9 +328,10 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                                   rows={3}
                                   disabled={readOnly}
                                   className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 resize-none"
-                                  placeholder={
-                                    t('myWork.implementationIdeas.describeTheIdeaDetails', 'Describe the idea details...')
-                                  }
+                                  placeholder={t(
+                                    'myWork.implementationIdeas.describeTheIdeaDetails',
+                                    'Describe the idea details...'
+                                  )}
                                 />
                               </div>
                             </motion.div>

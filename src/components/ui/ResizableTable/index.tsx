@@ -98,7 +98,10 @@ export const ResizableTable: React.FC<ResizableTableProps> = ({
 
   return (
     <div className={`overflow-x-auto ${className}`}>
-      <table /* §27-exempt: generyczny prymityw tabeli, FilterableTable = kanon dla list */  className="w-full" style={{ minWidth: `${totalWidth + 200}px` }}>
+      <table
+        /* §27-exempt: generyczny prymityw tabeli, FilterableTable = kanon dla list */ className="w-full"
+        style={{ minWidth: `${totalWidth + 200}px` }}
+      >
         <TableHeader
           columns={columns}
           columnWidths={internalWidths}

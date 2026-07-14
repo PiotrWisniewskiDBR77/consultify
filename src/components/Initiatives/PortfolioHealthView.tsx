@@ -108,13 +108,26 @@ export function usePortfolioHealth(endpoint = '/api/initiatives/portfolio-health
 // ---------------------------------------------------------------------------
 // Subcomponents
 // ---------------------------------------------------------------------------
-function ShareBar({ label, count, total }: { label: React.ReactNode; count: number; total: number }) {
+function ShareBar({
+  label,
+  count,
+  total,
+}: {
+  label: React.ReactNode;
+  count: number;
+  total: number;
+}) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
     <div className="flex items-center gap-3 py-1">
-      <div className="w-36 shrink-0 truncate text-xs text-slate-600 dark:text-slate-300">{label}</div>
+      <div className="w-36 shrink-0 truncate text-xs text-slate-600 dark:text-slate-300">
+        {label}
+      </div>
       <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        <div className="absolute inset-y-0 left-0 rounded-full bg-c-info" style={{ width: `${pct}%` }} />
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-c-info"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <div className="w-16 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
         {count} · {pct}%
@@ -166,7 +179,10 @@ export function PortfolioHealthView({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 p-6 text-sm text-slate-500" data-testid="portfolio-health-loading">
+      <div
+        className="flex items-center gap-2 p-6 text-sm text-slate-500"
+        data-testid="portfolio-health-loading"
+      >
         <Loader2 className="h-4 w-4 animate-spin" />
         {t('common.loading', 'Loading…')}
       </div>
@@ -185,7 +201,10 @@ export function PortfolioHealthView({
   const maxCell = health.balance.grid.reduce((m, c) => Math.max(m, c.count), 0) || 1;
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-auto p-4" data-testid="portfolio-health-view">
+    <div
+      className="flex h-full flex-col gap-4 overflow-auto p-4"
+      data-testid="portfolio-health-view"
+    >
       {/* Header + stats ------------------------------------------------ */}
       <header className="flex flex-wrap items-center gap-2">
         <MapIcon className="h-5 w-5 text-c-info" />
@@ -198,10 +217,22 @@ export function PortfolioHealthView({
       </header>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <HeadlineStat label={t('initiatives.portfolioHealth.quickWins', 'Quick wins')} value={health.balance.quickWins} />
-        <HeadlineStat label={t('initiatives.portfolioHealth.bigBets', 'Big bets')} value={health.balance.bigBets} />
-        <HeadlineStat label={t('initiatives.portfolioHealth.moneyPits', 'Money pits')} value={health.balance.moneyPits} />
-        <HeadlineStat label={t('initiatives.portfolioHealth.gapsCount', 'Coverage gaps')} value={health.gaps.length} />
+        <HeadlineStat
+          label={t('initiatives.portfolioHealth.quickWins', 'Quick wins')}
+          value={health.balance.quickWins}
+        />
+        <HeadlineStat
+          label={t('initiatives.portfolioHealth.bigBets', 'Big bets')}
+          value={health.balance.bigBets}
+        />
+        <HeadlineStat
+          label={t('initiatives.portfolioHealth.moneyPits', 'Money pits')}
+          value={health.balance.moneyPits}
+        />
+        <HeadlineStat
+          label={t('initiatives.portfolioHealth.gapsCount', 'Coverage gaps')}
+          value={health.gaps.length}
+        />
       </div>
 
       {/* Ready to launch (Z94 §5.4 werdykt zakładki) --------------------------- */}
@@ -268,7 +299,9 @@ export function PortfolioHealthView({
           </h3>
         </header>
         {health.coverage.length === 0 ? (
-          <p className="py-2 text-sm text-slate-500">{t('initiatives.portfolioHealth.noCoverage', 'No coverage data.')}</p>
+          <p className="py-2 text-sm text-slate-500">
+            {t('initiatives.portfolioHealth.noCoverage', 'No coverage data.')}
+          </p>
         ) : (
           <div className="space-y-0.5">
             {[...health.coverage]
@@ -354,7 +387,13 @@ export function PortfolioHealthView({
                       eff
                     )} · ${t('initiatives.portfolioHealth.impact', 'Impact')}: ${levelLabel(imp)}`}
                   >
-                    <span className={count > 0 ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-300'}>
+                    <span
+                      className={
+                        count > 0
+                          ? 'font-semibold text-slate-900 dark:text-slate-100'
+                          : 'text-slate-300'
+                      }
+                    >
                       {count}
                     </span>
                   </div>
@@ -375,7 +414,9 @@ export function PortfolioHealthView({
             {t('initiatives.portfolioHealth.byStatus', 'By status')}
           </h3>
           {Object.keys(health.byStatus).length === 0 ? (
-            <p className="text-sm text-slate-500">{t('initiatives.portfolioHealth.empty', 'No data.')}</p>
+            <p className="text-sm text-slate-500">
+              {t('initiatives.portfolioHealth.empty', 'No data.')}
+            </p>
           ) : (
             Object.entries(health.byStatus)
               .sort((a, b) => b[1] - a[1])

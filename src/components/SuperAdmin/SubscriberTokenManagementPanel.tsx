@@ -289,7 +289,9 @@ const SubscriberTokenManagementPanel: React.FC<SubscriberTokenManagementPanelPro
 
       {tokens.length > 0 && (
         <div className="overflow-x-auto rounded-md border border-slate-200 dark:border-slate-800">
-          <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="min-w-full divide-y divide-slate-200 text-[11px] dark:divide-slate-800">
+          <table
+            /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="min-w-full divide-y divide-slate-200 text-[11px] dark:divide-slate-800"
+          >
             <thead className="bg-slate-50 dark:bg-slate-900/60">
               <tr>
                 <th className="px-2 py-1.5 text-left font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

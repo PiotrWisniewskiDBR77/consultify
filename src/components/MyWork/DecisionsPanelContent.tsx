@@ -37,10 +37,13 @@ import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
-import { PREVIEW_SELECTED_ROW_CLASS, SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  PREVIEW_SELECTED_ROW_CLASS,
+  SELECTED_ROW_CLASS,
+} from '@/components/shared/selectionTokens';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
 import {
@@ -59,6 +62,7 @@ import {
   type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
@@ -72,7 +76,6 @@ import {
   type DecisionSnoozePreset,
 } from './DecisionPreviewPanel';
 import { DelegationModal } from './shared/DelegationModal';
-import i18n from '@/i18n';
 
 type ViewMode = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -597,9 +600,7 @@ const DecisionTableRow: React.FC<{
       {/* Decision Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-c-text">
-            {decision.title}
-          </span>
+          <span className="text-sm font-semibold text-c-text">{decision.title}</span>
           {showRowDescription && decision.description ? (
             <span className="mt-0.5 block truncate text-[11px] leading-4 text-c-text-muted">
               {decision.description}
@@ -613,8 +614,16 @@ const DecisionTableRow: React.FC<{
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
           <MetaChip
             icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
-            label={decision.decisionType || decision.type || (t('myWork.decisionsPanel.general', 'General'))}
-            title={decision.decisionType || decision.type || (t('myWork.decisionsPanel.general2', 'General'))}
+            label={
+              decision.decisionType ||
+              decision.type ||
+              t('myWork.decisionsPanel.general', 'General')
+            }
+            title={
+              decision.decisionType ||
+              decision.type ||
+              t('myWork.decisionsPanel.general2', 'General')
+            }
           />
         </td>
       )}
@@ -622,10 +631,7 @@ const DecisionTableRow: React.FC<{
       {/* Status */}
       {!hiddenColumns?.has('status') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.status }}>
-          <EntityStatusChip
-            status={decision.status}
-            label={statusLabel(decision.status, t)}
-          />
+          <EntityStatusChip status={decision.status} label={statusLabel(decision.status, t)} />
         </td>
       )}
 
@@ -907,9 +913,7 @@ const AwaitingDecisionTableRow: React.FC<{
 
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-c-text">
-            {decision.title}
-          </span>
+          <span className="text-sm font-semibold text-c-text">{decision.title}</span>
           {showRowDescription && decision.description ? (
             <span className="mt-0.5 block truncate text-[11px] leading-4 text-c-text-muted">
               {decision.description}
@@ -922,18 +926,23 @@ const AwaitingDecisionTableRow: React.FC<{
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
           <MetaChip
             icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
-            label={decision.decisionType || decision.type || (t('myWork.decisionsPanel.general3', 'General'))}
-            title={decision.decisionType || decision.type || (t('myWork.decisionsPanel.general4', 'General'))}
+            label={
+              decision.decisionType ||
+              decision.type ||
+              t('myWork.decisionsPanel.general3', 'General')
+            }
+            title={
+              decision.decisionType ||
+              decision.type ||
+              t('myWork.decisionsPanel.general4', 'General')
+            }
           />
         </td>
       )}
 
       {!hiddenColumns?.has('status') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.status }}>
-          <EntityStatusChip
-            status={decision.status}
-            label={statusLabel(decision.status, t)}
-          />
+          <EntityStatusChip status={decision.status} label={statusLabel(decision.status, t)} />
         </td>
       )}
 
@@ -986,10 +995,7 @@ const AwaitingDecisionTableRow: React.FC<{
         >
           <div className="flex items-center justify-end gap-2">
             {isDecided && showDecidedChip ? (
-              <EntityStatusChip
-                status={decidedAnswer}
-                label={statusLabel(decidedAnswer, t)}
-              />
+              <EntityStatusChip status={decidedAnswer} label={statusLabel(decidedAnswer, t)} />
             ) : null}
             <RowActionsMenu
               sections={kebabSections}
@@ -1321,7 +1327,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   };
 
   const handleDeleteDecision = async (id: string) => {
-    const confirmMsg = t('myWork.decisionsPanel.deleteThisDecisionThis', 'Delete this decision? This cannot be undone.');
+    const confirmMsg = t(
+      'myWork.decisionsPanel.deleteThisDecisionThis',
+      'Delete this decision? This cannot be undone.'
+    );
     if (!window.confirm(confirmMsg)) return;
     try {
       await Api.delete(`/decisions/${id}`);
@@ -1953,7 +1962,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
         >
           <div className="p-4 pt-3">
             <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
-              <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
+              <table
+                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full table-fixed"
+                style={{ minWidth: tableMinWidth }}
+              >
                 <thead>
                   <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">
                     {/* Select All */}
@@ -2019,7 +2031,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                         <div className="flex items-center gap-1">
                           <span
                             className={
-                              (tableFilters.status as string[])?.length ? 'text-c-text-secondary' : ''
+                              (tableFilters.status as string[])?.length
+                                ? 'text-c-text-secondary'
+                                : ''
                             }
                           >
                             {t('myWork.decisionsPanel.status', 'Status')}
@@ -2053,7 +2067,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                         <div className="flex items-center gap-1">
                           <span
                             className={
-                              (tableFilters.priority as string[])?.length ? 'text-c-text-secondary' : ''
+                              (tableFilters.priority as string[])?.length
+                                ? 'text-c-text-secondary'
+                                : ''
                             }
                           >
                             {t('myWork.decisionsPanel.priority', 'Priority')}
@@ -2129,9 +2145,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                               setIsViewSettingsOpen((open) => !open);
                             }}
                             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-c-text-muted transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                            aria-label={
-                              t('myWork.decisionsPanel.tableViewSettings', 'Table view settings')
-                            }
+                            aria-label={t(
+                              'myWork.decisionsPanel.tableViewSettings',
+                              'Table view settings'
+                            )}
                             aria-expanded={isViewSettingsOpen}
                             title={t('myWork.decisionsPanel.title', 'View settings')}
                           >
@@ -2162,7 +2179,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                       {t('myWork.decisionsPanel.viewSettings', 'View settings')}
                                     </div>
                                     <div className="mt-0.5 text-[11px] font-medium leading-4 text-c-text-muted">
-                                      {t('myWork.decisionsPanel.chooseVisibleColumns', 'Choose visible columns.')}
+                                      {t(
+                                        'myWork.decisionsPanel.chooseVisibleColumns',
+                                        'Choose visible columns.'
+                                      )}
                                     </div>
                                   </div>
                                   <div className="space-y-0.5">
@@ -2177,7 +2197,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                           col.id === 'type'
                                             ? t('myWork.decisionsPanel.type2', 'Type')
                                             : col.id === 'project'
-                                              ? t('myWork.decisionsPanel.projectOwner', 'Project / Owner')
+                                              ? t(
+                                                  'myWork.decisionsPanel.projectOwner',
+                                                  'Project / Owner'
+                                                )
                                               : col.id === 'priority'
                                                 ? t('myWork.decisionsPanel.priority2', 'Priority')
                                                 : col.id === 'date'
@@ -2185,7 +2208,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                                   : col.id === 'status'
                                                     ? 'Status'
                                                     : col.id === 'actions'
-                                                      ? t('myWork.decisionsPanel.actions', 'Actions')
+                                                      ? t(
+                                                          'myWork.decisionsPanel.actions',
+                                                          'Actions'
+                                                        )
                                                       : col.label;
 
                                         return (
@@ -2243,7 +2269,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                         className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-text focus:ring-c-focus"
                                       />
                                       <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
-                                        {t('myWork.decisionsPanel.showRowDescription', 'Show row description')}
+                                        {t(
+                                          'myWork.decisionsPanel.showRowDescription',
+                                          'Show row description'
+                                        )}
                                       </span>
                                     </label>
                                   </div>

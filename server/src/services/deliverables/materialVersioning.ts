@@ -48,7 +48,13 @@ export function commitVersion<S>(
   at: string = new Date().toISOString()
 ): MaterialVersion<S>[] {
   const nextVersion = (history.length === 0 ? 0 : history[history.length - 1].version) + 1;
-  const entry: MaterialVersion<S> = { version: nextVersion, state, snapshot, createdBy, createdAt: at };
+  const entry: MaterialVersion<S> = {
+    version: nextVersion,
+    state,
+    snapshot,
+    createdBy,
+    createdAt: at,
+  };
   return [...history, entry];
 }
 
@@ -58,7 +64,10 @@ export function latestVersion<S>(history: MaterialVersion<S>[]): MaterialVersion
 }
 
 /** Znajdź wersję po numerze. */
-export function getVersion<S>(history: MaterialVersion<S>[], version: number): MaterialVersion<S> | null {
+export function getVersion<S>(
+  history: MaterialVersion<S>[],
+  version: number
+): MaterialVersion<S> | null {
   return history.find((v) => v.version === version) ?? null;
 }
 

@@ -449,12 +449,8 @@ export const SuperAdminAISettings: React.FC = () => {
               <Server size={20} className="text-c-info" />
             </div>
             <div>
-              <h3 className="font-semibold text-c-text">
-                Provider Configuration
-              </h3>
-              <p className="text-sm text-c-text-secondary">
-                Default model and fallback chain
-              </p>
+              <h3 className="font-semibold text-c-text">Provider Configuration</h3>
+              <p className="text-sm text-c-text-secondary">Default model and fallback chain</p>
             </div>
           </div>
 
@@ -481,9 +477,7 @@ export const SuperAdminAISettings: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-c-text-secondary mb-2">
               Fallback Chain
-              <span className="text-c-text-muted font-normal ml-2">
-                (drag to reorder)
-              </span>
+              <span className="text-c-text-muted font-normal ml-2">(drag to reorder)</span>
             </label>
 
             <Reorder.Group
@@ -505,12 +499,8 @@ export const SuperAdminAISettings: React.FC = () => {
                       className="flex items-center gap-3 px-4 py-3 bg-c-surface-raised border border-c-border-subtle rounded-xl cursor-grab active:cursor-grabbing"
                     >
                       <GripVertical size={16} className="text-c-text-muted" />
-                      <span className="text-xs font-mono text-c-text-muted w-6">
-                        {index + 1}
-                      </span>
-                      <span className="flex-1 text-c-text">
-                        {provider?.name || providerId}
-                      </span>
+                      <span className="text-xs font-mono text-c-text-muted w-6">{index + 1}</span>
+                      <span className="flex-1 text-c-text">{provider?.name || providerId}</span>
                       <button
                         onClick={() => removeFromFallbackChain(providerId)}
                         className="p-1 text-c-text-secondary hover:text-c-danger transition-colors"
@@ -551,9 +541,7 @@ export const SuperAdminAISettings: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-c-text">Rate Limits</h3>
-              <p className="text-sm text-c-text-secondary">
-                Global request throttling
-              </p>
+              <p className="text-sm text-c-text-secondary">Global request throttling</p>
             </div>
           </div>
 
@@ -645,12 +633,8 @@ export const SuperAdminAISettings: React.FC = () => {
               <Shield size={20} className="text-c-danger" />
             </div>
             <div>
-              <h3 className="font-semibold text-c-text">
-                Security & Privacy
-              </h3>
-              <p className="text-sm text-c-text-secondary">
-                PII detection and encryption
-              </p>
+              <h3 className="font-semibold text-c-text">Security & Privacy</h3>
+              <p className="text-sm text-c-text-secondary">PII detection and encryption</p>
             </div>
           </div>
 
@@ -688,9 +672,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     />
                     <div className="flex-1">
                       <div className={`font-medium ${option.color}`}>{option.label}</div>
-                      <div className="text-sm text-c-text-secondary">
-                        {option.description}
-                      </div>
+                      <div className="text-sm text-c-text-secondary">{option.description}</div>
                     </div>
                     {settings.piiDetectionSensitivity === option.value && (
                       <CheckCircle size={20} className="text-c-accent" />
@@ -731,12 +713,8 @@ export const SuperAdminAISettings: React.FC = () => {
               <Activity size={20} className="text-c-info" />
             </div>
             <div>
-              <h3 className="font-semibold text-c-text">
-                Resilience & Compliance
-              </h3>
-              <p className="text-sm text-c-text-secondary">
-                Circuit breaker and data residency
-              </p>
+              <h3 className="font-semibold text-c-text">Resilience & Compliance</h3>
+              <p className="text-sm text-c-text-secondary">Circuit breaker and data residency</p>
             </div>
           </div>
 
@@ -765,9 +743,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     }
                     className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                   />
-                  <p className="text-xs text-c-text-muted mt-1">
-                    failures before trip
-                  </p>
+                  <p className="text-xs text-c-text-muted mt-1">failures before trip</p>
                 </div>
                 <div>
                   <label className="block text-sm text-c-text-secondary mb-1">
@@ -824,9 +800,7 @@ export const SuperAdminAISettings: React.FC = () => {
                       />
                       <span className="font-medium text-c-text">{option.label}</span>
                     </div>
-                    <span className="text-xs text-c-text-secondary">
-                      {option.description}
-                    </span>
+                    <span className="text-xs text-c-text-secondary">{option.description}</span>
                   </label>
                 ))}
               </div>

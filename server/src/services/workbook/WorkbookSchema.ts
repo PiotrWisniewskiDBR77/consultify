@@ -42,9 +42,7 @@ export const ColumnDefSchema = z.object({
   key: z.string(),
   header: z.string(),
   width: z.number().optional(),
-  type: z
-    .enum(['text', 'number', 'currency', 'percent', 'date', 'boolean', 'rating'])
-    .optional(),
+  type: z.enum(['text', 'number', 'currency', 'percent', 'date', 'boolean', 'rating']).optional(),
   numberFormat: z.string().optional(),
   style: CellStyleSchema.optional(),
 });
@@ -96,14 +94,7 @@ export const CfColorScaleRuleSchema = z.object({
 export const CfIconSetRuleSchema = z.object({
   type: z.literal('iconSet'),
   /** Common ExcelJS-supported icon set names. */
-  iconSet: z.enum([
-    '3Arrows',
-    '3Lights',
-    '3TrafficLights1',
-    '3Symbols',
-    '4Arrows',
-    '5Arrows',
-  ]),
+  iconSet: z.enum(['3Arrows', '3Lights', '3TrafficLights1', '3Symbols', '4Arrows', '5Arrows']),
   /** Whether to show the value alongside the icon. */
   showValue: z.boolean().optional(),
 });

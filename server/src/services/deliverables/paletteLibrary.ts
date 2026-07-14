@@ -40,24 +40,44 @@ export interface ContrastResult {
 // znaczenia (zielony=dobrze, czerwony=źle) — uniwersalna konwencja biznesowa.
 const SEMANTIC_BY_THEME: Record<ThemeId, SemanticPalette> = {
   executive: {
-    success: '#1D9E75', warning: '#D9A407', danger: '#C0392B',
-    info: '#0C447C', positive: '#1D9E75', negative: '#C0392B',
+    success: '#1D9E75',
+    warning: '#D9A407',
+    danger: '#C0392B',
+    info: '#0C447C',
+    positive: '#1D9E75',
+    negative: '#C0392B',
   },
   modern: {
-    success: '#10B981', warning: '#F59E0B', danger: '#EF4444',
-    info: '#06B6D4', positive: '#10B981', negative: '#EF4444',
+    success: '#10B981',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    info: '#06B6D4',
+    positive: '#10B981',
+    negative: '#EF4444',
   },
   corporate: {
-    success: '#15803D', warning: '#C2410C', danger: '#B91C1C',
-    info: '#1F3A5F', positive: '#15803D', negative: '#B91C1C',
+    success: '#15803D',
+    warning: '#C2410C',
+    danger: '#B91C1C',
+    info: '#1F3A5F',
+    positive: '#15803D',
+    negative: '#B91C1C',
   },
   classic: {
-    success: '#14532D', warning: '#B45309', danger: '#991B1B',
-    info: '#1E3A5F', positive: '#14532D', negative: '#991B1B',
+    success: '#14532D',
+    warning: '#B45309',
+    danger: '#991B1B',
+    info: '#1E3A5F',
+    positive: '#14532D',
+    negative: '#991B1B',
   },
   clean: {
-    success: '#059669', warning: '#D97706', danger: '#DC2626',
-    info: '#2563EB', positive: '#059669', negative: '#DC2626',
+    success: '#059669',
+    warning: '#D97706',
+    danger: '#DC2626',
+    info: '#2563EB',
+    positive: '#059669',
+    negative: '#DC2626',
   },
 };
 
@@ -112,9 +132,10 @@ export function seriesPalette(
 ): string[] {
   if (count <= 0) return [];
   if (opts?.colorblindSafe) return okabeIto(count);
-  const base = (opts?.themeId && opts.themeId in SERIES_BY_THEME)
-    ? SERIES_BY_THEME[opts.themeId as ThemeId]
-    : SERIES_BY_THEME.executive;
+  const base =
+    opts?.themeId && opts.themeId in SERIES_BY_THEME
+      ? SERIES_BY_THEME[opts.themeId as ThemeId]
+      : SERIES_BY_THEME.executive;
   // Cyklicznie gdy potrzeba więcej niż dostępnych tonów.
   return Array.from({ length: count }, (_, i) => base[i % base.length]);
 }

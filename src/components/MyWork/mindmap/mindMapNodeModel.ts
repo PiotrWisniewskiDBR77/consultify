@@ -150,8 +150,7 @@ export function normalizeMindMapNodes(
           node?.id === 'root'
             ? ideaTitle || i18n.t('mindmap.nodeModel.myIdea')
             : (node?.data?.label ?? ''),
-        hint:
-          node?.id === 'root' ? i18n.t('mindmap.nodeModel.clickToEdit') : node?.data?.hint,
+        hint: node?.id === 'root' ? i18n.t('mindmap.nodeModel.clickToEdit') : node?.data?.hint,
         branchKey: node?.data?.branchKey || 'uncategorized',
         _depth: getNodeDepth(node.id, edges),
         tags: sanitizeTags(depthFields.tags ?? node?.data?.tags),

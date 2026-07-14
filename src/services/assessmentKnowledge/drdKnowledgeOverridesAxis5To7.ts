@@ -45,7 +45,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: schemat organizacyjny z jednym ośrodkiem decyzyjnym plus dokumentacja projektu pokazująca szczegółowe polecenia zamiast celów. Ewentualnie wynik exit interview.',
-    suggestedTechnologies: ['HRIS (exit interviews)', 'Systemy zarządzania projektami', 'Dokumentacja projektowa'],
+    suggestedTechnologies: [
+      'HRIS (exit interviews)',
+      'Systemy zarządzania projektami',
+      'Dokumentacja projektowa',
+    ],
   },
   '5A#3': {
     questions: [
@@ -65,7 +69,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: wyniki badania zaangażowania/bezpieczeństwa psychologicznego (np. Gallup Q12) z wynikiem ≥ 4/5 w pytaniach o eksperymentowanie. Lub udokumentowana sesja retrospekcji, gdzie lider omawia własne błędy.',
-    suggestedTechnologies: ['Pulse Survey Tool (Officevibe, Leapsome)', 'HR Analytics', 'Learning Management System (LMS)'],
+    suggestedTechnologies: [
+      'Pulse Survey Tool (Officevibe, Leapsome)',
+      'HR Analytics',
+      'Learning Management System (LMS)',
+    ],
   },
   '5A#5': {
     questions: [
@@ -75,7 +83,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista inicjatyw innowacyjnych z ostatnich 2 lat z potwierdzonym wpływem biznesowym (ROI, nowi klienci, nowy produkt). Lub dokumentacja udziału w programie inkubacji / partnerstwie ze startupem.',
-    suggestedTechnologies: ['Innovation Pipeline Tool', 'Venture Builder Platform', 'R&D Portfolio Management'],
+    suggestedTechnologies: [
+      'Innovation Pipeline Tool',
+      'Venture Builder Platform',
+      'R&D Portfolio Management',
+    ],
   },
   '5A#6': {
     questions: [
@@ -85,7 +97,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: "Digital Vision 2026–2030" — dokument zatwierdzony przez zarząd z KPI i właścicielami. Program sukcesji z jawnym kryterium "kompetencje AI/cyfrowe". Raport kwartalny z przeglądem postępów transformacji prezentowany akcjonariuszom.',
-    suggestedTechnologies: ['Strategic Planning Tool (Cascade, Monday)', 'Succession Planning (SAP SuccessFactors)', 'Executive Reporting Dashboard'],
+    suggestedTechnologies: [
+      'Strategic Planning Tool (Cascade, Monday)',
+      'Succession Planning (SAP SuccessFactors)',
+      'Executive Reporting Dashboard',
+    ],
   },
 };
 
@@ -99,7 +115,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: raport diagnostyczny lub analiza SWOT z 2024/2025 roku wskazujący konkretne powody pilności zmiany. Lub protokół zarządu z omówieniem zagrożeń konkurencyjnych.',
-    suggestedTechnologies: ['Business Intelligence', 'Market Monitoring Tool', 'SWOT/Diagnostic Framework'],
+    suggestedTechnologies: [
+      'Business Intelligence',
+      'Market Monitoring Tool',
+      'SWOT/Diagnostic Framework',
+    ],
   },
   '5B#2': {
     questions: [
@@ -109,7 +129,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: zarządzenie wewnętrzne powołujące "komitet ds. transformacji cyfrowej" z imienną listą i mandatem. Lub dokumentacja kick-off spotkania z udziałem przedstawicieli sprzedaży, IT, operacji i HR.',
-    suggestedTechnologies: ['HRIS / Org Chart Tool', 'Collaboration Platform (Teams/Slack)', 'Governance Framework'],
+    suggestedTechnologies: [
+      'HRIS / Org Chart Tool',
+      'Collaboration Platform (Teams/Slack)',
+      'Governance Framework',
+    ],
   },
   '5B#3': {
     questions: [
@@ -119,7 +143,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: dokument "Wizja transformacji 2025–2027" zatwierdzony przez zarząd z KPI i timeline\'em. Lub plan komunikacyjny z harmonogramem townhallów i komunikatami dla poszczególnych grup.',
-    suggestedTechnologies: ['Strategic Planning Tool', 'Internal Communication Platform (Intranet)', 'OKR Software'],
+    suggestedTechnologies: [
+      'Strategic Planning Tool',
+      'Internal Communication Platform (Intranet)',
+      'OKR Software',
+    ],
   },
   '5B#4': {
     questions: [
@@ -129,7 +157,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: zapis townhalla lub newslettera z ostatnich 3 miesięcy potwierdzający dwukierunkową komunikację. Wyniki ankiety pracowniczej z pytaniem o zrozumienie kierunku transformacji.',
-    suggestedTechnologies: ['Internal Communication Platform', 'Employee Survey Tool', 'Intranet / Digital Workplace'],
+    suggestedTechnologies: [
+      'Internal Communication Platform',
+      'Employee Survey Tool',
+      'Intranet / Digital Workplace',
+    ],
   },
   '5B#5': {
     questions: [
@@ -139,7 +171,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: roadmapa transformacji z statusem "zielony/żółty/czerwony" per inicjatywa, aktualizowana co miesiąc. Protokół komitetu sterującego omawiającego usunięte bariery.',
-    suggestedTechnologies: ['Project Portfolio Management (PPM)', 'OKR/KPI Platform', 'Risk & Issue Register'],
+    suggestedTechnologies: [
+      'Project Portfolio Management (PPM)',
+      'OKR/KPI Platform',
+      'Risk & Issue Register',
+    ],
   },
   '5B#6': {
     questions: [
@@ -149,7 +185,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: karta wartości organizacyjnych z jawnym elementem "ciągła transformacja". Formularz oceny rocznej z pytaniem o wkład pracownika w zmianę. Lessons learned z 2 zakończonych projektów transformacyjnych wdrożone w kolejnych.',
-    suggestedTechnologies: ['Performance Management System', 'Knowledge Management (Confluence)', 'HR Onboarding Platform'],
+    suggestedTechnologies: [
+      'Performance Management System',
+      'Knowledge Management (Confluence)',
+      'HR Onboarding Platform',
+    ],
   },
 };
 
@@ -163,7 +203,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista uczestnictwa pracowników w konferencjach 2024–2025 z tematami i formą zwrotu wiedzy (prezentacja wewnętrzna, raport, warsztaty). Dowód refundacji kosztów.',
-    suggestedTechnologies: ['Learning Management System (LMS)', 'HR Training Register', 'Event Management Tool'],
+    suggestedTechnologies: [
+      'Learning Management System (LMS)',
+      'HR Training Register',
+      'Event Management Tool',
+    ],
   },
   '5C#2': {
     questions: [
@@ -173,7 +217,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: plan szkoleń wewnętrznych 2025 z kalendarzem, listą uczestników i potwierdzeniem obecności (podpisane listy lub wydruki z LMS). Rola "trener wewnętrzny" w opisach stanowisk.',
-    suggestedTechnologies: ['LMS (Moodle, Docebo)', 'HR Training Register', 'Calendar / Scheduling Tool'],
+    suggestedTechnologies: [
+      'LMS (Moodle, Docebo)',
+      'HR Training Register',
+      'Calendar / Scheduling Tool',
+    ],
   },
   '5C#3': {
     questions: [
@@ -193,7 +241,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: umowa z platformą e-learningową (Udemy Business, Coursera for Business) z datą i liczbą licencji. Raport completion rate za ostatni kwartał. Polityka "learning time" potwierdzona przez przełożonych.',
-    suggestedTechnologies: ['Udemy Business / Coursera for Teams', 'LinkedIn Learning', 'LMS Analytics'],
+    suggestedTechnologies: [
+      'Udemy Business / Coursera for Teams',
+      'LinkedIn Learning',
+      'LMS Analytics',
+    ],
   },
   '5C#5': {
     questions: [
@@ -203,7 +255,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: karty projektów z składem interdyscyplinarnym, potwierdzające uczestnictwo pracowników z różnych działów. Plan rotacji projektowej zatwierdzony przez HR.',
-    suggestedTechnologies: ['Project Management Tool (Jira/Asana)', 'HRIS (rotation tracking)', 'Skills Matrix'],
+    suggestedTechnologies: [
+      'Project Management Tool (Jira/Asana)',
+      'HRIS (rotation tracking)',
+      'Skills Matrix',
+    ],
   },
   '5C#6': {
     questions: [
@@ -213,7 +269,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista par mentor/mentee z ostatnich 12 miesięcy, plan spotkań i potwierdzenia odbycia (checkiny). Raport efektów: X awansów wśród mentees, Y% completion rate. Ocena roczna mentora uwzględniająca wkład w mentoring.',
-    suggestedTechnologies: ['Mentoring Platform (Together, MentorcliQ)', 'HRIS', 'Performance Management System'],
+    suggestedTechnologies: [
+      'Mentoring Platform (Together, MentorcliQ)',
+      'HRIS',
+      'Performance Management System',
+    ],
   },
 };
 
@@ -227,7 +287,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: platforma pomysłów z liczbą zgłoszeń, statusami i datami z ostatnich 12 miesięcy. Lub protokół hackathonu z listą uczestników i wynikiem.',
-    suggestedTechnologies: ['Idea Management Platform (Brightidea, IdeaScale)', 'Collaboration Tool (Teams/Slack)', 'Innovation Tracker'],
+    suggestedTechnologies: [
+      'Idea Management Platform (Brightidea, IdeaScale)',
+      'Collaboration Tool (Teams/Slack)',
+      'Innovation Tracker',
+    ],
   },
   '5D#2': {
     questions: [
@@ -237,7 +301,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista pilotażów z ostatnich 2 lat z opisem hipotezy, wyniku i decyzji (kontynuuj/zamknij). Pozycja "budżet innowacje" w planie finansowym z kwotą.',
-    suggestedTechnologies: ['Prototype/MVP Tools (Figma, Notion)', 'Project Tracking', 'Budget Management (ERP)'],
+    suggestedTechnologies: [
+      'Prototype/MVP Tools (Figma, Notion)',
+      'Project Tracking',
+      'Budget Management (ERP)',
+    ],
   },
   '5D#3': {
     questions: [
@@ -247,7 +315,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: raport trendów z datą i podpisem właściciela. Agenda spotkania zarządu z punktem "trendy/innowacje". Lista inicjatyw uruchomionych na podstawie analizy trendów.',
-    suggestedTechnologies: ['Market Intelligence (Crayon, Klue)', 'Research Platform (Gartner, Forrester)', 'BI Dashboard'],
+    suggestedTechnologies: [
+      'Market Intelligence (Crayon, Klue)',
+      'Research Platform (Gartner, Forrester)',
+      'BI Dashboard',
+    ],
   },
   '5D#4': {
     questions: [
@@ -257,7 +329,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: polityka "fail fast, learn fast" lub analogiczny dokument zatwierdzony przez zarząd. Protokół retrospekcji po zamkniętym projekcie z listą wniosków i kolejnymi działaniami.',
-    suggestedTechnologies: ['Knowledge Management (Confluence)', 'Retrospective Tools (Miro, EasyRetro)', 'HR Policy Platform'],
+    suggestedTechnologies: [
+      'Knowledge Management (Confluence)',
+      'Retrospective Tools (Miro, EasyRetro)',
+      'HR Policy Platform',
+    ],
   },
   '5D#5': {
     questions: [
@@ -267,7 +343,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: struktura organizacyjna z działem R&D. Budżet R&D jako % przychodów z ostatnich 3 lat. Lista patentów lub nowych produktów z powiązaniem z działem R&D.',
-    suggestedTechnologies: ['R&D Management Platform', 'Patent & IP Management', 'Project Portfolio (PPM)'],
+    suggestedTechnologies: [
+      'R&D Management Platform',
+      'Patent & IP Management',
+      'Project Portfolio (PPM)',
+    ],
   },
   '5D#6': {
     questions: [
@@ -277,7 +357,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: umowy partnerskie z uczelniami / startupami podpisane w ostatnich 2 latach. Produkt/usługa z udokumentowanym związkiem z tą współpracą. Rola "Innovation Partnership Manager" lub analogiczna w strukturze.',
-    suggestedTechnologies: ['CRM (partner management)', 'Partnership Platform', 'Innovation Ecosystem Tool (Plug and Play)'],
+    suggestedTechnologies: [
+      'CRM (partner management)',
+      'Partnership Platform',
+      'Innovation Ecosystem Tool (Plug and Play)',
+    ],
   },
 };
 
@@ -291,7 +375,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: wyciąg z planu finansowego z pozycją "transformacja cyfrowa / innowacje" na rok 2025, z kwotą i właścicielem. Lub protokół zarządu z zatwierdzoną alokacją.',
-    suggestedTechnologies: ['ERP (Finance module)', 'Budget Planning Tool', 'Project Portfolio Management'],
+    suggestedTechnologies: [
+      'ERP (Finance module)',
+      'Budget Planning Tool',
+      'Project Portfolio Management',
+    ],
   },
   '5E#2': {
     questions: [
@@ -311,7 +399,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: rejestr ekspertów wewnętrznych i preferowanych dostawców zewnętrznych z datą ostatniej aktualizacji. Faktura lub umowa z konsultantem z 2024/2025 + opis rezultatu zaangażowania.',
-    suggestedTechnologies: ['CRM (vendor/expert management)', 'Procurement System', 'Skills Directory (intranet)'],
+    suggestedTechnologies: [
+      'CRM (vendor/expert management)',
+      'Procurement System',
+      'Skills Directory (intranet)',
+    ],
   },
   '5E#4': {
     questions: [
@@ -321,7 +413,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: macierz dostępu do danych z podziałem na role, zatwierdzona i opublikowana na intranecie. Raport z systemu IAM/AD pokazujący zero nieuzasadnionych blokad w ostatnich 6 miesiącach.',
-    suggestedTechnologies: ['IAM (Identity & Access Management)', 'Data Governance Platform', 'Active Directory / Azure AD'],
+    suggestedTechnologies: [
+      'IAM (Identity & Access Management)',
+      'Data Governance Platform',
+      'Active Directory / Azure AD',
+    ],
   },
   '5E#5': {
     questions: [
@@ -331,7 +427,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: katalog oprogramowania/SAM Tool z listą narzędzi, liczbami licencji i właścicielami. Metryka onboarding IT: średni czas przydzielenia dostępów = X dni (dane z helpdesk). ',
-    suggestedTechnologies: ['SAM Tool (Snow Software, Flexera)', 'ITSM Helpdesk (ServiceNow, Jira)', 'MDM (Mobile Device Management)'],
+    suggestedTechnologies: [
+      'SAM Tool (Snow Software, Flexera)',
+      'ITSM Helpdesk (ServiceNow, Jira)',
+      'MDM (Mobile Device Management)',
+    ],
   },
   '5E#6': {
     questions: [
@@ -341,7 +441,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista aktywnych umów partnerskich z datą ważności i KPI rezultatu. Protokół rocznego przeglądu ekosystemu partnerskiego przez zarząd. Projekt zrealizowany wspólnie z partnerem zewnętrznym z opisem podziału nakładów i korzyści.',
-    suggestedTechnologies: ['CRM (partner management)', 'Contract Management System', 'Partnership Portal'],
+    suggestedTechnologies: [
+      'CRM (partner management)',
+      'Contract Management System',
+      'Partnership Portal',
+    ],
   },
 };
 
@@ -359,7 +463,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód negatywny (potwierdzenie braku): brak dokumentu strategii bezpieczeństwa w rejestrze polityk firmy. Lub raport audytu IT wskazujący "brak polityki bezpieczeństwa" jako znalezisko.',
-    suggestedTechnologies: ['(Brak — poziom wyjściowy)', 'Podstawowy antywirus', 'Firewall z pudełka'],
+    suggestedTechnologies: [
+      '(Brak — poziom wyjściowy)',
+      'Podstawowy antywirus',
+      'Firewall z pudełka',
+    ],
   },
   '6A#2': {
     questions: [
@@ -369,7 +477,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: rejestr ryzyk cyberbezpieczeństwa z datą przeprowadzenia, właścicielami ryzyk i statusem mitygacji. Protokół spotkania z omówieniem wyników analizy ryzyka.',
-    suggestedTechnologies: ['Risk Management Platform (RSA Archer)', 'GRC Tool (ServiceNow GRC)', 'Spreadsheet + formalny framework (ISO 27005)'],
+    suggestedTechnologies: [
+      'Risk Management Platform (RSA Archer)',
+      'GRC Tool (ServiceNow GRC)',
+      'Spreadsheet + formalny framework (ISO 27005)',
+    ],
   },
   '6A#3': {
     questions: [
@@ -399,7 +511,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: procedura offboardingu z checklistą i podpisem IT potwierdzającym odebranie dostępów. Raport ze szkoleń cyberbezpieczeństwa per pracownik (% ukończenia). SLA offboarding: X godzin do deaktywacji konta.',
-    suggestedTechnologies: ['HRIS (offboarding module)', 'IAM (automated deprovisioning)', 'LMS (training completion tracking)'],
+    suggestedTechnologies: [
+      'HRIS (offboarding module)',
+      'IAM (automated deprovisioning)',
+      'LMS (training completion tracking)',
+    ],
   },
   '6A#6': {
     questions: [
@@ -409,7 +525,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: raport z pentesta z datą, zakresem i planem naprawczym podpisanym przez CISO/CTO. Raport kwartalny dla zarządu z metrykami cyberbezpieczeństwa (liczba incydentów, MTTR, coverage szkoleń).',
-    suggestedTechnologies: ['SIEM (Splunk, QRadar, Microsoft Sentinel)', 'Pentest Tools / External Audit', 'Security Dashboard (GRC)'],
+    suggestedTechnologies: [
+      'SIEM (Splunk, QRadar, Microsoft Sentinel)',
+      'Pentest Tools / External Audit',
+      'Security Dashboard (GRC)',
+    ],
   },
 };
 
@@ -423,7 +543,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: konfiguracja (dump) reguł firewalla z datą ostatniego przeglądu. Potwierdzenie aktywnego logowania z retencją ≥ 90 dni.',
-    suggestedTechnologies: ['Next-Gen Firewall (Palo Alto, Fortinet, Cisco)', 'Firewall Log Management', 'Network Monitoring'],
+    suggestedTechnologies: [
+      'Next-Gen Firewall (Palo Alto, Fortinet, Cisco)',
+      'Firewall Log Management',
+      'Network Monitoring',
+    ],
   },
   '6B#2': {
     questions: [
@@ -433,7 +557,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: raport z konsoli antywirusa / EDR pokazujący % coverage (cel: 100% urządzeń), ostatnią datę aktualizacji sygnatur i liczbę aktywnych alertów.',
-    suggestedTechnologies: ['EDR/Antivirus (CrowdStrike, Microsoft Defender, SentinelOne)', 'Central Management Console', 'Endpoint Inventory'],
+    suggestedTechnologies: [
+      'EDR/Antivirus (CrowdStrike, Microsoft Defender, SentinelOne)',
+      'Central Management Console',
+      'Endpoint Inventory',
+    ],
   },
   '6B#3': {
     questions: [
@@ -443,7 +571,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: raport z systemu IDS z ostatnich 30 dni: liczba alertów, kategorie, status obsługi. Przykładowy incident ticket z IDS → obsługa → zamknięcie.',
-    suggestedTechnologies: ['IDS/IPS (Snort, Suricata, Cisco IPS)', 'Network Detection & Response (NDR)', 'SIEM (alert aggregation)'],
+    suggestedTechnologies: [
+      'IDS/IPS (Snort, Suricata, Cisco IPS)',
+      'Network Detection & Response (NDR)',
+      'SIEM (alert aggregation)',
+    ],
   },
   '6B#4': {
     questions: [
@@ -453,7 +585,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista źródeł zasilających SIEM (connector list) + przykładowy raport tygodniowy z SIEM z alertami i ich statusem. Reguła korelacji dla scenariusza brute force w konfiguracji SIEM.',
-    suggestedTechnologies: ['SIEM (Splunk, QRadar, Microsoft Sentinel, Elastic SIEM)', 'SOAR', 'Threat Intelligence Platform'],
+    suggestedTechnologies: [
+      'SIEM (Splunk, QRadar, Microsoft Sentinel, Elastic SIEM)',
+      'SOAR',
+      'Threat Intelligence Platform',
+    ],
   },
   '6B#5': {
     questions: [
@@ -463,7 +599,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: polityka MFA z listą systemów objętych wymogiem + raport z IdP (Azure AD/Okta) potwierdzający % użytkowników z MFA = 100% dla ról uprzywilejowanych. Protokół kwartalnego przeglądu uprawnień admin.',
-    suggestedTechnologies: ['MFA (Microsoft Authenticator, Duo)', 'IAM (Azure AD, Okta, CyberArk)', 'PAM (Privileged Access Management)'],
+    suggestedTechnologies: [
+      'MFA (Microsoft Authenticator, Duo)',
+      'IAM (Azure AD, Okta, CyberArk)',
+      'PAM (Privileged Access Management)',
+    ],
   },
   '6B#6': {
     questions: [
@@ -473,7 +613,12 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: schemat sieci z zaznaczeniem stref/segmentów i reguł przepływu. Raport pentesta z testem segmentacji z datą i wynikiem. Logi VPN z ostatnich 30 dni z potwierdzeniem wymagania MFA dla każdej sesji.',
-    suggestedTechnologies: ['Next-Gen Firewall (segmentation)', 'VPN (Cisco AnyConnect, Palo Alto GlobalProtect)', 'Network Access Control (NAC)', 'Pentest Tools'],
+    suggestedTechnologies: [
+      'Next-Gen Firewall (segmentation)',
+      'VPN (Cisco AnyConnect, Palo Alto GlobalProtect)',
+      'Network Access Control (NAC)',
+      'Pentest Tools',
+    ],
   },
 };
 
@@ -487,7 +632,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: polityka szyfrowania z listą objętych systemów i zastosowanymi algorytmami. Raport z narzędzia MDM/BitLocker potwierdzający % urządzeń z szyfrowaniem dysku = 100% dla laptopów.',
-    suggestedTechnologies: ['Disk Encryption (BitLocker, FileVault)', 'Database Encryption (TDE)', 'Key Management Service (AWS KMS, HashiCorp Vault)'],
+    suggestedTechnologies: [
+      'Disk Encryption (BitLocker, FileVault)',
+      'Database Encryption (TDE)',
+      'Key Management Service (AWS KMS, HashiCorp Vault)',
+    ],
   },
   '6C#2': {
     questions: [
@@ -497,7 +646,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: polityka haseł wbudowana w Active Directory (screen z ustawieniami: min 12 znaków, złożoność ON, wygaśnięcie 90 dni). Udokumentowany vault haseł dla kont serwisowych (np. CyberArk, 1Password Teams).',
-    suggestedTechnologies: ['Active Directory / Azure AD (password policy)', 'Password Manager (CyberArk, 1Password Teams, Bitwarden)', 'PAM Tool'],
+    suggestedTechnologies: [
+      'Active Directory / Azure AD (password policy)',
+      'Password Manager (CyberArk, 1Password Teams, Bitwarden)',
+      'PAM Tool',
+    ],
   },
   '6C#3': {
     questions: [
@@ -507,7 +660,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: macierz ról i uprawnień (RBAC matrix) z datą ostatniego przeglądu. Protokół access review Q1 2025 z listą zmian uprawnień. Potwierdzenie retencji logów dostępu = 90 dni (konfiguracja lub raport SIEM).',
-    suggestedTechnologies: ['IAM (Role-Based Access Control)', 'Data Access Governance (Varonis, Netwrix)', 'SIEM (audit logging)'],
+    suggestedTechnologies: [
+      'IAM (Role-Based Access Control)',
+      'Data Access Governance (Varonis, Netwrix)',
+      'SIEM (audit logging)',
+    ],
   },
   '6C#4': {
     questions: [
@@ -517,7 +674,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: polityka backupu z harmonogramem i listą objętych systemów. Protokół ostatniego testu DR: data, RTO osiągnięte X godzin (cel Y), RPO osiągnięte. Zrzut z systemu backup potwierdzający ostatnie wykonanie i wynik weryfikacji.',
-    suggestedTechnologies: ['Backup Solution (Veeam, Commvault, Azure Backup)', 'DR Platform', 'Backup Monitoring Dashboard'],
+    suggestedTechnologies: [
+      'Backup Solution (Veeam, Commvault, Azure Backup)',
+      'DR Platform',
+      'Backup Monitoring Dashboard',
+    ],
   },
   '6C#5': {
     questions: [
@@ -527,7 +688,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: konfiguracja DLP/UEBA z regułami wykrywającymi eksfiltrację i anomalie. Przykładowy incident ticket z wykryciem + obsługą. SLA dla alertów bezpieczeństwa: P1 = 30 min, P2 = 4h.',
-    suggestedTechnologies: ['DLP (Data Loss Prevention — Microsoft Purview, Symantec)', 'UEBA (Splunk, Securonix)', 'SOC Platform'],
+    suggestedTechnologies: [
+      'DLP (Data Loss Prevention — Microsoft Purview, Symantec)',
+      'UEBA (Splunk, Securonix)',
+      'SOC Platform',
+    ],
   },
   '6C#6': {
     questions: [
@@ -537,7 +702,12 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: konfiguracja certyfikatów klienckich lub FIDO2/YubiKey dla ról admin. Polityka Zero Trust z listą systemów objętych. Raport z PAM Tool pokazujący 100% sesji uprzywilejowanych z nagraniem i weryfikacją tożsamości.',
-    suggestedTechnologies: ['PKI / Certificate Management', 'FIDO2 / YubiKey', 'Zero Trust Network Access (Zscaler, Cloudflare Access)', 'PAM (CyberArk)'],
+    suggestedTechnologies: [
+      'PKI / Certificate Management',
+      'FIDO2 / YubiKey',
+      'Zero Trust Network Access (Zscaler, Cloudflare Access)',
+      'PAM (CyberArk)',
+    ],
   },
 };
 
@@ -551,7 +721,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: polityka szkolenia z bezpieczeństwa informacji z opisem zakresu, formy i periodowności. Raport z LMS: lista pracowników i status ukończenia szkolenia onboardingowego (cel: 100% nowych pracowników).',
-    suggestedTechnologies: ['LMS (szkolenia z bezpieczeństwa)', 'Onboarding Platform', 'HR Policy System'],
+    suggestedTechnologies: [
+      'LMS (szkolenia z bezpieczeństwa)',
+      'Onboarding Platform',
+      'HR Policy System',
+    ],
   },
   '6D#2': {
     questions: [
@@ -561,7 +735,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: plan szkoleń cyberbezpieczeństwa 2025 z harmonogramem, formatami i grupami docelowymi. Raport wyników testów wiedzy po szkoleniu (% pracowników z wynikiem ≥ 80%).',
-    suggestedTechnologies: ['Security Awareness Platform (KnowBe4, Proofpoint Security Awareness)', 'LMS', 'Phishing Simulation Tool'],
+    suggestedTechnologies: [
+      'Security Awareness Platform (KnowBe4, Proofpoint Security Awareness)',
+      'LMS',
+      'Phishing Simulation Tool',
+    ],
   },
   '6D#3': {
     questions: [
@@ -571,7 +749,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: raport z kampanii phishingowej (KnowBe4 lub Proofpoint): data, liczba odbiorców, % kliknięć (trend kwartalny). Polityka "failed phishing → mandatory retraining" z dowodem jej zastosowania.',
-    suggestedTechnologies: ['Phishing Simulation (KnowBe4, Proofpoint SA)', 'Security Awareness Analytics', 'LMS (remedial training)'],
+    suggestedTechnologies: [
+      'Phishing Simulation (KnowBe4, Proofpoint SA)',
+      'Security Awareness Analytics',
+      'LMS (remedial training)',
+    ],
   },
   '6D#4': {
     questions: [
@@ -581,7 +763,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: opis stanowisk lub zakres obowiązków audytora wewnętrznego ds. cyberbezpieczeństwa. Raport z audytu wewnętrznego 2024/2025 z wykazem znalezisk i planem naprawczym. Schemat org potwierdzający niezależność raportowania.',
-    suggestedTechnologies: ['GRC / Audit Management Tool', 'Internal Audit Platform (TeamMate, Auditboard)', 'Risk Register'],
+    suggestedTechnologies: [
+      'GRC / Audit Management Tool',
+      'Internal Audit Platform (TeamMate, Auditboard)',
+      'Risk Register',
+    ],
   },
   '6D#5': {
     questions: [
@@ -601,7 +787,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: certyfikat ISO 27001 z datą wydania i zakresem. Lub harmonogram wdrożenia ISO 27001 z etapami i datami. Protokół zarządczego przeglądu ISMS (Management Review) z ostatnich 12 miesięcy.',
-    suggestedTechnologies: ['ISMS Platform (Vanta, Drata, Tugboat Logic)', 'ISO 27001 Gap Assessment Tool', 'GRC (continuous compliance monitoring)'],
+    suggestedTechnologies: [
+      'ISMS Platform (Vanta, Drata, Tugboat Logic)',
+      'ISO 27001 Gap Assessment Tool',
+      'GRC (continuous compliance monitoring)',
+    ],
   },
 };
 
@@ -615,7 +805,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: dokument "Threat Landscape" lub rozdział BIA (Business Impact Analysis) z listą zagrożeń, datą przeglądu i podpisem właściciela. Rejestr zagrożeń w narzędziu GRC.',
-    suggestedTechnologies: ['Threat Modeling Tool (STRIDE, MITRE ATT&CK)', 'GRC / Risk Register', 'BIA Tool'],
+    suggestedTechnologies: [
+      'Threat Modeling Tool (STRIDE, MITRE ATT&CK)',
+      'GRC / Risk Register',
+      'BIA Tool',
+    ],
   },
   '6E#2': {
     questions: [
@@ -625,7 +819,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: dokument BIA (Business Impact Analysis) z macierzą krytyczności systemów i RTO/RPO per system, zatwierdzony przez właścicieli biznesowych. Przykład: "ERP — RTO 4h, RPO 1h; e-mail — RTO 8h, RPO 24h". Data zatwierdzenia.',
-    suggestedTechnologies: ['BIA Tool', 'DR Planning Platform (Fusion Risk Management)', 'CMDB (ServiceNow)'],
+    suggestedTechnologies: [
+      'BIA Tool',
+      'DR Planning Platform (Fusion Risk Management)',
+      'CMDB (ServiceNow)',
+    ],
   },
   '6E#3': {
     questions: [
@@ -635,7 +833,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: dokument "Incident Response Playbook" z procedurami per scenariusz (ransomware, phishing, awaria systemu), datą zatwierdzenia i potwierdzeniem dostępności offline (wydruk lub USB). RACI dla co najmniej scenariusza ransomware.',
-    suggestedTechnologies: ['SOAR (playbooks — Palo Alto XSOAR, Splunk SOAR)', 'Incident Management (PagerDuty, Jira)', 'Offline dokumentacja (PDF/USB)'],
+    suggestedTechnologies: [
+      'SOAR (playbooks — Palo Alto XSOAR, Splunk SOAR)',
+      'Incident Management (PagerDuty, Jira)',
+      'Offline dokumentacja (PDF/USB)',
+    ],
   },
   '6E#4': {
     questions: [
@@ -645,7 +847,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: protokół tabletop exercise z 2024/2025: scenariusz (np. "ransomware na ERP"), lista uczestników (IT + Prezes + Prawnik + PR), wnioski i action items. Dowód wdrożenia co najmniej jednego wniosku po szkoleniu.',
-    suggestedTechnologies: ['Tabletop Exercise Platform (Cybereason, AttackIQ)', 'SOAR (simulation)', 'Learning Management System'],
+    suggestedTechnologies: [
+      'Tabletop Exercise Platform (Cybereason, AttackIQ)',
+      'SOAR (simulation)',
+      'Learning Management System',
+    ],
   },
   '6E#5': {
     questions: [
@@ -655,7 +861,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: raport z DR drill 2024/2025 z: scenariuszem, datą, czasem odtworzenia systemu X = Y godzin (cel: Z godzin), listą uczestników i planem naprawczym dla nieosiągniętych RTO.',
-    suggestedTechnologies: ['DR Testing Platform (Zerto, Veeam DR Orchestrator)', 'Red Team / Pentest Tools', 'Backup & Recovery Monitoring'],
+    suggestedTechnologies: [
+      'DR Testing Platform (Zerto, Veeam DR Orchestrator)',
+      'Red Team / Pentest Tools',
+      'Backup & Recovery Monitoring',
+    ],
   },
   '6E#6': {
     questions: [
@@ -665,7 +875,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: rejestr post-mortem incydentów z ostatnich 12 miesięcy (co najmniej 3 wpisy) z wykazem wniosków i statusem wdrożenia action items. Raport kwartalny dla zarządu z metrykami MTTR/MTTD per kategoria incydentu.',
-    suggestedTechnologies: ['Incident Management Platform (PagerDuty, Jira)', 'Post-Mortem Tool (Blameless, Rootly)', 'Security Metrics Dashboard (SIEM/GRC)'],
+    suggestedTechnologies: [
+      'Incident Management Platform (PagerDuty, Jira)',
+      'Post-Mortem Tool (Blameless, Rootly)',
+      'Security Metrics Dashboard (SIEM/GRC)',
+    ],
   },
 };
 
@@ -683,7 +897,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód negatywny (potwierdzenie poziomu 1): wyniki ankiety wewnętrznej lub wywiadu z działem danych wskazujące, że brak zunifikowanych danych blokuje projekty AI. Lub raport IT z listą rozproszonych źródeł danych.',
-    suggestedTechnologies: ['(Punkt startowy)', 'Data Inventory / Data Map', 'Master Data Management (MDM) — plan wdrożenia'],
+    suggestedTechnologies: [
+      '(Punkt startowy)',
+      'Data Inventory / Data Map',
+      'Master Data Management (MDM) — plan wdrożenia',
+    ],
   },
   '7A#2': {
     questions: [
@@ -693,7 +911,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista kluczowych systemów z opisem struktury danych (schematy tabel lub ERD). Potwierdzenie, że dane ERP używają spójnych kodów klientów i produktów. Mapa systemów z zaznaczonymi przepływami danych (nawet ręcznymi).',
-    suggestedTechnologies: ['ERP / CRM / MES (z modułem eksportu danych)', 'Data Dictionary', 'ETL Tool (nawet podstawowy — Talend Open Studio)'],
+    suggestedTechnologies: [
+      'ERP / CRM / MES (z modułem eksportu danych)',
+      'Data Dictionary',
+      'ETL Tool (nawet podstawowy — Talend Open Studio)',
+    ],
   },
   '7A#3': {
     questions: [
@@ -703,7 +925,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: opis architektury data warehouse/lake z listą źródeł, częstotliwością zasilania i datą uruchomienia. Raport z pierwszego projektu ML / pilotażu predykcji z opisem danych wejściowych i wyników.',
-    suggestedTechnologies: ['Data Warehouse (Snowflake, BigQuery, Azure Synapse)', 'ETL/ELT (dbt, Airbyte, Azure Data Factory)', 'ML Platform (Azure ML, Databricks)'],
+    suggestedTechnologies: [
+      'Data Warehouse (Snowflake, BigQuery, Azure Synapse)',
+      'ETL/ELT (dbt, Airbyte, Azure Data Factory)',
+      'ML Platform (Azure ML, Databricks)',
+    ],
   },
   '7A#4': {
     questions: [
@@ -713,7 +939,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: konfiguracja DQ checks w narzędziu (Great Expectations, dbt tests) z raportem z ostatnich 30 dni — liczba sprawdzeń, % passed, alerty. Data catalog (Alation, DataHub) z liczbą wpisów i datą ostatniej aktualizacji.',
-    suggestedTechnologies: ['Data Quality Tool (Great Expectations, Monte Carlo)', 'Data Catalog (Alation, DataHub, Apache Atlas)', 'Real-time Streaming (Kafka, Kinesis)'],
+    suggestedTechnologies: [
+      'Data Quality Tool (Great Expectations, Monte Carlo)',
+      'Data Catalog (Alation, DataHub, Apache Atlas)',
+      'Real-time Streaming (Kafka, Kinesis)',
+    ],
   },
   '7A#5': {
     questions: [
@@ -723,7 +953,12 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: pipeline ML z automatycznym feature engineering, udokumentowany w MLflow lub analogicznym narzędziu, z metrykami: czas od danych do gotowego modelu = X godzin. Przykład "data product" z SLA i właścicielem w katalogu danych.',
-    suggestedTechnologies: ['MLOps Platform (MLflow, Kubeflow, SageMaker)', 'Feature Store (Feast, Tecton)', 'DataOps Automation (Monte Carlo, Atlan)', 'Data Product Framework'],
+    suggestedTechnologies: [
+      'MLOps Platform (MLflow, Kubeflow, SageMaker)',
+      'Feature Store (Feast, Tecton)',
+      'DataOps Automation (Monte Carlo, Atlan)',
+      'Data Product Framework',
+    ],
   },
 };
 
@@ -737,7 +972,11 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód negatywny lub ankieta pracownicza z pytaniem "Czy używasz narzędzi AI w pracy?" — odpowiedź "tak, ale nie oficjalnie" u > 30% wskazuje na poziom 1. Brak rejestru projektów AI w systemie zarządzania projektami.',
-    suggestedTechnologies: ['(Punkt startowy — brak formalnych wdrożeń)', 'Shadow IT Discovery Tool', 'AI Use Case Registry (plan)'],
+    suggestedTechnologies: [
+      '(Punkt startowy — brak formalnych wdrożeń)',
+      'Shadow IT Discovery Tool',
+      'AI Use Case Registry (plan)',
+    ],
   },
   '7B#2': {
     questions: [
@@ -747,7 +986,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: wdrożenie Microsoft Copilot lub analogicznego narzędzia z liczbą użytkowników, datą uruchomienia i mierzonym efektem (np. "X minut/tydzień zaoszczędzonych na sporządzaniu notatek ze spotkań" — raport z analytics).',
-    suggestedTechnologies: ['Microsoft Copilot / Google Duet AI', 'Document AI (AWS Textract)', 'Meeting Summary AI (Otter.ai, Fireflies)', 'No-code Automation (Zapier + AI)'],
+    suggestedTechnologies: [
+      'Microsoft Copilot / Google Duet AI',
+      'Document AI (AWS Textract)',
+      'Meeting Summary AI (Otter.ai, Fireflies)',
+      'No-code Automation (Zapier + AI)',
+    ],
   },
   '7B#3': {
     questions: [
@@ -757,7 +1001,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: screen z narzędzia biznesowego pokazujący rekomendację AI (np. "Model predykcji popytu: zalecana ilość zamówienia X szt.") + raport z historią decyzji podjętych na podstawie tej rekomendacji. Metryka dokładności modelu (accuracy/MAE).',
-    suggestedTechnologies: ['ML Models in Production (Azure ML, SageMaker)', 'Decision Intelligence Platform', 'Demand Forecasting (Anaplan, O9)', 'Predictive Maintenance (Uptake, SparkCognition)'],
+    suggestedTechnologies: [
+      'ML Models in Production (Azure ML, SageMaker)',
+      'Decision Intelligence Platform',
+      'Demand Forecasting (Anaplan, O9)',
+      'Predictive Maintenance (Uptake, SparkCognition)',
+    ],
   },
   '7B#4': {
     questions: [
@@ -767,7 +1016,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: opis procesu z zaznaczonym krokiem AI-autonomicznym i punktem escalacji do człowieka. Raport: 85% zamówień zakupowych generowanych automatycznie, 15% przekazanych do zatwierdzenia (z powodów: X, Y, Z). RPA/AI workflow configuration.',
-    suggestedTechnologies: ['RPA + AI (UiPath, Blue Prism, Automation Anywhere)', 'Process Orchestration Platform', 'Human-in-the-Loop Platform (Scale AI, Labelbox)', 'BPM with AI Decision Nodes'],
+    suggestedTechnologies: [
+      'RPA + AI (UiPath, Blue Prism, Automation Anywhere)',
+      'Process Orchestration Platform',
+      'Human-in-the-Loop Platform (Scale AI, Labelbox)',
+      'BPM with AI Decision Nodes',
+    ],
   },
   '7B#5': {
     questions: [
@@ -777,7 +1031,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: opis architektury procesu end-to-end z AI orchestration (np. planowanie produkcji w pełni AI-driven). Raport biznesowy: "koszt obsługi procesu X przed AI: Y PLN/szt.; po AI: Z PLN/szt." z datą. Diagram systemu z closed-loop feedback.',
-    suggestedTechnologies: ['Autonomous Process Orchestration (Celonis)', 'Agentic AI Frameworks (LangGraph, AutoGen)', 'MLOps + Real-time Decision Engine', 'Digital Twin (Siemens, ANSYS)'],
+    suggestedTechnologies: [
+      'Autonomous Process Orchestration (Celonis)',
+      'Agentic AI Frameworks (LangGraph, AutoGen)',
+      'MLOps + Real-time Decision Engine',
+      'Digital Twin (Siemens, ANSYS)',
+    ],
   },
 };
 
@@ -791,7 +1050,11 @@ const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód negatywny: roadmapa produktu 2025 bez pozycji "AI feature". Wyniki badania potrzeb klientów bez pytania o AI. Potwierdzenie braku komponentu AI w architekturze technicznej produktu.',
-    suggestedTechnologies: ['(Punkt startowy)', 'Product Roadmap Tool (Productboard)', 'Customer Feedback Platform'],
+    suggestedTechnologies: [
+      '(Punkt startowy)',
+      'Product Roadmap Tool (Productboard)',
+      'Customer Feedback Platform',
+    ],
   },
   '7C#2': {
     questions: [
@@ -801,7 +1064,12 @@ const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: screen z interfejsu produktu pokazujący funkcję AI (np. "Polecane dla Ciebie"). Analytics: 35% użytkowników korzysta z rekomendacji, wpływ na konwersję +8%. A/B test z datą i wynikami.',
-    suggestedTechnologies: ['Recommendation Engine (Recombee, AWS Personalize)', 'Semantic Search (Elastic, Pinecone)', 'Chatbot Platform (Dialogflow, Microsoft Bot Framework)', 'Product Analytics (Mixpanel, Amplitude)'],
+    suggestedTechnologies: [
+      'Recommendation Engine (Recombee, AWS Personalize)',
+      'Semantic Search (Elastic, Pinecone)',
+      'Chatbot Platform (Dialogflow, Microsoft Bot Framework)',
+      'Product Analytics (Mixpanel, Amplitude)',
+    ],
   },
   '7C#3': {
     questions: [
@@ -811,7 +1079,12 @@ const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: dokument architektury technicznej z zaznaczonym komponentem AI jako centralnym. Badanie klientów: "Dlaczego wybrałeś nasz produkt?" z AI wymienianym w top 3 powodów. Mapa personalizacji: które elementy UI/UX zmieniają się per użytkownik.',
-    suggestedTechnologies: ['Real-time ML Inference (Redis AI, TensorFlow Serving)', 'Personalization Engine (Dynamic Yield, Braze)', 'Feature Flags + ML (LaunchDarkly)', 'Vector Database (Pinecone, Weaviate)'],
+    suggestedTechnologies: [
+      'Real-time ML Inference (Redis AI, TensorFlow Serving)',
+      'Personalization Engine (Dynamic Yield, Braze)',
+      'Feature Flags + ML (LaunchDarkly)',
+      'Vector Database (Pinecone, Weaviate)',
+    ],
   },
   '7C#4': {
     questions: [
@@ -821,7 +1094,12 @@ const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: opis architektury continuous learning pipeline z datami retrenowania modelu i metrykami (np. "model retrenowany co 7 dni, accuracy wzrosła z 78% do 84% w 6 miesięcy"). Case study klienta opisujące personalizację w akcji.',
-    suggestedTechnologies: ['Online Learning / Continuous ML (River, Vowpal Wabbit)', 'MLOps (Kubeflow, MLflow)', 'Real-time Feature Store (Tecton)', 'A/B Testing for ML (Optimizely)'],
+    suggestedTechnologies: [
+      'Online Learning / Continuous ML (River, Vowpal Wabbit)',
+      'MLOps (Kubeflow, MLflow)',
+      'Real-time Feature Store (Tecton)',
+      'A/B Testing for ML (Optimizely)',
+    ],
   },
   '7C#5': {
     questions: [
@@ -831,7 +1109,12 @@ const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: opis produktu AI-native (np. autonomiczny agent analityczny, platforma predykcyjna) z przychodem za 2024/2025 i opisem wartości biznesowej dla klientów. Roadmapa 2025–2028 zatwierdzona przez zarząd z milestones AI.',
-    suggestedTechnologies: ['Agentic AI Products (LLM-based Agents)', 'Digital Twin Platform', 'Autonomous Analytics (ThoughtSpot, Tableau Pulse)', 'AI Platform as a Product (custom LLM fine-tuning)'],
+    suggestedTechnologies: [
+      'Agentic AI Products (LLM-based Agents)',
+      'Digital Twin Platform',
+      'Autonomous Analytics (ThoughtSpot, Tableau Pulse)',
+      'AI Platform as a Product (custom LLM fine-tuning)',
+    ],
   },
 };
 
@@ -845,7 +1128,11 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód negatywny: brak dokumentu "AI Usage Policy" w rejestrze polityk. Lub wynik Shadow IT Discovery wskazujący na nieautoryzowane narzędzia AI. Notatka prawna z flagą "brak polityki AI = ryzyko RODO/tajemnicy handlowej".',
-    suggestedTechnologies: ['Shadow IT Discovery (Netskope, Zscaler CASB)', 'AI Policy Template', 'Legal Risk Assessment Tool'],
+    suggestedTechnologies: [
+      'Shadow IT Discovery (Netskope, Zscaler CASB)',
+      'AI Policy Template',
+      'Legal Risk Assessment Tool',
+    ],
   },
   '7D#2': {
     questions: [
@@ -855,7 +1142,12 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: dokument "AI Usage Policy" z datą zatwierdzenia, listą dopuszczonych narzędzi i zakazem przetwarzania danych wrażliwych w nieautoryzowanych narzędziach. Potwierdzenie komunikacji do pracowników (e-mail, LMS).',
-    suggestedTechnologies: ['Policy Management Platform', 'LMS (szkolenie z polityki AI)', 'CASB (Cloud Access Security Broker — kontrola narzędzi AI)', 'AI Governance Framework (NIST AI RMF)'],
+    suggestedTechnologies: [
+      'Policy Management Platform',
+      'LMS (szkolenie z polityki AI)',
+      'CASB (Cloud Access Security Broker — kontrola narzędzi AI)',
+      'AI Governance Framework (NIST AI RMF)',
+    ],
   },
   '7D#3': {
     questions: [
@@ -865,7 +1157,12 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: rejestr projektów AI z kolumnami: opis, ocena ryzyka, decydent, data approvalem, status. Karta powołania AI Committee lub opis roli AI Officer. Repozytorium modeli (MLflow) z historią wersji dla modeli produkcyjnych.',
-    suggestedTechnologies: ['AI Governance Platform (IBM OpenScale, Fiddler AI)', 'MLflow Model Registry', 'GRC Tool (ryzyko AI)', 'AI Committee Charter Template'],
+    suggestedTechnologies: [
+      'AI Governance Platform (IBM OpenScale, Fiddler AI)',
+      'MLflow Model Registry',
+      'GRC Tool (ryzyko AI)',
+      'AI Committee Charter Template',
+    ],
   },
   '7D#4': {
     questions: [
@@ -875,7 +1172,12 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: konfiguracja monitoringu modelu w narzędziu (Evidently AI, Fiddler) z przykładowym alertem driftu i akcją podjętą przez zespół. Raport testu bezpieczeństwa LLM (prompt injection test) z datą. SLA dla modelu predykcyjnego w produkcji.',
-    suggestedTechnologies: ['ML Monitoring (Evidently AI, Whylogs, Fiddler AI)', 'LLM Security Testing (Garak, Promptfoo)', 'MLOps with Auto-Retrain Pipelines', 'Model SLA & On-call Setup'],
+    suggestedTechnologies: [
+      'ML Monitoring (Evidently AI, Whylogs, Fiddler AI)',
+      'LLM Security Testing (Garak, Promptfoo)',
+      'MLOps with Auto-Retrain Pipelines',
+      'Model SLA & On-call Setup',
+    ],
   },
   '7D#5': {
     questions: [
@@ -884,8 +1186,13 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
       'Czy firma ma formalną radę etyki AI lub udokumentowane zasady etycznego AI z mierzalnymi zobowiązaniami i corocznym raportem?',
     ],
     example:
-      'Dowód: raport transparentności AI (AI Transparency Report) za 2024/2025 z sekcjami: wyjaśnialność, biasy, incydenty, governance. Automatyczne guardrails w pipeline\'ach modelowania (np. automatyczne sprawdzenie fairness przed deploym). Skład i mandat Rady Etyki AI.',
-    suggestedTechnologies: ['Responsible AI Platform (Azure AI Fairness, IBM AI Fairness 360)', 'LLM Guardrails (Guardrails.ai, NVIDIA NeMo Guardrails)', 'Explainability Tool (SHAP, LIME)', 'AI Ethics Board Governance Framework'],
+      "Dowód: raport transparentności AI (AI Transparency Report) za 2024/2025 z sekcjami: wyjaśnialność, biasy, incydenty, governance. Automatyczne guardrails w pipeline'ach modelowania (np. automatyczne sprawdzenie fairness przed deploym). Skład i mandat Rady Etyki AI.",
+    suggestedTechnologies: [
+      'Responsible AI Platform (Azure AI Fairness, IBM AI Fairness 360)',
+      'LLM Guardrails (Guardrails.ai, NVIDIA NeMo Guardrails)',
+      'Explainability Tool (SHAP, LIME)',
+      'AI Ethics Board Governance Framework',
+    ],
   },
 };
 
@@ -899,7 +1206,11 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: wyniki ankiety pracowniczej z pytaniem "Czy używasz AI w pracy?" — < 20% odpowiedzi "tak". Brak pozycji "szkolenia AI" w planie HR 2025. Wynik badania nastrojów: AI kojarzone z "zagrożeniem dla pracy" przez > 50% respondentów.',
-    suggestedTechnologies: ['Employee Survey Tool', 'Skills Assessment Platform', '(plan budowy kompetencji)'],
+    suggestedTechnologies: [
+      'Employee Survey Tool',
+      'Skills Assessment Platform',
+      '(plan budowy kompetencji)',
+    ],
   },
   '7E#2': {
     questions: [
@@ -909,7 +1220,11 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: lista "AI champions" lub entuzjastów AI zidentyfikowanych przez HR w ostatnich 6 miesiącach. Lub wyniki ankiety: 15% pracowników deklaruje regularne korzystanie z AI bez firmowego szkolenia. Wewnętrzny post/prezentacja o zastosowaniu AI przez pracownika.',
-    suggestedTechnologies: ['Microsoft Copilot (pilotaż)', 'ChatGPT / Claude (personal use)', 'AI Community Platform (Slack channel, Teams)'],
+    suggestedTechnologies: [
+      'Microsoft Copilot (pilotaż)',
+      'ChatGPT / Claude (personal use)',
+      'AI Community Platform (Slack channel, Teams)',
+    ],
   },
   '7E#3': {
     questions: [
@@ -919,7 +1234,12 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: program szkoleń AI 2025 (curriculum: AI Basics → Prompt Engineering → AI w mojej roli) z harmonogramem i completion rate = 45% po 6 miesiącach (raport LMS). Case study: "Jak dział sprzedaży zaoszczędził 3h/tydzień dzięki AI".',
-    suggestedTechnologies: ['AI Training Platform (Coursera for Business, DataCamp)', 'LMS (training tracking)', 'AI Champions Program Framework', 'Microsoft Copilot Adoption Kit'],
+    suggestedTechnologies: [
+      'AI Training Platform (Coursera for Business, DataCamp)',
+      'LMS (training tracking)',
+      'AI Champions Program Framework',
+      'Microsoft Copilot Adoption Kit',
+    ],
   },
   '7E#4': {
     questions: [
@@ -929,7 +1249,12 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: galeria wewnętrznych automacji AI stworzonych przez pracowników (liczba, typy procesów). Raport z badania "AI Adoption Survey": 65% pracowników używa AI codziennie, 60% deklaruje pozytywny wpływ na efektywność. Agenda "AI Day" lub miesięczny webinar AI z attendance.',
-    suggestedTechnologies: ['Microsoft Power Automate + Copilot', 'Zapier + AI Actions', 'Low-code AI Tools (Bubble AI, Glide)', 'AI Adoption Analytics (Microsoft Viva Insights)'],
+    suggestedTechnologies: [
+      'Microsoft Power Automate + Copilot',
+      'Zapier + AI Actions',
+      'Low-code AI Tools (Bubble AI, Glide)',
+      'AI Adoption Analytics (Microsoft Viva Insights)',
+    ],
   },
   '7E#5': {
     questions: [
@@ -939,7 +1264,12 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Dowód: przykład agenta AI zarządzającego procesem (np. agent obsługi zamówień) z opisem roli pracownika = supervisor, nie executor. Raport "AI ROI 2025": dział X zaoszczędził Y PLN dzięki AI. Onboarding checklist nowego pracownika z pozycją "konfiguracja agentów AI".',
-    suggestedTechnologies: ['Agentic AI Platforms (Microsoft Copilot Studio, Salesforce Agentforce)', 'AI ROI Measurement (Viva Insights, custom analytics)', 'AI-first Onboarding Program', 'Multi-agent Orchestration (LangGraph, AutoGen)'],
+    suggestedTechnologies: [
+      'Agentic AI Platforms (Microsoft Copilot Studio, Salesforce Agentforce)',
+      'AI ROI Measurement (Viva Insights, custom analytics)',
+      'AI-first Onboarding Program',
+      'Multi-agent Orchestration (LangGraph, AutoGen)',
+    ],
   },
 };
 

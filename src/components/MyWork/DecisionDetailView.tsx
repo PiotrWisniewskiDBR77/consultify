@@ -84,13 +84,10 @@ import { Api } from '../../services/api';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
-import {
-  NModeCardState,
-  type NModeCardStatus,
-} from '../shared/NModeLayout/NModeCardState';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
 // wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
 import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
+import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import type { NModeSection } from '../shared/NModeLayout/types';
@@ -706,8 +703,7 @@ const DEMO_ESCALATION: EscalationRule = {
 // and content is a bracketed "[…]" notice. We treat that as a soft failure so the
 // card lands on `error` (retry available) instead of persisting a placeholder draft.
 const isDecisionSectionPlaceholder = (res: any): boolean =>
-  String(res?.model || '') === 'placeholder' ||
-  /^\s*\[.*\]\s*$/.test(String(res?.content || ''));
+  String(res?.model || '') === 'placeholder' || /^\s*\[.*\]\s*$/.test(String(res?.content || ''));
 
 const extractDecisionSectionContent = (res: any): string => {
   if (isDecisionSectionPlaceholder(res)) {
@@ -747,7 +743,10 @@ const normalizeRiskCategory = (
   const s = String(v || '').toLowerCase();
   // Backend enum: scope|schedule|cost|quality|business|operational.
   // FE enum: technical|business|operational|financial|legal|other.
-  const map: Record<string, 'technical' | 'business' | 'operational' | 'financial' | 'legal' | 'other'> = {
+  const map: Record<
+    string,
+    'technical' | 'business' | 'operational' | 'financial' | 'legal' | 'other'
+  > = {
     scope: 'operational',
     schedule: 'operational',
     cost: 'financial',
@@ -1037,8 +1036,14 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
   const escalationModeOptions: Array<{ value: EscalationMode; label: string }> = [
     { value: 'notify_only', label: t('decisions.detail.escalationMode.notifyOnly', 'Notify only') },
-    { value: 'manager_review', label: t('decisions.detail.escalationMode.managerReview', 'Manager review') },
-    { value: 'executive_alert', label: t('decisions.detail.escalationMode.executiveAlert', 'Executive alert') },
+    {
+      value: 'manager_review',
+      label: t('decisions.detail.escalationMode.managerReview', 'Manager review'),
+    },
+    {
+      value: 'executive_alert',
+      label: t('decisions.detail.escalationMode.executiveAlert', 'Executive alert'),
+    },
   ];
 
   const fallbackDeliveryFromReminder = (rule: ReminderRule): DeliveryConfig => ({
@@ -1413,9 +1418,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       description: (description || '').trim().length > 0,
       alternatives: alternatives.length > 0,
       risk: risks.length > 0,
-      consequences:
-        !!consequenceScenarios ||
-        (rationale || '').trim().length > 0,
+      consequences: !!consequenceScenarios || (rationale || '').trim().length > 0,
     };
     setCardStates((prev) => {
       let changed = false;
@@ -1669,9 +1672,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                     </div>
                     {(entry.oldValue || entry.newValue) && (
                       <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                        {entry.oldValue ? `${t('decisions.detail.activityLog.from', 'From')}: ${entry.oldValue}` : ''}
+                        {entry.oldValue
+                          ? `${t('decisions.detail.activityLog.from', 'From')}: ${entry.oldValue}`
+                          : ''}
                         {entry.oldValue && entry.newValue ? '  ->  ' : ''}
-                        {entry.newValue ? `${t('decisions.detail.activityLog.to', 'To')}: ${entry.newValue}` : ''}
+                        {entry.newValue
+                          ? `${t('decisions.detail.activityLog.to', 'To')}: ${entry.newValue}`
+                          : ''}
                       </div>
                     )}
                   </div>
@@ -1994,15 +2001,15 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         emitMyWorkEvent({ type: 'item:updated', entityType: 'decision', entityId: decisionId });
       } else {
         await Api.createDecision(payload);
-        if (!silent) toast.success(t('decisions.detail.activityLog.decisionCreated', 'Decision created'));
+        if (!silent)
+          toast.success(t('decisions.detail.activityLog.decisionCreated', 'Decision created'));
       }
       setLastPublishedSnapshot(draftSnapshot);
       persistDraft(silent ? 'autosave' : 'publish');
       onSaved?.({ ...payload, id: decisionId });
     } catch (error) {
       console.error('Failed to save decision', error);
-      if (!silent)
-        toast.error(t('decisions.detail.toast.saveFailed', 'Failed to save decision'));
+      if (!silent) toast.error(t('decisions.detail.toast.saveFailed', 'Failed to save decision'));
     } finally {
       setSaving(false);
     }
@@ -2236,15 +2243,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (!decisionId) return;
     try {
       // Add a comment requesting more information
-      const requestComment = t('decisions.detail.toast.requestMoreInfoComment', 'Please provide additional information before a decision can be made.');
+      const requestComment = t(
+        'decisions.detail.toast.requestMoreInfoComment',
+        'Please provide additional information before a decision can be made.'
+      );
 
       await handleAddComment(requestComment, undefined, { force: true });
 
       // Optionally update status to show it needs more info
       // For now, we'll just notify via toast and add the comment
-      toast.success(
-        t('decisions.detail.toast.requestSent', 'Request for more information sent')
-      );
+      toast.success(t('decisions.detail.toast.requestSent', 'Request for more information sent'));
 
       // Trigger delegation modal for more detailed request
       setShowDelegationModal(true);
@@ -2375,7 +2383,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const prompt = t(
         'decisions.detail.ai.prosConsPrompt',
         'For this decision option, generate 3 concrete pros and 3 concrete cons. Return JSON only: {"pros":["..."],"cons":["..."]}.\n\nOption title: {{altTitle}}\nDescription: {{altDescription}}\nDecision context: {{decisionTitle}}',
-        { altTitle: alt.title || '-', altDescription: alt.description || '-', decisionTitle: title || '-' }
+        {
+          altTitle: alt.title || '-',
+          altDescription: alt.description || '-',
+          decisionTitle: title || '-',
+        }
       );
 
       let nextPros: string[] = [];
@@ -2486,12 +2498,17 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const generateAlternativesAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
+        t(
+          'decisions.detail.toast.aiGenAvailableOnlyBeforeDecision',
+          'AI generation is available only before decision stage'
+        )
       );
       return;
     }
     if (!title && !description) {
-      toast.error(t('decisions.detail.toast.addTitleOrDescription', 'Add title or description first'));
+      toast.error(
+        t('decisions.detail.toast.addTitleOrDescription', 'Add title or description first')
+      );
       return;
     }
 
@@ -2531,7 +2548,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const generateDescriptionAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
+        t(
+          'decisions.detail.toast.aiGenAvailableOnlyBeforeDecision',
+          'AI generation is available only before decision stage'
+        )
       );
       return;
     }
@@ -2546,10 +2566,14 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       setDescription(content);
       setCardState('description', 'ai-draft');
-      toast.success(t('decisions.detail.toast.descriptionGenerated', 'Description generated by AI'));
+      toast.success(
+        t('decisions.detail.toast.descriptionGenerated', 'Description generated by AI')
+      );
     } catch {
       setCardState('description', 'error');
-      toast.error(t('decisions.detail.toast.descriptionGenerationError', 'Error generating description'));
+      toast.error(
+        t('decisions.detail.toast.descriptionGenerationError', 'Error generating description')
+      );
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -2558,7 +2582,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const generateAIComment = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
+        t(
+          'decisions.detail.toast.aiGenAvailableOnlyBeforeDecision',
+          'AI generation is available only before decision stage'
+        )
       );
       return;
     }
@@ -2568,8 +2595,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         .slice(-5)
         .map((c, idx) => `${idx + 1}. ${c.authorName}: ${c.content}`)
         .join('\n');
-      const decisionStatus = status || (t('decisions.detail.ai.commentNoStatus', 'no status'));
-      const decisionPriority = priority || (t('decisions.detail.ai.commentNoPriority', 'no priority'));
+      const decisionStatus = status || t('decisions.detail.ai.commentNoStatus', 'no status');
+      const decisionPriority =
+        priority || t('decisions.detail.ai.commentNoPriority', 'no priority');
 
       const prompt = t(
         'decisions.detail.ai.commentPrompt',
@@ -2613,7 +2641,10 @@ Return ONLY the final comment text.`,
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.decisionCoachSystemInstruction', 'You are a practical PMO decision coach. Be concrete and avoid generic filler.'),
+        systemInstruction: t(
+          'decisions.detail.ai.decisionCoachSystemInstruction',
+          'You are a practical PMO decision coach. Be concrete and avoid generic filler.'
+        ),
         roleName: 'Decision Comment Advisor',
       });
 
@@ -2650,7 +2681,10 @@ Return ONLY the final comment text.`,
       setComments([...comments, newComment]);
       toast.success(t('decisions.detail.toast.aiCommentGenerated', 'AI comment generated'));
     } catch {
-      const fallback = t('decisions.detail.ai.commentFallback', 'Before finalizing this decision, clarify one critical acceptance condition and assign an owner for the next step. This will reduce delay risk and responsibility ambiguity.');
+      const fallback = t(
+        'decisions.detail.ai.commentFallback',
+        'Before finalizing this decision, clarify one critical acceptance condition and assign an owner for the next step. This will reduce delay risk and responsibility ambiguity.'
+      );
 
       const newComment: Comment = {
         id: Math.random().toString(36).substr(2, 9),
@@ -2663,7 +2697,9 @@ Return ONLY the final comment text.`,
       };
 
       setComments((prev) => [...prev, newComment]);
-      toast.success(t('decisions.detail.toast.aiCommentFallbackAdded', 'Added a fallback AI comment'));
+      toast.success(
+        t('decisions.detail.toast.aiCommentFallbackAdded', 'Added a fallback AI comment')
+      );
     } finally {
       setIsGeneratingAIComment(false);
     }
@@ -2739,7 +2775,10 @@ Users (prefer project members):
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
+        systemInstruction: t(
+          'decisions.detail.ai.pmoJsonSystemInstruction',
+          'You are a PMO assistant. Return valid JSON only, no markdown.'
+        ),
         roleName: 'RACI Team Advisor',
       });
 
@@ -2813,7 +2852,10 @@ Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
+        systemInstruction: t(
+          'decisions.detail.ai.pmoJsonSystemInstruction',
+          'You are a PMO assistant. Return valid JSON only, no markdown.'
+        ),
         roleName: 'Reminder Rules Advisor',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -2880,13 +2922,19 @@ Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
           inAppNotification: true,
           emailNotification: false,
           delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
-          message: t('decisions.detail.decisionOverdueActionNeeded', 'Decision overdue - action needed.'),
+          message: t(
+            'decisions.detail.decisionOverdueActionNeeded',
+            'Decision overdue - action needed.'
+          ),
           enabled: true,
         },
       ];
       setReminders(fallback.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
       toast.success(
-        t('decisions.detail.toast.remindersFallbackApplied', 'Applied fallback reminder suggestions.')
+        t(
+          'decisions.detail.toast.remindersFallbackApplied',
+          'Applied fallback reminder suggestions.'
+        )
       );
     } finally {
       setIsSuggestingReminders(false);
@@ -2914,7 +2962,10 @@ Use userId only from users list:
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
+        systemInstruction: t(
+          'decisions.detail.ai.pmoJsonSystemInstruction',
+          'You are a PMO assistant. Return valid JSON only, no markdown.'
+        ),
         roleName: 'Escalation Rules Advisor',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -2982,7 +3033,10 @@ Use userId only from users list:
             criticalDays: 1,
             escalationMode: 'manager_review',
             delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
-            message: t('decisions.detail.decisionEscalatedDueToInactivity', 'Decision escalated due to inactivity.'),
+            message: t(
+              'decisions.detail.decisionEscalatedDueToInactivity',
+              'Decision escalated due to inactivity.'
+            ),
           }),
         ]);
       }
@@ -3010,7 +3064,10 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
+        systemInstruction: t(
+          'decisions.detail.ai.pmoJsonSystemInstruction',
+          'You are a PMO assistant. Return valid JSON only, no markdown.'
+        ),
         roleName: 'RACI Person Form Assistant',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -3073,7 +3130,10 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
           : prev
       );
       toast.success(
-        t('decisions.detail.toast.raciPersonFallbackApplied', 'Applied fallback RACI person configuration.')
+        t(
+          'decisions.detail.toast.raciPersonFallbackApplied',
+          'Applied fallback RACI person configuration.'
+        )
       );
     } finally {
       setIsSuggestingStakeholders(false);
@@ -3096,7 +3156,10 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
+        systemInstruction: t(
+          'decisions.detail.ai.pmoJsonSystemInstruction',
+          'You are a PMO assistant. Return valid JSON only, no markdown.'
+        ),
         roleName: 'Reminder Form Assistant',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -3151,12 +3214,15 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
               delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
               enabled: true,
               message:
-                prev.message || (t('decisions.detail.decisionDueIn3Days', 'Decision due in 3 days.')),
+                prev.message || t('decisions.detail.decisionDueIn3Days', 'Decision due in 3 days.'),
             }
           : prev
       );
       toast.success(
-        t('decisions.detail.toast.reminderFormFallbackApplied', 'Applied fallback reminder form values.')
+        t(
+          'decisions.detail.toast.reminderFormFallbackApplied',
+          'Applied fallback reminder form values.'
+        )
       );
     } finally {
       setIsSuggestingReminders(false);
@@ -3184,7 +3250,10 @@ Use userId only from this list:
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
+        systemInstruction: t(
+          'decisions.detail.ai.pmoJsonSystemInstruction',
+          'You are a PMO assistant. Return valid JSON only, no markdown.'
+        ),
         roleName: 'Escalation Form Assistant',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -3252,13 +3321,19 @@ Use userId only from this list:
                 enabled: true,
                 message:
                   prev.message ||
-                  (t('decisions.detail.decisionEscalatedDueToInactivity', 'Decision escalated due to inactivity.')),
+                  t(
+                    'decisions.detail.decisionEscalatedDueToInactivity',
+                    'Decision escalated due to inactivity.'
+                  ),
               }
             : prev
         );
       }
       toast.success(
-        t('decisions.detail.toast.escalationFormFallbackApplied', 'Applied fallback escalation form values.')
+        t(
+          'decisions.detail.toast.escalationFormFallbackApplied',
+          'Applied fallback escalation form values.'
+        )
       );
     } finally {
       setIsSuggestingEscalations(false);
@@ -3268,7 +3343,10 @@ Use userId only from this list:
   const generateConsequencesOfInactionAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
+        t(
+          'decisions.detail.toast.aiGenAvailableOnlyBeforeDecision',
+          'AI generation is available only before decision stage'
+        )
       );
       return;
     }
@@ -3294,12 +3372,17 @@ Use userId only from this list:
   const generateRisksAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
+        t(
+          'decisions.detail.toast.aiGenAvailableOnlyBeforeDecision',
+          'AI generation is available only before decision stage'
+        )
       );
       return;
     }
     if (!title && !description) {
-      toast.error(t('decisions.detail.toast.addTitleOrDescription', 'Add title or description first'));
+      toast.error(
+        t('decisions.detail.toast.addTitleOrDescription', 'Add title or description first')
+      );
       return;
     }
 
@@ -3490,7 +3573,8 @@ Use userId only from this list:
   const getRiskScore = (risk: RiskItem) =>
     riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
   const getRiskScoreClass = (score: number) => {
-    if (score >= 12) return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
+    if (score >= 12)
+      return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
     if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
     if (score >= 4)
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -3558,9 +3642,12 @@ Use userId only from this list:
     style: 'conservative' | 'executive' | 'action_forcing'
   ): string => {
     const recommendation =
-      recommendedAlternative?.title || t('decisions.detail.consequences.selectedOptionFallback', 'selected option');
+      recommendedAlternative?.title ||
+      t('decisions.detail.consequences.selectedOptionFallback', 'selected option');
     const decider =
-      deciderName || deciderId || t('decisions.detail.consequences.decisionOwnerFallback', 'decision owner');
+      deciderName ||
+      deciderId ||
+      t('decisions.detail.consequences.decisionOwnerFallback', 'decision owner');
     const due = dueDate || t('decisions.detail.consequences.dateFallback', '[DATE]');
     const riskLine = topRiskTitles.length
       ? topRiskTitles.join(', ')
@@ -3676,7 +3763,10 @@ Use userId only from this list:
           impact: r.impact,
         })),
       };
-      const systemInstruction = t('decisions.detail.ai.pmoAdvisorSystemInstruction', 'You are a PMO advisor. Return valid JSON only according to schema.');
+      const systemInstruction = t(
+        'decisions.detail.ai.pmoAdvisorSystemInstruction',
+        'You are a PMO advisor. Return valid JSON only according to schema.'
+      );
       const consequenceScenariosSchema =
         '{\n  "pessimistic":{"d7":"...","d30":"...","d90":"..."},\n  "neutral":{"d7":"...","d30":"...","d90":"..."},\n  "optimistic":{"d7":"...","d30":"...","d90":"..."}\n}';
       const prompt = t(
@@ -3714,7 +3804,10 @@ Use userId only from this list:
       setCardState('consequences', 'ai-draft');
       if (!silent) {
         toast.success(
-          t('decisions.detail.toast.consequenceScenariosUpdated', 'Consequence scenarios updated by AI')
+          t(
+            'decisions.detail.toast.consequenceScenariosUpdated',
+            'Consequence scenarios updated by AI'
+          )
         );
       }
     } catch {
@@ -3723,7 +3816,10 @@ Use userId only from this list:
       setCardState('consequences', 'ai-draft');
       if (!silent) {
         toast(
-          t('decisions.detail.toast.consequenceScenariosFallback', 'Fallback scenarios applied. AI temporarily unavailable.'),
+          t(
+            'decisions.detail.toast.consequenceScenariosFallback',
+            'Fallback scenarios applied. AI temporarily unavailable.'
+          ),
           { icon: '⚠️' }
         );
       }
@@ -3771,20 +3867,14 @@ Use userId only from this list:
       if (hasPros && hasCons) return alt;
 
       const fallbackPros = [
-        t(
-          'decisions.detail.altFallback.prosFaster',
-          'Faster delivery of business value'
-        ),
+        t('decisions.detail.altFallback.prosFaster', 'Faster delivery of business value'),
         t('decisions.detail.altFallback.prosPredictability', 'Better execution predictability'),
         t('decisions.detail.altFallback.prosAccountability', 'Clearer team accountability'),
       ];
       const fallbackCons = [
         t('decisions.detail.altFallback.consCost', 'Risk of higher initial cost'),
         t('decisions.detail.altFallback.consCoordination', 'Requires additional coordination'),
-        t(
-          'decisions.detail.altFallback.consCapability',
-          'Needs additional capability support'
-        ),
+        t('decisions.detail.altFallback.consCapability', 'Needs additional capability support'),
       ];
 
       return {
@@ -3818,11 +3908,9 @@ Use userId only from this list:
     }
 
     if (mode === 'formal') {
-      return t(
-        'decisions.detail.refine.formalPrefix',
-        'It is hereby noted that {{rest}}',
-        { rest: `${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}` }
-      );
+      return t('decisions.detail.refine.formalPrefix', 'It is hereby noted that {{rest}}', {
+        rest: `${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`,
+      });
     }
 
     // improve
@@ -3841,7 +3929,10 @@ Use userId only from this list:
   ) => {
     if (isDecisionStageLocked) {
       toast.error(
-        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
+        t(
+          'decisions.detail.toast.aiGenAvailableOnlyBeforeDecision',
+          'AI generation is available only before decision stage'
+        )
       );
       return;
     }
@@ -3856,10 +3947,22 @@ Use userId only from this list:
     setAiMenuOpenField(null);
     try {
       const instructionByMode = {
-        improve: t('decisions.detail.ai.refineImprove', 'Improve the text to be clear, professional, and concise. Keep the meaning and remove repetition.'),
-        shorten: t('decisions.detail.ai.refineShorten', 'Shorten the text by about 30-40% while keeping key meaning and decision-relevant information.'),
-        expand: t('decisions.detail.ai.refineExpand', 'Expand the text with useful context, risks, and business implications without filler.'),
-        formal: t('decisions.detail.ai.refineFormal', 'Rewrite the text in a more formal executive tone.'),
+        improve: t(
+          'decisions.detail.ai.refineImprove',
+          'Improve the text to be clear, professional, and concise. Keep the meaning and remove repetition.'
+        ),
+        shorten: t(
+          'decisions.detail.ai.refineShorten',
+          'Shorten the text by about 30-40% while keeping key meaning and decision-relevant information.'
+        ),
+        expand: t(
+          'decisions.detail.ai.refineExpand',
+          'Expand the text with useful context, risks, and business implications without filler.'
+        ),
+        formal: t(
+          'decisions.detail.ai.refineFormal',
+          'Rewrite the text in a more formal executive tone.'
+        ),
       } as const;
       const prompt = t(
         'decisions.detail.ai.refineTextPrompt',
@@ -3877,7 +3980,10 @@ Use userId only from this list:
 
       let refinedText = '';
       try {
-        const systemInstruction = t('decisions.detail.ai.contentEditorSystemInstruction', 'You are a PMO decision content editor. Return only the revised text, no commentary.');
+        const systemInstruction = t(
+          'decisions.detail.ai.contentEditorSystemInstruction',
+          'You are a PMO decision content editor. Return only the revised text, no commentary.'
+        );
 
         // 1) Prefer authenticated API path used across app
         const aiRes = await Api.post('/ai/chat', {
@@ -3912,7 +4018,10 @@ Use userId only from this list:
       if (!refinedText) {
         refinedText = fallbackRefineText(currentValue, mode);
         toast(
-          t('decisions.detail.toast.aiEditFallbackApplied', 'Fallback local edit applied (AI temporarily unavailable).'),
+          t(
+            'decisions.detail.toast.aiEditFallbackApplied',
+            'Fallback local edit applied (AI temporarily unavailable).'
+          ),
           { icon: '⚠️' }
         );
       }
@@ -3924,12 +4033,13 @@ Use userId only from this list:
       setAiUndoByField((prev) => ({ ...prev, [fieldKey]: currentValue }));
       applyValue(refinedText);
       toast.success(
-        t('decisions.detail.toast.contentUpdatedByAI', 'Content updated by AI. If you do not like it, click Undo AI.')
+        t(
+          'decisions.detail.toast.contentUpdatedByAI',
+          'Content updated by AI. If you do not like it, click Undo AI.'
+        )
       );
     } catch (error) {
-      toast.error(
-        t('decisions.detail.toast.aiRefineFailed', 'Failed to refine content with AI')
-      );
+      toast.error(t('decisions.detail.toast.aiRefineFailed', 'Failed to refine content with AI'));
     } finally {
       setAiFieldLoading((prev) => ({ ...prev, [fieldKey]: false }));
     }
@@ -4151,10 +4261,16 @@ Use userId only from this list:
 
   const getCommentPriorityHint = (priority: CommentPriorityLevel) => {
     if (priority === 'high') {
-      return t('decisions.detail.commentPriority.highHint', 'Needs quick response and decision-maker attention.');
+      return t(
+        'decisions.detail.commentPriority.highHint',
+        'Needs quick response and decision-maker attention.'
+      );
     }
     if (priority === 'low') {
-      return t('decisions.detail.commentPriority.lowHint', 'Informational note, no urgent action needed.');
+      return t(
+        'decisions.detail.commentPriority.lowHint',
+        'Informational note, no urgent action needed.'
+      );
     }
     return t('decisions.detail.commentPriority.normalHint', 'Standard working-level comment.');
   };
@@ -4189,7 +4305,10 @@ Use userId only from this list:
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('decisions.detail.ai.pmConsultantSystemInstruction', 'You are a PM consultant. Return a short comment ready to publish.'),
+        systemInstruction: t(
+          'decisions.detail.ai.pmConsultantSystemInstruction',
+          'You are a PM consultant. Return a short comment ready to publish.'
+        ),
         roleName: 'Comment Writing Assistant',
       });
       const next = String(aiRes?.text || aiRes?.content || '').trim();
@@ -4201,7 +4320,10 @@ Use userId only from this list:
       }
     } catch {
       if (!commentDraft.trim()) {
-        const fallback = t('decisions.detail.ai.commentDraftFallback', 'I suggest a short validation of this option on historical data and clarifying execution ownership.');
+        const fallback = t(
+          'decisions.detail.ai.commentDraftFallback',
+          'I suggest a short validation of this option on historical data and clarifying execution ownership.'
+        );
         setCommentDraft(fallback);
       } else {
         setCommentDraft((prev) =>
@@ -4341,7 +4463,9 @@ Use userId only from this list:
   const handleAddLinkedItem = async (item: LinkedItem) => {
     if (isDecisionStageLocked) return;
     if (linkedItems.some((existing) => existing.id === item.id && existing.type === item.type)) {
-      toast(t('decisions.detail.toast.linkAlreadyExists', 'This link already exists'), { icon: 'ℹ️' });
+      toast(t('decisions.detail.toast.linkAlreadyExists', 'This link already exists'), {
+        icon: 'ℹ️',
+      });
       return;
     }
     const { linkedItem, synced } = await hydrateLinkedItem(item);
@@ -4355,7 +4479,10 @@ Use userId only from this list:
     });
     if (item.type !== 'external' && !synced) {
       toast(
-        t('decisions.detail.toast.linkAddedSyncFailed', 'Link added, but metadata sync failed. This is a sign that internal linking may be broken.'),
+        t(
+          'decisions.detail.toast.linkAddedSyncFailed',
+          'Link added, but metadata sync failed. This is a sign that internal linking may be broken.'
+        ),
         { icon: '⚠️' }
       );
     }
@@ -4372,204 +4499,201 @@ Use userId only from this list:
     );
   };
 
-  const searchLinkedItems = useCallback(
-    async (query: string) => {
-      const q = query.trim().toLowerCase();
-      if (!q) return [];
-      try {
-        const [
-          tasksRes,
-          initiativesRes,
-          decisionsRes,
-          projectsRes,
-          assessmentsRes,
-          reportsRes,
-          toolsRes,
-          insightsRes,
-        ] = await Promise.allSettled([
-          Api.get('/tasks?limit=50'),
-          Api.get('/initiatives'),
-          Api.getDecisions(),
-          Api.getProjects(),
-          Api.get('/assessments'),
-          Api.get('/reports'),
-          Api.listToolSessions({ limit: 50 }),
-          Api.get('/interview/insights'),
-        ]);
+  const searchLinkedItems = useCallback(async (query: string) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    try {
+      const [
+        tasksRes,
+        initiativesRes,
+        decisionsRes,
+        projectsRes,
+        assessmentsRes,
+        reportsRes,
+        toolsRes,
+        insightsRes,
+      ] = await Promise.allSettled([
+        Api.get('/tasks?limit=50'),
+        Api.get('/initiatives'),
+        Api.getDecisions(),
+        Api.getProjects(),
+        Api.get('/assessments'),
+        Api.get('/reports'),
+        Api.listToolSessions({ limit: 50 }),
+        Api.get('/interview/insights'),
+      ]);
 
-        const tasks =
-          tasksRes.status === 'fulfilled'
-            ? Array.isArray(tasksRes.value)
-              ? tasksRes.value
-              : tasksRes.value?.tasks || []
-            : [];
-        const initiatives =
-          initiativesRes.status === 'fulfilled'
-            ? Array.isArray(initiativesRes.value)
-              ? initiativesRes.value
-              : initiativesRes.value?.initiatives || []
-            : [];
-        const decisions = decisionsRes.status === 'fulfilled' ? decisionsRes.value || [] : [];
-        const projects =
-          projectsRes.status === 'fulfilled'
-            ? Array.isArray(projectsRes.value)
-              ? projectsRes.value
-              : (projectsRes.value as any)?.projects || []
-            : [];
-        const assessments =
-          assessmentsRes.status === 'fulfilled'
-            ? Array.isArray(assessmentsRes.value)
-              ? assessmentsRes.value
-              : assessmentsRes.value?.assessments || []
-            : [];
-        const reports =
-          reportsRes.status === 'fulfilled'
-            ? Array.isArray(reportsRes.value)
-              ? reportsRes.value
-              : reportsRes.value?.reports || []
-            : [];
-        const tools =
-          toolsRes.status === 'fulfilled'
-            ? Array.isArray(toolsRes.value)
-              ? toolsRes.value
-              : toolsRes.value?.items || []
-            : [];
-        const insights =
-          insightsRes.status === 'fulfilled'
-            ? Array.isArray(insightsRes.value)
-              ? insightsRes.value
-              : insightsRes.value?.insights || []
-            : [];
+      const tasks =
+        tasksRes.status === 'fulfilled'
+          ? Array.isArray(tasksRes.value)
+            ? tasksRes.value
+            : tasksRes.value?.tasks || []
+          : [];
+      const initiatives =
+        initiativesRes.status === 'fulfilled'
+          ? Array.isArray(initiativesRes.value)
+            ? initiativesRes.value
+            : initiativesRes.value?.initiatives || []
+          : [];
+      const decisions = decisionsRes.status === 'fulfilled' ? decisionsRes.value || [] : [];
+      const projects =
+        projectsRes.status === 'fulfilled'
+          ? Array.isArray(projectsRes.value)
+            ? projectsRes.value
+            : (projectsRes.value as any)?.projects || []
+          : [];
+      const assessments =
+        assessmentsRes.status === 'fulfilled'
+          ? Array.isArray(assessmentsRes.value)
+            ? assessmentsRes.value
+            : assessmentsRes.value?.assessments || []
+          : [];
+      const reports =
+        reportsRes.status === 'fulfilled'
+          ? Array.isArray(reportsRes.value)
+            ? reportsRes.value
+            : reportsRes.value?.reports || []
+          : [];
+      const tools =
+        toolsRes.status === 'fulfilled'
+          ? Array.isArray(toolsRes.value)
+            ? toolsRes.value
+            : toolsRes.value?.items || []
+          : [];
+      const insights =
+        insightsRes.status === 'fulfilled'
+          ? Array.isArray(insightsRes.value)
+            ? insightsRes.value
+            : insightsRes.value?.insights || []
+          : [];
 
-        const mappedTasks: LinkedItem[] = tasks
-          .filter((t: any) =>
-            String(t.title || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 10)
-          .map((t: any) => ({
-            id: String(t.id),
-            type: 'task',
-            title: String(t.title || 'Task'),
-            status: t.status,
-            priority: t.priority,
-          }));
-        const mappedInitiatives: LinkedItem[] = initiatives
-          .filter((i: any) =>
-            String(i.name || i.title || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 10)
-          .map((i: any) => ({
-            id: String(i.id),
-            type: 'initiative',
-            title: String(i.name || i.title || 'Initiative'),
-            status: i.status,
-            priority: i.priority,
-          }));
-        const mappedDecisions: LinkedItem[] = decisions
-          .filter((d: any) =>
-            String(d.title || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 10)
-          .map((d: any) => ({
-            id: String(d.id),
-            type: 'decision',
-            title: String(d.title || 'Decision'),
-            status: d.status,
-            priority: d.priority,
-          }));
-        const mappedProjects: LinkedItem[] = projects
-          .filter((p: any) =>
-            String(p.name || p.title || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 10)
-          .map((p: any) => ({
-            id: String(p.id),
-            type: 'project',
-            title: String(p.name || p.title || 'Project'),
-            status: p.status,
-            priority: p.priority,
-          }));
-        const mappedAssessments: LinkedItem[] = assessments
-          .filter((a: any) =>
-            String(a.title || a.name || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 8)
-          .map((a: any) => ({
-            id: String(a.id),
-            type: 'assessment',
-            title: String(a.title || a.name || 'Assessment'),
-            status: a.status,
-            url: '/assessment',
-          }));
-        const mappedReports: LinkedItem[] = reports
-          .filter((r: any) =>
-            String(r.title || r.name || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 8)
-          .map((r: any) => ({
-            id: String(r.id),
-            type: 'report',
-            title: String(r.title || r.name || 'Report'),
-            status: r.status,
-            url: `/assessment-reports/${String(r.id)}`,
-          }));
-        const mappedTools: LinkedItem[] = tools
-          .filter((tool: any) =>
-            String(tool.name || tool.title || tool.toolType || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 8)
-          .map((tool: any) => ({
-            id: String(tool.id),
-            type: 'tool',
-            title: String(tool.name || tool.title || tool.toolType || 'Tool'),
-            status: tool.status,
-            url: '/tools',
-          }));
-        const mappedInsights: LinkedItem[] = insights
-          .filter((insight: any) =>
-            String(insight.title || insight.name || insight.summary || '')
-              .toLowerCase()
-              .includes(q)
-          )
-          .slice(0, 8)
-          .map((insight: any) => ({
-            id: String(insight.id),
-            type: 'insight',
-            title: String(insight.title || insight.name || 'Insight'),
-            status: insight.status,
-            url: '/interview',
-          }));
+      const mappedTasks: LinkedItem[] = tasks
+        .filter((t: any) =>
+          String(t.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((t: any) => ({
+          id: String(t.id),
+          type: 'task',
+          title: String(t.title || 'Task'),
+          status: t.status,
+          priority: t.priority,
+        }));
+      const mappedInitiatives: LinkedItem[] = initiatives
+        .filter((i: any) =>
+          String(i.name || i.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((i: any) => ({
+          id: String(i.id),
+          type: 'initiative',
+          title: String(i.name || i.title || 'Initiative'),
+          status: i.status,
+          priority: i.priority,
+        }));
+      const mappedDecisions: LinkedItem[] = decisions
+        .filter((d: any) =>
+          String(d.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((d: any) => ({
+          id: String(d.id),
+          type: 'decision',
+          title: String(d.title || 'Decision'),
+          status: d.status,
+          priority: d.priority,
+        }));
+      const mappedProjects: LinkedItem[] = projects
+        .filter((p: any) =>
+          String(p.name || p.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((p: any) => ({
+          id: String(p.id),
+          type: 'project',
+          title: String(p.name || p.title || 'Project'),
+          status: p.status,
+          priority: p.priority,
+        }));
+      const mappedAssessments: LinkedItem[] = assessments
+        .filter((a: any) =>
+          String(a.title || a.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((a: any) => ({
+          id: String(a.id),
+          type: 'assessment',
+          title: String(a.title || a.name || 'Assessment'),
+          status: a.status,
+          url: '/assessment',
+        }));
+      const mappedReports: LinkedItem[] = reports
+        .filter((r: any) =>
+          String(r.title || r.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((r: any) => ({
+          id: String(r.id),
+          type: 'report',
+          title: String(r.title || r.name || 'Report'),
+          status: r.status,
+          url: `/assessment-reports/${String(r.id)}`,
+        }));
+      const mappedTools: LinkedItem[] = tools
+        .filter((tool: any) =>
+          String(tool.name || tool.title || tool.toolType || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((tool: any) => ({
+          id: String(tool.id),
+          type: 'tool',
+          title: String(tool.name || tool.title || tool.toolType || 'Tool'),
+          status: tool.status,
+          url: '/tools',
+        }));
+      const mappedInsights: LinkedItem[] = insights
+        .filter((insight: any) =>
+          String(insight.title || insight.name || insight.summary || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((insight: any) => ({
+          id: String(insight.id),
+          type: 'insight',
+          title: String(insight.title || insight.name || 'Insight'),
+          status: insight.status,
+          url: '/interview',
+        }));
 
-        return [
-          ...mappedTasks,
-          ...mappedInitiatives,
-          ...mappedDecisions,
-          ...mappedProjects,
-          ...mappedAssessments,
-          ...mappedReports,
-          ...mappedTools,
-          ...mappedInsights,
-        ].slice(0, 24);
-      } catch {
-        return [];
-      }
-    },
-    []
-  );
+      return [
+        ...mappedTasks,
+        ...mappedInitiatives,
+        ...mappedDecisions,
+        ...mappedProjects,
+        ...mappedAssessments,
+        ...mappedReports,
+        ...mappedTools,
+        ...mappedInsights,
+      ].slice(0, 24);
+    } catch {
+      return [];
+    }
+  }, []);
 
   const openLinkedItemTarget = (item: LinkedItem) => {
     const explicitUrl = item.externalUrl || item.url;
@@ -4620,14 +4744,17 @@ Use userId only from this list:
   const rpTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
   const rpTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
   const rpTdValLast = 'px-3 py-2 text-right text-c-text';
-  const rpPill = 'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
+  const rpPill =
+    'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
   const rpBtn =
     'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
   const rpChipBtn =
     'inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]';
   const deciderUser = users.find((u) => u.id === deciderId);
   const deciderDisplayName =
-    deciderName || (deciderUser ? `${deciderUser.firstName} ${deciderUser.lastName}`.trim() : '') || dash;
+    deciderName ||
+    (deciderUser ? `${deciderUser.firstName} ${deciderUser.lastName}`.trim() : '') ||
+    dash;
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
@@ -4642,12 +4769,7 @@ Use userId only from this list:
       defaultOpen: true,
       children: (
         <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => handleSave()}
-            disabled={saving}
-            className={rpBtn}
-          >
+          <button type="button" onClick={() => handleSave()} disabled={saving} className={rpBtn}>
             <Save size={14} className="text-c-text-muted" />
             {t('myWork.decisionDetail.save', 'Save')}
           </button>
@@ -4660,7 +4782,11 @@ Use userId only from this list:
               <span className="text-xs text-c-text-muted">
                 {t('myWork.decisionDetail.share', 'Share')}
               </span>
-              <ArtifactPermalinkButton artifactType="decision" artifactId={decisionId} isPolish={isPolish} />
+              <ArtifactPermalinkButton
+                artifactType="decision"
+                artifactId={decisionId}
+                isPolish={isPolish}
+              />
             </div>
           )}
         </div>
@@ -4688,13 +4814,17 @@ Use userId only from this list:
               <tr>
                 <td className={rpTdKey}>{t('myWork.decisionDetail.status', 'Status')}</td>
                 <td className={rpTdVal}>
-                  <span className={rpPill}>{statusConfig.label[t('myWork.decisionDetail.en', 'en')]}</span>
+                  <span className={rpPill}>
+                    {statusConfig.label[t('myWork.decisionDetail.en', 'en')]}
+                  </span>
                 </td>
               </tr>
               <tr>
                 <td className={rpTdKey}>{t('myWork.decisionDetail.priority', 'Priority')}</td>
                 <td className={rpTdVal}>
-                  <span className={rpPill}>{priorityConfig.label[t('myWork.decisionDetail.en2', 'en')]}</span>
+                  <span className={rpPill}>
+                    {priorityConfig.label[t('myWork.decisionDetail.en2', 'en')]}
+                  </span>
                 </td>
               </tr>
               <tr>
@@ -4702,7 +4832,9 @@ Use userId only from this list:
                 <td className={`${rpTdVal} tabular-nums`}>{dueDate || dash}</td>
               </tr>
               <tr>
-                <td className="px-3 py-2 text-c-text-muted">{t('myWork.decisionDetail.decider', 'Decider')}</td>
+                <td className="px-3 py-2 text-c-text-muted">
+                  {t('myWork.decisionDetail.decider', 'Decider')}
+                </td>
                 <td className={rpTdValLast}>{deciderDisplayName}</td>
               </tr>
             </tbody>
@@ -4726,7 +4858,9 @@ Use userId only from this list:
         <div className="flex flex-col gap-2">
           {initiativeName ? (
             <div className="flex items-center gap-2">
-              <span className={rpKeyClass}>{t('myWork.decisionDetail.initiative', 'Initiative')}</span>
+              <span className={rpKeyClass}>
+                {t('myWork.decisionDetail.initiative', 'Initiative')}
+              </span>
               <button
                 type="button"
                 onClick={() => {
@@ -4794,7 +4928,9 @@ Use userId only from this list:
           ))}
           {attachments.length > 0 ? (
             <div className="flex items-center justify-between gap-3">
-              <span className={rpKeyClass}>{t('myWork.decisionDetail.attachments', 'Attachments')}</span>
+              <span className={rpKeyClass}>
+                {t('myWork.decisionDetail.attachments', 'Attachments')}
+              </span>
               <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
                 {attachments.length}
               </span>
@@ -4817,7 +4953,7 @@ Use userId only from this list:
             <li key={c.id} className="flex flex-col gap-0.5">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-xs font-semibold text-c-text truncate">
-                  {c.authorName || (t('myWork.decisionDetail.user', 'User'))}
+                  {c.authorName || t('myWork.decisionDetail.user', 'User')}
                 </span>
                 <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
                   {fmtDateTime(c.createdAt)}
@@ -4876,1722 +5012,2311 @@ Use userId only from this list:
       <div className="p-6">
         <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
-          {/* Main */}
-          {/* Title Header — uses shared NModeHeader component */}
-          <NModeHeader
-            title={title}
-            onTitleChange={(v) => !isDecisionStageLocked && setTitle(v)}
-            titleReadOnly={isDecisionStageLocked}
-            titlePlaceholder={{ en: 'Decision title...', pl: 'Tytuł decyzji...' }}
-            artifactId={decisionId || undefined}
-            artifactType="decision"
-            onSave={handleSave}
-            saving={saving}
-            isDirty={isDirty}
-            onChat={handleOpenChat}
-            showChatButton
-            onClose={onClose}
-            draftSavedLabel={draftSavedLabel || undefined}
-            statusDotColor={statusConfig.color}
-            presentationMode={presentationMode}
-            onPresentationModeChange={setPresentationMode}
-            buildArtifactCode={buildArtifactCode}
-            primaryAction={
-              decisionId && isPending
-                ? {
-                    label: { en: 'Approve decision', pl: 'Zatwierdź decyzję' },
-                    icon: Check,
-                    onClick: handleApprove,
-                  }
-                : undefined
-            }
-          />
+            {/* Main */}
+            {/* Title Header — uses shared NModeHeader component */}
+            <NModeHeader
+              title={title}
+              onTitleChange={(v) => !isDecisionStageLocked && setTitle(v)}
+              titleReadOnly={isDecisionStageLocked}
+              titlePlaceholder={{ en: 'Decision title...', pl: 'Tytuł decyzji...' }}
+              artifactId={decisionId || undefined}
+              artifactType="decision"
+              onSave={handleSave}
+              saving={saving}
+              isDirty={isDirty}
+              onChat={handleOpenChat}
+              showChatButton
+              onClose={onClose}
+              draftSavedLabel={draftSavedLabel || undefined}
+              statusDotColor={statusConfig.color}
+              presentationMode={presentationMode}
+              onPresentationModeChange={setPresentationMode}
+              buildArtifactCode={buildArtifactCode}
+              primaryAction={
+                decisionId && isPending
+                  ? {
+                      label: { en: 'Approve decision', pl: 'Zatwierdź decyzję' },
+                      icon: Check,
+                      onClick: handleApprove,
+                    }
+                  : undefined
+              }
+            />
 
-          {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
+            {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
                Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:
                - PropertiesStrip (full-width, under header)
                - 2-pane: LeftNav (fixed ~242px) | Canvas (selected section only)
                Left nav click → shows ONE section at a time (no scroll-all).
                ═══════════════════════════════════════════════════════════════════ */}
-          {presentationMode === 'n' && (
-            <div className="col-span-full space-y-4">
-              {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
-              <div className="flex items-center justify-between">
-                {!readMode ? (
-                  <NModeCardManager layout={decisionCardLayout} isPolish={isPolish} />
-                ) : (
-                  <div />
-                )}
-                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
-              </div>
-              {/* ── Origin Badge ──────────────────────────────────── */}
-              {sourceType && sourceId && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
-                  {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
-                  {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
-                  {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
-                  <span className="text-slate-600 dark:text-slate-300">
-                    {sourceType === 'idea'
-                      ? t('decisions.detail.source.createdFromIdea', 'Created from Idea')
-                      : sourceType === 'notebook'
-                        ? t('decisions.detail.source.createdFromNote', 'Created from Note')
-                        : `Created from ${sourceType}`}
-                  </span>
-                  <button
-                    onClick={() => {
-                      window.dispatchEvent(
-                        new CustomEvent('mywork-open-item', {
-                          detail: {
-                            type: sourceType === 'notebook' ? 'notebook' : sourceType,
-                            id: sourceId,
-                            name: `Source ${sourceType}`,
-                            initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
-                          },
-                        })
-                      );
-                    }}
-                    className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
-                  >
-                    {sourceType === 'idea'
-                      ? t('decisions.detail.source.viewSourceInMindmap', 'View source in mindmap →')
-                      : t('decisions.detail.source.viewSource', 'View source →')}
-                  </button>
+            {presentationMode === 'n' && (
+              <div className="col-span-full space-y-4">
+                {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
+                <div className="flex items-center justify-between">
+                  {!readMode ? (
+                    <NModeCardManager layout={decisionCardLayout} isPolish={isPolish} />
+                  ) : (
+                    <div />
+                  )}
+                  <ReadEditToggle readMode={readMode} onChange={setReadMode} />
                 </div>
-              )}
-
-              {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
-              {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
-              {!readMode && (
-              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
-                {decisionId && (
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                      {t('decisions.detail.workflow.label', 'Workflow')}
+                {/* ── Origin Badge ──────────────────────────────────── */}
+                {sourceType && sourceId && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
+                    {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
+                    {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
+                    {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {sourceType === 'idea'
+                        ? t('decisions.detail.source.createdFromIdea', 'Created from Idea')
+                        : sourceType === 'notebook'
+                          ? t('decisions.detail.source.createdFromNote', 'Created from Note')
+                          : `Created from ${sourceType}`}
                     </span>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
+                    <button
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent('mywork-open-item', {
+                            detail: {
+                              type: sourceType === 'notebook' ? 'notebook' : sourceType,
+                              id: sourceId,
+                              name: `Source ${sourceType}`,
+                              initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
+                            },
+                          })
+                        );
+                      }}
+                      className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                     >
-                      {t(`decisions.detail.workflowStage.${workflowStatus}`, workflowMeta.label.en)}
-                    </span>
-                    {workflowActions.map((action) => (
-                      <button
-                        key={action.id}
-                        type="button"
-                        onClick={action.onClick}
-                        disabled={workflowActionLoading}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                          action.tone === 'primary'
-                            ? 'border border-primary-400/50 bg-primary-500/10 text-primary-700 hover:bg-primary-500/15 dark:text-primary-300'
-                            : action.tone === 'success'
-                              ? 'border border-emerald-400/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300'
-                              : 'border border-slate-300/60 text-slate-600 hover:bg-slate-100 dark:border-navy-600/60 dark:text-slate-300 dark:hover:bg-navy-800'
-                        }`}
-                      >
-                        {workflowActionLoading ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : null}
-                        {action.label}
-                      </button>
-                    ))}
+                      {sourceType === 'idea'
+                        ? t(
+                            'decisions.detail.source.viewSourceInMindmap',
+                            'View source in mindmap →'
+                          )
+                        : t('decisions.detail.source.viewSource', 'View source →')}
+                    </button>
                   </div>
                 )}
-                {/* Action buttons for pending decisions */}
-                {decisionId && isPending && (
-                  <div className="flex items-center gap-2">
-                    {/* Approve = M1 primary (NModeHeader.primaryAction) per Formuła §9; workflow keeps secondary actions */}
-                    <button
-                      onClick={handleReject}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
-                    >
-                      <X size={13} /> {t('decisions.detail.actions.reject', 'Reject')}
-                    </button>
-                    <button
-                      onClick={handleRequestMoreInfo}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                    >
-                      <HelpCircle size={13} /> {t('decisions.detail.actions.requestInfo', 'Request info')}
-                    </button>
-                    <button
-                      onClick={() => setShowDelegationModal(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                    >
-                      <Share2 size={13} /> {t('decisions.detail.actions.delegate', 'Delegate')}
-                    </button>
-                    {activeNotionSection === 'options-tradeoffs' && (
-                      <button
-                        onClick={generateAlternativesAI}
-                        disabled={isDecisionStageLocked || isGeneratingAlternatives}
-                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          isGeneratingAlternatives
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                        } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={t('decisions.detail.actions.generateOptionsTitle', 'Generate options with AI')}
-                      >
-                        {isGeneratingAlternatives ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={13} />
-                        )}
-                        {t('decisions.detail.actions.generateOptions', 'Generate options')}
-                      </button>
-                    )}
-                    {activeNotionSection === 'options-tradeoffs' && (
-                      <button
-                        onClick={handleAnalyzeOptionsWithAI}
-                        disabled={isDecisionStageLocked}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={t(
-                          'decisions.detail.actions.analyzeOptionsTitle',
-                          'Discuss and analyze these options with Teresa'
-                        )}
-                      >
-                        <Sparkles size={13} />
-                        {t('decisions.detail.actions.analyzeOptions', 'Analyze options')}
-                      </button>
-                    )}
-                    {activeNotionSection === 'risk-impact' && (
-                      <button
-                        onClick={generateRisksAI}
-                        disabled={isDecisionStageLocked || isGeneratingRisks}
-                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          isGeneratingRisks
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                        } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={t('decisions.detail.actions.analyzeRisksTitle', 'Analyze risks with AI')}
-                      >
-                        {isGeneratingRisks ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={13} />
-                        )}
-                        {t('decisions.detail.actions.analyzeRisks', 'Analyze risks')}
-                      </button>
-                    )}
-                    {activeNotionSection === 'governance-escalation' && (
-                      <button
-                        onClick={suggestStakeholdersAI}
-                        disabled={isDecisionStageLocked || isSuggestingStakeholders}
-                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          isSuggestingStakeholders
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                        } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={t('decisions.detail.actions.generateRaciTitle', 'Generate RACI with AI')}
-                      >
-                        {isSuggestingStakeholders ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={13} />
-                        )}
-                        {t('decisions.detail.actions.generateRaci', 'Generate RACI')}
-                      </button>
-                    )}
-                    {activeNotionSection === 'comments' && (
-                      <button
-                        onClick={generateAIComment}
-                        disabled={isDecisionStageLocked || isGeneratingAIComment}
-                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          isGeneratingAIComment
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                        } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={t('decisions.detail.actions.generateCommentTitle', 'Generate AI comment')}
-                      >
-                        {isGeneratingAIComment ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={13} />
-                        )}
-                        {t('decisions.detail.actions.aiComments', 'AI comments')}
-                      </button>
-                    )}
-                    {activeNotionSection === 'consequences' && (
-                      <button
-                        onClick={() => generateConsequenceScenariosAI()}
-                        disabled={isDecisionStageLocked || isGeneratingConsequenceScenarios}
-                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          isGeneratingConsequenceScenarios
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                        } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={
-                          t('decisions.detail.actions.analyzeConsequencesTitle', 'Run AI consequence analysis')
-                        }
-                      >
-                        {isGeneratingConsequenceScenarios ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={13} />
-                        )}
-                        {t('decisions.detail.actions.analyzeConsequences', 'Analyze consequences')}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-              )}
 
-              {/* ── 2-Pane: LeftNav + Canvas — shared NModeLeftNav ───────── */}
-              <div className="flex gap-0 min-h-[60vh]">
-                <NModeLeftNav
-                  sections={orderedNotionSections as NModeSection[]}
-                  activeSection={activeNotionSection}
-                  onSectionChange={setActiveNotionSection}
-                  onSectionReorder={(ids) => decisionCardLayout.reorderByIds(ids)}
-                />
-
-                {/* Canvas (shows selected section only) */}
-                <div className="flex-1 pl-6 pt-1 min-w-0">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeNotionSection}
-                      initial={reducedMotion ? {} : { opacity: 0, y: 3 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={reducedMotion ? {} : { opacity: 0, y: -3 }}
-                      transition={{ duration: motionDuration }}
-                    >
-                      {/* ── Section: Context & Problem ───────────────── */}
-                      {activeNotionSection === 'context-problem' && (
-                        <NModeCardState
-                          state={isGeneratingDescription ? 'generating' : cardStates.description}
-                          sectionName={{ en: 'Decision Scope', pl: 'Zakres decyzji' }}
-                          aiGenerated={
-                            cardStates.description === 'ai-draft' ||
-                            cardStates.description === 'edited'
-                          }
-                          hideActions={isDecisionStageLocked}
-                          onRegenerate={generateDescriptionAI}
-                          onEdit={() => setCardState('description', 'edited')}
-                          onAccept={() => setCardState('description', 'done')}
-                          onGenerate={generateDescriptionAI}
-                          onFillManually={() => setCardState('description', 'edited')}
-                          onRetry={generateDescriptionAI}
+                {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
+                {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
+                {!readMode && (
+                  <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
+                    {decisionId && (
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                          {t('decisions.detail.workflow.label', 'Workflow')}
+                        </span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
                         >
-                        <div className="space-y-6">
-                          <div className="hidden">
-                            <button
-                              onClick={generateDescriptionAI}
-                              disabled={isDecisionStageLocked || isGeneratingDescription}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              {isGeneratingDescription ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Sparkles size={13} />
-                              )}{' '}
-                              AI
-                            </button>
-                          </div>
-
-                          {/* 1) Related item from linked records */}
-                          <div className="space-y-2">
-                            <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                              {t('decisions.detail.scope.relatedTo', 'Related to')}
-                            </label>
-                            {relatedDecisionItems.length === 0 ? (
-                              <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
-                                {t('decisions.detail.scope.noLinkedItem', 'No linked item')}
-                              </div>
+                          {t(
+                            `decisions.detail.workflowStage.${workflowStatus}`,
+                            workflowMeta.label.en
+                          )}
+                        </span>
+                        {workflowActions.map((action) => (
+                          <button
+                            key={action.id}
+                            type="button"
+                            onClick={action.onClick}
+                            disabled={workflowActionLoading}
+                            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                              action.tone === 'primary'
+                                ? 'border border-primary-400/50 bg-primary-500/10 text-primary-700 hover:bg-primary-500/15 dark:text-primary-300'
+                                : action.tone === 'success'
+                                  ? 'border border-emerald-400/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300'
+                                  : 'border border-slate-300/60 text-slate-600 hover:bg-slate-100 dark:border-navy-600/60 dark:text-slate-300 dark:hover:bg-navy-800'
+                            }`}
+                          >
+                            {workflowActionLoading ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : null}
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {/* Action buttons for pending decisions */}
+                    {decisionId && isPending && (
+                      <div className="flex items-center gap-2">
+                        {/* Approve = M1 primary (NModeHeader.primaryAction) per Formuła §9; workflow keeps secondary actions */}
+                        <button
+                          onClick={handleReject}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
+                        >
+                          <X size={13} /> {t('decisions.detail.actions.reject', 'Reject')}
+                        </button>
+                        <button
+                          onClick={handleRequestMoreInfo}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                        >
+                          <HelpCircle size={13} />{' '}
+                          {t('decisions.detail.actions.requestInfo', 'Request info')}
+                        </button>
+                        <button
+                          onClick={() => setShowDelegationModal(true)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                        >
+                          <Share2 size={13} /> {t('decisions.detail.actions.delegate', 'Delegate')}
+                        </button>
+                        {activeNotionSection === 'options-tradeoffs' && (
+                          <button
+                            onClick={generateAlternativesAI}
+                            disabled={isDecisionStageLocked || isGeneratingAlternatives}
+                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              isGeneratingAlternatives
+                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            title={t(
+                              'decisions.detail.actions.generateOptionsTitle',
+                              'Generate options with AI'
+                            )}
+                          >
+                            {isGeneratingAlternatives ? (
+                              <Loader2 size={13} className="animate-spin" />
                             ) : (
-                              <div className="space-y-1">
-                                {relatedDecisionItems.map((item) => (
-                                  <div
-                                    key={item.id}
-                                    className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
-                                  >
-                                    <div className="flex min-w-0 items-center gap-2">
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
-                                        {item.type}
-                                      </span>
-                                      <span className="truncate">{item.title}</span>
-                                    </div>
-                                    <span className="shrink-0 text-[11px] font-mono text-slate-500/70 dark:text-slate-500/70">
-                                      {getLinkedItemIndex(item)}
-                                    </span>
-                                  </div>
-                                ))}
+                              <Sparkles size={13} />
+                            )}
+                            {t('decisions.detail.actions.generateOptions', 'Generate options')}
+                          </button>
+                        )}
+                        {activeNotionSection === 'options-tradeoffs' && (
+                          <button
+                            onClick={handleAnalyzeOptionsWithAI}
+                            disabled={isDecisionStageLocked}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            title={t(
+                              'decisions.detail.actions.analyzeOptionsTitle',
+                              'Discuss and analyze these options with Teresa'
+                            )}
+                          >
+                            <Sparkles size={13} />
+                            {t('decisions.detail.actions.analyzeOptions', 'Analyze options')}
+                          </button>
+                        )}
+                        {activeNotionSection === 'risk-impact' && (
+                          <button
+                            onClick={generateRisksAI}
+                            disabled={isDecisionStageLocked || isGeneratingRisks}
+                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              isGeneratingRisks
+                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            title={t(
+                              'decisions.detail.actions.analyzeRisksTitle',
+                              'Analyze risks with AI'
+                            )}
+                          >
+                            {isGeneratingRisks ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={13} />
+                            )}
+                            {t('decisions.detail.actions.analyzeRisks', 'Analyze risks')}
+                          </button>
+                        )}
+                        {activeNotionSection === 'governance-escalation' && (
+                          <button
+                            onClick={suggestStakeholdersAI}
+                            disabled={isDecisionStageLocked || isSuggestingStakeholders}
+                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              isSuggestingStakeholders
+                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            title={t(
+                              'decisions.detail.actions.generateRaciTitle',
+                              'Generate RACI with AI'
+                            )}
+                          >
+                            {isSuggestingStakeholders ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={13} />
+                            )}
+                            {t('decisions.detail.actions.generateRaci', 'Generate RACI')}
+                          </button>
+                        )}
+                        {activeNotionSection === 'comments' && (
+                          <button
+                            onClick={generateAIComment}
+                            disabled={isDecisionStageLocked || isGeneratingAIComment}
+                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              isGeneratingAIComment
+                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            title={t(
+                              'decisions.detail.actions.generateCommentTitle',
+                              'Generate AI comment'
+                            )}
+                          >
+                            {isGeneratingAIComment ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={13} />
+                            )}
+                            {t('decisions.detail.actions.aiComments', 'AI comments')}
+                          </button>
+                        )}
+                        {activeNotionSection === 'consequences' && (
+                          <button
+                            onClick={() => generateConsequenceScenariosAI()}
+                            disabled={isDecisionStageLocked || isGeneratingConsequenceScenarios}
+                            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              isGeneratingConsequenceScenarios
+                                ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                                : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            title={t(
+                              'decisions.detail.actions.analyzeConsequencesTitle',
+                              'Run AI consequence analysis'
+                            )}
+                          >
+                            {isGeneratingConsequenceScenarios ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={13} />
+                            )}
+                            {t(
+                              'decisions.detail.actions.analyzeConsequences',
+                              'Analyze consequences'
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── 2-Pane: LeftNav + Canvas — shared NModeLeftNav ───────── */}
+                <div className="flex gap-0 min-h-[60vh]">
+                  <NModeLeftNav
+                    sections={orderedNotionSections as NModeSection[]}
+                    activeSection={activeNotionSection}
+                    onSectionChange={setActiveNotionSection}
+                    onSectionReorder={(ids) => decisionCardLayout.reorderByIds(ids)}
+                  />
+
+                  {/* Canvas (shows selected section only) */}
+                  <div className="flex-1 pl-6 pt-1 min-w-0">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeNotionSection}
+                        initial={reducedMotion ? {} : { opacity: 0, y: 3 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={reducedMotion ? {} : { opacity: 0, y: -3 }}
+                        transition={{ duration: motionDuration }}
+                      >
+                        {/* ── Section: Context & Problem ───────────────── */}
+                        {activeNotionSection === 'context-problem' && (
+                          <NModeCardState
+                            state={isGeneratingDescription ? 'generating' : cardStates.description}
+                            sectionName={{ en: 'Decision Scope', pl: 'Zakres decyzji' }}
+                            aiGenerated={
+                              cardStates.description === 'ai-draft' ||
+                              cardStates.description === 'edited'
+                            }
+                            hideActions={isDecisionStageLocked}
+                            onRegenerate={generateDescriptionAI}
+                            onEdit={() => setCardState('description', 'edited')}
+                            onAccept={() => setCardState('description', 'done')}
+                            onGenerate={generateDescriptionAI}
+                            onFillManually={() => setCardState('description', 'edited')}
+                            onRetry={generateDescriptionAI}
+                          >
+                            <div className="space-y-6">
+                              <div className="hidden">
+                                <button
+                                  onClick={generateDescriptionAI}
+                                  disabled={isDecisionStageLocked || isGeneratingDescription}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  {isGeneratingDescription ? (
+                                    <Loader2 size={13} className="animate-spin" />
+                                  ) : (
+                                    <Sparkles size={13} />
+                                  )}{' '}
+                                  AI
+                                </button>
                               </div>
-                            )}
-                          </div>
 
-                          {/* 2) Decision scope */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                {t('decisions.detail.scope.decisionScopeLabel', 'Decision scope')}
-                              </label>
-                              <AIFieldEnhancer
-                                fieldKey="n-description"
-                                sectionLabel="Decision Scope"
-                                currentValue={description}
-                                onApply={setDescription}
-                                artifactContext={{ title, status, priority, type: 'decision' }}
-                                disabled={isDecisionStageLocked}
-                              />
-                            </div>
-                            <div className="relative">
-                              <textarea
-                                value={description}
-                                onChange={(e) => {
-                                  if (isDecisionStageLocked) return;
-                                  setDescription(e.target.value);
-                                  markCardEdited('description');
-                                }}
-                                readOnly={isDecisionStageLocked}
-                                rows={isDescriptionExpanded ? 10 : 6}
-                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
-                                placeholder={
-                                  t('decisions.detail.scope.descriptionPlaceholder', 'Describe the decision scope (what exactly is being decided)...')
-                                }
-                              />
-                              {!isDescriptionExpanded && canExpandDescription && (
-                                <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
-                              )}
-                            </div>
-                            {canExpandDescription && (
-                              <button
-                                onClick={() => setIsDescriptionExpanded((prev) => !prev)}
-                                className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                              >
-                                {isDescriptionExpanded ? (
-                                  <>
-                                    <ChevronsUpDown size={12} />
-                                    {t('decisions.detail.scope.seeLess', 'See less')}
-                                  </>
+                              {/* 1) Related item from linked records */}
+                              <div className="space-y-2">
+                                <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                  {t('decisions.detail.scope.relatedTo', 'Related to')}
+                                </label>
+                                {relatedDecisionItems.length === 0 ? (
+                                  <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
+                                    {t('decisions.detail.scope.noLinkedItem', 'No linked item')}
+                                  </div>
                                 ) : (
-                                  <>
-                                    <ChevronsUpDown size={12} />
-                                    {t('decisions.detail.scope.seeMore', 'See more')}
-                                  </>
+                                  <div className="space-y-1">
+                                    {relatedDecisionItems.map((item) => (
+                                      <div
+                                        key={item.id}
+                                        className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
+                                      >
+                                        <div className="flex min-w-0 items-center gap-2">
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
+                                            {item.type}
+                                          </span>
+                                          <span className="truncate">{item.title}</span>
+                                        </div>
+                                        <span className="shrink-0 text-[11px] font-mono text-slate-500/70 dark:text-slate-500/70">
+                                          {getLinkedItemIndex(item)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
-                              </button>
-                            )}
-                          </div>
+                              </div>
 
-                          {/* 3) Additional context */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                {t('decisions.detail.scope.additionalContext', 'Additional context')}
-                              </label>
-                              <AIFieldEnhancer
-                                fieldKey="n-context"
-                                sectionLabel="Additional Context"
-                                currentValue={contextDetails}
-                                onApply={setContextDetails}
-                                artifactContext={{ title, status, priority, type: 'decision' }}
-                                disabled={isDecisionStageLocked}
-                              />
+                              {/* 2) Decision scope */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                    {t(
+                                      'decisions.detail.scope.decisionScopeLabel',
+                                      'Decision scope'
+                                    )}
+                                  </label>
+                                  <AIFieldEnhancer
+                                    fieldKey="n-description"
+                                    sectionLabel="Decision Scope"
+                                    currentValue={description}
+                                    onApply={setDescription}
+                                    artifactContext={{ title, status, priority, type: 'decision' }}
+                                    disabled={isDecisionStageLocked}
+                                  />
+                                </div>
+                                <div className="relative">
+                                  <textarea
+                                    value={description}
+                                    onChange={(e) => {
+                                      if (isDecisionStageLocked) return;
+                                      setDescription(e.target.value);
+                                      markCardEdited('description');
+                                    }}
+                                    readOnly={isDecisionStageLocked}
+                                    rows={isDescriptionExpanded ? 10 : 6}
+                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                    placeholder={t(
+                                      'decisions.detail.scope.descriptionPlaceholder',
+                                      'Describe the decision scope (what exactly is being decided)...'
+                                    )}
+                                  />
+                                  {!isDescriptionExpanded && canExpandDescription && (
+                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
+                                  )}
+                                </div>
+                                {canExpandDescription && (
+                                  <button
+                                    onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+                                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                  >
+                                    {isDescriptionExpanded ? (
+                                      <>
+                                        <ChevronsUpDown size={12} />
+                                        {t('decisions.detail.scope.seeLess', 'See less')}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ChevronsUpDown size={12} />
+                                        {t('decisions.detail.scope.seeMore', 'See more')}
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* 3) Additional context */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                    {t(
+                                      'decisions.detail.scope.additionalContext',
+                                      'Additional context'
+                                    )}
+                                  </label>
+                                  <AIFieldEnhancer
+                                    fieldKey="n-context"
+                                    sectionLabel="Additional Context"
+                                    currentValue={contextDetails}
+                                    onApply={setContextDetails}
+                                    artifactContext={{ title, status, priority, type: 'decision' }}
+                                    disabled={isDecisionStageLocked}
+                                  />
+                                </div>
+                                <div className="relative">
+                                  <textarea
+                                    value={contextDetails}
+                                    onChange={(e) =>
+                                      !isDecisionStageLocked && setContextDetails(e.target.value)
+                                    }
+                                    readOnly={isDecisionStageLocked}
+                                    rows={isContextExpanded ? 8 : 5}
+                                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                    placeholder={t(
+                                      'decisions.detail.scope.contextPlaceholder',
+                                      'Additional explanation, assumptions, constraints (optional)...'
+                                    )}
+                                  />
+                                  {!isContextExpanded && canExpandContext && (
+                                    <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
+                                  )}
+                                </div>
+                                {canExpandContext && (
+                                  <button
+                                    onClick={() => setIsContextExpanded((prev) => !prev)}
+                                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                  >
+                                    {isContextExpanded ? (
+                                      <>
+                                        <ChevronsUpDown size={12} />
+                                        {t('decisions.detail.scope.seeLess', 'See less')}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ChevronsUpDown size={12} />
+                                        {t('decisions.detail.scope.seeMore', 'See more')}
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <div className="relative">
-                              <textarea
-                                value={contextDetails}
-                                onChange={(e) =>
-                                  !isDecisionStageLocked && setContextDetails(e.target.value)
-                                }
-                                readOnly={isDecisionStageLocked}
-                                rows={isContextExpanded ? 8 : 5}
-                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
-                                placeholder={
-                                  t('decisions.detail.scope.contextPlaceholder', 'Additional explanation, assumptions, constraints (optional)...')
-                                }
-                              />
-                              {!isContextExpanded && canExpandContext && (
-                                <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
+                          </NModeCardState>
+                        )}
+
+                        {/* ── Section: Options & Trade-offs (InlineTable) ─ */}
+                        {activeNotionSection === 'options-tradeoffs' && (
+                          <NModeCardState
+                            state={
+                              isGeneratingAlternatives
+                                ? 'generating'
+                                : alternatives.length === 0 && cardStates.alternatives === 'empty'
+                                  ? 'empty'
+                                  : cardStates.alternatives === 'empty'
+                                    ? 'edited'
+                                    : cardStates.alternatives
+                            }
+                            sectionName={{ en: 'Options & Trade-offs', pl: 'Opcje i trade-offy' }}
+                            aiGenerated={
+                              cardStates.alternatives === 'ai-draft' ||
+                              cardStates.alternatives === 'edited'
+                            }
+                            hideActions={isDecisionStageLocked}
+                            onRegenerate={generateAlternativesAI}
+                            onEdit={() => setCardState('alternatives', 'edited')}
+                            onAccept={() => setCardState('alternatives', 'done')}
+                            onGenerate={generateAlternativesAI}
+                            onFillManually={() => {
+                              setCardState('alternatives', 'edited');
+                              addAlternative();
+                            }}
+                            onRetry={generateAlternativesAI}
+                          >
+                            <div className="space-y-5">
+                              {alternatives.length === 0 ? (
+                                /* EmptyStateInline */
+                                <div className="py-10 text-center">
+                                  <Lightbulb
+                                    size={28}
+                                    className="mx-auto mb-3 text-slate-700 dark:text-slate-400"
+                                  />
+                                  <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-3">
+                                    {t(
+                                      'decisions.detail.options.noOptions',
+                                      'No options defined yet.'
+                                    )}
+                                  </p>
+                                  <button
+                                    onClick={addAlternative}
+                                    className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
+                                  >
+                                    + {t('decisions.detail.options.addOption', 'Add option')}
+                                  </button>
+                                </div>
+                              ) : (
+                                /* InlineTable — flat comparison */
+                                <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
+                                  {alternatives.map((alt) => (
+                                    <div
+                                      key={alt.id}
+                                      className={`py-5 first:pt-1 group ${alt.isRecommended ? 'relative' : ''}`}
+                                    >
+                                      {alt.isRecommended && (
+                                        <span
+                                          className="absolute -left-4 top-5 w-1.5 h-1.5 rounded-full bg-emerald-500"
+                                          title="Recommended"
+                                        />
+                                      )}
+                                      <div className="flex items-start justify-between gap-3 mb-2">
+                                        <div className="flex-1 min-w-0">
+                                          <input
+                                            value={alt.title}
+                                            onChange={(e) =>
+                                              updateAlternative(alt.id, { title: e.target.value })
+                                            }
+                                            className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
+                                            placeholder={t(
+                                              'decisions.detail.options.namePlaceholder',
+                                              'Option name...'
+                                            )}
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {!alt.isRecommended && (
+                                            <button
+                                              onClick={() => setRecommendedAlternative(alt.id)}
+                                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition-colors"
+                                              title="Set recommended"
+                                            >
+                                              <Star size={13} />
+                                            </button>
+                                          )}
+                                          <button
+                                            onClick={() => removeAlternative(alt.id)}
+                                            className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                          >
+                                            <Trash2 size={13} />
+                                          </button>
+                                        </div>
+                                      </div>
+                                      <textarea
+                                        value={alt.description}
+                                        onChange={(e) =>
+                                          updateAlternative(alt.id, { description: e.target.value })
+                                        }
+                                        rows={2}
+                                        className="w-full text-xs bg-transparent text-slate-500 dark:text-slate-400 focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 resize-none leading-relaxed"
+                                        placeholder={t(
+                                          'decisions.detail.options.descriptionPlaceholder',
+                                          'Description...'
+                                        )}
+                                      />
+                                      <div className="mt-1 flex justify-end gap-2">
+                                        <AIFieldEnhancer
+                                          fieldKey={`n-alt-${alt.id}`}
+                                          sectionLabel={`Option: ${alt.title || 'Option description'}`}
+                                          currentValue={alt.description || ''}
+                                          onApply={(value) =>
+                                            updateAlternative(alt.id, { description: value })
+                                          }
+                                          artifactContext={{
+                                            title,
+                                            status,
+                                            priority,
+                                            type: 'decision',
+                                          }}
+                                          disabled={isDecisionStageLocked}
+                                        />
+                                      </div>
+                                      {/* Inline pros/cons */}
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 text-[11px]">
+                                        <div className="space-y-1.5">
+                                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                            + {alt.pros?.length || 0}{' '}
+                                            {t('decisions.detail.options.prosLabel', 'pros')}
+                                          </span>
+                                          {(alt.pros || []).map((pro, idx) => (
+                                            <div
+                                              key={`${alt.id}-pro-${idx}`}
+                                              className="flex items-center gap-1.5"
+                                            >
+                                              <input
+                                                value={pro}
+                                                onChange={(e) =>
+                                                  updateAlternativePro(alt.id, idx, e.target.value)
+                                                }
+                                                className="flex-1 text-[11px] bg-transparent border-b border-emerald-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
+                                                placeholder={t(
+                                                  'decisions.detail.options.proArgumentPlaceholder',
+                                                  'Pro argument...'
+                                                )}
+                                              />
+                                              <button
+                                                onClick={() => removeAlternativePro(alt.id, idx)}
+                                                className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                              >
+                                                <X size={11} />
+                                              </button>
+                                            </div>
+                                          ))}
+                                          <div className="flex items-center gap-1.5">
+                                            <input
+                                              value={altProsDraft[alt.id] || ''}
+                                              onChange={(e) =>
+                                                setAltProsDraft((prev) => ({
+                                                  ...prev,
+                                                  [alt.id]: e.target.value,
+                                                }))
+                                              }
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                  addAlternativePro(
+                                                    alt.id,
+                                                    altProsDraft[alt.id] || ''
+                                                  );
+                                                }
+                                              }}
+                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                              placeholder={t(
+                                                'decisions.detail.options.addProPlaceholder',
+                                                '+ Add pro'
+                                              )}
+                                            />
+                                          </div>
+                                          <div className="flex flex-wrap gap-1">
+                                            {quickProArguments.map((arg) => (
+                                              <button
+                                                key={`${alt.id}-quick-pro-${arg}`}
+                                                onClick={() => addAlternativePro(alt.id, arg)}
+                                                className="px-1.5 py-0.5 rounded border border-emerald-400/30 text-emerald-600 dark:text-emerald-400 text-[10px] hover:bg-emerald-500/10 transition-colors"
+                                              >
+                                                +{arg}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                          <span className="text-danger-500 dark:text-danger-400 font-medium">
+                                            − {alt.cons?.length || 0}{' '}
+                                            {t('decisions.detail.options.consLabel', 'cons')}
+                                          </span>
+                                          {(alt.cons || []).map((con, idx) => (
+                                            <div
+                                              key={`${alt.id}-con-${idx}`}
+                                              className="flex items-center gap-1.5"
+                                            >
+                                              <input
+                                                value={con}
+                                                onChange={(e) =>
+                                                  updateAlternativeCon(alt.id, idx, e.target.value)
+                                                }
+                                                className="flex-1 text-[11px] bg-transparent border-b border-danger-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-danger-400"
+                                                placeholder={t(
+                                                  'decisions.detail.options.conArgumentPlaceholder',
+                                                  'Con argument...'
+                                                )}
+                                              />
+                                              <button
+                                                onClick={() => removeAlternativeCon(alt.id, idx)}
+                                                className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                              >
+                                                <X size={11} />
+                                              </button>
+                                            </div>
+                                          ))}
+                                          <div className="flex items-center gap-1.5">
+                                            <input
+                                              value={altConsDraft[alt.id] || ''}
+                                              onChange={(e) =>
+                                                setAltConsDraft((prev) => ({
+                                                  ...prev,
+                                                  [alt.id]: e.target.value,
+                                                }))
+                                              }
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                  addAlternativeCon(
+                                                    alt.id,
+                                                    altConsDraft[alt.id] || ''
+                                                  );
+                                                }
+                                              }}
+                                              className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                              placeholder={t(
+                                                'decisions.detail.options.addConPlaceholder',
+                                                '+ Add con'
+                                              )}
+                                            />
+                                          </div>
+                                          <div className="flex flex-wrap gap-1">
+                                            {quickConArguments.map((arg) => (
+                                              <button
+                                                key={`${alt.id}-quick-con-${arg}`}
+                                                onClick={() => addAlternativeCon(alt.id, arg)}
+                                                className="px-1.5 py-0.5 rounded border border-danger-400/30 text-danger-500 dark:text-danger-400 text-[10px] hover:bg-danger-500/10 transition-colors"
+                                              >
+                                                +{arg}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                        {alt.riskLevel && (
+                                          <span
+                                            className={`font-medium ${alt.riskLevel === 'high' ? 'text-danger-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
+                                          >
+                                            {t('decisions.detail.options.riskLabel', 'risk')}:{' '}
+                                            {alt.riskLevel}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               )}
-                            </div>
-                            {canExpandContext && (
-                              <button
-                                onClick={() => setIsContextExpanded((prev) => !prev)}
-                                className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                              >
-                                {isContextExpanded ? (
-                                  <>
-                                    <ChevronsUpDown size={12} />
-                                    {t('decisions.detail.scope.seeLess', 'See less')}
-                                  </>
-                                ) : (
-                                  <>
-                                    <ChevronsUpDown size={12} />
-                                    {t('decisions.detail.scope.seeMore', 'See more')}
-                                  </>
-                                )}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        </NModeCardState>
-                      )}
 
-                      {/* ── Section: Options & Trade-offs (InlineTable) ─ */}
-                      {activeNotionSection === 'options-tradeoffs' && (
-                        <NModeCardState
-                          state={
-                            isGeneratingAlternatives
-                              ? 'generating'
-                              : alternatives.length === 0 && cardStates.alternatives === 'empty'
-                                ? 'empty'
-                                : cardStates.alternatives === 'empty'
-                                  ? 'edited'
-                                  : cardStates.alternatives
-                          }
-                          sectionName={{ en: 'Options & Trade-offs', pl: 'Opcje i trade-offy' }}
-                          aiGenerated={
-                            cardStates.alternatives === 'ai-draft' ||
-                            cardStates.alternatives === 'edited'
-                          }
-                          hideActions={isDecisionStageLocked}
-                          onRegenerate={generateAlternativesAI}
-                          onEdit={() => setCardState('alternatives', 'edited')}
-                          onAccept={() => setCardState('alternatives', 'done')}
-                          onGenerate={generateAlternativesAI}
-                          onFillManually={() => {
-                            setCardState('alternatives', 'edited');
-                            addAlternative();
-                          }}
-                          onRetry={generateAlternativesAI}
-                        >
-                        <div className="space-y-5">
-                          {alternatives.length === 0 ? (
-                            /* EmptyStateInline */
-                            <div className="py-10 text-center">
-                              <Lightbulb
-                                size={28}
-                                className="mx-auto mb-3 text-slate-700 dark:text-slate-400"
-                              />
-                              <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-3">
-                                {t('decisions.detail.options.noOptions', 'No options defined yet.')}
-                              </p>
                               <button
                                 onClick={addAlternative}
-                                className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
+                                className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-teal-500 transition-colors"
                               >
                                 + {t('decisions.detail.options.addOption', 'Add option')}
                               </button>
                             </div>
-                          ) : (
-                            /* InlineTable — flat comparison */
-                            <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
-                              {alternatives.map((alt) => (
-                                <div
-                                  key={alt.id}
-                                  className={`py-5 first:pt-1 group ${alt.isRecommended ? 'relative' : ''}`}
-                                >
-                                  {alt.isRecommended && (
-                                    <span
-                                      className="absolute -left-4 top-5 w-1.5 h-1.5 rounded-full bg-emerald-500"
-                                      title="Recommended"
-                                    />
-                                  )}
-                                  <div className="flex items-start justify-between gap-3 mb-2">
-                                    <div className="flex-1 min-w-0">
-                                      <input
-                                        value={alt.title}
-                                        onChange={(e) =>
-                                          updateAlternative(alt.id, { title: e.target.value })
-                                        }
-                                        className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
-                                        placeholder={t('decisions.detail.options.namePlaceholder', 'Option name...')}
-                                      />
-                                    </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      {!alt.isRecommended && (
-                                        <button
-                                          onClick={() => setRecommendedAlternative(alt.id)}
-                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition-colors"
-                                          title="Set recommended"
-                                        >
-                                          <Star size={13} />
-                                        </button>
-                                      )}
-                                      <button
-                                        onClick={() => removeAlternative(alt.id)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <textarea
-                                    value={alt.description}
-                                    onChange={(e) =>
-                                      updateAlternative(alt.id, { description: e.target.value })
-                                    }
-                                    rows={2}
-                                    className="w-full text-xs bg-transparent text-slate-500 dark:text-slate-400 focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 resize-none leading-relaxed"
-                                    placeholder={t('decisions.detail.options.descriptionPlaceholder', 'Description...')}
-                                  />
-                                  <div className="mt-1 flex justify-end gap-2">
-                                    <AIFieldEnhancer
-                                      fieldKey={`n-alt-${alt.id}`}
-                                      sectionLabel={`Option: ${alt.title || 'Option description'}`}
-                                      currentValue={alt.description || ''}
-                                      onApply={(value) =>
-                                        updateAlternative(alt.id, { description: value })
-                                      }
-                                      artifactContext={{
-                                        title,
-                                        status,
-                                        priority,
-                                        type: 'decision',
-                                      }}
-                                      disabled={isDecisionStageLocked}
-                                    />
-                                  </div>
-                                  {/* Inline pros/cons */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 text-[11px]">
-                                    <div className="space-y-1.5">
-                                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                                        + {alt.pros?.length || 0} {t('decisions.detail.options.prosLabel', 'pros')}
-                                      </span>
-                                      {(alt.pros || []).map((pro, idx) => (
-                                        <div
-                                          key={`${alt.id}-pro-${idx}`}
-                                          className="flex items-center gap-1.5"
-                                        >
-                                          <input
-                                            value={pro}
-                                            onChange={(e) =>
-                                              updateAlternativePro(alt.id, idx, e.target.value)
-                                            }
-                                            className="flex-1 text-[11px] bg-transparent border-b border-emerald-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-                                            placeholder={
-                                              t('decisions.detail.options.proArgumentPlaceholder', 'Pro argument...')
-                                            }
-                                          />
-                                          <button
-                                            onClick={() => removeAlternativePro(alt.id, idx)}
-                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
-                                          >
-                                            <X size={11} />
-                                          </button>
-                                        </div>
-                                      ))}
-                                      <div className="flex items-center gap-1.5">
-                                        <input
-                                          value={altProsDraft[alt.id] || ''}
-                                          onChange={(e) =>
-                                            setAltProsDraft((prev) => ({
-                                              ...prev,
-                                              [alt.id]: e.target.value,
-                                            }))
-                                          }
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                              e.preventDefault();
-                                              addAlternativePro(alt.id, altProsDraft[alt.id] || '');
-                                            }
-                                          }}
-                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
-                                          placeholder={
-                                            t('decisions.detail.options.addProPlaceholder', '+ Add pro')
-                                          }
-                                        />
-                                      </div>
-                                      <div className="flex flex-wrap gap-1">
-                                        {quickProArguments.map((arg) => (
-                                          <button
-                                            key={`${alt.id}-quick-pro-${arg}`}
-                                            onClick={() => addAlternativePro(alt.id, arg)}
-                                            className="px-1.5 py-0.5 rounded border border-emerald-400/30 text-emerald-600 dark:text-emerald-400 text-[10px] hover:bg-emerald-500/10 transition-colors"
-                                          >
-                                            +{arg}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
+                          </NModeCardState>
+                        )}
 
-                                    <div className="space-y-1.5">
-                                      <span className="text-danger-500 dark:text-danger-400 font-medium">
-                                        − {alt.cons?.length || 0} {t('decisions.detail.options.consLabel', 'cons')}
-                                      </span>
-                                      {(alt.cons || []).map((con, idx) => (
-                                        <div
-                                          key={`${alt.id}-con-${idx}`}
-                                          className="flex items-center gap-1.5"
-                                        >
-                                          <input
-                                            value={con}
-                                            onChange={(e) =>
-                                              updateAlternativeCon(alt.id, idx, e.target.value)
-                                            }
-                                            className="flex-1 text-[11px] bg-transparent border-b border-danger-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-danger-400"
-                                            placeholder={
-                                              t('decisions.detail.options.conArgumentPlaceholder', 'Con argument...')
-                                            }
-                                          />
-                                          <button
-                                            onClick={() => removeAlternativeCon(alt.id, idx)}
-                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
-                                          >
-                                            <X size={11} />
-                                          </button>
-                                        </div>
-                                      ))}
-                                      <div className="flex items-center gap-1.5">
-                                        <input
-                                          value={altConsDraft[alt.id] || ''}
-                                          onChange={(e) =>
-                                            setAltConsDraft((prev) => ({
-                                              ...prev,
-                                              [alt.id]: e.target.value,
-                                            }))
-                                          }
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                              e.preventDefault();
-                                              addAlternativeCon(alt.id, altConsDraft[alt.id] || '');
-                                            }
-                                          }}
-                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
-                                          placeholder={
-                                            t('decisions.detail.options.addConPlaceholder', '+ Add con')
-                                          }
-                                        />
-                                      </div>
-                                      <div className="flex flex-wrap gap-1">
-                                        {quickConArguments.map((arg) => (
-                                          <button
-                                            key={`${alt.id}-quick-con-${arg}`}
-                                            onClick={() => addAlternativeCon(alt.id, arg)}
-                                            className="px-1.5 py-0.5 rounded border border-danger-400/30 text-danger-500 dark:text-danger-400 text-[10px] hover:bg-danger-500/10 transition-colors"
-                                          >
-                                            +{arg}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                    {alt.riskLevel && (
-                                      <span
-                                        className={`font-medium ${alt.riskLevel === 'high' ? 'text-danger-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
-                                      >
-                                        {t('decisions.detail.options.riskLabel', 'risk')}: {alt.riskLevel}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <button
-                            onClick={addAlternative}
-                            className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-teal-500 transition-colors"
+                        {/* ── Section: Risk & Impact (shared RiskCanvas) ────── */}
+                        {activeNotionSection === 'risk-impact' && (
+                          <NModeCardState
+                            state={
+                              isGeneratingRisks
+                                ? 'generating'
+                                : risks.length === 0 && cardStates.risk === 'empty'
+                                  ? 'empty'
+                                  : cardStates.risk === 'empty'
+                                    ? 'edited'
+                                    : cardStates.risk
+                            }
+                            sectionName={{ en: 'Risk & Impact', pl: 'Ryzyko i wpływ' }}
+                            aiGenerated={
+                              cardStates.risk === 'ai-draft' || cardStates.risk === 'edited'
+                            }
+                            hideActions={isDecisionStageLocked}
+                            onRegenerate={generateRisksAI}
+                            onEdit={() => setCardState('risk', 'edited')}
+                            onAccept={() => setCardState('risk', 'done')}
+                            onGenerate={generateRisksAI}
+                            onFillManually={() => {
+                              setCardState('risk', 'edited');
+                              addRisk();
+                            }}
+                            onRetry={generateRisksAI}
                           >
-                            + {t('decisions.detail.options.addOption', 'Add option')}
-                          </button>
-                        </div>
-                        </NModeCardState>
-                      )}
-
-                      {/* ── Section: Risk & Impact (shared RiskCanvas) ────── */}
-                      {activeNotionSection === 'risk-impact' && (
-                        <NModeCardState
-                          state={
-                            isGeneratingRisks
-                              ? 'generating'
-                              : risks.length === 0 && cardStates.risk === 'empty'
-                                ? 'empty'
-                                : cardStates.risk === 'empty'
-                                  ? 'edited'
-                                  : cardStates.risk
-                          }
-                          sectionName={{ en: 'Risk & Impact', pl: 'Ryzyko i wpływ' }}
-                          aiGenerated={
-                            cardStates.risk === 'ai-draft' || cardStates.risk === 'edited'
-                          }
-                          hideActions={isDecisionStageLocked}
-                          onRegenerate={generateRisksAI}
-                          onEdit={() => setCardState('risk', 'edited')}
-                          onAccept={() => setCardState('risk', 'done')}
-                          onGenerate={generateRisksAI}
-                          onFillManually={() => {
-                            setCardState('risk', 'edited');
-                            addRisk();
-                          }}
-                          onRetry={generateRisksAI}
-                        >
-                        <RiskCanvas
-                          risks={risks}
-                          onAddRisk={addRisk}
-                          onUpdateRisk={(id, updates) => updateRisk(id, updates as any)}
-                          onRemoveRisk={removeRisk}
-                          onAIGenerate={generateRisksAI}
-                          isGeneratingAI={isGeneratingRisks}
-                          locked={isDecisionStageLocked}
-                          artifactType="decision"
-                          artifactContext={{ title, status, priority, type: 'decision' }}
-                          fieldKeyPrefix="n"
-                        />
-                        </NModeCardState>
-                      )}
-
-                      {/* ── Section: Consequences (dedicated menu block) ── */}
-                      {activeNotionSection === 'consequences' && (
-                        <NModeCardState
-                          state={
-                            isGeneratingConsequenceScenarios
-                              ? 'generating'
-                              : cardStates.consequences
-                          }
-                          sectionName={{
-                            en: 'Consequences of Inaction',
-                            pl: 'Konsekwencje bezczynności',
-                          }}
-                          aiGenerated={
-                            cardStates.consequences === 'ai-draft' ||
-                            cardStates.consequences === 'edited'
-                          }
-                          hideActions={isDecisionStageLocked}
-                          onRegenerate={() => generateConsequenceScenariosAI()}
-                          onEdit={() => setCardState('consequences', 'edited')}
-                          onAccept={() => setCardState('consequences', 'done')}
-                          onGenerate={() => generateConsequenceScenariosAI()}
-                          onFillManually={() => setCardState('consequences', 'edited')}
-                          onRetry={() => generateConsequenceScenariosAI()}
-                        >
-                        <div className="space-y-6">
-                          <div className="flex items-center justify-end">
-                            <AIFieldEnhancer
-                              fieldKey="n-rationale-scenarios"
-                              sectionLabel="Consequences of Inaction"
-                              currentValue={rationale}
-                              onApply={setRationale}
+                            <RiskCanvas
+                              risks={risks}
+                              onAddRisk={addRisk}
+                              onUpdateRisk={(id, updates) => updateRisk(id, updates as any)}
+                              onRemoveRisk={removeRisk}
+                              onAIGenerate={generateRisksAI}
+                              isGeneratingAI={isGeneratingRisks}
+                              locked={isDecisionStageLocked}
+                              artifactType="decision"
                               artifactContext={{ title, status, priority, type: 'decision' }}
-                              disabled={isDecisionStageLocked}
+                              fieldKeyPrefix="n"
                             />
-                          </div>
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                              <span>
-                                {t('decisions.detail.consequencesSection.aiScenariosRealtime', 'AI scenarios (real-time)')}
-                              </span>
-                              <span className="text-[10px]">
-                                {displayedConsequenceScenarios.source === 'ai'
-                                  ? t('decisions.detail.consequencesSection.sourceAI', 'Source: AI')
-                                  : t('decisions.detail.consequencesSection.sourceFallback', 'Source: fallback')}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                              {isGeneratingConsequenceScenarios
-                                ? t('decisions.detail.consequencesSection.aiUpdating', 'AI is updating scenarios...')
-                                : null}
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-                            {(
-                              [
-                                ['optimistic', t('decisions.detail.consequencesSection.optimistic', 'Optimistic')],
-                                ['neutral', t('decisions.detail.consequencesSection.neutral', 'Neutral')],
-                                ['pessimistic', t('decisions.detail.consequencesSection.pessimistic', 'Pessimistic')],
-                              ] as const
-                            ).map(([scenarioKey, label]) => {
-                              const scenario = displayedConsequenceScenarios[scenarioKey];
-                              const cardStyle =
-                                scenarioKey === 'optimistic'
-                                  ? 'border-emerald-400/35 bg-emerald-500/5'
-                                  : scenarioKey === 'neutral'
-                                    ? 'border-amber-400/35 bg-amber-500/5'
-                                    : 'border-danger-400/35 bg-danger-500/5';
-                              return (
-                                <div
-                                  key={scenarioKey}
-                                  className={`rounded-xl border p-3 space-y-3 shadow-sm ${cardStyle}`}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                      {label}
-                                    </h3>
-                                    <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                      7 / 30 / 90
-                                    </span>
-                                  </div>
-                                  <div className="grid grid-cols-1 gap-2">
-                                    {(
-                                      [
-                                        ['d7', '7d'],
-                                        ['d30', '30d'],
-                                        ['d90', '90d'],
-                                      ] as const
-                                    ).map(([timelineKey, timelineLabel]) => (
-                                      <div
-                                        key={`${scenarioKey}-${timelineKey}`}
-                                        className="rounded-lg border border-slate-200 dark:border-navy-700/50 bg-white/30 dark:bg-navy-900/25 p-2"
-                                      >
-                                        <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                          {timelineLabel}
-                                        </p>
-                                        <textarea
-                                          value={scenario[timelineKey]}
-                                          onChange={(e) =>
-                                            updateConsequenceScenarioCell(
-                                              scenarioKey,
-                                              timelineKey,
-                                              e.target.value
-                                            )
-                                          }
-                                          readOnly={isDecisionStageLocked}
-                                          rows={4}
-                                          className="w-full min-h-[92px] bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y"
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <div className="pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
-                            <div className="mb-2 flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                {t('decisions.detail.consequencesSection.decisionNote', 'Decision note')}
-                              </label>
-                              <AIFieldEnhancer
-                                fieldKey="n-rationale-note"
-                                sectionLabel="Consequences of Inaction"
-                                currentValue={rationale}
-                                onApply={setRationale}
-                                artifactContext={{ title, status, priority, type: 'decision' }}
-                                disabled={isDecisionStageLocked}
-                              />
-                            </div>
-                            <textarea
-                              value={rationale}
-                              onChange={(e) => {
-                                if (isDecisionStageLocked) return;
-                                setRationale(e.target.value);
-                                markCardEdited('consequences');
-                              }}
-                              readOnly={isDecisionStageLocked}
-                              rows={5}
-                              className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
-                              placeholder={
-                                t('decisions.detail.consequencesSection.notePlaceholder', 'What happens if the decision is not made?')
-                              }
-                            />
-                          </div>
-                        </div>
-                        </NModeCardState>
-                      )}
+                          </NModeCardState>
+                        )}
 
-                      {/* ── Section: Governance & Escalation (flat) ───── */}
-                      {activeNotionSection === 'governance-escalation' && (
-                        <div className="space-y-8">
-                          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                            {t('decisions.detail.governance.title', 'RACI & Escalation')}
-                          </h2>
-                          <div className="space-y-4">
-                            {/* RACI table */}
-                            <div className={governanceTableCardClass}>
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                                  {t('decisions.detail.governance.raciMatrixTitle', 'RACI (responsibility matrix)')}
-                                </h3>
-                                <div className="inline-flex items-center gap-2">
-                                  <button
-                                    disabled={isDecisionStageLocked}
-                                    onClick={() => {
-                                      const fallbackUser = users[0];
-                                      if (!fallbackUser) return;
-                                      setEditingStakeholderId('__new__');
-                                      setStakeholderDraft({
-                                        id: '__new__',
-                                        decisionId: decisionId || 'new',
-                                        userId: fallbackUser.id,
-                                        userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
-                                        userEmail: fallbackUser.email,
-                                        role: 'consulted',
-                                        notificationSettings: {
-                                          enabled: true,
-                                          triggers: ['on_status_change'],
-                                          emailEnabled: false,
-                                          inAppEnabled: true,
-                                          integrationChannels: [],
-                                          syncTargets: [],
-                                        },
-                                      });
-                                    }}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                  >
-                                    + {t('decisions.detail.governance.addPerson', 'Add person')}
-                                  </button>
+                        {/* ── Section: Consequences (dedicated menu block) ── */}
+                        {activeNotionSection === 'consequences' && (
+                          <NModeCardState
+                            state={
+                              isGeneratingConsequenceScenarios
+                                ? 'generating'
+                                : cardStates.consequences
+                            }
+                            sectionName={{
+                              en: 'Consequences of Inaction',
+                              pl: 'Konsekwencje bezczynności',
+                            }}
+                            aiGenerated={
+                              cardStates.consequences === 'ai-draft' ||
+                              cardStates.consequences === 'edited'
+                            }
+                            hideActions={isDecisionStageLocked}
+                            onRegenerate={() => generateConsequenceScenariosAI()}
+                            onEdit={() => setCardState('consequences', 'edited')}
+                            onAccept={() => setCardState('consequences', 'done')}
+                            onGenerate={() => generateConsequenceScenariosAI()}
+                            onFillManually={() => setCardState('consequences', 'edited')}
+                            onRetry={() => generateConsequenceScenariosAI()}
+                          >
+                            <div className="space-y-6">
+                              <div className="flex items-center justify-end">
+                                <AIFieldEnhancer
+                                  fieldKey="n-rationale-scenarios"
+                                  sectionLabel="Consequences of Inaction"
+                                  currentValue={rationale}
+                                  onApply={setRationale}
+                                  artifactContext={{ title, status, priority, type: 'decision' }}
+                                  disabled={isDecisionStageLocked}
+                                />
+                              </div>
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                  <span>
+                                    {t(
+                                      'decisions.detail.consequencesSection.aiScenariosRealtime',
+                                      'AI scenarios (real-time)'
+                                    )}
+                                  </span>
+                                  <span className="text-[10px]">
+                                    {displayedConsequenceScenarios.source === 'ai'
+                                      ? t(
+                                          'decisions.detail.consequencesSection.sourceAI',
+                                          'Source: AI'
+                                        )
+                                      : t(
+                                          'decisions.detail.consequencesSection.sourceFallback',
+                                          'Source: fallback'
+                                        )}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                  {isGeneratingConsequenceScenarios
+                                    ? t(
+                                        'decisions.detail.consequencesSection.aiUpdating',
+                                        'AI is updating scenarios...'
+                                      )
+                                    : null}
                                 </div>
                               </div>
-                              <div className="overflow-auto flex-1">
-                                <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
-                                  <thead>
-                                    <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colPerson', 'Person')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colRole', 'Role')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colEmail', 'Email')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colNotifications', 'Notifications')}
-                                      </th>
-                                      <th className="text-right py-2">
-                                        {t('decisions.detail.governance.colActions', 'Actions')}
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                                    {stakeholders.length === 0 ? (
-                                      <tr>
-                                        <td
-                                          colSpan={5}
-                                          className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                        >
-                                          {t('decisions.detail.governance.noStakeholders', 'No stakeholders yet.')}
-                                        </td>
+                              <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                                {(
+                                  [
+                                    [
+                                      'optimistic',
+                                      t(
+                                        'decisions.detail.consequencesSection.optimistic',
+                                        'Optimistic'
+                                      ),
+                                    ],
+                                    [
+                                      'neutral',
+                                      t('decisions.detail.consequencesSection.neutral', 'Neutral'),
+                                    ],
+                                    [
+                                      'pessimistic',
+                                      t(
+                                        'decisions.detail.consequencesSection.pessimistic',
+                                        'Pessimistic'
+                                      ),
+                                    ],
+                                  ] as const
+                                ).map(([scenarioKey, label]) => {
+                                  const scenario = displayedConsequenceScenarios[scenarioKey];
+                                  const cardStyle =
+                                    scenarioKey === 'optimistic'
+                                      ? 'border-emerald-400/35 bg-emerald-500/5'
+                                      : scenarioKey === 'neutral'
+                                        ? 'border-amber-400/35 bg-amber-500/5'
+                                        : 'border-danger-400/35 bg-danger-500/5';
+                                  return (
+                                    <div
+                                      key={scenarioKey}
+                                      className={`rounded-xl border p-3 space-y-3 shadow-sm ${cardStyle}`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                          {label}
+                                        </h3>
+                                        <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                          7 / 30 / 90
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-1 gap-2">
+                                        {(
+                                          [
+                                            ['d7', '7d'],
+                                            ['d30', '30d'],
+                                            ['d90', '90d'],
+                                          ] as const
+                                        ).map(([timelineKey, timelineLabel]) => (
+                                          <div
+                                            key={`${scenarioKey}-${timelineKey}`}
+                                            className="rounded-lg border border-slate-200 dark:border-navy-700/50 bg-white/30 dark:bg-navy-900/25 p-2"
+                                          >
+                                            <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                              {timelineLabel}
+                                            </p>
+                                            <textarea
+                                              value={scenario[timelineKey]}
+                                              onChange={(e) =>
+                                                updateConsequenceScenarioCell(
+                                                  scenarioKey,
+                                                  timelineKey,
+                                                  e.target.value
+                                                )
+                                              }
+                                              readOnly={isDecisionStageLocked}
+                                              rows={4}
+                                              className="w-full min-h-[92px] bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y"
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
+                                <div className="mb-2 flex items-center justify-between">
+                                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                                    {t(
+                                      'decisions.detail.consequencesSection.decisionNote',
+                                      'Decision note'
+                                    )}
+                                  </label>
+                                  <AIFieldEnhancer
+                                    fieldKey="n-rationale-note"
+                                    sectionLabel="Consequences of Inaction"
+                                    currentValue={rationale}
+                                    onApply={setRationale}
+                                    artifactContext={{ title, status, priority, type: 'decision' }}
+                                    disabled={isDecisionStageLocked}
+                                  />
+                                </div>
+                                <textarea
+                                  value={rationale}
+                                  onChange={(e) => {
+                                    if (isDecisionStageLocked) return;
+                                    setRationale(e.target.value);
+                                    markCardEdited('consequences');
+                                  }}
+                                  readOnly={isDecisionStageLocked}
+                                  rows={5}
+                                  className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
+                                  placeholder={t(
+                                    'decisions.detail.consequencesSection.notePlaceholder',
+                                    'What happens if the decision is not made?'
+                                  )}
+                                />
+                              </div>
+                            </div>
+                          </NModeCardState>
+                        )}
+
+                        {/* ── Section: Governance & Escalation (flat) ───── */}
+                        {activeNotionSection === 'governance-escalation' && (
+                          <div className="space-y-8">
+                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                              {t('decisions.detail.governance.title', 'RACI & Escalation')}
+                            </h2>
+                            <div className="space-y-4">
+                              {/* RACI table */}
+                              <div className={governanceTableCardClass}>
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                    {t(
+                                      'decisions.detail.governance.raciMatrixTitle',
+                                      'RACI (responsibility matrix)'
+                                    )}
+                                  </h3>
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      disabled={isDecisionStageLocked}
+                                      onClick={() => {
+                                        const fallbackUser = users[0];
+                                        if (!fallbackUser) return;
+                                        setEditingStakeholderId('__new__');
+                                        setStakeholderDraft({
+                                          id: '__new__',
+                                          decisionId: decisionId || 'new',
+                                          userId: fallbackUser.id,
+                                          userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
+                                          userEmail: fallbackUser.email,
+                                          role: 'consulted',
+                                          notificationSettings: {
+                                            enabled: true,
+                                            triggers: ['on_status_change'],
+                                            emailEnabled: false,
+                                            inAppEnabled: true,
+                                            integrationChannels: [],
+                                            syncTargets: [],
+                                          },
+                                        });
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      + {t('decisions.detail.governance.addPerson', 'Add person')}
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="overflow-auto flex-1">
+                                  <table
+                                    /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
+                                  >
+                                    <thead>
+                                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colPerson', 'Person')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colRole', 'Role')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colEmail', 'Email')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t(
+                                            'decisions.detail.governance.colNotifications',
+                                            'Notifications'
+                                          )}
+                                        </th>
+                                        <th className="text-right py-2">
+                                          {t('decisions.detail.governance.colActions', 'Actions')}
+                                        </th>
                                       </tr>
-                                    ) : (
-                                      stakeholders.map((s) => (
-                                        <tr key={s.id}>
-                                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
-                                            {s.userName || s.userId}
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                      {stakeholders.length === 0 ? (
+                                        <tr>
+                                          <td
+                                            colSpan={5}
+                                            className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                          >
+                                            {t(
+                                              'decisions.detail.governance.noStakeholders',
+                                              'No stakeholders yet.'
+                                            )}
                                           </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {stakeholderRoleLabel(s.role)}
-                                          </td>
-                                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                                            {s.userEmail || '—'}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs">
-                                            <div className="flex flex-wrap gap-1">
-                                              {stakeholderChannelLabels(s.notificationSettings).map(
-                                                (label) => (
+                                        </tr>
+                                      ) : (
+                                        stakeholders.map((s) => (
+                                          <tr key={s.id}>
+                                            <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                                              {s.userName || s.userId}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {stakeholderRoleLabel(s.role)}
+                                            </td>
+                                            <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                              {s.userEmail || '—'}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs">
+                                              <div className="flex flex-wrap gap-1">
+                                                {stakeholderChannelLabels(
+                                                  s.notificationSettings
+                                                ).map((label) => (
                                                   <span
                                                     key={`${s.id}-${label}`}
                                                     className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
                                                   >
                                                     {label}
                                                   </span>
-                                                )
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="py-2 text-right">
-                                            <div className="inline-flex items-center gap-1">
-                                              <button
-                                                disabled={isDecisionStageLocked}
-                                                onClick={() => {
-                                                  setEditingStakeholderId(s.id);
-                                                  setStakeholderDraft({ ...s });
-                                                }}
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
-                                                title={t('decisions.detail.activityLog.edit', 'Edit')}
-                                              >
-                                                <Edit3 size={13} />
-                                              </button>
-                                              <button
-                                                disabled={isDecisionStageLocked}
-                                                onClick={() =>
-                                                  setStakeholders(
-                                                    stakeholders.filter((item) => item.id !== s.id)
-                                                  )
-                                                }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
-                                                title={t('decisions.detail.governance.delete', 'Delete')}
-                                              >
-                                                <Trash2 size={13} />
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      ))
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-
-                            {/* Reminders table */}
-                            <div className={governanceTableCardClass}>
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                                  {t('decisions.detail.governance.remindersTitle', 'Reminders')}
-                                </h3>
-                                <div className="inline-flex items-center gap-2">
-                                  <button
-                                    disabled={isDecisionStageLocked}
-                                    onClick={() => {
-                                      setEditingReminderId('__new__');
-                                      setReminderDraft({
-                                        id: '__new__',
-                                        type: 'before_due',
-                                        days: 2,
-                                        recipients: 'both',
-                                        inAppNotification: true,
-                                        emailNotification: false,
-                                        delivery: ensureDeliveryConfig({
-                                          coreChannels: ['in_app'],
-                                        }),
-                                        message: '',
-                                        enabled: true,
-                                      });
-                                    }}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                  >
-                                    + {t('decisions.detail.governance.addReminder', 'Add reminder')}
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="overflow-auto flex-1">
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colType', 'Type')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colDays', 'Days')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colRecipients', 'Recipients')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colNotifications', 'Notifications')}
-                                      </th>
-                                      <th className="text-right py-2">
-                                        {t('decisions.detail.governance.colActions', 'Actions')}
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                                    {reminders.length === 0 ? (
-                                      <tr>
-                                        <td
-                                          colSpan={5}
-                                          className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                        >
-                                          {t('decisions.detail.governance.noReminders', 'No reminders yet.')}
-                                        </td>
-                                      </tr>
-                                    ) : (
-                                      reminders.map((r) => (
-                                        <tr key={r.id}>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {r.type === 'before_due'
-                                              ? t('decisions.detail.governance.beforeDue', 'Before due')
-                                              : t('decisions.detail.governance.afterDue', 'After due')}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {r.days}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {r.recipients}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs">
-                                            <div className="flex flex-wrap gap-1">
-                                              {!r.enabled && (
-                                                <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
-                                                  {t('decisions.detail.channels.disabled', 'Disabled')}
-                                                </span>
-                                              )}
-                                              {deliveryBadgeLabels(r.delivery, r).map((label) => (
-                                                <span
-                                                  key={`${r.id}-${label}`}
-                                                  className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                ))}
+                                              </div>
+                                            </td>
+                                            <td className="py-2 text-right">
+                                              <div className="inline-flex items-center gap-1">
+                                                <button
+                                                  disabled={isDecisionStageLocked}
+                                                  onClick={() => {
+                                                    setEditingStakeholderId(s.id);
+                                                    setStakeholderDraft({ ...s });
+                                                  }}
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                  title={t(
+                                                    'decisions.detail.activityLog.edit',
+                                                    'Edit'
+                                                  )}
                                                 >
-                                                  {label}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          </td>
-                                          <td className="py-2 text-right">
-                                            <div className="inline-flex items-center gap-1">
-                                              <button
-                                                disabled={isDecisionStageLocked}
-                                                onClick={() => {
-                                                  setEditingReminderId(r.id);
-                                                  setReminderDraft(normalizeReminderRule({ ...r }));
-                                                }}
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
-                                                title={t('decisions.detail.activityLog.edit', 'Edit')}
-                                              >
-                                                <Edit3 size={13} />
-                                              </button>
-                                              <button
-                                                disabled={isDecisionStageLocked}
-                                                onClick={() =>
-                                                  setReminders(
-                                                    reminders.filter((item) => item.id !== r.id)
-                                                  )
-                                                }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
-                                                title={t('decisions.detail.governance.delete', 'Delete')}
-                                              >
-                                                <Trash2 size={13} />
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      ))
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-
-                            {/* Escalation table */}
-                            <div className={governanceTableCardClass}>
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                                  {t('decisions.detail.governance.escalationTitle', 'Escalation and rules')}
-                                </h3>
-                                <div className="inline-flex items-center gap-2">
-                                  <button
-                                    disabled={isDecisionStageLocked}
-                                    onClick={() => {
-                                      setEscalationDraft(
-                                        normalizeEscalationRule({
-                                          id: Math.random().toString(36).slice(2, 11),
-                                          enabled: true,
-                                          escalateTo: users[0]?.id || '',
-                                          escalateToName: users[0]
-                                            ? `${users[0].firstName} ${users[0].lastName}`
-                                            : '',
-                                          afterDays: 3,
-                                          warningDays: 3,
-                                          criticalDays: 1,
-                                          escalationMode: 'manager_review',
-                                          delivery: ensureDeliveryConfig({
-                                            coreChannels: ['in_app', 'email'],
-                                          }),
-                                          message: '',
-                                        })
-                                      );
-                                      setEditingEscalationId('__new__');
-                                    }}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                  >
-                                    + {t('decisions.detail.governance.addEscalation', 'Add escalation')}
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="overflow-auto flex-1">
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colStatus', 'Status')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colThresholds', 'W/C thresholds')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colEscalateAfter', 'Escalate after')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colEscalateTo', 'Escalate to')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colMessage', 'Message')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colMode', 'Mode')}
-                                      </th>
-                                      <th className="text-left py-2 pr-2">
-                                        {t('decisions.detail.governance.colChannels', 'Channels')}
-                                      </th>
-                                      <th className="text-right py-2">
-                                        {t('decisions.detail.governance.colActions', 'Actions')}
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                                    {escalationRules.length === 0 ? (
-                                      <tr>
-                                        <td
-                                          colSpan={8}
-                                          className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                        >
-                                          {t('decisions.detail.governance.noEscalationRules', 'No escalation rules yet.')}
-                                        </td>
-                                      </tr>
-                                    ) : (
-                                      escalationRules.map((rule) => (
-                                        <tr key={rule.id}>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {rule.enabled
-                                              ? t('decisions.detail.governance.enabledStatus', 'Enabled')
-                                              : t('decisions.detail.channels.disabled', 'Disabled')}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {rule.warningDays}/{rule.criticalDays} d
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {rule.afterDays} d
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {rule.escalateToName || '—'}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {rule.message || '—'}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
-                                            {rule.escalationMode === 'notify_only'
-                                              ? t('decisions.detail.governance.escalationModeNotify', 'Notify')
-                                              : rule.escalationMode === 'manager_review'
-                                                ? t('decisions.detail.escalationMode.managerReview', 'Manager review')
-                                                : t('decisions.detail.escalationMode.executiveAlert', 'Executive alert')}
-                                          </td>
-                                          <td className="py-2 pr-2 text-xs">
-                                            <div className="flex flex-wrap gap-1">
-                                              {deliveryBadgeLabels(rule.delivery).map((label) => (
-                                                <span
-                                                  key={`${rule.id}-ch-${label}`}
-                                                  className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
-                                                >
-                                                  {label}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          </td>
-                                          <td className="py-2 text-right">
-                                            <div className="inline-flex items-center gap-1">
-                                              <button
-                                                disabled={isDecisionStageLocked}
-                                                onClick={() => {
-                                                  setEditingEscalationId(rule.id);
-                                                  setEscalationDraft({ ...rule });
-                                                }}
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
-                                                title={t('decisions.detail.activityLog.edit', 'Edit')}
-                                              >
-                                                <Edit3 size={13} />
-                                              </button>
-                                              <button
-                                                disabled={isDecisionStageLocked}
-                                                onClick={() =>
-                                                  setEscalationRules(
-                                                    escalationRules.filter(
-                                                      (item) => item.id !== rule.id
+                                                  <Edit3 size={13} />
+                                                </button>
+                                                <button
+                                                  disabled={isDecisionStageLocked}
+                                                  onClick={() =>
+                                                    setStakeholders(
+                                                      stakeholders.filter(
+                                                        (item) => item.id !== s.id
+                                                      )
                                                     )
-                                                  )
-                                                }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
-                                                title={t('decisions.detail.governance.delete', 'Delete')}
-                                              >
-                                                <Trash2 size={13} />
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      ))
-                                    )}
-                                  </tbody>
-                                </table>
+                                                  }
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
+                                                  title={t(
+                                                    'decisions.detail.governance.delete',
+                                                    'Delete'
+                                                  )}
+                                                >
+                                                  <Trash2 size={13} />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))
+                                      )}
+                                    </tbody>
+                                  </table>
+                                </div>
                               </div>
-                            </div>
-                          </div>
 
-                          {/* Stakeholder modal */}
-                          {stakeholderDraft && (
-                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                              <div
-                                className="absolute inset-0 bg-black/60"
-                                onClick={() => {
-                                  setEditingStakeholderId(null);
-                                  setStakeholderDraft(null);
-                                }}
-                              />
-                              <div className={`${governanceModalClass} min-h-[380px]`}>
+                              {/* Reminders table */}
+                              <div className={governanceTableCardClass}>
                                 <div className="flex items-center justify-between">
-                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                    {editingStakeholderId === '__new__'
-                                      ? t('decisions.detail.stakeholderModal.addTitle', 'Add RACI person')
-                                      : t('decisions.detail.stakeholderModal.editTitle', 'Edit RACI person')}
-                                  </h4>
+                                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                    {t('decisions.detail.governance.remindersTitle', 'Reminders')}
+                                  </h3>
                                   <div className="inline-flex items-center gap-2">
                                     <button
-                                      disabled={isDecisionStageLocked || isSuggestingStakeholders}
-                                      onClick={suggestStakeholderDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                                    >
-                                      {isSuggestingStakeholders ? (
-                                        <Loader2 size={12} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={12} />
-                                      )}
-                                      AI
-                                    </button>
-                                    <button
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                                      disabled={isDecisionStageLocked}
                                       onClick={() => {
-                                        setEditingStakeholderId(null);
-                                        setStakeholderDraft(null);
-                                      }}
-                                    >
-                                      <X size={16} />
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className={governanceModalHintClass}>
-                                  {t('decisions.detail.stakeholderModal.hint', 'Use this window to describe and configure person responsibility in RACI and communication channels.')}
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.governance.colPerson', 'Person')}
-                                    <select
-                                      value={stakeholderDraft.userId}
-                                      onChange={(e) => {
-                                        const selected = users.find((u) => u.id === e.target.value);
-                                        setStakeholderDraft({
-                                          ...stakeholderDraft,
-                                          userId: e.target.value,
-                                          userName: selected
-                                            ? `${selected.firstName} ${selected.lastName}`
-                                            : stakeholderDraft.userName,
-                                          userEmail: selected?.email || stakeholderDraft.userEmail,
+                                        setEditingReminderId('__new__');
+                                        setReminderDraft({
+                                          id: '__new__',
+                                          type: 'before_due',
+                                          days: 2,
+                                          recipients: 'both',
+                                          inAppNotification: true,
+                                          emailNotification: false,
+                                          delivery: ensureDeliveryConfig({
+                                            coreChannels: ['in_app'],
+                                          }),
+                                          message: '',
+                                          enabled: true,
                                         });
                                       }}
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
-                                      {users.map((u) => (
-                                        <option key={u.id} value={u.id}>
-                                          {u.firstName} {u.lastName}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.governance.colRole', 'Role')}
-                                    <select
-                                      value={stakeholderDraft.role}
-                                      onChange={(e) =>
-                                        setStakeholderDraft({
-                                          ...stakeholderDraft,
-                                          role: e.target.value as StakeholderRole,
-                                        })
-                                      }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                    >
-                                      <option value="responsible">
-                                        {t('decisions.detail.raci.responsible', 'Responsible')}
-                                      </option>
-                                      <option value="accountable">
-                                        {t('decisions.detail.raci.accountable', 'Accountable')}
-                                      </option>
-                                      <option value="consulted">
-                                        {t('decisions.detail.raci.consulted', 'Consulted')}
-                                      </option>
-                                      <option value="informed">
-                                        {t('decisions.detail.raci.informed', 'Informed')}
-                                      </option>
-                                    </select>
-                                  </label>
+                                      +{' '}
+                                      {t('decisions.detail.governance.addReminder', 'Add reminder')}
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="space-y-2 flex-1">
-                                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.stakeholderModal.notificationChannels', 'Notification channels')}
+                                <div className="overflow-auto flex-1">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colType', 'Type')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colDays', 'Days')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t(
+                                            'decisions.detail.governance.colRecipients',
+                                            'Recipients'
+                                          )}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t(
+                                            'decisions.detail.governance.colNotifications',
+                                            'Notifications'
+                                          )}
+                                        </th>
+                                        <th className="text-right py-2">
+                                          {t('decisions.detail.governance.colActions', 'Actions')}
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                      {reminders.length === 0 ? (
+                                        <tr>
+                                          <td
+                                            colSpan={5}
+                                            className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                          >
+                                            {t(
+                                              'decisions.detail.governance.noReminders',
+                                              'No reminders yet.'
+                                            )}
+                                          </td>
+                                        </tr>
+                                      ) : (
+                                        reminders.map((r) => (
+                                          <tr key={r.id}>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {r.type === 'before_due'
+                                                ? t(
+                                                    'decisions.detail.governance.beforeDue',
+                                                    'Before due'
+                                                  )
+                                                : t(
+                                                    'decisions.detail.governance.afterDue',
+                                                    'After due'
+                                                  )}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {r.days}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {r.recipients}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs">
+                                              <div className="flex flex-wrap gap-1">
+                                                {!r.enabled && (
+                                                  <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+                                                    {t(
+                                                      'decisions.detail.channels.disabled',
+                                                      'Disabled'
+                                                    )}
+                                                  </span>
+                                                )}
+                                                {deliveryBadgeLabels(r.delivery, r).map((label) => (
+                                                  <span
+                                                    key={`${r.id}-${label}`}
+                                                    className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                  >
+                                                    {label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </td>
+                                            <td className="py-2 text-right">
+                                              <div className="inline-flex items-center gap-1">
+                                                <button
+                                                  disabled={isDecisionStageLocked}
+                                                  onClick={() => {
+                                                    setEditingReminderId(r.id);
+                                                    setReminderDraft(
+                                                      normalizeReminderRule({ ...r })
+                                                    );
+                                                  }}
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                  title={t(
+                                                    'decisions.detail.activityLog.edit',
+                                                    'Edit'
+                                                  )}
+                                                >
+                                                  <Edit3 size={13} />
+                                                </button>
+                                                <button
+                                                  disabled={isDecisionStageLocked}
+                                                  onClick={() =>
+                                                    setReminders(
+                                                      reminders.filter((item) => item.id !== r.id)
+                                                    )
+                                                  }
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
+                                                  title={t(
+                                                    'decisions.detail.governance.delete',
+                                                    'Delete'
+                                                  )}
+                                                >
+                                                  <Trash2 size={13} />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))
+                                      )}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+
+                              {/* Escalation table */}
+                              <div className={governanceTableCardClass}>
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                    {t(
+                                      'decisions.detail.governance.escalationTitle',
+                                      'Escalation and rules'
+                                    )}
+                                  </h3>
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      disabled={isDecisionStageLocked}
+                                      onClick={() => {
+                                        setEscalationDraft(
+                                          normalizeEscalationRule({
+                                            id: Math.random().toString(36).slice(2, 11),
+                                            enabled: true,
+                                            escalateTo: users[0]?.id || '',
+                                            escalateToName: users[0]
+                                              ? `${users[0].firstName} ${users[0].lastName}`
+                                              : '',
+                                            afterDays: 3,
+                                            warningDays: 3,
+                                            criticalDays: 1,
+                                            escalationMode: 'manager_review',
+                                            delivery: ensureDeliveryConfig({
+                                              coreChannels: ['in_app', 'email'],
+                                            }),
+                                            message: '',
+                                          })
+                                        );
+                                        setEditingEscalationId('__new__');
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      +{' '}
+                                      {t(
+                                        'decisions.detail.governance.addEscalation',
+                                        'Add escalation'
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="overflow-auto flex-1">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colStatus', 'Status')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t(
+                                            'decisions.detail.governance.colThresholds',
+                                            'W/C thresholds'
+                                          )}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t(
+                                            'decisions.detail.governance.colEscalateAfter',
+                                            'Escalate after'
+                                          )}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t(
+                                            'decisions.detail.governance.colEscalateTo',
+                                            'Escalate to'
+                                          )}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colMessage', 'Message')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colMode', 'Mode')}
+                                        </th>
+                                        <th className="text-left py-2 pr-2">
+                                          {t('decisions.detail.governance.colChannels', 'Channels')}
+                                        </th>
+                                        <th className="text-right py-2">
+                                          {t('decisions.detail.governance.colActions', 'Actions')}
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                      {escalationRules.length === 0 ? (
+                                        <tr>
+                                          <td
+                                            colSpan={8}
+                                            className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                          >
+                                            {t(
+                                              'decisions.detail.governance.noEscalationRules',
+                                              'No escalation rules yet.'
+                                            )}
+                                          </td>
+                                        </tr>
+                                      ) : (
+                                        escalationRules.map((rule) => (
+                                          <tr key={rule.id}>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {rule.enabled
+                                                ? t(
+                                                    'decisions.detail.governance.enabledStatus',
+                                                    'Enabled'
+                                                  )
+                                                : t(
+                                                    'decisions.detail.channels.disabled',
+                                                    'Disabled'
+                                                  )}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {rule.warningDays}/{rule.criticalDays} d
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {rule.afterDays} d
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {rule.escalateToName || '—'}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {rule.message || '—'}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                              {rule.escalationMode === 'notify_only'
+                                                ? t(
+                                                    'decisions.detail.governance.escalationModeNotify',
+                                                    'Notify'
+                                                  )
+                                                : rule.escalationMode === 'manager_review'
+                                                  ? t(
+                                                      'decisions.detail.escalationMode.managerReview',
+                                                      'Manager review'
+                                                    )
+                                                  : t(
+                                                      'decisions.detail.escalationMode.executiveAlert',
+                                                      'Executive alert'
+                                                    )}
+                                            </td>
+                                            <td className="py-2 pr-2 text-xs">
+                                              <div className="flex flex-wrap gap-1">
+                                                {deliveryBadgeLabels(rule.delivery).map((label) => (
+                                                  <span
+                                                    key={`${rule.id}-ch-${label}`}
+                                                    className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                  >
+                                                    {label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </td>
+                                            <td className="py-2 text-right">
+                                              <div className="inline-flex items-center gap-1">
+                                                <button
+                                                  disabled={isDecisionStageLocked}
+                                                  onClick={() => {
+                                                    setEditingEscalationId(rule.id);
+                                                    setEscalationDraft({ ...rule });
+                                                  }}
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                  title={t(
+                                                    'decisions.detail.activityLog.edit',
+                                                    'Edit'
+                                                  )}
+                                                >
+                                                  <Edit3 size={13} />
+                                                </button>
+                                                <button
+                                                  disabled={isDecisionStageLocked}
+                                                  onClick={() =>
+                                                    setEscalationRules(
+                                                      escalationRules.filter(
+                                                        (item) => item.id !== rule.id
+                                                      )
+                                                    )
+                                                  }
+                                                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
+                                                  title={t(
+                                                    'decisions.detail.governance.delete',
+                                                    'Delete'
+                                                  )}
+                                                >
+                                                  <Trash2 size={13} />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))
+                                      )}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Stakeholder modal */}
+                            {stakeholderDraft && (
+                              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                                <div
+                                  className="absolute inset-0 bg-black/60"
+                                  onClick={() => {
+                                    setEditingStakeholderId(null);
+                                    setStakeholderDraft(null);
+                                  }}
+                                />
+                                <div className={`${governanceModalClass} min-h-[380px]`}>
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                      {editingStakeholderId === '__new__'
+                                        ? t(
+                                            'decisions.detail.stakeholderModal.addTitle',
+                                            'Add RACI person'
+                                          )
+                                        : t(
+                                            'decisions.detail.stakeholderModal.editTitle',
+                                            'Edit RACI person'
+                                          )}
+                                    </h4>
+                                    <div className="inline-flex items-center gap-2">
+                                      <button
+                                        disabled={isDecisionStageLocked || isSuggestingStakeholders}
+                                        onClick={suggestStakeholderDraftAI}
+                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      >
+                                        {isSuggestingStakeholders ? (
+                                          <Loader2 size={12} className="animate-spin" />
+                                        ) : (
+                                          <Sparkles size={12} />
+                                        )}
+                                        AI
+                                      </button>
+                                      <button
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                                        onClick={() => {
+                                          setEditingStakeholderId(null);
+                                          setStakeholderDraft(null);
+                                        }}
+                                      >
+                                        <X size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className={governanceModalHintClass}>
+                                    {t(
+                                      'decisions.detail.stakeholderModal.hint',
+                                      'Use this window to describe and configure person responsibility in RACI and communication channels.'
+                                    )}
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {t('decisions.detail.stakeholderModal.coreChannels', 'Core channels')}
-                                      </div>
-                                      <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
-                                        {[
-                                          {
-                                            key: 'enabled',
-                                            label: t('decisions.detail.governance.enabledStatus', 'Enabled'),
-                                            active: stakeholderDraft.notificationSettings.enabled,
-                                            toggle: () =>
-                                              setStakeholderDraft({
-                                                ...stakeholderDraft,
-                                                notificationSettings: {
-                                                  ...stakeholderDraft.notificationSettings,
-                                                  enabled:
-                                                    !stakeholderDraft.notificationSettings.enabled,
-                                                },
-                                              }),
-                                          },
-                                          {
-                                            key: 'in_app',
-                                            label: 'In-app',
-                                            active:
-                                              stakeholderDraft.notificationSettings.inAppEnabled,
-                                            toggle: () =>
-                                              setStakeholderDraft({
-                                                ...stakeholderDraft,
-                                                notificationSettings: {
-                                                  ...stakeholderDraft.notificationSettings,
-                                                  inAppEnabled:
-                                                    !stakeholderDraft.notificationSettings
-                                                      .inAppEnabled,
-                                                },
-                                              }),
-                                          },
-                                          {
-                                            key: 'email',
-                                            label: 'Email',
-                                            active:
-                                              stakeholderDraft.notificationSettings.emailEnabled,
-                                            toggle: () =>
-                                              setStakeholderDraft({
-                                                ...stakeholderDraft,
-                                                notificationSettings: {
-                                                  ...stakeholderDraft.notificationSettings,
-                                                  emailEnabled:
-                                                    !stakeholderDraft.notificationSettings
-                                                      .emailEnabled,
-                                                },
-                                              }),
-                                          },
-                                        ].map((channel) => (
-                                          <button
-                                            key={channel.key}
-                                            type="button"
-                                            onClick={channel.toggle}
-                                            className={`${channelChipClass} ${
-                                              channel.active
-                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
-                                                : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
-                                            }`}
-                                          >
-                                            {channel.label}
-                                          </button>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t('decisions.detail.governance.colPerson', 'Person')}
+                                      <select
+                                        value={stakeholderDraft.userId}
+                                        onChange={(e) => {
+                                          const selected = users.find(
+                                            (u) => u.id === e.target.value
+                                          );
+                                          setStakeholderDraft({
+                                            ...stakeholderDraft,
+                                            userId: e.target.value,
+                                            userName: selected
+                                              ? `${selected.firstName} ${selected.lastName}`
+                                              : stakeholderDraft.userName,
+                                            userEmail:
+                                              selected?.email || stakeholderDraft.userEmail,
+                                          });
+                                        }}
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      >
+                                        {users.map((u) => (
+                                          <option key={u.id} value={u.id}>
+                                            {u.firstName} {u.lastName}
+                                          </option>
                                         ))}
-                                      </div>
+                                      </select>
+                                    </label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t('decisions.detail.governance.colRole', 'Role')}
+                                      <select
+                                        value={stakeholderDraft.role}
+                                        onChange={(e) =>
+                                          setStakeholderDraft({
+                                            ...stakeholderDraft,
+                                            role: e.target.value as StakeholderRole,
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      >
+                                        <option value="responsible">
+                                          {t('decisions.detail.raci.responsible', 'Responsible')}
+                                        </option>
+                                        <option value="accountable">
+                                          {t('decisions.detail.raci.accountable', 'Accountable')}
+                                        </option>
+                                        <option value="consulted">
+                                          {t('decisions.detail.raci.consulted', 'Consulted')}
+                                        </option>
+                                        <option value="informed">
+                                          {t('decisions.detail.raci.informed', 'Informed')}
+                                        </option>
+                                      </select>
+                                    </label>
+                                  </div>
+                                  <div className="space-y-2 flex-1">
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t(
+                                        'decisions.detail.stakeholderModal.notificationChannels',
+                                        'Notification channels'
+                                      )}
                                     </div>
-                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {t('decisions.detail.stakeholderModal.integrationChannels', 'Integration channels')}
-                                      </div>
-                                      <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
-                                        {integrationChannelCatalog.map((channel) => {
-                                          const list =
-                                            stakeholderDraft.notificationSettings
-                                              .integrationChannels || [];
-                                          const selected = list.includes(channel.key);
-                                          return (
-                                            <button
-                                              key={channel.key}
-                                              type="button"
-                                              onClick={() => {
-                                                const current =
-                                                  stakeholderDraft.notificationSettings
-                                                    .integrationChannels || [];
-                                                const next = selected
-                                                  ? current.filter((c) => c !== channel.key)
-                                                  : [...current, channel.key];
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                          {t(
+                                            'decisions.detail.stakeholderModal.coreChannels',
+                                            'Core channels'
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                          {[
+                                            {
+                                              key: 'enabled',
+                                              label: t(
+                                                'decisions.detail.governance.enabledStatus',
+                                                'Enabled'
+                                              ),
+                                              active: stakeholderDraft.notificationSettings.enabled,
+                                              toggle: () =>
                                                 setStakeholderDraft({
                                                   ...stakeholderDraft,
                                                   notificationSettings: {
                                                     ...stakeholderDraft.notificationSettings,
-                                                    integrationChannels: next,
+                                                    enabled:
+                                                      !stakeholderDraft.notificationSettings
+                                                        .enabled,
                                                   },
-                                                });
-                                              }}
+                                                }),
+                                            },
+                                            {
+                                              key: 'in_app',
+                                              label: 'In-app',
+                                              active:
+                                                stakeholderDraft.notificationSettings.inAppEnabled,
+                                              toggle: () =>
+                                                setStakeholderDraft({
+                                                  ...stakeholderDraft,
+                                                  notificationSettings: {
+                                                    ...stakeholderDraft.notificationSettings,
+                                                    inAppEnabled:
+                                                      !stakeholderDraft.notificationSettings
+                                                        .inAppEnabled,
+                                                  },
+                                                }),
+                                            },
+                                            {
+                                              key: 'email',
+                                              label: 'Email',
+                                              active:
+                                                stakeholderDraft.notificationSettings.emailEnabled,
+                                              toggle: () =>
+                                                setStakeholderDraft({
+                                                  ...stakeholderDraft,
+                                                  notificationSettings: {
+                                                    ...stakeholderDraft.notificationSettings,
+                                                    emailEnabled:
+                                                      !stakeholderDraft.notificationSettings
+                                                        .emailEnabled,
+                                                  },
+                                                }),
+                                            },
+                                          ].map((channel) => (
+                                            <button
+                                              key={channel.key}
+                                              type="button"
+                                              onClick={channel.toggle}
                                               className={`${channelChipClass} ${
-                                                selected
+                                                channel.active
                                                   ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
-                                              title={channel.scope}
                                             >
                                               {channel.label}
                                             </button>
-                                          );
-                                        })}
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                          {t(
+                                            'decisions.detail.stakeholderModal.integrationChannels',
+                                            'Integration channels'
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                          {integrationChannelCatalog.map((channel) => {
+                                            const list =
+                                              stakeholderDraft.notificationSettings
+                                                .integrationChannels || [];
+                                            const selected = list.includes(channel.key);
+                                            return (
+                                              <button
+                                                key={channel.key}
+                                                type="button"
+                                                onClick={() => {
+                                                  const current =
+                                                    stakeholderDraft.notificationSettings
+                                                      .integrationChannels || [];
+                                                  const next = selected
+                                                    ? current.filter((c) => c !== channel.key)
+                                                    : [...current, channel.key];
+                                                  setStakeholderDraft({
+                                                    ...stakeholderDraft,
+                                                    notificationSettings: {
+                                                      ...stakeholderDraft.notificationSettings,
+                                                      integrationChannels: next,
+                                                    },
+                                                  });
+                                                }}
+                                                className={`${channelChipClass} ${
+                                                  selected
+                                                    ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                    : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                }`}
+                                                title={channel.scope}
+                                              >
+                                                {channel.label}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
                                       </div>
                                     </div>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                      {t(
+                                        'decisions.detail.stakeholderModal.syncTargets',
+                                        'Sync targets'
+                                      )}
+                                      <input
+                                        value={(
+                                          stakeholderDraft.notificationSettings.syncTargets || []
+                                        ).join(', ')}
+                                        onChange={(e) =>
+                                          setStakeholderDraft({
+                                            ...stakeholderDraft,
+                                            notificationSettings: {
+                                              ...stakeholderDraft.notificationSettings,
+                                              syncTargets: e.target.value
+                                                .split(',')
+                                                .map((item) => item.trim())
+                                                .filter(Boolean),
+                                            },
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        placeholder="slack:#ops, jira:DRD"
+                                      />
+                                    </label>
+                                  </div>
+                                  <div className="flex justify-end gap-2">
+                                    <button
+                                      onClick={() => {
+                                        setEditingStakeholderId(null);
+                                        setStakeholderDraft(null);
+                                      }}
+                                      className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                    >
+                                      {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        if (!stakeholderDraft) return;
+                                        if (editingStakeholderId === '__new__') {
+                                          setStakeholders([
+                                            ...stakeholders,
+                                            {
+                                              ...stakeholderDraft,
+                                              id: Math.random().toString(36).slice(2, 11),
+                                            },
+                                          ]);
+                                        } else {
+                                          setStakeholders(
+                                            stakeholders.map((item) =>
+                                              item.id === editingStakeholderId
+                                                ? { ...stakeholderDraft, id: item.id }
+                                                : item
+                                            )
+                                          );
+                                        }
+                                        setEditingStakeholderId(null);
+                                        setStakeholderDraft(null);
+                                      }}
+                                      className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                                    >
+                                      {t('decisions.detail.stakeholderModal.save', 'Save')}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Reminder modal */}
+                            {reminderDraft && (
+                              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                                <div
+                                  className="absolute inset-0 bg-black/60"
+                                  onClick={() => {
+                                    setEditingReminderId(null);
+                                    setReminderDraft(null);
+                                  }}
+                                />
+                                <div className={`${governanceModalClass} min-h-[380px]`}>
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                      {editingReminderId === '__new__'
+                                        ? t(
+                                            'decisions.detail.governance.addReminder',
+                                            'Add reminder'
+                                          )
+                                        : t(
+                                            'decisions.detail.reminderModal.editTitle',
+                                            'Edit reminder'
+                                          )}
+                                    </h4>
+                                    <div className="inline-flex items-center gap-2">
+                                      <button
+                                        disabled={isDecisionStageLocked || isSuggestingReminders}
+                                        onClick={suggestReminderDraftAI}
+                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      >
+                                        {isSuggestingReminders ? (
+                                          <Loader2 size={12} className="animate-spin" />
+                                        ) : (
+                                          <Sparkles size={12} />
+                                        )}
+                                        AI
+                                      </button>
+                                      <button
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                                        onClick={() => {
+                                          setEditingReminderId(null);
+                                          setReminderDraft(null);
+                                        }}
+                                      >
+                                        <X size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className={governanceModalHintClass}>
+                                    {t(
+                                      'decisions.detail.reminderModal.hint',
+                                      'Use this window to describe reminder intent: when it should trigger, recipients, and the message.'
+                                    )}
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t('decisions.detail.governance.colType', 'Type')}
+                                      <select
+                                        value={reminderDraft.type}
+                                        onChange={(e) =>
+                                          setReminderDraft({
+                                            ...reminderDraft,
+                                            type: e.target.value as 'before_due' | 'after_due',
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      >
+                                        <option value="before_due">
+                                          {t('decisions.detail.governance.beforeDue', 'Before due')}
+                                        </option>
+                                        <option value="after_due">
+                                          {t('decisions.detail.governance.afterDue', 'After due')}
+                                        </option>
+                                      </select>
+                                    </label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t('decisions.detail.governance.colDays', 'Days')}
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        value={reminderDraft.days}
+                                        onChange={(e) =>
+                                          setReminderDraft({
+                                            ...reminderDraft,
+                                            days: Number(e.target.value) || 0,
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      />
+                                    </label>
                                   </div>
                                   <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                    {t('decisions.detail.stakeholderModal.syncTargets', 'Sync targets')}
-                                    <input
-                                      value={(
-                                        stakeholderDraft.notificationSettings.syncTargets || []
-                                      ).join(', ')}
+                                    {t('decisions.detail.governance.colRecipients', 'Recipients')}
+                                    <select
+                                      value={reminderDraft.recipients}
                                       onChange={(e) =>
-                                        setStakeholderDraft({
-                                          ...stakeholderDraft,
-                                          notificationSettings: {
-                                            ...stakeholderDraft.notificationSettings,
-                                            syncTargets: e.target.value
-                                              .split(',')
-                                              .map((item) => item.trim())
-                                              .filter(Boolean),
-                                          },
+                                        setReminderDraft({
+                                          ...reminderDraft,
+                                          recipients: e.target.value as
+                                            | 'requester'
+                                            | 'decider'
+                                            | 'both'
+                                            | 'stakeholders',
                                         })
                                       }
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                      placeholder="slack:#ops, jira:DRD"
+                                    >
+                                      <option value="requester">Requester</option>
+                                      <option value="decider">Decider</option>
+                                      <option value="both">
+                                        {t('decisions.detail.reminderModal.both', 'Both')}
+                                      </option>
+                                      <option value="stakeholders">
+                                        {t(
+                                          'decisions.detail.reminderModal.stakeholders',
+                                          'Stakeholders'
+                                        )}
+                                      </option>
+                                    </select>
+                                  </label>
+                                  <div className="space-y-3">
+                                    <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                                      <input
+                                        type="checkbox"
+                                        checked={reminderDraft.enabled}
+                                        onChange={(e) =>
+                                          setReminderDraft({
+                                            ...reminderDraft,
+                                            enabled: e.target.checked,
+                                          })
+                                        }
+                                      />
+                                      {t(
+                                        'decisions.detail.reminderModal.ruleEnabled',
+                                        'Rule enabled'
+                                      )}
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                          {t(
+                                            'decisions.detail.stakeholderModal.coreChannels',
+                                            'Core channels'
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                          {(
+                                            [
+                                              { key: 'in_app', label: 'In-app' },
+                                              { key: 'email', label: 'Email' },
+                                            ] as Array<{ key: CoreDeliveryChannel; label: string }>
+                                          ).map((channel) => {
+                                            const delivery = ensureDeliveryConfig(
+                                              reminderDraft.delivery,
+                                              reminderDraft
+                                            );
+                                            const enabled = delivery.coreChannels.includes(
+                                              channel.key
+                                            );
+                                            return (
+                                              <button
+                                                key={channel.key}
+                                                type="button"
+                                                onClick={() =>
+                                                  setReminderDraft({
+                                                    ...reminderDraft,
+                                                    delivery: {
+                                                      ...delivery,
+                                                      coreChannels: toggleChannel(
+                                                        delivery.coreChannels,
+                                                        channel.key,
+                                                        !enabled
+                                                      ),
+                                                    },
+                                                    inAppNotification:
+                                                      channel.key === 'in_app'
+                                                        ? !enabled
+                                                        : delivery.coreChannels.includes('in_app'),
+                                                    emailNotification:
+                                                      channel.key === 'email'
+                                                        ? !enabled
+                                                        : delivery.coreChannels.includes('email'),
+                                                  })
+                                                }
+                                                className={`${channelChipClass} ${
+                                                  enabled
+                                                    ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                    : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                }`}
+                                              >
+                                                {channel.label}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                      <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                          {t(
+                                            'decisions.detail.stakeholderModal.integrationChannels',
+                                            'Integration channels'
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                          {integrationChannelCatalog.map((channel) => {
+                                            const delivery = ensureDeliveryConfig(
+                                              reminderDraft.delivery,
+                                              reminderDraft
+                                            );
+                                            const enabled = delivery.integrationChannels.includes(
+                                              channel.key
+                                            );
+                                            return (
+                                              <button
+                                                key={channel.key}
+                                                type="button"
+                                                onClick={() =>
+                                                  setReminderDraft({
+                                                    ...reminderDraft,
+                                                    delivery: {
+                                                      ...delivery,
+                                                      integrationChannels: toggleChannel(
+                                                        delivery.integrationChannels,
+                                                        channel.key,
+                                                        !enabled
+                                                      ),
+                                                    },
+                                                  })
+                                                }
+                                                className={`${channelChipClass} ${
+                                                  enabled
+                                                    ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                    : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                                }`}
+                                                title={channel.scope}
+                                              >
+                                                {channel.label}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                      {t(
+                                        'decisions.detail.stakeholderModal.syncTargets',
+                                        'Sync targets'
+                                      )}
+                                      <input
+                                        value={ensureDeliveryConfig(
+                                          reminderDraft.delivery,
+                                          reminderDraft
+                                        ).syncTargets.join(', ')}
+                                        onChange={(e) =>
+                                          setReminderDraft({
+                                            ...reminderDraft,
+                                            delivery: {
+                                              ...ensureDeliveryConfig(
+                                                reminderDraft.delivery,
+                                                reminderDraft
+                                              ),
+                                              syncTargets: e.target.value
+                                                .split(',')
+                                                .map((item) => item.trim())
+                                                .filter(Boolean),
+                                            },
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                        placeholder="slack:#delivery, jira:PROJ, webhook:ops"
+                                      />
+                                    </label>
+                                  </div>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {t('decisions.detail.governance.colMessage', 'Message')}
+                                    <textarea
+                                      value={reminderDraft.message || ''}
+                                      onChange={(e) =>
+                                        setReminderDraft({
+                                          ...reminderDraft,
+                                          message: e.target.value,
+                                        })
+                                      }
+                                      rows={3}
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                                     />
                                   </label>
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingStakeholderId(null);
-                                      setStakeholderDraft(null);
-                                    }}
-                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
-                                  >
-                                    {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (!stakeholderDraft) return;
-                                      if (editingStakeholderId === '__new__') {
-                                        setStakeholders([
-                                          ...stakeholders,
-                                          {
-                                            ...stakeholderDraft,
-                                            id: Math.random().toString(36).slice(2, 11),
-                                          },
-                                        ]);
-                                      } else {
-                                        setStakeholders(
-                                          stakeholders.map((item) =>
-                                            item.id === editingStakeholderId
-                                              ? { ...stakeholderDraft, id: item.id }
-                                              : item
-                                          )
-                                        );
-                                      }
-                                      setEditingStakeholderId(null);
-                                      setStakeholderDraft(null);
-                                    }}
-                                    className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
-                                  >
-                                    {t('decisions.detail.stakeholderModal.save', 'Save')}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Reminder modal */}
-                          {reminderDraft && (
-                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                              <div
-                                className="absolute inset-0 bg-black/60"
-                                onClick={() => {
-                                  setEditingReminderId(null);
-                                  setReminderDraft(null);
-                                }}
-                              />
-                              <div className={`${governanceModalClass} min-h-[380px]`}>
-                                <div className="flex items-center justify-between">
-                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                    {editingReminderId === '__new__'
-                                      ? t('decisions.detail.governance.addReminder', 'Add reminder')
-                                      : t('decisions.detail.reminderModal.editTitle', 'Edit reminder')}
-                                  </h4>
-                                  <div className="inline-flex items-center gap-2">
+                                  <div className="flex justify-end gap-2">
                                     <button
-                                      disabled={isDecisionStageLocked || isSuggestingReminders}
-                                      onClick={suggestReminderDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                                    >
-                                      {isSuggestingReminders ? (
-                                        <Loader2 size={12} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={12} />
-                                      )}
-                                      AI
-                                    </button>
-                                    <button
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                                       onClick={() => {
                                         setEditingReminderId(null);
                                         setReminderDraft(null);
                                       }}
+                                      className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                                     >
-                                      <X size={16} />
+                                      {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        if (!reminderDraft) return;
+                                        const normalized = normalizeReminderRule(reminderDraft);
+                                        if (editingReminderId === '__new__') {
+                                          setReminders([
+                                            ...reminders,
+                                            {
+                                              ...normalized,
+                                              id: Math.random().toString(36).slice(2, 11),
+                                            },
+                                          ]);
+                                        } else {
+                                          setReminders(
+                                            reminders.map((item) =>
+                                              item.id === editingReminderId
+                                                ? { ...normalized, id: item.id }
+                                                : item
+                                            )
+                                          );
+                                        }
+                                        setEditingReminderId(null);
+                                        setReminderDraft(null);
+                                      }}
+                                      className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                                    >
+                                      {t('decisions.detail.stakeholderModal.save', 'Save')}
                                     </button>
                                   </div>
                                 </div>
-                                <div className={governanceModalHintClass}>
-                                  {t('decisions.detail.reminderModal.hint', 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.')}
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.governance.colType', 'Type')}
+                              </div>
+                            )}
+
+                            {/* Escalation modal */}
+                            {editingEscalationId && escalationDraft && (
+                              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                                <div
+                                  className="absolute inset-0 bg-black/60"
+                                  onClick={() => {
+                                    setEditingEscalationId(null);
+                                    setEscalationDraft(null);
+                                  }}
+                                />
+                                <div className={governanceModalClass}>
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                      {editingEscalationId === '__new__'
+                                        ? t(
+                                            'decisions.detail.escalationModal.addTitle',
+                                            'Add escalation rule'
+                                          )
+                                        : t(
+                                            'decisions.detail.escalationModal.editTitle',
+                                            'Edit escalation rule'
+                                          )}
+                                    </h4>
+                                    <div className="inline-flex items-center gap-2">
+                                      <button
+                                        disabled={isDecisionStageLocked || isSuggestingEscalations}
+                                        onClick={suggestEscalationDraftAI}
+                                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      >
+                                        {isSuggestingEscalations ? (
+                                          <Loader2 size={12} className="animate-spin" />
+                                        ) : (
+                                          <Sparkles size={12} />
+                                        )}
+                                        AI
+                                      </button>
+                                      <button
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                                        onClick={() => {
+                                          setEditingEscalationId(null);
+                                          setEscalationDraft(null);
+                                        }}
+                                      >
+                                        <X size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className={governanceModalHintClass}>
+                                    {t(
+                                      'decisions.detail.escalationModal.hint',
+                                      'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.'
+                                    )}
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t(
+                                        'decisions.detail.escalationModal.warningThreshold',
+                                        'Warning threshold (days)'
+                                      )}
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        value={escalationDraft.warningDays}
+                                        onChange={(e) =>
+                                          setEscalationDraft({
+                                            ...escalationDraft,
+                                            warningDays: Number(e.target.value) || 0,
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      />
+                                    </label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t(
+                                        'decisions.detail.escalationModal.criticalThreshold',
+                                        'Critical threshold (days)'
+                                      )}
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        value={escalationDraft.criticalDays}
+                                        onChange={(e) =>
+                                          setEscalationDraft({
+                                            ...escalationDraft,
+                                            criticalDays: Number(e.target.value) || 0,
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      />
+                                    </label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t(
+                                        'decisions.detail.escalationModal.escalateAfterDays',
+                                        'Escalate after (days)'
+                                      )}
+                                      <input
+                                        type="number"
+                                        min={1}
+                                        value={escalationDraft.afterDays}
+                                        onChange={(e) =>
+                                          setEscalationDraft({
+                                            ...escalationDraft,
+                                            afterDays: Number(e.target.value) || 1,
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      />
+                                    </label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t(
+                                        'decisions.detail.governance.colEscalateTo',
+                                        'Escalate to'
+                                      )}
+                                      <select
+                                        value={escalationDraft.escalateTo}
+                                        onChange={(e) => {
+                                          const selected = users.find(
+                                            (u) => u.id === e.target.value
+                                          );
+                                          setEscalationDraft({
+                                            ...escalationDraft,
+                                            escalateTo: e.target.value,
+                                            escalateToName: selected
+                                              ? `${selected.firstName} ${selected.lastName}`
+                                              : escalationDraft.escalateToName,
+                                          });
+                                        }}
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      >
+                                        <option value="">
+                                          {t('decisions.detail.escalationModal.select', 'Select')}
+                                        </option>
+                                        {users.map((u) => (
+                                          <option key={u.id} value={u.id}>
+                                            {u.firstName} {u.lastName}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </label>
+                                  </div>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {t(
+                                      'decisions.detail.escalationModal.escalationMode',
+                                      'Escalation mode'
+                                    )}
                                     <select
-                                      value={reminderDraft.type}
+                                      value={escalationDraft.escalationMode}
                                       onChange={(e) =>
-                                        setReminderDraft({
-                                          ...reminderDraft,
-                                          type: e.target.value as 'before_due' | 'after_due',
+                                        setEscalationDraft({
+                                          ...escalationDraft,
+                                          escalationMode: e.target.value as EscalationMode,
                                         })
                                       }
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                                     >
-                                      <option value="before_due">
-                                        {t('decisions.detail.governance.beforeDue', 'Before due')}
-                                      </option>
-                                      <option value="after_due">
-                                        {t('decisions.detail.governance.afterDue', 'After due')}
-                                      </option>
+                                      {escalationModeOptions.map((mode) => (
+                                        <option key={mode.value} value={mode.value}>
+                                          {mode.label}
+                                        </option>
+                                      ))}
                                     </select>
                                   </label>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.governance.colDays', 'Days')}
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      value={reminderDraft.days}
-                                      onChange={(e) =>
-                                        setReminderDraft({
-                                          ...reminderDraft,
-                                          days: Number(e.target.value) || 0,
-                                        })
-                                      }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                    />
-                                  </label>
-                                </div>
-                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {t('decisions.detail.governance.colRecipients', 'Recipients')}
-                                  <select
-                                    value={reminderDraft.recipients}
-                                    onChange={(e) =>
-                                      setReminderDraft({
-                                        ...reminderDraft,
-                                        recipients: e.target.value as
-                                          | 'requester'
-                                          | 'decider'
-                                          | 'both'
-                                          | 'stakeholders',
-                                      })
-                                    }
-                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                  >
-                                    <option value="requester">Requester</option>
-                                    <option value="decider">Decider</option>
-                                    <option value="both">{t('decisions.detail.reminderModal.both', 'Both')}</option>
-                                    <option value="stakeholders">
-                                      {t('decisions.detail.reminderModal.stakeholders', 'Stakeholders')}
-                                    </option>
-                                  </select>
-                                </label>
-                                <div className="space-y-3">
                                   <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
                                     <input
                                       type="checkbox"
-                                      checked={reminderDraft.enabled}
+                                      checked={escalationDraft.enabled}
                                       onChange={(e) =>
-                                        setReminderDraft({
-                                          ...reminderDraft,
+                                        setEscalationDraft({
+                                          ...escalationDraft,
                                           enabled: e.target.checked,
                                         })
                                       }
                                     />
-                                    {t('decisions.detail.reminderModal.ruleEnabled', 'Rule enabled')}
+                                    {t(
+                                      'decisions.detail.reminderModal.ruleEnabled',
+                                      'Rule enabled'
+                                    )}
                                   </label>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {t('decisions.detail.stakeholderModal.coreChannels', 'Core channels')}
+                                        {t(
+                                          'decisions.detail.stakeholderModal.coreChannels',
+                                          'Core channels'
+                                        )}
                                       </div>
                                       <div className="flex flex-wrap gap-2">
                                         {(
@@ -6601,8 +7326,7 @@ Use userId only from this list:
                                           ] as Array<{ key: CoreDeliveryChannel; label: string }>
                                         ).map((channel) => {
                                           const delivery = ensureDeliveryConfig(
-                                            reminderDraft.delivery,
-                                            reminderDraft
+                                            escalationDraft.delivery
                                           );
                                           const enabled = delivery.coreChannels.includes(
                                             channel.key
@@ -6612,8 +7336,8 @@ Use userId only from this list:
                                               key={channel.key}
                                               type="button"
                                               onClick={() =>
-                                                setReminderDraft({
-                                                  ...reminderDraft,
+                                                setEscalationDraft({
+                                                  ...escalationDraft,
                                                   delivery: {
                                                     ...delivery,
                                                     coreChannels: toggleChannel(
@@ -6622,14 +7346,6 @@ Use userId only from this list:
                                                       !enabled
                                                     ),
                                                   },
-                                                  inAppNotification:
-                                                    channel.key === 'in_app'
-                                                      ? !enabled
-                                                      : delivery.coreChannels.includes('in_app'),
-                                                  emailNotification:
-                                                    channel.key === 'email'
-                                                      ? !enabled
-                                                      : delivery.coreChannels.includes('email'),
                                                 })
                                               }
                                               className={`${channelChipClass} ${
@@ -6646,13 +7362,15 @@ Use userId only from this list:
                                     </div>
                                     <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {t('decisions.detail.stakeholderModal.integrationChannels', 'Integration channels')}
+                                        {t(
+                                          'decisions.detail.stakeholderModal.integrationChannels',
+                                          'Integration channels'
+                                        )}
                                       </div>
                                       <div className="flex flex-wrap gap-2">
                                         {integrationChannelCatalog.map((channel) => {
                                           const delivery = ensureDeliveryConfig(
-                                            reminderDraft.delivery,
-                                            reminderDraft
+                                            escalationDraft.delivery
                                           );
                                           const enabled = delivery.integrationChannels.includes(
                                             channel.key
@@ -6662,8 +7380,8 @@ Use userId only from this list:
                                               key={channel.key}
                                               type="button"
                                               onClick={() =>
-                                                setReminderDraft({
-                                                  ...reminderDraft,
+                                                setEscalationDraft({
+                                                  ...escalationDraft,
                                                   delivery: {
                                                     ...delivery,
                                                     integrationChannels: toggleChannel(
@@ -6689,20 +7407,19 @@ Use userId only from this list:
                                     </div>
                                   </div>
                                   <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                    {t('decisions.detail.stakeholderModal.syncTargets', 'Sync targets')}
+                                    {t(
+                                      'decisions.detail.stakeholderModal.syncTargets',
+                                      'Sync targets'
+                                    )}
                                     <input
                                       value={ensureDeliveryConfig(
-                                        reminderDraft.delivery,
-                                        reminderDraft
+                                        escalationDraft.delivery
                                       ).syncTargets.join(', ')}
                                       onChange={(e) =>
-                                        setReminderDraft({
-                                          ...reminderDraft,
+                                        setEscalationDraft({
+                                          ...escalationDraft,
                                           delivery: {
-                                            ...ensureDeliveryConfig(
-                                              reminderDraft.delivery,
-                                              reminderDraft
-                                            ),
+                                            ...ensureDeliveryConfig(escalationDraft.delivery),
                                             syncTargets: e.target.value
                                               .split(',')
                                               .map((item) => item.trim())
@@ -6711,1457 +7428,1219 @@ Use userId only from this list:
                                         })
                                       }
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                      placeholder="slack:#delivery, jira:PROJ, webhook:ops"
+                                      placeholder="slack:#incident, jira:OPS, webhook:oncall"
                                     />
                                   </label>
-                                </div>
-                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {t('decisions.detail.governance.colMessage', 'Message')}
-                                  <textarea
-                                    value={reminderDraft.message || ''}
-                                    onChange={(e) =>
-                                      setReminderDraft({
-                                        ...reminderDraft,
-                                        message: e.target.value,
-                                      })
-                                    }
-                                    rows={3}
-                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                  />
-                                </label>
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingReminderId(null);
-                                      setReminderDraft(null);
-                                    }}
-                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
-                                  >
-                                    {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (!reminderDraft) return;
-                                      const normalized = normalizeReminderRule(reminderDraft);
-                                      if (editingReminderId === '__new__') {
-                                        setReminders([
-                                          ...reminders,
-                                          {
-                                            ...normalized,
-                                            id: Math.random().toString(36).slice(2, 11),
-                                          },
-                                        ]);
-                                      } else {
-                                        setReminders(
-                                          reminders.map((item) =>
-                                            item.id === editingReminderId
-                                              ? { ...normalized, id: item.id }
-                                              : item
-                                          )
-                                        );
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {t(
+                                      'decisions.detail.escalationModal.escalationMessage',
+                                      'Escalation message'
+                                    )}
+                                    <textarea
+                                      value={escalationDraft.message || ''}
+                                      onChange={(e) =>
+                                        setEscalationDraft({
+                                          ...escalationDraft,
+                                          message: e.target.value,
+                                        })
                                       }
-                                      setEditingReminderId(null);
-                                      setReminderDraft(null);
-                                    }}
-                                    className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
-                                  >
-                                    {t('decisions.detail.stakeholderModal.save', 'Save')}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Escalation modal */}
-                          {editingEscalationId && escalationDraft && (
-                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                              <div
-                                className="absolute inset-0 bg-black/60"
-                                onClick={() => {
-                                  setEditingEscalationId(null);
-                                  setEscalationDraft(null);
-                                }}
-                              />
-                              <div className={governanceModalClass}>
-                                <div className="flex items-center justify-between">
-                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                    {editingEscalationId === '__new__'
-                                      ? t('decisions.detail.escalationModal.addTitle', 'Add escalation rule')
-                                      : t('decisions.detail.escalationModal.editTitle', 'Edit escalation rule')}
-                                  </h4>
-                                  <div className="inline-flex items-center gap-2">
+                                      rows={3}
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                  <div className="flex justify-end gap-2">
                                     <button
-                                      disabled={isDecisionStageLocked || isSuggestingEscalations}
-                                      onClick={suggestEscalationDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                                    >
-                                      {isSuggestingEscalations ? (
-                                        <Loader2 size={12} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={12} />
-                                      )}
-                                      AI
-                                    </button>
-                                    <button
-                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                                       onClick={() => {
                                         setEditingEscalationId(null);
                                         setEscalationDraft(null);
                                       }}
+                                      className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                                     >
-                                      <X size={16} />
+                                      {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        if (!escalationDraft) return;
+                                        const normalized = normalizeEscalationRule(escalationDraft);
+                                        if (editingEscalationId === '__new__') {
+                                          setEscalationRules([
+                                            ...escalationRules,
+                                            {
+                                              ...normalized,
+                                              id: Math.random().toString(36).slice(2, 11),
+                                            },
+                                          ]);
+                                        } else {
+                                          setEscalationRules(
+                                            escalationRules.map((item) =>
+                                              item.id === editingEscalationId
+                                                ? { ...normalized, id: item.id }
+                                                : item
+                                            )
+                                          );
+                                        }
+                                        setEditingEscalationId(null);
+                                        setEscalationDraft(null);
+                                      }}
+                                      className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+                                    >
+                                      {t('decisions.detail.stakeholderModal.save', 'Save')}
                                     </button>
                                   </div>
                                 </div>
-                                <div className={governanceModalHintClass}>
-                                  {t('decisions.detail.escalationModal.hint', 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.')}
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.escalationModal.warningThreshold', 'Warning threshold (days)')}
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      value={escalationDraft.warningDays}
-                                      onChange={(e) =>
-                                        setEscalationDraft({
-                                          ...escalationDraft,
-                                          warningDays: Number(e.target.value) || 0,
-                                        })
-                                      }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                    />
-                                  </label>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.escalationModal.criticalThreshold', 'Critical threshold (days)')}
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      value={escalationDraft.criticalDays}
-                                      onChange={(e) =>
-                                        setEscalationDraft({
-                                          ...escalationDraft,
-                                          criticalDays: Number(e.target.value) || 0,
-                                        })
-                                      }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                    />
-                                  </label>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.escalationModal.escalateAfterDays', 'Escalate after (days)')}
-                                    <input
-                                      type="number"
-                                      min={1}
-                                      value={escalationDraft.afterDays}
-                                      onChange={(e) =>
-                                        setEscalationDraft({
-                                          ...escalationDraft,
-                                          afterDays: Number(e.target.value) || 1,
-                                        })
-                                      }
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                    />
-                                  </label>
-                                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('decisions.detail.governance.colEscalateTo', 'Escalate to')}
-                                    <select
-                                      value={escalationDraft.escalateTo}
-                                      onChange={(e) => {
-                                        const selected = users.find((u) => u.id === e.target.value);
-                                        setEscalationDraft({
-                                          ...escalationDraft,
-                                          escalateTo: e.target.value,
-                                          escalateToName: selected
-                                            ? `${selected.firstName} ${selected.lastName}`
-                                            : escalationDraft.escalateToName,
-                                        });
-                                      }}
-                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                    >
-                                      <option value="">{t('decisions.detail.escalationModal.select', 'Select')}</option>
-                                      {users.map((u) => (
-                                        <option key={u.id} value={u.id}>
-                                          {u.firstName} {u.lastName}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                </div>
-                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {t('decisions.detail.escalationModal.escalationMode', 'Escalation mode')}
-                                  <select
-                                    value={escalationDraft.escalationMode}
-                                    onChange={(e) =>
-                                      setEscalationDraft({
-                                        ...escalationDraft,
-                                        escalationMode: e.target.value as EscalationMode,
-                                      })
-                                    }
-                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                  >
-                                    {escalationModeOptions.map((mode) => (
-                                      <option key={mode.value} value={mode.value}>
-                                        {mode.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </label>
-                                <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
-                                  <input
-                                    type="checkbox"
-                                    checked={escalationDraft.enabled}
-                                    onChange={(e) =>
-                                      setEscalationDraft({
-                                        ...escalationDraft,
-                                        enabled: e.target.checked,
-                                      })
-                                    }
-                                  />
-                                  {t('decisions.detail.reminderModal.ruleEnabled', 'Rule enabled')}
-                                </label>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                      {t('decisions.detail.stakeholderModal.coreChannels', 'Core channels')}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {(
-                                        [
-                                          { key: 'in_app', label: 'In-app' },
-                                          { key: 'email', label: 'Email' },
-                                        ] as Array<{ key: CoreDeliveryChannel; label: string }>
-                                      ).map((channel) => {
-                                        const delivery = ensureDeliveryConfig(
-                                          escalationDraft.delivery
-                                        );
-                                        const enabled = delivery.coreChannels.includes(channel.key);
-                                        return (
-                                          <button
-                                            key={channel.key}
-                                            type="button"
-                                            onClick={() =>
-                                              setEscalationDraft({
-                                                ...escalationDraft,
-                                                delivery: {
-                                                  ...delivery,
-                                                  coreChannels: toggleChannel(
-                                                    delivery.coreChannels,
-                                                    channel.key,
-                                                    !enabled
-                                                  ),
-                                                },
-                                              })
-                                            }
-                                            className={`${channelChipClass} ${
-                                              enabled
-                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
-                                                : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
-                                            }`}
-                                          >
-                                            {channel.label}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
-                                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                      {t('decisions.detail.stakeholderModal.integrationChannels', 'Integration channels')}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {integrationChannelCatalog.map((channel) => {
-                                        const delivery = ensureDeliveryConfig(
-                                          escalationDraft.delivery
-                                        );
-                                        const enabled = delivery.integrationChannels.includes(
-                                          channel.key
-                                        );
-                                        return (
-                                          <button
-                                            key={channel.key}
-                                            type="button"
-                                            onClick={() =>
-                                              setEscalationDraft({
-                                                ...escalationDraft,
-                                                delivery: {
-                                                  ...delivery,
-                                                  integrationChannels: toggleChannel(
-                                                    delivery.integrationChannels,
-                                                    channel.key,
-                                                    !enabled
-                                                  ),
-                                                },
-                                              })
-                                            }
-                                            className={`${channelChipClass} ${
-                                              enabled
-                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
-                                                : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
-                                            }`}
-                                            title={channel.scope}
-                                          >
-                                            {channel.label}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                </div>
-                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {t('decisions.detail.stakeholderModal.syncTargets', 'Sync targets')}
-                                  <input
-                                    value={ensureDeliveryConfig(
-                                      escalationDraft.delivery
-                                    ).syncTargets.join(', ')}
-                                    onChange={(e) =>
-                                      setEscalationDraft({
-                                        ...escalationDraft,
-                                        delivery: {
-                                          ...ensureDeliveryConfig(escalationDraft.delivery),
-                                          syncTargets: e.target.value
-                                            .split(',')
-                                            .map((item) => item.trim())
-                                            .filter(Boolean),
-                                        },
-                                      })
-                                    }
-                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                    placeholder="slack:#incident, jira:OPS, webhook:oncall"
-                                  />
-                                </label>
-                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {t('decisions.detail.escalationModal.escalationMessage', 'Escalation message')}
-                                  <textarea
-                                    value={escalationDraft.message || ''}
-                                    onChange={(e) =>
-                                      setEscalationDraft({
-                                        ...escalationDraft,
-                                        message: e.target.value,
-                                      })
-                                    }
-                                    rows={3}
-                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                  />
-                                </label>
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingEscalationId(null);
-                                      setEscalationDraft(null);
-                                    }}
-                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
-                                  >
-                                    {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (!escalationDraft) return;
-                                      const normalized = normalizeEscalationRule(escalationDraft);
-                                      if (editingEscalationId === '__new__') {
-                                        setEscalationRules([
-                                          ...escalationRules,
-                                          {
-                                            ...normalized,
-                                            id: Math.random().toString(36).slice(2, 11),
-                                          },
-                                        ]);
-                                      } else {
-                                        setEscalationRules(
-                                          escalationRules.map((item) =>
-                                            item.id === editingEscalationId
-                                              ? { ...normalized, id: item.id }
-                                              : item
-                                          )
-                                        );
-                                      }
-                                      setEditingEscalationId(null);
-                                      setEscalationDraft(null);
-                                    }}
-                                    className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
-                                  >
-                                    {t('decisions.detail.stakeholderModal.save', 'Save')}
-                                  </button>
-                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        )}
 
-                      {/* ── Section: Comments (shared CommentsCanvas) ──── */}
-                      {activeNotionSection === 'comments' && (
-                        <CommentsCanvas
-                          comments={nModeComments}
-                          onDeleteComment={handleDeleteComment}
-                          dateFilter={commentDateFilter as DateFilter}
-                          onDateFilterChange={(f) => setCommentDateFilter(f as CommentDateFilter)}
-                          sortOrder={commentSortOrder as SortOrder}
-                          onToggleSort={() =>
-                            setCommentSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-                          }
-                          commentDraft={commentDraft}
-                          onCommentDraftChange={setCommentDraft}
-                          onSubmitComment={() => void submitCommentDraft()}
-                          draftPriority={commentDraftPriority as CommentPriority}
-                          onDraftPriorityChange={(p) =>
-                            setCommentDraftPriority(p as CommentPriorityLevel)
-                          }
-                          onAIEnhance={enhanceCommentDraftWithAI}
-                          isAIEnhancing={isEnhancingCommentDraft}
-                          locked={isDecisionStageLocked}
-                          getPriorityDotClass={(p) =>
-                            getPriorityDotClass(p as CommentPriorityLevel)
-                          }
-                          getCommentPriority={(c) =>
-                            getCommentPriority(c as unknown as Comment) as CommentPriority
-                          }
-                          getPriorityButtonClass={(p, a) =>
-                            getPriorityButtonClass(p as CommentPriorityLevel, a)
-                          }
-                          getCommentPriorityLabel={(p) =>
-                            getCommentPriorityLabel(p as CommentPriorityLevel)
-                          }
-                          getCommentPriorityHint={(p) =>
-                            getCommentPriorityHint(p as CommentPriorityLevel)
-                          }
-                        />
-                      )}
+                        {/* ── Section: Comments (shared CommentsCanvas) ──── */}
+                        {activeNotionSection === 'comments' && (
+                          <CommentsCanvas
+                            comments={nModeComments}
+                            onDeleteComment={handleDeleteComment}
+                            dateFilter={commentDateFilter as DateFilter}
+                            onDateFilterChange={(f) => setCommentDateFilter(f as CommentDateFilter)}
+                            sortOrder={commentSortOrder as SortOrder}
+                            onToggleSort={() =>
+                              setCommentSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                            }
+                            commentDraft={commentDraft}
+                            onCommentDraftChange={setCommentDraft}
+                            onSubmitComment={() => void submitCommentDraft()}
+                            draftPriority={commentDraftPriority as CommentPriority}
+                            onDraftPriorityChange={(p) =>
+                              setCommentDraftPriority(p as CommentPriorityLevel)
+                            }
+                            onAIEnhance={enhanceCommentDraftWithAI}
+                            isAIEnhancing={isEnhancingCommentDraft}
+                            locked={isDecisionStageLocked}
+                            getPriorityDotClass={(p) =>
+                              getPriorityDotClass(p as CommentPriorityLevel)
+                            }
+                            getCommentPriority={(c) =>
+                              getCommentPriority(c as unknown as Comment) as CommentPriority
+                            }
+                            getPriorityButtonClass={(p, a) =>
+                              getPriorityButtonClass(p as CommentPriorityLevel, a)
+                            }
+                            getCommentPriorityLabel={(p) =>
+                              getCommentPriorityLabel(p as CommentPriorityLevel)
+                            }
+                            getCommentPriorityHint={(p) =>
+                              getCommentPriorityHint(p as CommentPriorityLevel)
+                            }
+                          />
+                        )}
 
-                      {/* ── Section: Attachments & Links ─────────────────── */}
-                      {activeNotionSection === 'resources-links' && (
-                        <AttachmentsLinksCanvas
-                          attachments={attachments}
-                          onUploadAttachments={handleUploadAttachments}
-                          onDeleteAttachment={handleDeleteAttachment}
-                          onEditAttachment={(id, patch) => {
-                            setAttachments((prev) =>
-                              prev.map((a) => (a.id === id ? { ...a, ...patch } : a))
-                            );
-                          }}
-                          linkedItems={linkedItems}
-                          onAddLinkedItem={handleAddLinkedItem}
-                          onRemoveLinkedItem={handleRemoveLinkedItem}
-                          onEditLinkedItem={(key, patch) => {
-                            const [type, id] = key.split(':');
-                            setLinkedItems((prev) =>
-                              prev.map((item) =>
-                                item.type === type && item.id === id ? { ...item, ...patch } : item
-                              )
-                            );
-                          }}
-                          onNavigateLinkedItem={openLinkedItemTarget}
-                          searchLinkedItems={searchLinkedItems}
-                          readOnly={isDecisionStageLocked}
-                        />
-                      )}
+                        {/* ── Section: Attachments & Links ─────────────────── */}
+                        {activeNotionSection === 'resources-links' && (
+                          <AttachmentsLinksCanvas
+                            attachments={attachments}
+                            onUploadAttachments={handleUploadAttachments}
+                            onDeleteAttachment={handleDeleteAttachment}
+                            onEditAttachment={(id, patch) => {
+                              setAttachments((prev) =>
+                                prev.map((a) => (a.id === id ? { ...a, ...patch } : a))
+                              );
+                            }}
+                            linkedItems={linkedItems}
+                            onAddLinkedItem={handleAddLinkedItem}
+                            onRemoveLinkedItem={handleRemoveLinkedItem}
+                            onEditLinkedItem={(key, patch) => {
+                              const [type, id] = key.split(':');
+                              setLinkedItems((prev) =>
+                                prev.map((item) =>
+                                  item.type === type && item.id === id
+                                    ? { ...item, ...patch }
+                                    : item
+                                )
+                              );
+                            }}
+                            onNavigateLinkedItem={openLinkedItemTarget}
+                            searchLinkedItems={searchLinkedItems}
+                            readOnly={isDecisionStageLocked}
+                          />
+                        )}
 
-                      {decisionId && title && (
-                        <RelatedContext
-                          entityType="decision"
-                          entityId={decisionId}
-                          entityTitle={title}
-                        />
-                      )}
+                        {decisionId && title && (
+                          <RelatedContext
+                            entityType="decision"
+                            entityId={decisionId}
+                            entityTitle={title}
+                          />
+                        )}
 
-                      {decisionId && <AIConnections entityType="decision" entityId={decisionId} />}
+                        {decisionId && (
+                          <AIConnections entityType="decision" entityId={decisionId} />
+                        )}
 
-                      {/* ── Section: Activity Log (shared ActivityLogCanvas) */}
-                      {activeNotionSection === 'activity-log' && (
-                        <ActivityLogCanvas
-                          entries={nModeActivityEntries}
-                          stats={nModeActivityStats}
-                          typeMeta={nModeActivityTypeMeta}
-                        />
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
+                        {/* ── Section: Activity Log (shared ActivityLogCanvas) */}
+                        {activeNotionSection === 'activity-log' && (
+                          <ActivityLogCanvas
+                            entries={nModeActivityEntries}
+                            stats={nModeActivityStats}
+                            typeMeta={nModeActivityTypeMeta}
+                          />
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ═══════════ CLICKUP MODE (action-first) ═════════════════════════ */}
-          {presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE === 'true' && (
-            <div className="col-span-full space-y-4">
-              <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700/60">
-                {(
-                  [
-                    ['overview', t('decisions.detail.clickupTabs.overview', 'Overview')],
-                    ['resources', t('decisions.detail.clickupTabs.resources', 'Attachments + Links')],
-                    ['risk', t('decisions.detail.clickupTabs.risk', 'Risk')],
-                    ['options', t('decisions.detail.clickupTabs.options', 'Options')],
-                    ['governance', t('decisions.detail.clickupTabs.governance', 'RACI + Escalation')],
-                    ['comments', t('decisions.detail.clickupTabs.comments', 'Comments')],
-                    ['logs', t('decisions.detail.clickupTabs.logs', 'Logs')],
-                  ] as const
-                ).map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setClickupTab(key)}
-                    className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                      clickupTab === key
-                        ? 'bg-primary-500/15 border-primary-400/50 text-primary-600 dark:text-primary-300'
-                        : 'bg-transparent border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+            {/* ═══════════ CLICKUP MODE (action-first) ═════════════════════════ */}
+            {presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE === 'true' && (
+              <div className="col-span-full space-y-4">
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700/60">
+                  {(
+                    [
+                      ['overview', t('decisions.detail.clickupTabs.overview', 'Overview')],
+                      [
+                        'resources',
+                        t('decisions.detail.clickupTabs.resources', 'Attachments + Links'),
+                      ],
+                      ['risk', t('decisions.detail.clickupTabs.risk', 'Risk')],
+                      ['options', t('decisions.detail.clickupTabs.options', 'Options')],
+                      [
+                        'governance',
+                        t('decisions.detail.clickupTabs.governance', 'RACI + Escalation'),
+                      ],
+                      ['comments', t('decisions.detail.clickupTabs.comments', 'Comments')],
+                      ['logs', t('decisions.detail.clickupTabs.logs', 'Logs')],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() => setClickupTab(key)}
+                      className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
+                        clickupTab === key
+                          ? 'bg-primary-500/15 border-primary-400/50 text-primary-600 dark:text-primary-300'
+                          : 'bg-transparent border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.9fr)_330px] gap-4">
-                <div className="space-y-4 min-w-0">
-                  {clickupTab === 'overview' && (
-                    <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          {t('decisions.detail.clickupOverview.title', 'Decision Overview')}
-                        </h3>
-                        <AIFieldEnhancer
-                          fieldKey="c-description"
-                          sectionLabel="Decision Overview"
-                          currentValue={description}
-                          onApply={setDescription}
-                          artifactContext={{ title, status, priority, type: 'decision' }}
-                          disabled={isDecisionStageLocked}
-                        />
-                      </div>
-                      <textarea
-                        value={description}
-                        onChange={(e) => !isDecisionStageLocked && setDescription(e.target.value)}
-                        readOnly={isDecisionStageLocked}
-                        rows={6}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                      />
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                          {t('decisions.detail.consequencesSection.title', 'Consequences of Inaction')}
-                        </label>
-                        <AIFieldEnhancer
-                          fieldKey="c-rationale"
-                          sectionLabel="Consequences of Inaction"
-                          currentValue={rationale}
-                          onApply={setRationale}
-                          artifactContext={{ title, status, priority, type: 'decision' }}
-                          disabled={isDecisionStageLocked}
-                        />
-                      </div>
-                      <textarea
-                        value={rationale}
-                        onChange={(e) => !isDecisionStageLocked && setRationale(e.target.value)}
-                        readOnly={isDecisionStageLocked}
-                        rows={4}
-                        className="w-full px-3 py-2 rounded-xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/30 text-sm"
-                        placeholder={
-                          t('decisions.detail.consequencesSection.placeholderClickup', 'Consequences of inaction...')
-                        }
-                      />
-                    </div>
-                  )}
-
-                  {clickupTab === 'options' && (
-                    <AlternativesSection
-                      alternatives={alternatives}
-                      selectedAlternativeId={selectedAlternativeId}
-                      status={status}
-                      onAdd={addAlternative}
-                      onUpdate={updateAlternative}
-                      onRemove={removeAlternative}
-                      onSetRecommended={setRecommendedAlternative}
-                      onSelect={setSelectedAlternativeId}
-                      onGenerateAI={generateAlternativesAI}
-                      expanded
-                      onToggleExpand={() => {}}
-                      isGenerating={isGeneratingAlternatives}
-                    />
-                  )}
-
-                  {clickupTab === 'risk' && (
-                    <RiskAssessmentCompact
-                      risks={risks}
-                      onAdd={addRisk}
-                      onUpdate={updateRisk}
-                      onRemove={removeRisk}
-                      onGenerateAI={generateRisksAI}
-                      expanded
-                      onToggleExpand={() => {}}
-                      isGenerating={isGeneratingRisks}
-                    />
-                  )}
-
-                  {clickupTab === 'governance' && (
-                    <div className="space-y-4">
-                      {/* RACI table */}
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.9fr)_330px] gap-4">
+                  <div className="space-y-4 min-w-0">
+                    {clickupTab === 'overview' && (
                       <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {t('decisions.detail.governance.raciTitleShort', 'RACI')}
+                            {t('decisions.detail.clickupOverview.title', 'Decision Overview')}
                           </h3>
-                          <button
+                          <AIFieldEnhancer
+                            fieldKey="c-description"
+                            sectionLabel="Decision Overview"
+                            currentValue={description}
+                            onApply={setDescription}
+                            artifactContext={{ title, status, priority, type: 'decision' }}
                             disabled={isDecisionStageLocked}
-                            onClick={() => {
-                              const fallbackUser = users[0];
-                              if (!fallbackUser) return;
-                              const newStakeholder: Stakeholder = {
-                                id: Math.random().toString(36).substr(2, 9),
-                                decisionId: decisionId || 'new',
-                                userId: fallbackUser.id,
-                                userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
-                                userEmail: fallbackUser.email,
-                                role: 'consulted',
-                                notificationSettings: {
-                                  enabled: true,
-                                  triggers: ['on_status_change'],
-                                  emailEnabled: false,
-                                  inAppEnabled: true,
-                                  integrationChannels: [],
-                                  syncTargets: [],
-                                },
-                              };
-                              setStakeholders([...stakeholders, newStakeholder]);
-                            }}
-                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            + {t('decisions.detail.governance.add', 'Add')}
-                          </button>
+                          />
                         </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colRole', 'Role')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colPerson', 'Person')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colEmail', 'Email')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colNotifications', 'Notifications')}
-                                </th>
-                                <th className="text-right py-2">
-                                  {t('decisions.detail.governance.colActions', 'Actions')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                              {stakeholders.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={5}
-                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                  >
-                                    {t('decisions.detail.governance.noStakeholders', 'No stakeholders yet.')}
-                                  </td>
+                        <textarea
+                          value={description}
+                          onChange={(e) => !isDecisionStageLocked && setDescription(e.target.value)}
+                          readOnly={isDecisionStageLocked}
+                          rows={6}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                        />
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                            {t(
+                              'decisions.detail.consequencesSection.title',
+                              'Consequences of Inaction'
+                            )}
+                          </label>
+                          <AIFieldEnhancer
+                            fieldKey="c-rationale"
+                            sectionLabel="Consequences of Inaction"
+                            currentValue={rationale}
+                            onApply={setRationale}
+                            artifactContext={{ title, status, priority, type: 'decision' }}
+                            disabled={isDecisionStageLocked}
+                          />
+                        </div>
+                        <textarea
+                          value={rationale}
+                          onChange={(e) => !isDecisionStageLocked && setRationale(e.target.value)}
+                          readOnly={isDecisionStageLocked}
+                          rows={4}
+                          className="w-full px-3 py-2 rounded-xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/30 text-sm"
+                          placeholder={t(
+                            'decisions.detail.consequencesSection.placeholderClickup',
+                            'Consequences of inaction...'
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    {clickupTab === 'options' && (
+                      <AlternativesSection
+                        alternatives={alternatives}
+                        selectedAlternativeId={selectedAlternativeId}
+                        status={status}
+                        onAdd={addAlternative}
+                        onUpdate={updateAlternative}
+                        onRemove={removeAlternative}
+                        onSetRecommended={setRecommendedAlternative}
+                        onSelect={setSelectedAlternativeId}
+                        onGenerateAI={generateAlternativesAI}
+                        expanded
+                        onToggleExpand={() => {}}
+                        isGenerating={isGeneratingAlternatives}
+                      />
+                    )}
+
+                    {clickupTab === 'risk' && (
+                      <RiskAssessmentCompact
+                        risks={risks}
+                        onAdd={addRisk}
+                        onUpdate={updateRisk}
+                        onRemove={removeRisk}
+                        onGenerateAI={generateRisksAI}
+                        expanded
+                        onToggleExpand={() => {}}
+                        isGenerating={isGeneratingRisks}
+                      />
+                    )}
+
+                    {clickupTab === 'governance' && (
+                      <div className="space-y-4">
+                        {/* RACI table */}
+                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                              {t('decisions.detail.governance.raciTitleShort', 'RACI')}
+                            </h3>
+                            <button
+                              disabled={isDecisionStageLocked}
+                              onClick={() => {
+                                const fallbackUser = users[0];
+                                if (!fallbackUser) return;
+                                const newStakeholder: Stakeholder = {
+                                  id: Math.random().toString(36).substr(2, 9),
+                                  decisionId: decisionId || 'new',
+                                  userId: fallbackUser.id,
+                                  userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
+                                  userEmail: fallbackUser.email,
+                                  role: 'consulted',
+                                  notificationSettings: {
+                                    enabled: true,
+                                    triggers: ['on_status_change'],
+                                    emailEnabled: false,
+                                    inAppEnabled: true,
+                                    integrationChannels: [],
+                                    syncTargets: [],
+                                  },
+                                };
+                                setStakeholders([...stakeholders, newStakeholder]);
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              + {t('decisions.detail.governance.add', 'Add')}
+                            </button>
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colRole', 'Role')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colPerson', 'Person')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colEmail', 'Email')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t(
+                                      'decisions.detail.governance.colNotifications',
+                                      'Notifications'
+                                    )}
+                                  </th>
+                                  <th className="text-right py-2">
+                                    {t('decisions.detail.governance.colActions', 'Actions')}
+                                  </th>
                                 </tr>
-                              ) : (
-                                stakeholders.map((s) => (
-                                  <tr key={s.id}>
-                                    <td className="py-2 pr-2">
-                                      <select
-                                        value={s.role}
-                                        disabled={isDecisionStageLocked}
-                                        onChange={(e) =>
-                                          setStakeholders(
-                                            stakeholders.map((item) =>
-                                              item.id === s.id
-                                                ? {
-                                                    ...item,
-                                                    role: e.target.value as StakeholderRole,
-                                                  }
-                                                : item
-                                            )
-                                          )
-                                        }
-                                        className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
-                                      >
-                                        <option value="responsible">
-                                          {t('decisions.detail.raci.responsible', 'Responsible')}
-                                        </option>
-                                        <option value="accountable">
-                                          {t('decisions.detail.raci.accountable', 'Accountable')}
-                                        </option>
-                                        <option value="consulted">
-                                          {t('decisions.detail.raci.consulted', 'Consulted')}
-                                        </option>
-                                        <option value="informed">
-                                          {t('decisions.detail.raci.informed', 'Informed')}
-                                        </option>
-                                      </select>
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
-                                      {s.userName || s.userId}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                                      {s.userEmail || '—'}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs">
-                                      <div className="flex flex-wrap gap-1">
-                                        {stakeholderChannelLabels(s.notificationSettings).map(
-                                          (label) => (
-                                            <span
-                                              key={`${s.id}-clickup-${label}`}
-                                              className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px]"
-                                            >
-                                              {label}
-                                            </span>
-                                          )
-                                        )}
-                                      </div>
-                                    </td>
-                                    <td className="py-2 text-right">
-                                      <button
-                                        disabled={isDecisionStageLocked}
-                                        onClick={() =>
-                                          setStakeholders(
-                                            stakeholders.filter((item) => item.id !== s.id)
-                                          )
-                                        }
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                {stakeholders.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={5}
+                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                      {t(
+                                        'decisions.detail.governance.noStakeholders',
+                                        'No stakeholders yet.'
+                                      )}
                                     </td>
                                   </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
+                                ) : (
+                                  stakeholders.map((s) => (
+                                    <tr key={s.id}>
+                                      <td className="py-2 pr-2">
+                                        <select
+                                          value={s.role}
+                                          disabled={isDecisionStageLocked}
+                                          onChange={(e) =>
+                                            setStakeholders(
+                                              stakeholders.map((item) =>
+                                                item.id === s.id
+                                                  ? {
+                                                      ...item,
+                                                      role: e.target.value as StakeholderRole,
+                                                    }
+                                                  : item
+                                              )
+                                            )
+                                          }
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        >
+                                          <option value="responsible">
+                                            {t('decisions.detail.raci.responsible', 'Responsible')}
+                                          </option>
+                                          <option value="accountable">
+                                            {t('decisions.detail.raci.accountable', 'Accountable')}
+                                          </option>
+                                          <option value="consulted">
+                                            {t('decisions.detail.raci.consulted', 'Consulted')}
+                                          </option>
+                                          <option value="informed">
+                                            {t('decisions.detail.raci.informed', 'Informed')}
+                                          </option>
+                                        </select>
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                                        {s.userName || s.userId}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                        {s.userEmail || '—'}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs">
+                                        <div className="flex flex-wrap gap-1">
+                                          {stakeholderChannelLabels(s.notificationSettings).map(
+                                            (label) => (
+                                              <span
+                                                key={`${s.id}-clickup-${label}`}
+                                                className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px]"
+                                              >
+                                                {label}
+                                              </span>
+                                            )
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td className="py-2 text-right">
+                                        <button
+                                          disabled={isDecisionStageLocked}
+                                          onClick={() =>
+                                            setStakeholders(
+                                              stakeholders.filter((item) => item.id !== s.id)
+                                            )
+                                          }
+                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Reminders table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {t('decisions.detail.governance.remindersTitle', 'Reminders')}
-                          </h3>
-                          <button
-                            disabled={isDecisionStageLocked}
-                            onClick={() =>
-                              setReminders([
-                                ...reminders,
-                                {
-                                  id: Math.random().toString(36).substr(2, 9),
-                                  type: 'before_due',
-                                  days: 2,
-                                  recipients: 'both',
-                                  inAppNotification: true,
-                                  emailNotification: false,
-                                  message: '',
-                                  enabled: true,
-                                },
-                              ])
-                            }
-                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            + {t('decisions.detail.governance.add', 'Add')}
-                          </button>
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.active', 'Active')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.when', 'When')}
-                                </th>
-                                <th className="text-left py-2 pr-2">{t('decisions.detail.governance.colDays', 'Days')}</th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colRecipientsAlt', 'To whom')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colChannels', 'Channels')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colMessage', 'Message')}
-                                </th>
-                                <th className="text-right py-2">
-                                  {t('decisions.detail.governance.colActions', 'Actions')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                              {reminders.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={7}
-                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                  >
-                                    {t('decisions.detail.governance.noReminders', 'No reminders yet.')}
-                                  </td>
+                        {/* Reminders table */}
+                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                              {t('decisions.detail.governance.remindersTitle', 'Reminders')}
+                            </h3>
+                            <button
+                              disabled={isDecisionStageLocked}
+                              onClick={() =>
+                                setReminders([
+                                  ...reminders,
+                                  {
+                                    id: Math.random().toString(36).substr(2, 9),
+                                    type: 'before_due',
+                                    days: 2,
+                                    recipients: 'both',
+                                    inAppNotification: true,
+                                    emailNotification: false,
+                                    message: '',
+                                    enabled: true,
+                                  },
+                                ])
+                              }
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              + {t('decisions.detail.governance.add', 'Add')}
+                            </button>
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.active', 'Active')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.when', 'When')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colDays', 'Days')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colRecipientsAlt', 'To whom')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colChannels', 'Channels')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colMessage', 'Message')}
+                                  </th>
+                                  <th className="text-right py-2">
+                                    {t('decisions.detail.governance.colActions', 'Actions')}
+                                  </th>
                                 </tr>
-                              ) : (
-                                reminders.map((r) => (
-                                  <tr key={r.id}>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                {reminders.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                      {t(
+                                        'decisions.detail.governance.noReminders',
+                                        'No reminders yet.'
+                                      )}
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  reminders.map((r) => (
+                                    <tr key={r.id}>
+                                      <td className="py-2 pr-2">
+                                        <input
+                                          type="checkbox"
+                                          checked={r.enabled}
+                                          disabled={isDecisionStageLocked}
+                                          onChange={(e) =>
+                                            setReminders(
+                                              reminders.map((item) =>
+                                                item.id === r.id
+                                                  ? { ...item, enabled: e.target.checked }
+                                                  : item
+                                              )
+                                            )
+                                          }
+                                        />
+                                      </td>
+                                      <td className="py-2 pr-2">
+                                        <select
+                                          value={r.type}
+                                          disabled={isDecisionStageLocked}
+                                          onChange={(e) =>
+                                            setReminders(
+                                              reminders.map((item) =>
+                                                item.id === r.id
+                                                  ? {
+                                                      ...item,
+                                                      type: e.target.value as
+                                                        | 'before_due'
+                                                        | 'after_due',
+                                                    }
+                                                  : item
+                                              )
+                                            )
+                                          }
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        >
+                                          <option value="before_due">
+                                            {t(
+                                              'decisions.detail.governance.beforeDue',
+                                              'Before due'
+                                            )}
+                                          </option>
+                                          <option value="after_due">
+                                            {t('decisions.detail.governance.afterDue', 'After due')}
+                                          </option>
+                                        </select>
+                                      </td>
+                                      <td className="py-2 pr-2">
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          value={r.days}
+                                          disabled={isDecisionStageLocked}
+                                          onChange={(e) =>
+                                            setReminders(
+                                              reminders.map((item) =>
+                                                item.id === r.id
+                                                  ? { ...item, days: Number(e.target.value) || 0 }
+                                                  : item
+                                              )
+                                            )
+                                          }
+                                          className="w-20 px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        />
+                                      </td>
+                                      <td className="py-2 pr-2">
+                                        <select
+                                          value={r.recipients}
+                                          disabled={isDecisionStageLocked}
+                                          onChange={(e) =>
+                                            setReminders(
+                                              reminders.map((item) =>
+                                                item.id === r.id
+                                                  ? {
+                                                      ...item,
+                                                      recipients: e.target.value as
+                                                        | 'requester'
+                                                        | 'decider'
+                                                        | 'both'
+                                                        | 'stakeholders',
+                                                    }
+                                                  : item
+                                              )
+                                            )
+                                          }
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        >
+                                          <option value="requester">
+                                            {t('decisions.detail.infoPane.requester', 'Requester')}
+                                          </option>
+                                          <option value="decider">
+                                            {t('decisions.detail.infoPane.decider', 'Decider')}
+                                          </option>
+                                          <option value="both">
+                                            {t('decisions.detail.reminderModal.both', 'Both')}
+                                          </option>
+                                          <option value="stakeholders">
+                                            {t(
+                                              'decisions.detail.reminderModal.stakeholders',
+                                              'Stakeholders'
+                                            )}
+                                          </option>
+                                        </select>
+                                      </td>
+                                      <td className="py-2 pr-2 text-xs text-slate-500 dark:text-slate-400">
+                                        <label className="inline-flex items-center gap-1 mr-2">
+                                          <input
+                                            type="checkbox"
+                                            checked={r.inAppNotification}
+                                            disabled={isDecisionStageLocked}
+                                            onChange={(e) =>
+                                              setReminders(
+                                                reminders.map((item) =>
+                                                  item.id === r.id
+                                                    ? {
+                                                        ...item,
+                                                        inAppNotification: e.target.checked,
+                                                      }
+                                                    : item
+                                                )
+                                              )
+                                            }
+                                          />
+                                          In-app
+                                        </label>
+                                        <label className="inline-flex items-center gap-1">
+                                          <input
+                                            type="checkbox"
+                                            checked={r.emailNotification}
+                                            disabled={isDecisionStageLocked}
+                                            onChange={(e) =>
+                                              setReminders(
+                                                reminders.map((item) =>
+                                                  item.id === r.id
+                                                    ? {
+                                                        ...item,
+                                                        emailNotification: e.target.checked,
+                                                      }
+                                                    : item
+                                                )
+                                              )
+                                            }
+                                          />
+                                          Email
+                                        </label>
+                                      </td>
+                                      <td className="py-2 pr-2">
+                                        <input
+                                          value={r.message || ''}
+                                          disabled={isDecisionStageLocked}
+                                          onChange={(e) =>
+                                            setReminders(
+                                              reminders.map((item) =>
+                                                item.id === r.id
+                                                  ? { ...item, message: e.target.value }
+                                                  : item
+                                              )
+                                            )
+                                          }
+                                          className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                          placeholder={t(
+                                            'decisions.detail.governance.reminderTextPlaceholder',
+                                            'Reminder text...'
+                                          )}
+                                        />
+                                      </td>
+                                      <td className="py-2 text-right">
+                                        <button
+                                          disabled={isDecisionStageLocked}
+                                          onClick={() =>
+                                            setReminders(
+                                              reminders.filter((item) => item.id !== r.id)
+                                            )
+                                          }
+                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Escalation table */}
+                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                              {t('decisions.detail.activityLog.escalation', 'Escalation')}
+                            </h3>
+                            {!escalation && (
+                              <button
+                                disabled={isDecisionStageLocked}
+                                onClick={() =>
+                                  setEscalation({
+                                    id: Math.random().toString(36).substr(2, 9),
+                                    enabled: true,
+                                    escalateTo: users[0]?.id || '',
+                                    escalateToName: users[0]
+                                      ? `${users[0].firstName} ${users[0].lastName}`
+                                      : undefined,
+                                    afterDays: 3,
+                                    message: '',
+                                  })
+                                }
+                                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                + {t('decisions.detail.governance.add', 'Add')}
+                              </button>
+                            )}
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.enabledStatus', 'Enabled')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t(
+                                      'decisions.detail.governance.colEscalateAfterDays',
+                                      'After days'
+                                    )}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colEscalateTo', 'Escalate to')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colMessage', 'Message')}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {!escalation ? (
+                                  <tr>
+                                    <td
+                                      colSpan={4}
+                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                      {t(
+                                        'decisions.detail.governance.noEscalationRule',
+                                        'No escalation rule.'
+                                      )}
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  <tr className="border-b border-slate-200 dark:border-navy-700/40">
                                     <td className="py-2 pr-2">
                                       <input
                                         type="checkbox"
-                                        checked={r.enabled}
+                                        checked={escalation.enabled}
                                         disabled={isDecisionStageLocked}
                                         onChange={(e) =>
-                                          setReminders(
-                                            reminders.map((item) =>
-                                              item.id === r.id
-                                                ? { ...item, enabled: e.target.checked }
-                                                : item
-                                            )
-                                          )
+                                          setEscalation({
+                                            ...escalation,
+                                            enabled: e.target.checked,
+                                          })
                                         }
                                       />
-                                    </td>
-                                    <td className="py-2 pr-2">
-                                      <select
-                                        value={r.type}
-                                        disabled={isDecisionStageLocked}
-                                        onChange={(e) =>
-                                          setReminders(
-                                            reminders.map((item) =>
-                                              item.id === r.id
-                                                ? {
-                                                    ...item,
-                                                    type: e.target.value as
-                                                      | 'before_due'
-                                                      | 'after_due',
-                                                  }
-                                                : item
-                                            )
-                                          )
-                                        }
-                                        className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
-                                      >
-                                        <option value="before_due">
-                                          {t('decisions.detail.governance.beforeDue', 'Before due')}
-                                        </option>
-                                        <option value="after_due">
-                                          {t('decisions.detail.governance.afterDue', 'After due')}
-                                        </option>
-                                      </select>
                                     </td>
                                     <td className="py-2 pr-2">
                                       <input
                                         type="number"
-                                        min={0}
-                                        value={r.days}
+                                        min={1}
+                                        value={escalation.afterDays}
                                         disabled={isDecisionStageLocked}
                                         onChange={(e) =>
-                                          setReminders(
-                                            reminders.map((item) =>
-                                              item.id === r.id
-                                                ? { ...item, days: Number(e.target.value) || 0 }
-                                                : item
-                                            )
-                                          )
+                                          setEscalation({
+                                            ...escalation,
+                                            afterDays: Number(e.target.value) || 1,
+                                          })
                                         }
-                                        className="w-20 px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                                        className="w-24 px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                       />
                                     </td>
                                     <td className="py-2 pr-2">
                                       <select
-                                        value={r.recipients}
+                                        value={escalation.escalateTo}
                                         disabled={isDecisionStageLocked}
-                                        onChange={(e) =>
-                                          setReminders(
-                                            reminders.map((item) =>
-                                              item.id === r.id
-                                                ? {
-                                                    ...item,
-                                                    recipients: e.target.value as
-                                                      | 'requester'
-                                                      | 'decider'
-                                                      | 'both'
-                                                      | 'stakeholders',
-                                                  }
-                                                : item
-                                            )
-                                          )
-                                        }
+                                        onChange={(e) => {
+                                          const selected = users.find(
+                                            (u) => u.id === e.target.value
+                                          );
+                                          setEscalation({
+                                            ...escalation,
+                                            escalateTo: e.target.value,
+                                            escalateToName: selected
+                                              ? `${selected.firstName} ${selected.lastName}`
+                                              : escalation.escalateToName,
+                                          });
+                                        }}
                                         className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                       >
-                                        <option value="requester">
-                                          {t('decisions.detail.infoPane.requester', 'Requester')}
+                                        <option value="">
+                                          {t('decisions.detail.escalationModal.select', 'Select')}
                                         </option>
-                                        <option value="decider">
-                                          {t('decisions.detail.infoPane.decider', 'Decider')}
-                                        </option>
-                                        <option value="both">{t('decisions.detail.reminderModal.both', 'Both')}</option>
-                                        <option value="stakeholders">
-                                          {t('decisions.detail.reminderModal.stakeholders', 'Stakeholders')}
-                                        </option>
+                                        {users.map((u) => (
+                                          <option key={u.id} value={u.id}>
+                                            {u.firstName} {u.lastName}
+                                          </option>
+                                        ))}
                                       </select>
-                                    </td>
-                                    <td className="py-2 pr-2 text-xs text-slate-500 dark:text-slate-400">
-                                      <label className="inline-flex items-center gap-1 mr-2">
-                                        <input
-                                          type="checkbox"
-                                          checked={r.inAppNotification}
-                                          disabled={isDecisionStageLocked}
-                                          onChange={(e) =>
-                                            setReminders(
-                                              reminders.map((item) =>
-                                                item.id === r.id
-                                                  ? { ...item, inAppNotification: e.target.checked }
-                                                  : item
-                                              )
-                                            )
-                                          }
-                                        />
-                                        In-app
-                                      </label>
-                                      <label className="inline-flex items-center gap-1">
-                                        <input
-                                          type="checkbox"
-                                          checked={r.emailNotification}
-                                          disabled={isDecisionStageLocked}
-                                          onChange={(e) =>
-                                            setReminders(
-                                              reminders.map((item) =>
-                                                item.id === r.id
-                                                  ? { ...item, emailNotification: e.target.checked }
-                                                  : item
-                                              )
-                                            )
-                                          }
-                                        />
-                                        Email
-                                      </label>
                                     </td>
                                     <td className="py-2 pr-2">
                                       <input
-                                        value={r.message || ''}
+                                        value={escalation.message || ''}
                                         disabled={isDecisionStageLocked}
                                         onChange={(e) =>
-                                          setReminders(
-                                            reminders.map((item) =>
-                                              item.id === r.id
-                                                ? { ...item, message: e.target.value }
-                                                : item
-                                            )
-                                          )
+                                          setEscalation({ ...escalation, message: e.target.value })
                                         }
                                         className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
-                                        placeholder={
-                                          t('decisions.detail.governance.reminderTextPlaceholder', 'Reminder text...')
-                                        }
+                                        placeholder={t(
+                                          'decisions.detail.governance.escalationTextPlaceholder',
+                                          'Escalation message...'
+                                        )}
                                       />
                                     </td>
-                                    <td className="py-2 text-right">
-                                      <button
-                                        disabled={isDecisionStageLocked}
-                                        onClick={() =>
-                                          setReminders(reminders.filter((item) => item.id !== r.id))
-                                        }
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
-                                    </td>
                                   </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
+                    )}
 
-                      {/* Escalation table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {t('decisions.detail.activityLog.escalation', 'Escalation')}
-                          </h3>
-                          {!escalation && (
+                    {clickupTab === 'comments' && (
+                      <div className="space-y-4">
+                        <CommentsSection
+                          comments={comments}
+                          onAddComment={handleAddComment}
+                          onDeleteComment={handleDeleteComment}
+                          onLikeComment={handleLikeComment}
+                          onGenerateAIComment={generateAIComment}
+                          isGeneratingAI={isGeneratingAIComment}
+                          currentUserId="current-user"
+                          expanded
+                          onToggleExpand={() => {}}
+                        />
+                      </div>
+                    )}
+
+                    {clickupTab === 'resources' && (
+                      <div className="space-y-4">
+                        {/* Attachments table */}
+                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                              {t('decisions.detail.attachments.title', 'Attachments')}
+                            </h3>
+                            <label
+                              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                                isDecisionStageLocked
+                                  ? 'border-slate-300/40 dark:border-navy-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                  : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 cursor-pointer'
+                              }`}
+                            >
+                              + {t('decisions.detail.governance.add', 'Add')}
+                              <input
+                                type="file"
+                                multiple
+                                disabled={isDecisionStageLocked}
+                                className="hidden"
+                                onChange={(e) =>
+                                  e.target.files && handleUploadAttachments(e.target.files)
+                                }
+                              />
+                            </label>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.attachments.colName', 'Name')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colType', 'Type')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.attachments.colSize', 'Size')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.attachments.colUploaded', 'Uploaded')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.attachments.colBy', 'By')}
+                                  </th>
+                                  <th className="text-right py-2">
+                                    {t('decisions.detail.governance.colActions', 'Actions')}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                {attachments.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={6}
+                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                      {t('decisions.detail.attachments.none', 'No attachments.')}
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  attachments.map((a) => (
+                                    <tr key={a.id}>
+                                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300 max-w-[280px] truncate">
+                                        {a.name}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs">
+                                        {a.type || '—'}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                        {(a.size / 1024 / 1024).toFixed(1)} MB
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                        {a.uploadedAt
+                                          ? new Date(a.uploadedAt).toLocaleDateString()
+                                          : '—'}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                        {a.uploadedBy || '—'}
+                                      </td>
+                                      <td className="py-2 text-right">
+                                        <button
+                                          disabled={isDecisionStageLocked}
+                                          onClick={() => handleDeleteAttachment(a.id)}
+                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Linked items table */}
+                        <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                              {t('decisions.detail.linkedItems.title', 'Linked Items')}
+                            </h3>
                             <button
                               disabled={isDecisionStageLocked}
                               onClick={() =>
-                                setEscalation({
+                                handleAddLinkedItem({
                                   id: Math.random().toString(36).substr(2, 9),
-                                  enabled: true,
-                                  escalateTo: users[0]?.id || '',
-                                  escalateToName: users[0]
-                                    ? `${users[0].firstName} ${users[0].lastName}`
-                                    : undefined,
-                                  afterDays: 3,
-                                  message: '',
+                                  type: 'task',
+                                  title: t(
+                                    'decisions.detail.linkedItems.newLinkedItem',
+                                    'New linked item'
+                                  ),
                                 })
                               }
                               className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>
-                          )}
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.enabledStatus', 'Enabled')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colEscalateAfterDays', 'After days')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colEscalateTo', 'Escalate to')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colMessage', 'Message')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {!escalation ? (
-                                <tr>
-                                  <td
-                                    colSpan={4}
-                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                  >
-                                    {t('decisions.detail.governance.noEscalationRule', 'No escalation rule.')}
-                                  </td>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colType', 'Type')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.linkedItems.colTitle', 'Title')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.governance.colStatus', 'Status')}
+                                  </th>
+                                  <th className="text-left py-2 pr-2">
+                                    {t('decisions.detail.linkedItems.colPriority', 'Priority')}
+                                  </th>
+                                  <th className="text-right py-2">
+                                    {t('decisions.detail.governance.colActions', 'Actions')}
+                                  </th>
                                 </tr>
-                              ) : (
-                                <tr className="border-b border-slate-200 dark:border-navy-700/40">
-                                  <td className="py-2 pr-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={escalation.enabled}
-                                      disabled={isDecisionStageLocked}
-                                      onChange={(e) =>
-                                        setEscalation({ ...escalation, enabled: e.target.checked })
-                                      }
-                                    />
-                                  </td>
-                                  <td className="py-2 pr-2">
-                                    <input
-                                      type="number"
-                                      min={1}
-                                      value={escalation.afterDays}
-                                      disabled={isDecisionStageLocked}
-                                      onChange={(e) =>
-                                        setEscalation({
-                                          ...escalation,
-                                          afterDays: Number(e.target.value) || 1,
-                                        })
-                                      }
-                                      className="w-24 px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
-                                    />
-                                  </td>
-                                  <td className="py-2 pr-2">
-                                    <select
-                                      value={escalation.escalateTo}
-                                      disabled={isDecisionStageLocked}
-                                      onChange={(e) => {
-                                        const selected = users.find((u) => u.id === e.target.value);
-                                        setEscalation({
-                                          ...escalation,
-                                          escalateTo: e.target.value,
-                                          escalateToName: selected
-                                            ? `${selected.firstName} ${selected.lastName}`
-                                            : escalation.escalateToName,
-                                        });
-                                      }}
-                                      className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
+                              </thead>
+                              <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                {linkedItems.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={5}
+                                      className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                     >
-                                      <option value="">{t('decisions.detail.escalationModal.select', 'Select')}</option>
-                                      {users.map((u) => (
-                                        <option key={u.id} value={u.id}>
-                                          {u.firstName} {u.lastName}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </td>
-                                  <td className="py-2 pr-2">
-                                    <input
-                                      value={escalation.message || ''}
-                                      disabled={isDecisionStageLocked}
-                                      onChange={(e) =>
-                                        setEscalation({ ...escalation, message: e.target.value })
-                                      }
-                                      className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
-                                      placeholder={
-                                        t('decisions.detail.governance.escalationTextPlaceholder', 'Escalation message...')
-                                      }
-                                    />
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {clickupTab === 'comments' && (
-                    <div className="space-y-4">
-                      <CommentsSection
-                        comments={comments}
-                        onAddComment={handleAddComment}
-                        onDeleteComment={handleDeleteComment}
-                        onLikeComment={handleLikeComment}
-                        onGenerateAIComment={generateAIComment}
-                        isGeneratingAI={isGeneratingAIComment}
-                        currentUserId="current-user"
-                        expanded
-                        onToggleExpand={() => {}}
-                      />
-                    </div>
-                  )}
-
-                  {clickupTab === 'resources' && (
-                    <div className="space-y-4">
-                      {/* Attachments table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {t('decisions.detail.attachments.title', 'Attachments')}
-                          </h3>
-                          <label
-                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                              isDecisionStageLocked
-                                ? 'border-slate-300/40 dark:border-navy-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 cursor-pointer'
-                            }`}
-                          >
-                            + {t('decisions.detail.governance.add', 'Add')}
-                            <input
-                              type="file"
-                              multiple
-                              disabled={isDecisionStageLocked}
-                              className="hidden"
-                              onChange={(e) =>
-                                e.target.files && handleUploadAttachments(e.target.files)
-                              }
-                            />
-                          </label>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.attachments.colName', 'Name')}
-                                </th>
-                                <th className="text-left py-2 pr-2">{t('decisions.detail.governance.colType', 'Type')}</th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.attachments.colSize', 'Size')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.attachments.colUploaded', 'Uploaded')}
-                                </th>
-                                <th className="text-left py-2 pr-2">{t('decisions.detail.attachments.colBy', 'By')}</th>
-                                <th className="text-right py-2">
-                                  {t('decisions.detail.governance.colActions', 'Actions')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                              {attachments.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={6}
-                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                  >
-                                    {t('decisions.detail.attachments.none', 'No attachments.')}
-                                  </td>
-                                </tr>
-                              ) : (
-                                attachments.map((a) => (
-                                  <tr key={a.id}>
-                                    <td className="py-2 pr-2 text-slate-700 dark:text-slate-300 max-w-[280px] truncate">
-                                      {a.name}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs">
-                                      {a.type || '—'}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                                      {(a.size / 1024 / 1024).toFixed(1)} MB
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                                      {a.uploadedAt
-                                        ? new Date(a.uploadedAt).toLocaleDateString()
-                                        : '—'}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                                      {a.uploadedBy || '—'}
-                                    </td>
-                                    <td className="py-2 text-right">
-                                      <button
-                                        disabled={isDecisionStageLocked}
-                                        onClick={() => handleDeleteAttachment(a.id)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
+                                      {t('decisions.detail.linkedItems.none', 'No linked items.')}
                                     </td>
                                   </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
+                                ) : (
+                                  linkedItems.map((item) => (
+                                    <tr key={item.id}>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs uppercase">
+                                        {item.type}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300 max-w-[380px] truncate">
+                                        {item.title}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                        {item.status || '—'}
+                                      </td>
+                                      <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                        {item.priority || '—'}
+                                      </td>
+                                      <td className="py-2 text-right">
+                                        <button
+                                          disabled={isDecisionStageLocked}
+                                          onClick={() => handleRemoveLinkedItem(item)}
+                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
+                    )}
 
-                      {/* Linked items table */}
+                    {clickupTab === 'logs' && (
                       <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {t('decisions.detail.linkedItems.title', 'Linked Items')}
-                          </h3>
-                          <button
-                            disabled={isDecisionStageLocked}
-                            onClick={() =>
-                              handleAddLinkedItem({
-                                id: Math.random().toString(36).substr(2, 9),
-                                type: 'task',
-                                title: t('decisions.detail.linkedItems.newLinkedItem', 'New linked item'),
-                              })
-                            }
-                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            + {t('decisions.detail.governance.add', 'Add')}
-                          </button>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                <th className="text-left py-2 pr-2">{t('decisions.detail.governance.colType', 'Type')}</th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.linkedItems.colTitle', 'Title')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.governance.colStatus', 'Status')}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {t('decisions.detail.linkedItems.colPriority', 'Priority')}
-                                </th>
-                                <th className="text-right py-2">
-                                  {t('decisions.detail.governance.colActions', 'Actions')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                              {linkedItems.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={5}
-                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
-                                  >
-                                    {t('decisions.detail.linkedItems.none', 'No linked items.')}
-                                  </td>
-                                </tr>
-                              ) : (
-                                linkedItems.map((item) => (
-                                  <tr key={item.id}>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs uppercase">
-                                      {item.type}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-700 dark:text-slate-300 max-w-[380px] truncate">
-                                      {item.title}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                                      {item.status || '—'}
-                                    </td>
-                                    <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                                      {item.priority || '—'}
-                                    </td>
-                                    <td className="py-2 text-right">
-                                      <button
-                                        disabled={isDecisionStageLocked}
-                                        onClick={() => handleRemoveLinkedItem(item)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
+                        <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                          {t('decisions.detail.activityLog.title', 'Activity Log')}
+                        </h3>
+                        {renderActivityLogPanel()}
                       </div>
-                    </div>
-                  )}
-
-                  {clickupTab === 'logs' && (
-                    <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                        {t('decisions.detail.activityLog.title', 'Activity Log')}
-                      </h3>
-                      {renderActivityLogPanel()}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4 lg:sticky lg:top-28 self-start">
-                  {decisionId && isPending && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={handleApprove}
-                        className="px-3 py-2 rounded-xl border border-emerald-400/50 text-emerald-500 hover:bg-emerald-500/10 text-sm font-medium"
-                      >
-                        {t('decisions.detail.actions.approve', 'Approve')}
-                      </button>
-                      <button
-                        onClick={handleReject}
-                        className="px-3 py-2 rounded-xl border border-danger-400/50 text-danger-500 hover:bg-danger-500/10 text-sm font-medium"
-                      >
-                        {t('decisions.detail.actions.reject', 'Reject')}
-                      </button>
-                      <button
-                        onClick={handleRequestMoreInfo}
-                        className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
-                      >
-                        {t('decisions.detail.actions.requestInfo', 'Request info')}
-                      </button>
-                      <button
-                        onClick={() => setShowDelegationModal(true)}
-                        className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
-                      >
-                        {t('decisions.detail.actions.delegate', 'Delegate')}
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      {t('decisions.detail.infoPane.title', 'Information pane')}
-                    </h3>
-                    <div className="space-y-2.5 text-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {t('decisions.detail.governance.colStatus', 'Status')}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200 font-medium">
-                          {t(`decisions.detail.statusValue.${status}`, STATUS_CONFIG[status].label.en)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {t('decisions.detail.linkedItems.colPriority', 'Priority')}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200 font-medium">
-                          {t(
-                            `decisions.detail.priorityValue.${priority}`,
-                            PRIORITY_CONFIG[priority].label.en
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {t('decisions.detail.activityLog.deadline', 'Deadline')}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200">{dueDate || '—'}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {t('decisions.detail.infoPane.requester', 'Requester')}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200 text-right truncate">
-                          {requesterName || '—'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {t('decisions.detail.infoPane.decider', 'Decider')}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200 text-right truncate">
-                          {(() => {
-                            const decider = users.find((u) => u.id === deciderId);
-                            return decider ? `${decider.firstName} ${decider.lastName}` : '—';
-                          })()}
-                        </span>
-                      </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {t('decisions.detail.scope.relatedTo', 'Related to')}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-words">
-                          {decisionScopeLabel}
-                        </span>
-                      </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {t('decisions.detail.infoPane.decisionIndex', 'Decision index')}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-all text-xs font-mono">
-                          {decisionIndexLabel}
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
-                  {relatedNotes.length > 0 && (
-                    <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden">
-                      <motion.button
-                        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setRelatedNotesExpanded((e) => !e)}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
-                      >
-                        <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
-                          <BookOpen size={16} className="text-slate-500 dark:text-slate-400" />
-                          <span className="text-sm font-semibold">
-                            {t('myWork.decisions.relatedNotes', 'Related Notes')}
+                  <div className="space-y-4 lg:sticky lg:top-28 self-start">
+                    {decisionId && isPending && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={handleApprove}
+                          className="px-3 py-2 rounded-xl border border-emerald-400/50 text-emerald-500 hover:bg-emerald-500/10 text-sm font-medium"
+                        >
+                          {t('decisions.detail.actions.approve', 'Approve')}
+                        </button>
+                        <button
+                          onClick={handleReject}
+                          className="px-3 py-2 rounded-xl border border-danger-400/50 text-danger-500 hover:bg-danger-500/10 text-sm font-medium"
+                        >
+                          {t('decisions.detail.actions.reject', 'Reject')}
+                        </button>
+                        <button
+                          onClick={handleRequestMoreInfo}
+                          className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
+                        >
+                          {t('decisions.detail.actions.requestInfo', 'Request info')}
+                        </button>
+                        <button
+                          onClick={() => setShowDelegationModal(true)}
+                          className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
+                        >
+                          {t('decisions.detail.actions.delegate', 'Delegate')}
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
+                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {t('decisions.detail.infoPane.title', 'Information pane')}
+                      </h3>
+                      <div className="space-y-2.5 text-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                            {t('decisions.detail.governance.colStatus', 'Status')}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200 font-medium">
+                            {t(
+                              `decisions.detail.statusValue.${status}`,
+                              STATUS_CONFIG[status].label.en
+                            )}
                           </span>
                         </div>
-                        <motion.div
-                          animate={{ rotate: relatedNotesExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
-                        </motion.div>
-                      </motion.button>
-                      <AnimatePresence>
-                        {relatedNotesExpanded && (
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: 'auto' }}
-                            exit={{ height: 0 }}
-                            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
-                          >
-                            <div className="p-3 space-y-2">
-                              {relatedNotes.map((note) => (
-                                <button
-                                  key={note.id}
-                                  type="button"
-                                  onClick={() => {
-                                    window.dispatchEvent(
-                                      new CustomEvent('mywork-open-item', {
-                                        detail: { type: 'notebook', id: note.id, name: note.title },
-                                      })
-                                    );
-                                  }}
-                                  className="w-full text-left p-2.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/50 dark:bg-navy-800/30 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
-                                >
-                                  <span className="block truncate">{note.title}</span>
-                                  <NotebookMetadataBadges
-                                    captureSource={note.captureSource}
-                                    captureMetadata={note.captureMetadata}
-                                    convertedTo={note.convertedTo}
-                                    isPolish={isPolish}
-                                    className="mt-1"
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                            {t('decisions.detail.linkedItems.colPriority', 'Priority')}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200 font-medium">
+                            {t(
+                              `decisions.detail.priorityValue.${priority}`,
+                              PRIORITY_CONFIG[priority].label.en
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                            {t('decisions.detail.activityLog.deadline', 'Deadline')}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200">
+                            {dueDate || '—'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                            {t('decisions.detail.infoPane.requester', 'Requester')}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200 text-right truncate">
+                            {requesterName || '—'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                            {t('decisions.detail.infoPane.decider', 'Decider')}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200 text-right truncate">
+                            {(() => {
+                              const decider = users.find((u) => u.id === deciderId);
+                              return decider ? `${decider.firstName} ${decider.lastName}` : '—';
+                            })()}
+                          </span>
+                        </div>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                            {t('decisions.detail.scope.relatedTo', 'Related to')}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-words">
+                            {decisionScopeLabel}
+                          </span>
+                        </div>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                            {t('decisions.detail.infoPane.decisionIndex', 'Decision index')}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-all text-xs font-mono">
+                            {decisionIndexLabel}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  )}
+
+                    {relatedNotes.length > 0 && (
+                      <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden">
+                        <motion.button
+                          whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setRelatedNotesExpanded((e) => !e)}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
+                        >
+                          <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
+                            <BookOpen size={16} className="text-slate-500 dark:text-slate-400" />
+                            <span className="text-sm font-semibold">
+                              {t('myWork.decisions.relatedNotes', 'Related Notes')}
+                            </span>
+                          </div>
+                          <motion.div
+                            animate={{ rotate: relatedNotesExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
+                          </motion.div>
+                        </motion.button>
+                        <AnimatePresence>
+                          {relatedNotesExpanded && (
+                            <motion.div
+                              initial={{ height: 0 }}
+                              animate={{ height: 'auto' }}
+                              exit={{ height: 0 }}
+                              className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                            >
+                              <div className="p-3 space-y-2">
+                                {relatedNotes.map((note) => (
+                                  <button
+                                    key={note.id}
+                                    type="button"
+                                    onClick={() => {
+                                      window.dispatchEvent(
+                                        new CustomEvent('mywork-open-item', {
+                                          detail: {
+                                            type: 'notebook',
+                                            id: note.id,
+                                            name: note.title,
+                                          },
+                                        })
+                                      );
+                                    }}
+                                    className="w-full text-left p-2.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/50 dark:bg-navy-800/30 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
+                                  >
+                                    <span className="block truncate">{note.title}</span>
+                                    <NotebookMetadataBadges
+                                      captureSource={note.captureSource}
+                                      captureMetadata={note.captureMetadata}
+                                      convertedTo={note.convertedTo}
+                                      isPolish={isPolish}
+                                      className="mt-1"
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           </div>
           {/* ── Dokowany prawy panel artefaktu (xl+; ukryty na <xl) ── */}
           <div className="hidden xl:block shrink-0 sticky top-6 self-start">
@@ -8197,7 +8676,10 @@ Use userId only from this list:
             } catch (error) {
               console.error('[DecisionDetailView] Failed to reload after delegation:', error);
               toast.error(
-                t('decisions.detail.toast.delegationSavedRefreshFailed', 'Delegation saved, but failed to refresh data')
+                t(
+                  'decisions.detail.toast.delegationSavedRefreshFailed',
+                  'Delegation saved, but failed to refresh data'
+                )
               );
             }
           }}
@@ -8209,7 +8691,9 @@ Use userId only from this list:
           decision={{ id: decisionId, title, status, description, category }}
           onClose={() => setShowFollowUp(false)}
           onTasksCreated={(count) => {
-            toast.success(t('decisions.detail.toast.tasksCreated', 'Created {{count}} tasks', { count }));
+            toast.success(
+              t('decisions.detail.toast.tasksCreated', 'Created {{count}} tasks', { count })
+            );
             setShowFollowUp(false);
           }}
         />

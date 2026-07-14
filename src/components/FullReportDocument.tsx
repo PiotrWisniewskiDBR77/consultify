@@ -98,7 +98,9 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
           {report.keyInitiatives && (
             <div className="mb-12">
               <SectionHeader title={t.sections.initiatives || 'Key Initiatives'} />
-              <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-left text-sm">
+              <table
+                /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-left text-sm"
+              >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400">
                     <th className="pb-2 font-semibold">Initiative Name</th>

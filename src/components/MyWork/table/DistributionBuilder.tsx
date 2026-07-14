@@ -395,7 +395,9 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
               compact
               title={isPl ? 'Brak dystrybucji' : 'No distributions yet'}
               description={
-                isPl ? 'Utwórz pierwszą dystrybucję, aby udostępnić tabelę.' : 'Create your first distribution to share this table.'
+                isPl
+                  ? 'Utwórz pierwszą dystrybucję, aby udostępnić tabelę.'
+                  : 'Create your first distribution to share this table.'
               }
             />
           ) : (
@@ -410,10 +412,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                     key={dist.id}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface hover:border-c-border-subtle transition-colors"
                   >
-                    <ChannelIcon
-                      size={14}
-                      className="text-c-text-muted shrink-0"
-                    />
+                    <ChannelIcon size={14} className="text-c-text-muted shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-c-text truncate">

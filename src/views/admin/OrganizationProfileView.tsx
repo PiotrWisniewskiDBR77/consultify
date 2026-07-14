@@ -432,9 +432,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                       ) : (
                         <div className="text-center">
                           <Upload className="w-6 h-6 text-c-text-muted mx-auto mb-1" />
-                          <span className="text-xs text-c-text-muted">
-                            Upload Logo
-                          </span>
+                          <span className="text-xs text-c-text-muted">Upload Logo</span>
                         </div>
                       )}
                     </div>
@@ -711,9 +709,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <p className="text-sm text-c-text-secondary">
                       Upload a favicon (16x16 or 32x32 pixels)
                     </p>
-                    <p className="text-xs text-c-text-muted">
-                      PNG, ICO, or SVG recommended
-                    </p>
+                    <p className="text-xs text-c-text-muted">PNG, ICO, or SVG recommended</p>
                   </div>
                 </div>
               </div>
@@ -878,15 +874,11 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                       </div>
                       <div className="flex justify-between mt-1">
                         <span className="text-c-text-muted">Name:</span>
-                        <span className="text-c-text">
-                          {profile.customDomain?.split('.')[0]}
-                        </span>
+                        <span className="text-c-text">{profile.customDomain?.split('.')[0]}</span>
                       </div>
                       <div className="flex justify-between mt-1">
                         <span className="text-c-text-muted">Value:</span>
-                        <span className="text-c-text">
-                          custom.consultify.app
-                        </span>
+                        <span className="text-c-text">custom.consultify.app</span>
                       </div>
                     </div>
                   </div>

@@ -719,9 +719,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             >
               {frameworkConfig.icon}
             </div>
-            <h2 className="text-2xl font-bold text-c-text mb-3">
-              {frameworkConfig.name}
-            </h2>
+            <h2 className="text-2xl font-bold text-c-text mb-3">{frameworkConfig.name}</h2>
             <p className="text-c-text-secondary mb-2">{frameworkConfig.description}</p>
             <span className="inline-block px-4 py-2 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full text-sm font-medium">
               In Development
@@ -1024,9 +1022,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             <div className="w-16 h-16 rounded-full bg-danger-100 dark:bg-danger-900/20 flex items-center justify-center mx-auto mb-4 text-danger-600 dark:text-danger-400">
               <AlertCircle size={32} />
             </div>
-            <h2 className="text-xl font-bold text-c-text mb-2">
-              Unknown Framework
-            </h2>
+            <h2 className="text-xl font-bold text-c-text mb-2">Unknown Framework</h2>
             <p className="text-c-text-secondary">
               The assessment framework "{framework}" is not recognized or configured.
             </p>
@@ -1055,14 +1051,10 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               })}
             </div>
             <div className="flex-1 min-w-0">
-              <h1
-                className={`font-bold text-c-text truncate ${isCompact ? 'text-lg' : 'text-xl'}`}
-              >
+              <h1 className={`font-bold text-c-text truncate ${isCompact ? 'text-lg' : 'text-xl'}`}>
                 {framework}
               </h1>
-              <p
-                className={`text-c-text-secondary truncate ${isCompact ? 'text-xs' : 'text-sm'}`}
-              >
+              <p className={`text-c-text-secondary truncate ${isCompact ? 'text-xs' : 'text-sm'}`}>
                 {frameworkConfig.name}
               </p>
             </div>
@@ -1142,7 +1134,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
                     // Determine indicator styles based on progress
                     const getIndicatorClasses = () => {
-                      if (isActive) return 'bg-slate-900/10 text-slate-900 dark:bg-white/20 dark:text-white';
+                      if (isActive)
+                        return 'bg-slate-900/10 text-slate-900 dark:bg-white/20 dark:text-white';
                       switch (progressStatus) {
                         case 'complete':
                           return 'bg-green-500 text-white';
@@ -1262,16 +1255,12 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                     style={{ width: `${calculateProgress()}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-c-text">
-                  {calculateProgress()}%
-                </span>
+                <span className="text-sm font-medium text-c-text">{calculateProgress()}%</span>
                 {hasUnsavedChanges && (
                   <span className="text-xs text-amber-500 dark:text-amber-400 flex items-center gap-1">
                     <AlertCircle size={12} />
                     Unsaved changes
-                    <span className="text-c-text-muted ml-1">
-                      (auto-save in 30s)
-                    </span>
+                    <span className="text-c-text-muted ml-1">(auto-save in 30s)</span>
                   </span>
                 )}
                 {lastSaved && !hasUnsavedChanges && (

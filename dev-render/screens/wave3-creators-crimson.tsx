@@ -18,10 +18,26 @@
  *   - AIChat/MessageRenderer.tsx:899 (Confirm & proceed), :1962 (Save as Decision)
  *   - Meeting/MeetingHub.tsx:691 (New meeting), :1000 (modal Save), :1680 (today badge)
  */
+import {
+  CheckCircle2,
+  FileText,
+  LayoutGrid,
+  MessageSquare,
+  Plus,
+  Quote,
+  Sparkles,
+  Target,
+  Zap,
+} from 'lucide-react';
 import React from 'react';
-import { CheckCircle2, FileText, LayoutGrid, MessageSquare, Plus, Quote, Sparkles, Target, Zap } from 'lucide-react';
 
-function Section({ title, children }: { title: string; children: React.ReactNode }): React.ReactElement {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-bold text-c-text uppercase tracking-wide">{title}</h2>
@@ -32,7 +48,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Swatch({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function Swatch({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className="flex flex-col items-center gap-2">
       {children}
@@ -86,7 +108,7 @@ export default function Wave3CreatorsCrimsonScreen(): React.ReactElement {
       </Section>
 
       {/* ── Toolbar "New" CTA — BlockTypesManager / TemplatesManager ──── */}
-      <Section title="BlockTypesManager.tsx:456 / TemplatesManager.tsx:742 — toolbar &quot;New&quot; CTA">
+      <Section title='BlockTypesManager.tsx:456 / TemplatesManager.tsx:742 — toolbar "New" CTA'>
         <Swatch label="New Block / New Template">
           <button
             disabled
@@ -153,8 +175,14 @@ export default function Wave3CreatorsCrimsonScreen(): React.ReactElement {
         <Swatch label="'pisze…' pulse dots — ZOSTAWIONE (crimson, poza scope)">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-c-accent animate-pulse" />
-            <div className="w-2 h-2 rounded-full bg-c-accent animate-pulse" style={{ animationDelay: '0.15s' }} />
-            <div className="w-2 h-2 rounded-full bg-c-accent animate-pulse" style={{ animationDelay: '0.3s' }} />
+            <div
+              className="w-2 h-2 rounded-full bg-c-accent animate-pulse"
+              style={{ animationDelay: '0.15s' }}
+            />
+            <div
+              className="w-2 h-2 rounded-full bg-c-accent animate-pulse"
+              style={{ animationDelay: '0.3s' }}
+            />
           </div>
         </Swatch>
       </Section>

@@ -24,8 +24,8 @@ export default function Wave5InternalCrimsonScreen(): React.ReactElement {
           wave5-internal-crimson — Studio: eksport (CTA + toggle + selected-tab)
         </h1>
         <p className="text-xs text-c-text-muted mt-1">
-          PRZED: przyciski/toggle/selektor "1x/2x/3x" mialy pelne crimson tlo (bg-c-accent).
-          PO: CTA = bg-c-text/text-c-surface, toggle ON = bg-navy-900, selected = neutralny fill +
+          PRZED: przyciski/toggle/selektor "1x/2x/3x" mialy pelne crimson tlo (bg-c-accent). PO: CTA
+          = bg-c-text/text-c-surface, toggle ON = bg-navy-900, selected = neutralny fill +
           ring-c-focus. Czerwien tylko w tokenach *-soft (ikony), zero pelnego tla.
         </p>
         <div className="flex gap-2 mt-3">

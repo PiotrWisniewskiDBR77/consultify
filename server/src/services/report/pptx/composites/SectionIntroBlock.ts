@@ -6,8 +6,8 @@
  * as a deliberate divider, not text stuck to the top of the slide.
  */
 import { BodyText } from '../atomics/BodyText.js';
-import { centerY, distributeY } from './verticalRhythm.js';
 import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
+import { centerY, distributeY } from './verticalRhythm.js';
 
 export interface SectionIntroBlockProps {
   sectionTitle: string;
@@ -59,7 +59,9 @@ export function SectionIntroBlock(
     const descH = 0.7;
     const rows = hasDesc ? [titleH, descH] : [titleH];
     const ys =
-      rows.length === 1 ? [centerY({ y: p.y, h: p.h }, titleH)] : distributeY({ y: p.y, h: p.h }, rows, 'center', 0.2);
+      rows.length === 1
+        ? [centerY({ y: p.y, h: p.h }, titleH)]
+        : distributeY({ y: p.y, h: p.h }, rows, 'center', 0.2);
 
     elements.push(
       BodyText(

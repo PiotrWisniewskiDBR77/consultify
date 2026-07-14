@@ -287,7 +287,8 @@ export const GoldenThreadSankey: React.FC<GoldenThreadSankeyProps> = ({
         <g data-testid="gt-nodes">
           {laidNodes.map((n) => {
             const base = colorForColumn(n.column);
-            const orphanStroke = n.orphanKind === 'isolated' || n.orphanKind === 'in' ? ORPHAN_ROSE : ORPHAN_AMBER;
+            const orphanStroke =
+              n.orphanKind === 'isolated' || n.orphanKind === 'in' ? ORPHAN_ROSE : ORPHAN_AMBER;
             const stroke = n.isOrphan ? orphanStroke : base.stroke;
             const value = Math.max(n.inValue, n.outValue);
             return (

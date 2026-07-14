@@ -896,10 +896,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                           <Route size={12} className="text-danger-500" />
                         </div>
                       )}
-                      <div
-                        className="font-semibold text-c-text truncate flex-1"
-                        title={init.name}
-                      >
+                      <div className="font-semibold text-c-text truncate flex-1" title={init.name}>
                         {init.name}
                       </div>
                       {onCreateDependency && (

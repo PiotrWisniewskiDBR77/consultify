@@ -205,7 +205,11 @@ function getConfidenceLevel(score: number): { label: string; labelPl: string; co
     };
   if (score >= 40)
     return { label: 'Low', labelPl: 'Niska', color: 'text-amber-600 dark:text-amber-400' };
-  return { label: 'Very Low', labelPl: 'Bardzo niska', color: 'text-danger-600 dark:text-danger-400' };
+  return {
+    label: 'Very Low',
+    labelPl: 'Bardzo niska',
+    color: 'text-danger-600 dark:text-danger-400',
+  };
 }
 
 /** Confidence score ring visualization */

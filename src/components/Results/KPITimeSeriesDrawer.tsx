@@ -2247,9 +2247,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             key={m.initiativeId}
                             className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-200"
                           >
-                            <span className="truncate max-w-[220px]">
-                              {m.label}
-                            </span>
+                            <span className="truncate max-w-[220px]">{m.label}</span>
                             <button
                               type="button"
                               disabled={mappingBusy}

@@ -13,7 +13,6 @@ import { getStatusActions, getStatusMeta } from '@/services/initiativeLifecycle'
 
 import { CardBlockRenderer } from '../cards/CardBlockRenderer';
 import { buildControlCardSpec } from '../cards/cardSpecBuilders';
-
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -48,7 +47,8 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
   // F3 (D11) display layer — generic CardBlockRenderer preview. ADDITIVE: a
   // read-only "as it reads" governance summary built from the SAME resolved
   // human labels shown above (never codes). Does not replace the edit UI.
-  const owner = (initiative as any)?.owner ?? (initiative as any)?.ownerName ?? (initiative as any)?.owner_name;
+  const owner =
+    (initiative as any)?.owner ?? (initiative as any)?.ownerName ?? (initiative as any)?.owner_name;
   const controlCardSpec = buildControlCardSpec(
     {
       module: isPolish ? moduleConfig.labelPl : moduleConfig.label,

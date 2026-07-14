@@ -10,29 +10,30 @@
  */
 
 import { createRequire } from 'node:module';
+
 import logger from '../../utils/Logger.js';
-import { PPT_TYPE_SCALE } from './themeRegistry.js';
-import { seriesPalette, readableTextOn } from './paletteLibrary.js';
-import { computeMarimekkoLayout, computeHarveyBalls } from './advancedCharts.js';
+import { computeHarveyBalls, computeMarimekkoLayout } from './advancedCharts.js';
 import { chartAltText, imageAltText } from './deckAltText.js';
 import {
-  resolveDeckStyle,
-  renderCover,
-  renderClosing,
-  renderContentChrome,
-  renderBullets,
-  renderKpiBand,
-  renderTwoColumnSplit,
-  renderLeadWithSupport,
-  fitProse,
-  pushNote,
-  IMAGE_PANEL,
+  CONTENT_W,
   DECK_GRID,
   DECK_TOKENS,
-  CONTENT_W,
-  type PptxSlide,
+  fitProse,
+  IMAGE_PANEL,
   type KpiStat,
+  type PptxSlide,
+  pushNote,
+  renderBullets,
+  renderClosing,
+  renderContentChrome,
+  renderCover,
+  renderKpiBand,
+  renderLeadWithSupport,
+  renderTwoColumnSplit,
+  resolveDeckStyle,
 } from './DeckStyler.js';
+import { readableTextOn, seriesPalette } from './paletteLibrary.js';
+import { PPT_TYPE_SCALE } from './themeRegistry.js';
 
 /** Hairline grey for chart gridlines/axes (shared token — matches DOCX gridline). */
 const DECK_GRID_LINE = DECK_TOKENS.gridline;
@@ -48,22 +49,27 @@ export interface DeckPlanSlide {
   title?: string | null;
   keyMessage?: string | null;
   /** W1.5 — chart spec dołączony po layout (nie authorizowany przez LLM). */
-  chartSpec?: {
-    type: 'bar_series';
-    labels: string[];
-    series: Array<{ name: string; values: number[]; color?: string }>;
-  } | {
-    type: 'rag';
-    items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }>;
-  } | {
-    // W7.5 — marimekko: kolumny zmiennej szerokości × stos segmentów.
-    type: 'marimekko';
-    columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }>;
-  } | {
-    // W7.5 — harvey balls: jakościowa ocena 0..4 (dojrzałość/spełnienie).
-    type: 'harvey_balls';
-    rows: Array<{ label: string; level: number; note?: string }>;
-  } | null;
+  chartSpec?:
+    | {
+        type: 'bar_series';
+        labels: string[];
+        series: Array<{ name: string; values: number[]; color?: string }>;
+      }
+    | {
+        type: 'rag';
+        items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }>;
+      }
+    | {
+        // W7.5 — marimekko: kolumny zmiennej szerokości × stos segmentów.
+        type: 'marimekko';
+        columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }>;
+      }
+    | {
+        // W7.5 — harvey balls: jakościowa ocena 0..4 (dojrzałość/spełnienie).
+        type: 'harvey_balls';
+        rows: Array<{ label: string; level: number; note?: string }>;
+      }
+    | null;
   /** W1.7 — URL obrazu stockowego (T0 Unsplash/Pexels) dla slajdów z needsProductGraphic. */
   imageUrl?: string | null;
   /**
@@ -86,11 +92,7 @@ export interface DeckPlanSlide {
 
 // R4 §8 — intencje, które domyślnie renderujemy jako lead-thesis + support
 // (pojedyncza teza duża + kolumna dowodów), gdy nie ma wykresu ani jawnej kompozycji.
-const LEAD_INTENTS = new Set([
-  'single_insight',
-  'recommendation_single',
-  'root_cause',
-]);
+const LEAD_INTENTS = new Set(['single_insight', 'recommendation_single', 'root_cause']);
 // Intencje, które przy braku jawnej kompozycji renderujemy jako KPI-band,
 // jeśli key-message zawiera policzalne liczby do wyciągnięcia.
 const METRIC_INTENTS = new Set([
@@ -110,7 +112,15 @@ export interface DeckPptxOptions {
   /** Data na slajdzie tytułowym / stopce (domyślnie dziś, format ISO PL). */
   date?: string;
   /** Opcjonalny override brandu klienta (F8.1). Nadpisuje fonty/paletę motywu bazowego. */
-  brandOverride?: { fontPair?: Partial<{ heading: string; body: string }>; palette?: Partial<{ dominant: string; supporting: string; accent: string; neutralText: string }> };
+  brandOverride?: {
+    fontPair?: Partial<{ heading: string; body: string }>;
+    palette?: Partial<{
+      dominant: string;
+      supporting: string;
+      accent: string;
+      neutralText: string;
+    }>;
+  };
   /**
    * CONCLUSION_LAYER §W5 — closing slide is a DECISION bookend, not "Thank you".
    * When omitted, the runtime derives the ask/outcome from the last content
@@ -127,23 +137,23 @@ function hex(color: string): string {
 
 // W2.3 — sekcja chip: mały kolorowy label w prawym górnym rogu slajdu (beat Gamma).
 const SECTION_CHIP: Record<string, { pl: string; en: string }> = {
-  executive_summary:       { pl: 'EXEC SUMMARY', en: 'EXEC SUMMARY' },
-  root_cause:              { pl: 'PROBLEM',       en: 'PROBLEM' },
-  single_insight:          { pl: 'ROZWIĄZANIE',   en: 'SOLUTION' },
-  performance_overview:    { pl: 'FINANSE',        en: 'FINANCIALS' },
-  key_metrics_overview:    { pl: 'KPI',            en: 'KPIs' },
-  comparison:              { pl: 'RYNEK',          en: 'MARKET' },
-  process_flow:            { pl: 'GTM',            en: 'GTM' },
-  recommendation_single:   { pl: 'ASK',            en: 'ASK' },
-  recommendation_portfolio:{ pl: 'UNIT ECONOMICS', en: 'UNIT ECONOMICS' },
-  roadmap:                 { pl: 'ROADMAPA',       en: 'ROADMAP' },
-  risk_management:         { pl: 'RYZYKO',         en: 'RISK' },
+  executive_summary: { pl: 'EXEC SUMMARY', en: 'EXEC SUMMARY' },
+  root_cause: { pl: 'PROBLEM', en: 'PROBLEM' },
+  single_insight: { pl: 'ROZWIĄZANIE', en: 'SOLUTION' },
+  performance_overview: { pl: 'FINANSE', en: 'FINANCIALS' },
+  key_metrics_overview: { pl: 'KPI', en: 'KPIs' },
+  comparison: { pl: 'RYNEK', en: 'MARKET' },
+  process_flow: { pl: 'GTM', en: 'GTM' },
+  recommendation_single: { pl: 'ASK', en: 'ASK' },
+  recommendation_portfolio: { pl: 'UNIT ECONOMICS', en: 'UNIT ECONOMICS' },
+  roadmap: { pl: 'ROADMAPA', en: 'ROADMAP' },
+  risk_management: { pl: 'RYZYKO', en: 'RISK' },
 };
 
 function addSectionChip(
   slide: any,
   layoutIntent: string,
-  opts: { accent: string; bodyFont: string; isPolish: boolean },
+  opts: { accent: string; bodyFont: string; isPolish: boolean }
 ): void {
   const chip = SECTION_CHIP[layoutIntent];
   if (!chip) return;
@@ -151,15 +161,26 @@ function addSectionChip(
   // Tło chipa — accent color, prawy górny róg pod paskiem.
   const w = Math.max(1.0, label.length * 0.095 + 0.26);
   slide.addShape('roundRect', {
-    x: 9.6 - w, y: 0.22, w, h: 0.3,
+    x: 9.6 - w,
+    y: 0.22,
+    w,
+    h: 0.3,
     fill: { color: opts.accent },
     line: { color: opts.accent, width: 0 },
     rectRadius: 0.05,
   });
   slide.addText(label, {
-    x: 9.6 - w, y: 0.22, w, h: 0.3,
-    fontFace: opts.bodyFont, fontSize: 9, bold: true, color: 'FFFFFF',
-    charSpacing: 1, align: 'center', valign: 'middle',
+    x: 9.6 - w,
+    y: 0.22,
+    w,
+    h: 0.3,
+    fontFace: opts.bodyFont,
+    fontSize: 9,
+    bold: true,
+    color: 'FFFFFF',
+    charSpacing: 1,
+    align: 'center',
+    valign: 'middle',
   });
 }
 
@@ -173,7 +194,13 @@ function renderChartOnSlide(
   slide: any,
   pptx: any,
   spec: SlideChartSpec,
-  ctx: { accent: string; neutral: string; bodyFont: string; isPolish: boolean; themeId?: string | null },
+  ctx: {
+    accent: string;
+    neutral: string;
+    bodyFont: string;
+    isPolish: boolean;
+    themeId?: string | null;
+  }
 ): boolean {
   if (!spec) return false;
   try {
@@ -188,7 +215,10 @@ function renderChartOnSlide(
       const palette = seriesPalette(spec.series.length, { themeId: ctx.themeId });
       const multiSeries = spec.series.length > 1;
       slide.addChart('bar', data, {
-        x: 0.6, y: 2.1, w: 8.8, h: 2.9,
+        x: 0.6,
+        y: 2.1,
+        w: 8.8,
+        h: 2.9,
         barDir: 'col',
         barGrouping: 'clustered',
         altText: chartAltText(spec), // W14.1 — a11y
@@ -229,18 +259,32 @@ function renderChartOnSlide(
         // Soft zebra row tint for legibility of a status list.
         if (i % 2 === 1) {
           slide.addShape(pptx.ShapeType.rect, {
-            x: 0.5, y: y - 0.05, w: 8.9, h: 0.44,
-            fill: { color: DECK_TOKENS.panelFill }, line: { color: DECK_TOKENS.panelFill, width: 0 },
+            x: 0.5,
+            y: y - 0.05,
+            w: 8.9,
+            h: 0.44,
+            fill: { color: DECK_TOKENS.panelFill },
+            line: { color: DECK_TOKENS.panelFill, width: 0 },
           });
         }
         slide.addShape(pptx.ShapeType.ellipse, {
-          x: 0.62, y: y + 0.03, w: 0.28, h: 0.28,
-          fill: { color: dot }, line: { color: dot, width: 0 },
+          x: 0.62,
+          y: y + 0.03,
+          w: 0.28,
+          h: 0.28,
+          fill: { color: dot },
+          line: { color: dot, width: 0 },
         });
         slide.addText(item.label, {
-          x: 1.12, y, w: 8.1, h: 0.4,
-          fontFace: ctx.bodyFont, fontSize: 12, color: ctx.neutral,
-          align: 'left', valign: 'middle',
+          x: 1.12,
+          y,
+          w: 8.1,
+          h: 0.4,
+          fontFace: ctx.bodyFont,
+          fontSize: 12,
+          color: ctx.neutral,
+          align: 'left',
+          valign: 'middle',
         });
       });
       return true;
@@ -249,7 +293,10 @@ function renderChartOnSlide(
       // W7.5 — kolumny zmiennej szerokości × stos segmentów (znormalizowane → kanwa).
       const layout = computeMarimekkoLayout({ columns: spec.columns }, { columnGutter: 0.01 });
       if (layout.rects.length === 0) return false;
-      const CX = 0.6, CY = 2.1, CW = 8.8, CH = 2.7; // ramka wykresu (cale)
+      const CX = 0.6,
+        CY = 2.1,
+        CW = 8.8,
+        CH = 2.7; // ramka wykresu (cale)
       // stała kolejność nazw segmentów → spójny kolor serii w kolumnach
       const segNames = [...new Set(layout.rects.map((r) => r.segmentName))];
       const palette = seriesPalette(segNames.length, { themeId: ctx.themeId });
@@ -257,26 +304,40 @@ function renderChartOnSlide(
       for (const r of layout.rects) {
         const fillColor = colorOf(r.segmentName);
         slide.addShape(pptx.ShapeType.rect, {
-          x: CX + r.x * CW, y: CY + r.y * CH, w: r.w * CW, h: r.h * CH,
+          x: CX + r.x * CW,
+          y: CY + r.y * CH,
+          w: r.w * CW,
+          h: r.h * CH,
           fill: { color: fillColor },
           line: { color: 'FFFFFF', width: 1 },
         });
         // etykieta % gdy segment dość duży (czytelny auto-tekst)
         if (r.w * CW > 0.8 && r.h * CH > 0.3) {
           slide.addText(`${Math.round(r.shareOfTotal * 100)}%`, {
-            x: CX + r.x * CW, y: CY + r.y * CH, w: r.w * CW, h: r.h * CH,
-            fontFace: ctx.bodyFont, fontSize: 10,
+            x: CX + r.x * CW,
+            y: CY + r.y * CH,
+            w: r.w * CW,
+            h: r.h * CH,
+            fontFace: ctx.bodyFont,
+            fontSize: 10,
             color: hex(readableTextOn(`#${fillColor}`)),
-            align: 'center', valign: 'middle',
+            align: 'center',
+            valign: 'middle',
           });
         }
       }
       // etykiety kolumn pod wykresem
       for (const cb of layout.columnBounds) {
         slide.addText(cb.label, {
-          x: CX + cb.x * CW, y: CY + CH + 0.05, w: cb.w * CW, h: 0.3,
-          fontFace: ctx.bodyFont, fontSize: 9, color: ctx.neutral,
-          align: 'center', valign: 'top',
+          x: CX + cb.x * CW,
+          y: CY + CH + 0.05,
+          w: cb.w * CW,
+          h: 0.3,
+          fontFace: ctx.bodyFont,
+          fontSize: 9,
+          color: ctx.neutral,
+          align: 'center',
+          valign: 'top',
         });
       }
       return true;
@@ -291,27 +352,48 @@ function renderChartOnSlide(
         const D = 0.34; // średnica
         // tło: pełny okrąg (obrys)
         slide.addShape(pptx.ShapeType.ellipse, {
-          x: 0.6, y, w: D, h: D,
-          fill: { color: 'FFFFFF' }, line: { color: accent, width: 1 },
+          x: 0.6,
+          y,
+          w: D,
+          h: D,
+          fill: { color: 'FFFFFF' },
+          line: { color: accent, width: 1 },
         });
         // wypełnienie: wycinek 0..(fraction*360) gdy >0
         if (ball.fillFraction > 0) {
           slide.addShape(pptx.ShapeType.pie, {
-            x: 0.6, y, w: D, h: D,
-            fill: { color: accent }, line: { color: accent, width: 1 },
+            x: 0.6,
+            y,
+            w: D,
+            h: D,
+            fill: { color: accent },
+            line: { color: accent, width: 1 },
             angleRange: [0, Math.round(ball.fillFraction * 360)],
           });
         }
         slide.addText(ball.label, {
-          x: 1.05, y, w: 6.5, h: 0.4,
-          fontFace: ctx.bodyFont, fontSize: 11, color: ctx.neutral,
-          align: 'left', valign: 'middle',
+          x: 1.05,
+          y,
+          w: 6.5,
+          h: 0.4,
+          fontFace: ctx.bodyFont,
+          fontSize: 11,
+          color: ctx.neutral,
+          align: 'left',
+          valign: 'middle',
         });
         // poziom tekstowo (dostępność + szybki odczyt)
         slide.addText(ball.fillLabel, {
-          x: 7.6, y, w: 1.8, h: 0.4,
-          fontFace: ctx.bodyFont, fontSize: 9, color: ctx.neutral, italic: true,
-          align: 'right', valign: 'middle',
+          x: 7.6,
+          y,
+          w: 1.8,
+          h: 0.4,
+          fontFace: ctx.bodyFont,
+          fontSize: 9,
+          color: ctx.neutral,
+          italic: true,
+          align: 'right',
+          valign: 'middle',
         });
       });
       return true;
@@ -350,7 +432,7 @@ function renderComposition(
   style: ReturnType<typeof resolveDeckStyle>,
   plan: DeckPlanSlide,
   bullets: string[],
-  message: string,
+  message: string
 ): boolean {
   try {
     // 1) Jawny split (comparison / us-vs-them).
@@ -363,9 +445,15 @@ function renderComposition(
       const r = renderKpiBand(slide, style, plan.stats as KpiStat[]);
       if (message) {
         slide.addText(message, {
-          x: DECK_GRID.marginX, y: r.bottom + 0.05, w: CONTENT_W, h: 0.9,
-          fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.caption + 1,
-          color: style.neutral, align: 'left', valign: 'top',
+          x: DECK_GRID.marginX,
+          y: r.bottom + 0.05,
+          w: CONTENT_W,
+          h: 0.9,
+          fontFace: style.bodyFont,
+          fontSize: PPT_TYPE_SCALE.caption + 1,
+          color: style.neutral,
+          align: 'left',
+          valign: 'top',
         } as Record<string, unknown>);
       }
       return true;
@@ -400,7 +488,10 @@ function renderComposition(
         const rest = bullets.filter((b) => !STAT_LEAD.test(b));
         if (rest.length > 0) {
           renderBullets(slide, style, rest, {
-            x: DECK_GRID.marginX, y: r.bottom + 0.1, w: CONTENT_W, h: DECK_GRID.footerY - r.bottom - 0.3,
+            x: DECK_GRID.marginX,
+            y: r.bottom + 0.1,
+            w: CONTENT_W,
+            h: DECK_GRID.footerY - r.bottom - 0.3,
           });
         } else if (message) {
           pushNote(slide, message);
@@ -458,9 +549,7 @@ export async function deckPlansToPptxBuffer(
     });
 
     // ── Slajdy treści: teza (action-title) + treść wg kompozycji ──
-    const contentPlans = plans
-      .slice()
-      .sort((a, b) => a.slideIndex - b.slideIndex);
+    const contentPlans = plans.slice().sort((a, b) => a.slideIndex - b.slideIndex);
 
     let n = 0;
     for (const plan of contentPlans) {
@@ -488,12 +577,19 @@ export async function deckPlansToPptxBuffer(
       if (hasImage) {
         try {
           slide.addShape(pptx.ShapeType.rect, {
-            x: IMAGE_PANEL.x, y: IMAGE_PANEL.y, w: IMAGE_PANEL.w, h: IMAGE_PANEL.h,
+            x: IMAGE_PANEL.x,
+            y: IMAGE_PANEL.y,
+            w: IMAGE_PANEL.w,
+            h: IMAGE_PANEL.h,
             fill: { color: accent, transparency: 92 },
             line: { color: accent, transparency: 80, width: 1 },
           });
           (slide as unknown as { addImage: (o: Record<string, unknown>) => void }).addImage({
-            path: plan.imageUrl, x: IMAGE_PANEL.x, y: IMAGE_PANEL.y, w: IMAGE_PANEL.w, h: IMAGE_PANEL.h,
+            path: plan.imageUrl,
+            x: IMAGE_PANEL.x,
+            y: IMAGE_PANEL.y,
+            w: IMAGE_PANEL.w,
+            h: IMAGE_PANEL.h,
             sizing: { type: 'cover', w: IMAGE_PANEL.w, h: IMAGE_PANEL.h },
             altText: imageAltText({ title: plan.title, keyMessage: plan.keyMessage }),
           });
@@ -504,7 +600,13 @@ export async function deckPlansToPptxBuffer(
       const textW = hasImage ? 5.5 : CONTENT_W;
 
       // W1.5 — chart rendering: gdy jest chartSpec, chart zastępuje/uzupełnia key-message.
-      const chartRendered = renderChartOnSlide(slide, pptx, plan.chartSpec ?? null, { accent, neutral, bodyFont, isPolish, themeId: opts.themeId });
+      const chartRendered = renderChartOnSlide(slide, pptx, plan.chartSpec ?? null, {
+        accent,
+        neutral,
+        bodyFont,
+        isPolish,
+        themeId: opts.themeId,
+      });
 
       // R4 §8 — KOMPOZYCJA zależna od intencji (tylko gdy nie ma wykresu ani obrazu).
       let composed = false;
@@ -517,23 +619,40 @@ export async function deckPlansToPptxBuffer(
         // kompozycja narysowana — nic więcej
       } else if (bullets.length > 0 && !chartRendered) {
         // Dyscyplina bullet: ≤5×8 słów na slajdzie, nadmiar → notatki prelegenta.
-        renderBullets(slide, style, bullets, { x: DECK_GRID.marginX, y: contentTop, w: textW, h: 3.3 });
+        renderBullets(slide, style, bullets, {
+          x: DECK_GRID.marginX,
+          y: contentTop,
+          w: textW,
+          h: 3.3,
+        });
         if (message) pushNote(slide, message);
       } else if (message && !chartRendered) {
         // Proza pod tytułem — twardy guard: auto-shrink + przelew do notatek.
         const fit = fitProse(message, textW, 3.3, PPT_TYPE_SCALE.body, 14);
         slide.addText(fit.text, {
-          x: DECK_GRID.marginX, y: contentTop, w: textW, h: 3.3,
-          fontFace: bodyFont, fontSize: fit.fontSize, color: neutral,
-          align: 'left', valign: 'top',
+          x: DECK_GRID.marginX,
+          y: contentTop,
+          w: textW,
+          h: 3.3,
+          fontFace: bodyFont,
+          fontSize: fit.fontSize,
+          color: neutral,
+          align: 'left',
+          valign: 'top',
         });
         if (fit.overflowNote) pushNote(slide, fit.overflowNote);
       } else if (message && chartRendered) {
         // Key-message jako krótki podpis ponad wykresem.
         slide.addText(message, {
-          x: DECK_GRID.marginX, y: 1.6, w: textW, h: 0.45,
-          fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: neutral,
-          align: 'left', valign: 'top',
+          x: DECK_GRID.marginX,
+          y: 1.6,
+          w: textW,
+          h: 0.45,
+          fontFace: bodyFont,
+          fontSize: PPT_TYPE_SCALE.caption,
+          color: neutral,
+          align: 'left',
+          valign: 'top',
         });
         if (bullets.length > 0) pushNote(slide, bullets.map((b) => `• ${b}`).join('\n'));
       }
@@ -548,9 +667,7 @@ export async function deckPlansToPptxBuffer(
       (lastPlan?.title ?? '').trim() ||
       (isPolish ? 'Co robić najpierw' : 'What to do first');
     const derivedOutcome =
-      (opts.closingOutcome ?? '').trim() ||
-      (lastPlan?.keyMessage ?? '').trim() ||
-      undefined;
+      (opts.closingOutcome ?? '').trim() || (lastPlan?.keyMessage ?? '').trim() || undefined;
     const closing = pptx.addSlide() as PptxSlide;
     renderClosing(closing, style, {
       ask: derivedAsk,

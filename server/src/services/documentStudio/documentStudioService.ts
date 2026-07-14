@@ -19,20 +19,15 @@
  *     (Mode 2) is owned by `documentTemplateService.ts`.
  */
 
+import logger from '../../utils/Logger.js';
 import {
   buildWave5ExportManifest,
   createWave5Artifact,
   getWave5Artifact,
   markWave5ArtifactExported,
 } from '../wave5ArtifactRuntimeService.js';
-import logger from '../../utils/Logger.js';
 import { getActiveOrgLogo } from './documentAssetRegistryService.js';
 import { generateBlockProse } from './documentBlockProseGenerator.js';
-import {
-  createDocumentGenerationWarningCollector,
-  type DocumentGenerationWarning,
-  normalizeGenerationWarnings,
-} from './documentGenerationWarnings.js';
 import {
   ensureBrandVoiceRegistryHydrated,
   getActiveBrandVoiceProfile,
@@ -76,6 +71,11 @@ import {
   persistProposal as daoPersistProposal,
   persistSchemaOverlay as daoPersistSchemaOverlay,
 } from './documentEditorStateRegistryDao.js';
+import {
+  createDocumentGenerationWarningCollector,
+  type DocumentGenerationWarning,
+  normalizeGenerationWarnings,
+} from './documentGenerationWarnings.js';
 import type {
   DocumentLifecycleState,
   TransitionDocumentStatusParams,
@@ -557,10 +557,7 @@ export async function materializeDocumentArtifact(
 
   // C1 — emit the resolved outline immediately so the streaming FE can paint
   // the section skeleton before the (potentially slow) prose LLM call runs.
-  safeInvokeHook(
-    params.hooks?.onPlan ? () => params.hooks!.onPlan!(outline) : undefined,
-    'onPlan'
-  );
+  safeInvokeHook(params.hooks?.onPlan ? () => params.hooks!.onPlan!(outline) : undefined, 'onPlan');
 
   const sourceRefs = incomingSourceRefs;
 
@@ -719,9 +716,7 @@ export async function materializeDocumentArtifact(
   // so the streamed sections and the final `schema` in the `done` event are
   // guaranteed identical (progressive delivery, not a different result).
   if (params.hooks?.onSection) {
-    const orderedSections = [...finalSchema.sections].sort(
-      (a, b) => a.orderIndex - b.orderIndex
-    );
+    const orderedSections = [...finalSchema.sections].sort((a, b) => a.orderIndex - b.orderIndex);
     const total = orderedSections.length;
     orderedSections.forEach((section, index) => {
       safeInvokeHook(() => params.hooks!.onSection!(section, index, total), 'onSection');
@@ -2325,12 +2320,7 @@ export interface UpdateDocumentManualContentResult {
 export async function updateDocumentManualContent(
   params: UpdateDocumentManualContentParams
 ): Promise<UpdateDocumentManualContentResult> {
-  if (
-    !params.artifactId ||
-    !params.organizationId ||
-    !params.userId ||
-    !params.expectedVersion
-  ) {
+  if (!params.artifactId || !params.organizationId || !params.userId || !params.expectedVersion) {
     throw new Error('invalid_input');
   }
   if (!Array.isArray(params.sections)) {

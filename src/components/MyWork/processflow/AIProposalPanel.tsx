@@ -153,17 +153,11 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
                     className="flex items-center gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-[11px]"
                   >
                     <Icon size={14} className="shrink-0 text-c-text-secondary" />
-                    <span className="font-mono text-[10px] text-c-text-muted">
-                      {op.action}
-                    </span>
+                    <span className="font-mono text-[10px] text-c-text-muted">{op.action}</span>
                     {typeof op.params?.label === 'string' && op.params.label ? (
-                      <span className="truncate text-c-text-secondary">
-                        {op.params.label}
-                      </span>
+                      <span className="truncate text-c-text-secondary">{op.params.label}</span>
                     ) : op.target_id ? (
-                      <span className="truncate text-c-text-secondary">
-                        {op.target_id}
-                      </span>
+                      <span className="truncate text-c-text-secondary">{op.target_id}</span>
                     ) : null}
                   </li>
                 );
@@ -201,13 +195,17 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2">
-                <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">{t.before}</div>
+                <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">
+                  {t.before}
+                </div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-c-text-secondary">
                   {proposal.readback_before}
                 </pre>
               </div>
               <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2">
-                <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">{t.after}</div>
+                <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">
+                  {t.after}
+                </div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-c-text-secondary">
                   {proposal.readback_after}
                 </pre>
@@ -223,9 +221,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             <span className="text-c-text-secondary">→</span>
             <span
               className={`font-semibold ${
-                improved
-                  ? 'text-success-600 dark:text-success-400'
-                  : 'text-c-text'
+                improved ? 'text-success-600 dark:text-success-400' : 'text-c-text'
               }`}
             >
               {t.issues(proposal.validation_after.issue_count)}

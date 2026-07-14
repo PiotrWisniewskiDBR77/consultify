@@ -121,9 +121,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                 `}
       >
         <span className="text-lg font-black text-white">{t('landing.demo.getA', 'Get a')}</span>
-        <span className="text-lg font-black text-c-accent">
-          {t('landing.demo.word', 'Demo')}
-        </span>
+        <span className="text-lg font-black text-c-accent">{t('landing.demo.word', 'Demo')}</span>
         <ArrowRight
           size={20}
           className="text-c-accent group-hover:translate-x-1 transition-transform"
@@ -146,12 +144,8 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                     ${className}
                 `}
       >
-        <span className="text-xl font-black text-c-text">
-          {t('landing.demo.getA', 'Get a')}
-        </span>
-        <span className="text-xl font-black text-c-accent">
-          {t('landing.demo.word', 'Demo')}
-        </span>
+        <span className="text-xl font-black text-c-text">{t('landing.demo.getA', 'Get a')}</span>
+        <span className="text-xl font-black text-c-accent">{t('landing.demo.word', 'Demo')}</span>
         <ArrowRight
           size={20}
           className="text-c-accent group-hover:translate-x-1 transition-transform"

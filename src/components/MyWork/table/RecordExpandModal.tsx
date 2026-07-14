@@ -125,10 +125,7 @@ const FieldValueDisplay: React.FC<{
 
   if (fieldType === 'email') {
     return (
-      <a
-        href={`mailto:${value}`}
-        className="text-xs text-c-info underline hover:brightness-110"
-      >
+      <a href={`mailto:${value}`} className="text-xs text-c-info underline hover:brightness-110">
         {String(value)}
       </a>
     );
@@ -192,11 +189,7 @@ const FieldValueDisplay: React.FC<{
     );
   }
 
-  return (
-    <span className="text-xs text-c-text-secondary whitespace-pre-wrap">
-      {String(value)}
-    </span>
-  );
+  return <span className="text-xs text-c-text-secondary whitespace-pre-wrap">{String(value)}</span>;
 };
 
 // ── Linked record chips (nested, 1 level) ─────────────────────────────────────
@@ -369,9 +362,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                 <div className="h-6 w-48 animate-pulse rounded bg-c-surface-raised" />
               ) : (
                 <>
-                  <h2 className="truncate text-base font-bold text-c-text">
-                    {primaryValue}
-                  </h2>
+                  <h2 className="truncate text-base font-bold text-c-text">{primaryValue}</h2>
                   {resolvedTableName && (
                     <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-c-text-muted">
                       {resolvedTableName}

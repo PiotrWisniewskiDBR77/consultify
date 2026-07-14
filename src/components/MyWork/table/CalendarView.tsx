@@ -312,9 +312,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     <>
                       <div
                         className={`text-[10px] font-bold mb-0.5 ${
-                          isToday
-                            ? 'text-c-info'
-                            : 'text-c-text-muted'
+                          isToday ? 'text-c-info' : 'text-c-text-muted'
                         }`}
                       >
                         {cell.day}
@@ -334,7 +332,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         </div>
                       ))}
                       {dayRows.length > 3 && (
-                        <div className="text-[7px] text-c-text-muted px-1">+{dayRows.length - 3}</div>
+                        <div className="text-[7px] text-c-text-muted px-1">
+                          +{dayRows.length - 3}
+                        </div>
                       )}
                       {canAdd && (
                         <button
@@ -375,9 +375,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             ))}
             {HOURS.map((hour) => (
               <React.Fragment key={hour}>
-                <div className="text-[9px] text-c-text-muted py-0.5 pr-1 text-right">
-                  {hour}:00
-                </div>
+                <div className="text-[9px] text-c-text-muted py-0.5 pr-1 text-right">{hour}:00</div>
                 {weekDates.map((dateStr) => {
                   const dayRows = rowsByDate[dateStr] || [];
                   const isToday = dateStr === todayStr;
@@ -470,9 +468,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               const canAdd = !locked && onAddEventAtDate && (isHovered || rowsAtHour.length === 0);
               return (
                 <React.Fragment key={hour}>
-                  <div className="text-[9px] text-c-text-muted py-1 pr-1 text-right">
-                    {hour}:00
-                  </div>
+                  <div className="text-[9px] text-c-text-muted py-1 pr-1 text-right">{hour}:00</div>
                   <div
                     className={`min-h-[40px] rounded border transition-colors ${
                       isToday

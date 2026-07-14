@@ -78,9 +78,7 @@ export function resolveDeliverableTier(
  * Whether premium deliverable generation is active for this call. Convenience
  * wrapper over {@link resolveDeliverableTier} for branch checks.
  */
-export function isDeliverablePremiumActive(
-  options: ResolveDeliverableTierOptions = {}
-): boolean {
+export function isDeliverablePremiumActive(options: ResolveDeliverableTierOptions = {}): boolean {
   return resolveDeliverableTier(options) === 'PREMIUM';
 }
 
@@ -102,14 +100,21 @@ export function isDeliverablePremiumActive(
  *  re-resolvowany do innego providera w llmService gdy brak api_key). */
 function providerApiKeyFromEnv(provider: string): string | undefined {
   switch (provider.toLowerCase()) {
-    case 'openrouter': return process.env.OPENROUTER_API_KEY?.trim() || undefined;
-    case 'openai': return process.env.OPENAI_API_KEY?.trim() || undefined;
-    case 'anthropic': return process.env.ANTHROPIC_API_KEY?.trim() || undefined;
+    case 'openrouter':
+      return process.env.OPENROUTER_API_KEY?.trim() || undefined;
+    case 'openai':
+      return process.env.OPENAI_API_KEY?.trim() || undefined;
+    case 'anthropic':
+      return process.env.ANTHROPIC_API_KEY?.trim() || undefined;
     case 'google':
-    case 'gemini': return (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)?.trim() || undefined;
-    case 'deepseek': return process.env.DEEPSEEK_API_KEY?.trim() || undefined;
-    case 'groq': return process.env.GROQ_API_KEY?.trim() || undefined;
-    default: return undefined;
+    case 'gemini':
+      return (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)?.trim() || undefined;
+    case 'deepseek':
+      return process.env.DEEPSEEK_API_KEY?.trim() || undefined;
+    case 'groq':
+      return process.env.GROQ_API_KEY?.trim() || undefined;
+    default:
+      return undefined;
   }
 }
 
@@ -120,12 +125,20 @@ export function deliverableModelConfig(
     const provider = process.env.DELIVERABLE_LLM_PROVIDER?.trim();
     const model = process.env.DELIVERABLE_LLM_MODEL?.trim();
     if (provider && model) {
-      const cfg: Record<string, unknown> = { id: model, model_id: model, provider, tier: 'PREMIUM' };
+      const cfg: Record<string, unknown> = {
+        id: model,
+        model_id: model,
+        provider,
+        tier: 'PREMIUM',
+      };
       // llmService (getModelConfig) używa przekazanej konfiguracji AS-IS tylko gdy
       // ma provider ORAZ api_key; bez klucza re-resolvuje providera z prefiksu
       // model-id (np. "openai/…" → bezpośredni OpenAI), gubiąc override.
       const apiKey = providerApiKeyFromEnv(provider);
-      if (apiKey) { cfg.api_key = apiKey; cfg.apiKey = apiKey; }
+      if (apiKey) {
+        cfg.api_key = apiKey;
+        cfg.apiKey = apiKey;
+      }
       return cfg;
     }
   } catch {

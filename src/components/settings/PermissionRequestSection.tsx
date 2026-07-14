@@ -234,10 +234,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
             className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             title="Refresh"
           >
-            <RefreshCw
-              size={18}
-              className={`text-c-text-muted ${loading ? 'animate-spin' : ''}`}
-            />
+            <RefreshCw size={18} className={`text-c-text-muted ${loading ? 'animate-spin' : ''}`} />
           </button>
           {!showForm && (
             <button
@@ -302,9 +299,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                         >
                           <Icon
                             size={18}
-                            className={
-                              isSelected ? 'text-c-text-secondary' : 'text-c-text-muted'
-                            }
+                            className={isSelected ? 'text-c-text-secondary' : 'text-c-text-muted'}
                           />
                         </div>
                         <div>
@@ -313,9 +308,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                           >
                             {type.label}
                           </p>
-                          <p className="text-xs text-c-text-muted">
-                            {type.description}
-                          </p>
+                          <p className="text-xs text-c-text-muted">{type.description}</p>
                         </div>
                       </div>
                     </button>

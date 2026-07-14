@@ -60,14 +60,7 @@ function pct(value: number): string {
 export function suggestRca(input: RcaSuggestInput): RcaHypothesis[] {
   const hypotheses: RcaHypothesis[] = [];
 
-  const {
-    deviationPct,
-    trend,
-    adoptionScore,
-    staleData,
-    scopeChanged,
-    capacityOverloaded,
-  } = input;
+  const { deviationPct, trend, adoptionScore, staleData, scopeChanged, capacityOverloaded } = input;
 
   // Nieaktualne dane → najpierw podważamy wiarygodność pomiaru (data-quality).
   if (staleData === true) {
@@ -180,9 +173,7 @@ const CATEGORY_ACTION_MAP: Record<RcaCategory, RcaAction> = {
  * Mapuje kategorie RCA na konkretne akcje naprawcze (kategoria → akcja).
  * Deduplikuje po kategorii zachowując kolejność pierwszego wystąpienia.
  */
-export function suggestActions(
-  rca: Array<{ category: RcaCategory }>
-): RcaAction[] {
+export function suggestActions(rca: Array<{ category: RcaCategory }>): RcaAction[] {
   const seen = new Set<RcaCategory>();
   const actions: RcaAction[] = [];
 

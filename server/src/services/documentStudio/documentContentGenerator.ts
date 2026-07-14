@@ -14,6 +14,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { resolveDeliverableTier } from '../deliverableGenerationTier.js';
+import type { ContentBlock, ContentBlockType } from './documentBlockContentGenerator.js';
 import type {
   DocumentBlock,
   DocumentBlockType,
@@ -24,11 +26,6 @@ import type {
   DocumentSourceRef,
 } from './documentStudioTypes.js';
 import { DEFAULT_CONSULTING_FORMATTING_SCHEMA } from './documentStudioTypes.js';
-import { resolveDeliverableTier } from '../deliverableGenerationTier.js';
-import type {
-  ContentBlock,
-  ContentBlockType,
-} from './documentBlockContentGenerator.js';
 
 interface BuildSchemaInput {
   artifactId: string;
@@ -280,10 +277,7 @@ export interface PremiumDocumentSchemaOptions {
  * canonical `DocumentBlockType` the renderers/QA consume (kpi_strip/paragraph/
  * bullet_list/…). `divider` has no DocumentBlock equivalent → callers drop it.
  */
-const CONTENT_TO_DOCUMENT_BLOCK_TYPE: Record<
-  ContentBlockType,
-  DocumentBlockType | null
-> = {
+const CONTENT_TO_DOCUMENT_BLOCK_TYPE: Record<ContentBlockType, DocumentBlockType | null> = {
   heading: 'heading',
   text: 'paragraph',
   bulletList: 'bullet_list',

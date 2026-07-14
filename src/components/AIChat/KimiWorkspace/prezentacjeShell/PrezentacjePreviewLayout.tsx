@@ -92,10 +92,7 @@ export const PrezentacjePreviewLayout: React.FC<PrezentacjePreviewLayoutProps> =
               {slide.bulletPoints && slide.bulletPoints.length > 0 && (
                 <ul className="px-4 py-2.5 space-y-1">
                   {slide.bulletPoints.slice(0, 4).map((bp, bi) => (
-                    <li
-                      key={bi}
-                      className="text-xs text-c-text-secondary flex items-start gap-2"
-                    >
+                    <li key={bi} className="text-xs text-c-text-secondary flex items-start gap-2">
                       <span className="mt-1.5 w-1 h-1 rounded-hig-full bg-c-info flex-shrink-0" />
                       {bp}
                     </li>
@@ -109,9 +106,7 @@ export const PrezentacjePreviewLayout: React.FC<PrezentacjePreviewLayoutProps> =
         <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
           <div className="p-8 text-center text-c-text-secondary">
             <Presentation size={48} className="mx-auto mb-3 opacity-50" />
-            <p className="text-sm font-medium">
-              {t('kimi.deckPreview', 'Presentation preview')}
-            </p>
+            <p className="text-sm font-medium">{t('kimi.deckPreview', 'Presentation preview')}</p>
             {preview.deckId && onOpenBuilder && (
               <button
                 type="button"

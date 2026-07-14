@@ -268,9 +268,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   <p className="text-sm text-c-text-muted">
                     {t('settings.workingHours.weeklyHours', 'Weekly Hours')}
                   </p>
-                  <p className="text-xl font-bold text-c-text">
-                    {totalHours.toFixed(1)}h
-                  </p>
+                  <p className="text-xl font-bold text-c-text">{totalHours.toFixed(1)}h</p>
                 </div>
               </div>
             </div>
@@ -319,9 +317,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-4 h-4 rounded-full border-2 ${
-                      sameEveryDay
-                        ? 'border-navy-900 bg-navy-900'
-                        : 'border-c-border-subtle'
+                      sameEveryDay ? 'border-navy-900 bg-navy-900' : 'border-c-border-subtle'
                     }`}
                   >
                     {sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
@@ -348,9 +344,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-4 h-4 rounded-full border-2 ${
-                      !sameEveryDay
-                        ? 'border-navy-900 bg-navy-900'
-                        : 'border-c-border-subtle'
+                      !sameEveryDay ? 'border-navy-900 bg-navy-900' : 'border-c-border-subtle'
                     }`}
                   >
                     {!sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
@@ -385,9 +379,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   <div
                     key={day.key}
                     className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                      daySchedule.enabled
-                        ? 'bg-c-surface-raised'
-                        : 'bg-c-surface-raised opacity-60'
+                      daySchedule.enabled ? 'bg-c-surface-raised' : 'bg-c-surface-raised opacity-60'
                     }`}
                   >
                     {/* Day Toggle */}

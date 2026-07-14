@@ -141,7 +141,7 @@ export function simulateNpv(
   drivers: Drivers,
   npvFn: NpvFn,
   iterations = 2000,
-  seed = 42,
+  seed = 42
 ): SimulationResult {
   const rand = mulberry32(seed);
   const driverNames = Object.keys(drivers);

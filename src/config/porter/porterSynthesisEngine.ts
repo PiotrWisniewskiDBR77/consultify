@@ -248,7 +248,8 @@ export function validatePorterMove(
     issues.push({
       code: 'unlinked-rationale',
       messageEn: 'Response is linked to no force or implication — its rationale is untraceable.',
-      messagePl: 'Odpowiedź nie jest powiązana z żadną siłą ani implikacją — uzasadnienie jest niesprawdzalne.',
+      messagePl:
+        'Odpowiedź nie jest powiązana z żadną siłą ani implikacją — uzasadnienie jest niesprawdzalne.',
     });
   } else {
     const dangling = [
@@ -267,8 +268,10 @@ export function validatePorterMove(
   if (!move.tradeoff) {
     issues.push({
       code: 'missing-tradeoff',
-      messageEn: 'Response has no trade-off — a recommendation without a trade-off is a list, not a decision (W2).',
-      messagePl: 'Odpowiedź nie ma trade-offu — rekomendacja bez trade-offu to lista, nie decyzja (W2).',
+      messageEn:
+        'Response has no trade-off — a recommendation without a trade-off is a list, not a decision (W2).',
+      messagePl:
+        'Odpowiedź nie ma trade-offu — rekomendacja bez trade-offu to lista, nie decyzja (W2).',
     });
   } else if (
     !move.tradeoff.chosen?.trim() ||
@@ -277,8 +280,10 @@ export function validatePorterMove(
   ) {
     issues.push({
       code: 'incomplete-tradeoff',
-      messageEn: 'Trade-off is incomplete — it must name what is chosen, what is deferred, and at what cost.',
-      messagePl: 'Trade-off jest niekompletny — musi nazywać co wybieramy, co odkładamy i kosztem czego.',
+      messageEn:
+        'Trade-off is incomplete — it must name what is chosen, what is deferred, and at what cost.',
+      messagePl:
+        'Trade-off jest niekompletny — musi nazywać co wybieramy, co odkładamy i kosztem czego.',
     });
   }
 
@@ -289,8 +294,10 @@ export function validatePorterMove(
   ) {
     issues.push({
       code: 'missing-rejected-alternative',
-      messageEn: 'Response names no rejected alternative — which option was considered and why was it dropped?',
-      messagePl: 'Odpowiedź nie wskazuje odrzuconego wariantu — jaka opcja była rozważana i dlaczego odpadła?',
+      messageEn:
+        'Response names no rejected alternative — which option was considered and why was it dropped?',
+      messagePl:
+        'Odpowiedź nie wskazuje odrzuconego wariantu — jaka opcja była rozważana i dlaczego odpadła?',
     });
   }
 

@@ -28,8 +28,7 @@ const STYLES: Record<
   { chipClass: string; dotClass: string; icon: React.ReactNode; en: string }
 > = {
   draft: {
-    chipClass:
-      'bg-c-surface-raised text-c-text-secondary border-c-border-subtle',
+    chipClass: 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle',
     dotClass: 'text-c-text-secondary',
     icon: <Circle size={11} />,
     en: 'Draft',

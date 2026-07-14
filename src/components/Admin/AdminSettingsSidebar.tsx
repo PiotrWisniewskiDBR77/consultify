@@ -1,4 +1,12 @@
-import { Activity, ArrowLeft, CreditCard, ScrollText, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import {
+  Activity,
+  ArrowLeft,
+  CreditCard,
+  ScrollText,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

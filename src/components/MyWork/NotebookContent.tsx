@@ -83,9 +83,6 @@ import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
-import { NotebookReminderChip } from './notebook/NotebookReminderChip';
-import { NotebookPresenceStack } from './notebook/NotebookPresenceStack';
-import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookExportMenu } from './notebook/NotebookExportMenu';
 import { NotebookGraphView } from './notebook/NotebookGraphView';
@@ -101,8 +98,10 @@ import {
   type MentionMenuState,
   NotebookMentionMenu,
 } from './notebook/NotebookMentionMenu';
+import { NotebookPresenceStack } from './notebook/NotebookPresenceStack';
 import { NotebookProgressChip } from './notebook/NotebookProgressChip';
 import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
+import { NotebookReminderChip } from './notebook/NotebookReminderChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
 import { NotebookTopicChips } from './notebook/NotebookTopicChips';
@@ -115,6 +114,7 @@ import {
   SlashMenu,
   type SlashMenuState,
 } from './notebook/SlashMenu';
+import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { buildAskAIMessage } from './shared/askAiHelper';
 
 interface NotebookContentProps {
@@ -1390,7 +1390,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           const savedUpdatedAt = (saved as NotebookPage | undefined)?.updatedAt;
           if (savedUpdatedAt) {
             setPages((prev) =>
-              prev.map((p) => (p.id === persistedDraft.id ? { ...p, updatedAt: savedUpdatedAt } : p))
+              prev.map((p) =>
+                p.id === persistedDraft.id ? { ...p, updatedAt: savedUpdatedAt } : p
+              )
             );
           }
 
@@ -2536,9 +2538,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 {v.key !== 'all' && count > 0 && (
                   <span
                     className={`rounded-full px-1 text-[9px] ${
-                      active
-                        ? 'bg-c-surface/20'
-                        : 'bg-c-surface text-c-text-muted'
+                      active ? 'bg-c-surface/20' : 'bg-c-surface text-c-text-muted'
                     }`}
                   >
                     {count}
@@ -2632,9 +2632,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             )}
                             <span
                               className={`font-semibold text-[13px] truncate flex-1 ${
-                                isActive
-                                  ? 'text-c-text'
-                                  : 'text-c-text'
+                                isActive ? 'text-c-text' : 'text-c-text'
                               }`}
                             >
                               {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
@@ -2833,10 +2831,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ) : !activePage && pagesError ? (
             <div className="flex h-full items-center justify-center p-8">
               <div className="text-center">
-                <AlertTriangle
-                  size={36}
-                  className="mx-auto mb-3 text-c-text-muted"
-                />
+                <AlertTriangle size={36} className="mx-auto mb-3 text-c-text-muted" />
                 <p className="mb-3 text-sm text-c-text-secondary">
                   {isPolish ? 'Nie udało się wczytać notatek.' : 'Failed to load notes.'}
                 </p>
@@ -2907,9 +2902,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         <div className="text-sm font-semibold text-c-text group-hover:text-c-accent transition-colors">
                           {tmpl.label}
                         </div>
-                        <div className="text-[11px] text-c-text-secondary mt-0.5">
-                          {tmpl.desc}
-                        </div>
+                        <div className="text-[11px] text-c-text-secondary mt-0.5">{tmpl.desc}</div>
                       </div>
                     </button>
                   ))}
@@ -3248,7 +3241,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     </div>
 
                     {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
-                    <div ref={verificationStripRef} className="mt-3 flex items-center gap-2 flex-wrap">
+                    <div
+                      ref={verificationStripRef}
+                      className="mt-3 flex items-center gap-2 flex-wrap"
+                    >
                       <select
                         value={
                           (activePage.verificationStatus as NotebookVerificationStatus) ??

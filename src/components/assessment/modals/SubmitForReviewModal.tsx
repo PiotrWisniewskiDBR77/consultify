@@ -152,9 +152,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
         <div className="px-6 py-4 border-b border-c-border-subtle">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-c-text">
-                Wyślij do recenzji
-              </h3>
+              <h3 className="text-lg font-bold text-c-text">Wyślij do recenzji</h3>
               <p className="text-sm text-c-text-muted mt-0.5">{assessmentName}</p>
             </div>
             <button
@@ -173,12 +171,8 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
               <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
-              <p className="text-lg font-medium text-c-text">
-                Wysłano do recenzji!
-              </p>
-              <p className="text-sm text-c-text-muted mt-1">
-                Recenzenci otrzymają powiadomienie
-              </p>
+              <p className="text-lg font-medium text-c-text">Wysłano do recenzji!</p>
+              <p className="text-sm text-c-text-muted mt-1">Recenzenci otrzymają powiadomienie</p>
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
@@ -187,9 +181,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
           ) : users.length === 0 ? (
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
-              <p className="text-c-text-muted">
-                Brak użytkowników z uprawnieniami do recenzji
-              </p>
+              <p className="text-c-text-muted">Brak użytkowników z uprawnieniami do recenzji</p>
             </div>
           ) : (
             <>

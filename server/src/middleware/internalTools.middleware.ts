@@ -70,10 +70,7 @@ function isValidRoleToken(t: string): boolean {
  * Returns []    → env var is set but empty/invalid token → fail-closed (deny all)
  * Returns [...] → valid token list
  */
-function parseCsvEnv(
-  value: unknown,
-  tokenValidator: (t: string) => boolean
-): string[] | null {
+function parseCsvEnv(value: unknown, tokenValidator: (t: string) => boolean): string[] | null {
   if (typeof value !== 'string') return null;
   if (value.length > MAX_CSV_ENV_LENGTH) return null;
   const tokens = value
@@ -96,7 +93,10 @@ function normalizeRole(role: string): string {
 
 function emailDomain(email: string): string {
   const atIdx = email.indexOf('@');
-  return email.slice(atIdx + 1).trim().toLowerCase();
+  return email
+    .slice(atIdx + 1)
+    .trim()
+    .toLowerCase();
 }
 
 function isInternalToolsEnabled(): boolean {
@@ -172,26 +172,16 @@ export function requireInternalToolsAccess(
   const allowedDomains: string[] =
     domainsResult === null ? DEFAULT_ALLOWED_EMAIL_DOMAINS : domainsResult;
 
-  const rolesResult = parseCsvEnv(
-    process.env.INTERNAL_TOOLS_ALLOWED_ROLES,
-    isValidRoleToken
-  );
+  const rolesResult = parseCsvEnv(process.env.INTERNAL_TOOLS_ALLOWED_ROLES, isValidRoleToken);
   const allowedRoles: string[] =
     rolesResult === null
       ? DEFAULT_ALLOWED_ROLES.map((r) => r.toUpperCase())
       : rolesResult.map((r) => r.toUpperCase());
 
-  const orgIdsResult = parseCsvEnv(
-    process.env.INTERNAL_TOOLS_ALLOWED_ORG_IDS,
-    isValidOrgIdToken
-  );
+  const orgIdsResult = parseCsvEnv(process.env.INTERNAL_TOOLS_ALLOWED_ORG_IDS, isValidOrgIdToken);
   // null → allow all (no org restriction), [] → deny all
   const hasAllowedOrg =
-    orgIdsResult === null
-      ? true
-      : orgIdsResult.length === 0
-        ? false
-        : orgIdsResult.includes(orgId);
+    orgIdsResult === null ? true : orgIdsResult.length === 0 ? false : orgIdsResult.includes(orgId);
 
   const hasAllowedDomain = allowedDomains.length > 0 && allowedDomains.includes(emailDomain(email));
   const hasAllowedRole = allowedRoles.includes(normalizeRole(role));

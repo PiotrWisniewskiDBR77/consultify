@@ -28,8 +28,8 @@ import type { FieldType, LinkedRecordFieldOptions, TablePlatformView } from '@/t
 
 import { CalendarView } from './CalendarView';
 import { CellEditor } from './CellEditor';
-import { getConditionalStyle, type FormatRule } from './ConditionalFormatting';
 import { ChatToSchemaPanel } from './ChatToSchemaPanel';
+import { type FormatRule, getConditionalStyle } from './ConditionalFormatting';
 import { EmptyStateView } from './EmptyStateView';
 import { FieldManager } from './FieldManager';
 import { GridView, isMissingField } from './GridView';
@@ -121,10 +121,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
       return (
-        <div
-          className="px-1 py-1 text-xs text-c-warning italic select-none"
-          aria-hidden
-        >
+        <div className="px-1 py-1 text-xs text-c-warning italic select-none" aria-hidden>
           —
         </div>
       );
@@ -257,7 +254,9 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
 
   return (
     <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
-      <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full border-collapse text-left text-[11px]">
+      <table
+        /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full border-collapse text-left text-[11px]"
+      >
         <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur-sm">
           <tr>
             <th className="w-10 border-b border-r border-c-border-subtle" />
@@ -670,10 +669,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           {activeViewName && (
             <>
               <ChevronRight className="h-3 w-3 shrink-0" />
-              <span
-                className="text-c-accent truncate max-w-[140px]"
-                title={activeViewName}
-              >
+              <span className="text-c-accent truncate max-w-[140px]" title={activeViewName}>
                 {activeViewName}
               </span>
             </>
@@ -765,9 +761,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           type="button"
           onClick={() => setMobileViewPickerOpen((o) => !o)}
           className={`flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium ${
-            mobileViewPickerOpen
-              ? 'text-c-accent'
-              : 'text-c-text-secondary'
+            mobileViewPickerOpen ? 'text-c-accent' : 'text-c-text-secondary'
           }`}
         >
           <Layout className="h-5 w-5" />

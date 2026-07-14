@@ -238,9 +238,8 @@ async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
           f.type === 'rating'
       );
       if (hasStyledFields) {
-        const { buildWorkbookBuffer, tableSchemaToWorkbook } = await import(
-          '../workbook/WorkbookBuilder.js'
-        );
+        const { buildWorkbookBuffer, tableSchemaToWorkbook } =
+          await import('../workbook/WorkbookBuilder.js');
 
         // Collect all rows (same pagination loop as the SheetJS path below).
         const allRows: Record<string, unknown>[] = [];

@@ -138,14 +138,15 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
                 ) : col.type === 'select' ? (
                   <span
                     className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-                    style={{ backgroundColor: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${color} 18%, transparent)`,
+                      color,
+                    }}
                   >
                     {String(val)}
                   </span>
                 ) : (
-                  <span className="text-[9px] text-c-text-secondary truncate">
-                    {String(val)}
-                  </span>
+                  <span className="text-[9px] text-c-text-secondary truncate">{String(val)}</span>
                 )}
               </div>
             );
@@ -177,7 +178,9 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
   if (nodes.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <p className="text-sm text-c-text-muted">{t('ideas.table.noStickyNotes', 'No sticky notes')}</p>
+        <p className="text-sm text-c-text-muted">
+          {t('ideas.table.noStickyNotes', 'No sticky notes')}
+        </p>
       </div>
     );
   }

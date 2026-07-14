@@ -24,6 +24,12 @@ import {
 import React from 'react';
 
 import {
+  buildSiriConclusionPayload,
+  pushReportConclusion,
+  type ReportConclusionSource,
+} from '../../../../services/report/conclusionPush';
+import { buildSIRIConclusionModel } from '../../../../services/report/siriConclusion';
+import {
   compute16DScores,
   SIRI_16D_MAPPING_VERSION,
   SIRI_BUILDING_BLOCKS,
@@ -32,16 +38,7 @@ import {
   SIRI_PRIORITISATION_AREAS,
 } from '../../../../services/siriStructure';
 import { SIRIAssessmentData } from '../../../../types';
-import { buildSIRIConclusionModel } from '../../../../services/report/siriConclusion';
-import {
-  buildSiriConclusionPayload,
-  pushReportConclusion,
-  type ReportConclusionSource,
-} from '../../../../services/report/conclusionPush';
-import {
-  ConclusionExecutiveSummary,
-  ConclusionGapCards,
-} from '../ConclusionSummary';
+import { ConclusionExecutiveSummary, ConclusionGapCards } from '../ConclusionSummary';
 import { MaturityPathwaySection } from '../MaturityPathwaySection';
 
 // ============================================
@@ -362,7 +359,9 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
           Assessment Matrix (16 Prioritisation Areas)
         </h2>
         <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 overflow-x-auto">
-          <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-sm">
+          <table
+            /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-sm"
+          >
             <thead>
               <tr className="text-left text-slate-500 dark:text-slate-400">
                 <th className="py-2 pr-4">Area</th>

@@ -35,7 +35,7 @@ import {
 } from 'recharts';
 
 import type { DocumentChartBlockContent } from '../types';
-import { MAX_PIE_SLICES, MAX_SERIES, clampPalette, colorAt } from './docChartPalette';
+import { clampPalette, colorAt, MAX_PIE_SLICES, MAX_SERIES } from './docChartPalette';
 
 export interface DocChartBlockProps {
   content: DocumentChartBlockContent;
@@ -69,15 +69,15 @@ interface CartesianRow {
 }
 
 /** categories × series → recharts row objects. */
-function toCartesianRows(content: DocumentChartBlockContent, series: typeof content.series): {
+function toCartesianRows(
+  content: DocumentChartBlockContent,
+  series: typeof content.series
+): {
   rows: CartesianRow[];
   keys: string[];
 } {
   const keys = series.map((s) => s.label);
-  const rowCount = Math.max(
-    content.categories?.length ?? 0,
-    ...series.map((s) => s.values.length)
-  );
+  const rowCount = Math.max(content.categories?.length ?? 0, ...series.map((s) => s.values.length));
   const rows: CartesianRow[] = [];
   for (let i = 0; i < rowCount; i += 1) {
     const row: CartesianRow = {
@@ -93,7 +93,10 @@ function toCartesianRows(content: DocumentChartBlockContent, series: typeof cont
 }
 
 /** Pie/donut data from the FIRST series, capped to ≤5 slices ("Inne" surplus). */
-function toPieData(content: DocumentChartBlockContent, otherLabel: string): {
+function toPieData(
+  content: DocumentChartBlockContent,
+  otherLabel: string
+): {
   name: string;
   value: number;
 }[] {
@@ -173,9 +176,7 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
                 outerRadius={Math.round(h * 0.36)}
                 innerRadius={content.kind === 'donut' ? Math.round(h * 0.2) : 0}
                 paddingAngle={2}
-                label={({ name, percent }) =>
-                  `${name} ${Math.round((percent ?? 0) * 100)}%`
-                }
+                label={({ name, percent }) => `${name} ${Math.round((percent ?? 0) * 100)}%`}
                 labelLine={false}
               >
                 {pieData.map((_, idx) => (
@@ -194,7 +195,12 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
                 axisLine={AXIS_LINE}
                 label={
                   content.xAxisLabel
-                    ? { value: content.xAxisLabel, position: 'insideBottom', offset: -2, fontSize: 11 }
+                    ? {
+                        value: content.xAxisLabel,
+                        position: 'insideBottom',
+                        offset: -2,
+                        fontSize: 11,
+                      }
                     : undefined
                 }
               />
@@ -203,7 +209,12 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
                 axisLine={AXIS_LINE}
                 label={
                   content.yAxisLabel
-                    ? { value: content.yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 11 }
+                    ? {
+                        value: content.yAxisLabel,
+                        angle: -90,
+                        position: 'insideLeft',
+                        fontSize: 11,
+                      }
                     : undefined
                 }
               />
@@ -229,7 +240,12 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
                 axisLine={AXIS_LINE}
                 label={
                   content.xAxisLabel
-                    ? { value: content.xAxisLabel, position: 'insideBottom', offset: -2, fontSize: 11 }
+                    ? {
+                        value: content.xAxisLabel,
+                        position: 'insideBottom',
+                        offset: -2,
+                        fontSize: 11,
+                      }
                     : undefined
                 }
               />
@@ -238,7 +254,12 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
                 axisLine={AXIS_LINE}
                 label={
                   content.yAxisLabel
-                    ? { value: content.yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 11 }
+                    ? {
+                        value: content.yAxisLabel,
+                        angle: -90,
+                        position: 'insideLeft',
+                        fontSize: 11,
+                      }
                     : undefined
                 }
               />
@@ -266,7 +287,12 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
                 axisLine={AXIS_LINE}
                 label={
                   content.xAxisLabel
-                    ? { value: content.xAxisLabel, position: 'insideBottom', offset: -2, fontSize: 11 }
+                    ? {
+                        value: content.xAxisLabel,
+                        position: 'insideBottom',
+                        offset: -2,
+                        fontSize: 11,
+                      }
                     : undefined
                 }
               />
@@ -275,7 +301,12 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
                 axisLine={AXIS_LINE}
                 label={
                   content.yAxisLabel
-                    ? { value: content.yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 11 }
+                    ? {
+                        value: content.yAxisLabel,
+                        angle: -90,
+                        position: 'insideLeft',
+                        fontSize: 11,
+                      }
                     : undefined
                 }
               />

@@ -53,9 +53,7 @@ export interface TabeleSharePanelProps {
   forceEnableForTesting?: boolean;
 }
 
-function useTargetOptions(
-  t: (key: string, def: string) => string
-): Array<{
+function useTargetOptions(t: (key: string, def: string) => string): Array<{
   value: TableConversionTarget;
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
@@ -225,7 +223,10 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
         );
       } else if (result.status === 'succeeded') {
         toast.success(
-          t('kimi.tabeleShell.share.convertedTo', { defaultValue: 'Converted to {{target}}', target })
+          t('kimi.tabeleShell.share.convertedTo', {
+            defaultValue: 'Converted to {{target}}',
+            target,
+          })
         );
       } else {
         toast(
@@ -312,9 +313,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
                 <opt.Icon className="mt-0.5 h-3.5 w-3.5 flex-none" />
                 <span className="flex flex-col">
                   <span className="font-medium">{opt.label}</span>
-                  <span className="text-[10px] text-c-text-secondary">
-                    {opt.description}
-                  </span>
+                  <span className="text-[10px] text-c-text-secondary">{opt.description}</span>
                 </span>
               </button>
             );
@@ -359,7 +358,9 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
               data-testid="share-snapshot-live"
             />
             <span>
-              <span className="font-medium">{t('kimi.tabeleShell.share.liveRecords', 'Live records')}</span>{' '}
+              <span className="font-medium">
+                {t('kimi.tabeleShell.share.liveRecords', 'Live records')}
+              </span>{' '}
               <span className="text-[10px] text-c-text-secondary">
                 {t(
                   'kimi.tabeleShell.share.liveRecordsHint',
@@ -379,10 +380,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
             </div>
           ) : (
             sortedPacks.map((pack) => (
-              <label
-                key={pack.id}
-                className="flex items-start gap-2 text-xs text-c-text"
-              >
+              <label key={pack.id} className="flex items-start gap-2 text-xs text-c-text">
                 <input
                   type="radio"
                   name="source-snapshot"
@@ -437,10 +435,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
             {t('kimi.tabeleShell.share.loading', 'Loading…')}
           </div>
         ) : conversions.length === 0 ? (
-          <div
-            className="text-[11px] text-c-text-secondary"
-            data-testid="share-conversions-empty"
-          >
+          <div className="text-[11px] text-c-text-secondary" data-testid="share-conversions-empty">
             {t('kimi.tabeleShell.share.noConversionsYet', 'No conversions yet.')}
           </div>
         ) : (
@@ -448,10 +443,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
             {conversions.map((conv) => {
               const tone = statusTone(conv.status);
               return (
-                <li
-                  key={conv.id}
-                  className="flex items-center gap-2 text-xs text-c-text"
-                >
+                <li key={conv.id} className="flex items-center gap-2 text-xs text-c-text">
                   <span
                     className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${tone.className}`}
                     aria-label={t('kimi.tabeleShell.share.statusAriaLabel', {
@@ -479,7 +471,10 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-0.5 text-sky-600 dark:text-sky-400 hover:underline"
                       data-testid={`share-conversion-link-${conv.id}`}
-                      aria-label={t('kimi.tabeleShell.share.openConversionResult', 'Open conversion result')}
+                      aria-label={t(
+                        'kimi.tabeleShell.share.openConversionResult',
+                        'Open conversion result'
+                      )}
                     >
                       <ExternalLink className="h-3 w-3" />
                     </a>

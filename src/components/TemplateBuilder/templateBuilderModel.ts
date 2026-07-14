@@ -22,13 +22,7 @@ export type TemplateScope = 'org' | 'private';
 export type TemplateDepth = 'short' | 'medium' | 'long';
 
 /** doc — jedna sekcja dokumentu (Word/Report). */
-export type DocBlockKind =
-  | 'heading'
-  | 'paragraph'
-  | 'bullets'
-  | 'table'
-  | 'kpi'
-  | 'chart';
+export type DocBlockKind = 'heading' | 'paragraph' | 'bullets' | 'table' | 'kpi' | 'chart';
 
 export interface DocSection {
   id: string;
@@ -62,13 +56,7 @@ export interface DeckSlide {
 }
 
 /** table — jedna kolumna arkusza (Excel/Sheet). */
-export type SheetColumnType =
-  | 'text'
-  | 'number'
-  | 'currency'
-  | 'percent'
-  | 'date'
-  | 'formula';
+export type SheetColumnType = 'text' | 'number' | 'currency' | 'percent' | 'date' | 'formula';
 
 export interface SheetColumn {
   id: string;

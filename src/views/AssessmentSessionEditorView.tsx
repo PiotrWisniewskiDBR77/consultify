@@ -22,18 +22,18 @@ import { ADMAAssessmentEditor } from '@/components/assessment/adma/ADMAAssessmen
 import { AssessmentMenu3ActionBar } from '@/components/assessment/AssessmentMenu3ActionBar';
 import { AssessmentV8CanonPanel } from '@/components/assessment/AssessmentV8CanonPanel';
 import { AssessmentWorkbenchPanel } from '@/components/assessment/AssessmentWorkbenchPanel';
+import { areasToFormData, formDataToAreas } from '@/components/assessment/drd/drdAnswersAdapter';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { DRDMatrixSession } from '@/components/assessment/drd/DRDMatrixSession';
-import { areasToFormData, formDataToAreas } from '@/components/assessment/drd/drdAnswersAdapter';
-import { DRDForm } from '@/components/assessment/tools/DRDForm';
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
 import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
 import { SIRIAssessmentEditor } from '@/components/assessment/siri/SIRIAssessmentEditor';
-import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { CMPracticeForm } from '@/components/assessment/tools/CMPracticeForm';
+import { DRDForm } from '@/components/assessment/tools/DRDForm';
 import { LeanForm } from '@/components/assessment/tools/LeanForm';
+import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
 import { Api } from '@/services/api';
@@ -1541,9 +1541,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   if (!assessmentId || !framework) {
     return (
       <div className="h-full flex items-center justify-center bg-c-bg">
-        <div className="text-center text-c-text-muted">
-          Invalid assessment URL.
-        </div>
+        <div className="text-center text-c-text-muted">Invalid assessment URL.</div>
       </div>
     );
   }
@@ -1760,9 +1758,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     return (
       <div className="p-6">
         <div className="bg-white dark:bg-navy-900 border border-c-border rounded-xl p-6">
-          <div className="text-c-text-secondary font-medium mb-1">
-            Editor not available yet
-          </div>
+          <div className="text-c-text-secondary font-medium mb-1">Editor not available yet</div>
           <div className="text-sm text-c-text-muted">
             Framework: {(framework as string)?.toUpperCase()}
           </div>
@@ -1856,10 +1852,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   {String(status).toUpperCase()}
                 </span>
                 {assessmentId && (
-                  <InitiativeSuggestionBadge
-                    sourceType="assessment"
-                    sourceId={assessmentId}
-                  />
+                  <InitiativeSuggestionBadge sourceType="assessment" sourceId={assessmentId} />
                 )}
               </div>
             </div>
@@ -2003,9 +1996,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 </div>
               )}
               {editedMeta && (
-                <div className="text-[11px] text-c-text-muted truncate">
-                  {editedMeta}
-                </div>
+                <div className="text-[11px] text-c-text-muted truncate">{editedMeta}</div>
               )}
             </div>
 
@@ -2149,9 +2140,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                         <div className="font-medium">
                           {handoff.targetKind} {'->'} {handoff.targetRefOwner}
                         </div>
-                        <div className="text-xs text-c-text-muted">
-                          {handoff.purpose}
-                        </div>
+                        <div className="text-xs text-c-text-muted">{handoff.purpose}</div>
                       </div>
                     ))}
                   </div>
@@ -2436,9 +2425,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   {chatLoading ? (
                     <div className="p-6 text-sm text-c-text-muted">Loading…</div>
                   ) : chatConversations.length === 0 ? (
-                    <div className="p-6 text-sm text-c-text-muted">
-                      No conversations found.
-                    </div>
+                    <div className="p-6 text-sm text-c-text-muted">No conversations found.</div>
                   ) : (
                     <div className="divide-y divide-slate-200 dark:divide-navy-800">
                       {chatConversations.map((c: any) => {
@@ -2489,9 +2476,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
           />
           <div className="relative w-[min(420px,calc(100vw-32px))] overflow-hidden rounded-2xl bg-c-surface border border-c-border shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
-              <div className="text-base font-semibold text-c-text">
-                Exit Assessment
-              </div>
+              <div className="text-base font-semibold text-c-text">Exit Assessment</div>
               <button
                 type="button"
                 onClick={() => !isExiting && setShowExitConfirm(false)}

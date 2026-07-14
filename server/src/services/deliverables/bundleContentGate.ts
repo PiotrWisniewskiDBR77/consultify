@@ -162,7 +162,10 @@ export function runBundleContentGate(
     const passed = placeholderHits.length === 0 && heroNumberMismatches.length === 0;
 
     if (!passed) {
-      logger.warn('[ContentGate] failed', { placeholders: placeholderHits.length, mismatches: heroNumberMismatches.length });
+      logger.warn('[ContentGate] failed', {
+        placeholders: placeholderHits.length,
+        mismatches: heroNumberMismatches.length,
+      });
     }
 
     return { passed, placeholderHits, heroNumberMismatches, issues };

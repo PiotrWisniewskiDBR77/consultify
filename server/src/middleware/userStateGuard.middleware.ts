@@ -10,8 +10,8 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import UserStateMachine from '../services/userStateMachine.js';
 import { getDatabase as getDb } from '../database/Database.js';
+import UserStateMachine from '../services/userStateMachine.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
@@ -114,8 +114,7 @@ export async function attachUserState(
       req.userState = ANON;
       req.currentPhase = DEFAULT_PHASE;
       const perms = getPermissionsSafe(usm, ANON);
-      req.statePermissions =
-        perms ?? (getPermissionsSafe(usm, ANON) || {});
+      req.statePermissions = perms ?? (getPermissionsSafe(usm, ANON) || {});
       next();
     };
 
@@ -415,9 +414,7 @@ export async function transitionState(
 
     // Log to audit (if auditService available) — swallow all errors
     try {
-      const AuditService = await import('../services/auditService.js').then(
-        (m) => m.default || m
-      );
+      const AuditService = await import('../services/auditService.js').then((m) => m.default || m);
       const fromPhase = safeGet(() => usm.getPhase(trimmedFrom), '');
       await (AuditService as any).log({
         eventType: 'USER_STATE_TRANSITION',

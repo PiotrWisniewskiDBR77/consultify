@@ -362,9 +362,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       />
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          isSelected
-                            ? 'border-navy-900 bg-navy-900'
-                            : 'border-c-border-subtle'
+                          isSelected ? 'border-navy-900 bg-navy-900' : 'border-c-border-subtle'
                         }`}
                       >
                         {isSelected && <Check size={10} className="text-white" />}
@@ -419,9 +417,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       />
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          isSelected
-                            ? 'border-navy-900 bg-navy-900'
-                            : 'border-c-border-subtle'
+                          isSelected ? 'border-navy-900 bg-navy-900' : 'border-c-border-subtle'
                         }`}
                       >
                         {isSelected && <Check size={10} className="text-white" />}
@@ -429,9 +425,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       <div className="flex items-center gap-2">
                         <Clock
                           size={16}
-                          className={
-                            isSelected ? 'text-c-text-secondary' : 'text-c-text-secondary'
-                          }
+                          className={isSelected ? 'text-c-text-secondary' : 'text-c-text-secondary'}
                         />
                         <span
                           className={`text-sm font-medium ${isSelected ? 'text-c-text' : 'text-c-text-secondary'}`}
@@ -632,9 +626,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
             <span className="text-c-text-muted block">
               {t('settings.regional.currencyLabel', 'Currency')}
             </span>
-            <span className="font-mono text-c-text">
-              {formatExampleCurrency()}
-            </span>
+            <span className="font-mono text-c-text">{formatExampleCurrency()}</span>
           </div>
           <div>
             <span className="text-c-text-muted block">

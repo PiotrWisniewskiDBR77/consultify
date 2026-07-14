@@ -303,10 +303,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                       }
                     `}
                   >
-                    <Icon
-                      size={18}
-                      className={active ? c.text : 'text-c-text-secondary'}
-                    />
+                    <Icon size={18} className={active ? c.text : 'text-c-text-secondary'} />
                     <span
                       className={`text-[11px] font-medium ${active ? c.text : 'text-c-text-muted'}`}
                     >
@@ -324,83 +321,84 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               {isPl ? '2. Wybierz start' : '2. Choose a start'}
             </div>
             <div className="grid grid-cols-3 gap-3">
-            {/* Start with AI */}
-            <PrimaryStartButton
-              onClick={() => handleCardClick('describe_with_ai')}
-              onDoubleClick={() => handleCardDoubleClick('describe_with_ai')}
-              selected={selectedAction === 'describe_with_ai'}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-accent bg-c-accent-soft px-3 py-4 text-center transition-all duration-200 hover:border-c-accent hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <div className="rounded-xl p-2.5 bg-c-accent-soft text-c-accent transition-transform duration-200 group-hover:scale-110">
-                <Wand2 size={18} />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-c-accent">
-                  Start with AI
+              {/* Start with AI */}
+              <PrimaryStartButton
+                onClick={() => handleCardClick('describe_with_ai')}
+                onDoubleClick={() => handleCardDoubleClick('describe_with_ai')}
+                selected={selectedAction === 'describe_with_ai'}
+                className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-accent bg-c-accent-soft px-3 py-4 text-center transition-all duration-200 hover:border-c-accent hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <div className="rounded-xl p-2.5 bg-c-accent-soft text-c-accent transition-transform duration-200 group-hover:scale-110">
+                  <Wand2 size={18} />
                 </div>
-                <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
-                  {isPl
-                    ? 'Przenieś seed do workspace i od razu uruchom builder flow.'
-                    : 'Transfer seed to workspace and launch builder flow.'}
+                <div className="min-w-0">
+                  <div className="text-[13px] font-semibold text-c-accent">Start with AI</div>
+                  <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
+                    {isPl
+                      ? 'Przenieś seed do workspace i od razu uruchom builder flow.'
+                      : 'Transfer seed to workspace and launch builder flow.'}
+                  </div>
                 </div>
-              </div>
-              <ArrowRight
-                size={12}
-                className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
-              />
-            </PrimaryStartButton>
+                <ArrowRight
+                  size={12}
+                  className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
+                />
+              </PrimaryStartButton>
 
-            {/* Blank canvas */}
-            <PrimaryStartButton
-              onClick={() => handleCardClick('blank_canvas')}
-              onDoubleClick={() => handleCardDoubleClick('blank_canvas')}
-              selected={selectedAction === 'blank_canvas'}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border-subtle hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <div className="rounded-xl p-2.5 bg-c-surface text-c-text-muted transition-transform duration-200 group-hover:scale-110">
-                <Brain size={18} />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-c-text">
-                  Blank canvas
+              {/* Blank canvas */}
+              <PrimaryStartButton
+                onClick={() => handleCardClick('blank_canvas')}
+                onDoubleClick={() => handleCardDoubleClick('blank_canvas')}
+                selected={selectedAction === 'blank_canvas'}
+                className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border-subtle hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <div className="rounded-xl p-2.5 bg-c-surface text-c-text-muted transition-transform duration-200 group-hover:scale-110">
+                  <Brain size={18} />
                 </div>
-                <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
-                  {isPl
-                    ? 'Otwórz spokojny workspace z wybranym systemem startowym.'
-                    : 'Open a calm workspace with your chosen starting system.'}
+                <div className="min-w-0">
+                  <div className="text-[13px] font-semibold text-c-text">Blank canvas</div>
+                  <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
+                    {isPl
+                      ? 'Otwórz spokojny workspace z wybranym systemem startowym.'
+                      : 'Open a calm workspace with your chosen starting system.'}
+                  </div>
                 </div>
-              </div>
-              <ArrowRight
-                size={12}
-                className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
-              />
-            </PrimaryStartButton>
+                <ArrowRight
+                  size={12}
+                  className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
+                />
+              </PrimaryStartButton>
 
-            {/* Use template */}
-            <PrimaryStartButton
-              onClick={() => handleCardClick('use_template')}
-              onDoubleClick={() => handleCardDoubleClick('use_template')}
-              selected={selectedAction === 'use_template'}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-success bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-success hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <div className="rounded-xl p-2.5 text-c-success transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: 'color-mix(in srgb, var(--c-success) 12%, transparent)' }}>
-                <LayoutGrid size={18} />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
-                  {isPl ? 'Użyj szablonu' : 'Use template'}
+              {/* Use template */}
+              <PrimaryStartButton
+                onClick={() => handleCardClick('use_template')}
+                onDoubleClick={() => handleCardDoubleClick('use_template')}
+                selected={selectedAction === 'use_template'}
+                className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-success bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-success hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <div
+                  className="rounded-xl p-2.5 text-c-success transition-transform duration-200 group-hover:scale-110"
+                  style={{
+                    backgroundColor: 'color-mix(in srgb, var(--c-success) 12%, transparent)',
+                  }}
+                >
+                  <LayoutGrid size={18} />
                 </div>
-                <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
-                  {isPl
-                    ? 'Wejdź przez szablon startowy i ustaw domyślny system pracy.'
-                    : 'Enter via a starter template with a default work system.'}
+                <div className="min-w-0">
+                  <div className="text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
+                    {isPl ? 'Użyj szablonu' : 'Use template'}
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
+                    {isPl
+                      ? 'Wejdź przez szablon startowy i ustaw domyślny system pracy.'
+                      : 'Enter via a starter template with a default work system.'}
+                  </div>
                 </div>
-              </div>
-              <ArrowRight
-                size={12}
-                className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
-              />
-            </PrimaryStartButton>
+                <ArrowRight
+                  size={12}
+                  className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
+                />
+              </PrimaryStartButton>
             </div>
           </div>
 

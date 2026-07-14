@@ -472,16 +472,11 @@ function ModulePreferencesPanel({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-c-text">
-                  {card.title}
-                </div>
+                <div className="text-sm font-semibold text-c-text">{card.title}</div>
                 <div className="mt-2 space-y-1 text-sm text-c-text-secondary">
                   {card.values.map(([label, value]) => (
                     <div key={label}>
-                      <span className="font-medium text-c-text">
-                        {label}:
-                      </span>{' '}
-                      {value}
+                      <span className="font-medium text-c-text">{label}:</span> {value}
                     </div>
                   ))}
                 </div>

@@ -4,12 +4,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
+import { dispatchBetaAccessBlocked, isBetaClosed, isBetaLockedForRole } from '@/utils/betaAccess';
 import { normalizeAppRole } from '@/utils/roleGuards';
-import {
-  dispatchBetaAccessBlocked,
-  isBetaClosed,
-  isBetaLockedForRole,
-} from '@/utils/betaAccess';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

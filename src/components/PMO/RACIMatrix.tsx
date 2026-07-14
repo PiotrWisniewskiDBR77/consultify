@@ -171,7 +171,9 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
 
       {/* Matrix Table */}
       <div className="overflow-x-auto">
-        <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="w-full">
+        <table
+          /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full"
+        >
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-700/50">
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">

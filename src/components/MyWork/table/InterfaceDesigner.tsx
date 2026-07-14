@@ -93,13 +93,23 @@ const BlockPreview: React.FC<{
         <div className="bg-blue-50 rounded p-3">
           <span className="text-2xl font-bold text-blue-700">—</span>
           <br />
-          <span className="text-xs text-c-text-muted">{String(block.config.label || 'Summary')}</span>
+          <span className="text-xs text-c-text-muted">
+            {String(block.config.label || 'Summary')}
+          </span>
         </div>
       );
     case 'record_detail':
-      return <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">Record Detail</div>;
+      return (
+        <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">
+          Record Detail
+        </div>
+      );
     case 'filter':
-      return <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">Filter Control</div>;
+      return (
+        <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">
+          Filter Control
+        </div>
+      );
     case 'search':
       return (
         <div className="bg-c-surface-raised rounded p-2">
@@ -112,7 +122,11 @@ const BlockPreview: React.FC<{
         </div>
       );
     default:
-      return <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">{block.type}</div>;
+      return (
+        <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">
+          {block.type}
+        </div>
+      );
   }
 };
 
@@ -136,9 +150,7 @@ const BlockConfigPanel: React.FC<{
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-c-text">
-        {block.type.replace(/_/g, ' ')} Config
-      </h3>
+      <h3 className="text-sm font-semibold text-c-text">{block.type.replace(/_/g, ' ')} Config</h3>
 
       {hasTableSelector && (
         <div>

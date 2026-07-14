@@ -2,8 +2,9 @@ import { Bookmark, Globe, Share2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { PulseArticle, PulseData } from './useHomeData';
 import i18n from '@/i18n';
+
+import type { PulseArticle, PulseData } from './useHomeData';
 
 interface WorldPulseProps {
   data: PulseData;
@@ -69,7 +70,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">World Pulse</h3>
         </div>
         <span className="text-xs text-slate-500 dark:text-slate-500">
-          {t('myWork.worldPulse.whatSHappeningIn', 'What\'s happening in your world')}
+          {t('myWork.worldPulse.whatSHappeningIn', "What's happening in your world")}
         </span>
       </div>
 

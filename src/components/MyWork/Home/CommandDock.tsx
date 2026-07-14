@@ -10,9 +10,10 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
+
 import { HomeBlockShell } from './HomeBlockShell';
 import type { HomeBlock, HomeScreenAction } from './homeV2Types';
-import i18n from '@/i18n';
 
 interface CommandDockProps {
   block: Extract<HomeBlock, { id: 'commandDock' }>;
@@ -138,7 +139,10 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
             );
           })}
           <div className="ml-auto text-xs text-slate-600/55">
-            {t('myWork.commandDock.priorityFirstShortcutsSecond', 'Priority first, shortcuts second')}
+            {t(
+              'myWork.commandDock.priorityFirstShortcutsSecond',
+              'Priority first, shortcuts second'
+            )}
           </div>
         </div>
       </div>

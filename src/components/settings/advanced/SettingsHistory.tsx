@@ -158,9 +158,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
           <History size={28} className="text-amber-500" />
           Settings History
         </h2>
-        <p className="text-c-text-muted text-sm mt-1">
-          View and restore previous settings changes
-        </p>
+        <p className="text-c-text-muted text-sm mt-1">View and restore previous settings changes</p>
       </div>
 
       {loadError && <DegradedState title="Settings history unavailable" description={loadError} />}
@@ -244,9 +242,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                                 {entry.category}
                               </span>
                             </div>
-                            <p className="font-medium text-c-text mt-1">
-                              {entry.setting}
-                            </p>
+                            <p className="font-medium text-c-text mt-1">{entry.setting}</p>
                           </div>
                         </div>
                         <ChevronDown
@@ -261,9 +257,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                         <div className="ml-[76px] p-4 bg-c-surface-raised rounded-lg space-y-3">
                           {entry.oldValue && (
                             <div className="flex gap-4">
-                              <span className="text-sm text-c-text-muted w-20">
-                                Before:
-                              </span>
+                              <span className="text-sm text-c-text-muted w-20">Before:</span>
                               <span className="text-sm text-danger-600 dark:text-danger-400 line-through">
                                 {entry.oldValue}
                               </span>
@@ -271,34 +265,22 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                           )}
                           {entry.newValue && (
                             <div className="flex gap-4">
-                              <span className="text-sm text-c-text-muted w-20">
-                                After:
-                              </span>
+                              <span className="text-sm text-c-text-muted w-20">After:</span>
                               <span className="text-sm text-green-600 dark:text-green-400">
                                 {entry.newValue}
                               </span>
                             </div>
                           )}
                           <div className="flex gap-4 pt-2 border-t border-c-border-subtle dark:border-navy-700">
-                            <span className="text-sm text-c-text-muted w-20">
-                              Device:
-                            </span>
-                            <span className="text-sm text-c-text-secondary">
-                              {entry.device}
-                            </span>
+                            <span className="text-sm text-c-text-muted w-20">Device:</span>
+                            <span className="text-sm text-c-text-secondary">{entry.device}</span>
                           </div>
                           <div className="flex gap-4">
-                            <span className="text-sm text-c-text-muted w-20">
-                              IP:
-                            </span>
-                            <span className="text-sm text-c-text-secondary">
-                              {entry.ipAddress}
-                            </span>
+                            <span className="text-sm text-c-text-muted w-20">IP:</span>
+                            <span className="text-sm text-c-text-secondary">{entry.ipAddress}</span>
                           </div>
                           <div className="flex gap-4">
-                            <span className="text-sm text-c-text-muted w-20">
-                              Time:
-                            </span>
+                            <span className="text-sm text-c-text-muted w-20">Time:</span>
                             <span className="text-sm text-c-text-secondary">
                               {formatTimestamp(entry.timestamp)}
                             </span>

@@ -233,7 +233,9 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
             >
               {chip.dot ? <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} /> : null}
               <span>{chip.label}</span>
-              {chip.count !== undefined ? <Menu3Badge count={chip.count} active={isActive} /> : null}
+              {chip.count !== undefined ? (
+                <Menu3Badge count={chip.count} active={isActive} />
+              ) : null}
             </Menu3Chip>
           );
         })}
@@ -266,7 +268,11 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
                     <ChevronRight size={14} className="shrink-0 text-c-text-muted" />
                   ) : null}
                   {crumb.onClick && !isLast ? (
-                    <button type="button" onClick={crumb.onClick} className={MENU_1_BREADCRUMB_LINK}>
+                    <button
+                      type="button"
+                      onClick={crumb.onClick}
+                      className={MENU_1_BREADCRUMB_LINK}
+                    >
                       {crumb.label}
                     </button>
                   ) : (

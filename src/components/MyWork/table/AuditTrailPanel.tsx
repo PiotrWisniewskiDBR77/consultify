@@ -87,9 +87,7 @@ const ACTION_STYLES: Record<string, string> = {
 const FieldDiff = React.memo(function FieldDiff({ change }: { change: FieldChange }) {
   return (
     <div className="ml-9 mt-1 text-[11px] leading-relaxed">
-      <span className="font-medium text-c-text-muted">
-        {change.fieldName || change.fieldId}
-      </span>
+      <span className="font-medium text-c-text-muted">{change.fieldName || change.fieldId}</span>
       <div className="flex items-start gap-1.5 mt-0.5">
         <span className="inline-block px-1.5 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400 line-through max-w-[45%] truncate">
           {formatValue(change.oldValue)}
@@ -290,7 +288,9 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             compact
             title={isPl ? 'Wybierz rekord' : 'Select a record'}
             description={
-              isPl ? 'Wybierz rekord, aby zobaczyć historię zmian.' : 'Select a record to view its change history.'
+              isPl
+                ? 'Wybierz rekord, aby zobaczyć historię zmian.'
+                : 'Select a record to view its change history.'
             }
           />
         ) : loading && revisions.length === 0 ? (

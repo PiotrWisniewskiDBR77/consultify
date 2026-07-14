@@ -62,7 +62,8 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const effectivePlaceholder =
-    placeholder ?? t('canvas.editor.startTypingPlaceholder', 'Start typing or press / for commands...');
+    placeholder ??
+    t('canvas.editor.startTypingPlaceholder', 'Start typing or press / for commands...');
   const extensions = useMemo(
     () => getCanvasEditorExtensions(effectivePlaceholder),
     [effectivePlaceholder]
@@ -463,10 +464,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
         {/* Accept/Reject bar for pending AI diff */}
         {hasPendingDiff && (
-          <AIAcceptRejectBar
-            onAccept={handleAcceptDiff}
-            onReject={handleRejectDiff}
-          />
+          <AIAcceptRejectBar onAccept={handleAcceptDiff} onReject={handleRejectDiff} />
         )}
 
         {/* Streaming indicator */}

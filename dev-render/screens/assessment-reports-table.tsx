@@ -101,7 +101,10 @@ if (!g.__ASSESSMENT_REPORTS_TABLE_FETCH__) {
       if (url.includes('/report-builder') && url.includes('sourceType=ASSESSMENT')) {
         return jsonResponse({ reports: REPORTS });
       }
-      if (url.includes('/report-builder/') && /\/(approve|mark-sent-internal|mark-sent-external|send-back|share)$/.test(url)) {
+      if (
+        url.includes('/report-builder/') &&
+        /\/(approve|mark-sent-internal|mark-sent-external|send-back|share)$/.test(url)
+      ) {
         return jsonResponse({ ok: true, link: { url: '/share/mock-token' } });
       }
     } catch {
@@ -115,11 +118,7 @@ export default function AssessmentReportsTableScreen(): React.ReactElement {
   return (
     <MemoryRouter initialEntries={['/']}>
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px', height: 640 }}>
-        <ReportsTable
-          projectId="proj-1"
-          onCreateInitiatives={() => {}}
-          onOpenReport={() => {}}
-        />
+        <ReportsTable projectId="proj-1" onCreateInitiatives={() => {}} onOpenReport={() => {}} />
       </div>
     </MemoryRouter>
   );

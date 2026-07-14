@@ -33,9 +33,9 @@ import {
   MENU_3_CHIP_INACTIVE,
 } from '@/components/shared/ModuleMenu3';
 import {
-  standardPreviewShortcuts,
   StandardPreview,
   type StandardPreviewActions,
+  standardPreviewShortcuts,
   type StandardRowMenu,
   StandardTable,
   type TableColumn as StandardTableColumn,
@@ -258,11 +258,9 @@ export const MeetingHub: React.FC = () => {
         width: '280px',
         render: (row: MeetingItem) => (
           <div className="min-w-0">
-            <div className="text-sm font-medium text-c-text-secondary truncate">
-              {row.title}
-            </div>
+            <div className="text-sm font-medium text-c-text-secondary truncate">{row.title}</div>
             <div className="text-xs text-c-text-muted truncate">
-              {row.location || (t('meeting.noLocation2'))}
+              {row.location || t('meeting.noLocation2')}
             </div>
           </div>
         ),
@@ -284,9 +282,7 @@ export const MeetingHub: React.FC = () => {
         width: '120px',
         align: 'right' as const,
         render: (row: MeetingItem) => (
-          <span className="text-sm tabular-nums text-c-text-secondary">
-            {row.attendees.length}
-          </span>
+          <span className="text-sm tabular-nums text-c-text-secondary">{row.attendees.length}</span>
         ),
       },
       {
@@ -530,7 +526,7 @@ export const MeetingHub: React.FC = () => {
     try {
       const response = await (Api as any).addMeetingFollowUp?.(activeMeeting.id, {
         title: followUpDraft.title.trim(),
-        owner: followUpDraft.owner.trim() || (t('meeting.unassigned2')),
+        owner: followUpDraft.owner.trim() || t('meeting.unassigned2'),
       });
       const meeting = response?.meeting as MeetingItem | undefined;
       if (!meeting) throw new Error('Follow-up was not created');
@@ -751,7 +747,9 @@ export const MeetingHub: React.FC = () => {
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
               <StandardTable
                 columns={columns}
-                data={filteredMeetings as unknown as Array<Record<string, unknown> & { id: string }>}
+                data={
+                  filteredMeetings as unknown as Array<Record<string, unknown> & { id: string }>
+                }
                 selectedRowId={selectedId}
                 onRowClick={(row) => setSelectedId(String((row as any).id))}
                 onRowDoubleClick={(row) => openMeetingDocument(row as unknown as MeetingItem)}
@@ -864,8 +862,7 @@ export const MeetingHub: React.FC = () => {
                     // selectedMeeting when no full document is open (canon A7 blok 4 —
                     // AI ramka, tu z rzeczywistym wynikiem zamiast samych chipów).
                     hints: [],
-                    loading:
-                      operatorBriefLoading && briefingMeeting?.id === selectedMeeting.id,
+                    loading: operatorBriefLoading && briefingMeeting?.id === selectedMeeting.id,
                     error:
                       operatorBriefError && briefingMeeting?.id === selectedMeeting.id
                         ? t('meeting.operatorBriefError', 'Could not load the operator brief.')
@@ -873,12 +870,15 @@ export const MeetingHub: React.FC = () => {
                     result: briefMatchesMeeting(operatorBrief, selectedMeeting.id)
                       ? [
                           operatorBrief?.prepSummary,
-                          Array.isArray(operatorBrief?.agendaGaps) && operatorBrief.agendaGaps.length
+                          Array.isArray(operatorBrief?.agendaGaps) &&
+                          operatorBrief.agendaGaps.length
                             ? (operatorBrief.agendaGaps as string[]).slice(0, 2).join(' • ')
                             : null,
                           Array.isArray(operatorBrief?.followUpSuggestions) &&
                           operatorBrief.followUpSuggestions.length
-                            ? (operatorBrief.followUpSuggestions as string[]).slice(0, 3).join(' • ')
+                            ? (operatorBrief.followUpSuggestions as string[])
+                                .slice(0, 3)
+                                .join(' • ')
                             : null,
                         ]
                           .filter(Boolean)
@@ -1016,9 +1016,7 @@ export const MeetingHub: React.FC = () => {
                 <div className="text-sm font-semibold text-c-text">
                   {t('meeting.decisions.title', 'Add decision')}
                 </div>
-                <div className="text-xs text-c-text-muted">
-                  {activeMeeting.title}
-                </div>
+                <div className="text-xs text-c-text-muted">{activeMeeting.title}</div>
               </div>
               <button
                 type="button"
@@ -1064,9 +1062,7 @@ export const MeetingHub: React.FC = () => {
                 <div className="text-sm font-semibold text-c-text">
                   {t('meeting.followUp.title', 'Add follow-up')}
                 </div>
-                <div className="text-xs text-c-text-muted">
-                  {activeMeeting.title}
-                </div>
+                <div className="text-xs text-c-text-muted">{activeMeeting.title}</div>
               </div>
               <button
                 type="button"
@@ -1120,9 +1116,7 @@ export const MeetingHub: React.FC = () => {
                   <Sparkles size={16} className="text-c-text-secondary" />
                   {t('meeting.aiMeetingNotes2')}
                 </div>
-                <div className="text-xs text-c-text-muted">
-                  {activeMeeting.title}
-                </div>
+                <div className="text-xs text-c-text-muted">{activeMeeting.title}</div>
               </div>
               <button
                 type="button"
@@ -1134,14 +1128,10 @@ export const MeetingHub: React.FC = () => {
             </div>
             <div className="space-y-4 p-5">
               {!generatedNote ? (
-                <Field
-                  label={t('meeting.pasteTheMeetingTranscript2')}
-                >
+                <Field label={t('meeting.pasteTheMeetingTranscript2')}>
                   <textarea
                     className="w-full min-h-[180px] rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
-                    placeholder={
-                      t('meeting.pasteTheTranscriptTeresaWillExtract2')
-                    }
+                    placeholder={t('meeting.pasteTheTranscriptTeresaWillExtract2')}
                     value={notesTranscript}
                     onChange={(e) => setNotesTranscript(e.target.value)}
                   />
@@ -1151,18 +1141,14 @@ export const MeetingHub: React.FC = () => {
                   {generatedNote.source === 'heuristic' && (
                     <div className="flex items-center gap-1.5 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
                       <span>⚠</span>
-                      <span>
-                        {t('meeting.notesGeneratedByKeywordExtractionAi2')}
-                      </span>
+                      <span>{t('meeting.notesGeneratedByKeywordExtractionAi2')}</span>
                     </div>
                   )}
                   <div>
                     <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
                       {t('meeting.summary2')}
                     </div>
-                    <p className="text-sm text-c-text-secondary">
-                      {generatedNote.summary}
-                    </p>
+                    <p className="text-sm text-c-text-secondary">{generatedNote.summary}</p>
                   </div>
                   {Array.isArray(generatedNote.keyPoints) && generatedNote.keyPoints.length > 0 && (
                     <div>
@@ -1199,10 +1185,7 @@ export const MeetingHub: React.FC = () => {
                             <li key={i}>
                               {a?.task || String(a)}
                               {a?.owner ? (
-                                <span className="text-c-text-secondary">
-                                  {' '}
-                                  — {a.owner}
-                                </span>
+                                <span className="text-c-text-secondary"> — {a.owner}</span>
                               ) : null}
                             </li>
                           ))}
@@ -1228,9 +1211,7 @@ export const MeetingHub: React.FC = () => {
                   className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:opacity-90"
                 >
                   <Sparkles className="w-4 h-4" />
-                  {generatingNotes
-                    ? t('meeting.generating2')
-                    : t('meeting.generateNotes2')}
+                  {generatingNotes ? t('meeting.generating2') : t('meeting.generateNotes2')}
                 </button>
               )}
             </div>
@@ -1250,9 +1231,7 @@ export const MeetingHub: React.FC = () => {
                 'meeting.delete.confirm',
                 'This permanently removes the meeting, its decisions, and follow-ups. This cannot be undone.'
               )}
-              <div className="mt-2 font-medium text-c-text">
-                {deleteTarget.title}
-              </div>
+              <div className="mt-2 font-medium text-c-text">{deleteTarget.title}</div>
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
               <button
@@ -1320,151 +1299,141 @@ const MeetingDetailView: React.FC<{
 }) => {
   const { t } = useTranslation();
   return (
-  <div className="p-4 lg:p-6">
-    <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
-        <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
-            {t('meeting.meetingLabel')}
+    <div className="p-4 lg:p-6">
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface overflow-hidden">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
+              {t('meeting.meetingLabel')}
+            </div>
+            <div className="text-lg font-semibold text-c-text truncate">{meeting.title}</div>
+            <div className="mt-1 text-sm text-c-text-muted">
+              {formatDateTime(meeting.startAt, isPolish)}
+            </div>
           </div>
-          <div className="text-lg font-semibold text-c-text truncate">
-            {meeting.title}
-          </div>
-          <div className="mt-1 text-sm text-c-text-muted">
-            {formatDateTime(meeting.startAt, isPolish)}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onEdit}
+              className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
+            >
+              {t('meeting.edit2')}
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="h-9 px-4 rounded-full border border-red-200 text-red-600 dark:border-red-500/30 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10"
+            >
+              {t('meeting.delete4')}
+            </button>
+            <button
+              type="button"
+              onClick={onToggleStatus}
+              className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
+            >
+              {meeting.status === 'completed'
+                ? t('meeting.markScheduled')
+                : t('meeting.markCompleted')}
+            </button>
+            <button
+              type="button"
+              onClick={onAddDecision}
+              className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
+            >
+              {t('meeting.addDecision2')}
+            </button>
+            <button
+              type="button"
+              onClick={onAddFollowUp}
+              className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
+            >
+              {t('meeting.addFollowUp2')}
+            </button>
+            <button
+              type="button"
+              onClick={onGenerateNotes}
+              className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium inline-flex items-center gap-1.5 hover:opacity-90"
+              title={t('meeting.generateAiNotesFromTranscript')}
+            >
+              <Sparkles className="w-4 h-4" />
+              {t('meeting.aiNotes')}
+            </button>
+            <button
+              type="button"
+              onClick={onBack}
+              className="h-9 px-4 rounded-full border border-c-border text-sm"
+            >
+              {t('meeting.backToList')}
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
-          >
-            {t('meeting.edit2')}
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="h-9 px-4 rounded-full border border-red-200 text-red-600 dark:border-red-500/30 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10"
-          >
-            {t('meeting.delete4')}
-          </button>
-          <button
-            type="button"
-            onClick={onToggleStatus}
-            className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
-          >
-            {meeting.status === 'completed'
-              ? t('meeting.markScheduled')
-              : t('meeting.markCompleted')}
-          </button>
-          <button
-            type="button"
-            onClick={onAddDecision}
-            className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
-          >
-            {t('meeting.addDecision2')}
-          </button>
-          <button
-            type="button"
-            onClick={onAddFollowUp}
-            className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
-          >
-            {t('meeting.addFollowUp2')}
-          </button>
-          <button
-            type="button"
-            onClick={onGenerateNotes}
-            className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium inline-flex items-center gap-1.5 hover:opacity-90"
-            title={t('meeting.generateAiNotesFromTranscript')}
-          >
-            <Sparkles className="w-4 h-4" />
-            {t('meeting.aiNotes')}
-          </button>
-          <button
-            type="button"
-            onClick={onBack}
-            className="h-9 px-4 rounded-full border border-c-border text-sm"
-          >
-            {t('meeting.backToList')}
-          </button>
-        </div>
-      </div>
-      <div className="grid gap-4 p-5 lg:grid-cols-2">
-        <MeetingOperatorBriefCard
-          isPolish={isPolish}
-          brief={operatorBrief}
-          loading={operatorBriefLoading}
-          error={operatorBriefError}
-          onRetry={onRetryOperatorBrief}
-          className="lg:col-span-2"
-        />
-        <PreviewSection
-          icon={<Users size={14} />}
-          title={t('meeting.attendees2')}
-          items={meeting.attendees}
-          emptyLabel={t('meeting.noAttendeesYet')}
-        />
-        <PreviewSection
-          icon={<FileText size={14} />}
-          title={'Pre-read'}
-          items={meeting.preRead}
-          emptyLabel={t('meeting.noPreReadYet')}
-        />
-        <PreviewSection
-          icon={<ClipboardList size={14} />}
-          title={'Agenda'}
-          items={meeting.agenda}
-          emptyLabel={t('meeting.noAgendaYet')}
-        />
-        <PreviewSection
-          icon={<CheckSquare2 size={14} />}
-          title={t('meeting.decisions2')}
-          items={meeting.decisions}
-          emptyLabel={t('meeting.noDecisionsYet')}
-        />
-        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 lg:col-span-2">
-          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-            <CheckSquare2 size={14} />
-            <span>{t('meeting.followUps2')}</span>
-          </div>
-          {meeting.followUps.length ? (
-            <div className="space-y-2">
-              {meeting.followUps.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onToggleFollowUpStatus(item.id)}
-                  className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left hover:bg-c-surface-raised"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-c-text truncate">
-                        {item.title}
+        <div className="grid gap-4 p-5 lg:grid-cols-2">
+          <MeetingOperatorBriefCard
+            isPolish={isPolish}
+            brief={operatorBrief}
+            loading={operatorBriefLoading}
+            error={operatorBriefError}
+            onRetry={onRetryOperatorBrief}
+            className="lg:col-span-2"
+          />
+          <PreviewSection
+            icon={<Users size={14} />}
+            title={t('meeting.attendees2')}
+            items={meeting.attendees}
+            emptyLabel={t('meeting.noAttendeesYet')}
+          />
+          <PreviewSection
+            icon={<FileText size={14} />}
+            title={'Pre-read'}
+            items={meeting.preRead}
+            emptyLabel={t('meeting.noPreReadYet')}
+          />
+          <PreviewSection
+            icon={<ClipboardList size={14} />}
+            title={'Agenda'}
+            items={meeting.agenda}
+            emptyLabel={t('meeting.noAgendaYet')}
+          />
+          <PreviewSection
+            icon={<CheckSquare2 size={14} />}
+            title={t('meeting.decisions2')}
+            items={meeting.decisions}
+            emptyLabel={t('meeting.noDecisionsYet')}
+          />
+          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 lg:col-span-2">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              <CheckSquare2 size={14} />
+              <span>{t('meeting.followUps2')}</span>
+            </div>
+            {meeting.followUps.length ? (
+              <div className="space-y-2">
+                {meeting.followUps.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onToggleFollowUpStatus(item.id)}
+                    className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left hover:bg-c-surface-raised"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
+                        <div className="text-xs text-c-text-muted">{item.owner}</div>
                       </div>
-                      <div className="text-xs text-c-text-muted">{item.owner}</div>
+                      <StatusChip
+                        tone={item.status === 'done' ? 'success' : 'warning'}
+                        label={item.status === 'done' ? t('meeting.done') : t('meeting.open2')}
+                      />
                     </div>
-                    <StatusChip
-                      tone={item.status === 'done' ? 'success' : 'warning'}
-                      label={
-                        item.status === 'done'
-                          ? t('meeting.done')
-                          : t('meeting.open2')
-                      }
-                    />
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-sm text-c-text-muted">
-              {t('meeting.noFollowUpsYet')}
-            </div>
-          )}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-c-text-muted">{t('meeting.noFollowUpsYet')}</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
   );
 };
 
@@ -1478,56 +1447,52 @@ const MeetingOperatorBriefCard: React.FC<{
 }> = ({ isPolish, brief, loading = false, error = false, onRetry, className = '' }) => {
   const { t } = useTranslation();
   return (
-  <div
-    className={`rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 ${className}`.trim()}
-  >
-    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
-      <Sparkles size={14} />
-      <span>{'Operator brief'}</span>
-    </div>
-    {loading ? (
-      <div className="text-sm text-c-text-muted">
-        {t('meeting.preparingMeetingBrief')}
+    <div
+      className={`rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 ${className}`.trim()}
+    >
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+        <Sparkles size={14} />
+        <span>{'Operator brief'}</span>
       </div>
-    ) : error ? (
-      <div className="flex flex-col items-start gap-2">
-        <div className="text-sm text-amber-600 dark:text-amber-400">
-          {t('meeting.operatorBriefError', 'Could not load the operator brief.')}
+      {loading ? (
+        <div className="text-sm text-c-text-muted">{t('meeting.preparingMeetingBrief')}</div>
+      ) : error ? (
+        <div className="flex flex-col items-start gap-2">
+          <div className="text-sm text-amber-600 dark:text-amber-400">
+            {t('meeting.operatorBriefError', 'Could not load the operator brief.')}
+          </div>
+          {onRetry ? (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="text-xs font-medium text-c-text-secondary underline underline-offset-2 hover:text-c-text"
+            >
+              {t('common.retry', 'Retry')}
+            </button>
+          ) : null}
         </div>
-        {onRetry ? (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="text-xs font-medium text-c-text-secondary underline underline-offset-2 hover:text-c-text"
-          >
-            {t('common.retry', 'Retry')}
-          </button>
-        ) : null}
-      </div>
-    ) : brief ? (
-      <div className="space-y-2">
-        <div className="text-sm text-c-text-secondary">{brief.prepSummary}</div>
-        {Array.isArray(brief.agendaGaps) && brief.agendaGaps.length ? (
-          <div className="text-xs text-c-text-muted">
-            {(brief.agendaGaps as string[]).slice(0, 2).join(' • ')}
-          </div>
-        ) : null}
-        {Array.isArray(brief.followUpSuggestions) && brief.followUpSuggestions.length ? (
-          <div className="space-y-1">
-            {(brief.followUpSuggestions as string[]).slice(0, 3).map((item) => (
-              <div key={item} className="text-xs text-c-text-secondary">
-                {item}
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    ) : (
-      <div className="text-sm text-c-text-muted">
-        {t('meeting.noOperatorBrief')}
-      </div>
-    )}
-  </div>
+      ) : brief ? (
+        <div className="space-y-2">
+          <div className="text-sm text-c-text-secondary">{brief.prepSummary}</div>
+          {Array.isArray(brief.agendaGaps) && brief.agendaGaps.length ? (
+            <div className="text-xs text-c-text-muted">
+              {(brief.agendaGaps as string[]).slice(0, 2).join(' • ')}
+            </div>
+          ) : null}
+          {Array.isArray(brief.followUpSuggestions) && brief.followUpSuggestions.length ? (
+            <div className="space-y-1">
+              {(brief.followUpSuggestions as string[]).slice(0, 3).map((item) => (
+                <div key={item} className="text-xs text-c-text-secondary">
+                  {item}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="text-sm text-c-text-muted">{t('meeting.noOperatorBrief')}</div>
+      )}
+    </div>
   );
 };
 
@@ -1619,9 +1584,7 @@ const MeetingCalendarView: React.FC<{
   return (
     <div className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-sm font-semibold capitalize text-c-text">
-          {monthLabel}
-        </div>
+        <div className="text-sm font-semibold capitalize text-c-text">{monthLabel}</div>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
@@ -1667,12 +1630,7 @@ const MeetingCalendarView: React.FC<{
           const dayMeetings = byDay.get(key) || [];
           const isToday = key === todayKey;
           return (
-            <div
-              key={key}
-              className={`min-h-[88px] p-1.5 ${
-                inMonth ? 'bg-c-surface' : 'bg-c-bg'
-              }`}
-            >
+            <div key={key} className={`min-h-[88px] p-1.5 ${inMonth ? 'bg-c-surface' : 'bg-c-bg'}`}>
               <div className="mb-1 flex items-center justify-between">
                 <span
                   className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] ${

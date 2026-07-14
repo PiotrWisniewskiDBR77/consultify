@@ -202,11 +202,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
       </h4>
 
       {/* Zone 3 — Description (when available) */}
-      {description && (
-        <p className="mt-1 text-xs text-c-text-muted line-clamp-2">
-          {description}
-        </p>
-      )}
+      {description && <p className="mt-1 text-xs text-c-text-muted line-clamp-2">{description}</p>}
 
       {/* Owner + Sponsor */}
       <div className="flex items-center gap-3 mt-3">
@@ -255,9 +251,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
               <span className="text-c-text-muted">
                 {t('initiatives.card.nextStep', 'Next step')}:{' '}
               </span>
-              <span className="text-c-text-secondary font-medium">
-                {nextStep.label}
-              </span>
+              <span className="text-c-text-secondary font-medium">{nextStep.label}</span>
             </>
           ) : (
             '—'

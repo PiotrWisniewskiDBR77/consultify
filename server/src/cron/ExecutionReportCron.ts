@@ -7,8 +7,8 @@
  *  - runReportCadenceScan: detects status reports due this period (findDueReports).
  *  - runReportDistributionScan: sends queued distributions (processReportDistributions).
  */
-import { findDueReports } from '../services/reportCadenceService.js';
 import distributionSvc from '../services/executionDistributionService.js';
+import { findDueReports } from '../services/reportCadenceService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 

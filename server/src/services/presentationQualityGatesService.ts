@@ -14,10 +14,10 @@
  *  - Gate 10: Text density per presentation mode
  */
 
-import { get as dbGet, all as dbAll } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { normalizeDeckDocument } from './presentationDeckDocumentService.js';
 import { contentLeaksTemplateInventory } from './deliverableContentGuard.js';
+import { normalizeDeckDocument } from './presentationDeckDocumentService.js';
 
 export type DeckGateSeverity = 'error' | 'warning' | 'info';
 export type DeckGateCategory = 'structure' | 'content' | 'brand' | 'traceability' | 'quality';
@@ -488,7 +488,9 @@ export async function checkDeckQualityGates(
   cards.forEach((card, index) => {
     if (!REQUIRED_DECISION_CONTENT_INTENTS.has(String(card.intent || ''))) return;
     hasAnyDecisionSection = true;
-    const text = cardAggregateText(card).replace(/[{}\[\]"',:]/g, ' ').trim();
+    const text = cardAggregateText(card)
+      .replace(/[{}\[\]"',:]/g, ' ')
+      .trim();
     // Strip the title/key_message so we measure BODY substance, not just a heading.
     const body = text
       .replace(String(card.title || ''), '')

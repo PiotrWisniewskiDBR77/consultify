@@ -12,20 +12,19 @@
  *
  * Extend by adding an entry to SCREENS below.
  */
+// Real app stylesheet: Tailwind layers + the full c-* token system (light+dark).
+import '../src/index.css';
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
-// Real app stylesheet: Tailwind layers + the full c-* token system (light+dark).
-import '../src/index.css';
 // Real app i18n init (HttpBackend loads /locales/** served from repo `public/`).
 import i18n from '../src/i18n';
-
 import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
 import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
 import AssessmentListScreen from './screens/assessment-list';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import AssessmentReportsTableScreen from './screens/assessment-reports-table';
-import ResultsThreePairsScreen from './screens/results-three-pairs';
 import CanvasKebabRestructureScreen from './screens/canvas-kebab-restructure';
 import CanvasNewDocScreen from './screens/canvas-new-doc';
 import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
@@ -33,22 +32,23 @@ import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
-import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
+import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
+import ResultsThreePairsScreen from './screens/results-three-pairs';
+import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
 import TemplateBuilderDeckScreen from './screens/template-builder-deck';
 import TemplateBuilderDocScreen from './screens/template-builder-doc';
 import TemplateBuilderTableScreen from './screens/template-builder-table';
 import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
-import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
 import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
+import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
 import Wave5InternalCrimsonScreen from './screens/wave5-internal-crimson';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
-import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -141,7 +141,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <StandardKanbanCardScreen />,
   },
   'i18n-fala1-smoke': {
-    label: 'Smoke i18n fala 1 — realne TemplateBuilder (M10) / FormulaEditor (M08); &part=interview|ideas',
+    label:
+      'Smoke i18n fala 1 — realne TemplateBuilder (M10) / FormulaEditor (M08); &part=interview|ideas',
     render: () => <I18nFala1SmokeScreen />,
   },
   'ideas-teresa-panel': {
@@ -161,11 +162,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <SettingsCrimsonNeutralizedScreen />,
   },
   'wave4-choices-crimson': {
-    label: 'Fala 4: bg-c-accent CTA/wybor → neutralne (Assessment/Initiatives/Execution/Results/Decisions)',
+    label:
+      'Fala 4: bg-c-accent CTA/wybor → neutralne (Assessment/Initiatives/Execution/Results/Decisions)',
     render: () => <Wave4ChoicesCrimsonScreen />,
   },
   'wave5-internal-crimson': {
-    label: 'wave5-internal-crimson: naprawa bg-c-accent w Studio (Export/Link modal) — CTA/toggle/selected-tab',
+    label:
+      'wave5-internal-crimson: naprawa bg-c-accent w Studio (Export/Link modal) — CTA/toggle/selected-tab',
     render: () => <Wave5InternalCrimsonScreen />,
   },
 };

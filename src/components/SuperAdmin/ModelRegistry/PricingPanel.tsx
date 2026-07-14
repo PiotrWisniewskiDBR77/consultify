@@ -225,9 +225,7 @@ export const PricingPanel: React.FC = () => {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
           <div className="text-sm text-c-text-muted">Total Snapshots</div>
-          <div className="text-2xl font-bold text-c-text">
-            {snapshots.length}
-          </div>
+          <div className="text-2xl font-bold text-c-text">{snapshots.length}</div>
         </div>
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
           <div className="text-sm text-c-text-muted">Models Priced</div>
@@ -251,9 +249,7 @@ export const PricingPanel: React.FC = () => {
       {showAddForm && (
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-c-text">
-              New Price Snapshot
-            </h3>
+            <h3 className="text-sm font-semibold text-c-text">New Price Snapshot</h3>
             <button
               onClick={handleCreateSnapshot}
               className="flex items-center gap-2 px-4 h-9 bg-c-success hover:brightness-95 text-c-text rounded-lg text-sm font-medium transition-colors"
@@ -264,9 +260,7 @@ export const PricingPanel: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Provider
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Provider</label>
               <input
                 value={form.provider}
                 onChange={(e) => setForm((p) => ({ ...p, provider: e.target.value }))}
@@ -275,9 +269,7 @@ export const PricingPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Model ID
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Model ID</label>
               <input
                 value={form.modelId}
                 onChange={(e) => setForm((p) => ({ ...p, modelId: e.target.value }))}
@@ -286,9 +278,7 @@ export const PricingPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Source
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Source</label>
               <select
                 value={form.source}
                 onChange={(e) => setForm((p) => ({ ...p, source: e.target.value as PriceSource }))}
@@ -300,9 +290,7 @@ export const PricingPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Effective From
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Effective From</label>
               <input
                 type="date"
                 value={form.effectiveFrom}
@@ -313,9 +301,7 @@ export const PricingPanel: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Input / 1M tokens ($)
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Input / 1M tokens ($)</label>
               <input
                 type="number"
                 step="0.01"
@@ -326,9 +312,7 @@ export const PricingPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Output / 1M tokens ($)
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Output / 1M tokens ($)</label>
               <input
                 type="number"
                 step="0.01"
@@ -339,9 +323,7 @@ export const PricingPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Per Image ($)
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Per Image ($)</label>
               <input
                 type="number"
                 step="0.001"
@@ -352,9 +334,7 @@ export const PricingPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Per Request ($)
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Per Request ($)</label>
               <input
                 type="number"
                 step="0.0001"
@@ -379,7 +359,10 @@ export const PricingPanel: React.FC = () => {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary" />
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
+        />
         <input
           type="text"
           value={searchTerm}
@@ -391,7 +374,9 @@ export const PricingPanel: React.FC = () => {
 
       {/* Pricing table grouped by model */}
       <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
-        <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
+        <table
+          /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full"
+        >
           <thead>
             <tr className="border-b border-c-border-subtle">
               <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
@@ -428,14 +413,10 @@ export const PricingPanel: React.FC = () => {
                 onClick={() => setExpandedId(expandedId === snap.id ? null : snap.id)}
               >
                 <td className="px-4 py-3">
-                  <span className="text-sm font-mono text-c-text">
-                    {snap.modelId}
-                  </span>
+                  <span className="text-sm font-mono text-c-text">{snap.modelId}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-sm text-c-text-secondary">
-                    {snap.provider}
-                  </span>
+                  <span className="text-sm text-c-text-secondary">{snap.provider}</span>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <span className="text-sm text-c-text-secondary">
@@ -461,9 +442,7 @@ export const PricingPanel: React.FC = () => {
                   <SourceBadge source={snap.source} />
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-xs text-c-text-muted">
-                    {snap.effectiveFrom || '—'}
-                  </span>
+                  <span className="text-xs text-c-text-muted">{snap.effectiveFrom || '—'}</span>
                 </td>
               </tr>
             ))}

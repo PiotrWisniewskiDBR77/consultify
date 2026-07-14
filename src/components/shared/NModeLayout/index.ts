@@ -27,44 +27,28 @@
  */
 
 // ── Layout Components ───────────────────────────────────────────────────────
-export { NModeActionBar } from './NModeActionBar';
-export { FieldAIButton } from './FieldAIButton';
 export type { FieldAIButtonProps } from './FieldAIButton';
+export { FieldAIButton } from './FieldAIButton';
+export { NModeActionBar } from './NModeActionBar';
 export { NModeCanvas } from './NModeCanvas';
+export type { NModeCardStateProps, NModeCardStatus } from './NModeCardState';
+export { NModeCardBadge, NModeCardState } from './NModeCardState';
 export { NModeCBoard } from './NModeCBoard';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
-export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
-export { NModeCardState, NModeCardBadge } from './NModeCardState';
-export type { NModeCardStatus, NModeCardStateProps } from './NModeCardState';
+export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
 // ── Card management (wzorzec N §3.5) ────────────────────────────────────────
-export { useCardLayout } from './useCardLayout';
-export type {
-  CardLayout,
-  CardLayoutItem,
-  UseCardLayoutOptions,
-  UseCardLayoutResult,
-} from './useCardLayout';
-export {
-  NModeCardManager,
-  AddCardMenu,
-  SectionsManagerMenu,
-} from './NModeCardManager';
-export type {
-  NModeCardManagerProps,
-  AddCardMenuProps,
-  SectionsManagerMenuProps,
-} from './NModeCardManager';
+export type { ArtifactCardSpec, CardCatalogEntry, CardSet, NModeArtifactType } from './cardSets';
 export { DEFAULT_CARD_SETS, getCardSpec } from './cardSets';
 export type {
-  NModeArtifactType,
-  CardCatalogEntry,
-  CardSet,
-  ArtifactCardSpec,
-} from './cardSets';
-export { NModeShell, NMODE_TOOLBAR_SHELL_CLASS } from './NModeShell';
+  AddCardMenuProps,
+  NModeCardManagerProps,
+  SectionsManagerMenuProps,
+} from './NModeCardManager';
+export { AddCardMenu, NModeCardManager, SectionsManagerMenu } from './NModeCardManager';
+export { NMODE_TOOLBAR_SHELL_CLASS, NModeShell } from './NModeShell';
 export {
   NModeToolbar,
   ToolbarAISolidButton,
@@ -74,6 +58,13 @@ export {
   ToolbarSubtleButton,
 } from './NModeToolbar';
 export { SummaryCard } from './SummaryCard';
+export type {
+  CardLayout,
+  CardLayoutItem,
+  UseCardLayoutOptions,
+  UseCardLayoutResult,
+} from './useCardLayout';
+export { useCardLayout } from './useCardLayout';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 export type { NModeToolbarProps } from './NModeToolbar';

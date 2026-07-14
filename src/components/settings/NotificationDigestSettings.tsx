@@ -143,9 +143,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
             >
               <div
                 className={`text-sm font-medium ${
-                  frequency === option.value
-                    ? 'text-c-accent'
-                    : 'text-c-text-secondary'
+                  frequency === option.value ? 'text-c-accent' : 'text-c-text-secondary'
                 }`}
               >
                 {t(`settings.notifications.digest.freq_${option.value}`, option.label)}
@@ -176,9 +174,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
             >
               <div
                 className={`text-sm font-medium ${
-                  content === option.value
-                    ? 'text-c-accent'
-                    : 'text-c-text-secondary'
+                  content === option.value ? 'text-c-accent' : 'text-c-text-secondary'
                 }`}
               >
                 {t(`settings.notifications.digest.content_${option.value}`, option.label)}
@@ -212,9 +208,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
             >
               <div
                 className={`text-sm font-medium ${
-                  format === option.value
-                    ? 'text-c-accent'
-                    : 'text-c-text-secondary'
+                  format === option.value ? 'text-c-accent' : 'text-c-text-secondary'
                 }`}
               >
                 {t(`settings.notifications.digest.format_${option.value}`, option.label)}

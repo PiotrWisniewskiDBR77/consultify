@@ -20,9 +20,9 @@ import {
 } from '../services/effectiveAccessService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
 import { insertDynamic } from '../utils/dbDynamic.js';
-import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../utils/htmlEntities.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -650,7 +650,10 @@ function toDraft(row: DraftRow): WorkCanvasDraft {
   const contentEnvelope = createArtifactContentEnvelope({
     artifactType: row.kind,
     canonicalFormat: row.canonical_format || undefined,
-    contentMd: (() => { const raw = row.content_md || (typeof legacyContent === 'string' ? legacyContent : ''); return raw && raw.startsWith('"') ? JSON.parse(raw) : raw; })(),
+    contentMd: (() => {
+      const raw = row.content_md || (typeof legacyContent === 'string' ? legacyContent : '');
+      return raw && raw.startsWith('"') ? JSON.parse(raw) : raw;
+    })(),
     contentJson: contentJson ?? (row.canonical_format === 'json' ? legacyContent : undefined),
     blocks,
     contentSchemaVersion: row.content_schema_version || undefined,
@@ -958,13 +961,10 @@ async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
     const provenance = (draft.provenance || {}) as Record<string, any>;
     const tableSchemaB4 = provenance?.deliverablesGeneration?.tableSchemaB4;
     if (tableSchemaB4 && typeof tableSchemaB4 === 'object') {
-      const { resolveDeliverableTier } = await import(
-        '../services/deliverableGenerationTier.js'
-      );
+      const { resolveDeliverableTier } = await import('../services/deliverableGenerationTier.js');
       if (resolveDeliverableTier({ preferPremium: true }) === 'PREMIUM') {
-        const { tableSchemaToWorkbook, buildWorkbookBuffer } = await import(
-          '../services/workbook/WorkbookBuilder.js'
-        );
+        const { tableSchemaToWorkbook, buildWorkbookBuffer } =
+          await import('../services/workbook/WorkbookBuilder.js');
         const wbSchema = tableSchemaToWorkbook(tableSchemaB4 as any, {
           title: draft.title,
           author: 'Business Work Canvas',
@@ -3362,7 +3362,8 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   // Z139 (full scope): undo the input-sanitizer's HTML-entity escaping before
   // storing rich text AND the title, otherwise every save re-escapes and
   // corrupts the canvas content/title.
-  if (typeof payload.contentMd === 'string') payload.contentMd = decodeHtmlEntities(payload.contentMd);
+  if (typeof payload.contentMd === 'string')
+    payload.contentMd = decodeHtmlEntities(payload.contentMd);
   if (typeof payload.content === 'string') payload.content = decodeHtmlEntities(payload.content);
   if (payload.contentJson !== undefined)
     payload.contentJson = deepDecodeHtmlEntities(payload.contentJson);
@@ -3730,9 +3731,7 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
           draftId: draft.id,
           target: proposal.target,
           error:
-            provenanceError instanceof Error
-              ? provenanceError.message
-              : String(provenanceError),
+            provenanceError instanceof Error ? provenanceError.message : String(provenanceError),
         });
       }
     } catch (error) {
@@ -4166,8 +4165,7 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
     const errorRecord = error as { statusCode?: unknown; code?: unknown };
     if (errorRecord?.statusCode === 403) {
       return res.status(403).json({
-        error:
-          error instanceof Error ? error.message : 'Referenced entity is outside organization',
+        error: error instanceof Error ? error.message : 'Referenced entity is outside organization',
         code: typeof errorRecord.code === 'string' ? errorRecord.code : 'CANVAS_FORBIDDEN',
         recoverable: true,
       });
@@ -4799,9 +4797,8 @@ router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) =
   // Fail-open: if commitDraftToArtifact throws, the draft UPDATE above already
   // succeeded so the canvas is still saved; we just won't have a wave5_artifacts row.
   try {
-    const { commitDraftToArtifact } = await import(
-      '../services/deliverables/unifiedDocEntityService.js'
-    );
+    const { commitDraftToArtifact } =
+      await import('../services/deliverables/unifiedDocEntityService.js');
     await commitDraftToArtifact({
       organizationId,
       draftId: draft.id,

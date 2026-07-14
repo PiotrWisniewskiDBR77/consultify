@@ -1983,9 +1983,8 @@ if (startServer && shouldStartHttpServer) {
     // Fail-open: if this does not attach, the Deck Builder still works fully in
     // solo mode (the FE useCollaboration hook just reports `disconnected`).
     try {
-      const { attachPresentationCollabWs } = await import(
-        './gateways/presentationCollabWs.gateway.js'
-      );
+      const { attachPresentationCollabWs } =
+        await import('./gateways/presentationCollabWs.gateway.js');
       attachPresentationCollabWs(server);
       logger.info('[Server] Presentation collab WebSocket /ws/presentations/:deckId initialized');
     } catch (err: any) {

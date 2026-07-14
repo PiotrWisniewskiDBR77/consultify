@@ -193,6 +193,6 @@ export const deterministicNarrator: DrdNarrator = (input) => {
       : 'The axis description aggregates area results from the assessment engine.',
     evidence: input.evidence,
     aiGenerated: false,
-      narrative: 'deterministic',
+    narrative: 'deterministic',
   };
 };

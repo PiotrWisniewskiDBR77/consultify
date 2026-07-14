@@ -250,7 +250,9 @@ const AnswerTypePreview: React.FC<{
             className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"
           >
             <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-slate-400 dark:border-slate-500">
-              {i === 0 ? <span className="h-1.5 w-1.5 rounded-full bg-navy-900 dark:bg-white" /> : null}
+              {i === 0 ? (
+                <span className="h-1.5 w-1.5 rounded-full bg-navy-900 dark:bg-white" />
+              ) : null}
             </span>
             <span className="truncate">{opt}</span>
           </div>
@@ -332,7 +334,7 @@ const RespondentQuestionPreview: React.FC<{
         </span>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-medium text-slate-900 dark:text-white">
-            {question.questionText || (t('interview.templateBuilder.untitledQuestion'))}
+            {question.questionText || t('interview.templateBuilder.untitledQuestion')}
             {question.isRequired ? <span className="ml-1 text-danger-500">*</span> : null}
           </p>
           {question.description ? (
@@ -665,9 +667,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       const cloned = await Api.post(`/interview/templates/${templateId}/clone`, {
         scope: 'private',
       });
-      toast.success(
-        t('interview.templateBuilder.templateClonedOpeningCopyFor')
-      );
+      toast.success(t('interview.templateBuilder.templateClonedOpeningCopyFor'));
       if (onSuccess && cloned?.id) {
         onSuccess({ ...cloned, id: cloned.id } as Partial<Template> & { id: string });
       }
@@ -789,7 +789,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         (firstInvalidQuestion as { id: string; message: string } | null)?.message ||
         newErrors.name ||
         newErrors.questions ||
-        (t('interview.templateBuilder.fixFormErrors')),
+        t('interview.templateBuilder.fixFormErrors'),
     };
   }, [template, questions, isPolish]);
 
@@ -913,9 +913,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       const ordered = [...questions].sort((a, b) => a.sortOrder - b.sortOrder);
       if (ordered.length === 0) {
         if (!silent) {
-          toast.error(
-            t('interview.templateBuilder.addQuestionsToCheckQuality')
-          );
+          toast.error(t('interview.templateBuilder.addQuestionsToCheckQuality'));
         }
         return null;
       }
@@ -939,9 +937,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       } catch (error) {
         console.error('[TemplateBuilder] Quality check failed:', error);
         if (!silent) {
-          toast.error(
-            t('interview.templateBuilder.couldNotCheckTemplateQuality')
-          );
+          toast.error(t('interview.templateBuilder.couldNotCheckTemplateQuality'));
         }
         return null;
       }
@@ -955,9 +951,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     setIsCheckingQuality(false);
     if (!result) return;
     if (result.averageScore >= 70 && result.totalWarnings === 0) {
-      toast.success(
-        t('interview.templateBuilder.templateQualityLooksGreat')
-      );
+      toast.success(t('interview.templateBuilder.templateQualityLooksGreat'));
     }
   }, [evaluateQuality, isPolish]);
 
@@ -1091,17 +1085,13 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   const handleGenerateWithAI = useCallback(async () => {
     if (!template.description?.trim() && !importedSourceText.trim()) {
-      toast.error(
-        t('interview.templateBuilder.addABriefDescriptionOr')
-      );
+      toast.error(t('interview.templateBuilder.addABriefDescriptionOr'));
       return;
     }
 
     if (
       questions.length > 0 &&
-      !window.confirm(
-        t('interview.templateBuilder.aiWillReplaceTheCurrent')
-      )
+      !window.confirm(t('interview.templateBuilder.aiWillReplaceTheCurrent'))
     ) {
       return;
     }
@@ -1235,9 +1225,7 @@ ${importedSourceText.trim() || '(none)'}`;
         )
       );
       setQuestions(normalizedQuestions);
-      toast.success(
-        t('interview.templateBuilder.aiPreparedATemplateDraft')
-      );
+      toast.success(t('interview.templateBuilder.aiPreparedATemplateDraft'));
     } catch (error) {
       console.error('[TemplateBuilder] AI generation failed:', error);
       toast.error(t('interview.templateBuilder.failedToGenerateAiDraft'));
@@ -1271,9 +1259,7 @@ ${importedSourceText.trim() || '(none)'}`;
         file.type.startsWith('text/') || lowerName.endsWith('.txt') || lowerName.endsWith('.md');
 
       if (!isPdf && !isTxt) {
-        toast.error(
-          t('interview.templateBuilder.onlyTxtAndPdfAre')
-        );
+        toast.error(t('interview.templateBuilder.onlyTxtAndPdfAre'));
         return null;
       }
 
@@ -1307,9 +1293,7 @@ ${importedSourceText.trim() || '(none)'}`;
     async (importedSurveyText?: string) => {
       const sourceText = String(importedSurveyText ?? importedSourceText ?? '').trim();
       if (orderedQuestions.length === 0 && !sourceText) {
-        toast.error(
-          t('interview.templateBuilder.addQuestionsOrUploadA')
-        );
+        toast.error(t('interview.templateBuilder.addQuestionsOrUploadA'));
         return;
       }
 
@@ -1584,9 +1568,7 @@ ${sourceText || '(none)'}`;
           (proposal.reorder?.order?.length || 0) > 0;
 
         if (!hasAny) {
-          toast.success(
-            t('interview.templateBuilder.aiBelievesTheSurveyAlready')
-          );
+          toast.success(t('interview.templateBuilder.aiBelievesTheSurveyAlready'));
           return;
         }
 
@@ -1616,9 +1598,7 @@ ${sourceText || '(none)'}`;
         setShowAiProposalModal(true);
       } catch (error) {
         console.error('[TemplateBuilder] AI proposal failed:', error);
-        toast.error(
-          t('interview.templateBuilder.failedToPrepareAiSuggestions')
-        );
+        toast.error(t('interview.templateBuilder.failedToPrepareAiSuggestions'));
       } finally {
         setIsAiGenerating(false);
       }
@@ -1846,9 +1826,7 @@ ${sourceText || '(none)'}`;
                   value={template.name || ''}
                   onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
                   disabled={isApplicationTemplate}
-                  placeholder={
-                    t('interview.templateBuilder.eGDigitalMaturityIn')
-                  }
+                  placeholder={t('interview.templateBuilder.eGDigitalMaturityIn')}
                   className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
                       ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
@@ -1869,9 +1847,7 @@ ${sourceText || '(none)'}`;
                     setTemplate((prev) => ({ ...prev, description: e.target.value }))
                   }
                   disabled={isApplicationTemplate}
-                  placeholder={
-                    t('interview.templateBuilder.describeTheSurveyGoalBusiness')
-                  }
+                  placeholder={t('interview.templateBuilder.describeTheSurveyGoalBusiness')}
                   rows={6}
                   className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all resize-none"
                 />
@@ -1970,7 +1946,12 @@ ${sourceText || '(none)'}`;
                             disabled={isApplicationTemplate}
                             className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                           />
-                          <span>{t(`interview.templateBuilder.answerTypeLabel.${type.id}`, type.labelEn)}</span>
+                          <span>
+                            {t(
+                              `interview.templateBuilder.answerTypeLabel.${type.id}`,
+                              type.labelEn
+                            )}
+                          </span>
                         </label>
                       );
                     })}
@@ -2137,9 +2118,7 @@ ${sourceText || '(none)'}`;
                     icon={<Eye />}
                     onClick={() => setShowRespondentPreview(true)}
                     disabled={orderedQuestions.length === 0}
-                    title={
-                      t('interview.templateBuilder.seeTheFormAsA')
-                    }
+                    title={t('interview.templateBuilder.seeTheFormAsA')}
                   >
                     {t('interview.templateBuilder.preview')}
                   </Button>
@@ -2169,9 +2148,7 @@ ${sourceText || '(none)'}`;
                     onClick={() => void proposeQuestionImprovementsWithAI()}
                     disabled={isAiGenerating || isApplicationTemplate}
                     loading={isAiGenerating}
-                    title={
-                      t('interview.templateBuilder.useAiToReviewImprove')
-                    }
+                    title={t('interview.templateBuilder.useAiToReviewImprove')}
                     className="text-c-accent border-c-accent/30 hover:bg-c-accent/5 dark:hover:bg-c-accent/10"
                   >
                     {t('interview.templateBuilder.improveWithAi')}
@@ -2216,10 +2193,7 @@ ${sourceText || '(none)'}`;
                         <React.Fragment key={question.id}>
                           {question.sectionTitle ? (
                             <div className="flex items-center gap-2 pt-2 pb-1 first:pt-0">
-                              <Layers
-                                size={13}
-                                className="shrink-0 text-c-info dark:text-c-info"
-                              />
+                              <Layers size={13} className="shrink-0 text-c-info dark:text-c-info" />
                               <span className="text-[11px] font-semibold uppercase tracking-wide text-c-info dark:text-c-info">
                                 {question.sectionTitle}
                               </span>
@@ -2262,8 +2236,7 @@ ${sourceText || '(none)'}`;
                     {t('interview.templateBuilder.aiChangeProposal')}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {aiProposal.summary ||
-                      (t('interview.templateBuilder.aiReviewedTheSurveyAnd'))}
+                    {aiProposal.summary || t('interview.templateBuilder.aiReviewedTheSurveyAnd')}
                   </p>
                 </div>
                 <button
@@ -2437,7 +2410,7 @@ ${sourceText || '(none)'}`;
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {aiProposal.reorder.note ||
-                          (t('interview.templateBuilder.aiSuggestsABetterQuestion'))}
+                          t('interview.templateBuilder.aiSuggestsABetterQuestion')}
                       </p>
                     </div>
                   </label>
@@ -2481,8 +2454,7 @@ ${sourceText || '(none)'}`;
                     {t('interview.templateBuilder.respondentPreview')}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {template.name ||
-                      (t('interview.templateBuilder.howARespondentSeesThis'))}
+                    {template.name || t('interview.templateBuilder.howARespondentSeesThis')}
                     {' · '}
                     {orderedQuestions.length} {t('interview.templateBuilder.questions')}
                     {template.estimatedTimeMinutes
@@ -2804,7 +2776,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
         <div className="flex-1 min-w-0">
           <p className="text-[12px] text-slate-800 dark:text-slate-100 truncate">
-            {question.questionText || (t('interview.templateBuilder.newQuestion'))}
+            {question.questionText || t('interview.templateBuilder.newQuestion')}
           </p>
         </div>
 
@@ -2894,9 +2866,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               value={question.questionText}
               onChange={(e) => onUpdate({ questionText: e.target.value })}
               disabled={readOnly}
-              placeholder={
-                t('interview.templateBuilder.enterTheQuestionTitleAnd')
-              }
+              placeholder={t('interview.templateBuilder.enterTheQuestionTitleAnd')}
               rows={2}
               className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
                 error
@@ -3043,9 +3013,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               value={question.helpHint || ''}
               onChange={(e) => onUpdate({ helpHint: e.target.value })}
               disabled={readOnly}
-              placeholder={
-                t('interview.templateBuilder.additionalGuidanceForRespondent')
-              }
+              placeholder={t('interview.templateBuilder.additionalGuidanceForRespondent')}
               className={fieldClassName}
             />
           </div>
@@ -3066,9 +3034,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 disabled={readOnly}
                 rows={2}
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
-                placeholder={
-                  t('interview.templateBuilder.staticInstructionShownNextTo')
-                }
+                placeholder={t('interview.templateBuilder.staticInstructionShownNextTo')}
               />
             </div>
             <div className="space-y-1">
@@ -3081,9 +3047,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 disabled={readOnly}
                 rows={2}
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
-                placeholder={
-                  t('interview.templateBuilder.eGIn2023Oee')
-                }
+                placeholder={t('interview.templateBuilder.eGIn2023Oee')}
               />
             </div>
           </div>
@@ -3099,9 +3063,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               disabled={readOnly}
               rows={2}
               className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
-              placeholder={
-                t('interview.templateBuilder.additionalContextShownBelowThe')
-              }
+              placeholder={t('interview.templateBuilder.additionalContextShownBelowThe')}
             />
           </div>
 
@@ -3116,9 +3078,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={(e) => onUpdate({ evidencePrompt: e.target.value })}
               disabled={readOnly}
               className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
-              placeholder={
-                t('interview.templateBuilder.eGAttachAReport')
-              }
+              placeholder={t('interview.templateBuilder.eGAttachAReport')}
             />
           </div>
 
@@ -3131,9 +3091,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               value={question.expectedAnswerShape || ''}
               onChange={(e) => onUpdate({ expectedAnswerShape: e.target.value })}
               disabled={readOnly}
-              placeholder={
-                t('interview.templateBuilder.eGShortFactualAnswer')
-              }
+              placeholder={t('interview.templateBuilder.eGShortFactualAnswer')}
               className={fieldClassName}
             />
           </div>

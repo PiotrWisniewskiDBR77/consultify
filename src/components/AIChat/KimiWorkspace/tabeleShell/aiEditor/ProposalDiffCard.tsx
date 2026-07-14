@@ -109,11 +109,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
             {operations.slice(0, 25).map((op, idx) => {
               const opObj = op as { type?: string };
               return (
-                <li
-                  key={idx}
-                  className="truncate text-c-text-secondary"
-                  title={JSON.stringify(op)}
-                >
+                <li key={idx} className="truncate text-c-text-secondary" title={JSON.stringify(op)}>
                   {idx + 1}. {opObj?.type ?? t('kimi.tabeleShell.aiEditor.opFallback', 'op')} —{' '}
                   {shorten(JSON.stringify(op))}
                 </li>

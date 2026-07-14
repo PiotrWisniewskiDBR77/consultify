@@ -429,7 +429,8 @@ export class ArtifactConversionService {
           projectId: conversion.projectId ?? null,
           summary: String(payload.summary || ''),
           hypothesis: String(payload.hypothesis || ''),
-          confidenceLevel: String(payload.confidenceLevel || conversion.confidenceLevel || '') || null,
+          confidenceLevel:
+            String(payload.confidenceLevel || conversion.confidenceLevel || '') || null,
           problemStatement: String(payload.problemStatement || '') || null,
           deliverables: payload.deliverables || [],
           successCriteria: payload.successCriteria || [],

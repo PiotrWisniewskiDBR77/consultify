@@ -27,11 +27,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
-
-import RolloutStagesPanel from './RolloutStagesPanel';
-import RolloutBaselinePanel from './RolloutBaselinePanel';
-import CutoverRunbookPanel from './CutoverRunbookPanel';
-import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { Button } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
@@ -52,8 +47,12 @@ import {
 } from '../shared/ModuleMenu3';
 import { Callout } from '../shared/NModeBlocks';
 import type { RowAction } from '../shared/RowActionsMenu';
+import CutoverRunbookPanel from './CutoverRunbookPanel';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
+import RolloutBaselinePanel from './RolloutBaselinePanel';
 import { type RolloutEditTarget, RolloutRegisterEditModal } from './RolloutRegisterEditModal';
+import RolloutStagesPanel from './RolloutStagesPanel';
 
 // ── Resource shapes (mirror rollout.routes.ts response rows) ────────────────
 

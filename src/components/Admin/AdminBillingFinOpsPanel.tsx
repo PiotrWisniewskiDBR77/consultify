@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';
-import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 
 type TabId = 'summary' | 'plan' | 'payments' | 'invoices' | 'controls';
 
@@ -214,9 +214,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
       id: 'invoiceNumber',
       label: 'Invoice',
       width: '180px',
-      render: (row) => (
-        <span className="text-slate-900 dark:text-white">{row.invoiceNumber}</span>
-      ),
+      render: (row) => <span className="text-slate-900 dark:text-white">{row.invoiceNumber}</span>,
     },
     {
       id: 'invoiceStatus',
@@ -239,26 +237,20 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
       label: 'Amount due',
       width: '140px',
       align: 'right',
-      render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.amountDue}</span>
-      ),
+      render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.amountDue}</span>,
     },
     {
       id: 'amountPaid',
       label: 'Amount paid',
       width: '140px',
       align: 'right',
-      render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.amountPaid}</span>
-      ),
+      render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.amountPaid}</span>,
     },
     {
       id: 'dueDate',
       label: 'Due date',
       width: '140px',
-      render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.dueDate}</span>
-      ),
+      render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.dueDate}</span>,
     },
   ];
 
@@ -279,9 +271,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
       label: 'Default',
       width: '120px',
       render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">
-          {row.isDefault ? 'Yes' : '—'}
-        </span>
+        <span className="text-slate-600 dark:text-slate-300">{row.isDefault ? 'Yes' : '—'}</span>
       ),
     },
   ];

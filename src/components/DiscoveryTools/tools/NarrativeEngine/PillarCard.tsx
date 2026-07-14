@@ -68,9 +68,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
 
   const updatePillar = (updates: Partial<NarrativePillar>) => {
     updateInputData({
-      pillars: (data.pillars || []).map((p) =>
-        p.id === pillarId ? { ...p, ...updates } : p
-      ),
+      pillars: (data.pillars || []).map((p) => (p.id === pillarId ? { ...p, ...updates } : p)),
     } as Partial<NarrativeEngineData>);
   };
 

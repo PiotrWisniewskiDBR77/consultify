@@ -309,9 +309,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
                 key={`${q.year}-${q.quarter}`}
                 className="flex-1 px-4 py-3 text-center border-r border-c-border last:border-r-0"
               >
-                <div className="text-sm font-semibold text-c-text">
-                  Q{q.quarter}
-                </div>
+                <div className="text-sm font-semibold text-c-text">Q{q.quarter}</div>
                 <div className="text-xs text-c-text-muted">{q.year}</div>
               </div>
             ))}
@@ -351,10 +349,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
               </div>
             ) : (
               initiativeRows.map((row, rowIdx) => (
-                <div
-                  key={rowIdx}
-                  className="relative h-14 border-b border-c-border-subtle"
-                >
+                <div key={rowIdx} className="relative h-14 border-b border-c-border-subtle">
                   {row.map((initiative) => {
                     const startIdx = getQuarterIndex(initiative.targetQuarter);
                     if (startIdx === -1) return null;

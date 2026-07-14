@@ -279,12 +279,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               >
                 <div className={`w-full h-16 rounded-lg border mb-3 ${option.colors}`} />
                 <div className="flex items-center justify-center gap-2">
-                  <Icon
-                    size={16}
-                    className={
-                      isSelected ? 'text-c-accent' : 'text-c-text-muted'
-                    }
-                  />
+                  <Icon size={16} className={isSelected ? 'text-c-accent' : 'text-c-text-muted'} />
                   <span
                     className={`font-medium ${isSelected ? 'text-c-accent' : 'text-c-text-secondary'}`}
                   >
@@ -328,14 +323,10 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-c-border-subtle'
+                      isSelected ? 'border-blue-500 bg-blue-500' : 'border-c-border-subtle'
                     }`}
                   >
-                    {isSelected && (
-                      <div className="w-2 h-2 rounded-full bg-c-surface" />
-                    )}
+                    {isSelected && <div className="w-2 h-2 rounded-full bg-c-surface" />}
                   </div>
                   <div className="text-left">
                     <span
@@ -402,9 +393,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               >
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-emerald-100 dark:bg-emerald-500/20'
-                      : 'bg-c-surface-raised'
+                    isSelected ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-c-surface-raised'
                   }`}
                 >
                   <Icon

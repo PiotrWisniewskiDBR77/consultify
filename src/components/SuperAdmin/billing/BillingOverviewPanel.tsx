@@ -135,7 +135,9 @@ export const BillingOverviewPanel: React.FC = () => {
             <DollarSign size={20} className="text-emerald-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-c-text">{formatCurrency(stats?.mrr || 0)}</span>
+            <span className="text-3xl font-bold text-c-text">
+              {formatCurrency(stats?.mrr || 0)}
+            </span>
           </div>
           <p className="text-sm text-emerald-400/70 mt-2">ARR: {formatCurrency(stats?.arr || 0)}</p>
         </div>

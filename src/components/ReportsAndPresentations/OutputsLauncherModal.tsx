@@ -187,11 +187,18 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [selectedType, setSelectedType] = useState<DeliverableType | null>(null);
 
-  const { templates: apiTemplates, loading: tplLoading, error: tplError } =
-    useDeliverableTemplates(selectedType);
+  const {
+    templates: apiTemplates,
+    loading: tplLoading,
+    error: tplError,
+  } = useDeliverableTemplates(selectedType);
 
-  const { loading: suggestLoading, suggestion, suggest, reset: resetSuggestion } =
-    useTemplateSuggestion();
+  const {
+    loading: suggestLoading,
+    suggestion,
+    suggest,
+    reset: resetSuggestion,
+  } = useTemplateSuggestion();
 
   const [intentInput, setIntentInput] = useState('');
 
@@ -232,7 +239,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
       setCanvasConvertBusyId(null);
       setCanvasConvertError(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Reset the canvas sub-mode whenever the type tile changes (going back to
@@ -295,9 +302,11 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
 
   const handleSuggest = useCallback(() => {
     if (!selectedType) return;
-    const intentText = intentInput.trim() || t('rap.outputs.launcher.suggestDefaultIntent', 'choose the best template for me');
+    const intentText =
+      intentInput.trim() ||
+      t('rap.outputs.launcher.suggestDefaultIntent', 'choose the best template for me');
     suggest(intentText, toApiType(selectedType));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType, intentInput, suggest, t]);
 
   // #83e — convert a picked canvas draft directly into the selected output
@@ -330,7 +339,9 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   const handleBundleGenerate = useCallback(async () => {
     const brief = bundleBrief.trim();
     if (brief.length < 20) {
-      setBundleError(t('rap.outputs.launcher.bundleBriefTooShort', 'Brief must be at least 20 characters'));
+      setBundleError(
+        t('rap.outputs.launcher.bundleBriefTooShort', 'Brief must be at least 20 characters')
+      );
       return;
     }
     setBundleLoading(true);
@@ -343,7 +354,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
     } else {
       setBundleError(t('rap.outputs.launcher.bundleError', 'Generation failed — please try again'));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundleBrief, onClose, onBundleGenerated, t]);
 
   if (!open) return null;
@@ -365,7 +376,10 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
           <div className="flex items-center gap-2 min-w-0">
             {(selectedType || bundleStep) && (
               <button
-                onClick={() => { setBundleStep(false); setSelectedType(null); }}
+                onClick={() => {
+                  setBundleStep(false);
+                  setSelectedType(null);
+                }}
                 data-testid="launcher-back"
                 className="p-1 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
                 aria-label={t('rap.outputs.launcher.back', 'Back')}
@@ -399,16 +413,27 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
             /* W3.5 — Komplet AI: brief textarea → ZIP generation */
             <div className="flex flex-col gap-4">
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('rap.outputs.launcher.bundleSubtitle', 'Describe your company, product, market, and ask in one paragraph. The AI will produce DOCX + XLSX + PPTX and download them as a ZIP.')}
+                {t(
+                  'rap.outputs.launcher.bundleSubtitle',
+                  'Describe your company, product, market, and ask in one paragraph. The AI will produce DOCX + XLSX + PPTX and download them as a ZIP.'
+                )}
               </p>
               <textarea
                 data-testid="launcher-bundle-brief"
                 value={bundleBrief}
-                onChange={(e) => { setBundleBrief(e.target.value); setBundleError(null); }}
-                onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void handleBundleGenerate(); }}
+                onChange={(e) => {
+                  setBundleBrief(e.target.value);
+                  setBundleError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void handleBundleGenerate();
+                }}
                 rows={5}
                 maxLength={4000}
-                placeholder={t('rap.outputs.launcher.bundleBriefPlaceholder', 'e.g. Acme is a SaaS B2B platform for logistics companies in Central Europe. TAM €3B, asking €500k seed. Primary KPIs: MRR €40k, NRR 115%, burn €25k/mo…')}
+                placeholder={t(
+                  'rap.outputs.launcher.bundleBriefPlaceholder',
+                  'e.g. Acme is a SaaS B2B platform for logistics companies in Central Europe. TAM €3B, asking €500k seed. Primary KPIs: MRR €40k, NRR 115%, burn €25k/mo…'
+                )}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
               />
               <div className="text-[11px] text-slate-400 -mt-2">
@@ -429,23 +454,32 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                     t('rap.outputs.launcher.phase4', 'Rendering DOCX + XLSX + PPTX…'),
                   ].map((label, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <div className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] ${
-                        idx < bundlePhase
-                          ? 'bg-violet-600 text-white'
-                          : idx === bundlePhase
-                          ? 'border-2 border-violet-500 bg-white dark:bg-navy-900'
-                          : 'border-2 border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
-                      }`}>
+                      <div
+                        className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] ${
+                          idx < bundlePhase
+                            ? 'bg-violet-600 text-white'
+                            : idx === bundlePhase
+                              ? 'border-2 border-violet-500 bg-white dark:bg-navy-900'
+                              : 'border-2 border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+                        }`}
+                      >
                         {idx < bundlePhase && '✓'}
-                        {idx === bundlePhase && <span className="block w-2 h-2 rounded-full bg-violet-500 animate-pulse" />}
+                        {idx === bundlePhase && (
+                          <span className="block w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+                        )}
                       </div>
-                      <span className={`text-xs ${idx === bundlePhase ? 'text-slate-900 dark:text-white font-medium' : idx < bundlePhase ? 'text-slate-400 line-through' : 'text-slate-300 dark:text-navy-600'}`}>
+                      <span
+                        className={`text-xs ${idx === bundlePhase ? 'text-slate-900 dark:text-white font-medium' : idx < bundlePhase ? 'text-slate-400 line-through' : 'text-slate-300 dark:text-navy-600'}`}
+                      >
                         {label}
                       </span>
                     </div>
                   ))}
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-navy-600">
-                    {t('rap.outputs.launcher.phaseEstimateNote', 'Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.')}
+                    {t(
+                      'rap.outputs.launcher.phaseEstimateNote',
+                      'Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.'
+                    )}
                   </p>
                 </div>
               )}
@@ -456,9 +490,17 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                 disabled={bundleLoading || bundleBrief.trim().length < 20}
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {bundleLoading
-                  ? <><Loader2 size={16} className="animate-spin" /> {t('rap.outputs.launcher.bundleGenerating', 'Generating…')}</>
-                  : <><Download size={16} /> {t('rap.outputs.launcher.bundleGenerate', 'Generate & download ZIP')}</>}
+                {bundleLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />{' '}
+                    {t('rap.outputs.launcher.bundleGenerating', 'Generating…')}
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />{' '}
+                    {t('rap.outputs.launcher.bundleGenerate', 'Generate & download ZIP')}
+                  </>
+                )}
               </button>
             </div>
           ) : !selectedType ? (
@@ -515,7 +557,10 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                     </span>
                   </div>
                   <div className="text-[11px] text-violet-700 dark:text-violet-400 mt-0.5">
-                    {t('rap.outputs.launcher.bundleHint', 'One brief → DOCX + XLSX + PPTX downloaded as ZIP')}
+                    {t(
+                      'rap.outputs.launcher.bundleHint',
+                      'One brief → DOCX + XLSX + PPTX downloaded as ZIP'
+                    )}
                   </div>
                 </div>
                 <Sparkles size={16} className="shrink-0 text-violet-400 dark:text-violet-500" />
@@ -646,121 +691,127 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                 </div>
               ) : (
                 <>
-              {/* Teresa zaproponuje — mini input + przycisk */}
-              <div className="mb-4 flex gap-2">
-                <input
-                  type="text"
-                  data-testid="launcher-suggest-input"
-                  value={intentInput}
-                  onChange={(e) => setIntentInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSuggest(); }}
-                  placeholder={t('rap.outputs.launcher.suggestPlaceholder', 'Describe what you need…')}
-                  maxLength={1000}
-                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                />
-                <button
-                  type="button"
-                  data-testid="launcher-suggest-btn"
-                  onClick={handleSuggest}
-                  disabled={suggestLoading}
-                  aria-label={t('rap.outputs.launcher.suggestBtn', 'Teresa suggests')}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 hover:bg-primary-100 dark:hover:bg-primary-800/40 disabled:opacity-50 transition-colors"
-                >
-                  {suggestLoading
-                    ? <Loader2 size={14} className="animate-spin" />
-                    : <Wand2 size={14} />}
-                  {t('rap.outputs.launcher.suggestBtn', 'Teresa suggests')}
-                </button>
-              </div>
+                  {/* Teresa zaproponuje — mini input + przycisk */}
+                  <div className="mb-4 flex gap-2">
+                    <input
+                      type="text"
+                      data-testid="launcher-suggest-input"
+                      value={intentInput}
+                      onChange={(e) => setIntentInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSuggest();
+                      }}
+                      placeholder={t(
+                        'rap.outputs.launcher.suggestPlaceholder',
+                        'Describe what you need…'
+                      )}
+                      maxLength={1000}
+                      className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                    />
+                    <button
+                      type="button"
+                      data-testid="launcher-suggest-btn"
+                      onClick={handleSuggest}
+                      disabled={suggestLoading}
+                      aria-label={t('rap.outputs.launcher.suggestBtn', 'Teresa suggests')}
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 hover:bg-primary-100 dark:hover:bg-primary-800/40 disabled:opacity-50 transition-colors"
+                    >
+                      {suggestLoading ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Wand2 size={14} />
+                      )}
+                      {t('rap.outputs.launcher.suggestBtn', 'Teresa suggests')}
+                    </button>
+                  </div>
 
-              {/* Wynik sugestii */}
-              {suggestion && !suggestLoading && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700">
-                  <p className="text-xs text-primary-700 dark:text-primary-300 font-medium mb-1">
-                    {t('rap.outputs.launcher.suggestResult', 'Teresa recommends')}
-                    {': '}
-                    <span className="font-semibold">{suggestion.templateId}</span>
-                    {' '}
-                    <span className="opacity-70">({suggestion.confidence})</span>
-                  </p>
-                  <p className="text-[11px] text-primary-600 dark:text-primary-400 mb-2">
-                    {suggestion.reasoning}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handlePickTemplate(suggestion.templateId)}
-                    className="text-xs px-2.5 py-1 rounded-md bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 font-medium transition-colors"
-                  >
-                    {t('rap.outputs.launcher.suggestAccept', 'Use this template')}
-                  </button>
-                </div>
-              )}
-
-              {/* Loading */}
-              {tplLoading && (
-                <div className="flex items-center justify-center py-8 text-slate-400">
-                  <Loader2 size={20} className="animate-spin mr-2" />
-                  <span className="text-sm">{t('common.loading', 'Loading...')}</span>
-                </div>
-              )}
-
-              {/* Error — pokazuj Blank jako fallback */}
-              {!tplLoading && tplError && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">
-                  {tplError}
-                </div>
-              )}
-
-              {/* Template grid — zawsze Blank na pierwszej pozycji */}
-              {!tplLoading && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* Blank — zawsze pierwszy */}
-                  <button
-                    type="button"
-                    data-testid="launcher-template-blank"
-                    onClick={() => handlePickTemplate('blank')}
-                    aria-label={t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
-                    className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
-                  >
-                    <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
-                      <Sparkles size={18} />
-                    </div>
-                    <div className="min-w-0 pt-0.5">
-                      <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
-                        {t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Szablony z API (bez blank — eliminujemy duplikaty) */}
-                  {apiTemplates
-                    .filter((tpl) => !tpl.isBlank)
-                    .map((tpl) => (
+                  {/* Wynik sugestii */}
+                  {suggestion && !suggestLoading && (
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700">
+                      <p className="text-xs text-primary-700 dark:text-primary-300 font-medium mb-1">
+                        {t('rap.outputs.launcher.suggestResult', 'Teresa recommends')}
+                        {': '}
+                        <span className="font-semibold">{suggestion.templateId}</span>{' '}
+                        <span className="opacity-70">({suggestion.confidence})</span>
+                      </p>
+                      <p className="text-[11px] text-primary-600 dark:text-primary-400 mb-2">
+                        {suggestion.reasoning}
+                      </p>
                       <button
-                        key={tpl.id}
                         type="button"
-                        data-testid={`launcher-template-${tpl.id}`}
-                        onClick={() => handlePickTemplate(tpl.id)}
-                        aria-label={tpl.name}
+                        onClick={() => handlePickTemplate(suggestion.templateId)}
+                        className="text-xs px-2.5 py-1 rounded-md bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 font-medium transition-colors"
+                      >
+                        {t('rap.outputs.launcher.suggestAccept', 'Use this template')}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Loading */}
+                  {tplLoading && (
+                    <div className="flex items-center justify-center py-8 text-slate-400">
+                      <Loader2 size={20} className="animate-spin mr-2" />
+                      <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+                    </div>
+                  )}
+
+                  {/* Error — pokazuj Blank jako fallback */}
+                  {!tplLoading && tplError && (
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">
+                      {tplError}
+                    </div>
+                  )}
+
+                  {/* Template grid — zawsze Blank na pierwszej pozycji */}
+                  {!tplLoading && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Blank — zawsze pierwszy */}
+                      <button
+                        type="button"
+                        data-testid="launcher-template-blank"
+                        onClick={() => handlePickTemplate('blank')}
+                        aria-label={t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
                         className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
                       >
                         <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
-                          <FileText size={18} />
+                          <Sparkles size={18} />
                         </div>
                         <div className="min-w-0 pt-0.5">
                           <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
-                            {tpl.name}
+                            {t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
                           </div>
-                          {tpl.description && (
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                              {tpl.description}
-                            </div>
-                          )}
                         </div>
                       </button>
-                    ))}
-                </div>
-              )}
+
+                      {/* Szablony z API (bez blank — eliminujemy duplikaty) */}
+                      {apiTemplates
+                        .filter((tpl) => !tpl.isBlank)
+                        .map((tpl) => (
+                          <button
+                            key={tpl.id}
+                            type="button"
+                            data-testid={`launcher-template-${tpl.id}`}
+                            onClick={() => handlePickTemplate(tpl.id)}
+                            aria-label={tpl.name}
+                            className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                          >
+                            <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                              <FileText size={18} />
+                            </div>
+                            <div className="min-w-0 pt-0.5">
+                              <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
+                                {tpl.name}
+                              </div>
+                              {tpl.description && (
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                                  {tpl.description}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </>
               )}
             </>

@@ -960,7 +960,11 @@ router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, 
       return res.status(400).json({ error: 'tableId is required' });
     }
     const authReq = req as AuthRequest;
-    const userRole = await resolveUserRoleForTable(tableId, authReq.userId!, authReq.organizationId!);
+    const userRole = await resolveUserRoleForTable(
+      tableId,
+      authReq.userId!,
+      authReq.organizationId!
+    );
 
     if (typeof filterByFormula === 'string' && filterByFormula.trim()) {
       const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js'))
@@ -3246,101 +3250,126 @@ router.get(
   }
 );
 
-router.get('/governed-models/:modelId', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const model = await GovernedModelService.getModel(modelId);
-    if (!model) return res.status(404).json({ error: 'Governed model not found' });
-    return res.status(200).json(model);
-  } catch (e) {
-    handleRouteError(e, res, 'getGovernedModel');
+router.get(
+  '/governed-models/:modelId',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const model = await GovernedModelService.getModel(modelId);
+      if (!model) return res.status(404).json({ error: 'Governed model not found' });
+      return res.status(200).json(model);
+    } catch (e) {
+      handleRouteError(e, res, 'getGovernedModel');
+    }
   }
-});
+);
 
-router.patch('/governed-models/:modelId', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    const { name, description, status } = req.body ?? {};
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const model = await GovernedModelService.updateModel(modelId, { name, description, status });
-    if (!model) return res.status(404).json({ error: 'Governed model not found' });
-    return res.status(200).json(model);
-  } catch (e) {
-    handleRouteError(e, res, 'updateGovernedModel');
+router.patch(
+  '/governed-models/:modelId',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      const { name, description, status } = req.body ?? {};
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const model = await GovernedModelService.updateModel(modelId, { name, description, status });
+      if (!model) return res.status(404).json({ error: 'Governed model not found' });
+      return res.status(200).json(model);
+    } catch (e) {
+      handleRouteError(e, res, 'updateGovernedModel');
+    }
   }
-});
+);
 
-router.delete('/governed-models/:modelId', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const ok = await GovernedModelService.deleteModel(modelId);
-    if (!ok) return res.status(404).json({ error: 'Governed model not found' });
-    return res.status(204).send();
-  } catch (e) {
-    handleRouteError(e, res, 'deleteGovernedModel');
+router.delete(
+  '/governed-models/:modelId',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const ok = await GovernedModelService.deleteModel(modelId);
+      if (!ok) return res.status(404).json({ error: 'Governed model not found' });
+      return res.status(204).send();
+    } catch (e) {
+      handleRouteError(e, res, 'deleteGovernedModel');
+    }
   }
-});
+);
 
-router.post('/governed-models/:modelId/kpis', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    const {
-      code,
-      labelEn,
-      labelPl,
-      formulaType,
-      formulaConfig,
-      sourceTableId,
-      sourceFieldId,
-      unit,
-      format,
-    } = req.body ?? {};
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    if (!code || typeof code !== 'string')
-      return res.status(400).json({ error: 'code is required' });
-    if (!labelEn || typeof labelEn !== 'string')
-      return res.status(400).json({ error: 'labelEn is required' });
-    if (!formulaType || typeof formulaType !== 'string')
-      return res.status(400).json({ error: 'formulaType is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const kpi = await GovernedModelService.addKpi(modelId, {
-      code,
-      labelEn,
-      labelPl,
-      formulaType,
-      formulaConfig,
-      sourceTableId,
-      sourceFieldId,
-      unit,
-      format,
-    } as Parameters<typeof GovernedModelService.addKpi>[1]);
-    return res.status(201).json(kpi);
-  } catch (e) {
-    handleRouteError(e, res, 'addKpi');
+router.post(
+  '/governed-models/:modelId/kpis',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      const {
+        code,
+        labelEn,
+        labelPl,
+        formulaType,
+        formulaConfig,
+        sourceTableId,
+        sourceFieldId,
+        unit,
+        format,
+      } = req.body ?? {};
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      if (!code || typeof code !== 'string')
+        return res.status(400).json({ error: 'code is required' });
+      if (!labelEn || typeof labelEn !== 'string')
+        return res.status(400).json({ error: 'labelEn is required' });
+      if (!formulaType || typeof formulaType !== 'string')
+        return res.status(400).json({ error: 'formulaType is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const kpi = await GovernedModelService.addKpi(modelId, {
+        code,
+        labelEn,
+        labelPl,
+        formulaType,
+        formulaConfig,
+        sourceTableId,
+        sourceFieldId,
+        unit,
+        format,
+      } as Parameters<typeof GovernedModelService.addKpi>[1]);
+      return res.status(201).json(kpi);
+    } catch (e) {
+      handleRouteError(e, res, 'addKpi');
+    }
   }
-});
+);
 
-router.get('/governed-models/:modelId/kpis', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const kpis = await GovernedModelService.listKpis(modelId);
-    return res.status(200).json(kpis);
-  } catch (e) {
-    handleRouteError(e, res, 'listKpis');
+router.get(
+  '/governed-models/:modelId/kpis',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const kpis = await GovernedModelService.listKpis(modelId);
+      return res.status(200).json(kpis);
+    } catch (e) {
+      handleRouteError(e, res, 'listKpis');
+    }
   }
-});
+);
 
 router.delete('/kpis/:kpiId', async (req: Request, res: Response) => {
   try {
@@ -3356,39 +3385,49 @@ router.delete('/kpis/:kpiId', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/governed-models/:modelId/dimensions', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    const { name, sourceTableId, sourceFieldId, dimensionType } = req.body ?? {};
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    if (!name || typeof name !== 'string')
-      return res.status(400).json({ error: 'name is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const dim = await GovernedModelService.addDimension(modelId, {
-      name,
-      sourceTableId,
-      sourceFieldId,
-      dimensionType,
-    });
-    return res.status(201).json(dim);
-  } catch (e) {
-    handleRouteError(e, res, 'addDimension');
+router.post(
+  '/governed-models/:modelId/dimensions',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      const { name, sourceTableId, sourceFieldId, dimensionType } = req.body ?? {};
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      if (!name || typeof name !== 'string')
+        return res.status(400).json({ error: 'name is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const dim = await GovernedModelService.addDimension(modelId, {
+        name,
+        sourceTableId,
+        sourceFieldId,
+        dimensionType,
+      });
+      return res.status(201).json(dim);
+    } catch (e) {
+      handleRouteError(e, res, 'addDimension');
+    }
   }
-});
+);
 
-router.get('/governed-models/:modelId/dimensions', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const dims = await GovernedModelService.listDimensions(modelId);
-    return res.status(200).json(dims);
-  } catch (e) {
-    handleRouteError(e, res, 'listDimensions');
+router.get(
+  '/governed-models/:modelId/dimensions',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const dims = await GovernedModelService.listDimensions(modelId);
+      return res.status(200).json(dims);
+    } catch (e) {
+      handleRouteError(e, res, 'listDimensions');
+    }
   }
-});
+);
 
 router.delete('/dimensions/:dimensionId', async (req: Request, res: Response) => {
   try {
@@ -3404,39 +3443,49 @@ router.delete('/dimensions/:dimensionId', async (req: Request, res: Response) =>
   }
 });
 
-router.post('/governed-models/:modelId/sources', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    const { tableId, trusted, requiredProvenance } = req.body ?? {};
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    if (!tableId || typeof tableId !== 'string')
-      return res.status(400).json({ error: 'tableId is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const source = await GovernedModelService.addModelSource(
-      modelId,
-      tableId,
-      trusted ?? false,
-      requiredProvenance
-    );
-    return res.status(201).json(source);
-  } catch (e) {
-    handleRouteError(e, res, 'addModelSource');
+router.post(
+  '/governed-models/:modelId/sources',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      const { tableId, trusted, requiredProvenance } = req.body ?? {};
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      if (!tableId || typeof tableId !== 'string')
+        return res.status(400).json({ error: 'tableId is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const source = await GovernedModelService.addModelSource(
+        modelId,
+        tableId,
+        trusted ?? false,
+        requiredProvenance
+      );
+      return res.status(201).json(source);
+    } catch (e) {
+      handleRouteError(e, res, 'addModelSource');
+    }
   }
-});
+);
 
-router.get('/governed-models/:modelId/sources', requireGovernedModelAccess, async (req: Request, res: Response) => {
-  try {
-    const { modelId } = req.params;
-    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
-    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
-      .default;
-    const sources = await GovernedModelService.listModelSources(modelId);
-    return res.status(200).json(sources);
-  } catch (e) {
-    handleRouteError(e, res, 'listModelSources');
+router.get(
+  '/governed-models/:modelId/sources',
+  requireGovernedModelAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { modelId } = req.params;
+      if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+      const GovernedModelService = (
+        await import('../services/tablePlatform/GovernedModelService.js')
+      ).default;
+      const sources = await GovernedModelService.listModelSources(modelId);
+      return res.status(200).json(sources);
+    } catch (e) {
+      handleRouteError(e, res, 'listModelSources');
+    }
   }
-});
+);
 
 router.patch('/model-sources/:id/trust', async (req: Request, res: Response) => {
   try {
@@ -4497,10 +4546,9 @@ router.delete('/admin/service-accounts/:id', async (req: Request, res: Response)
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'id is required' });
     const db = (await import('../database/Database.js')).getDatabase();
-    const row = await db.query(
-      'SELECT organization_id FROM tp_service_accounts WHERE id = $1',
-      [id]
-    );
+    const row = await db.query('SELECT organization_id FROM tp_service_accounts WHERE id = $1', [
+      id,
+    ]);
     if (
       row.rows.length === 0 ||
       String((row.rows[0] as any).organization_id) !== String(organizationId)

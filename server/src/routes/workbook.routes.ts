@@ -169,9 +169,8 @@ router.post(
     // Register in V8 artifact registry (P19 Outputs Library integration)
     let artifactId: string | null = null;
     try {
-      const { registerArtifactOrigin, adoptRunArtifactForWorkbook } = await import(
-        '../services/v8/artifactRegistryService.js'
-      );
+      const { registerArtifactOrigin, adoptRunArtifactForWorkbook } =
+        await import('../services/v8/artifactRegistryService.js');
 
       const originSummary = {
         title: result.schema.title,

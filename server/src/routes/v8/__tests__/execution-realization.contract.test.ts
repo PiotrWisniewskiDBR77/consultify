@@ -12,7 +12,7 @@
  * in-memory `roi_realized_values` store shared by writer and reader so the read
  * back is an end-to-end assertion, not a mock echo.
  */
-import express, { type Express, type Request, type Response, type NextFunction } from 'express';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -32,7 +32,13 @@ interface RealizedRow {
 
 const realizedRows: RealizedRow[] = [];
 // Initiatives that the org-scope guard (SELECT id FROM initiatives ...) resolves.
-const initiatives: Array<{ id: string; organization_id: string; name: string; status: string; priority: string }> = [];
+const initiatives: Array<{
+  id: string;
+  organization_id: string;
+  name: string;
+  status: string;
+  priority: string;
+}> = [];
 // roi_assumptions rows so getROIPortfolioSummary has a portfolio item to attach realized to.
 const assumptions: Array<Record<string, unknown>> = [];
 
@@ -55,7 +61,18 @@ async function fakeRun(sql: string, params?: unknown[]): Promise<{ changes: numb
       source,
       variance_notes,
       recorded_by,
-    ] = p as [string, string, string, string, number | null, number | null, number | null, string, string | null, string];
+    ] = p as [
+      string,
+      string,
+      string,
+      string,
+      number | null,
+      number | null,
+      number | null,
+      string,
+      string | null,
+      string,
+    ];
     realizedRows.push({
       id,
       initiative_id,
@@ -76,10 +93,14 @@ async function fakeRun(sql: string, params?: unknown[]): Promise<{ changes: numb
 
 async function fakeGet<T = unknown>(sql: string, params?: unknown[]): Promise<T | null> {
   const p = paramList(params);
-  if (sql.includes('FROM initiatives') && sql.includes('id = ?') && sql.includes('organization_id = ?')) {
+  if (
+    sql.includes('FROM initiatives') &&
+    sql.includes('id = ?') &&
+    sql.includes('organization_id = ?')
+  ) {
     const [id, orgId] = p as [string, string];
     const found = initiatives.find((i) => i.id === id && i.organization_id === orgId);
-    return (found ? ({ id: found.id } as unknown as T) : null);
+    return found ? ({ id: found.id } as unknown as T) : null;
   }
   return null;
 }
@@ -109,7 +130,10 @@ async function fakeAll<T = unknown>(sql: string, params?: unknown[]): Promise<T[
   // getROIPortfolioSummary: realized aggregate from roi_realized_values
   if (sql.includes('FROM roi_realized_values') && sql.includes('GROUP BY initiative_id')) {
     const [orgId] = p as [string];
-    const byInit = new Map<string, { total_rev: number; total_cost: number; total_savings: number }>();
+    const byInit = new Map<
+      string,
+      { total_rev: number; total_cost: number; total_savings: number }
+    >();
     for (const r of realizedRows.filter((r) => r.organization_id === orgId)) {
       const acc = byInit.get(r.initiative_id) || { total_rev: 0, total_cost: 0, total_savings: 0 };
       acc.total_rev += r.realized_revenue_delta ?? 0;
@@ -160,8 +184,8 @@ vi.mock('../../../middleware/permission.middleware.js', () => ({
   requireAllPermissions: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-import executionControlRoutes from '../execution-control.routes.js';
 import { getROIPortfolioSummary } from '../../../services/v8/resultsROIService.js';
+import executionControlRoutes from '../execution-control.routes.js';
 
 const ORG = '00000000-0000-4000-8000-000000000088';
 const OTHER_ORG = '00000000-0000-4000-8000-000000000099';
@@ -201,7 +225,13 @@ describe('M14 → M15 realization feed-forward (contract)', () => {
   });
 
   it('records a realization (source=execution) that M15 getROIPortfolioSummary reads back', async () => {
-    initiatives.push({ id: 'init-1', organization_id: ORG, name: 'Init One', status: 'EXECUTING', priority: 'HIGH' });
+    initiatives.push({
+      id: 'init-1',
+      organization_id: ORG,
+      name: 'Init One',
+      status: 'EXECUTING',
+      priority: 'HIGH',
+    });
     // A portfolio item must exist for the realized value to attach in the rollup.
     assumptions.push({
       initiative_id: 'init-1',
@@ -243,7 +273,13 @@ describe('M14 → M15 realization feed-forward (contract)', () => {
 
   it('returns 404 when the initiative belongs to another org (no write)', async () => {
     // Initiative exists only in OTHER_ORG; caller is in ORG.
-    initiatives.push({ id: 'init-foreign', organization_id: OTHER_ORG, name: 'Foreign', status: 'EXECUTING', priority: 'HIGH' });
+    initiatives.push({
+      id: 'init-foreign',
+      organization_id: OTHER_ORG,
+      name: 'Foreign',
+      status: 'EXECUTING',
+      priority: 'HIGH',
+    });
 
     const app = createApp();
     const res = await request(app).post('/api/v8/execution-control/realizations').send({
@@ -259,7 +295,13 @@ describe('M14 → M15 realization feed-forward (contract)', () => {
 
   it('returns 403 for a VIEWER role (write gate, no write)', async () => {
     currentUser = { id: UID, role: 'VIEWER', organizationId: ORG };
-    initiatives.push({ id: 'init-1', organization_id: ORG, name: 'Init One', status: 'EXECUTING', priority: 'HIGH' });
+    initiatives.push({
+      id: 'init-1',
+      organization_id: ORG,
+      name: 'Init One',
+      status: 'EXECUTING',
+      priority: 'HIGH',
+    });
 
     const app = createApp();
     const res = await request(app).post('/api/v8/execution-control/realizations').send({
@@ -274,7 +316,13 @@ describe('M14 → M15 realization feed-forward (contract)', () => {
   });
 
   it('rejects an empty realization (no realized value supplied) with 400', async () => {
-    initiatives.push({ id: 'init-1', organization_id: ORG, name: 'Init One', status: 'EXECUTING', priority: 'HIGH' });
+    initiatives.push({
+      id: 'init-1',
+      organization_id: ORG,
+      name: 'Init One',
+      status: 'EXECUTING',
+      priority: 'HIGH',
+    });
 
     const app = createApp();
     const res = await request(app).post('/api/v8/execution-control/realizations').send({

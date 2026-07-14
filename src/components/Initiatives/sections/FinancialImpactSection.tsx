@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 
 import { CardBlockRenderer } from '../cards/CardBlockRenderer';
 import { buildBusinessCaseCardSpec } from '../cards/cardSpecBuilders';
-
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';

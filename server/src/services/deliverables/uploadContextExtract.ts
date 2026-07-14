@@ -35,7 +35,13 @@ function kindFromName(filename: string, mimetype?: string): UploadKind {
   const lower = (filename || '').toLowerCase();
   const mt = (mimetype || '').toLowerCase();
   if (lower.endsWith('.csv') || mt.includes('csv')) return 'csv';
-  if (lower.endsWith('.xlsx') || lower.endsWith('.xls') || mt.includes('spreadsheet') || mt.includes('excel')) return 'xlsx';
+  if (
+    lower.endsWith('.xlsx') ||
+    lower.endsWith('.xls') ||
+    mt.includes('spreadsheet') ||
+    mt.includes('excel')
+  )
+    return 'xlsx';
   if (lower.endsWith('.docx') || mt.includes('wordprocessingml')) return 'docx';
   if (lower.endsWith('.pdf') || mt.includes('pdf')) return 'pdf';
   if (lower.endsWith('.txt') || lower.endsWith('.md') || mt.startsWith('text/')) return 'text';
@@ -43,7 +49,10 @@ function kindFromName(filename: string, mimetype?: string): UploadKind {
 }
 
 function clamp(text: string): { text: string; truncated: boolean } {
-  const collapsed = String(text || '').replace(/[ \t ]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const collapsed = String(text || '')
+    .replace(/[ \t ]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   if (collapsed.length <= UPLOAD_CONTEXT_MAX_CHARS) return { text: collapsed, truncated: false };
   return { text: collapsed.slice(0, UPLOAD_CONTEXT_MAX_CHARS), truncated: true };
 }
@@ -53,7 +62,10 @@ function csvToText(content: string): string {
   try {
     const { headers, rows } = parseCSV(content);
     const head = headers.join(' | ');
-    const body = rows.slice(0, 200).map((r) => (Array.isArray(r) ? r.join(' | ') : Object.values(r).join(' | '))).join('\n');
+    const body = rows
+      .slice(0, 200)
+      .map((r) => (Array.isArray(r) ? r.join(' | ') : Object.values(r).join(' | ')))
+      .join('\n');
     return `${head}\n${body}`;
   } catch {
     return content;
@@ -83,8 +95,11 @@ async function docxToText(buffer: Buffer): Promise<string> {
   return xml
     .replace(/<\/w:p>/g, '\n')
     .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
 }
 
 /**
@@ -94,7 +109,7 @@ export async function extractUploadContext(
   buffer: Buffer,
   filename: string,
   mimetype?: string,
-  deps: UploadExtractDeps = {},
+  deps: UploadExtractDeps = {}
 ): Promise<UploadExtractResult> {
   const kind = kindFromName(filename, mimetype);
   const empty: UploadExtractResult = { text: '', kind, truncated: false, ok: false };
@@ -115,10 +130,12 @@ export async function extractUploadContext(
         raw = await docxToText(buffer);
         break;
       case 'pdf': {
-        const extractPdf = deps.extractPdf ?? (async (buf: Buffer) => {
-          const mod = (await import('../pdfParserService.js')).default;
-          return mod.extractTextFromBuffer(buf);
-        });
+        const extractPdf =
+          deps.extractPdf ??
+          (async (buf: Buffer) => {
+            const mod = (await import('../pdfParserService.js')).default;
+            return mod.extractTextFromBuffer(buf);
+          });
         raw = await extractPdf(buffer);
         break;
       }
@@ -128,7 +145,9 @@ export async function extractUploadContext(
     const { text, truncated } = clamp(raw);
     return { text, kind, truncated, ok: text.length > 0 };
   } catch (err) {
-    logger.warn(`${LOG} extract(${kind}) failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} extract(${kind}) failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`
+    );
     return empty;
   }
 }
@@ -137,7 +156,11 @@ export async function extractUploadContext(
  * Zbuduj blok kontekstu z wyekstrahowanego tekstu — gotowy do dopisania do briefu
  * (spójnie z W3.2 briefEnrichment). Zwraca '' gdy pusto.
  */
-export function uploadTextToContextBlock(result: UploadExtractResult, filename: string, isPolish = true): string {
+export function uploadTextToContextBlock(
+  result: UploadExtractResult,
+  filename: string,
+  isPolish = true
+): string {
   if (!result.ok || !result.text) return '';
   const header = isPolish
     ? `Kontekst z wgranego pliku „${filename}" (fakty — użyj jako podstawy, nie zmyślaj):`

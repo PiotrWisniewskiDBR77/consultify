@@ -59,9 +59,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
         <Archive size={14} className="text-c-accent" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-c-text truncate">
-          {snapshot.name}
-        </p>
+        <p className="text-xs font-semibold text-c-text truncate">{snapshot.name}</p>
         <div className="flex items-center gap-2 mt-0.5 text-[10px] text-c-text-secondary">
           <span className="flex items-center gap-0.5">
             <Clock size={9} />

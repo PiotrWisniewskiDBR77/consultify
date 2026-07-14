@@ -306,9 +306,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                     <span className={`text-4xl font-bold ${getScoreColor(score.total)}`}>
                       {score.total}
                     </span>
-                    <span className="text-c-text-muted text-lg">
-                      /100
-                    </span>
+                    <span className="text-c-text-muted text-lg">/100</span>
                   </div>
                 </div>
               </div>
@@ -572,9 +570,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 >
                   {getSeverityIcon(event.severity)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-c-text truncate">
-                      {event.description}
-                    </p>
+                    <p className="text-sm font-medium text-c-text truncate">{event.description}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <Clock className="w-3 h-3 text-c-text-muted" />
                       <span className="text-xs text-c-text-muted">
@@ -582,12 +578,8 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                       </span>
                       {event.ip && (
                         <>
-                          <span className="text-c-text-secondary">
-                            •
-                          </span>
-                          <span className="text-xs text-c-text-muted">
-                            {event.ip}
-                          </span>
+                          <span className="text-c-text-secondary">•</span>
+                          <span className="text-xs text-c-text-muted">{event.ip}</span>
                         </>
                       )}
                     </div>

@@ -1,5 +1,5 @@
-import { AppError, type AuthenticatedRequest, catchAsync, deps } from './shared.js';
 import { flagOn } from '../../utils/pgFlags.js';
+import { AppError, type AuthenticatedRequest, catchAsync, deps } from './shared.js';
 
 // =========================================
 // PHASE 5: REVENUE MANAGEMENT MODULE

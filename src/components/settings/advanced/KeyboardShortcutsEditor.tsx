@@ -266,9 +266,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
                 className={`grid grid-cols-[2fr,1fr,auto] gap-4 p-4 items-center hover:bg-c-surface-raised dark:hover:bg-navy-950 ${shortcut.isConflicting ? 'bg-danger-50 dark:bg-danger-500/10' : ''}`}
               >
                 <div>
-                  <p className="font-medium text-c-text">
-                    {getShortcutDescription(shortcut)}
-                  </p>
+                  <p className="font-medium text-c-text">{getShortcutDescription(shortcut)}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-secondary">
                       {getCategoryLabel(shortcut.category)}

@@ -1764,7 +1764,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     expectedRoi: 112,
     budgetCapex: 20000,
     budgetOpex: 64000,
-    deliverables: ['Role-based skills matrix', 'Passport certification tracks', 'Shift adoption scoreboard'],
+    deliverables: [
+      'Role-based skills matrix',
+      'Passport certification tracks',
+      'Shift adoption scoreboard',
+    ],
     successCriteria: [
       '80% of Line 3 operators passport-certified',
       'Twin alert-response adherence +30%',
@@ -1779,7 +1783,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
       {
         slug: 'passport-skills-matrix',
         title: 'Map digital skill requirements per frontline role',
-        description: 'Define, per role, the digital routines each operator, planner, and CSM must master.',
+        description:
+          'Define, per role, the digital routines each operator, planner, and CSM must master.',
         status: 'todo',
         priority: 'medium',
         dueDate: '+21d',
@@ -1789,7 +1794,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
       {
         slug: 'passport-pilot-cohort',
         title: 'Design pilot cohort with Line 3 operators',
-        description: 'Stand up the first frontline certification cohort where adoption gaps cost the most.',
+        description:
+          'Stand up the first frontline certification cohort where adoption gaps cost the most.',
         status: 'todo',
         priority: 'high',
         dueDate: '+40d',
@@ -1804,7 +1810,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'pending',
         decisionMaker: 'claire-laurent',
         deadline: '+18d',
-        rationale: 'People investment must be sized against production backfill cost before cohorts start.',
+        rationale:
+          'People investment must be sized against production backfill cost before cohorts start.',
       },
     ],
     milestones: [
@@ -1841,7 +1848,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     expectedRoi: 158,
     budgetCapex: 35000,
     budgetOpex: 82000,
-    deliverables: ['Voice-of-educator signal model', 'Renewal-save playbook', 'Quarterly educator experience report'],
+    deliverables: [
+      'Voice-of-educator signal model',
+      'Renewal-save playbook',
+      'Quarterly educator experience report',
+    ],
     successCriteria: [
       'At-risk renewals flagged 45 days earlier',
       'Educator NPS +10 pts',
@@ -1891,7 +1902,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'approved',
         decisionMaker: 'thomas-viau',
         deadline: '-3d',
-        rationale: 'Shared ownership of at-risk accounts produced no ownership; one name per account was approved.',
+        rationale:
+          'Shared ownership of at-risk accounts produced no ownership; one name per account was approved.',
       },
     ],
     milestones: [
@@ -1948,7 +1960,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
       {
         slug: 'esg-supplier-data-join',
         title: 'Extend supplier scorecards with origin and FSC custody fields',
-        description: 'Reuse the control-tower supplier records to carry origin and FSC chain-of-custody data.',
+        description:
+          'Reuse the control-tower supplier records to carry origin and FSC chain-of-custody data.',
         status: 'in_progress',
         priority: 'medium',
         dueDate: '+9d',
@@ -1973,7 +1986,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'approved',
         decisionMaker: 'jean-claude-laurent',
         deadline: '-5d',
-        rationale: 'Certifications the company already holds should work commercially, not sit in a compliance drawer.',
+        rationale:
+          'Certifications the company already holds should work commercially, not sit in a compliance drawer.',
       },
       {
         slug: 'esg-scope-boundary',
@@ -2018,7 +2032,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     expectedRoi: 124,
     budgetCapex: 15000,
     budgetOpex: 48000,
-    deliverables: ['Stage-gate framework with kill criteria', 'Concept funnel board', 'Quarterly innovation portfolio review'],
+    deliverables: [
+      'Stage-gate framework with kill criteria',
+      'Concept funnel board',
+      'Quarterly innovation portfolio review',
+    ],
     successCriteria: [
       'Every concept passes an evidence gate before design spend',
       'Kill decision within 30 days of failed gate',
@@ -2033,7 +2051,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
       {
         slug: 'gate-criteria-definition',
         title: 'Define gate evidence criteria and kill thresholds',
-        description: 'Set the evidence bar and kill thresholds for each stage gate before the next concept bet.',
+        description:
+          'Set the evidence bar and kill thresholds for each stage gate before the next concept bet.',
         status: 'in_progress',
         priority: 'high',
         dueDate: '+18d',
@@ -2043,7 +2062,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
       {
         slug: 'gate-motion-lab-onboard',
         title: 'Run Atelier Motion Concept Lab through Gate 1 as first tenant',
-        description: 'Prove the funnel on a live concept by putting the Motion Concept Lab through Gate 1.',
+        description:
+          'Prove the funnel on a live concept by putting the Motion Concept Lab through Gate 1.',
         status: 'todo',
         priority: 'medium',
         dueDate: '+45d',
@@ -2058,7 +2078,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'pending',
         decisionMaker: 'julien-moreau',
         deadline: '+24d',
-        rationale: 'One funnel prevents pet-project side doors, but the CTO must confirm it will not slow validated bets.',
+        rationale:
+          'One funnel prevents pet-project side doors, but the CTO must confirm it will not slow validated bets.',
       },
     ],
     milestones: [
@@ -2096,7 +2117,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     expectedRoi: 105,
     budgetCapex: 60000,
     budgetOpex: 90000,
-    deliverables: ['KPI definition registry (top 25)', 'Data lineage map for board scorecard', 'Telemetry quality monitor for plant feeds'],
+    deliverables: [
+      'KPI definition registry (top 25)',
+      'Data lineage map for board scorecard',
+      'Telemetry quality monitor for plant feeds',
+    ],
     successCriteria: [
       'Top 25 KPI definitions owned, documented, monitored',
       'Zero definition conflicts in board scorecard',
@@ -2111,7 +2136,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
       {
         slug: 'data-kpi-registry',
         title: 'Publish owned definitions for the top 25 portfolio KPIs',
-        description: 'Give OEE, lead-time variance, ARR, and 22 more KPIs exactly one defended definition.',
+        description:
+          'Give OEE, lead-time variance, ARR, and 22 more KPIs exactly one defended definition.',
         status: 'in_progress',
         priority: 'high',
         dueDate: '+15d',
@@ -2146,7 +2172,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'approved',
         decisionMaker: 'antoine-laurent',
         deadline: '-6d',
-        rationale: 'Evidence owners without blocking authority get politely ignored; the CEO made the mandate explicit.',
+        rationale:
+          'Evidence owners without blocking authority get politely ignored; the CEO made the mandate explicit.',
       },
       {
         slug: 'data-source-of-truth',

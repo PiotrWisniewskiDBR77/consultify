@@ -539,8 +539,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
   const labelClass = 'text-xs font-medium text-[var(--c-text-muted)]';
   const sectionTitleClass =
     'text-sm font-bold text-[var(--c-text)] mb-6 uppercase tracking-wider border-b border-[var(--c-border-subtle)] pb-2';
-  const cardClass =
-    'bg-[var(--c-surface)] border border-[var(--c-border-subtle)] rounded-lg p-6';
+  const cardClass = 'bg-[var(--c-surface)] border border-[var(--c-border-subtle)] rounded-lg p-6';
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
@@ -602,9 +601,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             {formState.pronouns && (
               <p className="text-[var(--c-text-muted)] text-xs">({formState.pronouns})</p>
             )}
-            <p className="text-sm font-medium text-[var(--c-accent)]">
-              {currentUser.companyName}
-            </p>
+            <p className="text-sm font-medium text-[var(--c-accent)]">{currentUser.companyName}</p>
 
             {/* Status Badge */}
             {(formState.statusMessage || formState.isOutOfOffice) && (
@@ -949,7 +946,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                   <button
                     onClick={() => updateFormField('isOutOfOffice', !formState.isOutOfOffice)}
                     className={`relative h-6 w-12 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${
-                      formState.isOutOfOffice ? 'bg-[var(--c-warning)]' : 'bg-[var(--c-border-strong)]'
+                      formState.isOutOfOffice
+                        ? 'bg-[var(--c-warning)]'
+                        : 'bg-[var(--c-border-strong)]'
                     }`}
                   >
                     <span

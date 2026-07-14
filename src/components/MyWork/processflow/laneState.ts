@@ -14,7 +14,10 @@ import type { Lane } from './useProcessFlowNodes';
 export const COLLAPSED_LANE_HEIGHT = 28;
 
 /** Resolve a lane's rendered band height, honouring collapse + user resize. */
-export function laneBandHeight(lane: Pick<Lane, 'collapsed' | 'height'>, defaultHeight: number): number {
+export function laneBandHeight(
+  lane: Pick<Lane, 'collapsed' | 'height'>,
+  defaultHeight: number
+): number {
   if (lane.collapsed) return COLLAPSED_LANE_HEIGHT;
   const h = lane.height;
   return typeof h === 'number' && h > 0 ? h : defaultHeight;
@@ -22,13 +25,16 @@ export function laneBandHeight(lane: Pick<Lane, 'collapsed' | 'height'>, default
 
 /** Toggle (or explicitly set) a lane's collapsed flag, returning a new array. */
 export function toggleLaneCollapsed(lanes: Lane[], laneId: string, next?: boolean): Lane[] {
-  return lanes.map((l) =>
-    l.id === laneId ? { ...l, collapsed: next ?? !l.collapsed } : l
-  );
+  return lanes.map((l) => (l.id === laneId ? { ...l, collapsed: next ?? !l.collapsed } : l));
 }
 
 /** Set a lane's height, clamped to a sane minimum; returns a new array. */
-export function setLaneHeight(lanes: Lane[], laneId: string, height: number, minHeight = 60): Lane[] {
+export function setLaneHeight(
+  lanes: Lane[],
+  laneId: string,
+  height: number,
+  minHeight = 60
+): Lane[] {
   const clamped = Math.max(minHeight, Math.round(height));
   return lanes.map((l) => (l.id === laneId ? { ...l, height: clamped } : l));
 }
@@ -55,10 +61,7 @@ export function laneBandLayout(
  * Whether a node belongs to a currently-collapsed lane (so it should be hidden
  * from the canvas). Nodes with no laneId are always visible.
  */
-export function isNodeInCollapsedLane(
-  nodeLaneId: unknown,
-  lanes: Lane[]
-): boolean {
+export function isNodeInCollapsedLane(nodeLaneId: unknown, lanes: Lane[]): boolean {
   if (typeof nodeLaneId !== 'string' || !nodeLaneId) return false;
   const lane = lanes.find((l) => l.id === nodeLaneId);
   return Boolean(lane?.collapsed);

@@ -59,8 +59,8 @@ export const BulletChart: React.FC<BulletChartProps> = ({
 }) => {
   const model = useMemo(() => {
     const hasForecast = typeof forecast === 'number' && Number.isFinite(forecast);
-    const candidates = [target, actual, baseline, ...(hasForecast ? [forecast!] : [])].filter(
-      (v) => Number.isFinite(v),
+    const candidates = [target, actual, baseline, ...(hasForecast ? [forecast!] : [])].filter((v) =>
+      Number.isFinite(v)
     );
     const rawMax = max ?? Math.max(1, ...candidates) * 1.1;
     const scaleMax = rawMax > 0 ? rawMax : 1;
@@ -108,7 +108,7 @@ export const BulletChart: React.FC<BulletChartProps> = ({
       data-testid="bullet-chart"
       role="img"
       aria-label={`${label ? `${label}: ` : ''}realizacja ${formatValue(
-        actual,
+        actual
       )} z celu ${formatValue(target)} (${Math.round(model.ratio * 100)}%)`}
       viewBox={`0 0 ${VB_W} ${height}`}
       width="100%"

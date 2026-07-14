@@ -168,9 +168,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             <BarChart3 size={28} className="text-blue-500" />
             Personal Analytics
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">
-            Track your productivity and performance
-          </p>
+          <p className="text-c-text-muted text-sm mt-1">Track your productivity and performance</p>
         </div>
         <div className="flex gap-2">
           <select
@@ -261,9 +259,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
 
       {/* Weekly Breakdown */}
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-c-text mb-4">
-          Daily Breakdown
-        </h3>
+        <h3 className="text-lg font-semibold text-c-text mb-4">Daily Breakdown</h3>
         <div className="space-y-3">
           {dailyActivity.slice(-7).map((day, i) => (
             <div key={i} className="flex items-center gap-4">
@@ -306,13 +302,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             <div key={i}>
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="text-c-text-secondary">{goal.label}</span>
-                <span
-                  className={
-                    goal.current >= goal.target
-                      ? 'text-green-600'
-                      : 'text-c-text'
-                  }
-                >
+                <span className={goal.current >= goal.target ? 'text-green-600' : 'text-c-text'}>
                   {goal.current} / {goal.target}
                 </span>
               </div>

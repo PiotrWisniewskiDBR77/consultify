@@ -10,7 +10,7 @@
  * doktrynie konsultanckiej (Minto/answer-first, ≤6 bulletów, action-titles).
  */
 
-import { resolveTheme, DEFAULT_THEME_ID } from './themeRegistry.js';
+import { DEFAULT_THEME_ID, resolveTheme } from './themeRegistry.js';
 
 export type DeliverableFormat = 'deck' | 'report' | 'table';
 export type Register = 'executive' | 'professional' | 'operational';
@@ -46,11 +46,21 @@ export interface GraphicDefaults {
   /** Paleta 60-30-10 (dominujący/wspierający/akcent) — hex. */
   palette: { dominant: string; supporting: string; accent: string; neutralText: string };
   /** Obrazy: gęstość + polityka źródła. */
-  images: { density: 'low' | 'medium' | 'high'; sourcePreference: 'stock-first' | 'generated-first'; maxImages: number };
+  images: {
+    density: 'low' | 'medium' | 'high';
+    sourcePreference: 'stock-first' | 'generated-first';
+    maxImages: number;
+  };
   /** Deck: różnorodność layoutów. */
   layout?: { minDistinctLayouts: number; noConsecutiveRepeat: boolean };
   /** Table: styl wizualny. */
-  tableStyle?: { headerTint: boolean; zebra: 'never' | 'whenDense' | 'always'; minimalBorders: boolean; numbersRightAligned: boolean; conditionalFormatting: boolean };
+  tableStyle?: {
+    headerTint: boolean;
+    zebra: 'never' | 'whenDense' | 'always';
+    minimalBorders: boolean;
+    numbersRightAligned: boolean;
+    conditionalFormatting: boolean;
+  };
 }
 
 export interface DeliverableDefaults {
@@ -96,7 +106,15 @@ const DEFAULTS: Record<DeliverableFormat, DeliverableDefaults> = {
       density: 'standard', // 4-8 stron
       answerFirst: true,
       targetUnits: 8,
-      narrativeArc: ['exec_summary', 'context', 'methodology', 'findings', 'recommendations', 'risks', 'next_steps'],
+      narrativeArc: [
+        'exec_summary',
+        'context',
+        'methodology',
+        'findings',
+        'recommendations',
+        'risks',
+        'next_steps',
+      ],
       maxWordsPerTitle: 16,
       actionTitles: true,
     },
@@ -140,8 +158,12 @@ function mergeGraphic(base: GraphicDefaults, over?: Partial<GraphicDefaults>): G
     fontPair: { ...base.fontPair, ...(over?.fontPair || {}) },
     palette: { ...base.palette, ...(over?.palette || {}) },
     images: { ...base.images, ...(over?.images || {}) },
-    layout: over?.layout ? { ...base.layout, ...over.layout } as GraphicDefaults['layout'] : base.layout,
-    tableStyle: over?.tableStyle ? { ...base.tableStyle, ...over.tableStyle } as GraphicDefaults['tableStyle'] : base.tableStyle,
+    layout: over?.layout
+      ? ({ ...base.layout, ...over.layout } as GraphicDefaults['layout'])
+      : base.layout,
+    tableStyle: over?.tableStyle
+      ? ({ ...base.tableStyle, ...over.tableStyle } as GraphicDefaults['tableStyle'])
+      : base.tableStyle,
   };
 }
 
@@ -154,7 +176,11 @@ function mergeGraphic(base: GraphicDefaults, over?: Partial<GraphicDefaults>): G
  */
 export function resolveDeliverableDefaults(
   format: DeliverableFormat,
-  overrides?: { content?: Partial<ContentDefaults>; graphic?: Partial<GraphicDefaults>; themeId?: string }
+  overrides?: {
+    content?: Partial<ContentDefaults>;
+    graphic?: Partial<GraphicDefaults>;
+    themeId?: string;
+  }
 ): DeliverableDefaults {
   const base = DEFAULTS[format];
 

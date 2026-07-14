@@ -158,9 +158,11 @@ export interface AcceptCandidateOptions {
  * Until then we derive a stable proposal from the artifact text so the inbox is
  * populated and the accept→generator path is exercisable end-to-end.
  */
-export function buildCandidateFromArtifact(
-  artifact: DiscoveryArtifact
-): { title: string; rationale: string; fitScore: number } {
+export function buildCandidateFromArtifact(artifact: DiscoveryArtifact): {
+  title: string;
+  rationale: string;
+  fitScore: number;
+} {
   const rawTitle = (artifact.title || '').trim();
   const baseTitle = rawTitle.length > 0 ? rawTitle : 'Inicjatywa z rozpoznania';
   // Tytuł kandydata = czytelny prefiks akcji + temat artefaktu (skrócony).
@@ -173,9 +175,10 @@ export function buildCandidateFromArtifact(
       : artifact.sourceType === 'assessment'
         ? 'wyniku assessmentu'
         : 'audytu';
-  const rationale = summary.length > 0
-    ? `AI sugeruje inicjatywę na podstawie ${sourceLabel}: ${summary}`.slice(0, 600)
-    : `AI sugeruje inicjatywę na podstawie ${sourceLabel} „${baseTitle}".`;
+  const rationale =
+    summary.length > 0
+      ? `AI sugeruje inicjatywę na podstawie ${sourceLabel}: ${summary}`.slice(0, 600)
+      : `AI sugeruje inicjatywę na podstawie ${sourceLabel} „${baseTitle}".`;
 
   // Deterministyczny fit_score 0..1: dłuższy/bogatszy artefakt = wyższe dopasowanie.
   // (LLM-SEAM: docelowo similarity vs portfel + pokrycie luk MECE — F4.)
@@ -241,7 +244,7 @@ export interface ProposeCandidateOptions {
  */
 export async function buildCandidateFromArtifactAI(
   artifact: DiscoveryArtifact,
-  options: ProposeCandidateOptions = {},
+  options: ProposeCandidateOptions = {}
 ): Promise<{ title: string; rationale: string; fitScore: number }> {
   const fallback = buildCandidateFromArtifact(artifact);
   try {
@@ -251,10 +254,16 @@ export async function buildCandidateFromArtifactAI(
     const isPolish = (options.language ?? 'pl') !== 'en';
     const sourceLabel =
       artifact.sourceType === 'interview_insight'
-        ? isPolish ? 'insight z wywiadu' : 'interview insight'
+        ? isPolish
+          ? 'insight z wywiadu'
+          : 'interview insight'
         : artifact.sourceType === 'assessment'
-          ? isPolish ? 'wynik assessmentu' : 'assessment result'
-          : isPolish ? 'audyt' : 'audit';
+          ? isPolish
+            ? 'wynik assessmentu'
+            : 'assessment result'
+          : isPolish
+            ? 'audyt'
+            : 'audit';
 
     const systemPrompt = isPolish
       ? `Jesteś konsultantem PMO. Z pojedynczego artefaktu rozpoznania proponujesz JEDNĄ inicjatywę: ostry, akcyjny tytuł, zwięzłe uzasadnienie i fit_score 0..1 (jak bardzo warto ją podjąć w kontekście portfela). Nie wymyślaj faktów spoza artefaktu. Zwróć WYŁĄCZNIE JSON: {"title": string, "rationale": string, "fitScore": number}.`
@@ -270,7 +279,7 @@ export async function buildCandidateFromArtifactAI(
         '',
         isPolish
           ? `Istniejące inicjatywy (NIE duplikuj; celuj w luki): ${options.portfolioSummary.slice(0, 1000)}`
-          : `Existing initiatives (do NOT duplicate; target gaps): ${options.portfolioSummary.slice(0, 1000)}`,
+          : `Existing initiatives (do NOT duplicate; target gaps): ${options.portfolioSummary.slice(0, 1000)}`
       );
     }
     lines.push('', isPolish ? 'Zwróć WYŁĄCZNIE JSON.' : 'Return JSON ONLY.');
@@ -315,8 +324,25 @@ export async function buildCandidateFromArtifactAI(
 // second DRAFT for the same initiative.
 
 const TITLE_STOPWORDS = new Set([
-  'inicjatywa', 'initiative', 'i', 'w', 'z', 'na', 'do', 'dla', 'oraz', 'the',
-  'a', 'an', 'of', 'for', 'to', 'and', 'or', 'on', 'with',
+  'inicjatywa',
+  'initiative',
+  'i',
+  'w',
+  'z',
+  'na',
+  'do',
+  'dla',
+  'oraz',
+  'the',
+  'a',
+  'an',
+  'of',
+  'for',
+  'to',
+  'and',
+  'or',
+  'on',
+  'with',
 ]);
 
 /** Significant, normalized words of a title (builder prefix + stopwords stripped). */
@@ -387,7 +413,7 @@ function mapRow(row: Record<string, unknown>): InitiativeCandidate {
     title: String(row.title ?? ''),
     rationale: String(row.rationale ?? ''),
     fitScore: row.fit_score != null ? Number(row.fit_score) : 0,
-    status: (String(row.status ?? 'pending') as CandidateStatus),
+    status: String(row.status ?? 'pending') as CandidateStatus,
     createdAt: row.created_at != null ? String(row.created_at) : undefined,
     createdBy: row.created_by != null ? String(row.created_by) : null,
   };
@@ -398,7 +424,10 @@ function mapRow(row: Record<string, unknown>): InitiativeCandidate {
  * initiative attached yet. Each source is independently fail-soft: a missing table or
  * a query error contributes [] instead of aborting the whole scan.
  */
-async function loadDiscoveryArtifacts(db: CandidateDb, orgId: string): Promise<DiscoveryArtifact[]> {
+async function loadDiscoveryArtifacts(
+  db: CandidateDb,
+  orgId: string
+): Promise<DiscoveryArtifact[]> {
   const artifacts: DiscoveryArtifact[] = [];
 
   // interview_insights — bez przypisanej inicjatywy.
@@ -514,7 +543,9 @@ export async function scanForCandidates(
      * build {title, rationale, fitScore}; a throw falls back to the deterministic
      * builder (fail-soft). Default (undefined) = deterministic builder.
      */
-    propose?: (artifact: DiscoveryArtifact) => Promise<{ title: string; rationale: string; fitScore: number }>;
+    propose?: (
+      artifact: DiscoveryArtifact
+    ) => Promise<{ title: string; rationale: string; fitScore: number }>;
   } = {}
 ): Promise<InitiativeCandidate[]> {
   if (!orgId) return [];
@@ -594,8 +625,7 @@ export async function listCandidates(
   if (!orgId) return [];
   try {
     const params: unknown[] = [orgId];
-    let sql =
-      `SELECT * FROM initiative_candidates WHERE organization_id = ?`;
+    let sql = `SELECT * FROM initiative_candidates WHERE organization_id = ?`;
     if (status) {
       sql += ` AND status = ?`;
       params.push(status);
@@ -635,7 +665,7 @@ export async function acceptCandidate(
   if (!id) return null;
 
   const opts: AcceptCandidateOptions =
-    typeof optsOrOrgId === 'string' ? { orgId: optsOrOrgId } : optsOrOrgId ?? {};
+    typeof optsOrOrgId === 'string' ? { orgId: optsOrOrgId } : (optsOrOrgId ?? {});
   const { orgId, userId } = opts;
   const fill = opts.fill !== false; // default true
   const language: 'en' | 'pl' = opts.language === 'en' ? 'en' : 'pl';
@@ -656,10 +686,9 @@ export async function acceptCandidate(
 
     // (a) Mark accepted (idempotent — accepting an accepted candidate is a no-op-ish).
     try {
-      await db.queryRun(
-        `UPDATE initiative_candidates SET status = 'accepted' WHERE id = ?`,
-        [candidate.id]
-      );
+      await db.queryRun(`UPDATE initiative_candidates SET status = 'accepted' WHERE id = ?`, [
+        candidate.id,
+      ]);
     } catch {
       // degrade — even if the status write fails we still proceed; a stale
       // 'pending' is recoverable.
@@ -669,7 +698,8 @@ export async function acceptCandidate(
     // Lineage source_type must be non-'manual' so the funnel enforces sourceId. A
     // candidate without a sourceId would trip the lineage guard → degrade source to
     // 'manual' in that edge case so the DRAFT still persists.
-    const lineageSourceType = candidate.sourceType && candidate.sourceId ? candidate.sourceType : 'manual';
+    const lineageSourceType =
+      candidate.sourceType && candidate.sourceId ? candidate.sourceType : 'manual';
     const lineageSourceId = candidate.sourceType && candidate.sourceId ? candidate.sourceId : null;
 
     // (b0) Zwornik cross-record de-dup — BEFORE minting a new DRAFT, check
@@ -762,7 +792,7 @@ export async function acceptCandidate(
             logger.warn(
               `[initiativeCandidateService] persist/hydrate failed for ${initiativeId} (ignored): ${
                 (persistErr as Error)?.message || persistErr
-              }`,
+              }`
             );
           }
         }

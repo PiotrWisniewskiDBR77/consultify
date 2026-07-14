@@ -18,7 +18,10 @@ export const AdminOrganizationOperationsPanel: React.FC = () => {
     {
       id: 'domains',
       label: t('admin.operations.tabs.domains.label', 'Domains'),
-      description: t('admin.operations.tabs.domains.desc', 'Tenant domain verification and routing'),
+      description: t(
+        'admin.operations.tabs.domains.desc',
+        'Tenant domain verification and routing'
+      ),
     },
     {
       id: 'branding',

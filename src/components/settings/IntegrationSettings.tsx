@@ -522,9 +522,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-c-text">Integrations</h2>
-          <p className="text-c-text-muted">
-            Connect external tools to streamline your workflow.
-          </p>
+          <p className="text-c-text-muted">Connect external tools to streamline your workflow.</p>
         </div>
         <EasySyncSetupShellPanel compact />
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-8 text-center">
@@ -1048,12 +1046,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         <Icon size={24} />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-c-text">
-                          {p.displayName}
-                        </h3>
-                        <p className="text-xs text-c-text-muted">
-                          {p.description || p.category}
-                        </p>
+                        <h3 className="font-semibold text-c-text">{p.displayName}</h3>
+                        <p className="text-xs text-c-text-muted">{p.description || p.category}</p>
                       </div>
                     </div>
                     {connected && (
@@ -1236,9 +1230,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               {isCommunicationProvider && (
                 <div className="space-y-4 rounded-xl border border-c-border-subtle dark:border-navy-700 p-4 bg-c-surface-raised">
                   <div>
-                    <div className="text-sm font-medium text-c-text">
-                      Project channel mappings
-                    </div>
+                    <div className="text-sm font-medium text-c-text">Project channel mappings</div>
                     <div className="text-xs text-c-text-muted mt-1">
                       Assign at least one project to a Slack or Teams channel. Optional mapping
                       webhook URLs can override the default webhook per project.
@@ -1412,37 +1404,26 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                 <Loader2 size={24} className="animate-spin text-blue-600" />
               </div>
             ) : logsModal.logs.length === 0 ? (
-              <div className="text-sm text-c-text-muted py-10 text-center">
-                No sync logs yet.
-              </div>
+              <div className="text-sm text-c-text-muted py-10 text-center">No sync logs yet.</div>
             ) : (
               <div className="overflow-auto border border-c-border-subtle dark:border-navy-700 rounded-xl">
                 <table className="w-full text-sm">
                   <thead className="bg-c-surface-raised">
                     <tr>
-                      <th className="text-left p-3 text-c-text-secondary font-medium">
-                        Started
-                      </th>
-                      <th className="text-left p-3 text-c-text-secondary font-medium">
-                        Status
-                      </th>
-                      <th className="text-left p-3 text-c-text-secondary font-medium">
-                        Type
-                      </th>
-                      <th className="text-left p-3 text-c-text-secondary font-medium">
-                        Processed
-                      </th>
-                      <th className="text-left p-3 text-c-text-secondary font-medium">
-                        Scope
-                      </th>
-                      <th className="text-left p-3 text-c-text-secondary font-medium">
-                        Duration
-                      </th>
+                      <th className="text-left p-3 text-c-text-secondary font-medium">Started</th>
+                      <th className="text-left p-3 text-c-text-secondary font-medium">Status</th>
+                      <th className="text-left p-3 text-c-text-secondary font-medium">Type</th>
+                      <th className="text-left p-3 text-c-text-secondary font-medium">Processed</th>
+                      <th className="text-left p-3 text-c-text-secondary font-medium">Scope</th>
+                      <th className="text-left p-3 text-c-text-secondary font-medium">Duration</th>
                     </tr>
                   </thead>
                   <tbody>
                     {logsModal.logs.map((l: any) => (
-                      <tr key={l.id} className="border-t border-c-border-subtle dark:border-navy-700">
+                      <tr
+                        key={l.id}
+                        className="border-t border-c-border-subtle dark:border-navy-700"
+                      >
                         <td className="p-3 text-c-text">
                           {l.startedAt ? new Date(l.startedAt).toLocaleString() : '—'}
                         </td>
@@ -1459,9 +1440,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             {l.status || 'unknown'}
                           </span>
                         </td>
-                        <td className="p-3 text-c-text-secondary">
-                          {l.syncType || '—'}
-                        </td>
+                        <td className="p-3 text-c-text-secondary">{l.syncType || '—'}</td>
                         <td className="p-3 text-c-text-secondary">
                           {typeof l.itemsProcessed === 'number' ? l.itemsProcessed : '—'}
                         </td>
@@ -1585,9 +1564,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   {webhook.secretKey && (
                     <div className="pt-4 border-t border-c-border-subtle dark:border-navy-700">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-c-text-muted">
-                          Secret Key:
-                        </span>
+                        <span className="text-xs text-c-text-muted">Secret Key:</span>
                         <code className="text-xs bg-c-surface-raised px-2 py-1 rounded font-mono">
                           {showSecret === webhook.id ? webhook.secretKey : '••••••••••••••••'}
                         </code>
@@ -1618,9 +1595,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       {isWebhookModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-c-surface rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-4 text-c-text">
-              Create Webhook
-            </h3>
+            <h3 className="text-lg font-bold mb-4 text-c-text">Create Webhook</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1">
@@ -1674,9 +1649,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               <span className="text-sm font-medium text-c-text-secondary">
                                 {event.type}
                               </span>
-                              <p className="text-xs text-c-text-muted">
-                                {event.description}
-                              </p>
+                              <p className="text-xs text-c-text-muted">{event.description}</p>
                             </div>
                           </label>
                         ))}

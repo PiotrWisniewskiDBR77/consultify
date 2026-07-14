@@ -217,8 +217,18 @@ export async function enforceTokenQuota(
   const orgId = safeOrgId(req);
 
   if (!orgId) {
-    const wrote = writeUnauthorized(res, '[QuotaMiddleware] Failed to write token unauthorized response', next);
-    if (!wrote) { try { next(); } catch { /* swallow */ } }
+    const wrote = writeUnauthorized(
+      res,
+      '[QuotaMiddleware] Failed to write token unauthorized response',
+      next
+    );
+    if (!wrote) {
+      try {
+        next();
+      } catch {
+        /* swallow */
+      }
+    }
     return;
   }
 
@@ -291,7 +301,11 @@ export async function enforceTokenQuota(
           code: 'QUOTA_CHECK_UNAVAILABLE',
         });
       } else {
-        try { next(); } catch { /* swallow */ }
+        try {
+          next();
+        } catch {
+          /* swallow */
+        }
       }
       return;
     }
@@ -311,7 +325,11 @@ export async function enforceTokenQuota(
 
     if (!quota.allowed) {
       if (isResponseCommitted(res)) {
-        try { next(); } catch { /* swallow */ }
+        try {
+          next();
+        } catch {
+          /* swallow */
+        }
         return;
       }
       writeError(res, 429, {
@@ -335,7 +353,11 @@ export async function enforceTokenQuota(
       writeHeader(res as any, 'X-Quota-Percentage', quota.percentage.toString());
     }
 
-    try { next(); } catch { /* swallow downstream next errors */ }
+    try {
+      next();
+    } catch {
+      /* swallow downstream next errors */
+    }
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
     if (!isResponseCommitted(res)) {
@@ -345,7 +367,11 @@ export async function enforceTokenQuota(
         code: 'QUOTA_CHECK_UNAVAILABLE',
       });
     } else {
-      try { next(); } catch { /* swallow */ }
+      try {
+        next();
+      } catch {
+        /* swallow */
+      }
     }
   }
 }
@@ -431,7 +457,11 @@ export async function enforceStorageQuota(
           code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
         });
       } else {
-        try { next(); } catch { /* swallow */ }
+        try {
+          next();
+        } catch {
+          /* swallow */
+        }
       }
       return;
     }
@@ -451,7 +481,11 @@ export async function enforceStorageQuota(
 
     if (!quota.allowed) {
       if (isResponseCommitted(res)) {
-        try { next(); } catch { /* swallow */ }
+        try {
+          next();
+        } catch {
+          /* swallow */
+        }
         return;
       }
       const usedBytes = Math.max(0, quota.used);
@@ -472,7 +506,11 @@ export async function enforceStorageQuota(
       return;
     }
 
-    try { next(); } catch { /* swallow downstream next errors */ }
+    try {
+      next();
+    } catch {
+      /* swallow downstream next errors */
+    }
   } catch (error: unknown) {
     logger.error('Storage quota check error:', error);
     if (!isResponseCommitted(res)) {
@@ -482,7 +520,11 @@ export async function enforceStorageQuota(
         code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
       });
     } else {
-      try { next(); } catch { /* swallow */ }
+      try {
+        next();
+      } catch {
+        /* swallow */
+      }
     }
   }
 }
@@ -512,11 +554,15 @@ export async function recordTokenUsageAfterResponse(
     const safeTokens = Math.min(rawTokens, TOKEN_MAX);
 
     const safeAction = String(action).slice(0, ACTION_MAX_LEN);
-    const endpoint = truncate(safeGet(() => req.path, ''), STRING_FIELD_MAX_LEN);
-    const model = truncate(
-      safeGet(() => (body as { model?: string })?.model, undefined) ?? 'default',
+    const endpoint = truncate(
+      safeGet(() => req.path, ''),
       STRING_FIELD_MAX_LEN
-    ) ?? 'default';
+    );
+    const model =
+      truncate(
+        safeGet(() => (body as { model?: string })?.model, undefined) ?? 'default',
+        STRING_FIELD_MAX_LEN
+      ) ?? 'default';
 
     await svc.recordTokenUsage(orgId, userId, safeTokens, safeAction, {
       endpoint,
@@ -549,7 +595,10 @@ export async function recordStorageAfterUpload(
     const file = safeFile(req);
 
     const safeAction = String(action).slice(0, ACTION_MAX_LEN);
-    const endpoint = truncate(safeGet(() => req.path, ''), STRING_FIELD_MAX_LEN);
+    const endpoint = truncate(
+      safeGet(() => req.path, ''),
+      STRING_FIELD_MAX_LEN
+    );
     const filename = truncate(
       safeGet(() => file?.originalname, undefined),
       STRING_FIELD_MAX_LEN

@@ -129,15 +129,11 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
           <div className="text-xs text-[var(--c-text-muted)]">Total Insights</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-[var(--c-success)]">
-            {confirmedInsights}
-          </div>
+          <div className="text-2xl font-bold text-[var(--c-success)]">{confirmedInsights}</div>
           <div className="text-xs text-[var(--c-text-muted)]">Confirmed</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-[var(--c-warning)]">
-            {highImpactInsights}
-          </div>
+          <div className="text-2xl font-bold text-[var(--c-warning)]">{highImpactInsights}</div>
           <div className="text-xs text-[var(--c-text-muted)]">High Impact</div>
         </div>
       </div>
@@ -170,9 +166,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm text-[var(--c-text)]">
-                    {config.label}
-                  </span>
+                  <span className="font-medium text-sm text-[var(--c-text)]">{config.label}</span>
                   {isCompleted && <CheckCircle size={14} className="text-[var(--c-success)]" />}
                 </div>
                 <span className="text-xs text-[var(--c-text-muted)]">
@@ -182,13 +176,12 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
               {categoryInsights.length > 0 && (
                 <div className="flex gap-1">
                   {categoryInsights.slice(0, 3).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-1.5 h-1.5 rounded-token-pill ${config.dot}`}
-                    />
+                    <div key={i} className={`w-1.5 h-1.5 rounded-token-pill ${config.dot}`} />
                   ))}
                   {categoryInsights.length > 3 && (
-                    <span className="text-xs text-[var(--c-text-muted)]">+{categoryInsights.length - 3}</span>
+                    <span className="text-xs text-[var(--c-text-muted)]">
+                      +{categoryInsights.length - 3}
+                    </span>
                   )}
                 </div>
               )}
@@ -200,9 +193,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
       {/* Organization Context Preview */}
       {context && context.completenessPercent > 0 && (
         <div className="p-4 border-t border-[var(--c-border-subtle)]">
-          <h4 className="font-medium text-sm text-[var(--c-text)] mb-3">
-            Organization Context
-          </h4>
+          <h4 className="font-medium text-sm text-[var(--c-text)] mb-3">Organization Context</h4>
           <div className="space-y-2">
             {context.keyMetrics.length > 0 && (
               <div className="text-xs">

@@ -13,8 +13,6 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { createBudget, listBudgets } from '../../services/budgetingService.js';
-import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
-import { resolveInitiativeProjectId } from '../../services/initiativeProjectPolicyService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import {
@@ -93,6 +91,8 @@ import {
   validateStatement,
 } from '../../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
+import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../../services/initiativeProjectPolicyService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -642,9 +642,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const modelId = String(req.params.modelId || '');
-    const { FinanceEnterpriseService } = await import(
-      '../../services/financeEnterpriseService.js'
-    );
+    const { FinanceEnterpriseService } = await import('../../services/financeEnterpriseService.js');
     const svc = new FinanceEnterpriseService();
     const versions = await svc.getModelVersions(organizationId, modelId);
     return res.json({ data: { versions, count: versions.length }, meta: financeMeta() });
@@ -665,9 +663,7 @@ router.get(
     if (!modelId) {
       return res.status(400).json({ error: 'modelId is required' });
     }
-    const { FinanceEnterpriseService } = await import(
-      '../../services/financeEnterpriseService.js'
-    );
+    const { FinanceEnterpriseService } = await import('../../services/financeEnterpriseService.js');
     const svc = new FinanceEnterpriseService();
     const diff = await svc.compareVersions(organizationId, from, to);
     if (!diff) {
@@ -817,10 +813,7 @@ router.get(
     }
 
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="model-${modelId}-outputs.json"`
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="model-${modelId}-outputs.json"`);
     return res.json({ modelId, outputs, exportedAt: new Date().toISOString() });
   })
 );

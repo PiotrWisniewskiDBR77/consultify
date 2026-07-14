@@ -11,7 +11,7 @@
  * Zachowanie: każdy endpoint /api/workqueue zwraca 501 (Not Implemented) — jawnie,
  * zamiast 404 czy crashu. Przywrócono 2026-06-24 (sprzątanie po nocnym runie M05–M09).
  */
-import { Router, type Request, type Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 
 const router = Router();
 

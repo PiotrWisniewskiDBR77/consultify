@@ -26,6 +26,18 @@ import {
 } from '@/store/useToolStore';
 
 import {
+  applyAmbitionDecomposerPendingAction,
+  buildAmbitionDecomposerFullSessionPrompt,
+  buildAmbitionDecomposerPrioritiesPrompt,
+  buildAmbitionDecomposerRethinkPrompt,
+} from './toolAi/ambitionDecomposer';
+import {
+  applyCapabilityMapperPendingAction,
+  buildCapabilityMapperFullSessionPrompt,
+  buildCapabilityMapperGapsPrompt,
+  buildCapabilityMapperRethinkPrompt,
+} from './toolAi/capabilityMapper';
+import {
   applyDynamicSwotPendingAction,
   buildDynamicSwotConversationProtocol,
   buildDynamicSwotCorrelationsPrompt,
@@ -34,6 +46,13 @@ import {
   createEmptyMissionContext,
   type ToolAiPendingAction,
 } from './toolAi/dynamicSwot';
+import {
+  applyFocusTradeoffPendingAction,
+  buildFocusTradeoffFullSessionPrompt,
+  buildFocusTradeoffRethinkPrompt,
+  buildFocusTradeoffTradeoffsPrompt,
+} from './toolAi/focusTradeoff';
+import { validateGrounding } from './toolAi/groundingValidator';
 import {
   applyGrowthPathsPendingAction,
   buildGrowthPathsFullSessionPrompt,
@@ -46,7 +65,18 @@ import {
   buildMarketForcesImplicationsPrompt,
   buildMarketForcesRethinkPrompt,
 } from './toolAi/marketForces';
+import {
+  applyNarrativeEnginePendingAction,
+  buildNarrativeEngineFullSessionPrompt,
+  buildNarrativeEngineRethinkPrompt,
+  buildNarrativeEngineThreadsPrompt,
+} from './toolAi/narrativeEngine';
 import { getToolStepOpeningQuestion } from './toolAi/openingQuestions';
+import {
+  applyOperationalPendingAction,
+  buildOperationalFullSessionPrompt,
+  type OperationalSectionMeta,
+} from './toolAi/operationalTool';
 import {
   applyPortfolioPendingAction,
   buildPortfolioFullSessionPrompt,
@@ -61,36 +91,6 @@ import {
   buildRiskSynthesisPrompt,
 } from './toolAi/riskUncertainty';
 import { getToolSystemPrompt } from './toolAi/systemPrompts';
-import {
-  applyAmbitionDecomposerPendingAction,
-  buildAmbitionDecomposerFullSessionPrompt,
-  buildAmbitionDecomposerPrioritiesPrompt,
-  buildAmbitionDecomposerRethinkPrompt,
-} from './toolAi/ambitionDecomposer';
-import {
-  applyFocusTradeoffPendingAction,
-  buildFocusTradeoffFullSessionPrompt,
-  buildFocusTradeoffRethinkPrompt,
-  buildFocusTradeoffTradeoffsPrompt,
-} from './toolAi/focusTradeoff';
-import {
-  applyNarrativeEnginePendingAction,
-  buildNarrativeEngineFullSessionPrompt,
-  buildNarrativeEngineRethinkPrompt,
-  buildNarrativeEngineThreadsPrompt,
-} from './toolAi/narrativeEngine';
-import {
-  applyOperationalPendingAction,
-  buildOperationalFullSessionPrompt,
-  type OperationalSectionMeta,
-} from './toolAi/operationalTool';
-import {
-  applyCapabilityMapperPendingAction,
-  buildCapabilityMapperFullSessionPrompt,
-  buildCapabilityMapperGapsPrompt,
-  buildCapabilityMapperRethinkPrompt,
-} from './toolAi/capabilityMapper';
-import { validateGrounding } from './toolAi/groundingValidator';
 import {
   applyValueChainPendingAction,
   buildValueChainConversationProtocol,
@@ -454,9 +454,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         setSessionGenerationStatus('idle');
         return;
       }
-      const stepsById = new Map(
-        ((currentSession.steps || []) as any[]).map((s) => [s.id, s])
-      );
+      const stepsById = new Map(((currentSession.steps || []) as any[]).map((s) => [s.id, s]));
       const sectionMeta: OperationalSectionMeta[] = sectionIds.map((id) => {
         const step = stepsById.get(id) as any;
         return {
@@ -524,11 +522,11 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                             formatForPrompt()
                           )
                         : toolType === 'dynamic-swot'
-                  ? buildDynamicSwotFullSessionPrompt(
-                      currentSession.inputData as SWOTData | undefined,
-                      formatForPrompt()
-                    )
-                  : '';
+                          ? buildDynamicSwotFullSessionPrompt(
+                              currentSession.inputData as SWOTData | undefined,
+                              formatForPrompt()
+                            )
+                          : '';
 
     if (!prompt) {
       setSessionGenerationStatus('idle');
@@ -669,11 +667,11 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                               userComment
                             )
                           : buildDynamicSwotRethinkPrompt(
-                    currentSession.inputData as SWOTData,
-                    cardType,
-                    cardId,
-                    userComment
-                  );
+                              currentSession.inputData as SWOTData,
+                              cardType,
+                              cardId,
+                              userComment
+                            );
 
       setPendingAction('rethink');
       await sendMessage(prompt);
@@ -945,34 +943,34 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                               },
                             })
                           : applyDynamicSwotPendingAction({
-                  pendingAction,
-                  parsed,
-                  currentStepId: currentStepDef?.id,
-                  swotData: (currentSession?.inputData as SWOTData | undefined) || {
-                    context: createEmptyMissionContext(),
-                    signals: [],
-                    items: [],
-                    correlations: [],
-                    tensions: [],
-                    recommendedMoves: [],
-                    outputCandidates: [],
-                  },
-                  rethinkTarget,
-                  toolType,
-                  actions: {
-                    updateInputData,
-                    addSWOTSignal,
-                    addSWOTItem,
-                    addCorrelation,
-                    setSWOTTensions,
-                    setSWOTMoves,
-                    setSWOTOutputCandidates,
-                    setSWOTSummary,
-                    setInitiatives,
-                    setSessionGenerationStatus,
-                    updateCardAfterRethink,
-                  },
-                });
+                              pendingAction,
+                              parsed,
+                              currentStepId: currentStepDef?.id,
+                              swotData: (currentSession?.inputData as SWOTData | undefined) || {
+                                context: createEmptyMissionContext(),
+                                signals: [],
+                                items: [],
+                                correlations: [],
+                                tensions: [],
+                                recommendedMoves: [],
+                                outputCandidates: [],
+                              },
+                              rethinkTarget,
+                              toolType,
+                              actions: {
+                                updateInputData,
+                                addSWOTSignal,
+                                addSWOTItem,
+                                addCorrelation,
+                                setSWOTTensions,
+                                setSWOTMoves,
+                                setSWOTOutputCandidates,
+                                setSWOTSummary,
+                                setInitiatives,
+                                setSessionGenerationStatus,
+                                updateCardAfterRethink,
+                              },
+                            });
     const normalizedResult = result as {
       missionSuggestion?: Partial<ConsultingMissionContext> | null;
       clearRethinkTarget?: boolean;

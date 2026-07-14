@@ -427,7 +427,10 @@ const PermissionsMatrixView: React.FC = () => {
           <div role="alert" className="flex items-center gap-2 text-danger-400">
             <AlertTriangle className="w-5 h-5" />
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-danger-300">
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-sm hover:text-danger-300"
+            >
               Dismiss
             </button>
           </div>
@@ -476,7 +479,9 @@ const PermissionsMatrixView: React.FC = () => {
         Object.keys(matrix.categories).length > 0 && (
           <CardWithHeader title="Permissions Matrix" subtitle="Role-based permissions overview">
             <div className="overflow-x-auto">
-              <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
+              <table
+                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+              >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700">
                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">

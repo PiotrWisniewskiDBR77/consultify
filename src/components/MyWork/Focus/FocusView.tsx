@@ -439,9 +439,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               {/* Title */}
               <h4
                 className={`text-sm font-semibold leading-snug ${
-                  item.isCompleted
-                    ? 'text-c-text-muted line-through'
-                    : 'text-c-text'
+                  item.isCompleted ? 'text-c-text-muted line-through' : 'text-c-text'
                 }`}
               >
                 {item.title}
@@ -649,9 +647,7 @@ const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
           >
             {item.type === 'decision' ? 'Decision' : 'Task'}
           </ChipBase>
-          <h4 className="text-sm font-semibold text-c-text truncate mt-1">
-            {item.title}
-          </h4>
+          <h4 className="text-sm font-semibold text-c-text truncate mt-1">{item.title}</h4>
         </div>
       </div>
     </div>
@@ -737,9 +733,7 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
             <div className={`p-3 rounded-full ${config.bgColor} mb-2`}>
               {renderIconNode(config.icon, { size: 16 })}
             </div>
-            <p className="text-sm text-c-text-muted">
-              {t('myWork.focus.emptyColumn', 'No items')}
-            </p>
+            <p className="text-sm text-c-text-muted">{t('myWork.focus.emptyColumn', 'No items')}</p>
           </div>
         )}
       </div>
@@ -872,10 +866,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                             </div>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {sug.reasons.map((r, ri) => (
-                                <span
-                                  key={ri}
-                                  className="text-[10px] text-c-text-muted"
-                                >
+                                <span key={ri} className="text-[10px] text-c-text-muted">
                                   {ri > 0 && '·'} {r}
                                 </span>
                               ))}
@@ -922,9 +913,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                               </span>
                             </div>
                           )}
-                          <span className="text-sm font-medium text-c-text">
-                            {user.name}
-                          </span>
+                          <span className="text-sm font-medium text-c-text">{user.name}</span>
                         </button>
                       ))}
                   </div>
@@ -1739,9 +1728,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
           </div>
           <div className="mt-2 flex items-center gap-4">
             <div>
-              <div className="text-lg font-semibold text-c-text">
-                {workloadSummary?.total ?? 0}
-              </div>
+              <div className="text-lg font-semibold text-c-text">{workloadSummary?.total ?? 0}</div>
               <div className="text-xs text-c-text-muted">
                 {t('myWork.focus.openItems', 'Open items')}
               </div>
@@ -1750,9 +1737,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
               <div className="text-lg font-semibold text-amber-600 dark:text-amber-400">
                 {workloadSummary?.atRisk ?? 0}
               </div>
-              <div className="text-xs text-c-text-muted">
-                {t('myWork.focus.atRisk', 'At risk')}
-              </div>
+              <div className="text-xs text-c-text-muted">{t('myWork.focus.atRisk', 'At risk')}</div>
             </div>
             <div>
               <div className="text-lg font-semibold text-danger-600 dark:text-danger-400">
@@ -1859,10 +1844,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
           </div>
 
           {showAIPlan ? (
-            <div
-              className="shrink-0 bg-c-bg p-3"
-              style={{ width: 'clamp(340px, 28%, 480px)' }}
-            >
+            <div className="shrink-0 bg-c-bg p-3" style={{ width: 'clamp(340px, 28%, 480px)' }}>
               <PreviewPaneShell
                 title={t('myWork.focus.aiPlan', 'AI Plan')}
                 onClose={() => setShowAIPlan(false)}
@@ -1871,10 +1853,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
               </PreviewPaneShell>
             </div>
           ) : previewOpen && selectedItem ? (
-            <div
-              className="shrink-0 bg-c-bg p-3"
-              style={{ width: 'clamp(340px, 28%, 480px)' }}
-            >
+            <div className="shrink-0 bg-c-bg p-3" style={{ width: 'clamp(340px, 28%, 480px)' }}>
               <PreviewPaneShell
                 title={selectedItem.title}
                 onClose={() => {

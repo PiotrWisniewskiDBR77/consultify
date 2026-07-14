@@ -347,9 +347,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
         <div className="border-t border-c-border-subtle dark:border-navy-700 pt-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <label className="font-medium text-c-text">
-                Automatic Data Anonymization
-              </label>
+              <label className="font-medium text-c-text">Automatic Data Anonymization</label>
               <p className="text-sm text-c-text-muted">
                 Automatically anonymize old data on schedule
               </p>
@@ -424,9 +422,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 <Icon
                   size={24}
                   className={
-                    exportFormat === format.value
-                      ? 'text-c-accent'
-                      : 'text-c-text-secondary'
+                    exportFormat === format.value ? 'text-c-accent' : 'text-c-text-secondary'
                   }
                 />
                 <p className="font-medium text-c-text mt-2">{format.label}</p>
@@ -478,9 +474,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                     </div>
                     <div>
                       <p className="font-medium text-c-text">{category.name}</p>
-                      <p className="text-sm text-c-text-muted">
-                        {category.description}
-                      </p>
+                      <p className="text-sm text-c-text-muted">{category.description}</p>
                       <p className="text-xs text-c-text-secondary mt-1">
                         {category.count} items • {category.size}
                       </p>
@@ -560,9 +554,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
             <Download size={24} className="text-indigo-600" />
             <div className="text-left">
               <p className="font-medium text-c-text">Export for Transfer</p>
-              <p className="text-sm text-c-text-muted">
-                GDPR-compliant data package
-              </p>
+              <p className="text-sm text-c-text-muted">GDPR-compliant data package</p>
             </div>
           </button>
           <button
@@ -574,9 +566,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
             <Upload size={24} className="text-emerald-600" />
             <div className="text-left">
               <p className="font-medium text-c-text">Import Data</p>
-              <p className="text-sm text-c-text-muted">
-                From ClickUp, Monday, Asana
-              </p>
+              <p className="text-sm text-c-text-muted">From ClickUp, Monday, Asana</p>
             </div>
           </button>
         </div>

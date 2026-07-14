@@ -73,7 +73,7 @@ function getDisplayFacts(facts: unknown): Array<{ label: string; value: string }
 }
 
 export const Wave6ContextLearningPanel: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [panel, setPanel] = React.useState<any>(null);
@@ -287,7 +287,8 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                 checked={privateMode}
                 onChange={(event) => setPrivateMode(event.target.checked)}
               />
-              <Lock size={15} /> {t('aios.wave6ContextLearningPanel.privateModeBlocksLearningWrites')}
+              <Lock size={15} />{' '}
+              {t('aios.wave6ContextLearningPanel.privateModeBlocksLearningWrites')}
             </label>
             <button
               type="button"
@@ -338,7 +339,9 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               <option value="project">{t('aios.wave6ContextLearningPanel.project')}</option>
               <option value="org">{t('aios.wave6ContextLearningPanel.organization')}</option>
               <option value="tenant">{t('aios.wave6ContextLearningPanel.tenant')}</option>
-              <option value="public_product">{t('aios.wave6ContextLearningPanel.publicProduct')}</option>
+              <option value="public_product">
+                {t('aios.wave6ContextLearningPanel.publicProduct')}
+              </option>
             </select>
             <label className="block text-xs font-medium text-slate-500">
               {t('aios.wave6ContextLearningPanel.memoryKey')}
@@ -360,9 +363,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
             <textarea
               value={memoryValue}
               onChange={(event) => setMemoryValue(event.target.value)}
-              placeholder={
-                t('aios.wave6ContextLearningPanel.whatShouldAiRememberExampleI')
-              }
+              placeholder={t('aios.wave6ContextLearningPanel.whatShouldAiRememberExampleI')}
               rows={4}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
@@ -390,7 +391,8 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                     {snapshot.snapshotType} {t('aios.wave6ContextLearningPanel.snapshot')}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {t('aios.wave6ContextLearningPanel.fresh')}: {snapshot.freshnessAt || (t('aios.wave6ContextLearningPanel.unknown'))}
+                    {t('aios.wave6ContextLearningPanel.fresh')}:{' '}
+                    {snapshot.freshnessAt || t('aios.wave6ContextLearningPanel.unknown')}
                   </div>
                   <div className="mt-2 rounded bg-slate-50 p-2 text-xs dark:bg-navy-950">
                     {getDisplayFacts(snapshot.facts).length > 0 ? (
@@ -441,8 +443,9 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                       </div>
                       <div className="mt-1 text-slate-600 dark:text-slate-300">{memory.value}</div>
                       <div className="mt-2 text-xs text-slate-500">
-                        {memory.assistantScope} / {memory.memoryScope} / {t('aios.wave6ContextLearningPanel.source')}:{' '}
-                        {memory.sourceLabel || (t('aios.wave6ContextLearningPanel.unknown2'))}
+                        {memory.assistantScope} / {memory.memoryScope} /{' '}
+                        {t('aios.wave6ContextLearningPanel.source')}:{' '}
+                        {memory.sourceLabel || t('aios.wave6ContextLearningPanel.unknown2')}
                       </div>
                     </div>
                     <div className="flex shrink-0 gap-2">

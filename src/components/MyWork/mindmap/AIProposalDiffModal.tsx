@@ -140,7 +140,9 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
               {isPl ? 'Brak proponowanych zmian.' : 'No changes proposed.'}
             </div>
           ) : (
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-xs">
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-xs"
+            >
               <thead>
                 <tr className="text-left text-[10px] font-semibold text-c-text-secondary dark:text-c-text-secondary uppercase tracking-wider border-b border-c-border-subtle dark:border-c-border-subtle">
                   <th className="py-1.5 w-8" />
@@ -192,7 +194,9 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                       <td className="py-2 font-medium text-c-text-secondary dark:text-c-text">
                         {op.label}
                       </td>
-                      <td className="py-2 text-c-text-secondary dark:text-c-text-secondary">{op.detail}</td>
+                      <td className="py-2 text-c-text-secondary dark:text-c-text-secondary">
+                        {op.detail}
+                      </td>
                     </tr>
                   );
                 })}

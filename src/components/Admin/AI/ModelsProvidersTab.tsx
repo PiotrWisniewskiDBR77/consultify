@@ -553,7 +553,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
           </p>
         </div>
         <div className="overflow-x-auto">
-          <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="admin-table">
+          <table
+            /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="admin-table"
+          >
             <thead>
               <tr>
                 <th>Provider</th>

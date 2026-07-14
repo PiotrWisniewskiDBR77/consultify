@@ -291,8 +291,10 @@ router.get('/connection', async (req: Request, res: Response, next: NextFunction
           tier: org.tier,
           status: org.status,
           partnerSince: org.partner_since || undefined,
-          licenseDiscountPercent: org.license_discount_percent != null ? Number(org.license_discount_percent) : undefined,
-          commissionRatePercent: org.commission_rate_percent != null ? Number(org.commission_rate_percent) : undefined,
+          licenseDiscountPercent:
+            org.license_discount_percent != null ? Number(org.license_discount_percent) : undefined,
+          commissionRatePercent:
+            org.commission_rate_percent != null ? Number(org.commission_rate_percent) : undefined,
           performanceScore: org.performance_score ?? undefined,
           publicListingEnabled: Boolean(org.public_listing_enabled),
           specializations: specializations.map((s) => s.framework),
@@ -973,7 +975,9 @@ router.get('/earnings', async (req: Request, res: Response, next: NextFunction) 
       earnings = await PartnerCommissionService.getEarningsSummary(partnerOrgId);
     } catch (dbError: any) {
       logger.error('Earnings: DB query failed:', dbError?.message);
-      return res.status(503).json({ success: false, error: 'Earnings temporarily unavailable', code: 'DB_ERROR' });
+      return res
+        .status(503)
+        .json({ success: false, error: 'Earnings temporarily unavailable', code: 'DB_ERROR' });
     }
 
     res.json({ success: true, data: earnings });

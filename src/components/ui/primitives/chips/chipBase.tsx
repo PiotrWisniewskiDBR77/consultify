@@ -68,7 +68,8 @@ const CHIP_STRUCTURE =
  * The neutral color layer. Uses ONLY `c.*` tokens, so it adapts to light/dark
  * via the CSS vars with no `dark:` overrides.
  */
-const CHIP_NEUTRAL = 'border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-c-text-secondary';
+const CHIP_NEUTRAL =
+  'border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-c-text-secondary';
 
 export interface ChipBaseProps extends React.HTMLAttributes<HTMLSpanElement> {
   size?: ChipSize;

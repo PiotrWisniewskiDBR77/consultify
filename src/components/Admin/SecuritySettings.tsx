@@ -568,7 +568,9 @@ export const SecuritySettings: React.FC = () => {
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
+              <table
+                /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-sm"
+              >
                 <thead className="bg-c-bg text-slate-300 uppercase text-xs">
                   <tr>
                     <th className="px-4 py-3 text-left">User</th>

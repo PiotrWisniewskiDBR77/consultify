@@ -385,12 +385,8 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                                 }
                             `}
                 >
-                  <div className="text-sm font-medium text-c-text-secondary">
-                    {voice.name}
-                  </div>
-                  <div className="text-xs text-c-text-muted">
-                    {voice.description}
-                  </div>
+                  <div className="text-sm font-medium text-c-text-secondary">{voice.name}</div>
+                  <div className="text-xs text-c-text-muted">{voice.description}</div>
                 </button>
               ))}
             </div>

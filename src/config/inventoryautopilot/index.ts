@@ -26,9 +26,9 @@ import type {
   VariabilityClass,
 } from './inventoryEngine';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './inventoryEngine';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
@@ -90,10 +90,10 @@ const truthy = (raw: unknown): boolean =>
 export function toInventorySession(
   sections: Record<string, unknown[]> | undefined
 ): InventorySession {
-  const rawSegments = ((sections?.['skus'] || sections?.['segments'] || []) as unknown[]) as Array<
+  const rawSegments = (sections?.['skus'] || sections?.['segments'] || []) as unknown[] as Array<
     Record<string, unknown>
   >;
-  const rawMoves = ((sections?.['moves'] || sections?.['policies'] || []) as unknown[]) as Array<
+  const rawMoves = (sections?.['moves'] || sections?.['policies'] || []) as unknown[] as Array<
     Record<string, unknown>
   >;
 

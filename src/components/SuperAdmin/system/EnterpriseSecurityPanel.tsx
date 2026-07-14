@@ -579,9 +579,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-c-text">
-            Security & Compliance
-          </h2>
+          <h2 className="text-2xl font-semibold text-c-text">Security & Compliance</h2>
           <p className="text-c-text-secondary text-sm">
             Monitor security events, manage access, and ensure compliance
           </p>
@@ -783,9 +781,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'sessions' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-c-text">
-                  Active Sessions
-                </h3>
+                <h3 className="text-lg font-medium text-c-text">Active Sessions</h3>
                 <button
                   disabled
                   title="Bulk session termination requires an audited backend workflow"
@@ -826,9 +822,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                           <div className="flex items-center gap-4">
                             <div
                               className={`p-2 rounded-lg ${
-                                session.is_current
-                                  ? 'bg-c-success/20'
-                                  : 'bg-c-surface-raised'
+                                session.is_current ? 'bg-c-success/20' : 'bg-c-surface-raised'
                               }`}
                             >
                               <DeviceIcon
@@ -880,9 +874,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'ip-rules' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-c-text">
-                  IP Access Rules
-                </h3>
+                <h3 className="text-lg font-medium text-c-text">IP Access Rules</h3>
                 <button
                   disabled
                   title="IP rule creation requires an audited backend workflow"
@@ -897,9 +889,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-c-warning mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-c-warning">
-                      IP Filtering Mode
-                    </h4>
+                    <h4 className="font-medium text-c-warning">IP Filtering Mode</h4>
                     <p className="text-sm text-c-text-secondary mt-1">
                       Currently using <strong>allowlist mode</strong>. Only IPs matching allow rules
                       can access the system. Deny rules take precedence over allow rules.
@@ -948,9 +938,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <code className="font-mono text-c-text">
-                                {rule.ip_pattern}
-                              </code>
+                              <code className="font-mono text-c-text">{rule.ip_pattern}</code>
                               <span
                                 className={`px-2 py-0.5 text-xs rounded ${
                                   rule.rule_type === 'allow'
@@ -961,9 +949,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                 {rule.rule_type.toUpperCase()}
                               </span>
                             </div>
-                            <p className="text-sm text-c-text-secondary mt-1">
-                              {rule.description}
-                            </p>
+                            <p className="text-sm text-c-text-secondary mt-1">{rule.description}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -994,9 +980,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'policies' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-c-text">
-                  Security Policies
-                </h3>
+                <h3 className="text-lg font-medium text-c-text">Security Policies</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1016,16 +1000,12 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-c-text">
-                              {policy.name}
-                            </span>
+                            <span className="font-medium text-c-text">{policy.name}</span>
                             <span className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded">
                               {policy.category}
                             </span>
                           </div>
-                          <p className="text-sm text-c-text-secondary">
-                            {policy.description}
-                          </p>
+                          <p className="text-sm text-c-text-secondary">{policy.description}</p>
                           <div className="text-xs text-c-text-secondary mt-2">
                             Last updated: {formatDate(policy.last_updated)}
                           </div>
@@ -1053,9 +1033,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'compliance' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-c-text">
-                  Compliance Frameworks
-                </h3>
+                <h3 className="text-lg font-medium text-c-text">Compliance Frameworks</h3>
                 <button
                   disabled
                   title="Compliance assessment execution requires an audited backend workflow"
@@ -1085,9 +1063,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                         className={`p-4 rounded-xl ${statusColors.bg} ${statusColors.border} border`}
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-medium text-c-text">
-                            {framework.name}
-                          </h4>
+                          <h4 className="font-medium text-c-text">{framework.name}</h4>
                           <span
                             className={`px-2 py-0.5 text-xs rounded ${statusColors.bg} ${statusColors.text}`}
                           >

@@ -13,16 +13,16 @@
  * See docs/standards/CONCLUSION_LAYER_STANDARD.md §3.W2.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
 import {
+  type AutomationSession,
   buildW2MoveSequence,
   computeBaseline,
   rankAutomationPhases,
-  type AutomationSession,
 } from './automationEngine';
-import { localizeLadder } from './index';
 import { type AutomationPhaseId } from './deepeningLadder';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+import { localizeLadder } from './index';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

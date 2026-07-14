@@ -1146,9 +1146,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <span className="text-sm text-c-text-secondary">{v.label}</span>
                     <div
                       className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
-                        ((intent.visuals as any)?.[v.key] ?? true)
-                          ? 'bg-blue-600'
-                          : 'bg-c-border'
+                        ((intent.visuals as any)?.[v.key] ?? true) ? 'bg-blue-600' : 'bg-c-border'
                       }`}
                       onClick={() =>
                         onIntentChange({
@@ -1318,7 +1316,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       className="w-8 h-8 rounded cursor-pointer border-0"
                     />
                     <div>
-                      <div className="text-xs text-c-text-secondary">{isPl ? 'Główny' : 'Primary'}</div>
+                      <div className="text-xs text-c-text-secondary">
+                        {isPl ? 'Główny' : 'Primary'}
+                      </div>
                       <div className="text-[10px] font-mono text-c-text-secondary">
                         {styling.primaryColor}
                       </div>
@@ -1332,7 +1332,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       className="w-8 h-8 rounded cursor-pointer border-0"
                     />
                     <div>
-                      <div className="text-xs text-c-text-secondary">{isPl ? 'Akcent' : 'Accent'}</div>
+                      <div className="text-xs text-c-text-secondary">
+                        {isPl ? 'Akcent' : 'Accent'}
+                      </div>
                       <div className="text-[10px] font-mono text-c-text-secondary">
                         {styling.accentColor}
                       </div>
@@ -1342,7 +1344,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
                 {/* Custom palette */}
                 <div className="pt-2 border-t border-c-border-subtle">
-                  <div className="text-xs text-c-text-secondary mb-2">{isPl ? 'Paleta' : 'Palette'}</div>
+                  <div className="text-xs text-c-text-secondary mb-2">
+                    {isPl ? 'Paleta' : 'Palette'}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {(styling.customColors || []).map((color) => (
                       <div key={color} className="relative group">

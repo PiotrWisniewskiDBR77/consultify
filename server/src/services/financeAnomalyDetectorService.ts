@@ -104,7 +104,9 @@ function median(values: number[]): number {
 }
 
 function normCode(code: string): string {
-  return String(code || '').trim().toLowerCase();
+  return String(code || '')
+    .trim()
+    .toLowerCase();
 }
 
 // ---------------------------------------------------------------------------
@@ -286,7 +288,7 @@ function detectScaleMismatch(statement: FinanceStatement): FinanceAnomaly[] {
         line: line.code,
         message:
           `Line "${line.code}" (${line.value}) is ~${Math.round(
-            Math.pow(10, Math.abs(log10 - medLog)),
+            Math.pow(10, Math.abs(log10 - medLog))
           )}x off the typical magnitude of other lines — possible units (thousands vs ` +
           `millions) mismatch.`,
       });

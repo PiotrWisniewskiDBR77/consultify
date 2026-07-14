@@ -137,9 +137,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-medium text-c-text truncate">
-                        {version.label}
-                      </p>
+                      <p className="text-xs font-medium text-c-text truncate">{version.label}</p>
                       <span
                         className={`text-[8px] px-1 py-0.5 rounded ${
                           version.type === 'manual'

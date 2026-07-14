@@ -159,7 +159,11 @@ export const Sidebar: React.FC = () => {
   // 'beta' badge is stripped from GA modules (Results/Finance/Materials).
   const navDeclutterEnabled = isNavDeclutterEnabled();
   const gatedMenuStructure = React.useMemo(() => {
-    const locked = lockClosedBetaModules(visibleMenuStructure, currentUser?.role, betaLockedMessage);
+    const locked = lockClosedBetaModules(
+      visibleMenuStructure,
+      currentUser?.role,
+      betaLockedMessage
+    );
     return navDeclutterEnabled ? declutterMenu(locked) : locked;
   }, [visibleMenuStructure, currentUser?.role, betaLockedMessage, navDeclutterEnabled]);
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);

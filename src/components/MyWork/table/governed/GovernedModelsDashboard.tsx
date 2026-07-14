@@ -270,10 +270,7 @@ function CreateModelWizard({
           <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Nowy model danych' : 'New Data Model'}
           </h3>
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
             <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
@@ -605,13 +602,9 @@ function ModelCard({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-c-text truncate">
-            {model.name}
-          </h4>
+          <h4 className="text-sm font-semibold text-c-text truncate">{model.name}</h4>
           {model.description && (
-            <p className="text-xs text-c-text-muted mt-0.5 line-clamp-2">
-              {model.description}
-            </p>
+            <p className="text-xs text-c-text-muted mt-0.5 line-clamp-2">{model.description}</p>
           )}
         </div>
         <TrustBadge status={model.status} isPl={isPl} />
@@ -1015,9 +1008,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-c-text">
-                {selectedModel.name}
-              </h3>
+              <h3 className="text-sm font-semibold text-c-text">{selectedModel.name}</h3>
               <button
                 onClick={() => setSelectedModel(null)}
                 className="p-1 rounded hover:bg-c-surface-raised"
@@ -1027,9 +1018,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             </div>
 
             {selectedModel.description && (
-              <p className="text-xs text-c-text-muted mb-4">
-                {selectedModel.description}
-              </p>
+              <p className="text-xs text-c-text-muted mb-4">{selectedModel.description}</p>
             )}
 
             <TrustBadge status={selectedModel.status} isPl={isPl} />
@@ -1048,10 +1037,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {(selectedModel.kpis ?? []).map((kpi) => {
                   const val = kpiValues[kpi.kpi_id];
                   return (
-                    <div
-                      key={kpi.kpi_id}
-                      className="p-3 rounded-lg border border-c-border-subtle"
-                    >
+                    <div key={kpi.kpi_id} className="p-3 rounded-lg border border-c-border-subtle">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-c-text-muted">
                           {isPl ? kpi.label_pl || kpi.label_en : kpi.label_en}

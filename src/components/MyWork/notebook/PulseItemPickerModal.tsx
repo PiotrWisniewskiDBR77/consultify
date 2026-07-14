@@ -177,7 +177,10 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
     >
       <div className="flex flex-col gap-4 min-h-0">
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary" />
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
+          />
           <input
             type="text"
             value={search}
@@ -205,9 +208,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
                 className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-4 py-3 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-c-text truncate">
-                    {item.title}
-                  </div>
+                  <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
                   {item.status && (
                     <div className="mt-0.5 text-[11px] text-c-text-muted capitalize">
                       {item.status}

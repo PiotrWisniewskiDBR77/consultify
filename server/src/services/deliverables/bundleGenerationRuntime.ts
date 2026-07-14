@@ -12,42 +12,42 @@ import logger from '../../utils/Logger.js';
 import { generateDocumentContent } from '../documentStudio/documentBlockContentGenerator.js';
 import { planDeckLayout, type SlideLayoutPlan } from '../presentationLayoutDirectorService.js';
 import { generateTableSchema } from '../tableSchemaGeneratorService.js';
-import type { BusinessPlanSpine } from './businessPlanSpine.js';
+import type { GenOpts } from './assumptionsModel.js';
+import { type ContentGateReport, runBundleContentGate } from './bundleContentGate.js';
+// W1.8b — kompozycja dojrzałego gate strukturalnego M19 (validateReport) na decku:
+import { type BundleDeckQaSummary, runBundleDeckQa } from './bundleDeckQa.js';
+// W1.8a — kompozycja dojrzałego silnika M18 Document Studio QA (10 kategorii):
+import { type BundleDocQaSummary, runBundleDocQa } from './bundleDocQa.js';
 import {
+  attachChartSpecs,
   generateBusinessPlan,
   spineToDeckSlides,
   spineToDocPlan,
   spineToTableIntent,
-  attachChartSpecs,
 } from './bundleOrchestrator.js';
-import type { GenOpts } from './assumptionsModel.js';
-// W1 — wpięcie „mózgu premium" w żywy pipeline (bramki jakości realnie działają):
-import { applyDeckBeautyGate, type BeautyScore } from './deckLayoutBeautyGate.js';
-import { runBundleContentGate, type ContentGateReport } from './bundleContentGate.js';
-import { buildFactBook, auditFactConsistency, type FactContradiction } from './factBook.js';
-import {
-  auditProvenance,
-  renderProvenanceFootnotes,
-  type ProvenanceAudit,
-  type Claim,
-  type ProvenanceKind,
-  type Footnote,
-} from './provenance.js';
-import { buildBothVariants, type AudienceVariantResult } from './deckAudienceVariants.js';
-import { routeImage } from './imageRouter.js';
-import { selectStockImageProvider } from './stockImageProvider.js';
-// W1.8a — kompozycja dojrzałego silnika M18 Document Studio QA (10 kategorii):
-import { runBundleDocQa, type BundleDocQaSummary } from './bundleDocQa.js';
-// W1.8b — kompozycja dojrzałego gate strukturalnego M19 (validateReport) na decku:
-import { runBundleDeckQa, type BundleDeckQaSummary } from './bundleDeckQa.js';
-// W12.1 — deterministyczny detektor McKinsey anti-patternów w planach slajdów:
-import { detectDeckAntiPatterns, type AntiPatternReport } from './deckAntiPatternDetector.js';
-// W7.2 — design-rule critic (typografia/kontrast/gęstość/grid) per slajd:
-import { critiqueDeck, type DeckCritique } from './deckDesignCritic.js';
-// W7.3 — arsenał archetypów z realną geometrią regionów:
-import { resolveArchetype } from './slideArchetypes.js';
 // W10.1 — scorecard agregujący wszystkie sygnały jakości w jeden wynik:
 import { buildQualityScorecard, type QualityScorecard } from './bundleQualityScorecard.js';
+import type { BusinessPlanSpine } from './businessPlanSpine.js';
+// W12.1 — deterministyczny detektor McKinsey anti-patternów w planach slajdów:
+import { type AntiPatternReport, detectDeckAntiPatterns } from './deckAntiPatternDetector.js';
+import { type AudienceVariantResult, buildBothVariants } from './deckAudienceVariants.js';
+// W7.2 — design-rule critic (typografia/kontrast/gęstość/grid) per slajd:
+import { critiqueDeck, type DeckCritique } from './deckDesignCritic.js';
+// W1 — wpięcie „mózgu premium" w żywy pipeline (bramki jakości realnie działają):
+import { applyDeckBeautyGate, type BeautyScore } from './deckLayoutBeautyGate.js';
+import { auditFactConsistency, buildFactBook, type FactContradiction } from './factBook.js';
+import { routeImage } from './imageRouter.js';
+import {
+  auditProvenance,
+  type Claim,
+  type Footnote,
+  type ProvenanceAudit,
+  type ProvenanceKind,
+  renderProvenanceFootnotes,
+} from './provenance.js';
+// W7.3 — arsenał archetypów z realną geometrią regionów:
+import { resolveArchetype } from './slideArchetypes.js';
+import { selectStockImageProvider } from './stockImageProvider.js';
 
 /** Raport jakości wiązki — wynik bramek/audytów wpiętych w generację (W1). */
 export interface BundleQuality {
@@ -111,16 +111,23 @@ function docText(doc: unknown): string {
       if (typeof c === 'string') parts.push(c);
       else if (c && typeof c === 'object') {
         if (typeof c.text === 'string') parts.push(c.text);
-        if (Array.isArray(c.items)) parts.push((c.items as unknown[]).filter((x) => typeof x === 'string').join(' '));
+        if (Array.isArray(c.items))
+          parts.push((c.items as unknown[]).filter((x) => typeof x === 'string').join(' '));
       }
     }
   }
   return parts.join('\n');
 }
 function tableText(table: unknown): string {
-  const t = table as { fields?: Array<{ header?: string }>; seedRows?: Array<Record<string, unknown>> } | null;
+  const t = table as {
+    fields?: Array<{ header?: string }>;
+    seedRows?: Array<Record<string, unknown>>;
+  } | null;
   if (!t) return '';
-  const headers = (t.fields ?? []).map((f) => f.header).filter(Boolean).join(' ');
+  const headers = (t.fields ?? [])
+    .map((f) => f.header)
+    .filter(Boolean)
+    .join(' ');
   const rows = (t.seedRows ?? []).map((r) => Object.values(r).join(' ')).join('\n');
   return `${headers}\n${rows}`;
 }
@@ -134,7 +141,10 @@ function spineClaims(spine: BusinessPlanSpine): Claim[] {
       key: (a as { key: string }).key,
       text: (a as { label: string }).label,
       source: prov?.source
-        ? { kind: (prov.benchmarked ? 'external' : 'assumption') as ProvenanceKind, label: prov.source }
+        ? {
+            kind: (prov.benchmarked ? 'external' : 'assumption') as ProvenanceKind,
+            label: prov.source,
+          }
         : undefined,
     });
   }
@@ -143,7 +153,11 @@ function spineClaims(spine: BusinessPlanSpine): Claim[] {
   // Dopisujemy addytywnie: brak spine.market lub brak provenance → po prostu
   // pominięte (fail-open, nie zmienia istniejącego zachowania assumptions).
   const market = spine.market as
-    | { tam?: { provenance?: { source?: string; benchmarked?: boolean } }; sam?: { provenance?: { source?: string; benchmarked?: boolean } }; som?: { provenance?: { source?: string; benchmarked?: boolean } } }
+    | {
+        tam?: { provenance?: { source?: string; benchmarked?: boolean } };
+        sam?: { provenance?: { source?: string; benchmarked?: boolean } };
+        som?: { provenance?: { source?: string; benchmarked?: boolean } };
+      }
     | undefined;
   const marketEntries: Array<['tam' | 'sam' | 'som', string]> = [
     ['tam', 'TAM'],
@@ -156,7 +170,10 @@ function spineClaims(spine: BusinessPlanSpine): Claim[] {
     claims.push({
       key: `market.${field}`,
       text: label,
-      source: { kind: (prov.benchmarked ? 'external' : 'assumption') as ProvenanceKind, label: prov.source },
+      source: {
+        kind: (prov.benchmarked ? 'external' : 'assumption') as ProvenanceKind,
+        label: prov.source,
+      },
     });
   }
   return claims;
@@ -178,7 +195,9 @@ export async function generateBundleFromSpine(
   try {
     table = await generateTableSchema(spineToTableIntent(spine), genOpts);
   } catch (err) {
-    logger.warn(`${LOG} table generation failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} table generation failed: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   let doc: unknown | null = null;
@@ -190,7 +209,9 @@ export async function generateBundleFromSpine(
       citationCount: 3,
     });
   } catch (err) {
-    logger.warn(`${LOG} doc generation failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} doc generation failed: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   let deck: unknown | null = null;
@@ -225,28 +246,39 @@ export async function generateBundleFromSpine(
         root_cause: `${spine.meta.company} business challenge`,
         single_insight: `${spine.meta.company} technology innovation`,
       };
-      const imagePromises = (gated.plans as Array<{ slideIndex?: number; layoutIntent?: string; imageUrl?: string | null }>)
-        .map(async (plan, idx) => {
-          const src = fullSlides[idx];
-          if (!src?.needsProductGraphic) return;
-          const route = routeImage({ contentType: 'photo', package: 'lite' });
-          if (route.isChartRoute) return;
-          const query = imageQueries[plan.layoutIntent ?? ''] ?? `${spine.meta.company} business`;
-          const img = await provider.fetchImage(query, { orientation: 'landscape' });
-          if (img?.url) plan.imageUrl = img.url;
-        });
+      const imagePromises = (
+        gated.plans as Array<{
+          slideIndex?: number;
+          layoutIntent?: string;
+          imageUrl?: string | null;
+        }>
+      ).map(async (plan, idx) => {
+        const src = fullSlides[idx];
+        if (!src?.needsProductGraphic) return;
+        const route = routeImage({ contentType: 'photo', package: 'lite' });
+        if (route.isChartRoute) return;
+        const query = imageQueries[plan.layoutIntent ?? ''] ?? `${spine.meta.company} business`;
+        const img = await provider.fetchImage(query, { orientation: 'landscape' });
+        if (img?.url) plan.imageUrl = img.url;
+      });
       await Promise.allSettled(imagePromises);
     }
     deck = gated;
     beauty = gated.beautyScore ?? null;
   } catch (err) {
-    logger.warn(`${LOG} deck generation failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} deck generation failed: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   // ── W1.2/W1.3/W1.4 — bramki jakości na ZSYNTETYZOWANYM materiale (fail-soft) ──
   let quality: BundleQuality;
   try {
-    const texts = { deckText: deckText(deck), reportText: docText(doc), tableText: tableText(table) };
+    const texts = {
+      deckText: deckText(deck),
+      reportText: docText(doc),
+      tableText: tableText(table),
+    };
     // W1.2 content-gate: placeholdery + spójność hero-numbers w 3 formatach.
     const content = runBundleContentGate(texts, spine.heroNumbers);
     // W1.3 factbook: twarde liczby sprzeczne z kanonem (hero-numbers = SoT).
@@ -270,22 +302,49 @@ export async function generateBundleFromSpine(
     // W7.2 — design-rule critic per slajd (mapuje plany na wejście critica).
     // W7.3 — gdy plan wskazuje archetyp (composition.layoutVariantId), bierzemy jego
     // REALNĄ geometrię regionów z arsenału → critic DR-06 waliduje faktyczny układ.
-    const designCritique = plans.length > 0
-      ? critiqueDeck(plans.map((p) => {
-          const pl = p as {
-            slideIndex?: number; layoutIntent?: string; title?: string; keyMessage?: string;
-            bullets?: string[]; composition?: { layoutVariantId?: string } | null;
-          };
-          const variantId = pl.composition?.layoutVariantId;
-          const intent = pl.layoutIntent ?? '';
-          const archetype = intent ? resolveArchetype(intent, variantId) : null;
-          const regions = archetype?.regions.map((r) => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
-          return { slideIndex: pl.slideIndex, layoutIntent: pl.layoutIntent, title: pl.title, keyMessage: pl.keyMessage, bullets: pl.bullets, regions };
-        }))
-      : null;
+    const designCritique =
+      plans.length > 0
+        ? critiqueDeck(
+            plans.map((p) => {
+              const pl = p as {
+                slideIndex?: number;
+                layoutIntent?: string;
+                title?: string;
+                keyMessage?: string;
+                bullets?: string[];
+                composition?: { layoutVariantId?: string } | null;
+              };
+              const variantId = pl.composition?.layoutVariantId;
+              const intent = pl.layoutIntent ?? '';
+              const archetype = intent ? resolveArchetype(intent, variantId) : null;
+              const regions = archetype?.regions.map((r) => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
+              return {
+                slideIndex: pl.slideIndex,
+                layoutIntent: pl.layoutIntent,
+                title: pl.title,
+                keyMessage: pl.keyMessage,
+                bullets: pl.bullets,
+                regions,
+              };
+            })
+          )
+        : null;
 
     const passed = content.passed && factContradictions.length === 0 && (beauty?.passed ?? true);
-    quality = { beauty, content, factContradictions, provenance, variants, docQa, deckQa, antiPatterns, designCritique, scorecard: null, footnotes, passed };
+    quality = {
+      beauty,
+      content,
+      factContradictions,
+      provenance,
+      variants,
+      docQa,
+      deckQa,
+      antiPatterns,
+      designCritique,
+      scorecard: null,
+      footnotes,
+      passed,
+    };
     // W10.1 — scorecard agreguje powyższe sygnały + flagi finansowe ze spine.
     quality.scorecard = buildQualityScorecard(quality, spine);
     if (!passed) {
@@ -296,8 +355,23 @@ export async function generateBundleFromSpine(
       });
     }
   } catch (err) {
-    logger.warn(`${LOG} quality gate error (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
-    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, deckQa: null, antiPatterns: null, designCritique: null, scorecard: null, footnotes: [], passed: true };
+    logger.warn(
+      `${LOG} quality gate error (fail-soft): ${err instanceof Error ? err.message : String(err)}`
+    );
+    quality = {
+      beauty,
+      content: null,
+      factContradictions: [],
+      provenance: null,
+      variants: null,
+      docQa: null,
+      deckQa: null,
+      antiPatterns: null,
+      designCritique: null,
+      scorecard: null,
+      footnotes: [],
+      passed: true,
+    };
   }
 
   return {

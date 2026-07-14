@@ -404,7 +404,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     <div>
       <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">{title}</h3>
       <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-sm">
+        <table
+          /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-sm"
+        >
           <thead>
             <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
               <th className="px-4 py-2">{t('finance.budget.line', 'Line')}</th>

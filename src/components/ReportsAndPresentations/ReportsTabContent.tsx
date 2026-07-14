@@ -13,8 +13,8 @@ import { useNavigate } from 'react-router-dom';
 
 import {
   StandardPreview,
-  standardPreviewShortcuts,
   type StandardPreviewActions,
+  standardPreviewShortcuts,
   type StandardRowMenu,
   StandardTable,
   type TableColumn as StandardTableColumn,
@@ -24,10 +24,10 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
+import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 import { REPORT_STATUS_META, REPORT_TYPE_META, type ReportItem } from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
-import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 
 interface ReportsTabContentProps {
   viewMode: ViewMode;
@@ -92,9 +92,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               >
                 {row.reportType}
               </span>
-              <span className="text-sm font-medium text-c-text truncate">
-                {row.title}
-              </span>
+              <span className="text-sm font-medium text-c-text truncate">{row.title}</span>
             </div>
           );
         },
@@ -196,7 +194,8 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         label: t('rap.columns.exports', 'Eksporty'),
         width: '140px',
         render: (row: ReportItem) => {
-          if (!row.exportFormats?.length) return <span className="text-sm text-c-text-muted">—</span>;
+          if (!row.exportFormats?.length)
+            return <span className="text-sm text-c-text-muted">—</span>;
           return (
             <div className="flex items-center gap-1">
               {row.exportFormats.map((fmt) => (
@@ -416,16 +415,11 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
 
           <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
             {canon.map(([code, label]) => (
-              <div
-                key={code}
-                className="rounded-xl border border-c-border-subtle bg-c-bg p-4"
-              >
+              <div key={code} className="rounded-xl border border-c-border-subtle bg-c-bg p-4">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {code}
                 </div>
-                <div className="mt-1 text-sm font-medium text-c-text">
-                  {label}
-                </div>
+                <div className="mt-1 text-sm font-medium text-c-text">{label}</div>
               </div>
             ))}
           </div>

@@ -607,7 +607,9 @@ export const DOCX_HEADING_MAX_CHARS = 120;
  * never cuts mid-word when a nearby space exists. Deterministic — no LLM.
  */
 export function clampHeadingText(text: string, maxChars = DOCX_HEADING_MAX_CHARS): string {
-  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  const clean = String(text ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (clean.length <= maxChars) return clean;
   let cut = clean.slice(0, maxChars);
   const lastSpace = cut.lastIndexOf(' ');
@@ -646,7 +648,11 @@ export function clampTableColumns(
   maxCols = DOCX_TABLE_MAX_COLS
 ): TableColumnClamp {
   if (columnCount <= maxCols) {
-    return { keep: Array.from({ length: columnCount }, (_, i) => i), folded: [], overflowed: false };
+    return {
+      keep: Array.from({ length: columnCount }, (_, i) => i),
+      folded: [],
+      overflowed: false,
+    };
   }
   const keepCount = Math.max(1, maxCols - 1);
   const keep = Array.from({ length: keepCount }, (_, i) => i);

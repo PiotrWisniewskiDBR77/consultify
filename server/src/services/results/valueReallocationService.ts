@@ -74,9 +74,7 @@ function fmtConf(value: number): string {
  * Pairing: largest `from` (by freed capacity) with largest `to` (by value at
  * stake), greedily, until one side is exhausted.
  */
-export function recommendReallocation(
-  items: Array<ReallocationItem>
-): ReallocationRecommendation {
+export function recommendReallocation(items: Array<ReallocationItem>): ReallocationRecommendation {
   const list = Array.isArray(items) ? items : [];
 
   const fromCandidates: FromCandidate[] = [];
@@ -152,9 +150,7 @@ export function recommendReallocation(
  * Summarize a recommendation: total FTE freed across the moved `from` items and
  * the number of moves proposed.
  */
-export function reallocationSummary(
-  rec: ReallocationRecommendation
-): ReallocationSummary {
+export function reallocationSummary(rec: ReallocationRecommendation): ReallocationSummary {
   const moves = rec?.moves ?? [];
   const fromCandidates = rec?.fromCandidates ?? [];
 

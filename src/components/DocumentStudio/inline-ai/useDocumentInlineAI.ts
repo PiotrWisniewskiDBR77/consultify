@@ -13,12 +13,9 @@
 
 import { useCallback, useState } from 'react';
 
-import {
-  approveDocumentStudioProposal,
-  createDocumentStudioLocalProposal,
-} from '../api';
-import { INLINE_ACTIONS } from './inlineActionPrompts';
+import { approveDocumentStudioProposal, createDocumentStudioLocalProposal } from '../api';
 import type { DocumentSchema } from '../types';
+import { INLINE_ACTIONS } from './inlineActionPrompts';
 
 type InlineAIStatus = 'idle' | 'loading' | 'done' | 'error';
 
@@ -84,8 +81,7 @@ export function useDocumentInlineAI(): UseDocumentInlineAIResult {
         );
         setState({ status: 'done', proposalId: proposal.proposalId, errorMsg: null });
       } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : 'Nie udało się wywołać propozycji AI.';
+        const msg = err instanceof Error ? err.message : 'Nie udało się wywołać propozycji AI.';
         setState({ status: 'error', proposalId: null, errorMsg: msg });
       }
     },
@@ -93,17 +89,13 @@ export function useDocumentInlineAI(): UseDocumentInlineAIResult {
   );
 
   const approveProposal = useCallback(
-    async (
-      artifactId: string,
-      proposalId: string
-    ): Promise<{ schema: DocumentSchema } | null> => {
+    async (artifactId: string, proposalId: string): Promise<{ schema: DocumentSchema } | null> => {
       try {
         const result = await approveDocumentStudioProposal(artifactId, proposalId);
         setState(INITIAL_STATE);
         return { schema: result.schema };
       } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : 'Nie udało się zatwierdzić propozycji.';
+        const msg = err instanceof Error ? err.message : 'Nie udało się zatwierdzić propozycji.';
         setState((prev) => ({ ...prev, status: 'error', errorMsg: msg }));
         return null;
       }

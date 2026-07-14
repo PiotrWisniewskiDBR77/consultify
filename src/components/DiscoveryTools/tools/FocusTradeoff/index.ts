@@ -3,8 +3,8 @@
  */
 
 export {
-  FocusTradeoffInputPhase,
   FocusTradeoffBuildPhase,
+  FocusTradeoffInputPhase,
   FocusTradeoffInsightsPhase,
   FocusTradeoffOutputsPhase,
 } from './FocusTradeoffPhases';

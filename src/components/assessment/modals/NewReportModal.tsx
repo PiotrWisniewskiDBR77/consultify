@@ -249,9 +249,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                 <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
               <p className="text-lg font-medium text-c-text">Raport utworzony!</p>
-              <p className="text-sm text-c-text-muted mt-1">
-                Możesz teraz edytować treść raportu
-              </p>
+              <p className="text-sm text-c-text-muted mt-1">Możesz teraz edytować treść raportu</p>
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
@@ -260,9 +258,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
           ) : assessments.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
-              <p className="text-c-text-muted font-medium">
-                Brak zatwierdzonych assessmentów
-              </p>
+              <p className="text-c-text-muted font-medium">Brak zatwierdzonych assessmentów</p>
               <p className="text-sm text-c-text-muted mt-1">
                 Najpierw zatwierdź assessment w procesie recenzji
               </p>
@@ -336,12 +332,8 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                               {isSelected && <CheckCircle2 size={12} className="text-c-surface" />}
                             </div>
                             <div>
-                              <p className="font-medium text-c-text text-sm">
-                                {assessment.name}
-                              </p>
-                              <p className="text-xs text-c-text-muted">
-                                {assessment.projectName}
-                              </p>
+                              <p className="font-medium text-c-text text-sm">{assessment.name}</p>
+                              <p className="text-xs text-c-text-muted">{assessment.projectName}</p>
                             </div>
                           </div>
                           <div className="text-right">

@@ -14,21 +14,21 @@
  * reach into section internals.
  */
 
+import type {
+  AutomationBaselineInput,
+  AutomationCandidate,
+  AutomationSession,
+} from './automationEngine';
 import {
   AUTOMATION_DEEPENING_LADDER,
   AUTOMATION_LADDER_RUNG_ORDER,
-  type LadderRung,
   type AutomationPhaseId,
+  type LadderRung,
 } from './deepeningLadder';
-import type {
-  AutomationCandidate,
-  AutomationBaselineInput,
-  AutomationSession,
-} from './automationEngine';
 
-export * from './deepeningLadder';
 export * from './automationEngine';
 export * from './conclusionPrompts';
+export * from './deepeningLadder';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {

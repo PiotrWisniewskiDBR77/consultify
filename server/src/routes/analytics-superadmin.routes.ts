@@ -16,8 +16,8 @@ import {
 import { getPublicAnnaFunnelSummary } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { flagOn } from '../utils/pgFlags.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 
 const router = Router();
 router.use(defaultRateLimiter);
@@ -643,7 +643,9 @@ router.get(
                 ORDER BY bm.category, bm.name
             `);
 
-      return res.json({ metrics: (metrics || []).map((m: any) => ({ ...m, isActive: flagOn(m.is_active) })) });
+      return res.json({
+        metrics: (metrics || []).map((m: any) => ({ ...m, isActive: flagOn(m.is_active) })),
+      });
     } catch (error: any) {
       logger.error('[Analytics] Get metrics error:', error);
       return analyticsFailure(res, 500, 'Failed to fetch metrics', { metrics: [] });

@@ -183,7 +183,9 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-c-text-muted">{formatDate(n.updatedAt, isPl)}</span>
+                  <span className="text-[11px] text-c-text-muted">
+                    {formatDate(n.updatedAt, isPl)}
+                  </span>
                 </button>
               ))
             )}

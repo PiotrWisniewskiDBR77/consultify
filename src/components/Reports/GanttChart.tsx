@@ -413,9 +413,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <button
               onClick={() => setZoom('year')}
               className={`px-3 py-1.5 text-xs font-medium transition-colors rounded-l-lg ${
-                zoom === 'year'
-                  ? 'bg-c-info/15 text-c-info'
-                  : 'text-c-text-muted hover:text-c-text'
+                zoom === 'year' ? 'bg-c-info/15 text-c-info' : 'text-c-text-muted hover:text-c-text'
               }`}
             >
               {isPolish ? 'Rok' : 'Year'}
@@ -549,9 +547,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         ))}
         <div className="flex items-center gap-1.5">
           <Flag className="w-3 h-3 text-c-text-muted" />
-          <span className="text-c-text-secondary">
-            {isPolish ? 'Kamień milowy' : 'Milestone'}
-          </span>
+          <span className="text-c-text-secondary">{isPolish ? 'Kamień milowy' : 'Milestone'}</span>
         </div>
         {showCriticalPath && (
           <>

@@ -579,20 +579,18 @@ describe('V8 execution-control read-only routes', () => {
     mockCreateBudgetEntry.mockResolvedValue('be-2');
 
     const app = createApp();
-    const res = await request(app)
-      .post('/api/v8/execution-control/budget/entries')
-      .send({
-        initiativeId: 'init-1',
-        entryType: 'ACTUAL',
-        costType: 'CAPEX',
-        amount: 1200,
-        // Attacker-controlled protected fields — must be ignored by the route.
-        createdBy: 'attacker-impersonated-user',
-        organizationId: 'org-victim',
-        organization_id: 'org-victim',
-        id: 'be-forced-id',
-        created_by: 'attacker-impersonated-user',
-      });
+    const res = await request(app).post('/api/v8/execution-control/budget/entries').send({
+      initiativeId: 'init-1',
+      entryType: 'ACTUAL',
+      costType: 'CAPEX',
+      amount: 1200,
+      // Attacker-controlled protected fields — must be ignored by the route.
+      createdBy: 'attacker-impersonated-user',
+      organizationId: 'org-victim',
+      organization_id: 'org-victim',
+      id: 'be-forced-id',
+      created_by: 'attacker-impersonated-user',
+    });
 
     expect(res.status).toBe(200);
     expect(mockCreateBudgetEntry).toHaveBeenCalledTimes(1);
@@ -646,17 +644,13 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('EXECUTION_INITIATIVE_ORG_MISMATCH');
     // No INSERT into initiative_dependencies should have run.
-    const ran = mockDbRun.mock.calls.some((c) =>
-      String(c[0]).includes('initiative_dependencies')
-    );
+    const ran = mockDbRun.mock.calls.some((c) => String(c[0]).includes('initiative_dependencies'));
     expect(ran).toBe(false);
   });
 
   it('POST /api/v8/execution-control/interventions/dependency returns 403 when one initiative is missing', async () => {
     // from-initiative belongs to caller org, to-initiative does not exist.
-    mockDbGet
-      .mockResolvedValueOnce({ organization_id: ORG })
-      .mockResolvedValueOnce(null);
+    mockDbGet.mockResolvedValueOnce({ organization_id: ORG }).mockResolvedValueOnce(null);
 
     const app = createApp();
     const res = await request(app).post('/api/v8/execution-control/interventions/dependency').send({

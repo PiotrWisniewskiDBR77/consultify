@@ -163,24 +163,17 @@ export const SufficiencyIndicator: React.FC<SufficiencyIndicatorProps> = ({
                 <li
                   key={c.id}
                   className={`flex items-start gap-2 text-sm ${
-                    c.met
-                      ? 'text-[var(--c-text-muted)]'
-                      : 'text-[var(--c-text)]'
+                    c.met ? 'text-[var(--c-text-muted)]' : 'text-[var(--c-text)]'
                   }`}
                 >
                   {c.met ? (
                     <Check size={16} className="shrink-0 mt-0.5 text-[var(--c-success)]" />
                   ) : (
-                    <AlertCircle
-                      size={16}
-                      className="shrink-0 mt-0.5 text-[var(--c-text-muted)]"
-                    />
+                    <AlertCircle size={16} className="shrink-0 mt-0.5 text-[var(--c-text-muted)]" />
                   )}
                   <span className={c.met ? 'line-through' : ''}>{c.label}</span>
                   {c.details && !c.met && (
-                    <span className="text-xs text-[var(--c-text-muted)]">
-                      — {c.details}
-                    </span>
+                    <span className="text-xs text-[var(--c-text-muted)]">— {c.details}</span>
                   )}
                 </li>
               ))}
@@ -199,10 +192,7 @@ export const SufficiencyIndicator: React.FC<SufficiencyIndicatorProps> = ({
         >
           <div className="w-full max-w-md rounded-token-xl bg-[var(--c-surface)] border border-[var(--c-border)] shadow-hig-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3
-                id="sendback-dialog-title"
-                className="text-lg font-semibold text-[var(--c-text)]"
-              >
+              <h3 id="sendback-dialog-title" className="text-lg font-semibold text-[var(--c-text)]">
                 {t('interview.sufficiency.sendBackDialog.title')}
               </h3>
               <button
@@ -225,13 +215,12 @@ export const SufficiencyIndicator: React.FC<SufficiencyIndicatorProps> = ({
                 </span>
                 <ul className="space-y-1 rounded-token-md bg-[var(--c-surface-raised)] p-3">
                   {missingItems.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex items-start gap-2 text-sm text-[var(--c-text)]"
-                    >
+                    <li key={c.id} className="flex items-start gap-2 text-sm text-[var(--c-text)]">
                       <AlertCircle size={14} className="shrink-0 mt-0.5 text-[var(--c-warning)]" />
                       {c.label}
-                      {c.details && <span className="text-xs text-[var(--c-text-muted)]">— {c.details}</span>}
+                      {c.details && (
+                        <span className="text-xs text-[var(--c-text-muted)]">— {c.details}</span>
+                      )}
                     </li>
                   ))}
                 </ul>

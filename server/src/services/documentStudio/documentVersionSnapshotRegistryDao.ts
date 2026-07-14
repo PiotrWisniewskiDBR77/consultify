@@ -76,9 +76,7 @@ export async function loadSnapshotsForOrg(
       [organizationId]
     );
     if (!Array.isArray(rows) || rows.length === 0) return [];
-    return rows
-      .map(rowToSnapshot)
-      .filter((s): s is DocumentVersionSnapshot => s !== null);
+    return rows.map(rowToSnapshot).filter((s): s is DocumentVersionSnapshot => s !== null);
   } catch (err) {
     logger.warn('[DocumentStudio][SnapshotDao] loadSnapshotsForOrg failed', {
       organizationId,
@@ -92,9 +90,7 @@ export async function loadSnapshotsForOrg(
  * Append a snapshot. Idempotent — ON CONFLICT (version_id) DO NOTHING
  * so a duplicate write from a retry or race is safe.
  */
-export async function persistSnapshot(
-  snapshot: DocumentVersionSnapshot
-): Promise<{ ok: boolean }> {
+export async function persistSnapshot(snapshot: DocumentVersionSnapshot): Promise<{ ok: boolean }> {
   if (!snapshot?.versionId || !snapshot.artifactId || !snapshot.organizationId) {
     return { ok: false };
   }

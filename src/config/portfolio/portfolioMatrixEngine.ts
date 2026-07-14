@@ -106,12 +106,10 @@ export function classifyPortfolio(
   elements: PortfolioElement[],
   midpoint = AXIS_MIDPOINT
 ): ClassifiedElement[] {
-  return elements
-    .filter(isAcceptedElement)
-    .map((el) => ({
-      ...el,
-      quadrant: classifyQuadrant(el.valueScore, el.feasibilityScore, midpoint),
-    }));
+  return elements.filter(isAcceptedElement).map((el) => ({
+    ...el,
+    quadrant: classifyQuadrant(el.valueScore, el.feasibilityScore, midpoint),
+  }));
 }
 
 export interface QuadrantDistribution {
@@ -194,7 +192,9 @@ export function sequencePortfolio(
       .map((d) => d.dependsOnElementId);
 
   // Detect cycles among accepted hard deps (DFS).
-  const WHITE = 0, GRAY = 1, BLACK = 2;
+  const WHITE = 0,
+    GRAY = 1,
+    BLACK = 2;
   const color = new Map<string, number>();
   const stack: string[] = [];
   const dfs = (id: string) => {
@@ -346,7 +346,8 @@ export function validatePortfolioMove(
     issues.push({
       code: 'unlinked-rationale',
       messageEn: 'Move is linked to no portfolio elements — its rationale is untraceable.',
-      messagePl: 'Ruch nie jest powiązany z żadnym elementem portfela — uzasadnienie jest niesprawdzalne.',
+      messagePl:
+        'Ruch nie jest powiązany z żadnym elementem portfela — uzasadnienie jest niesprawdzalne.',
     });
   } else {
     const dangling = links.filter((id) => !session.elementIds.has(id));
@@ -364,8 +365,7 @@ export function validatePortfolioMove(
       code: 'missing-tradeoff',
       messageEn:
         'Move has no trade-off — a recommendation without a trade-off is a list, not a decision (W2).',
-      messagePl:
-        'Ruch nie ma trade-offu — rekomendacja bez trade-offu to lista, nie decyzja (W2).',
+      messagePl: 'Ruch nie ma trade-offu — rekomendacja bez trade-offu to lista, nie decyzja (W2).',
     });
   } else if (
     !move.tradeoff.chosen?.trim() ||

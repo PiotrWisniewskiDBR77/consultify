@@ -508,9 +508,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                       ) : (
                         <span
                           className={`flex-1 text-xs font-semibold truncate ${
-                            isUngrouped
-                              ? 'text-c-text-secondary italic'
-                              : 'text-c-text'
+                            isUngrouped ? 'text-c-text-secondary italic' : 'text-c-text'
                           }`}
                           onDoubleClick={(e) => {
                             e.stopPropagation();

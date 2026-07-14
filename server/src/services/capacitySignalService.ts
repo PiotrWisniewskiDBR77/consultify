@@ -96,7 +96,7 @@ function underutilizedTitle(u: ResourceUtilization): string {
  */
 export function buildCapacitySignals(
   allocations: ResourceAllocation[],
-  capacities: ResourceCapacity[],
+  capacities: ResourceCapacity[]
 ): CapacitySignal[] {
   const util = computeUtilization(allocations, capacities);
 
@@ -143,23 +143,21 @@ export function buildCapacitySignals(
  */
 export function capacityPortfolioSignal(
   allocations: ResourceAllocation[],
-  capacities: ResourceCapacity[],
+  capacities: ResourceCapacity[]
 ): CapacityPortfolioSignal {
   const signals = buildCapacitySignals(allocations, capacities);
 
   const overloads = signals.filter((s) => s.type === 'CAPACITY_OVERLOAD');
   const overloadedCount = overloads.length;
-  const underutilizedCount = signals.filter(
-    (s) => s.type === 'CAPACITY_UNDERUTILIZED',
-  ).length;
+  const underutilizedCount = signals.filter((s) => s.type === 'CAPACITY_UNDERUTILIZED').length;
 
   const worstUtilizationPct = signals.reduce(
     (max, s) => (s.utilizationPct > max ? s.utilizationPct : max),
-    0,
+    0
   );
 
   const hasSevereOverload = overloads.some(
-    (s) => s.severity === 'CRITICAL' || s.severity === 'HIGH',
+    (s) => s.severity === 'CRITICAL' || s.severity === 'HIGH'
   );
 
   let balance: PortfolioBalance = 'healthy';

@@ -170,9 +170,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
             <Settings size={28} className="text-c-text-muted" />
             {t('settings.preferences.general.title', 'General Preferences')}
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">
-            Configure application behavior
-          </p>
+          <p className="text-c-text-muted text-sm mt-1">Configure application behavior</p>
         </div>
         <button
           onClick={handleSave}
@@ -216,9 +214,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
         <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
             <p className="font-medium text-c-text">Show Welcome Message</p>
-            <p className="text-sm text-c-text-muted">
-              Display welcome screen on startup
-            </p>
+            <p className="text-sm text-c-text-muted">Display welcome screen on startup</p>
           </div>
           <button
             onClick={() =>
@@ -247,9 +243,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
         <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
             <p className="font-medium text-c-text">Enable Auto-Save</p>
-            <p className="text-sm text-c-text-muted">
-              Automatically save changes periodically
-            </p>
+            <p className="text-sm text-c-text-muted">Automatically save changes periodically</p>
           </div>
           <button
             onClick={() => setSettings({ ...settings, autoSaveEnabled: !settings.autoSaveEnabled })}
@@ -268,9 +262,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
         {settings.autoSaveEnabled && (
           <div className="p-4 bg-c-surface-raised rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-c-text-secondary">
-                Save Interval
-              </label>
+              <label className="text-sm font-medium text-c-text-secondary">Save Interval</label>
               <span className="text-sm text-green-600">{settings.autoSaveInterval} seconds</span>
             </div>
             <input

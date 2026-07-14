@@ -96,9 +96,7 @@ export function buildFunnel(items: FunnelItem[]): FunnelStageAggregate[] {
  * Konwersja wartości między sąsiednimi etapami lejka + leakage (spadek wartości).
  * Zakłada wejście z buildFunnel (uporządkowane wg FUNNEL_ORDER).
  */
-export function funnelConversion(
-  funnel: FunnelStageAggregate[],
-): FunnelConversionStep[] {
+export function funnelConversion(funnel: FunnelStageAggregate[]): FunnelConversionStep[] {
   // Indeksujemy po etapie, żeby być odpornym na kolejność/brakujące etapy.
   const byStage = new Map<FunnelStage, FunnelStageAggregate>();
   for (const agg of funnel ?? []) {
@@ -131,8 +129,7 @@ export function valueAtRisk(items: ValueAtRiskItem[]): ValueAtRiskResult {
   for (const item of items ?? []) {
     if (!item) continue;
     const confidence = normalizeConfidence(item.confidence);
-    const isAtRisk =
-      confidence < CONFIDENCE_AT_RISK_THRESHOLD || item.behindPlan === true;
+    const isAtRisk = confidence < CONFIDENCE_AT_RISK_THRESHOLD || item.behindPlan === true;
     if (isAtRisk) {
       atRiskValue += safeNumber(item.value);
       atRiskCount += 1;

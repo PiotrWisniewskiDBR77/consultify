@@ -19,13 +19,7 @@
  * create-verb+noun pair and fall through to normal model routing.
  */
 
-export type ChatCreationIntent =
-  | 'initiative'
-  | 'task'
-  | 'decision'
-  | 'document'
-  | 'table'
-  | null;
+export type ChatCreationIntent = 'initiative' | 'task' | 'decision' | 'document' | 'table' | null;
 
 /**
  * Create verbs (PL + EN). PL forms cover imperative + common inflections.

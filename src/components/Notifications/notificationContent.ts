@@ -132,10 +132,7 @@ const inferWhy = (n: NotificationLike, t: TFunction): string => {
         );
   }
   if (nType.includes('OVERDUE')) {
-    return t(
-      'notifications.content.why.overdue',
-      'Deadline passed — cost of inaction is rising.'
-    );
+    return t('notifications.content.why.overdue', 'Deadline passed — cost of inaction is rising.');
   }
   if (nType.includes('DUE') || nType.includes('DUE_SOON')) {
     return t(
@@ -147,10 +144,7 @@ const inferWhy = (n: NotificationLike, t: TFunction): string => {
     return t('notifications.content.why.escalated', 'No response triggered an escalation.');
   }
   if (nType.includes('BLOCKED')) {
-    return t(
-      'notifications.content.why.blocked',
-      'Blocked — requires immediate attention.'
-    );
+    return t('notifications.content.why.blocked', 'Blocked — requires immediate attention.');
   }
   if (nType.includes('ASSIGN')) {
     return t('notifications.content.why.assigned', 'New assignment — action required.');
@@ -159,10 +153,7 @@ const inferWhy = (n: NotificationLike, t: TFunction): string => {
     return t('notifications.content.why.aiRisk', 'AI detected a risk — review the details.');
   }
   if (nType.includes('AI')) {
-    return t(
-      'notifications.content.why.ai',
-      'AI suggests action — review the recommendation.'
-    );
+    return t('notifications.content.why.ai', 'AI suggests action — review the recommendation.');
   }
   if (nType === 'PAYMENT_FAILED') {
     return t(
@@ -214,10 +205,7 @@ const inferWhy = (n: NotificationLike, t: TFunction): string => {
     return t('notifications.content.why.dbr77Generic', 'DBR77 communication — review details.');
   }
   if (nType.includes('GATE')) {
-    return t(
-      'notifications.content.why.gate',
-      'Gate requires your GO/NO-GO decision.'
-    );
+    return t('notifications.content.why.gate', 'Gate requires your GO/NO-GO decision.');
   }
   if (nType.includes('COMPLETED') || nType.includes('MILESTONE')) {
     return t('notifications.content.why.milestone', 'Milestone achieved.');
@@ -566,10 +554,7 @@ const inferExpectedAction = (
     return t('notifications.content.action.doCta', 'Do: {{label}}', { label: primaryCta.label });
   }
 
-  return t(
-    'notifications.content.action.default',
-    'Open the linked entity and take action.'
-  );
+  return t('notifications.content.action.default', 'Open the linked entity and take action.');
 };
 
 // ── Contextual Checklist Generation ───────────────────────────────────────────
@@ -590,19 +575,32 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
     if (isCritical) {
       return [
         cl(
-          t('notifications.content.checklist.taskOverdueCritical.blockers', 'Check blockers and reason for delay'),
+          t(
+            'notifications.content.checklist.taskOverdueCritical.blockers',
+            'Check blockers and reason for delay'
+          ),
           'critical'
         ),
         cl(
           assignee
-            ? t('notifications.content.checklist.taskOverdueCritical.contactNamed', 'Contact {{assignee}}', {
-                assignee,
-              })
-            : t('notifications.content.checklist.taskOverdueCritical.contact', 'Contact the assignee'),
+            ? t(
+                'notifications.content.checklist.taskOverdueCritical.contactNamed',
+                'Contact {{assignee}}',
+                {
+                  assignee,
+                }
+              )
+            : t(
+                'notifications.content.checklist.taskOverdueCritical.contact',
+                'Contact the assignee'
+              ),
           'critical'
         ),
         cl(
-          t('notifications.content.checklist.taskOverdueCritical.deadline', 'Set a new realistic deadline'),
+          t(
+            'notifications.content.checklist.taskOverdueCritical.deadline',
+            'Set a new realistic deadline'
+          ),
           'critical'
         ),
         cl(
@@ -612,7 +610,10 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
           ),
           'normal'
         ),
-        cl(t('notifications.content.checklist.taskOverdueCritical.status', 'Update task status'), 'normal'),
+        cl(
+          t('notifications.content.checklist.taskOverdueCritical.status', 'Update task status'),
+          'normal'
+        ),
         cl(
           t(
             'notifications.content.checklist.taskOverdueCritical.notify',
@@ -623,9 +624,15 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
       ];
     }
     return [
-      cl(t('notifications.content.checklist.taskOverdue.open', 'Open the task and review details'), 'normal'),
+      cl(
+        t('notifications.content.checklist.taskOverdue.open', 'Open the task and review details'),
+        'normal'
+      ),
       cl(t('notifications.content.checklist.taskOverdue.blockers', 'Check for blockers'), 'normal'),
-      cl(t('notifications.content.checklist.taskOverdue.update', 'Update deadline or status'), 'normal'),
+      cl(
+        t('notifications.content.checklist.taskOverdue.update', 'Update deadline or status'),
+        'normal'
+      ),
       cl(
         t('notifications.content.checklist.taskOverdue.notify', 'Notify the team about the change'),
         'optional'
@@ -635,15 +642,27 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
 
   if (nType === 'TASK_BLOCKED' || nType.includes('BLOCKED')) {
     return [
-      cl(t('notifications.content.checklist.taskBlocked.identify', 'Identify the blocker'), 'critical'),
-      cl(t('notifications.content.checklist.taskBlocked.contact', 'Contact the blocking party'), 'critical'),
       cl(
-        t('notifications.content.checklist.taskBlocked.plan', 'Establish a plan to remove the blocker'),
+        t('notifications.content.checklist.taskBlocked.identify', 'Identify the blocker'),
+        'critical'
+      ),
+      cl(
+        t('notifications.content.checklist.taskBlocked.contact', 'Contact the blocking party'),
+        'critical'
+      ),
+      cl(
+        t(
+          'notifications.content.checklist.taskBlocked.plan',
+          'Establish a plan to remove the blocker'
+        ),
         'normal'
       ),
       cl(t('notifications.content.checklist.taskBlocked.status', 'Update task status'), 'normal'),
       cl(
-        t('notifications.content.checklist.taskBlocked.escalate', 'Escalate if blocker persists > 24h'),
+        t(
+          'notifications.content.checklist.taskBlocked.escalate',
+          'Escalate if blocker persists > 24h'
+        ),
         'optional'
       ),
     ];
@@ -652,12 +671,21 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
   if (nType === 'TASK_ASSIGNED' || nType.includes('ASSIGN')) {
     return [
       cl(
-        t('notifications.content.checklist.taskAssigned.review', 'Review task description and scope'),
+        t(
+          'notifications.content.checklist.taskAssigned.review',
+          'Review task description and scope'
+        ),
         'normal'
       ),
-      cl(t('notifications.content.checklist.taskAssigned.confirm', 'Confirm the deadline'), 'normal'),
       cl(
-        t('notifications.content.checklist.taskAssigned.dependencies', 'Check dependencies and blockers'),
+        t('notifications.content.checklist.taskAssigned.confirm', 'Confirm the deadline'),
+        'normal'
+      ),
+      cl(
+        t(
+          'notifications.content.checklist.taskAssigned.dependencies',
+          'Check dependencies and blockers'
+        ),
         'normal'
       ),
       cl(
@@ -670,24 +698,39 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
   // ── DECISION types ──
   if (nType === 'DECISION_OVERDUE') {
     return [
-      cl(t('notifications.content.checklist.decisionOverdue.analyze', 'Analyze decision context'), 'critical'),
+      cl(
+        t('notifications.content.checklist.decisionOverdue.analyze', 'Analyze decision context'),
+        'critical'
+      ),
       cl(
         t('notifications.content.checklist.decisionOverdue.consult', 'Consult key stakeholders'),
         'critical'
       ),
       cl(
-        t('notifications.content.checklist.decisionOverdue.decide', 'Make the decision or escalate'),
+        t(
+          'notifications.content.checklist.decisionOverdue.decide',
+          'Make the decision or escalate'
+        ),
         'critical'
       ),
-      cl(t('notifications.content.checklist.decisionOverdue.document', 'Document the rationale'), 'normal'),
-      cl(t('notifications.content.checklist.decisionOverdue.notify', 'Notify dependent teams'), 'normal'),
+      cl(
+        t('notifications.content.checklist.decisionOverdue.document', 'Document the rationale'),
+        'normal'
+      ),
+      cl(
+        t('notifications.content.checklist.decisionOverdue.notify', 'Notify dependent teams'),
+        'normal'
+      ),
     ];
   }
 
   if (nType === 'DECISION_REQUIRED') {
     return [
       cl(
-        t('notifications.content.checklist.decisionRequired.review', 'Review data and decision context'),
+        t(
+          'notifications.content.checklist.decisionRequired.review',
+          'Review data and decision context'
+        ),
         'normal'
       ),
       cl(
@@ -695,7 +738,10 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
         'normal'
       ),
       cl(
-        t('notifications.content.checklist.decisionRequired.decide', 'Make the decision or delegate'),
+        t(
+          'notifications.content.checklist.decisionRequired.decide',
+          'Make the decision or delegate'
+        ),
         'normal'
       ),
       cl(
@@ -715,9 +761,15 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
         t('notifications.content.checklist.aiRiskDetected.review', 'Review detected risk details'),
         'critical'
       ),
-      cl(t('notifications.content.checklist.aiRiskDetected.verify', 'Verify AI input data'), 'normal'),
       cl(
-        t('notifications.content.checklist.aiRiskDetected.assess', 'Assess real impact on the project'),
+        t('notifications.content.checklist.aiRiskDetected.verify', 'Verify AI input data'),
+        'normal'
+      ),
+      cl(
+        t(
+          'notifications.content.checklist.aiRiskDetected.assess',
+          'Assess real impact on the project'
+        ),
         'normal'
       ),
       cl(
@@ -727,13 +779,22 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
         ),
         'normal'
       ),
-      cl(t('notifications.content.checklist.aiRiskDetected.update', 'Update the risk register'), 'optional'),
+      cl(
+        t('notifications.content.checklist.aiRiskDetected.update', 'Update the risk register'),
+        'optional'
+      ),
     ];
   }
 
   if (nType === 'AI_RECOMMENDATION') {
     return [
-      cl(t('notifications.content.checklist.aiRecommendation.review', 'Review the AI recommendation'), 'normal'),
+      cl(
+        t(
+          'notifications.content.checklist.aiRecommendation.review',
+          'Review the AI recommendation'
+        ),
+        'normal'
+      ),
       cl(
         t('notifications.content.checklist.aiRecommendation.verify', 'Verify assumptions and data'),
         'normal'
@@ -750,19 +811,25 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
 
   if (nType === 'AI_OVERLOAD_DETECTED') {
     return [
-      cl(t('notifications.content.checklist.aiOverload.review', 'Review team workload'), 'critical'),
+      cl(
+        t('notifications.content.checklist.aiOverload.review', 'Review team workload'),
+        'critical'
+      ),
+      cl(
+        t('notifications.content.checklist.aiOverload.identify', 'Identify most overloaded people'),
+        'normal'
+      ),
       cl(
         t(
-          'notifications.content.checklist.aiOverload.identify',
-          'Identify most overloaded people'
+          'notifications.content.checklist.aiOverload.redistribute',
+          'Redistribute or postpone tasks'
         ),
         'normal'
       ),
       cl(
-        t('notifications.content.checklist.aiOverload.redistribute', 'Redistribute or postpone tasks'),
-        'normal'
+        t('notifications.content.checklist.aiOverload.notify', 'Notify team about changes'),
+        'optional'
       ),
-      cl(t('notifications.content.checklist.aiOverload.notify', 'Notify team about changes'), 'optional'),
     ];
   }
 
@@ -809,11 +876,26 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
   // ── Billing / Payment types ──
   if (nType === 'PAYMENT_FAILED') {
     return [
-      cl(t('notifications.content.checklist.paymentFailed.open', 'Open billing section'), 'critical'),
-      cl(t('notifications.content.checklist.paymentFailed.check', 'Check payment method'), 'critical'),
-      cl(t('notifications.content.checklist.paymentFailed.update', 'Update card/account details'), 'normal'),
-      cl(t('notifications.content.checklist.paymentFailed.retry', 'Retry the transaction'), 'normal'),
-      cl(t('notifications.content.checklist.paymentFailed.confirm', 'Confirm payment success'), 'optional'),
+      cl(
+        t('notifications.content.checklist.paymentFailed.open', 'Open billing section'),
+        'critical'
+      ),
+      cl(
+        t('notifications.content.checklist.paymentFailed.check', 'Check payment method'),
+        'critical'
+      ),
+      cl(
+        t('notifications.content.checklist.paymentFailed.update', 'Update card/account details'),
+        'normal'
+      ),
+      cl(
+        t('notifications.content.checklist.paymentFailed.retry', 'Retry the transaction'),
+        'normal'
+      ),
+      cl(
+        t('notifications.content.checklist.paymentFailed.confirm', 'Confirm payment success'),
+        'optional'
+      ),
     ];
   }
 
@@ -821,7 +903,10 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
     return [
       cl(t('notifications.content.checklist.usageAlert.check', 'Check current usage'), 'normal'),
       cl(
-        t('notifications.content.checklist.usageAlert.identify', 'Identify what consumes resources'),
+        t(
+          'notifications.content.checklist.usageAlert.identify',
+          'Identify what consumes resources'
+        ),
         'normal'
       ),
       cl(
@@ -831,13 +916,19 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
         ),
         'normal'
       ),
-      cl(t('notifications.content.checklist.usageAlert.implement', 'Implement chosen strategy'), 'optional'),
+      cl(
+        t('notifications.content.checklist.usageAlert.implement', 'Implement chosen strategy'),
+        'optional'
+      ),
     ];
   }
 
   if (nType === 'SUBSCRIPTION_CHANGE') {
     return [
-      cl(t('notifications.content.checklist.subscriptionChange.review', 'Review new terms'), 'normal'),
+      cl(
+        t('notifications.content.checklist.subscriptionChange.review', 'Review new terms'),
+        'normal'
+      ),
       cl(
         t(
           'notifications.content.checklist.subscriptionChange.confirm',
@@ -854,12 +945,18 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
 
   if (nType === 'INVOICE_READY') {
     return [
-      cl(t('notifications.content.checklist.invoiceReady.download', 'Download the invoice'), 'normal'),
+      cl(
+        t('notifications.content.checklist.invoiceReady.download', 'Download the invoice'),
+        'normal'
+      ),
       cl(
         t('notifications.content.checklist.invoiceReady.verify', 'Verify amount and period'),
         'normal'
       ),
-      cl(t('notifications.content.checklist.invoiceReady.forward', 'Forward to accounting'), 'optional'),
+      cl(
+        t('notifications.content.checklist.invoiceReady.forward', 'Forward to accounting'),
+        'optional'
+      ),
     ];
   }
 
@@ -868,20 +965,26 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
     return [
       cl(t('notifications.content.checklist.dbr77KbNew.read', 'Read the new article'), 'normal'),
       cl(
-        t(
-          'notifications.content.checklist.dbr77KbNew.check',
-          'Check if it applies to your tasks'
-        ),
+        t('notifications.content.checklist.dbr77KbNew.check', 'Check if it applies to your tasks'),
         'normal'
       ),
-      cl(t('notifications.content.checklist.dbr77KbNew.apply', 'Apply the knowledge in practice'), 'optional'),
+      cl(
+        t('notifications.content.checklist.dbr77KbNew.apply', 'Apply the knowledge in practice'),
+        'optional'
+      ),
     ];
   }
 
   if (nType === 'DBR77_INSTRUCTION') {
     return [
-      cl(t('notifications.content.checklist.dbr77Instruction.read', 'Read the new instruction'), 'normal'),
-      cl(t('notifications.content.checklist.dbr77Instruction.adjust', 'Adjust your workflow'), 'normal'),
+      cl(
+        t('notifications.content.checklist.dbr77Instruction.read', 'Read the new instruction'),
+        'normal'
+      ),
+      cl(
+        t('notifications.content.checklist.dbr77Instruction.adjust', 'Adjust your workflow'),
+        'normal'
+      ),
       cl(
         t(
           'notifications.content.checklist.dbr77Instruction.confirm',
@@ -907,8 +1010,14 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
   if (nType === 'SYSTEM_ALERT') {
     return [
       cl(t('notifications.content.checklist.systemAlert.read', 'Read alert details'), 'normal'),
-      cl(t('notifications.content.checklist.systemAlert.assess', 'Assess impact on your work'), 'normal'),
-      cl(t('notifications.content.checklist.systemAlert.act', 'Take the required action'), 'normal'),
+      cl(
+        t('notifications.content.checklist.systemAlert.assess', 'Assess impact on your work'),
+        'normal'
+      ),
+      cl(
+        t('notifications.content.checklist.systemAlert.act', 'Take the required action'),
+        'normal'
+      ),
     ];
   }
 
@@ -916,13 +1025,19 @@ const inferChecklist = (n: NotificationLike, t: TFunction): SuggestedChecklistIt
   if (nType.includes('COMPLETED') || nType.includes('MILESTONE')) {
     return [
       cl(t('notifications.content.checklist.milestone.review', 'Review the summary'), 'optional'),
-      cl(t('notifications.content.checklist.milestone.dismiss', 'Dismiss the notification'), 'optional'),
+      cl(
+        t('notifications.content.checklist.milestone.dismiss', 'Dismiss the notification'),
+        'optional'
+      ),
     ];
   }
 
   // ── Generic fallback ──
   return [
-    cl(t('notifications.content.checklist.default.review', 'Review notification details'), 'normal'),
+    cl(
+      t('notifications.content.checklist.default.review', 'Review notification details'),
+      'normal'
+    ),
     cl(t('notifications.content.checklist.default.act', 'Take appropriate action'), 'normal'),
   ];
 };

@@ -80,7 +80,11 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
       data-testid={testId}
       className="fixed inset-0 z-40 flex"
     >
-      <div className="flex-1 bg-c-surface-raised backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+      <div
+        className="flex-1 bg-c-surface-raised backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-hidden
+      />
       <aside
         className="w-[420px] max-w-full h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-y-auto"
         data-testid={`${testId}-aside`}
@@ -88,10 +92,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle sticky top-0 bg-c-surface z-10">
           <div className="flex items-center gap-2">
             <ShieldCheck size={14} className="text-c-text-secondary" aria-hidden />
-            <h2
-              id={`${testId}-title`}
-              className="text-sm font-semibold text-c-text"
-            >
+            <h2 id={`${testId}-title`} className="text-sm font-semibold text-c-text">
               {t('kimi.template.governance.title', 'Template governance')}
             </h2>
           </div>
@@ -107,7 +108,10 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
         </div>
 
         {loading && (
-          <p className="px-4 py-6 text-[12px] text-c-text-secondary" data-testid={`${testId}-loading`}>
+          <p
+            className="px-4 py-6 text-[12px] text-c-text-secondary"
+            data-testid={`${testId}-loading`}
+          >
             {t('kimi.template.governance.loading', 'Loading…')}
           </p>
         )}
@@ -126,13 +130,9 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
           <div className="px-4 py-4 space-y-5" data-testid={`${testId}-body`}>
             {/* Header card */}
             <section>
-              <h3 className="text-base font-semibold text-c-text">
-                {template.name}
-              </h3>
+              <h3 className="text-base font-semibold text-c-text">{template.name}</h3>
               {template.description && (
-                <p className="mt-1 text-[12px] text-c-text-secondary">
-                  {template.description}
-                </p>
+                <p className="mt-1 text-[12px] text-c-text-secondary">{template.description}</p>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-c-text-secondary">
                 <TemplateLifecycleBadge status={template.status} testId={`${testId}-status`} />
@@ -191,9 +191,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
                           </p>
                         )}
                         {entry.note && (
-                          <p className="mt-1 text-[12px] text-c-text italic">
-                            "{entry.note}"
-                          </p>
+                          <p className="mt-1 text-[12px] text-c-text italic">"{entry.note}"</p>
                         )}
                       </li>
                     );

@@ -92,9 +92,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
               </div>
             )}
           </div>
-          {description && (
-            <p className="text-sm text-c-text-muted truncate">{description}</p>
-          )}
+          {description && <p className="text-sm text-c-text-muted truncate">{description}</p>}
         </div>
 
         {collapsible && (

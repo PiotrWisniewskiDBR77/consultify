@@ -157,17 +157,11 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                 }`}
               >
                 <Shield
-                  className={`w-5 h-5 ${
-                    isGatePassed
-                      ? 'text-c-success'
-                      : 'text-c-warning'
-                  }`}
+                  className={`w-5 h-5 ${isGatePassed ? 'text-c-success' : 'text-c-warning'}`}
                 />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-c-text">
-                  {gateConfig.title}
-                </h3>
+                <h3 className="text-lg font-bold text-c-text">{gateConfig.title}</h3>
                 <p className="text-sm text-c-text-muted">
                   {fromPhase} → {toPhase}
                 </p>
@@ -191,16 +185,16 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
           ) : (
             <>
               {/* Description */}
-              <p className="text-sm text-c-text-secondary mb-4">
-                {gateConfig.description}
-              </p>
+              <p className="text-sm text-c-text-secondary mb-4">{gateConfig.description}</p>
 
               {/* Error state */}
               {error && (
                 <div className="mb-4 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-danger-700 dark:text-danger-300">{error}</p>
+                    <p className="text-sm font-medium text-danger-700 dark:text-danger-300">
+                      {error}
+                    </p>
                     <p className="text-xs text-danger-500 dark:text-danger-400 mt-1">
                       Nie można ocenić bramki. Sprawdź konfigurację projektu lub skontaktuj się z
                       administratorem.
@@ -221,9 +215,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                 </div>
                 <span
                   className={`text-sm font-medium ${
-                    progressPercent === 100
-                      ? 'text-c-success'
-                      : 'text-c-warning'
+                    progressPercent === 100 ? 'text-c-success' : 'text-c-warning'
                   }`}
                 >
                   {metCount}/{criteria.length}
@@ -259,9 +251,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                         {c.criterion}
                       </p>
                       {c.evidence && (
-                        <p className="text-xs text-c-text-muted mt-0.5">
-                          {c.evidence}
-                        </p>
+                        <p className="text-xs text-c-text-muted mt-0.5">{c.evidence}</p>
                       )}
                     </div>
                   </div>

@@ -90,7 +90,7 @@ const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
 function crrParams(
   volatility: number,
   riskFreeRate: number,
-  dt: number,
+  dt: number
 ): { u: number; d: number; p: number; disc: number } {
   const vol = Math.max(0, volatility);
   const u = Math.exp(vol * Math.sqrt(dt));
@@ -113,7 +113,7 @@ function binomialEuropean(
   riskFreeRate: number,
   timeYears: number,
   steps: number,
-  payoff: (terminal: number) => number,
+  payoff: (terminal: number) => number
 ): number {
   const n = Math.max(1, Math.floor(steps));
   const t = Math.max(0, timeYears);
@@ -165,7 +165,7 @@ export function deferOption(input: DeferOptionInput): DeferOptionResult {
     riskFreeRate,
     timeToDecideYears,
     steps,
-    (terminal) => Math.max(terminal - investmentCost, 0),
+    (terminal) => Math.max(terminal - investmentCost, 0)
   );
 
   const expandedNpv = Math.max(staticNpv, optionValue);
@@ -210,7 +210,7 @@ export function abandonOption(input: AbandonOptionInput): AbandonOptionResult {
     riskFreeRate,
     timeToDecideYears,
     steps,
-    (terminal) => Math.max(salvageValue - terminal, 0),
+    (terminal) => Math.max(salvageValue - terminal, 0)
   );
 
   return { salvageValue, optionValue };

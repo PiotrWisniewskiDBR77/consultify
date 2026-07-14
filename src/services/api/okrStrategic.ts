@@ -43,7 +43,13 @@ export async function listOkrCycles(projectId = 'all'): Promise<OkrCycle[]> {
 
 export async function createOkrCycle(
   projectId: string | undefined,
-  input: { name: string; periodYear: number; periodQuarter?: number | null; deptId?: string | null; teamId?: string | null }
+  input: {
+    name: string;
+    periodYear: number;
+    periodQuarter?: number | null;
+    deptId?: string | null;
+    teamId?: string | null;
+  }
 ): Promise<OkrCycle> {
   const res = await Api.post(`/results-strategic/${projectId || 'all'}/okr/cycles`, input);
   return unwrap<{ cycle: OkrCycle }>(res).cycle;
@@ -52,8 +58,15 @@ export async function createOkrCycle(
 export async function closeOkrCycle(
   projectId: string | undefined,
   cycleId: string
-): Promise<{ cycle: OkrCycle; objectives: Array<{ objectiveId: string; score: number; status: string }>; avgScore: number }> {
-  const res = await Api.post(`/results-strategic/${projectId || 'all'}/okr/cycles/${cycleId}/close`, {});
+): Promise<{
+  cycle: OkrCycle;
+  objectives: Array<{ objectiveId: string; score: number; status: string }>;
+  avgScore: number;
+}> {
+  const res = await Api.post(
+    `/results-strategic/${projectId || 'all'}/okr/cycles/${cycleId}/close`,
+    {}
+  );
   return unwrap(res);
 }
 
@@ -129,7 +142,10 @@ export async function updateOkrKeyResult(
   id: string,
   patch: UpdateKeyResultInput
 ): Promise<{ score: number }> {
-  const res = await Api.patch(`/results-strategic/${projectId || 'all'}/okr/key-results/${id}`, patch);
+  const res = await Api.patch(
+    `/results-strategic/${projectId || 'all'}/okr/key-results/${id}`,
+    patch
+  );
   return unwrap(res);
 }
 
@@ -154,7 +170,9 @@ export async function listOkrCheckIns(
   projectId: string | undefined,
   keyResultId: string
 ): Promise<OkrCheckIn[]> {
-  const res = await Api.get(`/results-strategic/${projectId || 'all'}/okr/key-results/${keyResultId}/check-ins`);
+  const res = await Api.get(
+    `/results-strategic/${projectId || 'all'}/okr/key-results/${keyResultId}/check-ins`
+  );
   return unwrap<{ checkIns: OkrCheckIn[] }>(res).checkIns ?? [];
 }
 

@@ -95,10 +95,7 @@ function safeAmount(value: number): number {
  * Only run-rate + hard benefits are actually banked. Anything else produces a
  * zero-impact result (tracked, not banked) so callers can still see the line.
  */
-export function bankBenefit(
-  benefit: Benefit,
-  targetBudgetPeriod: string,
-): BankBenefitResult {
+export function bankBenefit(benefit: Benefit, targetBudgetPeriod: string): BankBenefitResult {
   const magnitude = safeAmount(benefit.value);
   const bankable = isBankable(benefit);
   const bankedAmount = bankable ? magnitude : 0;
@@ -130,10 +127,7 @@ export function bankBenefit(
  * Variance is expressed in benefit-magnitude terms (positive = good), so the
  * same comparison holds for both cost_out and revenue_up.
  */
-export function bankingStatus(
-  benefit: Benefit,
-  actual?: number,
-): BankingStatusResult {
+export function bankingStatus(benefit: Benefit, actual?: number): BankingStatusResult {
   if (!isBankable(benefit) || actual === undefined || actual === null) {
     return { status: 'pending', variance: 0 };
   }

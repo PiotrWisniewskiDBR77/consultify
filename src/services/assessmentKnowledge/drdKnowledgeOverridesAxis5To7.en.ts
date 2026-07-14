@@ -49,7 +49,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an org chart with a single decision-making center plus project documentation showing detailed directives instead of goals. Alternatively, exit interview results.',
-    suggestedTechnologies: ['HRIS (exit interviews)', 'Project management systems', 'Project documentation'],
+    suggestedTechnologies: [
+      'HRIS (exit interviews)',
+      'Project management systems',
+      'Project documentation',
+    ],
   },
   '5A#3': {
     questions: [
@@ -69,7 +73,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: engagement/psychological safety survey results (e.g. Gallup Q12) with a score ≥ 4/5 on experimentation questions. Or a documented retrospective session where the leader discusses their own mistakes.',
-    suggestedTechnologies: ['Pulse Survey Tool (Officevibe, Leapsome)', 'HR Analytics', 'Learning Management System (LMS)'],
+    suggestedTechnologies: [
+      'Pulse Survey Tool (Officevibe, Leapsome)',
+      'HR Analytics',
+      'Learning Management System (LMS)',
+    ],
   },
   '5A#5': {
     questions: [
@@ -79,7 +87,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of innovation initiatives from the last 2 years with confirmed business impact (ROI, new customers, new product). Or documentation of participation in an incubation program / startup partnership.',
-    suggestedTechnologies: ['Innovation Pipeline Tool', 'Venture Builder Platform', 'R&D Portfolio Management'],
+    suggestedTechnologies: [
+      'Innovation Pipeline Tool',
+      'Venture Builder Platform',
+      'R&D Portfolio Management',
+    ],
   },
   '5A#6': {
     questions: [
@@ -89,7 +101,11 @@ const axis5A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a "Digital Vision 2026–2030" document approved by the board with KPIs and owners. A succession program with an explicit "AI/digital competency" criterion. A quarterly progress report on the transformation presented to shareholders.',
-    suggestedTechnologies: ['Strategic Planning Tool (Cascade, Monday)', 'Succession Planning (SAP SuccessFactors)', 'Executive Reporting Dashboard'],
+    suggestedTechnologies: [
+      'Strategic Planning Tool (Cascade, Monday)',
+      'Succession Planning (SAP SuccessFactors)',
+      'Executive Reporting Dashboard',
+    ],
   },
 };
 
@@ -99,11 +115,15 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     questions: [
       'Has the organization formally identified specific problems or threats that force change (e.g. loss of market share, rising costs, regulatory pressure)?',
       'Is management aware that without change the company will be in a difficult position — has this been documented (report, analysis, presentation)?',
-      'Is there at least one person or committee formally responsible for monitoring change signals in the company\'s environment?',
+      "Is there at least one person or committee formally responsible for monitoring change signals in the company's environment?",
     ],
     example:
       'Evidence: a 2024/2025 diagnostic report or SWOT analysis pointing to specific reasons for urgency of change. Or board minutes discussing competitive threats.',
-    suggestedTechnologies: ['Business Intelligence', 'Market Monitoring Tool', 'SWOT/Diagnostic Framework'],
+    suggestedTechnologies: [
+      'Business Intelligence',
+      'Market Monitoring Tool',
+      'SWOT/Diagnostic Framework',
+    ],
   },
   '5B#2': {
     questions: [
@@ -113,7 +133,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an internal order establishing a "digital transformation committee" with a named list and mandate. Or documentation of a kick-off meeting attended by representatives from sales, IT, operations and HR.',
-    suggestedTechnologies: ['HRIS / Org Chart Tool', 'Collaboration Platform (Teams/Slack)', 'Governance Framework'],
+    suggestedTechnologies: [
+      'HRIS / Org Chart Tool',
+      'Collaboration Platform (Teams/Slack)',
+      'Governance Framework',
+    ],
   },
   '5B#3': {
     questions: [
@@ -123,7 +147,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a "Transformation Vision 2025–2027" document approved by the board with KPIs and a timeline. Or a communication plan with a schedule of townhalls and messages tailored to specific groups.',
-    suggestedTechnologies: ['Strategic Planning Tool', 'Internal Communication Platform (Intranet)', 'OKR Software'],
+    suggestedTechnologies: [
+      'Strategic Planning Tool',
+      'Internal Communication Platform (Intranet)',
+      'OKR Software',
+    ],
   },
   '5B#4': {
     questions: [
@@ -133,7 +161,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a recording of a townhall or newsletter from the last 3 months confirming two-way communication. Employee survey results with a question about understanding the direction of transformation.',
-    suggestedTechnologies: ['Internal Communication Platform', 'Employee Survey Tool', 'Intranet / Digital Workplace'],
+    suggestedTechnologies: [
+      'Internal Communication Platform',
+      'Employee Survey Tool',
+      'Intranet / Digital Workplace',
+    ],
   },
   '5B#5': {
     questions: [
@@ -143,7 +175,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a transformation roadmap with a "green/yellow/red" status per initiative, updated monthly. Steering committee minutes discussing removed barriers.',
-    suggestedTechnologies: ['Project Portfolio Management (PPM)', 'OKR/KPI Platform', 'Risk & Issue Register'],
+    suggestedTechnologies: [
+      'Project Portfolio Management (PPM)',
+      'OKR/KPI Platform',
+      'Risk & Issue Register',
+    ],
   },
   '5B#6': {
     questions: [
@@ -153,7 +189,11 @@ const axis5B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an organizational values charter with an explicit "continuous transformation" element. An annual review form asking about the employee\'s contribution to change. Lessons learned from 2 completed transformation projects implemented in subsequent ones.',
-    suggestedTechnologies: ['Performance Management System', 'Knowledge Management (Confluence)', 'HR Onboarding Platform'],
+    suggestedTechnologies: [
+      'Performance Management System',
+      'Knowledge Management (Confluence)',
+      'HR Onboarding Platform',
+    ],
   },
 };
 
@@ -167,7 +207,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of employee participation in conferences 2024–2025 with topics and knowledge-transfer format (internal presentation, report, workshop). Proof of cost reimbursement.',
-    suggestedTechnologies: ['Learning Management System (LMS)', 'HR Training Register', 'Event Management Tool'],
+    suggestedTechnologies: [
+      'Learning Management System (LMS)',
+      'HR Training Register',
+      'Event Management Tool',
+    ],
   },
   '5C#2': {
     questions: [
@@ -177,7 +221,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a 2025 internal training plan with a calendar, participant list and attendance confirmation (signed sheets or LMS printouts). An "internal trainer" role included in job descriptions.',
-    suggestedTechnologies: ['LMS (Moodle, Docebo)', 'HR Training Register', 'Calendar / Scheduling Tool'],
+    suggestedTechnologies: [
+      'LMS (Moodle, Docebo)',
+      'HR Training Register',
+      'Calendar / Scheduling Tool',
+    ],
   },
   '5C#3': {
     questions: [
@@ -197,7 +245,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a contract with an e-learning platform (Udemy Business, Coursera for Business) with a date and number of licenses. A completion-rate report for the last quarter. A "learning time" policy confirmed by supervisors.',
-    suggestedTechnologies: ['Udemy Business / Coursera for Teams', 'LinkedIn Learning', 'LMS Analytics'],
+    suggestedTechnologies: [
+      'Udemy Business / Coursera for Teams',
+      'LinkedIn Learning',
+      'LMS Analytics',
+    ],
   },
   '5C#5': {
     questions: [
@@ -207,7 +259,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: project charters showing cross-functional composition, confirming participation of employees from different departments. A project rotation plan approved by HR.',
-    suggestedTechnologies: ['Project Management Tool (Jira/Asana)', 'HRIS (rotation tracking)', 'Skills Matrix'],
+    suggestedTechnologies: [
+      'Project Management Tool (Jira/Asana)',
+      'HRIS (rotation tracking)',
+      'Skills Matrix',
+    ],
   },
   '5C#6': {
     questions: [
@@ -217,7 +273,11 @@ const axis5C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of mentor/mentee pairs from the last 12 months, a meeting plan and check-in confirmations. A results report: X promotions among mentees, Y% completion rate. An annual mentor review that accounts for their mentoring contribution.',
-    suggestedTechnologies: ['Mentoring Platform (Together, MentorcliQ)', 'HRIS', 'Performance Management System'],
+    suggestedTechnologies: [
+      'Mentoring Platform (Together, MentorcliQ)',
+      'HRIS',
+      'Performance Management System',
+    ],
   },
 };
 
@@ -231,7 +291,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an idea platform with the number of submissions, statuses and dates from the last 12 months. Or hackathon minutes with a participant list and outcome.',
-    suggestedTechnologies: ['Idea Management Platform (Brightidea, IdeaScale)', 'Collaboration Tool (Teams/Slack)', 'Innovation Tracker'],
+    suggestedTechnologies: [
+      'Idea Management Platform (Brightidea, IdeaScale)',
+      'Collaboration Tool (Teams/Slack)',
+      'Innovation Tracker',
+    ],
   },
   '5D#2': {
     questions: [
@@ -241,7 +305,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of pilots from the last 2 years with a description of the hypothesis, result and decision (continue/close). An "innovation budget" line item in the financial plan with an amount.',
-    suggestedTechnologies: ['Prototype/MVP Tools (Figma, Notion)', 'Project Tracking', 'Budget Management (ERP)'],
+    suggestedTechnologies: [
+      'Prototype/MVP Tools (Figma, Notion)',
+      'Project Tracking',
+      'Budget Management (ERP)',
+    ],
   },
   '5D#3': {
     questions: [
@@ -251,7 +319,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a trend report with a date and owner\'s signature. A board meeting agenda with a "trends/innovation" item. A list of initiatives launched based on trend analysis.',
-    suggestedTechnologies: ['Market Intelligence (Crayon, Klue)', 'Research Platform (Gartner, Forrester)', 'BI Dashboard'],
+    suggestedTechnologies: [
+      'Market Intelligence (Crayon, Klue)',
+      'Research Platform (Gartner, Forrester)',
+      'BI Dashboard',
+    ],
   },
   '5D#4': {
     questions: [
@@ -261,7 +333,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a "fail fast, learn fast" policy or analogous document approved by the board. Retrospective minutes from a closed project with a list of lessons and follow-up actions.',
-    suggestedTechnologies: ['Knowledge Management (Confluence)', 'Retrospective Tools (Miro, EasyRetro)', 'HR Policy Platform'],
+    suggestedTechnologies: [
+      'Knowledge Management (Confluence)',
+      'Retrospective Tools (Miro, EasyRetro)',
+      'HR Policy Platform',
+    ],
   },
   '5D#5': {
     questions: [
@@ -271,7 +347,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an org structure with an R&D department. R&D budget as % of revenue over the last 3 years. A list of patents or new products linked to the R&D department.',
-    suggestedTechnologies: ['R&D Management Platform', 'Patent & IP Management', 'Project Portfolio (PPM)'],
+    suggestedTechnologies: [
+      'R&D Management Platform',
+      'Patent & IP Management',
+      'Project Portfolio (PPM)',
+    ],
   },
   '5D#6': {
     questions: [
@@ -281,7 +361,11 @@ const axis5D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: partnership agreements with universities/startups signed in the last 2 years. A product/service with documented ties to this collaboration. An "Innovation Partnership Manager" role or equivalent in the org structure.',
-    suggestedTechnologies: ['CRM (partner management)', 'Partnership Platform', 'Innovation Ecosystem Tool (Plug and Play)'],
+    suggestedTechnologies: [
+      'CRM (partner management)',
+      'Partnership Platform',
+      'Innovation Ecosystem Tool (Plug and Play)',
+    ],
   },
 };
 
@@ -295,7 +379,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a financial plan excerpt with a "digital transformation / innovation" line item for 2025, with an amount and owner. Or board minutes with an approved allocation.',
-    suggestedTechnologies: ['ERP (Finance module)', 'Budget Planning Tool', 'Project Portfolio Management'],
+    suggestedTechnologies: [
+      'ERP (Finance module)',
+      'Budget Planning Tool',
+      'Project Portfolio Management',
+    ],
   },
   '5E#2': {
     questions: [
@@ -314,8 +402,12 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
       'Is the list of experts (internal and external partners) kept up to date and available to project managers?',
     ],
     example:
-      'Evidence: a register of internal experts and preferred external vendors with the date of the last update. An invoice or contract with a consultant from 2024/2025 plus a description of the engagement\'s outcome.',
-    suggestedTechnologies: ['CRM (vendor/expert management)', 'Procurement System', 'Skills Directory (intranet)'],
+      "Evidence: a register of internal experts and preferred external vendors with the date of the last update. An invoice or contract with a consultant from 2024/2025 plus a description of the engagement's outcome.",
+    suggestedTechnologies: [
+      'CRM (vendor/expert management)',
+      'Procurement System',
+      'Skills Directory (intranet)',
+    ],
   },
   '5E#4': {
     questions: [
@@ -325,7 +417,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a data access matrix broken down by role, approved and published on the intranet. An IAM/AD system report showing zero unjustified blockers in the last 6 months.',
-    suggestedTechnologies: ['IAM (Identity & Access Management)', 'Data Governance Platform', 'Active Directory / Azure AD'],
+    suggestedTechnologies: [
+      'IAM (Identity & Access Management)',
+      'Data Governance Platform',
+      'Active Directory / Azure AD',
+    ],
   },
   '5E#5': {
     questions: [
@@ -335,7 +431,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a software catalog/SAM Tool with a list of tools, license counts and owners. IT onboarding metric: average time to grant access = X days (from helpdesk data).',
-    suggestedTechnologies: ['SAM Tool (Snow Software, Flexera)', 'ITSM Helpdesk (ServiceNow, Jira)', 'MDM (Mobile Device Management)'],
+    suggestedTechnologies: [
+      'SAM Tool (Snow Software, Flexera)',
+      'ITSM Helpdesk (ServiceNow, Jira)',
+      'MDM (Mobile Device Management)',
+    ],
   },
   '5E#6': {
     questions: [
@@ -345,7 +445,11 @@ const axis5E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of active partnership agreements with validity dates and result KPIs. Minutes of the annual partner-ecosystem review by the board. A project delivered jointly with an external partner, describing the split of investment and benefits.',
-    suggestedTechnologies: ['CRM (partner management)', 'Contract Management System', 'Partnership Portal'],
+    suggestedTechnologies: [
+      'CRM (partner management)',
+      'Contract Management System',
+      'Partnership Portal',
+    ],
   },
 };
 
@@ -363,7 +467,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Negative evidence (confirmation of absence): no security strategy document in the company\'s policy register. Or an IT audit report flagging "no security policy" as a finding.',
-    suggestedTechnologies: ['(None — baseline level)', 'Basic antivirus', 'Out-of-the-box firewall'],
+    suggestedTechnologies: [
+      '(None — baseline level)',
+      'Basic antivirus',
+      'Out-of-the-box firewall',
+    ],
   },
   '6A#2': {
     questions: [
@@ -373,7 +481,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a cybersecurity risk register with a completion date, risk owners and mitigation status. Minutes of a meeting discussing the risk analysis results.',
-    suggestedTechnologies: ['Risk Management Platform (RSA Archer)', 'GRC Tool (ServiceNow GRC)', 'Spreadsheet + formal framework (ISO 27005)'],
+    suggestedTechnologies: [
+      'Risk Management Platform (RSA Archer)',
+      'GRC Tool (ServiceNow GRC)',
+      'Spreadsheet + formal framework (ISO 27005)',
+    ],
   },
   '6A#3': {
     questions: [
@@ -403,7 +515,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an offboarding procedure with a checklist and IT sign-off confirming access revocation. A per-employee cybersecurity training report (% completion). Offboarding SLA: X hours to account deactivation.',
-    suggestedTechnologies: ['HRIS (offboarding module)', 'IAM (automated deprovisioning)', 'LMS (training completion tracking)'],
+    suggestedTechnologies: [
+      'HRIS (offboarding module)',
+      'IAM (automated deprovisioning)',
+      'LMS (training completion tracking)',
+    ],
   },
   '6A#6': {
     questions: [
@@ -413,7 +529,11 @@ const axis6A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a pentest report with a date, scope and remediation plan signed off by the CISO/CTO. A quarterly board report with cybersecurity metrics (incident count, MTTR, training coverage).',
-    suggestedTechnologies: ['SIEM (Splunk, QRadar, Microsoft Sentinel)', 'Pentest Tools / External Audit', 'Security Dashboard (GRC)'],
+    suggestedTechnologies: [
+      'SIEM (Splunk, QRadar, Microsoft Sentinel)',
+      'Pentest Tools / External Audit',
+      'Security Dashboard (GRC)',
+    ],
   },
 };
 
@@ -427,7 +547,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a firewall rule configuration dump with the date of the last review. Confirmation of active logging with retention ≥ 90 days.',
-    suggestedTechnologies: ['Next-Gen Firewall (Palo Alto, Fortinet, Cisco)', 'Firewall Log Management', 'Network Monitoring'],
+    suggestedTechnologies: [
+      'Next-Gen Firewall (Palo Alto, Fortinet, Cisco)',
+      'Firewall Log Management',
+      'Network Monitoring',
+    ],
   },
   '6B#2': {
     questions: [
@@ -437,7 +561,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a report from the antivirus/EDR console showing % coverage (target: 100% of devices), the last signature update date, and the number of active alerts.',
-    suggestedTechnologies: ['EDR/Antivirus (CrowdStrike, Microsoft Defender, SentinelOne)', 'Central Management Console', 'Endpoint Inventory'],
+    suggestedTechnologies: [
+      'EDR/Antivirus (CrowdStrike, Microsoft Defender, SentinelOne)',
+      'Central Management Console',
+      'Endpoint Inventory',
+    ],
   },
   '6B#3': {
     questions: [
@@ -447,7 +575,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an IDS system report from the last 30 days: number of alerts, categories, handling status. A sample incident ticket from IDS → handling → closure.',
-    suggestedTechnologies: ['IDS/IPS (Snort, Suricata, Cisco IPS)', 'Network Detection & Response (NDR)', 'SIEM (alert aggregation)'],
+    suggestedTechnologies: [
+      'IDS/IPS (Snort, Suricata, Cisco IPS)',
+      'Network Detection & Response (NDR)',
+      'SIEM (alert aggregation)',
+    ],
   },
   '6B#4': {
     questions: [
@@ -457,7 +589,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of sources feeding the SIEM (connector list) plus a sample weekly SIEM report with alerts and their status. A correlation rule for the brute-force scenario in the SIEM configuration.',
-    suggestedTechnologies: ['SIEM (Splunk, QRadar, Microsoft Sentinel, Elastic SIEM)', 'SOAR', 'Threat Intelligence Platform'],
+    suggestedTechnologies: [
+      'SIEM (Splunk, QRadar, Microsoft Sentinel, Elastic SIEM)',
+      'SOAR',
+      'Threat Intelligence Platform',
+    ],
   },
   '6B#5': {
     questions: [
@@ -467,7 +603,11 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an MFA policy with a list of systems covered by the requirement, plus an IdP (Azure AD/Okta) report confirming 100% MFA coverage for privileged roles. Minutes of a quarterly admin privilege review.',
-    suggestedTechnologies: ['MFA (Microsoft Authenticator, Duo)', 'IAM (Azure AD, Okta, CyberArk)', 'PAM (Privileged Access Management)'],
+    suggestedTechnologies: [
+      'MFA (Microsoft Authenticator, Duo)',
+      'IAM (Azure AD, Okta, CyberArk)',
+      'PAM (Privileged Access Management)',
+    ],
   },
   '6B#6': {
     questions: [
@@ -477,7 +617,12 @@ const axis6B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a network diagram marking zones/segments and traffic-flow rules. A pentest report on segmentation testing with a date and result. VPN logs from the last 30 days confirming MFA was required for every session.',
-    suggestedTechnologies: ['Next-Gen Firewall (segmentation)', 'VPN (Cisco AnyConnect, Palo Alto GlobalProtect)', 'Network Access Control (NAC)', 'Pentest Tools'],
+    suggestedTechnologies: [
+      'Next-Gen Firewall (segmentation)',
+      'VPN (Cisco AnyConnect, Palo Alto GlobalProtect)',
+      'Network Access Control (NAC)',
+      'Pentest Tools',
+    ],
   },
 };
 
@@ -491,7 +636,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an encryption policy listing covered systems and algorithms used. A report from an MDM/BitLocker tool confirming 100% disk encryption coverage for laptops.',
-    suggestedTechnologies: ['Disk Encryption (BitLocker, FileVault)', 'Database Encryption (TDE)', 'Key Management Service (AWS KMS, HashiCorp Vault)'],
+    suggestedTechnologies: [
+      'Disk Encryption (BitLocker, FileVault)',
+      'Database Encryption (TDE)',
+      'Key Management Service (AWS KMS, HashiCorp Vault)',
+    ],
   },
   '6C#2': {
     questions: [
@@ -501,7 +650,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a password policy embedded in Active Directory (screenshot of settings: min 12 characters, complexity ON, 90-day expiry). A documented password vault for service accounts (e.g. CyberArk, 1Password Teams).',
-    suggestedTechnologies: ['Active Directory / Azure AD (password policy)', 'Password Manager (CyberArk, 1Password Teams, Bitwarden)', 'PAM Tool'],
+    suggestedTechnologies: [
+      'Active Directory / Azure AD (password policy)',
+      'Password Manager (CyberArk, 1Password Teams, Bitwarden)',
+      'PAM Tool',
+    ],
   },
   '6C#3': {
     questions: [
@@ -511,7 +664,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a role and permissions matrix (RBAC matrix) with the date of the last review. Q1 2025 access review minutes with a list of permission changes. Confirmation of access log retention = 90 days (configuration or SIEM report).',
-    suggestedTechnologies: ['IAM (Role-Based Access Control)', 'Data Access Governance (Varonis, Netwrix)', 'SIEM (audit logging)'],
+    suggestedTechnologies: [
+      'IAM (Role-Based Access Control)',
+      'Data Access Governance (Varonis, Netwrix)',
+      'SIEM (audit logging)',
+    ],
   },
   '6C#4': {
     questions: [
@@ -521,7 +678,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a backup policy with a schedule and list of covered systems. Minutes from the last DR test: date, RTO achieved X hours (target Y), RPO achieved. A screenshot from the backup system confirming the last run and verification result.',
-    suggestedTechnologies: ['Backup Solution (Veeam, Commvault, Azure Backup)', 'DR Platform', 'Backup Monitoring Dashboard'],
+    suggestedTechnologies: [
+      'Backup Solution (Veeam, Commvault, Azure Backup)',
+      'DR Platform',
+      'Backup Monitoring Dashboard',
+    ],
   },
   '6C#5': {
     questions: [
@@ -531,7 +692,11 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a DLP/UEBA configuration with rules detecting exfiltration and anomalies. A sample incident ticket with detection and handling. Security alert SLA: P1 = 30 min, P2 = 4h.',
-    suggestedTechnologies: ['DLP (Data Loss Prevention — Microsoft Purview, Symantec)', 'UEBA (Splunk, Securonix)', 'SOC Platform'],
+    suggestedTechnologies: [
+      'DLP (Data Loss Prevention — Microsoft Purview, Symantec)',
+      'UEBA (Splunk, Securonix)',
+      'SOC Platform',
+    ],
   },
   '6C#6': {
     questions: [
@@ -541,7 +706,12 @@ const axis6C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: client certificate or FIDO2/YubiKey configuration for admin roles. A Zero Trust policy with a list of covered systems. A PAM Tool report showing 100% of privileged sessions recorded and identity-verified.',
-    suggestedTechnologies: ['PKI / Certificate Management', 'FIDO2 / YubiKey', 'Zero Trust Network Access (Zscaler, Cloudflare Access)', 'PAM (CyberArk)'],
+    suggestedTechnologies: [
+      'PKI / Certificate Management',
+      'FIDO2 / YubiKey',
+      'Zero Trust Network Access (Zscaler, Cloudflare Access)',
+      'PAM (CyberArk)',
+    ],
   },
 };
 
@@ -565,7 +735,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a 2025 cybersecurity training plan with a schedule, formats and target groups. A report of post-training knowledge test results (% of employees scoring ≥ 80%).',
-    suggestedTechnologies: ['Security Awareness Platform (KnowBe4, Proofpoint Security Awareness)', 'LMS', 'Phishing Simulation Tool'],
+    suggestedTechnologies: [
+      'Security Awareness Platform (KnowBe4, Proofpoint Security Awareness)',
+      'LMS',
+      'Phishing Simulation Tool',
+    ],
   },
   '6D#3': {
     questions: [
@@ -575,7 +749,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a phishing campaign report (KnowBe4 or Proofpoint): date, number of recipients, % click-through (quarterly trend). A "failed phishing → mandatory retraining" policy with evidence of its application.',
-    suggestedTechnologies: ['Phishing Simulation (KnowBe4, Proofpoint SA)', 'Security Awareness Analytics', 'LMS (remedial training)'],
+    suggestedTechnologies: [
+      'Phishing Simulation (KnowBe4, Proofpoint SA)',
+      'Security Awareness Analytics',
+      'LMS (remedial training)',
+    ],
   },
   '6D#4': {
     questions: [
@@ -585,7 +763,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: job descriptions or a scope of responsibilities for the internal cybersecurity auditor. A 2024/2025 internal audit report listing findings and a remediation plan. An org chart confirming reporting independence.',
-    suggestedTechnologies: ['GRC / Audit Management Tool', 'Internal Audit Platform (TeamMate, Auditboard)', 'Risk Register'],
+    suggestedTechnologies: [
+      'GRC / Audit Management Tool',
+      'Internal Audit Platform (TeamMate, Auditboard)',
+      'Risk Register',
+    ],
   },
   '6D#5': {
     questions: [
@@ -605,7 +787,11 @@ const axis6D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an ISO 27001 certificate with issue date and scope. Or an ISO 27001 implementation schedule with stages and dates. Minutes of an ISMS management review from the last 12 months.',
-    suggestedTechnologies: ['ISMS Platform (Vanta, Drata, Tugboat Logic)', 'ISO 27001 Gap Assessment Tool', 'GRC (continuous compliance monitoring)'],
+    suggestedTechnologies: [
+      'ISMS Platform (Vanta, Drata, Tugboat Logic)',
+      'ISO 27001 Gap Assessment Tool',
+      'GRC (continuous compliance monitoring)',
+    ],
   },
 };
 
@@ -619,7 +805,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a "Threat Landscape" document or a BIA (Business Impact Analysis) chapter with a threat list, review date and owner\'s signature. A threat register in a GRC tool.',
-    suggestedTechnologies: ['Threat Modeling Tool (STRIDE, MITRE ATT&CK)', 'GRC / Risk Register', 'BIA Tool'],
+    suggestedTechnologies: [
+      'Threat Modeling Tool (STRIDE, MITRE ATT&CK)',
+      'GRC / Risk Register',
+      'BIA Tool',
+    ],
   },
   '6E#2': {
     questions: [
@@ -629,7 +819,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a BIA (Business Impact Analysis) document with a system-criticality matrix and RTO/RPO per system, approved by business owners. Example: "ERP — RTO 4h, RPO 1h; email — RTO 8h, RPO 24h". Approval date.',
-    suggestedTechnologies: ['BIA Tool', 'DR Planning Platform (Fusion Risk Management)', 'CMDB (ServiceNow)'],
+    suggestedTechnologies: [
+      'BIA Tool',
+      'DR Planning Platform (Fusion Risk Management)',
+      'CMDB (ServiceNow)',
+    ],
   },
   '6E#3': {
     questions: [
@@ -639,7 +833,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an "Incident Response Playbook" document with per-scenario procedures (ransomware, phishing, system outage), an approval date and confirmation of offline availability (printout or USB). A RACI for at least the ransomware scenario.',
-    suggestedTechnologies: ['SOAR (playbooks — Palo Alto XSOAR, Splunk SOAR)', 'Incident Management (PagerDuty, Jira)', 'Offline documentation (PDF/USB)'],
+    suggestedTechnologies: [
+      'SOAR (playbooks — Palo Alto XSOAR, Splunk SOAR)',
+      'Incident Management (PagerDuty, Jira)',
+      'Offline documentation (PDF/USB)',
+    ],
   },
   '6E#4': {
     questions: [
@@ -649,7 +847,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: minutes of a 2024/2025 tabletop exercise: scenario (e.g. "ransomware on the ERP"), participant list (IT + CEO + Legal + PR), conclusions and action items. Evidence that at least one lesson was implemented after the exercise.',
-    suggestedTechnologies: ['Tabletop Exercise Platform (Cybereason, AttackIQ)', 'SOAR (simulation)', 'Learning Management System'],
+    suggestedTechnologies: [
+      'Tabletop Exercise Platform (Cybereason, AttackIQ)',
+      'SOAR (simulation)',
+      'Learning Management System',
+    ],
   },
   '6E#5': {
     questions: [
@@ -659,7 +861,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a 2024/2025 DR drill report with: scenario, date, restoration time for system X = Y hours (target: Z hours), participant list and a remediation plan for any unmet RTOs.',
-    suggestedTechnologies: ['DR Testing Platform (Zerto, Veeam DR Orchestrator)', 'Red Team / Pentest Tools', 'Backup & Recovery Monitoring'],
+    suggestedTechnologies: [
+      'DR Testing Platform (Zerto, Veeam DR Orchestrator)',
+      'Red Team / Pentest Tools',
+      'Backup & Recovery Monitoring',
+    ],
   },
   '6E#6': {
     questions: [
@@ -669,7 +875,11 @@ const axis6E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an incident post-mortem register from the last 12 months (at least 3 entries) listing lessons and the status of action-item implementation. A quarterly board report with MTTR/MTTD metrics per incident category.',
-    suggestedTechnologies: ['Incident Management Platform (PagerDuty, Jira)', 'Post-Mortem Tool (Blameless, Rootly)', 'Security Metrics Dashboard (SIEM/GRC)'],
+    suggestedTechnologies: [
+      'Incident Management Platform (PagerDuty, Jira)',
+      'Post-Mortem Tool (Blameless, Rootly)',
+      'Security Metrics Dashboard (SIEM/GRC)',
+    ],
   },
 };
 
@@ -687,7 +897,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Negative evidence (confirming level 1): results of an internal survey or interview with the data department indicating that a lack of unified data blocks AI projects. Or an IT report listing scattered data sources.',
-    suggestedTechnologies: ['(Starting point)', 'Data Inventory / Data Map', 'Master Data Management (MDM) — implementation plan'],
+    suggestedTechnologies: [
+      '(Starting point)',
+      'Data Inventory / Data Map',
+      'Master Data Management (MDM) — implementation plan',
+    ],
   },
   '7A#2': {
     questions: [
@@ -697,7 +911,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of key systems with a description of data structure (table schemas or ERD). Confirmation that ERP data uses consistent customer and product codes. A system map with data flows marked (even manual ones).',
-    suggestedTechnologies: ['ERP / CRM / MES (with a data export module)', 'Data Dictionary', 'ETL Tool (even basic — Talend Open Studio)'],
+    suggestedTechnologies: [
+      'ERP / CRM / MES (with a data export module)',
+      'Data Dictionary',
+      'ETL Tool (even basic — Talend Open Studio)',
+    ],
   },
   '7A#3': {
     questions: [
@@ -707,7 +925,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a description of the data warehouse/lake architecture with a list of sources, refresh frequency, and launch date. A report from the first ML project/pilot describing input data and results.',
-    suggestedTechnologies: ['Data Warehouse (Snowflake, BigQuery, Azure Synapse)', 'ETL/ELT (dbt, Airbyte, Azure Data Factory)', 'ML Platform (Azure ML, Databricks)'],
+    suggestedTechnologies: [
+      'Data Warehouse (Snowflake, BigQuery, Azure Synapse)',
+      'ETL/ELT (dbt, Airbyte, Azure Data Factory)',
+      'ML Platform (Azure ML, Databricks)',
+    ],
   },
   '7A#4': {
     questions: [
@@ -717,7 +939,11 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: DQ check configuration in a tool (Great Expectations, dbt tests) with a report from the last 30 days — number of checks, % passed, alerts. A data catalog (Alation, DataHub) with the number of entries and last update date.',
-    suggestedTechnologies: ['Data Quality Tool (Great Expectations, Monte Carlo)', 'Data Catalog (Alation, DataHub, Apache Atlas)', 'Real-time Streaming (Kafka, Kinesis)'],
+    suggestedTechnologies: [
+      'Data Quality Tool (Great Expectations, Monte Carlo)',
+      'Data Catalog (Alation, DataHub, Apache Atlas)',
+      'Real-time Streaming (Kafka, Kinesis)',
+    ],
   },
   '7A#5': {
     questions: [
@@ -727,7 +953,12 @@ const axis7A: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an ML pipeline with automatic feature engineering, documented in MLflow or an equivalent tool, with metrics: time from data to a ready model = X hours. An example "data product" with an SLA and owner in the data catalog.',
-    suggestedTechnologies: ['MLOps Platform (MLflow, Kubeflow, SageMaker)', 'Feature Store (Feast, Tecton)', 'DataOps Automation (Monte Carlo, Atlan)', 'Data Product Framework'],
+    suggestedTechnologies: [
+      'MLOps Platform (MLflow, Kubeflow, SageMaker)',
+      'Feature Store (Feast, Tecton)',
+      'DataOps Automation (Monte Carlo, Atlan)',
+      'Data Product Framework',
+    ],
   },
 };
 
@@ -736,12 +967,16 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
   '7B#1': {
     questions: [
       'Are AI use cases in the organization isolated and experimental — i.e. not embedded in any key business process?',
-      'Do employees use AI tools (e.g. ChatGPT, Copilot, OCR tools) privately or without the organization\'s knowledge?',
+      "Do employees use AI tools (e.g. ChatGPT, Copilot, OCR tools) privately or without the organization's knowledge?",
       'Does the organization have no register of AI projects or AI use cases whatsoever?',
     ],
     example:
       'Negative evidence or an employee survey with the question "Do you use AI tools at work?" — a "yes, but not officially" answer from > 30% indicates level 1. No AI project register in the project management system.',
-    suggestedTechnologies: ['(Starting point — no formal deployments)', 'Shadow IT Discovery Tool', 'AI Use Case Registry (plan)'],
+    suggestedTechnologies: [
+      '(Starting point — no formal deployments)',
+      'Shadow IT Discovery Tool',
+      'AI Use Case Registry (plan)',
+    ],
   },
   '7B#2': {
     questions: [
@@ -751,7 +986,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a deployment of Microsoft Copilot or an equivalent tool with the number of users, launch date and a measured effect (e.g. "X minutes/week saved on meeting notes" — analytics report).',
-    suggestedTechnologies: ['Microsoft Copilot / Google Duet AI', 'Document AI (AWS Textract)', 'Meeting Summary AI (Otter.ai, Fireflies)', 'No-code Automation (Zapier + AI)'],
+    suggestedTechnologies: [
+      'Microsoft Copilot / Google Duet AI',
+      'Document AI (AWS Textract)',
+      'Meeting Summary AI (Otter.ai, Fireflies)',
+      'No-code Automation (Zapier + AI)',
+    ],
   },
   '7B#3': {
     questions: [
@@ -761,7 +1001,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a screenshot from a business tool showing an AI recommendation (e.g. "Demand forecasting model: recommended order quantity X units") plus a report of decision history based on that recommendation. A model accuracy metric (accuracy/MAE).',
-    suggestedTechnologies: ['ML Models in Production (Azure ML, SageMaker)', 'Decision Intelligence Platform', 'Demand Forecasting (Anaplan, O9)', 'Predictive Maintenance (Uptake, SparkCognition)'],
+    suggestedTechnologies: [
+      'ML Models in Production (Azure ML, SageMaker)',
+      'Decision Intelligence Platform',
+      'Demand Forecasting (Anaplan, O9)',
+      'Predictive Maintenance (Uptake, SparkCognition)',
+    ],
   },
   '7B#4': {
     questions: [
@@ -771,7 +1016,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a process description with the AI-autonomous step marked and the escalation point to a human. A report: 85% of purchase orders generated automatically, 15% passed for approval (reasons: X, Y, Z). RPA/AI workflow configuration.',
-    suggestedTechnologies: ['RPA + AI (UiPath, Blue Prism, Automation Anywhere)', 'Process Orchestration Platform', 'Human-in-the-Loop Platform (Scale AI, Labelbox)', 'BPM with AI Decision Nodes'],
+    suggestedTechnologies: [
+      'RPA + AI (UiPath, Blue Prism, Automation Anywhere)',
+      'Process Orchestration Platform',
+      'Human-in-the-Loop Platform (Scale AI, Labelbox)',
+      'BPM with AI Decision Nodes',
+    ],
   },
   '7B#5': {
     questions: [
@@ -781,7 +1031,12 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an end-to-end process architecture description with AI orchestration (e.g. fully AI-driven production planning). A business report: "cost of running process X before AI: Y PLN/unit; after AI: Z PLN/unit" with a date. A system diagram showing a closed-loop feedback.',
-    suggestedTechnologies: ['Autonomous Process Orchestration (Celonis)', 'Agentic AI Frameworks (LangGraph, AutoGen)', 'MLOps + Real-time Decision Engine', 'Digital Twin (Siemens, ANSYS)'],
+    suggestedTechnologies: [
+      'Autonomous Process Orchestration (Celonis)',
+      'Agentic AI Frameworks (LangGraph, AutoGen)',
+      'MLOps + Real-time Decision Engine',
+      'Digital Twin (Siemens, ANSYS)',
+    ],
   },
 };
 
@@ -789,13 +1044,17 @@ const axis7B: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
 const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
   '7C#1': {
     questions: [
-      'Do the organization\'s products or services contain no AI or predictive components at all — value comes solely from traditional features?',
+      "Do the organization's products or services contain no AI or predictive components at all — value comes solely from traditional features?",
       'Does the product roadmap for the next 12 months not include the rollout of any AI feature?',
       'Do customers not raise expectations regarding AI in the products (or is the organization not monitoring such signals)?',
     ],
     example:
       'Negative evidence: a 2025 product roadmap without an "AI feature" item. Customer needs survey results without a question about AI. Confirmation of no AI component in the product\'s technical architecture.',
-    suggestedTechnologies: ['(Starting point)', 'Product Roadmap Tool (Productboard)', 'Customer Feedback Platform'],
+    suggestedTechnologies: [
+      '(Starting point)',
+      'Product Roadmap Tool (Productboard)',
+      'Customer Feedback Platform',
+    ],
   },
   '7C#2': {
     questions: [
@@ -805,7 +1064,12 @@ const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a product interface screenshot showing an AI feature (e.g. "Recommended for you"). Analytics: 35% of users use the recommendations, impact on conversion +8%. An A/B test with a date and results.',
-    suggestedTechnologies: ['Recommendation Engine (Recombee, AWS Personalize)', 'Semantic Search (Elastic, Pinecone)', 'Chatbot Platform (Dialogflow, Microsoft Bot Framework)', 'Product Analytics (Mixpanel, Amplitude)'],
+    suggestedTechnologies: [
+      'Recommendation Engine (Recombee, AWS Personalize)',
+      'Semantic Search (Elastic, Pinecone)',
+      'Chatbot Platform (Dialogflow, Microsoft Bot Framework)',
+      'Product Analytics (Mixpanel, Amplitude)',
+    ],
   },
   '7C#3': {
     questions: [
@@ -815,27 +1079,42 @@ const axis7C: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a technical architecture document with the AI component marked as central. Customer research: "Why did you choose our product?" with AI listed among the top 3 reasons. A personalization map: which UI/UX elements change per user.',
-    suggestedTechnologies: ['Real-time ML Inference (Redis AI, TensorFlow Serving)', 'Personalization Engine (Dynamic Yield, Braze)', 'Feature Flags + ML (LaunchDarkly)', 'Vector Database (Pinecone, Weaviate)'],
+    suggestedTechnologies: [
+      'Real-time ML Inference (Redis AI, TensorFlow Serving)',
+      'Personalization Engine (Dynamic Yield, Braze)',
+      'Feature Flags + ML (LaunchDarkly)',
+      'Vector Database (Pinecone, Weaviate)',
+    ],
   },
   '7C#4': {
     questions: [
-      'Does AI drive the core product logic and dynamically adapt the product\'s behavior based on user and market data?',
+      "Does AI drive the core product logic and dynamically adapt the product's behavior based on user and market data?",
       'Does the product continuously learn and improve without manual model updates by humans (continuous learning)?',
       'Do individual customers feel the product "understands" their needs and behaves differently than for other users?',
     ],
     example:
       'Evidence: a description of the continuous-learning pipeline architecture with model retraining dates and metrics (e.g. "model retrained every 7 days, accuracy rose from 78% to 84% over 6 months"). A customer case study describing personalization in action.',
-    suggestedTechnologies: ['Online Learning / Continuous ML (River, Vowpal Wabbit)', 'MLOps (Kubeflow, MLflow)', 'Real-time Feature Store (Tecton)', 'A/B Testing for ML (Optimizely)'],
+    suggestedTechnologies: [
+      'Online Learning / Continuous ML (River, Vowpal Wabbit)',
+      'MLOps (Kubeflow, MLflow)',
+      'Real-time Feature Store (Tecton)',
+      'A/B Testing for ML (Optimizely)',
+    ],
   },
   '7C#5': {
     questions: [
       'Does the organization offer a product or service that could not exist without AI — i.e. AI defines the entire value model?',
-      'Does the company\'s portfolio include at least one AI-native product with revenue or savings measured on an annual scale?',
+      "Does the company's portfolio include at least one AI-native product with revenue or savings measured on an annual scale?",
       'Does the company have a 3–5 year AI-native product roadmap, linked to strategy and resources?',
     ],
     example:
       'Evidence: a description of an AI-native product (e.g. an autonomous analytics agent, a predictive platform) with 2024/2025 revenue and a description of the business value for customers. A 2025–2028 roadmap approved by the board with AI milestones.',
-    suggestedTechnologies: ['Agentic AI Products (LLM-based Agents)', 'Digital Twin Platform', 'Autonomous Analytics (ThoughtSpot, Tableau Pulse)', 'AI Platform as a Product (custom LLM fine-tuning)'],
+    suggestedTechnologies: [
+      'Agentic AI Products (LLM-based Agents)',
+      'Digital Twin Platform',
+      'Autonomous Analytics (ThoughtSpot, Tableau Pulse)',
+      'AI Platform as a Product (custom LLM fine-tuning)',
+    ],
   },
 };
 
@@ -849,7 +1128,11 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Negative evidence: no "AI Usage Policy" document in the policy register. Or Shadow IT Discovery results pointing to unauthorized AI tools. A legal note flagging "no AI policy = GDPR/trade-secret risk".',
-    suggestedTechnologies: ['Shadow IT Discovery (Netskope, Zscaler CASB)', 'AI Policy Template', 'Legal Risk Assessment Tool'],
+    suggestedTechnologies: [
+      'Shadow IT Discovery (Netskope, Zscaler CASB)',
+      'AI Policy Template',
+      'Legal Risk Assessment Tool',
+    ],
   },
   '7D#2': {
     questions: [
@@ -859,7 +1142,12 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an "AI Usage Policy" document with an approval date, a list of approved tools, and a ban on processing sensitive data in unauthorized tools. Confirmation of communication to employees (email, LMS).',
-    suggestedTechnologies: ['Policy Management Platform', 'LMS (AI policy training)', 'CASB (Cloud Access Security Broker — AI tool control)', 'AI Governance Framework (NIST AI RMF)'],
+    suggestedTechnologies: [
+      'Policy Management Platform',
+      'LMS (AI policy training)',
+      'CASB (Cloud Access Security Broker — AI tool control)',
+      'AI Governance Framework (NIST AI RMF)',
+    ],
   },
   '7D#3': {
     questions: [
@@ -869,7 +1157,12 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an AI project register with columns: description, risk assessment, decision-maker, approval date, status. An AI Committee charter or a description of the AI Officer role. A model repository (MLflow) with version history for production models.',
-    suggestedTechnologies: ['AI Governance Platform (IBM OpenScale, Fiddler AI)', 'MLflow Model Registry', 'GRC Tool (AI risk)', 'AI Committee Charter Template'],
+    suggestedTechnologies: [
+      'AI Governance Platform (IBM OpenScale, Fiddler AI)',
+      'MLflow Model Registry',
+      'GRC Tool (AI risk)',
+      'AI Committee Charter Template',
+    ],
   },
   '7D#4': {
     questions: [
@@ -879,7 +1172,12 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: model monitoring configuration in a tool (Evidently AI, Fiddler) with a sample drift alert and the action taken by the team. An LLM security test report (prompt injection test) with a date. An SLA for a predictive model in production.',
-    suggestedTechnologies: ['ML Monitoring (Evidently AI, Whylogs, Fiddler AI)', 'LLM Security Testing (Garak, Promptfoo)', 'MLOps with Auto-Retrain Pipelines', 'Model SLA & On-call Setup'],
+    suggestedTechnologies: [
+      'ML Monitoring (Evidently AI, Whylogs, Fiddler AI)',
+      'LLM Security Testing (Garak, Promptfoo)',
+      'MLOps with Auto-Retrain Pipelines',
+      'Model SLA & On-call Setup',
+    ],
   },
   '7D#5': {
     questions: [
@@ -889,7 +1187,12 @@ const axis7D: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an AI Transparency Report for 2024/2025 with sections on: explainability, bias, incidents, governance. Automatic guardrails in modeling pipelines (e.g. automatic fairness checks before deployment). Composition and mandate of an AI Ethics Board.',
-    suggestedTechnologies: ['Responsible AI Platform (Azure AI Fairness, IBM AI Fairness 360)', 'LLM Guardrails (Guardrails.ai, NVIDIA NeMo Guardrails)', 'Explainability Tool (SHAP, LIME)', 'AI Ethics Board Governance Framework'],
+    suggestedTechnologies: [
+      'Responsible AI Platform (Azure AI Fairness, IBM AI Fairness 360)',
+      'LLM Guardrails (Guardrails.ai, NVIDIA NeMo Guardrails)',
+      'Explainability Tool (SHAP, LIME)',
+      'AI Ethics Board Governance Framework',
+    ],
   },
 };
 
@@ -903,7 +1206,11 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: employee survey results with the question "Do you use AI at work?" — < 20% answering "yes". No "AI training" item in the 2025 HR plan. Sentiment survey results: AI associated with "job threat" by > 50% of respondents.',
-    suggestedTechnologies: ['Employee Survey Tool', 'Skills Assessment Platform', '(competency-building plan)'],
+    suggestedTechnologies: [
+      'Employee Survey Tool',
+      'Skills Assessment Platform',
+      '(competency-building plan)',
+    ],
   },
   '7E#2': {
     questions: [
@@ -913,7 +1220,11 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a list of "AI champions" or AI enthusiasts identified by HR in the last 6 months. Or survey results: 15% of employees report regular AI use without company training. An internal post/presentation about an employee\'s AI application.',
-    suggestedTechnologies: ['Microsoft Copilot (pilot)', 'ChatGPT / Claude (personal use)', 'AI Community Platform (Slack channel, Teams)'],
+    suggestedTechnologies: [
+      'Microsoft Copilot (pilot)',
+      'ChatGPT / Claude (personal use)',
+      'AI Community Platform (Slack channel, Teams)',
+    ],
   },
   '7E#3': {
     questions: [
@@ -923,7 +1234,12 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a 2025 AI training program (curriculum: AI Basics → Prompt Engineering → AI in My Role) with a schedule and a completion rate = 45% after 6 months (LMS report). Case study: "How the sales department saved 3h/week using AI".',
-    suggestedTechnologies: ['AI Training Platform (Coursera for Business, DataCamp)', 'LMS (training tracking)', 'AI Champions Program Framework', 'Microsoft Copilot Adoption Kit'],
+    suggestedTechnologies: [
+      'AI Training Platform (Coursera for Business, DataCamp)',
+      'LMS (training tracking)',
+      'AI Champions Program Framework',
+      'Microsoft Copilot Adoption Kit',
+    ],
   },
   '7E#4': {
     questions: [
@@ -933,7 +1249,12 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: a gallery of internal AI automations created by employees (number, types of processes). An "AI Adoption Survey" report: 65% of employees use AI daily, 60% report a positive impact on efficiency. An "AI Day" agenda or a monthly AI webinar with attendance figures.',
-    suggestedTechnologies: ['Microsoft Power Automate + Copilot', 'Zapier + AI Actions', 'Low-code AI Tools (Bubble AI, Glide)', 'AI Adoption Analytics (Microsoft Viva Insights)'],
+    suggestedTechnologies: [
+      'Microsoft Power Automate + Copilot',
+      'Zapier + AI Actions',
+      'Low-code AI Tools (Bubble AI, Glide)',
+      'AI Adoption Analytics (Microsoft Viva Insights)',
+    ],
   },
   '7E#5': {
     questions: [
@@ -943,7 +1264,12 @@ const axis7E: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
     ],
     example:
       'Evidence: an example of an AI agent managing a process (e.g. an order-handling agent) describing the employee\'s role as supervisor, not executor. An "AI ROI 2025" report: department X saved Y PLN thanks to AI. A new-employee onboarding checklist with an "AI agent configuration" item.',
-    suggestedTechnologies: ['Agentic AI Platforms (Microsoft Copilot Studio, Salesforce Agentforce)', 'AI ROI Measurement (Viva Insights, custom analytics)', 'AI-first Onboarding Program', 'Multi-agent Orchestration (LangGraph, AutoGen)'],
+    suggestedTechnologies: [
+      'Agentic AI Platforms (Microsoft Copilot Studio, Salesforce Agentforce)',
+      'AI ROI Measurement (Viva Insights, custom analytics)',
+      'AI-first Onboarding Program',
+      'Multi-agent Orchestration (LangGraph, AutoGen)',
+    ],
   },
 };
 

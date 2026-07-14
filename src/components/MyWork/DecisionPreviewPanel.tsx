@@ -32,12 +32,12 @@ import {
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { useUserIntegrations } from '@/hooks/useUserIntegrations';
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { DelegationModal } from './shared/DelegationModal';
-import i18n from '@/i18n';
 
 export type DecisionPreviewMode = 'my' | 'requests_pending' | 'all';
 
@@ -743,7 +743,11 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
   const handleDefer = async () => {
     if (!decisionId) return;
     try {
-      await Api.decideDecision(decisionId, 'deferred', t('myWork.decisionPreview.deferred', 'Deferred'));
+      await Api.decideDecision(
+        decisionId,
+        'deferred',
+        t('myWork.decisionPreview.deferred', 'Deferred')
+      );
       toast.success(t('myWork.decisionPreview.toastSuccess3', 'Deferred'));
       onDidMutate?.();
       await fetchDetails();
@@ -772,7 +776,10 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     try {
       await Api.escalateDecision(
         decisionId,
-        t('myWork.decisionPreview.escalatedFromPreviewNeeds', 'Escalated from preview — needs attention')
+        t(
+          'myWork.decisionPreview.escalatedFromPreviewNeeds',
+          'Escalated from preview — needs attention'
+        )
       );
       toast.success(t('myWork.decisionPreview.toastSuccess5', 'Escalated'));
       onDidMutate?.();
@@ -820,7 +827,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
             ? t('myWork.decisionPreview.myRequest', 'My request')
             : t('myWork.decisionPreview.preview', 'Preview')
         }
-        title={decision?.title || (t('myWork.decisionPreview.decision', 'Decision'))}
+        title={decision?.title || t('myWork.decisionPreview.decision', 'Decision')}
         onClose={onClose}
         actions={
           <button

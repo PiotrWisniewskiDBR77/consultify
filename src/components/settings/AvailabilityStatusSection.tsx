@@ -575,9 +575,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
               </span>
             )}
           </div>
-          {period.reason && (
-            <p className="text-sm text-c-text-secondary mt-1">{period.reason}</p>
-          )}
+          {period.reason && <p className="text-sm text-c-text-secondary mt-1">{period.reason}</p>}
           {period.isAllDay && (
             <span className="text-xs text-c-text-muted mt-1 block">
               {t('settings.availability.allDay', 'All Day')}

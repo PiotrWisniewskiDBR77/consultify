@@ -368,14 +368,10 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                     <div className="text-c-text-muted">
                       {t('results.initiatives.lifecycle', 'Lifecycle')}
                     </div>
-                    <div className="text-c-text">
-                      {initiative.lifecycleLabel}
-                    </div>
+                    <div className="text-c-text">{initiative.lifecycleLabel}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-c-text-muted">
-                      {t('common.updated', 'Updated')}
-                    </div>
+                    <div className="text-c-text-muted">{t('common.updated', 'Updated')}</div>
                     <div className="text-c-text">
                       {initiative.lastReportCreatedAt
                         ? new Date(initiative.lastReportCreatedAt).toLocaleDateString()

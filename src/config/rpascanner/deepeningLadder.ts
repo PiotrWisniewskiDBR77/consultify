@@ -123,7 +123,7 @@ export const RPA_DEEPENING_LADDER: Record<RpaGateId, LadderRung[]> = {
       },
       rationale: {
         pl: 'Bot odwzorowuje regułę, nie intuicję; bez jednej ustandaryzowanej ścieżki automatyzujecie wariant jednej osoby, a nie proces.',
-        en: 'A bot replays a rule, not intuition; without one standardized path you automate one person\'s variant, not the process.',
+        en: "A bot replays a rule, not intuition; without one standardized path you automate one person's variant, not the process.",
       },
     },
     {
@@ -136,7 +136,7 @@ export const RPA_DEEPENING_LADDER: Record<RpaGateId, LadderRung[]> = {
       },
       rationale: {
         pl: 'Proces w 70% regułowy i w 30% wyjątkowy to nie kandydat na pełną automatyzację — udział wyjątków decyduje o granicy bota.',
-        en: 'A process 70% rule-based and 30% exception is not a full-automation candidate — the exception share sets the bot\'s boundary.',
+        en: "A process 70% rule-based and 30% exception is not a full-automation candidate — the exception share sets the bot's boundary.",
       },
     },
     {
@@ -199,7 +199,7 @@ export const RPA_DEEPENING_LADDER: Record<RpaGateId, LadderRung[]> = {
       label: { pl: 'Kwantyfikacja', en: 'Quantification' },
       question: {
         pl: 'Jaki jest roczny zwrot: odzyskane godziny + koszt błędów uniknięty, minus koszt budowy i utrzymania bota?',
-        en: 'What is the annual return: hours recovered + error cost avoided, minus the bot\'s build and maintenance cost?',
+        en: "What is the annual return: hours recovered + error cost avoided, minus the bot's build and maintenance cost?",
       },
       rationale: {
         pl: 'Netto zwrot, nie same odzyskane godziny, decyduje o kolejności; bot o wysokim wolumenie, ale drogim utrzymaniu, potrafi mieć ujemny zwrot.',
@@ -240,7 +240,7 @@ export const RPA_DEEPENING_LADDER: Record<RpaGateId, LadderRung[]> = {
       label: { pl: 'Dowód', en: 'Evidence' },
       question: {
         pl: 'Czy istnieje dowód wykonalności — proof of concept, podobny bot w firmie, czy tylko przekonanie dostawcy?',
-        en: 'Is there feasibility evidence — a proof of concept, a similar bot in-house, or just the vendor\'s conviction?',
+        en: "Is there feasibility evidence — a proof of concept, a similar bot in-house, or just the vendor's conviction?",
       },
       rationale: {
         pl: 'Wykonalność zakładana bez PoC to najczęstszy powód, dla którego program RPA przepala budżet na botach, które nie ruszają na produkcji.',
@@ -253,7 +253,7 @@ export const RPA_DEEPENING_LADDER: Record<RpaGateId, LadderRung[]> = {
       label: { pl: 'Kwantyfikacja', en: 'Quantification' },
       question: {
         pl: 'Ile kosztuje utrzymanie bota rocznie (zmiany systemów, wyjątki, nadzór) względem jednorazowego kosztu budowy?',
-        en: 'What is the bot\'s annual maintenance cost (system changes, exceptions, oversight) relative to the one-off build cost?',
+        en: "What is the bot's annual maintenance cost (system changes, exceptions, oversight) relative to the one-off build cost?",
       },
       rationale: {
         pl: 'Bot to nie jednorazowy koszt, lecz zobowiązanie utrzymaniowe; kruchy bot na niestabilnym systemie zjada zwrot w kolejnych kwartałach.',
@@ -319,7 +319,7 @@ export const RPA_PROPOSAL_BANK: Record<RpaGateId, GateProposal[]> = {
       },
       explanation: {
         pl: 'Oznaczcie wolumen każdego procesu; proces uruchamiany kilka razy w miesiącu rzadko zwróci koszt budowy i utrzymania bota, mimo że irytuje.',
-        en: 'Tag each process with its volume; a process run a few times a month rarely returns the bot\'s build and maintenance cost, however annoying.',
+        en: "Tag each process with its volume; a process run a few times a month rarely returns the bot's build and maintenance cost, however annoying.",
       },
     },
     {
@@ -343,7 +343,7 @@ export const RPA_PROPOSAL_BANK: Record<RpaGateId, GateProposal[]> = {
       },
       explanation: {
         pl: 'Zanim zbudujecie bota, spiszcie jedną ustandaryzowaną ścieżkę — bez niej automatyzujecie wariant jednego operatora zamiast procesu firmy.',
-        en: 'Before building a bot, write one standardized path — without it you automate one operator\'s variant instead of the firm\'s process.',
+        en: "Before building a bot, write one standardized path — without it you automate one operator's variant instead of the firm's process.",
       },
     },
     {
@@ -365,7 +365,7 @@ export const RPA_PROPOSAL_BANK: Record<RpaGateId, GateProposal[]> = {
       },
       explanation: {
         pl: 'Oznaczcie kroki oparte o interfejsy zmieniające się przy aktualizacjach — to źródło przyszłej kruchości bota, którą lepiej wycenić przed budową.',
-        en: 'Flag steps built on interfaces that shift on updates — the source of the bot\'s future brittleness, better priced before the build.',
+        en: "Flag steps built on interfaces that shift on updates — the source of the bot's future brittleness, better priced before the build.",
       },
     },
     {

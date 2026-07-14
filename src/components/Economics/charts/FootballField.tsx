@@ -56,7 +56,10 @@ export const FootballField: React.FC<FootballFieldProps> = ({
   formatValue = defaultFormatValue,
 }) => {
   const safeRanges = useMemo(
-    () => (Array.isArray(ranges) ? ranges.filter((r) => r && Number.isFinite(r.low) && Number.isFinite(r.high)) : []),
+    () =>
+      Array.isArray(ranges)
+        ? ranges.filter((r) => r && Number.isFinite(r.low) && Number.isFinite(r.high))
+        : [],
     [ranges]
   );
 
@@ -145,13 +148,7 @@ export const FootballField: React.FC<FootballFieldProps> = ({
                 strokeWidth={1}
                 strokeDasharray="3 3"
               />
-              <text
-                x={x}
-                y={axisY + 18}
-                textAnchor="middle"
-                fontSize={11}
-                fill="rgb(100 116 139)"
-              >
+              <text x={x} y={axisY + 18} textAnchor="middle" fontSize={11} fill="rgb(100 116 139)">
                 {formatValue(t)}
               </text>
             </g>
@@ -159,7 +156,14 @@ export const FootballField: React.FC<FootballFieldProps> = ({
         })}
 
         {/* Oś X. */}
-        <line x1={PAD_LEFT} y1={axisY} x2={VIEW_WIDTH - PAD_RIGHT} y2={axisY} stroke="rgb(148 163 184)" strokeWidth={1} />
+        <line
+          x1={PAD_LEFT}
+          y1={axisY}
+          x2={VIEW_WIDTH - PAD_RIGHT}
+          y2={axisY}
+          stroke="rgb(148 163 184)"
+          strokeWidth={1}
+        />
 
         {/* Pasy zakresów. */}
         {safeRanges.map((r, i) => {

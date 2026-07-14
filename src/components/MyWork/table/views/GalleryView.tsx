@@ -153,10 +153,7 @@ const GalleryCard = React.memo<{
             }
 
             return (
-              <span
-                key={col.key}
-                className="text-[8px] text-c-text-muted truncate max-w-[80px]"
-              >
+              <span key={col.key} className="text-[8px] text-c-text-muted truncate max-w-[80px]">
                 {String(val)}
               </span>
             );

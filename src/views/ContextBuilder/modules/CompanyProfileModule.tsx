@@ -973,9 +973,7 @@ export const CompanyProfileModule: React.FC = () => {
                             />
                           </div>
                         </div>
-                        <p className="text-xs text-c-text-muted mt-1">
-                          {constraint.hint}
-                        </p>
+                        <p className="text-xs text-c-text-muted mt-1">{constraint.hint}</p>
                       </div>
                     </div>
 

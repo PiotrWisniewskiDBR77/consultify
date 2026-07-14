@@ -112,8 +112,7 @@ class SlackServiceClass {
       .toUpperCase()
       .replace(/[^A-Z0-9]+/g, '_');
     return (
-      process.env[`SLACK_FEEDBACK_WEBHOOK_URL_${envName}`] ||
-      process.env.SLACK_FEEDBACK_WEBHOOK_URL
+      process.env[`SLACK_FEEDBACK_WEBHOOK_URL_${envName}`] || process.env.SLACK_FEEDBACK_WEBHOOK_URL
     );
   }
 
@@ -122,10 +121,7 @@ class SlackServiceClass {
       .trim()
       .toUpperCase()
       .replace(/[^A-Z0-9]+/g, '_');
-    return (
-      process.env[`SLACK_IDEAS_WEBHOOK_URL_${envName}`] ||
-      process.env.SLACK_IDEAS_WEBHOOK_URL
-    );
+    return process.env[`SLACK_IDEAS_WEBHOOK_URL_${envName}`] || process.env.SLACK_IDEAS_WEBHOOK_URL;
   }
 
   /**
@@ -251,10 +247,11 @@ class SlackServiceClass {
    * Send feedback alert to Slack with full context
    */
   async sendNewFeedbackAlert(feedback: FeedbackData): Promise<void> {
-    const isIdea = feedback.type === 'IDEA' || feedback.type === 'FEATURE' || feedback.type === 'IMPROVEMENT';
+    const isIdea =
+      feedback.type === 'IDEA' || feedback.type === 'FEATURE' || feedback.type === 'IMPROVEMENT';
     const targetUrl = isIdea
-      ? (this.ideasWebhookUrl || this.webhookUrl)
-      : (this.feedbackWebhookUrl || this.webhookUrl);
+      ? this.ideasWebhookUrl || this.webhookUrl
+      : this.feedbackWebhookUrl || this.webhookUrl;
 
     if (!targetUrl) {
       logger.debug('[SlackService] No webhook URL configured, skipping feedback alert');
@@ -393,10 +390,16 @@ class SlackServiceClass {
           return;
         } catch (err) {
           lastError = err;
-          logger.warn(`[SlackService] Feedback alert attempt ${attempt + 1} failed:`, err instanceof Error ? err.message : String(err));
+          logger.warn(
+            `[SlackService] Feedback alert attempt ${attempt + 1} failed:`,
+            err instanceof Error ? err.message : String(err)
+          );
         }
       }
-      logger.error('[SlackService] Failed to send feedback alert after retries:', lastError instanceof Error ? lastError.message : String(lastError));
+      logger.error(
+        '[SlackService] Failed to send feedback alert after retries:',
+        lastError instanceof Error ? lastError.message : String(lastError)
+      );
     } catch (error: unknown) {
       logger.error(
         '[SlackService] Failed to send alert:',

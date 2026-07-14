@@ -249,10 +249,7 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
           </div>
         ) : (
           <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            <Calendar
-              size={32}
-              className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
-            />
+            <Calendar size={32} className="mx-auto mb-2 text-slate-700 dark:text-slate-400" />
             <p className="text-sm">{t('team.forecast.noData', 'No capacity data available')}</p>
           </div>
         )}

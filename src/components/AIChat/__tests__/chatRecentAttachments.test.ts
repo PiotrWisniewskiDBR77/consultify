@@ -53,11 +53,7 @@ describe('chatRecentAttachments', () => {
           { name: 'mid.pdf', addedAt: 200 },
         ])
       );
-      expect(readRecentAttachments().map((x) => x.name)).toEqual([
-        'new.pdf',
-        'mid.pdf',
-        'old.pdf',
-      ]);
+      expect(readRecentAttachments().map((x) => x.name)).toEqual(['new.pdf', 'mid.pdf', 'old.pdf']);
     });
   });
 

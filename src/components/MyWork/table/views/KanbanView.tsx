@@ -37,18 +37,13 @@ const KanbanCard = React.memo<{
     }}
     onClick={() => onClick(record.id)}
     className={`rounded-xl border bg-c-surface p-3 cursor-pointer hover:shadow-md transition-all ${
-      isDragging
-        ? 'opacity-40 scale-95 border-c-focus'
-        : 'border-c-border-subtle'
+      isDragging ? 'opacity-40 scale-95 border-c-focus' : 'border-c-border-subtle'
     }`}
     style={{ borderLeftWidth: 3, borderLeftColor: groupColor }}
   >
     <div className="flex items-start gap-2">
       {!locked && (
-        <GripVertical
-          size={12}
-          className="text-c-text-muted mt-0.5 flex-shrink-0 cursor-grab"
-        />
+        <GripVertical size={12} className="text-c-text-muted mt-0.5 flex-shrink-0 cursor-grab" />
       )}
       <div className="flex-1 min-w-0">
         <div className="text-xs font-semibold text-c-text truncate">
@@ -73,9 +68,7 @@ const KanbanCard = React.memo<{
                   <span className="text-[9px] text-c-text-secondary">{val}%</span>
                 </div>
               ) : (
-                <span className="text-[10px] text-c-text-secondary truncate">
-                  {String(val)}
-                </span>
+                <span className="text-[10px] text-c-text-secondary truncate">{String(val)}</span>
               )}
             </div>
           );
@@ -162,9 +155,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
           <div
             key={laneKey}
             className={`flex-shrink-0 w-[280px] flex flex-col rounded-2xl bg-c-bg border transition-colors ${
-              isDropping
-                ? 'border-c-focus ring-2 ring-c-focus'
-                : 'border-c-border-subtle'
+              isDropping ? 'border-c-focus ring-2 ring-c-focus' : 'border-c-border-subtle'
             }`}
             onDragOver={(e) => {
               e.preventDefault();

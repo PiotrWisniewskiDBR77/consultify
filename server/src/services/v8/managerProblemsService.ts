@@ -389,8 +389,7 @@ function buildDecisions(decisions: any[]): ManagerProblemRow[] {
       const daysWaiting = daysDiff(d.created_at) ?? 0;
       problems.push({
         id: `dec-pending-${d.id}`,
-        severity:
-          s === 'DEFERRED' ? 'warning' : pendingDecisionSeverity(d.priority, daysWaiting),
+        severity: s === 'DEFERRED' ? 'warning' : pendingDecisionSeverity(d.priority, daysWaiting),
         problemType: s === 'DEFERRED' ? 'deferred_decision' : 'pending_decision',
         title: `${s === 'DEFERRED' ? 'Deferred' : 'Pending'}: ${d.title}`,
         rootCause: `${s === 'DEFERRED' ? 'Decision was deferred.' : `Waiting for ${daysWaiting} days.`}${d.owner_name ? ` Owner: ${d.owner_name}.` : ''}`,

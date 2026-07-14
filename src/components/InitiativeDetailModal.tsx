@@ -523,9 +523,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   <Target size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-c-text">
-                    {t('initiative.charterTitle')}
-                  </h2>
+                  <h2 className="text-lg font-bold text-c-text">{t('initiative.charterTitle')}</h2>
                   <div className="flex items-center gap-2 text-xs text-c-text-secondary dark:text-c-text-muted">
                     <span className="uppercase">
                       {initiative.id
@@ -1181,9 +1179,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               <FileText size={12} className="text-c-info" />
                             </div>
                             <div>
-                              <p className="text-xs text-c-text font-medium">
-                                {att.name}
-                              </p>
+                              <p className="text-xs text-c-text font-medium">{att.name}</p>
                               <span className="text-[10px] text-c-text-muted uppercase">
                                 {att.type}
                               </span>
@@ -1241,9 +1237,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             </span>
                           </div>
                           <p className="text-xs text-c-text mb-1">{log.change}</p>
-                          <p className="text-[10px] text-c-text-muted italic">
-                            Why: {log.reason}
-                          </p>
+                          <p className="text-[10px] text-c-text-muted italic">Why: {log.reason}</p>
                         </div>
                       ))}
                       <button
@@ -1369,9 +1363,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           },
                         ].map((metric) => (
                           <div key={metric.key} className="flex items-center gap-3">
-                            <span className="text-xs text-c-text-muted w-20">
-                              {metric.label}
-                            </span>
+                            <span className="text-xs text-c-text-muted w-20">{metric.label}</span>
                             <div className="flex-1 flex items-center gap-3">
                               <input
                                 type="range"
@@ -1732,9 +1724,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   <div className="bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)] p-4 rounded border border-c-info flex items-start gap-3">
                     <Brain size={24} className="text-c-info mt-1" />
                     <div>
-                      <h4 className="text-sm font-bold text-c-text">
-                        {t('initiative.autoFill')}
-                      </h4>
+                      <h4 className="text-sm font-bold text-c-text">{t('initiative.autoFill')}</h4>
                       <p className="text-xs text-c-text-muted mb-3">
                         {t('initiative.autoFillDescription')}
                       </p>
@@ -2244,8 +2234,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 {/* Approval Workflow Status */}
                 <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle">
                   <h3 className="text-lg font-bold text-c-text mb-6 flex items-center gap-2">
-                    <Clock size={20} className="text-c-accent" />{' '}
-                    {t('initiative.approvalWorkflow')}
+                    <Clock size={20} className="text-c-accent" /> {t('initiative.approvalWorkflow')}
                   </h3>
 
                   {/* Status Timeline */}
@@ -2392,9 +2381,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       {t('initiative.decisionRequired')}
                     </h3>
                     <div className="bg-c-surface p-4 rounded-lg border border-c-info mb-4">
-                      <p className="text-lg text-c-text font-medium">
-                        {initiative.decisionToMake}
-                      </p>
+                      <p className="text-lg text-c-text font-medium">{initiative.decisionToMake}</p>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -2523,11 +2510,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             >
                               <option value="">{t('initiative.selectMember')}</option>
                               {users.map((u) => (
-                                <option
-                                  key={u.id}
-                                  value={u.id}
-                                  className="bg-c-surface"
-                                >
+                                <option key={u.id} value={u.id} className="bg-c-surface">
                                   {u.firstName} {u.lastName}
                                 </option>
                               ))}
@@ -3011,9 +2994,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 // Helper for Input fields
 const InputGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="mb-4">
-    <label className="block text-xs uppercase text-c-text-muted font-bold mb-1">
-      {label}
-    </label>
+    <label className="block text-xs uppercase text-c-text-muted font-bold mb-1">{label}</label>
     {children}
   </div>
 );

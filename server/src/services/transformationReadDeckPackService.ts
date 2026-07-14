@@ -1,6 +1,6 @@
 import type { ContextPack } from './contextPackBuilder.js';
-import type { SourceArtifact } from './presentationGeneratorService.js';
 import { isTemplateInventoryLeak } from './deliverableContentGuard.js';
+import type { SourceArtifact } from './presentationGeneratorService.js';
 
 export interface TransformationReadDeckPack {
   participants: string[];

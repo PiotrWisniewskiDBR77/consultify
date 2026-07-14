@@ -54,11 +54,26 @@ export interface ToolMoveLike {
 /** Map a tool move's `category` onto the InitiativeDraft `type` axis. */
 function mapMoveCategoryToType(category?: string): InitiativeDraft['type'] {
   const c = (category || '').toLowerCase();
-  if (c.includes('defensive') || c.includes('defend') || c.includes('protect') || c.includes('risk'))
+  if (
+    c.includes('defensive') ||
+    c.includes('defend') ||
+    c.includes('protect') ||
+    c.includes('risk')
+  )
     return 'defensive';
-  if (c.includes('quick-win') || c.includes('operational') || c.includes('reskill') || c.includes('restructure'))
+  if (
+    c.includes('quick-win') ||
+    c.includes('operational') ||
+    c.includes('reskill') ||
+    c.includes('restructure')
+  )
     return 'operational';
-  if (c.includes('growth') || c.includes('accelerator') || c.includes('experiment') || c.includes('bet'))
+  if (
+    c.includes('growth') ||
+    c.includes('accelerator') ||
+    c.includes('experiment') ||
+    c.includes('bet')
+  )
     return 'growth';
   return 'strategic';
 }

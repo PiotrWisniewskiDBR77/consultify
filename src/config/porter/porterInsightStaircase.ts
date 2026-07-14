@@ -87,15 +87,19 @@ export function validatePorterStaircase(item: StaircaseValidationInput): PorterS
   if (!s || !s.fact?.trim()) {
     issues.push({
       code: 'missing-fact',
-      messageEn: 'Force has no underlying structural fact (K1) — what in the market makes this force what it is?',
-      messagePl: 'Siła nie ma faktu strukturalnego (K1) — co na rynku czyni tę siłę tym, czym jest?',
+      messageEn:
+        'Force has no underlying structural fact (K1) — what in the market makes this force what it is?',
+      messagePl:
+        'Siła nie ma faktu strukturalnego (K1) — co na rynku czyni tę siłę tym, czym jest?',
     });
   }
   if (!s || !s.interpretation?.trim()) {
     issues.push({
       code: 'missing-interpretation',
-      messageEn: 'Force has no interpretation (K2) — what does this fact mean for our margin or position?',
-      messagePl: 'Siła nie ma interpretacji (K2) — co ten fakt znaczy dla naszej marży lub pozycji?',
+      messageEn:
+        'Force has no interpretation (K2) — what does this fact mean for our margin or position?',
+      messagePl:
+        'Siła nie ma interpretacji (K2) — co ten fakt znaczy dla naszej marży lub pozycji?',
     });
   }
   if (!s || !s.implication?.trim()) {

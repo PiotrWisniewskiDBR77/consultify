@@ -11,13 +11,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import ActivityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { notifyAssignment } from '../services/initiative/initiativeNotificationService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import {
   createIssueFromTask,
   parseJiraConfig,
   updateIssueFromTask,
 } from '../services/integrations/jiraOrgClient.js';
-import { notifyAssignment } from '../services/initiative/initiativeNotificationService.js';
 import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
@@ -3554,9 +3554,7 @@ export class TaskController {
       }
 
       try {
-        const { generateTaskSection } = await import(
-          '../services/taskSectionGenerationService.js'
-        );
+        const { generateTaskSection } = await import('../services/taskSectionGenerationService.js');
         const result = await generateTaskSection(
           sectionKey as any,
           {
@@ -3568,10 +3566,7 @@ export class TaskController {
             priority: (task as any).priority || null,
             status: (task as any).status || null,
             initiativeName: getMultilingualText((task as any).initiative_name, language),
-            initiativeContext: getMultilingualText(
-              (task as any).initiative_description,
-              language
-            ),
+            initiativeContext: getMultilingualText((task as any).initiative_description, language),
           },
           { language }
         );

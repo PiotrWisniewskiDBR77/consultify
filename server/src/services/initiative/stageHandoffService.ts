@@ -17,17 +17,17 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import auditEventsService from '../AuditEventsService.js';
-import logger from '../../utils/Logger.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
+  getStatusesForModule,
   InitiativeStatus,
   type InitiativeStatusType,
-  VALID_TRANSITIONS,
-  getStatusesForModule,
   isValidTransition,
   type ModuleId,
+  VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
+import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
+import auditEventsService from '../AuditEventsService.js';
 
 // ============================================
 // TYPES
@@ -133,10 +133,7 @@ export function handoffBoundary(
   if (fromModule === toModule) return 'within_module';
 
   // analiza (tools/assessment) → inicjatywa
-  if (
-    (fromModule === 'tools' || fromModule === 'assessment') &&
-    toModule === 'initiatives'
-  ) {
+  if ((fromModule === 'tools' || fromModule === 'assessment') && toModule === 'initiatives') {
     return 'analysis_to_initiative';
   }
 
@@ -200,9 +197,7 @@ export function evaluateHandoff(
     if (!payload.hasKpi) missing.push('hasKpi');
     if (!payload.hasOwner) missing.push('hasOwner');
     if (missing.length > 0) {
-      reasons.push(
-        `Ready-for-execution contract not met (missing: ${missing.join(', ')})`
-      );
+      reasons.push(`Ready-for-execution contract not met (missing: ${missing.join(', ')})`);
     }
   } else if (to === InitiativeStatus.TRACKING) {
     // closure (wykonanie → rezultaty)
@@ -224,10 +219,7 @@ export function evaluateHandoff(
  * rekordu inicjatywy. Czyni `evaluateHandoff` ŻYWYM kodem (był martwy: 0 wywołań).
  * Fail-safe: schema-drift / brak tabel → sygnał = false (advisory, nie blokuje).
  */
-async function deriveReadiness(
-  orgId: string,
-  initiativeId: string
-): Promise<HandoffPayload> {
+async function deriveReadiness(orgId: string, initiativeId: string): Promise<HandoffPayload> {
   const payload: HandoffPayload = {};
   try {
     const row = await queryHelpers.queryOne<Record<string, unknown>>(
@@ -238,12 +230,9 @@ async function deriveReadiness(
     );
     if (row) {
       payload.hasDates = Boolean(
-        (row.planned_start_date && row.planned_end_date) ||
-          (row.start_date && row.end_date)
+        (row.planned_start_date && row.planned_end_date) || (row.start_date && row.end_date)
       );
-      payload.hasOwner = Boolean(
-        row.owner_execution_id || row.owner_business_id || row.sponsor_id
-      );
+      payload.hasOwner = Boolean(row.owner_execution_id || row.owner_business_id || row.sponsor_id);
     }
   } catch {
     /* schema drift — leave hasDates/hasOwner undefined */

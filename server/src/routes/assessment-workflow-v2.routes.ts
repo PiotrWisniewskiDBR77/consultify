@@ -1231,13 +1231,7 @@ router.post(
       const linkId = uuidv4();
       const batchId = `manual-${initiativeId}`;
 
-      const {
-        title: rawTitle,
-        description,
-        category,
-        priority,
-        risk,
-      } = req.body || {};
+      const { title: rawTitle, description, category, priority, risk } = req.body || {};
       // F15 (data-integrity, continuation of Z139): decode HTML entities the
       // global input-sanitization middleware escaped on this field before
       // storing initiatives.title/name (funnel branch AND raw-insert fallback —

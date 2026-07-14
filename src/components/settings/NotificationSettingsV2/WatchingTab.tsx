@@ -85,12 +85,8 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
                       <div className="flex items-center gap-3">
                         <Icon size={16} className="text-c-text-secondary" />
                         <div>
-                          <p className="text-sm font-medium text-c-text">
-                            {watcher.objectId}
-                          </p>
-                          <p className="text-xs text-c-text-muted">
-                            Notify: {watcher.notifyOn}
-                          </p>
+                          <p className="text-sm font-medium text-c-text">{watcher.objectId}</p>
+                          <p className="text-xs text-c-text-muted">Notify: {watcher.notifyOn}</p>
                         </div>
                       </div>
 

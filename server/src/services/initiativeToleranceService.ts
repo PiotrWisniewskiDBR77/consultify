@@ -71,11 +71,7 @@ export function evaluateToleranceBreaches(
   tolerances: Tolerances = DEFAULT_TOLERANCES
 ): ToleranceBreach[] {
   const breaches: ToleranceBreach[] = [];
-  const check = (
-    dim: ToleranceDimension,
-    actual: number | null | undefined,
-    tol: number
-  ): void => {
+  const check = (dim: ToleranceDimension, actual: number | null | undefined, tol: number): void => {
     if (actual != null && actual > tol) breaches.push({ dimension: dim, actual, tolerance: tol });
   };
   check('scheduleDays', inputs.slipDays, tolerances.scheduleDays);

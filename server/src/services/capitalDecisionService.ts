@@ -120,7 +120,7 @@ export function hurdleRate(wacc: number, riskClass: RiskClass | string): number 
 export function riskAdjustedNpv(
   npv: number,
   probabilityOfSuccess: number,
-  leakagePct: number = 0,
+  leakagePct: number = 0
 ): RiskAdjustedNpvResult {
   const base = Number.isFinite(npv) ? npv : 0;
   const p = clamp01(probabilityOfSuccess);
@@ -170,7 +170,7 @@ export function rankByRiskAdjusted<T extends RankableItem>(items: T[]): (T & Ran
     const { rnpv, haircut } = riskAdjustedNpv(
       item.npv,
       item.probabilityOfSuccess,
-      item.leakagePct ?? 0,
+      item.leakagePct ?? 0
     );
     return { ...item, rnpv, haircut };
   });

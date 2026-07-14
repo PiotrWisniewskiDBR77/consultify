@@ -393,7 +393,9 @@ describe('V8 interview insights candidate routes', () => {
       results: [
         {
           candidateIndex: 0,
-          matches: [{ id: 'init_9', title: 'Assign onboarding owner', status: 'ACTIVE', score: 0.86 }],
+          matches: [
+            { id: 'init_9', title: 'Assign onboarding owner', status: 'ACTIVE', score: 0.86 },
+          ],
           topScore: 0.86,
           verdict: 'similar',
         },
@@ -418,7 +420,9 @@ describe('V8 interview insights candidate routes', () => {
     expect(mockCheckSimilarInitiatives).toHaveBeenCalledWith(
       expect.objectContaining({
         orgId: 'org_1',
-        candidates: [expect.objectContaining({ title: 'Onboarding process lacks a single owner.' })],
+        candidates: [
+          expect.objectContaining({ title: 'Onboarding process lacks a single owner.' }),
+        ],
       })
     );
     expect(mockRecordHandoff).toHaveBeenCalledTimes(1);
@@ -457,9 +461,9 @@ describe('V8 interview insights candidate routes', () => {
       evidence_pointers: [{ isTombstone: false, excerpt: 'No owner assigned.' }],
       readback_status: 'confirmed_by_client',
     });
-    (
-      await import('../../../utils/queryHelpers.js')
-    ).queryOne.mockResolvedValueOnce({ id: 'init_existing' });
+    (await import('../../../utils/queryHelpers.js')).queryOne.mockResolvedValueOnce({
+      id: 'init_existing',
+    });
 
     const res = await request(createApp())
       .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')

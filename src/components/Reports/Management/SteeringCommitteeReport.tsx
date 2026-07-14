@@ -144,7 +144,9 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
             </h2>
           </div>
           <div className="overflow-x-auto">
-            <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full">
+            <table
+              /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full"
+            >
               <thead>
                 <tr className="bg-slate-50 dark:bg-navy-800/50">
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">

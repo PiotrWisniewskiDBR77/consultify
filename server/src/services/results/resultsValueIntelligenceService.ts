@@ -6,25 +6,17 @@
  * banked vs forecast vs at-risk, the value funnel, and SCALE/INTERVENE/STOP
  * decisions. Pure — the route gathers the rows and calls this.
  */
+import { buildScorecard, topBenefits, topRisks } from './transformationScorecardService.js';
+import { portfolioDecisions } from './valueDecisionService.js';
+import { buildFunnel, mapInitiativeToFunnel, valueAtRisk } from './valueFunnelService.js';
 import {
-  STAGE_DEFAULT_CONFIDENCE,
   classifyValue,
   portfolioValueSplit,
   riskAdjustedValue,
+  STAGE_DEFAULT_CONFIDENCE,
   stageFromInitiative,
   type ValueStage,
 } from './valueStageGateService.js';
-import {
-  buildFunnel,
-  mapInitiativeToFunnel,
-  valueAtRisk,
-} from './valueFunnelService.js';
-import { portfolioDecisions } from './valueDecisionService.js';
-import {
-  buildScorecard,
-  topBenefits,
-  topRisks,
-} from './transformationScorecardService.js';
 
 export interface VIInitiative {
   id: string;
@@ -87,7 +79,10 @@ export function buildValueIntelligence(input: ValueIntelligenceInput): ValueInte
   for (const r of input.roiRealized || []) {
     if (!r.initiative_id) continue;
     const v = num(r.realized_revenue_delta) - num(r.realized_cost_delta) + num(r.realized_savings);
-    realizedByInit.set(String(r.initiative_id), (realizedByInit.get(String(r.initiative_id)) || 0) + v);
+    realizedByInit.set(
+      String(r.initiative_id),
+      (realizedByInit.get(String(r.initiative_id)) || 0) + v
+    );
   }
 
   const items = (input.initiatives || []).map((i) => {
@@ -99,12 +94,17 @@ export function buildValueIntelligence(input: ValueIntelligenceInput): ValueInte
     const realizedValue = realizedByInit.get(String(i.id)) || 0;
     const hasRoiBaseline = !!a;
     const hasRealized = realizedValue !== 0;
-    const stage = stageFromInitiative({ status: i.status ?? undefined, hasRoiBaseline, hasRealized });
+    const stage = stageFromInitiative({
+      status: i.status ?? undefined,
+      hasRoiBaseline,
+      hasRealized,
+    });
     const confidence = STAGE_DEFAULT_CONFIDENCE[stage];
     const realizationPct = valueAtStake > 0 ? realizedValue / valueAtStake : 0;
     const atRisk = realizationPct < 0.6 && ADVANCED.includes(stage);
     const { forecast } = classifyValue({ stage, value: valueAtStake, confidence });
-    const forecastValue = stage === 'L5_realized' ? 0 : forecast || riskAdjustedValue(valueAtStake, confidence);
+    const forecastValue =
+      stage === 'L5_realized' ? 0 : forecast || riskAdjustedValue(valueAtStake, confidence);
     return {
       id: String(i.id),
       name: i.name ?? null,
@@ -133,10 +133,18 @@ export function buildValueIntelligence(input: ValueIntelligenceInput): ValueInte
   return {
     scorecard: buildScorecard({ items: scorecardItems }),
     funnel: buildFunnel(
-      items.map((it) => ({ funnelStage: it.funnelStage, value: it.valueAtStake, confidence: it.confidence }))
+      items.map((it) => ({
+        funnelStage: it.funnelStage,
+        value: it.valueAtStake,
+        confidence: it.confidence,
+      }))
     ),
     valueAtRisk: valueAtRisk(
-      items.map((it) => ({ value: it.valueAtStake, confidence: it.confidence, behindPlan: it.realizationPct < 0.6 }))
+      items.map((it) => ({
+        value: it.valueAtStake,
+        confidence: it.confidence,
+        behindPlan: it.realizationPct < 0.6,
+      }))
     ),
     valueSplit: portfolioValueSplit(
       items.map((it) => ({ stage: it.stage, value: it.valueAtStake, confidence: it.confidence }))

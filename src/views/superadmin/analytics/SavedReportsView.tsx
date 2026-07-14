@@ -651,7 +651,9 @@ const SavedReportsView: React.FC = () => {
                   {/* Data Preview */}
                   {executionResult.data && executionResult.data.length > 0 && (
                     <div className="overflow-x-auto">
-                      <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full text-sm">
+                      <table
+                        /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full text-sm"
+                      >
                         <thead>
                           <tr className="border-b border-gray-700">
                             {Object.keys(executionResult.data[0])
@@ -720,7 +722,9 @@ const SavedReportsView: React.FC = () => {
                           ) : (
                             <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
                           )}
-                          <span className="text-c-text text-sm">{formatDate(exec.executed_at)}</span>
+                          <span className="text-c-text text-sm">
+                            {formatDate(exec.executed_at)}
+                          </span>
                         </div>
                         <span
                           className={`text-xs px-2 py-1 rounded ${

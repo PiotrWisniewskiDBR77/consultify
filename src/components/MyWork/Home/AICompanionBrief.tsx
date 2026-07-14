@@ -42,12 +42,15 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
   };
   const greeting = `${isPolish ? greetings[greetingKey].pl : greetings[greetingKey].en}${userName ? `, ${userName}` : ''}`;
 
-  const dateStr = now.toLocaleDateString(t('myWork.aiCompanionBrief.nowToLocaleDateString', 'en-US'), {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const dateStr = now.toLocaleDateString(
+    t('myWork.aiCompanionBrief.nowToLocaleDateString', 'en-US'),
+    {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }
+  );
 
   return (
     <div className="relative p-8 md:p-10 rounded-2xl bg-gradient-to-br from-primary-500/[0.08] via-crimson-500/[0.04] to-blue-500/[0.06] border border-primary-500/[0.12] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -101,7 +104,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-150"
         >
           <MessageSquare size={16} />
-          {t('myWork.aiCompanionBrief.letSTalkAbout', 'Let\'s talk about this')}
+          {t('myWork.aiCompanionBrief.letSTalkAbout', "Let's talk about this")}
         </button>
       )}
     </div>

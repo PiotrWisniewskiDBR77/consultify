@@ -63,7 +63,12 @@ function safeReadUser(req: AuthRequest): {
       (req.user as any)?.organizationId ||
       null;
     const userRole = (req as any).userRole || req.user?.role || null;
-    return { userId: userId ?? null, orgId: orgId ?? null, userRole: userRole ?? null, threw: false };
+    return {
+      userId: userId ?? null,
+      orgId: orgId ?? null,
+      userRole: userRole ?? null,
+      threw: false,
+    };
   } catch {
     return { userId: null, orgId: null, userRole: null, threw: true };
   }
@@ -332,11 +337,23 @@ export const auditAction = (options: AuditOptions) => {
 
             // Safely call resource accessors — each may throw
             let resourceId: string | null = null;
-            try { resourceId = getResourceId(req as AuthRequest, data) || null; } catch { resourceId = null; }
+            try {
+              resourceId = getResourceId(req as AuthRequest, data) || null;
+            } catch {
+              resourceId = null;
+            }
             let before: unknown = null;
-            try { before = getBefore(req as AuthRequest) || null; } catch { before = null; }
+            try {
+              before = getBefore(req as AuthRequest) || null;
+            } catch {
+              before = null;
+            }
             let after: unknown = null;
-            try { after = getAfter(req as AuthRequest, data) || null; } catch { after = null; }
+            try {
+              after = getAfter(req as AuthRequest, data) || null;
+            } catch {
+              after = null;
+            }
 
             await deps.GovernanceAuditService.logAudit({
               actorId,

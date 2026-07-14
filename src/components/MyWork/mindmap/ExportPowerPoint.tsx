@@ -110,9 +110,12 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        toast.success(isPl ? 'Prezentacja .pptx wyeksportowana!' : 'Presentation (.pptx) exported!', {
-          duration: 1500,
-        });
+        toast.success(
+          isPl ? 'Prezentacja .pptx wyeksportowana!' : 'Presentation (.pptx) exported!',
+          {
+            duration: 1500,
+          }
+        );
         onClose();
         return;
       }

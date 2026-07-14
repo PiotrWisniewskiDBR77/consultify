@@ -19,9 +19,7 @@ const TAG_ORDER = [1, 10, 2, 6, 3, 9, 4, 12, 5, 11, 7, 8];
 
 function resolveTag(n: number): string {
   if (typeof window === 'undefined') return '#3b8ea5';
-  const v = getComputedStyle(document.documentElement)
-    .getPropertyValue(`--c-tag-${n}`)
-    .trim();
+  const v = getComputedStyle(document.documentElement).getPropertyValue(`--c-tag-${n}`).trim();
   return v || '#3b8ea5';
 }
 

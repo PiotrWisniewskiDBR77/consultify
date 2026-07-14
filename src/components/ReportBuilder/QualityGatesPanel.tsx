@@ -234,7 +234,9 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
     errorCount > 0 ? 'text-danger-400' : warningCount > 0 ? 'text-amber-400' : 'text-emerald-400';
 
   return (
-    <div className={`rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-4 ${className}`}>
+    <div
+      className={`rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-4 ${className}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -323,7 +325,9 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
                       <span className="text-[11px] font-semibold text-c-text-secondary uppercase tracking-wider">
                         {t(meta.labelKey, meta.fallback)}
                       </span>
-                      <span className="text-[10px] text-c-text-secondary ml-auto">{gates.length}</span>
+                      <span className="text-[10px] text-c-text-secondary ml-auto">
+                        {gates.length}
+                      </span>
                     </div>
                     <div className="space-y-1">
                       {gates.map((gate) => {

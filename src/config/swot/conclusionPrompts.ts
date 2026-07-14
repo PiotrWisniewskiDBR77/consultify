@@ -15,19 +15,18 @@
  * against the engine — this file is the conclusion LAYER, it does not re-score.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { SWOTItem, SWOTTension } from '@/store/useToolStore';
 
 import {
   buildMoveConclusionPromptRules,
   computeTensionCoverage,
+  type DerivedTensionCandidate,
   deriveTensionCandidates,
   isAcceptedSwotItem,
-  TENSION_TYPE_TO_POSTURE,
-  type DerivedTensionCandidate,
   type SwotTensionType,
+  TENSION_TYPE_TO_POSTURE,
 } from './swotTensionEngine';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 const QUADRANT_LABEL: Record<SWOTItem['quadrant'], { pl: string; en: string }> = {

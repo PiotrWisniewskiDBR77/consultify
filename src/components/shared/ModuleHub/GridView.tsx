@@ -154,7 +154,11 @@ export const GridView: React.FC<GridViewProps> = ({
   const toGridCard = (item: GridItem): StandardGridCardData => {
     const title = String(item.name ?? '');
     const rawBrief = String(item.brief ?? item.summary ?? item.description ?? '').trim();
-    const description = rawBrief.split('\n').find((l) => l.trim().length > 0)?.trim() || '';
+    const description =
+      rawBrief
+        .split('\n')
+        .find((l) => l.trim().length > 0)
+        ?.trim() || '';
 
     const rowMenuActions: RowAction[] = [];
     if (onItemAction) {
@@ -190,7 +194,8 @@ export const GridView: React.FC<GridViewProps> = ({
       description,
       statusLabel: STATUS_LABEL[item.status] ?? item.status,
       statusTone: STATUS_TONE[item.status] ?? 'neutral',
-      accentColorVar: TYPE_ACCENT_VAR[item.type] ?? TYPE_ACCENT_VAR[item.typeColor] ?? FALLBACK_ACCENT_VAR,
+      accentColorVar:
+        TYPE_ACCENT_VAR[item.type] ?? TYPE_ACCENT_VAR[item.typeColor] ?? FALLBACK_ACCENT_VAR,
       chips: item.type ? [{ id: 'type', label: String(item.type) }] : undefined,
       progress: typeof item.progress === 'number' ? item.progress : undefined,
       footerRight: formatRelativeTime(item.updatedAt, isPolish),

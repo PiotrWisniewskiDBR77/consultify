@@ -146,14 +146,12 @@ describe('POST /api/artifacts/register-chat (DEC-1 chat deliverable back-referen
   it('registers a chat deck and it comes back from GET / with the back-reference', async () => {
     const app = createApp();
 
-    const reg = await request(app)
-      .post('/api/artifacts/register-chat')
-      .send({
-        kind: 'deck',
-        generationId: 'gen-deck-1',
-        title: 'Strategia wzrostu',
-        conversationId: 'conv-42',
-      });
+    const reg = await request(app).post('/api/artifacts/register-chat').send({
+      kind: 'deck',
+      generationId: 'gen-deck-1',
+      title: 'Strategia wzrostu',
+      conversationId: 'conv-42',
+    });
 
     expect(reg.status).toBe(200);
     expect(reg.body.readBack.status).toBe('registered');
@@ -181,8 +179,18 @@ describe('POST /api/artifacts/register-chat (DEC-1 chat deliverable back-referen
   it('maps each chat kind to the right registry taxonomy', async () => {
     const app = createApp();
     const cases = [
-      { kind: 'deck', outputType: 'presentation', artifactFamily: 'presentation', originRuntime: 'presentation' },
-      { kind: 'doc', outputType: 'report', artifactFamily: 'document', originRuntime: 'native_artifact' },
+      {
+        kind: 'deck',
+        outputType: 'presentation',
+        artifactFamily: 'presentation',
+        originRuntime: 'presentation',
+      },
+      {
+        kind: 'doc',
+        outputType: 'report',
+        artifactFamily: 'document',
+        originRuntime: 'native_artifact',
+      },
       { kind: 'sheet', outputType: 'sheet', artifactFamily: 'sheet', originRuntime: 'sheet' },
     ];
     for (const [i, c] of cases.entries()) {

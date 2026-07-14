@@ -586,10 +586,7 @@ const ambitionHorizonTone: Record<AmbitionTheme['horizon'], string> = {
   long: 'text-indigo-700 dark:text-indigo-300',
 };
 
-const ambitionHorizonLabel = (
-  horizon: AmbitionTheme['horizon'],
-  isPolish: boolean
-): string => {
+const ambitionHorizonLabel = (horizon: AmbitionTheme['horizon'], isPolish: boolean): string => {
   if (isPolish) {
     return horizon === 'short' ? 'Krótki' : horizon === 'medium' ? 'Średni' : 'Długi';
   }
@@ -660,8 +657,7 @@ export function AmbitionDecompositionVisual({
                 .filter((theme) => theme.horizon === horizon)
                 .sort(
                   (a, b) =>
-                    AMBITION_IMPORTANCE_RANK[a.importance] -
-                    AMBITION_IMPORTANCE_RANK[b.importance]
+                    AMBITION_IMPORTANCE_RANK[a.importance] - AMBITION_IMPORTANCE_RANK[b.importance]
                 );
               if (group.length === 0) return null;
               return (

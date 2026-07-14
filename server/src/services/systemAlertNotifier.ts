@@ -56,18 +56,20 @@ export async function sendSystemAlert(input: SystemAlertInput): Promise<void> {
   // Slack egress now goes through the central slackRouter (Filar 1). AI/LLM
   // alerts keep their dedicated ai_ops webhook (unchanged behaviour); everything
   // else routes to the #alerts channel. Throttle above + WhatsApp below stay.
-  const slackSend = isAiSource && aiSlack
-    ? aiSlack.sendSystemAlert(title, input.message, input.severity)
-    : routeToSlack({
-        channel: 'alerts',
-        // Headline (watch/phone): `🚨 Awaria · <źródło: tytuł>` for CRITICAL,
-        // `⚠️ Ostrzeżenie · …` for WARNING — instantly recognisable.
-        category: input.severity === 'CRITICAL' ? 'Awaria' : 'Ostrzeżenie',
-        severity: input.severity,
-        title,
-        text: input.message,
-        dedupeKey: input.throttleKey || `${input.severity}:${input.source || 'system'}:${input.title}`,
-      }).then(() => undefined);
+  const slackSend =
+    isAiSource && aiSlack
+      ? aiSlack.sendSystemAlert(title, input.message, input.severity)
+      : routeToSlack({
+          channel: 'alerts',
+          // Headline (watch/phone): `🚨 Awaria · <źródło: tytuł>` for CRITICAL,
+          // `⚠️ Ostrzeżenie · …` for WARNING — instantly recognisable.
+          category: input.severity === 'CRITICAL' ? 'Awaria' : 'Ostrzeżenie',
+          severity: input.severity,
+          title,
+          text: input.message,
+          dedupeKey:
+            input.throttleKey || `${input.severity}:${input.source || 'system'}:${input.title}`,
+        }).then(() => undefined);
 
   const results = await Promise.allSettled([
     slackSend,

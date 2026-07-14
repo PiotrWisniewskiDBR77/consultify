@@ -22,12 +22,7 @@
  * tests in isolation.
  */
 
-import {
-  SMED_PHASES,
-  smedPhaseLabel,
-  type Bilingual,
-  type SmedPhaseId,
-} from './deepeningLadder';
+import { type Bilingual, SMED_PHASES, type SmedPhaseId, smedPhaseLabel } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
 
@@ -348,14 +343,24 @@ export function buildW2MoveSequence(session: SmedSession): SequencedMove[] {
       pl: 'Odrzucamy równoległą przebudowę wszystkich faz: bez skończonego pierwszego zysku zespół gubi standard i cofa efekt.',
       en: 'We reject reworking all phases in parallel: without a finished first gain the team loses the standard and the effect reverts.',
     },
-    expectedImpact: primaryScore.attractiveness >= 2.5 ? 'high' : primaryScore.attractiveness >= 1.7 ? 'medium' : 'low',
-    estimatedEffort: primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
+    expectedImpact:
+      primaryScore.attractiveness >= 2.5
+        ? 'high'
+        : primaryScore.attractiveness >= 1.7
+          ? 'medium'
+          : 'low',
+    estimatedEffort:
+      primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
     validation: VALID,
   });
 
   // Convert is SMED's cheapest structural win — surface it explicitly if it has
   // scope and is not already the primary.
-  if (primary !== 'convert' && scoreOf('convert').minutesAddressed > 0 && ordered.includes('convert')) {
+  if (
+    primary !== 'convert' &&
+    scoreOf('convert').minutesAddressed > 0 &&
+    ordered.includes('convert')
+  ) {
     const convertScore = scoreOf('convert');
     moves.push({
       order: order++,
@@ -393,12 +398,14 @@ export function buildW2MoveSequence(session: SmedSession): SequencedMove[] {
       en: 'Standardize only after a confirmed gain',
     },
     rationale: {
-      pl: standardizeScore.improvementCount > 0
-        ? `Standard chroni ${standardizeScore.minutesAddressed} min rdzenia wewnętrznego, ale utrwala tylko sprawdzoną metodę — inaczej zamraża błąd i blokuje dalsze skracanie.`
-        : `Standaryzacja utrwala zysk z wcześniejszych faz na ${standardizeScore.minutesAddressed} min rdzenia wewnętrznego — bez niej efekt znika z rotacją ludzi.`,
-      en: standardizeScore.improvementCount > 0
-        ? `The standard protects ${standardizeScore.minutesAddressed} min of the internal core, but it only locks a proven method — otherwise it freezes an error and blocks further shortening.`
-        : `Standardization locks the gain from earlier phases across ${standardizeScore.minutesAddressed} min of the internal core — without it the effect vanishes with staff rotation.`,
+      pl:
+        standardizeScore.improvementCount > 0
+          ? `Standard chroni ${standardizeScore.minutesAddressed} min rdzenia wewnętrznego, ale utrwala tylko sprawdzoną metodę — inaczej zamraża błąd i blokuje dalsze skracanie.`
+          : `Standaryzacja utrwala zysk z wcześniejszych faz na ${standardizeScore.minutesAddressed} min rdzenia wewnętrznego — bez niej efekt znika z rotacją ludzi.`,
+      en:
+        standardizeScore.improvementCount > 0
+          ? `The standard protects ${standardizeScore.minutesAddressed} min of the internal core, but it only locks a proven method — otherwise it freezes an error and blocks further shortening.`
+          : `Standardization locks the gain from earlier phases across ${standardizeScore.minutesAddressed} min of the internal core — without it the effect vanishes with staff rotation.`,
     },
     tradeOff: {
       pl: 'Kosztem czasu na spisanie standardu, szkolenia i macierz kompetencji — zdolność zarządcza, nie techniczna.',

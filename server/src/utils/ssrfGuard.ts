@@ -110,7 +110,13 @@ function isBlockedIpv6(ip: string): boolean {
     return isBlockedIpv4(`${b[12]}.${b[13]}.${b[14]}.${b[15]}`);
   }
   // NAT64 64:ff9b::/96 → embedded IPv4 in last 4 bytes
-  if (b[0] === 0x00 && b[1] === 0x64 && b[2] === 0xff && b[3] === 0x9b && b.slice(4, 12).every((x) => x === 0)) {
+  if (
+    b[0] === 0x00 &&
+    b[1] === 0x64 &&
+    b[2] === 0xff &&
+    b[3] === 0x9b &&
+    b.slice(4, 12).every((x) => x === 0)
+  ) {
     return isBlockedIpv4(`${b[12]}.${b[13]}.${b[14]}.${b[15]}`);
   }
   // 6to4 2002::/16 → embedded IPv4 in bytes 2..5
@@ -161,7 +167,9 @@ export async function assertUrlIsSafe(rawUrl: string): Promise<URL> {
  * Resolve a host to a single PUBLIC address (or throw). Bare-IP literals are
  * validated directly; domains are DNS-resolved and every address checked.
  */
-async function resolvePublicAddress(hostname: string): Promise<{ address: string; family: number }> {
+async function resolvePublicAddress(
+  hostname: string
+): Promise<{ address: string; family: number }> {
   const literal = net.isIP(hostname);
   if (literal) {
     if (isBlockedIp(hostname)) throw new SsrfBlockedError('URL resolves to a blocked address');

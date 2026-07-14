@@ -53,7 +53,9 @@ export interface FieldErrorProps {
 
 export const FieldError: React.FC<FieldErrorProps> = ({ children, className }) => {
   if (!children) return null;
-  return <p className={cn('text-xs text-danger-500 dark:text-danger-400', className)}>{children}</p>;
+  return (
+    <p className={cn('text-xs text-danger-500 dark:text-danger-400', className)}>{children}</p>
+  );
 };
 
 export default Field;

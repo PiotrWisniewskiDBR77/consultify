@@ -5,7 +5,7 @@ import { Handle, Position } from 'reactflow';
 import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
 
 const STATUS_COLORS: Record<string, string> = {
-  todo: "bg-c-border-strong",
+  todo: 'bg-c-border-strong',
   in_progress: 'bg-c-info',
   done: 'bg-success-500',
   blocked: 'bg-danger-500',

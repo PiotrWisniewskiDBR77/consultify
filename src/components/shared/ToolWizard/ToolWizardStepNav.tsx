@@ -91,7 +91,10 @@ export const ToolWizardStepNav: React.FC<ToolWizardStepNavProps> = ({
                 ) : completed ? (
                   <Check size={16} className="text-emerald-500" />
                 ) : isCurrent ? (
-                  <Circle size={16} className="text-slate-700 dark:text-slate-200 fill-slate-200/50 dark:fill-white/10" />
+                  <Circle
+                    size={16}
+                    className="text-slate-700 dark:text-slate-200 fill-slate-200/50 dark:fill-white/10"
+                  />
                 ) : (
                   <Circle size={16} />
                 )}

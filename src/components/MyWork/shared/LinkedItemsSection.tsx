@@ -270,7 +270,9 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
           <div className="p-2 rounded-xl bg-primary-500/10 dark:bg-primary-500/20">
             <LinkIcon size={18} className="text-primary-500 dark:text-primary-400" />
           </div>
-          <span className="text-sm font-semibold">{t('myWork.linkedItems.linkedItems', 'Linked Items')}</span>
+          <span className="text-sm font-semibold">
+            {t('myWork.linkedItems.linkedItems', 'Linked Items')}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
@@ -408,9 +410,10 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             type="text"
                             value={externalTitle}
                             onChange={(e) => setExternalTitle(e.target.value)}
-                            placeholder={
-                              t('myWork.linkedItems.eGProjectDocumentation', 'e.g., Project documentation')
-                            }
+                            placeholder={t(
+                              'myWork.linkedItems.eGProjectDocumentation',
+                              'e.g., Project documentation'
+                            )}
                             className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
                             autoFocus
                           />
@@ -423,7 +426,10 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             type="url"
                             value={externalUrl}
                             onChange={(e) => setExternalUrl(e.target.value)}
-                            placeholder={t('myWork.linkedItems.placeholder2', 'https://example.com')}
+                            placeholder={t(
+                              'myWork.linkedItems.placeholder2',
+                              'https://example.com'
+                            )}
                             className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
                           />
                         </div>
@@ -456,7 +462,9 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
               {items.length === 0 ? (
                 <div className="text-center py-6 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   <LinkIcon size={32} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">{t('myWork.linkedItems.noLinkedItems', 'No linked items')}</p>
+                  <p className="text-sm">
+                    {t('myWork.linkedItems.noLinkedItems', 'No linked items')}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">

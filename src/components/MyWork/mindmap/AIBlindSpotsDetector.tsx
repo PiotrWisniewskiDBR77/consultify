@@ -199,7 +199,9 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
             {isPl ? 'Blind Spots AI' : 'AI Blind Spots'}
           </span>
           {loading && <Loader2 size={12} className="animate-spin text-c-warning" />}
-          <span className="text-[10px] text-c-text-secondary font-medium">{visibleSpots.length}</span>
+          <span className="text-[10px] text-c-text-secondary font-medium">
+            {visibleSpots.length}
+          </span>
           {expanded ? (
             <ChevronDown size={12} className="text-c-text-secondary" />
           ) : (

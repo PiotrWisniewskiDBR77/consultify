@@ -11,15 +11,11 @@
  * tradeoffs / moves) used by the SWOT/Ansoff/Porter prompts.
  */
 
-import {
-  buildW2MoveSequence,
-  rankDmsLayers,
-  type DmsSession,
-} from './managementSystemEngine';
-import { localizeLadder } from './index';
-import { type DmsLayerId } from './deepeningLadder';
-
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
+import { type DmsLayerId } from './deepeningLadder';
+import { localizeLadder } from './index';
+import { buildW2MoveSequence, type DmsSession, rankDmsLayers } from './managementSystemEngine';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -27,10 +23,7 @@ const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl :
  * weakest-first ranking and W2 sequence so its output stays consistent with the
  * scored facts. Returns null when there is nothing to conclude on.
  */
-export function buildDmsConclusionPrompt(
-  session: DmsSession,
-  isPolish: boolean
-): string | null {
+export function buildDmsConclusionPrompt(session: DmsSession, isPolish: boolean): string | null {
   const ranking = rankDmsLayers(session);
   // Nothing meaningful unless at least one layer is present.
   if (!ranking.scores.some((s) => s.present)) return null;

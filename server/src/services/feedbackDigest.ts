@@ -269,9 +269,7 @@ function buildDigestMessage(
   const hasFeedback =
     newInLast24h.length > 0 || stuckInNewOver48h.length > 0 || openCriticalProd.length > 0;
   const hasWork =
-    tasksCompleted24h.length > 0 ||
-    initiativesChanged24h.length > 0 ||
-    newUsers24h.length > 0;
+    tasksCompleted24h.length > 0 || initiativesChanged24h.length > 0 || newUsers24h.length > 0;
   if (!hasFeedback && !hasWork) {
     return null;
   }

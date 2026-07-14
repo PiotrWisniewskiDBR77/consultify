@@ -14,16 +14,7 @@
  *
  * Owned by AGENT 2. Host wiring: see report (Today entry hook).
  */
-import {
-  AlertTriangle,
-  Clock,
-  Hash,
-  Inbox,
-  Loader2,
-  Pin,
-  RefreshCw,
-  Sparkles,
-} from 'lucide-react';
+import { AlertTriangle, Clock, Hash, Inbox, Loader2, Pin, RefreshCw, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -120,9 +111,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
       {page.verificationStatus === 'disputed' && (
         <AlertTriangle size={12} className="shrink-0 text-c-warning" />
       )}
-      {page.captureSource && (
-        <Sparkles size={11} className="shrink-0 text-c-text-muted" />
-      )}
+      {page.captureSource && <Sparkles size={11} className="shrink-0 text-c-text-muted" />}
       {page.updatedAt && (
         <span className="shrink-0 text-[11px] text-c-text-muted">
           {formatWhen(page.updatedAt, isPl)}
@@ -164,7 +153,9 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-16 text-c-text-muted ${className}`}>
+      <div
+        className={`flex items-center justify-center gap-2 py-16 text-c-text-muted ${className}`}
+      >
         <Loader2 size={16} className="animate-spin" />
         <span className="text-sm">{isPl ? 'Ładuję „Dziś”…' : 'Loading Today…'}</span>
       </div>
@@ -174,9 +165,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-c-text">
-          {isPl ? 'Dziś' : 'Today'}
-        </h2>
+        <h2 className="text-lg font-semibold text-c-text">{isPl ? 'Dziś' : 'Today'}</h2>
         <button
           type="button"
           onClick={load}

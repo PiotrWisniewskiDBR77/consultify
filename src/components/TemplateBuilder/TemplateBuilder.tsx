@@ -9,27 +9,27 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { saveTemplate } from './templateBuilderApi';
 import {
+  type DeckSlide,
   DOC_BLOCK_LABELS,
-  SHEET_COLUMN_TYPE_LABELS,
-  SLIDE_ARCHETYPE_LABELS,
+  type DocSection,
   emptyDraft,
   newDeckSlide,
   newDocSection,
   newSheetColumn,
-  type DeckSlide,
-  type DocSection,
+  SHEET_COLUMN_TYPE_LABELS,
   type SheetColumn,
+  SLIDE_ARCHETYPE_LABELS,
   type TemplateDraft,
   type TemplateScope,
   type TemplateType,
 } from './templateBuilderModel';
-import { saveTemplate } from './templateBuilderApi';
-import { DeckSlideEditor, DocSectionEditor, SheetColumnEditor } from './TemplateCenterEditors';
 import { TemplateBuilderShell } from './TemplateBuilderShell';
+import { DeckSlideEditor, DocSectionEditor, SheetColumnEditor } from './TemplateCenterEditors';
 import { TemplateCreateWizard } from './TemplateCreateWizard';
+import type { TemplateRightTool, ThemeOption } from './TemplateRightPanel';
 import type { StructureListItem } from './TemplateStructureList';
-import type { ThemeOption, TemplateRightTool } from './TemplateRightPanel';
 
 /** Przykładowe motywy org — w realu z themeRegistry/brandIngestion (front do zrobienia w T3). */
 export const DEMO_THEME_OPTIONS: ThemeOption[] = [
@@ -264,9 +264,15 @@ export const TemplateBuilderFlow: React.FC<TemplateBuilderFlowProps> = ({
         open
         initialType={initialType}
         onCancel={() => onClose?.()}
-        onComplete={({ name, type, scope }: { name: string; type: TemplateType; scope: TemplateScope }) =>
-          setDraft(emptyDraft(type, name, scope))
-        }
+        onComplete={({
+          name,
+          type,
+          scope,
+        }: {
+          name: string;
+          type: TemplateType;
+          scope: TemplateScope;
+        }) => setDraft(emptyDraft(type, name, scope))}
       />
     );
   }

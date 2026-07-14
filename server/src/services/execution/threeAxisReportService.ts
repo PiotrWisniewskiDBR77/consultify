@@ -39,13 +39,13 @@ import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   attachSource as attachEvidenceSource,
-  upsertEnvelope as upsertEvidenceEnvelope,
   type EvidenceEnvelope,
+  upsertEnvelope as upsertEvidenceEnvelope,
 } from '../evidence/evidenceEnvelopeService.js';
-import { getActualCostByInitiative } from '../executionBudgetService.js';
 import { deriveInitiativeEvm, derivePortfolioEvm, type EvmResult } from '../evmService.js';
-import ReportBuilderService from '../reportBuilderService.js';
+import { getActualCostByInitiative } from '../executionBudgetService.js';
 import ReportContract, { type ReportScope } from '../report/reportContract.js';
+import ReportBuilderService from '../reportBuilderService.js';
 
 /* ────────────────────────────────────────────────────────────────────────────
    Typy
@@ -190,7 +190,9 @@ export function computeAxisZ(evm: EvmResult | null): AxisReading {
   return { pct: round1(evm.percentComplete * 100), dataQuality: 'ok', flags: [] };
 }
 
-export function computeAxisW(value: { current: number; target: number } | undefined | null): AxisReading {
+export function computeAxisW(
+  value: { current: number; target: number } | undefined | null
+): AxisReading {
   if (!value || !(value.target > 0)) {
     return { pct: null, dataQuality: 'missing', flags: ['no-value-baseline'] };
   }
@@ -253,7 +255,9 @@ async function fetchInitiatives(scope: ThreeAxisScope): Promise<InitiativeRow[]>
       params
     );
   } catch (err) {
-    logger.warn(`[threeAxisReportService] fetchInitiatives failed (degrading to empty): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[threeAxisReportService] fetchInitiatives failed (degrading to empty): ${(err as Error)?.message || err}`
+    );
     return [];
   }
 }
@@ -278,7 +282,12 @@ async function fetchValueAxis(
   try {
     const placeholders = queryHelpers.buildInPlaceholders(initiativeIds);
     const [baselineRows, ledgerRows] = await Promise.all([
-      queryHelpers.queryAll<{ initiative_id: string; baseline_total: number; target_total: number; kpi_count: number }>(
+      queryHelpers.queryAll<{
+        initiative_id: string;
+        baseline_total: number;
+        target_total: number;
+        kpi_count: number;
+      }>(
         `SELECT vb.initiative_id AS initiative_id,
                 SUM(vb.frozen_value) AS baseline_total,
                 SUM(COALESCE(ik.target_value, 0)) AS target_total,
@@ -299,7 +308,8 @@ async function fetchValueAxis(
     ]);
 
     const deltaByIni = new Map<string, number>();
-    for (const row of ledgerRows || []) deltaByIni.set(String(row.initiative_id), Number(row.delta_total) || 0);
+    for (const row of ledgerRows || [])
+      deltaByIni.set(String(row.initiative_id), Number(row.delta_total) || 0);
 
     for (const row of baselineRows || []) {
       const id = String(row.initiative_id);
@@ -313,7 +323,9 @@ async function fetchValueAxis(
     }
     return map;
   } catch (err) {
-    logger.warn(`[threeAxisReportService] fetchValueAxis failed (degrading to empty): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[threeAxisReportService] fetchValueAxis failed (degrading to empty): ${(err as Error)?.message || err}`
+    );
     return map;
   }
 }
@@ -328,7 +340,9 @@ export async function buildThreeAxisReport(scope: ThreeAxisScope): Promise<Three
   const initiativeIds = initiatives.map((i) => String(i.id));
 
   const [actualCostByIni, valueByIni] = await Promise.all([
-    getActualCostByInitiative(scope.organizationId, initiativeIds).catch(() => new Map<string, number>()),
+    getActualCostByInitiative(scope.organizationId, initiativeIds).catch(
+      () => new Map<string, number>()
+    ),
     fetchValueAxis(scope.organizationId, initiativeIds),
   ]);
 
@@ -457,7 +471,7 @@ const SPONSOR_3AXIS_DEFINITION_ID = 'sponsor-3axis';
 /** Skala 0-100 → pasek ASCII (7 kratek), do markdown/appendixu — czytelne bez frontu. */
 function bar(pct: number | null): string {
   if (pct === null) return '░░░░░░░ n/d';
-  const filled = Math.max(0, Math.min(7, Math.round((clamp01(pct / 100)) * 7)));
+  const filled = Math.max(0, Math.min(7, Math.round(clamp01(pct / 100) * 7)));
   return '▓'.repeat(filled) + '░'.repeat(7 - filled) + ` ${round1(pct)}%`;
 }
 
@@ -501,18 +515,33 @@ export function renderThreeAxisMarkdown(report: ThreeAxisReport): Record<string,
     '| Inicjatywa | T (czas) | Z (zadania) | W (wartość) | RAG |\n|---|---|---|---|---|';
   const overviewProgramRow = `| **PROGRAM (agregat)** | ${bar(report.program.T.pct)} | ${bar(report.program.Z.pct)} | ${bar(report.program.W.pct)} | ${ragEmoji(report.program.rag)} |`;
   const overviewRows = report.rows
-    .map((r) => `| ${r.name} | ${bar(r.T.pct)} | ${bar(r.Z.pct)} | ${bar(r.W.pct)} | ${ragEmoji(r.rag)} |`)
+    .map(
+      (r) =>
+        `| ${r.name} | ${bar(r.T.pct)} | ${bar(r.Z.pct)} | ${bar(r.W.pct)} | ${ragEmoji(r.rag)} |`
+    )
     .join('\n');
-  const overview = ['## Trzy osie — program i inicjatywy', '', overviewHeader, overviewProgramRow, overviewRows || '| — | — | — | — | — |'].join('\n');
+  const overview = [
+    '## Trzy osie — program i inicjatywy',
+    '',
+    overviewHeader,
+    overviewProgramRow,
+    overviewRows || '| — | — | — | — | — |',
+  ].join('\n');
 
   const excScheduleRows = report.exceptions.scheduleGap.length
     ? report.exceptions.scheduleGap
-        .map((r) => `- ${ragEmoji(r.scheduleHealth.rag)} **${r.name}** — SPI (Z-vs-T) = ${r.scheduleHealth.ratio?.toFixed(2)}`)
+        .map(
+          (r) =>
+            `- ${ragEmoji(r.scheduleHealth.rag)} **${r.name}** — SPI (Z-vs-T) = ${r.scheduleHealth.ratio?.toFixed(2)}`
+        )
         .join('\n')
     : '_Brak odchyleń harmonogramu powyżej progu._';
   const excImpactRows = report.exceptions.impactGap.length
     ? report.exceptions.impactGap
-        .map((r) => `- ${ragEmoji(r.impactGap.rag)} **${r.name}** — W/Z (luka wpływu) = ${r.impactGap.ratio?.toFixed(2)} — praca wykonana, wartość NIE nadąża`)
+        .map(
+          (r) =>
+            `- ${ragEmoji(r.impactGap.rag)} **${r.name}** — W/Z (luka wpływu) = ${r.impactGap.ratio?.toFixed(2)} — praca wykonana, wartość NIE nadąża`
+        )
         .join('\n')
     : '_Brak luki wpływu powyżej progu._';
   const exceptions = [
@@ -549,7 +578,12 @@ export function renderThreeAxisMarkdown(report: ThreeAxisReport): Record<string,
         `| ${r.name} | ${r.status} | ${r.raw.evm?.bac ?? '—'} | ${r.raw.evm?.pv ?? '—'} | ${r.raw.evm?.ev ?? '—'} | ${r.raw.evm?.ac ?? '—'} | ${r.raw.evm?.spi ?? '—'} | ${r.raw.evm?.cpi ?? '—'} | ${r.raw.valueCurrent ?? '—'} | ${r.raw.valueTarget ?? '—'} |`
     )
     .join('\n');
-  const appendix = ['## Aneks — pełna tabela', '', appendixHeader, appendixRows || '| — | — | — | — | — | — | — | — | — | — |'].join('\n');
+  const appendix = [
+    '## Aneks — pełna tabela',
+    '',
+    appendixHeader,
+    appendixRows || '| — | — | — | — | — | — | — | — | — | — |',
+  ].join('\n');
 
   return {
     header,
@@ -608,7 +642,8 @@ export async function publishThreeAxisSnapshot(
     : params.programId
       ? `program ${params.programId}`
       : 'organizacja';
-  const title = params.title || `Raport wykonawczy 3 osi — ${scopeLabel} (${report.asOf.slice(0, 10)})`;
+  const title =
+    params.title || `Raport wykonawczy 3 osi — ${scopeLabel} (${report.asOf.slice(0, 10)})`;
 
   const rb = await ReportBuilderService.createReport({
     organizationId: params.organizationId,
@@ -628,7 +663,12 @@ export async function publishThreeAxisSnapshot(
 
   for (const [sectionKey, content] of Object.entries(markdown)) {
     try {
-      await ReportBuilderService.updateSectionContent(rb.report.id, sectionKey, content, params.createdBy);
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        sectionKey,
+        content,
+        params.createdBy
+      );
     } catch (err) {
       logger.warn(
         `[threeAxisReportService] updateSectionContent(${sectionKey}) failed (non-fatal): ${(err as Error)?.message || err}`
@@ -663,7 +703,8 @@ export async function publishThreeAxisSnapshot(
         key: 'axis_T_formula',
         value: '(dziś − baseline_start) / (baseline_end − baseline_start), clamp 0..1',
         source_type: 'imported',
-        rationale: 'evmService PV time-phasing (identyczna matematyka, patrz docblock threeAxisReportService.ts)',
+        rationale:
+          'evmService PV time-phasing (identyczna matematyka, patrz docblock threeAxisReportService.ts)',
       },
       {
         key: 'axis_Z_formula',
@@ -672,9 +713,11 @@ export async function publishThreeAxisSnapshot(
       },
       {
         key: 'axis_W_formula',
-        value: 'Σ(value_baselines.frozen_value aktywnych KPI + Σ ledger.value_delta) / Σ(initiative_kpis.target_value)',
+        value:
+          'Σ(value_baselines.frozen_value aktywnych KPI + Σ ledger.value_delta) / Σ(initiative_kpis.target_value)',
         source_type: 'imported',
-        rationale: 'Decyzja D-G: oś WARTOŚĆ = value_ledger (banked), NIE initiative_benefits (G1 defekt).',
+        rationale:
+          'Decyzja D-G: oś WARTOŚĆ = value_ledger (banked), NIE initiative_benefits (G1 defekt).',
       },
       {
         key: 'rag_thresholds',
@@ -682,20 +725,22 @@ export async function publishThreeAxisSnapshot(
         source_type: 'imported',
       },
     ],
-    confidence: report.dataQuality.initiativesTotal > 0
-      ? Math.min(
-          1,
-          (report.dataQuality.withCostBaseline + report.dataQuality.withValueBaseline) /
-            (2 * report.dataQuality.initiativesTotal)
-        )
-      : null,
+    confidence:
+      report.dataQuality.initiativesTotal > 0
+        ? Math.min(
+            1,
+            (report.dataQuality.withCostBaseline + report.dataQuality.withValueBaseline) /
+              (2 * report.dataQuality.initiativesTotal)
+          )
+        : null,
     toVerify:
       report.dataQuality.withValueBaseline < report.dataQuality.initiativesTotal
         ? [
             {
               claim: `${report.dataQuality.initiativesTotal - report.dataQuality.withValueBaseline} inicjatyw bez aktywnego baseline'u wartości`,
               why: 'Oś W pokazuje "n/d" dla tych inicjatyw — brak `value_baselines` z `is_active=1` sprzężonego z `initiative_kpis.target_value`.',
-              suggested_check: 'Zamrozić baseline KPI (valueLedgerService.freezeBaseline) dla brakujących inicjatyw przed kolejną publikacją.',
+              suggested_check:
+                'Zamrozić baseline KPI (valueLedgerService.freezeBaseline) dla brakujących inicjatyw przed kolejną publikacją.',
             },
           ]
         : [],

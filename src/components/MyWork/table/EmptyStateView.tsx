@@ -88,12 +88,8 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
       >
         <Table2 className="h-9 w-9 text-c-text-secondary" strokeWidth={1.5} />
       </div>
-      <h3 className="text-base font-semibold text-c-text tracking-tight">
-        {headline}
-      </h3>
-      <p className="mt-2 text-sm text-c-text-muted leading-relaxed">
-        {description}
-      </p>
+      <h3 className="text-base font-semibold text-c-text tracking-tight">{headline}</h3>
+      <p className="mt-2 text-sm text-c-text-muted leading-relaxed">{description}</p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-2 w-full sm:flex-nowrap">
         <button
           type="button"

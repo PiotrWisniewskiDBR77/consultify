@@ -85,7 +85,9 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
         </div>
 
         <div className="mb-2">
-          <label className="mb-1 block text-[11px] text-c-text-secondary dark:text-c-text-muted">ID</label>
+          <label className="mb-1 block text-[11px] text-c-text-secondary dark:text-c-text-muted">
+            ID
+          </label>
           <input
             autoFocus
             value={artifactId}

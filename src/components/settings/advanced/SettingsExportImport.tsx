@@ -315,9 +315,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                 className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg cursor-pointer hover:bg-c-surface-raised dark:hover:bg-navy-800"
               >
                 <div className="flex items-center gap-3">
-                  <span className="font-medium text-c-text-secondary">
-                    {cat.label}
-                  </span>
+                  <span className="font-medium text-c-text-secondary">{cat.label}</span>
                 </div>
                 <input
                   type="checkbox"

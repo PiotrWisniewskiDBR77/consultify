@@ -47,7 +47,12 @@ export async function resolveProjectIdFromSource(
   db: ProjectSourceDb = defaultDb
 ): Promise<string | null> {
   if (!orgId || !sourceId) return null;
-  const table = SOURCE_TABLE_BY_TYPE[String(sourceType || '').trim().toLowerCase()];
+  const table =
+    SOURCE_TABLE_BY_TYPE[
+      String(sourceType || '')
+        .trim()
+        .toLowerCase()
+    ];
   if (!table) return null; // e.g. interview_insight/manual/teresa_chat — nothing to inherit
 
   try {

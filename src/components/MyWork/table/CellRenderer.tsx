@@ -225,9 +225,7 @@ const CheckboxCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onClick={() => !locked && onChange(!value)}
       disabled={locked}
       className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-        value
-          ? 'bg-c-text border-c-text text-c-bg'
-          : 'border-c-border-subtle hover:border-c-accent'
+        value ? 'bg-c-text border-c-text text-c-bg' : 'border-c-border-subtle hover:border-c-accent'
       }`}
     >
       {value && <Check size={12} />}
@@ -250,9 +248,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         >
           <Star
             size={14}
-            className={
-              star <= rating ? 'text-amber-400 fill-amber-400' : 'text-c-text-secondary'
-            }
+            className={star <= rating ? 'text-amber-400 fill-amber-400' : 'text-c-text-secondary'}
           />
         </button>
       ))}
@@ -334,9 +330,7 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 const FormulaCell: React.FC<CellProps> = ({ column, rowData }) => {
   const result = evaluateFormula(column.formula || '', rowData);
   return (
-    <span className="text-xs text-c-text-secondary tabular-nums font-medium px-1">
-      {result}
-    </span>
+    <span className="text-xs text-c-text-secondary tabular-nums font-medium px-1">{result}</span>
   );
 };
 

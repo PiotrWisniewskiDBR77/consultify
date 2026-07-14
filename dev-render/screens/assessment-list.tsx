@@ -11,8 +11,8 @@
  * All handlers are local no-ops / local state so the click interactions still
  * work for the supervisor without any backend.
  */
-import React, { useMemo, useState } from 'react';
 import { CheckCircle2, Eye, FileBarChart, RefreshCcw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 import StandardModuleBar from '../../src/components/standard/StandardModuleBar';
 import StandardTable, {
@@ -154,7 +154,9 @@ export function AssessmentListScreen(): React.ReactElement {
         align: 'right',
         sortable: true,
         render: (row: AssessmentRow) => (
-          <span className="font-mono tabular-nums">{row.score > 0 ? row.score.toFixed(1) : '—'}</span>
+          <span className="font-mono tabular-nums">
+            {row.score > 0 ? row.score.toFixed(1) : '—'}
+          </span>
         ),
       },
       {
@@ -205,9 +207,7 @@ export function AssessmentListScreen(): React.ReactElement {
       edit: undefined,
       editNote: 'Edycja z poziomu edytora sesji DRD',
       archive: () =>
-        setRows((prev) =>
-          prev.map((r) => (r.id === row.id ? { ...r, status: 'archived' } : r))
-        ),
+        setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: 'archived' } : r))),
     },
     destructive: {
       onClick: () => setRows((prev) => prev.filter((r) => r.id !== row.id)),
@@ -247,9 +247,7 @@ export function AssessmentListScreen(): React.ReactElement {
                     label: 'Archiwizuj',
                     onClick: () => {
                       setRows((prev) =>
-                        prev.map((r) =>
-                          selectedIds.has(r.id) ? { ...r, status: 'archived' } : r
-                        )
+                        prev.map((r) => (selectedIds.has(r.id) ? { ...r, status: 'archived' } : r))
                       );
                       setSelectedIds(new Set());
                     },

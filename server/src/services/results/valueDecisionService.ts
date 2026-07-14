@@ -106,7 +106,8 @@ export function recommendDecision(input: DecisionInput): DecisionResult {
   if (confidence != null) rationale.push(`pewność ${fmtPct(confidence)}`);
   if (adoption != null) rationale.push(`adopcja ${fmtPct(adoption)}`);
   if (trend != null) rationale.push(TREND_LABEL[trend]);
-  if (valueAtStake != null) rationale.push(`stawka ${Math.round(valueAtStake).toLocaleString('pl-PL')}`);
+  if (valueAtStake != null)
+    rationale.push(`stawka ${Math.round(valueAtStake).toLocaleString('pl-PL')}`);
 
   // Brak sygnału realizacji = nie ma na czym oprzeć decyzji → HOLD/observe.
   if (realization == null) {
@@ -117,7 +118,7 @@ export function recommendDecision(input: DecisionInput): DecisionResult {
   // 1) SCALE — realizuje powyżej planu z wysoką pewnością → DOŁÓŻ.
   if (realization >= SCALE_REALIZATION && confidence != null && confidence >= SCALE_CONFIDENCE) {
     rationale.push(
-      `realizacja ${fmtPct(realization)} ≥ ${fmtPct(SCALE_REALIZATION)} planu przy pewności ${fmtPct(confidence)} — dołóż zasoby`,
+      `realizacja ${fmtPct(realization)} ≥ ${fmtPct(SCALE_REALIZATION)} planu przy pewności ${fmtPct(confidence)} — dołóż zasoby`
     );
     return { action: 'SCALE', severity: 'info', rationale };
   }
@@ -135,14 +136,14 @@ export function recommendDecision(input: DecisionInput): DecisionResult {
       if (lowConfidence) why.push(`niska pewność ${fmtPct(confidence as number)}`);
       if (lowValue) why.push('niska stawka');
       rationale.push(
-        `realizacja ${fmtPct(realization)}${trend ? ` + ${TREND_LABEL[trend]}` : ''}${lowAdoption ? ' + słaba adopcja' : ''}, ${why.join(' i ')} — zabij`,
+        `realizacja ${fmtPct(realization)}${trend ? ` + ${TREND_LABEL[trend]}` : ''}${lowAdoption ? ' + słaba adopcja' : ''}, ${why.join(' i ')} — zabij`
       );
       return { action: 'STOP', severity: 'critical', rationale };
     }
 
     // INTERVENE — zagrożone, ale stawka/pewność uzasadniają ratunek.
     rationale.push(
-      `realizacja ${fmtPct(realization)}${trend ? ` + ${TREND_LABEL[trend]}` : ''}${lowAdoption ? ' + słaba adopcja' : ''} — interweniuj`,
+      `realizacja ${fmtPct(realization)}${trend ? ` + ${TREND_LABEL[trend]}` : ''}${lowAdoption ? ' + słaba adopcja' : ''} — interweniuj`
     );
     return { action: 'INTERVENE', severity: 'critical', rationale };
   }
@@ -187,7 +188,7 @@ export function portfolioDecisions(items: PortfolioItemInput[]): PortfolioDecisi
  * Agreguje decyzje per akcja: ile pozycji i ile łącznej wartości na szali.
  */
 export function decisionSummary(
-  decisions: Array<Pick<PortfolioDecision, 'action' | 'valueAtStake'>>,
+  decisions: Array<Pick<PortfolioDecision, 'action' | 'valueAtStake'>>
 ): DecisionSummary {
   const summary: DecisionSummary = {
     SCALE: { count: 0, value: 0 },

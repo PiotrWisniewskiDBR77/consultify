@@ -12,16 +12,16 @@
  * operational summary renderer consumes AI-Discovery output the same way.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
+import { type AiPhaseId } from './deepeningLadder';
+import { localizeLadder } from './index';
 import {
   buildW2MoveSequence,
   computeBaseline,
-  rankPhases,
   type DiscoverySession,
+  rankPhases,
 } from './useCaseEngine';
-import { localizeLadder } from './index';
-import { type AiPhaseId } from './deepeningLadder';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

@@ -138,7 +138,10 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
     () => [
       { label: t('assessment.preview.framework', 'Framework'), value: framework || '—' },
       { label: t('assessment.preview.status', 'Status'), value: status || '—' },
-      { label: t('assessment.preview.progress', 'Progress'), value: `${Math.round(progress || 0)}%` },
+      {
+        label: t('assessment.preview.progress', 'Progress'),
+        value: `${Math.round(progress || 0)}%`,
+      },
       {
         label: t('assessment.preview.created', 'Created'),
         value: createdAt ? createdAt.toLocaleDateString() : '—',

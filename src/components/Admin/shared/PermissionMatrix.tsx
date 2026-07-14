@@ -223,7 +223,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
 
       {/* Matrix Table */}
       <div className="overflow-x-auto border border-slate-200 dark:border-navy-700 rounded-xl">
-        <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="w-full">
+        <table
+          /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full"
+        >
           {/* Header */}
           <thead className="bg-slate-50 dark:bg-navy-900">
             <tr>

@@ -28,10 +28,7 @@ const ORDER: TemplateStatus[] = ['approved', 'draft', 'deprecated'];
 // Token-based filter-pill palette. `activeClass` = active (selected) pill;
 // inactive pills share a neutral token style. Dark: variants per
 // 00-foundation dark-mode.
-const META: Record<
-  TemplateStatus,
-  { en: string; icon: React.ReactNode; activeClass: string }
-> = {
+const META: Record<TemplateStatus, { en: string; icon: React.ReactNode; activeClass: string }> = {
   approved: {
     en: 'Approved',
     icon: <CheckCircle2 size={12} />,
@@ -41,8 +38,7 @@ const META: Record<
   draft: {
     en: 'Draft',
     icon: <Circle size={12} />,
-    activeClass:
-      'bg-c-border-subtle text-c-text border-c-border-strong',
+    activeClass: 'bg-c-border-subtle text-c-text border-c-border-strong',
   },
   deprecated: {
     en: 'Deprecated',
@@ -52,8 +48,7 @@ const META: Record<
   },
 };
 
-const INACTIVE_CLASS =
-  'bg-transparent text-c-text-secondary border-c-border-subtle';
+const INACTIVE_CLASS = 'bg-transparent text-c-text-secondary border-c-border-subtle';
 
 export const TemplateLifecycleFilter: React.FC<TemplateLifecycleFilterProps> = ({
   value,

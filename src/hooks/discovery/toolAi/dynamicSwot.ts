@@ -25,8 +25,8 @@ import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
 import {
   buildMoveConclusionPromptRules,
   deriveTensionCandidates,
-  TENSION_TYPE_TO_POSTURE,
   type SwotTensionType,
+  TENSION_TYPE_TO_POSTURE,
 } from '@/config/swot/swotTensionEngine';
 import type {
   SessionGenerationStatus,
@@ -489,7 +489,9 @@ function normalizeItemConclusionFields(item: any): Partial<Omit<SWOTItem, 'id'>>
   return extras;
 }
 
-function normalizeMoveTradeoff(raw: any): { chosen: string; deferred: string; cost: string } | undefined {
+function normalizeMoveTradeoff(
+  raw: any
+): { chosen: string; deferred: string; cost: string } | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const chosen = typeof raw.chosen === 'string' ? raw.chosen : '';
   const deferred = typeof raw.deferred === 'string' ? raw.deferred : '';
@@ -542,7 +544,9 @@ function normalizeSummaryConclusionFields(summaryObj: any, parsed: Record<string
     ? source.tradeoffs
         .filter(
           (t: any) =>
-            t && typeof t.chosen === 'string' && (typeof t.rejected === 'string' || typeof t.why === 'string')
+            t &&
+            typeof t.chosen === 'string' &&
+            (typeof t.rejected === 'string' || typeof t.why === 'string')
         )
         .map((t: any) => ({
           chosen: t.chosen,
@@ -553,7 +557,10 @@ function normalizeSummaryConclusionFields(summaryObj: any, parsed: Record<string
   const effectRaw = source.expectedEffect;
   const expectedEffect =
     effectRaw && typeof effectRaw === 'object' && typeof effectRaw.text === 'string'
-      ? { text: effectRaw.text, horizon: typeof effectRaw.horizon === 'string' ? effectRaw.horizon : '' }
+      ? {
+          text: effectRaw.text,
+          horizon: typeof effectRaw.horizon === 'string' ? effectRaw.horizon : '',
+        }
       : undefined;
   return { verdict, verdictRationale, tradeoffs, expectedEffect };
 }

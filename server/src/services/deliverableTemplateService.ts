@@ -8,8 +8,8 @@
  * CRUD (T3): create/update/delete/getById — org-scoped, system templates chronione (403).
  */
 
-import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
 import { registerArtifactOrigin } from './v8/artifactRegistryService.js';
 
 const LOG_PREFIX = '[deliverableTemplateService]';
@@ -40,10 +40,7 @@ function isMissingVisibilityColumnError(err: unknown): boolean {
   return /column\s+"?visibility"?\s+does not exist/i.test(msg);
 }
 
-function detectIsBlank(
-  name: string,
-  meta: Record<string, unknown>
-): boolean {
+function detectIsBlank(name: string, meta: Record<string, unknown>): boolean {
   if (BLANK_NAME_PATTERN.test(name)) return true;
   // doc: brak sekcji
   if (Array.isArray(meta.sections_json) && (meta.sections_json as unknown[]).length === 0)
@@ -319,9 +316,13 @@ export async function getDeliverableTemplate(
 ): Promise<DeliverableTemplate | null> {
   // deck
   const deck = await queryOne<{
-    id: string; name: string; description: string | null;
-    is_system: boolean; theme: string | null;
-    organization_id: string | null; outline_json: string | null;
+    id: string;
+    name: string;
+    description: string | null;
+    is_system: boolean;
+    theme: string | null;
+    organization_id: string | null;
+    outline_json: string | null;
   }>(
     `SELECT id, name, description, is_system, theme, organization_id, outline_json
      FROM presentation_templates
@@ -331,17 +332,27 @@ export async function getDeliverableTemplate(
   if (deck) {
     const meta: Record<string, unknown> = { theme: deck.theme, outline_json: deck.outline_json };
     return {
-      id: deck.id, type: 'deck', name: deck.name, description: deck.description,
-      isSystem: Boolean(deck.is_system), isBlank: detectIsBlank(deck.name, meta),
-      organizationId: deck.organization_id, meta,
+      id: deck.id,
+      type: 'deck',
+      name: deck.name,
+      description: deck.description,
+      isSystem: Boolean(deck.is_system),
+      isBlank: detectIsBlank(deck.name, meta),
+      organizationId: deck.organization_id,
+      meta,
     };
   }
 
   // doc
   const doc = await queryOne<{
-    id: string; name: string; description: string | null;
-    is_system: boolean; is_public: boolean; report_type: string | null;
-    sections_json: string | null; organization_id: string | null;
+    id: string;
+    name: string;
+    description: string | null;
+    is_system: boolean;
+    is_public: boolean;
+    report_type: string | null;
+    sections_json: string | null;
+    organization_id: string | null;
   }>(
     `SELECT id, name, description, is_system, is_public, report_type, sections_json, organization_id
      FROM report_builder_templates
@@ -349,19 +360,31 @@ export async function getDeliverableTemplate(
     [id, orgId]
   );
   if (doc) {
-    const meta: Record<string, unknown> = { report_type: doc.report_type, sections_json: doc.sections_json };
+    const meta: Record<string, unknown> = {
+      report_type: doc.report_type,
+      sections_json: doc.sections_json,
+    };
     return {
-      id: doc.id, type: 'doc', name: doc.name, description: doc.description,
-      isSystem: Boolean(doc.is_system), isBlank: detectIsBlank(doc.name, meta),
-      organizationId: doc.organization_id, meta,
+      id: doc.id,
+      type: 'doc',
+      name: doc.name,
+      description: doc.description,
+      isSystem: Boolean(doc.is_system),
+      isBlank: detectIsBlank(doc.name, meta),
+      organizationId: doc.organization_id,
+      meta,
     };
   }
 
   // table
   const tbl = await queryOne<{
-    id: string; name: string; description: string | null;
-    is_featured: boolean; category: string | null;
-    schema_snapshot: unknown; created_by: string | null;
+    id: string;
+    name: string;
+    description: string | null;
+    is_featured: boolean;
+    category: string | null;
+    schema_snapshot: unknown;
+    created_by: string | null;
     organization_id: string | null;
   }>(
     `SELECT id, name, description, is_featured, category, schema_snapshot, created_by, organization_id
@@ -370,9 +393,15 @@ export async function getDeliverableTemplate(
     [id, orgId]
   );
   if (tbl) {
-    const meta: Record<string, unknown> = { category: tbl.category, schema_snapshot: tbl.schema_snapshot };
+    const meta: Record<string, unknown> = {
+      category: tbl.category,
+      schema_snapshot: tbl.schema_snapshot,
+    };
     return {
-      id: String(tbl.id), type: 'table', name: tbl.name, description: tbl.description,
+      id: String(tbl.id),
+      type: 'table',
+      name: tbl.name,
+      description: tbl.description,
       isSystem: tbl.created_by === null,
       isBlank: detectIsBlank(tbl.name, {}),
       organizationId: tbl.organization_id,
@@ -528,9 +557,10 @@ export async function createDeliverableTemplate(
   const metaObj = meta ?? {};
 
   if (type === 'doc') {
-    const sectionsJson = typeof metaObj.sections_json === 'string'
-      ? metaObj.sections_json
-      : JSON.stringify(metaObj.sections_json ?? []);
+    const sectionsJson =
+      typeof metaObj.sections_json === 'string'
+        ? metaObj.sections_json
+        : JSON.stringify(metaObj.sections_json ?? []);
     const row = await queryOne<{ id: string }>(
       `INSERT INTO report_builder_templates
          (id, name, description, source_type, report_type, sections_json,
@@ -554,9 +584,10 @@ export async function createDeliverableTemplate(
   }
 
   if (type === 'deck') {
-    const outlineJson = typeof metaObj.outline_json === 'string'
-      ? metaObj.outline_json
-      : JSON.stringify(metaObj.outline_json ?? []);
+    const outlineJson =
+      typeof metaObj.outline_json === 'string'
+        ? metaObj.outline_json
+        : JSON.stringify(metaObj.outline_json ?? []);
     const row = await queryOne<{ id: string }>(
       `INSERT INTO presentation_templates
          (id, name, description, deck_type, outline_json,
@@ -580,9 +611,10 @@ export async function createDeliverableTemplate(
   }
 
   // table
-  const schemaSnapshot = typeof metaObj.schema_snapshot === 'string'
-    ? metaObj.schema_snapshot
-    : JSON.stringify(metaObj.schema_snapshot ?? {});
+  const schemaSnapshot =
+    typeof metaObj.schema_snapshot === 'string'
+      ? metaObj.schema_snapshot
+      : JSON.stringify(metaObj.schema_snapshot ?? {});
   const category = typeof metaObj.category === 'string' ? metaObj.category : 'custom';
   const row = await queryOne<{ id: string }>(
     `INSERT INTO tp_base_templates
@@ -614,16 +646,20 @@ export async function updateDeliverableTemplate(
   const existing = await getDeliverableTemplate(id, orgId);
   if (!existing) throw new TemplateNotFoundError(id);
   if (existing.isSystem) throw new TemplateForbiddenError();
-  if (existing.organizationId !== orgId) throw new TemplateForbiddenError('Cross-org update not allowed');
+  if (existing.organizationId !== orgId)
+    throw new TemplateForbiddenError('Cross-org update not allowed');
 
   const newName = updates.name ?? existing.name;
   const newDesc = updates.description !== undefined ? updates.description : existing.description;
   const metaObj = updates.meta ?? {};
 
   if (existing.type === 'doc') {
-    const sectionsJson = metaObj.sections_json !== undefined
-      ? (typeof metaObj.sections_json === 'string' ? metaObj.sections_json : JSON.stringify(metaObj.sections_json))
-      : String(existing.meta.sections_json ?? '[]');
+    const sectionsJson =
+      metaObj.sections_json !== undefined
+        ? typeof metaObj.sections_json === 'string'
+          ? metaObj.sections_json
+          : JSON.stringify(metaObj.sections_json)
+        : String(existing.meta.sections_json ?? '[]');
     await queryRun(
       `UPDATE report_builder_templates
        SET name = $1, description = $2, sections_json = $3, updated_at = NOW()
@@ -631,9 +667,12 @@ export async function updateDeliverableTemplate(
       [newName, newDesc, sectionsJson, id, orgId]
     );
   } else if (existing.type === 'deck') {
-    const outlineJson = metaObj.outline_json !== undefined
-      ? (typeof metaObj.outline_json === 'string' ? metaObj.outline_json : JSON.stringify(metaObj.outline_json))
-      : String(existing.meta.outline_json ?? '[]');
+    const outlineJson =
+      metaObj.outline_json !== undefined
+        ? typeof metaObj.outline_json === 'string'
+          ? metaObj.outline_json
+          : JSON.stringify(metaObj.outline_json)
+        : String(existing.meta.outline_json ?? '[]');
     await queryRun(
       `UPDATE presentation_templates
        SET name = $1, description = $2, outline_json = $3, updated_at = NOW()
@@ -656,14 +695,12 @@ export async function updateDeliverableTemplate(
 }
 
 /** Usuń template — tylko org-owned, nie-system. */
-export async function deleteDeliverableTemplate(
-  id: string,
-  orgId: string
-): Promise<boolean> {
+export async function deleteDeliverableTemplate(id: string, orgId: string): Promise<boolean> {
   const existing = await getDeliverableTemplate(id, orgId);
   if (!existing) return false;
   if (existing.isSystem) throw new TemplateForbiddenError();
-  if (existing.organizationId !== orgId) throw new TemplateForbiddenError('Cross-org delete not allowed');
+  if (existing.organizationId !== orgId)
+    throw new TemplateForbiddenError('Cross-org delete not allowed');
 
   if (existing.type === 'doc') {
     const r = await queryRun(

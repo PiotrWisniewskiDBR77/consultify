@@ -142,7 +142,10 @@ export function CoverLayout(
 
   // Accent rule under the title.
   elements.push(
-    Divider({ position: { x: LEFT + 0.02, y: 3.5, w: 1.7, h: 0 }, color: accent, thickness: 3 }, tokens)
+    Divider(
+      { position: { x: LEFT + 0.02, y: 3.5, w: 1.7, h: 0 }, color: accent, thickness: 3 },
+      tokens
+    )
   );
 
   // Subtitle.
@@ -208,7 +211,9 @@ export function CoverLayout(
   // (mirrors the FE `cover_bottom_strip` `70% / 30%` main+strip grid). Purely
   // additive to the editorial cover; the other variants omit it.
   if (isBottomStrip) {
-    elements.push(accentRect({ x: 0, y: tokens.grid.slideH - 0.55, w: tokens.grid.slideW, h: 0.55 }, accent));
+    elements.push(
+      accentRect({ x: 0, y: tokens.grid.slideH - 0.55, w: tokens.grid.slideW, h: 0.55 }, accent)
+    );
   }
 
   // Confidentiality

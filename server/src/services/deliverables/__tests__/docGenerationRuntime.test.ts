@@ -51,7 +51,15 @@ vi.mock('../../contextPackBuilder.js', () => ({
 }));
 
 vi.mock('../../tableSchemaGeneratorService.js', () => ({
-  generateTableSchema: vi.fn().mockResolvedValue({ tierUsed: 'STANDARD', fallbackUsed: true, fields: [], seedRows: [], conditionalFormatting: [], hasFormulas: false, sheets: [] }),
+  generateTableSchema: vi.fn().mockResolvedValue({
+    tierUsed: 'STANDARD',
+    fallbackUsed: true,
+    fields: [],
+    seedRows: [],
+    conditionalFormatting: [],
+    hasFormulas: false,
+    sheets: [],
+  }),
 }));
 
 const registerArtifactOriginMock = vi.fn();

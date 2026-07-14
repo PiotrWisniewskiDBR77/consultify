@@ -746,11 +746,7 @@ function stringCell(row: unknown, index: number): string {
  * projection is lossy — e.g. initiative budget/ROI never reach the blocks).
  * Extra rows become new objects; fewer rows truncate (a deleted row is an edit).
  */
-function mergeRowsOntoObjects(
-  baseItems: any[],
-  rows: unknown[],
-  fields: string[]
-): any[] {
+function mergeRowsOntoObjects(baseItems: any[], rows: unknown[], fields: string[]): any[] {
   return rows.map((row, index) => {
     const base = baseItems[index] ? { ...baseItems[index] } : {};
     fields.forEach((field, cellIndex) => {
@@ -885,7 +881,9 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
   const slide: UnifiedSlide = {
     ...base,
     intent: base.intent,
-    key_message: String(card.key_message || card.title || base.key_message || card.intent || 'Slide'),
+    key_message: String(
+      card.key_message || card.title || base.key_message || card.intent || 'Slide'
+    ),
     content,
   };
   (slide as any).slide_id = card.card_id;
@@ -905,7 +903,9 @@ export function deckDocumentToRenderableUnifiedJson(
   baseUnified: UnifiedReportJSON | null | undefined
 ): UnifiedReportJSON {
   const flattened = deckDocumentToUnifiedJson(deck);
-  const baseSlides = Array.isArray(baseUnified?.slides) ? (baseUnified!.slides as UnifiedSlide[]) : [];
+  const baseSlides = Array.isArray(baseUnified?.slides)
+    ? (baseUnified!.slides as UnifiedSlide[])
+    : [];
   if (baseSlides.length === 0) return flattened;
 
   const deckId = String(deck.deckId || deck.deck_id || '');

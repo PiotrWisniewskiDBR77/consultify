@@ -10,8 +10,8 @@
 
 import { Link2 } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 
@@ -75,10 +75,7 @@ export const DeckRelationsPanel: React.FC<DeckRelationsPanelProps> = ({ cards })
   }, [cards]);
 
   return (
-    <div
-      className="flex h-full flex-col overflow-y-auto p-4"
-      data-testid="deck-relations-panel"
-    >
+    <div className="flex h-full flex-col overflow-y-auto p-4" data-testid="deck-relations-panel">
       <div className="mb-3">
         <h3 className="flex items-center gap-1.5 text-sm font-semibold text-c-text">
           <Link2 className="h-4 w-4 text-c-text-secondary" />

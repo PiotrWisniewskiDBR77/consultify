@@ -79,7 +79,13 @@ function toMs(t: string | number | null | undefined): number | null {
  */
 export function resolveBindingFreshness(binding: MaterialBinding, nowMs: number): BindingFreshness {
   if (!binding || !binding.id || !binding.policy || !Number.isFinite(binding.policy.ttlSeconds)) {
-    return { id: binding?.id ?? 'unknown', ageSeconds: Infinity, isStale: true, needsRefresh: false, reason: 'invalid' };
+    return {
+      id: binding?.id ?? 'unknown',
+      ageSeconds: Infinity,
+      isStale: true,
+      needsRefresh: false,
+      reason: 'invalid',
+    };
   }
   const mode = binding.policy.mode;
   const ttl = Math.max(0, binding.policy.ttlSeconds);
@@ -104,7 +110,13 @@ export function resolveBindingFreshness(binding: MaterialBinding, nowMs: number)
   }
   // nieświeże:
   if (mode === 'manual') {
-    return { id: binding.id, ageSeconds, isStale: true, needsRefresh: false, reason: 'manual_mode' };
+    return {
+      id: binding.id,
+      ageSeconds,
+      isStale: true,
+      needsRefresh: false,
+      reason: 'manual_mode',
+    };
   }
   return { id: binding.id, ageSeconds, isStale: true, needsRefresh: true, reason: 'ttl_expired' };
 }
@@ -116,7 +128,7 @@ export function resolveBindingFreshness(binding: MaterialBinding, nowMs: number)
 export function planRefresh(
   bindings: MaterialBinding[],
   nowMs: number,
-  opts?: { onlyMode?: RefreshMode },
+  opts?: { onlyMode?: RefreshMode }
 ): RefreshPlan {
   if (!Array.isArray(bindings) || bindings.length === 0) {
     return { toRefresh: [], all: [] };
@@ -141,7 +153,7 @@ export function markFetched(binding: MaterialBinding, nowMs: number): MaterialBi
  */
 export function annotateDatasetFreshness(
   dataset: MaterialDataset,
-  freshness: BindingFreshness,
+  freshness: BindingFreshness
 ): MaterialDataset & { freshness: BindingFreshness } {
   return { ...dataset, freshness };
 }

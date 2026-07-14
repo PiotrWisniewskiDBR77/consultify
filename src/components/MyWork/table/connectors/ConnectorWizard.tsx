@@ -838,9 +838,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           className="h-4 w-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
         />
         <div>
-          <p className="text-sm font-medium text-c-text">
-            {isPl ? 'Uruchom teraz' : 'Run now'}
-          </p>
+          <p className="text-sm font-medium text-c-text">{isPl ? 'Uruchom teraz' : 'Run now'}</p>
           <p className="text-xs text-c-text-muted">
             {isPl
               ? 'Rozpocznij import natychmiast po utworzeniu'
@@ -877,11 +875,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         return (
           <React.Fragment key={idx}>
             {idx > 0 && (
-              <div
-                className={`flex-1 h-px ${
-                  isDone ? 'bg-c-surface' : 'bg-c-surface-raised'
-                }`}
-              />
+              <div className={`flex-1 h-px ${isDone ? 'bg-c-surface' : 'bg-c-surface-raised'}`} />
             )}
             <button
               onClick={() => {

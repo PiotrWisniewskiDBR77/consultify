@@ -78,9 +78,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
               `}
             >
               {tab.icon && (
-                <span
-                  className={activeTab === tab.id ? 'text-slate-900 dark:text-white' : ''}
-                >
+                <span className={activeTab === tab.id ? 'text-slate-900 dark:text-white' : ''}>
                   {tab.icon}
                 </span>
               )}

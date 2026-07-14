@@ -59,8 +59,8 @@ import type { ArtifactLink } from '@/utils/artifactLinks';
 import { getArtifactLabel } from '@/utils/artifactLinks';
 
 import TeresaMark from '../../shared/TeresaMark';
-import { AddEvidenceModal } from './AddEvidenceModal';
 import type { AIProposalBatch, CanvasToolType } from '../ideaSelectionTypes';
+import { AddEvidenceModal } from './AddEvidenceModal';
 
 // ── Types (superset) ───────────────────────────────────────────────────────────
 
@@ -285,7 +285,10 @@ function simpleMarkdown(text: string): string {
     .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
     .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/\n/g, '<br/>');
-  html = html.replace(/(<li>.*?<\/li>(?:<br\/>)?)+/g, (m) => `<ul>${m.replace(/<br\/>/g, '')}</ul>`);
+  html = html.replace(
+    /(<li>.*?<\/li>(?:<br\/>)?)+/g,
+    (m) => `<ul>${m.replace(/<br\/>/g, '')}</ul>`
+  );
   return html;
 }
 
@@ -454,7 +457,9 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
       const suggestions = result?.suggestions || [];
       setAiContext({
         relatedInitiatives: suggestions
-          .filter((s: any) => s.category === 'branch_suggestions' || s.source?.includes('initiative'))
+          .filter(
+            (s: any) => s.category === 'branch_suggestions' || s.source?.includes('initiative')
+          )
           .slice(0, 3)
           .map((s: any) => ({ id: s.id, title: s.text, relevance: s.detail || '' })),
         relatedRisks: suggestions
@@ -735,8 +740,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
   if (!open || !nodeData) return null;
 
-  const isProtected =
-    nodeData.nodeId === 'root' || nodeData.nodeId.startsWith('branch-');
+  const isProtected = nodeData.nodeId === 'root' || nodeData.nodeId.startsWith('branch-');
   const isAI =
     nodeData.sourceType === 'ai_chat' ||
     nodeData.sourceType === 'ai_hint' ||
@@ -936,7 +940,11 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {/* ── idea: Description (markdown) ── */}
         {isIdea && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
-            <ToggleBlock title={isPl ? 'Opis' : 'Description'} icon={<FileText size={14} />} defaultOpen>
+            <ToggleBlock
+              title={isPl ? 'Opis' : 'Description'}
+              icon={<FileText size={14} />}
+              defaultOpen
+            >
               {editingDesc && !locked ? (
                 <textarea
                   autoFocus
@@ -944,7 +952,9 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   onChange={(e) => setDescValue(e.target.value)}
                   onBlur={commitDescription}
                   placeholder={
-                    isPl ? 'Dodaj opis (obsługuje **markdown**)...' : 'Add description (supports **markdown**)...'
+                    isPl
+                      ? 'Dodaj opis (obsługuje **markdown**)...'
+                      : 'Add description (supports **markdown**)...'
                   }
                   className="w-full min-h-[100px] text-xs text-c-text bg-c-surface-raised dark:bg-c-surface rounded-xl p-3 border border-c-border-subtle dark:border-c-border-subtle outline-none resize-y placeholder:text-c-text-muted font-mono mt-2"
                   rows={4}
@@ -1039,7 +1049,10 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     key={tag}
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium ${TAG_COLORS[i % TAG_COLORS.length].chip}`}
                   >
-                    <Hash size={9} className={`${TAG_COLORS[i % TAG_COLORS.length].icon} shrink-0`} />
+                    <Hash
+                      size={9}
+                      className={`${TAG_COLORS[i % TAG_COLORS.length].icon} shrink-0`}
+                    />
                     <span>{tag}</span>
                     {!locked && (
                       <button
@@ -1116,7 +1129,9 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                                 {ini.title}
                               </div>
                               {ini.relevance && (
-                                <div className="text-[9px] text-c-text-secondary">{ini.relevance}</div>
+                                <div className="text-[9px] text-c-text-secondary">
+                                  {ini.relevance}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -1492,15 +1507,16 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               title={isPl ? 'Komentarze' : 'Comments'}
               icon={<MessageSquare size={14} />}
               badge={
-                (nodeData.comments?.length || 0) > 0
-                  ? String(nodeData.comments!.length)
-                  : undefined
+                (nodeData.comments?.length || 0) > 0 ? String(nodeData.comments!.length) : undefined
               }
               defaultOpen={(nodeData.comments?.length || 0) > 0}
             >
               <div className="space-y-2 mt-1">
                 {(nodeData.comments || []).map((cmt) => (
-                  <div key={cmt.id} className="p-2.5 rounded-lg bg-c-surface-raised dark:bg-c-surface">
+                  <div
+                    key={cmt.id}
+                    className="p-2.5 rounded-lg bg-c-surface-raised dark:bg-c-surface"
+                  >
                     <div className="flex items-center gap-1.5 mb-1">
                       <div className="w-5 h-5 rounded-full bg-c-surface dark:bg-c-surface-raised flex items-center justify-center">
                         <span className="text-[8px] font-bold text-c-text-secondary">
@@ -1613,7 +1629,9 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               ) : companyContext.length === 0 ? (
                 <EmptyStateInline
                   icon={FileText}
-                  message={isPl ? 'Brak powiązań z danymi firmy' : 'No company data connections found'}
+                  message={
+                    isPl ? 'Brak powiązań z danymi firmy' : 'No company data connections found'
+                  }
                   dashed={false}
                   className="py-4"
                 />
@@ -1626,12 +1644,16 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     >
                       <div className="flex items-start gap-2">
                         <div className="mt-0.5 shrink-0">
-                          {item.type === 'assessment' && <Target size={11} className="text-c-danger" />}
+                          {item.type === 'assessment' && (
+                            <Target size={11} className="text-c-danger" />
+                          )}
                           {item.type === 'interview' && (
                             <MessageSquare size={11} className="text-c-info" />
                           )}
                           {item.type === 'kpi' && <Zap size={11} className="text-c-success" />}
-                          {item.type === 'initiative' && <Rocket size={11} className="text-c-warning" />}
+                          {item.type === 'initiative' && (
+                            <Rocket size={11} className="text-c-warning" />
+                          )}
                           {item.type === 'similar_idea' && (
                             <Lightbulb size={11} className="text-c-accent" />
                           )}

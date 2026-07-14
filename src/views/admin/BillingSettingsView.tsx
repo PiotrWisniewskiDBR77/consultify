@@ -493,9 +493,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                     className="admin-input w-full"
                     placeholder="e.g. ACME-"
                   />
-                  <p className="text-xs text-c-text-muted mt-1">
-                    Prefix added to invoice numbers
-                  </p>
+                  <p className="text-xs text-c-text-muted mt-1">Prefix added to invoice numbers</p>
                 </div>
                 <div>
                   <label className="block text-xs text-c-text-muted uppercase tracking-wider mb-1.5">
@@ -508,9 +506,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                     className="admin-input w-full"
                     placeholder="Purchase Order Number"
                   />
-                  <p className="text-xs text-c-text-muted mt-1">
-                    Included on all invoices
-                  </p>
+                  <p className="text-xs text-c-text-muted mt-1">Included on all invoices</p>
                 </div>
               </div>
             </div>
@@ -537,15 +533,11 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
               </div>
               <div className="bg-c-surface/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-emerald-400 mb-1">12 mo</div>
-                <div className="text-sm text-c-text-muted">
-                  Typical discount duration
-                </div>
+                <div className="text-sm text-c-text-muted">Typical discount duration</div>
               </div>
               <div className="bg-c-surface/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-blue-400 mb-1">24/7</div>
-                <div className="text-sm text-c-text-muted">
-                  Priority support from partner
-                </div>
+                <div className="text-sm text-c-text-muted">Priority support from partner</div>
               </div>
             </div>
             <p className="text-sm text-c-text-muted mt-4">
@@ -688,15 +680,11 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                               </span>
                             )}
                           </p>
-                          <p className="text-xs text-c-text-muted">
-                            {contact.email}
-                          </p>
+                          <p className="text-xs text-c-text-muted">{contact.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-c-text-muted capitalize">
-                          {contact.role}
-                        </span>
+                        <span className="text-xs text-c-text-muted capitalize">{contact.role}</span>
                         <button
                           onClick={() => handleRemoveContact(contact.id)}
                           disabled

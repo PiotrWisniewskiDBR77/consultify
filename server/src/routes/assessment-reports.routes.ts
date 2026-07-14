@@ -992,7 +992,9 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
     // Resolve the client/organization name for the report cover.
     let organizationName = 'Organizacja';
     try {
-      const orgRow = await get<any>(`SELECT name FROM organizations WHERE id = ?`, [organizationId]);
+      const orgRow = await get<any>(`SELECT name FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
       if (orgRow?.name) organizationName = orgRow.name;
     } catch {
       /* non-fatal — fall back to default label */
@@ -1010,7 +1012,9 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
       const mod = await import('../services/ai/llmService.js');
       llm = mod.llmService || mod.default || null;
     } catch {
-      logger.warn('[AssessmentReports] LLM service unavailable for DRD report — using deterministic narrator');
+      logger.warn(
+        '[AssessmentReports] LLM service unavailable for DRD report — using deterministic narrator'
+      );
     }
 
     // Wire RAG grounding on the "Digital Pathfinder" book methodology KB
@@ -1019,14 +1023,17 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
     // without book citations — same posture as the LLM wiring above.
     let grounding: any = undefined;
     try {
-      const { buildDrdGroundingProvider } = await import('../services/report/drdReportGrounding.js');
+      const { buildDrdGroundingProvider } =
+        await import('../services/report/drdReportGrounding.js');
       grounding = buildDrdGroundingProvider({
         organizationId,
         language,
         logger: { warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta) },
       });
     } catch {
-      logger.warn('[AssessmentReports] Grounding provider unavailable for DRD report — no book citations');
+      logger.warn(
+        '[AssessmentReports] Grounding provider unavailable for DRD report — no book citations'
+      );
     }
 
     const { buildDrdReportHtmlServer } = await import('../services/report/drdReportService.js');
@@ -1049,9 +1056,8 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
     // Conclusion candidate. Fire-and-forget + fail-safe — a Conclusions-layer
     // failure must never break report generation.
     try {
-      const { safePersistDrdReportConclusion } = await import(
-        '../services/conclusions/reportConclusionBridge.js'
-      );
+      const { safePersistDrdReportConclusion } =
+        await import('../services/conclusions/reportConclusionBridge.js');
       void safePersistDrdReportConclusion(
         {
           organizationId,
@@ -1074,9 +1080,8 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
     // deterministic-fallback flags) as an EvidenceEnvelope so "Źródła i
     // założenia" can render it. Fire-and-forget + fail-safe.
     try {
-      const { safePersistDrdReportEvidence } = await import(
-        '../services/evidence/drdReportEvidenceBridge.js'
-      );
+      const { safePersistDrdReportEvidence } =
+        await import('../services/evidence/drdReportEvidenceBridge.js');
       void safePersistDrdReportEvidence(
         {
           model,
@@ -1150,9 +1155,10 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
     // Load assessment answers for context
     let assessmentAnswers: Record<string, any> = {};
     try {
-      const assessmentRow = await get<any>(`SELECT answers_json as answers FROM assessments WHERE id = ?`, [
-        reportRow.assessment_id,
-      ]);
+      const assessmentRow = await get<any>(
+        `SELECT answers_json as answers FROM assessments WHERE id = ?`,
+        [reportRow.assessment_id]
+      );
       assessmentAnswers = safeJsonParse(assessmentRow?.answers, {});
     } catch {
       /* ignore */

@@ -138,9 +138,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
                     key={it.k}
                     className="rounded-xl border border-c-border bg-c-surface-raised p-4"
                   >
-                    <p className="text-sm font-bold text-c-text">
-                      {t(it.k, it.d)}
-                    </p>
+                    <p className="text-sm font-bold text-c-text">{t(it.k, it.d)}</p>
                     <p className="text-xs text-c-text-muted mt-1">
                       {t(`${it.k}.sub`, 'Built for enterprise')}
                     </p>

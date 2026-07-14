@@ -248,7 +248,9 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
               <div className="w-16 h-16 bg-danger-100 dark:bg-danger-500/20 rounded-full flex items-center justify-center mb-4 text-danger-600 dark:text-danger-400">
                 <X size={32} />
               </div>
-              <h3 className="text-2xl font-bold text-danger-700 dark:text-danger-400">NO-GO: Pivot</h3>
+              <h3 className="text-2xl font-bold text-danger-700 dark:text-danger-400">
+                NO-GO: Pivot
+              </h3>
               <p className="text-danger-600/70 dark:text-danger-400/70 mt-2">
                 Pilot failed. Re-evaluate strategy.
               </p>

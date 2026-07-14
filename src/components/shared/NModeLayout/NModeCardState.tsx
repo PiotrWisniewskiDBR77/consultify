@@ -339,7 +339,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
       const ok = window.confirm(
         isPolish
           ? 'Regeneracja zastąpi Twoje ręczne zmiany. Kontynuować?'
-          : 'Regenerating will overwrite your manual edits. Continue?',
+          : 'Regenerating will overwrite your manual edits. Continue?'
       );
       if (!ok) return;
     }
@@ -381,11 +381,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
             title={isPolish ? 'Napisz kartę od nowa z AI' : 'Regenerate this card with AI'}
             className={`${CARD_ACTION_BASE} text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/25`}
           >
-            {regenerating ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              <RotateCw size={13} />
-            )}
+            {regenerating ? <Loader2 size={13} className="animate-spin" /> : <RotateCw size={13} />}
             {isPolish ? 'Regeneruj' : 'Regenerate'}
           </button>
         )}
@@ -417,12 +413,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
           </button>
         )}
         <div className="flex-1" />
-        <CardKebab
-          onClear={onClear}
-          onHistory={onHistory}
-          onHide={onHide}
-          isPolish={isPolish}
-        />
+        <CardKebab onClear={onClear} onHistory={onHistory} onHide={onHide} isPolish={isPolish} />
       </div>
     );
 

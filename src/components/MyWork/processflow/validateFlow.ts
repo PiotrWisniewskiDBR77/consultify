@@ -218,9 +218,17 @@ export function validateFlowWarnings(
  * semantic_first errors; dangling/no-exit/kit-completeness issues are
  * structural_bounded warnings.
  */
-function classifyWarning(id: string): { layer: ValidationIssue['layer']; severity: ValidationIssue['severity']; rule: string } {
+function classifyWarning(id: string): {
+  layer: ValidationIssue['layer'];
+  severity: ValidationIssue['severity'];
+  rule: string;
+} {
   if (id === 'no-start' || id === 'no-end' || id.startsWith('decision-exits-')) {
-    return { layer: 'semantic_first', severity: 'error', rule: id.startsWith('decision-exits-') ? 'decision_needs_two_exits' : id };
+    return {
+      layer: 'semantic_first',
+      severity: 'error',
+      rule: id.startsWith('decision-exits-') ? 'decision_needs_two_exits' : id,
+    };
   }
   if (id.startsWith('dangling-')) {
     return { layer: 'structural_bounded', severity: 'warning', rule: 'dangling_node' };

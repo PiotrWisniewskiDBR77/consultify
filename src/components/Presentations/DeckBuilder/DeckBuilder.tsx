@@ -17,6 +17,7 @@ import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
+import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 import {
   fetchPresentationGovernanceCard,
@@ -33,28 +34,28 @@ import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
-// STEP 1b — reuse the canonical composition normalizer so this builder's local
-// unifiedJson→Deck converter honours B1's composition identically to deckData.ts.
-import { normalizeSlideComposition } from './deckData';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
+import { ConflictBanner } from './ConflictBanner';
 import { DeckAuditLogModal } from './DeckAuditLogModal';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
 import { DeckBuilderMelsView } from './DeckBuilderMelsView';
-import { DeckCommentsPanel, type DeckSlideRef } from './DeckCommentsPanel';
-import { DeckRelationsPanel } from './DeckRelationsPanel';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
-import { DeckPresenceStack } from './DeckPresenceStack';
+import { DeckCommentsPanel, type DeckSlideRef } from './DeckCommentsPanel';
+// STEP 1b — reuse the canonical composition normalizer so this builder's local
+// unifiedJson→Deck converter honours B1's composition identically to deckData.ts.
+import { normalizeSlideComposition } from './deckData';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
+import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
+import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
-import { ConflictBanner } from './ConflictBanner';
 import { ShareModal } from './ShareModal';
 import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
@@ -63,7 +64,6 @@ import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
-import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
 
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
@@ -845,7 +845,7 @@ export const DeckBuilder: React.FC = () => {
             setActiveCardIndex(firstBlocker.cardIndex);
           }
         }
-        const message = err?.message || (t('presentations.exportFailed'));
+        const message = err?.message || t('presentations.exportFailed');
         toast.error(message);
       }
     },
@@ -860,14 +860,10 @@ export const DeckBuilder: React.FC = () => {
           setDeck(restored);
           toast.success(t('presentations.versionRestored'));
         } else {
-          toast.error(
-            t('presentations.couldNotRestoreThatVersion')
-          );
+          toast.error(t('presentations.couldNotRestoreThatVersion'));
         }
       } catch {
-        toast.error(
-          t('presentations.couldNotRestoreThatVersion')
-        );
+        toast.error(t('presentations.couldNotRestoreThatVersion'));
       }
     },
     [restoreVersion, setDeck]
@@ -913,9 +909,7 @@ export const DeckBuilder: React.FC = () => {
       const payload =
         res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
       const nextDeck = payload?.deck;
-      const reply =
-        payload?.reply ||
-        (t('presentations.iAppliedTheRequestedChangesTo'));
+      const reply = payload?.reply || t('presentations.iAppliedTheRequestedChangesTo');
       const actions = Array.isArray(payload?.appliedActions) ? payload.appliedActions : [];
       if (nextDeck) {
         setPendingAgentEdit({
@@ -937,7 +931,7 @@ export const DeckBuilder: React.FC = () => {
       view: AppView.PREZENTACJE_GEN,
       type: 'presentation',
       entityId: deck.deck_id,
-      entityName: deck.title || (t('presentations.presentationDeck')),
+      entityName: deck.title || t('presentations.presentationDeck'),
       entityData: {
         moduleKey: 'deckBuilder',
         artifactKind: 'deck',
@@ -1362,9 +1356,7 @@ export const DeckBuilder: React.FC = () => {
             viewModes={['list']}
           >
             {deckBacklinks.length === 0 && !deckBacklinksLoading ? (
-              <div className="text-xs text-c-text-secondary">
-                {t('presentations.noLinksYet')}
-              </div>
+              <div className="text-xs text-c-text-secondary">{t('presentations.noLinksYet')}</div>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {deckBacklinks.slice(0, 8).map((bl) => (

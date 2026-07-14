@@ -85,7 +85,10 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
             {t('presentations.analytics.title', 'Share Analytics')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary text-sm">
+        <button
+          onClick={onClose}
+          className="text-c-text-secondary hover:text-c-text-secondary text-sm"
+        >
           ✕
         </button>
       </div>
@@ -100,9 +103,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
                 {t('presentations.analytics.totalViews', 'Total Views')}
               </span>
             </div>
-            <p className="text-xl font-bold text-c-text mt-1">
-              {data.summary.total_views}
-            </p>
+            <p className="text-xl font-bold text-c-text mt-1">{data.summary.total_views}</p>
           </div>
           <div className="p-3 rounded-lg bg-blue-500/5">
             <div className="flex items-center gap-1.5">
@@ -111,9 +112,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
                 {t('presentations.analytics.uniqueViewers', 'Unique Viewers')}
               </span>
             </div>
-            <p className="text-xl font-bold text-c-text mt-1">
-              {data.summary.unique_viewers}
-            </p>
+            <p className="text-xl font-bold text-c-text mt-1">{data.summary.unique_viewers}</p>
           </div>
         </div>
       )}
@@ -142,14 +141,18 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
 
                   return (
                     <div key={i} className="flex items-center gap-2">
-                      <span className="text-[10px] text-c-text-secondary w-5 text-right">{i + 1}</span>
+                      <span className="text-[10px] text-c-text-secondary w-5 text-right">
+                        {i + 1}
+                      </span>
                       <div className="flex-1 h-3 bg-c-surface-raised rounded-full overflow-hidden">
                         <div
                           className="h-full bg-c-surface rounded-full transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-c-text-secondary w-10 text-right">{views}</span>
+                      <span className="text-[10px] text-c-text-secondary w-10 text-right">
+                        {views}
+                      </span>
                       {avgDur > 0 && (
                         <span className="text-[9px] text-c-text-secondary w-12 text-right">
                           {(avgDur / 1000).toFixed(1)}s

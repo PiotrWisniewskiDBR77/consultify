@@ -118,9 +118,7 @@ export const ProblemPlatformSection: React.FC = () => {
                     size={14}
                     className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0"
                   />
-                  <span className="text-sm text-c-text-secondary leading-relaxed">
-                    {point}
-                  </span>
+                  <span className="text-sm text-c-text-secondary leading-relaxed">{point}</span>
                 </div>
               ))}
               <div className="rounded-xl border border-amber-500/25 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/[0.06] px-4 py-3">

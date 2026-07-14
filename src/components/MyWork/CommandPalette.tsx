@@ -530,7 +530,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <ArrowRight
                 size={14}
                 className={`shrink-0 ${
-                  isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'
+                  isSelected
+                    ? 'text-slate-700 dark:text-slate-200'
+                    : 'text-slate-600 dark:text-slate-400'
                 }`}
               />
             </motion.button>

@@ -455,9 +455,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                   onChange={(event) => updateField('showPageNumbers', event.target.checked)}
                 />
                 <span>
-                  <span className="block text-sm font-medium text-navy-900">
-                    Show page numbers
-                  </span>
+                  <span className="block text-sm font-medium text-navy-900">Show page numbers</span>
                   <span className={helperTextClass}>Render page numbers in the slide footer.</span>
                 </span>
               </label>

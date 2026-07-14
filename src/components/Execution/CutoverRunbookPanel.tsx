@@ -77,9 +77,9 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
     }
     setLoading(true);
     try {
-      const res = (await Api.get(
-        `/rollout-ext/cutover/${encodeURIComponent(initiativeId)}`
-      )) as { runbook?: Runbook };
+      const res = (await Api.get(`/rollout-ext/cutover/${encodeURIComponent(initiativeId)}`)) as {
+        runbook?: Runbook;
+      };
       setRunbook(res?.runbook ?? null);
       setFailed(false);
     } catch (e: any) {
@@ -134,10 +134,7 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
   const steps = runbook?.steps ?? [];
 
   return (
-    <section
-      className="rounded-xl border border-gray-200 bg-white p-4"
-      data-testid="cutover-panel"
-    >
+    <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="cutover-panel">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">Cutover runbook + rollback</h3>
         {runbook && <span className="text-xs text-gray-400">{steps.length} kroków</span>}

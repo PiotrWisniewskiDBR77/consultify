@@ -8,13 +8,13 @@
  *
  * Czysta funkcja, deterministyczna — testowalna bez I/O.
  */
-import type { BusinessPlanSpine } from './businessPlanSpine.js';
 import type {
-  UnifiedReportJSON,
-  UnifiedSlide,
-  UnifiedReportMeta,
   KpiData,
+  UnifiedReportJSON,
+  UnifiedReportMeta,
+  UnifiedSlide,
 } from '../report/pptx/types.js';
+import type { BusinessPlanSpine } from './businessPlanSpine.js';
 
 /** Mapuje themeRegistry-style id → template M19 (corporate/minimal/modern). */
 function resolveTemplate(themeId?: string): 'corporate' | 'minimal' | 'modern' {
@@ -57,7 +57,7 @@ function sectionTitle(spine: BusinessPlanSpine, id: string): string {
  */
 export function spineToUnifiedReport(
   spine: BusinessPlanSpine,
-  opts: { themeId?: string; brandColor?: string; date?: string } = {},
+  opts: { themeId?: string; brandColor?: string; date?: string } = {}
 ): UnifiedReportJSON {
   const lang: 'en' | 'pl' = spine.meta.language === 'EN' ? 'en' : 'pl';
   const isPl = lang === 'pl';
@@ -149,7 +149,10 @@ export function spineToUnifiedReport(
 
   // 5 — MODEL & GTM & COMPETITION (key_messages)
   const modelMsgs = [
-    { title: isPl ? 'Model biznesowy' : 'Business model', description: sectionTitle(spine, 'business_model') },
+    {
+      title: isPl ? 'Model biznesowy' : 'Business model',
+      description: sectionTitle(spine, 'business_model'),
+    },
     { title: 'Go-to-market', description: sectionTitle(spine, 'gtm') },
     { title: isPl ? 'Przewaga' : 'Moat', description: sectionTitle(spine, 'competition') },
   ].filter((m) => m.description);
@@ -176,7 +179,8 @@ export function spineToUnifiedReport(
             { name: 'EBITDA', values: pnl.map((p) => Math.round(p.ebitda)) },
           ],
         },
-        insight_text: sectionTitle(spine, 'financial_plan') ||
+        insight_text:
+          sectionTitle(spine, 'financial_plan') ||
           `${isPl ? 'Trajektoria do rentowności' : 'Path to profitability'}.`,
         source: isPl ? 'Model finansowy (driver-based)' : 'Driver-based financial model',
       },
@@ -195,7 +199,8 @@ export function spineToUnifiedReport(
           labels: arrBridge.map((a) => a.period),
           series: [{ name: 'ARR', values: arrBridge.map((a) => Math.round(a.ending)) }],
         },
-        insight_text: sectionTitle(spine, 'traction') ||
+        insight_text:
+          sectionTitle(spine, 'traction') ||
           (isPl ? 'ARR rośnie w horyzoncie planu.' : 'ARR grows across the plan horizon.'),
       },
     });
@@ -271,7 +276,9 @@ export function spineToUnifiedReport(
       // Krótko, by zmieścić się w boxie (wcześniej przelewało się przez kartę).
       impact: val
         ? `${isPl ? 'Wycena' : 'Valuation'} ${heroFmt(spine, 'valuation_low')}–${heroFmt(spine, 'valuation_high')}`
-        : (isPl ? 'Zwrot z inwestycji w horyzoncie planu' : 'Return on investment within the plan horizon'),
+        : isPl
+          ? 'Zwrot z inwestycji w horyzoncie planu'
+          : 'Return on investment within the plan horizon',
       effort: heroFmt(spine, 'ask') || spine.meta.ask,
       priority: 'critical',
     },
@@ -294,12 +301,14 @@ export function spineToUnifiedReport(
         body: isPl
           ? 'Kluczowe założenia z wartością bazową, zakresem i źródłem (posortowane wg wpływu na wynik).'
           : 'Key assumptions with base value, range and source (sorted by impact on the outcome).',
-        tables: [{
-          headers: isPl
-            ? ['Założenie', 'Wartość', 'Zakres', 'Źródło']
-            : ['Assumption', 'Value', 'Range', 'Source'],
-          rows: defRows,
-        }],
+        tables: [
+          {
+            headers: isPl
+              ? ['Założenie', 'Wartość', 'Zakres', 'Źródło']
+              : ['Assumption', 'Value', 'Range', 'Source'],
+            rows: defRows,
+          },
+        ],
       },
     });
   }

@@ -336,9 +336,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       {!loadError && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-c-text">
-              {integrations.length}
-            </p>
+            <p className="text-2xl font-bold text-c-text">{integrations.length}</p>
             <p className="text-sm text-c-text-muted">
               {t('integrations.health.statConnected', 'Connected')}
             </p>
@@ -356,9 +354,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
             </p>
           </div>
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-c-text">
-              {totalStats.requestsToday}
-            </p>
+            <p className="text-2xl font-bold text-c-text">{totalStats.requestsToday}</p>
             <p className="text-sm text-c-text-muted">
               {t('integrations.health.statRequestsToday', 'Requests Today')}
             </p>
@@ -463,9 +459,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                     <p className="text-c-text-muted">
                       {t('integrations.health.syncFrequency', 'Sync Frequency')}
                     </p>
-                    <p className="font-medium text-c-text">
-                      {integration.syncFrequency}
-                    </p>
+                    <p className="font-medium text-c-text">{integration.syncFrequency}</p>
                   </div>
                   <div>
                     <p className="text-c-text-muted">
@@ -603,9 +597,7 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
                   ? run.error_summary || t('integrations.health.syncFailed', 'Sync failed')
                   : t('integrations.health.syncInProgress', 'Sync in progress')}
             </span>
-            <span className="text-c-text-secondary ml-auto">
-              {formatTimestamp(run.started_at)}
-            </span>
+            <span className="text-c-text-secondary ml-auto">{formatTimestamp(run.started_at)}</span>
           </div>
         ))}
       </div>

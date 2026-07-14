@@ -18,8 +18,8 @@ export default function NotebookQuickCaptureScreen(): React.ReactElement {
         </h1>
         <NotebookQuickCapture />
         <p className="mt-3 text-xs text-c-text-muted">
-          Wpisz dowolny tekst, aby zobaczyć przycisk „Wrzuć" w stanie aktywnym
-          (bez klikania — brak realnego zapisu w tym harnessie).
+          Wpisz dowolny tekst, aby zobaczyć przycisk „Wrzuć" w stanie aktywnym (bez klikania — brak
+          realnego zapisu w tym harnessie).
         </p>
       </div>
     </div>

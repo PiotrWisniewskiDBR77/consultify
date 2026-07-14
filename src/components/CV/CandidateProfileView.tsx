@@ -663,7 +663,9 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                             {Object.entries(m.explanation).map(([cap, detail]: [string, any]) => (
                               <div key={cap} className="flex items-center justify-between text-xs">
                                 <span className="text-gray-600 dark:text-gray-400">{cap}</span>
-                                <span className={detail.meets ? 'text-green-600' : 'text-danger-500'}>
+                                <span
+                                  className={detail.meets ? 'text-green-600' : 'text-danger-500'}
+                                >
                                   {detail.actual}/{detail.required} {detail.meets ? '✓' : '✗'}
                                 </span>
                               </div>

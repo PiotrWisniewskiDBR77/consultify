@@ -120,9 +120,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                     {hint ? (
                       <span
                         className={`mt-0.5 hidden truncate text-[10px] leading-tight sm:block ${
-                          isActive
-                            ? 'text-slate-600 dark:text-slate-300'
-                            : 'text-slate-400'
+                          isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400'
                         }`}
                       >
                         {hint}

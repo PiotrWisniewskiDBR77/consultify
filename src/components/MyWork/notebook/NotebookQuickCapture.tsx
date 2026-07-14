@@ -79,9 +79,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
       toast.success(isPl ? 'Wrzucono do notatnika' : 'Captured to notebook');
       onCreated?.(page);
     } catch (err: any) {
-      toast.error(
-        err?.message || (isPl ? 'Nie udało się wrzucić' : 'Capture failed')
-      );
+      toast.error(err?.message || (isPl ? 'Nie udało się wrzucić' : 'Capture failed'));
     } finally {
       setBusy(false);
     }
@@ -91,9 +89,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
     <div
       className={`flex items-center gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 px-2.5 py-2 focus-within:border-c-border-strong focus-within:ring-2 focus-within:ring-[var(--c-focus)] ${className}`}
     >
-      <span className="text-c-text-muted">
-        {isUrl ? <Link2 size={15} /> : <Plus size={15} />}
-      </span>
+      <span className="text-c-text-muted">{isUrl ? <Link2 size={15} /> : <Plus size={15} />}</span>
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -104,9 +100,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
           }
         }}
         disabled={busy}
-        placeholder={
-          isPl ? 'Wrzuć myśl lub link…' : 'Drop a thought or a link…'
-        }
+        placeholder={isPl ? 'Wrzuć myśl lub link…' : 'Drop a thought or a link…'}
         className="min-w-0 flex-1 bg-transparent text-sm text-c-text placeholder:text-c-text-muted outline-none"
       />
       <button

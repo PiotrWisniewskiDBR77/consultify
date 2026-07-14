@@ -431,8 +431,7 @@ export class StatusReportService {
 
     // Quality section — derived from realized issues (open RAID issues are the
     // available quality/delivery-problem signal), not a hardcoded GREEN.
-    const qualityStatus =
-      data.openIssues >= 3 ? 'RED' : data.openIssues >= 1 ? 'AMBER' : 'GREEN';
+    const qualityStatus = data.openIssues >= 3 ? 'RED' : data.openIssues >= 1 ? 'AMBER' : 'GREEN';
     sections[SECTION_NAMES.QUALITY] = {
       status: qualityStatus,
       content:
@@ -440,8 +439,7 @@ export class StatusReportService {
           ? `${data.openIssues} open issue(s) affecting quality/delivery`
           : 'No open issues tracked this period',
       highlights: data.openIssues === 0 ? ['No open issues'] : [],
-      issues:
-        data.openIssues >= 3 ? [`${data.openIssues} open issues require attention`] : [],
+      issues: data.openIssues >= 3 ? [`${data.openIssues} open issues require attention`] : [],
     };
 
     // Risks section

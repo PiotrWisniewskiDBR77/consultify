@@ -211,9 +211,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
         <header className="flex items-center justify-between border-b border-c-border-subtle px-5 py-3 border-c-border-subtle">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-c-success" />
-            <h2 className="text-sm font-semibold text-c-text">
-              Form intake (private link)
-            </h2>
+            <h2 className="text-sm font-semibold text-c-text">Form intake (private link)</h2>
           </div>
           <button
             type="button"
@@ -233,7 +231,6 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
               Loading intake context…
             </div>
           ) : error ? (
-
             <div className="rounded-md border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] px-3 py-2 text-c-danger border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)] text-c-danger">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
@@ -251,17 +248,11 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                 </h3>
                 <dl className="grid grid-cols-3 gap-y-1 text-xs">
                   <dt className="text-c-text-muted">Target table</dt>
-                  <dd
-                    className="col-span-2 truncate text-c-text"
-                    data-testid="intake-target-table"
-                  >
+                  <dd className="col-span-2 truncate text-c-text" data-testid="intake-target-table">
                     {context.targetTableId}
                   </dd>
                   <dt className="text-c-text-muted">Allow-list</dt>
-                  <dd
-                    className="col-span-2 text-c-text"
-                    data-testid="intake-allow-list-summary"
-                  >
+                  <dd className="col-span-2 text-c-text" data-testid="intake-allow-list-summary">
                     {context.fieldAllowList && context.fieldAllowList.length > 0
                       ? `${context.fieldAllowList.length} field${
                           context.fieldAllowList.length === 1 ? '' : 's'
@@ -269,10 +260,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                       : 'All configured fields'}
                   </dd>
                   <dt className="text-c-text-muted">Hard expiry</dt>
-                  <dd
-                    className="col-span-2 text-c-text"
-                    data-testid="intake-hard-expiry"
-                  >
+                  <dd className="col-span-2 text-c-text" data-testid="intake-hard-expiry">
                     {context.publicLinkExpiresAt
                       ? new Date(context.publicLinkExpiresAt).toLocaleString()
                       : 'None'}

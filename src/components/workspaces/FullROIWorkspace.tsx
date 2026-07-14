@@ -52,7 +52,9 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
         </span>
       </div>
 
-      <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-left text-sm">
+      <table
+        /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-left text-sm"
+      >
         <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
           <tr>
             <th className="p-4">Initiative</th>

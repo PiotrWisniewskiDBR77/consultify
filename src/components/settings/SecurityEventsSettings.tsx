@@ -477,9 +477,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                       <h4 className="font-medium text-c-text">{event.title}</h4>
                       {getSeverityBadge(event.severity)}
                     </div>
-                    <p className="text-sm text-c-text-secondary mb-2">
-                      {event.description}
-                    </p>
+                    <p className="text-sm text-c-text-secondary mb-2">{event.description}</p>
                     <div className="flex items-center gap-4 text-xs text-c-text-muted">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />

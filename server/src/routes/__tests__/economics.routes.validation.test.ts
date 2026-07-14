@@ -78,7 +78,10 @@ vi.mock('../../utils/DbPromise.js', () => ({
   all: (...a: unknown[]) => mockDbAll(...a),
 }));
 
-vi.mock('../../utils/pgFlags.js', () => ({ flagOn: () => false, parseMaybeJson: (v: unknown) => v }));
+vi.mock('../../utils/pgFlags.js', () => ({
+  flagOn: () => false,
+  parseMaybeJson: (v: unknown) => v,
+}));
 
 const ORG = 'org-1';
 let mockUser: { id: string; organizationId: string } | null = null;
@@ -91,10 +94,10 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
   isAuthenticated: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-import economicsRoutes from '../economics.routes.js';
 import * as budgetingSvc from '../../services/budgetingService.js';
 import * as finAnalysisSvc from '../../services/financialAnalysisService.js';
 import * as valuationSvc from '../../services/valuationService.js';
+import economicsRoutes from '../economics.routes.js';
 
 const ANALYSIS = 'analysis-1';
 const BUDGET = 'budget-1';
@@ -326,9 +329,7 @@ describe('economics routes — input validation', () => {
   });
 
   it('POST /valuations — missing sourceType → 400, service not reached', async () => {
-    const res = await request(createApp())
-      .post('/api/economics/valuations')
-      .send({ title: 'DCF' });
+    const res = await request(createApp()).post('/api/economics/valuations').send({ title: 'DCF' });
     expect(res.status).toBe(400);
     expect(valuationSvc.createValuation).not.toHaveBeenCalled();
   });

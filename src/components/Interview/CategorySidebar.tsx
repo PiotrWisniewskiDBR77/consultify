@@ -187,7 +187,8 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           />
         </div>
         <p className="mt-1 text-xs text-[var(--c-text-secondary)]">
-          {answeredQuestions}/{totalQuestions} {t('interview.categorySidebar.questions')} ({overallPercent}
+          {answeredQuestions}/{totalQuestions} {t('interview.categorySidebar.questions')} (
+          {overallPercent}
           %)
         </p>
       </div>

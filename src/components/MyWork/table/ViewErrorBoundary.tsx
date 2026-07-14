@@ -56,8 +56,8 @@ export class ViewErrorBoundary extends React.Component<
         <div className="max-w-md space-y-2">
           <h3 className="text-sm font-semibold text-c-text">{title}</h3>
           <p className="text-xs text-c-text-muted">
-            The <span className="font-medium text-c-text-secondary">{viewName}</span>{' '}
-            layout hit an unexpected error. Runtime details are hidden for safety.
+            The <span className="font-medium text-c-text-secondary">{viewName}</span> layout hit an
+            unexpected error. Runtime details are hidden for safety.
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">

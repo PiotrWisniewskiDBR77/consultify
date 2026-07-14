@@ -75,7 +75,9 @@ export const InlineTable = <T extends Record<string, unknown>>({
           {caption}
         </div>
       )}
-      <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="w-full">
+      <table
+        /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full"
+      >
         <thead>
           <tr className="border-b border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/20">
             {columns.map((col) => (

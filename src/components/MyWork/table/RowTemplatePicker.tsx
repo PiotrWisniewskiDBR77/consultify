@@ -186,10 +186,7 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
             {isPl ? 'Szablon wiersza' : 'Row Template'}
           </span>
-          <button
-            onClick={onClose}
-            className="p-0.5 rounded hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-0.5 rounded hover:bg-c-surface-raised">
             <X size={11} className="text-c-text-muted" />
           </button>
         </div>

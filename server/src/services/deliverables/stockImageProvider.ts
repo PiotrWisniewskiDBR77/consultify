@@ -244,8 +244,7 @@ export function selectStockImageProvider(
   config: StockImageProviderConfig = {}
 ): StockImageProvider {
   const env = (typeof process !== 'undefined' ? process.env : {}) as Record<string, string>;
-  const chosen =
-    config.provider ?? (env.STOCK_IMAGE_PROVIDER as StockImageProviderName) ?? 'null';
+  const chosen = config.provider ?? (env.STOCK_IMAGE_PROVIDER as StockImageProviderName) ?? 'null';
 
   if (chosen === 'unsplash') {
     const key = config.unsplashAccessKey ?? env.UNSPLASH_ACCESS_KEY ?? '';

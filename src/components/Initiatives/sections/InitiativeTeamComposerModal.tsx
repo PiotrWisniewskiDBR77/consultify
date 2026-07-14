@@ -224,8 +224,7 @@ function toneClasses(tone: RoleDef['tone']) {
       return {
         icon: 'text-c-info dark:text-c-info',
         chip: 'bg-c-info/10 dark:bg-c-info/10 border-c-info dark:border-c-info/30',
-        active:
-          'border-c-info dark:border-c-info/50 bg-c-info/80 dark:bg-c-info/10',
+        active: 'border-c-info dark:border-c-info/50 bg-c-info/80 dark:bg-c-info/10',
       };
     case 'emerald':
       return {

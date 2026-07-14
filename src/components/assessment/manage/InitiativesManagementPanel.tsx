@@ -42,8 +42,8 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { LoadingState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
@@ -734,9 +734,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-c-text truncate">
-                  {initiative.title}
-                </div>
+                <div className="text-sm font-medium text-c-text truncate">{initiative.title}</div>
                 {initiative.category && (
                   <div className="text-xs text-c-text-muted truncate">{initiative.category}</div>
                 )}
@@ -866,7 +864,8 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           id: 'open-in-initiatives',
           label: 'Open in Initiatives',
           icon: ExternalLink,
-          onClick: () => navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`),
+          onClick: () =>
+            navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`),
         },
         ...(canManage
           ? [
@@ -918,7 +917,15 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           }
         : {},
     }),
-    [canManage, navigate, handleDuplicateInitiative, handleUpdateStatus, handleOpenInitiative, openEditModal, handleDelete]
+    [
+      canManage,
+      navigate,
+      handleDuplicateInitiative,
+      handleUpdateStatus,
+      handleOpenInitiative,
+      openEditModal,
+      handleDelete,
+    ]
   );
 
   return (
@@ -1037,7 +1044,11 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               >
                 <Filter
                   size={14}
-                  className={statusFilter.length > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'}
+                  className={
+                    statusFilter.length > 0
+                      ? 'text-slate-700 dark:text-slate-200'
+                      : 'text-slate-500'
+                  }
                 />
                 <span className="text-slate-700 dark:text-slate-200">Status</span>
                 <span className="text-slate-500 dark:text-slate-400">{statusFilterLabel}</span>
@@ -1188,7 +1199,9 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           ) : (
             <StandardTable
               columns={columns}
-              data={filteredInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
+              data={
+                filteredInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
+              }
               onRowDoubleClick={(row) =>
                 handleOpenInitiative(String((row as unknown as Initiative).id))
               }

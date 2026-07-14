@@ -15,15 +15,30 @@
 
 // Prymitywy treści (zbieżne z COMPOSITION_BLOCK_TYPES w presentationLayoutDirectorService).
 export type ArchetypeBlock =
-  | 'heading' | 'paragraph' | 'bullet_list' | 'numbered_list' | 'table' | 'chart'
-  | 'image' | 'kpi_widget' | 'metric_strip' | 'smart_diagram' | 'callout'
-  | 'quote_block' | 'timeline_block' | 'divider' | 'icon_row';
+  | 'heading'
+  | 'paragraph'
+  | 'bullet_list'
+  | 'numbered_list'
+  | 'table'
+  | 'chart'
+  | 'image'
+  | 'kpi_widget'
+  | 'metric_strip'
+  | 'smart_diagram'
+  | 'callout'
+  | 'quote_block'
+  | 'timeline_block'
+  | 'divider'
+  | 'icon_row';
 
 /** Region archetypu — znormalizowany 0..1, origin top-left. */
 export interface ArchetypeRegion {
   /** Nazwa logiczna regionu (do mapowania treści). */
   name: string;
-  x: number; y: number; w: number; h: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   /** Prymitywy, które tu pasują (pierwszy = preferowany). */
   blocks: ArchetypeBlock[];
 }
@@ -39,20 +54,27 @@ export interface SlideArchetype {
 
 // Standardowy margines treści (poza pasem tytułu). Tytuł zwykle zajmuje górę 0..0.18.
 const TITLE_H = 0.16;
-const TOP = 0.20; // start treści pod tytułem
+const TOP = 0.2; // start treści pod tytułem
 const BODY_H = 0.78; // wysokość obszaru treści (0.20..0.98)
 const GUTTER = 0.02;
 
 /** Pas tytułu — wspólny dla większości archetypów (poza pełnoekranowymi). */
 const TITLE_REGION: ArchetypeRegion = {
-  name: 'title', x: 0.04, y: 0.04, w: 0.92, h: TITLE_H, blocks: ['heading'],
+  name: 'title',
+  x: 0.04,
+  y: 0.04,
+  w: 0.92,
+  h: TITLE_H,
+  blocks: ['heading'],
 };
 
 // ── Rejestr 24 archetypów ────────────────────────────────────────────────────
 const ARCHETYPES: SlideArchetype[] = [
   // 1. centered — tytuł + podtytuł wyśrodkowane (cover/divider)
   {
-    id: 'centered', label: 'Centered', description: 'Tytuł i podtytuł wyśrodkowane — okładka/dzielnik sekcji.',
+    id: 'centered',
+    label: 'Centered',
+    description: 'Tytuł i podtytuł wyśrodkowane — okładka/dzielnik sekcji.',
     bestForIntents: ['cover', 'section_intro'],
     regions: [
       { name: 'title', x: 0.1, y: 0.36, w: 0.8, h: 0.18, blocks: ['heading'] },
@@ -61,7 +83,9 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 2. left_image — obraz po lewej, treść po prawej
   {
-    id: 'left_image', label: 'Left image', description: 'Obraz pełnej wysokości po lewej, treść po prawej.',
+    id: 'left_image',
+    label: 'Left image',
+    description: 'Obraz pełnej wysokości po lewej, treść po prawej.',
     bestForIntents: ['cover', 'section_intro', 'single_insight'],
     regions: [
       { name: 'image', x: 0, y: 0, w: 0.42, h: 1, blocks: ['image'] },
@@ -71,7 +95,9 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 3. bottom_strip — treść pełna + pasek akcentu na dole
   {
-    id: 'bottom_strip', label: 'Bottom strip', description: 'Treść u góry, pasek akcentu/CTA na dole.',
+    id: 'bottom_strip',
+    label: 'Bottom strip',
+    description: 'Treść u góry, pasek akcentu/CTA na dole.',
     bestForIntents: ['cover', 'next_steps'],
     regions: [
       TITLE_REGION,
@@ -81,50 +107,100 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 4. stacked — pionowy stos (tytuł → treść)
   {
-    id: 'stacked', label: 'Stacked', description: 'Prosty pionowy stos: tytuł nad treścią.',
+    id: 'stacked',
+    label: 'Stacked',
+    description: 'Prosty pionowy stos: tytuł nad treścią.',
     bestForIntents: ['executive_summary', 'key_messages', 'single_insight', 'appendix', 'roadmap'],
     regions: [
       TITLE_REGION,
-      { name: 'body', x: 0.04, y: TOP, w: 0.92, h: BODY_H, blocks: ['paragraph', 'bullet_list', 'chart', 'table'] },
+      {
+        name: 'body',
+        x: 0.04,
+        y: TOP,
+        w: 0.92,
+        h: BODY_H,
+        blocks: ['paragraph', 'bullet_list', 'chart', 'table'],
+      },
     ],
   },
   // 5. two_column — dwie równe kolumny
   {
-    id: 'two_column', label: 'Two column', description: 'Dwie równe kolumny treści.',
+    id: 'two_column',
+    label: 'Two column',
+    description: 'Dwie równe kolumny treści.',
     bestForIntents: ['executive_summary', 'key_messages', 'comparison', 'risk_management'],
     regions: [
       TITLE_REGION,
-      { name: 'left', x: 0.04, y: TOP, w: 0.46 - GUTTER, h: BODY_H, blocks: ['bullet_list', 'paragraph'] },
-      { name: 'right', x: 0.5 + GUTTER, y: TOP, w: 0.46 - GUTTER, h: BODY_H, blocks: ['bullet_list', 'paragraph'] },
+      {
+        name: 'left',
+        x: 0.04,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: BODY_H,
+        blocks: ['bullet_list', 'paragraph'],
+      },
+      {
+        name: 'right',
+        x: 0.5 + GUTTER,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: BODY_H,
+        blocks: ['bullet_list', 'paragraph'],
+      },
     ],
   },
   // 6. kpi_grid_2x2 — siatka 2×2 KPI
   {
-    id: 'kpi_grid_2x2', label: 'KPI grid 2×2', description: 'Cztery kafelki KPI w siatce 2×2.',
-    bestForIntents: ['executive_summary', 'performance_overview', 'recommendation_portfolio', 'initiative_portfolio'],
+    id: 'kpi_grid_2x2',
+    label: 'KPI grid 2×2',
+    description: 'Cztery kafelki KPI w siatce 2×2.',
+    bestForIntents: [
+      'executive_summary',
+      'performance_overview',
+      'recommendation_portfolio',
+      'initiative_portfolio',
+    ],
     regions: [
       TITLE_REGION,
       { name: 'kpi_tl', x: 0.04, y: TOP, w: 0.46 - GUTTER, h: 0.37, blocks: ['kpi_widget'] },
-      { name: 'kpi_tr', x: 0.5 + GUTTER, y: TOP, w: 0.46 - GUTTER, h: 0.37, blocks: ['kpi_widget'] },
+      {
+        name: 'kpi_tr',
+        x: 0.5 + GUTTER,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: 0.37,
+        blocks: ['kpi_widget'],
+      },
       { name: 'kpi_bl', x: 0.04, y: 0.61, w: 0.46 - GUTTER, h: 0.37, blocks: ['kpi_widget'] },
-      { name: 'kpi_br', x: 0.5 + GUTTER, y: 0.61, w: 0.46 - GUTTER, h: 0.37, blocks: ['kpi_widget'] },
+      {
+        name: 'kpi_br',
+        x: 0.5 + GUTTER,
+        y: 0.61,
+        w: 0.46 - GUTTER,
+        h: 0.37,
+        blocks: ['kpi_widget'],
+      },
     ],
   },
   // 7. icon_row_grid — pasek ikon nad siatką treści
   {
-    id: 'icon_row_grid', label: 'Icon row + grid', description: 'Rząd ikon nad trzema kolumnami treści.',
+    id: 'icon_row_grid',
+    label: 'Icon row + grid',
+    description: 'Rząd ikon nad trzema kolumnami treści.',
     bestForIntents: ['key_messages'],
     regions: [
       TITLE_REGION,
       { name: 'icons', x: 0.04, y: TOP, w: 0.92, h: 0.14, blocks: ['icon_row'] },
-      { name: 'col1', x: 0.04, y: 0.36, w: 0.30 - GUTTER, h: 0.6, blocks: ['paragraph'] },
-      { name: 'col2', x: 0.35, y: 0.36, w: 0.30 - GUTTER, h: 0.6, blocks: ['paragraph'] },
-      { name: 'col3', x: 0.66, y: 0.36, w: 0.30, h: 0.6, blocks: ['paragraph'] },
+      { name: 'col1', x: 0.04, y: 0.36, w: 0.3 - GUTTER, h: 0.6, blocks: ['paragraph'] },
+      { name: 'col2', x: 0.35, y: 0.36, w: 0.3 - GUTTER, h: 0.6, blocks: ['paragraph'] },
+      { name: 'col3', x: 0.66, y: 0.36, w: 0.3, h: 0.6, blocks: ['paragraph'] },
     ],
   },
   // 8. big_number — jedna ogromna liczba + kontekst
   {
-    id: 'big_number', label: 'Big number', description: 'Jedna dominująca liczba z krótkim kontekstem.',
+    id: 'big_number',
+    label: 'Big number',
+    description: 'Jedna dominująca liczba z krótkim kontekstem.',
     bestForIntents: ['single_insight', 'performance_overview', 'recommendation_single'],
     regions: [
       TITLE_REGION,
@@ -134,28 +210,62 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 9. chart_left_text_right — wykres po lewej, narracja po prawej
   {
-    id: 'chart_left_text_right', label: 'Chart + narrative', description: 'Wykres po lewej, interpretacja po prawej.',
+    id: 'chart_left_text_right',
+    label: 'Chart + narrative',
+    description: 'Wykres po lewej, interpretacja po prawej.',
     bestForIntents: ['single_insight', 'performance_overview', 'recommendation_single'],
     regions: [
       TITLE_REGION,
       { name: 'chart', x: 0.04, y: TOP, w: 0.56 - GUTTER, h: BODY_H, blocks: ['chart'] },
-      { name: 'narrative', x: 0.6 + GUTTER, y: TOP, w: 0.36 - GUTTER, h: BODY_H, blocks: ['bullet_list', 'paragraph', 'callout'] },
+      {
+        name: 'narrative',
+        x: 0.6 + GUTTER,
+        y: TOP,
+        w: 0.36 - GUTTER,
+        h: BODY_H,
+        blocks: ['bullet_list', 'paragraph', 'callout'],
+      },
     ],
   },
   // 10. split_lr — wyraźny podział lewa/prawa (np. teza vs dowód)
   {
-    id: 'split_lr', label: 'Split L/R', description: 'Podział lewa/prawa z akcentem rozdzielającym.',
+    id: 'split_lr',
+    label: 'Split L/R',
+    description: 'Podział lewa/prawa z akcentem rozdzielającym.',
     bestForIntents: ['comparison', 'assessment', 'prioritization_matrix'],
     regions: [
       TITLE_REGION,
-      { name: 'left', x: 0.04, y: TOP, w: 0.46 - GUTTER, h: BODY_H, blocks: ['paragraph', 'bullet_list', 'chart'] },
-      { name: 'right', x: 0.5 + GUTTER, y: TOP, w: 0.46 - GUTTER, h: BODY_H, blocks: ['paragraph', 'bullet_list', 'chart'] },
+      {
+        name: 'left',
+        x: 0.04,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: BODY_H,
+        blocks: ['paragraph', 'bullet_list', 'chart'],
+      },
+      {
+        name: 'right',
+        x: 0.5 + GUTTER,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: BODY_H,
+        blocks: ['paragraph', 'bullet_list', 'chart'],
+      },
     ],
   },
   // 11. table — pełna tabela
   {
-    id: 'table', label: 'Full table', description: 'Pełnoszerokościowa tabela danych.',
-    bestForIntents: ['comparison', 'assessment', 'risk_management', 'recommendation_portfolio', 'initiative_portfolio', 'appendix'],
+    id: 'table',
+    label: 'Full table',
+    description: 'Pełnoszerokościowa tabela danych.',
+    bestForIntents: [
+      'comparison',
+      'assessment',
+      'risk_management',
+      'recommendation_portfolio',
+      'initiative_portfolio',
+      'appendix',
+    ],
     regions: [
       TITLE_REGION,
       { name: 'table', x: 0.04, y: TOP, w: 0.92, h: BODY_H, blocks: ['table'] },
@@ -163,7 +273,9 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 12. smart_diagram — pełnoekranowy diagram
   {
-    id: 'smart_diagram', label: 'Smart diagram', description: 'Diagram pełnoekranowy (proces/przyczyna-skutek).',
+    id: 'smart_diagram',
+    label: 'Smart diagram',
+    description: 'Diagram pełnoekranowy (proces/przyczyna-skutek).',
     bestForIntents: ['root_cause', 'prioritization_matrix'],
     regions: [
       TITLE_REGION,
@@ -172,7 +284,9 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 13. timeline_strip — poziomy pasek osi czasu
   {
-    id: 'timeline_strip', label: 'Timeline strip', description: 'Pozioma oś czasu z kamieniami milowymi.',
+    id: 'timeline_strip',
+    label: 'Timeline strip',
+    description: 'Pozioma oś czasu z kamieniami milowymi.',
     bestForIntents: ['roadmap', 'next_steps'],
     regions: [
       TITLE_REGION,
@@ -182,7 +296,9 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 14. numbered_stack — ponumerowane kroki
   {
-    id: 'numbered_stack', label: 'Numbered stack', description: 'Ponumerowana lista kroków/działań.',
+    id: 'numbered_stack',
+    label: 'Numbered stack',
+    description: 'Ponumerowana lista kroków/działań.',
     bestForIntents: ['next_steps', 'roadmap'],
     regions: [
       TITLE_REGION,
@@ -191,29 +307,63 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 15. exec_scqa — Minto SCQA w 4 ćwiartkach (Situation/Complication/Question/Answer)
   {
-    id: 'exec_scqa', label: 'Exec SCQA', description: 'Minto SCQA: Sytuacja/Komplikacja/Pytanie/Odpowiedź w 4 ćwiartkach.',
+    id: 'exec_scqa',
+    label: 'Exec SCQA',
+    description: 'Minto SCQA: Sytuacja/Komplikacja/Pytanie/Odpowiedź w 4 ćwiartkach.',
     bestForIntents: ['executive_summary', 'root_cause'],
     regions: [
       TITLE_REGION,
       { name: 'situation', x: 0.04, y: TOP, w: 0.46 - GUTTER, h: 0.37, blocks: ['paragraph'] },
-      { name: 'complication', x: 0.5 + GUTTER, y: TOP, w: 0.46 - GUTTER, h: 0.37, blocks: ['paragraph'] },
+      {
+        name: 'complication',
+        x: 0.5 + GUTTER,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: 0.37,
+        blocks: ['paragraph'],
+      },
       { name: 'question', x: 0.04, y: 0.61, w: 0.46 - GUTTER, h: 0.37, blocks: ['paragraph'] },
-      { name: 'answer', x: 0.5 + GUTTER, y: 0.61, w: 0.46 - GUTTER, h: 0.37, blocks: ['callout', 'paragraph'] },
+      {
+        name: 'answer',
+        x: 0.5 + GUTTER,
+        y: 0.61,
+        w: 0.46 - GUTTER,
+        h: 0.37,
+        blocks: ['callout', 'paragraph'],
+      },
     ],
   },
   // 16. before_after — stan przed (lewa) vs po (prawa)
   {
-    id: 'before_after', label: 'Before / after', description: 'Stan obecny po lewej, docelowy po prawej.',
+    id: 'before_after',
+    label: 'Before / after',
+    description: 'Stan obecny po lewej, docelowy po prawej.',
     bestForIntents: ['comparison', 'recommendation_single', 'root_cause'],
     regions: [
       TITLE_REGION,
-      { name: 'before', x: 0.04, y: TOP, w: 0.46 - GUTTER, h: BODY_H, blocks: ['bullet_list', 'paragraph'] },
-      { name: 'after', x: 0.5 + GUTTER, y: TOP, w: 0.46 - GUTTER, h: BODY_H, blocks: ['bullet_list', 'paragraph'] },
+      {
+        name: 'before',
+        x: 0.04,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: BODY_H,
+        blocks: ['bullet_list', 'paragraph'],
+      },
+      {
+        name: 'after',
+        x: 0.5 + GUTTER,
+        y: TOP,
+        w: 0.46 - GUTTER,
+        h: BODY_H,
+        blocks: ['bullet_list', 'paragraph'],
+      },
     ],
   },
   // 17. funnel — pionowy lejek etapów
   {
-    id: 'funnel', label: 'Funnel', description: 'Pionowy lejek etapów (np. TAM→SAM→SOM, sprzedaż).',
+    id: 'funnel',
+    label: 'Funnel',
+    description: 'Pionowy lejek etapów (np. TAM→SAM→SOM, sprzedaż).',
     bestForIntents: ['market', 'single_insight'],
     regions: [
       TITLE_REGION,
@@ -223,17 +373,28 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 18. heatmap — macierz/siatka oceny
   {
-    id: 'heatmap', label: 'Heatmap', description: 'Macierz oceny kolorami (gęstość/ryzyko/dojrzałość).',
+    id: 'heatmap',
+    label: 'Heatmap',
+    description: 'Macierz oceny kolorami (gęstość/ryzyko/dojrzałość).',
     bestForIntents: ['assessment', 'risk_management', 'prioritization_matrix'],
     regions: [
       TITLE_REGION,
-      { name: 'matrix', x: 0.04, y: TOP, w: 0.72 - GUTTER, h: BODY_H, blocks: ['table', 'smart_diagram'] },
+      {
+        name: 'matrix',
+        x: 0.04,
+        y: TOP,
+        w: 0.72 - GUTTER,
+        h: BODY_H,
+        blocks: ['table', 'smart_diagram'],
+      },
       { name: 'legend', x: 0.78, y: TOP, w: 0.18, h: BODY_H, blocks: ['metric_strip', 'callout'] },
     ],
   },
   // 19. matrix_2x2 — macierz strategiczna 2×2 z osiami
   {
-    id: 'matrix_2x2', label: '2×2 matrix', description: 'Macierz strategiczna 2×2 z opisanymi osiami.',
+    id: 'matrix_2x2',
+    label: '2×2 matrix',
+    description: 'Macierz strategiczna 2×2 z opisanymi osiami.',
     bestForIntents: ['prioritization_matrix', 'assessment', 'recommendation_portfolio'],
     regions: [
       TITLE_REGION,
@@ -243,19 +404,37 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 20. minto_pyramid — myśl nadrzędna + 3 wspierające
   {
-    id: 'minto_pyramid', label: 'Minto pyramid', description: 'Myśl nadrzędna u góry, 3 argumenty wspierające pod.',
+    id: 'minto_pyramid',
+    label: 'Minto pyramid',
+    description: 'Myśl nadrzędna u góry, 3 argumenty wspierające pod.',
     bestForIntents: ['executive_summary', 'recommendation_single', 'key_messages'],
     regions: [
       TITLE_REGION,
       { name: 'governing', x: 0.16, y: TOP, w: 0.68, h: 0.22, blocks: ['callout'] },
-      { name: 'support1', x: 0.04, y: 0.48, w: 0.30 - GUTTER, h: 0.48, blocks: ['paragraph', 'bullet_list'] },
-      { name: 'support2', x: 0.35, y: 0.48, w: 0.30 - GUTTER, h: 0.48, blocks: ['paragraph', 'bullet_list'] },
-      { name: 'support3', x: 0.66, y: 0.48, w: 0.30, h: 0.48, blocks: ['paragraph', 'bullet_list'] },
+      {
+        name: 'support1',
+        x: 0.04,
+        y: 0.48,
+        w: 0.3 - GUTTER,
+        h: 0.48,
+        blocks: ['paragraph', 'bullet_list'],
+      },
+      {
+        name: 'support2',
+        x: 0.35,
+        y: 0.48,
+        w: 0.3 - GUTTER,
+        h: 0.48,
+        blocks: ['paragraph', 'bullet_list'],
+      },
+      { name: 'support3', x: 0.66, y: 0.48, w: 0.3, h: 0.48, blocks: ['paragraph', 'bullet_list'] },
     ],
   },
   // 21. logo_wall — siatka dowodów/logotypów
   {
-    id: 'logo_wall', label: 'Logo wall', description: 'Siatka logotypów/dowodów społecznych.',
+    id: 'logo_wall',
+    label: 'Logo wall',
+    description: 'Siatka logotypów/dowodów społecznych.',
     bestForIntents: ['key_messages', 'appendix'],
     regions: [
       TITLE_REGION,
@@ -264,7 +443,9 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 22. quote_hero — duży cytat wyróżniony
   {
-    id: 'quote_hero', label: 'Quote hero', description: 'Wyróżniony cytat/teza na pełnym slajdzie.',
+    id: 'quote_hero',
+    label: 'Quote hero',
+    description: 'Wyróżniony cytat/teza na pełnym slajdzie.',
     bestForIntents: ['section_intro', 'single_insight'],
     regions: [
       { name: 'quote', x: 0.1, y: 0.3, w: 0.8, h: 0.4, blocks: ['quote_block'] },
@@ -273,18 +454,36 @@ const ARCHETYPES: SlideArchetype[] = [
   },
   // 23. comparison_columns — nagłówek + N kolumn porównawczych
   {
-    id: 'comparison_columns', label: 'Comparison columns', description: 'Trzy kolumny porównawcze pod wspólnym nagłówkiem.',
+    id: 'comparison_columns',
+    label: 'Comparison columns',
+    description: 'Trzy kolumny porównawcze pod wspólnym nagłówkiem.',
     bestForIntents: ['comparison', 'recommendation_portfolio'],
     regions: [
       TITLE_REGION,
-      { name: 'col1', x: 0.04, y: TOP, w: 0.30 - GUTTER, h: BODY_H, blocks: ['bullet_list', 'kpi_widget'] },
-      { name: 'col2', x: 0.35, y: TOP, w: 0.30 - GUTTER, h: BODY_H, blocks: ['bullet_list', 'kpi_widget'] },
-      { name: 'col3', x: 0.66, y: TOP, w: 0.30, h: BODY_H, blocks: ['bullet_list', 'kpi_widget'] },
+      {
+        name: 'col1',
+        x: 0.04,
+        y: TOP,
+        w: 0.3 - GUTTER,
+        h: BODY_H,
+        blocks: ['bullet_list', 'kpi_widget'],
+      },
+      {
+        name: 'col2',
+        x: 0.35,
+        y: TOP,
+        w: 0.3 - GUTTER,
+        h: BODY_H,
+        blocks: ['bullet_list', 'kpi_widget'],
+      },
+      { name: 'col3', x: 0.66, y: TOP, w: 0.3, h: BODY_H, blocks: ['bullet_list', 'kpi_widget'] },
     ],
   },
   // 24. roadmap_swimlane — poziome tory czasowe
   {
-    id: 'roadmap_swimlane', label: 'Roadmap swimlane', description: 'Poziome tory (workstream) na osi czasu.',
+    id: 'roadmap_swimlane',
+    label: 'Roadmap swimlane',
+    description: 'Poziome tory (workstream) na osi czasu.',
     bestForIntents: ['roadmap', 'initiative_portfolio'],
     regions: [
       TITLE_REGION,

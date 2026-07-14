@@ -103,13 +103,7 @@ const ThemeSettings: React.FC<{
               }`}
             >
               <div className="text-4xl mb-3">{t_.icon}</div>
-              <p
-                className={`font-medium ${
-                  theme === t_.id
-                    ? 'text-c-accent'
-                    : 'text-c-text'
-                }`}
-              >
+              <p className={`font-medium ${theme === t_.id ? 'text-c-accent' : 'text-c-text'}`}>
                 {t_.label}
               </p>
             </button>
@@ -247,9 +241,7 @@ const LanguageSettings: React.FC<{
             <span className="text-2xl">{lang.flag}</span>
             <span
               className={`font-medium ${
-                selectedLanguage === lang.code
-                  ? 'text-c-accent'
-                  : 'text-c-text'
+                selectedLanguage === lang.code ? 'text-c-accent' : 'text-c-text'
               }`}
             >
               {lang.name}

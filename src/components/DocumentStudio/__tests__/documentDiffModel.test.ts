@@ -96,9 +96,7 @@ describe('proposalToSchemaDiff — aggregate fallback (no proposedChanges)', () 
   });
 
   it('reports no changes when before === after', () => {
-    const diff = proposalToSchemaDiff(
-      makeProposal({ diff: { before: 'Same.', after: 'Same.' } })
-    );
+    const diff = proposalToSchemaDiff(makeProposal({ diff: { before: 'Same.', after: 'Same.' } }));
     expect(diff.hasChanges).toBe(false);
     expect(diff.stats.modifiedBlockCount).toBe(0);
     expect(diff.sectionDiffs[0].kind).toBe('unchanged');
@@ -160,9 +158,7 @@ describe('proposalToSchemaDiff — structured proposedChanges', () => {
 
   it('handles changes without a schema (no titles / block types)', () => {
     const proposal = makeProposal({
-      proposedChanges: [
-        { targetSectionId: 'sec-9', before: 'a', after: 'b' },
-      ],
+      proposedChanges: [{ targetSectionId: 'sec-9', before: 'a', after: 'b' }],
     });
     const diff = proposalToSchemaDiff(proposal);
     expect(diff.sectionDiffs[0].afterTitle).toBeNull();
@@ -172,7 +168,9 @@ describe('proposalToSchemaDiff — structured proposedChanges', () => {
 
   it('marks unchanged targeted changes as unchanged and keeps hasChanges false', () => {
     const proposal = makeProposal({
-      proposedChanges: [{ targetSectionId: 'sec-1', targetBlockId: 'blk-1', before: 'x', after: 'x' }],
+      proposedChanges: [
+        { targetSectionId: 'sec-1', targetBlockId: 'blk-1', before: 'x', after: 'x' },
+      ],
     });
     const diff = proposalToSchemaDiff(proposal, schema);
     expect(diff.hasChanges).toBe(false);

@@ -3,7 +3,7 @@
  * Kept for backwards compat — consumers should migrate to the canonical import.
  */
 export {
+  type CanvasDropdownItem as DropdownItem,
   CanvasToolbarBtn as ToolbarBtn,
   CanvasToolbarDropdown as ToolbarDropdown,
-  type CanvasDropdownItem as DropdownItem,
 } from '../canvas/CanvasToolbarPrimitives';

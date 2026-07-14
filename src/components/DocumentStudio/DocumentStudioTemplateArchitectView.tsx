@@ -35,7 +35,10 @@ function useDocumentTypeOptions(
 ): { value: DocumentTypeKey; label: string }[] {
   return useMemo(
     () => [
-      { value: 'executive_memo', label: t('documentStudio.docType.executiveMemo', 'Executive Memo') },
+      {
+        value: 'executive_memo',
+        label: t('documentStudio.docType.executiveMemo', 'Executive Memo'),
+      },
       {
         value: 'project_status_report',
         label: t('documentStudio.docType.projectStatusReport', 'Project Status Report'),
@@ -44,12 +47,18 @@ function useDocumentTypeOptions(
         value: 'steering_committee_report',
         label: t('documentStudio.docType.steeringCommitteeReport', 'Steering Committee Report'),
       },
-      { value: 'ai_audit_report', label: t('documentStudio.docType.aiAuditReport', 'AI Audit Report') },
+      {
+        value: 'ai_audit_report',
+        label: t('documentStudio.docType.aiAuditReport', 'AI Audit Report'),
+      },
       {
         value: 'interview_summary_report',
         label: t('documentStudio.docType.interviewSummaryReport', 'Interview Summary Report'),
       },
-      { value: 'workshop_summary', label: t('documentStudio.docType.workshopSummary', 'Workshop Summary') },
+      {
+        value: 'workshop_summary',
+        label: t('documentStudio.docType.workshopSummary', 'Workshop Summary'),
+      },
       { value: 'business_case', label: t('documentStudio.docType.businessCase', 'Business Case') },
       {
         value: 'risk_register_report',
@@ -61,12 +70,18 @@ function useDocumentTypeOptions(
         label: t('documentStudio.docType.implementationPlan', 'Implementation Plan'),
       },
       { value: 'board_report', label: t('documentStudio.docType.boardReport', 'Board Report') },
-      { value: 'sales_proposal', label: t('documentStudio.docType.salesProposal', 'Sales Proposal') },
+      {
+        value: 'sales_proposal',
+        label: t('documentStudio.docType.salesProposal', 'Sales Proposal'),
+      },
       {
         value: 'client_final_report',
         label: t('documentStudio.docType.clientFinalReport', 'Client Final Report'),
       },
-      { value: 'generic_document', label: t('documentStudio.docType.genericDocument', 'Generic document') },
+      {
+        value: 'generic_document',
+        label: t('documentStudio.docType.genericDocument', 'Generic document'),
+      },
     ],
     [t]
   );
@@ -107,7 +122,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   // live in the per-row actions menu via `getRowActions`.
   const tableColumns = useMemo<TableColumn[]>(
     () => [
-      { id: 'name', label: t('documentStudio.templateArchitect.colTemplate', 'Template'), width: '260px' },
+      {
+        id: 'name',
+        label: t('documentStudio.templateArchitect.colTemplate', 'Template'),
+        width: '260px',
+      },
       { id: 'documentType', label: t('documentStudio.templateArchitect.colType', 'Type') },
       {
         id: 'meta',
@@ -122,7 +141,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         filterable: true,
         filterOptions: [
           { value: 'draft', label: t('documentStudio.templateArchitect.statusDraft', 'Draft') },
-          { value: 'approved', label: t('documentStudio.templateArchitect.statusApproved', 'Approved') },
+          {
+            value: 'approved',
+            label: t('documentStudio.templateArchitect.statusApproved', 'Approved'),
+          },
           {
             value: 'deprecated',
             label: t('documentStudio.templateArchitect.statusDeprecated', 'Deprecated'),
@@ -260,7 +282,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setError(
         err instanceof Error
           ? err.message
-          : t('documentStudio.templateArchitect.errDeprecateTemplate', 'Failed to deprecate template')
+          : t(
+              'documentStudio.templateArchitect.errDeprecateTemplate',
+              'Failed to deprecate template'
+            )
       );
     } finally {
       setBusyTemplateId(null);
@@ -343,7 +368,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               type="text"
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
-              placeholder={t('documentStudio.templateArchitect.audiencePlaceholder', 'e.g., Board, CEO, CFO')}
+              placeholder={t(
+                'documentStudio.templateArchitect.audiencePlaceholder',
+                'e.g., Board, CEO, CFO'
+              )}
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </label>
@@ -356,8 +384,12 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
-              <option value="pl">{t('documentStudio.templateArchitect.langPolish', 'Polish')}</option>
-              <option value="en">{t('documentStudio.templateArchitect.langEnglish', 'English')}</option>
+              <option value="pl">
+                {t('documentStudio.templateArchitect.langPolish', 'Polish')}
+              </option>
+              <option value="en">
+                {t('documentStudio.templateArchitect.langEnglish', 'English')}
+              </option>
             </select>
           </label>
           <label className="col-span-1 flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm sm:col-span-2">
@@ -469,10 +501,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 <li key={`${selectedTemplate.templateId}-section-${idx}`}>
                   <span className="font-medium">{section.title}</span>
                   {section.purpose ? (
-                    <span className="text-xs text-c-text-secondary">
-                      {' '}
-                      — {section.purpose}
-                    </span>
+                    <span className="text-xs text-c-text-secondary"> — {section.purpose}</span>
                   ) : null}
                 </li>
               ))}

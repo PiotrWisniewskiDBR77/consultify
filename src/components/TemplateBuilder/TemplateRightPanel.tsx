@@ -8,17 +8,13 @@
  * Branding = motyw org OSOBNO od template'u (D19); tu tylko ref/picker.
  */
 
-import { Sparkles } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { Settings2 } from 'lucide-react';
 import React from 'react';
 
-import {
-  SCOPE_LABELS,
-  type TemplateDraft,
-  type TemplateScope,
-} from './templateBuilderModel';
 import { Field, Segmented, Select, TextArea, TextInput } from './templateBuilderFields';
+import { SCOPE_LABELS, type TemplateDraft, type TemplateScope } from './templateBuilderModel';
 
 export type TemplateRightTool = 'properties' | 'teresa';
 
@@ -53,12 +49,12 @@ export const TemplateRightPanel: React.FC<{
           <span className="text-sm font-semibold">Teresa</span>
         </div>
         <p className="text-sm text-c-text-muted">
-          Poproś Teresę o zaproponowanie struktury szablonu, przeredagowanie sekcji albo
-          dobranie archetypów slajdów.
+          Poproś Teresę o zaproponowanie struktury szablonu, przeredagowanie sekcji albo dobranie
+          archetypów slajdów.
         </p>
         <div className="rounded-lg border border-dashed border-c-border bg-c-bg p-3 text-[13px] text-c-text-muted">
-          Wejście AI (F4) — jeden byt asystenta. Podłączenie do UnifiedChatPanel poza zakresem
-          tego kroku (buildery struktury).
+          Wejście AI (F4) — jeden byt asystenta. Podłączenie do UnifiedChatPanel poza zakresem tego
+          kroku (buildery struktury).
         </div>
         <button
           type="button"
@@ -83,7 +79,11 @@ export const TemplateRightPanel: React.FC<{
         <span className="text-sm font-semibold">Właściwości szablonu</span>
       </div>
       <Field label="Nazwa">
-        <TextInput value={draft.name} onChange={(v) => onDraftChange({ name: v })} testId="prop-name" />
+        <TextInput
+          value={draft.name}
+          onChange={(v) => onDraftChange({ name: v })}
+          testId="prop-name"
+        />
       </Field>
       <Field label="Opis" hint="Krótko: do czego służy ten szablon.">
         <TextArea
@@ -94,7 +94,12 @@ export const TemplateRightPanel: React.FC<{
         />
       </Field>
       <Field label="Dostępność">
-        <Segmented value={draft.scope} options={scopeOpts} onChange={(v) => onDraftChange({ scope: v })} testId="prop-scope" />
+        <Segmented
+          value={draft.scope}
+          options={scopeOpts}
+          onChange={(v) => onDraftChange({ scope: v })}
+          testId="prop-scope"
+        />
       </Field>
       <Field label="Motyw (branding org)" hint="Brand Kit organizacji — osobno od struktury (D19).">
         <Select

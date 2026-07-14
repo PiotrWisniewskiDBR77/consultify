@@ -69,9 +69,7 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
                 <span
                   className={[
                     'shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-semibold',
-                    active
-                      ? 'bg-c-focus text-white'
-                      : 'bg-c-bg text-c-text-muted',
+                    active ? 'bg-c-focus text-white' : 'bg-c-bg text-c-text-muted',
                   ].join(' ')}
                 >
                   {item.index}

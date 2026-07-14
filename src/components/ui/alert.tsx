@@ -9,7 +9,8 @@ interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const variantStyles: Record<AlertVariant, string> = {
   default: 'bg-background text-foreground border',
-  destructive: 'border-danger-500/50 text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20',
+  destructive:
+    'border-danger-500/50 text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20',
   success:
     'border-green-500/50 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20',
   warning:

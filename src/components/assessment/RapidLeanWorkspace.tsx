@@ -482,7 +482,9 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-            <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full">
+            <table
+              /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full"
+            >
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">

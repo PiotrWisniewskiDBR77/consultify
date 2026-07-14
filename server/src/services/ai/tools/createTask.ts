@@ -65,7 +65,7 @@ const PRIORITY_DEFAULT_OFFSET_DAYS: Record<string, number> = {
  */
 export function sanitizeDueDate(
   rawDueDate: string | undefined,
-  priority: string,
+  priority: string
 ): string | undefined {
   const now = Date.now();
 
@@ -76,8 +76,8 @@ export function sanitizeDueDate(
     }
     logger.warn(
       `[create_task] rejected dueDate not in the future (raw="${rawDueDate}", now=${new Date(
-        now,
-      ).toISOString()}) — clamping to computed default`,
+        now
+      ).toISOString()}) — clamping to computed default`
     );
   }
 
@@ -104,7 +104,7 @@ export function sanitizeDueDate(
  */
 export function parseRelativeDueDate(
   text: string | undefined,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): string | undefined {
   const raw = String(text || '').toLowerCase();
   if (!raw) return undefined;
@@ -129,14 +129,20 @@ export function parseRelativeDueDate(
 
   // 2. "koniec / do końca miesiąca" → last calendar day of the current month.
   //    (EN: "end of the month".)
-  if (/(koniec|do konca|na koniec).{0,12}(miesiac|miesiaca|mies\b)/.test(t) || /end of (the )?month/.test(t)) {
+  if (
+    /(koniec|do konca|na koniec).{0,12}(miesiac|miesiaca|mies\b)/.test(t) ||
+    /end of (the )?month/.test(t)
+  ) {
     // Day 0 of next month = last day of current month.
     const eom = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 0);
     return eom.toISOString();
   }
 
   // 3. "koniec / do końca tygodnia" → this week's Friday (EN: "end of the week").
-  if (/(koniec|do konca|na koniec).{0,12}(tydzien|tygodnia|tygodniu|tyg\b)/.test(t) || /end of (the )?week/.test(t)) {
+  if (
+    /(koniec|do konca|na koniec).{0,12}(tydzien|tygodnia|tygodniu|tyg\b)/.test(t) ||
+    /end of (the )?week/.test(t)
+  ) {
     const dow = now.getDay(); // 0=Sun..6=Sat
     // Friday = 5. Days until Friday (0 if already Friday). If Sat/Sun, roll to next Friday.
     let add = (5 - dow + 7) % 7;
@@ -146,7 +152,9 @@ export function parseRelativeDueDate(
   }
 
   // 4. "za X dni" / "za X tygodni" / "in X days|weeks".
-  const rel = t.match(/(?:za|in)\s+(\d{1,3})\s*(dni|dzien|dzien\b|tydzien|tygodni|tyg\b|day|days|week|weeks)/);
+  const rel = t.match(
+    /(?:za|in)\s+(\d{1,3})\s*(dni|dzien|dzien\b|tydzien|tygodni|tyg\b|day|days|week|weeks)/
+  );
   if (rel) {
     const n = Number(rel[1]);
     const unit = rel[2];
@@ -169,7 +177,10 @@ export function parseRelativeDueDate(
   }
 
   // 6. "koniec kwartału" → last day of the current calendar quarter.
-  if (/(koniec|do konca|na koniec).{0,12}(kwartal|kwartalu)/.test(t) || /end of (the )?quarter/.test(t)) {
+  if (
+    /(koniec|do konca|na koniec).{0,12}(kwartal|kwartalu)/.test(t) ||
+    /end of (the )?quarter/.test(t)
+  ) {
     const q = Math.floor(now.getMonth() / 3);
     const lastMonthOfQuarter = q * 3 + 2; // 0-based: Q1→2 (Mar), Q2→5 (Jun)…
     const eoq = new Date(now.getFullYear(), lastMonthOfQuarter + 1, 0, 23, 59, 59, 0);
@@ -191,7 +202,7 @@ export function parseRelativeDueDate(
 async function fillTaskStructuralFields(
   taskId: string,
   input: { title: string; description?: string; priority?: string; ownerName?: string },
-  language: 'pl' | 'en',
+  language: 'pl' | 'en'
 ): Promise<void> {
   try {
     const [{ generateTaskSection }, queryHelpers] = await Promise.all([
@@ -236,8 +247,10 @@ async function fillTaskStructuralFields(
     } else {
       logger.error(
         `[create_task] strategy fill failed id=${taskId}: ${
-          strategyRes.reason instanceof Error ? strategyRes.reason.message : String(strategyRes.reason)
-        }`,
+          strategyRes.reason instanceof Error
+            ? strategyRes.reason.message
+            : String(strategyRes.reason)
+        }`
       );
     }
 
@@ -256,7 +269,7 @@ async function fillTaskStructuralFields(
           executionRes.reason instanceof Error
             ? executionRes.reason.message
             : String(executionRes.reason)
-        }`,
+        }`
       );
     }
 
@@ -273,18 +286,18 @@ async function fillTaskStructuralFields(
          (expected_outcome IS NULL OR expected_outcome = '') OR
          (acceptance_criteria IS NULL OR acceptance_criteria = '')
        )`,
-      params,
+      params
     );
     logger.info(
       `[create_task] structural fields filled id=${taskId} (${updates
         .map((u) => u.split(' ')[0])
-        .join(', ')})`,
+        .join(', ')})`
     );
   } catch (err) {
     logger.error(
       `[create_task] structural fill FAILED id=${taskId}: ${
         err instanceof Error ? err.message : String(err)
-      }`,
+      }`
     );
   }
 }
@@ -305,13 +318,14 @@ async function resolveOwnerName(userId: string): Promise<string | undefined> {
       email?: string;
     }>('SELECT first_name, last_name, email FROM users WHERE id = ?', [userId]);
     if (!row) return undefined;
-    const full = `${String(row.first_name || '').trim()} ${String(row.last_name || '').trim()}`.trim();
+    const full =
+      `${String(row.first_name || '').trim()} ${String(row.last_name || '').trim()}`.trim();
     return full || (row.email ? String(row.email).trim() : undefined) || undefined;
   } catch (err) {
     logger.warn(
       `[create_task] owner-name lookup failed userId=${userId}: ${
         err instanceof Error ? err.message : String(err)
-      }`,
+      }`
     );
     return undefined;
   }
@@ -378,7 +392,7 @@ export async function createTask(
       logger.info(
         `[create_task] relative deadline parsed from text → ${relativeDue} (overrides model due_date="${
           params?.due_date || ''
-        }")`,
+        }")`
       );
     }
 
@@ -417,7 +431,7 @@ export async function createTask(
         await fillTaskStructuralFields(
           taskId,
           { title, description: params?.description || undefined, priority, ownerName },
-          language,
+          language
         );
       })();
     }

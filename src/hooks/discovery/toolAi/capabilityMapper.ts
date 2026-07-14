@@ -1,14 +1,13 @@
 import type {
-  InitiativeDraft,
   CapabilityMapperData,
+  InitiativeDraft,
   ProposalStatus,
   ToolType,
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 interface CapabilityMapperActionHandlers {
   updateInputData: (data: Partial<CapabilityMapperData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;

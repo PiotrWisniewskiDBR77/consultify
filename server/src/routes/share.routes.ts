@@ -51,7 +51,6 @@ function getDb() {
 
 const router = Router();
 
-
 // is_active is INTEGER/bigint on Postgres — node-pg serializes bigint as a
 // STRING ("0"/"1"), so a raw `!share.is_active` is always falsy-wrong (a
 // non-empty string "0" is truthy). Coerce uniformly across number/string/bool.

@@ -250,8 +250,12 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
   // AI-proposed cards (R6) — surface the deterministic card proposal for the
   // chosen lever/type and let the user opt extra cards in. Selection is held in
   // wizard state (rendered below); persisting it further is out of scope here.
-  const { core: proposedCore, proposed: proposedExtra, loading: proposalLoading, fetchProposal } =
-    useProposeCards();
+  const {
+    core: proposedCore,
+    proposed: proposedExtra,
+    loading: proposalLoading,
+    fetchProposal,
+  } = useProposeCards();
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const toggleSelectedCard = useCallback((key: string) => {
     setSelectedCards((prev) =>

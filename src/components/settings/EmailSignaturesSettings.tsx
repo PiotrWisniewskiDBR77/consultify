@@ -341,10 +341,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
           {signatures.map((signature) => (
             <Card
               key={signature.id}
-              className={cn(
-                'transition-all',
-                signature.isDefault && 'ring-2 ring-c-focus'
-              )}
+              className={cn('transition-all', signature.isDefault && 'ring-2 ring-c-focus')}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">

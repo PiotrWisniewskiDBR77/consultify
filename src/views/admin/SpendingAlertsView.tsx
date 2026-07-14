@@ -331,9 +331,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Icon size={16} className="text-c-text-muted" />
-                    <span className="text-sm font-medium text-c-text-secondary">
-                      {type.label}
-                    </span>
+                    <span className="text-sm font-medium text-c-text-secondary">{type.label}</span>
                   </div>
                   {hasAlert && <Bell size={14} className="text-primary-500" />}
                 </div>
@@ -368,9 +366,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
       ) : alerts.length === 0 ? (
         <div className="p-12 text-center bg-c-surface rounded-xl border border-c-border-subtle">
           <Bell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-c-text">
-            No Alerts Configured
-          </h3>
+          <h3 className="text-lg font-medium text-c-text">No Alerts Configured</h3>
           <p className="text-c-text-muted mt-1 mb-4">
             Create alerts to get notified about spending
           </p>
@@ -392,9 +388,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
               <div
                 key={alert.id}
                 className={`p-4 bg-c-surface rounded-xl border ${
-                  alert.isActive
-                    ? 'border-c-border-subtle'
-                    : 'border-c-border-subtle opacity-60'
+                  alert.isActive ? 'border-c-border-subtle' : 'border-c-border-subtle opacity-60'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -407,17 +401,13 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                       }`}
                     >
                       <Icon
-                        className={
-                          alert.isActive ? 'text-primary-600' : 'text-c-text-muted'
-                        }
+                        className={alert.isActive ? 'text-primary-600' : 'text-c-text-muted'}
                         size={20}
                       />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-c-text">
-                          {typeInfo.label} Alert
-                        </h3>
+                        <h3 className="font-medium text-c-text">{typeInfo.label} Alert</h3>
                         {!alert.isActive && (
                           <span className="px-2 py-0.5 bg-c-surface-raised text-c-text-muted text-xs rounded-full">
                             Paused

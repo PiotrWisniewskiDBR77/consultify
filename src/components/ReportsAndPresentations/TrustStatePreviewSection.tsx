@@ -178,15 +178,11 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
         </Row>
 
         <Row label={t('rap.outputs.preview.lineage', 'Lineage')}>
-          <span className="text-[10px] font-medium text-c-text-secondary">
-            {lineageSummary}
-          </span>
+          <span className="text-[10px] font-medium text-c-text-secondary">{lineageSummary}</span>
         </Row>
 
         <Row label={t('rap.outputs.preview.artifactId', 'Artifact ID')}>
-          <span className="text-[10px] font-mono text-c-text-secondary">
-            {artifactId || '—'}
-          </span>
+          <span className="text-[10px] font-mono text-c-text-secondary">{artifactId || '—'}</span>
         </Row>
 
         <Row label={t('rap.outputs.preview.executionRunId', 'Execution run')}>
@@ -218,9 +214,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
         ) : null}
 
         <Row label={t('rap.outputs.preview.exportTrace', 'Export trace')}>
-          <span className="text-[10px] font-medium text-c-text-secondary">
-            {exportTraceText}
-          </span>
+          <span className="text-[10px] font-medium text-c-text-secondary">{exportTraceText}</span>
         </Row>
 
         <Row label={t('rap.outputs.preview.accessControl', 'Access control')}>

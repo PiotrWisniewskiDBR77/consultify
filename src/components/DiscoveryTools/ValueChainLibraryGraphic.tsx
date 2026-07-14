@@ -248,7 +248,9 @@ export function ValueChainLibraryGraphic({
           </div>
 
           <div className="rounded-2xl border border-amber-200/70 bg-amber-500/5 p-4 text-xs leading-relaxed text-slate-700 dark:border-amber-900/40 dark:text-slate-200">
-            <span className="font-semibold text-amber-700 dark:text-amber-300">{labels.legendTitle}: </span>
+            <span className="font-semibold text-amber-700 dark:text-amber-300">
+              {labels.legendTitle}:{' '}
+            </span>
             {isPolish
               ? 'kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość.'
               : "each activity's color shows whether it creates, is neutral to, or drains margin. Size and annotations follow cost and value contribution."}

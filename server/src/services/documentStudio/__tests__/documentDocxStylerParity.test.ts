@@ -271,9 +271,7 @@ describe('renderer — teal cover rule + navy heading styles', () => {
           orderIndex: 0,
           level: 1,
           title: 'Findings',
-          blocks: [
-            { blockId: 'b', type: 'paragraph', content: { text: 'Body.' } as unknown },
-          ],
+          blocks: [{ blockId: 'b', type: 'paragraph', content: { text: 'Body.' } as unknown }],
           sourceRefs: [],
         },
       ],

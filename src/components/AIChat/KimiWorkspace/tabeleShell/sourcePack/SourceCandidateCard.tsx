@@ -101,7 +101,10 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
             {candidate.hasVerifiedSource && (
               <span
                 className="inline-flex items-center gap-0.5 text-[11px] text-emerald-600 dark:text-emerald-400"
-                aria-label={t('kimi.tabeleShell.sourcePack.hasVerifiedSource', 'has verified source')}
+                aria-label={t(
+                  'kimi.tabeleShell.sourcePack.hasVerifiedSource',
+                  'has verified source'
+                )}
                 data-testid="candidate-verified-flag"
               >
                 <ShieldCheck className="h-3 w-3" />
@@ -118,16 +121,15 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
                     : 'bg-c-surface-raised text-c-text-secondary',
               ].join(' ')}
             >
-              {STATUS_LABEL_KEY[status] ? t(STATUS_LABEL_KEY[status], STATUS_LABEL[status] ?? status) : status}
+              {STATUS_LABEL_KEY[status]
+                ? t(STATUS_LABEL_KEY[status], STATUS_LABEL[status] ?? status)
+                : status}
             </span>
             <span className="text-[11px] text-c-text-secondary">
               {formatRelative(candidate.updatedAt)}
             </span>
           </div>
-          <h4
-            className="mt-0.5 truncate text-sm font-medium text-c-text"
-            title={candidate.title}
-          >
+          <h4 className="mt-0.5 truncate text-sm font-medium text-c-text" title={candidate.title}>
             {candidate.title}
           </h4>
           {candidate.preview && (
@@ -158,7 +160,9 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
           }
         >
           {selected ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-          {selected ? t('kimi.tabeleShell.sourcePack.added', 'Added') : t('kimi.tabeleShell.sourcePack.add', 'Add')}
+          {selected
+            ? t('kimi.tabeleShell.sourcePack.added', 'Added')
+            : t('kimi.tabeleShell.sourcePack.add', 'Add')}
         </button>
       </div>
     </li>

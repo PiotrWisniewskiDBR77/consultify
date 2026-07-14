@@ -4,8 +4,8 @@ import {
   GripVertical,
   LayoutGrid,
   List,
-  Move,
   MoreVertical,
+  Move,
   Plus,
   RefreshCw,
   Trash2,
@@ -106,9 +106,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                 closeContextMenu();
               }}
               className={`relative group cursor-pointer rounded-lg transition-all ${
-                index === activeIndex
-                  ? 'ring-2 ring-c-focus'
-                  : 'hover:ring-1 hover:ring-c-border'
+                index === activeIndex ? 'ring-2 ring-c-focus' : 'hover:ring-1 hover:ring-c-border'
               } ${dragIndex === index ? 'opacity-50' : ''}`}
             >
               {viewMode === 'cards' ? (
@@ -155,19 +153,17 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               ) : (
                 <div
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${
-                    index === activeIndex
-                      ? 'bg-c-accent-soft'
-                      : 'hover:bg-c-surface-raised'
+                    index === activeIndex ? 'bg-c-accent-soft' : 'hover:bg-c-surface-raised'
                   }`}
                 >
                   <GripVertical size={10} className="text-c-text-secondary cursor-grab" />
-                  <span className="font-bold text-c-text-secondary w-4 text-right">{index + 1}</span>
+                  <span className="font-bold text-c-text-secondary w-4 text-right">
+                    {index + 1}
+                  </span>
                   <span
                     className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${INTENT_COLORS[card.intent] || 'bg-c-text-muted'}`}
                   />
-                  <span className="text-c-text truncate flex-1">
-                    {card.title}
-                  </span>
+                  <span className="text-c-text truncate flex-1">{card.title}</span>
                   {outdated && <RefreshCw size={10} className="text-amber-500 flex-shrink-0" />}
                   <button
                     onClick={(e) => {

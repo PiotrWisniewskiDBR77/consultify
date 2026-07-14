@@ -394,7 +394,9 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       disabled={readOnly}
                       className="w-full px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 focus:outline-none"
                     >
-                      <option value="low">{t('myWork.impactAssessment.lowConfidence', 'Low confidence')}</option>
+                      <option value="low">
+                        {t('myWork.impactAssessment.lowConfidence', 'Low confidence')}
+                      </option>
                       <option value="medium">
                         {t('myWork.impactAssessment.mediumConfidence', 'Medium confidence')}
                       </option>
@@ -450,7 +452,9 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                     >
                       <option value="days">{t('myWork.impactAssessment.days', 'days')}</option>
                       <option value="weeks">{t('myWork.impactAssessment.weeks', 'weeks')}</option>
-                      <option value="months">{t('myWork.impactAssessment.months', 'months')}</option>
+                      <option value="months">
+                        {t('myWork.impactAssessment.months', 'months')}
+                      </option>
                     </select>
                   </div>
                   <div className="mt-2">
@@ -470,7 +474,9 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       disabled={readOnly}
                       className="w-full px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 focus:outline-none"
                     >
-                      <option value="low">{t('myWork.impactAssessment.lowConfidence2', 'Low confidence')}</option>
+                      <option value="low">
+                        {t('myWork.impactAssessment.lowConfidence2', 'Low confidence')}
+                      </option>
                       <option value="medium">
                         {t('myWork.impactAssessment.mediumConfidence2', 'Medium confidence')}
                       </option>
@@ -553,7 +559,9 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       disabled={readOnly}
                       className="w-full px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 focus:outline-none"
                     >
-                      <option value="low">{t('myWork.impactAssessment.lowConfidence3', 'Low confidence')}</option>
+                      <option value="low">
+                        {t('myWork.impactAssessment.lowConfidence3', 'Low confidence')}
+                      </option>
                       <option value="medium">
                         {t('myWork.impactAssessment.mediumConfidence3', 'Medium confidence')}
                       </option>
@@ -568,16 +576,20 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
               {/* Description */}
               <div className="mt-4">
                 <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                  {t('myWork.impactAssessment.additionalImpactDescription', 'Additional impact description')}
+                  {t(
+                    'myWork.impactAssessment.additionalImpactDescription',
+                    'Additional impact description'
+                  )}
                 </label>
                 <textarea
                   value={impact.description || ''}
                   onChange={(e) => onChange({ ...impact, description: e.target.value })}
                   rows={2}
                   disabled={readOnly}
-                  placeholder={
-                    t('myWork.impactAssessment.describeImpactDetails', 'Describe impact details...')
-                  }
+                  placeholder={t(
+                    'myWork.impactAssessment.describeImpactDetails',
+                    'Describe impact details...'
+                  )}
                   className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                 />
               </div>

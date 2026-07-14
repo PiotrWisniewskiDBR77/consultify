@@ -169,9 +169,7 @@ export function useCardLayout(options: UseCardLayoutOptions): UseCardLayoutResul
       setLayout((prev) => {
         if (prev.some((c) => c.id === catalogId)) {
           // Already present — if hidden, adding re-shows it.
-          const shown = prev.map((c) =>
-            c.id === catalogId ? { ...c, visible: true } : c
-          );
+          const shown = prev.map((c) => (c.id === catalogId ? { ...c, visible: true } : c));
           const normalized = reindex(sortByOrder(shown));
           onLayoutChange?.(normalized);
           return normalized;
@@ -202,9 +200,7 @@ export function useCardLayout(options: UseCardLayoutOptions): UseCardLayoutResul
   const setVisible = useCallback(
     (id: string, visible: boolean) => {
       setLayout((prev) => {
-        const next = reindex(
-          sortByOrder(prev).map((c) => (c.id === id ? { ...c, visible } : c))
-        );
+        const next = reindex(sortByOrder(prev).map((c) => (c.id === id ? { ...c, visible } : c)));
         onLayoutChange?.(next);
         return next;
       });
@@ -294,9 +290,7 @@ export function useCardLayout(options: UseCardLayoutOptions): UseCardLayoutResul
   const applyToSections = useCallback(
     <T extends { id: string }>(sections: T[]): T[] => {
       const byId = new Map(sections.map((s) => [s.id, s]));
-      const ordered = visibleOrderedIds
-        .map((id) => byId.get(id))
-        .filter((s): s is T => Boolean(s));
+      const ordered = visibleOrderedIds.map((id) => byId.get(id)).filter((s): s is T => Boolean(s));
       // Sections the layout knows nothing about (e.g. dynamically injected)
       // stay reachable at the end so we never truncate the artifact.
       const knownIds = new Set(layout.map((c) => c.id));

@@ -179,9 +179,7 @@ describe('financeEnterpriseService child-writes — parent model ownership gate'
   it('createConsolidation rejects a foreign-org id in sourceModelIds and writes nothing', async () => {
     // First id is owned, second belongs to the victim → the loop must reject
     // before the INSERT, so no consolidation row is grafted onto org B's models.
-    queryOne
-      .mockResolvedValueOnce({ id: 'model-owned-by-attacker' })
-      .mockResolvedValueOnce(null);
+    queryOne.mockResolvedValueOnce({ id: 'model-owned-by-attacker' }).mockResolvedValueOnce(null);
 
     await expect(
       financeEnterpriseService.createConsolidation(ORG, 'user-1', {
@@ -192,7 +190,8 @@ describe('financeEnterpriseService child-writes — parent model ownership gate'
 
     // The ownership read for the foreign id is org-scoped.
     const call = queryOne.mock.calls.find(
-      (c) => String(c[0]).includes('FROM financial_models') && (c[1] as unknown[])?.[0] === FOREIGN_MODEL
+      (c) =>
+        String(c[0]).includes('FROM financial_models') && (c[1] as unknown[])?.[0] === FOREIGN_MODEL
     );
     expect(call).toBeDefined();
     const [sql, params] = call as [string, unknown[]];

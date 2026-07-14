@@ -134,7 +134,8 @@ export const StrategicSynthesisModule: React.FC = () => {
                   width: 'w-1/6',
                   render: (item) => {
                     const colorMap: Record<string, string> = {
-                      Critical: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
+                      Critical:
+                        'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
                       High: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
                       Medium:
                         'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',

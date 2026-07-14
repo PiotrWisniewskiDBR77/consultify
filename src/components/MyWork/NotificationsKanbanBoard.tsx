@@ -234,9 +234,7 @@ const KanbanCardContent: React.FC<{
         </div>
         <h4
           className={`text-sm mb-1 line-clamp-2 leading-snug flex-1 ${
-            isRead
-              ? 'text-c-text-secondary'
-              : 'font-medium text-c-text'
+            isRead ? 'text-c-text-secondary' : 'font-medium text-c-text'
           }`}
         >
           {notification.title || 'Untitled notification'}
@@ -759,10 +757,7 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
-            <Bell
-              size={48}
-              className="text-c-text-muted mb-4"
-            />
+            <Bell size={48} className="text-c-text-muted mb-4" />
             <h3 className="text-lg font-medium text-c-text-secondary mb-2">
               {t('myWork.notifications.emptyTitle', 'No notifications')}
             </h3>

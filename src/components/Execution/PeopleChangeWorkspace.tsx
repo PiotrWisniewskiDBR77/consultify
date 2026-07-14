@@ -386,7 +386,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
             title={t('capability.empty', 'No capabilities defined yet.')}
             description={t(
               'capability.emptyDesc',
-              'Define capabilities to plan the change effort.',
+              'Define capabilities to plan the change effort.'
             )}
           />
         ) : (
@@ -679,7 +679,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
             title={t('stakeholder.noSegments', 'No segments defined.')}
             description={t(
               'stakeholder.noSegmentsDesc',
-              'Add stakeholder segments to tailor communications.',
+              'Add stakeholder segments to tailor communications.'
             )}
           />
         ) : (

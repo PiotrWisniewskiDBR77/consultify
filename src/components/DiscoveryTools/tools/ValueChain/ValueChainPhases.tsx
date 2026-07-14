@@ -17,9 +17,9 @@ import React, { useMemo, useState } from 'react';
 import {
   ProposalCardType,
   ToolSession,
+  useToolStore,
   ValueActivityId,
   ValueChainData,
-  useToolStore,
 } from '@/store/useToolStore';
 
 import { CreateInitiativeFromMoveButton } from '../../shared/createInitiativeFromMove';

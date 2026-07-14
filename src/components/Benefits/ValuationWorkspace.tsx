@@ -592,7 +592,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   title={t('valuation.list.loadErrorTitle', 'Could not load valuations')}
                   description={t(
                     'valuation.list.loadErrorDesc',
-                    'The valuations source could not be reached. Check your connection and try again.',
+                    'The valuations source could not be reached. Check your connection and try again.'
                   )}
                   onRetry={() => {
                     void fetchValuations();
@@ -605,7 +605,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   title={t('valuation.list.empty', 'No valuations yet. Create one to start.')}
                   description={t(
                     'valuation.list.emptyDesc',
-                    'Create a valuation to estimate value from a model or budget.',
+                    'Create a valuation to estimate value from a model or budget.'
                   )}
                   primaryAction={{
                     label: t('valuation.create.cta', 'New valuation'),
@@ -1165,7 +1165,9 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   )}
                                 </h4>
                               </div>
-                              <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-xs">
+                              <table
+                                /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-xs"
+                              >
                                 <thead>
                                   <tr className="text-c-text-muted border-b border-c-border-subtle dark:border-c-border-subtle">
                                     <th className="px-3 py-1.5 text-left">

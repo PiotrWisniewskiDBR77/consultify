@@ -80,8 +80,7 @@ describe('M19 presentations — no raw error text in 5xx response bodies', () =>
 
     // Capture each `res.status(5NN)...json({ ... })` body (non-greedy to the
     // first closing brace of the json object).
-    const bodies =
-      flat.match(/res\s*\.?\s*status\(5\d\d\)\s*\.json\(\{[^}]*\}/g) || [];
+    const bodies = flat.match(/res\s*\.?\s*status\(5\d\d\)\s*\.json\(\{[^}]*\}/g) || [];
     expect(bodies.length, 'expected at least one 5xx response body').toBeGreaterThan(0);
 
     const LEAKY =

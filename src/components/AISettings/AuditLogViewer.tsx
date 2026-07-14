@@ -172,9 +172,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         <div className="flex items-center gap-2">
           <History className="w-5 h-5 text-c-accent" />
           <h3 className="font-semibold text-white">Settings Audit Log</h3>
-          <span className="text-xs text-c-text-muted">
-            ({filteredEntries.length} entries)
-          </span>
+          <span className="text-xs text-c-text-muted">({filteredEntries.length} entries)</span>
         </div>
 
         <div className="flex items-center gap-2">

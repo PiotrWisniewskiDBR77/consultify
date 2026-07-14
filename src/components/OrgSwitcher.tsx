@@ -155,7 +155,9 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
                       disabled:opacity-50`}
                   >
                     <div className="w-4 shrink-0 flex items-center justify-center">
-                      {isCurrent && <Check size={14} className="text-slate-700 dark:text-slate-200" />}
+                      {isCurrent && (
+                        <Check size={14} className="text-slate-700 dark:text-slate-200" />
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">

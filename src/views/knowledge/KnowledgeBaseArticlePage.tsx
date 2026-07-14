@@ -463,7 +463,10 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           </div>
           <div className="relative z-10 flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
-              <BookOpen size={48} className="mx-auto text-c-text-secondary mb-4 dark:text-c-text-muted" />
+              <BookOpen
+                size={48}
+                className="mx-auto text-c-text-secondary mb-4 dark:text-c-text-muted"
+              />
               {redirectInfo?.redirectSlug ? (
                 <>
                   <h2 className="text-xl font-bold text-c-text mb-2 dark:text-c-text">
@@ -549,10 +552,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           {/* Deprecation banner */}
           {redirectInfo?.deprecationReason && (
             <div className="max-w-3xl mx-auto mb-6 rounded-xl border-l-2 border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)] px-4 py-3 text-sm text-c-text-secondary flex items-start gap-3">
-              <AlertTriangle
-                size={18}
-                className="flex-shrink-0 mt-0.5 text-c-danger"
-              />
+              <AlertTriangle size={18} className="flex-shrink-0 mt-0.5 text-c-danger" />
               <div>
                 <p className="font-bold">
                   {t('kb.article.deprecated', 'This article has been deprecated')}

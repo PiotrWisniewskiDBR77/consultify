@@ -3,10 +3,10 @@
  * Publiczny barrel.
  */
 
-export { TemplateBuilder, TemplateBuilderFlow, DEMO_THEME_OPTIONS } from './TemplateBuilder';
-export type { TemplateBuilderProps, TemplateBuilderFlowProps } from './TemplateBuilder';
-export { TemplateBuilderShell } from './TemplateBuilderShell';
-export { TemplateCreateWizard } from './TemplateCreateWizard';
+export type { TemplateBuilderFlowProps, TemplateBuilderProps } from './TemplateBuilder';
+export { DEMO_THEME_OPTIONS, TemplateBuilder, TemplateBuilderFlow } from './TemplateBuilder';
 export { saveTemplate } from './templateBuilderApi';
 export { isTemplateBuilderEnabled } from './templateBuilderFlags';
 export * from './templateBuilderModel';
+export { TemplateBuilderShell } from './TemplateBuilderShell';
+export { TemplateCreateWizard } from './TemplateCreateWizard';

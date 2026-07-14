@@ -139,7 +139,10 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     res.json({
-      initiatives: await initiativeGovernanceService.getGoalInitiatives(id.orgId, req.params.goalId),
+      initiatives: await initiativeGovernanceService.getGoalInitiatives(
+        id.orgId,
+        req.params.goalId
+      ),
     });
   })
 );
@@ -333,7 +336,10 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     res.json({
-      decisions: await initiativeGovernanceService.getInitiativeDecisions(id.orgId, req.params.initiativeId),
+      decisions: await initiativeGovernanceService.getInitiativeDecisions(
+        id.orgId,
+        req.params.initiativeId
+      ),
     });
   })
 );

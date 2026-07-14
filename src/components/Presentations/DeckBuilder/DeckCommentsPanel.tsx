@@ -193,7 +193,10 @@ export function DeckCommentsPanel({
   );
 
   const visibleThreads = useMemo(
-    () => (filter === 'all' ? threads : threads.filter((thr) => (filter === 'resolved' ? thr.resolved : !thr.resolved))),
+    () =>
+      filter === 'all'
+        ? threads
+        : threads.filter((thr) => (filter === 'resolved' ? thr.resolved : !thr.resolved)),
     [filter, threads]
   );
 
@@ -228,7 +231,13 @@ export function DeckCommentsPanel({
             )}
           </p>
         </div>
-        <Button type="button" size="sm" variant="ghost" onClick={() => void refresh()} disabled={loading}>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => void refresh()}
+          disabled={loading}
+        >
           {loading
             ? t('presentations.comments.loading', 'Loading…')
             : t('presentations.comments.refresh', 'Refresh')}
@@ -289,7 +298,9 @@ export function DeckCommentsPanel({
               aria-selected={active}
               onClick={() => setFilter(option.id)}
               className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                active ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary hover:text-c-text'
+                active
+                  ? 'bg-c-surface-raised text-c-text'
+                  : 'text-c-text-secondary hover:text-c-text'
               }`}
               data-testid={`deck-comments-filter-${option.id}`}
             >

@@ -48,7 +48,11 @@ export interface DerivedTensionCandidate {
   weight: number;
 }
 
-const PAIRING: { type: SwotTensionType; internal: SWOTItem['quadrant']; external: SWOTItem['quadrant'] }[] = [
+const PAIRING: {
+  type: SwotTensionType;
+  internal: SWOTItem['quadrant'];
+  external: SWOTItem['quadrant'];
+}[] = [
   { type: 'SO', internal: 'strengths', external: 'opportunities' },
   { type: 'WO', internal: 'weaknesses', external: 'opportunities' },
   { type: 'ST', internal: 'strengths', external: 'threats' },
@@ -116,9 +120,9 @@ export function computeTensionCoverage(
     (t) => t.proposalStatus !== 'rejected' && t.proposalStatus !== 'rethinking'
   );
   const postureToType = new Map<SWOTTension['type'], SwotTensionType>(
-    (Object.entries(TENSION_TYPE_TO_POSTURE) as [SwotTensionType, { type: SWOTTension['type'] }][]).map(
-      ([tensionType, { type }]) => [type, tensionType]
-    )
+    (
+      Object.entries(TENSION_TYPE_TO_POSTURE) as [SwotTensionType, { type: SWOTTension['type'] }][]
+    ).map(([tensionType, { type }]) => [type, tensionType])
   );
   const coveredSet = new Set<SwotTensionType>();
   activeTensions.forEach((t) => {
@@ -201,7 +205,8 @@ export function validateRecommendedMove(
     issues.push({
       code: 'unlinked-rationale',
       messageEn: 'Move is linked to no SWOT items or tensions — its rationale is untraceable.',
-      messagePl: 'Ruch nie jest powiązany z żadnym elementem SWOT ani napięciem — uzasadnienie jest niesprawdzalne.',
+      messagePl:
+        'Ruch nie jest powiązany z żadnym elementem SWOT ani napięciem — uzasadnienie jest niesprawdzalne.',
     });
   } else {
     const dangling = [
@@ -220,7 +225,8 @@ export function validateRecommendedMove(
   if (!move.tradeoff) {
     issues.push({
       code: 'missing-tradeoff',
-      messageEn: 'Move has no trade-off — a recommendation without a trade-off is a list, not a decision (W2).',
+      messageEn:
+        'Move has no trade-off — a recommendation without a trade-off is a list, not a decision (W2).',
       messagePl: 'Ruch nie ma trade-offu — rekomendacja bez trade-offu to lista, nie decyzja (W2).',
     });
   } else if (
@@ -230,8 +236,10 @@ export function validateRecommendedMove(
   ) {
     issues.push({
       code: 'incomplete-tradeoff',
-      messageEn: 'Trade-off is incomplete — it must name what is chosen, what is deferred, and at what cost.',
-      messagePl: 'Trade-off jest niekompletny — musi nazywać co wybieramy, co odkładamy i kosztem czego.',
+      messageEn:
+        'Trade-off is incomplete — it must name what is chosen, what is deferred, and at what cost.',
+      messagePl:
+        'Trade-off jest niekompletny — musi nazywać co wybieramy, co odkładamy i kosztem czego.',
     });
   }
 
@@ -242,8 +250,10 @@ export function validateRecommendedMove(
   ) {
     issues.push({
       code: 'missing-rejected-alternative',
-      messageEn: 'Move names no rejected alternative — which option was considered and why was it dropped?',
-      messagePl: 'Ruch nie wskazuje odrzuconego wariantu — jaka opcja była rozważana i dlaczego odpadła?',
+      messageEn:
+        'Move names no rejected alternative — which option was considered and why was it dropped?',
+      messagePl:
+        'Ruch nie wskazuje odrzuconego wariantu — jaka opcja była rozważana i dlaczego odpadła?',
     });
   }
 

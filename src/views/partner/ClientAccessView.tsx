@@ -24,9 +24,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '../../services/api';
 import { FilterableTable, type FilterChip } from '../../components/shared/ModuleHub';
 import { EntityStatusChip } from '../../components/ui/primitives/chips';
+import { Api } from '../../services/api';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,

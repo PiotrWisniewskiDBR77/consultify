@@ -42,10 +42,13 @@ interface ApiResponse {
 }
 
 const NODE_COLORS: Record<DriverNode['type'], string> = {
-  objective: 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-800 dark:text-indigo-200',
-  driver: 'bg-sky-100 dark:bg-sky-900/30 border-sky-300 dark:border-sky-600 text-sky-800 dark:text-sky-200',
+  objective:
+    'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-800 dark:text-indigo-200',
+  driver:
+    'bg-sky-100 dark:bg-sky-900/30 border-sky-300 dark:border-sky-600 text-sky-800 dark:text-sky-200',
   kpi: 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-600 text-emerald-800 dark:text-emerald-200',
-  initiative: 'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200',
+  initiative:
+    'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200',
 };
 
 const NODE_ICONS: Record<DriverNode['type'], React.ReactNode> = {
@@ -84,21 +87,30 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, children, depth, allNodes, ad
             <div className="w-4 h-px bg-slate-300 dark:bg-slate-600" />
           </div>
         )}
-        <div className={`group flex items-start gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer max-w-xs ${NODE_COLORS[node.type]}`}
+        <div
+          className={`group flex items-start gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer max-w-xs ${NODE_COLORS[node.type]}`}
           onClick={() => setExpanded((e) => !e)}
         >
           <div className="mt-0.5 shrink-0 opacity-60">{NODE_ICONS[node.type]}</div>
           <div className="min-w-0">
-            <div className="font-medium text-xs opacity-60 uppercase tracking-wide">{typeLabel}</div>
-            <div className="font-semibold truncate max-w-[180px]" title={node.label}>{node.label}</div>
+            <div className="font-medium text-xs opacity-60 uppercase tracking-wide">
+              {typeLabel}
+            </div>
+            <div className="font-semibold truncate max-w-[180px]" title={node.label}>
+              {node.label}
+            </div>
             {(node.rolledUpValue != null || node.value != null) && (
               <div className="text-xs opacity-75 mt-0.5">
                 {node.rolledUpValue != null ? fmtVal(node.rolledUpValue) : fmtVal(node.value)}
-                {node.target != null && <span className="opacity-60"> / {fmtVal(node.target)}</span>}
+                {node.target != null && (
+                  <span className="opacity-60"> / {fmtVal(node.target)}</span>
+                )}
               </div>
             )}
             {node.confidence != null && (
-              <div className="text-xs mt-0.5 opacity-60">{Math.round(node.confidence * 100)}% confidence</div>
+              <div className="text-xs mt-0.5 opacity-60">
+                {Math.round(node.confidence * 100)}% confidence
+              </div>
             )}
           </div>
           {children.length > 0 && (
@@ -174,7 +186,10 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
 
   if (loading) {
     return (
-      <div data-testid="value-driver-tree-loading" className="flex items-center justify-center py-8 text-slate-400 text-sm">
+      <div
+        data-testid="value-driver-tree-loading"
+        className="flex items-center justify-center py-8 text-slate-400 text-sm"
+      >
         <GitBranch size={16} className="mr-2 animate-pulse" />
         {t('common.loading', 'Loading...')}
       </div>
@@ -195,12 +210,20 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
       <div className="flex flex-wrap gap-3">
         {[
           { label: t('results.driverTree.stats.kpis', 'KPI'), value: data.stats.kpiCount },
-          { label: t('results.driverTree.stats.initiatives', 'Initiatives'), value: data.stats.initiativeCount },
+          {
+            label: t('results.driverTree.stats.initiatives', 'Initiatives'),
+            value: data.stats.initiativeCount,
+          },
           { label: t('results.driverTree.stats.nodes', 'Nodes'), value: data.stats.totalNodes },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-3 py-2">
+          <div
+            key={s.label}
+            className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-3 py-2"
+          >
             <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
-            <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">{s.value}</div>
+            <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {s.value}
+            </div>
           </div>
         ))}
       </div>
@@ -208,7 +231,10 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
       {/* Legend */}
       <div className="flex flex-wrap gap-2 text-xs">
         {(['objective', 'driver', 'kpi', 'initiative'] as const).map((type) => (
-          <div key={type} className={`flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs ${NODE_COLORS[type]}`}>
+          <div
+            key={type}
+            className={`flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs ${NODE_COLORS[type]}`}
+          >
             {NODE_ICONS[type]}
             <span>{t(`results.driverTree.type.${type}`, type)}</span>
           </div>
@@ -218,7 +244,10 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
       {/* Tree */}
       {roots.length === 0 ? (
         <div className="py-6 text-center text-sm text-slate-400">
-          {t('results.driverTree.noLinks', 'No KPI–initiative links. Link KPIs to initiatives in the KPI tab.')}
+          {t(
+            'results.driverTree.noLinks',
+            'No KPI–initiative links. Link KPIs to initiatives in the KPI tab.'
+          )}
         </div>
       ) : (
         <div className="space-y-3 overflow-auto">

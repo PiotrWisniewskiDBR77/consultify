@@ -171,7 +171,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
 
       {/* Matrix Table */}
       <div className="matrix-table-wrapper">
-        <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="matrix-table">
+        <table
+          /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="matrix-table"
+        >
           <thead>
             <tr>
               <th className="level-header">{isPolish ? 'Poziom' : 'Level'}</th>

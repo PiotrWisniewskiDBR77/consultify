@@ -13,12 +13,11 @@
  *   output -> { comparisons[], moves[] } with rationale/tradeOff/rejectedVariant
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { GrowthPathsData } from '@/store/useToolStore';
 
 import { localizeLadder } from './index';
-import { rankGrowthPaths, buildW2MoveSequence } from './moveValidator';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+import { buildW2MoveSequence, rankGrowthPaths } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

@@ -76,7 +76,12 @@ export function predictDelayRisk(inp: PredictionInputs): Prediction {
     reasons.push(`${inp.blockers} active blocker(s)`);
   }
   // late AND low completion compounds
-  if (inp.percentComplete != null && inp.percentComplete < 0.5 && inp.spi != null && inp.spi < 0.9) {
+  if (
+    inp.percentComplete != null &&
+    inp.percentComplete < 0.5 &&
+    inp.spi != null &&
+    inp.spi < 0.9
+  ) {
     score += 10;
     reasons.push('low completion while already behind');
   }

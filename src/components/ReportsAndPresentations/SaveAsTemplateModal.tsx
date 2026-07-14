@@ -93,7 +93,11 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(String(err?.error || (isPolish ? 'Nie udało się zapisać wzorca' : 'Failed to save template')));
+        throw new Error(
+          String(
+            err?.error || (isPolish ? 'Nie udało się zapisać wzorca' : 'Failed to save template')
+          )
+        );
       }
       const payload = (await res.json().catch(() => ({}))) as { data?: { artifactId?: string } };
       const templateArtifactId =
@@ -113,7 +117,10 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-40" onClick={isSubmitting ? undefined : onClose} />
+      <div
+        className="fixed inset-0 bg-black/60 z-40"
+        onClick={isSubmitting ? undefined : onClose}
+      />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
@@ -122,9 +129,7 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
                 {isPolish ? 'Zapisz jako wzorzec' : 'Save as template'}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 text-sm">
-                {isPolish
-                  ? `Na podstawie: ${source.title}`
-                  : `Based on: ${source.title}`}
+                {isPolish ? `Na podstawie: ${source.title}` : `Based on: ${source.title}`}
               </p>
             </div>
             <button
@@ -145,7 +150,9 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={isPolish ? 'np. Raport tygodniowy — wzorzec' : 'e.g. Weekly report — template'}
+                placeholder={
+                  isPolish ? 'np. Raport tygodniowy — wzorzec' : 'e.g. Weekly report — template'
+                }
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm placeholder-slate-500"
                 autoFocus
               />

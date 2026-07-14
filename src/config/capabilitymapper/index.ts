@@ -15,9 +15,9 @@ import {
   type SourcingArchetype,
 } from './deepeningLadder';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {

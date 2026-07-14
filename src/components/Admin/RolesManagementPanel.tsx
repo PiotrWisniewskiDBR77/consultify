@@ -766,7 +766,9 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                     {permission.description}
                                   </p>
                                 </div>
-                                {isSelected && <Check className="text-slate-700 dark:text-slate-200" size={16} />}
+                                {isSelected && (
+                                  <Check className="text-slate-700 dark:text-slate-200" size={16} />
+                                )}
                               </label>
                             );
                           })}

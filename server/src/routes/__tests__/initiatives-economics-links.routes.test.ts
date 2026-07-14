@@ -97,7 +97,11 @@ describe('GET /api/initiatives/:id/economics-links — contract', () => {
     mockQueryOne.mockResolvedValue({ id: 'init-1' }); // initiative exists in ORG
     mockGetLinkages.mockResolvedValue([
       makeLinkage(),
-      makeLinkage({ linkageId: 'lnk_2', linkageType: 'forecast', status: 'stale_vs_finance_model' }),
+      makeLinkage({
+        linkageId: 'lnk_2',
+        linkageType: 'forecast',
+        status: 'stale_vs_finance_model',
+      }),
     ]);
 
     const res = await request(createApp()).get('/api/initiatives/init-1/economics-links');

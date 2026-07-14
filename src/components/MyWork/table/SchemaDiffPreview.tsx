@@ -162,9 +162,7 @@ const FieldRow: React.FC<{
       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent ${bgClass} transition-colors`}
     >
       <Columns3 size={12} className="text-c-text-secondary flex-shrink-0" />
-      <span className="text-xs font-medium text-c-text min-w-[100px]">
-        {field.name}
-      </span>
+      <span className="text-xs font-medium text-c-text min-w-[100px]">{field.name}</span>
       <span className="text-[10px] text-c-text-muted font-mono px-1.5 py-0.5 rounded bg-c-surface-raised">
         {field.type}
       </span>

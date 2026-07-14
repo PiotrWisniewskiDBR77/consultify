@@ -23,10 +23,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
-import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
@@ -42,9 +42,9 @@ import {
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
-import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
-import { deliverableKickoffSeed, deliverableTypeLabel } from './deliverableKickoff';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
+import { deliverableKickoffSeed, deliverableTypeLabel } from './deliverableKickoff';
+import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import {
   type CanvasOutputResource,
   type LauncherSelection,
@@ -247,10 +247,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // included, no Teresa seeding needed) — just take the user to it.
   const handleCanvasOutputCreated = useCallback(
     (output: CanvasOutputResource) => {
-      const successMsg = t(
-        'rap.outputs.launcher.canvasConvertSuccess',
-        'Created from canvas'
-      );
+      const successMsg = t('rap.outputs.launcher.canvasConvertSuccess', 'Created from canvas');
       toast.success(`${output.title} — ${successMsg}`);
       if (output.url) {
         navigate(output.url);
@@ -585,9 +582,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         >
           <Filter size={16} />
           <span>{t('common.filters', 'Filters')}</span>
-          {activeCount > 0 ? (
-            <span className={MENU_3_BADGE_ACTIVE}>{activeCount}</span>
-          ) : null}
+          {activeCount > 0 ? <span className={MENU_3_BADGE_ACTIVE}>{activeCount}</span> : null}
         </button>
 
         {filtersOpen && (

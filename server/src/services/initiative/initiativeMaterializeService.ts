@@ -20,17 +20,17 @@ import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { validateInitiativeCard } from '../cardContentFormulaValidator.js';
 import {
-  tableSchemaToWorkbook,
-  buildWorkbookBuffer,
-  type TableSchemaLike,
-} from '../workbook/WorkbookBuilder.js';
-import {
   contentToDocumentSchema,
   safeBundleBaseName,
 } from '../deliverables/bundleExportRuntime.js';
-import { renderDocumentSchemaToDocxBuffer } from '../documentStudio/documentDocxRenderer.js';
-import { deckPlansToPptxBuffer, type DeckPlanSlide } from '../deliverables/bundlePptxRuntime.js';
+import { type DeckPlanSlide, deckPlansToPptxBuffer } from '../deliverables/bundlePptxRuntime.js';
 import type { BusinessPlanSpine } from '../deliverables/businessPlanSpine.js';
+import { renderDocumentSchemaToDocxBuffer } from '../documentStudio/documentDocxRenderer.js';
+import {
+  buildWorkbookBuffer,
+  type TableSchemaLike,
+  tableSchemaToWorkbook,
+} from '../workbook/WorkbookBuilder.js';
 
 const LOG = '[initiativeMaterializeService]';
 
@@ -110,7 +110,7 @@ function ownerFromRow(row: Record<string, unknown>): string | null {
 async function loadInitiative(
   db: MaterializeDb,
   initiativeId: string,
-  orgId?: string,
+  orgId?: string
 ): Promise<InitiativeView | null> {
   const params: unknown[] = [initiativeId];
   let where = 'i.id = ?';
@@ -125,7 +125,7 @@ async function loadInitiative(
      LEFT JOIN users ob ON i.owner_business_id = ob.id
      WHERE ${where}
      LIMIT 1`,
-    params,
+    params
   );
   if (!row) return null;
 
@@ -135,7 +135,7 @@ async function loadInitiative(
     const mrows = await db.queryAll<Record<string, unknown>>(
       `SELECT name, status, target_date FROM initiative_milestones
        WHERE initiative_id = ? ORDER BY order_index ASC, target_date ASC`,
-      [initiativeId],
+      [initiativeId]
     );
     milestones = (mrows ?? []).map((m) => ({
       name: orDash(str(m.name)),
@@ -143,13 +143,15 @@ async function loadInitiative(
       targetDate: str(m.target_date),
     }));
   } catch (err) {
-    logger.warn(`${LOG} milestones load failed (degraded): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} milestones load failed (degraded): ${err instanceof Error ? err.message : String(err)}`
+    );
   }
   const progressPct = milestones.length
     ? Math.round(
         (milestones.filter((m) => (m.status ?? '').toUpperCase() === 'COMPLETED').length /
           milestones.length) *
-          100,
+          100
       )
     : null;
 
@@ -159,7 +161,7 @@ async function loadInitiative(
     const kpi = await db.queryOne<Record<string, unknown>>(
       `SELECT name, target_value, unit FROM initiative_kpis
        WHERE initiative_id = ? ORDER BY is_primary DESC, sort_order ASC LIMIT 1`,
-      [initiativeId],
+      [initiativeId]
     );
     if (kpi) {
       const name = str(kpi.name);
@@ -170,7 +172,9 @@ async function loadInitiative(
       }
     }
   } catch (err) {
-    logger.warn(`${LOG} kpi load failed (degraded): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} kpi load failed (degraded): ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   return {
@@ -203,7 +207,7 @@ async function loadPortfolio(db: MaterializeDb, orgId: string): Promise<Initiati
      LEFT JOIN users ob ON i.owner_business_id = ob.id
      WHERE i.organization_id = ?
      ORDER BY i.created_at DESC`,
-    [orgId],
+    [orgId]
   );
   const views: InitiativeView[] = [];
   for (const row of rows ?? []) {
@@ -214,21 +218,24 @@ async function loadPortfolio(db: MaterializeDb, orgId: string): Promise<Initiati
     try {
       const mrows = await db.queryAll<Record<string, unknown>>(
         `SELECT status FROM initiative_milestones WHERE initiative_id = ?`,
-        [id],
+        [id]
       );
       if (mrows?.length) {
-        const done = mrows.filter((m) => String(m.status ?? '').toUpperCase() === 'COMPLETED').length;
+        const done = mrows.filter(
+          (m) => String(m.status ?? '').toUpperCase() === 'COMPLETED'
+        ).length;
         progressPct = Math.round((done / mrows.length) * 100);
       }
       const kpi = await db.queryOne<Record<string, unknown>>(
         `SELECT name, target_value, unit FROM initiative_kpis
          WHERE initiative_id = ? ORDER BY is_primary DESC, sort_order ASC LIMIT 1`,
-        [id],
+        [id]
       );
       if (kpi && str(kpi.name)) {
         const target = num(kpi.target_value);
         const unit = str(kpi.unit);
-        primaryKpi = target !== null ? `${str(kpi.name)}: ${target}${unit ? ` ${unit}` : ''}` : str(kpi.name);
+        primaryKpi =
+          target !== null ? `${str(kpi.name)}: ${target}${unit ? ` ${unit}` : ''}` : str(kpi.name);
       }
     } catch {
       // fail-soft per-row enrichment
@@ -289,7 +296,9 @@ async function materializeTable(views: InitiativeView[], title: string): Promise
     const wb = tableSchemaToWorkbook(schema, { title, headerColor: '4472C4' });
     return await buildWorkbookBuffer(wb);
   } catch (err) {
-    logger.warn(`${LOG} table materialize failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} table materialize failed: ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }
@@ -347,7 +356,7 @@ function initiativeReportSections(v: InitiativeView): GenContentSection[] {
           type: 'bulletList',
           content: {
             items: v.milestones.map(
-              (m) => `${m.name} — ${orDash(m.status)}${m.targetDate ? ` (${m.targetDate})` : ''}`,
+              (m) => `${m.name} — ${orDash(m.status)}${m.targetDate ? ` (${m.targetDate})` : ''}`
             ),
           },
         },
@@ -365,7 +374,7 @@ interface GenContentSection {
 async function materializeReport(
   views: InitiativeView[],
   company: string,
-  portfolio: boolean,
+  portfolio: boolean
 ): Promise<Buffer | null> {
   try {
     if (!views.length) return null;
@@ -381,7 +390,7 @@ async function materializeReport(
                 items: views.map(
                   (v) =>
                     `${orDash(v.name)} — status ${orDash(v.status)}, właściciel ${orDash(v.ownerName)}, ` +
-                    `postęp ${v.progressPct === null ? DASH : `${v.progressPct}%`}, ROI ${fmtRoi(v.expectedRoi)}`,
+                    `postęp ${v.progressPct === null ? DASH : `${v.progressPct}%`}, ROI ${fmtRoi(v.expectedRoi)}`
                 ),
               },
             },
@@ -395,7 +404,9 @@ async function materializeReport(
     const schema = contentToDocumentSchema({ sections } as never, spineStub(company));
     return await renderDocumentSchemaToDocxBuffer(schema);
   } catch (err) {
-    logger.warn(`${LOG} report materialize failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} report materialize failed: ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }
@@ -404,9 +415,18 @@ async function materializeReport(
 // DECK — initiative(s) → deck plans → PPTX (M17 minimal renderer, fail-soft)
 // ════════════════════════════════════════════════════════════════════════
 
-function initiativeDeckPlans(views: InitiativeView[], portfolio: boolean, title: string): DeckPlanSlide[] {
+function initiativeDeckPlans(
+  views: InitiativeView[],
+  portfolio: boolean,
+  title: string
+): DeckPlanSlide[] {
   const plans: DeckPlanSlide[] = [];
-  plans.push({ slideIndex: 0, layoutIntent: 'cover', title, keyMessage: portfolio ? 'Portfel inicjatyw' : orDash(views[0]?.name) });
+  plans.push({
+    slideIndex: 0,
+    layoutIntent: 'cover',
+    title,
+    keyMessage: portfolio ? 'Portfel inicjatyw' : orDash(views[0]?.name),
+  });
   if (portfolio) {
     plans.push({
       slideIndex: 1,
@@ -457,15 +477,19 @@ function initiativeDeckPlans(views: InitiativeView[], portfolio: boolean, title:
 async function materializeDeck(
   views: InitiativeView[],
   company: string,
-  portfolio: boolean,
+  portfolio: boolean
 ): Promise<Buffer | null> {
   try {
     if (!views.length) return null;
-    const title = portfolio ? `${company} — Portfel inicjatyw` : `${company} — ${orDash(views[0].name)}`;
+    const title = portfolio
+      ? `${company} — Portfel inicjatyw`
+      : `${company} — ${orDash(views[0].name)}`;
     const plans = initiativeDeckPlans(views, portfolio, title);
     return await deckPlansToPptxBuffer(plans, { title, company, language: 'pl' });
   } catch (err) {
-    logger.warn(`${LOG} deck materialize failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} deck materialize failed: ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }
@@ -498,14 +522,14 @@ function logFormulaVerdictAdvisory(view: InitiativeView): void {
     if (!verdict.pass) {
       logger.warn(
         `${LOG} initiative "${view.name}" (id=${view.id}) failed CARD_CONTENT_FORMULA ` +
-          `(score ${verdict.score}/100): ${verdict.violationCodes.join(', ')}`,
+          `(score ${verdict.score}/100): ${verdict.violationCodes.join(', ')}`
       );
     }
   } catch (err) {
     logger.warn(
       `${LOG} CARD_CONTENT_FORMULA validation skipped (fail-soft): ${
         err instanceof Error ? err.message : String(err)
-      }`,
+      }`
     );
   }
 }
@@ -513,7 +537,7 @@ function logFormulaVerdictAdvisory(view: InitiativeView): void {
 function resultFor(
   format: MaterializeFormat,
   buffer: Buffer | null,
-  baseName: string,
+  baseName: string
 ): MaterializeResult | null {
   if (!buffer || buffer.length === 0) return null;
   return {
@@ -533,7 +557,7 @@ export async function materializeInitiative(
   db: MaterializeDb,
   initiativeId: string,
   format: MaterializeFormat,
-  opts: { orgId?: string; company?: string } = {},
+  opts: { orgId?: string; company?: string } = {}
 ): Promise<MaterializeResult | null> {
   try {
     const view = await loadInitiative(db, initiativeId, opts.orgId);
@@ -550,7 +574,9 @@ export async function materializeInitiative(
     else if (format === 'deck') buffer = await materializeDeck([view], company, false);
     return resultFor(format, buffer, baseName);
   } catch (err) {
-    logger.warn(`${LOG} materializeInitiative failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} materializeInitiative failed: ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }
@@ -563,7 +589,7 @@ export async function materializePortfolio(
   db: MaterializeDb,
   orgId: string,
   format: MaterializeFormat,
-  opts: { company?: string } = {},
+  opts: { company?: string } = {}
 ): Promise<MaterializeResult | null> {
   try {
     const views = await loadPortfolio(db, orgId);
@@ -578,7 +604,9 @@ export async function materializePortfolio(
     else if (format === 'deck') buffer = await materializeDeck(views, company, true);
     return resultFor(format, buffer, 'portfel-inicjatyw');
   } catch (err) {
-    logger.warn(`${LOG} materializePortfolio failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} materializePortfolio failed: ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }

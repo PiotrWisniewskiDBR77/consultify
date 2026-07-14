@@ -5,21 +5,21 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  FINANCE_SAAS_3STMT,
+  FINANCE_SAAS_3STMT_DRIVERS,
+  financialDriversToAssumptions,
+} from '../assumptionsFinanceDrivers.js';
+import {
   applyUserEdit,
+  type Assumption,
   auditCoverage,
   buildAiAssumption,
   detectMissingDrivers,
   diffAssumptions,
   listAssumptions,
   markSource,
-  type Assumption,
   type RequiredDriver,
 } from '../assumptionsRegistry.js';
-import {
-  FINANCE_SAAS_3STMT,
-  FINANCE_SAAS_3STMT_DRIVERS,
-  financialDriversToAssumptions,
-} from '../assumptionsFinanceDrivers.js';
 
 const req: RequiredDriver[] = [
   { key: 'b.two', label: 'Dwa', unit: '%', benchmarkHint: 0.2 },
@@ -27,8 +27,16 @@ const req: RequiredDriver[] = [
   { key: 'c.opt', label: 'Opcjonalny', unit: '×', optional: true },
 ];
 
-const mk = (key: string, value: number | null, source: Assumption['provenance']['source_type'] = 'imported'): Assumption => ({
-  key, label: key, value, unit: 'EUR', provenance: { source_type: source },
+const mk = (
+  key: string,
+  value: number | null,
+  source: Assumption['provenance']['source_type'] = 'imported'
+): Assumption => ({
+  key,
+  label: key,
+  value,
+  unit: 'EUR',
+  provenance: { source_type: source },
 });
 
 describe('detectMissingDrivers', () => {
@@ -54,7 +62,9 @@ describe('detectMissingDrivers', () => {
 describe('buildAiAssumption (krok „AI zakłada jawnie")', () => {
   it('opakowuje wartość callera w ai_assumed z rationale/confidence', () => {
     const a = buildAiAssumption({ key: 'a.one', label: 'Jeden', unit: 'EUR' }, 120, {
-      rationale: 'brak danych — benchmark SaaS B2B', confidence: 0.6, source_ref: 'Bessemer 2025',
+      rationale: 'brak danych — benchmark SaaS B2B',
+      confidence: 0.6,
+      source_ref: 'Bessemer 2025',
     });
     expect(a.value).toBe(120);
     expect(a.provenance.source_type).toBe('ai_assumed');
@@ -63,7 +73,9 @@ describe('buildAiAssumption (krok „AI zakłada jawnie")', () => {
 
   it('benchmarked=true → source_type benchmark; confidence clamp do 0..1', () => {
     const a = buildAiAssumption({ key: 'x', label: 'X', unit: '%' }, 0.2, {
-      rationale: 'r', confidence: 1.4, benchmarked: true,
+      rationale: 'r',
+      confidence: 1.4,
+      benchmarked: true,
     });
     expect(a.provenance.source_type).toBe('benchmark');
     expect(a.provenance.confidence).toBe(1);
@@ -83,7 +95,10 @@ describe('markSource / applyUserEdit', () => {
     const e = applyUserEdit(a, 150, 'user-7', '2026-07-11T10:00:00Z', 'korekta CFO');
     expect(e.value).toBe(150);
     expect(e.provenance).toMatchObject({
-      source_type: 'user', edited_by: 'user-7', edited_at: '2026-07-11T10:00:00Z', rationale: 'korekta CFO',
+      source_type: 'user',
+      edited_by: 'user-7',
+      edited_at: '2026-07-11T10:00:00Z',
+      rationale: 'korekta CFO',
     });
   });
 });
@@ -92,10 +107,20 @@ describe('listAssumptions (status + needsReview do UI)', () => {
   it('mapuje statusy i flaguje ai_assumed / missing / low-confidence do przeglądu', () => {
     const items: Assumption[] = [
       mk('imported.x', 10, 'imported'),
-      { key: 'assumed.x', value: 5, unit: '%', provenance: { source_type: 'ai_assumed', confidence: 0.8 } },
+      {
+        key: 'assumed.x',
+        value: 5,
+        unit: '%',
+        provenance: { source_type: 'ai_assumed', confidence: 0.8 },
+      },
       { key: 'edited.x', value: 7, unit: '%', provenance: { source_type: 'user' } },
       mk('missing.x', null, 'imported'),
-      { key: 'lowconf.x', value: 3, unit: '%', provenance: { source_type: 'benchmark', confidence: 0.2 } },
+      {
+        key: 'lowconf.x',
+        value: 3,
+        unit: '%',
+        provenance: { source_type: 'benchmark', confidence: 0.2 },
+      },
     ];
     const listed = listAssumptions(items);
     const byKey = Object.fromEntries(listed.map((l) => [l.key, l]));
@@ -155,7 +180,7 @@ describe('Finance example — mostek FinancialDrivers → rejestr', () => {
   it('per-klucz nadpisanie source_type', () => {
     const a = financialDriversToAssumptions(
       { cac: 1500 },
-      { defaultSourceType: 'imported', sourceTypeByKey: { 'ue.cac': 'user' } },
+      { defaultSourceType: 'imported', sourceTypeByKey: { 'ue.cac': 'user' } }
     );
     const cac = a.find((x) => x.key === 'ue.cac');
     expect(cac?.provenance.source_type).toBe('user');
@@ -164,10 +189,23 @@ describe('Finance example — mostek FinancialDrivers → rejestr', () => {
   it('opcjonalny opex_leverage nie liczy się jako brak w audycie', () => {
     // pełny komplet wymaganych, bez opex_leverage
     const full: Record<string, number> = {
-      saasPricePerSeatMonth: 40, saasSeatsStart: 500, saasSeatGrowthYoY: 1.6, grossChurnAnnual: 0.12,
-      nrr: 1.1, servicesRevenueStart: 200000, servicesGrowthYoY: 0.3, grossMargin: 0.8,
-      smPctRevenue: 0.45, rdPctRevenue: 0.24, gaPctRevenue: 0.2, daPctRevenue: 0.02,
-      cac: 1500, arpuAnnual: 5000, startingCash: 1000000, fundingRaised: 2000000, taxRate: 0.19,
+      saasPricePerSeatMonth: 40,
+      saasSeatsStart: 500,
+      saasSeatGrowthYoY: 1.6,
+      grossChurnAnnual: 0.12,
+      nrr: 1.1,
+      servicesRevenueStart: 200000,
+      servicesGrowthYoY: 0.3,
+      grossMargin: 0.8,
+      smPctRevenue: 0.45,
+      rdPctRevenue: 0.24,
+      gaPctRevenue: 0.2,
+      daPctRevenue: 0.02,
+      cac: 1500,
+      arpuAnnual: 5000,
+      startingCash: 1000000,
+      fundingRaised: 2000000,
+      taxRate: 0.19,
     };
     const assumptions = financialDriversToAssumptions(full);
     const audit = auditCoverage(FINANCE_SAAS_3STMT, FINANCE_SAAS_3STMT_DRIVERS, assumptions);
@@ -181,9 +219,18 @@ describe('Pętla §6 end-to-end (usuń ~30% wejścia → AI uzupełnia jawnie �
   it('BRAK→AI-zakłada→lista→edytuj→recompute-diff', () => {
     // 1. wejście z brakami (usunięte ~30% z 17 wymaganych: 5 pól)
     const partial: Record<string, number> = {
-      saasPricePerSeatMonth: 40, saasSeatsStart: 500, saasSeatGrowthYoY: 1.6, grossChurnAnnual: 0.12,
-      nrr: 1.1, servicesRevenueStart: 200000, servicesGrowthYoY: 0.3, grossMargin: 0.8,
-      smPctRevenue: 0.45, rdPctRevenue: 0.24, gaPctRevenue: 0.2, daPctRevenue: 0.02,
+      saasPricePerSeatMonth: 40,
+      saasSeatsStart: 500,
+      saasSeatGrowthYoY: 1.6,
+      grossChurnAnnual: 0.12,
+      nrr: 1.1,
+      servicesRevenueStart: 200000,
+      servicesGrowthYoY: 0.3,
+      grossMargin: 0.8,
+      smPctRevenue: 0.45,
+      rdPctRevenue: 0.24,
+      gaPctRevenue: 0.2,
+      daPctRevenue: 0.02,
       // BRAK: cac, arpuAnnual, startingCash, fundingRaised, taxRate
     };
     let assumptions = financialDriversToAssumptions(partial);
@@ -191,14 +238,16 @@ describe('Pętla §6 end-to-end (usuń ~30% wejścia → AI uzupełnia jawnie �
     // wykrycie braków — deterministycznie
     const missing = detectMissingDrivers(FINANCE_SAAS_3STMT_DRIVERS, assumptions);
     expect(missing.map((m) => m.key).sort()).toEqual(
-      ['capital.funding', 'capital.starting_cash', 'tax.rate', 'ue.arpu_annual', 'ue.cac'].sort(),
+      ['capital.funding', 'capital.starting_cash', 'tax.rate', 'ue.arpu_annual', 'ue.cac'].sort()
     );
 
     // 2. AI uzupełnia JAWNIE (wartości z callera/LLM; tu z benchmarkHint) → merge do rejestru
     const filled = missing.map((m) =>
       buildAiAssumption(m, m.benchmarkHint ?? 0, {
-        rationale: `brak w imporcie — benchmark ${m.label}`, confidence: 0.55, source_ref: 'benchmark FP&A',
-      }),
+        rationale: `brak w imporcie — benchmark ${m.label}`,
+        confidence: 0.55,
+        source_ref: 'benchmark FP&A',
+      })
     );
     const filledKeys = new Set(filled.map((f) => f.key));
     assumptions = [...assumptions.filter((a) => !filledKeys.has(a.key)), ...filled];
@@ -207,20 +256,31 @@ describe('Pętla §6 end-to-end (usuń ~30% wejścia → AI uzupełnia jawnie �
     const audit = auditCoverage(FINANCE_SAAS_3STMT, FINANCE_SAAS_3STMT_DRIVERS, assumptions);
     expect(audit.complete).toBe(true);
     expect(audit.assumedKeys.sort()).toEqual(
-      ['capital.funding', 'capital.starting_cash', 'tax.rate', 'ue.arpu_annual', 'ue.cac'].sort(),
+      ['capital.funding', 'capital.starting_cash', 'tax.rate', 'ue.arpu_annual', 'ue.cac'].sort()
     );
 
     // 4. użytkownik edytuje jedno ai_assumed → recompute-diff pokazuje deltę + zmianę źródła
     const before = assumptions;
     const idx = assumptions.findIndex((a) => a.key === 'ue.cac');
     const after = [...assumptions];
-    after[idx] = applyUserEdit(assumptions[idx], 2000, 'cfo-1', '2026-07-11T12:00:00Z', 'CFO: realny CAC');
+    after[idx] = applyUserEdit(
+      assumptions[idx],
+      2000,
+      'cfo-1',
+      '2026-07-11T12:00:00Z',
+      'CFO: realny CAC'
+    );
 
     const diff = diffAssumptions(before, after);
     expect(diff).toHaveLength(1);
     expect(diff[0]).toMatchObject({
-      key: 'ue.cac', kind: 'value_changed', from: 1500, to: 2000, deltaAbs: 500,
-      fromSource: 'ai_assumed', toSource: 'user',
+      key: 'ue.cac',
+      kind: 'value_changed',
+      from: 1500,
+      to: 2000,
+      deltaAbs: 500,
+      fromSource: 'ai_assumed',
+      toSource: 'user',
     });
 
     // po edycji cac już nie „do przeglądu"

@@ -59,9 +59,7 @@ function safeNumber(value: number | undefined, fallback: number): number {
  * Agreguje wpływ finansowy delt KPI per linia sprawozdania.
  * impact = kpiDelta × multiplier × sign(direction); sumowane per statementLineId.
  */
-export function aggregateKpiFinancialImpact(
-  mappings: KpiFinanceMapping[],
-): StatementLineImpact[] {
+export function aggregateKpiFinancialImpact(mappings: KpiFinanceMapping[]): StatementLineImpact[] {
   const byLine = new Map<string, StatementLineImpact>();
 
   for (const m of mappings) {
@@ -95,7 +93,7 @@ export function aggregateKpiFinancialImpact(
  * Zawsze zwraca komplet kluczy (brak danych = 0).
  */
 export function financialImpactByStatement(
-  impacts: StatementLineImpact[],
+  impacts: StatementLineImpact[]
 ): Record<StatementType, number> {
   const result: Record<StatementType, number> = {
     'P&L': 0,
@@ -115,9 +113,7 @@ export function financialImpactByStatement(
  * Mostkuje wpływy do formatu konsumowanego przez moduł M16 Finanse.
  * Każdy wpis jest oznaczony źródłem M15_BENEFITS (audytowalna proweniencja).
  */
-export function bridgeToFinanceModule(
-  impacts: StatementLineImpact[],
-): FinanceBridgeEntry[] {
+export function bridgeToFinanceModule(impacts: StatementLineImpact[]): FinanceBridgeEntry[] {
   return impacts.map((impact) => ({
     lineId: impact.statementLineId,
     statementType: impact.statementType,

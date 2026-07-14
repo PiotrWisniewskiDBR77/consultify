@@ -242,9 +242,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
-            {isPl ? 'Pola' : 'Fields'}
-          </h3>
+          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Pola' : 'Fields'}</h3>
           <div className="flex items-center gap-1">
             {!locked && (
               <button
@@ -622,9 +620,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
           <span className="text-[9px] font-bold text-c-text-secondary whitespace-nowrap">
             {item.label}:
           </span>
-          <span className="text-[9px] text-c-text-secondary break-all">
-            {item.value}
-          </span>
+          <span className="text-[9px] text-c-text-secondary break-all">{item.value}</span>
         </div>
       ))}
     </div>
@@ -692,9 +688,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
-            {isPl ? 'Nowe pole' : 'New Field'}
-          </h3>
+          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Nowe pole' : 'New Field'}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
@@ -791,9 +785,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
 
           {fieldType === 'rating' && (
             <div>
-              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                Max
-              </label>
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">Max</label>
               <input
                 type="number"
                 min={1}

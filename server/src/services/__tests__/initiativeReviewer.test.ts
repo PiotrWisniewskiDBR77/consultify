@@ -30,8 +30,8 @@ vi.mock('../initiativeSectionTypeService.js', () => ({
 }));
 
 import service, {
-  REVIEW_PASS_THRESHOLD,
   __resetLlmInstanceForTests,
+  REVIEW_PASS_THRESHOLD,
   type SectionReviewResult,
 } from '../initiativeGenerationService.js';
 

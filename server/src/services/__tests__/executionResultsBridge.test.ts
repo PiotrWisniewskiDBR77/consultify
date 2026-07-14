@@ -114,9 +114,7 @@ describe('executionResultsBridge — M14→M15 budget_health feed-forward', () =
       { kpi_id: 'kpi-2', name: 'Margin' },
     ]);
     // kpi-1 already has a pending signal; kpi-2 does not
-    mockDbGet
-      .mockResolvedValueOnce({ signal_id: 'existing-sig' })
-      .mockResolvedValueOnce(null);
+    mockDbGet.mockResolvedValueOnce({ signal_id: 'existing-sig' }).mockResolvedValueOnce(null);
 
     await exportBudgetHealthToResults(ORG, INITIATIVE);
 

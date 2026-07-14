@@ -61,7 +61,12 @@ export interface EvidenceSource {
   url?: string;
 }
 
-export type EvidenceAssumptionSourceType = 'imported' | 'user' | 'teresa' | 'ai_assumed' | 'benchmark';
+export type EvidenceAssumptionSourceType =
+  | 'imported'
+  | 'user'
+  | 'teresa'
+  | 'ai_assumed'
+  | 'benchmark';
 
 export interface EvidenceAssumption {
   key: string;

@@ -70,9 +70,7 @@ function getPrecision(fieldOptions?: Record<string, unknown>): number {
 // ── Sub-renderers ────────────────────────────────────────────────────────────
 
 const TextDisplay: React.FC<{ value: unknown }> = ({ value }) => (
-  <span className="text-xs text-c-text truncate block px-1">
-    {String(value ?? '')}
-  </span>
+  <span className="text-xs text-c-text truncate block px-1">{String(value ?? '')}</span>
 );
 
 const NumberDisplay: React.FC<{ value: unknown; precision?: number }> = ({
@@ -87,9 +85,7 @@ const NumberDisplay: React.FC<{ value: unknown; precision?: number }> = ({
     ? num.toLocaleString(undefined, { maximumFractionDigits: precision })
     : '—';
   return (
-    <span className="text-xs text-c-text tabular-nums text-right block px-1">
-      {formatted}
-    </span>
+    <span className="text-xs text-c-text tabular-nums text-right block px-1">{formatted}</span>
   );
 };
 
@@ -107,9 +103,7 @@ const CurrencyDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, 
     ? `${symbol}${num.toLocaleString(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision })}`
     : '—';
   return (
-    <span className="text-xs text-c-text tabular-nums text-right block px-1">
-      {formatted}
-    </span>
+    <span className="text-xs text-c-text tabular-nums text-right block px-1">{formatted}</span>
   );
 };
 
@@ -126,9 +120,7 @@ const PercentDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
     ? `${num.toLocaleString(undefined, { maximumFractionDigits: precision })}%`
     : '—';
   return (
-    <span className="text-xs text-c-text tabular-nums text-right block px-1">
-      {formatted}
-    </span>
+    <span className="text-xs text-c-text tabular-nums text-right block px-1">{formatted}</span>
   );
 };
 
@@ -161,9 +153,7 @@ const DateDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   const d = new Date(String(value));
   const str = Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
-  return (
-    <span className="text-xs text-c-text tabular-nums px-1">{str}</span>
-  );
+  return <span className="text-xs text-c-text tabular-nums px-1">{str}</span>;
 };
 
 const SingleSelectDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, unknown> }> = ({
@@ -354,9 +344,7 @@ const RatingDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, un
         <Star
           key={i}
           size={12}
-          className={
-            i < rating ? 'text-amber-400 fill-amber-400' : 'text-c-text-secondary'
-          }
+          className={i < rating ? 'text-amber-400 fill-amber-400' : 'text-c-text-secondary'}
         />
       ))}
     </span>
@@ -372,11 +360,7 @@ const DurationDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
   const formatted = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  return (
-    <span className="text-xs text-c-text tabular-nums px-1">
-      {formatted}
-    </span>
-  );
+  return <span className="text-xs text-c-text tabular-nums px-1">{formatted}</span>;
 };
 
 const BarcodeDisplay: React.FC<{ value: unknown }> = ({ value }) => {

@@ -42,24 +42,13 @@ function IdeasPart(): React.ReactElement {
       <h2 className="text-sm font-semibold mb-3 text-c-text">
         M08 Ideas — FormulaEditor (namespace ideas → table)
       </h2>
-      <FormulaEditor
-        tableId="tbl-smoke"
-        value={expr}
-        onChange={setExpr}
-        fields={FIELDS as never}
-      />
+      <FormulaEditor tableId="tbl-smoke" value={expr} onChange={setExpr} fields={FIELDS as never} />
     </div>
   );
 }
 
 function InterviewPart(): React.ReactElement {
-  return (
-    <TemplateBuilder
-      isOpen
-      onClose={() => undefined}
-      onSuccess={() => undefined}
-    />
-  );
+  return <TemplateBuilder isOpen onClose={() => undefined} onSuccess={() => undefined} />;
 }
 
 export default function I18nFala1SmokeScreen(): React.ReactElement {

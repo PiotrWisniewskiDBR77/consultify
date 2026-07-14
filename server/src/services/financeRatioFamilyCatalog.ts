@@ -301,7 +301,9 @@ export const FINANCE_RATIO_FAMILY_CATALOG: RatioFamilyDefinition[] = [
     direction: 'higher_better',
     unit: '%',
     compute: (v) =>
-      hasAll(v, ['NET_INCOME', 'REVENUE']) ? mulOrNull(safeDiv(v.NET_INCOME, v.REVENUE), 100) : null,
+      hasAll(v, ['NET_INCOME', 'REVENUE'])
+        ? mulOrNull(safeDiv(v.NET_INCOME, v.REVENUE), 100)
+        : null,
   },
   {
     code: 'ROA',
@@ -322,7 +324,8 @@ export const FINANCE_RATIO_FAMILY_CATALOG: RatioFamilyDefinition[] = [
     family: 'profitability',
     label: 'Return on Equity',
     labelPl: 'Zwrot z kapitału własnego (ROE)',
-    formula: 'NET_INCOME / TOTAL_EQUITY × 100 (patrz też computeDupontFromLines dla dekompozycji 3-stopniowej)',
+    formula:
+      'NET_INCOME / TOTAL_EQUITY × 100 (patrz też computeDupontFromLines dla dekompozycji 3-stopniowej)',
     requiredLineCodes: ['NET_INCOME', 'TOTAL_EQUITY'],
     direction: 'higher_better',
     unit: '%',
@@ -513,7 +516,8 @@ export const FINANCE_RATIO_FAMILY_CATALOG: RatioFamilyDefinition[] = [
     family: 'value',
     label: 'ROIC − WACC Spread',
     labelPl: 'Spread ROIC − WACC (kreacja wartości)',
-    formula: 'ROIC(%) − WACC(%) [WACC = wejście z silnika wyceny, §5 — SKIPPED BY DESIGN bez podania]',
+    formula:
+      'ROIC(%) − WACC(%) [WACC = wejście z silnika wyceny, §5 — SKIPPED BY DESIGN bez podania]',
     requiredLineCodes: ['NOPAT', 'INVESTED_CAPITAL'],
     direction: 'higher_better',
     unit: 'pp',

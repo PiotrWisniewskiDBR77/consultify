@@ -52,8 +52,7 @@ export const DocumentStudioGeneratingPanel: React.FC<DocumentStudioGeneratingPan
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-c-text">
             <Loader2 className="h-4 w-4 animate-spin text-c-text-secondary" aria-hidden="true" />
-            {outline?.title ??
-              t('documentStudio.generating.title', 'Generating your document…')}
+            {outline?.title ?? t('documentStudio.generating.title', 'Generating your document…')}
           </h2>
           <p className="mt-1 text-sm text-c-text-muted" aria-live="polite">
             {outline
@@ -109,9 +108,7 @@ export const DocumentStudioGeneratingPanel: React.FC<DocumentStudioGeneratingPan
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <span
-                  className={`font-medium ${ready ? 'text-c-text' : 'text-c-text-secondary'}`}
-                >
+                <span className={`font-medium ${ready ? 'text-c-text' : 'text-c-text-secondary'}`}>
                   {idx + 1}. {title}
                 </span>
                 {!ready && (

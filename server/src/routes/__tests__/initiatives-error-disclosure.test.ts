@@ -30,7 +30,12 @@ const UID = 'user-err-1';
 const loggerError = vi.fn();
 
 vi.mock('../../utils/Logger.js', () => ({
-  default: { error: (...a: unknown[]) => loggerError(...a), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  default: {
+    error: (...a: unknown[]) => loggerError(...a),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
 }));
 
 vi.mock('../../utils/queryHelpers.js', () => ({
@@ -50,23 +55,14 @@ vi.mock('../../database/Database.js', () => ({
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
   requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
-  requireRole:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  requireRole: () => (_req: any, _res: any, next: () => void) => next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  requireOrgRole:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
+  requireOrgRole: () => (_req: any, _res: any, next: () => void) => next(),
   validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
 }));
 
@@ -75,18 +71,9 @@ vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/validation.middleware.js', () => ({
-  validateBody:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  validateParams:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  validateQuery:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  validateBody: () => (_req: any, _res: any, next: () => void) => next(),
+  validateParams: () => (_req: any, _res: any, next: () => void) => next(),
+  validateQuery: () => (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/demoGuard.middleware.js', () => ({
@@ -104,10 +91,7 @@ vi.mock('../../services/blueprintService.js', () => ({
 }));
 
 vi.mock('../../services/initiative/initiativeGovernanceGuard.js', () => ({
-  requireInitiativeWriteAccess:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  requireInitiativeWriteAccess: () => (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../services/initiative/initiativeKpiAssignmentService.js', () => ({

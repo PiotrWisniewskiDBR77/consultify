@@ -59,7 +59,8 @@ const PRIORITY_OPTIONS = [
   {
     value: 'LOW',
     label: 'Niski',
-    color: 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted',
+    color:
+      'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted',
   },
   {
     value: 'MEDIUM',
@@ -154,12 +155,8 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                 <MapPin className="w-5 h-5 text-c-accent dark:text-c-accent" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-c-text">
-                  Dodaj do Roadmapy
-                </h3>
-                <p className="text-sm text-c-text-muted truncate max-w-[200px]">
-                  {initiativeName}
-                </p>
+                <h3 className="text-lg font-bold text-c-text">Dodaj do Roadmapy</h3>
+                <p className="text-sm text-c-text-muted truncate max-w-[200px]">{initiativeName}</p>
               </div>
             </div>
             <button
@@ -178,12 +175,8 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
               <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
-              <p className="text-lg font-medium text-c-text">
-                Dodano do Roadmapy!
-              </p>
-              <p className="text-sm text-c-text-muted mt-1">
-                Inicjatywa została zaplanowana
-              </p>
+              <p className="text-lg font-medium text-c-text">Dodano do Roadmapy!</p>
+              <p className="text-sm text-c-text-muted mt-1">Inicjatywa została zaplanowana</p>
             </div>
           ) : (
             <>

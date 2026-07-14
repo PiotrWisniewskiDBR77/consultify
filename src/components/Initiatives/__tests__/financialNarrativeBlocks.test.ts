@@ -6,10 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import {
-  FINANCIAL_BLOCK_MARKER,
-  upsertFinancialBlock,
-} from '../financialNarrativeBlocks';
+import { FINANCIAL_BLOCK_MARKER, upsertFinancialBlock } from '../financialNarrativeBlocks';
 
 const A = FINANCIAL_BLOCK_MARKER['financial-analysis']; // FIN:ANALYSIS
 const I = FINANCIAL_BLOCK_MARKER['financial-impact']; // FIN:IMPACT

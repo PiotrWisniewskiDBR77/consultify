@@ -12,12 +12,11 @@
  *   verdict -> rationale -> trade-offs (>=1 chosen/rejected/why) -> first steps + effect.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { OperationalToolData } from '@/store/useToolStore';
 
-import { assessA3, buildW2MoveSequence } from './moveValidator';
 import { localizeLadder } from './index';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+import { assessA3, buildW2MoveSequence } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

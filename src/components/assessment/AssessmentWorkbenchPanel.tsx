@@ -246,9 +246,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="mt-4 text-sm text-c-text-muted">Loading workbench…</div>
-      ) : null}
+      {isLoading ? <div className="mt-4 text-sm text-c-text-muted">Loading workbench…</div> : null}
 
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
@@ -266,9 +264,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
             Review Readiness
           </div>
-          <div className="mt-1 text-sm font-medium text-c-text">
-            {businessSummary.reviewState}
-          </div>
+          <div className="mt-1 text-sm font-medium text-c-text">{businessSummary.reviewState}</div>
           <div className="mt-2 text-sm text-c-text-secondary">
             Review remains explicit. AI can help prepare proposals, but approval gates still live
             here.
@@ -359,8 +355,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                   }
                 />
                 <span>
-                  <span className="font-medium text-c-text">{pointer.kind}</span>{' '}
-                  {pointer.ref}
+                  <span className="font-medium text-c-text">{pointer.kind}</span> {pointer.ref}
                   {pointer.label ? (
                     <span className="text-c-text-muted"> • {pointer.label}</span>
                   ) : null}
@@ -368,9 +363,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
               </label>
             ))}
             {!evidenceOptions.length ? (
-              <div className="text-sm text-c-text-muted">
-                No evidence pointers yet.
-              </div>
+              <div className="text-sm text-c-text-muted">No evidence pointers yet.</div>
             ) : null}
           </div>
           <div className="mt-4 grid gap-2">

@@ -273,9 +273,9 @@ describe('P05 Finance Lane', () => {
         updated_at: '2026-03-01',
       };
       mockDbGet
-        .mockResolvedValueOnce({ role: 'admin' })  // permission check
-        .mockResolvedValueOnce(null)                // model check
-        .mockResolvedValueOnce(run);                // getLaneRun
+        .mockResolvedValueOnce({ role: 'admin' }) // permission check
+        .mockResolvedValueOnce(null) // model check
+        .mockResolvedValueOnce(run); // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const res = await request(app)
@@ -303,9 +303,9 @@ describe('P05 Finance Lane', () => {
         updated_at: '2026-03-01',
       };
       mockDbGet
-        .mockResolvedValueOnce({ role: 'admin' })  // permission check
-        .mockResolvedValueOnce(null)                // model check
-        .mockResolvedValueOnce(run);                // getLaneRun
+        .mockResolvedValueOnce({ role: 'admin' }) // permission check
+        .mockResolvedValueOnce(null) // model check
+        .mockResolvedValueOnce(run); // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const res = await request(app)
@@ -555,9 +555,9 @@ describe('P05 Finance Lane', () => {
         updated_at: '2026-03-01',
       };
       mockDbGet
-        .mockResolvedValueOnce({ role: 'admin' })  // permission
-        .mockResolvedValueOnce(null)                // model
-        .mockResolvedValueOnce(importRun);          // getLaneRun
+        .mockResolvedValueOnce({ role: 'admin' }) // permission
+        .mockResolvedValueOnce(null) // model
+        .mockResolvedValueOnce(importRun); // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const importRes = await request(app)
@@ -573,9 +573,9 @@ describe('P05 Finance Lane', () => {
         audit_trail_json: JSON.stringify(importRes.body.data.auditTrail),
       };
       mockDbGet
-        .mockResolvedValueOnce({ role: 'admin' })  // permission
-        .mockResolvedValueOnce(null)                // model
-        .mockResolvedValueOnce(analysisRun);        // getLaneRun
+        .mockResolvedValueOnce({ role: 'admin' }) // permission
+        .mockResolvedValueOnce(null) // model
+        .mockResolvedValueOnce(analysisRun); // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const analysisRes = await request(app)
@@ -603,9 +603,9 @@ describe('P05 Finance Lane', () => {
         audit_trail_json: JSON.stringify(analysisRes.body.data.auditTrail),
       };
       mockDbGet
-        .mockResolvedValueOnce({ role: 'admin' })  // permission
-        .mockResolvedValueOnce(null)                // model
-        .mockResolvedValueOnce(mutationRun);        // getLaneRun
+        .mockResolvedValueOnce({ role: 'admin' }) // permission
+        .mockResolvedValueOnce(null) // model
+        .mockResolvedValueOnce(mutationRun); // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const mutationRes = await request(app)
@@ -621,9 +621,9 @@ describe('P05 Finance Lane', () => {
         audit_trail_json: JSON.stringify(mutationRes.body.data.auditTrail),
       };
       mockDbGet
-        .mockResolvedValueOnce({ role: 'admin' })  // permission
-        .mockResolvedValueOnce(null)                // model
-        .mockResolvedValueOnce(readbackRun);        // getLaneRun
+        .mockResolvedValueOnce({ role: 'admin' }) // permission
+        .mockResolvedValueOnce(null) // model
+        .mockResolvedValueOnce(readbackRun); // getLaneRun
       // getMutationAudits query
       mockDbAll.mockResolvedValueOnce([
         {

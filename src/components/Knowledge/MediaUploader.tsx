@@ -352,9 +352,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                   <Upload
                     size={24}
                     className={
-                      isDragging
-                        ? 'text-c-success'
-                        : 'text-c-text-secondary dark:text-c-text-muted'
+                      isDragging ? 'text-c-success' : 'text-c-text-secondary dark:text-c-text-muted'
                     }
                   />
                 </div>
@@ -385,7 +383,9 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                         <span className="text-c-text-secondary dark:text-c-text-muted">
                           {getFileIcon(file.name)}
                         </span>
-                        <span className="text-c-text-muted text-sm truncate max-w-xs">{file.name}</span>
+                        <span className="text-c-text-muted text-sm truncate max-w-xs">
+                          {file.name}
+                        </span>
                         <span className="text-c-text-muted text-xs">
                           {(file.size / 1024 / 1024).toFixed(1)} MB
                         </span>
@@ -480,10 +480,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 Web Page URL
               </label>
               <div className="relative">
-                <Link2
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-c-info"
-                />
+                <Link2 size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-info" />
                 <input
                   type="text"
                   value={webUrl}

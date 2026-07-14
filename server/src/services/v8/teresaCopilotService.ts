@@ -19,7 +19,6 @@ import type { OperationContract } from '../../types/operationContract.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { ensureRunForAction, recordAIRunEvent } from '../aiRunLedgerService.js';
-import { extractReminder } from './teresaReminderExtraction.js';
 import {
   buildProposalOperationContract,
   updateOperationContractLinks,
@@ -39,6 +38,7 @@ import {
   validateWriteOwnership,
   type VoiceAvailability,
 } from './teresaCopilotCanon.js';
+import { extractReminder } from './teresaReminderExtraction.js';
 
 const LOG_PREFIX = '[P08-TeresaCopilot]';
 
@@ -667,7 +667,9 @@ function buildPreviewLines(
             year: 'numeric',
           })
         : reminder.term;
-      lines.push(trimPreview(`Przypomnienie: ${reminder.term ? `${reminder.term} · ` : ''}${when}`, 120));
+      lines.push(
+        trimPreview(`Przypomnienie: ${reminder.term ? `${reminder.term} · ` : ''}${when}`, 120)
+      );
     }
   } else if (target === 'calendar') {
     const calendar = (payload.calendar_intent || {}) as Record<string, unknown>;

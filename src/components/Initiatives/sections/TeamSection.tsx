@@ -75,9 +75,7 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
               <div className="p-1.5 rounded-lg bg-c-surface-raised">
                 <Target size={14} className="text-c-info" />
               </div>
-              <span className="text-xs font-semibold text-c-text-secondary uppercase">
-                Sponsor
-              </span>
+              <span className="text-xs font-semibold text-c-text-secondary uppercase">Sponsor</span>
             </div>
           </div>
           <p className="text-xs text-c-text-muted mb-2">

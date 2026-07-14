@@ -33,12 +33,9 @@
  * save produces (that would reset the canvas).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-import {
-  type IdeaMapSyncState,
-  useIdeaMapSync,
-} from '@/components/MyWork/canvas/useIdeaMapSync';
 import type { Edge, Node } from 'reactflow';
+
+import { type IdeaMapSyncState, useIdeaMapSync } from '@/components/MyWork/canvas/useIdeaMapSync';
 
 /**
  * Payload the host (`IdeaProcessFlowTool.buildPersistPayload`) produces. Kept

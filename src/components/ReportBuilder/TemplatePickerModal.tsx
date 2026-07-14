@@ -119,9 +119,7 @@ const TemplateCard: FC<{
             )}
           </div>
           <div className="flex-1 min-w-0 pr-6">
-            <h4 className="font-semibold text-sm text-c-text truncate">
-              {template.name}
-            </h4>
+            <h4 className="font-semibold text-sm text-c-text truncate">{template.name}</h4>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               {template.isDefault && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded">
@@ -147,16 +145,12 @@ const TemplateCard: FC<{
 
         {/* Description */}
         {template.description && (
-          <p className="text-xs text-c-text-secondary line-clamp-2 mb-2">
-            {template.description}
-          </p>
+          <p className="text-xs text-c-text-secondary line-clamp-2 mb-2">{template.description}</p>
         )}
 
         {/* Use case tag */}
         {template.useCase && (
-          <p className="text-[11px] text-c-text-secondary italic mb-2">
-            {template.useCase}
-          </p>
+          <p className="text-[11px] text-c-text-secondary italic mb-2">{template.useCase}</p>
         )}
 
         {/* Footer */}
@@ -193,9 +187,7 @@ const TemplateCard: FC<{
             <div className="px-4 pb-3 space-y-0.5">
               {template.sections.map((s, i) => (
                 <div key={s.key || i} className="flex items-center gap-2 text-[10px]">
-                  <span className="text-c-text-secondary w-4 text-right">
-                    {i + 1}.
-                  </span>
+                  <span className="text-c-text-secondary w-4 text-right">{i + 1}.</span>
                   <span
                     className={`${s.required ? 'text-c-text font-medium' : 'text-c-text-secondary'}`}
                   >
@@ -337,9 +329,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 <FileText size={20} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-c-text">
-                  Select Report Template
-                </h2>
+                <h2 className="text-lg font-semibold text-c-text">Select Report Template</h2>
                 <p className="text-sm text-c-text-secondary">
                   Choose a template to create your report
                 </p>
@@ -385,9 +375,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Package size={16} className="text-blue-500" />
-                      <h3 className="text-sm font-semibold text-c-text">
-                        Application Templates
-                      </h3>
+                      <h3 className="text-sm font-semibold text-c-text">Application Templates</h3>
                       <span className="text-xs text-c-text-secondary">
                         ({systemTemplates.length})
                       </span>
@@ -410,12 +398,8 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Building2 size={16} className="text-c-accent" />
-                      <h3 className="text-sm font-semibold text-c-text">
-                        Organization Templates
-                      </h3>
-                      <span className="text-xs text-c-text-secondary">
-                        ({orgTemplates.length})
-                      </span>
+                      <h3 className="text-sm font-semibold text-c-text">Organization Templates</h3>
+                      <span className="text-xs text-c-text-secondary">({orgTemplates.length})</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {orgTemplates.map((template) => (
@@ -436,9 +420,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                     <div className="p-4 rounded-full bg-c-surface-raised inline-block mb-3">
                       <FileText size={32} className="text-c-text-secondary" />
                     </div>
-                    <p className="text-sm font-medium text-c-text">
-                      No templates available
-                    </p>
+                    <p className="text-sm font-medium text-c-text">No templates available</p>
                     <p className="text-xs text-c-text-secondary mt-1">
                       Create a custom template using "Add Clean" option
                     </p>
@@ -524,9 +506,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           >
             <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-c-text">
-                  New template
-                </h3>
+                <h3 className="text-lg font-semibold text-c-text">New template</h3>
                 <p className="text-sm text-c-text-secondary">
                   Provide basic metadata, then open the generator.
                 </p>
@@ -542,9 +522,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
 
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-c-text mb-1">
-                  Name
-                </label>
+                <label className="block text-sm font-medium text-c-text mb-1">Name</label>
                 <input
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}

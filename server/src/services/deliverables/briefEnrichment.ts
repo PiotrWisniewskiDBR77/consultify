@@ -34,11 +34,11 @@ type RetrievalEnvelope<T> = { results: T[] };
 export interface BriefEnrichmentDeps {
   searchInsights: (
     params: { query: string; limit: number },
-    ctx: { organizationId: string },
+    ctx: { organizationId: string }
   ) => Promise<RetrievalEnvelope<{ title?: string; snippet?: string }>>;
   searchOrgNotes: (
     params: { query: string; limit: number },
-    ctx: { organizationId: string },
+    ctx: { organizationId: string }
   ) => Promise<RetrievalEnvelope<{ title?: string; snippet?: string }>>;
 }
 
@@ -68,7 +68,7 @@ export async function enrichBriefWithOrgContext(
   brief: string,
   organizationId: string,
   deps?: BriefEnrichmentDeps,
-  opts: BriefEnrichmentOptions = {},
+  opts: BriefEnrichmentOptions = {}
 ): Promise<BriefEnrichment> {
   const noop: BriefEnrichment = { enrichedBrief: brief, contextBlock: null, hits: [], used: false };
   try {
@@ -81,13 +81,25 @@ export async function enrichBriefWithOrgContext(
     const perTool = Math.max(1, Math.ceil(maxHits / 2));
 
     const [insights, notes] = await Promise.all([
-      d.searchInsights({ query, limit: perTool }, { organizationId: orgId }).catch(() => ({ results: [] })),
-      d.searchOrgNotes({ query, limit: perTool }, { organizationId: orgId }).catch(() => ({ results: [] })),
+      d
+        .searchInsights({ query, limit: perTool }, { organizationId: orgId })
+        .catch(() => ({ results: [] })),
+      d
+        .searchOrgNotes({ query, limit: perTool }, { organizationId: orgId })
+        .catch(() => ({ results: [] })),
     ]);
 
     const hits: BriefEnrichmentHit[] = [
-      ...(insights.results ?? []).map((h) => ({ type: 'insight' as const, title: String(h.title ?? ''), snippet: String(h.snippet ?? '') })),
-      ...(notes.results ?? []).map((h) => ({ type: 'note' as const, title: String(h.title ?? ''), snippet: String(h.snippet ?? '') })),
+      ...(insights.results ?? []).map((h) => ({
+        type: 'insight' as const,
+        title: String(h.title ?? ''),
+        snippet: String(h.snippet ?? ''),
+      })),
+      ...(notes.results ?? []).map((h) => ({
+        type: 'note' as const,
+        title: String(h.title ?? ''),
+        snippet: String(h.snippet ?? ''),
+      })),
     ]
       .filter((h) => h.title || h.snippet)
       .slice(0, maxHits);
@@ -111,7 +123,9 @@ export async function enrichBriefWithOrgContext(
       used: true,
     };
   } catch (err) {
-    logger.warn(`${LOG} enrich failed (fail-soft, using raw brief): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} enrich failed (fail-soft, using raw brief): ${err instanceof Error ? err.message : String(err)}`
+    );
     return noop;
   }
 }

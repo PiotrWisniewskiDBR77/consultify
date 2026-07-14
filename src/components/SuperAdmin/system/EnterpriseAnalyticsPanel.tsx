@@ -317,9 +317,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-c-text">
-            Analytics & Reporting
-          </h2>
+          <h2 className="text-2xl font-bold text-c-text">Analytics & Reporting</h2>
           <p className="text-c-text-secondary text-sm">
             Monitor system performance and generate insights
           </p>
@@ -406,12 +404,8 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                               {Math.abs(metric.change)}%
                             </div>
                           </div>
-                          <div className="text-2xl font-bold text-c-text">
-                            {metric.value}
-                          </div>
-                          <div className="text-xs text-c-text-muted">
-                            {metric.title}
-                          </div>
+                          <div className="text-2xl font-bold text-c-text">{metric.value}</div>
+                          <div className="text-xs text-c-text-muted">{metric.title}</div>
                         </div>
                       );
                     })}
@@ -504,9 +498,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                             <div className="w-10 h-10 rounded-lg bg-c-accent/10 flex items-center justify-center">
                               <Icon className="w-5 h-5 text-c-accent" />
                             </div>
-                            <h3 className="font-medium text-c-text">
-                              {report.label}
-                            </h3>
+                            <h3 className="font-medium text-c-text">{report.label}</h3>
                           </div>
                           <p className="text-sm text-c-text-secondary mb-4">
                             Generate a comprehensive {report.label.toLowerCase()} report for the
@@ -543,9 +535,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'scheduled' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-c-text">
-                  Scheduled Reports
-                </h3>
+                <h3 className="text-lg font-medium text-c-text">Scheduled Reports</h3>
                 <button
                   disabled
                   title="Scheduled report creation requires an audited backend workflow"

@@ -92,9 +92,9 @@ export const AboutView: React.FC = () => {
                 of building internal competencies.
               </p>
               <p className="text-lg text-c-text-secondary mb-6 leading-relaxed">
-                <strong className="text-c-text">Consultify changes that.</strong>{' '}
-                We've built a platform that combines the rigor of top-tier consulting methodologies
-                with the speed and accessibility of AI.
+                <strong className="text-c-text">Consultify changes that.</strong> We've built a
+                platform that combines the rigor of top-tier consulting methodologies with the speed
+                and accessibility of AI.
               </p>
               <p className="text-lg text-c-text-secondary leading-relaxed">
                 The result? Strategic decisions in days, not months. At a fraction of the cost. With
@@ -151,9 +151,7 @@ export const AboutView: React.FC = () => {
       {/* Team Section - Placeholder */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-c-text mb-6">
-            Built by Consultants, for Leaders
-          </h2>
+          <h2 className="text-3xl font-bold text-c-text mb-6">Built by Consultants, for Leaders</h2>
           <p className="text-lg text-c-text-secondary mb-8 leading-relaxed">
             Consultify is developed by {COMPANY.name}, a team of technologists and strategy
             professionals based in {COMPANY.location}. We combine deep experience in enterprise
@@ -166,9 +164,7 @@ export const AboutView: React.FC = () => {
           >
             <Rocket className="w-6 h-6 text-c-accent" />
             <div className="text-left">
-              <p className="font-semibold text-c-text">
-                Founded in {COMPANY.founded}
-              </p>
+              <p className="font-semibold text-c-text">Founded in {COMPANY.founded}</p>
               <p className="text-sm text-c-text-muted">{COMPANY.location}</p>
             </div>
           </div>

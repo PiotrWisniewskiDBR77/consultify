@@ -349,7 +349,14 @@ router.get(
       logger.warn(
         `[FinancialModeling] assumptions-status degraded to unavailable for model ${modelId}: ${e?.message || e}`
       );
-      res.json({ modelId, available: false, isGrounded: false, seedSource: null, assumptions: [], coverage: null });
+      res.json({
+        modelId,
+        available: false,
+        isGrounded: false,
+        seedSource: null,
+        assumptions: [],
+        coverage: null,
+      });
     }
   })
 );

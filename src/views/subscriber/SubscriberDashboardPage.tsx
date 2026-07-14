@@ -514,9 +514,7 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
     <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm">
       <div className="flex items-center gap-2">
         <ShieldCheck size={14} className="text-c-text-muted" aria-hidden />
-        <h3 className="text-sm font-semibold text-c-text-secondary">
-          {COPY.signatureCardTitle}
-        </h3>
+        <h3 className="text-sm font-semibold text-c-text-secondary">{COPY.signatureCardTitle}</h3>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-c-text-secondary">
         <span className="inline-flex items-center rounded-full bg-c-accent-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-c-accent">
@@ -528,9 +526,7 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
             {formatRelative(data.signature.secretLastRotatedAt)}
           </strong>
           {data.signature.daysSinceRotation !== null && (
-            <span className="ml-1 text-c-text-muted">
-              ({data.signature.daysSinceRotation}d)
-            </span>
+            <span className="ml-1 text-c-text-muted">({data.signature.daysSinceRotation}d)</span>
           )}
         </span>
       </div>
@@ -556,9 +552,7 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
         {COPY.signatureWhyTitle}
         {open ? <ChevronUp size={12} aria-hidden /> : <ChevronDown size={12} aria-hidden />}
       </button>
-      {open && (
-        <p className="mt-2 text-xs text-c-text-secondary">{COPY.signatureWhyBody}</p>
-      )}
+      {open && <p className="mt-2 text-xs text-c-text-secondary">{COPY.signatureWhyBody}</p>}
     </div>
   );
 };
@@ -567,9 +561,7 @@ const DeliverySummary: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data })
   const { delivery } = data;
   return (
     <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-c-text-secondary">
-        {COPY.deliveryCardTitle}
-      </h3>
+      <h3 className="text-sm font-semibold text-c-text-secondary">{COPY.deliveryCardTitle}</h3>
       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <DeliveryColumn label="Last 7 days" agg={delivery.last7Days} />
         <DeliveryColumn label="Last 30 days" agg={delivery.last30Days} />
@@ -646,9 +638,7 @@ const ReasonsAndWarnings: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data
   );
   return (
     <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-c-text-secondary">
-        {COPY.warningsHeading}
-      </h3>
+      <h3 className="text-sm font-semibold text-c-text-secondary">{COPY.warningsHeading}</h3>
       {items.length === 0 ? (
         <p className="mt-2 text-xs text-c-text-muted">{COPY.noWarnings}</p>
       ) : (
@@ -675,8 +665,10 @@ interface ErrorViewProps {
 
 const ERROR_TONE: Record<SubscriberFetchStatus, string> = {
   ok: 'border-c-success/30 bg-c-success/10 text-c-success',
-  unauthorized: 'border-danger-200 bg-danger-50 text-danger-800 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
-  forbidden: 'border-danger-200 bg-danger-50 text-danger-800 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
+  unauthorized:
+    'border-danger-200 bg-danger-50 text-danger-800 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
+  forbidden:
+    'border-danger-200 bg-danger-50 text-danger-800 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
   rate_limited: 'border-c-warning/30 bg-c-warning/10 text-c-warning',
   storage_unavailable: 'border-c-warning/30 bg-c-warning/10 text-c-warning',
   network_error: 'border-c-border-subtle bg-c-surface-raised text-c-text-secondary',

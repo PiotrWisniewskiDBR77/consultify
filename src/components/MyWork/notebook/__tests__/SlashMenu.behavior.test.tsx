@@ -31,7 +31,12 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-import { detectSlashTrigger, INITIAL_SLASH_STATE, SlashMenu, type SlashMenuState } from '../SlashMenu';
+import {
+  detectSlashTrigger,
+  INITIAL_SLASH_STATE,
+  SlashMenu,
+  type SlashMenuState,
+} from '../SlashMenu';
 
 /**
  * Minimal Tiptap Editor stub. executeCommand calls:
@@ -64,7 +69,11 @@ function makeEditorStub() {
   const editor = {
     chainCalls,
     state: {
-      selection: { from: 5, to: 5, $from: { pos: 5, parent: { textContent: '/h1', childCount: 1 } } },
+      selection: {
+        from: 5,
+        to: 5,
+        $from: { pos: 5, parent: { textContent: '/h1', childCount: 1 } },
+      },
       doc: { textBetween: () => '' },
     },
     commands: { setCallout: vi.fn(), setDetails: vi.fn() },

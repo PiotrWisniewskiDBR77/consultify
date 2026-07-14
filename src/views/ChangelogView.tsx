@@ -88,10 +88,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {onBack && (
-                <button
-                  onClick={onBack}
-                  className="p-2 hover:bg-c-surface-raised rounded-lg"
-                >
+                <button onClick={onBack} className="p-2 hover:bg-c-surface-raised rounded-lg">
                   <ArrowLeft size={20} className="text-c-text-secondary" />
                 </button>
               )}
@@ -183,9 +180,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                             )}
                           </span>
                         </div>
-                        <h3 className="text-lg font-semibold text-c-text">
-                          {release.title[lang]}
-                        </h3>
+                        <h3 className="text-lg font-semibold text-c-text">{release.title[lang]}</h3>
                         {release.summary && (
                           <p className="text-c-text-secondary text-sm mt-1">
                             {release.summary[lang]}
@@ -193,15 +188,9 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                         )}
                       </div>
                       {isExpanded ? (
-                        <ChevronUp
-                          size={20}
-                          className="text-c-text-muted flex-shrink-0"
-                        />
+                        <ChevronUp size={20} className="text-c-text-muted flex-shrink-0" />
                       ) : (
-                        <ChevronDown
-                          size={20}
-                          className="text-c-text-muted flex-shrink-0"
-                        />
+                        <ChevronDown size={20} className="text-c-text-muted flex-shrink-0" />
                       )}
                     </button>
 
@@ -300,10 +289,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                             </h4>
                             <ul className="space-y-2">
                               {release.breaking.map((item: any, i: number) => (
-                                <li
-                                  key={i}
-                                  className="flex items-start gap-2 text-c-danger"
-                                >
+                                <li key={i} className="flex items-start gap-2 text-c-danger">
                                   <span>•</span>
                                   {item[lang]}
                                 </li>

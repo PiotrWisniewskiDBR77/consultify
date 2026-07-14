@@ -11,16 +11,16 @@
  * summary renderer consumes SMED output the same way.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
 import {
   buildW2MoveSequence,
   computeBaseline,
   rankSmedPhases,
   type SmedSession,
 } from './changeoverEngine';
-import { localizeLadder } from './index';
 import { type SmedPhaseId } from './deepeningLadder';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+import { localizeLadder } from './index';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -28,10 +28,7 @@ const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl :
  * ranking and W2 sequence so its output stays consistent with the scored facts.
  * Returns null when there is nothing measured to conclude on.
  */
-export function buildSmedConclusionPrompt(
-  session: SmedSession,
-  isPolish: boolean
-): string | null {
+export function buildSmedConclusionPrompt(session: SmedSession, isPolish: boolean): string | null {
   const ranking = rankSmedPhases(session);
   if (ranking.ordered.length === 0) return null;
 

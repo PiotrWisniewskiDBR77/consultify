@@ -147,7 +147,7 @@ export function firstRunSeedPlan(industryHint?: string): {
     return { featured: startersForFormat('bundle'), all: [...STARTERS] };
   }
   const matched = STARTERS.filter((s) =>
-    s.tags.some((t) => hint.includes(t.toLowerCase()) || t.toLowerCase().includes(hint)),
+    s.tags.some((t) => hint.includes(t.toLowerCase()) || t.toLowerCase().includes(hint))
   );
   const featured = matched.length > 0 ? matched : startersForFormat('bundle');
   return { featured, all: [...STARTERS] };

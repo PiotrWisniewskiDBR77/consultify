@@ -237,7 +237,9 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
       <div
         className={`text-[${depth === 0 ? '12' : '10'}px] ${depth === 0 ? 'font-bold text-c-text-secondary dark:text-c-text' : 'text-c-text-secondary dark:text-c-text-muted'} py-0.5`}
       >
-        {depth > 0 && <span className="text-c-text-secondary mr-1">{'─'.repeat(Math.min(depth, 3))}</span>}
+        {depth > 0 && (
+          <span className="text-c-text-secondary mr-1">{'─'.repeat(Math.min(depth, 3))}</span>
+        )}
         {node.label}
         {node.notes && (
           <span className="ml-1 text-[8px] text-c-text-secondary" title={node.notes}>
@@ -274,7 +276,10 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {!preview && !loading && (
             <div className="text-center py-6">
-              <Upload size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <Upload
+                size={36}
+                className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
+              />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'Importuj mapę z pliku .mm (FreeMind), .xmind (XMind) lub .opml (OPML).'
@@ -310,9 +315,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
           {preview && (
             <>
               <div className="mb-3 p-2 rounded-xl bg-c-surface-raised border border-c-info">
-                <div className="text-[10px] font-bold text-c-info dark:text-c-info">
-                  {fileName}
-                </div>
+                <div className="text-[10px] font-bold text-c-info dark:text-c-info">{fileName}</div>
                 <div className="text-[9px] text-c-text-secondary">
                   {nodeCount} {isPl ? 'węzłów' : 'nodes'} · {preview.children.length}{' '}
                   {isPl ? 'gałęzi' : 'branches'}

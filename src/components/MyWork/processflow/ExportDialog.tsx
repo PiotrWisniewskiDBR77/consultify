@@ -71,13 +71,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             >
               <div className="text-c-accent flex-shrink-0">{f.icon}</div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-c-text">
-                  {f.title}
-                </div>
+                <div className="text-sm font-medium text-c-text">{f.title}</div>
                 <div className="text-xs text-c-text-muted">{f.desc}</div>
               </div>
               {isExporting ? (
-                <Loader2 size={16} className="ml-auto animate-spin text-c-text-secondary flex-shrink-0" />
+                <Loader2
+                  size={16}
+                  className="ml-auto animate-spin text-c-text-secondary flex-shrink-0"
+                />
               ) : (
                 <Download size={16} className="ml-auto text-c-text-secondary flex-shrink-0" />
               )}

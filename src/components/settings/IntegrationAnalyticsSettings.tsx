@@ -320,9 +320,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 </span>
                 <TrendingUp size={16} className="text-blue-500" />
               </div>
-              <p className="text-2xl font-bold text-c-text">
-                {formatNumber(stats.total_requests)}
-              </p>
+              <p className="text-2xl font-bold text-c-text">{formatNumber(stats.total_requests)}</p>
               <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                 {stats.success_rate}% {t('settings.analytics.successRate', 'success rate')}
               </p>
@@ -351,9 +349,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 </span>
                 <DollarSign size={16} className="text-green-500" />
               </div>
-              <p className="text-2xl font-bold text-c-text">
-                {formatCurrency(stats.total_cost)}
-              </p>
+              <p className="text-2xl font-bold text-c-text">{formatCurrency(stats.total_cost)}</p>
               <p className="text-xs text-c-text-muted mt-1">
                 {formatNumber(stats.total_tokens)} {t('settings.analytics.tokens', 'tokens')}
               </p>
@@ -532,16 +528,16 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 <tbody className="divide-y divide-c-border-subtle dark:divide-white/5">
                   {logs.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-sm text-c-text-muted"
-                      >
+                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-c-text-muted">
                         {t('settings.analytics.noLogs', 'No logs found')}
                       </td>
                     </tr>
                   ) : (
                     logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-c-surface-raised dark:hover:bg-navy-800/50">
+                      <tr
+                        key={log.id}
+                        className="hover:bg-c-surface-raised dark:hover:bg-navy-800/50"
+                      >
                         <td className="px-4 py-3 text-xs text-c-text-secondary">
                           {new Date(log.created_at).toLocaleString()}
                         </td>

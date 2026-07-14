@@ -49,7 +49,9 @@ export function evaluateReportCitationGate(insight: ReportPackSourceInsight): st
   };
 
   const findings = [...themes, ...issues];
-  const uncited = findings.filter((f) => !refsOf(f).some((ref) => verbatimByAnswerId.get(ref) === true));
+  const uncited = findings.filter(
+    (f) => !refsOf(f).some((ref) => verbatimByAnswerId.get(ref) === true)
+  );
   for (const f of uncited) {
     reasons.push(
       `${CITATION_GATE_PREFIX} Wniosek „${titleOf(f) || '(bez tytułu)'}" nie ma dosłownego cytatu w mapie dowodów (§D20 — wymóg na ścieżce raportu klienta).`
@@ -68,13 +70,20 @@ export function evaluateReportCitationGate(insight: ReportPackSourceInsight): st
         opportunities: insight.opportunities,
         signals: insight.signals,
         evidence_map: evidenceMap,
-        key_findings: (insight as Record<string, unknown>).keyFindings ?? (insight as Record<string, unknown>).key_findings,
-        quote_bank: (insight as Record<string, unknown>).quoteBank ?? (insight as Record<string, unknown>).quote_bank,
+        key_findings:
+          (insight as Record<string, unknown>).keyFindings ??
+          (insight as Record<string, unknown>).key_findings,
+        quote_bank:
+          (insight as Record<string, unknown>).quoteBank ??
+          (insight as Record<string, unknown>).quote_bank,
       },
       { reportPath: true }
     );
     for (const v of verdict.violations) {
-      if (v.severity === 'hard' && (v.code === 'insight.finding_quote' || v.code === 'insight.quote_attribution')) {
+      if (
+        v.severity === 'hard' &&
+        (v.code === 'insight.finding_quote' || v.code === 'insight.quote_attribution')
+      ) {
         reasons.push(`${CITATION_GATE_PREFIX} ${v.message}`);
       }
     }

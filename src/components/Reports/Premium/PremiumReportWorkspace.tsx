@@ -192,10 +192,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[var(--c-surface)]">
-        <LoadingState
-          variant="progress"
-          label={t('premiumReport.loading', 'Loading report…')}
-        />
+        <LoadingState variant="progress" label={t('premiumReport.loading', 'Loading report…')} />
       </div>
     );
   }

@@ -60,23 +60,14 @@ vi.mock('../../database/Database.js', () => ({
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
   requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
-  requireRole:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  requireRole: () => (_req: any, _res: any, next: () => void) => next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  requireOrgRole:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
+  requireOrgRole: () => (_req: any, _res: any, next: () => void) => next(),
   validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
 }));
 
@@ -86,18 +77,9 @@ vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
 
 vi.mock('../../middleware/validation.middleware.js', () => ({
   // Pass-through validation so we exercise the controller-level guards directly.
-  validateBody:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  validateParams:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
-  validateQuery:
-    () =>
-    (_req: any, _res: any, next: () => void) =>
-      next(),
+  validateBody: () => (_req: any, _res: any, next: () => void) => next(),
+  validateParams: () => (_req: any, _res: any, next: () => void) => next(),
+  validateQuery: () => (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/demoGuard.middleware.js', () => ({
@@ -312,17 +294,15 @@ describe('M13 mass-assignment — V-2: KPI update pins tenant/identity from serv
   it('PUT /:id/kpis/:kpiId ignores body organizationId/ids (uses token + params)', async () => {
     mockUpdateKpiAssignment.mockResolvedValue({ id: KPI_ID, name: 'On-time %' });
 
-    const res = await request(app)
-      .put(`/api/initiatives/${INITIATIVE_ID}/kpis/${KPI_ID}`)
-      .send({
-        // Attacker-controlled protected fields:
-        organizationId: VICTIM_ORG,
-        initiativeId: 'init-someone-else',
-        kpiId: 'kpi-someone-else',
-        userId: 'impersonated-user',
-        // Legitimate editable field:
-        targetValue: 95,
-      });
+    const res = await request(app).put(`/api/initiatives/${INITIATIVE_ID}/kpis/${KPI_ID}`).send({
+      // Attacker-controlled protected fields:
+      organizationId: VICTIM_ORG,
+      initiativeId: 'init-someone-else',
+      kpiId: 'kpi-someone-else',
+      userId: 'impersonated-user',
+      // Legitimate editable field:
+      targetValue: 95,
+    });
 
     expect(res.status).toBe(200);
     expect(mockUpdateKpiAssignment).toHaveBeenCalledTimes(1);

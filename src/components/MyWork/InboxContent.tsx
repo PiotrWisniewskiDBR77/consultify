@@ -102,6 +102,7 @@ import {
 } from '@/components/ui/ResizableTable';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import {
   type V8CanonicalInboxItem,
@@ -110,7 +111,6 @@ import {
 } from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
-import i18n from '@/i18n';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 type InboxItemType =
@@ -675,7 +675,10 @@ const formatRelativeTime = (
   else if (diffHours < 24) text = isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   else if (diffDays < 7) text = isPolish ? `${diffDays} d temu` : `${diffDays}d ago`;
   else
-    text = d.toLocaleDateString(i18n.t('myWork.inboxContent.dToLocaleDateString', 'en-US'), { month: 'short', day: 'numeric' });
+    text = d.toLocaleDateString(i18n.t('myWork.inboxContent.dToLocaleDateString', 'en-US'), {
+      month: 'short',
+      day: 'numeric',
+    });
 
   let agingLevel: 'fresh' | 'warm' | 'hot' | 'critical';
   if (diffHours < 4) agingLevel = 'fresh';
@@ -1106,7 +1109,7 @@ const PreviewPane: React.FC<{
         recommendedReason: String(r.recommendedReason || ''),
       });
     } catch (e: any) {
-      setAiError(e?.message || (i18n.t('myWork.inboxContent.aIUnavailable', 'AI unavailable')));
+      setAiError(e?.message || i18n.t('myWork.inboxContent.aIUnavailable', 'AI unavailable'));
     } finally {
       setAiLoading(false);
     }
@@ -1345,7 +1348,7 @@ const PreviewPane: React.FC<{
   return (
     <PreviewPaneShell
       kicker={undefined}
-      title={item.title || (i18n.t('myWork.inboxContent.inboxItem', 'Inbox item'))}
+      title={item.title || i18n.t('myWork.inboxContent.inboxItem', 'Inbox item')}
       onClose={onClose}
       actions={
         <button
@@ -1548,7 +1551,9 @@ const AIHintStrip: React.FC<{
                               '\n'
                             )
                           )
-                          .then(() => toast.success(i18n.t('myWork.inboxContent.toastSuccess2', 'Copied')));
+                          .then(() =>
+                            toast.success(i18n.t('myWork.inboxContent.toastSuccess2', 'Copied'))
+                          );
                       }
                     },
                   },
@@ -2063,7 +2068,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         toast.success(t('myWork.inboxContent.toastSuccess4', 'Undo last AI suggestion'));
         fetchInbox();
       } else {
-        toast.error(res.message || (t('myWork.inboxContent.noAITriageTo', 'No AI triage to undo')));
+        toast.error(res.message || t('myWork.inboxContent.noAITriageTo', 'No AI triage to undo'));
       }
     } catch (e) {
       toast.error(t('myWork.inboxContent.toastError6', 'Undo failed'));
@@ -2399,7 +2404,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           break;
         case '?':
           toast(
-            t('myWork.inboxContent.shortcutsJKNav', 'Shortcuts: J/K nav, T today, W week, E done, B save, A dismiss, X reject, Enter open, Space select'),
+            t(
+              'myWork.inboxContent.shortcutsJKNav',
+              'Shortcuts: J/K nav, T today, W week, E done, B save, A dismiss, X reject, Enter open, Space select'
+            ),
             { duration: 5000, icon: '⌨️' }
           );
           break;
@@ -2463,7 +2471,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             {item.suggestedAction && (
               <span
                 className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
-                title={item.suggestedReason || (t('myWork.inboxContent.aISuggestion', 'AI suggestion'))}
+                title={
+                  item.suggestedReason || t('myWork.inboxContent.aISuggestion', 'AI suggestion')
+                }
               >
                 AI:{' '}
                 {item.suggestedAction === 'accept_today'
@@ -2575,7 +2585,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 user: {
                   icon: MessageSquare,
                   color: 'text-blue-500',
-                  label: item.source?.userName || (t('myWork.inboxContent.team', 'Team')),
+                  label: item.source?.userName || t('myWork.inboxContent.team', 'Team'),
                 },
               };
               const c = cfg[src] || cfg.system;
@@ -2948,7 +2958,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     : 'border-c-border-subtle hover:border-c-border-strong'
                 }`}
                 aria-label={
-                  isSelected ? (t('myWork.inboxContent.deselect', 'Deselect')) : t('myWork.inboxContent.select', 'Select')
+                  isSelected
+                    ? t('myWork.inboxContent.deselect', 'Deselect')
+                    : t('myWork.inboxContent.select', 'Select')
                 }
               >
                 {isSelected && <CheckSquare size={10} />}
@@ -3115,7 +3127,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 {item.linkedDecisionId ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                     <Scale size={10} />
-                    {t('myWork.inboxContent.decision2', 'Decision')} {item.linkedDecisionId.slice(0, 8)}…
+                    {t('myWork.inboxContent.decision2', 'Decision')}{' '}
+                    {item.linkedDecisionId.slice(0, 8)}…
                   </span>
                 ) : null}
               </div>
@@ -3278,9 +3291,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             <SharedEmptyState
               variant="filter"
               title={t('myWork.inboxContent.title2', 'Nothing matches this filter')}
-              description={
-                t('myWork.inboxContent.changeYourSearchOr', 'Change your search or turn off the “action required” filter to see more.')
-              }
+              description={t(
+                'myWork.inboxContent.changeYourSearchOr',
+                'Change your search or turn off the “action required” filter to see more.'
+              )}
             />
           ) : filteredItems.length === 0 ? (
             <div className="py-16 text-center text-c-text-secondary">
@@ -3291,7 +3305,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     {t('myWork.inboxContent.noCompletedItems', 'No completed items')}
                   </p>
                   <p className="text-sm text-c-text-muted">
-                    {t('myWork.inboxContent.markItemsAsDone', 'Mark items as Done (E) and they\'ll appear here.')}
+                    {t(
+                      'myWork.inboxContent.markItemsAsDone',
+                      "Mark items as Done (E) and they'll appear here."
+                    )}
                   </p>
                 </>
               ) : statusTab === 'saved' ? (
@@ -3301,7 +3318,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     {t('myWork.inboxContent.noSavedItems', 'No saved items')}
                   </p>
                   <p className="text-sm text-c-text-muted">
-                    {t('myWork.inboxContent.useSaveBTo', 'Use Save (B) to bookmark items for later.')}
+                    {t(
+                      'myWork.inboxContent.useSaveBTo',
+                      'Use Save (B) to bookmark items for later.'
+                    )}
                   </p>
                 </>
               ) : (
@@ -3311,7 +3331,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     {t('myWork.inboxContent.inboxIsEmptyZero', 'Inbox is empty — zero backlog!')}
                   </p>
                   <p className="text-sm text-c-text-muted">
-                    {t('myWork.inboxContent.everythingProcessedGreatJob', 'Everything processed. Great job!')}
+                    {t(
+                      'myWork.inboxContent.everythingProcessedGreatJob',
+                      'Everything processed. Great job!'
+                    )}
                   </p>
                 </>
               )}

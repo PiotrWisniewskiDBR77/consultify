@@ -3,9 +3,9 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import DbPromise from '../utils/DbPromise.js';
-import PDFParserService from './pdfParserService.js';
-import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import logger from '../utils/Logger.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import PDFParserService from './pdfParserService.js';
 
 /**
  * Report Import Service

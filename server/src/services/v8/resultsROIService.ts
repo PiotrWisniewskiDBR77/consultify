@@ -2170,8 +2170,7 @@ export async function getReconciliationOverview(
   } catch {
     reconCols = new Set<string>();
   }
-  const hasEngineCols =
-    reconCols.has('deviation_absolute') && reconCols.has('conclusion_json');
+  const hasEngineCols = reconCols.has('deviation_absolute') && reconCols.has('conclusion_json');
   const engineSelect = hasEngineCols
     ? `,
        r.driver_key AS eng_driver_key,
@@ -2223,8 +2222,7 @@ export async function getReconciliationOverview(
     // PREFER the engine's persisted deviation when present: it is unit-normalised
     // to a single finance basis (no "% vs €" fabrications) and carries a
     // CONCLUSION_LAYER. Detected by a non-null engine deviation OR conclusion.
-    const engineReconciled =
-      row.eng_deviation_absolute != null || row.eng_conclusion_json != null;
+    const engineReconciled = row.eng_deviation_absolute != null || row.eng_conclusion_json != null;
 
     let projectedValue: number | null;
     let realizedValue: number | null;
@@ -2265,9 +2263,7 @@ export async function getReconciliationOverview(
       if (monetary && projectedValue != null && realizedValue != null) {
         varianceAbsolute = round2(realizedValue - projectedValue);
         variancePercent =
-          projectedValue !== 0
-            ? round2((varianceAbsolute / Math.abs(projectedValue)) * 100)
-            : null;
+          projectedValue !== 0 ? round2((varianceAbsolute / Math.abs(projectedValue)) * 100) : null;
         hasMismatch = varianceAbsolute !== 0;
       }
     }

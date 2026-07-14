@@ -214,7 +214,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       icon: Monitor,
       label: t('settings.appearance.system', 'System'),
       description: t('settings.appearance.systemDesc', 'Match your device'),
-      preview: 'bg-gradient-to-r from-white to-c-surface border-c-border-subtle dark:border-navy-700',
+      preview:
+        'bg-gradient-to-r from-white to-c-surface border-c-border-subtle dark:border-navy-700',
     },
   ];
 

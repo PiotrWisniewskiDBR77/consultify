@@ -101,7 +101,9 @@ export function computeMarginMap(
 
   const creators = entries.filter((e) => e.pole === 'creator').map((e) => e.activityId);
   const drains = entries.filter((e) => e.pole === 'drain').map((e) => e.activityId);
-  const costInDrains = entries.filter((e) => e.pole === 'drain').reduce((sum, e) => sum + e.cost, 0);
+  const costInDrains = entries
+    .filter((e) => e.pole === 'drain')
+    .reduce((sum, e) => sum + e.cost, 0);
   const costInCreators = entries
     .filter((e) => e.pole === 'creator')
     .reduce((sum, e) => sum + e.cost, 0);
@@ -146,12 +148,32 @@ const suggestLeverType = (e: MarginMapEntry): LeverMoveType => {
 };
 
 const leverRationale = (e: MarginMapEntry): { en: string; pl: string } => {
-  const poleEn = e.pole === 'drain' ? 'erodes margin' : e.pole === 'creator' ? 'creates margin' : 'is neutral on margin';
-  const polePl = e.pole === 'drain' ? 'wyciąga marżę' : e.pole === 'creator' ? 'tworzy marżę' : 'jest neutralne dla marży';
+  const poleEn =
+    e.pole === 'drain'
+      ? 'erodes margin'
+      : e.pole === 'creator'
+        ? 'creates margin'
+        : 'is neutral on margin';
+  const polePl =
+    e.pole === 'drain'
+      ? 'wyciąga marżę'
+      : e.pole === 'creator'
+        ? 'tworzy marżę'
+        : 'jest neutralne dla marży';
   const costEn = e.cost >= 3 ? 'high cost' : e.cost === 2 ? 'medium cost' : 'low cost';
   const costPl = e.cost >= 3 ? 'wysoki koszt' : e.cost === 2 ? 'średni koszt' : 'niski koszt';
-  const matEn = e.maturityGap >= 3 ? 'weak maturity' : e.maturityGap === 2 ? 'adequate maturity' : 'strong maturity';
-  const matPl = e.maturityGap >= 3 ? 'słaba dojrzałość' : e.maturityGap === 2 ? 'przeciętna dojrzałość' : 'wysoka dojrzałość';
+  const matEn =
+    e.maturityGap >= 3
+      ? 'weak maturity'
+      : e.maturityGap === 2
+        ? 'adequate maturity'
+        : 'strong maturity';
+  const matPl =
+    e.maturityGap >= 3
+      ? 'słaba dojrzałość'
+      : e.maturityGap === 2
+        ? 'przeciętna dojrzałość'
+        : 'wysoka dojrzałość';
   return {
     en: `${costEn} + ${matEn}; ${poleEn} — highest leverage sits here.`,
     pl: `${costPl} + ${matPl}; ${polePl} — tu jest największa dźwignia.`,
@@ -170,10 +192,7 @@ export function deriveLeverCandidates(
 ): LeverCandidate[] {
   const map = computeMarginMap(activities);
   return [...map.entries]
-    .sort(
-      (a, b) =>
-        b.leverScore - a.leverScore || b.cost - a.cost || b.maturityGap - a.maturityGap
-    )
+    .sort((a, b) => b.leverScore - a.leverScore || b.cost - a.cost || b.maturityGap - a.maturityGap)
     .slice(0, max)
     .map((e) => {
       const r = leverRationale(e);
@@ -271,7 +290,10 @@ export interface ValueChainMoveIssue {
   messagePl: string;
 }
 
-type MoveForValidation = Pick<ValueChainMove, 'rationale' | 'linkedActivityIds' | 'linkedLeverIds'> &
+type MoveForValidation = Pick<
+  ValueChainMove,
+  'rationale' | 'linkedActivityIds' | 'linkedLeverIds'
+> &
   ValueChainMoveConclusionFields;
 
 /**
@@ -303,7 +325,8 @@ export function validateValueChainMove(
     issues.push({
       code: 'unlinked-rationale',
       messageEn: 'Move is linked to no activities or levers — its rationale is untraceable.',
-      messagePl: 'Ruch nie jest powiązany z żadnym ogniwem ani dźwignią — uzasadnienie jest niesprawdzalne.',
+      messagePl:
+        'Ruch nie jest powiązany z żadnym ogniwem ani dźwignią — uzasadnienie jest niesprawdzalne.',
     });
   } else {
     const dangling = [
@@ -322,7 +345,8 @@ export function validateValueChainMove(
   if (!move.tradeoff) {
     issues.push({
       code: 'missing-tradeoff',
-      messageEn: 'Move has no trade-off — a recommendation without a trade-off is a list, not a decision (W2).',
+      messageEn:
+        'Move has no trade-off — a recommendation without a trade-off is a list, not a decision (W2).',
       messagePl: 'Ruch nie ma trade-offu — rekomendacja bez trade-offu to lista, nie decyzja (W2).',
     });
   } else if (
@@ -332,8 +356,10 @@ export function validateValueChainMove(
   ) {
     issues.push({
       code: 'incomplete-tradeoff',
-      messageEn: 'Trade-off is incomplete — it must name what is chosen, what is deferred, and at what cost.',
-      messagePl: 'Trade-off jest niekompletny — musi nazywać co wybieramy, co odkładamy i kosztem czego.',
+      messageEn:
+        'Trade-off is incomplete — it must name what is chosen, what is deferred, and at what cost.',
+      messagePl:
+        'Trade-off jest niekompletny — musi nazywać co wybieramy, co odkładamy i kosztem czego.',
     });
   }
 
@@ -344,8 +370,10 @@ export function validateValueChainMove(
   ) {
     issues.push({
       code: 'missing-rejected-alternative',
-      messageEn: 'Move names no rejected alternative — which option (improve vs automate vs outsource vs integrate) was considered and why was it dropped?',
-      messagePl: 'Ruch nie wskazuje odrzuconego wariantu — jaka opcja (usprawnij vs zautomatyzuj vs outsourcuj vs zintegruj) była rozważana i dlaczego odpadła?',
+      messageEn:
+        'Move names no rejected alternative — which option (improve vs automate vs outsource vs integrate) was considered and why was it dropped?',
+      messagePl:
+        'Ruch nie wskazuje odrzuconego wariantu — jaka opcja (usprawnij vs zautomatyzuj vs outsourcuj vs zintegruj) była rozważana i dlaczego odpadła?',
     });
   }
 

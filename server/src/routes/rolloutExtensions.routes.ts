@@ -25,27 +25,22 @@ import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/au
 import { requirePermission } from '../middleware/permissionMiddleware.js';
 import { requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-
-import {
-  advanceStage,
-  createStage,
-  listStages,
-  updateStage,
-  type CreateStageInput,
-  type UpdateStagePatch,
-} from '../services/rolloutStagesService.js';
+import { addStep, createRunbook, getRunbook } from '../services/cutoverRunbookService.js';
 import {
   captureBaseline,
   getLatestBaseline,
   listBaselines,
 } from '../services/rolloutBaselineService.js';
-import {
-  addStep,
-  createRunbook,
-  getRunbook,
-} from '../services/cutoverRunbookService.js';
 import { evaluateStageGate, type GateInputs } from '../services/rolloutGateService.js';
+import {
+  advanceStage,
+  createStage,
+  type CreateStageInput,
+  listStages,
+  updateStage,
+  type UpdateStagePatch,
+} from '../services/rolloutStagesService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
@@ -273,15 +268,9 @@ router.post(
 // ================================================================
 
 const GateEvaluateSchema = z.object({
-  gateMetrics: z
-    .array(z.object({ name: z.string(), met: z.boolean() }))
-    .optional(),
-  gateBlockers: z
-    .array(z.object({ name: z.string(), open: z.boolean() }))
-    .optional(),
-  signOffs: z
-    .array(z.object({ name: z.string(), done: z.boolean() }))
-    .optional(),
+  gateMetrics: z.array(z.object({ name: z.string(), met: z.boolean() })).optional(),
+  gateBlockers: z.array(z.object({ name: z.string(), open: z.boolean() })).optional(),
+  signOffs: z.array(z.object({ name: z.string(), done: z.boolean() })).optional(),
 });
 
 router.post(

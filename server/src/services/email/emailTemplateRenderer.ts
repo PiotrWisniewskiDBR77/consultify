@@ -18,8 +18,8 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import Handlebars from 'handlebars';
+import path from 'path';
 
 import logger from '../../utils/Logger.js';
 

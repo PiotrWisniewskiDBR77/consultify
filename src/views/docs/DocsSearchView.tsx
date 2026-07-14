@@ -39,15 +39,16 @@ export const DocsSearchView: React.FC = () => {
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
-        <span className="text-c-text font-medium">
-          {t('docs.search.title', 'Search')}
-        </span>
+        <span className="text-c-text font-medium">{t('docs.search.title', 'Search')}</span>
       </nav>
 
       {/* Search Box */}
       <form onSubmit={handleSearch} className="mb-8">
         <div className="relative">
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-c-text-muted" />
+          <Search
+            size={20}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-c-text-muted"
+          />
           <input
             type="text"
             value={searchInput}
@@ -80,10 +81,7 @@ export const DocsSearchView: React.FC = () => {
         {isLoading ? (
           // Loading skeleton
           Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="p-6 rounded-xl border border-c-border animate-pulse"
-            >
+            <div key={i} className="p-6 rounded-xl border border-c-border animate-pulse">
               <div className="h-5 w-3/4 rounded bg-c-border mb-2" />
               <div className="h-4 w-full rounded bg-c-border mb-4" />
               <div className="h-3 w-32 rounded bg-c-border" />

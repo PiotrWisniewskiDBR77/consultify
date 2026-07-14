@@ -130,7 +130,18 @@ export function bscOverview(kpis: BscKpi[]): BscOverview {
 const PERSPECTIVE_KEYWORDS: Array<{ perspective: Perspective; keywords: string[] }> = [
   {
     perspective: 'financial',
-    keywords: ['koszt', 'przychód', 'przychod', 'marża', 'marza', 'cost', 'revenue', 'margin', 'profit', 'roi'],
+    keywords: [
+      'koszt',
+      'przychód',
+      'przychod',
+      'marża',
+      'marza',
+      'cost',
+      'revenue',
+      'margin',
+      'profit',
+      'roi',
+    ],
   },
   {
     perspective: 'customer',
@@ -138,11 +149,33 @@ const PERSPECTIVE_KEYWORDS: Array<{ perspective: Perspective; keywords: string[]
   },
   {
     perspective: 'process',
-    keywords: ['czas', 'cykl', 'jakość', 'jakosc', 'proces', 'time', 'cycle', 'quality', 'process', 'throughput'],
+    keywords: [
+      'czas',
+      'cykl',
+      'jakość',
+      'jakosc',
+      'proces',
+      'time',
+      'cycle',
+      'quality',
+      'process',
+      'throughput',
+    ],
   },
   {
     perspective: 'learning',
-    keywords: ['szkolenie', 'kompetencja', 'kompetencje', 'rozwój', 'rozwoj', 'training', 'competence', 'skill', 'growth', 'learning'],
+    keywords: [
+      'szkolenie',
+      'kompetencja',
+      'kompetencje',
+      'rozwój',
+      'rozwoj',
+      'training',
+      'competence',
+      'skill',
+      'growth',
+      'learning',
+    ],
   },
 ];
 

@@ -25,14 +25,14 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { MaturityMatrix } from '@/components/MaturityMatrix';
 import type { DRDEditorAnswers } from '@/components/assessment/drd/DRDAssessmentEditor';
+import { MaturityMatrix } from '@/components/MaturityMatrix';
 import {
   DRD_AXIS_KEY_MAP,
   DRD_STRUCTURE,
+  type DRDArea,
   getAxisById,
   getQuestionsForAxis,
-  type DRDArea,
 } from '@/services/drdStructure';
 import type { AxisId } from '@/types';
 
@@ -125,10 +125,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
     onAxisChange(nextAxisId);
   };
 
-  const totalAreas = useMemo(
-    () => DRD_STRUCTURE.reduce((sum, a) => sum + a.areas.length, 0),
-    []
-  );
+  const totalAreas = useMemo(() => DRD_STRUCTURE.reduce((sum, a) => sum + a.areas.length, 0), []);
   const assessedAreas = useMemo(() => {
     let n = 0;
     for (const ax of DRD_STRUCTURE) {
@@ -191,8 +188,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
                       const lvl = getAchievedLevel(value, area.id);
                       const cls =
                         lvl > 0 ? LEVEL_TAG_CLASS[lvl] || EMPTY_CELL_CLASS : EMPTY_CELL_CLASS;
-                      const isSelectedArea =
-                        ax.id === axis.id && area.id === (currentAreaId || '');
+                      const isSelectedArea = ax.id === axis.id && area.id === (currentAreaId || '');
                       return (
                         <button
                           key={area.id}

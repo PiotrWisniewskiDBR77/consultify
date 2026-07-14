@@ -282,9 +282,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-1">
-              Name
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">Name</label>
             <input
               type="text"
               value={form.name}
@@ -318,9 +316,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                Tier
-              </label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">Tier</label>
               <select
                 value={form.tier}
                 onChange={(e) => setForm({ ...form, tier: e.target.value })}
@@ -609,9 +605,7 @@ export const ModelCatalogTable: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               <div className="text-sm text-c-text-muted">Total</div>
-              <div className="text-2xl font-bold text-c-text">
-                {models.length}
-              </div>
+              <div className="text-2xl font-bold text-c-text">{models.length}</div>
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               <div className="text-sm text-c-text-muted">Active</div>
@@ -686,9 +680,7 @@ export const ModelCatalogTable: React.FC = () => {
           {showFilters && (
             <div className="grid grid-cols-3 gap-4 p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
-                  Provider Type
-                </label>
+                <label className="block text-xs text-c-text-muted mb-1">Provider Type</label>
                 <select
                   value={filterProviderType}
                   onChange={(e) => setFilterProviderType(e.target.value as ProviderType | '')}
@@ -702,9 +694,7 @@ export const ModelCatalogTable: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
-                  Health Status
-                </label>
+                <label className="block text-xs text-c-text-muted mb-1">Health Status</label>
                 <select
                   value={filterHealth}
                   onChange={(e) => setFilterHealth(e.target.value as HealthStatus | '')}
@@ -718,9 +708,7 @@ export const ModelCatalogTable: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
-                  Status
-                </label>
+                <label className="block text-xs text-c-text-muted mb-1">Status</label>
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as '' | 'active' | 'inactive')}
@@ -737,7 +725,9 @@ export const ModelCatalogTable: React.FC = () => {
           {/* Table */}
           <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
             <div className="overflow-x-auto">
-              <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
+              <table
+                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+              >
                 <thead>
                   <tr className="border-b border-c-border-subtle">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
@@ -782,19 +772,13 @@ export const ModelCatalogTable: React.FC = () => {
                     >
                       <td className="px-4 py-3">
                         <div>
-                          <div className="font-medium text-c-text text-sm">
-                            {model.name}
-                          </div>
-                          <div className="text-xs text-c-text-muted font-mono">
-                            {model.modelId}
-                          </div>
+                          <div className="font-medium text-c-text text-sm">{model.name}</div>
+                          <div className="text-xs text-c-text-muted font-mono">{model.modelId}</div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div>
-                          <div className="text-sm text-c-text-secondary">
-                            {model.originVendor}
-                          </div>
+                          <div className="text-sm text-c-text-secondary">{model.originVendor}</div>
                           <ProviderTypeBadge type={model.providerType} />
                         </div>
                       </td>

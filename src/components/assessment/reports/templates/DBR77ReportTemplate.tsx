@@ -130,7 +130,9 @@ const WorkstationPage: React.FC<{
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Błędy:</span>
-              <span className="font-bold text-danger-600">{workstation.currentState.errorRate}%</span>
+              <span className="font-bold text-danger-600">
+                {workstation.currentState.errorRate}%
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Nadgodziny:</span>

@@ -12,7 +12,7 @@
 
 import React from 'react';
 
-import { narrowKpiContent, type NarrowedKpiContent, type NarrowedKpiItem } from './docBlockContent';
+import { type NarrowedKpiContent, type NarrowedKpiItem, narrowKpiContent } from './docBlockContent';
 
 export interface DocKpiStripProps {
   /** Either an already-narrowed `{items}` object, or raw block content. */
@@ -20,11 +20,7 @@ export interface DocKpiStripProps {
 }
 
 function isNarrowed(c: unknown): c is NarrowedKpiContent {
-  return (
-    typeof c === 'object' &&
-    c !== null &&
-    Array.isArray((c as { items?: unknown }).items)
-  );
+  return typeof c === 'object' && c !== null && Array.isArray((c as { items?: unknown }).items);
 }
 
 function trendColor(trend?: NarrowedKpiItem['trend']): string {
@@ -89,7 +85,12 @@ export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {
             {item.delta && (
               <div
                 className="doc-kpi-strip__delta"
-                style={{ fontSize: 12, fontWeight: 600, color: trendColor(item.trend), marginTop: 4 }}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: trendColor(item.trend),
+                  marginTop: 4,
+                }}
               >
                 {item.delta}
               </div>

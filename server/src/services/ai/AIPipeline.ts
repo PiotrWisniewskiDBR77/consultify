@@ -328,7 +328,8 @@ export class AIPipeline {
         // route distinguishes them and emits a separate SSE 'reasoning' event.
         // When off, reasoningBuffer stays empty and the stream is plain strings —
         // normal chat is byte-for-byte unaffected.
-        const streamAiModes = (request.options as any)?.aiModes || (request.context as any)?.aiModes;
+        const streamAiModes =
+          (request.options as any)?.aiModes || (request.context as any)?.aiModes;
         const showReasoning = streamAiModes?.showReasoning === true;
 
         // SPEC_01 (Tryb A): function-calling on the chat stream. The route opts
@@ -383,9 +384,7 @@ export class AIPipeline {
             try {
               const { classifyChatCreationIntent, INTENT_TO_TOOL, INTENT_DROP_TOOLS } =
                 await import('./chatCreationIntent.js');
-              const lastUser = [...nonSystemMsgs]
-                .reverse()
-                .find((m) => m.role === 'user')?.content;
+              const lastUser = [...nonSystemMsgs].reverse().find((m) => m.role === 'user')?.content;
               const intent = classifyChatCreationIntent(String(lastUser || ''));
               if (intent) {
                 const forcedTool = INTENT_TO_TOOL[intent];
@@ -421,7 +420,9 @@ export class AIPipeline {
                       'potem krótko potwierdź. / [OVERRIDE THIS TURN] The user asks to CREATE A TABLE. You MUST ' +
                       'call the generate_deliverable tool with type="table" so a real Ideas Table opens; do NOT ' +
                       'reply with an inline Markdown table or an ```artifact:table``` block.';
-                    logger.info('[AIPipeline] routing-N table intent → injected force-tool directive');
+                    logger.info(
+                      '[AIPipeline] routing-N table intent → injected force-tool directive'
+                    );
                   }
                 }
               }
@@ -1452,13 +1453,19 @@ export class AIPipeline {
             (request as any)._promptVersion = assembled?.metadata?.promptVersion ?? null;
             (request as any)._promptMeta = assembled?.metadata || null;
           } else {
-            parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request));
+            parts.push(
+              this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request)
+            );
           }
         } else {
-          parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request));
+          parts.push(
+            this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request)
+          );
         }
       } else {
-        parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request));
+        parts.push(
+          this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request)
+        );
       }
     } catch (err: any) {
       logger.debug(`[AIPipeline] Prompt SSOT unavailable, using persona prompt: ${err?.message}`);

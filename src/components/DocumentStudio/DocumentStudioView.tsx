@@ -19,14 +19,14 @@ import { TopBar, type TopBarChipDescriptor } from '@/components/shared/Executive
 import { LoadingState } from '@/components/ui/primitives';
 
 import {
+  type DocumentStreamDoneEvent,
+  type GenerateDocumentParams,
   generateDocumentStudioArtifact,
   generateDocumentStudioArtifactStream,
   getDocumentStudioArtifact,
   listDocumentStudioTemplates,
   MissingRequiredSourceError,
   planDocumentStudioOutline,
-  type DocumentStreamDoneEvent,
-  type GenerateDocumentParams,
 } from './api';
 import { DocumentStudioDocumentPanel } from './DocumentStudioDocumentPanel';
 import {
@@ -196,9 +196,12 @@ export const DocumentStudioView: React.FC = () => {
           },
           onSection: (event) => {
             setStreamSections((prev) => {
-              const next = prev.length >= event.total ? [...prev] : new Array(event.total)
-                .fill(null)
-                .map((_, i) => prev[i] ?? { title: '', ready: false });
+              const next =
+                prev.length >= event.total
+                  ? [...prev]
+                  : new Array(event.total)
+                      .fill(null)
+                      .map((_, i) => prev[i] ?? { title: '', ready: false });
               next[event.index] = { title: event.title, ready: true };
               return next;
             });
@@ -268,10 +271,7 @@ export const DocumentStudioView: React.FC = () => {
       setIntake(nextIntake);
       setActiveTemplateId(options.templateId);
       setUseLlm(false);
-      await runStreamingGeneration(
-        { intake: nextIntake, templateId: options.templateId },
-        null
-      );
+      await runStreamingGeneration({ intake: nextIntake, templateId: options.templateId }, null);
       return;
     }
 

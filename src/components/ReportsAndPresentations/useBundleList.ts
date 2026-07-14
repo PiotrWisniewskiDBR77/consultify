@@ -3,7 +3,8 @@
  * Odpytuje GET /bundles przy każdym montaży i po `refetch()`.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { listBundles, type BundleListItem } from '../../services/deliverablesBundle';
+
+import { type BundleListItem, listBundles } from '../../services/deliverablesBundle';
 
 export interface UseBundleListResult {
   bundles: BundleListItem[];
@@ -25,9 +26,21 @@ export function useBundleList(): UseBundleListResult {
     setLoading(true);
     setError(null);
     listBundles()
-      .then((data) => { if (!cancelled) { setBundles(data); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setError('Failed to load bundles'); setLoading(false); } });
-    return () => { cancelled = true; };
+      .then((data) => {
+        if (!cancelled) {
+          setBundles(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Failed to load bundles');
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [tick]);
 
   return { bundles, loading, error, refetch };

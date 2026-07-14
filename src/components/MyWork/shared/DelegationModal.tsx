@@ -179,7 +179,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
       const serverMessage = error?.response?.data?.error;
       toast.error(
         serverMessage ||
-          (t('myWork.delegation.failedToSendDelegation', 'Failed to send delegation request'))
+          t('myWork.delegation.failedToSendDelegation', 'Failed to send delegation request')
       );
     } finally {
       setSubmitting(false);
@@ -282,7 +282,10 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 {delegationType === 'input'
-                  ? t('myWork.delegation.selectPeopleMultipleAllowed', 'Select people (multiple allowed)')
+                  ? t(
+                      'myWork.delegation.selectPeopleMultipleAllowed',
+                      'Select people (multiple allowed)'
+                    )
                   : t('myWork.delegation.selectPerson', 'Select person')}
               </label>
               <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -332,9 +335,10 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder={
-                    t('myWork.delegation.eGAbsenceLack', 'e.g., Absence, lack of expertise...')
-                  }
+                  placeholder={t(
+                    'myWork.delegation.eGAbsenceLack',
+                    'e.g., Absence, lack of expertise...'
+                  )}
                   className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500"
                 />
               </div>
@@ -351,8 +355,14 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                 rows={3}
                 placeholder={
                   delegationType === 'input'
-                    ? t('myWork.delegation.whatDoYouWant', 'What do you want to know? What questions do you have?')
-                    : t('myWork.delegation.additionalInformationForThe', 'Additional information for the recipient...')
+                    ? t(
+                        'myWork.delegation.whatDoYouWant',
+                        'What do you want to know? What questions do you have?'
+                      )
+                    : t(
+                        'myWork.delegation.additionalInformationForThe',
+                        'Additional information for the recipient...'
+                      )
                 }
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500 resize-none"
               />

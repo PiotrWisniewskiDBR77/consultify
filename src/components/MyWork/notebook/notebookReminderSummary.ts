@@ -50,7 +50,8 @@ export function getNotebookReminderSummary(
   if (!reminder) return null;
 
   const dueAt = typeof reminder.dueAt === 'string' && reminder.dueAt.trim() ? reminder.dueAt : null;
-  const term = typeof reminder.term === 'string' && reminder.term.trim() ? reminder.term.trim() : null;
+  const term =
+    typeof reminder.term === 'string' && reminder.term.trim() ? reminder.term.trim() : null;
 
   const formattedDate = dueAt ? formatReminderDate(dueAt, isPolish) : null;
 

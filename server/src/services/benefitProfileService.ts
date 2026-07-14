@@ -26,11 +26,7 @@ const LOG_PREFIX = '[BenefitProfile]';
 // ---------------------------------------------------------------------------
 
 export type BenefitHardness = 'hard' | 'soft';
-export type BenefitValueType =
-  | 'cost_out'
-  | 'revenue_up'
-  | 'working_capital'
-  | 'cost_avoidance';
+export type BenefitValueType = 'cost_out' | 'revenue_up' | 'working_capital' | 'cost_avoidance';
 export type BenefitRecurrence = 'run_rate' | 'one_time';
 
 /** A single S-curve sample for a benefit/initiative at a given period. */
@@ -214,9 +210,7 @@ export async function upsertProfilePoint(
        WHERE id = ? AND organization_id = ?`,
       [planned, actual, row.id, organizationId]
     );
-    logger.info(
-      `${LOG_PREFIX} Updated point ${row.id} (org ${organizationId}, ${data.period})`
-    );
+    logger.info(`${LOG_PREFIX} Updated point ${row.id} (org ${organizationId}, ${data.period})`);
     return rowToPoint({
       ...row,
       planned_cumulative: planned,
@@ -231,20 +225,9 @@ export async function upsertProfilePoint(
       id, organization_id, initiative_id, benefit_id, period,
       planned_cumulative, actual_cumulative, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      organizationId,
-      data.initiativeId,
-      benefitId,
-      data.period,
-      planned,
-      actual,
-      createdAt,
-    ]
+    [id, organizationId, data.initiativeId, benefitId, data.period, planned, actual, createdAt]
   );
-  logger.info(
-    `${LOG_PREFIX} Inserted point ${id} (org ${organizationId}, ${data.period})`
-  );
+  logger.info(`${LOG_PREFIX} Inserted point ${id} (org ${organizationId}, ${data.period})`);
 
   return {
     id,

@@ -446,7 +446,9 @@ export function ReportTemplatePickerModal(props: {
           ) : (
             /* Table View */
             <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-              <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
+              <table
+                /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-sm"
+              >
                 <thead>
                   <tr className="bg-slate-50 dark:bg-navy-800 text-left">
                     <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400">

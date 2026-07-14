@@ -164,9 +164,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
           </div>
           <div className="flex-1">
             <label className="font-medium text-c-text">{label}</label>
-            {description && (
-              <p className="text-sm text-c-text-muted">{description}</p>
-            )}
+            {description && <p className="text-sm text-c-text-muted">{description}</p>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -207,9 +205,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
           </div>
           <div>
             <label className="font-medium text-c-text">{label}</label>
-            {description && (
-              <p className="text-sm text-c-text-muted">{description}</p>
-            )}
+            {description && <p className="text-sm text-c-text-muted">{description}</p>}
           </div>
         </div>
         <button
@@ -329,9 +325,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
         />
 
         <div className="border-t border-c-border-subtle dark:border-navy-700 pt-4 space-y-3">
-          <p className="text-sm font-medium text-c-text-secondary">
-            Show in Activity Feed:
-          </p>
+          <p className="text-sm font-medium text-c-text-secondary">Show in Activity Feed:</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <label className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg cursor-pointer">
               <input
@@ -393,9 +387,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 bg-c-surface-raised rounded-lg space-y-2">
-            <label className="block font-medium text-c-text">
-              Allow @mentions from
-            </label>
+            <label className="block font-medium text-c-text">Allow @mentions from</label>
             <select
               value={settings.allowMentionsFrom}
               onChange={(e) =>
@@ -410,9 +402,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
           </div>
 
           <div className="p-4 bg-c-surface-raised rounded-lg space-y-2">
-            <label className="block font-medium text-c-text">
-              Allow direct messages from
-            </label>
+            <label className="block font-medium text-c-text">Allow direct messages from</label>
             <select
               value={settings.allowDirectMessagesFrom}
               onChange={(e) =>

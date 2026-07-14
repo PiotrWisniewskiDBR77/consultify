@@ -153,9 +153,7 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
   ];
   const hasSectionActions = sectionActions.length > 0;
   const showEvidenceBadge =
-    quoteRequirementLevel != null &&
-    quoteRequirementLevel !== 'NONE' &&
-    !quotesSatisfied;
+    quoteRequirementLevel != null && quoteRequirementLevel !== 'NONE' && !quotesSatisfied;
 
   return (
     <div className="space-y-6">

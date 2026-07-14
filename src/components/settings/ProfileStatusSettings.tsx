@@ -109,15 +109,10 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
                                     }
                                 `}
               >
-                <Icon
-                  size={24}
-                  className={isSelected ? option.color : 'text-c-text-secondary'}
-                />
+                <Icon size={24} className={isSelected ? option.color : 'text-c-text-secondary'} />
                 <span
                   className={`text-sm font-medium ${
-                    isSelected
-                      ? 'text-c-accent'
-                      : 'text-c-text-secondary'
+                    isSelected ? 'text-c-accent' : 'text-c-text-secondary'
                   }`}
                 >
                   {option.label}
@@ -161,15 +156,11 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
           {selectedStatus && (
             <>
               <selectedStatus.icon size={16} className={selectedStatus.color} />
-              <span className="text-sm font-medium text-c-text">
-                {selectedStatus.label}
-              </span>
+              <span className="text-sm font-medium text-c-text">{selectedStatus.label}</span>
               {statusMessage && (
                 <>
                   <span className="text-c-text-secondary">•</span>
-                  <span className="text-sm text-c-text-secondary">
-                    {statusMessage}
-                  </span>
+                  <span className="text-sm text-c-text-secondary">{statusMessage}</span>
                 </>
               )}
             </>

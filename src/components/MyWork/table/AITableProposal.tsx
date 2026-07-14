@@ -153,10 +153,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
             <div className="text-[10px] text-c-text-muted mt-0.5">{proposal.description}</div>
           )}
         </div>
-        <button
-          onClick={onReject}
-          className="p-1 rounded-lg hover:bg-c-surface-raised"
-        >
+        <button onClick={onReject} className="p-1 rounded-lg hover:bg-c-surface-raised">
           <X size={14} className="text-c-text-secondary" />
         </button>
       </div>
@@ -211,9 +208,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                     }`}
                   >
                     {renderCheckbox(acceptedColumns.has(col.key), () => toggleColumn(col.key))}
-                    <span className="text-[10px] font-medium text-c-text flex-1">
-                      {col.header}
-                    </span>
+                    <span className="text-[10px] font-medium text-c-text flex-1">{col.header}</span>
                     <span className="text-[8px] text-c-text-secondary bg-c-surface-raised px-1.5 py-0.5 rounded">
                       {col.type}
                     </span>
@@ -258,7 +253,9 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                     <span className="text-[10px] font-medium text-c-text flex-1">
                       {v.icon || '📋'} {v.name}
                     </span>
-                    {v.layout && <span className="text-[8px] text-c-text-secondary">{v.layout}</span>}
+                    {v.layout && (
+                      <span className="text-[8px] text-c-text-secondary">{v.layout}</span>
+                    )}
                   </div>
                 ))}
               </div>

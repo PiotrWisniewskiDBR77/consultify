@@ -93,20 +93,80 @@ export function AmbitionDecomposerLibraryGraphic({
   };
   const themes: DecoTheme[] = isPolish
     ? [
-        { title: 'Dane gotowe pod AI', target: '90% danych skatalogowanych', horizon: 'short', importance: 'high' },
-        { title: 'Kompetencje zespołu', target: '40 przeszkolonych osób', horizon: 'short', importance: 'medium' },
-        { title: 'Produkty wsparte AI', target: '3 wdrożone use-case', horizon: 'medium', importance: 'high' },
-        { title: 'Automatyzacja procesów', target: '25% kosztów operacji', horizon: 'medium', importance: 'medium' },
-        { title: 'Nowe modele przychodu', target: '15% przychodu z AI', horizon: 'long', importance: 'high' },
-        { title: 'Ekosystem partnerów', target: '2 alianse strategiczne', horizon: 'long', importance: 'low' },
+        {
+          title: 'Dane gotowe pod AI',
+          target: '90% danych skatalogowanych',
+          horizon: 'short',
+          importance: 'high',
+        },
+        {
+          title: 'Kompetencje zespołu',
+          target: '40 przeszkolonych osób',
+          horizon: 'short',
+          importance: 'medium',
+        },
+        {
+          title: 'Produkty wsparte AI',
+          target: '3 wdrożone use-case',
+          horizon: 'medium',
+          importance: 'high',
+        },
+        {
+          title: 'Automatyzacja procesów',
+          target: '25% kosztów operacji',
+          horizon: 'medium',
+          importance: 'medium',
+        },
+        {
+          title: 'Nowe modele przychodu',
+          target: '15% przychodu z AI',
+          horizon: 'long',
+          importance: 'high',
+        },
+        {
+          title: 'Ekosystem partnerów',
+          target: '2 alianse strategiczne',
+          horizon: 'long',
+          importance: 'low',
+        },
       ]
     : [
-        { title: 'AI-ready data', target: '90% data cataloged', horizon: 'short', importance: 'high' },
-        { title: 'Team capability', target: '40 people upskilled', horizon: 'short', importance: 'medium' },
-        { title: 'AI-powered products', target: '3 use-cases live', horizon: 'medium', importance: 'high' },
-        { title: 'Process automation', target: '25% ops cost cut', horizon: 'medium', importance: 'medium' },
-        { title: 'New revenue models', target: '15% revenue from AI', horizon: 'long', importance: 'high' },
-        { title: 'Partner ecosystem', target: '2 strategic alliances', horizon: 'long', importance: 'low' },
+        {
+          title: 'AI-ready data',
+          target: '90% data cataloged',
+          horizon: 'short',
+          importance: 'high',
+        },
+        {
+          title: 'Team capability',
+          target: '40 people upskilled',
+          horizon: 'short',
+          importance: 'medium',
+        },
+        {
+          title: 'AI-powered products',
+          target: '3 use-cases live',
+          horizon: 'medium',
+          importance: 'high',
+        },
+        {
+          title: 'Process automation',
+          target: '25% ops cost cut',
+          horizon: 'medium',
+          importance: 'medium',
+        },
+        {
+          title: 'New revenue models',
+          target: '15% revenue from AI',
+          horizon: 'long',
+          importance: 'high',
+        },
+        {
+          title: 'Partner ecosystem',
+          target: '2 strategic alliances',
+          horizon: 'long',
+          importance: 'low',
+        },
       ];
 
   const importanceTone: Record<'high' | 'medium' | 'low', string> = {

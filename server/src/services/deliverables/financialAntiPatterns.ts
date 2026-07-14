@@ -50,9 +50,8 @@ export function detectHockeyStick(pnl: PnLPeriod[]): AntiPatternFinding[] {
   const lastGain = rev[rev.length - 1] - rev[rev.length - 2];
   const lateShare = totalGain > 0 ? lastGain / totalGain : 0;
 
-  const acceleratesVsPrev = prevGrowth > 0
-    ? lastGrowth >= prevGrowth * HOCKEY_ACCEL_RATIO
-    : lastGrowth > 0; // z ~0 wzrostu na dodatni = też przyspieszenie
+  const acceleratesVsPrev =
+    prevGrowth > 0 ? lastGrowth >= prevGrowth * HOCKEY_ACCEL_RATIO : lastGrowth > 0; // z ~0 wzrostu na dodatni = też przyspieszenie
 
   const bigJump = lastMultiple >= HOCKEY_GROWTH_MULTIPLE;
   const backloaded = lateShare >= HOCKEY_LATE_SHARE;
@@ -60,12 +59,14 @@ export function detectHockeyStick(pnl: PnLPeriod[]): AntiPatternFinding[] {
   if (bigJump && acceleratesVsPrev && backloaded) {
     const pct = Math.round(lastGrowth * 100);
     const sharePct = Math.round(lateShare * 100);
-    return [{
-      pattern: 'hockey_stick_no_driver',
-      severity: 'flag',
-      detail: `Przychód skacze +${pct}% w ostatnim roku (${sharePct}% całego wzrostu skumulowane na końcu) — „kij hokejowy" bez proporcjonalnej zmiany drivera; uzasadnij konkretnym mechanizmem.`,
-      ref: 'financials.pnl.revenue',
-    }];
+    return [
+      {
+        pattern: 'hockey_stick_no_driver',
+        severity: 'flag',
+        detail: `Przychód skacze +${pct}% w ostatnim roku (${sharePct}% całego wzrostu skumulowane na końcu) — „kij hokejowy" bez proporcjonalnej zmiany drivera; uzasadnij konkretnym mechanizmem.`,
+        ref: 'financials.pnl.revenue',
+      },
+    ];
   }
   return [];
 }

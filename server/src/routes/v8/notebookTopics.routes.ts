@@ -62,7 +62,9 @@ export function registerNotebookTopicsRoutes(router: Router): void {
       const { organizationId } = getV8Context(req);
       const name = String(req.body?.name ?? '').trim();
       if (!name) {
-        return res.status(400).json({ error: 'name required', code: 'NOTEBOOK_TOPIC_NAME_REQUIRED' });
+        return res
+          .status(400)
+          .json({ error: 'name required', code: 'NOTEBOOK_TOPIC_NAME_REQUIRED' });
       }
       try {
         const topic = await notebookTopicService.createTopic(organizationId, name);

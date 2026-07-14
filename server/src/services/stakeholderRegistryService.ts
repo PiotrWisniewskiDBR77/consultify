@@ -408,7 +408,11 @@ export async function getProjectEffectiveStakeholders(organizationId: string, pr
     [organizationId]
   );
 
-  const direct = projectRows.map((r: any) => ({ ...mapEngagementRow(r), inherited: false, ...identityFields(r) }));
+  const direct = projectRows.map((r: any) => ({
+    ...mapEngagementRow(r),
+    inherited: false,
+    ...identityFields(r),
+  }));
   const inherited = orgBaselineRows
     .filter((r: any) => !coveredStakeholderIds.has(r.stakeholder_id))
     .map((r: any) => ({ ...mapEngagementRow(r), inherited: true, ...identityFields(r) }));
@@ -464,9 +468,7 @@ export async function getInitiativeEffectiveStakeholders(
     return direct;
   }
 
-  const coveredRegistryIds = new Set(
-    initiativeRows.map((r: any) => r.registry_id).filter(Boolean)
-  );
+  const coveredRegistryIds = new Set(initiativeRows.map((r: any) => r.registry_id).filter(Boolean));
   const projectEffective = await getProjectEffectiveStakeholders(
     organizationId,
     initiative.project_id

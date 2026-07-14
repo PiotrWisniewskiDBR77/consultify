@@ -461,7 +461,9 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/30">
-                  <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
+                  <table
+                    /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
+                  >
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200/60 dark:border-navy-700/60">
                         <th className="w-10 py-2.5 pl-3 pr-2"></th>

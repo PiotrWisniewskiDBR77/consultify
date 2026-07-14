@@ -83,10 +83,7 @@ export function usePointFixedMenuPosition(x: number, y: number, open: boolean) {
 }
 
 /** Anchor a fixed-position menu to a trigger element's rect (e.g. a dropdown button). */
-export function useAnchorFixedMenuPosition(
-  anchorEl: HTMLElement | null,
-  open: boolean
-) {
+export function useAnchorFixedMenuPosition(anchorEl: HTMLElement | null, open: boolean) {
   const ref = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<FixedMenuStyle>(HIDDEN_STYLE);
 

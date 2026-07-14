@@ -22,8 +22,8 @@
  * mutates anything.
  */
 
-import { mapDbStatusToP11Lifecycle } from './initiativeLifecycleCanon.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { mapDbStatusToP11Lifecycle } from './initiativeLifecycleCanon.js';
 
 // ---------------------------------------------------------------------------
 // Types

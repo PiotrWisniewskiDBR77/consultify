@@ -23,7 +23,6 @@ import auditEventsService from '../../services/AuditEventsService.js';
 import blueprintService from '../../services/blueprintService.js';
 import { requireInitiativeWriteAccess } from '../../services/initiative/initiativeGovernanceGuard.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
-import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
 import {
   createWizardSession,
   evaluateShortlistGateForSession,
@@ -36,15 +35,16 @@ import {
   triageCandidate as triageWizardCandidate,
 } from '../../services/initiative/initiativeWizardService.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
+import { resolveInitiativeProjectId } from '../../services/initiativeProjectPolicyService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
+import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
 import { getProgramRollup } from '../../services/pmo/programRollupService.js';
 import {
   getCapacityTimeline,
   getInitiativeCapacity,
 } from '../../services/workloadCapacityService.js';
-import { resolveInitiativeProjectId } from '../../services/initiativeProjectPolicyService.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -924,7 +924,12 @@ router.get('/programs/:programId/rollup', async (req: any, res: any) => {
 
     return res.json(rollup);
   } catch (err: any) {
-    return failInitiative500(res, 'Failed to fetch program rollup', 'PROGRAM_ROLLUP_FETCH_FAILED', err);
+    return failInitiative500(
+      res,
+      'Failed to fetch program rollup',
+      'PROGRAM_ROLLUP_FETCH_FAILED',
+      err
+    );
   }
 });
 
@@ -1102,99 +1107,103 @@ router.get('/raci-results-summary', async (req: any, res: any) => {
  * wymusza status startowy `DRAFT` + nowy UUID + org-scope + created_by (niżej).
  * Przejście przez createInitiativeService zgubiłoby skopiowane pola/lineage.
  */
-router.post('/:id/duplicate', requireInitiativeCapability('initiative.create', { shadow: true }), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const originalId = String(req.params.id || '');
-    const original = (await queryHelpers.queryOne(
-      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [originalId, String(orgId)]
-    )) as any;
-    if (!original) return res.status(404).json({ error: 'Initiative not found' });
-
-    const now = new Date().toISOString();
-    const newId = uuidv4();
-    const baseTitle = String(original.title || original.name || 'Initiative');
-    // F15 (data-integrity, continuation of Z139): decode HTML entities the
-    // global sanitizer escaped on a custom title override before storing.
-    const newTitle = req.body?.title
-      ? decodeHtmlEntities(String(req.body.title))
-      : `${baseTitle} (Copy)`;
-
-    // SQLite-first: duplicate using actual table columns to avoid NOT NULL surprises.
-    let cols: string[] = [];
+router.post(
+  '/:id/duplicate',
+  requireInitiativeCapability('initiative.create', { shadow: true }),
+  async (req: any, res: any) => {
     try {
-      const info = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
-        name?: string;
-      }>;
-      cols = (info || []).map((r) => String(r.name || '')).filter(Boolean);
-    } catch {
-      cols = [];
-    }
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    if (cols.length === 0) {
-      // Fallback minimal insert (best-effort). D1: still anchor project_id.
-      const fallbackProjectId = await resolveInitiativeProjectId(
+      const originalId = String(req.params.id || '');
+      const original = (await queryHelpers.queryOne(
+        `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [originalId, String(orgId)]
+      )) as any;
+      if (!original) return res.status(404).json({ error: 'Initiative not found' });
+
+      const now = new Date().toISOString();
+      const newId = uuidv4();
+      const baseTitle = String(original.title || original.name || 'Initiative');
+      // F15 (data-integrity, continuation of Z139): decode HTML entities the
+      // global sanitizer escaped on a custom title override before storing.
+      const newTitle = req.body?.title
+        ? decodeHtmlEntities(String(req.body.title))
+        : `${baseTitle} (Copy)`;
+
+      // SQLite-first: duplicate using actual table columns to avoid NOT NULL surprises.
+      let cols: string[] = [];
+      try {
+        const info = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
+          name?: string;
+        }>;
+        cols = (info || []).map((r) => String(r.name || '')).filter(Boolean);
+      } catch {
+        cols = [];
+      }
+
+      if (cols.length === 0) {
+        // Fallback minimal insert (best-effort). D1: still anchor project_id.
+        const fallbackProjectId = await resolveInitiativeProjectId(
+          String(orgId),
+          original.project_id,
+          { createdBy: userId ? String(userId) : null }
+        );
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (id, organization_id, project_id, title, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'DRAFT', ?, ?)`,
+          [newId, String(orgId), fallbackProjectId, newTitle, now, now]
+        );
+        return res.status(201).json({ id: newId });
+      }
+
+      // D1 (Zwornik §9 Faza 3): duplicate creates a NEW initiative row — if the
+      // ORIGINAL was itself a pre-zwornik orphan (project_id NULL), anchor the
+      // copy to the org's system portfolio project instead of propagating the
+      // orphan.
+      const anchoredProjectId = await resolveInitiativeProjectId(
         String(orgId),
         original.project_id,
         { createdBy: userId ? String(userId) : null }
       );
+
+      const insertCols: string[] = [];
+      const insertVals: any[] = [];
+      for (const c of cols) {
+        insertCols.push(c);
+        if (c === 'id') insertVals.push(newId);
+        else if (c === 'organization_id') insertVals.push(String(orgId));
+        else if (c === 'title') insertVals.push(newTitle);
+        else if (c === 'name') insertVals.push(newTitle);
+        else if (c === 'status') insertVals.push('DRAFT');
+        else if (c === 'project_id') insertVals.push(anchoredProjectId);
+        else if (c === 'created_at') insertVals.push(now);
+        else if (c === 'updated_at') insertVals.push(now);
+        else if (c === 'created_by')
+          insertVals.push(String(userId || original.created_by || 'system'));
+        else if (c === 'updated_by')
+          insertVals.push(String(userId || original.updated_by || 'system'));
+        else insertVals.push(original[c] ?? null);
+      }
+
+      const placeholders = insertCols.map(() => '?').join(', ');
       await queryHelpers.queryRun(
-        `INSERT INTO initiatives (id, organization_id, project_id, title, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'DRAFT', ?, ?)`,
-        [newId, String(orgId), fallbackProjectId, newTitle, now, now]
+        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${placeholders})`,
+        insertVals
       );
+
       return res.status(201).json({ id: newId });
+    } catch (err: any) {
+      return failInitiative500(
+        res,
+        'Failed to duplicate initiative',
+        'INITIATIVE_DUPLICATE_FAILED',
+        err
+      );
     }
-
-    // D1 (Zwornik §9 Faza 3): duplicate creates a NEW initiative row — if the
-    // ORIGINAL was itself a pre-zwornik orphan (project_id NULL), anchor the
-    // copy to the org's system portfolio project instead of propagating the
-    // orphan.
-    const anchoredProjectId = await resolveInitiativeProjectId(
-      String(orgId),
-      original.project_id,
-      { createdBy: userId ? String(userId) : null }
-    );
-
-    const insertCols: string[] = [];
-    const insertVals: any[] = [];
-    for (const c of cols) {
-      insertCols.push(c);
-      if (c === 'id') insertVals.push(newId);
-      else if (c === 'organization_id') insertVals.push(String(orgId));
-      else if (c === 'title') insertVals.push(newTitle);
-      else if (c === 'name') insertVals.push(newTitle);
-      else if (c === 'status') insertVals.push('DRAFT');
-      else if (c === 'project_id') insertVals.push(anchoredProjectId);
-      else if (c === 'created_at') insertVals.push(now);
-      else if (c === 'updated_at') insertVals.push(now);
-      else if (c === 'created_by')
-        insertVals.push(String(userId || original.created_by || 'system'));
-      else if (c === 'updated_by')
-        insertVals.push(String(userId || original.updated_by || 'system'));
-      else insertVals.push(original[c] ?? null);
-    }
-
-    const placeholders = insertCols.map(() => '?').join(', ');
-    await queryHelpers.queryRun(
-      `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${placeholders})`,
-      insertVals
-    );
-
-    return res.status(201).json({ id: newId });
-  } catch (err: any) {
-    return failInitiative500(
-      res,
-      'Failed to duplicate initiative',
-      'INITIATIVE_DUPLICATE_FAILED',
-      err
-    );
   }
-});
+);
 
 /**
  * GET /api/initiatives/templates
@@ -2447,22 +2456,26 @@ router.patch(
  *   (keeps transition validation + governance rules).
  * - Otherwise, delegate to the canonical update handler (same as PUT, but accepts partial payloads).
  */
-router.patch('/:id', requireInitiativeCapability('initiative.update', { shadow: true }), (req, res, next) => {
-  const body = (req as any)?.body || {};
-  const hasStatus = body && Object.prototype.hasOwnProperty.call(body, 'status');
+router.patch(
+  '/:id',
+  requireInitiativeCapability('initiative.update', { shadow: true }),
+  (req, res, next) => {
+    const body = (req as any)?.body || {};
+    const hasStatus = body && Object.prototype.hasOwnProperty.call(body, 'status');
 
-  if (hasStatus) {
-    return (validateBody(UpdateInitiativeStatusSchema) as any)(req, res, (err?: unknown) => {
+    if (hasStatus) {
+      return (validateBody(UpdateInitiativeStatusSchema) as any)(req, res, (err?: unknown) => {
+        if (err) return next(err);
+        return (InitiativeController.updateInitiativeStatus as any)(req, res, next);
+      });
+    }
+
+    return (validateBody(UpdateInitiativeSchema) as any)(req, res, (err?: unknown) => {
       if (err) return next(err);
-      return (InitiativeController.updateInitiativeStatus as any)(req, res, next);
+      return (InitiativeController.updateInitiative as any)(req, res, next);
     });
   }
-
-  return (validateBody(UpdateInitiativeSchema) as any)(req, res, (err?: unknown) => {
-    if (err) return next(err);
-    return (InitiativeController.updateInitiative as any)(req, res, next);
-  });
-});
+);
 
 /**
  * DELETE /api/initiatives/:id
@@ -2542,7 +2555,11 @@ router.post(
  * POST /api/initiatives/:id/unblock
  * Unblock initiative
  */
-router.post('/:id/unblock', requireInitiativeCapability('initiative.unblock', { shadow: true }), InitiativeController.unblockInitiative);
+router.post(
+  '/:id/unblock',
+  requireInitiativeCapability('initiative.unblock', { shadow: true }),
+  InitiativeController.unblockInitiative
+);
 
 /**
  * POST /api/initiatives/:id/complete
@@ -2558,7 +2575,11 @@ router.post(
  * POST /api/initiatives/:id/move
  * Move initiative to different project
  */
-router.post('/:id/move', requireInitiativeCapability('initiative.update', { shadow: true }), InitiativeController.moveInitiative);
+router.post(
+  '/:id/move',
+  requireInitiativeCapability('initiative.update', { shadow: true }),
+  InitiativeController.moveInitiative
+);
 
 /**
  * POST /api/pmo/initiatives/bulk-assign
@@ -2568,13 +2589,21 @@ router.post('/:id/move', requireInitiativeCapability('initiative.update', { shad
  * Declared as a literal path (not `/:id/...`) so it never collides with the
  * single-initiative routes above.
  */
-router.post('/bulk-assign', requireInitiativeCapability('initiative.update', { shadow: true }), InitiativeController.bulkAssignInitiatives);
+router.post(
+  '/bulk-assign',
+  requireInitiativeCapability('initiative.update', { shadow: true }),
+  InitiativeController.bulkAssignInitiatives
+);
 
 /**
  * POST /api/initiatives/:id/archive
  * Archive initiative
  */
-router.post('/:id/archive', requireInitiativeCapability('initiative.status.change', { shadow: true }), InitiativeController.archiveInitiative);
+router.post(
+  '/:id/archive',
+  requireInitiativeCapability('initiative.status.change', { shadow: true }),
+  InitiativeController.archiveInitiative
+);
 
 // ==========================================
 // V4-EXEC-04: INITIATIVE CAPACITY
@@ -2638,7 +2667,11 @@ router.post('/:id/kpis', InitiativeController.createInitiativeKpi);
  * PUT /api/initiatives/:id/kpis/:kpiId
  * Update KPI assignment for an initiative
  */
-router.put('/:id/kpis/:kpiId', requireInitiativeCapability('kpi.update', { shadow: true }), InitiativeController.updateInitiativeKpi);
+router.put(
+  '/:id/kpis/:kpiId',
+  requireInitiativeCapability('kpi.update', { shadow: true }),
+  InitiativeController.updateInitiativeKpi
+);
 
 /**
  * DELETE /api/initiatives/:id/kpis/:kpiId
@@ -2886,8 +2919,16 @@ router.get('/:id/history', InitiativeController.getHistory);
 // ==========================================
 
 router.get('/:id/comments', InitiativeController.getInitiativeComments);
-router.post('/:id/comments', requireInitiativeCapability('initiative.comment', { shadow: true }), InitiativeController.addInitiativeComment);
-router.delete('/:id/comments/:commentId', requireInitiativeCapability('initiative.comment', { shadow: true }), InitiativeController.deleteInitiativeComment);
+router.post(
+  '/:id/comments',
+  requireInitiativeCapability('initiative.comment', { shadow: true }),
+  InitiativeController.addInitiativeComment
+);
+router.delete(
+  '/:id/comments/:commentId',
+  requireInitiativeCapability('initiative.comment', { shadow: true }),
+  InitiativeController.deleteInitiativeComment
+);
 
 // ==========================================
 // INITIATIVE TASK DEPENDENCIES (aggregated)

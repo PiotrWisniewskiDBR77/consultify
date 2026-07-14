@@ -68,7 +68,9 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
           ),
           table: ({ children }) => (
             <div className="my-6 overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10">
-              <table /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */  className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
+              <table
+                /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */ className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10"
+              >
                 {children}
               </table>
             </div>

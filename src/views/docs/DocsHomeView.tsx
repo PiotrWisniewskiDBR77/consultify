@@ -248,9 +248,7 @@ export const DocsHomeView: React.FC = () => {
                 <h3 className="mt-4 font-semibold group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm text-c-text-secondary">
-                  {item.description}
-                </p>
+                <p className="mt-2 text-sm text-c-text-secondary">{item.description}</p>
                 <div className="mt-4 flex items-center text-sm font-medium text-primary-600 dark:text-primary-400">
                   {t('docs.home.helpRuntime.cards.cta', 'Open')}
                   <ArrowRight
@@ -284,9 +282,7 @@ export const DocsHomeView: React.FC = () => {
                   </div>
                   <div>
                     <div className="font-semibold">{card.title}</div>
-                    <div className="mt-1 text-sm text-c-text-secondary">
-                      {card.description}
-                    </div>
+                    <div className="mt-1 text-sm text-c-text-secondary">{card.description}</div>
                   </div>
                 </div>
               ))}
@@ -314,9 +310,7 @@ export const DocsHomeView: React.FC = () => {
                       <DynamicIcon name={card.icon} className="text-blue-500" />
                     </div>
                     <div className="mt-3 font-semibold">{card.title}</div>
-                    <div className="mt-1 text-sm text-c-text-secondary">
-                      {card.description}
-                    </div>
+                    <div className="mt-1 text-sm text-c-text-secondary">{card.description}</div>
                   </div>
                 ))}
               </div>
@@ -342,9 +336,7 @@ export const DocsHomeView: React.FC = () => {
                     )}
                   >
                     <div className="font-semibold">{guide.title}</div>
-                    <div className="mt-1 text-sm text-c-text-secondary">
-                      {guide.description}
-                    </div>
+                    <div className="mt-1 text-sm text-c-text-secondary">{guide.description}</div>
                   </div>
                 ))}
               </div>
@@ -463,9 +455,7 @@ export const DocsHomeView: React.FC = () => {
                   className="rounded-xl border border-c-border-subtle bg-c-surface/40 p-4"
                 >
                   <div className="font-semibold text-c-text">{step.title}</div>
-                  <div className="mt-2 text-sm text-c-text-secondary">
-                    {step.description}
-                  </div>
+                  <div className="mt-2 text-sm text-c-text-secondary">{step.description}</div>
                 </div>
               ))}
             </div>

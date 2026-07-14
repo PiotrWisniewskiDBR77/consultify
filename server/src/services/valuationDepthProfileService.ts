@@ -34,13 +34,13 @@
  */
 
 import {
-  buildBasketFromResults,
-  synthesizeBasket,
   type BasketConfig,
   type BasketMethod,
   type BasketMethodKey,
   type BasketResult,
+  buildBasketFromResults,
   type MethodRange,
+  synthesizeBasket,
   type ValuationResultsShape,
 } from './valuationBasketService.js';
 import {

@@ -322,8 +322,14 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                       }`}
                                       title={
                                         stakeholder.notificationSettings.enabled
-                                          ? t('myWork.stakeholders.notificationsEnabled', 'Notifications enabled')
-                                          : t('myWork.stakeholders.notificationsDisabled', 'Notifications disabled')
+                                          ? t(
+                                              'myWork.stakeholders.notificationsEnabled',
+                                              'Notifications enabled'
+                                            )
+                                          : t(
+                                              'myWork.stakeholders.notificationsDisabled',
+                                              'Notifications disabled'
+                                            )
                                       }
                                     >
                                       {stakeholder.notificationSettings.enabled ? (
@@ -466,7 +472,10 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                           <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                                             <Check size={12} />
                                             <span>
-                                              {t('myWork.stakeholders.acknowledged', 'Acknowledged')}{' '}
+                                              {t(
+                                                'myWork.stakeholders.acknowledged',
+                                                'Acknowledged'
+                                              )}{' '}
                                               {new Date(
                                                 stakeholder.acknowledgedAt
                                               ).toLocaleDateString()}

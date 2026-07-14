@@ -12,6 +12,9 @@
  * summary renderer consumes RPA Scanner output the same way.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
+import { type RpaGateId } from './deepeningLadder';
 import {
   buildW2MoveSequence,
   computeBaseline,
@@ -19,9 +22,6 @@ import {
   type RpaSession,
 } from './feasibilityEngine';
 import { localizeLadder } from './index';
-import { type RpaGateId } from './deepeningLadder';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -29,10 +29,7 @@ const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl :
  * baseline, gate ranking and W2 sequence so its output stays consistent with the
  * scored facts. Returns null when there is nothing to conclude on.
  */
-export function buildRpaConclusionPrompt(
-  session: RpaSession,
-  isPolish: boolean
-): string | null {
+export function buildRpaConclusionPrompt(session: RpaSession, isPolish: boolean): string | null {
   const ranking = rankRpaGates(session);
   if (ranking.ordered.length === 0) return null;
 

@@ -158,9 +158,7 @@ export const StakeholderApi = {
     return data.stakeholder;
   },
 
-  createStakeholder: async (
-    input: CreateStakeholderInput
-  ): Promise<StakeholderRegistryEntry> => {
+  createStakeholder: async (input: CreateStakeholderInput): Promise<StakeholderRegistryEntry> => {
     const data = await apiPost<{ stakeholder: StakeholderRegistryEntry }>(
       '/pmo/stakeholders',
       input,
@@ -229,9 +227,7 @@ export const StakeholderApi = {
   // EFFECTIVE / INHERITANCE READ-MODELS (§3.3) + F12 prefill hook
   // ==========================================
 
-  getProjectEffectiveStakeholders: async (
-    projectId: string
-  ): Promise<EffectiveStakeholder[]> => {
+  getProjectEffectiveStakeholders: async (projectId: string): Promise<EffectiveStakeholder[]> => {
     const data = await apiGet<{ stakeholders: EffectiveStakeholder[] }>(
       `/pmo/stakeholders/project/${projectId}/effective`,
       'Failed to fetch project stakeholders'

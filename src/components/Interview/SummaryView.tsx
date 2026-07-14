@@ -163,9 +163,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Key Facts (As-Is)
               </h3>
               {session.summaryFacts.length === 0 ? (
-                <p className="text-sm text-[var(--c-text-muted)] italic">
-                  No facts extracted yet.
-                </p>
+                <p className="text-sm text-[var(--c-text-muted)] italic">No facts extracted yet.</p>
               ) : (
                 <div className="space-y-2">
                   {session.summaryFacts.map((item, idx) => (
@@ -175,7 +173,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">
+                          {item.category}
+                        </span>
                         <p className="text-sm text-[var(--c-text)]">{item.fact}</p>
                       </div>
                     </div>
@@ -191,9 +191,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Information Gaps
               </h3>
               {session.summaryGaps.length === 0 ? (
-                <p className="text-sm text-[var(--c-text-muted)] italic">
-                  No gaps identified.
-                </p>
+                <p className="text-sm text-[var(--c-text-muted)] italic">No gaps identified.</p>
               ) : (
                 <div className="space-y-2">
                   {session.summaryGaps.map((item, idx) => (
@@ -203,7 +201,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">
+                          {item.category}
+                        </span>
                         <p className="text-sm text-[var(--c-text)]">{item.gap}</p>
                       </div>
                     </div>
@@ -231,10 +231,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
-                        <p className="text-sm text-[var(--c-text)]">
-                          {item.constraint}
-                        </p>
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">
+                          {item.category}
+                        </span>
+                        <p className="text-sm text-[var(--c-text)]">{item.constraint}</p>
                       </div>
                     </div>
                   ))}
@@ -261,10 +261,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
-                        <p className="text-sm text-[var(--c-text)]">
-                          {item.painPoint}
-                        </p>
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">
+                          {item.category}
+                        </span>
+                        <p className="text-sm text-[var(--c-text)]">{item.painPoint}</p>
                       </div>
                     </div>
                   ))}

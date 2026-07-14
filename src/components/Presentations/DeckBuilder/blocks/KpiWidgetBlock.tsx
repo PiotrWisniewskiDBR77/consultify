@@ -22,7 +22,11 @@ export const KpiWidgetBlock: React.FC<Props> = ({ block, theme, density = 'defau
   const benchmark = (block.content.benchmark as string) || '';
 
   const trendColor =
-    trend === 'up' ? theme.chartPalette[2] || '#16A34A' : trend === 'down' ? '#DC2626' : theme.colors.textSecondary;
+    trend === 'up'
+      ? theme.chartPalette[2] || '#16A34A'
+      : trend === 'down'
+        ? '#DC2626'
+        : theme.colors.textSecondary;
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const isHero = density === 'hero';
 

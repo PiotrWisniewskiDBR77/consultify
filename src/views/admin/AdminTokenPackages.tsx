@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
@@ -68,9 +69,7 @@ export const AdminTokenPackages = () => {
             <Package className="w-5 h-5 text-blue-400" />
             Token Packages
           </h2>
-          <p className="text-sm text-c-text-secondary mt-1">
-            Manage purchasable token bundles.
-          </p>
+          <p className="text-sm text-c-text-secondary mt-1">Manage purchasable token bundles.</p>
         </div>
         <button
           onClick={() =>
@@ -167,9 +166,7 @@ export const AdminTokenPackages = () => {
                     onChange={(e) => setEditingPkg({ ...editingPkg, price_usd: e.target.value })}
                     className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg pl-8 pr-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono"
                   />
-                  <span className="absolute left-3 top-3.5 text-c-text-muted text-sm">
-                    $
-                  </span>
+                  <span className="absolute left-3 top-3.5 text-c-text-muted text-sm">$</span>
                 </div>
               </div>
               <div>
@@ -205,9 +202,7 @@ export const AdminTokenPackages = () => {
                   className="w-5 h-5 rounded border-c-border dark:border-white/20 bg-c-surface text-blue-500 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
                 />
                 <div>
-                  <span className="text-c-text font-medium block">
-                    Mark as "Popular"
-                  </span>
+                  <span className="text-c-text font-medium block">Mark as "Popular"</span>
                   <span className="text-c-text-secondary text-xs block">
                     Highlights this package with a badge and border.
                   </span>
@@ -266,9 +261,7 @@ export const AdminTokenPackages = () => {
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-c-text">
-                    ${pkg.price_usd}
-                  </span>
+                  <span className="text-2xl font-bold text-c-text">${pkg.price_usd}</span>
                   <span className="text-c-text-muted text-sm">USD</span>
                 </div>
                 {pkg.bonus_percent > 0 && (

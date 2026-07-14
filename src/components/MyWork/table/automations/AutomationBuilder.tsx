@@ -250,9 +250,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     : 'border-c-border-subtle bg-c-surface hover:border-c-border-subtle'
                 }`}
               >
-                <span
-                  className={`mt-0.5 ${isActive ? 'text-c-text' : 'text-c-text-secondary'}`}
-                >
+                <span className={`mt-0.5 ${isActive ? 'text-c-text' : 'text-c-text-secondary'}`}>
                   {opt.icon}
                 </span>
                 <div>
@@ -331,7 +329,9 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           <h3 className="text-sm font-semibold text-c-text-muted">
             <Bell className="mr-1.5 inline h-4 w-4" />
             {isPl ? 'Akcje' : 'Actions'}
-            <span className="ml-1.5 text-xs font-normal text-c-text-secondary">({actions.length})</span>
+            <span className="ml-1.5 text-xs font-normal text-c-text-secondary">
+              ({actions.length})
+            </span>
           </h3>
           <button
             type="button"

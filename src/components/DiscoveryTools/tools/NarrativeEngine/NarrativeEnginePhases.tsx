@@ -46,10 +46,7 @@ const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
   return isPolish ? 'Zaakceptowane' : 'Accepted';
 };
 
-const resonanceBadge = (
-  resonance: 'high' | 'medium' | 'low' | undefined,
-  isPolish: boolean
-) => {
+const resonanceBadge = (resonance: 'high' | 'medium' | 'low' | undefined, isPolish: boolean) => {
   switch (resonance) {
     case 'high':
       return isPolish ? 'Wysoki' : 'High';

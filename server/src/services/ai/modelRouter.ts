@@ -1402,7 +1402,9 @@ export class ModelRouter {
       // re-query the DB.
       const cached = await appCache.get<ProviderRow | null>(CACHE_KEY);
       if (cached) provider = cached;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     if (provider === undefined) {
       provider = await DbPromise.get<ProviderRow>(
@@ -1424,7 +1426,9 @@ export class ModelRouter {
 
       try {
         await appCache.set(CACHE_KEY, provider ?? null, 300); // 5 mins, flushed on config_update
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     if (!provider || !provider.api_key) {

@@ -4,13 +4,13 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { Button, Input, SelectField } from '../ui/primitives';
-import { EntityStatusChip } from '../ui/primitives/chips';
-import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
-import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { useAppStore } from '../../store/useAppStore';
 import { OwnershipManagementView } from '../../views/admin/OwnershipManagementView';
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
+import { Button, Input, SelectField } from '../ui/primitives';
+import { EntityStatusChip } from '../ui/primitives/chips';
 
 type RoleOption = 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST';
 
@@ -89,12 +89,18 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
     if (!orgId) {
       setInviteError(
-        t('admin.membersRoles.invite.noOrg', 'No active organization — reload the page and try again.')
+        t(
+          'admin.membersRoles.invite.noOrg',
+          'No active organization — reload the page and try again.'
+        )
       );
       return;
     }
     if (!canManageTeam) {
-      const msg = t('admin.membersRoles.invite.denied', 'Only a team owner or admin can add members.');
+      const msg = t(
+        'admin.membersRoles.invite.denied',
+        'Only a team owner or admin can add members.'
+      );
       setInviteError(msg);
       toast.error(msg);
       return;
@@ -118,7 +124,10 @@ export const AdminMembersRolesPanel: React.FC = () => {
     }
     if (!isValidEmail(email)) {
       setInviteError(
-        t('admin.membersRoles.invite.invalidEmail', 'Enter a valid email address (e.g. member@company.com).')
+        t(
+          'admin.membersRoles.invite.invalidEmail',
+          'Enter a valid email address (e.g. member@company.com).'
+        )
       );
       return;
     }
@@ -126,7 +135,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
     try {
       setInviting(true);
       await Api.addOrganizationMember(orgId, email, inviteRole);
-      const msg = t('admin.membersRoles.invite.added', '{{email}} added to the workspace.', { email });
+      const msg = t('admin.membersRoles.invite.added', '{{email}} added to the workspace.', {
+        email,
+      });
       setInviteNotice(msg);
       toast.success(t('admin.membersRoles.invite.addedToast', 'Member added to workspace'));
       setInviteEmail('');
@@ -169,7 +180,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
       toast.success(t('admin.membersRoles.role.updated', 'Member role updated'));
       await loadMembers();
     } catch (error: any) {
-      toast.error(error?.message || t('admin.membersRoles.role.updateFailed', 'Failed to update role'));
+      toast.error(
+        error?.message || t('admin.membersRoles.role.updateFailed', 'Failed to update role')
+      );
     } finally {
       setSavingMemberId(null);
     }
@@ -183,7 +196,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
       toast.success(t('admin.membersRoles.remove.removed', 'Member removed'));
       await loadMembers();
     } catch (error: any) {
-      toast.error(error?.message || t('admin.membersRoles.remove.failed', 'Failed to remove member'));
+      toast.error(
+        error?.message || t('admin.membersRoles.remove.failed', 'Failed to remove member')
+      );
     } finally {
       setSavingMemberId(null);
     }
@@ -204,16 +219,15 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
       const code = response?.code?.code || response?.code;
       if (!code) {
-        throw new Error(
-          t('admin.membersRoles.code.noCode', 'Code was not returned by the server')
-        );
+        throw new Error(t('admin.membersRoles.code.noCode', 'Code was not returned by the server'));
       }
 
       setGeneratedInviteCode(code);
       toast.success(t('admin.membersRoles.code.generated', 'Access code generated'));
     } catch (error: any) {
       toast.error(
-        error?.message || t('admin.membersRoles.code.generateFailed', 'Failed to generate access code')
+        error?.message ||
+          t('admin.membersRoles.code.generateFailed', 'Failed to generate access code')
       );
     } finally {
       setIsGeneratingCode(false);
@@ -470,7 +484,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
               value={generatedInviteMaxUses}
               aria-label={t('admin.membersRoles.code.maxUsesLabel', 'Maximum team registrations')}
               onChange={(event) =>
-                setGeneratedInviteMaxUses(Math.min(500, Math.max(1, Number(event.target.value || 1))))
+                setGeneratedInviteMaxUses(
+                  Math.min(500, Math.max(1, Number(event.target.value || 1)))
+                )
               }
             />
             <Button

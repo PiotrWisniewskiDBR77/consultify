@@ -655,7 +655,11 @@ export function SLADashboard() {
                         Duration: {breach.duration} min
                       </div>
                     </div>
-                    {breach.resolved && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">Resolved</span>}
+                    {breach.resolved && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                        Resolved
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

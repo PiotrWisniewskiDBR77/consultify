@@ -82,8 +82,9 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
       });
       await load();
     } catch (err) {
-      const status = (err as { status?: number; response?: { status?: number } })
-        ?.status ?? (err as { response?: { status?: number } })?.response?.status;
+      const status =
+        (err as { status?: number; response?: { status?: number } })?.status ??
+        (err as { response?: { status?: number } })?.response?.status;
       const msg = String((err as { message?: string })?.message ?? '');
       if (status === 400 || /projectId/i.test(msg)) {
         setNeedsProject(true);
@@ -114,9 +115,7 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
       </div>
 
       {needsProject && (
-        <p className="mb-2 text-xs text-amber-600">
-          Zapis baseline wymaga wybranego projektu.
-        </p>
+        <p className="mb-2 text-xs text-amber-600">Zapis baseline wymaga wybranego projektu.</p>
       )}
       {failed && (
         <p className="mb-2 text-xs text-amber-600">
@@ -126,20 +125,13 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
       {loading && <p className="text-sm text-gray-400">Ładowanie…</p>}
 
       {!loading && baselines.length === 0 ? (
-        <p className="text-sm text-gray-400">
-          Brak zapisanych baseline'ów — zapisz pierwszy.
-        </p>
+        <p className="text-sm text-gray-400">Brak zapisanych baseline'ów — zapisz pierwszy.</p>
       ) : (
         <ul className="flex flex-col gap-2" data-testid="baseline-list">
           {baselines.map((b) => (
-            <li
-              key={b.id}
-              className="flex flex-col gap-0.5 rounded-lg border border-gray-100 p-2"
-            >
+            <li key={b.id} className="flex flex-col gap-0.5 rounded-lg border border-gray-100 p-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-gray-900">
-                  {b.label || 'Baseline'}
-                </span>
+                <span className="text-sm font-medium text-gray-900">{b.label || 'Baseline'}</span>
                 <span className="shrink-0 text-xs text-gray-400">{baselineDate(b)}</span>
               </div>
               {b.reason && <span className="text-xs text-gray-500">{b.reason}</span>}

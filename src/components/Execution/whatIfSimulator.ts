@@ -104,8 +104,10 @@ export function simulateWhatIf(
   interventions: Intervention[]
 ): WhatIfResult {
   const baseHealth = clampHealth(num(baseline.healthScore, 0));
-  const baseSpi = baseline.spi === null || baseline.spi === undefined ? null : clampIndex(baseline.spi);
-  const baseCpi = baseline.cpi === null || baseline.cpi === undefined ? null : clampIndex(baseline.cpi);
+  const baseSpi =
+    baseline.spi === null || baseline.spi === undefined ? null : clampIndex(baseline.spi);
+  const baseCpi =
+    baseline.cpi === null || baseline.cpi === undefined ? null : clampIndex(baseline.cpi);
   const baseUtil = clampUtil(num(baseline.capacityUtilizationPct, 0));
   const baseRisks = Math.max(0, Math.round(num(baseline.openHighRisks, 0)));
 
@@ -181,7 +183,9 @@ export function simulateWhatIf(
         break;
       }
       default: {
-        explanation.push(`nieznana interwencja "${String((intervention as { type?: unknown }).type)}": pominięta.`);
+        explanation.push(
+          `nieznana interwencja "${String((intervention as { type?: unknown }).type)}": pominięta.`
+        );
         break;
       }
     }
@@ -231,6 +235,6 @@ export function compareScenarios(
         index,
       };
     })
-    .sort((a, b) => (b.healthDelta - a.healthDelta) || (a.index - b.index))
+    .sort((a, b) => b.healthDelta - a.healthDelta || a.index - b.index)
     .map(({ label, projected, healthDelta }) => ({ label, projected, healthDelta }));
 }

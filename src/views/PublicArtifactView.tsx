@@ -96,9 +96,7 @@ export const PublicArtifactView: React.FC = () => {
             {isPl ? '· udostępniony dokument' : '· shared document'}
           </span>
           {data?.orgBranding?.name && (
-            <span className="ml-auto text-xs text-c-text-muted">
-              {data.orgBranding.name}
-            </span>
+            <span className="ml-auto text-xs text-c-text-muted">{data.orgBranding.name}</span>
           )}
         </div>
       </header>
@@ -147,9 +145,7 @@ export const PublicArtifactView: React.FC = () => {
         {status === 'ok' && data && !isMarkdownKind && (
           <div className="py-20 text-center">
             <Presentation size={28} className="mx-auto text-c-text-muted" />
-            <div className="mt-3 text-lg font-semibold text-c-text">
-              {data.title}
-            </div>
+            <div className="mt-3 text-lg font-semibold text-c-text">{data.title}</div>
             <p className="mt-2 text-sm text-c-text-muted">
               {isPl
                 ? 'Ten artefakt nie jest jeszcze dostępny publicznie.'

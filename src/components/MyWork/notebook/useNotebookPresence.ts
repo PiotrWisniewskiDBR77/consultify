@@ -139,9 +139,7 @@ export function useNotebookPresence(
   const disconnect = useCallback(() => {
     if (wsRef.current) {
       if (currentUser && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(
-          JSON.stringify({ type: 'presence:leave', userId: currentUser.userId })
-        );
+        wsRef.current.send(JSON.stringify({ type: 'presence:leave', userId: currentUser.userId }));
       }
       wsRef.current.close();
       wsRef.current = null;

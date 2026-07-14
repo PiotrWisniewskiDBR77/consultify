@@ -66,7 +66,7 @@ export interface WorkingCapitalScheduleRow {
  *   ΔWC       = NWC(t) − NWC(t−1)
  */
 export function workingCapitalSchedule(
-  input: WorkingCapitalScheduleInput,
+  input: WorkingCapitalScheduleInput
 ): WorkingCapitalScheduleRow[] {
   const dso = num(input?.dso);
   const dpo = num(input?.dpo);
@@ -196,9 +196,7 @@ export interface DepreciationScheduleRow {
  *
  * `accumulated` is cumulative depreciation; `nbv` = cost − accumulated.
  */
-export function depreciationSchedule(
-  input: DepreciationScheduleInput,
-): DepreciationScheduleRow[] {
+export function depreciationSchedule(input: DepreciationScheduleInput): DepreciationScheduleRow[] {
   const life = Math.max(1, num(input?.usefulLifeYears));
   const method: DepreciationMethod = input?.method === 'declining' ? 'declining' : 'straight_line';
   const capexByPeriod = Array.isArray(input?.capexByPeriod) ? input.capexByPeriod : [];

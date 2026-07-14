@@ -104,7 +104,11 @@ export async function resolveConsultant(slug: string): Promise<ConsultantRef | n
 }
 
 /** Zajęte przedziały z kalendarza konsultanta (nachodzące na okno). */
-async function loadCalendarBusy(organizationId: string, windowStart: Date, windowEnd: Date): Promise<BusyInterval[]> {
+async function loadCalendarBusy(
+  organizationId: string,
+  windowStart: Date,
+  windowEnd: Date
+): Promise<BusyInterval[]> {
   // Fetch od (windowStart - 1 dzień) bez filtra endAt, żeby złapać też trwające
   // i null-end eventy; overlap liczymy w JS.
   const fetchFrom = new Date(windowStart.getTime() - 24 * 60 * 60 * 1000).toISOString();
@@ -123,7 +127,11 @@ async function loadCalendarBusy(organizationId: string, windowStart: Date, windo
 }
 
 /** Zajęte przedziały z istniejących rezerwacji (tabela może nie istnieć). */
-async function loadBookingBusy(slug: string, windowStart: Date, windowEnd: Date): Promise<BusyInterval[]> {
+async function loadBookingBusy(
+  slug: string,
+  windowStart: Date,
+  windowEnd: Date
+): Promise<BusyInterval[]> {
   try {
     const rows = await dbAll<Record<string, unknown>>(
       `SELECT start_at, end_at FROM public_booking_requests
@@ -177,7 +185,9 @@ export async function getAvailability(slug: string): Promise<AvailabilityResult>
 
   const days: AvailabilityDay[] = [];
   for (let dayOffset = 0; dayOffset < WINDOW_DAYS; dayOffset++) {
-    const base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + dayOffset));
+    const base = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + dayOffset)
+    );
     const dow = base.getUTCDay();
     if (dow === 0 || dow === 6) continue; // weekend
 
@@ -330,8 +340,9 @@ async function notifyConsultant(
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] || c
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] || c
   );
 }
 

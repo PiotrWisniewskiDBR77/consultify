@@ -46,11 +46,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
   }
 
   if (!analytics) {
-    return (
-      <div className="p-8 text-center text-c-text-muted">
-        No data available for analysis.
-      </div>
-    );
+    return <div className="p-8 text-center text-c-text-muted">No data available for analysis.</div>;
   }
 
   return (
@@ -106,9 +102,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
                   !
                 </span>
                 <div>
-                  <div className="font-bold text-sm text-c-text-secondary">
-                    {risk.label}
-                  </div>
+                  <div className="font-bold text-sm text-c-text-secondary">{risk.label}</div>
                   <div className="text-xs text-c-text-muted">
                     Pressure: {risk.competitivePressure || 'High'}
                   </div>
@@ -131,12 +125,8 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
                   ✓
                 </span>
                 <div>
-                  <div className="font-bold text-sm text-c-text-secondary">
-                    {opp.label}
-                  </div>
-                  <div className="text-xs text-c-text-muted">
-                    Potential: High Value
-                  </div>
+                  <div className="font-bold text-sm text-c-text-secondary">{opp.label}</div>
+                  <div className="text-xs text-c-text-muted">Potential: High Value</div>
                 </div>
               </li>
             ))}

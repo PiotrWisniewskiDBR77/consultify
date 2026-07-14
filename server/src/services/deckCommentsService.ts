@@ -294,7 +294,8 @@ export async function ensureDeckCommentsHydrated(organizationId: string): Promis
 // =============================================================================
 
 function validateBody(body: unknown): asserts body is string {
-  if (typeof body !== 'string') throw new DeckCommentError('invalid_input', 'body must be a string');
+  if (typeof body !== 'string')
+    throw new DeckCommentError('invalid_input', 'body must be a string');
   const trimmed = body.trim();
   if (trimmed.length === 0) throw new DeckCommentError('invalid_input', 'body must not be empty');
   if (trimmed.length > 10_000)
@@ -594,10 +595,7 @@ export interface DeckCommentCounts {
   perSlide: Record<string, { open: number; resolved: number }>;
 }
 
-export function getDeckCommentCounts(
-  deckId: string,
-  organizationId: string
-): DeckCommentCounts {
+export function getDeckCommentCounts(deckId: string, organizationId: string): DeckCommentCounts {
   const counts: DeckCommentCounts = {
     deckId,
     organizationId,

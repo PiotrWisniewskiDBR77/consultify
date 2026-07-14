@@ -511,7 +511,10 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
           </div>
         ) : (
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-hidden">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full" style={{ minWidth: 900 }}>
+            <table
+              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+              style={{ minWidth: 900 }}
+            >
               <thead>
                 <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
                   {/* Select All */}
@@ -636,9 +639,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                         {/* Block Name */}
                         <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium text-c-text">
-                              {block.name}
-                            </span>
+                            <span className="text-sm font-medium text-c-text">{block.name}</span>
                             {block.description && (
                               <span className="text-xs text-c-text-secondary mt-0.5 line-clamp-1">
                                 {block.description}
@@ -751,9 +752,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-              <h3 className="font-semibold text-c-text">
-                {editing ? 'Edit Block' : 'New Block'}
-              </h3>
+              <h3 className="font-semibold text-c-text">{editing ? 'Edit Block' : 'New Block'}</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary transition-colors"
@@ -765,9 +764,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-c-text mb-1">
-                    Name
-                  </label>
+                  <label className="block text-sm font-medium text-c-text mb-1">Name</label>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -775,9 +772,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-c-text mb-1">
-                    Render Kind
-                  </label>
+                  <label className="block text-sm font-medium text-c-text mb-1">Render Kind</label>
                   <select
                     value={renderKind}
                     onChange={(e) => setRenderKind(e.target.value as BlockRenderKind)}
@@ -794,9 +789,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-c-text mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-c-text mb-1">Description</label>
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -818,9 +811,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-c-text mb-1">
-                      Length
-                    </label>
+                    <label className="block text-sm font-medium text-c-text mb-1">Length</label>
                     <select
                       value={defaultLength}
                       onChange={(e) => setDefaultLength(e.target.value as SectionLength)}
@@ -832,9 +823,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-c-text mb-1">
-                      Style
-                    </label>
+                    <label className="block text-sm font-medium text-c-text mb-1">Style</label>
                     <select
                       value={defaultLanguage}
                       onChange={(e) => setDefaultLanguage(e.target.value as SectionLanguage)}

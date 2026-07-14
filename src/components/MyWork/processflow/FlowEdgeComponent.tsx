@@ -117,7 +117,8 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   // #6p: arrow direction (none/start/end/both) — rendered via per-edge SVG
   // markers below. Default 'none' keeps every existing flow byte-identical
   // (no flow has ever had arrowheads) until a user opts in via the popover.
-  const arrowDirection = (data?.arrowDirection as 'none' | 'start' | 'end' | 'both' | undefined) ?? 'none';
+  const arrowDirection =
+    (data?.arrowDirection as 'none' | 'start' | 'end' | 'both' | undefined) ?? 'none';
   const showEndArrow = arrowDirection === 'end' || arrowDirection === 'both';
   const showStartArrow = arrowDirection === 'start' || arrowDirection === 'both';
   const markerColor = edgeStroke || EDGE_NEUTRAL_STROKE;

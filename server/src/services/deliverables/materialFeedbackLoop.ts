@@ -55,7 +55,10 @@ export function extractRecommendations(sections: MaterialSectionLike[]): Recomme
     }
 
     if (s.text) {
-      const sentences = s.text.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
+      const sentences = s.text
+        .split(/(?<=[.!?])\s+/)
+        .map((x) => x.trim())
+        .filter(Boolean);
       for (const sent of sentences) {
         if (RECOMMENDATION_CUE.test(sent)) {
           out.push({ text: sent, sourceSection: s.title });

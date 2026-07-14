@@ -372,7 +372,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
       const msg = String(err?.response?.data?.error || err?.message || '').toLowerCase();
       if (msg.includes('circular')) {
         toast.error(
-          t('myWork.dependencies.cannotAddWouldCreate', 'Cannot add — would create a circular dependency')
+          t(
+            'myWork.dependencies.cannotAddWouldCreate',
+            'Cannot add — would create a circular dependency'
+          )
         );
       } else if (msg.includes('already exists') || msg.includes('już istnieje')) {
         toast.error(t('myWork.dependencies.toastError3', 'This dependency already exists'));
@@ -388,9 +391,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   const handleRemove = async (dep: TaskDependency) => {
     const baseTaskId = effectiveTaskId || dep.sourceTaskId;
     if (!baseTaskId) {
-      toast.error(
-        t('myWork.dependencies.missingTaskContext', 'Missing task context')
-      );
+      toast.error(t('myWork.dependencies.missingTaskContext', 'Missing task context'));
       return;
     }
     try {
@@ -408,9 +409,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   const handleDuplicate = async (dep: TaskDependency) => {
     const baseTaskId = effectiveTaskId || dep.sourceTaskId;
     if (!baseTaskId) {
-      toast.error(
-        t('myWork.dependencies.missingTaskContext2', 'Missing task context')
-      );
+      toast.error(t('myWork.dependencies.missingTaskContext2', 'Missing task context'));
       return;
     }
     try {
@@ -467,9 +466,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     if (!editingDependency || !addDirection) return;
     const baseTaskId = effectiveTaskId || editingDependency.sourceTaskId;
     if (!baseTaskId) {
-      toast.error(
-        t('myWork.dependencies.missingTaskContext3', 'Missing task context')
-      );
+      toast.error(t('myWork.dependencies.missingTaskContext3', 'Missing task context'));
       return;
     }
 
@@ -498,9 +495,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
       if (taskId) fetchDependencies();
       await onRefreshExternalDependencies?.();
     } catch {
-      toast.error(
-        t('myWork.dependencies.failedToUpdateDependency', 'Failed to update dependency')
-      );
+      toast.error(t('myWork.dependencies.failedToUpdateDependency', 'Failed to update dependency'));
     }
   };
 
@@ -563,23 +558,36 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {t('myWork.dependencies.noDependenciesYet', 'No dependencies yet')}
               </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                {t('myWork.dependencies.useTheButtonAbove', 'Use the button above to add a dependency to another task.')}
+                {t(
+                  'myWork.dependencies.useTheButtonAbove',
+                  'Use the button above to add a dependency to another task.'
+                )}
               </p>
             </div>
           ) : (
             <>
               {/* ── Combined dependencies table ───────────────── */}
               <div className="overflow-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
-                <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
+                <table
+                  /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
+                >
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
                       <th className="text-left py-2.5 pl-3 pr-2">
                         {t('myWork.dependencies.direction', 'Direction')}
                       </th>
-                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.task', 'Task')}</th>
-                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.type', 'Type')}</th>
-                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.lag', 'Lag')}</th>
-                      <th className="text-left py-2.5 pr-2">{t('myWork.dependencies.status', 'Status')}</th>
+                      <th className="text-left py-2.5 pr-2">
+                        {t('myWork.dependencies.task', 'Task')}
+                      </th>
+                      <th className="text-left py-2.5 pr-2">
+                        {t('myWork.dependencies.type', 'Type')}
+                      </th>
+                      <th className="text-left py-2.5 pr-2">
+                        {t('myWork.dependencies.lag', 'Lag')}
+                      </th>
+                      <th className="text-left py-2.5 pr-2">
+                        {t('myWork.dependencies.status', 'Status')}
+                      </th>
                       <th className="text-left py-2.5 pr-2">
                         {t('myWork.dependencies.priority', 'Priority')}
                       </th>
@@ -772,7 +780,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                   <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
                     <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                     <span>
-                      {t('myWork.dependencies.thisTaskHasIncomplete', 'This task has incomplete predecessors — it may be blocked.')}
+                      {t(
+                        'myWork.dependencies.thisTaskHasIncomplete',
+                        'This task has incomplete predecessors — it may be blocked.'
+                      )}
                     </span>
                   </div>
                 </div>
@@ -844,8 +855,14 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">
                       {editingDependency
-                        ? t('myWork.dependencies.modifySettingsForThis', 'Modify settings for this dependency')
-                        : t('myWork.dependencies.configureAndSelectA', 'Configure and select a task to link')}
+                        ? t(
+                            'myWork.dependencies.modifySettingsForThis',
+                            'Modify settings for this dependency'
+                          )
+                        : t(
+                            'myWork.dependencies.configureAndSelectA',
+                            'Configure and select a task to link'
+                          )}
                     </p>
                   </div>
                 </div>
@@ -991,7 +1008,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <span
                         className={`text-[10px] leading-tight ${addDirection === 'successor' ? 'text-amber-500/70 dark:text-amber-400/60' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                       >
-                        {t('myWork.dependencies.anotherTaskDependsOn', 'Another task depends on this')}
+                        {t(
+                          'myWork.dependencies.anotherTaskDependsOn',
+                          'Another task depends on this'
+                        )}
                       </span>
                     </button>
                   </div>
@@ -1087,7 +1107,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           ? isPolish
                             ? `⚡ ${Math.abs(lagDays)} ${Math.abs(lagDays) === 1 ? 'dzień' : 'dni'} wyprzedzenia (overlap)`
                             : `⚡ ${Math.abs(lagDays)} day${Math.abs(lagDays) === 1 ? '' : 's'} lead (overlap)`
-                          : t('myWork.dependencies.noDelayTasksConnect', '→ No delay — tasks connect directly')}
+                          : t(
+                              'myWork.dependencies.noDelayTasksConnect',
+                              '→ No delay — tasks connect directly'
+                            )}
                     </span>
                   </div>
 
@@ -1095,7 +1118,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-500">
                       <AlertTriangle size={12} />
                       <span>
-                        {t('myWork.dependencies.largeLagValueMake', 'Large lag value — make sure this is correct')}
+                        {t(
+                          'myWork.dependencies.largeLagValueMake',
+                          'Large lag value — make sure this is correct'
+                        )}
                       </span>
                     </div>
                   )}
@@ -1129,9 +1155,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                   <textarea
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
-                    placeholder={
-                      t('myWork.dependencies.addContextConditionsOr', 'Add context, conditions, or notes about this dependency...')
-                    }
+                    placeholder={t(
+                      'myWork.dependencies.addContextConditionsOr',
+                      'Add context, conditions, or notes about this dependency...'
+                    )}
                     rows={2}
                     className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 transition-all resize-none"
                   />
@@ -1152,9 +1179,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         type="text"
                         value={searchQuery}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        placeholder={
-                          t('myWork.dependencies.typeTaskNameTo', 'Type task name to search...')
-                        }
+                        placeholder={t(
+                          'myWork.dependencies.typeTaskNameTo',
+                          'Type task name to search...'
+                        )}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400 transition-all"
                         autoFocus
                       />
@@ -1229,7 +1257,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           {t('myWork.dependencies.noTasksFound', 'No tasks found')}
                         </p>
                         <p className="text-[11px] text-slate-700 dark:text-slate-400 mt-0.5">
-                          {t('myWork.dependencies.tryADifferentSearch', 'Try a different search term')}
+                          {t(
+                            'myWork.dependencies.tryADifferentSearch',
+                            'Try a different search term'
+                          )}
                         </p>
                       </div>
                     )}
@@ -1237,7 +1268,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     {/* Empty state */}
                     {!searchQuery && searchResults.length === 0 && !isSearching && (
                       <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 py-2">
-                        {t('myWork.dependencies.startTypingToSearch', 'Start typing to search for a task to link')}
+                        {t(
+                          'myWork.dependencies.startTypingToSearch',
+                          'Start typing to search for a task to link'
+                        )}
                       </p>
                     )}
 
@@ -1293,7 +1327,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               {editingDependency && (
                 <div className="px-6 py-3.5 border-t border-slate-200 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {t('myWork.dependencies.changesWillBeSaved', 'Changes will be saved immediately')}
+                    {t(
+                      'myWork.dependencies.changesWillBeSaved',
+                      'Changes will be saved immediately'
+                    )}
                   </p>
                   <div className="flex items-center gap-2">
                     <button

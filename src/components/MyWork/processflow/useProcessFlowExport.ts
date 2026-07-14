@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Edge, Node } from 'reactflow';
 
-import { generateReadback, readbackToText, type LaneLike } from './generateReadback';
+import { generateReadback, type LaneLike, readbackToText } from './generateReadback';
 import { type ProcessFlowMode } from './ProcessFlowToolbar';
 
 export type ExportFormat = 'json' | 'readback' | 'png';
@@ -97,9 +97,8 @@ export function useProcessFlowExport({
             // Rasterizer needs a concrete color; resolve the canonical app-bg
             // token so the export matches the active (light/dark) theme.
             const exportBg =
-              getComputedStyle(document.documentElement)
-                .getPropertyValue('--c-bg')
-                .trim() || '#ffffff';
+              getComputedStyle(document.documentElement).getPropertyValue('--c-bg').trim() ||
+              '#ffffff';
             const dataUrl = await toPng(canvasRef.current, { backgroundColor: exportBg });
             const link = document.createElement('a');
             link.download = `process-flow-${processId}.png`;

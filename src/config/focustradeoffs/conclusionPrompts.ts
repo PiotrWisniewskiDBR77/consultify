@@ -11,12 +11,11 @@
  *   output -> { summary{verdict,tradeoffs,expectedEffect}, tradeoffs[], moves[], initiatives[], outputCandidates[] } (W2)
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { FocusTradeoffData } from '@/store/useToolStore';
 
 import { localizeLadder } from './index';
-import { rankPriorities, buildW2MoveSequence } from './moveValidator';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+import { buildW2MoveSequence, rankPriorities } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

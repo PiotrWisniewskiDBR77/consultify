@@ -411,9 +411,7 @@ export const AppPricingView: React.FC = () => {
                           <X
                             size={16}
                             className={`mt-0.5 flex-shrink-0 ${
-                              tier.highlight
-                                ? 'text-primary-300/50'
-                                : 'text-c-text-secondary'
+                              tier.highlight ? 'text-primary-300/50' : 'text-c-text-secondary'
                             }`}
                           />
                         )}

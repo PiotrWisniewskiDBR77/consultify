@@ -242,12 +242,7 @@ export function buildIdeaCanvasTopBarChips(args: {
  * Convert · Health. Descriptors only carry id/label/icon; the host renders the
  * matching existing panel content via `renderRightRailPanel(activeToolId)`.
  */
-export type IdeaCanvasRightToolId =
-  | 'problem'
-  | 'status'
-  | 'inspector'
-  | 'convert'
-  | 'health';
+export type IdeaCanvasRightToolId = 'problem' | 'status' | 'inspector' | 'convert' | 'health';
 
 export interface IdeaCanvasRightRailLabels {
   problem: string;

@@ -7,11 +7,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import PDFParserService from '../pdfParserService.js';
 
 import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { aiLogger } from '.././ai/logger.js';
+import PDFParserService from '../pdfParserService.js';
 import { embeddingService } from './embeddingService.js';
 
 type KnowledgeSourceConfig = {

@@ -364,7 +364,8 @@ const accentMap: Record<
     badge: 'bg-primary-500/10 text-primary-400 border-primary-500/20',
     icon: 'text-primary-400',
     highlight: 'from-primary-500/10 to-primary-600/5 border-primary-500/10',
-    button: 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-600/20',
+    button:
+      'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-600/20',
     buttonRegistered: 'bg-primary-500/10 text-primary-400 border border-primary-500/20',
   },
   emerald: {

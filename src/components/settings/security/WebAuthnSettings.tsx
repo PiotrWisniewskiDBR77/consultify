@@ -238,9 +238,7 @@ const WebAuthnSettings: React.FC = () => {
       case 'cross-platform':
         return <Key className="text-amber-400" size={20} />;
       default:
-        return (
-          <Smartphone className="text-c-text-secondary" size={20} />
-        );
+        return <Smartphone className="text-c-text-secondary" size={20} />;
     }
   }
 

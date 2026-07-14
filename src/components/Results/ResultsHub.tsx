@@ -18,6 +18,19 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import {
+  type MetaPill,
+  StandardPreview,
+  type StandardPreviewActions,
+  standardPreviewShortcuts,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+import { AssigneeCell } from '@/components/ui/primitives/cells';
+import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
@@ -28,23 +41,8 @@ import {
 import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
 import { useAppStore } from '@/store/useAppStore';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
-
-import {
-  StandardPreview,
-  standardPreviewShortcuts,
-  type MetaPill,
-  type StandardPreviewActions,
-  type StandardRowMenu,
-  StandardTable,
-  type TableColumn as StandardTableColumn,
-} from '@/components/standard';
-import { AssigneeCell } from '@/components/ui/primitives/cells';
-import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips';
 
 import { Banner } from '../shared/Banner';
-import { LoadingState as SharedLoadingState } from '@/components/shared/states';
-
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
@@ -60,6 +58,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import AIInsightsPanel from './AIInsightsPanel';
 import { KPICreateModal } from './KPICreateModal';
 import {
   filterKpisByLifecycle,
@@ -71,19 +70,15 @@ import {
   type ResultsTrackedInitiative,
 } from './kpiDomain';
 import { KpiOverviewView } from './KpiOverviewView';
-import { M14HandoffInbox } from './M14HandoffInbox';
 import { KpiQueueView } from './KpiQueueView';
 import { loadResultsKpis } from './kpiRuntime';
 import type { SignalSheetRecord } from './kpiSignalSheetTypes';
 import { KpiSignalSheetView } from './KpiSignalSheetView';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
-import { ResultsInitiativesView } from './ResultsInitiativesView';
-import TransformationScorecard from './TransformationScorecard';
-import ValueDriverTree from './ValueDriverTree';
-import StrategicLayerPanel from './StrategicLayerPanel';
-import AIInsightsPanel from './AIInsightsPanel';
+import { M14HandoffInbox } from './M14HandoffInbox';
 import PortfolioInsightsPanel from './PortfolioInsightsPanel';
 import { isResultsFlagEnabled } from './resultsFeatureFlags';
+import { ResultsInitiativesView } from './ResultsInitiativesView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
 import { ResultsGridView } from './ResultsKPITable';
@@ -93,16 +88,19 @@ import {
   ResultsWallboardsView,
 } from './ResultsReportingEnterpriseViews';
 import { createResultsShowcaseSnapshot } from './resultsShowcaseData';
-import { ROIAnalysisView, type ROIInitiativeItem } from './ROIAnalysisView';
-import { ROIDetailDrawer } from './ROIDetailDrawer';
-import { ROIOpenModal } from './ROIOpenModal';
-import { ROITrackingView } from './ROITrackingView';
 import {
   ResultsThreePairsView,
   type ThreePairKpi,
   type ThreePairObjective,
   type ThreePairRoi,
 } from './ResultsThreePairsView';
+import { ROIAnalysisView, type ROIInitiativeItem } from './ROIAnalysisView';
+import { ROIDetailDrawer } from './ROIDetailDrawer';
+import { ROIOpenModal } from './ROIOpenModal';
+import { ROITrackingView } from './ROITrackingView';
+import StrategicLayerPanel from './StrategicLayerPanel';
+import TransformationScorecard from './TransformationScorecard';
+import ValueDriverTree from './ValueDriverTree';
 
 const ResultsInitiativeDocumentView = React.lazy(async () => {
   const module = await import('../Initiatives/InitiativeDocumentView');
@@ -537,11 +535,15 @@ export const ResultsHub: React.FC = () => {
         label: t('results.tabs.roiAnalysis', 'ROI Analysis'),
         icon: <DollarSign size={16} />,
       },
-      ...(isResultsFlagEnabled('strategicLayer') ? [{
-        id: 'results_strategic' as ModuleTab,
-        label: t('results.tabs.strategic', 'Strategic'),
-        icon: <Layers size={16} />,
-      }] : []),
+      ...(isResultsFlagEnabled('strategicLayer')
+        ? [
+            {
+              id: 'results_strategic' as ModuleTab,
+              label: t('results.tabs.strategic', 'Strategic'),
+              icon: <Layers size={16} />,
+            },
+          ]
+        : []),
     ],
     [t, kpis.length, trackedInitiatives.length]
   );
@@ -1506,9 +1508,7 @@ export const ResultsHub: React.FC = () => {
           <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
             {`${selectedKpiIds.size} ${t('common.selected', 'selected')}`}
           </span>
-          <Menu3Chip
-            onClick={() => setSelectedKpiIds(new Set(filteredKpis.map((k) => k.id)))}
-          >
+          <Menu3Chip onClick={() => setSelectedKpiIds(new Set(filteredKpis.map((k) => k.id)))}>
             {t('common.selectAll', 'Select all')}
           </Menu3Chip>
           <Menu3Chip onClick={() => setSelectedKpiIds(new Set())}>
@@ -1630,10 +1630,7 @@ export const ResultsHub: React.FC = () => {
         filterOptions: [
           ...new Set(
             filteredKpis
-              .flatMap((k) => [
-                k.initiativeName,
-                ...(k.linkedInitiatives || []).map((i) => i.name),
-              ])
+              .flatMap((k) => [k.initiativeName, ...(k.linkedInitiatives || []).map((i) => i.name)])
               .filter(Boolean) as string[]
           ),
         ].map((n) => ({ value: n, label: n })),
@@ -1966,7 +1963,10 @@ export const ResultsHub: React.FC = () => {
         />
 
         {showCreateModal && (
-          <KPICreateModal onClose={() => setShowCreateModal(false)} onSuccess={handleCreateSuccess} />
+          <KPICreateModal
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={handleCreateSuccess}
+          />
         )}
 
         {drawerState && (
@@ -2175,8 +2175,7 @@ export const ResultsHub: React.FC = () => {
             }}
           />
         ) : activeTab === 'results_initiatives' ? (
-          isResultsFlagEnabled('transformationScorecard') ||
-          isResultsFlagEnabled('m14Handoff') ? (
+          isResultsFlagEnabled('transformationScorecard') || isResultsFlagEnabled('m14Handoff') ? (
             <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto">
               {isResultsFlagEnabled('transformationScorecard') && (
                 <div className="shrink-0 px-1 pt-1">
@@ -2227,7 +2226,10 @@ export const ResultsHub: React.FC = () => {
               <StrategicLayerPanel projectId="all" />
             ) : (
               <div className="text-sm text-c-text-muted py-8 text-center">
-                {t('results.strategic.disabled', 'Strategic layer disabled — enable the ff_strategicLayer flag.')}
+                {t(
+                  'results.strategic.disabled',
+                  'Strategic layer disabled — enable the ff_strategicLayer flag.'
+                )}
               </div>
             )}
             {isResultsFlagEnabled('valueDriverTree') && (
@@ -2242,10 +2244,15 @@ export const ResultsHub: React.FC = () => {
         ) : activeTab === 'results_ai' ? (
           <div className="p-4 overflow-auto space-y-6">
             {isResultsFlagEnabled('aiInsights') && <AIInsightsPanel projectId="all" />}
-            {isResultsFlagEnabled('portfolioInsights') && <PortfolioInsightsPanel projectId="all" />}
+            {isResultsFlagEnabled('portfolioInsights') && (
+              <PortfolioInsightsPanel projectId="all" />
+            )}
             {!isResultsFlagEnabled('aiInsights') && !isResultsFlagEnabled('portfolioInsights') && (
               <div className="text-sm text-c-text-muted py-8 text-center">
-                {t('results.ai.disabled', 'AI/Portfolio panel disabled — enable ff_aiInsights or ff_portfolioInsights.')}
+                {t(
+                  'results.ai.disabled',
+                  'AI/Portfolio panel disabled — enable ff_aiInsights or ff_portfolioInsights.'
+                )}
               </div>
             )}
           </div>

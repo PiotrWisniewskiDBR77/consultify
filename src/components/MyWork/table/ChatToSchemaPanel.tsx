@@ -746,11 +746,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
   // Render: splitScreen | slideOver | modal
   // -------------------------------------------------------------------------
   if (mode === 'splitScreen') {
-    return (
-      <div className="flex flex-col h-full min-h-0 w-full bg-c-surface">
-        {panelContent}
-      </div>
-    );
+    return <div className="flex flex-col h-full min-h-0 w-full bg-c-surface">{panelContent}</div>;
   }
 
   if (mode === 'slideOver') {

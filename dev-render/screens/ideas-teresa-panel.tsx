@@ -32,19 +32,30 @@ import { IdeaRightPanel } from '../../src/components/standard/IdeaRightPanel';
 function PropertiesMock({ isPl }: { isPl: boolean }): React.ReactElement {
   const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div className="flex items-start justify-between gap-3 py-1.5">
-      <span className="text-[11px] uppercase tracking-wider text-c-text-muted shrink-0">{label}</span>
+      <span className="text-[11px] uppercase tracking-wider text-c-text-muted shrink-0">
+        {label}
+      </span>
       <span className="text-xs text-c-text text-right">{value}</span>
     </div>
   );
   return (
     <div className="flex flex-col divide-y divide-c-border-subtle">
-      <Row label={isPl ? 'Nazwa' : 'Name'} value={isPl ? 'Ekspansja DE — mapa hipotez' : 'DE expansion — hypothesis map'} />
+      <Row
+        label={isPl ? 'Nazwa' : 'Name'}
+        value={isPl ? 'Ekspansja DE — mapa hipotez' : 'DE expansion — hypothesis map'}
+      />
       <Row
         label={isPl ? 'Tagi' : 'Tags'}
         value={
           <span className="inline-flex gap-1">
-            <span className="inline-flex items-center gap-1 rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-muted"><Tag size={9} />rynek</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-muted"><Tag size={9} />DE</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-muted">
+              <Tag size={9} />
+              rynek
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-muted">
+              <Tag size={9} />
+              DE
+            </span>
           </span>
         }
       />
@@ -79,8 +90,14 @@ function ContextMock({ isPl }: { isPl: boolean }): React.ReactElement {
           {isPl ? 'Wejście' : 'Input'}
         </p>
         <ul className="divide-y divide-c-border-subtle">
-          <Link icon={FileText} label={isPl ? 'Notatka: wywiady z partnerami DE' : 'Note: DE partner interviews'} />
-          <Link icon={Lightbulb} label={isPl ? 'Insight: luka w kanałach B2B' : 'Insight: B2B channel gap'} />
+          <Link
+            icon={FileText}
+            label={isPl ? 'Notatka: wywiady z partnerami DE' : 'Note: DE partner interviews'}
+          />
+          <Link
+            icon={Lightbulb}
+            label={isPl ? 'Insight: luka w kanałach B2B' : 'Insight: B2B channel gap'}
+          />
         </ul>
       </div>
       <div>
@@ -88,7 +105,10 @@ function ContextMock({ isPl }: { isPl: boolean }): React.ReactElement {
           {isPl ? 'Wyjście' : 'Output'}
         </p>
         <ul className="divide-y divide-c-border-subtle">
-          <Link icon={ArrowRight} label={isPl ? 'Inicjatywa: pilotaż DACH' : 'Initiative: DACH pilot'} />
+          <Link
+            icon={ArrowRight}
+            label={isPl ? 'Inicjatywa: pilotaż DACH' : 'Initiative: DACH pilot'}
+          />
         </ul>
       </div>
       <button
@@ -140,8 +160,12 @@ function TeresaMock({ isPl }: { isPl: boolean }): React.ReactElement {
         </p>
         <div className="flex flex-col gap-2">
           {[
-            isPl ? 'Rozważ gałąź „bariery regulacyjne DE" — brakuje jej na mapie.' : 'Consider a "DE regulatory barriers" branch — it is missing.',
-            isPl ? 'Węzły „kanały" i „popyt" wyglądają na powiązane — połączyć?' : 'The "channels" and "demand" nodes look related — link them?',
+            isPl
+              ? 'Rozważ gałąź „bariery regulacyjne DE" — brakuje jej na mapie.'
+              : 'Consider a "DE regulatory barriers" branch — it is missing.',
+            isPl
+              ? 'Węzły „kanały" i „popyt" wyglądają na powiązane — połączyć?'
+              : 'The "channels" and "demand" nodes look related — link them?',
           ].map((t, i) => (
             <div
               key={i}
@@ -176,7 +200,10 @@ function CanvasMock({ isPl }: { isPl: boolean }): React.ReactElement {
           </div>
           <div className="flex gap-3">
             {['popyt', 'kanały', 'ryzyka'].map((n) => (
-              <div key={n} className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text-secondary">
+              <div
+                key={n}
+                className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text-secondary"
+              >
                 {n}
               </div>
             ))}
@@ -188,16 +215,21 @@ function CanvasMock({ isPl }: { isPl: boolean }): React.ReactElement {
 }
 
 export default function IdeasTeresaPanelScreen(): React.ReactElement {
-  const isPl = (document.documentElement.lang || 'pl').startsWith('pl') ||
+  const isPl =
+    (document.documentElement.lang || 'pl').startsWith('pl') ||
     new URLSearchParams(window.location.search).get('lang') !== 'en';
 
   return (
     <div className="flex h-screen w-full flex-col bg-c-surface">
       {/* Mock topbar narzędzia idei */}
       <div className="flex h-12 items-center gap-3 border-b border-c-border-subtle px-4">
-        <span className="text-sm font-semibold text-c-text">{isPl ? 'Mapa myśli' : 'Mind map'}</span>
+        <span className="text-sm font-semibold text-c-text">
+          {isPl ? 'Mapa myśli' : 'Mind map'}
+        </span>
         <span className="text-c-text-muted">·</span>
-        <span className="text-xs text-c-text-muted">{isPl ? 'Ekspansja DE — mapa hipotez' : 'DE expansion — hypothesis map'}</span>
+        <span className="text-xs text-c-text-muted">
+          {isPl ? 'Ekspansja DE — mapa hipotez' : 'DE expansion — hypothesis map'}
+        </span>
       </div>
       {/* Wiersz: canvas + JEDEN prawy panel (dok Teresy) */}
       <div className="flex min-h-0 flex-1">

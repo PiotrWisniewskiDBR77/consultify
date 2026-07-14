@@ -128,9 +128,7 @@ export const PartnerPricingView: React.FC = () => {
 
                 <h1 className="mt-6 text-4xl font-black tracking-tight text-c-text md:text-5xl">
                   Program partnerski, który daje{' '}
-                  <span className="text-c-accent">
-                    realny pipeline, wdrożenia i payout
-                  </span>
+                  <span className="text-c-accent">realny pipeline, wdrożenia i payout</span>
                 </h1>
 
                 <p className="mt-6 max-w-3xl text-lg leading-relaxed text-c-text-secondary">
@@ -200,12 +198,8 @@ export const PartnerPricingView: React.FC = () => {
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-c-accent-soft text-c-accent">
                         <Icon size={20} />
                       </div>
-                      <h3 className="mt-4 text-lg font-bold text-c-text">
-                        {step.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-c-text-secondary">
-                        {step.description}
-                      </p>
+                      <h3 className="mt-4 text-lg font-bold text-c-text">{step.title}</h3>
+                      <p className="mt-2 text-sm text-c-text-secondary">{step.description}</p>
                       <p className="mt-3 text-sm font-medium text-c-text-secondary">
                         {step.detail}
                       </p>
@@ -283,12 +277,8 @@ export const PartnerPricingView: React.FC = () => {
                         0{idx + 1}
                       </span>
                     </div>
-                    <h3 className="mt-4 text-lg font-bold text-c-text">
-                      {step.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-c-text-secondary">
-                      {step.description}
-                    </p>
+                    <h3 className="mt-4 text-lg font-bold text-c-text">{step.title}</h3>
+                    <p className="mt-2 text-sm text-c-text-secondary">{step.description}</p>
                   </div>
                 );
               })}
@@ -351,9 +341,7 @@ export const PartnerPricingView: React.FC = () => {
                   >
                     <div className="flex items-start gap-3">
                       <Check className="mt-0.5 text-c-success" size={18} />
-                      <p className="text-sm font-medium text-c-text-secondary">
-                        {item}
-                      </p>
+                      <p className="text-sm font-medium text-c-text-secondary">{item}</p>
                     </div>
                   </div>
                 ))}
@@ -373,9 +361,7 @@ export const PartnerPricingView: React.FC = () => {
         <section className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 text-center">
-              <h2 className="text-3xl font-black text-c-text">
-                Korzyści z partnerstwa
-              </h2>
+              <h2 className="text-3xl font-black text-c-text">Korzyści z partnerstwa</h2>
               <p className="mx-auto mt-4 max-w-2xl text-c-text-secondary">
                 Program jest zbudowany tak, by partner mógł szybciej wejść na rynek, przejść przez
                 aktywację i skalować współpracę bez ręcznego zszywania procesu.
@@ -397,12 +383,8 @@ export const PartnerPricingView: React.FC = () => {
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-c-accent-soft">
                       <Icon size={24} className="text-c-accent" />
                     </div>
-                    <h3 className="mt-4 text-lg font-bold text-c-text">
-                      {benefit.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-c-text-secondary">
-                      {benefit.description}
-                    </p>
+                    <h3 className="mt-4 text-lg font-bold text-c-text">{benefit.title}</h3>
+                    <p className="mt-2 text-sm text-c-text-secondary">{benefit.description}</p>
                   </motion.div>
                 );
               })}
@@ -453,12 +435,8 @@ export const PartnerPricingView: React.FC = () => {
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-c-accent-soft text-c-accent">
                       <Icon size={22} />
                     </div>
-                    <h3 className="mt-4 text-lg font-bold text-c-text">
-                      {step.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-c-text-secondary">
-                      {step.description}
-                    </p>
+                    <h3 className="mt-4 text-lg font-bold text-c-text">{step.title}</h3>
+                    <p className="mt-2 text-sm text-c-text-secondary">{step.description}</p>
                   </div>
                 );
               })}
@@ -485,9 +463,7 @@ export const PartnerPricingView: React.FC = () => {
         <section className="px-6 py-16">
           <div className="mx-auto max-w-7xl">
             <div className="mb-12 text-center">
-              <h2 className="text-3xl font-black text-c-text">
-                Poziomy programu
-              </h2>
+              <h2 className="text-3xl font-black text-c-text">Poziomy programu</h2>
               <p className="mx-auto mt-4 max-w-2xl text-c-text-secondary">
                 Poziomy nadal porządkują rozwój partnera, ale najpierw partner dostaje jeden, spójny
                 flow wejścia i jasną ścieżkę wzrostu.
@@ -525,9 +501,7 @@ export const PartnerPricingView: React.FC = () => {
                       >
                         <Icon
                           size={24}
-                          className={
-                            tier.highlight ? 'text-white' : 'text-c-accent'
-                          }
+                          className={tier.highlight ? 'text-white' : 'text-c-accent'}
                         />
                       </div>
                       <div>
@@ -540,9 +514,7 @@ export const PartnerPricingView: React.FC = () => {
                         </h3>
                         <p
                           className={`text-xs ${
-                            tier.highlight
-                              ? 'text-primary-200'
-                              : 'text-c-text-muted'
+                            tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                           }`}
                         >
                           {tier.subtitle}
@@ -561,9 +533,7 @@ export const PartnerPricingView: React.FC = () => {
                         </span>
                         <span
                           className={`text-sm ${
-                            tier.highlight
-                              ? 'text-primary-200'
-                              : 'text-c-text-muted'
+                            tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                           }`}
                         >
                           commission
@@ -600,9 +570,7 @@ export const PartnerPricingView: React.FC = () => {
                             <X
                               size={16}
                               className={`mt-0.5 flex-shrink-0 ${
-                                tier.highlight
-                                  ? 'text-primary-300/50'
-                                  : 'text-c-text-secondary'
+                                tier.highlight ? 'text-primary-300/50' : 'text-c-text-secondary'
                               }`}
                             />
                           )}
@@ -643,9 +611,7 @@ export const PartnerPricingView: React.FC = () => {
                           >
                             <span
                               className={
-                                tier.highlight
-                                  ? 'text-primary-200'
-                                  : 'text-c-text-secondary'
+                                tier.highlight ? 'text-primary-200' : 'text-c-text-secondary'
                               }
                             >
                               {req.label}
@@ -697,9 +663,7 @@ export const PartnerPricingView: React.FC = () => {
         <section className="px-6 py-16">
           <div className="mx-auto max-w-3xl">
             <div className="mb-12 text-center">
-              <h2 className="text-3xl font-black text-c-text">
-                Najczęściej zadawane pytania
-              </h2>
+              <h2 className="text-3xl font-black text-c-text">Najczęściej zadawane pytania</h2>
               <p className="mt-4 text-c-text-secondary">
                 Masz scenariusz, który wymaga niestandardowych warunków?{' '}
                 <button onClick={openContact} className="text-c-accent hover:underline">
@@ -724,9 +688,7 @@ export const PartnerPricingView: React.FC = () => {
                   >
                     <div className="flex items-start gap-3">
                       <HelpCircle size={20} className="mt-0.5 flex-shrink-0 text-c-accent" />
-                      <span className="font-bold text-c-text">
-                        {faq.question}
-                      </span>
+                      <span className="font-bold text-c-text">{faq.question}</span>
                     </div>
                     <ChevronDown
                       size={20}
@@ -737,9 +699,7 @@ export const PartnerPricingView: React.FC = () => {
                   </button>
                   {expandedFaq === idx && (
                     <div className="border-t border-c-border-subtle p-4 pb-5 pt-4">
-                      <p className="pl-8 text-sm text-c-text-secondary">
-                        {faq.answer}
-                      </p>
+                      <p className="pl-8 text-sm text-c-text-secondary">{faq.answer}</p>
                     </div>
                   )}
                 </motion.div>

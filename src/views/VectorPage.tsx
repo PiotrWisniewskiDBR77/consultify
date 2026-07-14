@@ -401,7 +401,9 @@ export const VectorPage: React.FC = () => {
             {...fadeUp}
             className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/[0.08]"
           >
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-sm"
+            >
               <thead>
                 <tr className="bg-slate-100 dark:bg-white/[0.04]">
                   <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">

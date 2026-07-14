@@ -92,7 +92,9 @@ export const ChatTracesViewer: React.FC = () => {
         )}
 
         <div className="max-h-[70vh] overflow-auto">
-          <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-sm">
+          <table
+            /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-sm"
+          >
             <thead className="sticky top-0 bg-slate-50 dark:bg-navy-900 text-slate-600 dark:text-slate-300">
               <tr>
                 <th className="text-left px-4 py-2 font-medium">Started</th>

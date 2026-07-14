@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import {
   Check,
   ClipboardList,
@@ -15,7 +16,6 @@ import {
   Table2,
   X,
 } from 'lucide-react';
-import type { TFunction } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
@@ -439,7 +439,9 @@ function EditableMarkdownCanvas({
 function TableCanvas({ content }: { content: WorkCanvasTableContent }) {
   return (
     <div className="overflow-auto rounded-2xl border border-slate-200 dark:border-white/10">
-      <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm">
+      <table
+        /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm"
+      >
         <thead className="bg-slate-50 dark:bg-white/[0.03]">
           <tr>
             {content.columns.map((column) => (
@@ -1001,40 +1003,43 @@ export function WorkCanvasShell() {
     []
   );
 
-  const handleResearchSessionSelected = React.useCallback((session: ResearchSessionView | null) => {
-    if (!session) return;
-    let draftToPersist: WorkCanvasDraft | null = null;
-    setDraft((current) => {
-      if (!current || current.researchSessionId === session.sessionId) return current;
-      if (current.kind !== 'research') return current;
-      const nextDraft = {
-        ...current,
-        researchSessionId: session.sessionId,
-        content: {
-          ...(current.content as WorkCanvasResearchContent),
-          status: session.status === 'archived' ? 'completed' : session.status,
-        },
-        updatedAt: new Date().toISOString(),
-      };
-      draftToPersist = nextDraft;
-      return nextDraft;
-    });
-    window.setTimeout(() => {
-      if (!draftToPersist || draftToPersist.id.startsWith('work-canvas-')) return;
-      void WorkCanvasApi.updateDraft(draftToPersist.id, {
-        researchSessionId: session.sessionId,
-        content: draftToPersist.content,
-      }).catch((error: any) => {
-        setErrorMessage(
-          workCanvasErrorMessage(
-            error,
-            t('canvas.workShell.errResearchLink', 'Research session link could not be saved.'),
-            t
-          )
-        );
+  const handleResearchSessionSelected = React.useCallback(
+    (session: ResearchSessionView | null) => {
+      if (!session) return;
+      let draftToPersist: WorkCanvasDraft | null = null;
+      setDraft((current) => {
+        if (!current || current.researchSessionId === session.sessionId) return current;
+        if (current.kind !== 'research') return current;
+        const nextDraft = {
+          ...current,
+          researchSessionId: session.sessionId,
+          content: {
+            ...(current.content as WorkCanvasResearchContent),
+            status: session.status === 'archived' ? 'completed' : session.status,
+          },
+          updatedAt: new Date().toISOString(),
+        };
+        draftToPersist = nextDraft;
+        return nextDraft;
       });
-    }, 0);
-  }, [t]);
+      window.setTimeout(() => {
+        if (!draftToPersist || draftToPersist.id.startsWith('work-canvas-')) return;
+        void WorkCanvasApi.updateDraft(draftToPersist.id, {
+          researchSessionId: session.sessionId,
+          content: draftToPersist.content,
+        }).catch((error: any) => {
+          setErrorMessage(
+            workCanvasErrorMessage(
+              error,
+              t('canvas.workShell.errResearchLink', 'Research session link could not be saved.'),
+              t
+            )
+          );
+        });
+      }, 0);
+    },
+    [t]
+  );
 
   const copyCurrentDraft = async () => {
     if (!draft) return;

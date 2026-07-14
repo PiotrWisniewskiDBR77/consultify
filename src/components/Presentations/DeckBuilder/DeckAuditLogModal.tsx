@@ -257,9 +257,7 @@ const AuditEventRow: React.FC<{ event: PresentationAuditLogEvent }> = ({ event }
             {event.scope}
           </span>
         ) : null}
-        <div className="min-w-0 flex-1 text-sm text-c-text">
-          {event.summary}
-        </div>
+        <div className="min-w-0 flex-1 text-sm text-c-text">{event.summary}</div>
         {hasMetadata ? (
           <button
             type="button"
@@ -792,9 +790,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <History size={20} className="text-c-text-secondary" />
-          <p className="mt-2 text-sm font-medium text-c-text-secondary">
-            No audit events yet
-          </p>
+          <p className="mt-2 text-sm font-medium text-c-text-secondary">No audit events yet</p>
           <p className="mt-1 text-xs text-c-text-secondary">
             Activity for this deck will appear here once edits, shares, or AI proposals occur.
           </p>

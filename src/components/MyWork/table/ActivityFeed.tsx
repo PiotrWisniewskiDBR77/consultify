@@ -115,9 +115,7 @@ const EventItem = React.memo(function EventItem({
         {eventIcon(event.eventType)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-c-text leading-snug truncate">
-          {eventLabel(event, isPl)}
-        </p>
+        <p className="text-[11px] text-c-text leading-snug truncate">{eventLabel(event, isPl)}</p>
         {!compact && (
           <span className="text-[10px] text-c-text-secondary flex items-center gap-1 mt-0.5">
             <Clock size={9} />

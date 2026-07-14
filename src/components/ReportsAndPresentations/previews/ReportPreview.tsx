@@ -1,12 +1,12 @@
-import { FileDown, ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, FileDown } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  PreviewActionBar,
   type ActionButton,
+  PreviewActionBar,
 } from '@/components/shared/PreviewPane/PreviewActionBar';
-import { PreviewMetaCard, type MetaPill } from '@/components/shared/PreviewPane/PreviewMetaCard';
+import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane/PreviewMetaCard';
 import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 
 import { reportTypeLabel, statusLabel } from '../previewLabels';

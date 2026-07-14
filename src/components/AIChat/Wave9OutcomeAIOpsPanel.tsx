@@ -16,17 +16,50 @@ import { Api } from '../../services/api';
 type SourceRef = { sourceType: string; sourceId: string; title?: string | null };
 
 const reasonLabels: Record<string, { en: string; pl: string }> = {
-  regression_pack_failed: { en: 'Regression pack did not pass.', pl: 'Pakiet regresji nie przeszedł.' },
-  ciso_pack_failed: { en: 'CISO/security pack did not pass.', pl: 'Pakiet CISO/bezpieczeństwa nie przeszedł.' },
-  business_persona_pack_failed: { en: 'Business persona pack did not pass.', pl: 'Pakiet person biznesowych nie przeszedł.' },
-  provider_health_failed: { en: 'AI provider health is not acceptable.', pl: 'Stan zdrowia dostawcy AI jest nieakceptowalny.' },
-  compliance_audit_failed: { en: 'Compliance audit evidence did not pass.', pl: 'Dowody audytu zgodności nie przeszły weryfikacji.' },
-  missing_regression_evidence: { en: 'Missing regression evidence ID.', pl: 'Brak identyfikatora dowodu regresji.' },
-  missing_ciso_evidence: { en: 'Missing CISO evidence ID.', pl: 'Brak identyfikatora dowodu CISO.' },
-  missing_persona_evidence: { en: 'Missing business persona evidence ID.', pl: 'Brak identyfikatora dowodu persony biznesowej.' },
-  missing_compliance_evidence: { en: 'Missing compliance audit evidence ID.', pl: 'Brak identyfikatora dowodu audytu zgodności.' },
-  ai_ops_eval_gate_failed: { en: 'AI Ops eval pack did not pass.', pl: 'Pakiet ewaluacji AI Ops nie przeszedł.' },
-  open_p0_findings: { en: 'Open P0 findings must be closed before release.', pl: 'Otwarte ustalenia P0 muszą zostać zamknięte przed wdrożeniem.' },
+  regression_pack_failed: {
+    en: 'Regression pack did not pass.',
+    pl: 'Pakiet regresji nie przeszedł.',
+  },
+  ciso_pack_failed: {
+    en: 'CISO/security pack did not pass.',
+    pl: 'Pakiet CISO/bezpieczeństwa nie przeszedł.',
+  },
+  business_persona_pack_failed: {
+    en: 'Business persona pack did not pass.',
+    pl: 'Pakiet person biznesowych nie przeszedł.',
+  },
+  provider_health_failed: {
+    en: 'AI provider health is not acceptable.',
+    pl: 'Stan zdrowia dostawcy AI jest nieakceptowalny.',
+  },
+  compliance_audit_failed: {
+    en: 'Compliance audit evidence did not pass.',
+    pl: 'Dowody audytu zgodności nie przeszły weryfikacji.',
+  },
+  missing_regression_evidence: {
+    en: 'Missing regression evidence ID.',
+    pl: 'Brak identyfikatora dowodu regresji.',
+  },
+  missing_ciso_evidence: {
+    en: 'Missing CISO evidence ID.',
+    pl: 'Brak identyfikatora dowodu CISO.',
+  },
+  missing_persona_evidence: {
+    en: 'Missing business persona evidence ID.',
+    pl: 'Brak identyfikatora dowodu persony biznesowej.',
+  },
+  missing_compliance_evidence: {
+    en: 'Missing compliance audit evidence ID.',
+    pl: 'Brak identyfikatora dowodu audytu zgodności.',
+  },
+  ai_ops_eval_gate_failed: {
+    en: 'AI Ops eval pack did not pass.',
+    pl: 'Pakiet ewaluacji AI Ops nie przeszedł.',
+  },
+  open_p0_findings: {
+    en: 'Open P0 findings must be closed before release.',
+    pl: 'Otwarte ustalenia P0 muszą zostać zamknięte przed wdrożeniem.',
+  },
 };
 
 const formatReason = (reason: string, isPolish: boolean) => {
@@ -51,7 +84,7 @@ const parseSourceRefs = (raw: string): SourceRef[] =>
     .filter((source) => source.sourceId.length > 0);
 
 export const Wave9OutcomeAIOpsPanel: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
 
@@ -437,14 +470,15 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 >
                   <div className="font-medium">{outcome.kpiName}</div>
                   <div className="mt-1 text-xs text-slate-500">
-                    {t('aios.wave9OutcomeAIOpsPanel.baseline')} {outcome.baseline} → {t('aios.wave9OutcomeAIOpsPanel.target')} {outcome.target}; {t('aios.wave9OutcomeAIOpsPanel.confidence')}{' '}
-                    {outcome.confidence}
+                    {t('aios.wave9OutcomeAIOpsPanel.baseline')} {outcome.baseline} →{' '}
+                    {t('aios.wave9OutcomeAIOpsPanel.target')} {outcome.target};{' '}
+                    {t('aios.wave9OutcomeAIOpsPanel.confidence')} {outcome.confidence}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
                     ROI:{' '}
                     {outcome.roi?.available
                       ? `${outcome.roi.riskAdjustedRoiPercent}% ${t('aios.wave9OutcomeAIOpsPanel.riskAdjusted')}`
-                      : (t('aios.wave9OutcomeAIOpsPanel.missing'))}
+                      : t('aios.wave9OutcomeAIOpsPanel.missing')}
                   </div>
                 </button>
               ))}
@@ -471,12 +505,16 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                   disabled={loading || !selectedOutcomeId}
                   className="rounded-md border px-3 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
                 >
-                  {({
-                    client_ready: t('aios.wave9OutcomeAIOpsPanel.reportTypeClientReady'),
-                    investor_ready: t('aios.wave9OutcomeAIOpsPanel.reportTypeInvestorReady'),
-                    steering_committee: t('aios.wave9OutcomeAIOpsPanel.reportTypeSteeringCommittee'),
-                    ciso_security: t('aios.wave9OutcomeAIOpsPanel.reportTypeCisoSecurity'),
-                  } as Record<string, string>)[type] ?? type.replace(/_/g, ' ')}
+                  {(
+                    {
+                      client_ready: t('aios.wave9OutcomeAIOpsPanel.reportTypeClientReady'),
+                      investor_ready: t('aios.wave9OutcomeAIOpsPanel.reportTypeInvestorReady'),
+                      steering_committee: t(
+                        'aios.wave9OutcomeAIOpsPanel.reportTypeSteeringCommittee'
+                      ),
+                      ciso_security: t('aios.wave9OutcomeAIOpsPanel.reportTypeCisoSecurity'),
+                    } as Record<string, string>
+                  )[type] ?? type.replace(/_/g, ' ')}
                 </button>
               ))}
             </div>
@@ -484,7 +522,8 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               <div className="mt-3 rounded-lg border p-3 text-xs dark:border-navy-700">
                 <div className="font-medium">{report.title}</div>
                 <div className="mt-1 text-slate-500">
-                  {t('aios.wave9OutcomeAIOpsPanel.assumptions')}: {report.businessEffectSummary?.assumptions?.length || 0}; {t('aios.confidence')}:{' '}
+                  {t('aios.wave9OutcomeAIOpsPanel.assumptions')}:{' '}
+                  {report.businessEffectSummary?.assumptions?.length || 0}; {t('aios.confidence')}:{' '}
                   {report.businessEffectSummary?.confidence}
                 </div>
               </div>
@@ -498,14 +537,17 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
                 <Database size={14} className="mb-1" />
-                {t('aios.wave9OutcomeAIOpsPanel.providers')}: {dashboard?.providerHealth?.length || 0}
+                {t('aios.wave9OutcomeAIOpsPanel.providers')}:{' '}
+                {dashboard?.providerHealth?.length || 0}
               </div>
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
-                {t('aios.wave9OutcomeAIOpsPanel.cost')}: ${dashboard?.costDashboard?.totalCostUsd || 0}
+                {t('aios.wave9OutcomeAIOpsPanel.cost')}: $
+                {dashboard?.costDashboard?.totalCostUsd || 0}
               </div>
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
                 <ListChecks size={14} className="mb-1" />
-                {t('aios.wave9OutcomeAIOpsPanel.evalGate')}: {dashboard?.evalDashboard?.latestGate || 'BLOCKED'}
+                {t('aios.wave9OutcomeAIOpsPanel.evalGate')}:{' '}
+                {dashboard?.evalDashboard?.latestGate || 'BLOCKED'}
               </div>
             </div>
             <div className="mt-3 rounded-lg border p-3 text-xs text-slate-600 dark:border-navy-700 dark:text-slate-300">
@@ -526,7 +568,8 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-md border border-danger-200 px-3 py-2 text-xs font-medium text-danger-700 disabled:opacity-50 dark:border-danger-900 dark:text-danger-200"
               >
-                <AlertTriangle size={14} /> {t('aios.wave9OutcomeAIOpsPanel.simulateProviderUnavailable')}
+                <AlertTriangle size={14} />{' '}
+                {t('aios.wave9OutcomeAIOpsPanel.simulateProviderUnavailable')}
               </button>
             </div>
           </div>
@@ -566,7 +609,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                     {Object.values(acceptance.report.acceptanceRunEvidence)
                       .filter(Boolean)
                       .map((run: any) => `${run.runType}:${run.runRef || run.runId}`)
-                      .join(', ') || (t('aios.wave9OutcomeAIOpsPanel.none'))}
+                      .join(', ') || t('aios.wave9OutcomeAIOpsPanel.none')}
                   </div>
                 )}
               </div>

@@ -205,7 +205,7 @@ export const ANSOFF_DEEPENING_LADDER: Record<GrowthQuadrantId, LadderRung[]> = {
       },
       rationale: {
         pl: 'Ryzyko rozwoju produktu to luka zdolności wytwórczych — najczęstszy powód odroczenia tej ścieżki.',
-        en: "Product-development risk is a build-capability gap — the most common reason to defer this path.",
+        en: 'Product-development risk is a build-capability gap — the most common reason to defer this path.',
       },
     },
   ],

@@ -115,9 +115,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
       setReport(next);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.qa.runFailed', 'Failed to run QA')
+        err instanceof Error ? err.message : t('documentStudio.qa.runFailed', 'Failed to run QA')
       );
     } finally {
       setLoading(false);

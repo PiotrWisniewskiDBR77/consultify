@@ -168,16 +168,11 @@ export const DocsArticleView: React.FC = () => {
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
-        <Link
-          to={`/docs/${categorySlug}`}
-          className="hover:text-c-accent"
-        >
+        <Link to={`/docs/${categorySlug}`} className="hover:text-c-accent">
           {article.category_name}
         </Link>
         <ChevronRight size={14} />
-        <span className="text-c-text font-medium truncate max-w-[200px]">
-          {article.title}
-        </span>
+        <span className="text-c-text font-medium truncate max-w-[200px]">{article.title}</span>
       </nav>
 
       <div className="flex gap-8">
@@ -273,10 +268,7 @@ export const DocsArticleView: React.FC = () => {
                   const match = /language-(\w+)/.exec(className || '');
                   const inline = !match;
                   return inline ? (
-                    <code
-                      className="px-1.5 py-0.5 rounded bg-c-surface-raised text-sm"
-                      {...props}
-                    >
+                    <code className="px-1.5 py-0.5 rounded bg-c-surface-raised text-sm" {...props}>
                       {children}
                     </code>
                   ) : (
@@ -292,7 +284,11 @@ export const DocsArticleView: React.FC = () => {
                 },
                 table: ({ children }) => (
                   <div className="overflow-x-auto">
-                    <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="min-w-full">{children}</table>
+                    <table
+                      /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="min-w-full"
+                    >
+                      {children}
+                    </table>
                   </div>
                 ),
               }}
@@ -305,9 +301,7 @@ export const DocsArticleView: React.FC = () => {
           <div className="mt-12 p-6 rounded-xl border border-c-border bg-c-surface-raised">
             <h3 className="text-lg font-semibold mb-3">Was this article helpful?</h3>
             {feedbackGiven ? (
-              <p className="text-sm text-c-text-secondary">
-                Thank you for your feedback! 🙏
-              </p>
+              <p className="text-sm text-c-text-secondary">Thank you for your feedback! 🙏</p>
             ) : (
               <div className="flex items-center gap-3">
                 <button

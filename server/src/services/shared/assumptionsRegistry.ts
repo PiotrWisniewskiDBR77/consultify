@@ -39,7 +39,11 @@ export type AssumptionSourceType =
 
 /** Klasy statusu jako kryterium „needsReview" i koloru badge w UI. */
 export const HARD_SOURCE_TYPES: readonly AssumptionSourceType[] = ['imported', 'user', 'teresa'];
-export const SOURCED_SOURCE_TYPES: readonly AssumptionSourceType[] = ['imported', 'benchmark', 'teresa'];
+export const SOURCED_SOURCE_TYPES: readonly AssumptionSourceType[] = [
+  'imported',
+  'benchmark',
+  'teresa',
+];
 
 /** Prowieniencja pojedynczej wartości (§4.2 Z114). */
 export interface AssumptionProvenance {
@@ -107,7 +111,7 @@ const isMissingValue = (v: number | null | undefined): boolean =>
  */
 export function detectMissingDrivers(
   required: readonly RequiredDriver[],
-  provided: readonly Assumption[],
+  provided: readonly Assumption[]
 ): MissingDriver[] {
   const byKey = new Map<string, Assumption>();
   for (const a of provided) byKey.set(a.key, a);
@@ -116,9 +120,21 @@ export function detectMissingDrivers(
     if (r.optional) continue;
     const found = byKey.get(r.key);
     if (!found) {
-      out.push({ key: r.key, label: r.label, unit: r.unit, benchmarkHint: r.benchmarkHint, reason: 'absent' });
+      out.push({
+        key: r.key,
+        label: r.label,
+        unit: r.unit,
+        benchmarkHint: r.benchmarkHint,
+        reason: 'absent',
+      });
     } else if (isMissingValue(found.value)) {
-      out.push({ key: r.key, label: r.label, unit: r.unit, benchmarkHint: r.benchmarkHint, reason: 'null_value' });
+      out.push({
+        key: r.key,
+        label: r.label,
+        unit: r.unit,
+        benchmarkHint: r.benchmarkHint,
+        reason: 'null_value',
+      });
     }
   }
   return out.sort((a, b) => a.key.localeCompare(b.key));
@@ -144,7 +160,7 @@ export interface AiAssumeOpts {
 export function buildAiAssumption(
   driver: Pick<RequiredDriver, 'key' | 'label' | 'unit'>,
   value: number,
-  opts: AiAssumeOpts,
+  opts: AiAssumeOpts
 ): Assumption {
   return {
     key: driver.key,
@@ -183,7 +199,7 @@ export function applyUserEdit(
   value: number,
   editedBy: string,
   at: string,
-  rationale?: string,
+  rationale?: string
 ): Assumption {
   return {
     ...a,
@@ -262,7 +278,7 @@ export interface CoverageAudit {
 export function auditCoverage(
   modelType: string,
   required: readonly RequiredDriver[],
-  provided: readonly Assumption[],
+  provided: readonly Assumption[]
 ): CoverageAudit {
   const missing = detectMissingDrivers(required, provided);
   const requiredCount = required.filter((r) => !r.optional).length;
@@ -306,7 +322,7 @@ export interface AssumptionChange {
  */
 export function diffAssumptions(
   before: readonly Assumption[],
-  after: readonly Assumption[],
+  after: readonly Assumption[]
 ): AssumptionChange[] {
   const beforeByKey = new Map<string, Assumption>();
   const afterByKey = new Map<string, Assumption>();
@@ -319,11 +335,27 @@ export function diffAssumptions(
     const b = beforeByKey.get(key);
     const a = afterByKey.get(key);
     if (b && !a) {
-      out.push({ key, kind: 'removed', label: b.label, unit: b.unit, from: b.value, to: null, fromSource: b.provenance.source_type });
+      out.push({
+        key,
+        kind: 'removed',
+        label: b.label,
+        unit: b.unit,
+        from: b.value,
+        to: null,
+        fromSource: b.provenance.source_type,
+      });
       continue;
     }
     if (!b && a) {
-      out.push({ key, kind: 'added', label: a.label, unit: a.unit, from: null, to: a.value, toSource: a.provenance.source_type });
+      out.push({
+        key,
+        kind: 'added',
+        label: a.label,
+        unit: a.unit,
+        from: null,
+        to: a.value,
+        toSource: a.provenance.source_type,
+      });
       continue;
     }
     if (!b || !a) continue;
@@ -332,9 +364,14 @@ export function diffAssumptions(
       const from = b.value ?? null;
       const to = a.value ?? null;
       const change: AssumptionChange = {
-        key, kind: 'value_changed', label: a.label ?? b.label, unit: a.unit,
-        from, to,
-        fromSource: b.provenance.source_type, toSource: a.provenance.source_type,
+        key,
+        kind: 'value_changed',
+        label: a.label ?? b.label,
+        unit: a.unit,
+        from,
+        to,
+        fromSource: b.provenance.source_type,
+        toSource: a.provenance.source_type,
       };
       if (typeof from === 'number' && typeof to === 'number') {
         change.deltaAbs = to - from;
@@ -345,9 +382,14 @@ export function diffAssumptions(
     }
     if (b.provenance.source_type !== a.provenance.source_type) {
       out.push({
-        key, kind: 'source_changed', label: a.label ?? b.label, unit: a.unit,
-        from: b.value ?? null, to: a.value ?? null,
-        fromSource: b.provenance.source_type, toSource: a.provenance.source_type,
+        key,
+        kind: 'source_changed',
+        label: a.label ?? b.label,
+        unit: a.unit,
+        from: b.value ?? null,
+        to: a.value ?? null,
+        fromSource: b.provenance.source_type,
+        toSource: a.provenance.source_type,
       });
     }
   }

@@ -206,7 +206,11 @@ export function registerNotebookVersionsRoutes(router: RouterType): RouterType {
 
       // Allow the client to snapshot in-flight (unsaved) content by passing a body;
       // otherwise snapshot what's currently persisted on the page.
-      const body = (req.body || {}) as { contentJson?: unknown; contentText?: unknown; title?: unknown };
+      const body = (req.body || {}) as {
+        contentJson?: unknown;
+        contentText?: unknown;
+        title?: unknown;
+      };
       const snapshotPage: NotebookPageRow = {
         ...(page as NotebookPageRow),
         title: body.title != null ? String(body.title) : page!.title,

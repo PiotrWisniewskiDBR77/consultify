@@ -3,7 +3,7 @@
  * Używane w OutputsLauncherModal (krok 2: galeria szablonów).
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface TemplateItem {
   id: string;
@@ -21,7 +21,9 @@ const TYPE_MAP: Record<string, string> = {
   table: 'table',
 };
 
-export function useDeliverableTemplates(type: 'doc' | 'deck' | 'table' | 'report' | 'presentation' | null) {
+export function useDeliverableTemplates(
+  type: 'doc' | 'deck' | 'table' | 'report' | 'presentation' | null
+) {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

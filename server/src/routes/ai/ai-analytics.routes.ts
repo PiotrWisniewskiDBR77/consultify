@@ -273,9 +273,21 @@ router.get(
       return res.json({
         success: true,
         period,
-        userUsage: (userUsage || []).map((r: any) => ({ ...r, request_count: Number(r.request_count ?? 0), total_tokens: Number(r.total_tokens ?? 0) })),
-        dailyTrends: (dailyTrends || []).map((r: any) => ({ ...r, requests: Number(r.requests ?? 0), tokens: Number(r.tokens ?? 0) })),
-        capabilityDistribution: (capabilityDistribution || []).map((r: any) => ({ ...r, count: Number(r.count ?? 0), tokens: Number(r.tokens ?? 0) })),
+        userUsage: (userUsage || []).map((r: any) => ({
+          ...r,
+          request_count: Number(r.request_count ?? 0),
+          total_tokens: Number(r.total_tokens ?? 0),
+        })),
+        dailyTrends: (dailyTrends || []).map((r: any) => ({
+          ...r,
+          requests: Number(r.requests ?? 0),
+          tokens: Number(r.tokens ?? 0),
+        })),
+        capabilityDistribution: (capabilityDistribution || []).map((r: any) => ({
+          ...r,
+          count: Number(r.count ?? 0),
+          tokens: Number(r.tokens ?? 0),
+        })),
       });
     } catch (error: unknown) {
       if (aiLogger?.error) {
@@ -459,7 +471,12 @@ router.get(
         errorRates: errorRates.map((e) => {
           const tot = Number(e.total ?? 0);
           const err = Number(e.errors ?? 0);
-          return { ...e, total: tot, errors: err, errorRate: tot > 0 ? ((err / tot) * 100).toFixed(2) : 0 };
+          return {
+            ...e,
+            total: tot,
+            errors: err,
+            errorRate: tot > 0 ? ((err / tot) * 100).toFixed(2) : 0,
+          };
         }),
         contextUtilization: (() => {
           const tot = Number(cacheStats?.total ?? 0);

@@ -322,7 +322,9 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                       <span className="text-slate-600 dark:text-slate-300">
                         {a.mutationType} →{' '}
                         <span
-                          className={a.outcome === 'applied' ? 'text-emerald-500' : 'text-danger-500'}
+                          className={
+                            a.outcome === 'applied' ? 'text-emerald-500' : 'text-danger-500'
+                          }
                         >
                           {a.outcome}
                         </span>{' '}

@@ -269,7 +269,9 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                             }}
                           />
                         </div>
-                        <span className="text-[9px] text-c-text-secondary w-6 text-right">{d.count}</span>
+                        <span className="text-[9px] text-c-text-secondary w-6 text-right">
+                          {d.count}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -291,12 +293,10 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                   </span>
                   <div className="grid grid-cols-2 gap-1 text-[10px]">
                     <span className="text-c-text-muted">
-                      {isPl ? 'Śr.' : 'Avg'}:{' '}
-                      <strong className="text-c-text">{avg}</strong>
+                      {isPl ? 'Śr.' : 'Avg'}: <strong className="text-c-text">{avg}</strong>
                     </span>
                     <span className="text-c-text-muted">
-                      {isPl ? 'Suma' : 'Sum'}:{' '}
-                      <strong className="text-c-text">{sum}</strong>
+                      {isPl ? 'Suma' : 'Sum'}: <strong className="text-c-text">{sum}</strong>
                     </span>
                     <span className="text-c-text-muted">
                       Min: <strong className="text-c-text">{min}</strong>
@@ -319,9 +319,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               </span>
             </div>
             {aiNarrative ? (
-              <p className="text-[11px] text-c-text leading-relaxed">
-                {aiNarrative}
-              </p>
+              <p className="text-[11px] text-c-text leading-relaxed">{aiNarrative}</p>
             ) : (
               <button
                 onClick={handleGenerateNarrative}

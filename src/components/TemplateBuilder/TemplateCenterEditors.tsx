@@ -9,23 +9,22 @@
 import { FileText, LayoutTemplate, Table2 } from 'lucide-react';
 import React from 'react';
 
+import { Field, Segmented, Select, TextArea, TextInput, Toggle } from './templateBuilderFields';
 import {
-  DOC_BLOCK_LABELS,
+  type DeckSlide,
   DEPTH_LABELS,
-  SHEET_COLUMN_TYPE_LABELS,
-  SLIDE_ARCHETYPE_LABELS,
+  DOC_BLOCK_LABELS,
   type DocBlockKind,
   type DocSection,
-  type DeckSlide,
+  SHEET_COLUMN_TYPE_LABELS,
   type SheetColumn,
   type SheetColumnType,
+  SLIDE_ARCHETYPE_LABELS,
   type SlideArchetype,
   type TemplateDepth,
 } from './templateBuilderModel';
-import { Field, Segmented, Select, TextArea, TextInput, Toggle } from './templateBuilderFields';
 
-const CENTER_WRAP =
-  'h-full overflow-y-auto bg-c-bg flex justify-center';
+const CENTER_WRAP = 'h-full overflow-y-auto bg-c-bg flex justify-center';
 const CARD =
   'w-full max-w-2xl m-6 rounded-xl border border-c-border bg-c-surface p-6 space-y-5 shadow-sm';
 
@@ -43,7 +42,9 @@ export const DocSectionEditor: React.FC<{
   onChange: (patch: Partial<DocSection>) => void;
 }> = ({ section, onChange }) => {
   if (!section)
-    return <EmptyCenter icon={<FileText className="w-12 h-12" />} text="Wybierz sekcję z lewej listy." />;
+    return (
+      <EmptyCenter icon={<FileText className="w-12 h-12" />} text="Wybierz sekcję z lewej listy." />
+    );
   const blockOpts = (Object.keys(DOC_BLOCK_LABELS) as DocBlockKind[]).map((k) => ({
     value: k,
     label: DOC_BLOCK_LABELS[k],
@@ -68,10 +69,20 @@ export const DocSectionEditor: React.FC<{
           />
         </Field>
         <Field label="Typ bloku" hint="Jaki element renderuje generator w tej sekcji.">
-          <Select value={section.block} options={blockOpts} onChange={(v) => onChange({ block: v })} testId="doc-block" />
+          <Select
+            value={section.block}
+            options={blockOpts}
+            onChange={(v) => onChange({ block: v })}
+            testId="doc-block"
+          />
         </Field>
         <Field label="Długość / głębokość">
-          <Segmented value={section.depth} options={depthOpts} onChange={(v) => onChange({ depth: v })} testId="doc-depth" />
+          <Segmented
+            value={section.depth}
+            options={depthOpts}
+            onChange={(v) => onChange({ depth: v })}
+            testId="doc-depth"
+          />
         </Field>
         <Field
           label="Instrukcja dla generatora"
@@ -102,7 +113,12 @@ export const DeckSlideEditor: React.FC<{
   onChange: (patch: Partial<DeckSlide>) => void;
 }> = ({ slide, onChange }) => {
   if (!slide)
-    return <EmptyCenter icon={<LayoutTemplate className="w-12 h-12" />} text="Wybierz slajd z lewej listy." />;
+    return (
+      <EmptyCenter
+        icon={<LayoutTemplate className="w-12 h-12" />}
+        text="Wybierz slajd z lewej listy."
+      />
+    );
   const archOpts = (Object.keys(SLIDE_ARCHETYPE_LABELS) as SlideArchetype[]).map((k) => ({
     value: k,
     label: SLIDE_ARCHETYPE_LABELS[k],
@@ -125,9 +141,17 @@ export const DeckSlideEditor: React.FC<{
           />
         </Field>
         <Field label="Archetyp układu" hint="Layout slajdu — zmienia kompozycję, nie treść.">
-          <Select value={slide.archetype} options={archOpts} onChange={(v) => onChange({ archetype: v })} testId="deck-archetype" />
+          <Select
+            value={slide.archetype}
+            options={archOpts}
+            onChange={(v) => onChange({ archetype: v })}
+            testId="deck-archetype"
+          />
         </Field>
-        <Field label="Instrukcja dla generatora" hint="Co pokazuje slajd; placeholder strukturalny.">
+        <Field
+          label="Instrukcja dla generatora"
+          hint="Co pokazuje slajd; placeholder strukturalny."
+        >
           <TextArea
             value={slide.hint}
             onChange={(v) => onChange({ hint: v })}
@@ -146,7 +170,10 @@ export const DeckSlideEditor: React.FC<{
   );
 };
 
-const SlidePreview: React.FC<{ archetype: SlideArchetype; title: string }> = ({ archetype, title }) => {
+const SlidePreview: React.FC<{ archetype: SlideArchetype; title: string }> = ({
+  archetype,
+  title,
+}) => {
   const bar = 'rounded bg-c-border';
   return (
     <div className="rounded-lg border border-c-border bg-c-bg p-4">
@@ -205,7 +232,9 @@ export const SheetColumnEditor: React.FC<{
   onChange: (patch: Partial<SheetColumn>) => void;
 }> = ({ column, onChange }) => {
   if (!column)
-    return <EmptyCenter icon={<Table2 className="w-12 h-12" />} text="Wybierz kolumnę z lewej listy." />;
+    return (
+      <EmptyCenter icon={<Table2 className="w-12 h-12" />} text="Wybierz kolumnę z lewej listy." />
+    );
   const typeOpts = (Object.keys(SHEET_COLUMN_TYPE_LABELS) as SheetColumnType[]).map((k) => ({
     value: k,
     label: SHEET_COLUMN_TYPE_LABELS[k],
@@ -226,7 +255,12 @@ export const SheetColumnEditor: React.FC<{
           />
         </Field>
         <Field label="Typ danych">
-          <Select value={column.type} options={typeOpts} onChange={(v) => onChange({ type: v })} testId="col-type" />
+          <Select
+            value={column.type}
+            options={typeOpts}
+            onChange={(v) => onChange({ type: v })}
+            testId="col-type"
+          />
         </Field>
         {column.type === 'formula' && (
           <Field label="Formuła" hint="Wyrażenie schematu, np. =B*C. Struktura, nie dane.">

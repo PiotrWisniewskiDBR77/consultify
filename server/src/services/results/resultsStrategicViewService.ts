@@ -11,24 +11,21 @@
  * KPIs lacking an explicit perspective are mapped via inferPerspective(name).
  */
 import {
-  bscOverview,
-  inferPerspective,
   type BscKpi,
   type BscKpiStatus,
   type BscOverview,
+  bscOverview,
+  inferPerspective,
   type Perspective,
 } from './balancedScorecardService.js';
 import {
-  buildBdn,
-  bdnStats,
   type BdnEdge,
   type BdnNode,
   type BdnStats,
+  bdnStats,
+  buildBdn,
 } from './benefitsDependencyNetworkService.js';
-import {
-  buildNarrative,
-  type ValueNarrative,
-} from './valueNarrativeService.js';
+import { buildNarrative, type ValueNarrative } from './valueNarrativeService.js';
 
 export interface StrategicKpi {
   id: string;

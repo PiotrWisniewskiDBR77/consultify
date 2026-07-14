@@ -301,18 +301,14 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
               </p>
               {transcript && (
                 <div className="mt-3 p-3 rounded-xl bg-c-surface-raised text-left">
-                  <p className="text-[11px] text-c-text whitespace-pre-wrap">
-                    {transcript}
-                  </p>
+                  <p className="text-[11px] text-c-text whitespace-pre-wrap">{transcript}</p>
                 </div>
               )}
             </div>
           ) : (
             <div
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
-                isDragOver
-                  ? 'border-c-accent bg-c-accent-soft'
-                  : 'border-c-border-subtle'
+                isDragOver ? 'border-c-accent bg-c-accent-soft' : 'border-c-border-subtle'
               }`}
               onDragOver={(e) => {
                 e.preventDefault();

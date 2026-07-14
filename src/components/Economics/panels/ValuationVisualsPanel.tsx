@@ -77,8 +77,16 @@ function buildRanges(
   // Comps: min / median / max wprost.
   const comps = v.comps?.impliedEnterpriseValue;
   if (comps && (isNum(comps.min) || isNum(comps.median) || isNum(comps.max))) {
-    const min = isNum(comps.min) ? comps.min : isNum(comps.median) ? comps.median : (comps.max as number);
-    const max = isNum(comps.max) ? comps.max : isNum(comps.median) ? comps.median : (comps.min as number);
+    const min = isNum(comps.min)
+      ? comps.min
+      : isNum(comps.median)
+        ? comps.median
+        : (comps.max as number);
+    const max = isNum(comps.max)
+      ? comps.max
+      : isNum(comps.median)
+        ? comps.median
+        : (comps.min as number);
     const median = isNum(comps.median) ? comps.median : (min + max) / 2;
     ranges.push({
       label: t('valuation.visuals.methodComps', 'Comparables'),
@@ -104,11 +112,7 @@ function buildRanges(
   }
 
   // Punkt referencyjny (triangulacja): główna wycena = DCF jeśli jest, inaczej mediana comps.
-  const point = isNum(dcfEv)
-    ? dcfEv
-    : isNum(comps?.median)
-      ? (comps!.median as number)
-      : undefined;
+  const point = isNum(dcfEv) ? dcfEv : isNum(comps?.median) ? (comps!.median as number) : undefined;
 
   return { ranges, point };
 }
@@ -123,9 +127,7 @@ function buildHeatmap(v: ValuationResults): {
   const xLabels = Array.isArray(s?.waccGrid) ? s!.waccGrid : [];
   const yLabels = Array.isArray(s?.gGrid) ? s!.gGrid : [];
   const cells: SensitivityCell[] = Array.isArray(s?.matrix)
-    ? s!.matrix
-        .filter((c) => c && isNum(c.ev))
-        .map((c) => ({ x: c.wacc, y: c.g, value: c.ev }))
+    ? s!.matrix.filter((c) => c && isNum(c.ev)).map((c) => ({ x: c.wacc, y: c.g, value: c.ev }))
     : [];
   return { xLabels, yLabels, cells };
 }
@@ -181,7 +183,10 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
   return (
     <div className="space-y-4" data-testid="valuation-visuals-panel">
       {/* Football field — valuation triangulation */}
-      <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="valuation-football">
+      <section
+        className="rounded-xl border border-gray-200 bg-white p-4"
+        data-testid="valuation-football"
+      >
         <h3 className="mb-3 text-sm font-semibold text-gray-900">
           {t('valuation.visuals.triangulation', 'Valuation triangulation')}
         </h3>
@@ -195,7 +200,10 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
       </section>
 
       {/* Sensitivity heatmap — WACC × growth */}
-      <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="valuation-heatmap">
+      <section
+        className="rounded-xl border border-gray-200 bg-white p-4"
+        data-testid="valuation-heatmap"
+      >
         <h3 className="mb-3 text-sm font-semibold text-gray-900">
           {t('valuation.visuals.sensitivity', 'Sensitivity: WACC × growth')}
         </h3>
@@ -203,13 +211,19 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
           <SensitivityHeatmap xLabels={xLabels} yLabels={yLabels} matrix={cells} />
         ) : (
           <SectionEmpty>
-            {t('valuation.visuals.emptySensitivity', 'No sensitivity analysis — run the valuation.')}
+            {t(
+              'valuation.visuals.emptySensitivity',
+              'No sensitivity analysis — run the valuation.'
+            )}
           </SectionEmpty>
         )}
       </section>
 
       {/* Tornado — one-way sensitivity */}
-      <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="valuation-tornado">
+      <section
+        className="rounded-xl border border-gray-200 bg-white p-4"
+        data-testid="valuation-tornado"
+      >
         <h3 className="mb-3 text-sm font-semibold text-gray-900">
           {t('valuation.visuals.tornado', 'One-way sensitivity')}
         </h3>

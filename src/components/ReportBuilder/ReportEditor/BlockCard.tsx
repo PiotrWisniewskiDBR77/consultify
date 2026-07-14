@@ -1116,12 +1116,8 @@ const CoverPreview: React.FC<{ content: string }> = ({ content }) => {
       const p = JSON.parse(trimmed);
       return (
         <div className="text-center py-6 px-4">
-          <h3 className="text-xl font-bold text-c-text mb-1">
-            {p.title || 'Report'}
-          </h3>
-          {p.subtitle && (
-            <p className="text-sm text-c-text-secondary mb-3">{p.subtitle}</p>
-          )}
+          <h3 className="text-xl font-bold text-c-text mb-1">{p.title || 'Report'}</h3>
+          {p.subtitle && <p className="text-sm text-c-text-secondary mb-3">{p.subtitle}</p>}
           <div className="flex items-center justify-center gap-2 text-xs text-c-text-secondary">
             {p.companyName || p.company ? <span>{p.companyName || p.company}</span> : null}
             {(p.companyName || p.company) && p.date ? <span>·</span> : null}
@@ -2124,21 +2120,15 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   />
                   <div className="flex items-center gap-3 px-3 py-1 bg-c-surface-raised border-t border-c-border-subtle">
                     <span className="text-[9px] text-c-text-secondary">
-                      <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">
-                        ⌘S
-                      </kbd>{' '}
+                      <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">⌘S</kbd>{' '}
                       {isPl ? 'zapisz' : 'save'}
                     </span>
                     <span className="text-[9px] text-c-text-secondary">
-                      <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">
-                        ⌘Z
-                      </kbd>{' '}
+                      <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">⌘Z</kbd>{' '}
                       {isPl ? 'cofnij' : 'undo'}
                     </span>
                     <span className="text-[9px] text-c-text-secondary">
-                      <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">
-                        Esc
-                      </kbd>{' '}
+                      <kbd className="px-0.5 bg-c-border-subtle rounded text-[8px]">Esc</kbd>{' '}
                       {isPl ? 'zamknij' : 'close'}
                     </span>
                   </div>
@@ -2519,8 +2509,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                         'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
                       SUGGESTION:
                         'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                      CHANGE_REQUEST:
-                        'bg-c-accent-soft text-c-accent',
+                      CHANGE_REQUEST: 'bg-c-accent-soft text-c-accent',
                       QUESTION:
                         'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                     };

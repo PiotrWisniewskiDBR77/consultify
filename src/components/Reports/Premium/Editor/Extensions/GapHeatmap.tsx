@@ -197,7 +197,9 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
         </div>
       ) : data ? (
         <div className="overflow-x-auto">
-          <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="w-full text-sm">
+          <table
+            /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full text-sm"
+          >
             <thead>
               <tr>
                 <th className="text-left py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">

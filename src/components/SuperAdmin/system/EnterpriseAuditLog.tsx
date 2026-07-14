@@ -438,9 +438,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
               <div className="text-sm text-c-text-secondary">Total Events</div>
-              <div className="text-2xl font-bold text-c-text mt-1">
-                {stats.total || 0}
-              </div>
+              <div className="text-2xl font-bold text-c-text mt-1">{stats.total || 0}</div>
             </div>
             <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <div className="text-sm text-c-text-secondary">Low Risk</div>
@@ -521,9 +519,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  Action Type
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">Action Type</label>
                 <select
                   value={filters.actionType}
                   onChange={(e) => setFilters({ ...filters, actionType: e.target.value })}
@@ -539,9 +535,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  Resource Type
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">Resource Type</label>
                 <select
                   value={filters.resourceType}
                   onChange={(e) => setFilters({ ...filters, resourceType: e.target.value })}
@@ -557,9 +551,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  Compliance Tag
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">Compliance Tag</label>
                 <select
                   value={filters.complianceTag}
                   onChange={(e) => setFilters({ ...filters, complianceTag: e.target.value })}
@@ -575,9 +567,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  User ID
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">User ID</label>
                 <input
                   type="text"
                   value={filters.userId}
@@ -588,9 +578,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  Start Date
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">Start Date</label>
                 <input
                   type="date"
                   value={filters.startDate}
@@ -600,9 +588,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  End Date
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">End Date</label>
                 <input
                   type="date"
                   value={filters.endDate}
@@ -663,13 +649,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-c-text">
-                              {log.action_type}
-                            </span>
+                            <span className="font-medium text-c-text">{log.action_type}</span>
                             {log.resource_type && (
-                              <span className="text-c-text-secondary">
-                                on {log.resource_type}
-                              </span>
+                              <span className="text-c-text-secondary">on {log.resource_type}</span>
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-c-text-muted mt-1">
@@ -754,9 +736,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                         </div>
                         {log.request_id && (
                           <div>
-                            <div className="text-xs text-c-text-muted">
-                              Request ID
-                            </div>
+                            <div className="text-xs text-c-text-muted">Request ID</div>
                             <code className="text-xs text-c-text-secondary font-mono mt-1 block">
                               {log.request_id.slice(0, 12)}...
                             </code>
@@ -764,9 +744,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                         )}
                         {log.resource_id && (
                           <div>
-                            <div className="text-xs text-c-text-muted">
-                              Resource ID
-                            </div>
+                            <div className="text-xs text-c-text-muted">Resource ID</div>
                             <code className="text-xs text-c-text-secondary font-mono mt-1 block">
                               {log.resource_id.slice(0, 12)}...
                             </code>
@@ -774,9 +752,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                         )}
                         {log.organization_id && (
                           <div>
-                            <div className="text-xs text-c-text-muted">
-                              Organization
-                            </div>
+                            <div className="text-xs text-c-text-muted">Organization</div>
                             <code className="text-xs text-c-text-secondary font-mono mt-1 block">
                               {log.organization_id.slice(0, 12)}...
                             </code>
@@ -788,9 +764,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           {log.before_data && (
                             <div>
-                              <div className="text-xs text-c-text-muted mb-2">
-                                Before
-                              </div>
+                              <div className="text-xs text-c-text-muted mb-2">Before</div>
                               <pre className="p-2 bg-c-surface rounded-lg text-xs text-c-text overflow-x-auto max-h-32">
                                 {JSON.stringify(log.before_data, null, 2)}
                               </pre>
@@ -798,9 +772,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                           )}
                           {log.after_data && (
                             <div>
-                              <div className="text-xs text-c-text-muted mb-2">
-                                After
-                              </div>
+                              <div className="text-xs text-c-text-muted mb-2">After</div>
                               <pre className="p-2 bg-c-surface rounded-lg text-xs text-c-text overflow-x-auto max-h-32">
                                 {JSON.stringify(log.after_data, null, 2)}
                               </pre>
@@ -811,9 +783,7 @@ export const EnterpriseAuditLog: React.FC = () => {
 
                       {log.user_agent && (
                         <div className="mt-4">
-                          <div className="text-xs text-c-text-muted mb-1">
-                            User Agent
-                          </div>
+                          <div className="text-xs text-c-text-muted mb-1">User Agent</div>
                           <div className="text-xs text-c-text-secondary truncate">
                             {log.user_agent}
                           </div>
@@ -842,9 +812,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 >
                   Previous
                 </button>
-                <span className="text-sm text-c-text-secondary">
-                  Page {pagination.page}
-                </span>
+                <span className="text-sm text-c-text-secondary">Page {pagination.page}</span>
                 <button
                   onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
                   disabled={logs.length < pagination.pageSize}
@@ -879,9 +847,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   ) : (
                     analyticsActionCounts.map(({ action, count }) => (
                       <div key={action} className="flex items-center gap-3">
-                        <div className="w-24 text-sm text-c-text-secondary">
-                          {action}
-                        </div>
+                        <div className="w-24 text-sm text-c-text-secondary">{action}</div>
                         <div className="flex-1 h-2 bg-c-surface-raised rounded-full overflow-hidden">
                           <div
                             className="h-full bg-c-info rounded-full"
@@ -937,9 +903,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                       <div className={`text-sm font-medium ${tag.color.split(' ')[1]}`}>
                         {tag.name}
                       </div>
-                      <div className="text-xs text-c-text-muted mt-1">
-                        {tag.count} events
-                      </div>
+                      <div className="text-xs text-c-text-muted mt-1">{tag.count} events</div>
                     </div>
                   ))}
                 </div>

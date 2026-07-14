@@ -109,10 +109,7 @@ export interface EmittedChange {
  * Used as the sink for system-emitted change events such as rebaseline
  * or KPI-target changes. Org-scoped; snake_case columns.
  */
-export async function emitChange(
-  orgId: string,
-  input: EmitChangeInput,
-): Promise<EmittedChange> {
+export async function emitChange(orgId: string, input: EmitChangeInput): Promise<EmittedChange> {
   const rows = await dbAll<EmittedChange>(
     `INSERT INTO rollout_changes
        (organization_id, project_id, title, type, status, change_class, requested_by, assessment)
@@ -129,7 +126,7 @@ export async function emitChange(
       input.change_class ?? null,
       input.requested_by ?? null,
       input.assessment ?? null,
-    ],
+    ]
   );
   return rows[0];
 }

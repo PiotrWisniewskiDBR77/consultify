@@ -514,8 +514,12 @@ class ScheduledReportService {
         const brief = scheduleData.description?.trim() || scheduleData.name;
         if (brief && brief.length >= 20) {
           const { generateBundle } = await import('./deliverables/bundleGenerationRuntime.js');
-          const { exportBundleFiles, bundleFilesToZip, safeBundleBaseName } = await import('./deliverables/bundleExportRuntime.js');
-          const bundle = await generateBundle(brief, { orgId: scheduleData.organizationId, preferPremium: true });
+          const { exportBundleFiles, bundleFilesToZip, safeBundleBaseName } =
+            await import('./deliverables/bundleExportRuntime.js');
+          const bundle = await generateBundle(brief, {
+            orgId: scheduleData.organizationId,
+            preferPremium: true,
+          });
           if (bundle) {
             const files = await exportBundleFiles(bundle);
             bundleBaseName = safeBundleBaseName(bundle.spine.meta.company);
@@ -563,7 +567,10 @@ class ScheduledReportService {
       // Deliver report (or bundle ZIP)
       if (reportId) {
         const zipAttachment = bundleZip
-          ? { filename: `${bundleBaseName ?? 'material'}-komplet.zip`, contentBase64: bundleZip.toString('base64') }
+          ? {
+              filename: `${bundleBaseName ?? 'material'}-komplet.zip`,
+              contentBase64: bundleZip.toString('base64'),
+            }
           : undefined;
         execution.deliveryResults = await this.deliverReport(scheduleData, reportId, zipAttachment);
       }
@@ -608,7 +615,7 @@ class ScheduledReportService {
   private async deliverReport(
     schedule: ReportSchedule,
     reportId: string,
-    bundleAttachment?: { filename: string; contentBase64: string },
+    bundleAttachment?: { filename: string; contentBase64: string }
   ): Promise<DeliveryResult[]> {
     const results: DeliveryResult[] = [];
 
@@ -672,7 +679,7 @@ class ScheduledReportService {
   private async deliverViaEmail(
     schedule: ReportSchedule,
     reportId: string,
-    bundleAttachment?: { filename: string; contentBase64: string },
+    bundleAttachment?: { filename: string; contentBase64: string }
   ): Promise<void> {
     const emailConfig = schedule.deliveryConfig.email;
     if (!emailConfig || !emailConfig.recipients?.length) return;
@@ -684,11 +691,13 @@ class ScheduledReportService {
     if (rejected.length > 0) {
       logger.info(
         `[ScheduledReportService] ${rejected.length} odbiorców odrzuconych (governance): ` +
-        rejected.map((r) => `${r.email}:${r.reason}`).join(', '),
+          rejected.map((r) => `${r.email}:${r.reason}`).join(', ')
       );
     }
     if (governedRecipients.length === 0) {
-      logger.warn(`[ScheduledReportService] brak ważnych odbiorców po governance (report ${reportId})`);
+      logger.warn(
+        `[ScheduledReportService] brak ważnych odbiorców po governance (report ${reportId})`
+      );
       return;
     }
 
@@ -705,10 +714,23 @@ class ScheduledReportService {
 
     // W6.1 — dołącz ZIP wiązki gdy dostępny.
     const attachments = bundleAttachment
-      ? [{ filename: bundleAttachment.filename, content: bundleAttachment.contentBase64, contentType: 'application/zip' }]
+      ? [
+          {
+            filename: bundleAttachment.filename,
+            content: bundleAttachment.contentBase64,
+            contentType: 'application/zip',
+          },
+        ]
       : undefined;
 
-    let sendFn: ((opts: { to: string; subject: string; html: string; attachments?: unknown[] }) => Promise<unknown>) | null = null;
+    let sendFn:
+      | ((opts: {
+          to: string;
+          subject: string;
+          html: string;
+          attachments?: unknown[];
+        }) => Promise<unknown>)
+      | null = null;
     if (this.emailService?.send) {
       sendFn = (opts) => this.emailService.send(opts);
     } else {

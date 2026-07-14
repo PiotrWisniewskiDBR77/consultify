@@ -21,61 +21,56 @@ const EMPTY_CONTEXT = {
   companyProfile: {},
 };
 
-router.get(
-  '/',
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    const orgId = req.user?.organizationId;
-    if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-
-    try {
-      const rows = await dbAll<{
-        goals_json: string;
-        challenges_json: string;
-        synthesis_json: string;
-        company_profile_json: string;
-      }>(
-        'SELECT goals_json, challenges_json, synthesis_json, company_profile_json FROM organization_context_store WHERE organization_id = $1',
-        [orgId],
-        { fallback: true }
-      );
-
-      if (!rows.length) {
-        res.json(EMPTY_CONTEXT);
-        return;
-      }
-
-      const row = rows[0];
-      res.json({
-        goals: parseJsonField(row.goals_json),
-        challenges: parseJsonField(row.challenges_json),
-        synthesis: parseJsonField(row.synthesis_json),
-        companyProfile: parseJsonField(row.company_profile_json),
-      });
-    } catch (err: any) {
-      Logger.error('[org-context-store] GET failed', { orgId, err: err?.message });
-      res.status(500).json({ error: 'Failed to load org context' });
-    }
+router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+  const orgId = req.user?.organizationId;
+  if (!orgId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
   }
-);
 
-router.put(
-  '/',
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
-    if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const rows = await dbAll<{
+      goals_json: string;
+      challenges_json: string;
+      synthesis_json: string;
+      company_profile_json: string;
+    }>(
+      'SELECT goals_json, challenges_json, synthesis_json, company_profile_json FROM organization_context_store WHERE organization_id = $1',
+      [orgId],
+      { fallback: true }
+    );
+
+    if (!rows.length) {
+      res.json(EMPTY_CONTEXT);
       return;
     }
 
-    const { goals, challenges, synthesis, companyProfile } = req.body ?? {};
+    const row = rows[0];
+    res.json({
+      goals: parseJsonField(row.goals_json),
+      challenges: parseJsonField(row.challenges_json),
+      synthesis: parseJsonField(row.synthesis_json),
+      companyProfile: parseJsonField(row.company_profile_json),
+    });
+  } catch (err: any) {
+    Logger.error('[org-context-store] GET failed', { orgId, err: err?.message });
+    res.status(500).json({ error: 'Failed to load org context' });
+  }
+});
 
-    try {
-      await dbRun(
-        `INSERT INTO organization_context_store
+router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
+  const orgId = req.user?.organizationId;
+  const userId = req.user?.id;
+  if (!orgId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const { goals, challenges, synthesis, companyProfile } = req.body ?? {};
+
+  try {
+    await dbRun(
+      `INSERT INTO organization_context_store
            (organization_id, goals_json, challenges_json, synthesis_json, company_profile_json, updated_at, updated_by)
          VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
          ON CONFLICT (organization_id) DO UPDATE SET
@@ -85,24 +80,23 @@ router.put(
            company_profile_json = EXCLUDED.company_profile_json,
            updated_at           = EXCLUDED.updated_at,
            updated_by           = EXCLUDED.updated_by`,
-        [
-          orgId,
-          JSON.stringify(goals ?? {}),
-          JSON.stringify(challenges ?? {}),
-          JSON.stringify(synthesis ?? {}),
-          JSON.stringify(companyProfile ?? {}),
-          userId ?? null,
-        ],
-        { fallback: true }
-      );
+      [
+        orgId,
+        JSON.stringify(goals ?? {}),
+        JSON.stringify(challenges ?? {}),
+        JSON.stringify(synthesis ?? {}),
+        JSON.stringify(companyProfile ?? {}),
+        userId ?? null,
+      ],
+      { fallback: true }
+    );
 
-      res.json({ ok: true });
-    } catch (err: any) {
-      Logger.error('[org-context-store] PUT failed', { orgId, err: err?.message });
-      res.status(500).json({ error: 'Failed to save org context' });
-    }
+    res.json({ ok: true });
+  } catch (err: any) {
+    Logger.error('[org-context-store] PUT failed', { orgId, err: err?.message });
+    res.status(500).json({ error: 'Failed to save org context' });
   }
-);
+});
 
 function parseJsonField(raw: string | object | null): unknown {
   if (!raw) return {};

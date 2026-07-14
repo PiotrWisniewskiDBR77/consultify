@@ -6,7 +6,7 @@
  * payload (banked/forecast/at-risk, funnel, SCALE/INTERVENE/STOP decisions).
  * Org-wide when projectId is 'all'/'null'/absent. Read-only.
  */
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 
 import verifyToken from '../middleware/auth.middleware.js';
 import {
@@ -15,8 +15,8 @@ import {
   type VIRoiAssumption,
   type VIRoiRealized,
 } from '../services/results/resultsValueIntelligenceService.js';
-import { all as dbAll } from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll } from '../utils/DbPromise.js';
 
 interface AuthedRequest {
   user?: { organizationId?: string };
@@ -35,26 +35,30 @@ router.get(
       return;
     }
     const projectId = req.params.projectId;
-    const orgWide = !projectId || projectId === 'all' || projectId === 'null' || projectId === 'undefined';
+    const orgWide =
+      !projectId || projectId === 'all' || projectId === 'null' || projectId === 'undefined';
 
-    const initiatives = ((await dbAll(
-      orgWide
-        ? `SELECT id, name, status FROM initiatives WHERE organization_id = ?`
-        : `SELECT id, name, status FROM initiatives WHERE project_id = ? AND organization_id = ?`,
-      orgWide ? [orgId] : [projectId, orgId]
-    )) as VIInitiative[] | undefined) || [];
+    const initiatives =
+      ((await dbAll(
+        orgWide
+          ? `SELECT id, name, status FROM initiatives WHERE organization_id = ?`
+          : `SELECT id, name, status FROM initiatives WHERE project_id = ? AND organization_id = ?`,
+        orgWide ? [orgId] : [projectId, orgId]
+      )) as VIInitiative[] | undefined) || [];
 
-    const roiAssumptions = ((await dbAll(
-      `SELECT initiative_id, expected_npv, expected_revenue_delta, expected_cost_delta
+    const roiAssumptions =
+      ((await dbAll(
+        `SELECT initiative_id, expected_npv, expected_revenue_delta, expected_cost_delta
        FROM roi_assumptions WHERE organization_id = ?`,
-      [orgId]
-    )) as VIRoiAssumption[] | undefined) || [];
+        [orgId]
+      )) as VIRoiAssumption[] | undefined) || [];
 
-    const roiRealized = ((await dbAll(
-      `SELECT initiative_id, realized_revenue_delta, realized_cost_delta, realized_savings
+    const roiRealized =
+      ((await dbAll(
+        `SELECT initiative_id, realized_revenue_delta, realized_cost_delta, realized_savings
        FROM roi_realized_values WHERE organization_id = ?`,
-      [orgId]
-    )) as VIRoiRealized[] | undefined) || [];
+        [orgId]
+      )) as VIRoiRealized[] | undefined) || [];
 
     const data = buildValueIntelligence({ initiatives, roiAssumptions, roiRealized });
     // Return the bare payload (not {success,data}): the FE Api proxy maps

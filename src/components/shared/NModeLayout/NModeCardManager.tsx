@@ -141,7 +141,11 @@ export interface AddCardMenuProps {
 }
 
 /** "+ Nowa karta ▾" — catalog of cards not yet on the artifact. */
-export const AddCardMenu: React.FC<AddCardMenuProps> = ({ layout, isPolish: isPolishProp, className }) => {
+export const AddCardMenu: React.FC<AddCardMenuProps> = ({
+  layout,
+  isPolish: isPolishProp,
+  className,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
   const [open, setOpen] = useState(false);
@@ -330,7 +334,9 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
                   <Icon size={13} className="shrink-0 text-c-text-muted" />
                   <span
                     className={`flex-1 truncate text-xs ${
-                      item.visible ? 'text-c-text-secondary' : 'text-c-text-muted line-through opacity-70'
+                      item.visible
+                        ? 'text-c-text-secondary'
+                        : 'text-c-text-muted line-through opacity-70'
                     }`}
                   >
                     {label}
@@ -402,7 +408,11 @@ export interface NModeCardManagerProps {
 }
 
 /** Renders both affordances in canonical order: [Sekcje ▾] [+ Nowa karta ▾]. */
-export const NModeCardManager: React.FC<NModeCardManagerProps> = ({ layout, isPolish, hideAdd }) => (
+export const NModeCardManager: React.FC<NModeCardManagerProps> = ({
+  layout,
+  isPolish,
+  hideAdd,
+}) => (
   <div className="flex items-center gap-1">
     <SectionsManagerMenu layout={layout} isPolish={isPolish} />
     {!hideAdd && <AddCardMenu layout={layout} isPolish={isPolish} />}

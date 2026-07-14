@@ -70,7 +70,7 @@ export function convertCurrency(
   value: number,
   fromCcy: string | undefined,
   toCcy: string | undefined,
-  rates: FxRates,
+  rates: FxRates
 ): number | null {
   if (!Number.isFinite(value)) return null;
 
@@ -98,7 +98,7 @@ export function convertCurrency(
 export function normalizeToPresentation(
   lines: StatementLine[],
   presentationCcy: string,
-  rates: FxRates,
+  rates: FxRates
 ): NormalizedLine[] {
   if (!Array.isArray(lines)) return [];
 
@@ -151,7 +151,7 @@ export function mergeMultiYear(statements: MultiYearStatement[]): MergedMultiYea
  * when the prior value is 0 (division undefined).
  */
 export function computeYoY(
-  series: number[] | Array<{ period: string; value: number }>,
+  series: number[] | Array<{ period: string; value: number }>
 ): YoYPoint[] {
   if (!Array.isArray(series) || series.length === 0) return [];
 
@@ -186,7 +186,7 @@ export function computeYoY(
  */
 export function readinessThreshold(
   coverage: Record<string, boolean>,
-  requiredCoverage: string[],
+  requiredCoverage: string[]
 ): ReadinessResult {
   const required = Array.isArray(requiredCoverage) ? requiredCoverage : [];
 

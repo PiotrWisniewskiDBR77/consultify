@@ -42,7 +42,11 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
       color: 'bg-blue-500/20 text-blue-400',
     },
     success: { label: 'Success', labelPl: 'Sukces', color: 'bg-emerald-500/20 text-emerald-400' },
-    failure: { label: 'Failed', labelPl: 'Niepowodzenie', color: 'bg-danger-500/20 text-danger-400' },
+    failure: {
+      label: 'Failed',
+      labelPl: 'Niepowodzenie',
+      color: 'bg-danger-500/20 text-danger-400',
+    },
     inconclusive: {
       label: 'Inconclusive',
       labelPl: 'Niejednoznaczny',

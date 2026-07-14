@@ -300,8 +300,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         // is an axios shape this client never produces, so it was always
         // undefined and silently hid the real reason behind a generic toast.
         toast.error(
-          error?.message ||
-            t('initiatives.toast.statusChangeError', 'Could not change status')
+          error?.message || t('initiatives.toast.statusChangeError', 'Could not change status')
         );
       } finally {
         setIsLoading(false);

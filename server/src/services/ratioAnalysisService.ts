@@ -122,7 +122,9 @@ function deriveStatementReadiness(row: {
  * attach the same industry-benchmark context to a different ratio catalog's codes
  * without re-querying/duplicating this lookup.
  */
-export async function loadOrganizationIndustry(organizationId: string): Promise<string | undefined> {
+export async function loadOrganizationIndustry(
+  organizationId: string
+): Promise<string | undefined> {
   try {
     const row = await dbGet<any>(`SELECT industry FROM organizations WHERE id = ?`, [
       organizationId,

@@ -15,9 +15,9 @@ import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import { validateInitiativeCard } from './cardContentFormulaValidator.js';
 import {
-  materializeInsightCandidates,
   type MaterializationOutcome,
   type MaterializationSourceItem,
+  materializeInsightCandidates,
 } from './insightMaterializationService.js';
 
 // F3.3 — CARD_CONTENT_FORMULA §A3: injected into every assessment initiative-generation

@@ -120,8 +120,7 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor; menuItem?: boolean }> =
   } else if (active) {
     // Active/toggle state — neutral blue focus accent (NEVER crimson;
     // `primary-*` in tailwind = crimson #85182F, reserved for destructive semantics).
-    stateClasses =
-      'text-c-focus-solid bg-c-focus/10 hover:bg-c-focus/15';
+    stateClasses = 'text-c-focus-solid bg-c-focus/10 hover:bg-c-focus/15';
   } else {
     // Secondary tier — ghost button, lower visual weight.
     stateClasses =
@@ -355,10 +354,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {primaryChips.length > 0 ? (
           <>
             {secondaryChips.length > 0 || overflowChips.length > 0 ? (
-              <span
-                aria-hidden="true"
-                className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700"
-              />
+              <span aria-hidden="true" className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700" />
             ) : null}
             {primaryChips.map((chip) => (
               <Chip key={chip.id} descriptor={chip} />

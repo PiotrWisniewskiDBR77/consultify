@@ -15,11 +15,7 @@ import { ChevronRight, Search, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  FilterableTable,
-  type FilterChip,
-  type TableColumn,
-} from '@/components/shared/ModuleHub';
+import { FilterableTable, type FilterChip, type TableColumn } from '@/components/shared/ModuleHub';
 import type { RowAction } from '@/components/shared/RowActionsMenu';
 import { EntityStatusChip } from '@/components/ui/primitives';
 
@@ -236,9 +232,7 @@ export function ProblemTable({
         render: (r: any) => (
           <div className="min-w-0">
             <p className="text-xs font-medium text-c-text truncate">{r.title}</p>
-            <p className="text-[10px] text-c-text-muted truncate mt-0.5">
-              {r.rootCause}
-            </p>
+            <p className="text-[10px] text-c-text-muted truncate mt-0.5">{r.rootCause}</p>
           </div>
         ),
       },
@@ -296,9 +290,7 @@ export function ProblemTable({
         label: t('manager.col.owner', 'Owner'),
         width: '140px',
         render: (r: any) => (
-          <span className="text-xs text-c-text-secondary truncate block">
-            {r.ownerName || '—'}
-          </span>
+          <span className="text-xs text-c-text-secondary truncate block">{r.ownerName || '—'}</span>
         ),
       },
     ],
@@ -392,9 +384,7 @@ export function ProblemTable({
         onRowClick={(r: any) => onSelect(r.__row as ManagerProblemRow)}
         onRowDoubleClick={(r: any) => onDoubleClick?.(r.__row as ManagerProblemRow)}
         getRowActions={getRowActions}
-        emptyMessage={
-          emptyMessage || t('manager.noProblems', 'No problems detected — on track.')
-        }
+        emptyMessage={emptyMessage || t('manager.noProblems', 'No problems detected — on track.')}
         density="compact"
         canvasClassName="p-0"
         enableColumnSettings={false}

@@ -140,7 +140,10 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto space-y-4">
           {webhooks.length === 0 && (
             <div className="text-center py-6">
-              <Bell size={28} className="text-c-text-muted dark:text-c-text-secondary mx-auto mb-2" />
+              <Bell
+                size={28}
+                className="text-c-text-muted dark:text-c-text-secondary mx-auto mb-2"
+              />
               <p className="text-[10px] text-c-text-muted mb-3">
                 {isPl ? 'Brak skonfigurowanych webhooków.' : 'No webhooks configured.'}
               </p>
@@ -166,7 +169,9 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                     onChange={(e) => updateWebhook(wh.id, { enabled: e.target.checked })}
                     className="w-3 h-3 rounded"
                   />
-                  <span className="text-[9px] text-c-text-muted">{isPl ? 'Aktywny' : 'Active'}</span>
+                  <span className="text-[9px] text-c-text-muted">
+                    {isPl ? 'Aktywny' : 'Active'}
+                  </span>
                 </label>
                 <button
                   onClick={() => removeWebhook(wh.id)}

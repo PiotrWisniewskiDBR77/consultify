@@ -117,7 +117,9 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full">
+          <table
+            /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full"
+          >
             <thead>
               <tr className="bg-slate-50 dark:bg-navy-800/50 text-xs uppercase text-slate-500 dark:text-slate-400">
                 <th className="px-4 py-3 text-left">Project</th>
@@ -183,7 +185,9 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
         <div className="bg-danger-50 dark:bg-danger-900/10 rounded-xl border border-danger-200 dark:border-danger-500/30 p-6">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={18} className="text-danger-500" />
-            <h3 className="text-lg font-semibold text-danger-700 dark:text-danger-400">Escalations</h3>
+            <h3 className="text-lg font-semibold text-danger-700 dark:text-danger-400">
+              Escalations
+            </h3>
           </div>
           <ul className="space-y-2 text-sm text-danger-700 dark:text-danger-300">
             {content.warnings.map((warning: string, index: number) => (

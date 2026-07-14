@@ -73,7 +73,9 @@ export function AdminTable<T extends Record<string, any>>({
       className={`border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-transparent rounded-xl overflow-hidden ${className}`}
     >
       <div className="overflow-x-auto">
-        <table /* §27-exempt: generyczny prymityw tabeli, FilterableTable = kanon dla list */  className="w-full text-left">
+        <table
+          /* §27-exempt: generyczny prymityw tabeli, FilterableTable = kanon dla list */ className="w-full text-left"
+        >
           <thead>
             <tr className="border-b border-slate-200 dark:border-white/[0.06]">
               {columns.map((col) => (

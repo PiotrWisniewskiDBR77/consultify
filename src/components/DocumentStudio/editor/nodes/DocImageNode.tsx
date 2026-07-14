@@ -10,15 +10,17 @@ import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import React from 'react';
 
 import { DOC_IMAGE_NODE_NAME } from '../nodeNames';
-import { payloadBlockAttributes, parseNodePayload } from './payloadAttrs';
+import { parseNodePayload, payloadBlockAttributes } from './payloadAttrs';
 
 const DocImageNodeComponent: React.FC<{
   node: { attrs: Record<string, unknown> };
   selected: boolean;
 }> = ({ node, selected }) => {
-  const payload = parseNodePayload(node.attrs) as
-    | { url?: string; alt?: string; caption?: string }
-    | null;
+  const payload = parseNodePayload(node.attrs) as {
+    url?: string;
+    alt?: string;
+    caption?: string;
+  } | null;
   const url = payload && typeof payload.url === 'string' ? payload.url : '';
 
   return (

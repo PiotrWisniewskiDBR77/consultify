@@ -470,7 +470,10 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
         <>
           {/* Search */}
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
+            />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -511,7 +514,9 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         <p className="text-sm font-medium text-white">
                           {getShortcutName(shortcut)}
                         </p>
-                        <p className="text-xs text-c-text-muted">{getShortcutDescription(shortcut)}</p>
+                        <p className="text-xs text-c-text-muted">
+                          {getShortcutDescription(shortcut)}
+                        </p>
                       </div>
 
                       <div className="flex items-center gap-3 ml-4">

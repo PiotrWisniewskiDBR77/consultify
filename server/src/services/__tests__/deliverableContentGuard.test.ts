@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  isTemplateInventoryLeak,
   contentLeaksTemplateInventory,
+  isTemplateInventoryLeak,
 } from '../deliverableContentGuard.js';
 
 describe('deliverableContentGuard (BUG C)', () => {

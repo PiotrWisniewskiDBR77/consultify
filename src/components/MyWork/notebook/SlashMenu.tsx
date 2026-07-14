@@ -175,7 +175,9 @@ const COMMANDS: SlashCommand[] = [
     keywords: ['date', 'today', 'data', 'dzisiaj', 'now'],
     action: (e) => {
       const locale =
-        typeof document !== 'undefined' && document.documentElement.lang === 'pl' ? 'pl-PL' : 'en-US';
+        typeof document !== 'undefined' && document.documentElement.lang === 'pl'
+          ? 'pl-PL'
+          : 'en-US';
       const formatted = new Date().toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
@@ -192,12 +194,7 @@ const COMMANDS: SlashCommand[] = [
     descriptionPl: 'Układ dwukolumnowy',
     icon: <Columns2 size={ICON_SIZE} />,
     keywords: ['columns', 'column', 'kolumny', 'kolumna', '2', 'split', 'grid'],
-    action: (e) =>
-      e
-        .chain()
-        .focus()
-        .insertTable({ rows: 1, cols: 2, withHeaderRow: false })
-        .run(),
+    action: (e) => e.chain().focus().insertTable({ rows: 1, cols: 2, withHeaderRow: false }).run(),
   },
   {
     id: 'callout',
@@ -470,7 +467,9 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev - 1 + orderedItems.length) % Math.max(orderedItems.length, 1));
+        setSelectedIdx(
+          (prev) => (prev - 1 + orderedItems.length) % Math.max(orderedItems.length, 1)
+        );
         return;
       }
 
@@ -520,9 +519,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
                   }}
                   onMouseEnter={() => setSelectedIdx(idx)}
                   className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors ${
-                    isActive
-                      ? 'bg-c-surface-raised'
-                      : 'hover:bg-c-surface-raised'
+                    isActive ? 'bg-c-surface-raised' : 'hover:bg-c-surface-raised'
                   }`}
                 >
                   <span

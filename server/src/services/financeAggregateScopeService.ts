@@ -39,7 +39,6 @@
  */
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
-
 import { loadPackValueMaps } from './financialStatementPackService.js';
 
 // ---------------------------------------------------------------------------

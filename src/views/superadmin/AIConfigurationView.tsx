@@ -693,7 +693,9 @@ Help leaders develop change management competencies.`,
             </div>
 
             <div className="bg-c-surface border border-white/10 rounded-xl overflow-hidden">
-              <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left text-sm">
+              <table
+                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left text-sm"
+              >
                 <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 uppercase text-xs">
                   <tr>
                     <th className="px-6 py-4 font-medium">Name</th>

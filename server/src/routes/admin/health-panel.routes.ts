@@ -14,18 +14,18 @@
  */
 import { type Response, Router } from 'express';
 
-import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import verifyAdmin from '../../middleware/admin.middleware.js';
+import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import {
   cacheProbeResult,
   getCachedResults,
   getProbeById,
   HEALTH_PROBES,
+  type HealthProbeContext,
   isHealthPanelAllowedEnv,
   runAllProbes,
   runProbe,
   summarizeResults,
-  type HealthProbeContext,
 } from '../../services/health/healthProbeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 

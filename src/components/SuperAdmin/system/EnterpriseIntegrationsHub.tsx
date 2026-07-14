@@ -422,9 +422,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-c-text">
-            Integrations Hub
-          </h2>
+          <h2 className="text-2xl font-semibold text-c-text">Integrations Hub</h2>
           <p className="text-c-text-secondary text-sm">
             Connect Consultify with your existing tools and workflows
           </p>
@@ -519,9 +517,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'integrations' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-c-text">
-                  Connected Integrations
-                </h3>
+                <h3 className="text-lg font-medium text-c-text">Connected Integrations</h3>
                 <button
                   onClick={() => setActiveTab('catalog')}
                   className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
@@ -788,9 +784,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <span className="text-3xl">{connector.icon}</span>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-c-text">
-                                {connector.name}
-                              </span>
+                              <span className="font-medium text-c-text">{connector.name}</span>
                               {connector.status === 'beta' && (
                                 <span className="px-1.5 py-0.5 text-xs bg-c-warning/20 text-c-warning rounded">
                                   Beta
@@ -802,16 +796,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs text-c-text-muted">
-                              {connector.category}
-                            </span>
+                            <span className="text-xs text-c-text-muted">{connector.category}</span>
                           </div>
                         </div>
                         {isConnected && <CheckCircle className="w-5 h-5 text-c-success" />}
                       </div>
-                      <p className="text-sm text-c-text-secondary mb-4">
-                        {connector.description}
-                      </p>
+                      <p className="text-sm text-c-text-secondary mb-4">{connector.description}</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1 text-xs text-c-text-muted">
                           <Lock className="w-3 h-3" />
@@ -874,10 +864,10 @@ const DeliveriesModal: React.FC<{
     <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Webhook Deliveries</h3>
-          <p className="text-sm text-c-text-secondary">
-            {asText(webhook.name, 'Unnamed webhook')}
-          </p>
+          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">
+            Webhook Deliveries
+          </h3>
+          <p className="text-sm text-c-text-secondary">{asText(webhook.name, 'Unnamed webhook')}</p>
         </div>
         <button
           onClick={onClose}

@@ -89,17 +89,20 @@ export function buildDrdReportEvidenceEnvelope(
     deterministicSections.push('streszczenie zarządcze');
   }
   for (const g of model.gapCards || []) {
-    if (g.narrative?.narrative === 'deterministic') deterministicSections.push(`karta luki: ${g.areaName}`);
+    if (g.narrative?.narrative === 'deterministic')
+      deterministicSections.push(`karta luki: ${g.areaName}`);
   }
   for (const c of model.chapters || []) {
-    if (c.narrative?.narrative === 'deterministic') deterministicSections.push(`rozdział: ${c.axisName}`);
+    if (c.narrative?.narrative === 'deterministic')
+      deterministicSections.push(`rozdział: ${c.axisName}`);
   }
   const toVerify: EvidenceToVerify[] = [];
   if (deterministicSections.length > 0) {
     toVerify.push({
       claim: `${deterministicSections.length} sekcji raportu użyło szablonu deterministycznego (bez LLM): ${deterministicSections.join(', ')}.`,
       why: 'LLM narrator nie przeszedł walidacji (numbers_from_engine/evidence_link) lub był niedostępny — raport użył bezpiecznego fallbacku (CONCLUSION_LAYER_STANDARD, fail-safe).',
-      suggested_check: 'Rozważ regenerację raportu po weryfikacji dostępności/tieru modelu LLM (patrz checklist §10 KONCEPT_CONTENT_ENGINES).',
+      suggested_check:
+        'Rozważ regenerację raportu po weryfikacji dostępności/tieru modelu LLM (patrz checklist §10 KONCEPT_CONTENT_ENGINES).',
     });
   }
 

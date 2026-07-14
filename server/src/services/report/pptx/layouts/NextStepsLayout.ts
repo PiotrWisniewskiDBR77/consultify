@@ -171,7 +171,12 @@ export function NextStepsLayout(
       BodyText(
         {
           text: c.closing_message!,
-          position: { x: sidebarX + 0.25, y: g.contentY + 0.25, w: sidebarW - 0.5, h: g.contentH - 0.5 },
+          position: {
+            x: sidebarX + 0.25,
+            y: g.contentY + 0.25,
+            w: sidebarW - 0.5,
+            h: g.contentH - 0.5,
+          },
           bold: true,
           color: 'FFFFFF',
           align: 'left',

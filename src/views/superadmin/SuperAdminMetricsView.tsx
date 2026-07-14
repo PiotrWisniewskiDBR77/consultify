@@ -156,7 +156,9 @@ export const SuperAdminMetricsView: React.FC = () => {
         <Card variant="bordered" padding="lg">
           <SectionHeader title="Attribution Channels" subtitle="Source performance metrics" />
           <div className="overflow-x-auto">
-            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-left">
+            <table
+              /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-left"
+            >
               <thead>
                 <tr className="border-b border-white/[0.06]">
                   <th className="pb-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">

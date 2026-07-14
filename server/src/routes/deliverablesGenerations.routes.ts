@@ -11,19 +11,25 @@
  */
 
 import { type Response, Router } from 'express';
+import multer from 'multer';
 import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
+import db from '../database/PostgresDatabase.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+// W5 (F5 kompozycja) — konektory + formularze → tabela materiału:
+import { connectorRegistry } from '../services/dataCollection/connectorFramework.js';
+import { extractBrandTheme } from '../services/deliverables/brandIngestion.js';
+// W3.2 (F2.2) — wzbogacenie briefu o kontekst organizacji przed generacją:
+import { enrichBriefWithOrgContext } from '../services/deliverables/briefEnrichment.js';
 import {
-  DeliverablesGenerationError,
-  plan,
-  start,
-  status,
-} from '../services/deliverables/deliverablesGenerationService.js';
-import { getDeliverableMetrics } from '../services/deliverables/deliverablesMetricsService.js';
+  bundleFilesToZip,
+  exportBundleFiles,
+  safeBundleBaseName,
+} from '../services/deliverables/bundleExportRuntime.js';
+import { generateBundle } from '../services/deliverables/bundleGenerationRuntime.js';
 import {
   generateBusinessPlan,
   spineToDeckSlides,
@@ -31,30 +37,29 @@ import {
   spineToTableIntent,
 } from '../services/deliverables/bundleOrchestrator.js';
 import {
-  generateBundle,
-} from '../services/deliverables/bundleGenerationRuntime.js';
-import { exportBundleFiles, bundleFilesToZip, safeBundleBaseName } from '../services/deliverables/bundleExportRuntime.js';
+  DeliverablesGenerationError,
+  plan,
+  start,
+  status,
+} from '../services/deliverables/deliverablesGenerationService.js';
+import { getDeliverableMetrics } from '../services/deliverables/deliverablesMetricsService.js';
+import { connectorDataset, formDataset } from '../services/deliverables/materialDataBinding.js';
+import {
+  aggregateQualityTelemetry,
+  recordsFromRows,
+} from '../services/deliverables/qualityTelemetry.js';
+import { firstRunSeedPlan } from '../services/deliverables/starterTemplates.js';
 import { isThemeId } from '../services/deliverables/themeRegistry.js';
-import { extractBrandTheme } from '../services/deliverables/brandIngestion.js';
-import multer from 'multer';
+// W3.3 (F2.3) — upload pliku → tekst kontekstowy:
+import { extractUploadContext } from '../services/deliverables/uploadContextExtract.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
+import formService from '../services/tablePlatform/FormService.js';
 import type {
   CreateGenerationRequest,
   DeliverableFormat,
   StartGenerationRequest,
 } from '../types/deliverablesGeneration.js';
 import logger from '../utils/Logger.js';
-import db from '../database/PostgresDatabase.js';
-// W5 (F5 kompozycja) — konektory + formularze → tabela materiału:
-import { connectorRegistry } from '../services/dataCollection/connectorFramework.js';
-import { connectorDataset, formDataset } from '../services/deliverables/materialDataBinding.js';
-import formService from '../services/tablePlatform/FormService.js';
-// W3.2 (F2.2) — wzbogacenie briefu o kontekst organizacji przed generacją:
-import { enrichBriefWithOrgContext } from '../services/deliverables/briefEnrichment.js';
-// W3.3 (F2.3) — upload pliku → tekst kontekstowy:
-import { extractUploadContext } from '../services/deliverables/uploadContextExtract.js';
-import { aggregateQualityTelemetry, recordsFromRows } from '../services/deliverables/qualityTelemetry.js';
-import { firstRunSeedPlan } from '../services/deliverables/starterTemplates.js';
 
 const router = Router();
 
@@ -297,7 +302,10 @@ router.post('/business-plan', aiRateLimiter, async (req: any, res: Response) => 
   if (!parsed.success) {
     res.status(400).json({
       success: false,
-      error: `Invalid brief: ${parsed.error.issues.slice(0, 3).map((i) => i.message).join('; ')}`,
+      error: `Invalid brief: ${parsed.error.issues
+        .slice(0, 3)
+        .map((i) => i.message)
+        .join('; ')}`,
       code: 'invalid_setup',
     });
     return;
@@ -349,13 +357,21 @@ async function persistBundleRecord(opts: {
        VALUES ($1, $2, $3, $4, 'draft', $5, $6, $7, $8, FALSE)
        ON CONFLICT DO NOTHING`,
       [
-        orgId, userId ?? null, brief.slice(0, 4000), title,
-        themeId ?? null, language,
-        JSON.stringify(qualityJson ?? null), JSON.stringify(heroNumbersJson ?? null),
-      ],
+        orgId,
+        userId ?? null,
+        brief.slice(0, 4000),
+        title,
+        themeId ?? null,
+        language,
+        JSON.stringify(qualityJson ?? null),
+        JSON.stringify(heroNumbersJson ?? null),
+      ]
     );
   } catch (err) {
-    logger.warn('[bundle/export] persistBundleRecord failed (non-fatal):', err instanceof Error ? err.message : String(err));
+    logger.warn(
+      '[bundle/export] persistBundleRecord failed (non-fatal):',
+      err instanceof Error ? err.message : String(err)
+    );
   }
 }
 
@@ -378,7 +394,10 @@ router.post('/bundle', aiRateLimiter, async (req: any, res: Response) => {
   if (!parsed.success) {
     res.status(400).json({
       success: false,
-      error: `Invalid bundle request: ${parsed.error.issues.slice(0, 3).map((i) => i.message).join('; ')}`,
+      error: `Invalid bundle request: ${parsed.error.issues
+        .slice(0, 3)
+        .map((i) => i.message)
+        .join('; ')}`,
       code: 'invalid_setup',
     });
     return;
@@ -388,7 +407,9 @@ router.post('/bundle', aiRateLimiter, async (req: any, res: Response) => {
     // W3.2 — opcjonalnie zakotwicz brief w kontekście org (fail-soft: brak trafień → oryginał).
     let brief = parsed.data.brief;
     if (parsed.data.useOrgContext && orgId) {
-      const enriched = await enrichBriefWithOrgContext(brief, orgId, undefined, { language: parsed.data.language });
+      const enriched = await enrichBriefWithOrgContext(brief, orgId, undefined, {
+        language: parsed.data.language,
+      });
       brief = enriched.enrichedBrief;
     }
     const bundle = await generateBundle(brief, {
@@ -451,12 +472,15 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
   }
 
   // Body can come from JSON (no file) or from multipart form-data fields.
-  const bodySource = (req.body ?? {});
+  const bodySource = req.body ?? {};
   const parsed = BundleExportSchema.safeParse(bodySource);
   if (!parsed.success) {
     res.status(400).json({
       success: false,
-      error: `Invalid bundle export request: ${parsed.error.issues.slice(0, 3).map((i) => i.message).join('; ')}`,
+      error: `Invalid bundle export request: ${parsed.error.issues
+        .slice(0, 3)
+        .map((i) => i.message)
+        .join('; ')}`,
       code: 'invalid_setup',
     });
     return;
@@ -466,7 +490,9 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
     // W3.2 — opcjonalne zakotwiczenie briefu w kontekście org (fail-soft).
     let exportBrief = parsed.data.brief;
     if (parsed.data.useOrgContext && orgId) {
-      const enriched = await enrichBriefWithOrgContext(exportBrief, orgId, undefined, { language: parsed.data.language });
+      const enriched = await enrichBriefWithOrgContext(exportBrief, orgId, undefined, {
+        language: parsed.data.language,
+      });
       exportBrief = enriched.enrichedBrief;
     }
     const bundle = await generateBundle(exportBrief, {
@@ -474,7 +500,9 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
       preferPremium: true,
     });
     if (!bundle) {
-      res.status(502).json({ success: false, error: 'Bundle generation failed', code: 'internal_error' });
+      res
+        .status(502)
+        .json({ success: false, error: 'Bundle generation failed', code: 'internal_error' });
       return;
     }
 
@@ -488,7 +516,9 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
     const base = safeBundleBaseName(bundle.spine.meta.company);
     const zipBuffer = await bundleFilesToZip(files, base);
     if (!zipBuffer) {
-      res.status(502).json({ success: false, error: 'No exportable files produced', code: 'internal_error' });
+      res
+        .status(502)
+        .json({ success: false, error: 'No exportable files produced', code: 'internal_error' });
       return;
     }
 
@@ -531,7 +561,7 @@ router.get('/bundles', async (req: any, res: Response) => {
        WHERE organization_id = $1
        ORDER BY created_at DESC
        LIMIT 50`,
-      [orgId],
+      [orgId]
     );
     res.status(200).json({
       success: true,
@@ -588,9 +618,12 @@ router.get('/bundles/telemetry', async (req: any, res: Response) => {
        WHERE organization_id = $1
        ORDER BY created_at DESC
        LIMIT 200`,
-      [orgId],
+      [orgId]
     );
-    const rows = (result?.rows ?? []) as Array<{ quality_json?: unknown; created_at?: string | number }>;
+    const rows = (result?.rows ?? []) as Array<{
+      quality_json?: unknown;
+      created_at?: string | number;
+    }>;
     const telemetry = aggregateQualityTelemetry(recordsFromRows(rows));
     res.status(200).json({ success: true, telemetry });
   } catch (err) {
@@ -626,13 +659,19 @@ router.post('/data/connectors/preview', aiRateLimiter, async (req: any, res: Res
   }
   const parsed = ConnectorPreviewSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
-    res.status(400).json({ success: false, error: 'Invalid connector preview request', code: 'invalid_setup' });
+    res
+      .status(400)
+      .json({ success: false, error: 'Invalid connector preview request', code: 'invalid_setup' });
     return;
   }
   try {
-    const dataset = await connectorDataset(parsed.data.type, parsed.data.config, { limit: parsed.data.limit ?? 25 });
+    const dataset = await connectorDataset(parsed.data.type, parsed.data.config, {
+      limit: parsed.data.limit ?? 25,
+    });
     if (!dataset) {
-      res.status(502).json({ success: false, error: 'Connector returned no data', code: 'internal_error' });
+      res
+        .status(502)
+        .json({ success: false, error: 'Connector returned no data', code: 'internal_error' });
       return;
     }
     res.status(200).json({ success: true, dataset });
@@ -660,7 +699,7 @@ router.post('/data/forms/:formId/dataset', async (req: any, res: Response) => {
       fieldLabels = Object.fromEntries(
         (form.config?.fields ?? [])
           .filter((f: any) => f.label)
-          .map((f: any) => [f.fieldId, f.label as string]),
+          .map((f: any) => [f.fieldId, f.label as string])
       );
     } catch {
       fieldLabels = undefined; // brak etykiet → klucze surowe (fail-soft)
@@ -670,7 +709,9 @@ router.post('/data/forms/:formId/dataset', async (req: any, res: Response) => {
       fieldLabels,
     });
     if (!dataset) {
-      res.status(502).json({ success: false, error: 'Form returned no data', code: 'internal_error' });
+      res
+        .status(502)
+        .json({ success: false, error: 'Form returned no data', code: 'internal_error' });
       return;
     }
     res.status(200).json({ success: true, dataset });
@@ -697,7 +738,9 @@ router.post('/data/extract', aiRateLimiter, async (req: any, res: Response) => {
   try {
     await parseContextUpload(req, res);
   } catch {
-    res.status(400).json({ success: false, error: 'Upload too large or malformed', code: 'invalid_setup' });
+    res
+      .status(400)
+      .json({ success: false, error: 'Upload too large or malformed', code: 'invalid_setup' });
     return;
   }
   const file = req.file;
@@ -706,9 +749,17 @@ router.post('/data/extract', aiRateLimiter, async (req: any, res: Response) => {
     return;
   }
   try {
-    const result = await extractUploadContext(file.buffer, file.originalname ?? 'upload', file.mimetype);
+    const result = await extractUploadContext(
+      file.buffer,
+      file.originalname ?? 'upload',
+      file.mimetype
+    );
     if (!result.ok) {
-      res.status(422).json({ success: false, error: `Unsupported or empty file (${result.kind})`, code: 'invalid_setup' });
+      res.status(422).json({
+        success: false,
+        error: `Unsupported or empty file (${result.kind})`,
+        code: 'invalid_setup',
+      });
       return;
     }
     res.status(200).json({ success: true, extract: result });

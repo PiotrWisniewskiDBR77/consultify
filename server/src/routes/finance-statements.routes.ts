@@ -36,6 +36,10 @@ import {
   searchStatementDocumentIntelligence,
   upsertStatementDocumentIntelligence,
 } from '../services/documentIntelligenceService.js';
+import {
+  computeInitiativeDeltaForOrg,
+  computePortfolioAggregateForPack,
+} from '../services/financeAggregateScopeService.js';
 import { ensureCanonicalRegistryInDatabase } from '../services/financeCanonicalRegistrySyncService.js';
 import {
   getFinanceTraceId,
@@ -50,16 +54,12 @@ import {
   isNonFinancialByPolicy,
 } from '../services/financeMappingPolicy.js';
 import {
-  computeInitiativeDeltaForOrg,
-  computePortfolioAggregateForPack,
-} from '../services/financeAggregateScopeService.js';
-import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
-import {
   FinanceReportReconcileBlockedError,
   loadFinanceReportLineageForPack,
   loadReconcileSummaryForPack,
   publishFinanceReportSectionSnapshot,
 } from '../services/financeReportSectionService.js';
+import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
 import {
   assignStatementToExistingPack,
   detachStatementFromPack,
@@ -1779,8 +1779,11 @@ router.post(
     const userId = getUserId(req);
     const body = req.body || {};
     const valuationId =
-      typeof body.valuationId === 'string' && body.valuationId.trim() ? body.valuationId.trim() : undefined;
-    const title = typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
+      typeof body.valuationId === 'string' && body.valuationId.trim()
+        ? body.valuationId.trim()
+        : undefined;
+    const title =
+      typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
     const periodFrom = typeof body.periodFrom === 'string' ? body.periodFrom : undefined;
     const periodTo = typeof body.periodTo === 'string' ? body.periodTo : undefined;
 
@@ -1810,7 +1813,9 @@ router.post(
         // RECONCILE_ENFORCE=true + persisted R1-R8 blocksReady → report NOT published.
         // Structural 409 with the blocking checks, not a generic 500 (see
         // financeReportSectionService.FinanceReportReconcileBlockedError docblock).
-        logger.warn(`[FinanceStatements] Report section publish blocked by reconcile enforce: ${e.message}`);
+        logger.warn(
+          `[FinanceStatements] Report section publish blocked by reconcile enforce: ${e.message}`
+        );
         return res.status(409).json({
           success: false,
           error: e.message,
@@ -1897,7 +1902,13 @@ router.get(
         success: true,
         packId,
         available: false,
-        lineage: { packId: null, sourcePack: null, generatedAt: new Date().toISOString(), assumptions: [], entries: [] },
+        lineage: {
+          packId: null,
+          sourcePack: null,
+          generatedAt: new Date().toISOString(),
+          assumptions: [],
+          entries: [],
+        },
       });
     }
   })

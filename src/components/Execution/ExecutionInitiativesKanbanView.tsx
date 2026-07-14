@@ -24,17 +24,17 @@ import { CSS } from '@dnd-kit/utilities';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StandardKanbanCard } from '../../components/standard';
 import type {
   StandardKanbanCard as StandardKanbanCardData,
   StandardKanbanChip,
   StandardKanbanUrgency,
 } from '../../components/standard';
+import { StandardKanbanCard } from '../../components/standard';
+import type { ChipTone } from '../../components/ui/primitives/chips/chipBase';
 import { getStatusStyle } from '../../constants/statusColors';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
-import type { ChipTone } from '../../components/ui/primitives/chips/chipBase';
-import type { HealthLevel } from '../../utils/initiativeHelpers';
 import type { InitiativeStatus, PortfolioInitiative } from '../../types';
+import type { HealthLevel } from '../../utils/initiativeHelpers';
 import { getHealthInfo, getNextStep } from '../../utils/initiativeHelpers';
 
 /** Priorytet → tone chipa (kanon A9: kolor tylko w kropce; crimson = tylko krytyczny). */
@@ -123,9 +123,7 @@ const KanbanCard: React.FC<{
     title: initiative.name,
     chips,
     urgency: priorityUrgency(initiative.priority),
-    ownerInitials: owner
-      ? `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
-      : undefined,
+    ownerInitials: owner ? `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}` : undefined,
     ownerAvatarUrl: owner?.avatarUrl,
     ownerName: ownerName || t('initiatives.kanban.noOwner', 'Unassigned'),
     footer: nextStep ? (
@@ -219,9 +217,7 @@ const KanbanColumn: React.FC<{
           ))}
         </SortableContext>
         {initiatives.length === 0 && (
-          <div className="p-3 text-center text-c-text-muted text-xs">
-            Drop initiatives here
-          </div>
+          <div className="p-3 text-center text-c-text-muted text-xs">Drop initiatives here</div>
         )}
       </div>
     </div>
@@ -316,9 +312,7 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
         </div>
       </div>
       <DragOverlay>
-        {activeInitiative && (
-          <KanbanCard initiative={activeInitiative} onClick={() => {}} />
-        )}
+        {activeInitiative && <KanbanCard initiative={activeInitiative} onClick={() => {}} />}
       </DragOverlay>
     </DndContext>
   );

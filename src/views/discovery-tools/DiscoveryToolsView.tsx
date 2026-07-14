@@ -299,9 +299,7 @@ export const DiscoveryToolsView: React.FC = () => {
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-c-accent-soft flex items-center justify-center">
-                  <span className="text-sm font-bold text-c-accent">
-                    {item.step}
-                  </span>
+                  <span className="text-sm font-bold text-c-accent">{item.step}</span>
                 </div>
                 <div>
                   <h3 className="font-medium text-c-text">

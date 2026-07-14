@@ -35,7 +35,7 @@ const hasPermission = (user, action, resource) => {
   };
 
   // Normalize role: trim whitespace, uppercase; blank/missing → VIEWER
-  let rawRole = user.role;
+  const rawRole = user.role;
   let normalizedRole: string;
   if (rawRole === undefined || rawRole === null) {
     normalizedRole = 'VIEWER';
@@ -242,10 +242,7 @@ const requireFrameworkApprover = (framework) => {
     }
 
     try {
-      const canApprove = await FrameworkRBACService.canApprove(
-        req.user.id,
-        resolvedFramework
-      );
+      const canApprove = await FrameworkRBACService.canApprove(req.user.id, resolvedFramework);
 
       if (!canApprove) {
         return res.status(403).json({
@@ -286,10 +283,7 @@ const requireFrameworkCertifier = (framework) => {
     }
 
     try {
-      const canCertify = await FrameworkRBACService.canCertify(
-        req.user.id,
-        resolvedFramework
-      );
+      const canCertify = await FrameworkRBACService.canCertify(req.user.id, resolvedFramework);
 
       if (!canCertify) {
         return res.status(403).json({

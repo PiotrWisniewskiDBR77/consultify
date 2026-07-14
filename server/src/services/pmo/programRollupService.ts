@@ -32,15 +32,15 @@
  * (program widzi tylko "root" inicjatywy — dokładnie dzisiejsze zachowanie),
  * zamiast wywalić cały rollup błędem 500.
  */
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
-  getProjectFinanceRollup,
-  getValueRollup,
   getBenefitsRollup,
+  getProjectFinanceRollup,
   getRoiRollup,
-  toNumber,
+  getValueRollup,
   type ProjectFinanceRollup,
+  toNumber,
 } from '../projectFinanceRollupService.js';
 
 export interface ProgramSummary {
@@ -124,7 +124,9 @@ export function dedupeIds(...groups: string[][]): string[] {
   return out;
 }
 
-export function bucketHealth(rows: Array<{ status: string | null | undefined }>): ProgramHealthBuckets {
+export function bucketHealth(
+  rows: Array<{ status: string | null | undefined }>
+): ProgramHealthBuckets {
   const buckets: ProgramHealthBuckets = { green: 0, amber: 0, red: 0 };
   for (const row of rows) {
     buckets[classifyStatus(row.status)] += 1;
@@ -250,7 +252,9 @@ async function getProgramRow(orgId: string, programId: string): Promise<ProgramS
       endDate: row.end_date ?? null,
     };
   } catch (err) {
-    logger.warn(`[programRollupService] failed to load program ${programId}: ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[programRollupService] failed to load program ${programId}: ${(err as Error)?.message || err}`
+    );
     return null;
   }
 }
@@ -288,7 +292,9 @@ async function getProjectNames(orgId: string, projectIds: string[]): Promise<Map
     );
     for (const r of rows || []) map.set(String(r.id), r.name);
   } catch (err) {
-    logger.warn(`[programRollupService] failed to load project names (degrading to empty names): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[programRollupService] failed to load project names (degrading to empty names): ${(err as Error)?.message || err}`
+    );
   }
   return map;
 }
@@ -315,7 +321,9 @@ async function getChildPrograms(orgId: string, programId: string): Promise<Progr
       initiativeCount: toNumber(r.initiative_count),
     }));
   } catch (err) {
-    logger.warn(`[programRollupService] failed to load child programs (degrading to empty): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[programRollupService] failed to load child programs (degrading to empty): ${(err as Error)?.message || err}`
+    );
     return [];
   }
 }
@@ -340,19 +348,29 @@ async function getProgramInitiativeRows(
              AND (program_id = ? OR project_id IN (${placeholders}))`;
       params.push(...projectIds);
     }
-    const rows = await queryHelpers.queryAll<{ id: string; status: string | null; project_id: string | null }>(
-      sql,
-      params
-    );
-    return (rows || []).map((r) => ({ id: String(r.id), status: r.status, projectId: r.project_id ? String(r.project_id) : null }));
+    const rows = await queryHelpers.queryAll<{
+      id: string;
+      status: string | null;
+      project_id: string | null;
+    }>(sql, params);
+    return (rows || []).map((r) => ({
+      id: String(r.id),
+      status: r.status,
+      projectId: r.project_id ? String(r.project_id) : null,
+    }));
   } catch (err) {
-    logger.warn(`[programRollupService] failed to load program initiatives (degrading to empty): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[programRollupService] failed to load program initiatives (degrading to empty): ${(err as Error)?.message || err}`
+    );
     return [];
   }
 }
 
 /** Σ initiative_budget_items.amount for a set of "root" initiative ids (no project container). Same table as executionBudgetService.getPortfolioBudgetSummary, scoped by explicit id list instead of project_id. */
-async function getRootInitiativesBudgetPlanned(orgId: string, initiativeIds: string[]): Promise<number> {
+async function getRootInitiativesBudgetPlanned(
+  orgId: string,
+  initiativeIds: string[]
+): Promise<number> {
   if (initiativeIds.length === 0) return 0;
   try {
     const placeholders = queryHelpers.buildInPlaceholders(initiativeIds);
@@ -364,7 +382,9 @@ async function getRootInitiativesBudgetPlanned(orgId: string, initiativeIds: str
     );
     return toNumber(row?.total);
   } catch (err) {
-    logger.warn(`[programRollupService] root-initiative budget rollup failed (degrading to 0): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[programRollupService] root-initiative budget rollup failed (degrading to 0): ${(err as Error)?.message || err}`
+    );
     return 0;
   }
 }
@@ -375,7 +395,10 @@ async function getRootInitiativesBudgetPlanned(orgId: string, initiativeIds: str
  * no project). Returns `null` when the program doesn't exist for this org —
  * callers should treat that as 404, not 500.
  */
-export async function getProgramRollup(orgId: string, programId: string): Promise<ProgramRollup | null> {
+export async function getProgramRollup(
+  orgId: string,
+  programId: string
+): Promise<ProgramRollup | null> {
   const program = await getProgramRow(orgId, programId);
   if (!program) return null;
 

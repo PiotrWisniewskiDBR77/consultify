@@ -687,560 +687,562 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreviewFooter={renderPreviewFooter}
       >
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */
-          className="w-full table-fixed bg-c-surface"
-          style={{ minWidth: tableMinWidth }}
-        >
-          <thead className="sticky top-0 z-10 bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
-            <tr className="border-b border-c-border-subtle">
-              <th className="px-2 py-3" style={{ width: columnWidths.select }}>
-                <button
-                  onClick={() => {
-                    if (allSelected) {
-                      onClearSelection();
-                    } else {
-                      onSelectAllVisible();
-                    }
-                  }}
-                  className={`flex h-4 w-4 items-center justify-center rounded-[4px] border text-[10px] transition-all ${
-                    allSelected
-                      ? 'border-c-text bg-c-text text-c-surface'
-                      : someSelected
-                        ? 'border-c-text bg-c-text/60 text-c-surface'
-                        : 'border-c-border-strong bg-white/70 text-transparent opacity-20 hover:border-c-border-strong hover:bg-white hover:text-c-text-muted hover:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.03] dark:hover:bg-white/[0.07]'
-                  }`}
-                  title={isPolish ? 'Zaznacz widoczne' : 'Select visible'}
-                >
-                  {allSelected ? '✓' : someSelected ? '−' : '□'}
-                </button>
-              </th>
-              <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                style={{ width: columnWidths.title }}
-              >
-                <button
-                  onClick={() => onSort('title')}
-                  className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
-                >
-                  {isPolish ? 'Tytul' : 'Title'}
-                  <SortIndicator active={sortField === 'title'} direction={sortDir} />
-                </button>
-                <ColumnResizer
-                  columnId="title"
-                  currentWidth={columnWidths.title}
-                  minWidth={IDEAS_RESIZE_BOUNDS.title.min}
-                  maxWidth={IDEAS_RESIZE_BOUNDS.title.max}
-                  onResize={handleColumnBoundaryResize}
-                />
-              </th>
-              {isColumnVisible('stage') ? (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                  style={{ width: columnWidths.stage }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <button
-                      onClick={() => onSort('stage')}
-                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
-                    >
-                      <span
-                        className={
-                          (tableFilters.stage as string[] | undefined)?.length
-                            ? 'text-c-text-secondary'
-                            : ''
-                        }
-                      >
-                        {isPolish ? 'Etap' : 'Stage'}
-                      </span>
-                      <SortIndicator active={sortField === 'stage'} direction={sortDir} />
-                    </button>
-                    <FilterDropdown
-                      column={stageColumn}
-                      value={tableFilters.stage as string[] | undefined}
-                      onChange={(value) => onTableFilterChange('stage', value as string[])}
-                      isOpen={openFilterId === 'stage'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'stage' ? null : 'stage')}
-                      onClose={() => setOpenFilterId(null)}
-                    />
-                  </div>
-                  <ColumnResizer
-                    columnId="stage"
-                    currentWidth={columnWidths.stage}
-                    minWidth={IDEAS_RESIZE_BOUNDS.stage.min}
-                    maxWidth={IDEAS_RESIZE_BOUNDS.stage.max}
-                    onResize={handleColumnBoundaryResize}
-                  />
+          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */
+            className="w-full table-fixed bg-c-surface"
+            style={{ minWidth: tableMinWidth }}
+          >
+            <thead className="sticky top-0 z-10 bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
+              <tr className="border-b border-c-border-subtle">
+                <th className="px-2 py-3" style={{ width: columnWidths.select }}>
+                  <button
+                    onClick={() => {
+                      if (allSelected) {
+                        onClearSelection();
+                      } else {
+                        onSelectAllVisible();
+                      }
+                    }}
+                    className={`flex h-4 w-4 items-center justify-center rounded-[4px] border text-[10px] transition-all ${
+                      allSelected
+                        ? 'border-c-text bg-c-text text-c-surface'
+                        : someSelected
+                          ? 'border-c-text bg-c-text/60 text-c-surface'
+                          : 'border-c-border-strong bg-white/70 text-transparent opacity-20 hover:border-c-border-strong hover:bg-white hover:text-c-text-muted hover:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.03] dark:hover:bg-white/[0.07]'
+                    }`}
+                    title={isPolish ? 'Zaznacz widoczne' : 'Select visible'}
+                  >
+                    {allSelected ? '✓' : someSelected ? '−' : '□'}
+                  </button>
                 </th>
-              ) : null}
-              {isColumnVisible('tags') ? (
                 <th
                   className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                  style={{ width: columnWidths.tags }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <button
-                      onClick={() => onSort('tags')}
-                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
-                    >
-                      <span
-                        className={
-                          (tableFilters.tags as string[] | undefined)?.length
-                            ? 'text-c-text-secondary'
-                            : ''
-                        }
-                      >
-                        {isPolish ? 'Tagi' : 'Tags'}
-                      </span>
-                      <SortIndicator active={sortField === 'tags'} direction={sortDir} />
-                    </button>
-                    <FilterDropdown
-                      column={tagsColumn}
-                      value={tableFilters.tags as string[] | undefined}
-                      onChange={(value) => onTableFilterChange('tags', value as string[])}
-                      isOpen={openFilterId === 'tags'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'tags' ? null : 'tags')}
-                      onClose={() => setOpenFilterId(null)}
-                    />
-                  </div>
-                  <ColumnResizer
-                    columnId="tags"
-                    currentWidth={columnWidths.tags}
-                    minWidth={IDEAS_RESIZE_BOUNDS.tags.min}
-                    maxWidth={IDEAS_RESIZE_BOUNDS.tags.max}
-                    onResize={handleColumnBoundaryResize}
-                  />
-                </th>
-              ) : null}
-              {isColumnVisible('tool') ? (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                  style={{ width: columnWidths.tool }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <button
-                      onClick={() => onSort('tool')}
-                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
-                    >
-                      <span
-                        className={
-                          (tableFilters.tool as string[] | undefined)?.length
-                            ? 'text-c-text-secondary'
-                            : ''
-                        }
-                      >
-                        {isPolish ? 'Narzedzie' : 'Tool'}
-                      </span>
-                      <SortIndicator active={sortField === 'tool'} direction={sortDir} />
-                    </button>
-                    <FilterDropdown
-                      column={toolColumn}
-                      value={tableFilters.tool as string[] | undefined}
-                      onChange={(value) => onTableFilterChange('tool', value as string[])}
-                      isOpen={openFilterId === 'tool'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'tool' ? null : 'tool')}
-                      onClose={() => setOpenFilterId(null)}
-                    />
-                  </div>
-                  <ColumnResizer
-                    columnId="tool"
-                    currentWidth={columnWidths.tool}
-                    minWidth={IDEAS_RESIZE_BOUNDS.tool.min}
-                    maxWidth={IDEAS_RESIZE_BOUNDS.tool.max}
-                    onResize={handleColumnBoundaryResize}
-                  />
-                </th>
-              ) : null}
-              {isColumnVisible('date') ? (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                  style={{ width: columnWidths.date }}
+                  style={{ width: columnWidths.title }}
                 >
                   <button
-                    onClick={() => onSort('date')}
+                    onClick={() => onSort('title')}
                     className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
                   >
-                    {isPolish ? 'Data' : 'Updated'}
-                    <SortIndicator active={sortField === 'date'} direction={sortDir} />
+                    {isPolish ? 'Tytul' : 'Title'}
+                    <SortIndicator active={sortField === 'title'} direction={sortDir} />
                   </button>
                   <ColumnResizer
-                    columnId="date"
-                    currentWidth={columnWidths.date}
-                    minWidth={IDEAS_RESIZE_BOUNDS.date.min}
-                    maxWidth={IDEAS_RESIZE_BOUNDS.date.max}
+                    columnId="title"
+                    currentWidth={columnWidths.title}
+                    minWidth={IDEAS_RESIZE_BOUNDS.title.min}
+                    maxWidth={IDEAS_RESIZE_BOUNDS.title.max}
                     onResize={handleColumnBoundaryResize}
                   />
                 </th>
-              ) : null}
-              <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                style={{ width: columnWidths.actions }}
-              >
-                <div className="flex items-center justify-end normal-case tracking-normal">
-                  <TableSettingsPopover
-                    columns={[
-                      {
-                        id: 'title',
-                        label: isPolish ? 'Tytuł' : 'Title',
-                        required: true,
-                        visible: true,
-                      },
-                      ...IDEAS_TABLE_OPTIONAL_COLUMNS.map(
-                        (column): TableSettingsColumn => ({
-                          id: column.id,
-                          label: isPolish ? column.labelPl : column.label,
-                          visible: isColumnVisible(column.id),
-                        })
-                      ),
-                      {
-                        id: 'actions',
-                        label: isPolish ? 'Akcje' : 'Actions',
-                        required: true,
-                        visible: true,
-                      },
-                    ]}
-                    onToggle={(columnId) =>
-                      toggleColumnVisibility(columnId as IdeasTableOptionalColumn)
-                    }
-                    showDescription={showRowDescription}
-                    onToggleDescription={updateRowDescriptionSetting}
-                    label={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                    columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
-                    descriptionLabel={isPolish ? 'Pokaż opis w wierszu' : 'Show row description'}
-                  />
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {ideas.map((idea, index) => {
-              const isChecked = selectedIds.has(idea.id);
-              const isPreviewSelected = previewIdeaId === idea.id;
-              const isFocused = focusedIndex === index;
-              const rowAccentClass = isPreviewSelected
-                ? 'bg-c-info'
-                : isFocused
-                  ? 'bg-c-info'
-                  : isChecked
-                    ? 'bg-c-info'
-                    : null;
-              const selectionCheckboxVisibility =
-                isChecked || isPreviewSelected || isFocused
-                  ? 'opacity-100'
-                  : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100';
-
-              const rowActionSections: RowActionSection[] = [
-                {
-                  id: 'open',
-                  kind: 'open',
-                  actions: [
-                    {
-                      id: 'open',
-                      label: isPolish ? 'Otwórz' : 'Open',
-                      icon: ExternalLink,
-                      onClick: () => onOpenIdea(idea),
-                    },
-                    {
-                      id: 'flow',
-                      label: 'Process Flow',
-                      icon: Workflow,
-                      onClick: () => onOpenIdeaInProcessFlow(idea),
-                    },
-                  ],
-                },
-                {
-                  id: 'ai',
-                  kind: 'ai',
-                  actions: [
-                    {
-                      id: 'ai_chat',
-                      label: 'AI Chat',
-                      icon: MessageSquare,
-                      onClick: () => onOpenIdeaAiChat?.(idea),
-                      disabled: !onOpenIdeaAiChat,
-                    },
-                    {
-                      id: 'ai_insights',
-                      label: 'AI Insights',
-                      icon: Bot,
-                      onClick: () => onOpenIdeaAiInsights?.(idea),
-                      disabled: !onOpenIdeaAiInsights,
-                    },
-                  ],
-                },
-                {
-                  id: 'convert',
-                  kind: 'convert',
-                  label: isPolish ? 'Konwertuj do' : 'Convert to',
-                  actions: [
-                    {
-                      id: 'convert_initiative',
-                      label: isPolish ? 'Inicjatywa' : 'Initiative',
-                      icon: Rocket,
-                      onClick: () =>
-                        onConvertIdeaToTarget
-                          ? onConvertIdeaToTarget(idea, 'initiative')
-                          : onStartConvert(idea),
-                    },
-                    {
-                      id: 'convert_tasks',
-                      label: isPolish ? 'Zadania' : 'Tasks',
-                      icon: CheckCircle2,
-                      onClick: () =>
-                        onConvertIdeaToTarget
-                          ? onConvertIdeaToTarget(idea, 'task_set')
-                          : onStartConvert(idea),
-                    },
-                    {
-                      id: 'convert_decision',
-                      label: isPolish ? 'Decyzja' : 'Decision',
-                      icon: Star,
-                      onClick: () =>
-                        onConvertIdeaToTarget
-                          ? onConvertIdeaToTarget(idea, 'decision')
-                          : onStartConvert(idea),
-                    },
-                    {
-                      id: 'convert_team_chat',
-                      label: 'Team Chat',
-                      icon: MessageSquarePlus,
-                      onClick: () =>
-                        onConvertIdeaToTarget
-                          ? onConvertIdeaToTarget(idea, 'team_chat')
-                          : onStartConvert(idea),
-                    },
-                  ],
-                },
-                // Create output — przed strefami manage (canon §17: …Convert · Create output · Manage · Danger).
-                {
-                  id: 'output',
-                  kind: 'output',
-                  actions: [
-                    {
-                      id: 'output_presentation',
-                      label: isPolish ? 'Prezentacja' : 'Presentation',
-                      icon: Presentation,
-                      disabled: true,
-                      rightLabel: isPolish ? 'wkrótce' : 'soon',
-                      onClick: () => undefined,
-                    },
-                    {
-                      id: 'output_report',
-                      label: isPolish ? 'Raport' : 'Report',
-                      icon: FileText,
-                      disabled: true,
-                      rightLabel: isPolish ? 'wkrótce' : 'soon',
-                      onClick: () => undefined,
-                    },
-                    {
-                      id: 'output_table',
-                      label: isPolish ? 'Tabela' : 'Table',
-                      icon: Table2,
-                      disabled: true,
-                      rightLabel: isPolish ? 'wkrótce' : 'soon',
-                      onClick: () => undefined,
-                    },
-                  ],
-                },
-                ...(folders && onMoveToFolder
-                  ? [
-                      {
-                        id: 'folder',
-                        kind: 'manage' as const,
-                        label: isPolish ? 'Folder' : 'Folder',
-                        actions: [
-                          {
-                            id: 'folder-none',
-                            label: isPolish ? 'Bez folderu' : 'No folder',
-                            icon: FolderMinus,
-                            onClick: () => onMoveToFolder(idea, null),
-                            disabled: !(idea as any).folderId,
-                          },
-                          ...folders.map((f) => ({
-                            id: `folder-${f.id}`,
-                            label: f.name,
-                            icon: Folder,
-                            onClick: () => onMoveToFolder(idea, f.id),
-                            rightLabel: (idea as any).folderId === f.id ? '✓' : undefined,
-                          })),
-                        ],
-                      },
-                    ]
-                  : []),
-                // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2).
-                // Ideas have no `due_date`, so the Delay slot (pos. 4) is N/A.
-                {
-                  id: 'fixed',
-                  kind: 'manage',
-                  actions: [
-                    {
-                      id: 'open-preview',
-                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                      icon: ChevronRight,
-                      onClick: () => {
-                        setPreviewIdeaId(idea.id);
-                        onFocusIndexChange(index);
-                      },
-                    },
-                    {
-                      id: 'edit',
-                      label: isPolish ? 'Edytuj' : 'Edit',
-                      icon: Edit2,
-                      onClick: () => onOpenIdea(idea),
-                    },
-                    {
-                      id: 'archive',
-                      label: isPolish ? 'Archiwizuj' : 'Archive',
-                      icon: Archive,
-                      disabled: true,
-                      description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
-                      onClick: () => {},
-                    },
-                  ],
-                },
-                {
-                  id: 'danger',
-                  kind: 'danger',
-                  actions: [
-                    {
-                      id: 'delete',
-                      label: isPolish ? 'Usuń' : 'Delete',
-                      icon: Trash2,
-                      variant: 'danger',
-                      onClick: () => onDeleteIdea(idea),
-                    },
-                  ],
-                },
-              ];
-
-              return (
-                <tr
-                  key={idea.id}
-                  onClick={() => {
-                    setPreviewIdeaId(idea.id);
-                    onFocusIndexChange(index);
-                  }}
-                  onDoubleClick={() => onOpenIdea(idea)}
-                  className={`group cursor-pointer border-b border-slate-200/50 dark:border-white/[0.03] transition-colors ${
-                    isPreviewSelected
-                      ? SELECTED_ROW_CLASS
-                      : isChecked
-                        ? SELECTED_ROW_CLASS
-                        : isFocused
-                          ? FOCUSED_ROW_CLASS
-                          : 'bg-c-surface hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]'
-                  }`}
-                >
-                  <td
-                    className="relative px-2 py-2.5 align-middle"
-                    style={{ width: columnWidths.select }}
+                {isColumnVisible('stage') ? (
+                  <th
+                    className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
+                    style={{ width: columnWidths.stage }}
                   >
-                    {rowAccentClass ? (
-                      <span
-                        aria-hidden="true"
-                        className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full ${rowAccentClass}`}
-                      />
-                    ) : null}
-                    <label
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all ${selectionCheckboxVisibility} hover:bg-black/[0.05] dark:hover:bg-white/[0.06]`}
-                      aria-label={isPolish ? 'Zaznacz pomysł' : 'Select idea'}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={(event) => {
-                          event.stopPropagation();
-                          onToggleSelect(idea.id);
-                        }}
-                        onClick={(event) => event.stopPropagation()}
-                        className="h-3.5 w-3.5 rounded-[4px] border-c-border-strong bg-transparent text-c-info shadow-none transition-all checked:border-c-info checked:bg-c-info checked:opacity-100 focus:ring-2 focus:ring-c-focus focus:ring-offset-0 dark:border-white/[0.18] dark:bg-transparent dark:checked:bg-c-info"
-                      />
-                    </label>
-                  </td>
-                  <td className="px-3 py-2.5 align-middle" style={{ width: columnWidths.title }}>
-                    <div className="flex items-center gap-1.5">
-                      {onToggleFavorite ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleFavorite(idea.id);
-                          }}
-                          aria-label={
-                            isFavorite?.(idea.id)
-                              ? isPolish
-                                ? 'Usuń z oznaczonych'
-                                : 'Remove from starred'
-                              : isPolish
-                                ? 'Oznacz gwiazdką'
-                                : 'Star'
+                    <div className="flex items-center justify-start gap-1">
+                      <button
+                        onClick={() => onSort('stage')}
+                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                      >
+                        <span
+                          className={
+                            (tableFilters.stage as string[] | undefined)?.length
+                              ? 'text-c-text-secondary'
+                              : ''
                           }
-                          aria-pressed={isFavorite?.(idea.id) ?? false}
-                          className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-amber-400"
                         >
-                          <Star
-                            size={14}
-                            className={isFavorite?.(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
-                          />
-                        </button>
-                      ) : null}
-                      <div className="truncate pr-4 text-sm font-semibold leading-5 text-c-text">
-                        {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
-                      </div>
+                          {isPolish ? 'Etap' : 'Stage'}
+                        </span>
+                        <SortIndicator active={sortField === 'stage'} direction={sortDir} />
+                      </button>
+                      <FilterDropdown
+                        column={stageColumn}
+                        value={tableFilters.stage as string[] | undefined}
+                        onChange={(value) => onTableFilterChange('stage', value as string[])}
+                        isOpen={openFilterId === 'stage'}
+                        onToggle={() => setOpenFilterId(openFilterId === 'stage' ? null : 'stage')}
+                        onClose={() => setOpenFilterId(null)}
+                      />
                     </div>
-                    {showRowDescription && idea.body ? (
-                      <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-c-text-muted">
-                        {idea.body}
-                      </div>
-                    ) : null}
-                  </td>
-                  {isColumnVisible('stage') ? (
-                    <td
-                      className="px-3 py-2.5 text-left align-middle"
-                      style={{ width: columnWidths.stage }}
-                    >
-                      {renderStageBadge(idea.stage)}
-                    </td>
-                  ) : null}
-                  {isColumnVisible('tags') ? (
-                    <td
-                      className="px-3 py-2.5 text-left align-middle"
-                      style={{ width: columnWidths.tags }}
-                    >
-                      {renderTagBadges(idea.tags)}
-                    </td>
-                  ) : null}
-                  {isColumnVisible('tool') ? (
-                    <td
-                      className="px-3 py-2.5 text-left align-middle"
-                      style={{ width: columnWidths.tool }}
-                    >
-                      {renderToolBadge(idea.preferredTool)}
-                    </td>
-                  ) : null}
-                  {isColumnVisible('date') ? (
-                    <td
-                      className="px-3 py-2.5 text-left align-middle text-[11px] font-medium leading-5 text-c-text-muted group-hover:text-c-text-secondary"
-                      style={{ width: columnWidths.date }}
-                    >
-                      {formatIdeaDate(idea)}
-                    </td>
-                  ) : null}
-                  <td
-                    className="px-3 py-2.5 text-right align-middle"
-                    style={{ width: columnWidths.actions }}
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <RowActionsMenu
-                      sections={rowActionSections}
-                      iconVariant="vertical"
-                      className="opacity-40 transition-opacity group-hover:opacity-100"
+                    <ColumnResizer
+                      columnId="stage"
+                      currentWidth={columnWidths.stage}
+                      minWidth={IDEAS_RESIZE_BOUNDS.stage.min}
+                      maxWidth={IDEAS_RESIZE_BOUNDS.stage.max}
+                      onResize={handleColumnBoundaryResize}
                     />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </th>
+                ) : null}
+                {isColumnVisible('tags') ? (
+                  <th
+                    className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
+                    style={{ width: columnWidths.tags }}
+                  >
+                    <div className="flex items-center justify-start gap-1">
+                      <button
+                        onClick={() => onSort('tags')}
+                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                      >
+                        <span
+                          className={
+                            (tableFilters.tags as string[] | undefined)?.length
+                              ? 'text-c-text-secondary'
+                              : ''
+                          }
+                        >
+                          {isPolish ? 'Tagi' : 'Tags'}
+                        </span>
+                        <SortIndicator active={sortField === 'tags'} direction={sortDir} />
+                      </button>
+                      <FilterDropdown
+                        column={tagsColumn}
+                        value={tableFilters.tags as string[] | undefined}
+                        onChange={(value) => onTableFilterChange('tags', value as string[])}
+                        isOpen={openFilterId === 'tags'}
+                        onToggle={() => setOpenFilterId(openFilterId === 'tags' ? null : 'tags')}
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="tags"
+                      currentWidth={columnWidths.tags}
+                      minWidth={IDEAS_RESIZE_BOUNDS.tags.min}
+                      maxWidth={IDEAS_RESIZE_BOUNDS.tags.max}
+                      onResize={handleColumnBoundaryResize}
+                    />
+                  </th>
+                ) : null}
+                {isColumnVisible('tool') ? (
+                  <th
+                    className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
+                    style={{ width: columnWidths.tool }}
+                  >
+                    <div className="flex items-center justify-start gap-1">
+                      <button
+                        onClick={() => onSort('tool')}
+                        className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                      >
+                        <span
+                          className={
+                            (tableFilters.tool as string[] | undefined)?.length
+                              ? 'text-c-text-secondary'
+                              : ''
+                          }
+                        >
+                          {isPolish ? 'Narzedzie' : 'Tool'}
+                        </span>
+                        <SortIndicator active={sortField === 'tool'} direction={sortDir} />
+                      </button>
+                      <FilterDropdown
+                        column={toolColumn}
+                        value={tableFilters.tool as string[] | undefined}
+                        onChange={(value) => onTableFilterChange('tool', value as string[])}
+                        isOpen={openFilterId === 'tool'}
+                        onToggle={() => setOpenFilterId(openFilterId === 'tool' ? null : 'tool')}
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="tool"
+                      currentWidth={columnWidths.tool}
+                      minWidth={IDEAS_RESIZE_BOUNDS.tool.min}
+                      maxWidth={IDEAS_RESIZE_BOUNDS.tool.max}
+                      onResize={handleColumnBoundaryResize}
+                    />
+                  </th>
+                ) : null}
+                {isColumnVisible('date') ? (
+                  <th
+                    className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
+                    style={{ width: columnWidths.date }}
+                  >
+                    <button
+                      onClick={() => onSort('date')}
+                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
+                    >
+                      {isPolish ? 'Data' : 'Updated'}
+                      <SortIndicator active={sortField === 'date'} direction={sortDir} />
+                    </button>
+                    <ColumnResizer
+                      columnId="date"
+                      currentWidth={columnWidths.date}
+                      minWidth={IDEAS_RESIZE_BOUNDS.date.min}
+                      maxWidth={IDEAS_RESIZE_BOUNDS.date.max}
+                      onResize={handleColumnBoundaryResize}
+                    />
+                  </th>
+                ) : null}
+                <th
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
+                  style={{ width: columnWidths.actions }}
+                >
+                  <div className="flex items-center justify-end normal-case tracking-normal">
+                    <TableSettingsPopover
+                      columns={[
+                        {
+                          id: 'title',
+                          label: isPolish ? 'Tytuł' : 'Title',
+                          required: true,
+                          visible: true,
+                        },
+                        ...IDEAS_TABLE_OPTIONAL_COLUMNS.map(
+                          (column): TableSettingsColumn => ({
+                            id: column.id,
+                            label: isPolish ? column.labelPl : column.label,
+                            visible: isColumnVisible(column.id),
+                          })
+                        ),
+                        {
+                          id: 'actions',
+                          label: isPolish ? 'Akcje' : 'Actions',
+                          required: true,
+                          visible: true,
+                        },
+                      ]}
+                      onToggle={(columnId) =>
+                        toggleColumnVisibility(columnId as IdeasTableOptionalColumn)
+                      }
+                      showDescription={showRowDescription}
+                      onToggleDescription={updateRowDescriptionSetting}
+                      label={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                      columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                      descriptionLabel={isPolish ? 'Pokaż opis w wierszu' : 'Show row description'}
+                    />
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {ideas.map((idea, index) => {
+                const isChecked = selectedIds.has(idea.id);
+                const isPreviewSelected = previewIdeaId === idea.id;
+                const isFocused = focusedIndex === index;
+                const rowAccentClass = isPreviewSelected
+                  ? 'bg-c-info'
+                  : isFocused
+                    ? 'bg-c-info'
+                    : isChecked
+                      ? 'bg-c-info'
+                      : null;
+                const selectionCheckboxVisibility =
+                  isChecked || isPreviewSelected || isFocused
+                    ? 'opacity-100'
+                    : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100';
+
+                const rowActionSections: RowActionSection[] = [
+                  {
+                    id: 'open',
+                    kind: 'open',
+                    actions: [
+                      {
+                        id: 'open',
+                        label: isPolish ? 'Otwórz' : 'Open',
+                        icon: ExternalLink,
+                        onClick: () => onOpenIdea(idea),
+                      },
+                      {
+                        id: 'flow',
+                        label: 'Process Flow',
+                        icon: Workflow,
+                        onClick: () => onOpenIdeaInProcessFlow(idea),
+                      },
+                    ],
+                  },
+                  {
+                    id: 'ai',
+                    kind: 'ai',
+                    actions: [
+                      {
+                        id: 'ai_chat',
+                        label: 'AI Chat',
+                        icon: MessageSquare,
+                        onClick: () => onOpenIdeaAiChat?.(idea),
+                        disabled: !onOpenIdeaAiChat,
+                      },
+                      {
+                        id: 'ai_insights',
+                        label: 'AI Insights',
+                        icon: Bot,
+                        onClick: () => onOpenIdeaAiInsights?.(idea),
+                        disabled: !onOpenIdeaAiInsights,
+                      },
+                    ],
+                  },
+                  {
+                    id: 'convert',
+                    kind: 'convert',
+                    label: isPolish ? 'Konwertuj do' : 'Convert to',
+                    actions: [
+                      {
+                        id: 'convert_initiative',
+                        label: isPolish ? 'Inicjatywa' : 'Initiative',
+                        icon: Rocket,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'initiative')
+                            : onStartConvert(idea),
+                      },
+                      {
+                        id: 'convert_tasks',
+                        label: isPolish ? 'Zadania' : 'Tasks',
+                        icon: CheckCircle2,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'task_set')
+                            : onStartConvert(idea),
+                      },
+                      {
+                        id: 'convert_decision',
+                        label: isPolish ? 'Decyzja' : 'Decision',
+                        icon: Star,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'decision')
+                            : onStartConvert(idea),
+                      },
+                      {
+                        id: 'convert_team_chat',
+                        label: 'Team Chat',
+                        icon: MessageSquarePlus,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'team_chat')
+                            : onStartConvert(idea),
+                      },
+                    ],
+                  },
+                  // Create output — przed strefami manage (canon §17: …Convert · Create output · Manage · Danger).
+                  {
+                    id: 'output',
+                    kind: 'output',
+                    actions: [
+                      {
+                        id: 'output_presentation',
+                        label: isPolish ? 'Prezentacja' : 'Presentation',
+                        icon: Presentation,
+                        disabled: true,
+                        rightLabel: isPolish ? 'wkrótce' : 'soon',
+                        onClick: () => undefined,
+                      },
+                      {
+                        id: 'output_report',
+                        label: isPolish ? 'Raport' : 'Report',
+                        icon: FileText,
+                        disabled: true,
+                        rightLabel: isPolish ? 'wkrótce' : 'soon',
+                        onClick: () => undefined,
+                      },
+                      {
+                        id: 'output_table',
+                        label: isPolish ? 'Tabela' : 'Table',
+                        icon: Table2,
+                        disabled: true,
+                        rightLabel: isPolish ? 'wkrótce' : 'soon',
+                        onClick: () => undefined,
+                      },
+                    ],
+                  },
+                  ...(folders && onMoveToFolder
+                    ? [
+                        {
+                          id: 'folder',
+                          kind: 'manage' as const,
+                          label: isPolish ? 'Folder' : 'Folder',
+                          actions: [
+                            {
+                              id: 'folder-none',
+                              label: isPolish ? 'Bez folderu' : 'No folder',
+                              icon: FolderMinus,
+                              onClick: () => onMoveToFolder(idea, null),
+                              disabled: !(idea as any).folderId,
+                            },
+                            ...folders.map((f) => ({
+                              id: `folder-${f.id}`,
+                              label: f.name,
+                              icon: Folder,
+                              onClick: () => onMoveToFolder(idea, f.id),
+                              rightLabel: (idea as any).folderId === f.id ? '✓' : undefined,
+                            })),
+                          ],
+                        },
+                      ]
+                    : []),
+                  // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2).
+                  // Ideas have no `due_date`, so the Delay slot (pos. 4) is N/A.
+                  {
+                    id: 'fixed',
+                    kind: 'manage',
+                    actions: [
+                      {
+                        id: 'open-preview',
+                        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                        icon: ChevronRight,
+                        onClick: () => {
+                          setPreviewIdeaId(idea.id);
+                          onFocusIndexChange(index);
+                        },
+                      },
+                      {
+                        id: 'edit',
+                        label: isPolish ? 'Edytuj' : 'Edit',
+                        icon: Edit2,
+                        onClick: () => onOpenIdea(idea),
+                      },
+                      {
+                        id: 'archive',
+                        label: isPolish ? 'Archiwizuj' : 'Archive',
+                        icon: Archive,
+                        disabled: true,
+                        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                        onClick: () => {},
+                      },
+                    ],
+                  },
+                  {
+                    id: 'danger',
+                    kind: 'danger',
+                    actions: [
+                      {
+                        id: 'delete',
+                        label: isPolish ? 'Usuń' : 'Delete',
+                        icon: Trash2,
+                        variant: 'danger',
+                        onClick: () => onDeleteIdea(idea),
+                      },
+                    ],
+                  },
+                ];
+
+                return (
+                  <tr
+                    key={idea.id}
+                    onClick={() => {
+                      setPreviewIdeaId(idea.id);
+                      onFocusIndexChange(index);
+                    }}
+                    onDoubleClick={() => onOpenIdea(idea)}
+                    className={`group cursor-pointer border-b border-slate-200/50 dark:border-white/[0.03] transition-colors ${
+                      isPreviewSelected
+                        ? SELECTED_ROW_CLASS
+                        : isChecked
+                          ? SELECTED_ROW_CLASS
+                          : isFocused
+                            ? FOCUSED_ROW_CLASS
+                            : 'bg-c-surface hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]'
+                    }`}
+                  >
+                    <td
+                      className="relative px-2 py-2.5 align-middle"
+                      style={{ width: columnWidths.select }}
+                    >
+                      {rowAccentClass ? (
+                        <span
+                          aria-hidden="true"
+                          className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full ${rowAccentClass}`}
+                        />
+                      ) : null}
+                      <label
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all ${selectionCheckboxVisibility} hover:bg-black/[0.05] dark:hover:bg-white/[0.06]`}
+                        aria-label={isPolish ? 'Zaznacz pomysł' : 'Select idea'}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(event) => {
+                            event.stopPropagation();
+                            onToggleSelect(idea.id);
+                          }}
+                          onClick={(event) => event.stopPropagation()}
+                          className="h-3.5 w-3.5 rounded-[4px] border-c-border-strong bg-transparent text-c-info shadow-none transition-all checked:border-c-info checked:bg-c-info checked:opacity-100 focus:ring-2 focus:ring-c-focus focus:ring-offset-0 dark:border-white/[0.18] dark:bg-transparent dark:checked:bg-c-info"
+                        />
+                      </label>
+                    </td>
+                    <td className="px-3 py-2.5 align-middle" style={{ width: columnWidths.title }}>
+                      <div className="flex items-center gap-1.5">
+                        {onToggleFavorite ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleFavorite(idea.id);
+                            }}
+                            aria-label={
+                              isFavorite?.(idea.id)
+                                ? isPolish
+                                  ? 'Usuń z oznaczonych'
+                                  : 'Remove from starred'
+                                : isPolish
+                                  ? 'Oznacz gwiazdką'
+                                  : 'Star'
+                            }
+                            aria-pressed={isFavorite?.(idea.id) ?? false}
+                            className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-amber-400"
+                          >
+                            <Star
+                              size={14}
+                              className={
+                                isFavorite?.(idea.id) ? 'fill-amber-400 text-amber-400' : ''
+                              }
+                            />
+                          </button>
+                        ) : null}
+                        <div className="truncate pr-4 text-sm font-semibold leading-5 text-c-text">
+                          {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
+                        </div>
+                      </div>
+                      {showRowDescription && idea.body ? (
+                        <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-c-text-muted">
+                          {idea.body}
+                        </div>
+                      ) : null}
+                    </td>
+                    {isColumnVisible('stage') ? (
+                      <td
+                        className="px-3 py-2.5 text-left align-middle"
+                        style={{ width: columnWidths.stage }}
+                      >
+                        {renderStageBadge(idea.stage)}
+                      </td>
+                    ) : null}
+                    {isColumnVisible('tags') ? (
+                      <td
+                        className="px-3 py-2.5 text-left align-middle"
+                        style={{ width: columnWidths.tags }}
+                      >
+                        {renderTagBadges(idea.tags)}
+                      </td>
+                    ) : null}
+                    {isColumnVisible('tool') ? (
+                      <td
+                        className="px-3 py-2.5 text-left align-middle"
+                        style={{ width: columnWidths.tool }}
+                      >
+                        {renderToolBadge(idea.preferredTool)}
+                      </td>
+                    ) : null}
+                    {isColumnVisible('date') ? (
+                      <td
+                        className="px-3 py-2.5 text-left align-middle text-[11px] font-medium leading-5 text-c-text-muted group-hover:text-c-text-secondary"
+                        style={{ width: columnWidths.date }}
+                      >
+                        {formatIdeaDate(idea)}
+                      </td>
+                    ) : null}
+                    <td
+                      className="px-3 py-2.5 text-right align-middle"
+                      style={{ width: columnWidths.actions }}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <RowActionsMenu
+                        sections={rowActionSections}
+                        iconVariant="vertical"
+                        className="opacity-40 transition-opacity group-hover:opacity-100"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </TableWithPreviewLayout>
     </div>

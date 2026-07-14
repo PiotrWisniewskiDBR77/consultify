@@ -139,9 +139,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
             {stats.allDone && stats.hasErrors && (
               <AlertCircle size={14} className="text-danger-500" />
             )}
-            <span className="text-xs font-semibold text-c-text">
-              {statusLabel}
-            </span>
+            <span className="text-xs font-semibold text-c-text">{statusLabel}</span>
           </div>
           <span className="text-[10px] text-c-text-secondary font-mono">
             {stats.done}/{stats.total}
@@ -182,9 +180,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                 {idx < operations.length - 1 && (
                   <div
                     className={`w-0.5 h-3 mt-0.5 rounded-full transition-colors ${
-                      isDone
-                        ? 'bg-emerald-300 dark:bg-emerald-700'
-                        : 'bg-c-border-subtle'
+                      isDone ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-c-border-subtle'
                     }`}
                   />
                 )}
@@ -246,7 +242,6 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
       {/* Error summary */}
       {stats.allDone && stats.hasErrors && (
-
         <div className="px-4 py-3 border-t border-danger-200/60 dark:border-danger-800/40 bg-danger-50/50 dark:bg-danger-950/20">
           <p className="text-xs text-danger-700 dark:text-danger-300 font-medium">
             {t('ideas.table.operationsFailedCount', '{{failed}} of {{total}} operations failed', {

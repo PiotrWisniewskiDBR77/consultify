@@ -25,9 +25,7 @@ export const PreviewAIBrief: React.FC<PreviewAIBriefProps> = ({ brief, loading }
           <div className="h-3 w-3/5 rounded bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]" />
         </div>
       ) : (
-        <span className="flex-1 text-[11px] leading-relaxed text-c-text-secondary">
-          {brief}
-        </span>
+        <span className="flex-1 text-[11px] leading-relaxed text-c-text-secondary">{brief}</span>
       )}
     </motion.div>
   );

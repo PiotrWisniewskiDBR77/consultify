@@ -572,9 +572,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
                   </span>
                 );
               })}
-              <span className="text-xs text-c-text-secondary py-1">
-                +4 more categories
-              </span>
+              <span className="text-xs text-c-text-secondary py-1">+4 more categories</span>
             </div>
           </div>
         </div>
@@ -647,9 +645,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
         <div className="w-16 h-16 rounded-full bg-c-surface-raised/40 dark:bg-navy-800 flex items-center justify-center mb-4">
           <Database className="w-8 h-8 text-c-text-secondary" />
         </div>
-        <p className="text-lg font-medium text-c-text-secondary mb-1">
-          No insights captured yet
-        </p>
+        <p className="text-lg font-medium text-c-text-secondary mb-1">No insights captured yet</p>
         <p className="text-sm text-c-text-muted max-w-md">
           Start a conversation with the AI to capture project knowledge. Insights will appear here
           as they are detected.
@@ -841,9 +837,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
         <div className="w-16 h-16 rounded-full bg-c-surface-raised/40 dark:bg-navy-800 flex items-center justify-center mb-4">
           <History className="w-8 h-8 text-c-text-secondary" />
         </div>
-        <p className="text-lg font-medium text-c-text-secondary mb-1">
-          No interview sessions yet
-        </p>
+        <p className="text-lg font-medium text-c-text-secondary mb-1">No interview sessions yet</p>
         <p className="text-sm text-c-text-muted max-w-md">
           Your AI interview sessions will appear here. Start a conversation to create your first
           session.

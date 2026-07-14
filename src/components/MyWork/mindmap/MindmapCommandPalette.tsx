@@ -439,15 +439,21 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
 
           <div className="flex items-center gap-3 px-3.5 py-1.5 border-t border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface-raised text-[10px] text-c-text-secondary dark:text-c-text-secondary">
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">↑↓</kbd>
+              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">
+                ↑↓
+              </kbd>
               {isPl ? 'Nawiguj' : 'Navigate'}
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">↵</kbd>
+              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">
+                ↵
+              </kbd>
               {isPl ? 'Wykonaj' : 'Execute'}
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">esc</kbd>
+              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">
+                esc
+              </kbd>
               {isPl ? 'Zamknij' : 'Close'}
             </span>
           </div>

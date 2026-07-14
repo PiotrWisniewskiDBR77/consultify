@@ -26,8 +26,6 @@ import {
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
-import { exportValuationPptx } from '../services/valuationExportService.js';
-import * as valuationSvc from '../services/valuationService.js';
 import { buildBasketFromResults } from '../services/valuationBasketService.js';
 import {
   buildBasketForDepth,
@@ -37,6 +35,8 @@ import {
   resolveStoredDepth,
   setValuationDepth,
 } from '../services/valuationDepthProfileService.js';
+import { exportValuationPptx } from '../services/valuationExportService.js';
+import * as valuationSvc from '../services/valuationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -364,9 +364,7 @@ const updatePeersSchema = z
     median: z.number(),
     max: z.number(),
     peerSet: z.array(
-      z
-        .object({ name: z.string().max(300), notes: z.string().max(2000).optional() })
-        .passthrough()
+      z.object({ name: z.string().max(300), notes: z.string().max(2000).optional() }).passthrough()
     ),
     confidenceNote: z.string().max(4000).optional(),
   })
@@ -2517,7 +2515,8 @@ router.get(
       assumptions?.basket && typeof assumptions.basket === 'object' ? assumptions.basket : {};
 
     const depthOverrideRaw = typeof req.query.depth === 'string' ? req.query.depth : undefined;
-    const depthOverride = depthOverrideRaw && isValidDepth(depthOverrideRaw) ? depthOverrideRaw : null;
+    const depthOverride =
+      depthOverrideRaw && isValidDepth(depthOverrideRaw) ? depthOverrideRaw : null;
     const resolvedDepth = depthOverride ?? resolveStoredDepth(assumptions);
 
     if (!resolvedDepth) {

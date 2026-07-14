@@ -270,9 +270,9 @@ export function useIdeaMapSync({
   // refused even after hydration.
   const hydratedRef = useRef(false);
   const lastKnownNodeCountRef = useRef(0);
-  const flushNowRef = useRef<((p?: IdeaMapSyncPayload | null, o?: FlushSyncOpts) => Promise<any>) | null>(
-    null
-  );
+  const flushNowRef = useRef<
+    ((p?: IdeaMapSyncPayload | null, o?: FlushSyncOpts) => Promise<any>) | null
+  >(null);
 
   const persistDraft = useCallback(
     (payload: IdeaMapSyncPayload, pending: boolean) => {
@@ -472,10 +472,7 @@ export function useIdeaMapSync({
       // a spurious 0-node flush is refused even before the first user edit has
       // captured a payload (closes the window right after a non-empty hydrate).
       if (typeof hydratedNodeCount === 'number' && hydratedNodeCount > 0) {
-        lastKnownNodeCountRef.current = Math.max(
-          lastKnownNodeCountRef.current,
-          hydratedNodeCount
-        );
+        lastKnownNodeCountRef.current = Math.max(lastKnownNodeCountRef.current, hydratedNodeCount);
       }
       const draft = readIdeaMapDraft(ideaId);
       if (draft?.pending) {
@@ -567,7 +564,7 @@ export function useIdeaMapSync({
         });
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const syncLabel = useMemo(

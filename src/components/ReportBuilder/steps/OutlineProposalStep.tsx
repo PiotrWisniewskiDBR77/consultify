@@ -184,9 +184,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
                 onChange={(e) => updateTitle(section.key, e.target.value)}
                 className="w-full bg-transparent text-sm font-medium text-c-text border-b border-transparent hover:border-c-border-subtle focus:border-blue-500 focus:outline-none transition-colors pb-0.5"
               />
-              <p className="text-xs text-c-text-secondary leading-relaxed">
-                {section.summary}
-              </p>
+              <p className="text-xs text-c-text-secondary leading-relaxed">{section.summary}</p>
               <div className="flex items-center gap-2 pt-1">
                 {section.required && (
                   <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium">

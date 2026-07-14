@@ -231,9 +231,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
       {/* Password Requirements */}
       <div className="p-4 bg-c-surface-raised rounded-lg mt-6">
-        <h4 className="text-sm font-medium text-c-text-secondary mb-2">
-          Password Requirements
-        </h4>
+        <h4 className="text-sm font-medium text-c-text-secondary mb-2">Password Requirements</h4>
         <ul className="text-xs text-c-text-muted space-y-1">
           <li className={newPassword.length >= 8 ? 'text-green-500' : ''}>
             • At least 8 characters
@@ -328,15 +326,11 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             </div>
             <div>
               <p className="text-c-text-muted">Role</p>
-              <p className="font-medium text-c-text">
-                {currentUser.role || 'USER'}
-              </p>
+              <p className="font-medium text-c-text">{currentUser.role || 'USER'}</p>
             </div>
             <div>
               <p className="text-c-text-muted">Organization</p>
-              <p className="font-medium text-c-text">
-                {currentUser.companyName || 'N/A'}
-              </p>
+              <p className="font-medium text-c-text">{currentUser.companyName || 'N/A'}</p>
             </div>
             <div>
               <p className="text-c-text-muted">2FA Status</p>
@@ -677,9 +671,7 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
           </div>
         );
       default:
-        return (
-          <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-        );
+        return <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
     }
   };
 

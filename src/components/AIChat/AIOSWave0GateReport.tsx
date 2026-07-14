@@ -1,9 +1,9 @@
 import { ClipboardCheck } from 'lucide-react';
 import React from 'react';
 
-import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 
 const gateRows = [
   ['Wave 0', 'Runtime truth, owners, flags, test data', 'PASS', 'AI OS gate report in hub'],
@@ -23,9 +23,7 @@ const gateColumns: TableColumn[] = [
     id: 'wave',
     label: 'Wave',
     width: '120px',
-    render: (row) => (
-      <span className="font-medium text-slate-900 dark:text-white">{row.wave}</span>
-    ),
+    render: (row) => <span className="font-medium text-slate-900 dark:text-white">{row.wave}</span>,
   },
   {
     id: 'scope',

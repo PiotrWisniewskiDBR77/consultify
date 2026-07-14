@@ -512,7 +512,9 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
             <div
               key={key.id}
               className={`p-4 bg-c-surface rounded-lg border transition-all ${
-                isSelected ? 'border-c-border-strong' : 'border-c-border-subtle dark:border-navy-700'
+                isSelected
+                  ? 'border-c-border-strong'
+                  : 'border-c-border-subtle dark:border-navy-700'
               }`}
             >
               {/* Key Header */}
@@ -530,9 +532,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                       />
                     )}
                   </div>
-                  <p className="text-sm text-c-text-muted font-mono">
-                    {key.prefix}••••••••••••
-                  </p>
+                  <p className="text-sm text-c-text-muted font-mono">{key.prefix}••••••••••••</p>
                   {key.lastUsed && (
                     <p className="text-xs text-c-text-secondary mt-1">
                       {t('settings.api.lastUsed', 'Last used')}: {key.lastUsed}
@@ -657,10 +657,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   {usage.requests && usage.requests.length > 0 && (
                     <ResponsiveContainer width="100%" height={200}>
                       <LineChart data={usage.requests}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="var(--c-border-strong)"
-                        />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--c-border-strong)" />
                         <XAxis
                           dataKey="date"
                           tick={{ fontSize: 10 }}
@@ -725,9 +722,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                             <span className="text-sm font-medium text-c-text-secondary">
                               {scope.name}
                             </span>
-                            <p className="text-xs text-c-text-muted">
-                              {scope.description}
-                            </p>
+                            <p className="text-xs text-c-text-muted">{scope.description}</p>
                           </div>
                         </label>
                       ))}

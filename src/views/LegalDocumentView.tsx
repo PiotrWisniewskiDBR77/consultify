@@ -263,9 +263,7 @@ export const LegalDocumentView: React.FC = () => {
           <div className="w-20 h-20 bg-c-surface-raised dark:bg-c-surface/5 rounded-xl flex items-center justify-center mx-auto mb-6">
             <FileText className="w-10 h-10 text-c-text-secondary" />
           </div>
-          <h1 className="text-2xl font-bold text-c-text mb-3">
-            Document Not Found
-          </h1>
+          <h1 className="text-2xl font-bold text-c-text mb-3">Document Not Found</h1>
           <p className="text-c-text-secondary mb-8">
             {error || 'The requested document could not be found.'}
           </p>
@@ -418,9 +416,7 @@ export const LegalDocumentView: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs text-c-text-muted">Version</p>
-                    <p className="font-medium text-c-text-secondary">
-                      {document.version}
-                    </p>
+                    <p className="font-medium text-c-text-secondary">{document.version}</p>
                   </div>
                 </div>
               </div>
@@ -471,9 +467,7 @@ export const LegalDocumentView: React.FC = () => {
                   ),
                   // Paragraphs
                   p: ({ children }) => (
-                    <p className="text-c-text-secondary leading-relaxed mb-4">
-                      {children}
-                    </p>
+                    <p className="text-c-text-secondary leading-relaxed mb-4">{children}</p>
                   ),
                   // Links
                   a: ({ href, children }) => (
@@ -486,9 +480,7 @@ export const LegalDocumentView: React.FC = () => {
                   ),
                   // Strong/bold
                   strong: ({ children }) => (
-                    <strong className="font-semibold text-c-text">
-                      {children}
-                    </strong>
+                    <strong className="font-semibold text-c-text">{children}</strong>
                   ),
                   // Lists
                   ul: ({ children }) => <ul className="space-y-2 my-4 ml-1">{children}</ul>,
@@ -506,7 +498,11 @@ export const LegalDocumentView: React.FC = () => {
                   // Tables - Beautiful styling
                   table: ({ children }) => (
                     <div className="my-6 overflow-x-auto rounded-xl border border-c-border-subtle">
-                      <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-sm">{children}</table>
+                      <table
+                        /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-sm"
+                      >
+                        {children}
+                      </table>
                     </div>
                   ),
                   thead: ({ children }) => (

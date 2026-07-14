@@ -142,9 +142,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-c-text truncate">
-                  {c.name}
-                </span>
+                <span className="text-sm font-medium text-c-text truncate">{c.name}</span>
                 <span className="text-[11px] text-c-text-muted">
                   {isPl ? meta.labelPl : meta.labelEn}
                 </span>

@@ -242,19 +242,16 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  const handleSort = useCallback(
-    (colId: string) => {
-      setSortCol((prev) => {
-        if (prev === colId) {
-          setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-          return prev;
-        }
-        setSortDir('asc');
-        return colId;
-      });
-    },
-    []
-  );
+  const handleSort = useCallback((colId: string) => {
+    setSortCol((prev) => {
+      if (prev === colId) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prev;
+      }
+      setSortDir('asc');
+      return colId;
+    });
+  }, []);
 
   // Canon §27 — column contract. Filterable columns carry `filterable` +
   // `filterOptions`; FilterableTable owns the dropdown UI and the filtering
@@ -268,9 +265,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
           const kpi = byId.get(row.id);
           return (
             <div className="min-w-0">
-              <span className="text-sm font-medium text-c-text block truncate">
-                {row.name}
-              </span>
+              <span className="text-sm font-medium text-c-text block truncate">{row.name}</span>
               {kpi?.description && (
                 <p className="text-xs text-c-text-muted mt-0.5 line-clamp-1">{kpi.description}</p>
               )}
@@ -720,9 +715,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                   </div>
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-c-text line-clamp-2 mb-1">
-                {kpi.name}
-              </h3>
+              <h3 className="text-sm font-medium text-c-text line-clamp-2 mb-1">{kpi.name}</h3>
               {kpi.initiativeName && (
                 <p className="text-xs text-c-info mb-3 truncate">{kpi.initiativeName}</p>
               )}

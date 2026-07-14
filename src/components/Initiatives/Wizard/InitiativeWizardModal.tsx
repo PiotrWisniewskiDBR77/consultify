@@ -1618,9 +1618,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {t.coreTitle}
             </div>
-            <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
-              {t.coreHint}
-            </p>
+            <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">{t.coreHint}</p>
           </div>
         </div>
         <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -2142,9 +2140,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     <div className="space-y-3">
       <div className="rounded-2xl border border-c-info/30 bg-slate-50 p-3 text-sm text-slate-800 dark:border-c-info/20 dark:bg-white/[0.05] dark:text-slate-100">
         <div className="font-medium">{t.bulkSelectTitle}</div>
-        <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          {t.bulkSelectHint}
-        </div>
+        <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{t.bulkSelectHint}</div>
       </div>
       {/* #29f — soft 1-3 limit (warning only, never a hard block) */}
       {overSoftLimit && (

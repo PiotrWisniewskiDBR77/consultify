@@ -2,10 +2,10 @@
  * CapabilityMapper - Exports
  */
 
+export { CapabilityCard } from './CapabilityCard';
 export {
-  CapabilityMapperInputPhase,
   CapabilityMapperBuildPhase,
+  CapabilityMapperInputPhase,
   CapabilityMapperInsightsPhase,
   CapabilityMapperOutputsPhase,
 } from './CapabilityMapperPhases';
-export { CapabilityCard } from './CapabilityCard';

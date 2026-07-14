@@ -63,9 +63,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
           <p className="text-xs text-c-text-muted mt-1">
             I'm monitoring news sources for "Carbon Tax Legislation" as it seems relevant to your
             sector.
-            <button className="text-c-accent font-bold ml-1 hover:underline">
-              Add to list?
-            </button>
+            <button className="text-c-accent font-bold ml-1 hover:underline">Add to list?</button>
           </p>
         </div>
       </div>

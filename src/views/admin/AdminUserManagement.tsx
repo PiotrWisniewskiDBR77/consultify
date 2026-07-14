@@ -344,8 +344,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30';
     if (role === 'PROJECT_MANAGER')
       return 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30';
-    if (role === 'MANAGER')
-      return 'bg-slate-500/10 text-c-text-secondary border-slate-500/30';
+    if (role === 'MANAGER') return 'bg-slate-500/10 text-c-text-secondary border-slate-500/30';
     return 'bg-c-surface-raised dark:bg-c-surface/5 text-c-text-secondary border-c-border';
   };
 
@@ -428,7 +427,9 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             {actionError}
           </div>
         )}
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="admin-table">
+        <table
+          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="admin-table"
+        >
           <thead>
             <tr>
               <th>User</th>
@@ -453,10 +454,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </tr>
             ) : filteredUsers.length === 0 ? (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-12 text-center text-c-text-muted"
-                >
+                <td colSpan={5} className="px-6 py-12 text-center text-c-text-muted">
                   No users found
                 </td>
               </tr>

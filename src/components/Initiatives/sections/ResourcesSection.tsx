@@ -1429,9 +1429,7 @@ export const ResourcesSection: React.FC = () => {
                   {t('initiatives.resourcesSection.selectItemsToAdd')}
                 </p>
                 {aiProposal.note ? (
-                  <p className="text-[11px] text-c-text-muted mt-1">
-                    {aiProposal.note}
-                  </p>
+                  <p className="text-[11px] text-c-text-muted mt-1">{aiProposal.note}</p>
                 ) : null}
                 {(proposalQuality.confirmPlaceholders > 0 ||
                   proposalQuality.zeroAmounts > 0 ||
@@ -1531,9 +1529,7 @@ export const ResourcesSection: React.FC = () => {
                             </p>
                           ) : null}
                           {b.rationale ? (
-                            <p className="text-[11px] text-c-text-muted mt-1">
-                              {b.rationale}
-                            </p>
+                            <p className="text-[11px] text-c-text-muted mt-1">{b.rationale}</p>
                           ) : null}
                         </div>
                       </label>
@@ -1588,9 +1584,7 @@ export const ResourcesSection: React.FC = () => {
                             </p>
                           ) : null}
                           {r.rationale ? (
-                            <p className="text-[11px] text-c-text-muted mt-1">
-                              {r.rationale}
-                            </p>
+                            <p className="text-[11px] text-c-text-muted mt-1">{r.rationale}</p>
                           ) : null}
                         </div>
                       </label>
@@ -1650,9 +1644,7 @@ export const ResourcesSection: React.FC = () => {
                             </p>
                           ) : null}
                           {tool.rationale ? (
-                            <p className="text-[11px] text-c-text-muted mt-1">
-                              {tool.rationale}
-                            </p>
+                            <p className="text-[11px] text-c-text-muted mt-1">{tool.rationale}</p>
                           ) : null}
                         </div>
                       </label>
@@ -1713,9 +1705,7 @@ export const ResourcesSection: React.FC = () => {
                             </p>
                           ) : null}
                           {a.rationale ? (
-                            <p className="text-[11px] text-c-text-muted mt-1">
-                              {a.rationale}
-                            </p>
+                            <p className="text-[11px] text-c-text-muted mt-1">{a.rationale}</p>
                           ) : null}
                         </div>
                       </label>
@@ -1885,7 +1875,9 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-c-border dark:border-navy-700/40">
-        <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm table-fixed">
+        <table
+          /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm table-fixed"
+        >
           <colgroup>
             <col style={{ width: '5%' }} />
             <col style={{ width: '22%' }} />
@@ -1941,7 +1933,9 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">
+                    {idx + 1}
+                  </td>
                   <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
                     <span className="inline-flex items-center gap-1.5">
                       <Briefcase size={12} className="text-c-text-secondary flex-shrink-0" />
@@ -1960,7 +1954,9 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   <td className="py-2.5 pr-2 text-right text-xs font-medium text-c-text">
                     {fmtCurrency(item.amount, item.currency, isPolish)}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">{item.currency || 'PLN'}</td>
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
+                    {item.currency || 'PLN'}
+                  </td>
                   <td
                     className="py-2.5 pr-2 text-xs text-c-text-muted truncate"
                     title={item.description || ''}
@@ -2264,7 +2260,9 @@ const TeamTable: React.FC<TeamTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">
+                    {idx + 1}
+                  </td>
                   <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
                     {item.name ||
                       (item.firstName ? `${item.firstName} ${item.lastName || ''}`.trim() : '—')}
@@ -2584,10 +2582,10 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
-                  <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
-                    {item.name || '—'}
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">
+                    {idx + 1}
                   </td>
+                  <td className="py-2.5 pl-3 pr-2 text-c-text truncate">{item.name || '—'}</td>
                   <td className="py-2.5 pr-2 text-xs text-c-text-muted">
                     {TOOL_CATEGORIES.find((c) => c.value === item.category)?.[
                       isPolish ? 'labelPl' : 'labelEn'
@@ -2954,7 +2952,9 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">
+                    {idx + 1}
+                  </td>
                   <td className="py-2.5 pr-2">
                     <span className="inline-flex items-center gap-1.5 text-xs">
                       {typeIcon(item.assetType)}
@@ -2965,9 +2965,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                       </span>
                     </span>
                   </td>
-                  <td className="py-2.5 pr-2 text-c-text truncate">
-                    {item.name}
-                  </td>
+                  <td className="py-2.5 pr-2 text-c-text truncate">{item.name}</td>
                   <td className="py-2.5 pr-2 text-xs text-c-text-muted truncate">
                     {item.provider || '—'}
                   </td>

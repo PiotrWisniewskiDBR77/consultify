@@ -8,11 +8,7 @@
  */
 import React, { useMemo, useState } from 'react';
 
-import {
-  simulateWhatIf,
-  type Intervention,
-  type PortfolioMetrics,
-} from './whatIfSimulator';
+import { type Intervention, type PortfolioMetrics, simulateWhatIf } from './whatIfSimulator';
 
 interface Props {
   baseline: PortfolioMetrics;
@@ -26,8 +22,7 @@ const INTERVENTIONS: Array<{ type: Intervention['type']; label: string; magnitud
   { type: 'reprioritize', label: 'Repriorytetyzuj', magnitude: 1 },
 ];
 
-const fmtIdx = (v: number | null | undefined): string =>
-  v == null ? '—' : v.toFixed(2);
+const fmtIdx = (v: number | null | undefined): string => (v == null ? '—' : v.toFixed(2));
 
 const deltaBadge = (delta: number): { text: string; cls: string } => {
   if (delta > 0) return { text: `+${delta}`, cls: 'bg-emerald-100 text-emerald-700' };
@@ -132,7 +127,7 @@ const Metric: React.FC<{
     <div className="rounded-lg border border-gray-100 p-2">
       <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
       <p className="text-sm font-semibold text-gray-800">
-        {idx ? fmtIdx(p) : p ?? '—'}
+        {idx ? fmtIdx(p) : (p ?? '—')}
         {changed && (
           <span className="ml-1 text-[10px] font-normal text-gray-400">
             (z {idx ? fmtIdx(b) : b})

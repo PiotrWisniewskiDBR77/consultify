@@ -5,10 +5,10 @@
 // extracted domain controllers have full TypeScript checking.
 
 import auditEventsService from '../services/AuditEventsService.js';
+import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
 import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
-import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
 import { buildSeedExclusion, isSeedRequested } from '../utils/superadminSeedFilter.js';
 import * as customerCtrl from './superadmin/customerController.js';
 import {
@@ -152,7 +152,9 @@ const getOrganizations = catchAsync(async (req, res, next) => {
   );
   // Non-destructive seed filter: hide ephemeral `demo-org-session-*` scaffolding
   // orgs from the default listing (hundreds of them). `?includeSeed=true` shows all.
-  const orgSeed = isSeedRequested(req.query) ? { clause: '', params: [] } : buildSeedExclusion({ orgIdCol: 'o.id' });
+  const orgSeed = isSeedRequested(req.query)
+    ? { clause: '', params: [] }
+    : buildSeedExclusion({ orgIdCol: 'o.id' });
   const orgWhere = orgSeed.clause ? `WHERE ${orgSeed.clause}` : '';
   // Feedback #d11ec6b0 (restored after merge d675885189 dropped it): membership
   // lives in TWO places — users.organization_id (primary tenant) and the
@@ -1046,12 +1048,14 @@ const rejectAccessRequest = catchAsync(async (req, res, next) => {
 const getAccessCodes = catchAsync(async (req, res, next) => {
   deps.db.all(`SELECT * FROM access_codes ORDER BY created_at DESC`, [], (err, rows) => {
     if (err) return next(new AppError(err.message, 500));
-    res.json((rows || []).map((r: any) => ({
-      ...r,
-      is_active: flagOn(r.is_active),
-      max_uses: r.max_uses != null ? Number(r.max_uses) : null,
-      current_uses: r.current_uses != null ? Number(r.current_uses) : 0,
-    })));
+    res.json(
+      (rows || []).map((r: any) => ({
+        ...r,
+        is_active: flagOn(r.is_active),
+        max_uses: r.max_uses != null ? Number(r.max_uses) : null,
+        current_uses: r.current_uses != null ? Number(r.current_uses) : 0,
+      }))
+    );
   });
 });
 
@@ -1555,12 +1559,14 @@ const getUsageByOrganization = catchAsync(async (req, res, next) => {
 
   deps.db.all(query, [], (err, rows) => {
     if (err) return next(new AppError('Failed to fetch usage data', 500));
-    res.json((rows || []).map((r: any) => ({
-      ...r,
-      user_count: Number(r.user_count ?? 0),
-      tokens_used: Number(r.tokens_used ?? 0),
-      ai_calls: Number(r.ai_calls ?? 0),
-    })));
+    res.json(
+      (rows || []).map((r: any) => ({
+        ...r,
+        user_count: Number(r.user_count ?? 0),
+        tokens_used: Number(r.tokens_used ?? 0),
+        ai_calls: Number(r.ai_calls ?? 0),
+      }))
+    );
   });
 });
 

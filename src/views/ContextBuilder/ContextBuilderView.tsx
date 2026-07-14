@@ -168,7 +168,9 @@ const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                   )}
                 />
                 <span className="truncate">{item.label}</span>
-                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white" />}
+                {isActive && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white" />
+                )}
               </button>
             );
           })}

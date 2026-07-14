@@ -30,8 +30,8 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../../utils/Logger.js';
 import { AIPipeline } from '../ai/AIPipeline.js';
 import {
-  BusinessCasePlan,
   BusinessCaseModelResult,
+  BusinessCasePlan,
   runBusinessCaseModel,
 } from './businessCaseModel.js';
 import {
@@ -411,9 +411,18 @@ class BusinessCaseService {
           `KONTEKST PLANU:\nProblem: ${plan.problem}\n` +
           `Opcje rozważane: ${plan.options.map((o) => `${o.name} — ${o.description}`).join(' | ')}\n\n` +
           `Napisz rekomendację w formacie W2. UŻYWAJ WYŁĄCZNIE liczb z bloku FAKTY powyżej, dosłownie.`;
-        const retryNarrative = await this.callLLM(NARRATIVE_SYSTEM_PROMPT, retryPrompt, llmParams, 3000);
+        const retryNarrative = await this.callLLM(
+          NARRATIVE_SYSTEM_PROMPT,
+          retryPrompt,
+          llmParams,
+          3000
+        );
         const retryCheck = checkNarrativeNumbers(retryNarrative, factsBlock);
-        if (retryNarrative && (retryCheck.consistent || retryCheck.unverifiedNumbers.length < narrativeCheck.unverifiedNumbers.length)) {
+        if (
+          retryNarrative &&
+          (retryCheck.consistent ||
+            retryCheck.unverifiedNumbers.length < narrativeCheck.unverifiedNumbers.length)
+        ) {
           narrative = retryNarrative;
           pipelineLog.push({
             phase: 'review',

@@ -143,9 +143,7 @@ export const WhereItHappensSection: React.FC = () => {
                         style={{ color: visual.accentColor }}
                         className="shrink-0"
                       />
-                      <span className="text-xs text-c-text-muted font-medium">
-                        {h}
-                      </span>
+                      <span className="text-xs text-c-text-muted font-medium">{h}</span>
                     </div>
                   ))}
                 </div>

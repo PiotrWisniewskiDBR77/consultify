@@ -21,10 +21,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  type DeckDocument,
   deckDocumentFromUnifiedJson,
   deckDocumentToRenderableUnifiedJson,
   deckDocumentToUnifiedJson,
-  type DeckDocument,
 } from '../presentationDeckDocumentService.js';
 import { PptxPipelineService } from '../report/pptx/PptxPipelineService.js';
 import type { UnifiedReportJSON } from '../report/pptx/types.js';
@@ -86,8 +86,14 @@ function buildRichReport(): UnifiedReportJSON {
         content: {
           type: 'key_messages',
           messages: [
-            { title: 'Quoting bottleneck', description: 'Every quote passes through senior engineers.' },
-            { title: 'Fulfilment handoffs', description: 'Five manual handoffs between order and installation.' },
+            {
+              title: 'Quoting bottleneck',
+              description: 'Every quote passes through senior engineers.',
+            },
+            {
+              title: 'Fulfilment handoffs',
+              description: 'Five manual handoffs between order and installation.',
+            },
           ],
         },
       },
@@ -98,8 +104,20 @@ function buildRichReport(): UnifiedReportJSON {
           type: 'performance_overview',
           period: 'FY2025 vs FY2024',
           kpis: [
-            { name: 'Marketplace GMV', value: 'PLN 41M', trend: 'up', delta: '+38%', status: 'good' },
-            { name: 'Gross margin', value: '24%', trend: 'down', delta: '-6 p.p.', status: 'critical' },
+            {
+              name: 'Marketplace GMV',
+              value: 'PLN 41M',
+              trend: 'up',
+              delta: '+38%',
+              status: 'good',
+            },
+            {
+              name: 'Gross margin',
+              value: '24%',
+              trend: 'down',
+              delta: '-6 p.p.',
+              status: 'critical',
+            },
           ],
           context: 'Unit economics deteriorate with every incremental order.',
         },
@@ -153,8 +171,18 @@ function buildRichReport(): UnifiedReportJSON {
         content: {
           type: 'roadmap',
           phases: [
-            { label: 'Wave 1 — Industrialise quoting', timeframe: 'Q3 2026', status: 'in_progress', items: ['Deploy configurator', 'Price floor policy v1'] },
-            { label: 'Wave 2 — Automate fulfilment', timeframe: 'Q4 2026', status: 'planned', items: ['Digital handoffs', 'Partner SLA scorecards'] },
+            {
+              label: 'Wave 1 — Industrialise quoting',
+              timeframe: 'Q3 2026',
+              status: 'in_progress',
+              items: ['Deploy configurator', 'Price floor policy v1'],
+            },
+            {
+              label: 'Wave 2 — Automate fulfilment',
+              timeframe: 'Q4 2026',
+              status: 'planned',
+              items: ['Digital handoffs', 'Partner SLA scorecards'],
+            },
           ],
         },
       },
@@ -164,8 +192,20 @@ function buildRichReport(): UnifiedReportJSON {
         content: {
           type: 'risk_management',
           risks: [
-            { risk: 'Key-person dependency', likelihood: 'high', impact: 'high', mitigation: 'Knowledge-capture sprints', owner: 'CTO' },
-            { risk: 'Configurator scope creep', likelihood: 'medium', impact: 'high', mitigation: 'Freeze scope at top-20 cell types', owner: 'Programme lead' },
+            {
+              risk: 'Key-person dependency',
+              likelihood: 'high',
+              impact: 'high',
+              mitigation: 'Knowledge-capture sprints',
+              owner: 'CTO',
+            },
+            {
+              risk: 'Configurator scope creep',
+              likelihood: 'medium',
+              impact: 'high',
+              mitigation: 'Freeze scope at top-20 cell types',
+              owner: 'Programme lead',
+            },
           ],
         },
       },
@@ -175,8 +215,30 @@ function buildRichReport(): UnifiedReportJSON {
         content: {
           type: 'initiative_portfolio',
           initiatives: [
-            { name: 'Robot-cell configurator', summary: 'Self-service configuration', strategicIntent: 'Fix', priority: 'critical', timeline: 'Q3 2026', impact: 5, effort: 4, budget: 'PLN 850k', roi: '4.2x / 18m', owner: 'CTO' },
-            { name: 'Deal-desk & price floors', summary: 'Approval matrix', strategicIntent: 'Fix', priority: 'critical', timeline: 'Q3-Q4 2026', impact: 4, effort: 2, budget: 'PLN 120k', roi: '11x / 12m', owner: 'CRO' },
+            {
+              name: 'Robot-cell configurator',
+              summary: 'Self-service configuration',
+              strategicIntent: 'Fix',
+              priority: 'critical',
+              timeline: 'Q3 2026',
+              impact: 5,
+              effort: 4,
+              budget: 'PLN 850k',
+              roi: '4.2x / 18m',
+              owner: 'CTO',
+            },
+            {
+              name: 'Deal-desk & price floors',
+              summary: 'Approval matrix',
+              strategicIntent: 'Fix',
+              priority: 'critical',
+              timeline: 'Q3-Q4 2026',
+              impact: 4,
+              effort: 2,
+              budget: 'PLN 120k',
+              roi: '11x / 12m',
+              owner: 'CRO',
+            },
           ],
         },
       },
@@ -186,8 +248,18 @@ function buildRichReport(): UnifiedReportJSON {
         content: {
           type: 'next_steps',
           actions: [
-            { action: 'Approve Wave 1 budget and charter', owner: 'Board', deadline: '2026-07-25', status: 'pending' },
-            { action: 'Nominate programme lead', owner: 'CEO', deadline: '2026-07-31', status: 'pending' },
+            {
+              action: 'Approve Wave 1 budget and charter',
+              owner: 'Board',
+              deadline: '2026-07-25',
+              status: 'pending',
+            },
+            {
+              action: 'Nominate programme lead',
+              owner: 'CEO',
+              deadline: '2026-07-31',
+              status: 'pending',
+            },
           ],
           closing_message: 'Every month of delay costs recoverable GMV.',
         },
@@ -275,8 +347,12 @@ describe('stale-regen download path — renderable projection', () => {
     expect(mergedStr).toContain('EDITED MITIGATION');
     expect(mergedStr).toContain('ADDED SLIDE');
     // Structure edits survive.
-    expect(merged.slides.some((slide) => (slide.content as any)?.type === 'comparison')).toBe(false);
-    const riskIndex = merged.slides.findIndex((s) => (s.content as any)?.type === 'risk_management');
+    expect(merged.slides.some((slide) => (slide.content as any)?.type === 'comparison')).toBe(
+      false
+    );
+    const riskIndex = merged.slides.findIndex(
+      (s) => (s.content as any)?.type === 'risk_management'
+    );
     const roadmapIndex = merged.slides.findIndex((s) => (s.content as any)?.type === 'roadmap');
     expect(riskIndex).toBeGreaterThan(-1);
     expect(riskIndex).toBeLessThan(roadmapIndex);

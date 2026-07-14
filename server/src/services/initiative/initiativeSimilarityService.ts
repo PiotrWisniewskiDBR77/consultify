@@ -9,8 +9,8 @@
  * Pure lexical similarity (Jaccard over normalized tokens) — no LLM, cheap,
  * deterministic. Org-scoped. Excludes terminal (CANCELLED/ARCHIVED) rows.
  */
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import { jaccardSimilarity } from './similarityPrimitives.js';
 
 export interface SimilarInitiative {
@@ -22,9 +22,32 @@ export interface SimilarInitiative {
 }
 
 const STOPWORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'of', 'to', 'for', 'in', 'on', 'with', 'by',
-  'i', 'oraz', 'dla', 'do', 'na', 'w', 'z', 'ze', 'o', 'jest', 'inicjatywa',
-  'initiative', 'projekt', 'project',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'of',
+  'to',
+  'for',
+  'in',
+  'on',
+  'with',
+  'by',
+  'i',
+  'oraz',
+  'dla',
+  'do',
+  'na',
+  'w',
+  'z',
+  'ze',
+  'o',
+  'jest',
+  'inicjatywa',
+  'initiative',
+  'projekt',
+  'project',
 ]);
 
 /** Lowercase → token set, drop stopwords + short tokens. */

@@ -29,7 +29,11 @@ export interface BundleDocQaSummary {
 }
 
 interface GenContentLike {
-  sections?: Array<{ heading?: string; title?: string; blocks: Array<{ blockId?: string; type: string; content: unknown }> }>;
+  sections?: Array<{
+    heading?: string;
+    title?: string;
+    blocks: Array<{ blockId?: string; type: string; content: unknown }>;
+  }>;
 }
 
 /**
@@ -66,7 +70,9 @@ export function runBundleDocQa(doc: unknown, spine: BusinessPlanSpine): BundleDo
       highFindings,
     };
   } catch (err) {
-    logger.warn(`[bundleDocQa] M18 QA failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `[bundleDocQa] M18 QA failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }

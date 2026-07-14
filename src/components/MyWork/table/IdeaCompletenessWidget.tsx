@@ -139,9 +139,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
                 <div className="text-[10px] text-c-text-muted">
                   {t(`ideas.table.metric.${item.labelKey}`, item.labelEn)}
                 </div>
-                <div className="text-xs font-bold text-c-text tabular-nums">
-                  {item.value}
-                </div>
+                <div className="text-xs font-bold text-c-text tabular-nums">{item.value}</div>
               </div>
             </div>
           );
@@ -152,7 +150,10 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
       {metrics.completeness >= 60 && (
         <div className="mt-3 flex items-center gap-1.5 text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 rounded-lg px-2 py-1.5">
           <CheckCircle2 size={12} />
-          {t('ideas.table.ideaIsReadyForConversionToInitiative', 'Idea is ready for conversion to initiative')}
+          {t(
+            'ideas.table.ideaIsReadyForConversionToInitiative',
+            'Idea is ready for conversion to initiative'
+          )}
         </div>
       )}
     </div>

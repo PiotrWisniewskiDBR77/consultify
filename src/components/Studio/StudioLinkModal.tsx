@@ -195,9 +195,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
               <Loader2 size={20} className="text-c-text-muted animate-spin" />
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="text-center py-8 text-sm text-c-text-muted">
-              No {activeTab}s found
-            </div>
+            <div className="text-center py-8 text-sm text-c-text-muted">No {activeTab}s found</div>
           ) : (
             filteredItems.map((item) => (
               <button

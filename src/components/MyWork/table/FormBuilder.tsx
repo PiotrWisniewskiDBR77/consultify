@@ -487,9 +487,7 @@ function FieldListPanel({
               </span>
               <span
                 className={`flex-1 text-sm font-medium ${
-                  fc.hidden
-                    ? 'text-c-text-secondary line-through'
-                    : 'text-c-text'
+                  fc.hidden ? 'text-c-text-secondary line-through' : 'text-c-text'
                 }`}
               >
                 {fc.label || field.name}
@@ -889,9 +887,7 @@ function FormPreview({
     <div className="mx-auto max-w-lg">
       <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 shadow-sm">
         <h3 className="mb-1 text-xl font-semibold text-c-text">{name}</h3>
-        {description && (
-          <p className="mb-6 text-sm text-c-text-muted">{description}</p>
-        )}
+        {description && <p className="mb-6 text-sm text-c-text-muted">{description}</p>}
 
         <div className="space-y-5">
           {visibleFields.map((fc) => {
@@ -928,8 +924,7 @@ function PreviewField({ field, config }: { field: TablePlatformField; config: Fo
 }
 
 function renderPreviewInput(fieldType: FieldType | string) {
-  const base =
-    'w-full rounded-lg border border-c-border-subtle px-3 py-2 text-sm';
+  const base = 'w-full rounded-lg border border-c-border-subtle px-3 py-2 text-sm';
 
   switch (fieldType) {
     case 'longText':

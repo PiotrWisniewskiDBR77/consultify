@@ -97,7 +97,9 @@ const RACIMatrixRenderer: React.FC<{ data: any }> = ({ data }) => {
 
   return (
     <div className="overflow-auto">
-      <table /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */  className="min-w-full border-collapse">
+      <table
+        /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */ className="min-w-full border-collapse"
+      >
         <thead>
           <tr className="bg-slate-50 dark:bg-navy-800">
             <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-navy-700">

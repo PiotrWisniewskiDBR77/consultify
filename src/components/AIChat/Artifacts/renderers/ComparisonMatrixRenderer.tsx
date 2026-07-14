@@ -274,7 +274,9 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
 
       {/* Matrix Table */}
       <div className="flex-1 overflow-auto">
-        <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="min-w-full divide-y divide-slate-200 dark:divide-navy-700">
+        <table
+          /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="min-w-full divide-y divide-slate-200 dark:divide-navy-700"
+        >
           <thead className="bg-slate-50 dark:bg-navy-800 sticky top-0 z-10">
             <tr>
               <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-1/4">

@@ -590,9 +590,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
               onScroll={handleScroll}
               disabled={locked}
               rows={4}
-              placeholder={
-                t('ideas.table.eGIfStatusDone10', 'e.g. IF({status} = "Done", 1, 0)')
-              }
+              placeholder={t('ideas.table.eGIfStatusDone10', 'e.g. IF({status} = "Done", 1, 0)')}
               className="relative w-full resize-y rounded-xl bg-transparent p-3 font-mono text-xs leading-relaxed text-transparent caret-slate-800 outline-none placeholder:text-c-text-muted dark:caret-zinc-200 dark:placeholder:text-c-text-secondary"
               spellCheck={false}
             />
@@ -623,9 +621,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                       {item.type === 'field' ? 'F' : 'fn'}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium text-c-text">
-                        {item.label}
-                      </div>
+                      <div className="font-medium text-c-text">{item.label}</div>
                       {item.detail && (
                         <div className="truncate text-[10px] text-c-text-secondary">
                           {item.detail}
@@ -660,7 +656,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
             ) : (
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-danger-600 dark:text-danger-400">
                 <X className="h-3.5 w-3.5" />
-                {validation.error ?? (t('ideas.table.invalidFormula', 'Invalid formula'))}
+                {validation.error ?? t('ideas.table.invalidFormula', 'Invalid formula')}
               </div>
             )
           ) : null}
@@ -691,9 +687,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
             {previewLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-c-text-secondary" />
             ) : preview != null ? (
-              <span className="font-mono text-xs font-semibold text-c-text">
-                {preview}
-              </span>
+              <span className="font-mono text-xs font-semibold text-c-text">{preview}</span>
             ) : (
               <span className="text-[10px] italic text-c-text-secondary">
                 {t('ideas.table.noPreviewDataAvailable', 'No preview data available')}
@@ -786,7 +780,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                 {t('ideas.table.dependencyCycleDetected', 'Dependency cycle detected')}
               </div>
               <div className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-                {t('ideas.table.thisFormulaCreatesACircularDependencyModifyTheExpressionToAv', 'This formula creates a circular dependency. Modify the expression to avoid loops.')}
+                {t(
+                  'ideas.table.thisFormulaCreatesACircularDependencyModifyTheExpressionToAv',
+                  'This formula creates a circular dependency. Modify the expression to avoid loops.'
+                )}
               </div>
             </div>
           </div>

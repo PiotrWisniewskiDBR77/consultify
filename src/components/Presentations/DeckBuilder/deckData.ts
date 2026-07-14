@@ -34,7 +34,11 @@ export function normalizeSlideComposition(raw: unknown): CardComposition | null 
     if (regions.length) out.regions = regions;
   }
 
-  if (out.layoutVariantId === undefined && out.emphasis === undefined && out.regions === undefined) {
+  if (
+    out.layoutVariantId === undefined &&
+    out.emphasis === undefined &&
+    out.regions === undefined
+  ) {
     return null;
   }
   return out;

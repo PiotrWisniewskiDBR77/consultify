@@ -179,7 +179,9 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
                 : 'text-slate-600 hover:text-primary-500 hover:bg-primary-500/10'
             }
           `}
-          title={isRunning ? (t('myWork.taskTimer.pause', 'Pause')) : t('myWork.taskTimer.start', 'Start')}
+          title={
+            isRunning ? t('myWork.taskTimer.pause', 'Pause') : t('myWork.taskTimer.start', 'Start')
+          }
         >
           {isRunning ? <Pause size={14} /> : <Play size={14} />}
         </button>
@@ -339,17 +341,23 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
                       <div className="flex items-center gap-2">
                         <Clock size={12} className="text-slate-600" />
                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {entry.startTime.toLocaleTimeString(t('myWork.taskTimer.entryStartTimeToLocaleTimeString', 'en-US'), {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {entry.startTime.toLocaleTimeString(
+                            t('myWork.taskTimer.entryStartTimeToLocaleTimeString', 'en-US'),
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }
+                          )}
                           {entry.endTime && (
                             <>
                               {' → '}
-                              {entry.endTime.toLocaleTimeString(t('myWork.taskTimer.entryEndTimeToLocaleTimeString', 'en-US'), {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {entry.endTime.toLocaleTimeString(
+                                t('myWork.taskTimer.entryEndTimeToLocaleTimeString', 'en-US'),
+                                {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )}
                             </>
                           )}
                         </span>

@@ -85,12 +85,8 @@ interface Props {
   /** Inicjatywy z kokpitu. Gdy puste/brak → użyty przykład. */
   initiatives?: ValueOfficeInitiative[];
   /** Wstrzykiwalne fetchery (testy / odmienni wywołujący). */
-  valueBridgeFetcher?: (
-    initiatives: ValueOfficeInitiative[]
-  ) => Promise<ValueBridgeResponse>;
-  portfolioFetcher?: (
-    initiatives: ValueOfficeInitiative[]
-  ) => Promise<PortfolioResponse>;
+  valueBridgeFetcher?: (initiatives: ValueOfficeInitiative[]) => Promise<ValueBridgeResponse>;
+  portfolioFetcher?: (initiatives: ValueOfficeInitiative[]) => Promise<PortfolioResponse>;
 }
 
 const defaultValueBridgeFetcher = async (
@@ -124,10 +120,42 @@ const defaultPortfolioFetcher = async (
 
 // Przykładowe inicjatywy — panel nigdy nie jest pusty (gdy kokpit nic nie poda).
 const SAMPLE_INITIATIVES: ValueOfficeInitiative[] = [
-  { id: 'demo-1', name: 'Automatyzacja zakupów', value: 1_200_000, stage: 'realized', npv: 900_000, risk: 0.2, effort: 3 },
-  { id: 'demo-2', name: 'Konsolidacja systemów', value: 800_000, stage: 'in_flight', npv: 600_000, risk: 0.5, effort: 6 },
-  { id: 'demo-3', name: 'Optymalizacja energii', value: 450_000, stage: 'committed', npv: 300_000, risk: 0.35, effort: 2 },
-  { id: 'demo-4', name: 'Nowy kanał sprzedaży', value: 600_000, stage: 'identified', npv: 200_000, risk: 0.7, effort: 8 },
+  {
+    id: 'demo-1',
+    name: 'Automatyzacja zakupów',
+    value: 1_200_000,
+    stage: 'realized',
+    npv: 900_000,
+    risk: 0.2,
+    effort: 3,
+  },
+  {
+    id: 'demo-2',
+    name: 'Konsolidacja systemów',
+    value: 800_000,
+    stage: 'in_flight',
+    npv: 600_000,
+    risk: 0.5,
+    effort: 6,
+  },
+  {
+    id: 'demo-3',
+    name: 'Optymalizacja energii',
+    value: 450_000,
+    stage: 'committed',
+    npv: 300_000,
+    risk: 0.35,
+    effort: 2,
+  },
+  {
+    id: 'demo-4',
+    name: 'Nowy kanał sprzedaży',
+    value: 600_000,
+    stage: 'identified',
+    npv: 200_000,
+    risk: 0.7,
+    effort: 8,
+  },
 ];
 
 // --- Formatowanie KPI (skala k/M) ---------------------------------------
@@ -269,12 +297,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Portfel decyzyjny (NPV×ryzyko)
         </h4>
-        <PortfolioBubble
-          points={bubbleData}
-          xLabel="Ryzyko"
-          yLabel="NPV"
-          quadrants
-        />
+        <PortfolioBubble points={bubbleData} xLabel="Ryzyko" yLabel="NPV" quadrants />
       </section>
     </div>
   );

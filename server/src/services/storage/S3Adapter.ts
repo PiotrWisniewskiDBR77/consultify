@@ -153,9 +153,11 @@ export class S3Adapter implements StorageAdapter {
 
   async getObject(key: string): Promise<GetObjectResult> {
     const [{ GetObjectCommand }, client] = await Promise.all([this.sdk(), this.client()]);
-    const res = (await client.send(
-      new GetObjectCommand({ Bucket: this.bucket(), Key: key })
-    )) as { Body?: unknown; ContentLength?: number; ContentType?: string };
+    const res = (await client.send(new GetObjectCommand({ Bucket: this.bucket(), Key: key }))) as {
+      Body?: unknown;
+      ContentLength?: number;
+      ContentType?: string;
+    };
 
     if (!res.Body) {
       throw new Error(`Object not found: ${key}`);
@@ -174,7 +176,7 @@ export class S3Adapter implements StorageAdapter {
       await client.send(new HeadObjectCommand({ Bucket: this.bucket(), Key: key }));
       return true;
     } catch (err) {
-      const name = (err as { name?: string; $metadata?: { httpStatusCode?: number } });
+      const name = err as { name?: string; $metadata?: { httpStatusCode?: number } };
       if (name.name === 'NotFound' || name.$metadata?.httpStatusCode === 404) {
         return false;
       }
@@ -200,8 +202,7 @@ export class S3Adapter implements StorageAdapter {
       this.presigner(),
     ]);
     const ttl =
-      options?.expiresInSeconds ??
-      parseInt(process.env.S3_SIGNED_URL_TTL_SECONDS || '900', 10);
+      options?.expiresInSeconds ?? parseInt(process.env.S3_SIGNED_URL_TTL_SECONDS || '900', 10);
     return getSignedUrl(client, new GetObjectCommand({ Bucket: this.bucket(), Key: key }), {
       expiresIn: ttl,
     });

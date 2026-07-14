@@ -149,7 +149,10 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
             {t('presentations.builder.editCard.title', 'Edit this card')}
           </span>
         </div>
-        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary text-xs">
+        <button
+          onClick={onClose}
+          className="text-c-text-secondary hover:text-c-text-secondary text-xs"
+        >
           ESC
         </button>
       </div>

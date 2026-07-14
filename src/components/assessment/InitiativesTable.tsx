@@ -408,7 +408,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           const initiative = row as unknown as Initiative;
           const owner = initiative.ownerBusiness;
           if (!owner) {
-            return <span className="text-xs text-slate-600 dark:text-slate-500 italic">Unassigned</span>;
+            return (
+              <span className="text-xs text-slate-600 dark:text-slate-500 italic">Unassigned</span>
+            );
           }
           return (
             <div
@@ -637,7 +639,6 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           />
         </div>
       </div>
-
 
       {/* Initiative Details Modal */}
       {viewingInitiativeId && (

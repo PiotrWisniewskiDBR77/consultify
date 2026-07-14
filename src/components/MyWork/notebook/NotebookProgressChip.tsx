@@ -3,15 +3,7 @@
  * Replaces NotebookCanonicalPathStrip (4-card layout) with a slim pill strip.
  * L-03: same callbacks as NotebookCanonicalPathStrip, much smaller footprint.
  */
-import {
-  ChevronRight,
-  Eye,
-  FileOutput,
-  Lightbulb,
-  Paperclip,
-  Radar,
-  Sparkles,
-} from 'lucide-react';
+import { ChevronRight, Eye, FileOutput, Lightbulb, Paperclip, Radar, Sparkles } from 'lucide-react';
 import React from 'react';
 
 interface NotebookProgressChipProps {
@@ -41,15 +33,10 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
 }) => {
   const pillBase =
     'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors';
-  const pillActive =
-    'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised';
-  const pillDisabled =
-    'cursor-not-allowed bg-c-surface-raised text-c-text-muted';
-  const pillHighlight =
-    'bg-c-warning/10 text-c-warning hover:bg-c-warning/15';
-  const sep = (
-    <ChevronRight size={12} className="text-c-text-muted select-none" aria-hidden />
-  );
+  const pillActive = 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised';
+  const pillDisabled = 'cursor-not-allowed bg-c-surface-raised text-c-text-muted';
+  const pillHighlight = 'bg-c-warning/10 text-c-warning hover:bg-c-warning/15';
+  const sep = <ChevronRight size={12} className="text-c-text-muted select-none" aria-hidden />;
 
   return (
     <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-1.5">
@@ -109,7 +96,13 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         type="button"
         onClick={onConvert}
         disabled={!canConvertDeliverable}
-        title={canConvertDeliverable ? (isPolish ? 'Konwertuj do raportu' : 'Convert to report') : convertBlockedReason}
+        title={
+          canConvertDeliverable
+            ? isPolish
+              ? 'Konwertuj do raportu'
+              : 'Convert to report'
+            : convertBlockedReason
+        }
         className={`${pillBase} ${canConvertDeliverable ? 'bg-c-text text-c-surface hover:brightness-110' : pillDisabled}`}
       >
         <FileOutput size={11} />

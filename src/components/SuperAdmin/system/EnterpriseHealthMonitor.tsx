@@ -469,9 +469,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             <StatusIcon className={`w-6 h-6 ${STATUS_CONFIG[overallStatus].text}`} />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-c-text">
-              System Health
-            </h2>
+            <h2 className="text-2xl font-semibold text-c-text">System Health</h2>
             <p className="text-c-text-secondary text-sm">
               {overallStatus === 'healthy' && 'All systems operational'}
               {overallStatus === 'degraded' && 'Some services experiencing issues'}
@@ -545,9 +543,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 <div className="p-4 bg-gradient-to-br from-c-success/10 to-c-success/5 rounded-xl border border-c-success/20">
                   <div className="flex items-center gap-3 mb-3">
                     <Server className="w-5 h-5 text-c-success" />
-                    <span className="text-sm font-medium text-c-text">
-                      API Server
-                    </span>
+                    <span className="text-sm font-medium text-c-text">API Server</span>
                   </div>
                   <div className="text-2xl font-semibold text-c-text">
                     {health?.api?.responseTime || 0}ms
@@ -558,9 +554,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 <div className="p-4 bg-gradient-to-br from-c-info/10 to-c-info/5 rounded-xl border border-c-info/20">
                   <div className="flex items-center gap-3 mb-3">
                     <Database className="w-5 h-5 text-c-info" />
-                    <span className="text-sm font-medium text-c-text">
-                      Database
-                    </span>
+                    <span className="text-sm font-medium text-c-text">Database</span>
                   </div>
                   <div className="text-2xl font-semibold text-c-text">
                     {health?.database?.responseTime || 0}ms
@@ -573,9 +567,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 <div className="p-4 bg-c-accent-soft rounded-xl border border-c-accent/20">
                   <div className="flex items-center gap-3 mb-3">
                     <Brain className="w-5 h-5 text-c-accent" />
-                    <span className="text-sm font-medium text-c-text">
-                      AI Services
-                    </span>
+                    <span className="text-sm font-medium text-c-text">AI Services</span>
                   </div>
                   <div className="text-2xl font-semibold text-c-text">
                     {Object.values(health?.ai?.providers || {}).filter(Boolean).length}
@@ -586,16 +578,12 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 <div className="p-4 bg-gradient-to-br from-c-warning/10 to-c-warning/5 rounded-xl border border-c-warning/20">
                   <div className="flex items-center gap-3 mb-3">
                     <Clock className="w-5 h-5 text-c-warning" />
-                    <span className="text-sm font-medium text-c-text">
-                      Uptime
-                    </span>
+                    <span className="text-sm font-medium text-c-text">Uptime</span>
                   </div>
                   <div className="text-2xl font-semibold text-c-text">
                     {health?.system?.uptime?.formatted || '0m'}
                   </div>
-                  <div className="text-xs text-c-warning mt-1">
-                    {health?.system?.environment}
-                  </div>
+                  <div className="text-xs text-c-warning mt-1">{health?.system?.environment}</div>
                 </div>
               </div>
 
@@ -640,10 +628,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       {['1m', '5m', '15m'].map((label, i) => (
-                        <div
-                          key={label}
-                          className="p-2 bg-c-surface-raised rounded-lg text-center"
-                        >
+                        <div key={label} className="p-2 bg-c-surface-raised rounded-lg text-center">
                           <div className="text-c-text-muted">{label}</div>
                           <div className="text-c-text font-medium mt-1">
                             {safeNumber(health?.system?.loadAvg?.[i]).toFixed(2)}
@@ -731,9 +716,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                           <Icon className={`w-5 h-5 ${statusConfig.text}`} />
                         </div>
                         <div>
-                          <h4 className="font-medium text-c-text">
-                            {service.name}
-                          </h4>
+                          <h4 className="font-medium text-c-text">{service.name}</h4>
                           <div className="flex items-center gap-3 text-xs text-c-text-muted mt-1">
                             <span>Latency: {service.latency}ms</span>
                             <span>•</span>
@@ -752,9 +735,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     </div>
                     {service.dependencies.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-c-border-subtle">
-                        <span className="text-xs text-c-text-muted">
-                          Dependencies:{' '}
-                        </span>
+                        <span className="text-xs text-c-text-muted">Dependencies: </span>
                         {service.dependencies.map((dep, i) => (
                           <span key={dep} className="text-xs text-c-text-secondary">
                             {dep}
@@ -815,22 +796,16 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                       <Icon className="w-4 h-4 text-c-text-secondary" />
                       {trend === 'up' && <TrendingUp className="w-4 h-4 text-c-success" />}
                       {trend === 'down' && <TrendingDown className="w-4 h-4 text-c-danger" />}
-                      {trend === 'stable' && (
-                        <Activity className="w-4 h-4 text-c-text-secondary" />
-                      )}
+                      {trend === 'stable' && <Activity className="w-4 h-4 text-c-text-secondary" />}
                     </div>
-                    <div className="text-2xl font-semibold text-c-text">
-                      {value}
-                    </div>
+                    <div className="text-2xl font-semibold text-c-text">{value}</div>
                     <div className="text-xs text-c-text-muted mt-1">{label}</div>
                   </div>
                 ))}
               </div>
 
               <div className="p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
-                <h3 className="text-sm font-medium text-c-text mb-4">
-                  System Information
-                </h3>
+                <h3 className="text-sm font-medium text-c-text mb-4">System Information</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {[
                     { label: 'Node.js Version', value: health?.system?.nodeVersion || 'Unknown' },
@@ -840,9 +815,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   ].map(({ label, value }) => (
                     <div key={label}>
                       <div className="text-xs text-c-text-muted">{label}</div>
-                      <div className="text-sm text-c-text font-medium mt-1 capitalize">
-                        {value}
-                      </div>
+                      <div className="text-sm text-c-text font-medium mt-1 capitalize">{value}</div>
                     </div>
                   ))}
                 </div>
@@ -856,9 +829,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'alerts' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-c-text">
-              Alert Configuration
-            </h3>
+            <h3 className="text-sm font-medium text-c-text">Alert Configuration</h3>
             <button
               onClick={() => setShowCreateAlert(true)}
               disabled={!!alertsLoadError}

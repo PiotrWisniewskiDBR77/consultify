@@ -25,7 +25,12 @@ export const FINANCE_SAAS_3STMT = 'finance.saas_3stmt';
  * Klucze w konwencji kropkowej, spójne z `buildAssumptionRegistry` z deliverables.
  */
 export const FINANCE_SAAS_3STMT_DRIVERS: readonly RequiredDriver[] = [
-  { key: 'saas.price_per_seat_month', label: 'Cena SaaS / seat / mies', unit: 'EUR/seat/mies', benchmarkHint: 40 },
+  {
+    key: 'saas.price_per_seat_month',
+    label: 'Cena SaaS / seat / mies',
+    unit: 'EUR/seat/mies',
+    benchmarkHint: 40,
+  },
   { key: 'saas.seats_start', label: 'Seaty na koniec R1', unit: 'szt', benchmarkHint: 500 },
   { key: 'saas.seat_growth_yoy', label: 'Wzrost seatów r/r', unit: '×', benchmarkHint: 1.6 },
   { key: 'saas.gross_churn', label: 'Churn brutto roczny', unit: '%', benchmarkHint: 0.12 },
@@ -43,7 +48,13 @@ export const FINANCE_SAAS_3STMT_DRIVERS: readonly RequiredDriver[] = [
   { key: 'capital.funding', label: 'Pozyskane finansowanie', unit: 'EUR', benchmarkHint: 2000000 },
   { key: 'tax.rate', label: 'Stopa podatku', unit: '%', benchmarkHint: 0.19 },
   // opex leverage jest opcjonalny (default 1 w silniku) — nie liczony jako brak
-  { key: 'cost.opex_leverage_yoy', label: 'Dźwignia OpEx r/r', unit: '×', benchmarkHint: 0.85, optional: true },
+  {
+    key: 'cost.opex_leverage_yoy',
+    label: 'Dźwignia OpEx r/r',
+    unit: '×',
+    benchmarkHint: 0.85,
+    optional: true,
+  },
 ];
 
 /** Mapa klucz-rejestru → pole w `FinancialDrivers`. Jednoznaczny, testowalny mostek. */
@@ -85,7 +96,7 @@ export interface FinanceMapOpts {
  */
 export function financialDriversToAssumptions(
   drivers: Partial<FinancialDrivers>,
-  opts: FinanceMapOpts = {},
+  opts: FinanceMapOpts = {}
 ): Assumption[] {
   const defaultSource = opts.defaultSourceType ?? 'imported';
   return FINANCE_SAAS_3STMT_DRIVERS.map((r): Assumption => {

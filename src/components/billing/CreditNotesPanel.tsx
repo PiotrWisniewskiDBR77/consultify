@@ -364,7 +364,9 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
             </p>
           </div>
         ) : (
-          <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
+          <table
+            /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full"
+          >
             <thead className="bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
               <tr>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">

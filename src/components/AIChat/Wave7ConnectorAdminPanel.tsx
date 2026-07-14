@@ -25,7 +25,7 @@ type Wave7Connector = {
 };
 
 export const Wave7ConnectorAdminPanel: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [catalog, setCatalog] = React.useState<any[]>([]);
@@ -278,7 +278,9 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
             >
               <option value="connected">{t('aios.wave7ConnectorAdminPanel.connected')}</option>
               <option value="stale">{t('aios.wave7ConnectorAdminPanel.stale')}</option>
-              <option value="disconnected">{t('aios.wave7ConnectorAdminPanel.disconnected')}</option>
+              <option value="disconnected">
+                {t('aios.wave7ConnectorAdminPanel.disconnected')}
+              </option>
               <option value="failed">{t('aios.wave7ConnectorAdminPanel.failed')}</option>
             </select>
             <input
@@ -321,7 +323,9 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               <option value="read">{t('aios.wave7ConnectorAdminPanel.read')}</option>
               <option value="search">{t('aios.wave7ConnectorAdminPanel.search')}</option>
               <option value="write">{t('aios.wave7ConnectorAdminPanel.writeRequiresAirun')}</option>
-              <option value="destructive">{t('aios.wave7ConnectorAdminPanel.destructiveRequiresAirun')}</option>
+              <option value="destructive">
+                {t('aios.wave7ConnectorAdminPanel.destructiveRequiresAirun')}
+              </option>
             </select>
             <input
               value={query}
@@ -445,12 +449,16 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                     )}
                   </div>
                   <div className="mt-2 text-xs text-slate-500">
-                    {t('aios.wave7ConnectorAdminPanel.status')}: {connector.status}; {t('aios.wave7ConnectorAdminPanel.freshnessAge')}:{' '}
-                    {connector.freshnessAgeMinutes ?? (t('aios.wave7ConnectorAdminPanel.unknown'))} min; TTL:{' '}
-                    {connector.freshnessTtlMinutes ?? (t('aios.unknown'))} min
+                    {t('aios.wave7ConnectorAdminPanel.status')}: {connector.status};{' '}
+                    {t('aios.wave7ConnectorAdminPanel.freshnessAge')}:{' '}
+                    {connector.freshnessAgeMinutes ?? t('aios.wave7ConnectorAdminPanel.unknown')}{' '}
+                    min; TTL: {connector.freshnessTtlMinutes ?? t('aios.unknown')} min
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    {t('aios.wave7ConnectorAdminPanel.oauthAccess')}: {connector.accessState || connector.authState || (t('aios.unknown'))}; {t('aios.wave7ConnectorAdminPanel.tokenExpiry')}: {connector.tokenExpiresAt || (t('aios.wave7ConnectorAdminPanel.notRecorded'))}
+                    {t('aios.wave7ConnectorAdminPanel.oauthAccess')}:{' '}
+                    {connector.accessState || connector.authState || t('aios.unknown')};{' '}
+                    {t('aios.wave7ConnectorAdminPanel.tokenExpiry')}:{' '}
+                    {connector.tokenExpiresAt || t('aios.wave7ConnectorAdminPanel.notRecorded')}
                   </div>
                   {(connector.reconnectRequired ||
                     connector.tokenExpired ||
@@ -459,7 +467,9 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                       {t('aios.wave7ConnectorAdminPanel.reconnectRequired')}
                       {connector.accessRevokedAt
                         ? connector.revokedReason
-                          ? t('aios.wave7ConnectorAdminPanel.accessRevokedWithReason', { reason: connector.revokedReason })
+                          ? t('aios.wave7ConnectorAdminPanel.accessRevokedWithReason', {
+                              reason: connector.revokedReason,
+                            })
                           : t('aios.wave7ConnectorAdminPanel.accessRevoked')
                         : connector.tokenExpired
                           ? t('aios.wave7ConnectorAdminPanel.tokenExpired')
@@ -473,7 +483,9 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                       : 'tenant'}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    {t('aios.wave7ConnectorAdminPanel.sourceBinding')}: {connector.tenantPolicy?.externalConnectorId || (t('aios.wave7ConnectorAdminPanel.registryOnly'))}
+                    {t('aios.wave7ConnectorAdminPanel.sourceBinding')}:{' '}
+                    {connector.tenantPolicy?.externalConnectorId ||
+                      t('aios.wave7ConnectorAdminPanel.registryOnly')}
                   </div>
                   {connector.failureState && (
                     <div className="mt-2 rounded bg-danger-50 p-2 text-xs text-danger-700 dark:bg-danger-900/30 dark:text-danger-200">
@@ -491,7 +503,9 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">{t('aios.wave7ConnectorAdminPanel.connectorrunAudit')}</h2>
+            <h2 className="font-semibold">
+              {t('aios.wave7ConnectorAdminPanel.connectorrunAudit')}
+            </h2>
             <div className="mt-3 space-y-2">
               {runs.map((run) => (
                 <div key={run.runId} className="rounded-lg border p-3 text-xs dark:border-navy-700">
@@ -499,17 +513,28 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                     {run.toolName} / {run.toolKind} / {run.status}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    ACL: {run.aclDecision?.reason || (t('aios.unknown'))}; {t('aios.wave7ConnectorAdminPanel.freshness')}:{' '}
-                    {run.freshnessWarning || (t('aios.wave7ConnectorAdminPanel.fresh'))}
+                    ACL: {run.aclDecision?.reason || t('aios.unknown')};{' '}
+                    {t('aios.wave7ConnectorAdminPanel.freshness')}:{' '}
+                    {run.freshnessWarning || t('aios.wave7ConnectorAdminPanel.fresh')}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    OAuth: {run.sourceTrace?.accessState || (t('aios.unknown'))}; {t('aios.tokenExpiry')}:{' '}
-                    {run.sourceTrace?.tokenExpiresAt || (t('aios.wave7ConnectorAdminPanel.notTracked'))}
+                    OAuth: {run.sourceTrace?.accessState || t('aios.unknown')};{' '}
+                    {t('aios.tokenExpiry')}:{' '}
+                    {run.sourceTrace?.tokenExpiresAt ||
+                      t('aios.wave7ConnectorAdminPanel.notTracked')}
                   </div>
-                  {run.error && <div className="mt-1 text-danger-600">{t('aios.wave7ConnectorAdminPanel.error')}: {run.error}</div>}
+                  {run.error && (
+                    <div className="mt-1 text-danger-600">
+                      {t('aios.wave7ConnectorAdminPanel.error')}: {run.error}
+                    </div>
+                  )}
                 </div>
               ))}
-              {runs.length === 0 && <div className="text-sm text-slate-500">{t('aios.wave7ConnectorAdminPanel.noRunsYet')}</div>}
+              {runs.length === 0 && (
+                <div className="text-sm text-slate-500">
+                  {t('aios.wave7ConnectorAdminPanel.noRunsYet')}
+                </div>
+              )}
             </div>
           </div>
         </section>

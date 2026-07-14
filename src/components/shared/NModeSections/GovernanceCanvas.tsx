@@ -457,7 +457,9 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
             </div>
           </div>
           <div className="overflow-auto flex-1">
-            <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="w-full text-sm">
+            <table
+              /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full text-sm"
+            >
               <thead>
                 <tr className={TH}>
                   <th className="text-left py-2 pr-2">{isPolish ? 'Osoba' : 'Person'}</th>

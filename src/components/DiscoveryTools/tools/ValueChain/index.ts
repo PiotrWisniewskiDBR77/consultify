@@ -2,10 +2,10 @@
  * ValueChain - Exports
  */
 
+export { ActivityCard } from './ActivityCard';
 export {
-  ValueChainInputPhase,
   ValueChainBuildPhase,
+  ValueChainInputPhase,
   ValueChainInsightsPhase,
   ValueChainOutputsPhase,
 } from './ValueChainPhases';
-export { ActivityCard } from './ActivityCard';

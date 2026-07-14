@@ -56,9 +56,7 @@ const UMBRELLA_TERMS: { pattern: RegExp; labelEn: string; labelPl: string }[] = 
   { pattern: /quality issues|problemy z jako/i, labelEn: 'quality', labelPl: 'jakość' },
 ];
 
-export function detectUmbrellaClaim(
-  text: string
-): { labelEn: string; labelPl: string } | null {
+export function detectUmbrellaClaim(text: string): { labelEn: string; labelPl: string } | null {
   for (const term of UMBRELLA_TERMS) {
     if (term.pattern.test(text)) return { labelEn: term.labelEn, labelPl: term.labelPl };
   }
@@ -128,7 +126,10 @@ export function validateInsightStaircase(item: StaircaseValidationInput): SwotSt
       });
     }
   }
-  if (requiresDecomposition(item.text) && (!item.decomposition || item.decomposition.length === 0)) {
+  if (
+    requiresDecomposition(item.text) &&
+    (!item.decomposition || item.decomposition.length === 0)
+  ) {
     const umbrella = detectUmbrellaClaim(item.text);
     issues.push({
       code: 'needs-decomposition',

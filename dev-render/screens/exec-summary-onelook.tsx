@@ -6,12 +6,12 @@
  */
 import React from 'react';
 
-import ExecutionSummaryOneLook from '../../src/components/Execution/ExecutionSummaryOneLook';
 import type {
-  OneLookRisk,
   OneLookDecision,
   OneLookMilestone,
+  OneLookRisk,
 } from '../../src/components/Execution/ExecutionSummaryOneLook';
+import ExecutionSummaryOneLook from '../../src/components/Execution/ExecutionSummaryOneLook';
 
 const RISKS: OneLookRisk[] = [
   {
@@ -82,10 +82,34 @@ const DECISIONS: OneLookDecision[] = [
 ];
 
 const MILESTONES: OneLookMilestone[] = [
-  { id: 'm1', initiativeName: 'Automatyzacja linii pakowania', name: 'Go-live pilota linii 1', targetDate: '2026-07-21', status: 'na tor' },
-  { id: 'm2', initiativeName: 'Rollup finansowy Q3', name: 'Zamknięcie testów UAT', targetDate: '2026-07-28', status: 'ryzyko' },
-  { id: 'm3', initiativeName: 'Migracja legacy MES', name: 'Decyzja bramka fazy 2', targetDate: '2026-08-04', status: 'oczekuje' },
-  { id: 'm4', initiativeName: 'Program szkoleń Lean', name: 'Start kohorty brygadzistów', targetDate: '2026-08-11', status: 'na tor' },
+  {
+    id: 'm1',
+    initiativeName: 'Automatyzacja linii pakowania',
+    name: 'Go-live pilota linii 1',
+    targetDate: '2026-07-21',
+    status: 'na tor',
+  },
+  {
+    id: 'm2',
+    initiativeName: 'Rollup finansowy Q3',
+    name: 'Zamknięcie testów UAT',
+    targetDate: '2026-07-28',
+    status: 'ryzyko',
+  },
+  {
+    id: 'm3',
+    initiativeName: 'Migracja legacy MES',
+    name: 'Decyzja bramka fazy 2',
+    targetDate: '2026-08-04',
+    status: 'oczekuje',
+  },
+  {
+    id: 'm4',
+    initiativeName: 'Program szkoleń Lean',
+    name: 'Start kohorty brygadzistów',
+    targetDate: '2026-08-11',
+    status: 'na tor',
+  },
 ];
 
 const ExecSummaryOneLookScreen: React.FC = () => (

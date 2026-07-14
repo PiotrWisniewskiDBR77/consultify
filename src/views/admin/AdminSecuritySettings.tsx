@@ -453,9 +453,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                         ) : (
                           <XCircle className="text-c-text-muted" size={18} />
                         )}
-                        <span className="font-medium text-c-text">
-                          Microsoft
-                        </span>
+                        <span className="font-medium text-c-text">Microsoft</span>
                       </div>
                       <p className="text-xs text-c-text-muted mt-1">
                         {oauthStatus.microsoft?.configured ? 'Configured' : 'Not configured'}

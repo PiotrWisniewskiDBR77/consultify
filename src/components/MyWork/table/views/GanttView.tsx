@@ -353,9 +353,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
               <div
                 key={i}
                 className={`flex-shrink-0 flex items-center justify-center border-r border-c-border-subtle text-[9px] font-medium ${
-                  slot.isToday
-                    ? 'text-c-info bg-c-info/10'
-                    : 'text-c-text-muted'
+                  slot.isToday ? 'text-c-info bg-c-info/10' : 'text-c-text-muted'
                 }`}
                 style={{ width: colWidth }}
               >
@@ -467,9 +465,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
 
                   {/* Label */}
                   <div className="relative h-full flex items-center px-1.5 overflow-hidden">
-                    <span className="text-[8px] font-bold text-c-text truncate">
-                      {gr.title}
-                    </span>
+                    <span className="text-[8px] font-bold text-c-text truncate">{gr.title}</span>
                   </div>
                 </div>
               );

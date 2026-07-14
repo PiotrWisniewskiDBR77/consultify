@@ -519,10 +519,7 @@ export const PresentationStudioPage: React.FC = () => {
   }, [state]);
 
   return (
-    <div
-      className="min-h-screen bg-c-bg"
-      data-testid="presentation-studio-page"
-    >
+    <div className="min-h-screen bg-c-bg" data-testid="presentation-studio-page">
       {/* Local Menu 3 / command row. Per the AI-actions-menu3 rule, the
           contextual AI action ("Run preview") MUST live on the right side of
           the local command row, not inside the canvas. Command-row hierarchy
@@ -539,9 +536,7 @@ export const PresentationStudioPage: React.FC = () => {
             <p className="text-xs font-medium uppercase tracking-wider text-c-text-muted">
               Presentation Studio
             </p>
-            <h1 className="truncate text-base font-semibold text-c-text">
-              Studio preview surface
-            </h1>
+            <h1 className="truncate text-base font-semibold text-c-text">Studio preview surface</h1>
           </div>
           <div
             className="flex shrink-0 items-center gap-2"
@@ -582,10 +577,7 @@ export const PresentationStudioPage: React.FC = () => {
             ) : null}
 
             {approval.ticket ? (
-              <span
-                aria-hidden="true"
-                className="mx-1 h-5 w-px self-center bg-c-border"
-              />
+              <span aria-hidden="true" className="mx-1 h-5 w-px self-center bg-c-border" />
             ) : null}
 
             {approval.ticket ? (
@@ -741,12 +733,9 @@ export const PresentationStudioPage: React.FC = () => {
             className="rounded-xl border border-dashed border-c-border bg-c-surface px-5 py-10 text-center text-sm text-c-text-secondary"
             data-testid="presentation-studio-empty"
           >
-            Click{' '}
-            <strong className="font-semibold text-c-text">
-              Run preview
-            </strong>{' '}
-            to fetch source pack, narrative plan, template plan, and generate previews. This page
-            never persists anything and never invokes deck generation.
+            Click <strong className="font-semibold text-c-text">Run preview</strong> to fetch source
+            pack, narrative plan, template plan, and generate previews. This page never persists
+            anything and never invokes deck generation.
           </div>
         ) : null}
 

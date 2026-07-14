@@ -250,9 +250,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                       className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: color }}
                     />
-                    <span className="text-[11px] font-bold text-c-text">
-                      {clusterName}
-                    </span>
+                    <span className="text-[11px] font-bold text-c-text">{clusterName}</span>
                     <span className="text-[9px] text-c-text-secondary ml-auto">
                       {clusterNodes.length} {isPl ? 'elementów' : 'items'}
                     </span>
@@ -319,9 +317,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                       {getNodeLabel(dup.nodeB)}
                     </span>
                   </div>
-                  <p className="text-[10px] text-c-text-muted mb-2">
-                    {dup.reason}
-                  </p>
+                  <p className="text-[10px] text-c-text-muted mb-2">{dup.reason}</p>
                   {onMergeNodes && (
                     <button
                       onClick={() => onMergeNodes(dup.nodeA, dup.nodeB)}

@@ -42,13 +42,13 @@ import {
   normalizeWorkflowTimeline,
   shapeFeedbackRow,
 } from '../services/feedbackShape.js';
+import { computeSlaDueAtIso } from '../services/feedbackSla.js';
 import {
   findDuplicateCandidates as findFeedbackDuplicates,
   inferCluster as inferFeedbackCluster,
   inferPriorityForPipeline as inferFeedbackPriority,
 } from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
-import { computeSlaDueAtIso } from '../services/feedbackSla.js';
 import { anchorSlackThread } from '../services/slack/feedbackThreadAnchor.js';
 import { routeToSlack } from '../services/slack/slackRouter.js';
 import WhatsAppService from '../services/WhatsAppService.js';
@@ -113,8 +113,7 @@ export async function notifySlackThread(
       }
     }
 
-    const threadTs =
-      meta && typeof meta.slack_thread_ts === 'string' ? meta.slack_thread_ts : null;
+    const threadTs = meta && typeof meta.slack_thread_ts === 'string' ? meta.slack_thread_ts : null;
     if (!threadTs) return; // not a Slack-sourced ticket → nothing to do
 
     await routeToSlack({
@@ -272,12 +271,8 @@ async function ensureFeedbackSchema(): Promise<void> {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
-    await dbRun(
-      `CREATE INDEX IF NOT EXISTS idx_feedback_pulse_user ON feedback_pulse(user_id)`
-    );
-    await dbRun(
-      `CREATE INDEX IF NOT EXISTS idx_feedback_pulse_rating ON feedback_pulse(rating)`
-    );
+    await dbRun(`CREATE INDEX IF NOT EXISTS idx_feedback_pulse_user ON feedback_pulse(user_id)`);
+    await dbRun(`CREATE INDEX IF NOT EXISTS idx_feedback_pulse_rating ON feedback_pulse(rating)`);
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS feature_requests (
@@ -813,8 +808,7 @@ async function dispatchFeedbackEscalation(input: {
   // router+headline+blocks format used for Slack-sourced tickets, and gets the
   // SAME thread anchor — so later status/workflow/response updates
   // (notifySlackThread) reply into that thread exactly like a Slack-origin ticket.
-  const isSlackSourced =
-    (input.metadata as { source?: unknown } | undefined)?.source === 'slack';
+  const isSlackSourced = (input.metadata as { source?: unknown } | undefined)?.source === 'slack';
   if (uniqueChannels.includes('slack') && isSlackSourced) {
     dispatchSummary.results.slack = {
       status: 'skipped',
@@ -1261,328 +1255,328 @@ export async function createFeedbackInternal(
   const appEnv = getAppEnv();
 
   const { actualUserId, actualUserEmail, actualUserName } = resolveFeedbackActor({
-      reqUser,
-      userId,
-      userEmail,
-      userName,
-    });
+    reqUser,
+    userId,
+    userEmail,
+    userName,
+  });
 
-    // Resolve organizationId when possible
-    let organizationId: string | null = null;
+  // Resolve organizationId when possible
+  let organizationId: string | null = null;
+  try {
+    if ((reqUser as any)?.organizationId) {
+      organizationId = String((reqUser as any).organizationId);
+    } else if (actualUserId) {
+      const userRow = await dbGet<{ organization_id?: string }>(
+        `SELECT organization_id FROM users WHERE id = ?`,
+        [actualUserId]
+      );
+      if (userRow?.organization_id) organizationId = String(userRow.organization_id);
+    }
+  } catch {
+    // ignore
+  }
+
+  const orgIdForNotifications = String(organizationId || 'system');
+  const ticketOrgId: string | null = organizationId ? String(organizationId) : null;
+
+  // Canonical: create ticket in feedback_items
+  const feedbackCols = await getTableColumns('feedback_items');
+  const feedbackId = uuidv4();
+
+  const rawTitle = String(parsedTitle || '').trim();
+  const inferredTitle =
+    rawTitle ||
+    String(message)
+      .split('\n')
+      .map((s: string) => s.trim())
+      .filter(Boolean)[0] ||
+    String(message).slice(0, 80);
+  const title = inferredTitle.length > 120 ? inferredTitle.slice(0, 120) + '…' : inferredTitle;
+  const description = String(parsedDescription || message || '').trim();
+
+  const contextFields = [
+    'routePath',
+    'deviceType',
+    'screenSize',
+    'uiLanguage',
+    'uiTheme',
+    'workspaceContext',
+  ];
+  const contextMeta: Record<string, unknown> = {};
+  const contextSources: Record<string, unknown> = {
+    routePath,
+    deviceType,
+    screenSize,
+    uiLanguage,
+    uiTheme,
+    workspaceContext,
+  };
+  for (const field of contextFields) {
+    if (contextSources[field] !== undefined) contextMeta[field] = contextSources[field];
+  }
+
+  const dossier: Record<string, unknown> = {};
+  if (signatureHash) dossier.signatureHash = signatureHash;
+  if (appContext && typeof appContext === 'object') dossier.appContext = appContext;
+  if (Array.isArray(consoleLogs) && consoleLogs.length > 0) dossier.consoleLogs = consoleLogs;
+  if (Array.isArray(networkErrors) && networkErrors.length > 0) {
+    dossier.networkErrors = networkErrors;
+  }
+  if (Array.isArray(breadcrumbs) && breadcrumbs.length > 0) dossier.breadcrumbs = breadcrumbs;
+  if (lastUncaughtError && typeof lastUncaughtError === 'object') {
+    dossier.lastUncaughtError = lastUncaughtError;
+  }
+
+  let workflowSeed: Record<string, unknown> | undefined;
+  try {
+    const cluster = inferFeedbackCluster(routePath || null);
+    if (cluster) workflowSeed = { cluster };
+  } catch (err) {
+    logger.warn('[Feedback] inferCluster failed:', err);
+  }
+
+  let duplicateOf: string | null = null;
+  let duplicateCandidates: Array<{ id: string; title: string | null }> = [];
+  if (signatureHash) {
     try {
-      if ((reqUser as any)?.organizationId) {
-        organizationId = String((reqUser as any).organizationId);
-      } else if (actualUserId) {
-        const userRow = await dbGet<{ organization_id?: string }>(
-          `SELECT organization_id FROM users WHERE id = ?`,
-          [actualUserId]
-        );
-        if (userRow?.organization_id) organizationId = String(userRow.organization_id);
+      duplicateCandidates = await findFeedbackDuplicates(signatureHash, 5);
+      if (duplicateCandidates.length > 0) {
+        duplicateOf = duplicateCandidates[0].id;
       }
-    } catch {
-      // ignore
-    }
-
-    const orgIdForNotifications = String(organizationId || 'system');
-    const ticketOrgId: string | null = organizationId ? String(organizationId) : null;
-
-    // Canonical: create ticket in feedback_items
-    const feedbackCols = await getTableColumns('feedback_items');
-    const feedbackId = uuidv4();
-
-    const rawTitle = String(parsedTitle || '').trim();
-    const inferredTitle =
-      rawTitle ||
-      String(message)
-        .split('\n')
-        .map((s: string) => s.trim())
-        .filter(Boolean)[0] ||
-      String(message).slice(0, 80);
-    const title = inferredTitle.length > 120 ? inferredTitle.slice(0, 120) + '…' : inferredTitle;
-    const description = String(parsedDescription || message || '').trim();
-
-    const contextFields = [
-      'routePath',
-      'deviceType',
-      'screenSize',
-      'uiLanguage',
-      'uiTheme',
-      'workspaceContext',
-    ];
-    const contextMeta: Record<string, unknown> = {};
-    const contextSources: Record<string, unknown> = {
-      routePath,
-      deviceType,
-      screenSize,
-      uiLanguage,
-      uiTheme,
-      workspaceContext,
-    };
-    for (const field of contextFields) {
-      if (contextSources[field] !== undefined) contextMeta[field] = contextSources[field];
-    }
-
-    const dossier: Record<string, unknown> = {};
-    if (signatureHash) dossier.signatureHash = signatureHash;
-    if (appContext && typeof appContext === 'object') dossier.appContext = appContext;
-    if (Array.isArray(consoleLogs) && consoleLogs.length > 0) dossier.consoleLogs = consoleLogs;
-    if (Array.isArray(networkErrors) && networkErrors.length > 0) {
-      dossier.networkErrors = networkErrors;
-    }
-    if (Array.isArray(breadcrumbs) && breadcrumbs.length > 0) dossier.breadcrumbs = breadcrumbs;
-    if (lastUncaughtError && typeof lastUncaughtError === 'object') {
-      dossier.lastUncaughtError = lastUncaughtError;
-    }
-
-    let workflowSeed: Record<string, unknown> | undefined;
-    try {
-      const cluster = inferFeedbackCluster(routePath || null);
-      if (cluster) workflowSeed = { cluster };
     } catch (err) {
-      logger.warn('[Feedback] inferCluster failed:', err);
+      logger.warn('[Feedback] findDuplicateCandidates failed:', err);
     }
+  }
 
-    let duplicateOf: string | null = null;
-    let duplicateCandidates: Array<{ id: string; title: string | null }> = [];
-    if (signatureHash) {
-      try {
-        duplicateCandidates = await findFeedbackDuplicates(signatureHash, 5);
-        if (duplicateCandidates.length > 0) {
-          duplicateOf = duplicateCandidates[0].id;
-        }
-      } catch (err) {
-        logger.warn('[Feedback] findDuplicateCandidates failed:', err);
-      }
-    }
-
-    const basePriority = priorityFromEnvAndSeverity({ appEnv, severity, type });
-    let priority: TicketPriority = basePriority;
-    try {
-      priority = inferFeedbackPriority({
-        basePriority,
-        appEnv,
-        type,
-        severity: severity || null,
-        hasUncaughtError: Boolean(lastUncaughtError),
-        duplicateCount: duplicateCandidates.length,
-      });
-    } catch (err) {
-      logger.warn('[Feedback] inferPriority failed:', err);
-    }
-    const status: TicketStatus = 'NEW';
-
-    // F5 (SLA): response deadline from severity (fallback priority), stamped at
-    // intake. Persisted to the due_at column when present AND mirrored into
-    // metadata so engines/rows without the column still carry the deadline.
-    const slaDueAt = computeSlaDueAtIso(severity || null, priority, Date.now());
-
-    let metadataJson: Record<string, unknown> = {
-      ...(metadata || {}),
-      sla_due_at: slaDueAt,
-      ...contextMeta,
+  const basePriority = priorityFromEnvAndSeverity({ appEnv, severity, type });
+  let priority: TicketPriority = basePriority;
+  try {
+    priority = inferFeedbackPriority({
+      basePriority,
       appEnv,
-      clientEnv: clientEnv || undefined,
-      userEmail: actualUserEmail || undefined,
-      userName: actualUserName || undefined,
-      feedbackType: type,
-      severity: severity || undefined,
-      title,
-      ...(Object.keys(dossier).length > 0 ? { dossier } : {}),
-      ...(signatureHash ? { signatureHash } : {}),
-      ...(duplicateOf ? { duplicateOf } : {}),
-      ...(duplicateCandidates.length > 0 ? { duplicateCandidates } : {}),
-      ...(workflowSeed ? { workflow: workflowSeed } : {}),
-    };
+      type,
+      severity: severity || null,
+      hasUncaughtError: Boolean(lastUncaughtError),
+      duplicateCount: duplicateCandidates.length,
+    });
+  } catch (err) {
+    logger.warn('[Feedback] inferPriority failed:', err);
+  }
+  const status: TicketStatus = 'NEW';
 
-    const insertCols: string[] = [
-      'id',
-      'organization_id',
-      'user_id',
-      'feedback_type',
-      'title',
-      'description',
-    ];
-    const values: unknown[] = [
-      feedbackId,
-      ticketOrgId,
-      actualUserId,
-      String(type).toUpperCase(),
-      title,
-      description,
-    ];
+  // F5 (SLA): response deadline from severity (fallback priority), stamped at
+  // intake. Persisted to the due_at column when present AND mirrored into
+  // metadata so engines/rows without the column still carry the deadline.
+  const slaDueAt = computeSlaDueAtIso(severity || null, priority, Date.now());
 
-    const optional: Array<[string, unknown]> = [
-      ['priority', priority],
-      ['status', status],
-      ['metadata_json', JSON.stringify(metadataJson)],
-      ['severity', severity || null],
-      ['source_env', appEnv],
-      // V2.1 additive columns. Only the cluster seed is known at creation
-      // time; owner / deploy_status land once a human (or Cursor) PATCHes
-      // the workflow.
-      ['cluster', (workflowSeed?.cluster as string | undefined) || null],
-      // F5 (SLA): response deadline, so the overdue sweep can query it directly.
-      ['due_at', slaDueAt],
-    ];
+  let metadataJson: Record<string, unknown> = {
+    ...(metadata || {}),
+    sla_due_at: slaDueAt,
+    ...contextMeta,
+    appEnv,
+    clientEnv: clientEnv || undefined,
+    userEmail: actualUserEmail || undefined,
+    userName: actualUserName || undefined,
+    feedbackType: type,
+    severity: severity || undefined,
+    title,
+    ...(Object.keys(dossier).length > 0 ? { dossier } : {}),
+    ...(signatureHash ? { signatureHash } : {}),
+    ...(duplicateOf ? { duplicateOf } : {}),
+    ...(duplicateCandidates.length > 0 ? { duplicateCandidates } : {}),
+    ...(workflowSeed ? { workflow: workflowSeed } : {}),
+  };
 
-    for (const [col, val] of optional) {
-      if (feedbackCols.has(col)) {
-        insertCols.push(col);
-        values.push(val);
-      }
+  const insertCols: string[] = [
+    'id',
+    'organization_id',
+    'user_id',
+    'feedback_type',
+    'title',
+    'description',
+  ];
+  const values: unknown[] = [
+    feedbackId,
+    ticketOrgId,
+    actualUserId,
+    String(type).toUpperCase(),
+    title,
+    description,
+  ];
+
+  const optional: Array<[string, unknown]> = [
+    ['priority', priority],
+    ['status', status],
+    ['metadata_json', JSON.stringify(metadataJson)],
+    ['severity', severity || null],
+    ['source_env', appEnv],
+    // V2.1 additive columns. Only the cluster seed is known at creation
+    // time; owner / deploy_status land once a human (or Cursor) PATCHes
+    // the workflow.
+    ['cluster', (workflowSeed?.cluster as string | undefined) || null],
+    // F5 (SLA): response deadline, so the overdue sweep can query it directly.
+    ['due_at', slaDueAt],
+  ];
+
+  for (const [col, val] of optional) {
+    if (feedbackCols.has(col)) {
+      insertCols.push(col);
+      values.push(val);
     }
+  }
 
-    const placeholders = insertCols.map(() => '?').join(', ');
-    const sql = `INSERT INTO feedback_items (${insertCols.join(', ')}) VALUES (${placeholders})`;
-    const insertResult = await dbRun(sql, values);
-    if (!insertResult.success) {
-      throw new Error(insertResult.error || 'Failed to insert feedback ticket');
-    }
+  const placeholders = insertCols.map(() => '?').join(', ');
+  const sql = `INSERT INTO feedback_items (${insertCols.join(', ')}) VALUES (${placeholders})`;
+  const insertResult = await dbRun(sql, values);
+  if (!insertResult.success) {
+    throw new Error(insertResult.error || 'Failed to insert feedback ticket');
+  }
 
-    // Persist screenshot as a filesystem artefact (Railway volume / local /tmp).
-    if (screenshot && typeof screenshot.dataUrl === 'string') {
-      try {
-        const saved = await saveScreenshotFromDataUrl(feedbackId, screenshot.dataUrl, {
-          width: screenshot.width,
-          height: screenshot.height,
-        });
-        if (saved) {
-          const artifacts = Array.isArray((metadataJson as any).artifacts)
-            ? ((metadataJson as any).artifacts as unknown[])
-            : [];
-          metadataJson = {
-            ...metadataJson,
-            artifacts: [...artifacts, saved],
-          };
-          if (feedbackCols.has('metadata_json')) {
-            await dbRun(`UPDATE feedback_items SET metadata_json = ? WHERE id = ?`, [
-              JSON.stringify(metadataJson),
-              feedbackId,
-            ]);
-          }
-        }
-      } catch (err) {
-        logger.warn('[Feedback] Failed to store screenshot artifact:', err);
-      }
-    }
-
-    // Auto-create backlog task for every ticket
-    let linkedTaskId: string | null = null;
+  // Persist screenshot as a filesystem artefact (Railway volume / local /tmp).
+  if (screenshot && typeof screenshot.dataUrl === 'string') {
     try {
-      if (!ticketOrgId) {
-        throw new Error('No organizationId resolved for ticket; skipping auto-task');
-      }
-      const taskTitle = `[${appEnv.toUpperCase()}] ${String(type).toUpperCase()}: ${title}`;
-      const taskDescription =
-        `${description}\n\n` +
-        `---\n` +
-        `Ticket: ${feedbackId}\n` +
-        `Env: ${appEnv}\n` +
-        `Route: ${String((metadataJson as any)?.routePath || '')}\n` +
-        `User: ${userEmail || userName || userId || 'anonymous'}\n`;
-
-      linkedTaskId = await createTaskForFeedback({
-        organizationId: ticketOrgId,
-        userId: actualUserId,
-        title: taskTitle,
-        description: taskDescription,
-        priority,
-        feedbackId,
-        appEnv,
+      const saved = await saveScreenshotFromDataUrl(feedbackId, screenshot.dataUrl, {
+        width: screenshot.width,
+        height: screenshot.height,
       });
-
-      if (feedbackCols.has('linked_task_id') || feedbackCols.has('metadata_json')) {
-        const updateCols: string[] = [];
-        const updateVals: unknown[] = [];
-        const nextMeta = { ...metadataJson, linkedTaskId };
-
-        if (feedbackCols.has('linked_task_id')) {
-          updateCols.push('linked_task_id = ?');
-          updateVals.push(linkedTaskId);
-        }
+      if (saved) {
+        const artifacts = Array.isArray((metadataJson as any).artifacts)
+          ? ((metadataJson as any).artifacts as unknown[])
+          : [];
+        metadataJson = {
+          ...metadataJson,
+          artifacts: [...artifacts, saved],
+        };
         if (feedbackCols.has('metadata_json')) {
-          updateCols.push('metadata_json = ?');
-          updateVals.push(JSON.stringify(nextMeta));
-        }
-        if (feedbackCols.has('updated_at')) {
-          updateCols.push('updated_at = CURRENT_TIMESTAMP');
-        }
-
-        if (updateCols.length > 0) {
-          await dbRun(`UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`, [
-            ...updateVals,
+          await dbRun(`UPDATE feedback_items SET metadata_json = ? WHERE id = ?`, [
+            JSON.stringify(metadataJson),
             feedbackId,
           ]);
         }
-        metadataJson = nextMeta;
       }
-    } catch (e) {
-      logger.warn('[Feedback] Failed to auto-create task from feedback:', e);
+    } catch (err) {
+      logger.warn('[Feedback] Failed to store screenshot artifact:', err);
     }
+  }
 
-    // Feedback #0e1e7dec — escalation previously ran inline and awaited
-    // Slack / email / WhatsApp network calls before sending the HTTP
-    // response. HIGH/CRITICAL severities add email + WhatsApp channels on
-    // top of in-app + Slack, which turned the user-visible "Submit feedback"
-    // latency from ~200ms to multi-seconds compared to MEDIUM/LOW tickets.
-    // The ticket is already persisted at this point and the task is linked —
-    // the only thing remaining is best-effort notification fan-out, which is
-    // safe to run in the background. We fire-and-forget and keep persisting
-    // the dispatch status asynchronously so the audit trail survives.
-    const escalationSnapshot = {
-      metadata: { ...metadataJson },
+  // Auto-create backlog task for every ticket
+  let linkedTaskId: string | null = null;
+  try {
+    if (!ticketOrgId) {
+      throw new Error('No organizationId resolved for ticket; skipping auto-task');
+    }
+    const taskTitle = `[${appEnv.toUpperCase()}] ${String(type).toUpperCase()}: ${title}`;
+    const taskDescription =
+      `${description}\n\n` +
+      `---\n` +
+      `Ticket: ${feedbackId}\n` +
+      `Env: ${appEnv}\n` +
+      `Route: ${String((metadataJson as any)?.routePath || '')}\n` +
+      `User: ${userEmail || userName || userId || 'anonymous'}\n`;
+
+    linkedTaskId = await createTaskForFeedback({
+      organizationId: ticketOrgId,
+      userId: actualUserId,
+      title: taskTitle,
+      description: taskDescription,
       priority,
-      linkedTaskId,
-    };
-    const escalationPromise = (async () => {
-      try {
-        const alertDispatch = await dispatchFeedbackEscalation({
-          kind: 'feedback',
-          id: feedbackId,
-          organizationId: orgIdForNotifications,
-          appEnv,
-          channels: resolveEscalationChannels({
-            kind: 'feedback',
-            feedbackType: type,
-            severity,
-          }),
-          feedbackType: type,
-          severity: severity || 'MEDIUM',
-          priority: escalationSnapshot.priority,
-          userId: actualUserId,
-          userEmail: actualUserEmail,
-          userName: actualUserName,
-          routePath: routePath || null,
-          deviceType: deviceType || null,
-          screenSize: screenSize || null,
-          uiLanguage: uiLanguage || null,
-          uiTheme: uiTheme || null,
-          title,
-          message: description,
-          taskId: escalationSnapshot.linkedTaskId,
-          metadata: escalationSnapshot.metadata,
-        });
-        // Atomic per-key write — must NOT clobber slack_thread_ts/source that a
-        // concurrent Slack anchor may have written after this snapshot was taken.
-        await updateFeedbackMetadataKey(feedbackId, 'alertDispatch', alertDispatch);
-      } catch (dispatchErr) {
-        logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
-      }
-    })();
-    // Attach a swallow-only handler so Node never logs "unhandledRejection"
-    // for the detached promise — the inner try/catch already reports via
-    // `logger.error`.
-    escalationPromise.catch(() => {});
-
-    return {
       feedbackId,
-      taskId: linkedTaskId,
-      priority,
-      metadataJson,
       appEnv,
-      organizationId,
-      escalationPromise,
-    };
+    });
+
+    if (feedbackCols.has('linked_task_id') || feedbackCols.has('metadata_json')) {
+      const updateCols: string[] = [];
+      const updateVals: unknown[] = [];
+      const nextMeta = { ...metadataJson, linkedTaskId };
+
+      if (feedbackCols.has('linked_task_id')) {
+        updateCols.push('linked_task_id = ?');
+        updateVals.push(linkedTaskId);
+      }
+      if (feedbackCols.has('metadata_json')) {
+        updateCols.push('metadata_json = ?');
+        updateVals.push(JSON.stringify(nextMeta));
+      }
+      if (feedbackCols.has('updated_at')) {
+        updateCols.push('updated_at = CURRENT_TIMESTAMP');
+      }
+
+      if (updateCols.length > 0) {
+        await dbRun(`UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`, [
+          ...updateVals,
+          feedbackId,
+        ]);
+      }
+      metadataJson = nextMeta;
+    }
+  } catch (e) {
+    logger.warn('[Feedback] Failed to auto-create task from feedback:', e);
+  }
+
+  // Feedback #0e1e7dec — escalation previously ran inline and awaited
+  // Slack / email / WhatsApp network calls before sending the HTTP
+  // response. HIGH/CRITICAL severities add email + WhatsApp channels on
+  // top of in-app + Slack, which turned the user-visible "Submit feedback"
+  // latency from ~200ms to multi-seconds compared to MEDIUM/LOW tickets.
+  // The ticket is already persisted at this point and the task is linked —
+  // the only thing remaining is best-effort notification fan-out, which is
+  // safe to run in the background. We fire-and-forget and keep persisting
+  // the dispatch status asynchronously so the audit trail survives.
+  const escalationSnapshot = {
+    metadata: { ...metadataJson },
+    priority,
+    linkedTaskId,
+  };
+  const escalationPromise = (async () => {
+    try {
+      const alertDispatch = await dispatchFeedbackEscalation({
+        kind: 'feedback',
+        id: feedbackId,
+        organizationId: orgIdForNotifications,
+        appEnv,
+        channels: resolveEscalationChannels({
+          kind: 'feedback',
+          feedbackType: type,
+          severity,
+        }),
+        feedbackType: type,
+        severity: severity || 'MEDIUM',
+        priority: escalationSnapshot.priority,
+        userId: actualUserId,
+        userEmail: actualUserEmail,
+        userName: actualUserName,
+        routePath: routePath || null,
+        deviceType: deviceType || null,
+        screenSize: screenSize || null,
+        uiLanguage: uiLanguage || null,
+        uiTheme: uiTheme || null,
+        title,
+        message: description,
+        taskId: escalationSnapshot.linkedTaskId,
+        metadata: escalationSnapshot.metadata,
+      });
+      // Atomic per-key write — must NOT clobber slack_thread_ts/source that a
+      // concurrent Slack anchor may have written after this snapshot was taken.
+      await updateFeedbackMetadataKey(feedbackId, 'alertDispatch', alertDispatch);
+    } catch (dispatchErr) {
+      logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
+    }
+  })();
+  // Attach a swallow-only handler so Node never logs "unhandledRejection"
+  // for the detached promise — the inner try/catch already reports via
+  // `logger.error`.
+  escalationPromise.catch(() => {});
+
+  return {
+    feedbackId,
+    taskId: linkedTaskId,
+    priority,
+    metadataJson,
+    appEnv,
+    organizationId,
+    escalationPromise,
+  };
 }
 
 /**

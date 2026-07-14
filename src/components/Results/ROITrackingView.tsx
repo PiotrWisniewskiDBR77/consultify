@@ -19,14 +19,13 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
   V8ResultsApi,
   type V8ResultsRoiPortfolioSummary,
 } from '@/services/api/v8/results';
-
-import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ReconciliationPanel } from './ReconciliationPanel';
@@ -85,7 +84,11 @@ function normalizePortfolioSummary(
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
-  'on-track': { bg: 'bg-c-surface-raised/10', text: 'text-c-text-secondary', dot: 'bg-c-border-strong' },
+  'on-track': {
+    bg: 'bg-c-surface-raised/10',
+    text: 'text-c-text-secondary',
+    dot: 'bg-c-border-strong',
+  },
   below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
@@ -350,7 +353,11 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
   const variancePct = totalPlanned !== 0 ? (totalVariance / Math.abs(totalPlanned)) * 100 : 0;
 
   const statusFilterOptions: FilterOption[] = [
-    { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-c-border-strong' },
+    {
+      value: 'on-track',
+      label: t('results.roi.statusOnTrack', 'On track'),
+      color: 'bg-c-border-strong',
+    },
     { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-danger-500' },
     { value: 'above', label: t('results.roi.statusAbove', 'Above plan'), color: 'bg-emerald-500' },
   ];
@@ -524,7 +531,9 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                       <td className="px-4 py-3 text-sm text-c-text-muted">
                         {t('results.roi.periodYtd', 'YTD')}
                       </td>
-                      <td className="px-4 py-3 text-sm text-c-text-muted">{item.ownerName || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-c-text-muted">
+                        {item.ownerName || '—'}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <div className="relative">
                           <button

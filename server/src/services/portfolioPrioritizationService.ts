@@ -83,9 +83,7 @@ function median(values: number[]): number {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0
-    ? (sorted[mid - 1] + sorted[mid]) / 2
-    : sorted[mid];
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
 /** value-over-risk score used for ranking. */
@@ -93,12 +91,7 @@ function valueOverRisk(npv: number, risk: number): number {
   return npv / (1 + risk);
 }
 
-function quadrantFor(
-  npv: number,
-  risk: number,
-  npvMedian: number,
-  riskMedian: number
-): Quadrant {
+function quadrantFor(npv: number, risk: number, npvMedian: number, riskMedian: number): Quadrant {
   const highNpv = npv >= npvMedian;
   const highRisk = risk > riskMedian;
   if (highNpv && !highRisk) return 'fund';
@@ -113,9 +106,7 @@ function quadrantFor(
  * Quadrants are computed against the median NPV and median risk of the
  * supplied set. Rank is assigned by npv / (1 + risk), descending.
  */
-export function prioritize(
-  initiatives: PortfolioInitiativeInput[]
-): PrioritizedInitiative[] {
+export function prioritize(initiatives: PortfolioInitiativeInput[]): PrioritizedInitiative[] {
   if (!Array.isArray(initiatives) || initiatives.length === 0) return [];
 
   const normalized = initiatives.map((it) => ({
@@ -124,8 +115,7 @@ export function prioritize(
     npv: toFiniteNumber(it.npv),
     risk: clamp01(it.risk),
     effort: toFiniteNumber(it.effort),
-    strategicFit:
-      it.strategicFit === undefined ? undefined : clamp01(it.strategicFit),
+    strategicFit: it.strategicFit === undefined ? undefined : clamp01(it.strategicFit),
   }));
 
   const npvMedian = median(normalized.map((it) => it.npv));
@@ -159,9 +149,7 @@ export function prioritize(
  * Shape the prioritized portfolio for the PortfolioBubble component.
  *   x = risk, y = npv, size = effort, color = quadrant color.
  */
-export function bubbleData(
-  initiatives: PortfolioInitiativeInput[]
-): BubblePoint[] {
+export function bubbleData(initiatives: PortfolioInitiativeInput[]): BubblePoint[] {
   return prioritize(initiatives).map((it) => ({
     id: it.id,
     x: it.risk,

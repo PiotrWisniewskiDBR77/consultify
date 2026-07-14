@@ -27,12 +27,8 @@ import type {
   RaidLevel,
   RiskResponseStrategy,
 } from '@/components/shared/NModeSections/RaidCanvas';
+import type { RiskAssumption, RiskItem, RiskUncertaintyData } from '@/store/useToolStore';
 import type { SourceType, TraceabilityMetadata } from '@/types/domain/traceability';
-import type {
-  RiskAssumption,
-  RiskItem,
-  RiskUncertaintyData,
-} from '@/store/useToolStore';
 
 import { rankRisks } from './moveValidator';
 
@@ -113,15 +109,11 @@ const assumptionToRaidItem = (
   id: `raid-assumption-${assumption.id}`,
   type: 'assumption',
   title: assumption.text || 'Assumption',
-  description: assumption.consequenceIfWrong
-    ? `If wrong: ${assumption.consequenceIfWrong}`
-    : '',
+  description: assumption.consequenceIfWrong ? `If wrong: ${assumption.consequenceIfWrong}` : '',
   // Fragility (1..5) drives the impact band — a shaky, high-consequence
   // assumption reads as a high-impact RAID line.
   impact: scoreToRaidLevel(fragility),
-  proposedAction: assumption.validationMethod
-    ? `Validate: ${assumption.validationMethod}`
-    : '',
+  proposedAction: assumption.validationMethod ? `Validate: ${assumption.validationMethod}` : '',
   status: 'open',
   source: sourceRef,
   createdAt: new Date().toISOString(),

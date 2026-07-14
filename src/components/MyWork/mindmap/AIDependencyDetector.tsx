@@ -38,10 +38,32 @@ const TYPE_CONFIG: Record<
   string,
   { color: string; colorBg: string; label: string; labelPl: string; dash?: string }
 > = {
-  depends_on: { color: 'var(--c-danger)', colorBg: 'color-mix(in srgb, var(--c-danger) 8%, transparent)', label: 'Depends on', labelPl: 'Zależy od' },
-  enables: { color: 'var(--c-success)', colorBg: 'color-mix(in srgb, var(--c-success) 8%, transparent)', label: 'Enables', labelPl: 'Umożliwia' },
-  conflicts_with: { color: 'var(--c-warning)', colorBg: 'color-mix(in srgb, var(--c-warning) 8%, transparent)', label: 'Conflicts with', labelPl: 'Konflikt z', dash: '5 5' },
-  related_to: { color: 'var(--c-info)', colorBg: 'color-mix(in srgb, var(--c-info) 8%, transparent)', label: 'Related to', labelPl: 'Powiązane z', dash: '3 6' },
+  depends_on: {
+    color: 'var(--c-danger)',
+    colorBg: 'color-mix(in srgb, var(--c-danger) 8%, transparent)',
+    label: 'Depends on',
+    labelPl: 'Zależy od',
+  },
+  enables: {
+    color: 'var(--c-success)',
+    colorBg: 'color-mix(in srgb, var(--c-success) 8%, transparent)',
+    label: 'Enables',
+    labelPl: 'Umożliwia',
+  },
+  conflicts_with: {
+    color: 'var(--c-warning)',
+    colorBg: 'color-mix(in srgb, var(--c-warning) 8%, transparent)',
+    label: 'Conflicts with',
+    labelPl: 'Konflikt z',
+    dash: '5 5',
+  },
+  related_to: {
+    color: 'var(--c-info)',
+    colorBg: 'color-mix(in srgb, var(--c-info) 8%, transparent)',
+    label: 'Related to',
+    labelPl: 'Powiązane z',
+    dash: '3 6',
+  },
 };
 
 export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
@@ -175,7 +197,10 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {dependencies.length === 0 && !loading && (
             <div className="text-center py-8">
-              <GitMerge size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <GitMerge
+                size={36}
+                className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
+              />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'Wykryj ukryte zależności między pomysłami.'

@@ -1236,7 +1236,8 @@ const AXIS_5_CULTURE: DRDAxis = {
         {
           level: 6,
           title: 'Instytucjonalizacja',
-          description: 'Zmiana jest zinstytucjonalizowana — zakorzeniona w kulturze i sposobie pracy.',
+          description:
+            'Zmiana jest zinstytucjonalizowana — zakorzeniona w kulturze i sposobie pracy.',
         },
       ],
     },
@@ -1510,7 +1511,8 @@ const AXIS_6_CYBERSECURITY: DRDAxis = {
         {
           level: 6,
           title: 'ISO 27001',
-          description: 'Certyfikacja ISO 27001 (system zarządzania bezpieczeństwem informacji, ISMS).',
+          description:
+            'Certyfikacja ISO 27001 (system zarządzania bezpieczeństwem informacji, ISMS).',
         },
       ],
     },

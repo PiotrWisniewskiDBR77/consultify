@@ -136,7 +136,13 @@ const renderBlock = (node: any, indent = ''): string => {
     case 'taskList':
       return renderListItems(children, { task: true, indent });
     case 'blockquote':
-      return prefixLines(children.map((child) => renderBlock(child)).filter(Boolean).join('\n\n'), '> ');
+      return prefixLines(
+        children
+          .map((child) => renderBlock(child))
+          .filter(Boolean)
+          .join('\n\n'),
+        '> '
+      );
     case 'codeBlock': {
       const language = String(node.attrs?.language || '').trim();
       return `\`\`\`${language}\n${children.map(renderInline).join('')}\n\`\`\``;
@@ -147,7 +153,13 @@ const renderBlock = (node: any, indent = ''): string => {
       return renderTable(node);
     // Notebook custom nodes — degrade gracefully to portable markdown.
     case 'callout':
-      return prefixLines(children.map((child) => renderBlock(child)).filter(Boolean).join('\n\n'), '> ');
+      return prefixLines(
+        children
+          .map((child) => renderBlock(child))
+          .filter(Boolean)
+          .join('\n\n'),
+        '> '
+      );
     case 'details':
     case 'detailsContent':
       return children
@@ -188,7 +200,9 @@ export function notebookContentToMarkdown(contentJson: any, fallbackText?: strin
 }
 
 /** Build the POST /api/work-canvas/drafts body for a notebook-expand draft. */
-export function buildNotebookExpandDraftBody(page: NotebookExpandPageInput): Record<string, unknown> {
+export function buildNotebookExpandDraftBody(
+  page: NotebookExpandPageInput
+): Record<string, unknown> {
   const title = String(page.title || '').trim() || 'Untitled note';
   const contentMd = notebookContentToMarkdown(page.contentJson, page.contentText);
   return {
@@ -218,8 +232,7 @@ export function buildExpandChatUrl(draftId: string): string {
 export async function expandNotebookPageToCanvasDraft(
   page: NotebookExpandPageInput
 ): Promise<NotebookExpandResult> {
-  const token =
-    typeof window !== 'undefined' ? window.localStorage.getItem('token') || '' : '';
+  const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') || '' : '';
   const response = await fetch('/api/work-canvas/drafts', {
     method: 'POST',
     headers: {

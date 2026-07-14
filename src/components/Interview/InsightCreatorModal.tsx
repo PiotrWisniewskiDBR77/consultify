@@ -566,14 +566,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   // E7.3 / E7.4: Auto-fill custom prompt for special analysis types
   const applyPromptPreset = (type: InsightPromptType) => {
     if (type === 'between_the_lines') {
-      setCustomPrompt(
-        t('interview.insightCreatorModal.analyzeRespondentAnswersAtA')
-      );
+      setCustomPrompt(t('interview.insightCreatorModal.analyzeRespondentAnswersAtA'));
     } else if (type === 'summary' && !customPrompt) {
       // E7.4: Precise formula for executive summaries
-      setCustomPrompt(
-        t('interview.insightCreatorModal.useAPreciseConsultingFormula')
-      );
+      setCustomPrompt(t('interview.insightCreatorModal.useAPreciseConsultingFormula'));
     }
   };
 
@@ -654,9 +650,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
       );
     } catch (error) {
       console.error('[InsightCreatorModal] Failed to load context documents:', error);
-      toast.error(
-        t('interview.insightCreatorModal.failedToLoadContextDocuments')
-      );
+      toast.error(t('interview.insightCreatorModal.failedToLoadContextDocuments'));
     } finally {
       setIsLoadingContextDocuments(false);
     }
@@ -715,9 +709,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
       setSelectedRespondents(respondentIds.filter((id) => validRespondents.has(id)));
     }
     if (nextSessions.length < basket.sessionIds.length) {
-      toast(
-        t('interview.insightCreatorModal.someSessionsFromTheBasket')
-      );
+      toast(t('interview.insightCreatorModal.someSessionsFromTheBasket'));
     }
     return nextSessions;
   };
@@ -732,9 +724,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     if (!basket) return;
     const appliedSessions = applyBasket(basketId);
     if (!appliedSessions || appliedSessions.length === 0) {
-      toast.error(
-        t('interview.insightCreatorModal.thisBasketHasNoAvailable')
-      );
+      toast.error(t('interview.insightCreatorModal.thisBasketHasNoAvailable'));
       return;
     }
     // Pre-clear the previous angle so the user consciously picks a new lens.
@@ -747,9 +737,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     const refineIndex = CREATOR_STEPS.findIndex((step) => step.id === 'refine');
     setCurrentStep(refineIndex >= 0 ? refineIndex : currentStep);
     setAdvancedOpen(true);
-    toast.success(
-      t('interview.insightCreatorModal.newLensPickAnAngle')
-    );
+    toast.success(t('interview.insightCreatorModal.newLensPickAnAngle'));
   };
 
   // Save the current source selection as a reusable basket.
@@ -860,14 +848,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         });
       }
       await fetchContextDocuments();
-      toast.success(
-        t('interview.insightCreatorModal.documentsUploadedAndSentFor')
-      );
+      toast.success(t('interview.insightCreatorModal.documentsUploadedAndSentFor'));
     } catch (error) {
       console.error('[InsightCreatorModal] Upload context document failed:', error);
-      toast.error(
-        t('interview.insightCreatorModal.failedToUploadContextDocument')
-      );
+      toast.error(t('interview.insightCreatorModal.failedToUploadContextDocument'));
     } finally {
       setIsUploadingContextDocument(false);
     }
@@ -1115,10 +1099,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
       const existing = respondents.get(session.respondentId);
       respondents.set(session.respondentId, {
         id: session.respondentId,
-        name:
-          existing?.name ||
-          trimmedName ||
-          (t('interview.insightCreatorModal.unnamedRespondent')),
+        name: existing?.name || trimmedName || t('interview.insightCreatorModal.unnamedRespondent'),
         role: existing?.role || session.respondentRole?.trim() || undefined,
         department: existing?.department || session.department?.trim() || undefined,
         sessionCount: (existing?.sessionCount ?? 0) + 1,
@@ -1267,9 +1248,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     }
 
     setIsGenerating(true);
-    const toastId = toast.loading(
-      t('interview.insightCreatorModal.generatingAiInsights')
-    );
+    const toastId = toast.loading(t('interview.insightCreatorModal.generatingAiInsights'));
     const customPromptWithAttachments = buildPromptWithAttachmentContext();
     const artifactLinks = getInternalArtifactLinks();
     const normalizedLeadingQuestion = leadingQuestion.trim();
@@ -1407,19 +1386,15 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         message.includes('timeout') ||
         message.includes('econnrefused');
       if (status === 401 || status === 403) {
-        toast.error(
-          t('interview.insightCreatorModal.noPermissionToGenerateInsights'),
-          { duration: 6000 }
-        );
+        toast.error(t('interview.insightCreatorModal.noPermissionToGenerateInsights'), {
+          duration: 6000,
+        });
       } else if (looksLikeLlm) {
-        toast.error(
-          t('interview.insightCreatorModal.generationFailedTheLlmModel'),
-          { duration: 6000 }
-        );
+        toast.error(t('interview.insightCreatorModal.generationFailedTheLlmModel'), {
+          duration: 6000,
+        });
       } else {
-        toast.error(
-          t('interview.insightCreatorModal.failedToGenerateInsightsCheck')
-        );
+        toast.error(t('interview.insightCreatorModal.failedToGenerateInsightsCheck'));
       }
       console.error('[InsightCreatorModal] Failed to generate insight:', error);
     } finally {
@@ -1557,7 +1532,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const selectedPeopleSummary =
     selectedRespondents.length === 0
       ? t('interview.insightCreatorModal.allPeople')
-      : t('interview.insightCreatorModal.selectedPeopleCount', { count: selectedRespondents.length });
+      : t('interview.insightCreatorModal.selectedPeopleCount', {
+          count: selectedRespondents.length,
+        });
 
   const isLastStep = currentStep === CREATOR_STEPS.length - 1;
   const canGenerate = !isGenerating;
@@ -1725,7 +1702,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             {t(`interview.insightCreatorModal.analysisTypeName.${type.id}`, type.name)}
           </div>
           <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-            {t(`interview.insightCreatorModal.analysisTypeDescription.${type.id}`, type.description)}
+            {t(
+              `interview.insightCreatorModal.analysisTypeDescription.${type.id}`,
+              type.description
+            )}
           </p>
         </div>
         <StyledCheck checked={isSelected} />
@@ -1749,9 +1729,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={
-              t('interview.insightCreatorModal.eGDigitalTransformationAnalysis')
-            }
+            placeholder={t('interview.insightCreatorModal.eGDigitalTransformationAnalysis')}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
           {renderSimilarWarning()}
@@ -1772,7 +1750,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               {t('interview.insightCreatorModal.outputType')} *
             </label>
             <span className="text-xs text-c-info">
-              {t('interview.insightCreatorModal.selectedCountColon', { count: selectedTypes.length })}
+              {t('interview.insightCreatorModal.selectedCountColon', {
+                count: selectedTypes.length,
+              })}
             </span>
           </div>
           <div className="max-h-[280px] space-y-3 overflow-auto pr-1">
@@ -1782,7 +1762,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               return (
                 <div key={cat.key} className="space-y-1.5">
                   <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t(`interview.insightCreatorModal.analysisCategoryLabel.${cat.key}`, cat.labelEn)}
+                    {t(
+                      `interview.insightCreatorModal.analysisCategoryLabel.${cat.key}`,
+                      cat.labelEn
+                    )}
                   </p>
                   {items.map(renderTypeRow)}
                 </div>
@@ -1803,11 +1786,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         <div className="mb-2 flex items-center justify-between">
           <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
             {t('interview.insightCreatorModal.selectPeople')}
-            <InfoHint
-              text={
-                t('interview.insightCreatorModal.narrowTheAnalysisToSelected')
-              }
-            />
+            <InfoHint text={t('interview.insightCreatorModal.narrowTheAnalysisToSelected')} />
           </label>
           <button
             type="button"
@@ -1932,9 +1911,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               type="button"
               onClick={() => startNewLensFromBasket(activeBasket.id)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-2 text-sm font-medium text-c-bg shadow-sm shadow-black/10 transition-colors hover:bg-c-text-secondary"
-              title={
-                t('interview.insightCreatorModal.reuseTheseSourcesAndJump')
-              }
+              title={t('interview.insightCreatorModal.reuseTheseSourcesAndJump')}
             >
               <Sparkles size={14} />
               {t('interview.insightCreatorModal.newLens')}
@@ -2157,9 +2134,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             filterDepartment ||
             filterDateFrom ||
             filterDateTo) && (
-            <p className="text-xs mt-1">
-              {t('interview.insightCreatorModal.tryChangingFilters')}
-            </p>
+            <p className="text-xs mt-1">{t('interview.insightCreatorModal.tryChangingFilters')}</p>
           )}
         </div>
       ) : (
@@ -2243,11 +2218,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {t('interview.insightCreatorModal.analysisMode')}
-          <InfoHint
-            text={
-              t('interview.insightCreatorModal.promptLensControlsHowThe')
-            }
-          />
+          <InfoHint text={t('interview.insightCreatorModal.promptLensControlsHowThe')} />
         </label>
         <div className="max-h-56 space-y-1.5 overflow-auto pr-1">
           {ANALYSIS_MODE_OPTIONS.map((mode) => {
@@ -2284,7 +2255,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           {t('interview.insightCreatorModal.analysisModesArePromptLenses')}
         </p>
         <p className="mt-2 text-xs text-c-info">
-          {t('interview.insightCreatorModal.selectedCountColon', { count: selectedAnalysisModes.length })}
+          {t('interview.insightCreatorModal.selectedCountColon', {
+            count: selectedAnalysisModes.length,
+          })}
         </p>
       </div>
 
@@ -2325,18 +2298,16 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         <p className="mt-1.5 text-xs text-c-info">
           {selectedTopicFocus.length === 0
             ? t('interview.insightCreatorModal.noSelectionGeneralConsultingSynthesis')
-            : t('interview.insightCreatorModal.selectedCountColon', { count: selectedTopicFocus.length })}
+            : t('interview.insightCreatorModal.selectedCountColon', {
+                count: selectedTopicFocus.length,
+              })}
         </p>
       </div>
 
       <div>
         <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {t('interview.insightCreatorModal.aiContextBoundary')}
-          <InfoHint
-            text={
-              t('interview.insightCreatorModal.decidesWhetherTheAiMay')
-            }
-          />
+          <InfoHint text={t('interview.insightCreatorModal.decidesWhetherTheAiMay')} />
         </div>
         <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {[
@@ -2368,10 +2339,16 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                 }`}
               >
                 <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {t(`interview.insightCreatorModal.contextModeTitle.${option.value}`, option.titleEn)}
+                  {t(
+                    `interview.insightCreatorModal.contextModeTitle.${option.value}`,
+                    option.titleEn
+                  )}
                 </div>
                 <p className="mt-0.5 line-clamp-2 text-[11px] font-normal text-slate-500 dark:text-slate-400">
-                  {t(`interview.insightCreatorModal.contextModeHint.${option.value}`, option.hintEn)}
+                  {t(
+                    `interview.insightCreatorModal.contextModeHint.${option.value}`,
+                    option.hintEn
+                  )}
                 </p>
               </button>
             );
@@ -2391,9 +2368,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           value={customPrompt}
           onChange={(e) => setCustomPrompt(e.target.value)}
           rows={3}
-          placeholder={
-            t('interview.insightCreatorModal.eGFocusOnDifferences')
-          }
+          placeholder={t('interview.insightCreatorModal.eGFocusOnDifferences')}
           className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
@@ -2401,11 +2376,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
         <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {t('interview.insightCreatorModal.contextDocuments')}
-          <InfoHint
-            text={
-              t('interview.insightCreatorModal.filesAddOrganizationProjectContext')
-            }
-          />
+          <InfoHint text={t('interview.insightCreatorModal.filesAddOrganizationProjectContext')} />
         </div>
         {/* #28 — Proper drag-and-drop zone */}
         <label
@@ -2506,7 +2477,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         )}
         <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
           <span>
-            {t('interview.insightCreatorModal.selectedDocumentsCountColon', { count: selectedContextDocumentIds.length })}
+            {t('interview.insightCreatorModal.selectedDocumentsCountColon', {
+              count: selectedContextDocumentIds.length,
+            })}
           </span>
           <button
             type="button"
@@ -2526,9 +2499,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           value={internalArtifactLinks}
           onChange={(e) => setInternalArtifactLinks(e.target.value)}
           rows={2}
-          placeholder={
-            t('interview.insightCreatorModal.pasteOneLinkOrArtifact')
-          }
+          placeholder={t('interview.insightCreatorModal.pasteOneLinkOrArtifact')}
           className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
@@ -2549,19 +2520,13 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
       <div className="rounded-xl border border-c-info/60 bg-c-info/50 p-3.5 dark:border-c-info/20 dark:bg-c-info/[0.07]">
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
           {t('interview.insightCreatorModal.leadingQuestionHypothesis')}
-          <InfoHint
-            text={
-              t('interview.insightCreatorModal.optionalPointTheAnalysisAt')
-            }
-          />
+          <InfoHint text={t('interview.insightCreatorModal.optionalPointTheAnalysisAt')} />
         </label>
         <input
           type="text"
           value={leadingQuestion}
           onChange={(event) => setLeadingQuestion(event.target.value)}
-          placeholder={
-            t('interview.insightCreatorModal.eGWhereDoOwnership')
-          }
+          placeholder={t('interview.insightCreatorModal.eGWhereDoOwnership')}
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -2572,9 +2537,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
       <Disclosure
         icon={SlidersHorizontal}
         title={t('interview.insightCreatorModal.advanced')}
-        hint={
-          t('interview.insightCreatorModal.lensTopicsAiContextDocuments')
-        }
+        hint={t('interview.insightCreatorModal.lensTopicsAiContextDocuments')}
         count={advancedCount}
         open={advancedOpen}
         onToggle={() => setAdvancedOpen((v) => !v)}

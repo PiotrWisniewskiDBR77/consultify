@@ -392,9 +392,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                         setMenuId(null);
                                       }}
                                       className={`w-4 h-4 rounded-full border transition-transform hover:scale-110 ${
-                                        project.color === c
-                                          ? 'border-c-text'
-                                          : 'border-transparent'
+                                        project.color === c ? 'border-c-text' : 'border-transparent'
                                       }`}
                                       style={{ backgroundColor: c }}
                                       title={c}

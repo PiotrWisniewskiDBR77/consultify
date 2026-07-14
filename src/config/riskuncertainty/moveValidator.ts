@@ -38,7 +38,8 @@ const round1 = (value: number) => Math.round(value * 10) / 10;
 const localize = (text: Bilingual, isPolish: boolean) => (isPolish ? text.pl : text.en);
 
 /** 1-5 numeric level → coarse high/medium/low bucket. */
-const scaleToLevel = (value: number): Level => (value >= 4 ? 'high' : value >= 2.5 ? 'medium' : 'low');
+const scaleToLevel = (value: number): Level =>
+  value >= 4 ? 'high' : value >= 2.5 ? 'medium' : 'low';
 
 const isAccepted = (item: { proposalStatus?: string }): boolean =>
   item.proposalStatus !== 'rejected' && item.proposalStatus !== 'rethinking';
@@ -322,7 +323,9 @@ export function buildW2MoveSequence(data: RiskUncertaintyData): SequencedMove[] 
       },
       rationale: {
         pl: `„${topRisk.title}" ma ekspozycję P${topRisk.probability}×I${topRisk.impact}=${topRisk.exposure}/25${
-          topRisk.responseReady ? '' : ' i nie ma jeszcze pełnej reakcji (plan, właściciel, trigger)'
+          topRisk.responseReady
+            ? ''
+            : ' i nie ma jeszcze pełnej reakcji (plan, właściciel, trigger)'
         } — to tu koncentrujecie zdolność reakcji.`,
         en: `"${topRisk.title}" carries exposure P${topRisk.probability}×I${topRisk.impact}=${topRisk.exposure}/25${
           topRisk.responseReady ? '' : ' and lacks a full response (plan, owner, trigger)'

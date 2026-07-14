@@ -149,21 +149,14 @@ function mapCfRule(rule: ConditionalFormattingRule, ruleIndex: number): any {
           type: 'colorScale',
           priority: ruleIndex + 1,
           cfvo: [{ type: 'min' }, { type: 'max' }],
-          color: [
-            { argb: hexToArgb(rule.colors[0]) },
-            { argb: hexToArgb(rule.colors[1]) },
-          ],
+          color: [{ argb: hexToArgb(rule.colors[0]) }, { argb: hexToArgb(rule.colors[1]) }],
         };
       }
       // 3-color
       return {
         type: 'colorScale',
         priority: ruleIndex + 1,
-        cfvo: [
-          { type: 'min' },
-          { type: 'percentile', value: 50 },
-          { type: 'max' },
-        ],
+        cfvo: [{ type: 'min' }, { type: 'percentile', value: 50 }, { type: 'max' }],
         color: [
           { argb: hexToArgb(rule.colors[0]) },
           { argb: hexToArgb(rule.colors[1]) },
@@ -354,8 +347,7 @@ export async function buildWorkbookBuffer(
 
     // Default banded rows (zebra) when the schema didn't specify one — this is
     // exactly the "brak formatowania" gap the LLM leaves.
-    const effectiveAlternate =
-      sheetDef.alternateRowColor ?? (applyStyling ? ZEBRA_HEX : undefined);
+    const effectiveAlternate = sheetDef.alternateRowColor ?? (applyStyling ? ZEBRA_HEX : undefined);
 
     // Consultant depth: which text columns read as status/health columns and
     // should get auto RAG semaphores? Only when styling is on AND the schema did
@@ -368,10 +360,7 @@ export async function buildWorkbookBuffer(
     const semaphoreCols = applyStyling
       ? sheetDef.columns
           .map((c, i) => ({ col: c, letter: colLetterLocal(i + 1) }))
-          .filter(
-            ({ col, letter }) =>
-              looksLikeStatusColumn(col) && !explicitCfLetters.has(letter)
-          )
+          .filter(({ col, letter }) => looksLikeStatusColumn(col) && !explicitCfLetters.has(letter))
           .map(({ col }) => col.key)
       : [];
     const semaphoreColSet = new Set(semaphoreCols);
@@ -449,11 +438,7 @@ export async function buildWorkbookBuffer(
         // Consultant depth: auto RAG semaphore on status columns, ONLY where the
         // schema left the cell/column unstyled (never clobber an explicit fill or
         // a select chip). Fills the "raw status text" gap the LLM leaves.
-        if (
-          semaphoreColSet.has(col.key) &&
-          !cellDef.style?.bgColor &&
-          !col.style?.bgColor
-        ) {
+        if (semaphoreColSet.has(col.key) && !cellDef.style?.bgColor && !col.style?.bgColor) {
           const sem = classifyStatus(cellDef.value);
           if (sem) {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: sem.fill } };
@@ -462,7 +447,11 @@ export async function buildWorkbookBuffer(
               color: { argb: sem.font },
               ...(sem.bold ? { bold: true } : {}),
             };
-            cell.alignment = { vertical: 'middle', ...(cell.alignment ?? {}), horizontal: 'center' };
+            cell.alignment = {
+              vertical: 'middle',
+              ...(cell.alignment ?? {}),
+              horizontal: 'center',
+            };
           }
         }
 
@@ -681,24 +670,22 @@ const TABLE_TYPE_MAP: Record<string, NonNullable<ColumnDef['type']>> = {
   rating: 'rating',
 };
 
-function mapTableColumnType(
-  fieldType: string
-): NonNullable<ColumnDef['type']> {
+function mapTableColumnType(fieldType: string): NonNullable<ColumnDef['type']> {
   return TABLE_TYPE_MAP[fieldType] ?? 'text';
 }
 
 /** Normalize a label for tolerant select-option matching. */
 function normalizeLabel(v: unknown): string {
-  return String(v ?? '').trim().toLowerCase();
+  return String(v ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 /**
  * Build a label→hex lookup for select-type fields so each seed cell whose value
  * matches an option gets that option's color as its cell fill.
  */
-function buildSelectColorIndex(
-  fields: TableField[]
-): Map<string, Map<string, string>> {
+function buildSelectColorIndex(fields: TableField[]): Map<string, Map<string, string>> {
   const idx = new Map<string, Map<string, string>>();
   for (const f of fields) {
     if ((f.type === 'singleSelect' || f.type === 'multiSelect') && f.options?.length) {
@@ -809,7 +796,15 @@ export function tableSchemaToWorkbook(
       return mapTableSheet(name, s.fields, s.seedRows, s.conditionalFormatting, meta.headerColor);
     });
   } else {
-    sheets = [mapTableSheet('Sheet1', table.fields, table.seedRows, table.conditionalFormatting, meta.headerColor)];
+    sheets = [
+      mapTableSheet(
+        'Sheet1',
+        table.fields,
+        table.seedRows,
+        table.conditionalFormatting,
+        meta.headerColor
+      ),
+    ];
   }
 
   return {

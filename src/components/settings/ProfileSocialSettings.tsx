@@ -200,23 +200,17 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
               >
                 <Icon
                   size={20}
-                  className={
-                    isSelected ? 'text-c-text-secondary' : 'text-c-text-secondary'
-                  }
+                  className={isSelected ? 'text-c-text-secondary' : 'text-c-text-secondary'}
                 />
                 <div>
                   <div
                     className={`text-sm font-medium ${
-                      isSelected
-                        ? 'text-c-text'
-                        : 'text-c-text-secondary'
+                      isSelected ? 'text-c-text' : 'text-c-text-secondary'
                     }`}
                   >
                     {option.label}
                   </div>
-                  <div className="text-xs text-c-text-muted mt-0.5">
-                    {option.description}
-                  </div>
+                  <div className="text-xs text-c-text-muted mt-0.5">{option.description}</div>
                 </div>
               </button>
             );

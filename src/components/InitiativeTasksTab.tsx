@@ -276,15 +276,11 @@ export const InitiativeTasksTab: React.FC<Props> = ({
         )}
 
         {loading ? (
-          <div className="text-center py-10 text-c-text-muted">
-            Loading tasks...
-          </div>
+          <div className="text-center py-10 text-c-text-muted">Loading tasks...</div>
         ) : filteredTasks.length === 0 ? (
           <div className="text-center py-10 border-2 border-dashed border-c-border rounded-xl bg-c-surface-raised">
             <CheckCircle size={32} className="mx-auto mb-2 text-c-text-secondary" />
-            <p className="text-c-text-muted">
-              No tasks found. Create one to get started.
-            </p>
+            <p className="text-c-text-muted">No tasks found. Create one to get started.</p>
           </div>
         ) : (
           filteredTasks.map((task) => (

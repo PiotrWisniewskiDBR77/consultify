@@ -64,9 +64,11 @@ export function TabeleSchemaBlock({ field, onClickProposal }: TabeleSchemaBlockP
                   // placeholder that read identically on every row (HOTFIX #62 UI-M6).
                   t('kimi.tabele.schema.typeCaption', {
                     defaultValue: '{{fieldType}} field',
-                    fieldType: field.fieldType || t('kimi.tabele.schema.defaultType', {
-                      defaultValue: 'text',
-                    }),
+                    fieldType:
+                      field.fieldType ||
+                      t('kimi.tabele.schema.defaultType', {
+                        defaultValue: 'text',
+                      }),
                   })}
           </p>
         </div>

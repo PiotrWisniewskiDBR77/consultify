@@ -475,9 +475,13 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                           : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      {filter === 'overdue' && <AlertCircle size={14} className="text-danger-500" />}
+                      {filter === 'overdue' && (
+                        <AlertCircle size={14} className="text-danger-500" />
+                      )}
                       {filter === 'blocking' && <Clock size={14} className="text-amber-500" />}
-                      {filter === 'critical' && <TrendingUp size={14} className="text-danger-500" />}
+                      {filter === 'critical' && (
+                        <TrendingUp size={14} className="text-danger-500" />
+                      )}
                       {filter === 'high' && <TrendingUp size={14} className="text-amber-500" />}
                       {filter === 'all'
                         ? t('decisions.filterAll', 'All')

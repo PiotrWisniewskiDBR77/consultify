@@ -112,15 +112,14 @@ function quantileSorted(sorted: number[], q: number): number {
  */
 export function zScoreAnomalies(
   values: number[],
-  threshold: number = DEFAULT_Z_THRESHOLD,
+  threshold: number = DEFAULT_Z_THRESHOLD
 ): ZScoreAnomaly[] {
   const clean = cleanValues(values);
   const n = clean.length;
   if (n < 2) return [];
 
   const mean = clean.reduce((acc, p) => acc + p.value, 0) / n;
-  const variance =
-    clean.reduce((acc, p) => acc + (p.value - mean) ** 2, 0) / n;
+  const variance = clean.reduce((acc, p) => acc + (p.value - mean) ** 2, 0) / n;
   const stddev = Math.sqrt(variance);
 
   // Wszystkie wartości równe → brak rozrzutu → brak anomalii.
@@ -147,14 +146,14 @@ export function zScoreAnomalies(
  *
  * Indeksy w wyniku odnoszą się do oryginalnego szeregu wejściowego.
  */
-export function iqrAnomalies(
-  values: number[],
-  k: number = DEFAULT_IQR_K,
-): IqrAnomaly[] {
+export function iqrAnomalies(values: number[], k: number = DEFAULT_IQR_K): IqrAnomaly[] {
   const clean = cleanValues(values);
   if (clean.length < 2) return [];
 
-  const sorted = clean.map((p) => p.value).slice().sort((a, b) => a - b);
+  const sorted = clean
+    .map((p) => p.value)
+    .slice()
+    .sort((a, b) => a - b);
   const q1 = quantileSorted(sorted, 0.25);
   const q3 = quantileSorted(sorted, 0.75);
   const iqr = q3 - q1;
@@ -189,7 +188,7 @@ export function iqrAnomalies(
  */
 export function detectAnomalies(
   values: number[],
-  opts?: DetectAnomaliesOptions,
+  opts?: DetectAnomaliesOptions
 ): DetectAnomaliesResult {
   const zThreshold = opts?.zThreshold ?? DEFAULT_Z_THRESHOLD;
   const iqrK = opts?.iqrK ?? DEFAULT_IQR_K;

@@ -42,11 +42,7 @@ vi.mock('../../../services/notificationService.js', () => ({
 }));
 
 import { KPIStatusValues } from '../../../types/resultsROIContinuity.js';
-import {
-  getKPITrend,
-  getROIPortfolioSummary,
-  updateKPIStatus,
-} from '../resultsROIService.js';
+import { getKPITrend, getROIPortfolioSummary, updateKPIStatus } from '../resultsROIService.js';
 
 const ORG_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 const OTHER_ORG_ID = 'ffffffff-0000-4111-8222-333333333333';

@@ -24,8 +24,8 @@ import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import { ErrorState, LoadingState, MetaChip } from '../ui/primitives';
 import { CompetencyCatalog } from './CompetencyCatalog';
 import type { OrganizationSection } from './OrganizationSidebar';
@@ -123,9 +123,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
       id: 'name',
       label: t('organization.members.name', 'Name'),
       width: '200px',
-      render: (row) => (
-        <span className="font-medium text-c-text">{row.name}</span>
-      ),
+      render: (row) => <span className="font-medium text-c-text">{row.name}</span>,
     },
     {
       id: 'email',
@@ -281,9 +279,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             <h3 className="text-sm font-semibold text-c-text">
               {t('organization.billing.planTitle', 'Current Plan')}
             </h3>
-            <p className="text-2xl font-bold mt-1 text-c-text capitalize">
-              {plan}
-            </p>
+            <p className="text-2xl font-bold mt-1 text-c-text capitalize">{plan}</p>
             <p className="text-sm text-c-text-muted mt-1">
               {isTrialPlan
                 ? t(
@@ -335,9 +331,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           {t('organization.billing.tokensTitle', 'Token Balance')}
         </h3>
         <div className="mt-3 flex items-end gap-3">
-          <span className="text-3xl font-bold text-c-text">
-            {tokens.toLocaleString()}
-          </span>
+          <span className="text-3xl font-bold text-c-text">{tokens.toLocaleString()}</span>
           <span className="text-sm text-c-text-muted pb-1">
             / {tokenLimit.toLocaleString()} {t('organization.billing.tokensUnit', 'tokens')}
           </span>

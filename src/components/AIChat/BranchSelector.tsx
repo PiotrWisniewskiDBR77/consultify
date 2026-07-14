@@ -92,7 +92,10 @@ const BranchItem: React.FC<BranchItemProps> = ({
       `}
       onClick={() => !isEditing && onSelect()}
     >
-      <GitBranch size={14} className={isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'} />
+      <GitBranch
+        size={14}
+        className={isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}
+      />
 
       {isEditing ? (
         <input

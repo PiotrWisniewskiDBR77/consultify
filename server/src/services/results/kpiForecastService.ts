@@ -44,9 +44,7 @@ const EPS = 1e-9;
 
 function sanitize(points: TrendPoint[] | null | undefined): TrendPoint[] {
   if (!Array.isArray(points)) return [];
-  return points.filter(
-    (p) => p != null && Number.isFinite(p.t) && Number.isFinite(p.value),
-  );
+  return points.filter((p) => p != null && Number.isFinite(p.t) && Number.isFinite(p.value));
 }
 
 /**
@@ -89,7 +87,7 @@ export function linearTrend(points: Array<{ t: number; value: number }>): Linear
  */
 export function forecastValue(
   points: Array<{ t: number; value: number }>,
-  atT: number,
+  atT: number
 ): number | null {
   const pts = sanitize(points);
   if (pts.length === 0 || !Number.isFinite(atT)) return null;
@@ -155,9 +153,7 @@ export function projectToTarget(input: ProjectToTargetInput): ProjectToTargetRes
 
   // Czy obecna prognoza (na ostatnim t) już spełnia target?
   const alreadyMet =
-    direction === 'HIGHER_IS_BETTER'
-      ? projectedAtLast >= target
-      : projectedAtLast <= target;
+    direction === 'HIGHER_IS_BETTER' ? projectedAtLast >= target : projectedAtLast <= target;
 
   // Punkt przecięcia z targetem: slope * t + intercept = target.
   let crossT: number | null = null;
@@ -169,8 +165,7 @@ export function projectToTarget(input: ProjectToTargetInput): ProjectToTargetRes
   }
 
   // Czy trend zmierza we właściwą stronę względem kierunku?
-  const movingTowardTarget =
-    direction === 'HIGHER_IS_BETTER' ? trend.slope > 0 : trend.slope < 0;
+  const movingTowardTarget = direction === 'HIGHER_IS_BETTER' ? trend.slope > 0 : trend.slope < 0;
 
   let willHitTarget: boolean;
   let etaT: number | null;
@@ -199,10 +194,7 @@ export function projectToTarget(input: ProjectToTargetInput): ProjectToTargetRes
  * Alert wyprzedzający — sygnalizuje, gdy prognoza nie trafi w target
  * (w ogóle, lub nie przed podanym deadline).
  */
-export function leadingAlert(
-  proj: ProjectToTargetResult,
-  deadlineT?: number,
-): LeadingAlertResult {
+export function leadingAlert(proj: ProjectToTargetResult, deadlineT?: number): LeadingAlertResult {
   if (!proj) {
     return { alert: false, message: 'Brak prognozy.' };
   }

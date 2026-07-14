@@ -71,9 +71,7 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
             className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
           />
         ) : (
-          <span className="text-xs font-medium text-c-text">
-            {data?.label || 'Document'}
-          </span>
+          <span className="text-xs font-medium text-c-text">{data?.label || 'Document'}</span>
         )}
       </div>
 

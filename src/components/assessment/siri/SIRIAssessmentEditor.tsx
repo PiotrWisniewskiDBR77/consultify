@@ -231,9 +231,7 @@ const DimensionCard: React.FC<{
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="text-xs text-c-text-muted mt-2 line-clamp-2">
-        {dimension.description}
-      </p>
+      <p className="text-xs text-c-text-muted mt-2 line-clamp-2">{dimension.description}</p>
     </button>
   );
 };
@@ -313,10 +311,7 @@ const LevelSelector: React.FC<{
         {SIRI_MATURITY_LEVELS[currentLevel]?.indicators && (
           <ul className="mt-3 space-y-1">
             {SIRI_MATURITY_LEVELS[currentLevel].indicators?.map((indicator, i) => (
-              <li
-                key={i}
-                className="text-xs text-c-text-muted flex items-start gap-2"
-              >
+              <li key={i} className="text-xs text-c-text-muted flex items-start gap-2">
                 <CheckCircle2 size={12} className="text-c-success mt-0.5 shrink-0" />
                 {indicator}
               </li>
@@ -342,9 +337,7 @@ const PrioritisationAreaCard: React.FC<{
     <div className="bg-c-surface dark:bg-c-bg rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h4 className="font-medium text-c-text">
-            {isPolish ? area.namePL : area.name}
-          </h4>
+          <h4 className="font-medium text-c-text">{isPolish ? area.namePL : area.name}</h4>
           <p className="text-xs text-c-text-muted">{area.description}</p>
         </div>
         <div className="text-lg font-bold text-c-accent">{state.score}</div>
@@ -395,9 +388,7 @@ const ScoreSummaryPanel: React.FC<{
   return (
     <div className="bg-c-surface-raised rounded-xl p-4 space-y-4">
       <div className="text-center">
-        <div className="text-4xl font-bold text-c-text">
-          {overallScore.toFixed(1)}
-        </div>
+        <div className="text-4xl font-bold text-c-text">{overallScore.toFixed(1)}</div>
         <div className="text-sm text-c-text-muted">
           {isPolish ? 'Wynik ogólny' : 'Overall Score'} / 5
         </div>
@@ -667,9 +658,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
             <div className="max-w-2xl mx-auto space-y-6">
               {/* Dimension Header */}
               <div>
-                <h3 className="text-2xl font-bold text-c-text">
-                  {activeDimension.name}
-                </h3>
+                <h3 className="text-2xl font-bold text-c-text">{activeDimension.name}</h3>
                 <p className="text-c-text-secondary dark:text-c-text-muted mt-2">
                   {activeDimension.description}
                 </p>
@@ -762,7 +751,9 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
 
               {/* Matrix Table */}
               <div className="overflow-x-auto">
-                <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full border-collapse">
+                <table
+                  /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full border-collapse"
+                >
                   <thead>
                     <tr>
                       <th className="p-3 text-left bg-c-surface-raised border border-c-border-subtle">
@@ -774,9 +765,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                           className="p-3 text-center bg-c-surface-raised border border-c-border-subtle min-w-[100px]"
                         >
                           <div className="font-bold">{level.level}</div>
-                          <div className="text-xs text-c-text-muted">
-                            {level.title}
-                          </div>
+                          <div className="text-xs text-c-text-muted">{level.title}</div>
                         </th>
                       ))}
                     </tr>

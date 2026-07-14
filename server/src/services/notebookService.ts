@@ -13,12 +13,12 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
-import PDFParserService from './pdfParserService.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { embeddingService } from './ai/embeddingService.js';
 import { persistNotebookSourceFile } from './notebookSourceFileService.js';
+import PDFParserService from './pdfParserService.js';
 import { P07_PROVENANCE_LANGUAGE, type P07Provenance } from './v8/notebookCanon.js';
 
 // ============================================================
@@ -782,9 +782,7 @@ class NotebookService {
     // into a bogus `$1`, shifting every other param → 42P18 "could not determine
     // data type of parameter $1" (and it was a SQL-injection vector). The rank
     // expression sits in SELECT, so its bind goes FIRST in the param list.
-    const rankExpr = isPg
-      ? `ts_rank(np.search_vector, plainto_tsquery('simple', ?))`
-      : '1.0';
+    const rankExpr = isPg ? `ts_rank(np.search_vector, plainto_tsquery('simple', ?))` : '1.0';
     const finalParams = isPg ? [ftsQueryParam, ...params] : params;
 
     const rows =

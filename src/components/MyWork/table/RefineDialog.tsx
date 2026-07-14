@@ -136,9 +136,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
           <p className="text-[11px] font-medium text-c-text-muted uppercase tracking-wider mb-1">
             {isPl ? 'Aktualna propozycja' : 'Current proposal'}
           </p>
-          <p className="text-xs text-c-text leading-relaxed line-clamp-3">
-            {proposalSummary}
-          </p>
+          <p className="text-xs text-c-text leading-relaxed line-clamp-3">{proposalSummary}</p>
         </div>
 
         {/* Refinement input */}

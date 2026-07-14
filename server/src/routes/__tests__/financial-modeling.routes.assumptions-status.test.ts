@@ -95,7 +95,13 @@ describe('GET /api/financial-modeling/models/:id/assumptions-status (#82f)', () 
           needsReview: true,
         },
       ],
-      coverage: { modelType: 'financial_model.3stmt', requiredCount: 10, presentCount: 8, coverage: 0.8, complete: false },
+      coverage: {
+        modelType: 'financial_model.3stmt',
+        requiredCount: 10,
+        presentCount: 8,
+        coverage: 0.8,
+        complete: false,
+      },
     });
 
     const res = await request(createApp()).get(

@@ -319,9 +319,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 </>
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-slate-700 dark:text-slate-400">
-                    —
-                  </span>
+                  <span className="text-3xl font-bold text-slate-700 dark:text-slate-400">—</span>
                   <span className="text-sm font-semibold mt-1 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {t('executive.health.noData', 'No data')}
                   </span>

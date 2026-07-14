@@ -179,7 +179,11 @@ export function computeDeviation(
   // Percent-based bands when we have a non-zero projection; otherwise fall back
   // to "any non-zero absolute gap = off_track".
   const magnitude =
-    deviationPercent != null ? Math.abs(deviationPercent) : Math.abs(deviationAbsolute) > 0 ? Infinity : 0;
+    deviationPercent != null
+      ? Math.abs(deviationPercent)
+      : Math.abs(deviationAbsolute) > 0
+        ? Infinity
+        : 0;
 
   let severity: DeviationSeverity = 'on_track';
   if (magnitude > offTrackPct) severity = 'off_track';

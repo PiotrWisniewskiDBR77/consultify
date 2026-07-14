@@ -260,9 +260,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                 {new Date(msg.createdAt).toLocaleTimeString()}
               </span>
             </div>
-            <p className="text-sm text-[var(--c-text)] whitespace-pre-wrap">
-              {msg.content}
-            </p>
+            <p className="text-sm text-[var(--c-text)] whitespace-pre-wrap">{msg.content}</p>
           </div>
         ))}
         <div ref={messagesEndRef} />

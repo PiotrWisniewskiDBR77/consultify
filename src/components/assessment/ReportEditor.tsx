@@ -29,6 +29,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { LoadingState } from '@/components/ui/primitives';
+
 import { buildDRDVisualizationDataFromAxes } from '../../services/drdVizAdapter';
 import {
   buildADMAAssessmentData,
@@ -482,170 +483,172 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           </div>
         </div>
       ) : (
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-6 space-y-8">
-          {/* Gap Analysis Summary (Read-only) */}
-          {gapSummary.length > 0 && (
-            <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-              <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                <Target size={20} className="text-primary-500" />
-                Podsumowanie Gap Analysis
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {gapSummary.slice(0, 4).map((item) => (
-                  <div
-                    key={item.axis}
-                    className="bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-navy-700"
-                  >
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{item.label}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-navy-900 dark:text-white">
-                        {item.actual}
-                      </span>
-                      <TrendingUp size={16} className="text-primary-500" />
-                      <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                        {item.target}
-                      </span>
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-5xl mx-auto p-6 space-y-8">
+            {/* Gap Analysis Summary (Read-only) */}
+            {gapSummary.length > 0 && (
+              <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
+                <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Target size={20} className="text-primary-500" />
+                  Podsumowanie Gap Analysis
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {gapSummary.slice(0, 4).map((item) => (
+                    <div
+                      key={item.axis}
+                      className="bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-navy-700"
+                    >
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        {item.label}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-navy-900 dark:text-white">
+                          {item.actual}
+                        </span>
+                        <TrendingUp size={16} className="text-primary-500" />
+                        <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                          {item.target}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Gap: {item.gap} poziomów
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Gap: {item.gap} poziomów
-                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Executive Summary */}
+            <div>
+              <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
+                <FileText size={16} className="text-primary-500" />
+                Executive Summary
+              </label>
+              <textarea
+                value={executiveSummary}
+                onChange={(e) => setExecutiveSummary(e.target.value)}
+                disabled={isReadOnly}
+                placeholder="Podsumowanie wykonawcze raportu..."
+                rows={6}
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+              />
+            </div>
+
+            {/* Key Findings */}
+            <div>
+              <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
+                <Lightbulb size={16} className="text-amber-500" />
+                Kluczowe Wnioski ({keyFindings.length})
+              </label>
+              <div className="space-y-2 mb-3">
+                {keyFindings.map((finding, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-500/20"
+                  >
+                    <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      {index + 1}
+                    </span>
+                    <p className="flex-1 text-sm text-navy-900 dark:text-white">{finding}</p>
+                    {!isReadOnly && (
+                      <button
+                        onClick={() => removeFinding(index)}
+                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Executive Summary */}
-          <div>
-            <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-              <FileText size={16} className="text-primary-500" />
-              Executive Summary
-            </label>
-            <textarea
-              value={executiveSummary}
-              onChange={(e) => setExecutiveSummary(e.target.value)}
-              disabled={isReadOnly}
-              placeholder="Podsumowanie wykonawcze raportu..."
-              rows={6}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
-            />
-          </div>
-
-          {/* Key Findings */}
-          <div>
-            <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-              <Lightbulb size={16} className="text-amber-500" />
-              Kluczowe Wnioski ({keyFindings.length})
-            </label>
-            <div className="space-y-2 mb-3">
-              {keyFindings.map((finding, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-500/20"
-                >
-                  <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    {index + 1}
-                  </span>
-                  <p className="flex-1 text-sm text-navy-900 dark:text-white">{finding}</p>
-                  {!isReadOnly && (
-                    <button
-                      onClick={() => removeFinding(index)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
+              {!isReadOnly && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newFinding}
+                    onChange={(e) => setNewFinding(e.target.value)}
+                    placeholder="Dodaj nowy wniosek..."
+                    className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 text-sm"
+                    onKeyDown={(e) => e.key === 'Enter' && addFinding()}
+                  />
+                  <button
+                    onClick={addFinding}
+                    disabled={!newFinding.trim()}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    <Plus size={16} />
+                    Dodaj
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
-            {!isReadOnly && (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newFinding}
-                  onChange={(e) => setNewFinding(e.target.value)}
-                  placeholder="Dodaj nowy wniosek..."
-                  className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 text-sm"
-                  onKeyDown={(e) => e.key === 'Enter' && addFinding()}
-                />
-                <button
-                  onClick={addFinding}
-                  disabled={!newFinding.trim()}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                >
-                  <Plus size={16} />
-                  Dodaj
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* Recommendations */}
-          <div>
-            <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-              <Sparkles size={16} className="text-green-500" />
-              Rekomendacje ({recommendations.length})
-            </label>
-            <div className="space-y-2 mb-3">
-              {recommendations.map((rec, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-500/20"
-                >
-                  <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    {index + 1}
-                  </span>
-                  <p className="flex-1 text-sm text-navy-900 dark:text-white">{rec}</p>
-                  {!isReadOnly && (
-                    <button
-                      onClick={() => removeRecommendation(index)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
+            {/* Recommendations */}
+            <div>
+              <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
+                <Sparkles size={16} className="text-green-500" />
+                Rekomendacje ({recommendations.length})
+              </label>
+              <div className="space-y-2 mb-3">
+                {recommendations.map((rec, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-500/20"
+                  >
+                    <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      {index + 1}
+                    </span>
+                    <p className="flex-1 text-sm text-navy-900 dark:text-white">{rec}</p>
+                    {!isReadOnly && (
+                      <button
+                        onClick={() => removeRecommendation(index)}
+                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {!isReadOnly && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newRecommendation}
+                    onChange={(e) => setNewRecommendation(e.target.value)}
+                    placeholder="Dodaj nową rekomendację..."
+                    className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 text-sm"
+                    onKeyDown={(e) => e.key === 'Enter' && addRecommendation()}
+                  />
+                  <button
+                    onClick={addRecommendation}
+                    disabled={!newRecommendation.trim()}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-400 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    <Plus size={16} />
+                    Dodaj
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
-            {!isReadOnly && (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newRecommendation}
-                  onChange={(e) => setNewRecommendation(e.target.value)}
-                  placeholder="Dodaj nową rekomendację..."
-                  className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 text-sm"
-                  onKeyDown={(e) => e.key === 'Enter' && addRecommendation()}
-                />
-                <button
-                  onClick={addRecommendation}
-                  disabled={!newRecommendation.trim()}
-                  className="px-4 py-2 bg-green-500 hover:bg-green-400 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                >
-                  <Plus size={16} />
-                  Dodaj
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2">
-              Notatki dodatkowe
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              disabled={isReadOnly}
-              placeholder="Dodatkowe uwagi i notatki..."
-              rows={4}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
-            />
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2">
+                Notatki dodatkowe
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                disabled={isReadOnly}
+                placeholder="Dodatkowe uwagi i notatki..."
+                rows={4}
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+              />
+            </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   );

@@ -136,7 +136,9 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
   const urgency = card.urgency ?? 'none';
   const hasMenu = !!(card.rowMenuActions?.length || card.rowMenuSections?.length);
   const accentStyle =
-    urgency === 'none' && card.accentColorVar ? { borderLeftColor: card.accentColorVar } : undefined;
+    urgency === 'none' && card.accentColorVar
+      ? { borderLeftColor: card.accentColorVar }
+      : undefined;
 
   return (
     <div
@@ -164,7 +166,11 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
             className="shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 data-[open=true]:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
-            <RowActionsMenu actions={card.rowMenuActions} sections={card.rowMenuSections} size="sm" />
+            <RowActionsMenu
+              actions={card.rowMenuActions}
+              sections={card.rowMenuSections}
+              size="sm"
+            />
           </div>
         ) : null}
       </div>
@@ -240,7 +246,10 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
             return (
               <span
                 key={metric.id}
-                className={cn('inline-flex shrink-0 items-center gap-1 text-[11px] font-medium', toneClass)}
+                className={cn(
+                  'inline-flex shrink-0 items-center gap-1 text-[11px] font-medium',
+                  toneClass
+                )}
               >
                 {Icon ? <Icon size={12} className="shrink-0" aria-hidden="true" /> : null}
                 {metric.label}

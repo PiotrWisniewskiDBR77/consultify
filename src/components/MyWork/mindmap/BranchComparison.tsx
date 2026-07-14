@@ -159,7 +159,10 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
             </div>
             <div className="space-y-1 max-h-[200px] overflow-y-auto">
               {stats.nodeLabels.map((label, idx) => (
-                <div key={idx} className="text-[10px] text-c-text-secondary dark:text-c-text-muted truncate">
+                <div
+                  key={idx}
+                  className="text-[10px] text-c-text-secondary dark:text-c-text-muted truncate"
+                >
                   {label}
                 </div>
               ))}

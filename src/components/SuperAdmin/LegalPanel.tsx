@@ -183,9 +183,7 @@ export const LegalPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-c-text">
-            Legal Documents
-          </h2>
+          <h2 className="text-lg font-semibold text-c-text">Legal Documents</h2>
           <p className="text-sm text-c-text-secondary">
             Manage versions, activation status, and publication of legal documents.
           </p>
@@ -214,10 +212,7 @@ export const LegalPanel: React.FC = () => {
       </div>
 
       {actionError && (
-        <div
-          role="alert"
-          className="p-4 rounded-lg bg-c-danger/10 text-c-danger"
-        >
+        <div role="alert" className="p-4 rounded-lg bg-c-danger/10 text-c-danger">
           {actionError}
         </div>
       )}
@@ -246,7 +241,9 @@ export const LegalPanel: React.FC = () => {
                   {items.length} version{items.length === 1 ? '' : 's'}
                 </div>
               </div>
-              <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full text-left text-sm">
+              <table
+                /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full text-left text-sm"
+              >
                 <thead className="bg-c-surface-raised text-c-text-secondary text-xs uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-3 font-medium">Title</th>
@@ -262,18 +259,14 @@ export const LegalPanel: React.FC = () => {
                     return (
                       <tr key={d.id} className="hover:bg-c-surface-raised">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-c-text">
-                            {d.title || d.name || type}
-                          </div>
+                          <div className="font-medium text-c-text">{d.title || d.name || type}</div>
                           {d.change_summary && (
                             <div className="text-xs text-c-text-secondary mt-0.5">
                               {d.change_summary}
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 font-mono text-c-text-secondary">
-                          {d.version}
-                        </td>
+                        <td className="px-6 py-4 font-mono text-c-text-secondary">{d.version}</td>
                         <td className="px-6 py-4 text-c-text-secondary">
                           {formatDate(d.effective_from || d.effective_date)}
                         </td>
@@ -317,9 +310,7 @@ export const LegalPanel: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
           <div className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full">
             <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-c-text">
-                Publish Legal Document
-              </h3>
+              <h3 className="text-lg font-semibold text-c-text">Publish Legal Document</h3>
               <button
                 onClick={() => setShowPublishModal(false)}
                 className="p-1 hover:bg-c-surface-raised rounded-lg"

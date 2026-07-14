@@ -348,9 +348,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 >
                   {option.label}
                 </div>
-                <div className="text-xs text-c-text-muted mt-1">
-                  {option.description}
-                </div>
+                <div className="text-xs text-c-text-muted mt-1">{option.description}</div>
               </button>
             );
           })}

@@ -251,9 +251,7 @@ export function FormsIndex({
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-c-text">
-          {t('formsIndex.title', 'Forms')}
-        </h2>
+        <h2 className="text-lg font-semibold text-c-text">{t('formsIndex.title', 'Forms')}</h2>
         {!locked && (
           <button
             onClick={handleCreate}
@@ -286,9 +284,7 @@ export function FormsIndex({
               </div>
 
               {/* Name */}
-              <h3 className="mb-1 text-sm font-semibold text-c-text">
-                {form.name}
-              </h3>
+              <h3 className="mb-1 text-sm font-semibold text-c-text">{form.name}</h3>
               {form.description && (
                 <p className="mb-3 text-xs text-c-text-muted line-clamp-2 text-c-text-muted">
                   {form.description}
@@ -357,9 +353,7 @@ export function FormsIndex({
                           key={mode}
                           onClick={() => handleShareModeChange(form, mode)}
                           className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-c-surface-raised ${
-                            shareMode === mode
-                              ? 'font-medium text-c-accent'
-                              : 'text-c-text-muted'
+                            shareMode === mode ? 'font-medium text-c-accent' : 'text-c-text-muted'
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5" />

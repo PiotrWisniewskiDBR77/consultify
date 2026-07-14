@@ -79,9 +79,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     <div className="absolute left-0 top-full mt-1 z-overlay w-[400px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-c-text">
-            {isPl ? 'Filtry' : 'Filters'}
-          </span>
+          <span className="text-xs font-bold text-c-text">{isPl ? 'Filtry' : 'Filters'}</span>
           {filters.rules.length > 1 && (
             <button
               onClick={toggleLogic}
@@ -100,10 +98,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               {isPl ? 'Wyczyść' : 'Clear'}
             </button>
           )}
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-c-surface-raised">
             <X size={14} className="text-c-text-secondary" />
           </button>
         </div>

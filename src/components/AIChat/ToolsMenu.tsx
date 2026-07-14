@@ -210,9 +210,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     privateMode,
   } = aiConfig as any;
 
-  const activeModeCount = [deepResearch, showReasoning, textToSpeech, privateMode, aiConfig.multiAgent].filter(
-    Boolean
-  ).length;
+  const activeModeCount = [
+    deepResearch,
+    showReasoning,
+    textToSpeech,
+    privateMode,
+    aiConfig.multiAgent,
+  ].filter(Boolean).length;
 
   const AI_MODES: ToolMode[] = [
     {
@@ -368,7 +372,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 >
                   {t(mode.labelKey)}
                 </span>
-                {isEnabled && <Check size={16} className="shrink-0 text-slate-700 dark:text-slate-200" />}
+                {isEnabled && (
+                  <Check size={16} className="shrink-0 text-slate-700 dark:text-slate-200" />
+                )}
               </button>
             );
           })}

@@ -22,7 +22,10 @@ export type EdgeStrokeStyle = 'solid' | 'dashed';
 // source used by ColorPickerPopover (mindmap) — no bespoke colors introduced.
 const TAG_SWATCHES = Array.from({ length: 8 }, (_, i) => `var(--c-tag-${i + 1})`);
 
-const ARROW_OPTIONS: Array<{ id: EdgeArrowDirection; icon: React.ComponentType<{ size?: number }> }> = [
+const ARROW_OPTIONS: Array<{
+  id: EdgeArrowDirection;
+  icon: React.ComponentType<{ size?: number }>;
+}> = [
   { id: 'none', icon: Ban },
   { id: 'end', icon: ArrowRight },
   { id: 'start', icon: ArrowLeft },
@@ -90,7 +93,8 @@ export const EdgeStylePopover: React.FC<EdgeStylePopoverProps> = ({
   };
 
   const currentColor = (edge.data?.edgeColor as string | undefined) ?? null;
-  const currentStyle: EdgeStrokeStyle = edge.data?.strokeStyleOverride === 'dashed' ? 'dashed' : 'solid';
+  const currentStyle: EdgeStrokeStyle =
+    edge.data?.strokeStyleOverride === 'dashed' ? 'dashed' : 'solid';
   const currentArrow: EdgeArrowDirection =
     (edge.data?.arrowDirection as EdgeArrowDirection | undefined) ?? 'none';
 

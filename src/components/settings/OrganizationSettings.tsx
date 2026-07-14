@@ -157,11 +157,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
   };
 
   if (loading) {
-    return (
-      <div className="p-8 text-center text-c-text-muted">
-        Loading organization details...
-      </div>
-    );
+    return <div className="p-8 text-center text-c-text-muted">Loading organization details...</div>;
   }
 
   const handleCreateOrganization = async () => {
@@ -187,13 +183,8 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     return (
       <>
         <div className="p-8 text-center bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 shadow-sm">
-          <Building2
-            size={48}
-            className="mx-auto text-c-text-secondary mb-4"
-          />
-          <h3 className="text-lg font-semibold text-navy-900 mb-2">
-            No Organization Found
-          </h3>
+          <Building2 size={48} className="mx-auto text-c-text-secondary mb-4" />
+          <h3 className="text-lg font-semibold text-navy-900 mb-2">No Organization Found</h3>
           <p className="text-c-text-muted mb-6 max-w-md mx-auto">
             You are not currently a member of any organization. Create one to get started with team
             collaboration and token sharing.
@@ -271,9 +262,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             <Building2 className="text-c-accent" />
             Organization Settings
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">
-            Manage members, billing, and tokens.
-          </p>
+          <p className="text-c-text-muted text-sm mt-1">Manage members, billing, and tokens.</p>
         </div>
         {organizations.length > 1 && (
           <select
@@ -294,10 +283,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
-            <CreditCard
-              size={20}
-              className="text-c-text-muted"
-            />
+            <CreditCard size={20} className="text-c-text-muted" />
             Billing Status
           </h3>
           <div className="flex items-center justify-between mb-4">
@@ -412,9 +398,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         </div>
         <div className="max-h-64 overflow-y-auto">
           {!selectedOrg?.ledger || selectedOrg.ledger.length === 0 ? (
-            <div className="p-8 text-center text-c-text-muted text-sm">
-              No token activity yet.
-            </div>
+            <div className="p-8 text-center text-c-text-muted text-sm">No token activity yet.</div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-c-surface-raised sticky top-0">
@@ -435,7 +419,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               </thead>
               <tbody className="divide-y divide-c-border-subtle dark:divide-white/5">
                 {selectedOrg.ledger.slice(0, 10).map((entry: any) => (
-                  <tr key={entry.id} className="hover:bg-c-surface-raised dark:hover:bg-c-surface-raised">
+                  <tr
+                    key={entry.id}
+                    className="hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
+                  >
                     <td className="px-4 py-2">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
@@ -571,9 +558,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-semibold text-c-text-muted mb-1">
-                  Role
-                </label>
+                <label className="block text-xs font-semibold text-c-text-muted mb-1">Role</label>
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value)}
@@ -613,9 +598,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     {member.first_name} {member.last_name}{' '}
                     {member.user_id === currentUser.id && '(You)'}
                   </div>
-                  <div className="text-xs text-c-text-muted">
-                    {member.email || member.user_id}
-                  </div>
+                  <div className="text-xs text-c-text-muted">{member.email || member.user_id}</div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -638,9 +621,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             </div>
           ))}
           {members.length === 0 && (
-            <div className="p-8 text-center text-c-text-muted text-sm">
-              No members found.
-            </div>
+            <div className="p-8 text-center text-c-text-muted text-sm">No members found.</div>
           )}
         </div>
       </div>

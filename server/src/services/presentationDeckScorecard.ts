@@ -16,8 +16,8 @@
  * Fail-open by contract: any error / unreadable deck returns null so the list
  * falls back to the existing governance validationState badge and never breaks.
  */
-import { checkDeckQualityGates } from './presentationQualityGatesService.js';
 import logger from '../utils/Logger.js';
+import { checkDeckQualityGates } from './presentationQualityGatesService.js';
 
 export type DeckQualityGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 
@@ -95,7 +95,10 @@ export async function computeDeckListScorecard(
     const report = await checkDeckQualityGates(organizationId, deckId);
     // A "deck not found" report is inconclusive noise for the list — skip it so
     // we fall back to the governance badge rather than fabricate an F.
-    if (report.result === 'BLOCKED_P1' && report.gates.some((g) => g.gateType === 'DECK_NOT_FOUND')) {
+    if (
+      report.result === 'BLOCKED_P1' &&
+      report.gates.some((g) => g.gateType === 'DECK_NOT_FOUND')
+    ) {
       return null;
     }
     return toDeckListScorecard(report);

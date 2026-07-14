@@ -100,9 +100,7 @@ function ToolbarIconButton({
       onClick={onClick}
       disabled={disabled}
       className={`p-1.5 rounded-lg transition-colors ${
-        active
-          ? 'text-c-text bg-c-surface'
-          : 'text-c-text-secondary hover:text-c-text-secondary'
+        active ? 'text-c-text bg-c-surface' : 'text-c-text-secondary hover:text-c-text-secondary'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${className ?? ''}`}
       title={title}
     >
@@ -337,9 +335,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
   return (
     <div className="flex flex-wrap items-center gap-1 md:gap-2 bg-c-surface backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] mx-3 my-2 px-4 py-2 flex-shrink-0">
-      <div className="text-xs font-semibold text-c-text mr-2">
-        {isPl ? 'Tabela' : 'Table'}
-      </div>
+      <div className="text-xs font-semibold text-c-text mr-2">{isPl ? 'Tabela' : 'Table'}</div>
 
       {/* Collaboration Presence */}
       <WorkspacePresenceIndicatorComponent
@@ -528,7 +524,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* Quick filter */}
       <div className="relative flex-1 max-w-[200px]">
-        <Filter size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary" />
+        <Filter
+          size={12}
+          className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary"
+        />
         <input
           value={props.filterInput}
           onChange={(e) => props.onFilterInputChange(e.target.value)}
@@ -603,9 +602,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       <button
         onClick={() => setGroupBy(groupBy ? null : 'status')}
         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-          groupBy
-            ? 'bg-c-surface text-c-text'
-            : 'text-c-text-secondary hover:bg-c-surface-raised'
+          groupBy ? 'bg-c-surface text-c-text' : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
         title={isPl ? 'Grupuj' : 'Group'}
       >

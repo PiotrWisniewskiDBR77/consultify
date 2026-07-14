@@ -88,8 +88,8 @@ export const SmartGuidesOverlay: React.FC<SmartGuidesOverlayProps> = ({
     const seenH = new Set<number>();
 
     // Vertical guides: align x of left / center / right.
-    const vKeys: (keyof typeof active[number])[] = ['left', 'cx', 'right'];
-    const hKeys: (keyof typeof active[number])[] = ['top', 'cy', 'bottom'];
+    const vKeys: (keyof (typeof active)[number])[] = ['left', 'cx', 'right'];
+    const hKeys: (keyof (typeof active)[number])[] = ['top', 'cy', 'bottom'];
 
     for (const a of active) {
       for (const key of vKeys) {

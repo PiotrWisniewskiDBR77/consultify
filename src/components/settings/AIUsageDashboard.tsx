@@ -415,9 +415,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                             {formatNumber(stat.tokens)} tokens
                           </span>
                           <span className="text-c-text-secondary">•</span>
-                          <span className="text-c-text-muted">
-                            {stat.count} requests
-                          </span>
+                          <span className="text-c-text-muted">{stat.count} requests</span>
                         </div>
                       </div>
                       <Progress value={percentage} className="h-2" />
@@ -540,9 +538,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
             <div className="space-y-3">
               {hasAvgResponseTime && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-c-text-muted">
-                    Average response time
-                  </span>
+                  <span className="text-sm text-c-text-muted">Average response time</span>
                   <span className="text-sm font-medium">
                     {periodStats?.avgResponseTime?.toFixed(2)}s
                   </span>
@@ -557,9 +553,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-c-text-muted">
-                  Tokens per request
-                </span>
+                <span className="text-sm text-c-text-muted">Tokens per request</span>
                 <span className="text-sm font-medium">
                   {periodStats
                     ? periodStats.totalRequests > 0

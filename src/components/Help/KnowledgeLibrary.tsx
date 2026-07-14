@@ -154,7 +154,9 @@ const CategoryChip: React.FC<CategoryChipProps> = ({ category, isActive, onClick
   >
     <DynamicIcon name={category.icon} size={12} />
     {category.name}
-    <span className={`text-[10px] ${isActive ? 'text-slate-300 dark:text-slate-400' : 'text-slate-600'}`}>
+    <span
+      className={`text-[10px] ${isActive ? 'text-slate-300 dark:text-slate-400' : 'text-slate-600'}`}
+    >
       ({category.article_count})
     </span>
   </button>

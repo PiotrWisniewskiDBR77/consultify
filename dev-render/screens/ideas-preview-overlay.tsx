@@ -24,8 +24,8 @@ import React from 'react';
 import {
   type ActionRow,
   type MetaPill,
-  PreviewAIHintStrip,
   PreviewActionBar,
+  PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
@@ -44,19 +44,81 @@ interface MockIdea {
 }
 
 const IDEAS_PL: MockIdea[] = [
-  { id: 'i1', title: 'Ekspansja DE — mapa hipotez wejścia na rynek', body: 'Gałęzie: popyt, konkurencja, kanały sprzedaży, ryzyka regulacyjne. Priorytet: walidacja popytu w segmencie mid-market.', stage: 'Rośnie', tool: 'Mind Map', tags: ['rynek', 'DE'], updatedAt: '2026-07-11' },
-  { id: 'i2', title: 'Automatyzacja onboardingu klientów', body: 'Skrócić time-to-value z 21 do 7 dni przez self-serve setup i szablony.', stage: 'Iskra', tool: 'Process Flow', tags: ['ops'], updatedAt: '2026-07-10' },
-  { id: 'i3', title: 'Pakiet premium — model cenowy', body: 'Trzy warianty: Core / Pro / Enterprise. Test wrażliwości cenowej.', stage: 'Kształtuje się', tool: 'Tabela', tags: ['pricing', 'GTM'], updatedAt: '2026-07-09' },
-  { id: 'i4', title: 'Program poleceń partnerskich', body: 'Prowizja warstwowa + współ-marketing dla top 10 partnerów.', stage: 'Iskra', tool: 'Notatnik', tags: ['partnerzy'], updatedAt: '2026-07-08' },
-  { id: 'i5', title: 'Redukcja churnu w kohorcie Q1', body: 'Health score + proaktywna interwencja CS przy spadku aktywności.', stage: 'Gotowy', tool: 'Whiteboard', tags: ['retencja'], updatedAt: '2026-07-07' },
-  { id: 'i6', title: 'Biblioteka wzorców doradczych', body: '~40 startowych szablonów w 7 kategoriach konsultingowych.', stage: 'Rośnie', tool: 'Deck', tags: ['content'], updatedAt: '2026-07-06' },
+  {
+    id: 'i1',
+    title: 'Ekspansja DE — mapa hipotez wejścia na rynek',
+    body: 'Gałęzie: popyt, konkurencja, kanały sprzedaży, ryzyka regulacyjne. Priorytet: walidacja popytu w segmencie mid-market.',
+    stage: 'Rośnie',
+    tool: 'Mind Map',
+    tags: ['rynek', 'DE'],
+    updatedAt: '2026-07-11',
+  },
+  {
+    id: 'i2',
+    title: 'Automatyzacja onboardingu klientów',
+    body: 'Skrócić time-to-value z 21 do 7 dni przez self-serve setup i szablony.',
+    stage: 'Iskra',
+    tool: 'Process Flow',
+    tags: ['ops'],
+    updatedAt: '2026-07-10',
+  },
+  {
+    id: 'i3',
+    title: 'Pakiet premium — model cenowy',
+    body: 'Trzy warianty: Core / Pro / Enterprise. Test wrażliwości cenowej.',
+    stage: 'Kształtuje się',
+    tool: 'Tabela',
+    tags: ['pricing', 'GTM'],
+    updatedAt: '2026-07-09',
+  },
+  {
+    id: 'i4',
+    title: 'Program poleceń partnerskich',
+    body: 'Prowizja warstwowa + współ-marketing dla top 10 partnerów.',
+    stage: 'Iskra',
+    tool: 'Notatnik',
+    tags: ['partnerzy'],
+    updatedAt: '2026-07-08',
+  },
+  {
+    id: 'i5',
+    title: 'Redukcja churnu w kohorcie Q1',
+    body: 'Health score + proaktywna interwencja CS przy spadku aktywności.',
+    stage: 'Gotowy',
+    tool: 'Whiteboard',
+    tags: ['retencja'],
+    updatedAt: '2026-07-07',
+  },
+  {
+    id: 'i6',
+    title: 'Biblioteka wzorców doradczych',
+    body: '~40 startowych szablonów w 7 kategoriach konsultingowych.',
+    stage: 'Rośnie',
+    tool: 'Deck',
+    tags: ['content'],
+    updatedAt: '2026-07-06',
+  },
 ];
 
 const IDEAS_EN: MockIdea[] = IDEAS_PL.map((it, i) => ({
   ...it,
-  title: ['DE expansion — market-entry hypothesis map', 'Customer onboarding automation', 'Premium tier — pricing model', 'Partner referral program', 'Q1 cohort churn reduction', 'Advisory template library'][i],
+  title: [
+    'DE expansion — market-entry hypothesis map',
+    'Customer onboarding automation',
+    'Premium tier — pricing model',
+    'Partner referral program',
+    'Q1 cohort churn reduction',
+    'Advisory template library',
+  ][i],
   stage: ['Growing', 'Spark', 'Shaping', 'Spark', 'Ready', 'Growing'][i],
-  body: ['Branches: demand, competition, sales channels, regulatory risk. Priority: validate mid-market demand.', 'Cut time-to-value from 21 to 7 days via self-serve setup and templates.', 'Three tiers: Core / Pro / Enterprise. Price sensitivity test.', 'Tiered commission + co-marketing for the top 10 partners.', 'Health score + proactive CS intervention on activity drop.', '~40 starter templates across 7 consulting categories.'][i],
+  body: [
+    'Branches: demand, competition, sales channels, regulatory risk. Priority: validate mid-market demand.',
+    'Cut time-to-value from 21 to 7 days via self-serve setup and templates.',
+    'Three tiers: Core / Pro / Enterprise. Price sensitivity test.',
+    'Tiered commission + co-marketing for the top 10 partners.',
+    'Health score + proactive CS intervention on activity drop.',
+    '~40 starter templates across 7 consulting categories.',
+  ][i],
 }));
 
 function StageBadge({ label }: { label: string }): React.ReactElement {
@@ -123,8 +185,18 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
       {
         columns: 3,
         buttons: [
-          { label: isPl ? 'Konwertuj' : 'Convert', icon: Sparkles, onClick: () => {}, colorScheme: 'purple' },
-          { label: isPl ? 'Otwórz Flow' : 'Open Flow', icon: Workflow, onClick: () => {}, colorScheme: 'emerald' },
+          {
+            label: isPl ? 'Konwertuj' : 'Convert',
+            icon: Sparkles,
+            onClick: () => {},
+            colorScheme: 'purple',
+          },
+          {
+            label: isPl ? 'Otwórz Flow' : 'Open Flow',
+            icon: Workflow,
+            onClick: () => {},
+            colorScheme: 'emerald',
+          },
           { label: isPl ? 'Usuń' : 'Delete', icon: Trash2, onClick: () => {}, colorScheme: 'red' },
         ],
       },
@@ -148,7 +220,9 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
       <div className="mx-auto max-w-[1240px]">
         <div className="mb-3">
           <h1 className="text-lg font-semibold text-c-text">
-            {isPl ? 'My Work → Ideas — podgląd desktop jako overlay (#4b)' : 'My Work → Ideas — desktop preview overlay (#4b)'}
+            {isPl
+              ? 'My Work → Ideas — podgląd desktop jako overlay (#4b)'
+              : 'My Work → Ideas — desktop preview overlay (#4b)'}
           </h1>
           <p className="text-xs text-c-text-muted mt-0.5">
             {overlay
@@ -159,8 +233,17 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
                 ? 'overlay=0 · STARY tryb: panel jako flex-sibling wypycha grid (reflow, kontrast).'
                 : 'overlay=0 · OLD mode: flex-sibling panel pushes the grid (reflow, contrast).'}
             {' · '}
-            <a className="underline" href={`?screen=ideas-preview-overlay&overlay=${overlay ? '1' : '0'}&open=${openParam ? '0' : '1'}&theme=${params.get('theme') || 'light'}&lang=${isPl ? 'pl' : 'en'}`}>
-              {openParam ? (isPl ? 'zamknij podgląd' : 'close preview') : isPl ? 'otwórz podgląd' : 'open preview'}
+            <a
+              className="underline"
+              href={`?screen=ideas-preview-overlay&overlay=${overlay ? '1' : '0'}&open=${openParam ? '0' : '1'}&theme=${params.get('theme') || 'light'}&lang=${isPl ? 'pl' : 'en'}`}
+            >
+              {openParam
+                ? isPl
+                  ? 'zamknij podgląd'
+                  : 'close preview'
+                : isPl
+                  ? 'otwórz podgląd'
+                  : 'open preview'}
             </a>
           </p>
         </div>
@@ -214,7 +297,9 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
                             </span>
                           ))}
                         </div>
-                        <span className="shrink-0">{new Date(idea.updatedAt).toLocaleDateString()}</span>
+                        <span className="shrink-0">
+                          {new Date(idea.updatedAt).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   );

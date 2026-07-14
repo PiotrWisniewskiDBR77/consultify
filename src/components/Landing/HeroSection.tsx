@@ -252,9 +252,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                 {/* Glowing accent for primary */}
                 {card.primary && (
-                  <div
-                    className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow bg-c-accent/20"
-                  />
+                  <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow bg-c-accent/20" />
                 )}
               </motion.div>
             );

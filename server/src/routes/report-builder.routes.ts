@@ -42,11 +42,21 @@ const {
 } = docxModule as any;
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import { getOrCreateBrandVoice, updateBrandVoice } from '../services/brandVoiceProfileService.js';
+import {
+  buildPmReportSections,
+  type PmReportKind,
+  publishPmReport,
+} from '../services/execution/programManagementReportsService.js';
+import {
+  buildThreeAxisReport,
+  publishThreeAxisSnapshot,
+} from '../services/execution/threeAxisReportService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
 import notificationService from '../services/notificationService.js';
 import { computeRagForReport } from '../services/ragLogicService.js';
+import ReportContract from '../services/report/reportContract.js';
 import {
   applyAgentAction,
   getAgentMessages,
@@ -54,16 +64,6 @@ import {
 } from '../services/reportAgentService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
-import ReportContract from '../services/report/reportContract.js';
-import {
-  buildThreeAxisReport,
-  publishThreeAxisSnapshot,
-} from '../services/execution/threeAxisReportService.js';
-import {
-  buildPmReportSections,
-  publishPmReport,
-  type PmReportKind,
-} from '../services/execution/programManagementReportsService.js';
 import {
   getCanonicalTemplate,
   proposeOutline,
@@ -342,47 +342,44 @@ router.get('/definitions', async (req: Request, res: Response, _next: NextFuncti
  * Body: { projectId?, programId?, title?, periodFrom?, periodTo? }. Zakres domyślny (brak
  * projectId/programId) = cała organizacja (patrz threeAxisReportService.buildThreeAxisReport).
  */
-router.post(
-  '/program-3axis/publish',
-  async (req: Request, res: Response, _next: NextFunction) => {
-    try {
-      const { userId, organizationId } = getAuthContext(req);
-      const body = req.body || {};
-      const projectId =
-        typeof body.projectId === 'string' && body.projectId.trim()
-          ? body.projectId.trim()
-          : undefined;
-      const programId =
-        typeof body.programId === 'string' && body.programId.trim()
-          ? body.programId.trim()
-          : undefined;
-      const title =
-        typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
-      const periodFrom = typeof body.periodFrom === 'string' ? body.periodFrom : undefined;
-      const periodTo = typeof body.periodTo === 'string' ? body.periodTo : undefined;
+router.post('/program-3axis/publish', async (req: Request, res: Response, _next: NextFunction) => {
+  try {
+    const { userId, organizationId } = getAuthContext(req);
+    const body = req.body || {};
+    const projectId =
+      typeof body.projectId === 'string' && body.projectId.trim()
+        ? body.projectId.trim()
+        : undefined;
+    const programId =
+      typeof body.programId === 'string' && body.programId.trim()
+        ? body.programId.trim()
+        : undefined;
+    const title =
+      typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
+    const periodFrom = typeof body.periodFrom === 'string' ? body.periodFrom : undefined;
+    const periodTo = typeof body.periodTo === 'string' ? body.periodTo : undefined;
 
-      const result = await publishThreeAxisSnapshot({
-        organizationId,
-        createdBy: userId || 'system',
-        projectId,
-        programId,
-        title,
-        periodFrom,
-        periodTo,
-      });
+    const result = await publishThreeAxisSnapshot({
+      organizationId,
+      createdBy: userId || 'system',
+      projectId,
+      programId,
+      title,
+      periodFrom,
+      periodTo,
+    });
 
-      res.status(201).json({
-        success: true,
-        reportId: result.reportId,
-        snapshotId: result.snapshotId,
-        report: result.report,
-      });
-    } catch (err) {
-      logger.error('[ReportBuilder] Error publishing 3-axis program report:', err);
-      res.status(500).json({ error: 'Failed to publish 3-axis program report' });
-    }
+    res.status(201).json({
+      success: true,
+      reportId: result.reportId,
+      snapshotId: result.snapshotId,
+      report: result.report,
+    });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error publishing 3-axis program report:', err);
+    res.status(500).json({ error: 'Failed to publish 3-axis program report' });
   }
-);
+});
 
 /**
  * GET /api/report-builder/program-3axis/live
@@ -395,40 +392,37 @@ router.post(
  * zmienia zachowania `/program-3axis/publish`. Query: `projectId?`, `programId?`
  * (domyślnie = cała organizacja, jak w publish), `asOf?` (epoch ms, domyślnie teraz).
  */
-router.get(
-  '/program-3axis/live',
-  async (req: Request, res: Response, _next: NextFunction) => {
-    try {
-      const { organizationId } = getAuthContext(req);
-      const projectId =
-        typeof req.query.projectId === 'string' && req.query.projectId.trim()
-          ? req.query.projectId.trim()
-          : undefined;
-      const programId =
-        typeof req.query.programId === 'string' && req.query.programId.trim()
-          ? req.query.programId.trim()
-          : undefined;
-      const asOfRaw = typeof req.query.asOf === 'string' ? Number(req.query.asOf) : undefined;
-      const asOf = Number.isFinite(asOfRaw) ? asOfRaw : undefined;
+router.get('/program-3axis/live', async (req: Request, res: Response, _next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const projectId =
+      typeof req.query.projectId === 'string' && req.query.projectId.trim()
+        ? req.query.projectId.trim()
+        : undefined;
+    const programId =
+      typeof req.query.programId === 'string' && req.query.programId.trim()
+        ? req.query.programId.trim()
+        : undefined;
+    const asOfRaw = typeof req.query.asOf === 'string' ? Number(req.query.asOf) : undefined;
+    const asOf = Number.isFinite(asOfRaw) ? asOfRaw : undefined;
 
-      const report = await buildThreeAxisReport({
-        organizationId,
-        projectId,
-        programId,
-        asOf,
-      });
+    const report = await buildThreeAxisReport({
+      organizationId,
+      projectId,
+      programId,
+      asOf,
+    });
 
-      res.json({ success: true, available: true, report });
-    } catch (err) {
-      logger.error('[ReportBuilder] Error building live 3-axis program report:', err);
-      res.json({
-        success: true,
-        available: false,
-        report: null,
-      });
-    }
+    res.json({ success: true, available: true, report });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error building live 3-axis program report:', err);
+    res.json({
+      success: true,
+      available: false,
+      report: null,
+    });
   }
-);
+});
 
 const PM_REPORT_KINDS: PmReportKind[] = ['sponsor-onepager', 'steering', 'pmo-weekly'];
 
@@ -451,7 +445,9 @@ router.get(
     try {
       const kind = parsePmReportKind(req.params.kind);
       if (!kind) {
-        res.status(400).json({ error: `Unknown PM report kind. Expected one of: ${PM_REPORT_KINDS.join(', ')}` });
+        res.status(400).json({
+          error: `Unknown PM report kind. Expected one of: ${PM_REPORT_KINDS.join(', ')}`,
+        });
         return;
       }
       const { organizationId } = getAuthContext(req);
@@ -486,15 +482,21 @@ router.post(
     try {
       const kind = parsePmReportKind(req.params.kind);
       if (!kind) {
-        res.status(400).json({ error: `Unknown PM report kind. Expected one of: ${PM_REPORT_KINDS.join(', ')}` });
+        res.status(400).json({
+          error: `Unknown PM report kind. Expected one of: ${PM_REPORT_KINDS.join(', ')}`,
+        });
         return;
       }
       const { userId, organizationId } = getAuthContext(req);
       const body = req.body || {};
       const projectId =
-        typeof body.projectId === 'string' && body.projectId.trim() ? body.projectId.trim() : undefined;
+        typeof body.projectId === 'string' && body.projectId.trim()
+          ? body.projectId.trim()
+          : undefined;
       const programId =
-        typeof body.programId === 'string' && body.programId.trim() ? body.programId.trim() : undefined;
+        typeof body.programId === 'string' && body.programId.trim()
+          ? body.programId.trim()
+          : undefined;
       const title =
         typeof body.title === 'string' && body.title.trim() ? body.title.trim() : undefined;
 
@@ -1897,8 +1899,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { organizationId } = getAuthContext(req);
-    const { status, statusIn, sourceType, sourceId, search, archived, includeArchived } =
-      req.query;
+    const { status, statusIn, sourceType, sourceId, search, archived, includeArchived } = req.query;
 
     // Parse statusIn if provided as comma-separated string
     let statusInArray: string[] | undefined;
@@ -3938,9 +3939,7 @@ const exportDocx = async (req: Request, res: Response) => {
     }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting Word (.docx):', err);
     // INFO-DISCLOSURE guard: log the real error above; never echo raw err.message to the client.
-    return res
-      .status(500)
-      .json({ error: 'Failed to export Word', code: 'EXPORT_DOCX_FAILED' });
+    return res.status(500).json({ error: 'Failed to export Word', code: 'EXPORT_DOCX_FAILED' });
   }
 };
 
@@ -4171,9 +4170,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting PPTX:', err);
     // INFO-DISCLOSURE guard: log the real error above; never echo raw err.message to the client.
-    return res
-      .status(500)
-      .json({ error: 'Failed to export PPTX', code: 'EXPORT_PPTX_FAILED' });
+    return res.status(500).json({ error: 'Failed to export PPTX', code: 'EXPORT_PPTX_FAILED' });
   }
 });
 

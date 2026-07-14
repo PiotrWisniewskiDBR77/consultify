@@ -158,7 +158,9 @@ async function fetchBacklinks(pageId: string): Promise<BacklinkLite[]> {
     id: `${r.sourceType}-${r.sourceId}`,
     sourceType: r.sourceType,
     sourceId: r.sourceId,
-    title: titleByKey.get(`${r.sourceType}:${r.sourceId}`) || `${r.sourceType} ${r.sourceId.slice(0, 6)}`,
+    title:
+      titleByKey.get(`${r.sourceType}:${r.sourceId}`) ||
+      `${r.sourceType} ${r.sourceId.slice(0, 6)}`,
   }));
 }
 

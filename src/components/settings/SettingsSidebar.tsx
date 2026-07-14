@@ -606,9 +606,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           <Icon
                             className={cn(
                               'h-4 w-4 flex-shrink-0',
-                              isActive
-                                ? 'text-[var(--c-info)]'
-                                : 'text-[var(--c-text-muted)]'
+                              isActive ? 'text-[var(--c-info)]' : 'text-[var(--c-text-muted)]'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>

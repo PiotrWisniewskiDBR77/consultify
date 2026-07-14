@@ -15,7 +15,7 @@
 
 import { deriveInitiativeEvm } from './evmService.js';
 import { predictInitiative, type RiskLevel } from './executionPredictionService.js';
-import { triageSignals, type Signal, type TriageResult } from './executionTriageService.js';
+import { type Signal, type TriageResult, triageSignals } from './executionTriageService.js';
 
 /** One raw initiative row as it arrives from the DB (snake_case). */
 export interface IntelligenceInitiative {

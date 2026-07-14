@@ -174,7 +174,9 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
           <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20">
             <Paperclip size={18} className="text-blue-500 dark:text-blue-400" />
           </div>
-          <span className="text-sm font-semibold">{t('myWork.attachments.attachments', 'Attachments')}</span>
+          <span className="text-sm font-semibold">
+            {t('myWork.attachments.attachments', 'Attachments')}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {attachments.length > 0 && (
@@ -239,7 +241,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                       <Upload size={40} className="text-blue-500 dark:text-blue-400" />
                     </motion.div>
                     <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-                      {t('myWork.attachments.dragFilesHereOr', 'Drag files here or click to upload')}
+                      {t(
+                        'myWork.attachments.dragFilesHereOr',
+                        'Drag files here or click to upload'
+                      )}
                     </p>
                     <p className="text-xs text-slate-600 dark:text-slate-500">
                       Max {maxSizeMB}MB / {t('myWork.attachments.file', 'file')}
@@ -380,7 +385,9 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                     onClick={() =>
                       navigator.clipboard
                         .writeText(previewAttachment.url)
-                        .then(() => toast.success(t('myWork.attachments.toastSuccess2', 'Link copied')))
+                        .then(() =>
+                          toast.success(t('myWork.attachments.toastSuccess2', 'Link copied'))
+                        )
                     }
                     className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                     title={t('myWork.attachments.title5', 'Copy link')}

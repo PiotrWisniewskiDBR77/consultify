@@ -75,14 +75,11 @@ import { buildArtifactCode } from '@/utils/artifactLinks';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
-// ── N-Mode Layout (shared) ──────────────────────────────────────────────────
-import {
-  NModeCardState,
-  type NModeCardStatus,
-} from '../shared/NModeLayout/NModeCardState';
 // #52 — card-management primitive (show/hide + reorder), same wiring as
 // InsightViewer.tsx (nakładka, see comment at `taskCardLayout` below).
 import { NModeCardManager } from '../shared/NModeLayout/NModeCardManager';
+// ── N-Mode Layout (shared) ──────────────────────────────────────────────────
+import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModeSectionWrapper } from '../shared/NModeLayout/NModeSectionWrapper';
@@ -218,8 +215,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, emitMyWorkEvent, currentUser } =
-    useAppStore();
+  const {
+    isChatCollapsed,
+    toggleChatCollapse,
+    setChatKickoffMessage,
+    emitMyWorkEvent,
+    currentUser,
+  } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -695,7 +697,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             id: String(e.id),
             edgeId: String(e.id),
             decisionId: String(e.sourceId),
-            decisionTitle: match?.title || (t('myWork.taskDetail.decision', 'Decision')),
+            decisionTitle: match?.title || t('myWork.taskDetail.decision', 'Decision'),
             decisionStatus: (allowed.includes(status)
               ? status
               : 'pending') as RelatedDecision['decisionStatus'],
@@ -1508,7 +1510,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const getRiskScore = (risk: RiskItem) =>
     riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
   const getRiskScoreClass = (score: number) => {
-    if (score >= 12) return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
+    if (score >= 12)
+      return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
     if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
     if (score >= 4)
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -1736,7 +1739,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
     setDescription(descriptions[Math.floor(Math.random() * descriptions.length)]);
     setIsGeneratingDescription(false);
-    addActivityLogEntry('edit', t('myWork.taskDetail.aIGeneratedDescription', 'AI generated description'));
+    addActivityLogEntry(
+      'edit',
+      t('myWork.taskDetail.aIGeneratedDescription', 'AI generated description')
+    );
     toast.success(t('myWork.taskDetail.toastSuccess6', 'AI generated description'));
   };
 
@@ -1803,7 +1809,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
     setChecklist([...checklist, ...newItems]);
     setIsGeneratingChecklist(false);
-    addActivityLogEntry('edit', t('myWork.taskDetail.aIGeneratedChecklist', 'AI generated checklist'));
+    addActivityLogEntry(
+      'edit',
+      t('myWork.taskDetail.aIGeneratedChecklist', 'AI generated checklist')
+    );
     toast.success(t('myWork.taskDetail.toastSuccess7', 'AI generated checklist'));
   };
 
@@ -1878,7 +1887,10 @@ Return ONLY the final comment text.`;
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: t('myWork.taskDetail.systemInstruction', 'You are a practical PMO coach. Respond briefly, concretely, and avoid generic filler.'),
+        systemInstruction: t(
+          'myWork.taskDetail.systemInstruction',
+          'You are a practical PMO coach. Respond briefly, concretely, and avoid generic filler.'
+        ),
         roleName: 'Task Comment Advisor',
       });
 
@@ -2195,62 +2207,67 @@ Return ONLY the final comment text.`;
   };
 
   // ── Wzorzec N: aplikacja wygenerowanej treści karty na pola ──────────────
-  const applyGeneratedCard = useCallback((key: AICardKey, content: any) => {
-    if (!content) return;
-    if (key === 'description-scope') {
-      // Strategy → description (+ scal why/expectedOutcome jako blok, bo ten widok
-      // nie ma dedykowanych pól why/outcome; nie gubimy treści).
-      if (typeof content === 'string') {
-        setDescription(content);
-      } else if (typeof content === 'object') {
-        const parts: string[] = [];
-        if (content.description) parts.push(String(content.description));
-        if (content.why) parts.push(`${t('myWork.taskDetail.why', 'Why')}: ${content.why}`);
-        if (content.expectedOutcome)
-          parts.push(`${t('myWork.taskDetail.expectedOutcome', 'Expected outcome')}: ${content.expectedOutcome}`);
-        if (parts.length) setDescription(parts.join('\n\n'));
-      }
-    } else if (key === 'checklist') {
-      const items: any[] = Array.isArray(content)
-        ? content
-        : Array.isArray(content?.checklist)
-          ? content.checklist
-          : Array.isArray(content?.acceptanceCriteria)
-            ? content.acceptanceCriteria
+  const applyGeneratedCard = useCallback(
+    (key: AICardKey, content: any) => {
+      if (!content) return;
+      if (key === 'description-scope') {
+        // Strategy → description (+ scal why/expectedOutcome jako blok, bo ten widok
+        // nie ma dedykowanych pól why/outcome; nie gubimy treści).
+        if (typeof content === 'string') {
+          setDescription(content);
+        } else if (typeof content === 'object') {
+          const parts: string[] = [];
+          if (content.description) parts.push(String(content.description));
+          if (content.why) parts.push(`${t('myWork.taskDetail.why', 'Why')}: ${content.why}`);
+          if (content.expectedOutcome)
+            parts.push(
+              `${t('myWork.taskDetail.expectedOutcome', 'Expected outcome')}: ${content.expectedOutcome}`
+            );
+          if (parts.length) setDescription(parts.join('\n\n'));
+        }
+      } else if (key === 'checklist') {
+        const items: any[] = Array.isArray(content)
+          ? content
+          : Array.isArray(content?.checklist)
+            ? content.checklist
+            : Array.isArray(content?.acceptanceCriteria)
+              ? content.acceptanceCriteria
+              : [];
+        if (items.length) {
+          setChecklist(
+            items.map((it: any) => ({
+              id: Math.random().toString(36).slice(2, 11),
+              text: typeof it === 'string' ? it : it.text || it.title || '',
+              completed: false,
+            }))
+          );
+        }
+      } else if (key === 'evidence') {
+        // Backend zwraca {"evidence": ["dowód 1", ...]} — dodajemy jako pozycje
+        // wymaganych dowodów (typ DOCUMENT), NIE nadpisując istniejących ręcznych.
+        const raw: any[] = Array.isArray(content)
+          ? content
+          : Array.isArray(content?.evidence)
+            ? content.evidence
             : [];
-      if (items.length) {
-        setChecklist(
-          items.map((it: any) => ({
+        const items = raw
+          .map((it: any) => (typeof it === 'string' ? it : it?.text || it?.title || ''))
+          .filter((t: string) => t.trim().length > 0)
+          .map((t: string) => ({
             id: Math.random().toString(36).slice(2, 11),
-            text: typeof it === 'string' ? it : it.text || it.title || '',
-            completed: false,
-          }))
-        );
+            type: 'DOCUMENT' as EvidenceType,
+            title: t,
+          }));
+        if (items.length) {
+          setEvidenceItems((prev) => [...prev, ...items]);
+        }
       }
-    } else if (key === 'evidence') {
-      // Backend zwraca {"evidence": ["dowód 1", ...]} — dodajemy jako pozycje
-      // wymaganych dowodów (typ DOCUMENT), NIE nadpisując istniejących ręcznych.
-      const raw: any[] = Array.isArray(content)
-        ? content
-        : Array.isArray(content?.evidence)
-          ? content.evidence
-          : [];
-      const items = raw
-        .map((it: any) => (typeof it === 'string' ? it : it?.text || it?.title || ''))
-        .filter((t: string) => t.trim().length > 0)
-        .map((t: string) => ({
-          id: Math.random().toString(36).slice(2, 11),
-          type: 'DOCUMENT' as EvidenceType,
-          title: t,
-        }));
-      if (items.length) {
-        setEvidenceItems((prev) => [...prev, ...items]);
-      }
-    }
-    // 'dependencies' → treść informacyjna; ten widok trzyma zależności jako
-    // powiązane zadania (DependenciesSection), więc AI-draft pokazujemy jako
-    // sugestie w opisie sekcji bez nadpisywania realnych powiązań.
-  }, [isPolish]);
+      // 'dependencies' → treść informacyjna; ten widok trzyma zależności jako
+      // powiązane zadania (DependenciesSection), więc AI-draft pokazujemy jako
+      // sugestie w opisie sekcji bez nadpisywania realnych powiązań.
+    },
+    [isPolish]
+  );
 
   // ── Wzorzec N: generacja karty przez AI (onRegenerate / onGenerate) ──────
   const generateCard = useCallback(
@@ -2320,7 +2337,10 @@ Return ONLY the final comment text.`;
                   </label>
                   {relatedTaskItems.length === 0 ? (
                     <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
-                      {t('myWork.taskDetail.noLinkedSourceStandalone', 'No linked source — standalone task')}
+                      {t(
+                        'myWork.taskDetail.noLinkedSourceStandalone',
+                        'No linked source — standalone task'
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-1">
@@ -2368,205 +2388,209 @@ Return ONLY the final comment text.`;
                     readOnly={readMode}
                     rows={10}
                     className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[200px]"
-                    placeholder={
-                      t('myWork.taskDetail.describeWhatNeedsTo', 'Describe what needs to be done, why it matters, any constraints or dependencies...')
-                    }
+                    placeholder={t(
+                      'myWork.taskDetail.describeWhatNeedsTo',
+                      'Describe what needs to be done, why it matters, any constraints or dependencies...'
+                    )}
                   />
                 </div>
 
                 {/* 2.1) Relevant ideas (T009) — hidden in Read (do pokazania klientowi) */}
                 {!readMode && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {t('myWork.ideas.suggestions', 'Relevant ideas')}
-                    </label>
-                    {suggestedIdeasLoading ? (
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {t('common.loading', 'Loading…')}
-                      </span>
-                    ) : null}
-                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                        {t('myWork.ideas.suggestions', 'Relevant ideas')}
+                      </label>
+                      {suggestedIdeasLoading ? (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {t('common.loading', 'Loading…')}
+                        </span>
+                      ) : null}
+                    </div>
 
-                  {suggestedIdeas.length === 0 ? (
-                    <Callout
-                      variant="info"
-                      title={t('myWork.ideas.suggestionsEmptyTitle', 'No suggestions')}
-                    >
-                      {t(
-                        'myWork.ideas.suggestionsEmpty',
-                        'Save ideas from chat to build your private library.'
-                      )}
-                    </Callout>
-                  ) : (
-                    <div className="space-y-2">
-                      {suggestedIdeas.map((idea) => (
-                        <div
-                          key={idea.id}
-                          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
-                                {idea.title}
-                              </div>
-                              {idea.body ? (
-                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                                  {idea.body}
+                    {suggestedIdeas.length === 0 ? (
+                      <Callout
+                        variant="info"
+                        title={t('myWork.ideas.suggestionsEmptyTitle', 'No suggestions')}
+                      >
+                        {t(
+                          'myWork.ideas.suggestionsEmpty',
+                          'Save ideas from chat to build your private library.'
+                        )}
+                      </Callout>
+                    ) : (
+                      <div className="space-y-2">
+                        {suggestedIdeas.map((idea) => (
+                          <div
+                            key={idea.id}
+                            className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                                  {idea.title}
                                 </div>
-                              ) : null}
-                            </div>
-                            <div className="flex flex-col gap-2 shrink-0">
-                              <button
-                                onClick={() => {
-                                  const insert = [
-                                    '',
-                                    '---',
-                                    `${t('myWork.ideas.idea', 'Idea')}: ${idea.title}`,
-                                    idea.body || '',
-                                  ]
-                                    .filter(Boolean)
-                                    .join('\n');
-                                  setDescription((prev) => `${prev || ''}${insert}`.trim());
-                                  trackFunnelEvent('my_idea_used', {
-                                    surface: 'task',
-                                    ideaId: idea.id,
-                                  });
-                                  toast.success(
-                                    t('myWork.ideas.insertedToast', 'Inserted into description')
-                                  );
-                                }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
-                              >
-                                {t('myWork.ideas.insert', 'Insert')}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  try {
-                                    const { setMyWorkIntent } = useAppStore.getState() as any;
-                                    setMyWorkIntent?.({
-                                      tab: 'ideas',
-                                      open: {
-                                        type: 'idea',
-                                        id: idea.id,
-                                        name: idea.title,
-                                        data: idea,
-                                      },
+                                {idea.body ? (
+                                  <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                    {idea.body}
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className="flex flex-col gap-2 shrink-0">
+                                <button
+                                  onClick={() => {
+                                    const insert = [
+                                      '',
+                                      '---',
+                                      `${t('myWork.ideas.idea', 'Idea')}: ${idea.title}`,
+                                      idea.body || '',
+                                    ]
+                                      .filter(Boolean)
+                                      .join('\n');
+                                    setDescription((prev) => `${prev || ''}${insert}`.trim());
+                                    trackFunnelEvent('my_idea_used', {
+                                      surface: 'task',
+                                      ideaId: idea.id,
                                     });
-                                  } catch {
-                                    /* ignore */
-                                  }
-                                }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                              >
-                                {t('myWork.ideas.open', 'Open')}
-                              </button>
+                                    toast.success(
+                                      t('myWork.ideas.insertedToast', 'Inserted into description')
+                                    );
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
+                                >
+                                  {t('myWork.ideas.insert', 'Insert')}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    try {
+                                      const { setMyWorkIntent } = useAppStore.getState() as any;
+                                      setMyWorkIntent?.({
+                                        tab: 'ideas',
+                                        open: {
+                                          type: 'idea',
+                                          id: idea.id,
+                                          name: idea.title,
+                                          data: idea,
+                                        },
+                                      });
+                                    } catch {
+                                      /* ignore */
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                >
+                                  {t('myWork.ideas.open', 'Open')}
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* 2.2) Relevant notes (T011) — hidden in Read (do pokazania klientowi) */}
                 {!readMode && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {t('myWork.notebook.suggestions', 'Relevant notes')}
-                    </label>
-                    {suggestedNotesLoading ? (
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {t('common.loading', 'Loading…')}
-                      </span>
-                    ) : null}
-                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                        {t('myWork.notebook.suggestions', 'Relevant notes')}
+                      </label>
+                      {suggestedNotesLoading ? (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {t('common.loading', 'Loading…')}
+                        </span>
+                      ) : null}
+                    </div>
 
-                  {suggestedNotes.length === 0 ? (
-                    <Callout
-                      variant="info"
-                      title={t('myWork.notebook.suggestionsEmptyTitle', 'No suggestions')}
-                    >
-                      {t(
-                        'myWork.notebook.suggestionsEmpty',
-                        'Create notebook pages to build a searchable knowledge base.'
-                      )}
-                    </Callout>
-                  ) : (
-                    <div className="space-y-2">
-                      {suggestedNotes.map((note) => (
-                        <div
-                          key={note.id}
-                          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
-                                {note.title}
-                              </div>
-                              {note.contentText ? (
-                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                                  {note.contentText}
+                    {suggestedNotes.length === 0 ? (
+                      <Callout
+                        variant="info"
+                        title={t('myWork.notebook.suggestionsEmptyTitle', 'No suggestions')}
+                      >
+                        {t(
+                          'myWork.notebook.suggestionsEmpty',
+                          'Create notebook pages to build a searchable knowledge base.'
+                        )}
+                      </Callout>
+                    ) : (
+                      <div className="space-y-2">
+                        {suggestedNotes.map((note) => (
+                          <div
+                            key={note.id}
+                            className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                                  {note.title}
                                 </div>
-                              ) : null}
-                              <NotebookMetadataBadges
-                                captureSource={note.captureSource}
-                                captureMetadata={note.captureMetadata}
-                                convertedTo={note.convertedTo}
-                                isPolish={isPolish}
-                                className="mt-1.5"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-2 shrink-0">
-                              <button
-                                onClick={() => {
-                                  const insert = [
-                                    '',
-                                    '---',
-                                    `${t('myWork.notebook.note', 'Note')}: ${note.title}`,
-                                    note.contentText || '',
-                                  ]
-                                    .filter(Boolean)
-                                    .join('\n');
-                                  setDescription((prev) => `${prev || ''}${insert}`.trim());
-                                  trackFunnelEvent('active_notes_inserted', {
-                                    surface: 'task',
-                                    noteId: note.id,
-                                  });
-                                  toast.success(
-                                    t('myWork.notebook.insertedToast', 'Inserted into description')
-                                  );
-                                }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
-                              >
-                                {t('myWork.notebook.insert', 'Insert')}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  trackFunnelEvent('active_notes_opened', {
-                                    surface: 'task',
-                                    noteId: note.id,
-                                  });
-                                  try {
-                                    const { setMyWorkIntent } = useAppStore.getState() as any;
-                                    setMyWorkIntent?.({ tab: 'notebook' });
-                                  } catch {
-                                    /* ignore */
-                                  }
-                                }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                              >
-                                {t('myWork.notebook.open', 'Open')}
-                              </button>
+                                {note.contentText ? (
+                                  <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                    {note.contentText}
+                                  </div>
+                                ) : null}
+                                <NotebookMetadataBadges
+                                  captureSource={note.captureSource}
+                                  captureMetadata={note.captureMetadata}
+                                  convertedTo={note.convertedTo}
+                                  isPolish={isPolish}
+                                  className="mt-1.5"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-2 shrink-0">
+                                <button
+                                  onClick={() => {
+                                    const insert = [
+                                      '',
+                                      '---',
+                                      `${t('myWork.notebook.note', 'Note')}: ${note.title}`,
+                                      note.contentText || '',
+                                    ]
+                                      .filter(Boolean)
+                                      .join('\n');
+                                    setDescription((prev) => `${prev || ''}${insert}`.trim());
+                                    trackFunnelEvent('active_notes_inserted', {
+                                      surface: 'task',
+                                      noteId: note.id,
+                                    });
+                                    toast.success(
+                                      t(
+                                        'myWork.notebook.insertedToast',
+                                        'Inserted into description'
+                                      )
+                                    );
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
+                                >
+                                  {t('myWork.notebook.insert', 'Insert')}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    trackFunnelEvent('active_notes_opened', {
+                                      surface: 'task',
+                                      noteId: note.id,
+                                    });
+                                    try {
+                                      const { setMyWorkIntent } = useAppStore.getState() as any;
+                                      setMyWorkIntent?.({ tab: 'notebook' });
+                                    } catch {
+                                      /* ignore */
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                >
+                                  {t('myWork.notebook.open', 'Open')}
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* 3) Expected Outcome */}
@@ -2591,9 +2615,10 @@ Return ONLY the final comment text.`;
                     readOnly={readMode}
                     rows={8}
                     className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[160px]"
-                    placeholder={
-                      t('myWork.taskDetail.defineTheMeasurableOutcome', 'Define the measurable outcome — what does success look like, acceptance criteria...')
-                    }
+                    placeholder={t(
+                      'myWork.taskDetail.defineTheMeasurableOutcome',
+                      'Define the measurable outcome — what does success look like, acceptance criteria...'
+                    )}
                   />
                 </div>
               </div>
@@ -2641,7 +2666,10 @@ Return ONLY the final comment text.`;
                     className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {t('myWork.taskDetail.noItemsYetGenerate', 'No items yet — generate with AI or add manually')}
+                    {t(
+                      'myWork.taskDetail.noItemsYetGenerate',
+                      'No items yet — generate with AI or add manually'
+                    )}
                   </p>
                 </div>
               ) : (
@@ -2809,7 +2837,10 @@ Return ONLY the final comment text.`;
                       className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                     />
                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {t('myWork.taskDetail.noIdeasYetGenerate', 'No ideas yet — generate with AI or add manually')}
+                      {t(
+                        'myWork.taskDetail.noIdeasYetGenerate',
+                        'No ideas yet — generate with AI or add manually'
+                      )}
                     </p>
                   </div>
                 ) : (
@@ -2927,7 +2958,10 @@ Return ONLY the final comment text.`;
                                   }
                                   readOnly={readMode}
                                   className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none"
-                                  placeholder={t('myWork.taskDetail.placeholder2', 'Approach name...')}
+                                  placeholder={t(
+                                    'myWork.taskDetail.placeholder2',
+                                    'Approach name...'
+                                  )}
                                 />
 
                                 {/* Description — editable */}
@@ -2944,70 +2978,72 @@ Return ONLY the final comment text.`;
                                   readOnly={readMode}
                                   rows={3}
                                   className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-400 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y min-h-[48px]"
-                                  placeholder={
-                                    t('myWork.taskDetail.describeTheApproachSteps', 'Describe the approach, steps, tools...')
-                                  }
+                                  placeholder={t(
+                                    'myWork.taskDetail.describeTheApproachSteps',
+                                    'Describe the approach, steps, tools...'
+                                  )}
                                 />
                               </div>
 
                               {/* Actions */}
                               {!readMode && (
-                              <div className="flex items-center gap-1 shrink-0">
-                                <select
-                                  value={idea.status}
-                                  onChange={(e) =>
-                                    setImplementationIdeas(
-                                      implementationIdeas.map((i) =>
-                                        i.id === idea.id
-                                          ? {
-                                              ...i,
-                                              status: e.target
-                                                .value as ImplementationIdea['status'],
-                                            }
-                                          : i
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <select
+                                    value={idea.status}
+                                    onChange={(e) =>
+                                      setImplementationIdeas(
+                                        implementationIdeas.map((i) =>
+                                          i.id === idea.id
+                                            ? {
+                                                ...i,
+                                                status: e.target
+                                                  .value as ImplementationIdea['status'],
+                                              }
+                                            : i
+                                        )
                                       )
-                                    )
-                                  }
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium border-0 cursor-pointer focus:outline-none bg-transparent ${sConfig.text}`}
-                                >
-                                  {Object.entries(ideaStatusConfig).map(([key, cfg]) => (
-                                    <option key={key} value={key}>
-                                      {cfg.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  onClick={() =>
-                                    setImplementationIdeas(
-                                      implementationIdeas.filter((i) => i.id !== idea.id)
-                                    )
-                                  }
-                                  className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                                <AIFieldEnhancer
-                                  fieldKey={`idea-${idea.id}`}
-                                  sectionLabel={
-                                    t('myWork.taskDetail.implementationIdea', 'Implementation Idea')
-                                  }
-                                  currentValue={`${idea.title}\n${idea.description}`}
-                                  onApply={(val) => {
-                                    const lines = val.split('\n');
-                                    const newTitle = lines[0] || idea.title;
-                                    const newDesc =
-                                      lines.slice(1).join('\n').trim() || idea.description;
-                                    setImplementationIdeas(
-                                      implementationIdeas.map((i) =>
-                                        i.id === idea.id
-                                          ? { ...i, title: newTitle, description: newDesc }
-                                          : i
+                                    }
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium border-0 cursor-pointer focus:outline-none bg-transparent ${sConfig.text}`}
+                                  >
+                                    {Object.entries(ideaStatusConfig).map(([key, cfg]) => (
+                                      <option key={key} value={key}>
+                                        {cfg.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    onClick={() =>
+                                      setImplementationIdeas(
+                                        implementationIdeas.filter((i) => i.id !== idea.id)
                                       )
-                                    );
-                                  }}
-                                  artifactContext={{ title, status, priority, type: 'task' }}
-                                />
-                              </div>
+                                    }
+                                    className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                  <AIFieldEnhancer
+                                    fieldKey={`idea-${idea.id}`}
+                                    sectionLabel={t(
+                                      'myWork.taskDetail.implementationIdea',
+                                      'Implementation Idea'
+                                    )}
+                                    currentValue={`${idea.title}\n${idea.description}`}
+                                    onApply={(val) => {
+                                      const lines = val.split('\n');
+                                      const newTitle = lines[0] || idea.title;
+                                      const newDesc =
+                                        lines.slice(1).join('\n').trim() || idea.description;
+                                      setImplementationIdeas(
+                                        implementationIdeas.map((i) =>
+                                          i.id === idea.id
+                                            ? { ...i, title: newTitle, description: newDesc }
+                                            : i
+                                        )
+                                      );
+                                    }}
+                                    artifactContext={{ title, status, priority, type: 'task' }}
+                                  />
+                                </div>
                               )}
                             </div>
                           </div>
@@ -3145,48 +3181,59 @@ Return ONLY the final comment text.`;
                 <div className={governanceTableCardClass}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                      {t('myWork.taskDetail.rACIResponsibilityMatrix', 'RACI (responsibility matrix)')}
+                      {t(
+                        'myWork.taskDetail.rACIResponsibilityMatrix',
+                        'RACI (responsibility matrix)'
+                      )}
                     </h3>
                     {!readMode && (
-                    <button
-                      onClick={() => {
-                        const fallbackUser = users[0];
-                        if (!fallbackUser) return;
-                        setEditingStakeholderId('__new__');
-                        setStakeholderDraft({
-                          id: '__new__',
-                          decisionId: taskId || 'new',
-                          userId: fallbackUser.id,
-                          userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
-                          userEmail: fallbackUser.email,
-                          role: 'consulted',
-                          notificationSettings: {
-                            enabled: true,
-                            triggers: ['on_status_change'],
-                            emailEnabled: false,
-                            inAppEnabled: true,
-                            integrationChannels: [],
-                            syncTargets: [],
-                          },
-                        });
-                      }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
-                    >
-                      + {t('myWork.taskDetail.addPerson', 'Add person')}
-                    </button>
+                      <button
+                        onClick={() => {
+                          const fallbackUser = users[0];
+                          if (!fallbackUser) return;
+                          setEditingStakeholderId('__new__');
+                          setStakeholderDraft({
+                            id: '__new__',
+                            decisionId: taskId || 'new',
+                            userId: fallbackUser.id,
+                            userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
+                            userEmail: fallbackUser.email,
+                            role: 'consulted',
+                            notificationSettings: {
+                              enabled: true,
+                              triggers: ['on_status_change'],
+                              emailEnabled: false,
+                              inAppEnabled: true,
+                              integrationChannels: [],
+                              syncTargets: [],
+                            },
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                      >
+                        + {t('myWork.taskDetail.addPerson', 'Add person')}
+                      </button>
                     )}
                   </div>
                   <div className="overflow-auto flex-1">
-                    <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
+                    <table
+                      /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
+                    >
                       <thead>
                         <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.person', 'Person')}</th>
-                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.role', 'Role')}</th>
+                          <th className="text-left py-2 pr-2">
+                            {t('myWork.taskDetail.person', 'Person')}
+                          </th>
+                          <th className="text-left py-2 pr-2">
+                            {t('myWork.taskDetail.role', 'Role')}
+                          </th>
                           <th className="text-left py-2 pr-2">Email</th>
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.notifications', 'Notifications')}
                           </th>
-                          <th className="text-right py-2">{t('myWork.taskDetail.actions', 'Actions')}</th>
+                          <th className="text-right py-2">
+                            {t('myWork.taskDetail.actions', 'Actions')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -3225,29 +3272,29 @@ Return ONLY the final comment text.`;
                               </td>
                               <td className="py-2 text-right">
                                 {!readMode && (
-                                <div className="inline-flex items-center gap-1">
-                                  <button
-                                    onClick={() => {
-                                      setEditingStakeholderId(s.id);
-                                      setStakeholderDraft({ ...s });
-                                    }}
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
-                                    title={t('myWork.taskDetail.title7', 'Edit')}
-                                  >
-                                    <Edit3 size={13} />
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setStakeholders(
-                                        stakeholders.filter((item) => item.id !== s.id)
-                                      )
-                                    }
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
-                                    title={t('myWork.taskDetail.title8', 'Delete')}
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </div>
+                                  <div className="inline-flex items-center gap-1">
+                                    <button
+                                      onClick={() => {
+                                        setEditingStakeholderId(s.id);
+                                        setStakeholderDraft({ ...s });
+                                      }}
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
+                                      title={t('myWork.taskDetail.title7', 'Edit')}
+                                    >
+                                      <Edit3 size={13} />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        setStakeholders(
+                                          stakeholders.filter((item) => item.id !== s.id)
+                                        )
+                                      }
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                                      title={t('myWork.taskDetail.title8', 'Delete')}
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
                                 )}
                               </td>
                             </tr>
@@ -3265,40 +3312,46 @@ Return ONLY the final comment text.`;
                       {t('myWork.taskDetail.reminders', 'Reminders')}
                     </h3>
                     {!readMode && (
-                    <button
-                      onClick={() => {
-                        setEditingReminderId('__new__');
-                        setReminderDraft({
-                          id: '__new__',
-                          type: 'before_due',
-                          days: 2,
-                          recipients: 'both',
-                          inAppNotification: true,
-                          emailNotification: false,
-                          delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
-                          message: '',
-                          enabled: true,
-                        });
-                      }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
-                    >
-                      + {t('myWork.taskDetail.addReminder', 'Add reminder')}
-                    </button>
+                      <button
+                        onClick={() => {
+                          setEditingReminderId('__new__');
+                          setReminderDraft({
+                            id: '__new__',
+                            type: 'before_due',
+                            days: 2,
+                            recipients: 'both',
+                            inAppNotification: true,
+                            emailNotification: false,
+                            delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
+                            message: '',
+                            enabled: true,
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                      >
+                        + {t('myWork.taskDetail.addReminder', 'Add reminder')}
+                      </button>
                     )}
                   </div>
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.type2', 'Type')}</th>
-                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.days', 'Days')}</th>
+                          <th className="text-left py-2 pr-2">
+                            {t('myWork.taskDetail.type2', 'Type')}
+                          </th>
+                          <th className="text-left py-2 pr-2">
+                            {t('myWork.taskDetail.days', 'Days')}
+                          </th>
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.recipients', 'Recipients')}
                           </th>
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.notifications2', 'Notifications')}
                           </th>
-                          <th className="text-right py-2">{t('myWork.taskDetail.actions2', 'Actions')}</th>
+                          <th className="text-right py-2">
+                            {t('myWork.taskDetail.actions2', 'Actions')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -3347,29 +3400,31 @@ Return ONLY the final comment text.`;
                               </td>
                               <td className="py-2 text-right">
                                 {!readMode && (
-                                <div className="inline-flex items-center gap-1">
-                                  <button
-                                    onClick={() => {
-                                      setEditingReminderId(r.id);
-                                      setReminderDraft(
-                                        normalizeReminderRule({ ...r } as ReminderRuleWithDelivery)
-                                      );
-                                    }}
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
-                                    title={t('myWork.taskDetail.title9', 'Edit')}
-                                  >
-                                    <Edit3 size={13} />
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setReminders(reminders.filter((item) => item.id !== r.id))
-                                    }
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
-                                    title={t('myWork.taskDetail.title10', 'Delete')}
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </div>
+                                  <div className="inline-flex items-center gap-1">
+                                    <button
+                                      onClick={() => {
+                                        setEditingReminderId(r.id);
+                                        setReminderDraft(
+                                          normalizeReminderRule({
+                                            ...r,
+                                          } as ReminderRuleWithDelivery)
+                                        );
+                                      }}
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
+                                      title={t('myWork.taskDetail.title9', 'Edit')}
+                                    >
+                                      <Edit3 size={13} />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        setReminders(reminders.filter((item) => item.id !== r.id))
+                                      }
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                                      title={t('myWork.taskDetail.title10', 'Delete')}
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
                                 )}
                               </td>
                             </tr>
@@ -3387,30 +3442,30 @@ Return ONLY the final comment text.`;
                       {t('myWork.taskDetail.escalationAndRules', 'Escalation and rules')}
                     </h3>
                     {!readMode && (
-                    <button
-                      onClick={() => {
-                        setEscalationDraft(
-                          normalizeEscalationRule({
-                            id: Math.random().toString(36).slice(2, 11),
-                            enabled: true,
-                            escalateTo: users[0]?.id || '',
-                            escalateToName: users[0]
-                              ? `${users[0].firstName} ${users[0].lastName}`
-                              : '',
-                            afterDays: 3,
-                            warningDays: thresholds.warningDays,
-                            criticalDays: thresholds.criticalDays,
-                            escalationMode: 'manager_review',
-                            delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
-                            message: '',
-                          })
-                        );
-                        setEditingEscalationId('__new__');
-                      }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
-                    >
-                      + {t('myWork.taskDetail.addEscalation', 'Add escalation')}
-                    </button>
+                      <button
+                        onClick={() => {
+                          setEscalationDraft(
+                            normalizeEscalationRule({
+                              id: Math.random().toString(36).slice(2, 11),
+                              enabled: true,
+                              escalateTo: users[0]?.id || '',
+                              escalateToName: users[0]
+                                ? `${users[0].firstName} ${users[0].lastName}`
+                                : '',
+                              afterDays: 3,
+                              warningDays: thresholds.warningDays,
+                              criticalDays: thresholds.criticalDays,
+                              escalationMode: 'manager_review',
+                              delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
+                              message: '',
+                            })
+                          );
+                          setEditingEscalationId('__new__');
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                      >
+                        + {t('myWork.taskDetail.addEscalation', 'Add escalation')}
+                      </button>
                     )}
                   </div>
                   <div className="overflow-auto flex-1">
@@ -3430,11 +3485,15 @@ Return ONLY the final comment text.`;
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.message', 'Message')}
                           </th>
-                          <th className="text-left py-2 pr-2">{t('myWork.taskDetail.mode', 'Mode')}</th>
+                          <th className="text-left py-2 pr-2">
+                            {t('myWork.taskDetail.mode', 'Mode')}
+                          </th>
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.channels', 'Channels')}
                           </th>
-                          <th className="text-right py-2">{t('myWork.taskDetail.actions3', 'Actions')}</th>
+                          <th className="text-right py-2">
+                            {t('myWork.taskDetail.actions3', 'Actions')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -3444,7 +3503,10 @@ Return ONLY the final comment text.`;
                               colSpan={8}
                               className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                             >
-                              {t('myWork.taskDetail.noEscalationRulesYet', 'No escalation rules yet.')}
+                              {t(
+                                'myWork.taskDetail.noEscalationRulesYet',
+                                'No escalation rules yet.'
+                              )}
                             </td>
                           </tr>
                         ) : (
@@ -3488,29 +3550,29 @@ Return ONLY the final comment text.`;
                               </td>
                               <td className="py-2 text-right">
                                 {!readMode && (
-                                <div className="inline-flex items-center gap-1">
-                                  <button
-                                    onClick={() => {
-                                      setEditingEscalationId(rule.id);
-                                      setEscalationDraft({ ...rule });
-                                    }}
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
-                                    title={t('myWork.taskDetail.title11', 'Edit')}
-                                  >
-                                    <Edit3 size={13} />
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setEscalationRules(
-                                        escalationRules.filter((item) => item.id !== rule.id)
-                                      )
-                                    }
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
-                                    title={t('myWork.taskDetail.title12', 'Delete')}
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </div>
+                                  <div className="inline-flex items-center gap-1">
+                                    <button
+                                      onClick={() => {
+                                        setEditingEscalationId(rule.id);
+                                        setEscalationDraft({ ...rule });
+                                      }}
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
+                                      title={t('myWork.taskDetail.title11', 'Edit')}
+                                    >
+                                      <Edit3 size={13} />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        setEscalationRules(
+                                          escalationRules.filter((item) => item.id !== rule.id)
+                                        )
+                                      }
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                                      title={t('myWork.taskDetail.title12', 'Delete')}
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
                                 )}
                               </td>
                             </tr>
@@ -3598,7 +3660,10 @@ Return ONLY the final comment text.`;
       const AI_CARD_META: Partial<
         Record<string, { key: AICardKey; name: { en: string; pl: string } }>
       > = {
-        'description-scope': { key: 'description-scope', name: { en: 'Strategy', pl: 'Strategia' } },
+        'description-scope': {
+          key: 'description-scope',
+          name: { en: 'Strategy', pl: 'Strategia' },
+        },
         checklist: { key: 'checklist', name: { en: 'Execution', pl: 'Wykonanie' } },
         dependencies: { key: 'dependencies', name: { en: 'Dependencies', pl: 'Zależności' } },
         evidence: { key: 'evidence', name: { en: 'Evidence', pl: 'Dowody' } },
@@ -3832,7 +3897,10 @@ Return ONLY the final comment text.`;
             {t('myWork.taskDetail.taskNotFound', 'Task not found')}
           </h3>
           <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
-            {t('myWork.taskDetail.thisTaskHasBeen', 'This task has been deleted or is no longer available to you. Refresh your task list.')}
+            {t(
+              'myWork.taskDetail.thisTaskHasBeen',
+              'This task has been deleted or is no longer available to you. Refresh your task list.'
+            )}
           </p>
         </div>
         {onClose && (
@@ -3860,7 +3928,9 @@ Return ONLY the final comment text.`;
       const u = users.find((usr) => usr.id === ownerId);
       return u ? `${u.firstName} ${u.lastName}`.trim() : '';
     })();
-    const statusLabel = (STATUS_CONFIG[status] || STATUS_CONFIG.todo).label[t('myWork.taskDetail.en', 'en')];
+    const statusLabel = (STATUS_CONFIG[status] || STATUS_CONFIG.todo).label[
+      t('myWork.taskDetail.en', 'en')
+    ];
     const priorityLabel = (PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium).label[
       t('myWork.taskDetail.en2', 'en')
     ];
@@ -3894,7 +3964,8 @@ Return ONLY the final comment text.`;
     const tdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
     const tdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
     const tdValLast = 'px-3 py-2 text-right text-c-text';
-    const pill = 'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
+    const pill =
+      'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
 
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
@@ -3960,7 +4031,9 @@ Return ONLY the final comment text.`;
                   <td className={tdVal}>{ownerFullName || dash}</td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-c-text-muted">{t('myWork.taskDetail.initiative', 'Initiative')}</td>
+                  <td className="px-3 py-2 text-c-text-muted">
+                    {t('myWork.taskDetail.initiative', 'Initiative')}
+                  </td>
                   <td className={tdValLast}>{initiativeName || dash}</td>
                 </tr>
               </tbody>
@@ -3979,7 +4052,9 @@ Return ONLY the final comment text.`;
           <div className="flex flex-col gap-2">
             {initiativeName ? (
               <div className="flex items-center gap-2">
-                <span className={panelKeyClass}>{t('myWork.taskDetail.initiative2', 'Initiative')}</span>
+                <span className={panelKeyClass}>
+                  {t('myWork.taskDetail.initiative2', 'Initiative')}
+                </span>
                 <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
                   <Target size={12} className="text-c-text-muted shrink-0" />
                   <span className="truncate">{initiativeName}</span>
@@ -3988,7 +4063,9 @@ Return ONLY the final comment text.`;
             ) : null}
             {attachments.length > 0 ? (
               <div className="flex items-center justify-between gap-3">
-                <span className={panelKeyClass}>{t('myWork.taskDetail.attachments', 'Attachments')}</span>
+                <span className={panelKeyClass}>
+                  {t('myWork.taskDetail.attachments', 'Attachments')}
+                </span>
                 <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
                   {attachments.length}
                 </span>
@@ -4011,7 +4088,7 @@ Return ONLY the final comment text.`;
               <li key={c.id} className="flex flex-col gap-0.5">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-xs font-semibold text-c-text truncate">
-                    {c.authorName || (t('myWork.taskDetail.user', 'User'))}
+                    {c.authorName || t('myWork.taskDetail.user', 'User')}
                   </span>
                   <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
                     {fmtDateTime(c.createdAt)}
@@ -4059,429 +4136,446 @@ Return ONLY the final comment text.`;
           <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
             <div className="xl:flex-1 xl:min-w-0 space-y-0">
-            {/* ── Header ──────────────────────────────────────── */}
-            <NModeHeader
-              title={title}
-              onTitleChange={setTitle}
-              titleReadOnly={readMode}
-              titlePlaceholder={{ en: 'Task title...', pl: 'Tytuł zadania...' }}
-              artifactId={taskId || undefined}
-              artifactType="task"
-              onSave={handleSave}
-              saving={saving}
-              isDirty={isDirty}
-              draftSavedLabel={
-                lastSavedAt
-                  ? isPolish
-                    ? `Zapisano ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    : `Saved ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                  : undefined
-              }
-              onChat={handleOpenChat}
-              showChatButton
-              onClose={onClose}
-              statusDotColor={statusConfig.color}
-              presentationMode={presentationMode}
-              onPresentationModeChange={setPresentationMode}
-              buildArtifactCode={buildArtifactCode}
-            />
+              {/* ── Header ──────────────────────────────────────── */}
+              <NModeHeader
+                title={title}
+                onTitleChange={setTitle}
+                titleReadOnly={readMode}
+                titlePlaceholder={{ en: 'Task title...', pl: 'Tytuł zadania...' }}
+                artifactId={taskId || undefined}
+                artifactType="task"
+                onSave={handleSave}
+                saving={saving}
+                isDirty={isDirty}
+                draftSavedLabel={
+                  lastSavedAt
+                    ? isPolish
+                      ? `Zapisano ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : `Saved ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : undefined
+                }
+                onChat={handleOpenChat}
+                showChatButton
+                onClose={onClose}
+                statusDotColor={statusConfig.color}
+                presentationMode={presentationMode}
+                onPresentationModeChange={setPresentationMode}
+                buildArtifactCode={buildArtifactCode}
+              />
 
-            {/* ── N-Mode Content ──────────────────────────────── */}
-            <div className="col-span-full space-y-4 mt-4">
-              {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
-              <div className="flex items-center justify-between">
-                {!readMode ? (
-                  <NModeCardManager layout={taskCardLayout} isPolish={isPolish} />
-                ) : (
-                  <div />
-                )}
-                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
-              </div>
-              {/* Deadline Alert */}
-              {dueDate && dueDateAlertBorderClass && (
-                <div className="mb-3 px-4 py-2 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">
-                  <AlertCircle size={14} />
-                  {t('myWork.taskDetail.warningDeadlineApproachingOr', 'Warning: deadline approaching or overdue!')}
+              {/* ── N-Mode Content ──────────────────────────────── */}
+              <div className="col-span-full space-y-4 mt-4">
+                {/* ── Menu 1 (klasa S): card management (#52) + Read/Edit toggle ── */}
+                <div className="flex items-center justify-between">
+                  {!readMode ? (
+                    <NModeCardManager layout={taskCardLayout} isPolish={isPolish} />
+                  ) : (
+                    <div />
+                  )}
+                  <ReadEditToggle readMode={readMode} onChange={setReadMode} />
                 </div>
-              )}
-
-              {/* Blocked reason — editable when status=blocked */}
-              {status === 'blocked' && (
-                <div className="mb-3 px-4 py-3 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle size={14} className="text-danger-500 dark:text-danger-400" />
-                    <span className="text-xs font-semibold text-danger-600 dark:text-danger-400 uppercase tracking-wide">
-                      {t('myWork.taskDetail.blockedReason', 'Blocked Reason')}
-                    </span>
+                {/* Deadline Alert */}
+                {dueDate && dueDateAlertBorderClass && (
+                  <div className="mb-3 px-4 py-2 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">
+                    <AlertCircle size={14} />
+                    {t(
+                      'myWork.taskDetail.warningDeadlineApproachingOr',
+                      'Warning: deadline approaching or overdue!'
+                    )}
                   </div>
-                  <textarea
-                    value={blockedReason}
-                    onChange={(e) => setBlockedReason(e.target.value)}
-                    rows={2}
-                    className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-navy-800/60 border border-danger-200/40 dark:border-danger-500/20 text-slate-700 dark:text-slate-300 placeholder-danger-300 dark:placeholder-danger-500/50 focus:outline-none focus:border-danger-400 resize-none"
-                    placeholder={
-                      t('myWork.taskDetail.describeBlockingReason', 'Describe blocking reason...')
-                    }
-                  />
-                </div>
-              )}
+                )}
 
-              {/* ── Origin Badge ──────────────────────────────────── */}
-              {sourceType && sourceId && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
-                  {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
-                  {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
-                  {sourceType === 'decision' && <Scale size={14} className="text-blue-500" />}
-                  <span className="text-slate-600 dark:text-slate-300">
-                    {sourceType === 'idea'
-                      ? t('myWork.taskDetail.createdFromIdea', 'Created from Idea')
-                      : sourceType === 'notebook'
-                        ? t('myWork.taskDetail.createdFromNote', 'Created from Note')
-                        : `Created from ${sourceType}`}
-                  </span>
-                  <button
-                    onClick={() => {
-                      window.dispatchEvent(
-                        new CustomEvent('mywork-open-item', {
-                          detail: {
-                            type: sourceType === 'notebook' ? 'notebook' : sourceType,
-                            id: sourceId,
-                            name: `Source ${sourceType}`,
-                            initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
-                          },
-                        })
-                      );
-                    }}
-                    className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
-                  >
-                    {sourceType === 'idea'
-                      ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
-                      : t('myWork.taskDetail.viewSource', 'View source →')}
-                  </button>
-                </div>
-              )}
-
-              {/* ── Task Action Bar ──────────────────────────────── */}
-              {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
-              {!readMode && (
-              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
-                <div className="flex items-center gap-2">
-                  {/* Start / Resume — shown when todo or blocked */}
-                  {(status === 'todo' || status === 'blocked') && (
-                    <button
-                      onClick={() => {
-                        const old = status;
-                        setStatus('in_progress');
-                        if (status === 'blocked') setBlockedReason('');
-                        addActivityLogEntry(
-                          'status_change',
-                          t('myWork.taskDetail.taskStarted', 'Task started'),
-                          old,
-                          'in_progress'
-                        );
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-400/50 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
-                    >
-                      <Play size={13} /> {t('myWork.taskDetail.start', 'Start')}
-                    </button>
-                  )}
-
-                  {/* Send to Review — shown when in_progress */}
-                  {status === 'in_progress' && (
-                    <button
-                      onClick={() => {
-                        setStatus('review');
-                        addActivityLogEntry(
-                          'status_change',
-                          t('myWork.taskDetail.sentToReview', 'Sent to review'),
-                          'in_progress',
-                          'review'
-                        );
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
-                    >
-                      <Eye size={13} /> {t('myWork.taskDetail.sendToReview', 'Send to Review')}
-                    </button>
-                  )}
-
-                  {/* Complete — shown when in_progress or review */}
-                  {(status === 'in_progress' || status === 'review') && (
-                    <button
-                      onClick={() => {
-                        const old = status;
-                        setStatus('done');
-                        addActivityLogEntry(
-                          'status_change',
-                          t('myWork.taskDetail.taskCompleted', 'Task completed'),
-                          old,
-                          'done'
-                        );
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
-                    >
-                      <CheckCircle2 size={13} /> {t('myWork.taskDetail.complete', 'Complete')}
-                    </button>
-                  )}
-
-                  {/* Block — shown when not blocked and not done */}
-                  {status !== 'blocked' && status !== 'done' && (
-                    <button
-                      onClick={() => {
-                        const old = status;
-                        setStatus('blocked');
-                        addActivityLogEntry(
-                          'status_change',
-                          t('myWork.taskDetail.taskBlocked', 'Task blocked'),
-                          old,
-                          'blocked'
-                        );
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
-                    >
-                      <AlertCircle size={13} /> {t('myWork.taskDetail.block', 'Block')}
-                    </button>
-                  )}
-
-                  {/* Reopen — shown when done */}
-                  {status === 'done' && (
-                    <button
-                      onClick={() => {
-                        setStatus('in_progress');
-                        addActivityLogEntry(
-                          'status_change',
-                          t('myWork.taskDetail.taskReopened', 'Task reopened'),
-                          'done',
-                          'in_progress'
-                        );
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-400/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
-                    >
-                      <Play size={13} /> {t('myWork.taskDetail.reopen', 'Reopen')}
-                    </button>
-                  )}
-
-                  {/* Reassign — always shown */}
-                  <button
-                    onClick={() => {
-                      // scroll to assignee field or open a quick picker
-                      toast(
-                        t('myWork.taskDetail.changeAssigneeInThe', 'Change assignee in the Assignee field above')
-                      );
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                  >
-                    <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
-                  </button>
-
-                  {/* ── Section-specific AI actions (right-aligned) ── */}
-                  {activeNSection === 'implementation' && (
-                    <button
-                      onClick={generateIdeasAI}
-                      disabled={isGeneratingIdeas}
-                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                        isGeneratingIdeas
-                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                      } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={
-                        t('myWork.taskDetail.generateImplementationPlanWith', 'Generate implementation plan with AI')
-                      }
-                    >
-                      {isGeneratingIdeas ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={13} />
+                {/* Blocked reason — editable when status=blocked */}
+                {status === 'blocked' && (
+                  <div className="mb-3 px-4 py-3 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle size={14} className="text-danger-500 dark:text-danger-400" />
+                      <span className="text-xs font-semibold text-danger-600 dark:text-danger-400 uppercase tracking-wide">
+                        {t('myWork.taskDetail.blockedReason', 'Blocked Reason')}
+                      </span>
+                    </div>
+                    <textarea
+                      value={blockedReason}
+                      onChange={(e) => setBlockedReason(e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-navy-800/60 border border-danger-200/40 dark:border-danger-500/20 text-slate-700 dark:text-slate-300 placeholder-danger-300 dark:placeholder-danger-500/50 focus:outline-none focus:border-danger-400 resize-none"
+                      placeholder={t(
+                        'myWork.taskDetail.describeBlockingReason',
+                        'Describe blocking reason...'
                       )}
-                      {t('myWork.taskDetail.createIdeas', 'Create Ideas')}
-                    </button>
-                  )}
+                    />
+                  </div>
+                )}
 
-                  {activeNSection === 'risk-alternatives' && (
+                {/* ── Origin Badge ──────────────────────────────────── */}
+                {sourceType && sourceId && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
+                    {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
+                    {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
+                    {sourceType === 'decision' && <Scale size={14} className="text-blue-500" />}
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {sourceType === 'idea'
+                        ? t('myWork.taskDetail.createdFromIdea', 'Created from Idea')
+                        : sourceType === 'notebook'
+                          ? t('myWork.taskDetail.createdFromNote', 'Created from Note')
+                          : `Created from ${sourceType}`}
+                    </span>
                     <button
-                      onClick={generateRisksAI}
-                      disabled={isGeneratingRisks}
-                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                        isGeneratingRisks
-                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                      } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={t('myWork.taskDetail.title13', 'Analyze risks with AI')}
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent('mywork-open-item', {
+                            detail: {
+                              type: sourceType === 'notebook' ? 'notebook' : sourceType,
+                              id: sourceId,
+                              name: `Source ${sourceType}`,
+                              initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
+                            },
+                          })
+                        );
+                      }}
+                      className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                     >
-                      {isGeneratingRisks ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={13} />
-                      )}
-                      {t('myWork.taskDetail.analyzeRisks', 'Analyze risks')}
+                      {sourceType === 'idea'
+                        ? t('myWork.taskDetail.viewSourceInMindmap', 'View source in mindmap →')
+                        : t('myWork.taskDetail.viewSource', 'View source →')}
                     </button>
-                  )}
+                  </div>
+                )}
 
-                  {activeNSection === 'checklist' && (
-                    <button
-                      onClick={generateAIChecklist}
-                      disabled={isGeneratingChecklist}
-                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                        isGeneratingChecklist
-                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                      } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={
-                        t('myWork.taskDetail.generateChecklistWithAI', 'Generate checklist with AI')
-                      }
-                    >
-                      {isGeneratingChecklist ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={13} />
+                {/* ── Task Action Bar ──────────────────────────────── */}
+                {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
+                {!readMode && (
+                  <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
+                    <div className="flex items-center gap-2">
+                      {/* Start / Resume — shown when todo or blocked */}
+                      {(status === 'todo' || status === 'blocked') && (
+                        <button
+                          onClick={() => {
+                            const old = status;
+                            setStatus('in_progress');
+                            if (status === 'blocked') setBlockedReason('');
+                            addActivityLogEntry(
+                              'status_change',
+                              t('myWork.taskDetail.taskStarted', 'Task started'),
+                              old,
+                              'in_progress'
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-400/50 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                        >
+                          <Play size={13} /> {t('myWork.taskDetail.start', 'Start')}
+                        </button>
                       )}
-                      {t('myWork.taskDetail.createChecklist', 'Create Checklist')}
-                    </button>
-                  )}
 
-                  {activeNSection === 'comments' && (
-                    <button
-                      onClick={generateAIComment}
-                      disabled={isGeneratingAIComment}
-                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                        isGeneratingAIComment
-                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                      } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={t('myWork.taskDetail.title14', 'Generate AI comments')}
-                    >
-                      {isGeneratingAIComment ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={13} />
+                      {/* Send to Review — shown when in_progress */}
+                      {status === 'in_progress' && (
+                        <button
+                          onClick={() => {
+                            setStatus('review');
+                            addActivityLogEntry(
+                              'status_change',
+                              t('myWork.taskDetail.sentToReview', 'Sent to review'),
+                              'in_progress',
+                              'review'
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                        >
+                          <Eye size={13} /> {t('myWork.taskDetail.sendToReview', 'Send to Review')}
+                        </button>
                       )}
-                      {t('myWork.taskDetail.aIComments', 'AI comments')}
-                    </button>
-                  )}
 
-                  {activeNSection === 'governance' && (
-                    <button
-                      onClick={async () => {
-                        setIsSuggestingStakeholders(true);
-                        try {
-                          const roster = users
-                            .map((u) => `${u.id}: ${u.firstName} ${u.lastName} (${u.email})`)
-                            .join('\n');
-                          const prompt = isPolish
-                            ? `Na podstawie danych zadania zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nDostępne osoby:\n${roster}`
-                            : `Based on task data, propose a RACI team. Return JSON ONLY:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nAvailable people:\n${roster}`;
-                          const aiRes = await Api.post('/ai/chat', {
-                            message: prompt,
-                            history: [],
-                            systemInstruction: t('myWork.taskDetail.systemInstruction2', 'You are a PMO assistant. Return valid JSON only.'),
-                            roleName: 'RACI Team Advisor',
-                          });
-                          const raw = String(aiRes?.text || aiRes?.content || '').trim();
-                          const jsonMatch = raw.match(/\{[\s\S]*\}/);
-                          if (jsonMatch) {
-                            const parsed = JSON.parse(jsonMatch[0]);
-                            if (Array.isArray(parsed.stakeholders)) {
-                              const next = parsed.stakeholders.map((s: any) => {
-                                const user = users.find((u) => u.id === s.userId);
-                                return {
+                      {/* Complete — shown when in_progress or review */}
+                      {(status === 'in_progress' || status === 'review') && (
+                        <button
+                          onClick={() => {
+                            const old = status;
+                            setStatus('done');
+                            addActivityLogEntry(
+                              'status_change',
+                              t('myWork.taskDetail.taskCompleted', 'Task completed'),
+                              old,
+                              'done'
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                        >
+                          <CheckCircle2 size={13} /> {t('myWork.taskDetail.complete', 'Complete')}
+                        </button>
+                      )}
+
+                      {/* Block — shown when not blocked and not done */}
+                      {status !== 'blocked' && status !== 'done' && (
+                        <button
+                          onClick={() => {
+                            const old = status;
+                            setStatus('blocked');
+                            addActivityLogEntry(
+                              'status_change',
+                              t('myWork.taskDetail.taskBlocked', 'Task blocked'),
+                              old,
+                              'blocked'
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
+                        >
+                          <AlertCircle size={13} /> {t('myWork.taskDetail.block', 'Block')}
+                        </button>
+                      )}
+
+                      {/* Reopen — shown when done */}
+                      {status === 'done' && (
+                        <button
+                          onClick={() => {
+                            setStatus('in_progress');
+                            addActivityLogEntry(
+                              'status_change',
+                              t('myWork.taskDetail.taskReopened', 'Task reopened'),
+                              'done',
+                              'in_progress'
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-400/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <Play size={13} /> {t('myWork.taskDetail.reopen', 'Reopen')}
+                        </button>
+                      )}
+
+                      {/* Reassign — always shown */}
+                      <button
+                        onClick={() => {
+                          // scroll to assignee field or open a quick picker
+                          toast(
+                            t(
+                              'myWork.taskDetail.changeAssigneeInThe',
+                              'Change assignee in the Assignee field above'
+                            )
+                          );
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      >
+                        <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
+                      </button>
+
+                      {/* ── Section-specific AI actions (right-aligned) ── */}
+                      {activeNSection === 'implementation' && (
+                        <button
+                          onClick={generateIdeasAI}
+                          disabled={isGeneratingIdeas}
+                          className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            isGeneratingIdeas
+                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                          title={t(
+                            'myWork.taskDetail.generateImplementationPlanWith',
+                            'Generate implementation plan with AI'
+                          )}
+                        >
+                          {isGeneratingIdeas ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={13} />
+                          )}
+                          {t('myWork.taskDetail.createIdeas', 'Create Ideas')}
+                        </button>
+                      )}
+
+                      {activeNSection === 'risk-alternatives' && (
+                        <button
+                          onClick={generateRisksAI}
+                          disabled={isGeneratingRisks}
+                          className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            isGeneratingRisks
+                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                          title={t('myWork.taskDetail.title13', 'Analyze risks with AI')}
+                        >
+                          {isGeneratingRisks ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={13} />
+                          )}
+                          {t('myWork.taskDetail.analyzeRisks', 'Analyze risks')}
+                        </button>
+                      )}
+
+                      {activeNSection === 'checklist' && (
+                        <button
+                          onClick={generateAIChecklist}
+                          disabled={isGeneratingChecklist}
+                          className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            isGeneratingChecklist
+                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                          title={t(
+                            'myWork.taskDetail.generateChecklistWithAI',
+                            'Generate checklist with AI'
+                          )}
+                        >
+                          {isGeneratingChecklist ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={13} />
+                          )}
+                          {t('myWork.taskDetail.createChecklist', 'Create Checklist')}
+                        </button>
+                      )}
+
+                      {activeNSection === 'comments' && (
+                        <button
+                          onClick={generateAIComment}
+                          disabled={isGeneratingAIComment}
+                          className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            isGeneratingAIComment
+                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                          title={t('myWork.taskDetail.title14', 'Generate AI comments')}
+                        >
+                          {isGeneratingAIComment ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={13} />
+                          )}
+                          {t('myWork.taskDetail.aIComments', 'AI comments')}
+                        </button>
+                      )}
+
+                      {activeNSection === 'governance' && (
+                        <button
+                          onClick={async () => {
+                            setIsSuggestingStakeholders(true);
+                            try {
+                              const roster = users
+                                .map((u) => `${u.id}: ${u.firstName} ${u.lastName} (${u.email})`)
+                                .join('\n');
+                              const prompt = isPolish
+                                ? `Na podstawie danych zadania zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nDostępne osoby:\n${roster}`
+                                : `Based on task data, propose a RACI team. Return JSON ONLY:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nAvailable people:\n${roster}`;
+                              const aiRes = await Api.post('/ai/chat', {
+                                message: prompt,
+                                history: [],
+                                systemInstruction: t(
+                                  'myWork.taskDetail.systemInstruction2',
+                                  'You are a PMO assistant. Return valid JSON only.'
+                                ),
+                                roleName: 'RACI Team Advisor',
+                              });
+                              const raw = String(aiRes?.text || aiRes?.content || '').trim();
+                              const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                              if (jsonMatch) {
+                                const parsed = JSON.parse(jsonMatch[0]);
+                                if (Array.isArray(parsed.stakeholders)) {
+                                  const next = parsed.stakeholders.map((s: any) => {
+                                    const user = users.find((u) => u.id === s.userId);
+                                    return {
+                                      id: Math.random().toString(36).substr(2, 9),
+                                      decisionId: taskId || 'new',
+                                      userId: s.userId,
+                                      userName: user
+                                        ? `${user.firstName} ${user.lastName}`
+                                        : s.userId,
+                                      userEmail: user?.email || '',
+                                      role: s.role as StakeholderRole,
+                                      notificationSettings: {
+                                        enabled: true,
+                                        triggers: ['on_status_change'],
+                                        emailEnabled: false,
+                                        inAppEnabled: true,
+                                        integrationChannels: [],
+                                        syncTargets: [],
+                                      },
+                                    };
+                                  });
+                                  setStakeholders(next);
+                                  toast.success(
+                                    isPolish
+                                      ? `AI zaproponowało skład RACI (${next.length} osób).`
+                                      : `AI proposed RACI team (${next.length} people).`
+                                  );
+                                }
+                              }
+                            } catch {
+                              // fallback
+                              const fallbackTeam = users
+                                .slice(0, Math.min(4, users.length))
+                                .map((u, i) => ({
                                   id: Math.random().toString(36).substr(2, 9),
                                   decisionId: taskId || 'new',
-                                  userId: s.userId,
-                                  userName: user ? `${user.firstName} ${user.lastName}` : s.userId,
-                                  userEmail: user?.email || '',
-                                  role: s.role as StakeholderRole,
+                                  userId: u.id,
+                                  userName: `${u.firstName} ${u.lastName}`,
+                                  userEmail: u.email,
+                                  role:
+                                    (
+                                      [
+                                        'accountable',
+                                        'responsible',
+                                        'consulted',
+                                        'informed',
+                                      ] as StakeholderRole[]
+                                    )[i] || 'informed',
                                   notificationSettings: {
                                     enabled: true,
-                                    triggers: ['on_status_change'],
+                                    triggers: [
+                                      'on_status_change',
+                                    ] as StakeholderNotificationSettings['triggers'],
                                     emailEnabled: false,
                                     inAppEnabled: true,
                                     integrationChannels: [],
                                     syncTargets: [],
                                   },
-                                };
-                              });
-                              setStakeholders(next);
+                                }));
+                              setStakeholders(fallbackTeam);
                               toast.success(
-                                isPolish
-                                  ? `AI zaproponowało skład RACI (${next.length} osób).`
-                                  : `AI proposed RACI team (${next.length} people).`
+                                t(
+                                  'myWork.taskDetail.appliedFallbackRACITeam',
+                                  'Applied fallback RACI team.'
+                                )
                               );
+                            } finally {
+                              setIsSuggestingStakeholders(false);
                             }
-                          }
-                        } catch {
-                          // fallback
-                          const fallbackTeam = users
-                            .slice(0, Math.min(4, users.length))
-                            .map((u, i) => ({
-                              id: Math.random().toString(36).substr(2, 9),
-                              decisionId: taskId || 'new',
-                              userId: u.id,
-                              userName: `${u.firstName} ${u.lastName}`,
-                              userEmail: u.email,
-                              role:
-                                (
-                                  [
-                                    'accountable',
-                                    'responsible',
-                                    'consulted',
-                                    'informed',
-                                  ] as StakeholderRole[]
-                                )[i] || 'informed',
-                              notificationSettings: {
-                                enabled: true,
-                                triggers: [
-                                  'on_status_change',
-                                ] as StakeholderNotificationSettings['triggers'],
-                                emailEnabled: false,
-                                inAppEnabled: true,
-                                integrationChannels: [],
-                                syncTargets: [],
-                              },
-                            }));
-                          setStakeholders(fallbackTeam);
-                          toast.success(
-                            t('myWork.taskDetail.appliedFallbackRACITeam', 'Applied fallback RACI team.')
-                          );
-                        } finally {
-                          setIsSuggestingStakeholders(false);
-                        }
-                      }}
-                      disabled={isSuggestingStakeholders}
-                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                        isSuggestingStakeholders
-                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
-                      } disabled:opacity-40 disabled:cursor-not-allowed`}
-                      title={t('myWork.taskDetail.title15', 'Generate RACI with AI')}
-                    >
-                      {isSuggestingStakeholders ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={13} />
+                          }}
+                          disabled={isSuggestingStakeholders}
+                          className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            isSuggestingStakeholders
+                              ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                              : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                          title={t('myWork.taskDetail.title15', 'Generate RACI with AI')}
+                        >
+                          {isSuggestingStakeholders ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={13} />
+                          )}
+                          {t('myWork.taskDetail.generateRACI', 'Generate RACI')}
+                        </button>
                       )}
-                      {t('myWork.taskDetail.generateRACI', 'Generate RACI')}
-                    </button>
-                  )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2-Pane: LeftNav + Canvas */}
+                <div className="flex gap-0 min-h-[60vh]">
+                  <NModeLeftNav
+                    sections={visibleTaskNModeSections}
+                    activeSection={activeNSection}
+                    onSectionChange={setActiveNSection}
+                    onSectionReorder={(ids) => taskCardLayout.reorderByIds(ids)}
+                  />
+                  <NModeCanvas
+                    sections={visibleTaskNModeSections}
+                    activeSection={activeNSection}
+                    reducedMotion={reducedMotion}
+                    motionDuration={motionDuration}
+                  />
                 </div>
               </div>
-              )}
-
-              {/* 2-Pane: LeftNav + Canvas */}
-              <div className="flex gap-0 min-h-[60vh]">
-                <NModeLeftNav
-                  sections={visibleTaskNModeSections}
-                  activeSection={activeNSection}
-                  onSectionChange={setActiveNSection}
-                  onSectionReorder={(ids) => taskCardLayout.reorderByIds(ids)}
-                />
-                <NModeCanvas
-                  sections={visibleTaskNModeSections}
-                  activeSection={activeNSection}
-                  reducedMotion={reducedMotion}
-                  motionDuration={motionDuration}
-                />
-              </div>
-            </div>
-            {/* ── /Lewa kolumna ── */}
+              {/* ── /Lewa kolumna ── */}
             </div>
 
             {/* ── Dokowany prawy panel artefaktu (lg+; ukryty na <lg) ── */}
@@ -4525,7 +4619,10 @@ Return ONLY the final comment text.`;
                 </button>
               </div>
               <div className={governanceModalHintClass}>
-                {t('myWork.taskDetail.useThisWindowTo', 'Use this window to describe and configure person responsibility in RACI and communication channels.')}
+                {t(
+                  'myWork.taskDetail.useThisWindowTo',
+                  'Use this window to describe and configure person responsibility in RACI and communication channels.'
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="text-xs text-slate-500 dark:text-slate-400">
@@ -4567,8 +4664,12 @@ Return ONLY the final comment text.`;
                     <option value="responsible">
                       {t('myWork.taskDetail.responsible2', 'Responsible')}
                     </option>
-                    <option value="accountable">{t('myWork.taskDetail.accountable2', 'Accountable')}</option>
-                    <option value="consulted">{t('myWork.taskDetail.consulted2', 'Consulted')}</option>
+                    <option value="accountable">
+                      {t('myWork.taskDetail.accountable2', 'Accountable')}
+                    </option>
+                    <option value="consulted">
+                      {t('myWork.taskDetail.consulted2', 'Consulted')}
+                    </option>
                     <option value="informed">{t('myWork.taskDetail.informed2', 'Informed')}</option>
                   </select>
                 </label>
@@ -4752,9 +4853,7 @@ Return ONLY the final comment text.`;
                 <div className="inline-flex items-center gap-2">
                   <button
                     disabled={isSuggestingStakeholders}
-                    onClick={() =>
-                      toast(t('myWork.taskDetail.toast3', 'AI will fill the form...'))
-                    }
+                    onClick={() => toast(t('myWork.taskDetail.toast3', 'AI will fill the form...'))}
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
                     <Sparkles size={12} /> AI
@@ -4771,7 +4870,10 @@ Return ONLY the final comment text.`;
                 </div>
               </div>
               <div className={governanceModalHintClass}>
-                {t('myWork.taskDetail.useThisWindowTo2', 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.')}
+                {t(
+                  'myWork.taskDetail.useThisWindowTo2',
+                  'Use this window to describe reminder intent: when it should trigger, recipients, and the message.'
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="text-xs text-slate-500 dark:text-slate-400">
@@ -4786,8 +4888,12 @@ Return ONLY the final comment text.`;
                     }
                     className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                   >
-                    <option value="before_due">{t('myWork.taskDetail.beforeDue2', 'Before due')}</option>
-                    <option value="after_due">{t('myWork.taskDetail.afterDue2', 'After due')}</option>
+                    <option value="before_due">
+                      {t('myWork.taskDetail.beforeDue2', 'Before due')}
+                    </option>
+                    <option value="after_due">
+                      {t('myWork.taskDetail.afterDue2', 'After due')}
+                    </option>
                   </select>
                 </label>
                 <label className="text-xs text-slate-500 dark:text-slate-400">
@@ -5011,9 +5117,7 @@ Return ONLY the final comment text.`;
                 <div className="inline-flex items-center gap-2">
                   <button
                     disabled={isSuggestingStakeholders}
-                    onClick={() =>
-                      toast(t('myWork.taskDetail.toast4', 'AI will fill the form...'))
-                    }
+                    onClick={() => toast(t('myWork.taskDetail.toast4', 'AI will fill the form...'))}
                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
                     <Sparkles size={12} /> AI
@@ -5030,7 +5134,10 @@ Return ONLY the final comment text.`;
                 </div>
               </div>
               <div className={governanceModalHintClass}>
-                {t('myWork.taskDetail.useThisWindowTo3', 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.')}
+                {t(
+                  'myWork.taskDetail.useThisWindowTo3',
+                  'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.'
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="text-xs text-slate-500 dark:text-slate-400">
@@ -5436,9 +5543,10 @@ Return ONLY the final comment text.`;
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
                         className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition"
-                        placeholder={
-                          t('myWork.taskDetail.describeTaskDetails', 'Describe task details...')
-                        }
+                        placeholder={t(
+                          'myWork.taskDetail.describeTaskDetails',
+                          'Describe task details...'
+                        )}
                       />
                     </div>
                   </motion.div>
@@ -5520,9 +5628,10 @@ Return ONLY the final comment text.`;
                         onChange={(e) => setExpectedOutcome(e.target.value)}
                         rows={3}
                         className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition"
-                        placeholder={
-                          t('myWork.taskDetail.whatShouldBeThe', 'What should be the outcome of this task?')
-                        }
+                        placeholder={t(
+                          'myWork.taskDetail.whatShouldBeThe',
+                          'What should be the outcome of this task?'
+                        )}
                       />
                     </div>
                   </motion.div>
@@ -5634,7 +5743,10 @@ Return ONLY the final comment text.`;
                             {t('myWork.taskDetail.noRelatedDecisions', 'No related decisions')}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-                            {t('myWork.taskDetail.linkExistingOrCreate', 'Link existing or create new decision')}
+                            {t(
+                              'myWork.taskDetail.linkExistingOrCreate',
+                              'Link existing or create new decision'
+                            )}
                           </p>
                         </div>
                       ) : (
@@ -5735,7 +5847,10 @@ Return ONLY the final comment text.`;
                                           );
                                           setRelatedDecisions(prev); // rollback
                                           toast.error(
-                                            t('myWork.taskDetail.failedToRemoveLink', 'Failed to remove link')
+                                            t(
+                                              'myWork.taskDetail.failedToRemoveLink',
+                                              'Failed to remove link'
+                                            )
                                           );
                                         }
                                       }}
@@ -5774,9 +5889,10 @@ Return ONLY the final comment text.`;
                               type="text"
                               value={newDecisionTitle}
                               onChange={(e) => setNewDecisionTitle(e.target.value)}
-                              placeholder={
-                                t('myWork.taskDetail.eGProjectBudget', 'E.g. Project budget approval')
-                              }
+                              placeholder={t(
+                                'myWork.taskDetail.eGProjectBudget',
+                                'E.g. Project budget approval'
+                              )}
                               className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
                               autoFocus
                             />
@@ -5785,14 +5901,18 @@ Return ONLY the final comment text.`;
                           {/* Decision description */}
                           <div>
                             <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                              {t('myWork.taskDetail.problemDescriptionContext', 'Problem description / context')}
+                              {t(
+                                'myWork.taskDetail.problemDescriptionContext',
+                                'Problem description / context'
+                              )}
                             </label>
                             <textarea
                               value={newDecisionDescription}
                               onChange={(e) => setNewDecisionDescription(e.target.value)}
-                              placeholder={
-                                t('myWork.taskDetail.describeTheProblemRequiring', 'Describe the problem requiring decision...')
-                              }
+                              placeholder={t(
+                                'myWork.taskDetail.describeTheProblemRequiring',
+                                'Describe the problem requiring decision...'
+                              )}
                               rows={2}
                               className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400 resize-none"
                             />
@@ -5801,7 +5921,10 @@ Return ONLY the final comment text.`;
                           {/* Relationship type */}
                           <div>
                             <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                              {t('myWork.taskDetail.relationshipWithTask', 'Relationship with task')}
+                              {t(
+                                'myWork.taskDetail.relationshipWithTask',
+                                'Relationship with task'
+                              )}
                             </label>
                             <div className="flex flex-wrap gap-2">
                               {[
@@ -5861,20 +5984,29 @@ Return ONLY the final comment text.`;
                               onClick={async () => {
                                 if (!newDecisionTitle.trim()) {
                                   toast.error(
-                                    t('myWork.taskDetail.enterDecisionTitle', 'Enter decision title')
+                                    t(
+                                      'myWork.taskDetail.enterDecisionTitle',
+                                      'Enter decision title'
+                                    )
                                   );
                                   return;
                                 }
                                 if (!taskId) {
                                   toast.error(
-                                    t('myWork.taskDetail.saveTheTaskFirst', 'Save the task first to create a decision')
+                                    t(
+                                      'myWork.taskDetail.saveTheTaskFirst',
+                                      'Save the task first to create a decision'
+                                    )
                                   );
                                   return;
                                 }
                                 const decisionMakerId = currentUser?.id || ownerId || assigneeId;
                                 if (!decisionMakerId) {
                                   toast.error(
-                                    t('myWork.taskDetail.noDecisionMakerAvailable', 'No decision maker available — cannot create decision')
+                                    t(
+                                      'myWork.taskDetail.noDecisionMakerAvailable',
+                                      'No decision maker available — cannot create decision'
+                                    )
                                   );
                                   return;
                                 }
@@ -5928,12 +6060,18 @@ Return ONLY the final comment text.`;
                                       : `Created decision: ${newDecisionTitle}`
                                   );
                                   toast.success(
-                                    t('myWork.taskDetail.decisionCreatedAndLinked', 'Decision created and linked')
+                                    t(
+                                      'myWork.taskDetail.decisionCreatedAndLinked',
+                                      'Decision created and linked'
+                                    )
                                   );
                                 } catch (err) {
                                   console.error('[TaskDetailView] Failed to create decision', err);
                                   toast.error(
-                                    t('myWork.taskDetail.failedToCreateDecision', 'Failed to create decision')
+                                    t(
+                                      'myWork.taskDetail.failedToCreateDecision',
+                                      'Failed to create decision'
+                                    )
                                   );
                                 } finally {
                                   setCreatingDecision(false);
@@ -5954,13 +6092,18 @@ Return ONLY the final comment text.`;
                               }}
                               className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 transition"
                             >
-                              <span className="text-sm">{t('myWork.taskDetail.cancel4', 'Cancel')}</span>
+                              <span className="text-sm">
+                                {t('myWork.taskDetail.cancel4', 'Cancel')}
+                              </span>
                             </button>
                           </div>
 
                           {/* Info about full editor */}
                           <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 text-center">
-                            {t('myWork.taskDetail.decisionWillBeCreated', 'Decision will be created as draft. You can complete it in full editor.')}
+                            {t(
+                              'myWork.taskDetail.decisionWillBeCreated',
+                              'Decision will be created as draft. You can complete it in full editor.'
+                            )}
                           </p>
                         </motion.div>
                       )}
@@ -5981,9 +6124,10 @@ Return ONLY the final comment text.`;
                               type="text"
                               value={decisionSearchQuery}
                               onChange={(e) => setDecisionSearchQuery(e.target.value)}
-                              placeholder={
-                                t('myWork.taskDetail.searchExistingDecisions', 'Search existing decisions...')
-                              }
+                              placeholder={t(
+                                'myWork.taskDetail.searchExistingDecisions',
+                                'Search existing decisions...'
+                              )}
                               className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
                               autoFocus
                             />
@@ -6005,7 +6149,10 @@ Return ONLY the final comment text.`;
                                   onClick={async () => {
                                     if (!taskId) {
                                       toast.error(
-                                        t('myWork.taskDetail.saveTheTaskFirst2', 'Save the task first to link a decision')
+                                        t(
+                                          'myWork.taskDetail.saveTheTaskFirst2',
+                                          'Save the task first to link a decision'
+                                        )
                                       );
                                       return;
                                     }
@@ -6040,7 +6187,10 @@ Return ONLY the final comment text.`;
                                         err
                                       );
                                       toast.error(
-                                        t('myWork.taskDetail.failedToLinkDecision', 'Failed to link decision')
+                                        t(
+                                          'myWork.taskDetail.failedToLinkDecision',
+                                          'Failed to link decision'
+                                        )
                                       );
                                     } finally {
                                       setLinkingDecisionId(null);
@@ -6068,7 +6218,10 @@ Return ONLY the final comment text.`;
                                 !relatedDecisions.some((r) => r.decisionId === d.id)
                             ).length === 0 && (
                               <p className="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 py-4">
-                                {t('myWork.taskDetail.noMatchingDecisions', 'No matching decisions')}
+                                {t(
+                                  'myWork.taskDetail.noMatchingDecisions',
+                                  'No matching decisions'
+                                )}
                               </p>
                             )}
                           </div>
@@ -6744,9 +6897,10 @@ Return ONLY the final comment text.`;
                             onChange={(e) => setBlockedReason(e.target.value)}
                             rows={2}
                             className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-danger-200 dark:border-danger-500/30 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-danger-400 resize-none"
-                            placeholder={
-                              t('myWork.taskDetail.describeBlockingReason2', 'Describe blocking reason...')
-                            }
+                            placeholder={t(
+                              'myWork.taskDetail.describeBlockingReason2',
+                              'Describe blocking reason...'
+                            )}
                           />
                         </div>
                       )}

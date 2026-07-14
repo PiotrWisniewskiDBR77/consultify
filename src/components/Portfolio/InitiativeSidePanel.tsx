@@ -34,8 +34,8 @@ import { useTranslation } from 'react-i18next';
 
 import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
 import { Api } from '../../services/api';
-import { formatRoiDisplay } from '../../utils/safeFormat';
 import { InitiativeStatus, PortfolioInitiative, Task, User as UserType } from '../../types';
+import { formatRoiDisplay } from '../../utils/safeFormat';
 import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import { DecisionDetailModal } from '../MyWork/DecisionDetailModal';
 import { TaskDetailModal } from '../TaskDetailModal';
@@ -170,7 +170,9 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       const raw = Array.isArray(response) ? response : response?.decisions || [];
       // Hide soft-deleted decisions (DELETE /api/decisions/:id sets status='cancelled').
       // No archive view here — cancelled just drops out of the active list.
-      setDecisions(raw.filter((d: Decision) => String(d.status || '').toUpperCase() !== 'CANCELLED'));
+      setDecisions(
+        raw.filter((d: Decision) => String(d.status || '').toUpperCase() !== 'CANCELLED')
+      );
     } catch (error: any) {
       console.error('[InitiativeSidePanel] Failed to fetch decisions:', error);
       setDecisions([]);

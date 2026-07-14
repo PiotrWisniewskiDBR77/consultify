@@ -245,7 +245,9 @@ export function TabelePreviewLayout({
           {tableData.columns.length > 0 ? (
             <div className="overflow-hidden rounded-hig-lg border border-c-border-subtle bg-c-surface">
               <div className="overflow-x-auto">
-                <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-left text-xs">
+                <table
+                  /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-left text-xs"
+                >
                   <thead className="bg-c-surface-raised">
                     <tr>
                       {tableData.columns.map((column) => (
@@ -385,10 +387,7 @@ export function TabelePreviewLayout({
         >
           <div className="mb-4 flex items-center gap-2">
             <Database size={18} className="text-c-text-secondary" aria-hidden="true" />
-            <h2
-              id="tabele-preview-rationale-heading"
-              className="text-lg font-semibold text-c-text"
-            >
+            <h2 id="tabele-preview-rationale-heading" className="text-lg font-semibold text-c-text">
               {t('kimi.tabele.preview.rationaleTitle', { defaultValue: 'AI Rationale' })}
             </h2>
           </div>

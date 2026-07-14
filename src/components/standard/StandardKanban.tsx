@@ -26,13 +26,12 @@ import { cn } from '@/utils/cn';
 
 import type { ChipTone } from '../ui/primitives/chips/chipBase';
 import { CHIP_TONE_VAR, ChipDot } from '../ui/primitives/chips/chipBase';
-
+import type { StandardKanbanCard as StandardKanbanCardData } from './StandardKanbanCard';
 // Karta = JEDEN kanon (#75b): renderer żyje w `StandardKanbanCard.tsx` i jest
 // reużywany też przez bespoke boardy dnd-kit. Fasada tylko go komponuje.
 import { StandardKanbanCard } from './StandardKanbanCard';
-import type { StandardKanbanCard as StandardKanbanCardData } from './StandardKanbanCard';
 
-export type { StandardKanbanUrgency, StandardKanbanChip } from './StandardKanbanCard';
+export type { StandardKanbanChip, StandardKanbanUrgency } from './StandardKanbanCard';
 // Re-eksport modelu danych karty pod historyczną nazwą (moduły deklarują karty).
 export type { StandardKanbanCard } from './StandardKanbanCard';
 
@@ -177,10 +176,7 @@ export const StandardKanban: React.FC<StandardKanbanProps> = ({
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
 
   return (
-    <div
-      data-testid="standard-kanban"
-      className={cn('h-full overflow-x-auto p-4', className)}
-    >
+    <div data-testid="standard-kanban" className={cn('h-full overflow-x-auto p-4', className)}>
       <div className="flex h-full gap-4">
         {columns.map((column) => (
           <KanbanColumnZone

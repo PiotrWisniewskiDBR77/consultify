@@ -37,39 +37,39 @@
  * `buildThreeAxisReport`/`projectFinanceRollupService`), która zasila powyższą funkcję.
  */
 
-import logger from '../utils/Logger.js';
 import { all as dbAll } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   attachSource as attachEvidenceSource,
-  upsertEnvelope as upsertEvidenceEnvelope,
   type EvidenceAssumption,
   type EvidenceAssumptionSourceType,
   type EvidenceEnvelope,
   type EvidenceSource,
   type EvidenceSourceType,
+  upsertEnvelope as upsertEvidenceEnvelope,
 } from './evidence/evidenceEnvelopeService.js';
 import {
+  type ComputedFamilyRatio,
   computeDupontFromLines,
   computeFinanceRatioFamilyCatalog,
-  groupByFamily,
-  type ComputedFamilyRatio,
   type DupontFromLines,
+  groupByFamily,
   type LineValueMap,
   type RatioFamily,
 } from './financeRatioFamilyCatalog.js';
 import { getStatementPackDetail, loadPackValueMaps } from './financialStatementPackService.js';
 import {
   buildRatioBenchmark,
-  loadOrganizationIndustry,
   type ComputedRatio,
+  loadOrganizationIndustry,
 } from './ratioAnalysisService.js';
 import { RECONCILE_ENFORCE } from './reconciliationService.js';
 import ReportContract, { type ReportScope } from './report/reportContract.js';
 import ReportBuilderService from './reportBuilderService.js';
 import {
-  buildBasketFromResults,
   type BasketConfig,
   type BasketResult,
+  buildBasketFromResults,
 } from './valuationBasketService.js';
 import { getOrgDefaultWacc, getValuation, listValuations } from './valuationService.js';
 
@@ -209,19 +209,23 @@ export function buildFinanceReportLineage(
   const sectionAssumptions: FinanceLineageAssumption[] = [
     {
       key: 'ratio_engine',
-      value: 'financeRatioFamilyCatalog.computeFinanceRatioFamilyCatalog (Z111, 24 wskaźników / 5 rodzin + DuPont)',
+      value:
+        'financeRatioFamilyCatalog.computeFinanceRatioFamilyCatalog (Z111, 24 wskaźników / 5 rodzin + DuPont)',
       sourceType: 'imported',
-      rationale: 'Brak wartości linii kanonicznej = skipped (null), nigdy 0 (doktryna "no guessing").',
+      rationale:
+        'Brak wartości linii kanonicznej = skipped (null), nigdy 0 (doktryna "no guessing").',
     },
     {
       key: 'reconcile_engine',
-      value: 'reconciliationService.reconcileStatements (R1-R8) — CZYTANE z persystowanego shadow-wyniku, nie przeliczane',
+      value:
+        'reconciliationService.reconcileStatements (R1-R8) — CZYTANE z persystowanego shadow-wyniku, nie przeliczane',
       sourceType: 'imported',
       rationale: `RECONCILE_ENFORCE=${RECONCILE_ENFORCE} — obserwacyjny, nie blokuje readiness pakietu.`,
     },
     {
       key: 'valuation_engine',
-      value: 'valuationBasketService.buildBasketFromResults (M1 DCF, M2 comps, M3 precedent, M4 asset/income)',
+      value:
+        'valuationBasketService.buildBasketFromResults (M1 DCF, M2 comps, M3 precedent, M4 asset/income)',
       sourceType: 'imported',
     },
   ];
@@ -230,7 +234,8 @@ export function buildFinanceReportLineage(
       key: 'wacc_pct',
       value: waccPct,
       sourceType: 'imported',
-      rationale: 'valuationService.getOrgDefaultWacc — organization_settings.finance.defaultWacc (fallback 12% gdy organizacja nie ustawiła własnego).',
+      rationale:
+        'valuationService.getOrgDefaultWacc — organization_settings.finance.defaultWacc (fallback 12% gdy organizacja nie ustawiła własnego).',
     });
   }
 
@@ -253,7 +258,8 @@ export function buildFinanceReportLineage(
                 key: 'wacc_pct',
                 value: waccPct,
                 sourceType: 'imported',
-                rationale: 'Wejście z silnika wyceny (valuationService.getOrgDefaultWacc), nie z linii kanonicznej pakietu.',
+                rationale:
+                  'Wejście z silnika wyceny (valuationService.getOrgDefaultWacc), nie z linii kanonicznej pakietu.',
               },
             ]
           : [],
@@ -304,9 +310,10 @@ export function buildFinanceReportLineage(
  * envelope). Truncation (30/20 wpisów) — jak wcześniej — chroni przed nadmiarowym JSON
  * przy dużych katalogach wskaźników/checków, envelope to koperta dowodowa, nie pełny dump.
  */
-export function lineageToEvidenceInputs(
-  lineage: FinanceReportLineage
-): { sources: EvidenceSource[]; assumptions: EvidenceAssumption[] } {
+export function lineageToEvidenceInputs(lineage: FinanceReportLineage): {
+  sources: EvidenceSource[];
+  assumptions: EvidenceAssumption[];
+} {
   const categoryToSourceType: Record<FinanceLineageCategory, EvidenceSourceType> = {
     ratio: 'statement_pack',
     reconcile: 'statement_pack',
@@ -318,7 +325,11 @@ export function lineageToEvidenceInputs(
     reconcile: 20,
     valuation: 20,
   };
-  const seenPerCategory: Record<FinanceLineageCategory, number> = { ratio: 0, reconcile: 0, valuation: 0 };
+  const seenPerCategory: Record<FinanceLineageCategory, number> = {
+    ratio: 0,
+    reconcile: 0,
+    valuation: 0,
+  };
 
   const sources: EvidenceSource[] = [];
   for (const entry of lineage.entries) {
@@ -491,7 +502,8 @@ export function summarizeReconcileValidations(
       difference: v.difference,
       tolerance: v.tolerance,
     }));
-  const overallStatus = (summaryDetails.overallStatus as FinanceReconcileSummary['overallStatus']) || 'na';
+  const overallStatus =
+    (summaryDetails.overallStatus as FinanceReconcileSummary['overallStatus']) || 'na';
   // Persisted `ReconcileResult.blocksReady` from the last recompute (shadowReconcilePack
   // writes it verbatim into RECONCILE_SUMMARY.details_json). Fallback to re-deriving from
   // the checks themselves (identical formula to reconciliationService.reconcileStatements)
@@ -554,7 +566,11 @@ function emptyFinanceReportSection(organizationId: string, asOf: string): Financ
       blocksReady: false,
     },
     valuation: { available: false, valuationId: null, valuationTitle: null, basket: null },
-    dataQuality: { statementTypesPresent: [], missingStatementTypes: ['P&L', 'BS', 'CF'], resolvedLineCount: 0 },
+    dataQuality: {
+      statementTypesPresent: [],
+      missingStatementTypes: ['P&L', 'BS', 'CF'],
+      resolvedLineCount: 0,
+    },
     lineage: emptyFinanceReportLineage(asOf),
   };
 }
@@ -580,7 +596,9 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
 
   // 2) Reconcile R1-R8 — CZYTANE z persystowanego shadow-wyniku (financial_statement_validations),
   //    NIE przeliczane drugi raz (patrz docblock pliku, punkt 2).
-  const reconcile: FinanceReconcileSummary = summarizeReconcileValidations(input.reconcileValidations);
+  const reconcile: FinanceReconcileSummary = summarizeReconcileValidations(
+    input.reconcileValidations
+  );
 
   // 3) Koszyk EV — football field. Basket już policzony przez wołającego (orkiestracja DB
   //    poniżej), tu tylko przenoszony do struktury sekcji.
@@ -595,11 +613,7 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
 
   const verdict = worstRag([
     ratioRag(reconcile.available ? reconcile.overallStatus : 'na'),
-    valuation.basket
-      ? valuation.basket.consistencyFlag.triggered
-        ? 'AMBER'
-        : 'GREEN'
-      : 'NA',
+    valuation.basket ? (valuation.basket.consistencyFlag.triggered ? 'AMBER' : 'GREEN') : 'NA',
   ]);
 
   const headline =
@@ -608,7 +622,14 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
     `reconcile R1-R8 ${reconcile.available ? reconcile.overallStatus : 'niedostępny'} (shadow${RECONCILE_ENFORCE ? '' : ', nie blokuje'}) · ` +
     `EV koszyk ${valuation.basket ? `${valuation.basket.methods.length} metod${valuation.basket.consistencyFlag.triggered ? ', ROZBIEŻNOŚĆ >20%' : ''}` : 'niedostępny'}.`;
 
-  const lineage = buildFinanceReportLineage(input.pack, ratios, reconcile, valuation, input.waccPct, asOf);
+  const lineage = buildFinanceReportLineage(
+    input.pack,
+    ratios,
+    reconcile,
+    valuation,
+    input.waccPct,
+    asOf
+  );
 
   return {
     organizationId: input.organizationId,
@@ -619,7 +640,13 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
     asOf,
     verdict,
     headline,
-    ratios: { total: ratios.length, computed: computedCount, skipped: ratios.length - computedCount, byFamily, dupont },
+    ratios: {
+      total: ratios.length,
+      computed: computedCount,
+      skipped: ratios.length - computedCount,
+      byFamily,
+      dupont,
+    },
     reconcile,
     valuation,
     dataQuality: {
@@ -653,7 +680,9 @@ async function loadOrgBenchmarkRows(organizationId: string): Promise<OrgBenchmar
     );
     return rows || [];
   } catch (err) {
-    logger.warn(`[financeReportSectionService] loadOrgBenchmarkRows failed (degrading to empty): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[financeReportSectionService] loadOrgBenchmarkRows failed (degrading to empty): ${(err as Error)?.message || err}`
+    );
     return [];
   }
 }
@@ -673,19 +702,26 @@ async function resolveValuation(
     const val = await getValuation(organizationId, id);
     if (!val) return null;
 
-    const results = (val.results && typeof val.results === 'object' ? val.results : {}) as Record<string, any>;
+    const results = (val.results && typeof val.results === 'object' ? val.results : {}) as Record<
+      string,
+      any
+    >;
     // Reuse an already-computed basket verbatim (no recompute) when present; otherwise
     // synthesize purely from whatever DCF/comps results already exist (no I/O, no side
     // effect on the valuation row — a report read must not mutate valuation state).
     let basket: BasketResult | null = (results.basket as BasketResult) || null;
     if (!basket && (results.dcf || results.comps)) {
       const config: BasketConfig =
-        results?.assumptions?.basket && typeof results.assumptions.basket === 'object' ? results.assumptions.basket : {};
+        results?.assumptions?.basket && typeof results.assumptions.basket === 'object'
+          ? results.assumptions.basket
+          : {};
       basket = buildBasketFromResults(results, config);
     }
     return { id, title: val.title || null, basket };
   } catch (err) {
-    logger.warn(`[financeReportSectionService] resolveValuation failed (degrading to unavailable): ${(err as Error)?.message || err}`);
+    logger.warn(
+      `[financeReportSectionService] resolveValuation failed (degrading to unavailable): ${(err as Error)?.message || err}`
+    );
     return null;
   }
 }
@@ -716,7 +752,9 @@ export async function loadFinanceReportSectionData(
   ]);
   const lineValues: LineValueMap = { ...maps.pnl, ...maps.bs, ...maps.cf };
 
-  const packValidations: Array<Record<string, any>> = Array.isArray(detail.validations) ? detail.validations : [];
+  const packValidations: Array<Record<string, any>> = Array.isArray(detail.validations)
+    ? detail.validations
+    : [];
   const reconcileValidations = mapPackValidationsToReconcileRows(packValidations);
 
   return composeFinanceReportSection({
@@ -826,9 +864,10 @@ export function renderFinanceReportMarkdown(section: FinanceReportSection): Reco
       })
     )
     .join('\n');
-  const dupontLine = section.ratios.dupont.status === 'computed'
-    ? `DuPont ROE = ${section.ratios.dupont.roe}% (marża ${section.ratios.dupont.netMarginPct}% × rotacja ${section.ratios.dupont.assetTurnover} × dźwignia ${section.ratios.dupont.equityMultiplier})`
-    : 'DuPont — pominięty (brakujące linie kanoniczne).';
+  const dupontLine =
+    section.ratios.dupont.status === 'computed'
+      ? `DuPont ROE = ${section.ratios.dupont.roe}% (marża ${section.ratios.dupont.netMarginPct}% × rotacja ${section.ratios.dupont.assetTurnover} × dźwignia ${section.ratios.dupont.equityMultiplier})`
+      : 'DuPont — pominięty (brakujące linie kanoniczne).';
   const ratioTable = [
     `## Wskaźniki (${section.ratios.computed}/${section.ratios.total} policzonych)`,
     '',
@@ -849,11 +888,18 @@ export function renderFinanceReportMarkdown(section: FinanceReportSection): Reco
         '',
         ...section.reconcile.checks
           .filter((c) => c.status !== 'pass')
-          .map((c) => `- ${c.status === 'fail' ? '🔴' : '🟡'} **${c.checkCode}** (${c.checkName}) — ${c.message}`),
+          .map(
+            (c) =>
+              `- ${c.status === 'fail' ? '🔴' : '🟡'} **${c.checkCode}** (${c.checkName}) — ${c.message}`
+          ),
       ]
         .filter(Boolean)
         .join('\n')
-    : ['## Reconcile R1-R8 (shadow)', '', '_Pakiet nie przeszedł jeszcze przeliczenia — brak wyniku._'].join('\n');
+    : [
+        '## Reconcile R1-R8 (shadow)',
+        '',
+        '_Pakiet nie przeszedł jeszcze przeliczenia — brak wyniku._',
+      ].join('\n');
 
   const evFootballField = section.valuation.basket
     ? [
@@ -904,7 +950,10 @@ const FINANCE_SECTION_DEFINITION_ID = 'finance-section';
 /** TRYB 2 (patrzeć) — podgląd live, waliduje rejestrację przez `reportContract.readLive`. */
 export async function getFinanceReportSectionLiveView(
   scope: ReportScope & { packId?: string; valuationId?: string }
-): Promise<{ live: Awaited<ReturnType<typeof ReportContract.readLive>>; section: FinanceReportSection }> {
+): Promise<{
+  live: Awaited<ReturnType<typeof ReportContract.readLive>>;
+  section: FinanceReportSection;
+}> {
   const live = await ReportContract.readLive(FINANCE_SECTION_DEFINITION_ID, scope);
   const section = await loadFinanceReportSectionData({
     organizationId: scope.organizationId,
@@ -1008,7 +1057,9 @@ export async function publishFinanceReportSectionSnapshot(
 
   const markdown = renderFinanceReportMarkdown(section);
 
-  const title = params.title || `Sekcja finansowa — ${section.periodLabel || params.packId} (${section.asOf.slice(0, 10)})`;
+  const title =
+    params.title ||
+    `Sekcja finansowa — ${section.periodLabel || params.packId} (${section.asOf.slice(0, 10)})`;
 
   const rb = await ReportBuilderService.createReport({
     organizationId: params.organizationId,
@@ -1020,12 +1071,21 @@ export async function publishFinanceReportSectionSnapshot(
     createdBy: params.createdBy,
     periodFrom: params.periodFrom,
     periodTo: params.periodTo,
-    config: { packId: params.packId, valuationId: params.valuationId ?? null, generatedBy: 'financeReportSectionService' },
+    config: {
+      packId: params.packId,
+      valuationId: params.valuationId ?? null,
+      generatedBy: 'financeReportSectionService',
+    },
   });
 
   for (const [sectionKey, content] of Object.entries(markdown)) {
     try {
-      await ReportBuilderService.updateSectionContent(rb.report.id, sectionKey, content, params.createdBy);
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        sectionKey,
+        content,
+        params.createdBy
+      );
     } catch (err) {
       logger.warn(
         `[financeReportSectionService] updateSectionContent(${sectionKey}) failed (non-fatal): ${(err as Error)?.message || err}`
@@ -1045,7 +1105,9 @@ export async function publishFinanceReportSectionSnapshot(
   // #82g — jawny LINEAGE: REUŻYWA `section.lineage` (już zbudowany w `composeFinanceReportSection`,
   // czyli identyczny z tym, co widać w live-view PRZED publikacją) jako JEDYNE źródło sources/
   // assumptions envelope — nie ma już drugiego, niezależnie utrzymywanego zbioru "co jest źródłem".
-  const { sources: lineageSources, assumptions: lineageAssumptions } = lineageToEvidenceInputs(section.lineage);
+  const { sources: lineageSources, assumptions: lineageAssumptions } = lineageToEvidenceInputs(
+    section.lineage
+  );
 
   const envelope = await upsertEvidenceEnvelope({
     organizationId: params.organizationId,
@@ -1054,16 +1116,22 @@ export async function publishFinanceReportSectionSnapshot(
     sources: lineageSources,
     assumptions: lineageAssumptions,
     confidence: section.ratios.total > 0 ? section.ratios.computed / section.ratios.total : null,
-    toVerify: section.ratios.skipped > 0
-      ? [
-          {
-            claim: `${section.ratios.skipped} z ${section.ratios.total} wskaźników pominiętych (brak linii kanonicznej)`,
-            why: 'Pakiet nie ma wszystkich wymaganych linii kanonicznych dla tych formuł.',
-            suggested_check: 'Uzupełnić mapowanie linii w pakiecie sprawozdań przed kolejną publikacją.',
-          },
-        ]
-      : [],
-    computedBy: { service: 'financeReportSectionService', version: '1', at: new Date().toISOString() },
+    toVerify:
+      section.ratios.skipped > 0
+        ? [
+            {
+              claim: `${section.ratios.skipped} z ${section.ratios.total} wskaźników pominiętych (brak linii kanonicznej)`,
+              why: 'Pakiet nie ma wszystkich wymaganych linii kanonicznych dla tych formuł.',
+              suggested_check:
+                'Uzupełnić mapowanie linii w pakiecie sprawozdań przed kolejną publikacją.',
+            },
+          ]
+        : [],
+    computedBy: {
+      service: 'financeReportSectionService',
+      version: '1',
+      at: new Date().toISOString(),
+    },
     createdBy: params.createdBy,
   });
 
@@ -1079,7 +1147,13 @@ export async function publishFinanceReportSectionSnapshot(
     // best-effort — nie blokuje publikacji (wzorzec threeAxisReportService).
   }
 
-  return { reportId: rb.report.id, snapshotId: snapshot.snapshotId, section, envelope, lineage: section.lineage };
+  return {
+    reportId: rb.report.id,
+    snapshotId: snapshot.snapshotId,
+    section,
+    envelope,
+    lineage: section.lineage,
+  };
 }
 
 export default {

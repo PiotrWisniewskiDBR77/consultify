@@ -267,9 +267,7 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
         }
       } catch (error) {
         console.error('[QuestionsList] Failed to save answer:', error);
-        setSaveError(
-          t('interview.questionsList.failedToSavePleaseTry')
-        );
+        setSaveError(t('interview.questionsList.failedToSavePleaseTry'));
       } finally {
         setSavingId(null);
       }
@@ -628,7 +626,10 @@ Rules:
 
               const metaPills: MetaPill[] = [
                 {
-                  label: t(`interview.questionsList.statusLabel.${item.status}`, statusConfig.labelEn),
+                  label: t(
+                    `interview.questionsList.statusLabel.${item.status}`,
+                    statusConfig.labelEn
+                  ),
                   className: `${statusConfig.bgColor} ${statusConfig.color}`,
                   icon: StatusIcon,
                 },
@@ -770,9 +771,7 @@ Rules:
                             onChange={(e) => setEditNotes(e.target.value)}
                             className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus resize-none min-h-[72px]"
                             rows={3}
-                            placeholder={
-                              t('interview.questionsList.additionalNotesContext')
-                            }
+                            placeholder={t('interview.questionsList.additionalNotesContext')}
                           />
                         </div>
 
@@ -785,9 +784,7 @@ Rules:
 
                         <div className="flex items-center gap-2 text-xs text-slate-600">
                           <Sparkles size={12} />
-                          <span>
-                            {t('interview.questionsList.useAiOrChatTo')}
-                          </span>
+                          <span>{t('interview.questionsList.useAiOrChatTo')}</span>
                         </div>
                       </div>
                     ) : (
@@ -966,7 +963,10 @@ Rules:
                                 }}
                                 disabled={readOnly}
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusConfig.bgColor} ${readOnly ? 'cursor-default' : 'hover:opacity-80'}`}
-                                title={t(`interview.questionsList.statusLabel.${question.status}`, statusConfig.labelEn)}
+                                title={t(
+                                  `interview.questionsList.statusLabel.${question.status}`,
+                                  statusConfig.labelEn
+                                )}
                               >
                                 <StatusIcon size={16} className={statusConfig.color} />
                               </button>
@@ -1010,7 +1010,10 @@ Rules:
                                       key={tag}
                                       className={`px-1.5 py-0.5 rounded text-[11px] ${tagConfig.color}`}
                                     >
-                                      {t(`interview.questionsList.tagLabel.${tag}`, tagConfig.labelEn)}
+                                      {t(
+                                        `interview.questionsList.tagLabel.${tag}`,
+                                        tagConfig.labelEn
+                                      )}
                                     </span>
                                   ) : null;
                                 })}
@@ -1026,8 +1029,7 @@ Rules:
                           </td>
                           <td className="px-4 py-3">
                             <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                              {question.answerText ||
-                                (t('interview.questionsList.noAnswerYet2'))}
+                              {question.answerText || t('interview.questionsList.noAnswerYet2')}
                             </div>
                           </td>
                           <td className="px-4 py-3">
@@ -1039,9 +1041,7 @@ Rules:
                                 <button
                                   onClick={() => openChatForQuestion(question)}
                                   className="p-1.5 rounded hover:bg-c-info/10 dark:hover:bg-c-info/30 transition-colors"
-                                  title={
-                                    t('interview.questionsList.aiChatForThisQuestion')
-                                  }
+                                  title={t('interview.questionsList.aiChatForThisQuestion')}
                                 >
                                   <Sparkles size={14} className="text-c-info" />
                                 </button>
@@ -1178,9 +1178,7 @@ Rules:
                     }
                   }}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm text-c-info dark:text-c-info hover:bg-c-info/10 dark:hover:bg-c-info/20 rounded-lg border border-dashed border-c-info dark:border-c-info transition-colors"
-                  title={
-                    t('interview.questionsList.aiWillProposeNextQuestions')
-                  }
+                  title={t('interview.questionsList.aiWillProposeNextQuestions')}
                 >
                   <Lightbulb size={14} />
                   {t('interview.questionsList.proposeQuestions')}
@@ -1287,9 +1285,7 @@ Rules:
                   onClick={handleApplyChatToQuestion}
                   disabled={applyLoading || chatMessages.length < 2}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
-                  title={
-                    t('interview.questionsList.insertDraftIntoFieldHuman')
-                  }
+                  title={t('interview.questionsList.insertDraftIntoFieldHuman')}
                 >
                   {applyLoading
                     ? t('interview.questionsList.applying')

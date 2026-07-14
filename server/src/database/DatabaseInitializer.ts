@@ -2096,9 +2096,7 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
     await db.query(
       `ALTER TABLE report_builder_reports ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP`
     );
-    await db.query(
-      `ALTER TABLE report_builder_reports ADD COLUMN IF NOT EXISTS archived_by TEXT`
-    );
+    await db.query(`ALTER TABLE report_builder_reports ADD COLUMN IF NOT EXISTS archived_by TEXT`);
     await db.query(
       `CREATE INDEX IF NOT EXISTS idx_rb_reports_archived ON report_builder_reports(organization_id, archived_at)`
     );
@@ -3124,9 +3122,15 @@ async function ensureSchemaColumnGaps(): Promise<void> {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_idea ON my_idea_map_snapshots(idea_id)`);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_org ON my_idea_map_snapshots(organization_id)`);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_created ON my_idea_map_snapshots(created_at DESC)`);
+  await db.query(
+    `CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_idea ON my_idea_map_snapshots(idea_id)`
+  );
+  await db.query(
+    `CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_org ON my_idea_map_snapshots(organization_id)`
+  );
+  await db.query(
+    `CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_created ON my_idea_map_snapshots(created_at DESC)`
+  );
 
   // my_idea_activity: same — missing from prod until this guard runs.
   await db.query(`
@@ -3143,9 +3147,15 @@ async function ensureSchemaColumnGaps(): Promise<void> {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_activity_idea ON my_idea_activity(idea_id)`);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_activity_org ON my_idea_activity(organization_id)`);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_activity_created ON my_idea_activity(created_at DESC)`);
+  await db.query(
+    `CREATE INDEX IF NOT EXISTS idx_my_idea_activity_idea ON my_idea_activity(idea_id)`
+  );
+  await db.query(
+    `CREATE INDEX IF NOT EXISTS idx_my_idea_activity_org ON my_idea_activity(organization_id)`
+  );
+  await db.query(
+    `CREATE INDEX IF NOT EXISTS idx_my_idea_activity_created ON my_idea_activity(created_at DESC)`
+  );
 }
 
 // ==========================================

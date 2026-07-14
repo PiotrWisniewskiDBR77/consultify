@@ -14,15 +14,15 @@
  */
 
 import {
+  type LadderRung,
   RISK_DEEPENING_LADDER,
   RISK_LADDER_RUNG_ORDER,
-  type LadderRung,
   type RiskDimensionId,
 } from './deepeningLadder';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
-export * from './conclusionPrompts';
 export * from './raidHandoff';
 
 /** A ladder rung with strings resolved to a single language. */

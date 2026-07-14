@@ -446,9 +446,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         id: 'title',
         label: t('rbHub.col.title', 'Tytuł'),
         render: (row) => (
-          <span className="text-sm font-medium text-c-text">
-            {String(row.title ?? '—')}
-          </span>
+          <span className="text-sm font-medium text-c-text">{String(row.title ?? '—')}</span>
         ),
       },
       {
@@ -560,20 +558,14 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 </div>
                 <dl className="text-sm space-y-1.5">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-c-text-secondary">
-                      {t('rbHub.col.created', 'Utworzono')}
-                    </dt>
-                    <dd className="text-c-text">
-                      {formatDate(item.created_at)}
-                    </dd>
+                    <dt className="text-c-text-secondary">{t('rbHub.col.created', 'Utworzono')}</dt>
+                    <dd className="text-c-text">{formatDate(item.created_at)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-c-text-secondary">
                       {t('rbHub.col.updated', 'Zaktualizowano')}
                     </dt>
-                    <dd className="text-c-text">
-                      {formatDate(item.updated_at)}
-                    </dd>
+                    <dd className="text-c-text">{formatDate(item.updated_at)}</dd>
                   </div>
                 </dl>
               </div>
@@ -653,9 +645,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                   {/* Latest report summary */}
                   <div className="px-4 py-3 bg-c-surface-raised/[0.02] flex items-center gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-c-text truncate">
-                        {latest.title}
-                      </p>
+                      <p className="text-sm font-medium text-c-text truncate">{latest.title}</p>
                       <p className="text-xs text-c-text-secondary mt-0.5">
                         {t('rbHub.latestReport', 'Najnowszy')}: {formatDate(latest.created_at)}
                       </p>
@@ -732,9 +722,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-c-text truncate">
-                  {tpl.name}
-                </h4>
+                <h4 className="text-sm font-semibold text-c-text truncate">{tpl.name}</h4>
                 {tpl.description && (
                   <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">
                     {tpl.description}
@@ -795,7 +783,9 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
 
     return (
       <div className="overflow-auto h-full">
-        <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full text-left">
+        <table
+          /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full text-left"
+        >
           <thead className="sticky top-0 bg-c-surface-raised border-b border-c-border-subtle">
             <tr>
               <th className="px-4 py-3 text-xs font-semibold text-c-text-secondary uppercase tracking-wide">
@@ -815,14 +805,9 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           </thead>
           <tbody className="divide-y divide-c-border-subtle">
             {filteredSchedules.map((s) => (
-              <tr
-                key={s.id}
-                className="hover:opacity-90/[0.03] transition-colors"
-              >
+              <tr key={s.id} className="hover:opacity-90/[0.03] transition-colors">
                 <td className="px-4 py-3">
-                  <span className="text-sm font-medium text-c-text">
-                    {s.name}
-                  </span>
+                  <span className="text-sm font-medium text-c-text">{s.name}</span>
                 </td>
                 <td className="px-4 py-3 text-xs text-c-text-secondary capitalize">
                   {s.frequency}

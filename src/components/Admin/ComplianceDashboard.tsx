@@ -756,7 +756,9 @@ export function ComplianceDashboard() {
         {/* Activities Tab */}
         {activeTab === 'activities' && (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
+            <table
+              /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+            >
               <thead className="bg-slate-50 dark:bg-navy-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">

@@ -160,10 +160,17 @@ export function computePayback(cashflows: number[]): number | null {
 }
 
 /** ROI% = (total nominal net benefit over the horizon − investment) / investment × 100. */
-export function computeROI(cashflows: number[]): { roiPct: number; totalInvestment: number; totalNominalBenefit: number } {
+export function computeROI(cashflows: number[]): {
+  roiPct: number;
+  totalInvestment: number;
+  totalNominalBenefit: number;
+} {
   const totalInvestment = Math.abs(Math.min(0, cashflows[0] ?? 0));
   const totalNominalBenefit = cashflows.slice(1).reduce((s, cf) => s + cf, 0);
-  const roiPct = totalInvestment > 0 ? round2(((totalNominalBenefit - totalInvestment) / totalInvestment) * 100) : 0;
+  const roiPct =
+    totalInvestment > 0
+      ? round2(((totalNominalBenefit - totalInvestment) / totalInvestment) * 100)
+      : 0;
   return { roiPct, totalInvestment, totalNominalBenefit };
 }
 
@@ -250,7 +257,15 @@ export function runBusinessCaseModel(plan: BusinessCasePlan): BusinessCaseModelR
     throw new Error('businessCaseModel: horizonYears must be >= 1');
   }
 
-  const base = runScenario('base', 'Bazowy', null, 1, plan.drivers, plan.horizonYears, plan.waccPct);
+  const base = runScenario(
+    'base',
+    'Bazowy',
+    null,
+    1,
+    plan.drivers,
+    plan.horizonYears,
+    plan.waccPct
+  );
 
   const knownDriverKeys = new Set(plan.drivers.map((d) => d.key));
   const scenarios = (plan.scenarios || [])
@@ -262,7 +277,17 @@ export function runBusinessCaseModel(plan: BusinessCasePlan): BusinessCaseModelR
       }
       return true;
     })
-    .map((s) => runScenario(s.key, s.name, s.driverKey, s.multiplier, plan.drivers, plan.horizonYears, plan.waccPct));
+    .map((s) =>
+      runScenario(
+        s.key,
+        s.name,
+        s.driverKey,
+        s.multiplier,
+        plan.drivers,
+        plan.horizonYears,
+        plan.waccPct
+      )
+    );
 
   let worstCase: ScenarioResult | null = null;
   let bestCase: ScenarioResult | null = null;

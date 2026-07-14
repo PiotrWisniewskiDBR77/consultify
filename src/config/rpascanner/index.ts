@@ -14,21 +14,16 @@
  */
 
 import {
+  type LadderRung,
   RPA_DEEPENING_LADDER,
   RPA_LADDER_RUNG_ORDER,
-  type LadderRung,
   type RpaGateId,
 } from './deepeningLadder';
-import type {
-  AutomationIdea,
-  ProcessCandidate,
-  RpaSession,
-  TechTier,
-} from './feasibilityEngine';
+import type { AutomationIdea, ProcessCandidate, RpaSession, TechTier } from './feasibilityEngine';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './feasibilityEngine';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
@@ -91,9 +86,7 @@ const asRate = (raw: unknown): number | undefined => {
  * carries the monthly volume; `durationMinutes` the per-run handling time;
  * `frequency` optionally carries the exception rate.
  */
-export function toRpaSession(
-  sections: Record<string, unknown[]> | undefined
-): RpaSession {
+export function toRpaSession(sections: Record<string, unknown[]> | undefined): RpaSession {
   const rawCandidates = (sections?.['process-candidates'] || []) as Array<Record<string, unknown>>;
   const rawIdeas = (sections?.['automation-ideas'] || []) as Array<Record<string, unknown>>;
 

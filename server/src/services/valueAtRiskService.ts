@@ -53,8 +53,7 @@ export interface VarHeatmapCell {
   intensity: number;
 }
 
-const clamp = (n: number, min: number, max: number): number =>
-  Math.min(max, Math.max(min, n));
+const clamp = (n: number, min: number, max: number): number => Math.min(max, Math.max(min, n));
 
 /**
  * EVM schedule-health on a 0..100 scale: SPI*100, capped at 100.
@@ -85,10 +84,7 @@ function classifyLevel(ratio: number): VarLevel {
  * When `spi` is `null` (no schedule signal) we cannot estimate exposure:
  * VaR = 0, confidence unknown (`null`), level 'low'.
  */
-export function valueAtRisk(
-  benefitForecast: number,
-  spi: number | null
-): VarResult {
+export function valueAtRisk(benefitForecast: number, spi: number | null): VarResult {
   const forecast = Number.isFinite(benefitForecast) ? benefitForecast : 0;
 
   if (spi === null || spi === undefined || !Number.isFinite(spi)) {
@@ -113,9 +109,7 @@ export function portfolioVaR(items: PortfolioVarItem[]): PortfolioVarResult {
   const list = Array.isArray(items) ? items : [];
 
   const byInitiative: PortfolioVarByInitiative[] = list.map((item) => {
-    const forecast = Number.isFinite(item.benefitForecast)
-      ? item.benefitForecast
-      : 0;
+    const forecast = Number.isFinite(item.benefitForecast) ? item.benefitForecast : 0;
     const res = valueAtRisk(forecast, item.spi);
     return {
       initiativeId: item.initiativeId,
@@ -124,10 +118,7 @@ export function portfolioVaR(items: PortfolioVarItem[]): PortfolioVarResult {
     };
   });
 
-  const totalForecast = byInitiative.reduce(
-    (sum, i) => sum + i.benefitForecast,
-    0
-  );
+  const totalForecast = byInitiative.reduce((sum, i) => sum + i.benefitForecast, 0);
   const totalAtRisk = byInitiative.reduce((sum, i) => sum + i.valueAtRisk, 0);
   const atRiskPct = totalForecast > 0 ? totalAtRisk / totalForecast : 0;
 
@@ -140,9 +131,7 @@ export function portfolioVaR(items: PortfolioVarItem[]): PortfolioVarResult {
 export function varHeatmapCells(items: PortfolioVarItem[]): VarHeatmapCell[] {
   const list = Array.isArray(items) ? items : [];
   return list.map((item) => {
-    const forecast = Number.isFinite(item.benefitForecast)
-      ? item.benefitForecast
-      : 0;
+    const forecast = Number.isFinite(item.benefitForecast) ? item.benefitForecast : 0;
     const { valueAtRisk: at } = valueAtRisk(forecast, item.spi);
     const intensity = forecast > 0 ? clamp(at / forecast, 0, 1) : 0;
     return { initiativeId: item.initiativeId, intensity };

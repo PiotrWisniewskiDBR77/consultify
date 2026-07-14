@@ -10,14 +10,14 @@ export type { DRDAreaLevelKey, DRDLevelKnowledge } from './drdKnowledge';
 export { getDRDKnowledge } from './drdKnowledge';
 export type { LeanLevelKnowledge, LeanWasteKnowledge } from './leanKnowledge';
 export { getLeanKnowledge, getLeanLevelMeaning, getLeanWasteKnowledge } from './leanKnowledge';
-export type { SIRIDimensionLevelKey, SIRILevelKnowledge } from './siriKnowledge';
-export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
 export type {
   MaturityPathwayFramework,
   MaturityPathwayInput,
   MaturityPathwayRecommendation,
 } from './maturityPathwayService';
 export { getMaturityPathway } from './maturityPathwayService';
+export type { SIRIDimensionLevelKey, SIRILevelKnowledge } from './siriKnowledge';
+export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
 export type { WhyThisMattersHint } from './whyThisMatters';
 export {
   ADMA_PILLAR_WHY_HINTS,

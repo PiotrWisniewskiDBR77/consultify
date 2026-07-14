@@ -15,10 +15,10 @@
  */
 
 import DRD_STRUCTURE, { DRD_KEY_TO_AXIS_MAP } from '../../data/drdStructure.js';
-import { generateDrdReport } from './drdReportGenerator.js';
 import type { LlmLike } from './drdLlmNarrator.js';
-import type { AreaScores, DrdReportMeta, DrdReportModel } from './drdReportModel.js';
+import { generateDrdReport } from './drdReportGenerator.js';
 import type { DrdGroundingProvider } from './drdReportGrounding.js';
+import type { AreaScores, DrdReportMeta, DrdReportModel } from './drdReportModel.js';
 
 /**
  * Derive area-level scores from per-AXIS aggregates (the report editor's

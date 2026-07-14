@@ -4,8 +4,8 @@
  */
 import React from 'react';
 
-import { TemplateBuilder } from '@/components/TemplateBuilder';
 import type { TemplateDraft } from '@/components/TemplateBuilder';
+import { TemplateBuilder } from '@/components/TemplateBuilder';
 
 const draft: TemplateDraft = {
   type: 'table',

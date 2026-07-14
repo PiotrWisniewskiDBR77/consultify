@@ -44,10 +44,7 @@ vi.mock('../../../services/resultsEnterpriseService.js', () => ({
   resultsEnterpriseService: {},
 }));
 
-import {
-  findKpiEditLockViolation,
-  findKpiReportFinalizationViolation,
-} from '../results.routes.js';
+import { findKpiEditLockViolation, findKpiReportFinalizationViolation } from '../results.routes.js';
 
 const ORG = '00000000-0000-4000-8000-000000000099';
 

@@ -223,7 +223,10 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                     <div className="border-t border-white/[0.06] p-4 space-y-4">
                       {delivery.error_message && (
                         <div className="flex items-start gap-2 p-3 bg-danger-500/10 border border-danger-500/20 rounded-lg">
-                          <AlertTriangle size={16} className="text-danger-400 flex-shrink-0 mt-0.5" />
+                          <AlertTriangle
+                            size={16}
+                            className="text-danger-400 flex-shrink-0 mt-0.5"
+                          />
                           <span className="text-sm text-danger-300">{delivery.error_message}</span>
                         </div>
                       )}

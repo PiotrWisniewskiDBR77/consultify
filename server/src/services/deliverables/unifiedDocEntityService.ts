@@ -27,6 +27,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -99,10 +100,7 @@ interface ArtifactRow {
 // READ — getUnifiedDoc
 // ──────────────────────────────────────────────────────────────
 
-async function findDraft(
-  organizationId: string,
-  draftId: string
-): Promise<DraftRow | null> {
+async function findDraft(organizationId: string, draftId: string): Promise<DraftRow | null> {
   return dbGet<DraftRow>(
     `SELECT id, organization_id, title, content_json, artifact_id, artifact_version,
             save_state, dirty_state, updated_at

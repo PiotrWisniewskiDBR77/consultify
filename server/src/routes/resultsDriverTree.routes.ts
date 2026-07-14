@@ -9,16 +9,16 @@
  * BUG-18: rollUpTree() to populate rolledUpValue + confidence + stats.coveredValue.
  * BUG-12: edges aliased with `from`/`to` for frontend compatibility.
  */
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 
 import verifyToken from '../middleware/auth.middleware.js';
 import {
   buildTreeFromMappings,
-  rollUpTree,
   type BuildTreeInput,
+  rollUpTree,
 } from '../services/results/valueDriverTreeService.js';
-import { all as dbAll } from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll } from '../utils/DbPromise.js';
 
 interface AuthedRequest {
   user?: { organizationId?: string };
@@ -55,30 +55,33 @@ router.get(
     const orgWide =
       !projectId || projectId === 'all' || projectId === 'null' || projectId === 'undefined';
 
-    const initiatives = ((await dbAll(
-      orgWide
-        ? `SELECT id, name FROM initiatives WHERE organization_id = ?`
-        : `SELECT id, name FROM initiatives WHERE project_id = ? AND organization_id = ?`,
-      orgWide ? [orgId] : [projectId, orgId]
-    )) as Array<{ id: string; name: string }>) || [];
+    const initiatives =
+      ((await dbAll(
+        orgWide
+          ? `SELECT id, name FROM initiatives WHERE organization_id = ?`
+          : `SELECT id, name FROM initiatives WHERE project_id = ? AND organization_id = ?`,
+        orgWide ? [orgId] : [projectId, orgId]
+      )) as Array<{ id: string; name: string }>) || [];
 
-    const kpis = ((await dbAll(
-      `SELECT id, name, category, current_value, target_value, baseline_value
+    const kpis =
+      ((await dbAll(
+        `SELECT id, name, category, current_value, target_value, baseline_value
        FROM initiative_kpis WHERE organization_id = ?`,
-      [orgId]
-    )) as Array<{
-      id: string;
-      name: string;
-      category: string | null;
-      current_value: number | null;
-      target_value: number | null;
-      baseline_value: number | null;
-    }>) || [];
+        [orgId]
+      )) as Array<{
+        id: string;
+        name: string;
+        category: string | null;
+        current_value: number | null;
+        target_value: number | null;
+        baseline_value: number | null;
+      }>) || [];
 
-    const mappings = ((await dbAll(
-      `SELECT initiative_id, kpi_id FROM initiative_kpi_mappings WHERE organization_id = ?`,
-      [orgId]
-    )) as Array<{ initiative_id: string; kpi_id: string }>) || [];
+    const mappings =
+      ((await dbAll(
+        `SELECT initiative_id, kpi_id FROM initiative_kpi_mappings WHERE organization_id = ?`,
+        [orgId]
+      )) as Array<{ initiative_id: string; kpi_id: string }>) || [];
 
     // BUG-17: build synthetic driver nodes from KPI categories
     // Group KPIs by category → one driver node per unique category
@@ -93,7 +96,9 @@ router.get(
 
     // One synthetic objective at the top
     const syntheticObjectiveId = 'objective_root';
-    const syntheticObjectives = [{ id: syntheticObjectiveId, label: 'Wyniki biznesowe', value: null }];
+    const syntheticObjectives = [
+      { id: syntheticObjectiveId, label: 'Wyniki biznesowe', value: null },
+    ];
 
     const syntheticDrivers = Array.from(categoryToDriverId.entries()).map(([cat, driverId]) => ({
       id: driverId,
@@ -151,7 +156,10 @@ router.get(
     const progressByKpiId = new Map<string, number>();
     for (const k of kpis) {
       if (k.current_value != null && k.target_value != null && k.target_value !== 0) {
-        progressByKpiId.set(String(k.id), Math.min(Number(k.current_value) / Number(k.target_value), 1));
+        progressByKpiId.set(
+          String(k.id),
+          Math.min(Number(k.current_value) / Number(k.target_value), 1)
+        );
       }
     }
 

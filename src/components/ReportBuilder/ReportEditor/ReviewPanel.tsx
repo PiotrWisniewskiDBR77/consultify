@@ -380,7 +380,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   };
 
   const Line: React.FC<{ done: boolean }> = ({ done }) => (
-    <div className={`w-[1.5px] h-3 ml-[6px] ${done ? 'bg-emerald-500/60' : 'bg-c-surface-raised'}`} />
+    <div
+      className={`w-[1.5px] h-3 ml-[6px] ${done ? 'bg-emerald-500/60' : 'bg-c-surface-raised'}`}
+    />
   );
 
   const renderSteps = (steps: WStep[], overrideAllDone = false) => (
@@ -668,9 +670,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             {summary && (
               <span
                 className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                  openCount > 0
-                    ? 'bg-amber-900/30 text-amber-400'
-                    : 'bg-c-text text-c-bg-secondary'
+                  openCount > 0 ? 'bg-amber-900/30 text-amber-400' : 'bg-c-text text-c-bg-secondary'
                 }`}
               >
                 {openCount > 0 ? openCount : summary.total}

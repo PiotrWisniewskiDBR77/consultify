@@ -132,10 +132,10 @@ export function InitiativeSuggestionBadge({
         if (mounted.current) setAccepted(true);
         return;
       }
-      const res = await fetch(
-        `${CANDIDATES_BASE}/${encodeURIComponent(candidate.id)}/accept`,
-        { method: 'POST', headers: getHeaders() }
-      );
+      const res = await fetch(`${CANDIDATES_BASE}/${encodeURIComponent(candidate.id)}/accept`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (mounted.current) setAccepted(true);
     } catch {

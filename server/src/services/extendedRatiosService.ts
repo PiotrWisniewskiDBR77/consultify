@@ -17,11 +17,7 @@
 // Types
 // ---------------------------------------------------------------------------
 
-export type ExtendedRatioCategory =
-  | 'return'
-  | 'leverage'
-  | 'coverage'
-  | 'efficiency';
+export type ExtendedRatioCategory = 'return' | 'leverage' | 'coverage' | 'efficiency';
 
 export type ExtendedRatioStatus = 'ok' | 'warn' | 'critical';
 
@@ -76,11 +72,7 @@ export interface BenchmarkComparison {
 
 /** Division guarded against zero / non-finite denominators and results. */
 function safeDiv(numerator: number, denominator: number): number | null {
-  if (
-    !Number.isFinite(numerator) ||
-    !Number.isFinite(denominator) ||
-    denominator === 0
-  ) {
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
     return null;
   }
   const result = numerator / denominator;
@@ -102,7 +94,7 @@ function nopat(ebit: number, taxRatePct: number): number | null {
 function higherBetterStatus(
   value: number | null,
   warn: number,
-  critical: number,
+  critical: number
 ): ExtendedRatioStatus {
   if (value === null) return 'critical';
   if (value < critical) return 'critical';
@@ -117,7 +109,7 @@ function higherBetterStatus(
 function lowerBetterStatus(
   value: number | null,
   warn: number,
-  critical: number,
+  critical: number
 ): ExtendedRatioStatus {
   if (value === null) return 'critical';
   if (value > critical) return 'critical';
@@ -135,9 +127,7 @@ function lowerBetterStatus(
  * Invested capital = equity + (debt − cash)   [net-debt basis]
  * Capital employed = equity + debt             [current liabilities not modeled]
  */
-export function computeExtendedRatios(
-  fin: ExtendedFinancials,
-): ExtendedRatio[] {
+export function computeExtendedRatios(fin: ExtendedFinancials): ExtendedRatio[] {
   const {
     netIncome,
     equity,
@@ -158,8 +148,7 @@ export function computeExtendedRatios(
 
   const roe = safeDiv(netIncome, equity);
   const roa = safeDiv(netIncome, totalAssets);
-  const roic =
-    nopatValue === null ? null : safeDiv(nopatValue, investedCapital);
+  const roic = nopatValue === null ? null : safeDiv(nopatValue, investedCapital);
   const roce = safeDiv(ebit, capitalEmployed);
   const debtToEquity = safeDiv(debt, equity);
   const equityRatio = safeDiv(equity, totalAssets);
@@ -257,9 +246,7 @@ export function computeExtendedRatios(
  * the three returned components equals the returned `roe` whenever every factor
  * is computable.
  */
-export function dupontDecomposition(
-  fin: ExtendedFinancials,
-): DupontDecomposition {
+export function dupontDecomposition(fin: ExtendedFinancials): DupontDecomposition {
   const { netIncome, revenue, totalAssets, equity } = fin;
 
   const netMargin = safeDiv(netIncome, revenue);
@@ -289,10 +276,7 @@ export function dupontDecomposition(
  *
  * Exact ties land on the named percentile (p25 / median / p75).
  */
-export function benchmarkStatus(
-  value: number,
-  benchmark: IndustryBenchmark,
-): BenchmarkComparison {
+export function benchmarkStatus(value: number, benchmark: IndustryBenchmark): BenchmarkComparison {
   const { p25, median, p75 } = benchmark;
 
   if (!Number.isFinite(value)) {

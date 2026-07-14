@@ -71,97 +71,92 @@ class StakeholderRegistryController {
     res.json({ stakeholders: stakeholderRegistryService.stripConfidential(rows, canView) });
   });
 
-  static getOne = asyncHandler(
-    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const orgId = req.user?.organizationId;
-      if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-      const entry = await stakeholderRegistryService.getRegistryEntry(orgId, req.params.id);
-      if (!entry) {
-        res.status(404).json({ error: 'Stakeholder not found' });
-        return;
-      }
-      const canView = await canViewAssessment(req, null);
-      res.json({ stakeholder: stakeholderRegistryService.stripConfidential(entry, canView) });
+  static getOne = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
-  );
-
-  static create = asyncHandler(
-    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const orgId = req.user?.organizationId;
-      const actorId = req.user?.id;
-      if (!orgId || !actorId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-      try {
-        const entry = await stakeholderRegistryService.createRegistryEntry(
-          orgId,
-          actorId,
-          req.body || {}
-        );
-        // D11 defense-in-depth: the route's write-capability gate
-        // (requireStakeholderWrite) is itself a no-op unless
-        // EFFECTIVE_ACCESS_ENFORCE/SHADOW is set — so redact the response the
-        // same way every read path does, rather than trusting the mutation
-        // gate alone to keep confidential fields from a caller who lacks
-        // stakeholder.assessment.view.
-        const canView = await canViewAssessment(req, null);
-        res
-          .status(201)
-          .json({ success: true, stakeholder: stakeholderRegistryService.stripConfidential(entry, canView) });
-      } catch (err: any) {
-        res.status(err?.status || 400).json({ error: err?.message || 'Failed to create stakeholder' });
-      }
+    const entry = await stakeholderRegistryService.getRegistryEntry(orgId, req.params.id);
+    if (!entry) {
+      res.status(404).json({ error: 'Stakeholder not found' });
+      return;
     }
-  );
+    const canView = await canViewAssessment(req, null);
+    res.json({ stakeholder: stakeholderRegistryService.stripConfidential(entry, canView) });
+  });
 
-  static update = asyncHandler(
-    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const orgId = req.user?.organizationId;
-      if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-      const entry = await stakeholderRegistryService.updateRegistryEntry(
+  static create = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const orgId = req.user?.organizationId;
+    const actorId = req.user?.id;
+    if (!orgId || !actorId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    try {
+      const entry = await stakeholderRegistryService.createRegistryEntry(
         orgId,
-        req.params.id,
+        actorId,
         req.body || {}
       );
-      if (!entry) {
-        res.status(404).json({ error: 'Stakeholder not found' });
-        return;
-      }
-      // D11 defense-in-depth (see `create` above): redact before echoing the
-      // merged row back — it can carry pre-existing confidential fields the
-      // caller of THIS request never set (e.g. a PATCH that only touches
-      // orgUnit still echoes defaultInfluence/defaultInterest set earlier by
-      // someone else).
+      // D11 defense-in-depth: the route's write-capability gate
+      // (requireStakeholderWrite) is itself a no-op unless
+      // EFFECTIVE_ACCESS_ENFORCE/SHADOW is set — so redact the response the
+      // same way every read path does, rather than trusting the mutation
+      // gate alone to keep confidential fields from a caller who lacks
+      // stakeholder.assessment.view.
       const canView = await canViewAssessment(req, null);
-      res.json({
+      res.status(201).json({
         success: true,
         stakeholder: stakeholderRegistryService.stripConfidential(entry, canView),
       });
+    } catch (err: any) {
+      res
+        .status(err?.status || 400)
+        .json({ error: err?.message || 'Failed to create stakeholder' });
     }
-  );
+  });
 
-  static remove = asyncHandler(
-    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const orgId = req.user?.organizationId;
-      if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-      const deleted = await stakeholderRegistryService.deleteRegistryEntry(orgId, req.params.id);
-      if (!deleted) {
-        res.status(404).json({ error: 'Stakeholder not found' });
-        return;
-      }
-      res.json({ success: true });
+  static update = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
-  );
+    const entry = await stakeholderRegistryService.updateRegistryEntry(
+      orgId,
+      req.params.id,
+      req.body || {}
+    );
+    if (!entry) {
+      res.status(404).json({ error: 'Stakeholder not found' });
+      return;
+    }
+    // D11 defense-in-depth (see `create` above): redact before echoing the
+    // merged row back — it can carry pre-existing confidential fields the
+    // caller of THIS request never set (e.g. a PATCH that only touches
+    // orgUnit still echoes defaultInfluence/defaultInterest set earlier by
+    // someone else).
+    const canView = await canViewAssessment(req, null);
+    res.json({
+      success: true,
+      stakeholder: stakeholderRegistryService.stripConfidential(entry, canView),
+    });
+  });
+
+  static remove = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const deleted = await stakeholderRegistryService.deleteRegistryEntry(orgId, req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: 'Stakeholder not found' });
+      return;
+    }
+    res.json({ success: true });
+  });
 
   // ==========================================
   // ENGAGEMENTS (assessment, per context)
@@ -203,9 +198,7 @@ class StakeholderRegistryController {
         );
         res.status(201).json({ success: true, id: engagementId });
       } catch (err: any) {
-        res
-          .status(err?.status || 400)
-          .json({ error: err?.message || 'Failed to save engagement' });
+        res.status(err?.status || 400).json({ error: err?.message || 'Failed to save engagement' });
       }
     }
   );

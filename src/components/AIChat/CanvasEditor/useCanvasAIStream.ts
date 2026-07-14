@@ -54,9 +54,7 @@ export function ensureBlockSpacing(markdown: string): string {
     const needsGapBefore =
       prevTrim !== '' &&
       ((isHeading(line) && !isHeading(prev)) ||
-        ((isListItem(line) || isTableRow(line)) &&
-          !isListItem(prev) &&
-          !isTableRow(prev)));
+        ((isListItem(line) || isTableRow(line)) && !isListItem(prev) && !isTableRow(prev)));
     if (needsGapBefore) result.push('');
     result.push(line);
     // Blank line AFTER a heading so the following paragraph/list is its own block.

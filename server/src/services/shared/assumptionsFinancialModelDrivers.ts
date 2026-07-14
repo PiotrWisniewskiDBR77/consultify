@@ -71,7 +71,9 @@ export function financialModelToAssumptions(params: {
   return FINANCIAL_MODEL_DRIVERS.map((driver): Assumption => {
     const isBaseline = driver.key.startsWith('baseline.');
     const fieldKey = isBaseline ? driver.key.replace('baseline.', '') : driver.key;
-    const raw = isBaseline ? baseline[fieldKey] : (assumptions as Record<string, unknown>)[fieldKey];
+    const raw = isBaseline
+      ? baseline[fieldKey]
+      : (assumptions as Record<string, unknown>)[fieldKey];
     const value = typeof raw === 'number' && !Number.isNaN(raw) ? raw : null;
 
     let source_type: AssumptionSourceType;
@@ -80,13 +82,15 @@ export function financialModelToAssumptions(params: {
     if (isBaseline && missingSet.has(fieldKey)) {
       // Backend już wie, że ta linia NIE miała pokrycia w źródle (buildSeededAssumptionsFromStatement/Pack).
       source_type = 'ai_assumed';
-      rationale = 'Brak tej linii w pakiecie/sprawozdaniu źródłowym — wartość domyślna, do przeglądu.';
+      rationale =
+        'Brak tej linii w pakiecie/sprawozdaniu źródłowym — wartość domyślna, do przeglądu.';
     } else if (isGrounded && value !== null) {
       source_type = 'imported';
       rationale = 'Zaciągnięte z pakietu sprawozdań / sprawozdania źródłowego modelu.';
     } else if (value !== null) {
       source_type = 'ai_assumed';
-      rationale = 'Model bez powiązanego źródła (manual/zero-seeded) — wartość domyślna, edytowalna.';
+      rationale =
+        'Model bez powiązanego źródła (manual/zero-seeded) — wartość domyślna, edytowalna.';
     } else {
       source_type = 'ai_assumed';
     }

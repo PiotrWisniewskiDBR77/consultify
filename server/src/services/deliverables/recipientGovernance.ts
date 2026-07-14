@@ -57,13 +57,15 @@ export function isValidEmail(email: unknown): boolean {
  */
 export function governRecipients(
   recipients: unknown,
-  opts: GovernanceOptions = {},
+  opts: GovernanceOptions = {}
 ): GovernanceResult {
   const allowed: string[] = [];
   const rejected: RejectedRecipient[] = [];
   if (!Array.isArray(recipients)) return { allowed, rejected };
 
-  const max = Number.isFinite(opts.maxRecipients) ? Math.max(0, opts.maxRecipients as number) : DEFAULT_MAX;
+  const max = Number.isFinite(opts.maxRecipients)
+    ? Math.max(0, opts.maxRecipients as number)
+    : DEFAULT_MAX;
   const optOut = new Set<string>();
   for (const o of opts.optOut ?? []) {
     if (typeof o === 'string') optOut.add(normalize(o));

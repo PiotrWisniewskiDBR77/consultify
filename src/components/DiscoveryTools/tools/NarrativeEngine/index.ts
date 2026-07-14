@@ -3,8 +3,8 @@
  */
 
 export {
-  NarrativeEngineInputPhase,
   NarrativeEngineBuildPhase,
+  NarrativeEngineInputPhase,
   NarrativeEngineInsightsPhase,
   NarrativeEngineOutputsPhase,
 } from './NarrativeEnginePhases';

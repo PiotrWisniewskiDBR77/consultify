@@ -108,7 +108,9 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
 
             {/* Scenario Table */}
             <div className="bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-              <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-sm text-left">
+              <table
+                /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-sm text-left"
+              >
                 <thead className="bg-slate-50 dark:bg-navy-900 text-xs uppercase font-bold text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="p-4">Criteria</th>

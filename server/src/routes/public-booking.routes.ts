@@ -32,7 +32,8 @@ router.get(
       res.json({ success: true, ...result });
     } catch (err) {
       const status = (err as { statusCode?: number }).statusCode ?? 500;
-      if (status === 404) return res.status(404).json({ success: false, error: 'Consultant not found' });
+      if (status === 404)
+        return res.status(404).json({ success: false, error: 'Consultant not found' });
       logger.error(`[#24c] availability failed for ${slug}: ${(err as Error).message}`);
       return res.status(500).json({ success: false, error: 'Failed to load availability' });
     }

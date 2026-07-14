@@ -191,10 +191,7 @@ const WelcomeStep: React.FC<StepCommonProps & { onStart: () => void; onSkip: () 
 
       <ul className="mx-auto mt-6 max-w-md space-y-2 text-left">
         {points.map((point, i) => (
-          <li
-            key={i}
-            className="flex items-start gap-2.5 text-sm text-c-text-secondary"
-          >
+          <li key={i} className="flex items-start gap-2.5 text-sm text-c-text-secondary">
             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-c-accent-soft text-c-accent dark:bg-c-accent-soft dark:text-c-accent">
               <Check size={13} />
             </span>

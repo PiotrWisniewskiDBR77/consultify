@@ -304,13 +304,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     <div className="flex items-center gap-3">
                       <Icon
                         size={20}
-                        className={
-                          isEnabled ? 'text-green-500' : 'text-c-text-secondary'
-                        }
+                        className={isEnabled ? 'text-green-500' : 'text-c-text-secondary'}
                       />
-                      <span className="font-medium text-c-text-secondary">
-                        {option.label}
-                      </span>
+                      <span className="font-medium text-c-text-secondary">{option.label}</span>
                     </div>
                     <button
                       onClick={() => toggleWidget(option.key)}

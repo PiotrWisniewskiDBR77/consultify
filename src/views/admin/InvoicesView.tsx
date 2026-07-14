@@ -28,6 +28,7 @@ import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
+
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
@@ -225,9 +226,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         {!loadError && (
           <div className="text-right">
             <p className="text-sm text-c-text-muted">Total Paid (All Time)</p>
-            <p className="text-2xl font-bold text-c-text">
-              {formatCurrency(totalPaid, 'USD')}
-            </p>
+            <p className="text-2xl font-bold text-c-text">{formatCurrency(totalPaid, 'USD')}</p>
           </div>
         )}
       </div>
@@ -312,7 +311,9 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         </div>
       ) : (
         <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
-          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
+          <table
+            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+          >
             <thead className="bg-c-surface-raised">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
@@ -336,12 +337,8 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
               {filteredInvoices.map((invoice) => (
                 <tr key={invoice.id} className="hover:bg-c-surface-raised/50">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-c-text">
-                      {invoice.number}
-                    </div>
-                    <div className="text-sm text-c-text-muted">
-                      {invoice.description}
-                    </div>
+                    <div className="font-medium text-c-text">{invoice.number}</div>
+                    <div className="text-sm text-c-text-muted">{invoice.description}</div>
                   </td>
                   <td className="px-6 py-4 text-sm text-c-text-secondary">
                     {formatDate(invoice.date)}
@@ -397,21 +394,15 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             >
               <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-c-text">
-                    {selectedInvoice.number}
-                  </h3>
-                  <p className="text-sm text-c-text-muted">
-                    {formatDate(selectedInvoice.date)}
-                  </p>
+                  <h3 className="text-lg font-semibold text-c-text">{selectedInvoice.number}</h3>
+                  <p className="text-sm text-c-text-muted">{formatDate(selectedInvoice.date)}</p>
                 </div>
                 {getStatusBadge(selectedInvoice.status)}
               </div>
               <div className="p-6 space-y-4">
                 {/* Line Items */}
                 <div>
-                  <h4 className="text-sm font-medium text-c-text-secondary mb-3">
-                    Items
-                  </h4>
+                  <h4 className="text-sm font-medium text-c-text-secondary mb-3">Items</h4>
                   <div className="space-y-2">
                     {selectedInvoice.items.map((item, idx) => (
                       <div
@@ -419,9 +410,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                         className="flex justify-between py-2 border-b border-c-border-subtle"
                       >
                         <div>
-                          <p className="text-sm text-c-text">
-                            {item.description}
-                          </p>
+                          <p className="text-sm text-c-text">{item.description}</p>
                           <p className="text-xs text-c-text-muted">
                             Qty: {item.quantity} ×{' '}
                             {formatCurrency(item.unitPrice, selectedInvoice.currency)}

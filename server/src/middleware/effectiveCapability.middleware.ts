@@ -49,7 +49,12 @@ type ShadowVerdict =
   | { status: 'no_auth' }
   | { status: 'no_project' }
   | { status: 'error' }
-  | { status: 'evaluated'; wouldAllow: boolean; projectId: string | null; projectRole: string | null };
+  | {
+      status: 'evaluated';
+      wouldAllow: boolean;
+      projectId: string | null;
+      projectRole: string | null;
+    };
 
 /**
  * Resolve effective access and compute whether the caller WOULD pass the
@@ -145,30 +150,54 @@ async function handleShadowCapability(
 
   // enforce mode: turn verdict into real responses.
   if (verdict.status === 'no_auth') {
-    safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+    safeWriteJson(
+      res,
+      401,
+      { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+      'auth',
+      {}
+    );
     return;
   }
   if (verdict.status === 'no_project') {
-    safeWriteJson(res, 400, {
-      error: 'Project context is required',
-      code: 'PROJECT_CONTEXT_REQUIRED',
-      required: capLabel,
-      reason: options.reason || 'missing_project_context',
-    }, 'deny', { capability: capLabel });
+    safeWriteJson(
+      res,
+      400,
+      {
+        error: 'Project context is required',
+        code: 'PROJECT_CONTEXT_REQUIRED',
+        required: capLabel,
+        reason: options.reason || 'missing_project_context',
+      },
+      'deny',
+      { capability: capLabel }
+    );
     return;
   }
   if (verdict.status === 'error') {
-    safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability: capLabel });
+    safeWriteJson(
+      res,
+      503,
+      { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' },
+      'error',
+      { capability: capLabel }
+    );
     return;
   }
   if (!verdict.wouldAllow) {
-    safeWriteJson(res, 403, {
-      error: 'Capability required',
-      code: 'CAPABILITY_REQUIRED',
-      required: capLabel,
-      projectId: verdict.projectId,
-      reason: options.reason || 'missing_capability_or_scope',
-    }, 'deny', { capability: capLabel, path: route });
+    safeWriteJson(
+      res,
+      403,
+      {
+        error: 'Capability required',
+        code: 'CAPABILITY_REQUIRED',
+        required: capLabel,
+        projectId: verdict.projectId,
+        reason: options.reason || 'missing_capability_or_scope',
+      },
+      'deny',
+      { capability: capLabel, path: route }
+    );
     return;
   }
   (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = undefined;
@@ -183,7 +212,11 @@ function firstString(...values: unknown[]): string | null {
 }
 
 function safePath(req: AuthRequest): string {
-  try { return req.path ?? ''; } catch { return ''; }
+  try {
+    return req.path ?? '';
+  } catch {
+    return '';
+  }
 }
 
 function isResponseCommitted(res: Response): boolean {
@@ -197,7 +230,13 @@ function isResponseCommitted(res: Response): boolean {
   }
 }
 
-function safeWriteJson(res: Response, status: number, body: object, phase: string, extra: Record<string, unknown>): void {
+function safeWriteJson(
+  res: Response,
+  status: number,
+  body: object,
+  phase: string,
+  extra: Record<string, unknown>
+): void {
   if (isResponseCommitted(res)) {
     logger.warn('[effectiveCapability] response already committed; skipping json write', {
       status,
@@ -370,7 +409,13 @@ export function requireProjectCapability(
 ) {
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!capability || !capability.trim()) {
-      safeWriteJson(res, 400, { error: 'Capability name is required', code: 'CAPABILITY_INVALID' }, 'validate', {});
+      safeWriteJson(
+        res,
+        400,
+        { error: 'Capability name is required', code: 'CAPABILITY_INVALID' },
+        'validate',
+        {}
+      );
       return;
     }
 
@@ -380,15 +425,30 @@ export function requireProjectCapability(
       return;
     }
 
-    let userId: string | null, organizationId: string | null, applicationRole: string | null, isImpersonating: boolean;
+    let userId: string | null,
+      organizationId: string | null,
+      applicationRole: string | null,
+      isImpersonating: boolean;
     try {
       ({ userId, organizationId, applicationRole, isImpersonating } = getUserContext(req));
     } catch {
-      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      safeWriteJson(
+        res,
+        401,
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        'auth',
+        {}
+      );
       return;
     }
     if (!userId || !organizationId) {
-      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      safeWriteJson(
+        res,
+        401,
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        'auth',
+        {}
+      );
       return;
     }
     if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
@@ -408,7 +468,13 @@ export function requireProjectCapability(
         safeNext(next, 'allow', capability);
         return;
       }
-      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability });
+      safeWriteJson(
+        res,
+        503,
+        { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' },
+        'error',
+        { capability }
+      );
       return;
     }
     if (!projectId && !options.allowWithoutProject) {
@@ -420,12 +486,18 @@ export function requireProjectCapability(
         safeNext(next, 'allow', capability);
         return;
       }
-      safeWriteJson(res, 400, {
-        error: 'Project context is required',
-        code: 'PROJECT_CONTEXT_REQUIRED',
-        required: capability,
-        reason: options.reason || 'missing_project_context',
-      }, 'deny', { capability });
+      safeWriteJson(
+        res,
+        400,
+        {
+          error: 'Project context is required',
+          code: 'PROJECT_CONTEXT_REQUIRED',
+          required: capability,
+          reason: options.reason || 'missing_project_context',
+        },
+        'deny',
+        { capability }
+      );
       return;
     }
 
@@ -447,7 +519,13 @@ export function requireProjectCapability(
         safeNext(next, 'allow', capability);
         return;
       }
-      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability });
+      safeWriteJson(
+        res,
+        503,
+        { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' },
+        'error',
+        { capability }
+      );
       return;
     }
 
@@ -463,7 +541,13 @@ export function requireProjectCapability(
         safeNext(next, 'allow', capability);
         return;
       }
-      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability });
+      safeWriteJson(
+        res,
+        503,
+        { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' },
+        'error',
+        { capability }
+      );
       return;
     }
 
@@ -478,13 +562,19 @@ export function requireProjectCapability(
         safeNext(next, 'allow', capability);
         return;
       }
-      safeWriteJson(res, 403, {
-        error: 'Capability required',
-        code: 'CAPABILITY_REQUIRED',
-        required: capability,
-        projectId,
-        reason: options.reason || 'missing_capability_or_scope',
-      }, 'deny', { capability, path: safePath(req) });
+      safeWriteJson(
+        res,
+        403,
+        {
+          error: 'Capability required',
+          code: 'CAPABILITY_REQUIRED',
+          required: capability,
+          projectId,
+          reason: options.reason || 'missing_capability_or_scope',
+        },
+        'deny',
+        { capability, path: safePath(req) }
+      );
       return;
     }
 
@@ -500,7 +590,13 @@ export function requireAnyProjectCapability(
 ) {
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!capabilities.length) {
-      safeWriteJson(res, 400, { error: 'At least one capability is required', code: 'CAPABILITY_LIST_INVALID' }, 'validate', {});
+      safeWriteJson(
+        res,
+        400,
+        { error: 'At least one capability is required', code: 'CAPABILITY_LIST_INVALID' },
+        'validate',
+        {}
+      );
       return;
     }
 
@@ -510,15 +606,30 @@ export function requireAnyProjectCapability(
       return;
     }
 
-    let userId: string | null, organizationId: string | null, applicationRole: string | null, isImpersonating: boolean;
+    let userId: string | null,
+      organizationId: string | null,
+      applicationRole: string | null,
+      isImpersonating: boolean;
     try {
       ({ userId, organizationId, applicationRole, isImpersonating } = getUserContext(req));
     } catch {
-      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      safeWriteJson(
+        res,
+        401,
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        'auth',
+        {}
+      );
       return;
     }
     if (!userId || !organizationId) {
-      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      safeWriteJson(
+        res,
+        401,
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        'auth',
+        {}
+      );
       return;
     }
     if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
@@ -538,7 +649,13 @@ export function requireAnyProjectCapability(
         safeNext(next, 'allow', capabilities);
         return;
       }
-      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capabilities });
+      safeWriteJson(
+        res,
+        503,
+        { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' },
+        'error',
+        { capabilities }
+      );
       return;
     }
     if (!projectId && !options.allowWithoutProject) {
@@ -550,12 +667,18 @@ export function requireAnyProjectCapability(
         safeNext(next, 'allow', capabilities);
         return;
       }
-      safeWriteJson(res, 400, {
-        error: 'Project context is required',
-        code: 'PROJECT_CONTEXT_REQUIRED',
-        required: capabilities,
-        reason: options.reason || 'missing_project_context',
-      }, 'deny', { capabilities });
+      safeWriteJson(
+        res,
+        400,
+        {
+          error: 'Project context is required',
+          code: 'PROJECT_CONTEXT_REQUIRED',
+          required: capabilities,
+          reason: options.reason || 'missing_project_context',
+        },
+        'deny',
+        { capabilities }
+      );
       return;
     }
 
@@ -577,7 +700,13 @@ export function requireAnyProjectCapability(
         safeNext(next, 'allow', capabilities);
         return;
       }
-      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capabilities });
+      safeWriteJson(
+        res,
+        503,
+        { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' },
+        'error',
+        { capabilities }
+      );
       return;
     }
 
@@ -593,7 +722,13 @@ export function requireAnyProjectCapability(
         safeNext(next, 'allow', capabilities);
         return;
       }
-      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capabilities });
+      safeWriteJson(
+        res,
+        503,
+        { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' },
+        'error',
+        { capabilities }
+      );
       return;
     }
 
@@ -608,13 +743,19 @@ export function requireAnyProjectCapability(
         safeNext(next, 'allow', capabilities);
         return;
       }
-      safeWriteJson(res, 403, {
-        error: 'Capability required',
-        code: 'CAPABILITY_REQUIRED',
-        required: capabilities,
-        projectId,
-        reason: options.reason || 'missing_capability_or_scope',
-      }, 'deny', { capabilities });
+      safeWriteJson(
+        res,
+        403,
+        {
+          error: 'Capability required',
+          code: 'CAPABILITY_REQUIRED',
+          required: capabilities,
+          projectId,
+          reason: options.reason || 'missing_capability_or_scope',
+        },
+        'deny',
+        { capabilities }
+      );
       return;
     }
 

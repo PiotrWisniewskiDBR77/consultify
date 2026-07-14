@@ -234,12 +234,8 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-c-accent" />
             <div>
-              <h3 className="font-semibold text-c-text">
-                {isPl ? 'Komentarze' : 'Comments'}
-              </h3>
-              {sectionName && (
-                <p className="text-xs text-c-text-secondary">{sectionName}</p>
-              )}
+              <h3 className="font-semibold text-c-text">{isPl ? 'Komentarze' : 'Comments'}</h3>
+              {sectionName && <p className="text-xs text-c-text-secondary">{sectionName}</p>}
             </div>
           </div>
           <button
@@ -361,9 +357,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
 
                 {/* Comment content */}
                 <div className="p-3">
-                  <p className="text-sm text-c-text whitespace-pre-wrap">
-                    {comment.content}
-                  </p>
+                  <p className="text-sm text-c-text whitespace-pre-wrap">{comment.content}</p>
 
                   {/* Section indicator */}
                   {comment.sectionKey && sectionKey === undefined && (

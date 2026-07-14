@@ -12,13 +12,7 @@
  */
 
 export type BenefitType = 'financial' | 'non-financial' | 'strategic';
-export type BenefitCategory =
-  | 'revenue'
-  | 'cost'
-  | 'risk'
-  | 'efficiency'
-  | 'customer'
-  | 'unknown';
+export type BenefitCategory = 'revenue' | 'cost' | 'risk' | 'efficiency' | 'customer' | 'unknown';
 
 export interface RawKpiInput {
   id: string;
@@ -42,10 +36,44 @@ export interface BenefitProfile {
 }
 
 const REVENUE_PATTERNS = [/revenue/i, /sprzedaż/i, /przychód/i, /income/i, /zysk/i, /profit/i];
-const COST_PATTERNS = [/cost/i, /koszt/i, /wydatek/i, /expense/i, /savings?/i, /oszczędności/i, /redukcja/i];
-const RISK_PATTERNS = [/risk/i, /ryzyko/i, /compliance/i, /incident/i, /defect/i, /błąd/i, /usterka/i];
-const EFFICIENCY_PATTERNS = [/effic/i, /effekt/i, /czas/i, /time/i, /process/i, /proces/i, /wydajność/i, /lead.?time/i, /cycle/i];
-const CUSTOMER_PATTERNS = [/customer/i, /klient/i, /nps/i, /satisfaction/i, /satysfakcja/i, /retention/i, /churn/i];
+const COST_PATTERNS = [
+  /cost/i,
+  /koszt/i,
+  /wydatek/i,
+  /expense/i,
+  /savings?/i,
+  /oszczędności/i,
+  /redukcja/i,
+];
+const RISK_PATTERNS = [
+  /risk/i,
+  /ryzyko/i,
+  /compliance/i,
+  /incident/i,
+  /defect/i,
+  /błąd/i,
+  /usterka/i,
+];
+const EFFICIENCY_PATTERNS = [
+  /effic/i,
+  /effekt/i,
+  /czas/i,
+  /time/i,
+  /process/i,
+  /proces/i,
+  /wydajność/i,
+  /lead.?time/i,
+  /cycle/i,
+];
+const CUSTOMER_PATTERNS = [
+  /customer/i,
+  /klient/i,
+  /nps/i,
+  /satisfaction/i,
+  /satysfakcja/i,
+  /retention/i,
+  /churn/i,
+];
 
 function inferCategory(name: string): BenefitCategory {
   if (REVENUE_PATTERNS.some((re) => re.test(name))) return 'revenue';
@@ -61,17 +89,24 @@ function inferType(name: string, unit?: string | null): BenefitType {
   const lunit = (unit || '').toLowerCase();
   // Financial indicators: currency units or known financial keywords
   if (/pln|zł|usd|eur|gbp|€|\$/.test(lunit)) return 'financial';
-  if (/revenue|cost|koszt|przychód|income|profit|zysk|savings|oszczędności/.test(lname)) return 'financial';
+  if (/revenue|cost|koszt|przychód|income|profit|zysk|savings|oszczędności/.test(lname))
+    return 'financial';
   // Strategic: if name has strategic keywords
-  if (/strategic|strategiczny|capability|vision|brand|marka|pozycja|market.?share/.test(lname)) return 'strategic';
+  if (/strategic|strategiczny|capability|vision|brand|marka|pozycja|market.?share/.test(lname))
+    return 'strategic';
   return 'non-financial';
 }
 
 function inferIsDisBenefit(name: string): boolean {
-  return /dis.?benefit|negatyw|negative|reduction|redukcja|zmniejszenie|spadek|obniżenie/.test(name.toLowerCase());
+  return /dis.?benefit|negatyw|negative|reduction|redukcja|zmniejszenie|spadek|obniżenie/.test(
+    name.toLowerCase()
+  );
 }
 
-function realizationPct(current: number | null | undefined, target: number | null | undefined): number | null {
+function realizationPct(
+  current: number | null | undefined,
+  target: number | null | undefined
+): number | null {
   if (current == null || target == null || target === 0) return null;
   return Math.min(Math.max(current / target, 0), 2); // cap at 200%
 }

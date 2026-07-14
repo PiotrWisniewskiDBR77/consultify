@@ -185,7 +185,9 @@ export const CreditNotesPanel: React.FC = () => {
         </div>
       ) : (
         <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl overflow-hidden">
-          <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
+          <table
+            /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full"
+          >
             <thead>
               <tr className="border-b border-white/[0.06]">
                 <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
@@ -210,7 +212,10 @@ export const CreditNotesPanel: React.FC = () => {
             </thead>
             <tbody>
               {filteredCreditNotes.map((cn) => (
-                <tr key={cn.id} className="border-b border-white/[0.04] hover:bg-c-surface-raised/50">
+                <tr
+                  key={cn.id}
+                  className="border-b border-white/[0.04] hover:bg-c-surface-raised/50"
+                >
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">

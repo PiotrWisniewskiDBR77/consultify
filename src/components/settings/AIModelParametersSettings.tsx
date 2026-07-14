@@ -49,7 +49,10 @@ interface UserModelPrefs {
 }
 
 const TIER_BADGE: Record<string, { label: string; className: string } | null> = {
-  PLATFORM: { label: 'PLATFORM', className: 'bg-navy-900 text-white dark:bg-c-surface dark:text-navy-950' },
+  PLATFORM: {
+    label: 'PLATFORM',
+    className: 'bg-navy-900 text-white dark:bg-c-surface dark:text-navy-950',
+  },
   PREMIUM: { label: 'PRO', className: 'bg-amber-500/20 text-amber-400' },
   REASONING: { label: 'REASONING', className: 'bg-blue-500/20 text-blue-400' },
   STANDARD: null,

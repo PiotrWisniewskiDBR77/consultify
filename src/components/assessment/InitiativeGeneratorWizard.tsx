@@ -646,7 +646,9 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
                 <div>
-                  <h4 className="font-medium text-danger-900 dark:text-danger-300">Transfer Failed</h4>
+                  <h4 className="font-medium text-danger-900 dark:text-danger-300">
+                    Transfer Failed
+                  </h4>
                   <p className="text-sm text-danger-700 dark:text-danger-400">
                     {transferResult.failed.length} initiative(s) could not be transferred
                   </p>

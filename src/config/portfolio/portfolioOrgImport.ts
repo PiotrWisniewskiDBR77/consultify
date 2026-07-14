@@ -68,13 +68,11 @@ export function importOrgInitiativesAsElements(
     .filter((it) => it && (it.title || it.name))
     .map((it, i) => {
       const depIds = it.dependsOn ?? it.dependencies ?? [];
-      const dependencies: PortfolioDependency[] = depIds
-        .filter(Boolean)
-        .map((depId) => ({
-          dependsOnElementId: String(depId),
-          reason: 'imported dependency from org portfolio',
-          kind: 'hard' as const,
-        }));
+      const dependencies: PortfolioDependency[] = depIds.filter(Boolean).map((depId) => ({
+        dependsOnElementId: String(depId),
+        reason: 'imported dependency from org portfolio',
+        kind: 'hard' as const,
+      }));
       return {
         id: it.id ? String(it.id) : `org-elem-${i}`,
         title: String(it.title ?? it.name),

@@ -643,7 +643,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                         </div>
                       )}
                     </div>
-                    {isClickable && <ExternalLink size={11} className="text-c-text-secondary shrink-0" />}
+                    {isClickable && (
+                      <ExternalLink size={11} className="text-c-text-secondary shrink-0" />
+                    )}
                   </div>
                 );
               })}

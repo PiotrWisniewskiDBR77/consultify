@@ -266,8 +266,16 @@ function kpiHasBaselineTargetUnit(item: unknown): boolean {
   return isPresent(baseline) && isPresent(target) && isPresent(unit);
 }
 
-const pass = (id: CardStructRule, reason: string): CardValidationResult => ({ id, pass: true, reason });
-const fail = (id: CardStructRule, reason: string): CardValidationResult => ({ id, pass: false, reason });
+const pass = (id: CardStructRule, reason: string): CardValidationResult => ({
+  id,
+  pass: true,
+  reason,
+});
+const fail = (id: CardStructRule, reason: string): CardValidationResult => ({
+  id,
+  pass: false,
+  reason,
+});
 
 function countReason(label: string, n: number, min: number): string {
   return `${label}: ${n} (wymagane ≥${min}).`;
@@ -277,7 +285,8 @@ function countReason(label: string, n: number, min: number): string {
 export function kpiBaselineTarget(card: Card): CardValidationResult {
   const id: CardStructRule = 'kpi_baseline_target';
   const kpis = asArray(card?.kpis ?? card?.kpi);
-  if (kpis.length === 0) return fail(id, 'Brak KPI — wymagany ≥1 KPI z baseline→target i jednostką.');
+  if (kpis.length === 0)
+    return fail(id, 'Brak KPI — wymagany ≥1 KPI z baseline→target i jednostką.');
   const ok = kpis.some(kpiHasBaselineTargetUnit);
   return ok
     ? pass(id, 'Co najmniej jeden KPI ma baseline, target i jednostkę.')
@@ -288,19 +297,25 @@ export function kpiBaselineTarget(card: Card): CardValidationResult {
 export function raidMix(card: Card): CardValidationResult {
   const id: CardStructRule = 'raid_mix';
   const items = asArray(card?.key_risks ?? card?.raid ?? card?.raid_log);
-  if (items.length === 0) return fail(id, 'Brak wpisów RAID — wymagane ≥2 RISK + ≥1 ASSUMPTION + ≥1 DEPENDENCY.');
+  if (items.length === 0)
+    return fail(id, 'Brak wpisów RAID — wymagane ≥2 RISK + ≥1 ASSUMPTION + ≥1 DEPENDENCY.');
   let risks = 0;
   let assumptions = 0;
   let dependencies = 0;
   for (const it of items) {
     const k = raidKind(it);
     if (k.startsWith('RISK') || k.startsWith('RYZYK')) risks += 1;
-    else if (k.startsWith('ASSUMP') || k.startsWith('ZAŁOŻ') || k.startsWith('ZALOZ')) assumptions += 1;
-    else if (k.startsWith('DEPEND') || k.startsWith('ZALEŻ') || k.startsWith('ZALEZ')) dependencies += 1;
+    else if (k.startsWith('ASSUMP') || k.startsWith('ZAŁOŻ') || k.startsWith('ZALOZ'))
+      assumptions += 1;
+    else if (k.startsWith('DEPEND') || k.startsWith('ZALEŻ') || k.startsWith('ZALEZ'))
+      dependencies += 1;
   }
   const ok = risks >= 2 && assumptions >= 1 && dependencies >= 1;
   return ok
-    ? pass(id, `Mix RAID spełniony (RISK ${risks}, ASSUMPTION ${assumptions}, DEPENDENCY ${dependencies}).`)
+    ? pass(
+        id,
+        `Mix RAID spełniony (RISK ${risks}, ASSUMPTION ${assumptions}, DEPENDENCY ${dependencies}).`
+      )
     : fail(
         id,
         `Mix RAID niespełniony — RISK ${risks}/2, ASSUMPTION ${assumptions}/1, DEPENDENCY ${dependencies}/1.`
@@ -311,21 +326,27 @@ export function raidMix(card: Card): CardValidationResult {
 export function scopeOutMece(card: Card): CardValidationResult {
   const id: CardStructRule = 'scope_out_mece';
   const n = asArray(card?.scope_out).length;
-  return n >= 3 ? pass(id, `Poza zakresem: ${n} pozycji.`) : fail(id, countReason('Poza zakresem (scope_out)', n, 3));
+  return n >= 3
+    ? pass(id, `Poza zakresem: ${n} pozycji.`)
+    : fail(id, countReason('Poza zakresem (scope_out)', n, 3));
 }
 
 // 4. scope_in ≥3.
 export function scopeInCount(card: Card): CardValidationResult {
   const id: CardStructRule = 'scope_in_count';
   const n = asArray(card?.scope_in).length;
-  return n >= 3 ? pass(id, `W zakresie: ${n} pozycji.`) : fail(id, countReason('W zakresie (scope_in)', n, 3));
+  return n >= 3
+    ? pass(id, `W zakresie: ${n} pozycji.`)
+    : fail(id, countReason('W zakresie (scope_in)', n, 3));
 }
 
 // 5. deliverables ≥4.
 export function deliverablesCount(card: Card): CardValidationResult {
   const id: CardStructRule = 'deliverables_count';
   const n = asArray(card?.deliverables).length;
-  return n >= 4 ? pass(id, `Produkty/rezultaty: ${n}.`) : fail(id, countReason('Produkty (deliverables)', n, 4));
+  return n >= 4
+    ? pass(id, `Produkty/rezultaty: ${n}.`)
+    : fail(id, countReason('Produkty (deliverables)', n, 4));
 }
 
 // 6. success_criteria ≥4.
@@ -341,14 +362,18 @@ export function successCount(card: Card): CardValidationResult {
 export function killCount(card: Card): CardValidationResult {
   const id: CardStructRule = 'kill_count';
   const n = asArray(card?.kill_criteria).length;
-  return n >= 2 ? pass(id, `Kryteria zatrzymania: ${n}.`) : fail(id, countReason('Kryteria stop (kill_criteria)', n, 2));
+  return n >= 2
+    ? pass(id, `Kryteria zatrzymania: ${n}.`)
+    : fail(id, countReason('Kryteria stop (kill_criteria)', n, 2));
 }
 
 // 8. milestones ≥3.
 export function milestonesCount(card: Card): CardValidationResult {
   const id: CardStructRule = 'milestones_count';
   const n = asArray(card?.milestones).length;
-  return n >= 3 ? pass(id, `Kamienie milowe: ${n}.`) : fail(id, countReason('Kamienie milowe (milestones)', n, 3));
+  return n >= 3
+    ? pass(id, `Kamienie milowe: ${n}.`)
+    : fail(id, countReason('Kamienie milowe (milestones)', n, 3));
 }
 
 // 9. ≥1 of cost_capex | cost_opex | expected_roi present.
@@ -357,31 +382,36 @@ export function roiSizing(card: Card): CardValidationResult {
   const present = [card?.cost_capex, card?.cost_opex, card?.expected_roi].filter(isPresent).length;
   return present >= 1
     ? pass(id, 'Oszacowanie (CAPEX/OPEX/ROI) obecne.')
-    : fail(id, 'Brak oszacowania — uzupełnij co najmniej jedno z: cost_capex, cost_opex, expected_roi.');
+    : fail(
+        id,
+        'Brak oszacowania — uzupełnij co najmniej jedno z: cost_capex, cost_opex, expected_roi.'
+      );
 }
 
 // 10. owner present (owner_business_id | ownerId | owner_id).
 export function ownerAssigned(card: Card): CardValidationResult {
   const id: CardStructRule = 'owner_assigned';
-  const ok = isPresent(card?.owner_business_id) || isPresent(card?.ownerId) || isPresent(card?.owner_id);
+  const ok =
+    isPresent(card?.owner_business_id) || isPresent(card?.ownerId) || isPresent(card?.owner_id);
   return ok
     ? pass(id, 'Właściciel inicjatywy przypisany.')
     : fail(id, 'Brak właściciela — przypisz owner_business_id (lub ownerId).');
 }
 
 /** Registry of structural validators, keyed by rule id (stable order). */
-export const CARD_STRUCT_VALIDATORS: Record<CardStructRule, (card: Card) => CardValidationResult> = {
-  kpi_baseline_target: kpiBaselineTarget,
-  raid_mix: raidMix,
-  scope_out_mece: scopeOutMece,
-  scope_in_count: scopeInCount,
-  deliverables_count: deliverablesCount,
-  success_count: successCount,
-  kill_count: killCount,
-  milestones_count: milestonesCount,
-  roi_sizing: roiSizing,
-  owner_assigned: ownerAssigned,
-};
+export const CARD_STRUCT_VALIDATORS: Record<CardStructRule, (card: Card) => CardValidationResult> =
+  {
+    kpi_baseline_target: kpiBaselineTarget,
+    raid_mix: raidMix,
+    scope_out_mece: scopeOutMece,
+    scope_in_count: scopeInCount,
+    deliverables_count: deliverablesCount,
+    success_count: successCount,
+    kill_count: killCount,
+    milestones_count: milestonesCount,
+    roi_sizing: roiSizing,
+    owner_assigned: ownerAssigned,
+  };
 
 /**
  * Run all (or a subset of) structural §B3 validators against an initiative card.

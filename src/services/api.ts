@@ -5527,9 +5527,7 @@ export const Api = {
   // list rows already carry `contentMd`/`title` (full row), so no follow-up
   // fetch is needed to seed the new draft's content.
   workCanvasListDrafts: async (conversationId?: string | null): Promise<any[]> => {
-    const query = conversationId
-      ? `?conversationId=${encodeURIComponent(conversationId)}`
-      : '';
+    const query = conversationId ? `?conversationId=${encodeURIComponent(conversationId)}` : '';
     const res = await fetch(`${API_URL}/work-canvas/drafts${query}`, {
       headers: getHeaders(),
     });

@@ -129,7 +129,8 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       toast.error(
         t('kimi.tabeleShell.aiEditor.proposeFailed', {
           defaultValue: 'Failed to propose: {{reason}}',
-          reason: (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
+          reason:
+            (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
         })
       );
     } finally {
@@ -169,7 +170,8 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       toast.error(
         t('kimi.tabeleShell.aiEditor.applyFailed', {
           defaultValue: 'Apply failed: {{reason}}',
-          reason: (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
+          reason:
+            (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
         })
       );
     } finally {
@@ -188,7 +190,8 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       toast.error(
         t('kimi.tabeleShell.aiEditor.rejectFailed', {
           defaultValue: 'Reject failed: {{reason}}',
-          reason: (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
+          reason:
+            (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
         })
       );
     } finally {
@@ -207,10 +210,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
           {t('kimi.tabeleShell.aiEditor.title', 'AI Editor')}
         </h3>
         {budget && (
-          <span
-            className="text-[11px] text-c-text-secondary"
-            data-testid="ai-editor-budget"
-          >
+          <span className="text-[11px] text-c-text-secondary" data-testid="ai-editor-budget">
             {t('kimi.tabeleShell.aiEditor.budgetLabel', {
               defaultValue: '{{used}} / {{total}} tokens',
               used: budget.tokensUsedToday.toLocaleString(),
@@ -290,7 +290,10 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
 
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] text-c-text-secondary">
-          {t('kimi.tabeleShell.aiEditor.disclaimer', 'AI never executes. You always review the diff and approve.')}
+          {t(
+            'kimi.tabeleShell.aiEditor.disclaimer',
+            'AI never executes. You always review the diff and approve.'
+          )}
         </p>
         <button
           type="button"

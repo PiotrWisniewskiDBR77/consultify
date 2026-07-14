@@ -79,20 +79,20 @@ function mapRow(row: ChampionRow): ChangeChampion {
  */
 export async function listChampions(
   organizationId: string,
-  initiativeId?: string | null,
+  initiativeId?: string | null
 ): Promise<ChangeChampion[]> {
   const rows = initiativeId
     ? await dbAll<ChampionRow>(
         `SELECT * FROM change_champions
           WHERE organization_id = ? AND initiative_id = ?
           ORDER BY created_at ASC`,
-        [organizationId, initiativeId],
+        [organizationId, initiativeId]
       )
     : await dbAll<ChampionRow>(
         `SELECT * FROM change_champions
           WHERE organization_id = ?
           ORDER BY created_at ASC`,
-        [organizationId],
+        [organizationId]
       );
   return rows.map(mapRow);
 }
@@ -100,10 +100,7 @@ export async function listChampions(
 /**
  * Add a champion to the coalition. Returns the generated id.
  */
-export async function addChampion(
-  organizationId: string,
-  data: AddChampionInput,
-): Promise<string> {
+export async function addChampion(organizationId: string, data: AddChampionInput): Promise<string> {
   const id = randomUUID();
   await dbRun(
     `INSERT INTO change_champions
@@ -117,7 +114,7 @@ export async function addChampion(
       data.role ?? 'champion',
       data.influence ?? null,
       data.status ?? 'active',
-    ],
+    ]
   );
   logger.info?.('[changeChampions] added champion', {
     organizationId,
@@ -130,14 +127,11 @@ export async function addChampion(
 /**
  * Remove a champion. Org-scoped so one org can never delete another's row.
  */
-export async function removeChampion(
-  organizationId: string,
-  id: string,
-): Promise<void> {
-  await dbRun(
-    `DELETE FROM change_champions WHERE id = ? AND organization_id = ?`,
-    [id, organizationId],
-  );
+export async function removeChampion(organizationId: string, id: string): Promise<void> {
+  await dbRun(`DELETE FROM change_champions WHERE id = ? AND organization_id = ?`, [
+    id,
+    organizationId,
+  ]);
 }
 
 // ── Pure analytics (no DB) ─────────────────────────────────────
@@ -151,7 +145,7 @@ export async function removeChampion(
  */
 export function coalitionCoverage(
   championCount: number,
-  affectedPopulation: number,
+  affectedPopulation: number
 ): CoalitionCoverage {
   if (!Number.isFinite(affectedPopulation) || affectedPopulation <= 0) {
     return { coveragePct: 0, adequate: false };
@@ -171,7 +165,7 @@ export function coalitionCoverage(
  * @returns ids of initiatives whose championCount is 0 (or non-positive)
  */
 export function detectNoChampion(
-  initiatives: Array<{ id: string; championCount: number }>,
+  initiatives: Array<{ id: string; championCount: number }>
 ): string[] {
   if (!Array.isArray(initiatives)) return [];
   return initiatives

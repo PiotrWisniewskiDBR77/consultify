@@ -130,7 +130,9 @@ export async function getCollaboratorRole(
     );
     if (!row) return null;
     const role = (row as any).role;
-    return (VALID_ROLES as readonly string[]).includes(role) ? (role as CollaboratorRole) : 'viewer';
+    return (VALID_ROLES as readonly string[]).includes(role)
+      ? (role as CollaboratorRole)
+      : 'viewer';
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (!isSchemaMissing(msg)) {
@@ -176,10 +178,9 @@ export async function upsertCollaborator(input: {
            WHERE id = ?`,
           [role, input.invitedEmail ?? null, (existing as any).id]
         );
-        const updated = await dbGet(
-          `SELECT * FROM presentation_deck_collaborators WHERE id = ?`,
-          [(existing as any).id]
-        );
+        const updated = await dbGet(`SELECT * FROM presentation_deck_collaborators WHERE id = ?`, [
+          (existing as any).id,
+        ]);
         return { status: 'ok', collaborator: updated ? mapRow(updated) : undefined };
       }
     }

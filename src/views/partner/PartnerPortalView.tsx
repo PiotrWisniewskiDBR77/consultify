@@ -39,8 +39,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { FilterableTable, type FilterChip } from '../../components/shared/ModuleHub';
-import { EntityStatusChip } from '../../components/ui/primitives/chips';
 import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import {
   loadPartnerRuntimeSummary,
@@ -48,12 +46,13 @@ import {
   PartnerRuntimeSummaryStrip,
 } from '../../components/Partner/PartnerRuntimeSummaryStrip';
 import { PartnerSection } from '../../components/Partner/PartnerSidebar';
+import { FilterableTable, type FilterChip } from '../../components/shared/ModuleHub';
+import { EntityStatusChip } from '../../components/ui/primitives/chips';
 import {
   PARTNER_CERTIFICATION_DOC_BY_TYPE,
   PARTNER_DOC_HREF_BY_SLUG,
 } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
-import { getLegacyPartnerSection } from './partnerLegacyRoutes';
 import { Api } from '../../services/api';
 import {
   shouldFallbackToLegacyPartner,
@@ -65,6 +64,7 @@ import {
   type V8PartnerReferralAnalytics,
 } from '../../services/api/v8';
 import { cn } from '../../utils/cn';
+import { getLegacyPartnerSection } from './partnerLegacyRoutes';
 
 const PARTNER_SECTIONS = new Set<PartnerSection>([
   'partner-home',
@@ -248,10 +248,7 @@ const DashboardSection: React.FC = () => {
         <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-1/3" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
-            >
+            <div key={i} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-2/3 mb-3" />
               <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-1/2 mb-2" />
               <div className="h-3 bg-slate-200 dark:bg-navy-700 rounded w-1/4" />
@@ -349,10 +346,7 @@ const DashboardSection: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <div
-            key={index}
-            className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
-          >
+          <div key={index} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
                 <stat.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -720,10 +714,7 @@ const MetricsSection: React.FC = () => {
         <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-1/3" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
-            >
+            <div key={i} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-2/3 mb-3" />
               <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-1/2 mb-2" />
               <div className="h-3 bg-slate-200 dark:bg-navy-700 rounded w-1/4" />
@@ -822,10 +813,7 @@ const MetricsSection: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
-          <div
-            key={index}
-            className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
-          >
+          <div key={index} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
             <p className="text-sm text-c-text-secondary mb-2">{metric.label}</p>
             <p className="text-2xl font-bold text-c-text">{metric.value}</p>
             <div className="flex items-center gap-2 mt-2">
@@ -1185,9 +1173,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                   <div className="w-10 h-10 shrink-0 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   </div>
-                  <span className="font-medium text-c-text truncate">
-                    {org.name}
-                  </span>
+                  <span className="font-medium text-c-text truncate">{org.name}</span>
                 </div>
               ),
             },
@@ -1204,9 +1190,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               label: t('partner.clients.col.users', 'Users'),
               width: '90px',
               align: 'right',
-              render: (org) => (
-                <span className="text-sm text-c-text-secondary">{org.users}</span>
-              ),
+              render: (org) => <span className="text-sm text-c-text-secondary">{org.users}</span>,
             },
             {
               id: 'projects',
@@ -1223,9 +1207,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               width: '110px',
               align: 'right',
               render: (org) => (
-                <span className="text-sm text-c-text-secondary">
-                  {org.assessmentScore}/5
-                </span>
+                <span className="text-sm text-c-text-secondary">{org.assessmentScore}/5</span>
               ),
             },
             {
@@ -1304,9 +1286,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-c-text-secondary">Progress</span>
-                    <span className="font-medium text-c-text">
-                      {project.progress}%
-                    </span>
+                    <span className="font-medium text-c-text">{project.progress}%</span>
                   </div>
                   <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                     <div
@@ -1565,10 +1545,7 @@ const CertificationSection: React.FC<{
   const LoadingSkeleton = () => (
     <div className="space-y-4 animate-pulse">
       {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
-        >
+        <div key={i} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-slate-200 dark:bg-navy-700 rounded-xl" />
             <div className="flex-1 space-y-2">
@@ -1685,9 +1662,7 @@ const CertificationSection: React.FC<{
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-c-text">
-                          {course.name}
-                        </h4>
+                        <h4 className="font-medium text-c-text">{course.name}</h4>
                         <span
                           className={cn(
                             'px-2 py-1 text-xs font-medium rounded-full',
@@ -1736,9 +1711,7 @@ const CertificationSection: React.FC<{
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-sm mb-1">
                             <span className="text-c-text-secondary">Progress</span>
-                            <span className="font-medium text-c-text">
-                              {course.progress}%
-                            </span>
+                            <span className="font-medium text-c-text">{course.progress}%</span>
                           </div>
                           <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                             <div
@@ -1867,9 +1840,7 @@ const CertificationSection: React.FC<{
                       <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-c-text">
-                        {course.name} Exam
-                      </h4>
+                      <h4 className="font-medium text-c-text">{course.name} Exam</h4>
                       <p className="text-sm text-c-text-secondary">
                         {course.certificateId
                           ? 'Passed'
@@ -1943,10 +1914,7 @@ const CertificationSection: React.FC<{
               ) : (
                 <div className="mt-4 space-y-4 max-h-[60vh] overflow-auto pr-1">
                   {examQuestions.map((q: any, idx: number) => (
-                    <div
-                      key={q.id}
-                      className="rounded-lg border border-c-border-subtle p-3"
-                    >
+                    <div key={q.id} className="rounded-lg border border-c-border-subtle p-3">
                       <div className="font-medium text-c-text">
                         {idx + 1}. {q.text}
                       </div>
@@ -2234,9 +2202,7 @@ const ResourcesSection: React.FC<{
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-c-text">
-            {titles[subsection]}
-          </h2>
+          <h2 className="text-xl font-semibold text-c-text">{titles[subsection]}</h2>
           <p className="text-c-text-secondary">
             {t('partner.resources.desc', 'Pobierz materiały dla swojego partnerstwa')}
           </p>
@@ -2253,9 +2219,7 @@ const ResourcesSection: React.FC<{
         (docsBridge.length > 0 || academyHighlights.length > 0) && (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
-              <h3 className="text-base font-semibold text-c-text">
-                Canonical partner docs
-              </h3>
+              <h3 className="text-base font-semibold text-c-text">Canonical partner docs</h3>
               <div className="mt-3 space-y-3">
                 {docsBridge.map((doc) => (
                   <button
@@ -2263,9 +2227,7 @@ const ResourcesSection: React.FC<{
                     onClick={() => navigate(doc.href)}
                     className="w-full flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-3 text-left hover:border-primary-500 transition-colors"
                   >
-                    <span className="text-sm font-medium text-c-text">
-                      {doc.title}
-                    </span>
+                    <span className="text-sm font-medium text-c-text">{doc.title}</span>
                     <ExternalLink className="w-4 h-4 text-c-text-secondary" />
                   </button>
                 ))}
@@ -2273,9 +2235,7 @@ const ResourcesSection: React.FC<{
             </div>
 
             <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
-              <h3 className="text-base font-semibold text-c-text">
-                Academy status bridge
-              </h3>
+              <h3 className="text-base font-semibold text-c-text">Academy status bridge</h3>
               <div className="mt-3 space-y-3">
                 {academyHighlights.slice(0, 4).map((item) => {
                   const href =
@@ -2693,9 +2653,7 @@ const ProfileSection: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                Phone
-              </label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">Phone</label>
               <input
                 type="tel"
                 value={formData.contactPhone}
@@ -2768,7 +2726,9 @@ const ProfileSection: React.FC<{
                 <span
                   className={cn(
                     'font-medium',
-                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-c-text-secondary'
+                    selectedSpecializations.includes(fw)
+                      ? 'text-primary-600'
+                      : 'text-c-text-secondary'
                   )}
                 >
                   {fw}

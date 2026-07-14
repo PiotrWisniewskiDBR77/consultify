@@ -6,9 +6,8 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 interface RiskActionHandlers {
   updateInputData: (data: Partial<RiskUncertaintyData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;

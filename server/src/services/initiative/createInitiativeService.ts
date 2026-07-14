@@ -14,19 +14,16 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
-import auditEventsService from '../AuditEventsService.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
+import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import { CreateInitiativeSchema } from '../../validators/initiative.validators.js';
+import auditEventsService from '../AuditEventsService.js';
 import {
   isRequireInitiativeProjectEnabled,
   resolveOrCreateSystemPortfolioProject,
 } from '../initiativeProjectPolicyService.js';
-import logger from '../../utils/Logger.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
-import {
-  validateCardStructure,
-  type InitiativeCardData,
-} from './initiativeCardValidators.js';
+import { type InitiativeCardData, validateCardStructure } from './initiativeCardValidators.js';
 
 export interface CreateInitiativeInput {
   title?: string;

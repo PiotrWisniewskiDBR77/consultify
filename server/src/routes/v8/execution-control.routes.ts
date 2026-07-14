@@ -451,7 +451,16 @@ router.post(
          ON CONFLICT (id)
          DO UPDATE SET is_dismissed = TRUE, dismissed_by = EXCLUDED.dismissed_by, dismissed_at = NOW(), updated_at = NOW()
            WHERE delay_signals.organization_id = ?`,
-        [signalId, organizationId, entityType, entityId, entityName, deviationType, userId, organizationId]
+        [
+          signalId,
+          organizationId,
+          entityType,
+          entityId,
+          entityName,
+          deviationType,
+          userId,
+          organizationId,
+        ]
       );
     }
 
@@ -1207,10 +1216,10 @@ router.post(
     // its lookup; make it 404 on a missing task rather than escalating against null.
     let initiativeId: string | null;
     if (entityType === 'INITIATIVE') {
-      const init = (await dbAll(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [entityId, organizationId]
-      )) as { id: string }[];
+      const init = (await dbAll(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+        entityId,
+        organizationId,
+      ])) as { id: string }[];
       if (!init?.length) {
         return res
           .status(404)
@@ -1778,7 +1787,16 @@ router.post(
          VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()
            WHERE v8_lane_decisions.organization_id = ?`,
-        [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null, organizationId]
+        [
+          decisionId,
+          organizationId,
+          laneId,
+          suggestionId,
+          state,
+          userId,
+          notes || null,
+          organizationId,
+        ]
       );
     } catch {
       // table may not exist — create it on the fly

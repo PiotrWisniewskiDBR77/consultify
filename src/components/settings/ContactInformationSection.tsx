@@ -808,9 +808,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <MapPin size={18} className="text-amber-500" />
-            <span className="font-medium text-c-text capitalize">
-              {address.type || 'office'}
-            </span>
+            <span className="font-medium text-c-text capitalize">{address.type || 'office'}</span>
             {address.isPrimary && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
           </div>
           <p className="text-sm text-c-text-secondary mt-1">

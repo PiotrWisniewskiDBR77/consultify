@@ -62,15 +62,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
+import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import { Select } from '@/components/shared/forms';
-import {
-  ArtifactRightPanel,
-  type ArtifactRightPanelSection,
-} from '@/components/standard/ArtifactRightPanel';
-import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import {
@@ -80,23 +76,16 @@ import {
   NModeSectionWrapper,
   ToolbarIconButton,
 } from '@/components/shared/NModeLayout';
-import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
-import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import { AddCardMenu } from '@/components/shared/NModeLayout/NModeCardManager';
-import {
-  useCardLayout,
-  type CardLayout,
-} from '@/components/shared/NModeLayout/useCardLayout';
+import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import {
   ToolbarAISolidButton,
   ToolbarAISplitButton,
   ToolbarGhostButton,
 } from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
-import type {
-  NModeSection,
-  PropertyFieldOption,
-} from '@/components/shared/NModeLayout/types';
+import type { NModeSection, PropertyFieldOption } from '@/components/shared/NModeLayout/types';
+import { type CardLayout, useCardLayout } from '@/components/shared/NModeLayout/useCardLayout';
 import {
   ActivityLogCanvas,
   type ActivityLogEntry as NModeActivityLogEntry,
@@ -110,6 +99,11 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
+import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -1074,14 +1068,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // new `useCardLayout` primitive + `+ Nowa karta` menu drive the same downstream
   // filtering the ad-hoc Sections dropdown already used, without a deep refactor.
   const cardLayoutVisibleIds = cardLayout.visibleOrderedIds;
-  const cardLayoutAllIds = useMemo(
-    () => cardLayout.layout.map((c) => c.id),
-    [cardLayout.layout]
-  );
+  const cardLayoutAllIds = useMemo(() => cardLayout.layout.map((c) => c.id), [cardLayout.layout]);
   useEffect(() => {
-    const hidden = new Set(
-      cardLayoutAllIds.filter((id) => !cardLayoutVisibleIds.includes(id))
-    );
+    const hidden = new Set(cardLayoutAllIds.filter((id) => !cardLayoutVisibleIds.includes(id)));
     setHiddenSectionIds(hidden);
     setNModeSectionOrder(cardLayoutVisibleIds.length > 0 ? cardLayoutVisibleIds : null);
   }, [cardLayoutVisibleIds, cardLayoutAllIds]);
@@ -1114,7 +1103,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Insight-level "Propose initiatives" → opens the initiative generator (reconciles
   // AI/heuristic candidates from this insight against the live initiative grid).
   const [genOpen, setGenOpen] = useState(false);
-
 
   // Lifecycle transition state
   const [lifecycleTransitioning, setLifecycleTransitioning] = useState(false);
@@ -1245,9 +1233,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         toast.success(t('interview.insightViewer.reportWorksheetUpdated'));
       } catch (error) {
         console.error('[InsightViewer] Failed to update report worksheet:', error);
-        toast.error(
-          t('interview.insightViewer.failedToSaveWorksheetStatus')
-        );
+        toast.error(t('interview.insightViewer.failedToSaveWorksheetStatus'));
       } finally {
         setWorksheetActionLoadingKey(null);
       }
@@ -1263,9 +1249,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setReportPack(response.result.reportPack);
       setReportReadiness(response.result.readiness);
       if (response.result.blocked) {
-        toast.error(
-          t('interview.insightViewer.theReadinessGateBlocksReview')
-        );
+        toast.error(t('interview.insightViewer.theReadinessGateBlocksReview'));
         return;
       }
       toast.success(
@@ -1275,9 +1259,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       );
     } catch (error) {
       console.error('[InsightViewer] Failed to submit report pack for review:', error);
-      toast.error(
-        t('interview.insightViewer.failedToSubmitReportPack')
-      );
+      toast.error(t('interview.insightViewer.failedToSubmitReportPack'));
     } finally {
       setReportReviewSubmitting(false);
     }
@@ -1291,9 +1273,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setReportPack(response.result.reportPack);
       setReportReadiness(response.result.readiness);
       if (response.result.blocked) {
-        toast.error(
-          t('interview.insightViewer.thePublishGateBlocksReport')
-        );
+        toast.error(t('interview.insightViewer.thePublishGateBlocksReport'));
         return;
       }
       toast.success(
@@ -1303,9 +1283,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       );
     } catch (error) {
       console.error('[InsightViewer] Failed to publish report pack:', error);
-      toast.error(
-        t('interview.insightViewer.failedToPublishReportPack')
-      );
+      toast.error(t('interview.insightViewer.failedToPublishReportPack'));
     } finally {
       setReportPublishing(false);
     }
@@ -1329,9 +1307,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       toast.success(t('interview.insightViewer.reportManifestDownloaded'));
     } catch (error) {
       console.error('[InsightViewer] Failed to export report manifest:', error);
-      toast.error(
-        t('interview.insightViewer.failedToDownloadManifestThe')
-      );
+      toast.error(t('interview.insightViewer.failedToDownloadManifestThe'));
     } finally {
       setReportExporting(false);
     }
@@ -1354,9 +1330,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       toast.success(t('interview.insightViewer.markdownReportDownloaded'));
     } catch (error) {
       console.error('[InsightViewer] Failed to export report markdown:', error);
-      toast.error(
-        t('interview.insightViewer.failedToDownloadMarkdownReport')
-      );
+      toast.error(t('interview.insightViewer.failedToDownloadMarkdownReport'));
     } finally {
       setReportMarkdownExporting(false);
     }
@@ -1370,13 +1344,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setReportPack(response.result.reportPack);
       await loadReportReadiness(insight.id);
       toast.success(
-        t('interview.insightViewer.newDraftFromVersion', { version: response.result.revision.version })
+        t('interview.insightViewer.newDraftFromVersion', {
+          version: response.result.revision.version,
+        })
       );
     } catch (error) {
       console.error('[InsightViewer] Failed to create report pack revision:', error);
-      toast.error(
-        t('interview.insightViewer.failedToCreateANew')
-      );
+      toast.error(t('interview.insightViewer.failedToCreateANew'));
     } finally {
       setReportRevisionCreating(false);
     }
@@ -1913,26 +1887,34 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     const contradictionSignals = v6Signals.filter((signal) => signal.type === 'contradiction');
     const publishBlockers = uniqueNonEmpty([
       ...(findingsSummary.total === 0
-        ? [
-            t('interview.insightViewer.noPersistedP10FindingsAre'),
-          ]
+        ? [t('interview.insightViewer.noPersistedP10FindingsAre')]
         : []),
       ...(findingsSummary.activeEvidence === 0
-        ? [
-            t('interview.insightViewer.noActiveEvidencePointersAre'),
-          ]
+        ? [t('interview.insightViewer.noActiveEvidencePointersAre')]
         : []),
       ...(candidateSummary.needsEvidence > 0
-        ? [t('interview.insightViewer.candidatesNeedEvidence', { count: candidateSummary.needsEvidence })]
+        ? [
+            t('interview.insightViewer.candidatesNeedEvidence', {
+              count: candidateSummary.needsEvidence,
+            }),
+          ]
         : []),
       ...(candidateSummary.needsSplit > 0
         ? [t('interview.insightViewer.candidatesNeedSplit', { count: candidateSummary.needsSplit })]
         : []),
       ...(readbackSummary.unresolved > 0
-        ? [t('interview.insightViewer.findingsUnresolvedReadback', { count: readbackSummary.unresolved })]
+        ? [
+            t('interview.insightViewer.findingsUnresolvedReadback', {
+              count: readbackSummary.unresolved,
+            }),
+          ]
         : []),
       ...(readbackSummary.challenged > 0
-        ? [t('interview.insightViewer.findingsChallengedReadback', { count: readbackSummary.challenged })]
+        ? [
+            t('interview.insightViewer.findingsChallengedReadback', {
+              count: readbackSummary.challenged,
+            }),
+          ]
         : []),
     ]);
 
@@ -2240,9 +2222,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             ? ({ ...prev, sectionCompletions: prevMap, section_completions: prevMap } as any)
             : prev
         );
-        toast.error(
-          t('interview.insightViewer.failedToSaveSectionStatus')
-        );
+        toast.error(t('interview.insightViewer.failedToSaveSectionStatus'));
       }
     },
     [insight, sectionCompletions, isPolish]
@@ -2319,28 +2299,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         id: 'fill-empty',
         label: t('interview.insightViewer.fillEmpty'),
         icon: <Plus size={13} />,
-        onClick: () =>
-          seedTeresaPrompt(
-            t('interview.insightViewer.fillInTheEmptyAnd')
-          ),
+        onClick: () => seedTeresaPrompt(t('interview.insightViewer.fillInTheEmptyAnd')),
       },
       {
         id: 'synthesize',
         label: t('interview.insightViewer.synthesize'),
         icon: <Layers size={13} />,
         onClick: () =>
-          seedTeresaPrompt(
-            t('interview.insightViewer.synthesizeThisInsightSurfaceThe')
-          ),
+          seedTeresaPrompt(t('interview.insightViewer.synthesizeThisInsightSurfaceThe')),
       },
       {
         id: 'quality-check',
         label: t('interview.insightViewer.qualityCheck'),
         icon: <CheckCircle2 size={13} />,
-        onClick: () =>
-          seedTeresaPrompt(
-            t('interview.insightViewer.doAQualityCheckOf')
-          ),
+        onClick: () => seedTeresaPrompt(t('interview.insightViewer.doAQualityCheckOf')),
       },
       {
         id: 'refresh',
@@ -2355,10 +2327,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         id: 'continue',
         label: t('interview.insightViewer.continue'),
         icon: <Send size={13} />,
-        onClick: () =>
-          seedTeresaPrompt(
-            t('interview.insightViewer.continueWhereWeLeftOff')
-          ),
+        onClick: () => seedTeresaPrompt(t('interview.insightViewer.continueWhereWeLeftOff')),
       },
     ]);
 
@@ -2647,16 +2616,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         const MAX_RETRIES = 2;
         const findingId = handoffFinding.findingId;
         if (!findingId) {
-          toast.error(
-            t('interview.insightViewer.thisFindingIsNotYet')
-          );
+          toast.error(t('interview.insightViewer.thisFindingIsNotYet'));
           return;
         }
         // Link mode requires a real, user-picked target initiative id.
         if (mode === 'link' && !handoffTargetInitiativeId) {
-          toast.error(
-            t('interview.insightViewer.pickATargetInitiativeTo')
-          );
+          toast.error(t('interview.insightViewer.pickATargetInitiativeTo'));
           return;
         }
         const targetInitiativeId = handoffTargetInitiativeId;
@@ -2685,9 +2650,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               resultType: res?.initiative?.type,
             });
             if (landingPath) {
-              toast.success(
-                t('interview.insightViewer.initiativeCreatedOpeningItsDocument')
-              );
+              toast.success(t('interview.insightViewer.initiativeCreatedOpeningItsDocument'));
               navigate(landingPath);
             } else {
               toast.success(
@@ -2721,16 +2684,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               errMsg.includes('permission') ||
               errMsg.includes('forbidden')
             ) {
-              toast.error(
-                t('interview.insightViewer.permissionDeniedForInitiativeHandoff')
-              );
+              toast.error(t('interview.insightViewer.permissionDeniedForInitiativeHandoff'));
               return;
             }
 
             if (errMsg.includes('422') || errMsg.includes('HANDOFF_BLOCKED')) {
-              toast.error(
-                t('interview.insightViewer.handoffBlockedCheckFindingConfidence')
-              );
+              toast.error(t('interview.insightViewer.handoffBlockedCheckFindingConfidence'));
               return;
             }
 
@@ -2743,13 +2702,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
         const errMsg = lastError instanceof Error ? lastError.message : '';
         if (errMsg.includes('network') || errMsg.includes('fetch') || errMsg.includes('timeout')) {
-          toast.error(
-            t('interview.insightViewer.networkIssuePayloadPreservedPlease')
-          );
+          toast.error(t('interview.insightViewer.networkIssuePayloadPreservedPlease'));
         } else {
-          toast.error(
-            t('interview.insightViewer.failedToHandOffFinding')
-          );
+          toast.error(t('interview.insightViewer.failedToHandOffFinding'));
         }
       } finally {
         handoffSubmitLockRef.current = false;
@@ -2800,13 +2755,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           errMsg.includes('permission') ||
           errMsg.includes('forbidden')
         ) {
-          toast.error(
-            t('interview.insightViewer.permissionDeniedForLifecycleChange')
-          );
+          toast.error(t('interview.insightViewer.permissionDeniedForLifecycleChange'));
         } else {
-          toast.error(
-            t('interview.insightViewer.failedToChangeLifecycleStatus')
-          );
+          toast.error(t('interview.insightViewer.failedToChangeLifecycleStatus'));
         }
       } finally {
         setLifecycleTransitioning(false);
@@ -2858,7 +2809,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         toast.error(
           err?.response?.data?.error ||
             err?.message ||
-            (t('interview.insightViewer.failedToUpdateCandidateTriage'))
+            t('interview.insightViewer.failedToUpdateCandidateTriage')
         );
       } finally {
         setCandidateActionLoadingId(null);
@@ -2900,9 +2851,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         ]);
         toast.success(t('interview.insightViewer.readbackUpdated'));
       } catch {
-        toast.error(
-          t('interview.insightViewer.failedToUpdateReadback')
-        );
+        toast.error(t('interview.insightViewer.failedToUpdateReadback'));
       } finally {
         setReadbackLoadingId(null);
       }
@@ -3249,7 +3198,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               source={{
                 type: 'interview_insight',
                 id: insight?.id || insightId,
-                title: insight?.title || title || (t('interview.insightViewer.insight')),
+                title: insight?.title || title || t('interview.insightViewer.insight'),
                 status: insight?.status,
                 content: insight?.content || executiveSummary,
                 confidence: primaryConfidence,
@@ -3344,9 +3293,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     ) : (
                       <EmptyStateInline
                         icon={ShieldAlert}
-                        message={
-                          t('interview.insightViewer.noFindingsWithActiveEvidence')
-                        }
+                        message={t('interview.insightViewer.noFindingsWithActiveEvidence')}
                       />
                     )}
                   </div>
@@ -3410,9 +3357,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     ) : (
                       <EmptyStateInline
                         icon={Radio}
-                        message={
-                          t('interview.insightViewer.noExplicitContradictionSignals')
-                        }
+                        message={t('interview.insightViewer.noExplicitContradictionSignals')}
                       />
                     )}
                   </div>
@@ -3427,13 +3372,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <div className="space-y-4">
               {renderSectionCardHeader('executive-summary', !!executiveSummary)}
-              <Callout
-                variant="purple"
-                title={
-                  t('interview.insightViewer.readThisAsAConsulting')
-                }
-              >
-                {executiveSummary || (t('interview.insightViewer.noSummaryAvailable'))}
+              <Callout variant="purple" title={t('interview.insightViewer.readThisAsAConsulting')}>
+                {executiveSummary || t('interview.insightViewer.noSummaryAvailable')}
               </Callout>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -3504,18 +3444,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </ul>
                 </Callout>
               )}
-              <Callout
-                variant="info"
-                title={t('interview.insightViewer.interpretationScope')}
-              >
+              <Callout variant="info" title={t('interview.insightViewer.interpretationScope')}>
                 {t('interview.insightViewer.thisIsTheConsultingLayer')}
               </Callout>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className={TEXT_L1}>
-                    {t('interview.insightViewer.officialAnswers2')}
-                  </div>
+                  <div className={TEXT_L1}>{t('interview.insightViewer.officialAnswers2')}</div>
                   {officialAnswers.length > 0 ? (
                     officialAnswers.map((item) => (
                       <div
@@ -3528,9 +3463,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   ) : (
                     <EmptyStateInline
                       icon={FileText}
-                      message={
-                        t('interview.insightViewer.noSourceFactsAvailable')
-                      }
+                      message={t('interview.insightViewer.noSourceFactsAvailable')}
                     />
                   )}
                 </div>
@@ -3551,9 +3484,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   ) : (
                     <EmptyStateInline
                       icon={AlertTriangle}
-                      message={
-                        t('interview.insightViewer.noClearIssuesToSurface')
-                      }
+                      message={t('interview.insightViewer.noClearIssuesToSurface')}
                     />
                   )}
                 </div>
@@ -3574,9 +3505,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   ) : (
                     <EmptyStateInline
                       icon={Sparkles}
-                      message={
-                        t('interview.insightViewer.noSignalsOrOpportunitiesYet')
-                      }
+                      message={t('interview.insightViewer.noSignalsOrOpportunitiesYet')}
                     />
                   )}
                 </div>
@@ -3601,9 +3530,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-5">
               <Callout
                 variant={score >= 60 ? 'info' : 'warning'}
-                title={
-                  t('interview.insightViewer.materialQualityIsNotA')
-                }
+                title={t('interview.insightViewer.materialQualityIsNotA')}
               >
                 {t('interview.insightViewer.thisCardExplainsHowFar')}
               </Callout>
@@ -3727,9 +3654,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <EmptyStateInline
                   icon={AlertCircle}
-                  message={
-                    t('interview.insightViewer.materialQualityWillAppearAfter')
-                  }
+                  message={t('interview.insightViewer.materialQualityWillAppearAfter')}
                 />
               )}
             </div>
@@ -4010,7 +3935,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   worksheet.warnings.length > 0
                                     ? worksheet.warnings
                                     : [
-                                        t('interview.insightViewer.worksheetNeedsOperatorCompletion'),
+                                        t(
+                                          'interview.insightViewer.worksheetNeedsOperatorCompletion'
+                                        ),
                                       ],
                               },
                               {
@@ -4021,7 +3948,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   worksheet.warnings.length > 0
                                     ? worksheet.warnings
                                     : [
-                                        t('interview.insightViewer.worksheetMarkedDegradedByOperator'),
+                                        t(
+                                          'interview.insightViewer.worksheetMarkedDegradedByOperator'
+                                        ),
                                       ],
                               },
                             ] satisfies Array<{
@@ -4052,7 +3981,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 }
                                 className="rounded-md border border-c-border-subtle px-2 py-1 text-[10px] font-semibold text-c-text-secondary transition-colors hover:border-c-border-strong hover:text-c-text disabled:cursor-not-allowed disabled:opacity-45"
                               >
-                                {loading ? (t('interview.insightViewer.saving')) : action.label}
+                                {loading ? t('interview.insightViewer.saving') : action.label}
                               </button>
                             );
                           })}
@@ -4064,9 +3993,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <EmptyStateInline
                   icon={FileText}
-                  message={
-                    t('interview.insightViewer.reportPackIsNotAvailable')
-                  }
+                  message={t('interview.insightViewer.reportPackIsNotAvailable')}
                 />
               )}
             </div>
@@ -4163,11 +4090,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </div>
 
               {(sourcePack?.degradedReasons || []).length > 0 && (
-                <Callout
-                  variant="warning"
-                  title={t('interview.insightViewer.sourceGaps')}
-                  compact
-                >
+                <Callout variant="warning" title={t('interview.insightViewer.sourceGaps')} compact>
                   <ul className="list-disc list-inside space-y-1">
                     {(sourcePack?.degradedReasons || []).map((reason) => (
                       <li key={reason} className="text-sm">
@@ -4198,8 +4121,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               entry.sourceSessionId,
                             ]
                               .filter(Boolean)
-                              .join(' · ') ||
-                              (t('interview.insightViewer.noRespondentMetadata'))}
+                              .join(' · ') || t('interview.insightViewer.noRespondentMetadata')}
                           </div>
                         </div>
                         {entry.degradedReason ? (
@@ -4238,9 +4160,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={Link2}
                   message={t('interview.insightViewer.noSourcePackAvailable')}
-                  hint={
-                    t('interview.insightViewer.sourcePackAppearsAfterInsight')
-                  }
+                  hint={t('interview.insightViewer.sourcePackAppearsAfterInsight')}
                 />
               )}
             </div>
@@ -4279,9 +4199,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-5">
               <Callout
                 variant="info"
-                title={
-                  t('interview.insightViewer.analysisCanonPersonXTopic')
-                }
+                title={t('interview.insightViewer.analysisCanonPersonXTopic')}
               >
                 {t('interview.insightViewer.thisLayerDoesNotCreate')}
               </Callout>
@@ -4382,9 +4300,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
                       className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
                     >
-                      <option value="all">
-                        {t('interview.insightViewer.allDepartments')}
-                      </option>
+                      <option value="all">{t('interview.insightViewer.allDepartments')}</option>
                       {analysisDepartmentOptions.map((department) => (
                         <option key={department} value={department}>
                           {department}
@@ -4397,9 +4313,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className={TEXT_L1}>
-                    {t('interview.insightViewer.consensusTopics')}
-                  </div>
+                  <div className={TEXT_L1}>{t('interview.insightViewer.consensusTopics')}</div>
                   {consensusTopics.length > 0 ? (
                     consensusTopics.map((topic) => (
                       <div
@@ -4411,24 +4325,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                         <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                           {topic.supportingStakeholderLabels.join(', ') ||
-                            (t('interview.insightViewer.noLenses'))}
+                            t('interview.insightViewer.noLenses')}
                         </div>
                       </div>
                     ))
                   ) : (
                     <EmptyStateInline
                       icon={CheckCircle2}
-                      message={
-                        t('interview.insightViewer.noConfirmedConsensusYet')
-                      }
+                      message={t('interview.insightViewer.noConfirmedConsensusYet')}
                     />
                   )}
                 </div>
 
                 <div className="space-y-3">
-                  <div className={TEXT_L1}>
-                    {t('interview.insightViewer.localOnlySignals')}
-                  </div>
+                  <div className={TEXT_L1}>{t('interview.insightViewer.localOnlySignals')}</div>
                   {localOnlyTopics.length > 0 ? (
                     localOnlyTopics.slice(0, 6).map((topic) => (
                       <div
@@ -4496,9 +4406,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               {contradictedTopics.length > 0 && (
                 <Callout
                   variant="critical"
-                  title={
-                    t('interview.insightViewer.topicsWithCrossPerspectiveContradiction')
-                  }
+                  title={t('interview.insightViewer.topicsWithCrossPerspectiveContradiction')}
                 >
                   <ul className="list-disc list-inside space-y-1">
                     {contradictedTopics.map((topic) => (
@@ -4604,9 +4512,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <EmptyStateInline
                   icon={BarChart3}
-                  message={
-                    t('interview.insightViewer.noDataForTheCurrent')
-                  }
+                  message={t('interview.insightViewer.noDataForTheCurrent')}
                 />
               )}
             </div>
@@ -4619,11 +4525,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-4">
               {renderSectionCardHeader('themes', v6Themes.length > 0)}
               {v6MissingData.length > 0 && (
-                <Callout
-                  variant="warning"
-                  title={t('interview.insightViewer.missingData')}
-                  compact
-                >
+                <Callout variant="warning" title={t('interview.insightViewer.missingData')} compact>
                   <ul className="list-disc list-inside space-y-0.5">
                     {v6MissingData.map((item, idx) => (
                       <li key={idx}>{item}</li>
@@ -4635,9 +4537,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={Layers}
                   message={t('interview.insightViewer.noThemesIdentifiedYet')}
-                  hint={
-                    t('interview.insightViewer.themesWillAppearAfterV6')
-                  }
+                  hint={t('interview.insightViewer.themesWillAppearAfterV6')}
                   action={
                     canRegenerateV6
                       ? {
@@ -4803,7 +4703,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           {persistedFinding && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
                               <Target size={10} />
-                              {t('interview.insightViewer.p10PointerCount', { count: activePointerCount })}
+                              {t('interview.insightViewer.p10PointerCount', {
+                                count: activePointerCount,
+                              })}
                             </span>
                           )}
                           {theme.evidence_refs?.length > 0 && (
@@ -4894,12 +4796,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               {v6Issues.length === 0 ? (
                 <EmptyStateInline
                   icon={ShieldAlert}
-                  message={
-                    t('interview.insightViewer.noIssuesIdentifiedYet')
-                  }
-                  hint={
-                    t('interview.insightViewer.issuesWillAppearAfterV6')
-                  }
+                  message={t('interview.insightViewer.noIssuesIdentifiedYet')}
+                  hint={t('interview.insightViewer.issuesWillAppearAfterV6')}
                   action={
                     canRegenerateV6
                       ? {
@@ -5071,7 +4969,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           {persistedFinding && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
                               <Target size={10} />
-                              {t('interview.insightViewer.p10PointerCount', { count: activePointerCount })}
+                              {t('interview.insightViewer.p10PointerCount', {
+                                count: activePointerCount,
+                              })}
                             </span>
                           )}
                           {issue.evidence_refs?.length > 0 && (
@@ -5146,12 +5046,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               {v6Opportunities.length === 0 ? (
                 <EmptyStateInline
                   icon={TrendingUp}
-                  message={
-                    t('interview.insightViewer.noOpportunitiesIdentifiedYet')
-                  }
-                  hint={
-                    t('interview.insightViewer.opportunitiesWillAppearAfterV6')
-                  }
+                  message={t('interview.insightViewer.noOpportunitiesIdentifiedYet')}
+                  hint={t('interview.insightViewer.opportunitiesWillAppearAfterV6')}
                   action={
                     canRegenerateV6
                       ? {
@@ -5317,7 +5213,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           {persistedFinding && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
                               <Target size={10} />
-                              {t('interview.insightViewer.p10PointerCount', { count: activePointerCount })}
+                              {t('interview.insightViewer.p10PointerCount', {
+                                count: activePointerCount,
+                              })}
                             </span>
                           )}
                           {opp.evidence_refs?.length > 0 && (
@@ -5397,9 +5295,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={Radio}
                   message={t('interview.insightViewer.noSignalsDetectedYet')}
-                  hint={
-                    t('interview.insightViewer.signalsWillAppearAfterV6')
-                  }
+                  hint={t('interview.insightViewer.signalsWillAppearAfterV6')}
                   action={
                     canRegenerateV6
                       ? {
@@ -5512,9 +5408,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={MapIcon}
                   message={t('interview.insightViewer.noEvidenceMapAvailable')}
-                  hint={
-                    t('interview.insightViewer.mapWillAppearAfterV6')
-                  }
+                  hint={t('interview.insightViewer.mapWillAppearAfterV6')}
                   action={
                     canRegenerateV6
                       ? {
@@ -5643,9 +5537,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-5">
               <Callout
                 variant="warning"
-                title={
-                  t('interview.insightViewer.workingLayerBeforeAP10')
-                }
+                title={t('interview.insightViewer.workingLayerBeforeAP10')}
               >
                 {t('interview.insightViewer.candidatesAreNotPublishableTruth')}
               </Callout>
@@ -5916,9 +5808,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <EmptyStateInline
                   icon={Eye}
-                  message={
-                    t('interview.insightViewer.noCandidatesAvailableForTriage')
-                  }
+                  message={t('interview.insightViewer.noCandidatesAvailableForTriage')}
                 />
               )}
             </div>
@@ -5931,9 +5821,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-5">
               <Callout
                 variant="info"
-                title={
-                  t('interview.insightViewer.readTheInsightThroughPeople')
-                }
+                title={t('interview.insightViewer.readTheInsightThroughPeople')}
               >
                 {t('interview.insightViewer.thisSectionShowsWhichTopics')}
               </Callout>
@@ -5983,9 +5871,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
                       className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
                     >
-                      <option value="all">
-                        {t('interview.insightViewer.allDepartments')}
-                      </option>
+                      <option value="all">{t('interview.insightViewer.allDepartments')}</option>
                       {analysisDepartmentOptions.map((department) => (
                         <option key={department} value={department}>
                           {department}
@@ -6039,9 +5925,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {contradictedSupportedTopics.length > 0 && (
                           <Callout
                             variant="critical"
-                            title={
-                              t('interview.insightViewer.contradictedTopicsForThisPerspective')
-                            }
+                            title={t(
+                              'interview.insightViewer.contradictedTopicsForThisPerspective'
+                            )}
                             compact
                           >
                             <ul className="list-disc list-inside space-y-1">
@@ -6100,9 +5986,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           ) : (
                             <EmptyStateInline
                               icon={Users}
-                              message={
-                                t('interview.insightViewer.noSupportedTopicsForThis')
-                              }
+                              message={t('interview.insightViewer.noSupportedTopicsForThis')}
                             />
                           )}
                         </div>
@@ -6131,9 +6015,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <EmptyStateInline
                   icon={Users}
-                  message={
-                    t('interview.insightViewer.noPerspectivesForTheCurrent')
-                  }
+                  message={t('interview.insightViewer.noPerspectivesForTheCurrent')}
                 />
               )}
             </div>
@@ -6150,9 +6032,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-4">
               <Callout
                 variant="success"
-                title={
-                  t('interview.insightViewer.traceabilityToSourceAnswers')
-                }
+                title={t('interview.insightViewer.traceabilityToSourceAnswers')}
               >
                 {t('interview.insightViewer.eachCardBelowShowsWhich')}
               </Callout>
@@ -6161,9 +6041,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <EmptyStateInline
                   icon={Target}
                   message={t('interview.insightViewer.noSourceSessions')}
-                  hint={
-                    t('interview.insightViewer.addOrCompleteSessionsTo')
-                  }
+                  hint={t('interview.insightViewer.addOrCompleteSessionsTo')}
                 />
               ) : (
                 <div className="space-y-3">
@@ -6178,8 +6056,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {session.name}
                           </div>
                           <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {session.templateName ||
-                              (t('interview.insightViewer.sourceSession'))}
+                            {session.templateName || t('interview.insightViewer.sourceSession')}
                           </div>
                         </div>
                         <button
@@ -6627,11 +6504,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                       <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                         {[lens.role, lens.department].filter(Boolean).join(' · ') ||
-                          (t('interview.insightViewer.perspective'))}
+                          t('interview.insightViewer.perspective')}
                       </div>
                       <blockquote className="mt-2 border-l-2 border-c-info pl-3 text-sm italic text-slate-700 dark:text-slate-300">
-                        {lens.localSummary ||
-                          (t('interview.insightViewer.noLocalSummaryForThis'))}
+                        {lens.localSummary || t('interview.insightViewer.noLocalSummaryForThis')}
                       </blockquote>
                     </div>
                   ))}
@@ -6639,9 +6515,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
               {evidenceQuotes.length > 0 && (
                 <div className="space-y-2">
-                  <div className={TEXT_L1}>
-                    {t('interview.insightViewer.quotesFromContent')}
-                  </div>
+                  <div className={TEXT_L1}>{t('interview.insightViewer.quotesFromContent')}</div>
                   {evidenceQuotes.map((quote, i) => (
                     <blockquote
                       key={i}
@@ -6688,11 +6562,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 },
               }}
             >
-              <Callout
-                variant="info"
-                title={t('interview.insightViewer.toneAsAProxy')}
-                compact
-              >
+              <Callout variant="info" title={t('interview.insightViewer.toneAsAProxy')} compact>
                 {t('interview.insightViewer.toneIsApproximatedFromTopic')}
               </Callout>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -6750,7 +6620,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'power-dynamics': {
           const roleGroups = new Map<string, typeof visiblePeopleLenses>();
           for (const lens of visiblePeopleLenses) {
-            const key = lens.role || (t('interview.insightViewer.unspecifiedRole'));
+            const key = lens.role || t('interview.insightViewer.unspecifiedRole');
             const arr = roleGroups.get(key) || [];
             arr.push(lens);
             roleGroups.set(key, arr);
@@ -7546,17 +7416,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ? 'border-success-400/50 text-success-700 dark:text-success-300 bg-success-50/60 dark:bg-success-900/20'
                 : 'border-slate-300/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
             }`}
-            title={
-              t('interview.insightViewer.markSectionCompleteAiSignal')
-            }
+            title={t('interview.insightViewer.markSectionCompleteAiSignal')}
           >
             <CheckCircle2
               size={14}
               className={done ? 'text-success-600 dark:text-success-400' : ''}
             />
-            {done
-              ? t('interview.insightViewer.reopen')
-              : t('interview.insightViewer.markComplete')}
+            {done ? t('interview.insightViewer.reopen') : t('interview.insightViewer.markComplete')}
           </button>
         </div>
       );
@@ -7816,9 +7682,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           if (ok) {
             toast.success(t('interview.insightViewer.downloadedPdfReport'));
           } else {
-            toast.error(
-              t('interview.insightViewer.failedToExportReport')
-            );
+            toast.error(t('interview.insightViewer.failedToExportReport'));
           }
           break;
         }
@@ -7838,9 +7702,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
         default:
           // unsupported targets are disabled in the UI; guard anyway
-          toast.error(
-            t('interview.insightViewer.thisTargetIsNotSupported')
-          );
+          toast.error(t('interview.insightViewer.thisTargetIsNotSupported'));
           return;
       }
       setExportDialogOpen(false);
@@ -7973,7 +7835,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <span
                       className={`inline-flex h-6 items-center gap-1.5 px-2 rounded-md text-[11px] font-semibold ${statusPill.bg} ${statusPill.text}`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`} />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusPill.dot}`}
+                      />
                       <span className="truncate">{statusPillLabel || currentInsightStatus}</span>
                       {statusEditable && (
                         <ChevronDown size={10} className="flex-shrink-0 opacity-60" />
@@ -7988,7 +7852,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       >
                         {statusBaseOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>
-                            {t(`interview.insightViewer.statusOptionLabel.${opt.value}`, opt.label.en)}
+                            {t(
+                              `interview.insightViewer.statusOptionLabel.${opt.value}`,
+                              opt.label.en
+                            )}
                           </option>
                         ))}
                       </select>
@@ -7999,7 +7866,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               <tr>
                 <td className={panelTdKey}>{t('interview.insightViewer.source')}</td>
                 <td className={panelTdVal}>
-                  {t('interview.insightViewer.sessionsCount', { count: insight?.sourceSessionCount ?? 0 })}
+                  {t('interview.insightViewer.sessionsCount', {
+                    count: insight?.sourceSessionCount ?? 0,
+                  })}
                 </td>
               </tr>
               <tr>
@@ -8065,7 +7934,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       label: t('interview.insightViewer.sourcesAssumptions'),
       icon: Link2,
       defaultOpen: false,
-      children: <EvidencePanelSection artifactType="insight" artifactId={insight?.id} isPolish={isPolish} />,
+      children: (
+        <EvidencePanelSection artifactType="insight" artifactId={insight?.id} isPolish={isPolish} />
+      ),
     },
     {
       id: 'comments',
@@ -8081,7 +7952,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <li key={c.id} className="flex flex-col gap-0.5">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-xs font-semibold text-c-text truncate">
-                  {c.authorName || (t('interview.insightViewer.user'))}
+                  {c.authorName || t('interview.insightViewer.user')}
                 </span>
                 <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
                   {fmtPanelDateTime(c.createdAt)}
@@ -8170,7 +8041,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           // Two zones split by a divider. ZERO crimson/primary; AI = teal only.
           const activeSectionMeta = INSIGHT_SECTIONS.find((s) => s.id === activeNSection);
           const activeSectionLabel = activeSectionMeta
-            ? t(`interview.insightViewer.sectionLabel.${activeSectionMeta.id}`, activeSectionMeta.label.en)
+            ? t(
+                `interview.insightViewer.sectionLabel.${activeSectionMeta.id}`,
+                activeSectionMeta.label.en
+              )
             : '';
           return (
             <div className="flex items-center gap-1 min-h-[36px] flex-wrap">
@@ -8409,7 +8283,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   icon={<Sparkles size={14} />}
                   disabled={isRegenerating}
                   onClick={handleRegenerate}
-                  title={t('interview.insightViewer.aiForSectionX', { section: activeSectionLabel })}
+                  title={t('interview.insightViewer.aiForSectionX', {
+                    section: activeSectionLabel,
+                  })}
                 >
                   {isRegenerating && <Loader2 size={13} className="animate-spin" />}
                   {t('interview.insightViewer.aiSection')}
@@ -8568,9 +8444,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             ? t('interview.insightViewer.noExistingInitiatives')
                             : t('interview.insightViewer.selectAnInitiative')
                       }
-                      aria-label={
-                        t('interview.insightViewer.selectTargetInitiative')
-                      }
+                      aria-label={t('interview.insightViewer.selectTargetInitiative')}
                     />
                   </div>
                   <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -8651,7 +8525,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         key={et.id}
                         onClick={() => et.supported && setExportTarget(et.id)}
                         disabled={!et.supported}
-                        title={t(`interview.insightViewer.exportTargetHint.${et.id}`, et.hint.en) || undefined}
+                        title={
+                          t(`interview.insightViewer.exportTargetHint.${et.id}`, et.hint.en) ||
+                          undefined
+                        }
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                           active
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
@@ -8668,16 +8545,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {(() => {
                     const activeTarget = exportTargets.find((et) => et.id === exportTarget);
                     return activeTarget
-                      ? t(`interview.insightViewer.exportTargetHint.${activeTarget.id}`, activeTarget.hint.en)
+                      ? t(
+                          `interview.insightViewer.exportTargetHint.${activeTarget.id}`,
+                          activeTarget.hint.en
+                        )
                       : null;
                   })()}
                 </p>
                 {(exportTarget === 'tools' || exportTarget === 'assessment') && (
                   <p className="mt-1 flex items-start gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
                     <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
-                    <span>
-                      {t('interview.insightViewer.sectionSelectionAppliesToThis')}
-                    </span>
+                    <span>{t('interview.insightViewer.sectionSelectionAppliesToThis')}</span>
                   </p>
                 )}
               </div>
@@ -8774,7 +8652,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             count: exportSelectedIds.size,
                             target: (() => {
                               const et = exportTargets.find((x) => x.id === exportTarget);
-                              return et ? t(`interview.insightViewer.exportTargetLabel.${et.id}`, et.label.en) : '';
+                              return et
+                                ? t(
+                                    `interview.insightViewer.exportTargetLabel.${et.id}`,
+                                    et.label.en
+                                  )
+                                : '';
                             })(),
                           })}
                         </p>
@@ -8784,7 +8667,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             .map((s) => (
                               <li key={s.id} className="flex items-center gap-2">
                                 <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />
-                                <span className="flex-1">{t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}</span>
+                                <span className="flex-1">
+                                  {t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}
+                                </span>
                                 <span className="text-[10px] text-slate-400">{s.group}</span>
                               </li>
                             ))}

@@ -168,21 +168,25 @@ export function buildActivityLadder(meta: ValueChainActivityMeta): ValueChainQue
       intentPl: 'Zlokalizować realną praktykę, zanim ją ocenimy.',
       textEn: `For ${meta.nameEn} (${meta.probeEn}) — how is it actually run today, in one concrete sentence? Who does it, with what, and how much of it is manual?`,
       textPl: `Dla ogniwa „${meta.namePl}" (${meta.probePl}) — jak jest DZIŚ realizowane, w jednym konkretnym zdaniu? Kto to robi, czym i jak dużo jest ręczne?`,
-      probeEn: 'Describe the last time it broke or slowed down — that is where the practice really lives.',
-      probePl: 'Opisz ostatni raz, kiedy to się zacięło lub spowolniło — tam naprawdę żyje ta praktyka.',
+      probeEn:
+        'Describe the last time it broke or slowed down — that is where the practice really lives.',
+      probePl:
+        'Opisz ostatni raz, kiedy to się zacięło lub spowolniło — tam naprawdę żyje ta praktyka.',
       answerOptions: [
         {
           key: 'described',
           labelEn: 'I can describe how it runs concretely',
           labelPl: 'Potrafię konkretnie opisać, jak działa',
           consultantSignalEn: 'Surface located — move to the cost-value proof.',
-          consultantSignalPl: 'Powierzchnia zlokalizowana — przejdź do dowodu kosztowo-wartościowego.',
+          consultantSignalPl:
+            'Powierzchnia zlokalizowana — przejdź do dowodu kosztowo-wartościowego.',
         },
         {
           key: 'unclear',
           labelEn: 'It is not clearly owned / varies a lot',
           labelPl: 'Nie ma jasnego właściciela / bardzo się różni',
-          consultantSignalEn: 'Inconsistency itself is a finding — probe the variance, then proceed.',
+          consultantSignalEn:
+            'Inconsistency itself is a finding — probe the variance, then proceed.',
           consultantSignalPl: 'Sama niespójność jest wnioskiem — zbadaj rozrzut, potem idź dalej.',
         },
       ],
@@ -197,15 +201,18 @@ export function buildActivityLadder(meta: ValueChainActivityMeta): ValueChainQue
       intentPl: 'Wymusić dowód kosztowo-wartościowy — ocena bez niego to folklor.',
       textEn: `Where does ${meta.nameEn} show up in the P&L and in what the customer will pay? Roughly what share of total cost does it drive, and does the customer notice it (would they pay less if it were worse)?`,
       textPl: `Gdzie „${meta.namePl}" widać w rachunku wyników i w tym, ile klient zapłaci? Jaki mniej więcej udział w koszcie całkowitym generuje i czy klient to zauważa (zapłaciłby mniej, gdyby było gorsze)?`,
-      probeEn: 'If you cannot name the share, who owns that number and by when can we get it? Until then it is "declared".',
-      probePl: 'Jeśli nie znasz udziału — kto ma tę liczbę i na kiedy ją zdobędziemy? Do tego czasu to „deklaracja".',
+      probeEn:
+        'If you cannot name the share, who owns that number and by when can we get it? Until then it is "declared".',
+      probePl:
+        'Jeśli nie znasz udziału — kto ma tę liczbę i na kiedy ją zdobędziemy? Do tego czasu to „deklaracja".',
       answerOptions: [
         {
           key: 'cost-heavy',
           labelEn: 'Big cost, customer barely notices',
           labelPl: 'Duży koszt, klient prawie nie zauważa',
           consultantSignalEn: 'Cost drain — candidate to automate/outsource; test maturity next.',
-          consultantSignalPl: 'Wyciek kosztowy — kandydat do automatyzacji/outsourcingu; testuj dojrzałość.',
+          consultantSignalPl:
+            'Wyciek kosztowy — kandydat do automatyzacji/outsourcingu; testuj dojrzałość.',
         },
         {
           key: 'value-heavy',
@@ -219,7 +226,8 @@ export function buildActivityLadder(meta: ValueChainActivityMeta): ValueChainQue
           labelEn: 'Both — big cost AND strongly valued',
           labelPl: 'Oba — duży koszt I mocno ceniony',
           consultantSignalEn: 'The margin fulcrum — highest stakes; benchmark rigorously.',
-          consultantSignalPl: 'Punkt podparcia marży — najwyższa stawka; benchmarkuj rygorystycznie.',
+          consultantSignalPl:
+            'Punkt podparcia marży — najwyższa stawka; benchmarkuj rygorystycznie.',
         },
         {
           key: 'neither',
@@ -242,11 +250,14 @@ export function buildActivityLadder(meta: ValueChainActivityMeta): ValueChainQue
       activityId: a,
       level: 3,
       intentEn: 'Benchmark the cost side — locate the maturity gap that unlocks a cut.',
-      intentPl: 'Benchmarkuj stronę kosztową — zlokalizuj lukę dojrzałości, która odblokuje cięcie.',
+      intentPl:
+        'Benchmarkuj stronę kosztową — zlokalizuj lukę dojrzałości, która odblokuje cięcie.',
       textEn: `Compared to how the best in your industry run ${meta.nameEn} — is yours in-house or outsourced, manual or digitalized? Where exactly is the gap that makes it cost more than it should?`,
       textPl: `W porównaniu z tym, jak najlepsi w branży realizują „${meta.namePl}" — u Was jest to in-house czy outsourcing, ręcznie czy cyfrowo? Gdzie dokładnie jest luka, przez którą kosztuje więcej niż powinno?`,
-      probeEn: 'Name one competitor or reference you would benchmark against — vague "the market" is not a benchmark.',
-      probePl: 'Wskaż jednego konkurenta lub punkt odniesienia do benchmarku — mgliste „rynek" to nie benchmark.',
+      probeEn:
+        'Name one competitor or reference you would benchmark against — vague "the market" is not a benchmark.',
+      probePl:
+        'Wskaż jednego konkurenta lub punkt odniesienia do benchmarku — mgliste „rynek" to nie benchmark.',
       answerOptions: [
         {
           key: 'manual-inhouse',
@@ -270,12 +281,15 @@ export function buildActivityLadder(meta: ValueChainActivityMeta): ValueChainQue
       id: l3value,
       activityId: a,
       level: 3,
-      intentEn: 'Benchmark the value side — is the differentiation defensible and has it room to grow?',
+      intentEn:
+        'Benchmark the value side — is the differentiation defensible and has it room to grow?',
       intentPl: 'Benchmarkuj stronę wartości — czy wyróżnienie jest do obrony i ma zapas wzrostu?',
       textEn: `On the value ${meta.nameEn} creates — is it something only you do well, or does every serious competitor match it? And is your capability strong, or is the differentiation fragile?`,
       textPl: `Co do wartości, którą tworzy „${meta.namePl}" — to coś, co robicie dobrze tylko Wy, czy dorównuje każdy poważny konkurent? I czy Wasza zdolność jest silna, czy wyróżnienie jest kruche?`,
-      probeEn: 'What would a customer switch to if this got 10% worse? That reveals how defensible it really is.',
-      probePl: 'Na co klient by się przerzucił, gdyby to było o 10% gorsze? To pokazuje, jak bardzo jest to do obrony.',
+      probeEn:
+        'What would a customer switch to if this got 10% worse? That reveals how defensible it really is.',
+      probePl:
+        'Na co klient by się przerzucił, gdyby to było o 10% gorsze? To pokazuje, jak bardzo jest to do obrony.',
       answerOptions: [
         {
           key: 'defensible-immature',
@@ -303,36 +317,46 @@ export function buildActivityLadder(meta: ValueChainActivityMeta): ValueChainQue
       intentPl: 'Przekuć lukę w rodzinę ruchów, nazywając wpisany w nią trade-off.',
       textEn: `Given the cost-value proof and the benchmark gap for ${meta.nameEn} — which move fits: IMPROVE (raise maturity in-house), AUTOMATE (remove manual cost), OUTSOURCE (buy it cheaper/better outside), or INTEGRATE (tie it tighter to adjacent activities)? What do you give up by choosing it?`,
       textPl: `Biorąc pod uwagę dowód kosztowo-wartościowy i lukę benchmarku dla „${meta.namePl}" — który ruch pasuje: USPRAWNIJ (podnieś dojrzałość in-house), ZAUTOMATYZUJ (usuń koszt ręczny), OUTSOURCUJ (kup taniej/lepiej na zewnątrz), czy ZINTEGRUJ (spnij mocniej z sąsiednimi ogniwami)? Co tracisz, wybierając ten ruch?`,
-      probeEn: 'For outsource: what control do you give up and what dependency do you take on? Name both or it is not a decision.',
-      probePl: 'Dla outsourcingu: jaką kontrolę oddajesz i jaką zależność przyjmujesz? Nazwij oba, inaczej to nie decyzja.',
+      probeEn:
+        'For outsource: what control do you give up and what dependency do you take on? Name both or it is not a decision.',
+      probePl:
+        'Dla outsourcingu: jaką kontrolę oddajesz i jaką zależność przyjmujesz? Nazwij oba, inaczej to nie decyzja.',
       answerOptions: [
         {
           key: 'improve',
           labelEn: 'Improve in-house (raise maturity)',
           labelPl: 'Usprawnij in-house (podnieś dojrzałość)',
-          consultantSignalEn: 'Capability build — trade-off is time/focus vs faster external options.',
-          consultantSignalPl: 'Budowa zdolności — trade-off to czas/uwaga vs szybsze opcje zewnętrzne.',
+          consultantSignalEn:
+            'Capability build — trade-off is time/focus vs faster external options.',
+          consultantSignalPl:
+            'Budowa zdolności — trade-off to czas/uwaga vs szybsze opcje zewnętrzne.',
         },
         {
           key: 'automate',
           labelEn: 'Automate (remove manual cost)',
           labelPl: 'Zautomatyzuj (usuń koszt ręczny)',
-          consultantSignalEn: 'Cost-reduction — trade-off is upfront investment + change vs recurring savings.',
-          consultantSignalPl: 'Redukcja kosztu — trade-off to inwestycja + zmiana vs oszczędności powtarzalne.',
+          consultantSignalEn:
+            'Cost-reduction — trade-off is upfront investment + change vs recurring savings.',
+          consultantSignalPl:
+            'Redukcja kosztu — trade-off to inwestycja + zmiana vs oszczędności powtarzalne.',
         },
         {
           key: 'outsource',
           labelEn: 'Outsource (buy it outside)',
           labelPl: 'Outsourcuj (kup na zewnątrz)',
-          consultantSignalEn: 'Outsource — trade-off is lost control + new dependency vs lower cost; force both.',
-          consultantSignalPl: 'Outsourcing — trade-off to utrata kontroli + nowa zależność vs niższy koszt; wymuś oba.',
+          consultantSignalEn:
+            'Outsource — trade-off is lost control + new dependency vs lower cost; force both.',
+          consultantSignalPl:
+            'Outsourcing — trade-off to utrata kontroli + nowa zależność vs niższy koszt; wymuś oba.',
         },
         {
           key: 'integrate',
           labelEn: 'Integrate with adjacent activities',
           labelPl: 'Zintegruj z sąsiednimi ogniwami',
-          consultantSignalEn: 'Linkage-optimization — trade-off is coordination cost vs end-to-end gain.',
-          consultantSignalPl: 'Optymalizacja powiązań — trade-off to koszt koordynacji vs zysk end-to-end.',
+          consultantSignalEn:
+            'Linkage-optimization — trade-off is coordination cost vs end-to-end gain.',
+          consultantSignalPl:
+            'Optymalizacja powiązań — trade-off to koszt koordynacji vs zysk end-to-end.',
         },
       ],
       branches: { improve: null, automate: null, outsource: null, integrate: null },

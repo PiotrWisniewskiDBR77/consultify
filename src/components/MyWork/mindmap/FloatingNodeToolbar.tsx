@@ -37,7 +37,6 @@ import { useTranslation } from 'react-i18next';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
 import type { AlignMode } from './alignDistribute';
-
 import { ArtifactLinksPopover } from './floating-toolbar/ArtifactLinksPopover';
 import { BranchThemeDropdown } from './floating-toolbar/BranchThemeDropdown';
 import { ColorPickerPopover } from './floating-toolbar/ColorPickerPopover';
@@ -198,14 +197,62 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <>
             {(
               [
-                { m: 'align-left', Icon: AlignStartVertical, pl: 'Wyrównaj do lewej', en: 'Align left', dist: false },
-                { m: 'align-center-h', Icon: AlignCenterVertical, pl: 'Wyśrodkuj w poziomie', en: 'Align center', dist: false },
-                { m: 'align-right', Icon: AlignEndVertical, pl: 'Wyrównaj do prawej', en: 'Align right', dist: false },
-                { m: 'align-top', Icon: AlignStartHorizontal, pl: 'Wyrównaj do góry', en: 'Align top', dist: false },
-                { m: 'align-middle-v', Icon: AlignCenterHorizontal, pl: 'Wyśrodkuj w pionie', en: 'Align middle', dist: false },
-                { m: 'align-bottom', Icon: AlignEndHorizontal, pl: 'Wyrównaj do dołu', en: 'Align bottom', dist: false },
-                { m: 'distribute-h', Icon: AlignHorizontalDistributeCenter, pl: 'Rozłóż poziomo', en: 'Distribute horizontally', dist: true },
-                { m: 'distribute-v', Icon: AlignVerticalDistributeCenter, pl: 'Rozłóż pionowo', en: 'Distribute vertically', dist: true },
+                {
+                  m: 'align-left',
+                  Icon: AlignStartVertical,
+                  pl: 'Wyrównaj do lewej',
+                  en: 'Align left',
+                  dist: false,
+                },
+                {
+                  m: 'align-center-h',
+                  Icon: AlignCenterVertical,
+                  pl: 'Wyśrodkuj w poziomie',
+                  en: 'Align center',
+                  dist: false,
+                },
+                {
+                  m: 'align-right',
+                  Icon: AlignEndVertical,
+                  pl: 'Wyrównaj do prawej',
+                  en: 'Align right',
+                  dist: false,
+                },
+                {
+                  m: 'align-top',
+                  Icon: AlignStartHorizontal,
+                  pl: 'Wyrównaj do góry',
+                  en: 'Align top',
+                  dist: false,
+                },
+                {
+                  m: 'align-middle-v',
+                  Icon: AlignCenterHorizontal,
+                  pl: 'Wyśrodkuj w pionie',
+                  en: 'Align middle',
+                  dist: false,
+                },
+                {
+                  m: 'align-bottom',
+                  Icon: AlignEndHorizontal,
+                  pl: 'Wyrównaj do dołu',
+                  en: 'Align bottom',
+                  dist: false,
+                },
+                {
+                  m: 'distribute-h',
+                  Icon: AlignHorizontalDistributeCenter,
+                  pl: 'Rozłóż poziomo',
+                  en: 'Distribute horizontally',
+                  dist: true,
+                },
+                {
+                  m: 'distribute-v',
+                  Icon: AlignVerticalDistributeCenter,
+                  pl: 'Rozłóż pionowo',
+                  en: 'Distribute vertically',
+                  dist: true,
+                },
               ] as const
             ).map(({ m, Icon, pl, en, dist }) => {
               const disabledBtn = dist && !canDistribute;
@@ -432,63 +479,63 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
 
         {/* 7. Link / Artifact */}
         {!isMulti && (
-        <div className="relative">
-          <button
-            onClick={() => toggle('artifacts')}
-            title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
-            aria-label={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
-            className={btnClass(openDropdown === 'artifacts')}
-          >
-            <Paperclip size={13} />
-          </button>
-          {openDropdown === 'artifacts' && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-dropdown">
-              <ArtifactLinksPopover
-                isPl={!!isPl}
-                disabled={disabled}
-                links={Array.isArray(nodeData?.artifactLinks) ? nodeData.artifactLinks : []}
-                onAttach={() => {
-                  onOpenArtifactModal();
-                  closeDD();
-                }}
-                onOpenNodeDetail={() => {
-                  onOpenNodeDetail();
-                  closeDD();
-                }}
-                onOpenArtifact={(link) => {
-                  onOpenLinkedArtifact(link);
-                  closeDD();
-                }}
-                onRemoveArtifact={(link) => onRemoveArtifact(link)}
-              />
-            </div>
-          )}
-        </div>
+          <div className="relative">
+            <button
+              onClick={() => toggle('artifacts')}
+              title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+              aria-label={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+              className={btnClass(openDropdown === 'artifacts')}
+            >
+              <Paperclip size={13} />
+            </button>
+            {openDropdown === 'artifacts' && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-dropdown">
+                <ArtifactLinksPopover
+                  isPl={!!isPl}
+                  disabled={disabled}
+                  links={Array.isArray(nodeData?.artifactLinks) ? nodeData.artifactLinks : []}
+                  onAttach={() => {
+                    onOpenArtifactModal();
+                    closeDD();
+                  }}
+                  onOpenNodeDetail={() => {
+                    onOpenNodeDetail();
+                    closeDD();
+                  }}
+                  onOpenArtifact={(link) => {
+                    onOpenLinkedArtifact(link);
+                    closeDD();
+                  }}
+                  onRemoveArtifact={(link) => onRemoveArtifact(link)}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {/* 8. Quick Task */}
         {!isMulti && (
-        <div className="relative">
-          <button
-            onClick={() => toggle('task')}
-            title={isPl ? 'Szybkie zadanie' : 'Quick task'}
-            aria-label={isPl ? 'Szybkie zadanie' : 'Quick task'}
-            className={btnClass(openDropdown === 'task')}
-          >
-            <CheckSquare size={13} />
-          </button>
-          {openDropdown === 'task' && (
-            <div className="absolute top-full left-0 mt-1 z-dropdown">
-              <QuickTaskPopover
-                isPl={!!isPl}
-                nodeId={nodeId}
-                nodeLabel={nodeData?.label}
-                onClose={closeDD}
-                onAction={onAction}
-              />
-            </div>
-          )}
-        </div>
+          <div className="relative">
+            <button
+              onClick={() => toggle('task')}
+              title={isPl ? 'Szybkie zadanie' : 'Quick task'}
+              aria-label={isPl ? 'Szybkie zadanie' : 'Quick task'}
+              className={btnClass(openDropdown === 'task')}
+            >
+              <CheckSquare size={13} />
+            </button>
+            {openDropdown === 'task' && (
+              <div className="absolute top-full left-0 mt-1 z-dropdown">
+                <QuickTaskPopover
+                  isPl={!!isPl}
+                  nodeId={nodeId}
+                  nodeLabel={nodeData?.label}
+                  onClose={closeDD}
+                  onAction={onAction}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {/* 8b. Convert branch */}
@@ -546,7 +593,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                     }}
                     className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-hig-md transition-colors"
                   >
-                    <item.icon size={13} className="shrink-0 text-c-text-secondary dark:text-c-text-secondary" />
+                    <item.icon
+                      size={13}
+                      className="shrink-0 text-c-text-secondary dark:text-c-text-secondary"
+                    />
                     <span className="flex-1 truncate">{item.label}</span>
                   </button>
                 ))}
@@ -569,116 +619,116 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
 
         {/* 9a. Quick Notes */}
         {!isMulti && (
-        <div className="relative">
-          <button
-            onClick={() => toggle('quickNotes')}
-            disabled={disabled}
-            title={isPl ? 'Szybka notatka' : 'Quick notes'}
-            className={btnClass(openDropdown === 'quickNotes')}
-          >
-            <StickyNote size={13} />
-          </button>
-          {openDropdown === 'quickNotes' && (
-            <div className="absolute top-full left-0 mt-1 z-dropdown">
-              <QuickNotesPopover
-                isPl={!!isPl}
-                nodeId={nodeId}
-                currentNotes={nodeData?.notes || ''}
-                onSave={(id, notes) => onUpdate({ notes })}
-                onClose={closeDD}
-              />
-            </div>
-          )}
-        </div>
+          <div className="relative">
+            <button
+              onClick={() => toggle('quickNotes')}
+              disabled={disabled}
+              title={isPl ? 'Szybka notatka' : 'Quick notes'}
+              className={btnClass(openDropdown === 'quickNotes')}
+            >
+              <StickyNote size={13} />
+            </button>
+            {openDropdown === 'quickNotes' && (
+              <div className="absolute top-full left-0 mt-1 z-dropdown">
+                <QuickNotesPopover
+                  isPl={!!isPl}
+                  nodeId={nodeId}
+                  currentNotes={nodeData?.notes || ''}
+                  onSave={(id, notes) => onUpdate({ notes })}
+                  onClose={closeDD}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {/* 9b. Quick Tags */}
         {!isMulti && (
-        <div className="relative">
-          <button
-            onClick={() => toggle('quickTags')}
-            disabled={disabled}
-            title={isPl ? 'Szybkie tagi' : 'Quick tags'}
-            className={btnClass(openDropdown === 'quickTags')}
-          >
-            <Hash size={13} />
-          </button>
-          {openDropdown === 'quickTags' && (
-            <div className="absolute top-full left-0 mt-1 z-dropdown">
-              <QuickTagsPopover
-                isPl={!!isPl}
-                nodeId={nodeId}
-                currentTags={Array.isArray(nodeData?.tags) ? nodeData.tags : []}
-                onSave={(id, tags) => onUpdate({ tags })}
-                onClose={closeDD}
-              />
-            </div>
-          )}
-        </div>
+          <div className="relative">
+            <button
+              onClick={() => toggle('quickTags')}
+              disabled={disabled}
+              title={isPl ? 'Szybkie tagi' : 'Quick tags'}
+              className={btnClass(openDropdown === 'quickTags')}
+            >
+              <Hash size={13} />
+            </button>
+            {openDropdown === 'quickTags' && (
+              <div className="absolute top-full left-0 mt-1 z-dropdown">
+                <QuickTagsPopover
+                  isPl={!!isPl}
+                  nodeId={nodeId}
+                  currentTags={Array.isArray(nodeData?.tags) ? nodeData.tags : []}
+                  onSave={(id, tags) => onUpdate({ tags })}
+                  onClose={closeDD}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {/* 9c. Quick Link */}
         {!isMulti && (
-        <div className="relative">
-          <button
-            onClick={() => toggle('quickLink')}
-            disabled={disabled}
-            title={isPl ? 'Szybki link' : 'Quick link'}
-            className={btnClass(openDropdown === 'quickLink')}
-          >
-            <Link2 size={13} />
-          </button>
-          {openDropdown === 'quickLink' && (
-            <div className="absolute top-full left-0 mt-1 z-dropdown">
-              <QuickLinkPopover
-                isPl={!!isPl}
-                nodeId={nodeId}
-                currentLink={nodeData?.evidenceLink || ''}
-                onSave={(id, link) => onUpdate({ evidenceLink: link })}
-                onClose={closeDD}
-              />
-            </div>
-          )}
-        </div>
+          <div className="relative">
+            <button
+              onClick={() => toggle('quickLink')}
+              disabled={disabled}
+              title={isPl ? 'Szybki link' : 'Quick link'}
+              className={btnClass(openDropdown === 'quickLink')}
+            >
+              <Link2 size={13} />
+            </button>
+            {openDropdown === 'quickLink' && (
+              <div className="absolute top-full left-0 mt-1 z-dropdown">
+                <QuickLinkPopover
+                  isPl={!!isPl}
+                  nodeId={nodeId}
+                  currentLink={nodeData?.evidenceLink || ''}
+                  onSave={(id, link) => onUpdate({ evidenceLink: link })}
+                  onClose={closeDD}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
 
         {/* 10. AI */}
         {!isMulti && (
-        <div className="relative">
-          <button
-            onClick={() => toggle('ai')}
-            title="AI"
-            aria-label="AI"
-            className={btnClass(openDropdown === 'ai')}
-          >
-            <Sparkles size={13} />
-          </button>
-          {openDropdown === 'ai' && (
-            <div className="absolute top-full right-0 mt-1 z-dropdown">
-              <FloatingAIPopover
-                isPl={!!isPl}
-                nodeId={nodeId}
-                onAction={onAction}
-                onOpenChatAboutNode={onOpenChatAboutNode}
-                onClose={closeDD}
-              />
-            </div>
-          )}
-        </div>
+          <div className="relative">
+            <button
+              onClick={() => toggle('ai')}
+              title="AI"
+              aria-label="AI"
+              className={btnClass(openDropdown === 'ai')}
+            >
+              <Sparkles size={13} />
+            </button>
+            {openDropdown === 'ai' && (
+              <div className="absolute top-full right-0 mt-1 z-dropdown">
+                <FloatingAIPopover
+                  isPl={!!isPl}
+                  nodeId={nodeId}
+                  onAction={onAction}
+                  onOpenChatAboutNode={onOpenChatAboutNode}
+                  onClose={closeDD}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {/* 10. More (opens context menu) — single-node only, context menu acts on one node */}
         {!isMulti && (
-        <button
-          onClick={(e) => onOpenContextMenu({ x: e.clientX, y: e.clientY })}
-          title={isPl ? 'Więcej opcji' : 'More options'}
-          aria-label={isPl ? 'Więcej opcji' : 'More options'}
-          className={btnClass(false)}
-        >
-          <MoreVertical size={13} />
-        </button>
+          <button
+            onClick={(e) => onOpenContextMenu({ x: e.clientX, y: e.clientY })}
+            title={isPl ? 'Więcej opcji' : 'More options'}
+            aria-label={isPl ? 'Więcej opcji' : 'More options'}
+            className={btnClass(false)}
+          >
+            <MoreVertical size={13} />
+          </button>
         )}
       </div>
     </div>

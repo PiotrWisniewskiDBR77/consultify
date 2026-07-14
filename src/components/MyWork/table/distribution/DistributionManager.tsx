@@ -489,17 +489,25 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 <SummaryRow
                   label={t('ideas.table.source', 'Source')}
                   value={
-                    sourceType === 'table' ? (t('ideas.table.table', 'Table')) : t('ideas.table.view', 'View')
+                    sourceType === 'table'
+                      ? t('ideas.table.table', 'Table')
+                      : t('ideas.table.view', 'View')
                   }
                 />
-                <SummaryRow label={t('ideas.table.format', 'Format')} value={format.toUpperCase()} />
+                <SummaryRow
+                  label={t('ideas.table.format', 'Format')}
+                  value={format.toUpperCase()}
+                />
                 <SummaryRow
                   label={t('ideas.table.channelLabel', 'Channel')}
-                  value={t(`ideas.table.channel.${getChannelDef(channel).id}`, getChannelDef(channel).en)}
+                  value={t(
+                    `ideas.table.channel.${getChannelDef(channel).id}`,
+                    getChannelDef(channel).en
+                  )}
                 />
                 <SummaryRow
                   label={t('ideas.table.scheduleLabel', 'Schedule')}
-                  value={schedule || (t('ideas.table.onDemand', 'On demand'))}
+                  value={schedule || t('ideas.table.onDemand', 'On demand')}
                 />
               </div>
 
@@ -516,7 +524,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       <strong>
                         {name}.{format}
                       </strong>{' '}
-                      {t('ideas.table.to', 'to')}: {(channelConfig.to as string) || '(no recipients)'}
+                      {t('ideas.table.to', 'to')}:{' '}
+                      {(channelConfig.to as string) || '(no recipients)'}
                     </p>
                   )}
                   {channel === 'slack' && (
@@ -532,8 +541,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   )}
                   {channel === 'webhook' && (
                     <p>
-                      {t('ideas.table.postTo', 'POST to')}: {(channelConfig.url as string) || '(no URL)'}{' '}
-                      ({format.toUpperCase()})
+                      {t('ideas.table.postTo', 'POST to')}:{' '}
+                      {(channelConfig.url as string) || '(no URL)'} ({format.toUpperCase()})
                     </p>
                   )}
                 </div>
@@ -551,7 +560,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             }}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors hover:text-c-text-secondary"
           >
-            {stepIndex === 0 ? (t('ideas.table.cancel', 'Cancel')) : t('ideas.table.back', 'Back')}
+            {stepIndex === 0 ? t('ideas.table.cancel', 'Cancel') : t('ideas.table.back', 'Back')}
           </button>
           {step === 'review' ? (
             <button
@@ -593,7 +602,9 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           <h3 className="text-sm font-semibold text-c-text">
             {t('ideas.table.distributions', 'Distributions')}
             {distributions.length > 0 && (
-              <span className="ml-1 font-normal text-c-text-secondary">({distributions.length})</span>
+              <span className="ml-1 font-normal text-c-text-secondary">
+                ({distributions.length})
+              </span>
             )}
           </h3>
         </div>
@@ -621,7 +632,10 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               {t('ideas.table.noDistributionsYet', 'No distributions yet')}
             </p>
             <p className="mb-4 max-w-xs text-xs text-c-text-muted">
-              {t('ideas.table.automaticallySendTableDataViaEmailSlackTeamsOrWebhook', 'Automatically send table data via email, Slack, Teams, or webhook.')}
+              {t(
+                'ideas.table.automaticallySendTableDataViaEmailSlackTeamsOrWebhook',
+                'Automatically send table data via email, Slack, Teams, or webhook.'
+              )}
             </p>
             <button
               onClick={() => setShowWizard(true)}
@@ -643,16 +657,11 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   key={dist.id}
                   className="group flex items-center gap-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
                 >
-                  <ChannelIcon
-                    size={16}
-                    className="flex-shrink-0 text-c-text-muted"
-                  />
+                  <ChannelIcon size={16} className="flex-shrink-0 text-c-text-muted" />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium text-c-text">
-                        {dist.name}
-                      </span>
+                      <span className="truncate text-sm font-medium text-c-text">{dist.name}</span>
                       {!dist.is_active && (
                         <span className="rounded bg-c-warning px-1.5 py-0.5 text-[10px] text-c-warning bg-c-warning text-c-warning">
                           {t('ideas.table.paused', 'Paused')}
@@ -660,7 +669,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       )}
                     </div>
                     <div className="mt-0.5 text-[10px] text-c-text-muted">
-                      {dist.format?.toUpperCase()} · {t(`ideas.table.channel.${chDef.id}`, chDef.en)}
+                      {dist.format?.toUpperCase()} ·{' '}
+                      {t(`ideas.table.channel.${chDef.id}`, chDef.en)}
                       {dist.schedule && (
                         <>
                           {' '}
@@ -698,7 +708,9 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                           : 'text-c-warning hover:bg-c-warning text-c-warning hover:bg-c-warning'
                       }`}
                       title={
-                        dist.is_active ? (t('ideas.table.pause', 'Pause')) : t('ideas.table.resume', 'Resume')
+                        dist.is_active
+                          ? t('ideas.table.pause', 'Pause')
+                          : t('ideas.table.resume', 'Resume')
                       }
                     >
                       {dist.is_active ? <Pause size={12} /> : <Power size={12} />}

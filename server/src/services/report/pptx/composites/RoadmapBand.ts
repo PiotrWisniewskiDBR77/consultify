@@ -27,16 +27,14 @@ export interface RoadmapBandProps {
 /** Parse a 6-digit hex (no #) into [r,g,b]. */
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
-  return [
-    parseInt(h.slice(0, 2), 16),
-    parseInt(h.slice(2, 4), 16),
-    parseInt(h.slice(4, 6), 16),
-  ];
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
 }
 
 function rgbToHex([r, g, b]: [number, number, number]): string {
   const c = (n: number) =>
-    Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
+    Math.max(0, Math.min(255, Math.round(n)))
+      .toString(16)
+      .padStart(2, '0');
   return `${c(r)}${c(g)}${c(b)}`.toUpperCase();
 }
 

@@ -58,10 +58,7 @@ export function TabeleRationaleSection({
               aria-label={t('kimi.tabele.rationale.points', { defaultValue: 'Rationale points' })}
             >
               {visibleBullets.map((bullet, index) => (
-                <li
-                  key={`${bullet}-${index}`}
-                  className="flex gap-2 text-sm text-c-text"
-                >
+                <li key={`${bullet}-${index}`} className="flex gap-2 text-sm text-c-text">
                   <span
                     className="mt-2 h-1.5 w-1.5 rounded-hig-full bg-sky-500"
                     aria-hidden="true"

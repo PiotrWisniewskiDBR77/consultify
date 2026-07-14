@@ -10,16 +10,15 @@ import {
 } from '@/config/valuechain/valueChainQuestionBank';
 import type {
   InitiativeDraft,
-  ValueActivityId,
-  ValueChainData,
   ProposalStatus,
   ToolType,
+  ValueActivityId,
+  ValueChainData,
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 const ACTIVITY_IDS: ValueActivityId[] = [
   'inboundLogistics',
   'operations',
@@ -267,7 +266,9 @@ function normalizeStaircase(raw: any): ValueChainData['activities'][ValueActivit
   };
 }
 
-function normalizeTradeoff(raw: any): { chosen: string; deferred: string; cost: string } | undefined {
+function normalizeTradeoff(
+  raw: any
+): { chosen: string; deferred: string; cost: string } | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const chosen = typeof raw.chosen === 'string' ? raw.chosen : '';
   const deferred = typeof raw.deferred === 'string' ? raw.deferred : '';
@@ -458,7 +459,9 @@ export function applyValueChainPendingAction({
                 linkedActivityIds: cleanActivityIds(move.linkedActivityIds),
                 ...(() => {
                   const tradeoff = normalizeTradeoff(move.tradeoff);
-                  const rejectedAlternative = normalizeRejectedAlternative(move.rejectedAlternative);
+                  const rejectedAlternative = normalizeRejectedAlternative(
+                    move.rejectedAlternative
+                  );
                   return {
                     ...(tradeoff ? { tradeoff } : {}),
                     ...(rejectedAlternative ? { rejectedAlternative } : {}),

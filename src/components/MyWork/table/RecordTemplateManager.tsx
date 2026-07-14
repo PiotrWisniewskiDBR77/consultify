@@ -459,9 +459,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
               onChange={(e) => onChange(e.target.checked)}
               className="rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
             />
-            <span className="text-[11px] text-c-text-muted">
-              {isPl ? 'Zaznaczony' : 'Checked'}
-            </span>
+            <span className="text-[11px] text-c-text-muted">{isPl ? 'Zaznaczony' : 'Checked'}</span>
           </label>
         );
 
@@ -604,10 +602,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
             {isPl ? 'Z szablonu' : 'From Template'}
           </span>
-          <button
-            onClick={onClose}
-            className="p-0.5 rounded hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-0.5 rounded hover:bg-c-surface-raised">
             <X size={11} className="text-c-text-muted" />
           </button>
         </div>

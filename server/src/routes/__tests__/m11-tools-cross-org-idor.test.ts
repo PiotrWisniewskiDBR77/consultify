@@ -59,12 +59,10 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
+  requireOrgAccess: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
 }));
 
 vi.mock('../../middleware/demoGuard.middleware.js', () => ({
@@ -240,9 +238,7 @@ describe('M11 CONFIRMED-safe — tool session by-id endpoints are org-scoped', (
   it('DELETE /tools/:toolId/comments/:commentId → 404 cross-org and runs no DELETE', async () => {
     // ensureToolCommentsSchema CREATE TABLE → queryRun; comment lookup → queryOne null.
     const app = await buildToolsApp();
-    const res = await request(app).delete(
-      '/api/tools/tool-from-org-b/comments/comment-from-org-b'
-    );
+    const res = await request(app).delete('/api/tools/tool-from-org-b/comments/comment-from-org-b');
 
     expect(res.status).toBe(404);
     const lookup = mockQueryOne.mock.calls.find(

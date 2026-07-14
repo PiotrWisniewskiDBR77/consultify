@@ -130,7 +130,9 @@ export const PMOStatusBar: React.FC = () => {
             <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               Phase {phaseNumber}/{totalPhases}
             </span>
-            <span className="text-sm font-semibold text-c-text">{currentPhase || 'Loading...'}</span>
+            <span className="text-sm font-semibold text-c-text">
+              {currentPhase || 'Loading...'}
+            </span>
           </div>
 
           {/* Separator */}

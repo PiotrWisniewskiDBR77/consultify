@@ -24,12 +24,12 @@
  * initiativeGenerationService, routes, controllers, or the Gateway.
  */
 
+import logger from '../../utils/Logger.js';
 import initiativeGenerationService, {
-  REVIEW_PASS_THRESHOLD,
   type GenerationContext,
   type GenerationResult,
+  REVIEW_PASS_THRESHOLD,
 } from '../initiativeGenerationService.js';
-import logger from '../../utils/Logger.js';
 
 // ==========================================
 // CARD TAXONOMY (D10 core + D2 optional library)
@@ -119,7 +119,15 @@ const TYPE_OPTIONAL_MAP: Record<InitiativeType, OptionalSectionKey[]> = {
   general: ['overview', 'tasks', 'raid', 'timeline', 'stakeholders'],
   regulatory: ['overview', 'raid', 'gates', 'decisions', 'dependencies', 'stakeholders'],
   pilot: ['overview', 'pilot', 'tasks', 'raid', 'timeline'],
-  transformation: ['overview', 'tasks', 'raid', 'gates', 'timeline', 'stakeholders', 'dependencies'],
+  transformation: [
+    'overview',
+    'tasks',
+    'raid',
+    'gates',
+    'timeline',
+    'stakeholders',
+    'dependencies',
+  ],
   cost: ['overview', 'financialAnalysis', 'tasks', 'resources', 'timeline'],
   technology: ['overview', 'tasks', 'dependencies', 'skillsGap', 'competencyRequirements', 'raid'],
   people: ['overview', 'skillsGap', 'competencyRequirements', 'team', 'stakeholders', 'tasks'],
@@ -127,7 +135,9 @@ const TYPE_OPTIONAL_MAP: Record<InitiativeType, OptionalSectionKey[]> = {
 
 /** Normalize a free-form type string into one of the InitiativeType buckets. */
 export function normalizeInitiativeType(type?: string | null): InitiativeType {
-  const t = String(type || '').toLowerCase().trim();
+  const t = String(type || '')
+    .toLowerCase()
+    .trim();
   if (!t) return 'general';
   if (/regulat|complian|legal|audit|risk/.test(t)) return 'regulatory';
   if (/pilot|poc|proof|experiment|mvp/.test(t)) return 'pilot';
@@ -162,7 +172,7 @@ export interface ProposeCardsResult {
 export function proposeCards(
   type?: string | null,
   sourceType?: string | null,
-  context?: { brief?: string; [k: string]: unknown },
+  context?: { brief?: string; [k: string]: unknown }
 ): ProposeCardsResult {
   const resolved = normalizeInitiativeType(type);
   const core = [...CORE_SECTION_KEYS];
@@ -203,7 +213,7 @@ export interface SectionGenerator {
     sectionKey: string,
     context: GenerationContext,
     organizationId?: string,
-    options?: { withReview?: boolean },
+    options?: { withReview?: boolean }
   ): Promise<GenerationResult>;
 }
 
@@ -293,9 +303,10 @@ function reviewScore(result: GenerationResult | undefined): number | undefined {
  */
 export async function generateFullInitiative(
   deps: GeneratorDeps,
-  input: GenerateFullInput,
+  input: GenerateFullInput
 ): Promise<GenerateFullResult> {
-  const language: 'en' | 'pl' = input.language === 'pl' ? 'pl' : input.language === 'en' ? 'en' : 'pl';
+  const language: 'en' | 'pl' =
+    input.language === 'pl' ? 'pl' : input.language === 'en' ? 'en' : 'pl';
   const passThreshold =
     typeof deps.passThreshold === 'number' ? deps.passThreshold : REVIEW_PASS_THRESHOLD;
 
@@ -313,7 +324,9 @@ export async function generateFullInitiative(
     ...(input.sourceType ? { sourceLineage: input.sourceType } : {}),
     // §6 downstream Insight seeds (#57/Z60) — additive: absent when the caller
     // didn't supply insightSeeds, so the existing brief-only flow is unchanged.
-    ...(input.insightSeeds?.seedOwnerRole ? { seedOwnerRole: input.insightSeeds.seedOwnerRole } : {}),
+    ...(input.insightSeeds?.seedOwnerRole
+      ? { seedOwnerRole: input.insightSeeds.seedOwnerRole }
+      : {}),
     ...(input.insightSeeds?.seedKpiSeeds ? { seedKpiSeeds: input.insightSeeds.seedKpiSeeds } : {}),
   };
 
@@ -326,9 +339,7 @@ export async function generateFullInitiative(
   // (a) fill SEQUENTIALLY (below) and (b) retry a thrown section once here, so a
   // transient hiccup on one card no longer wipes the initiative.
   const HARD_RETRY = 1;
-  const generateWithRetry = async (
-    key: (typeof keys)[number],
-  ): Promise<GenerationResult> => {
+  const generateWithRetry = async (key: (typeof keys)[number]): Promise<GenerationResult> => {
     let lastErr: any;
     for (let attempt = 0; attempt <= HARD_RETRY; attempt++) {
       try {
@@ -336,7 +347,7 @@ export async function generateFullInitiative(
           key,
           baseContext,
           input.organizationId,
-          { withReview: true },
+          { withReview: true }
         );
       } catch (err: any) {
         lastErr = err;
@@ -345,7 +356,7 @@ export async function generateFullInitiative(
             `[GeneratorBrain] section "${key}" threw (attempt ${attempt + 1}/${
               HARD_RETRY + 1
             }) — retrying:`,
-            err?.message || err,
+            err?.message || err
           );
         }
       }
@@ -369,7 +380,7 @@ export async function generateFullInitiative(
             key,
             baseContext,
             input.organizationId,
-            { withReview: true },
+            { withReview: true }
           );
           outcome.healed = true;
           finalResult = second;
@@ -377,7 +388,7 @@ export async function generateFullInitiative(
           // Heal failed → keep the first (still-usable) attempt; not a hard failure.
           logger.warn(
             `[GeneratorBrain] auto-heal failed for "${key}" — keeping first attempt:`,
-            healErr?.message || healErr,
+            healErr?.message || healErr
           );
         }
       }
@@ -426,7 +437,8 @@ export async function generateFullInitiative(
 
   const scored = outcomes.filter((o) => typeof o.score === 'number');
   const averageScore = scored.length
-    ? Math.round((scored.reduce((sum, o) => sum + (o.score as number), 0) / scored.length) * 10) / 10
+    ? Math.round((scored.reduce((sum, o) => sum + (o.score as number), 0) / scored.length) * 10) /
+      10
     : null;
   const belowThreshold = outcomes
     .filter((o) => typeof o.score === 'number' && (o.score as number) < passThreshold)
@@ -451,12 +463,12 @@ export async function generateFullInitiative(
         outcomes
           .filter((o) => o.failed)
           .map((o) => `${o.key}=${o.error || 'unknown'}`)
-          .join(' | '),
+          .join(' | ')
     );
   } else {
     logger.info(
       `[GeneratorBrain] initiative ${input.initiativeId}: filled ${qualitySummary.filled}/${qualitySummary.total} ` +
-        `(failed=${qualitySummary.failed}, healed=${qualitySummary.healed}, avg=${qualitySummary.averageScore ?? 'n/a'})`,
+        `(failed=${qualitySummary.failed}, healed=${qualitySummary.healed}, avg=${qualitySummary.averageScore ?? 'n/a'})`
     );
   }
 

@@ -356,7 +356,9 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
                     <div className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
                       {kpi.value}
                       {kpi.trend === 'good' && <TrendingUp size={14} className="text-green-500" />}
-                      {kpi.trend === 'bad' && <TrendingDown size={14} className="text-danger-500" />}
+                      {kpi.trend === 'bad' && (
+                        <TrendingDown size={14} className="text-danger-500" />
+                      )}
                     </div>
                     <div className="text-[10px] text-slate-600">Baseline: {kpi.baseline}</div>
                   </div>

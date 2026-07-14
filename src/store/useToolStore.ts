@@ -1459,7 +1459,8 @@ export const VALUE_CHAIN_STEPS: StepDefinition[] = [
     id: 'mission',
     name: 'Mission & Scope',
     namePl: 'Misja i zakres',
-    description: 'Define the business, value chain scope, strategic positioning, and success signal',
+    description:
+      'Define the business, value chain scope, strategic positioning, and success signal',
     descriptionPl: 'Zdefiniuj biznes, zakres łańcucha wartości, pozycjonowanie i sygnał sukcesu',
     required: true,
     aiAssisted: false,
@@ -1468,7 +1469,8 @@ export const VALUE_CHAIN_STEPS: StepDefinition[] = [
     id: 'input',
     name: 'Input & Exploration',
     namePl: 'Wejście i eksploracja',
-    description: 'Capture cost, operations, and differentiation signals from context and interviews',
+    description:
+      'Capture cost, operations, and differentiation signals from context and interviews',
     descriptionPl: 'Zbierz sygnały kosztu, operacji i różnicowania z kontekstu i wywiadów',
     required: true,
     aiAssisted: true,
@@ -1477,8 +1479,7 @@ export const VALUE_CHAIN_STEPS: StepDefinition[] = [
     id: 'activities',
     name: 'Value Chain Build',
     namePl: 'Budowa łańcucha wartości',
-    description:
-      'Map the 9 activities with cost contribution, value contribution, and margin role',
+    description: 'Map the 9 activities with cost contribution, value contribution, and margin role',
     descriptionPl: 'Zmapuj 9 aktywności wg kontrybucji kosztu, wartości i roli w marży',
     required: true,
     aiAssisted: true,
@@ -1487,8 +1488,10 @@ export const VALUE_CHAIN_STEPS: StepDefinition[] = [
     id: 'insights',
     name: 'Margin Levers & Moves',
     namePl: 'Dźwignie marży i ruchy',
-    description: 'Synthesize the chain into margin levers, a positioning verdict, and strategic moves',
-    descriptionPl: 'Przekształć łańcuch w dźwignie marży, werdykt pozycjonowania i ruchy strategiczne',
+    description:
+      'Synthesize the chain into margin levers, a positioning verdict, and strategic moves',
+    descriptionPl:
+      'Przekształć łańcuch w dźwignie marży, werdykt pozycjonowania i ruchy strategiczne',
     required: true,
     aiAssisted: true,
   },

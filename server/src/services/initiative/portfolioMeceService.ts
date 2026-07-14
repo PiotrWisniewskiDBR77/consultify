@@ -47,9 +47,32 @@ export interface PortfolioMeceResult {
 }
 
 const STOPWORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'of', 'to', 'for', 'in', 'on', 'with', 'by',
-  'i', 'oraz', 'dla', 'do', 'na', 'w', 'z', 'ze', 'o', 'jest', 'inicjatywa',
-  'initiative', 'projekt', 'project',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'of',
+  'to',
+  'for',
+  'in',
+  'on',
+  'with',
+  'by',
+  'i',
+  'oraz',
+  'dla',
+  'do',
+  'na',
+  'w',
+  'z',
+  'ze',
+  'o',
+  'jest',
+  'inicjatywa',
+  'initiative',
+  'projekt',
+  'project',
 ]);
 
 /** Lowercase → token set, drop stopwords + short tokens. */
@@ -66,7 +89,9 @@ function tokenize(text: string): Set<string> {
 }
 
 function normGoalKey(k?: string): string {
-  return String(k || '').trim().toLowerCase();
+  return String(k || '')
+    .trim()
+    .toLowerCase();
 }
 
 /** Similarity threshold above which two token sets are treated as "overlapping". */
@@ -98,7 +123,9 @@ export function checkPortfolioMece(
     id: String(e.id),
     title: String(e.title || ''),
     goalKey: normGoalKey(e.goalKey),
-    titleNorm: String(e.title || '').trim().toLowerCase(),
+    titleNorm: String(e.title || '')
+      .trim()
+      .toLowerCase(),
     tokens: new Set<string>([...tokenize(e.title || ''), ...tokenize(e.summary || '')]),
   }));
 
@@ -108,10 +135,7 @@ export function checkPortfolioMece(
     const candTitle = String(c.title || '');
     const candGoalKey = normGoalKey(c.goalKey);
     const candTitleNorm = candTitle.trim().toLowerCase();
-    const candTokens = new Set<string>([
-      ...tokenize(candTitle),
-      ...tokenize(c.description || ''),
-    ]);
+    const candTokens = new Set<string>([...tokenize(candTitle), ...tokenize(c.description || '')]);
 
     for (const e of existingInfo) {
       let reason: string | null = null;

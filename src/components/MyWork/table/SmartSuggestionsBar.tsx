@@ -250,9 +250,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
           <IconComp size={10} className="text-c-accent" />
-          <span className="text-[10px] font-bold text-c-text">
-            {current.title}
-          </span>
+          <span className="text-[10px] font-bold text-c-text">{current.title}</span>
           <span
             className="text-[8px] font-bold uppercase tracking-wider px-1 py-0 rounded"
             style={{
@@ -273,9 +271,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
             {Math.round(current.confidence * 100)}%
           </span>
         </div>
-        <p className="text-[10px] text-c-text-muted leading-relaxed truncate">
-          {current.detail}
-        </p>
+        <p className="text-[10px] text-c-text-muted leading-relaxed truncate">{current.detail}</p>
       </div>
 
       {/* Action button */}

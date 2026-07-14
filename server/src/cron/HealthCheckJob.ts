@@ -42,7 +42,8 @@ class HealthCheckJob {
     this.deps = {
       db: deps?.db || getDatabase(),
       emailService: deps?.emailService as any,
-      alertEmail: deps?.alertEmail || process.env.ALERT_EMAIL_RECIPIENTS || process.env.ALERT_EMAIL || '',
+      alertEmail:
+        deps?.alertEmail || process.env.ALERT_EMAIL_RECIPIENTS || process.env.ALERT_EMAIL || '',
       alertThreshold: deps?.alertThreshold || 1,
     };
   }

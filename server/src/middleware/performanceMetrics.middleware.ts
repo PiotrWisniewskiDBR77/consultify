@@ -259,11 +259,25 @@ export function performanceMetricsMiddleware(
       const statusCode = Number.isFinite(rawStatus) ? rawStatus : 500;
 
       // Read request fields safely (they may throw)
-      const method = cap(safeStr(() => req.method, 'UNKNOWN'), 32);
-      const path = cap(safeStr(() => req.originalUrl || req.path, 'unknown'), 2048);
+      const method = cap(
+        safeStr(() => req.method, 'UNKNOWN'),
+        32
+      );
+      const path = cap(
+        safeStr(() => req.originalUrl || req.path, 'unknown'),
+        2048
+      );
       const routeLabel = getRouteLabel(req);
-      const userId = cap(safeStr(() => req.user?.id ?? '', ''), 256) || null;
-      const organizationId = cap(safeStr(() => req.user?.organizationId ?? '', ''), 256) || null;
+      const userId =
+        cap(
+          safeStr(() => req.user?.id ?? '', ''),
+          256
+        ) || null;
+      const organizationId =
+        cap(
+          safeStr(() => req.user?.organizationId ?? '', ''),
+          256
+        ) || null;
 
       // Read stored performance metrics (getter may throw)
       let dbQueryCount = 0;

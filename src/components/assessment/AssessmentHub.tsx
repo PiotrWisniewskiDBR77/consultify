@@ -33,14 +33,14 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
-  standardPreviewShortcuts,
   type StandardPreviewActions,
+  standardPreviewShortcuts,
   type StandardRowMenu,
   StandardTable,
 } from '@/components/standard';
-import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { ErrorState } from '@/components/ui/primitives';
 import {
   MetaChip,
@@ -74,7 +74,6 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_INNER_CLASS,
@@ -82,6 +81,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
@@ -643,8 +643,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       })),
       render: (row) => {
         const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
-        if (!meta)
-          return <span className="text-xs text-c-text-muted">{row.framework}</span>;
+        if (!meta) return <span className="text-xs text-c-text-muted">{row.framework}</span>;
         return (
           <div className="flex items-center gap-2">
             <span className="text-c-text-muted">{meta.icon}</span>
@@ -1327,7 +1326,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         // to plainly name the current tab (matches the visible tab label); the
         // badge count is explained via tooltip instead of a vague word.
         id: 'active-tab',
-        label: activeTab === 'reports' ? 'Reports' : activeTab === 'initiatives' ? 'Initiatives' : 'Assessment',
+        label:
+          activeTab === 'reports'
+            ? 'Reports'
+            : activeTab === 'initiatives'
+              ? 'Initiatives'
+              : 'Assessment',
         badge: currentData.length,
         active: true,
         title: isPolish
@@ -1425,7 +1429,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClick: () => void handleOpenHubChat(),
         active: isHubChatActive,
         disabled: isLoading,
-        title: isPolish ? 'Otwiera pusty czat AI dla tego huba.' : 'Opens a blank AI chat for this hub.',
+        title: isPolish
+          ? 'Otwiera pusty czat AI dla tego huba.'
+          : 'Opens a blank AI chat for this hub.',
       },
       thirdHubAction,
     ],
@@ -1989,12 +1995,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     preview: () => setSelectedReportRowId(String((row as any).id)),
                     edit: isImported
                       ? undefined
-                      : () =>
-                          navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`),
+                      : () => navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`),
                     editNote: isImported
-                      ? (isPolish
-                          ? 'Edycja przez przegląd zaimportowanego PDF'
-                          : 'Edit via the imported-PDF review flow')
+                      ? isPolish
+                        ? 'Edycja przez przegląd zaimportowanego PDF'
+                        : 'Edit via the imported-PDF review flow'
                       : undefined,
                   },
                   destructive: isImported
@@ -2731,7 +2736,10 @@ const ReportSlideOverContent: React.FC<{
                   </div>
                   <div className="shrink-0">
                     {downloadingId === fmt ? (
-                      <Loader2 size={14} className="animate-spin text-slate-500 dark:text-slate-400" />
+                      <Loader2
+                        size={14}
+                        className="animate-spin text-slate-500 dark:text-slate-400"
+                      />
                     ) : (
                       <Download
                         size={14}
@@ -2746,7 +2754,9 @@ const ReportSlideOverContent: React.FC<{
         ) : (
           /* Quick-generate buttons when no exports exist */
           <div className="p-3.5">
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">No exports yet. Generate now:</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+              No exports yet. Generate now:
+            </p>
             <div className="grid grid-cols-3 gap-2">
               {(['pdf', 'pptx', 'docx'] as const).map((fmt) => {
                 const cfg = EXPORT_FORMAT_CONFIG[fmt];

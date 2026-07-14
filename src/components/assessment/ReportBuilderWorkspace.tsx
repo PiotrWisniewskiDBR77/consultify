@@ -156,7 +156,9 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Handle AI action on section
   const handleAIAction = useCallback(
     async (sectionId: string, action: string) => {
-      toast.loading(t('assessment.reportBuilder.aiProcessing', 'AI processing...'), { id: 'ai-action' });
+      toast.loading(t('assessment.reportBuilder.aiProcessing', 'AI processing...'), {
+        id: 'ai-action',
+      });
 
       const success = await aiAction(sectionId, action as AIAction);
 
@@ -183,7 +185,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Handle finalize
   const handleFinalize = useCallback(async () => {
     const confirmed = window.confirm(
-      t('assessment.reportBuilder.confirmFinalize', 'Submit the report for approval (set status FINAL)? You can still edit it until it is approved.')
+      t(
+        'assessment.reportBuilder.confirmFinalize',
+        'Submit the report for approval (set status FINAL)? You can still edit it until it is approved.'
+      )
     );
 
     if (!confirmed) return;
@@ -201,7 +206,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 
   const handleApprove = useCallback(async () => {
     const confirmed = window.confirm(
-      t('assessment.reportBuilder.confirmApprove', 'Approve the report? It will become globally visible and locked for editing.')
+      t(
+        'assessment.reportBuilder.confirmApprove',
+        'Approve the report? It will become globally visible and locked for editing.'
+      )
     );
     if (!confirmed) return;
 
@@ -219,7 +227,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Handle regenerate
   const handleRegenerate = useCallback(async () => {
     const confirmed = window.confirm(
-      t('assessment.reportBuilder.confirmRegenerate', 'Are you sure you want to regenerate the report? All edits will be lost.')
+      t(
+        'assessment.reportBuilder.confirmRegenerate',
+        'Are you sure you want to regenerate the report? All edits will be lost.'
+      )
     );
 
     if (!confirmed) return;
@@ -233,7 +244,9 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     setIsRegenerating(false);
 
     if (success) {
-      toast.success(t('assessment.reportBuilder.reportRegenerated', 'Report regenerated'), { id: 'regenerate' });
+      toast.success(t('assessment.reportBuilder.reportRegenerated', 'Report regenerated'), {
+        id: 'regenerate',
+      });
     } else {
       toast.error(t('assessment.reportBuilder.regenerateFailed', 'Failed to regenerate report'), {
         id: 'regenerate',
@@ -243,9 +256,13 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 
   // Handle export PDF
   const handleExportPdf = useCallback(async () => {
-    toast.loading(t('assessment.reportBuilder.exportingPdf', 'Exporting PDF...'), { id: 'export-pdf' });
+    toast.loading(t('assessment.reportBuilder.exportingPdf', 'Exporting PDF...'), {
+      id: 'export-pdf',
+    });
     await exportPdf();
-    toast.success(t('assessment.reportBuilder.pdfDownloaded', 'PDF downloaded'), { id: 'export-pdf' });
+    toast.success(t('assessment.reportBuilder.pdfDownloaded', 'PDF downloaded'), {
+      id: 'export-pdf',
+    });
   }, [exportPdf, t]);
 
   // Handle export Excel
@@ -254,7 +271,9 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
       id: 'export-excel',
     });
     await exportExcel();
-    toast.success(t('assessment.reportBuilder.excelDownloaded', 'Excel downloaded'), { id: 'export-excel' });
+    toast.success(t('assessment.reportBuilder.excelDownloaded', 'Excel downloaded'), {
+      id: 'export-excel',
+    });
   }, [exportExcel, t]);
 
   // Handle TOC section click
@@ -339,7 +358,11 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
           addChatMessage({
             id: `ai-edit-${Date.now()}`,
             role: 'ai',
-            content: t('assessment.reportBuilder.executingAction', `Executing "${action}" on the selected section...`, { action }),
+            content: t(
+              'assessment.reportBuilder.executingAction',
+              `Executing "${action}" on the selected section...`,
+              { action }
+            ),
             timestamp: new Date(),
           });
           setIsBotTyping(false);
@@ -412,7 +435,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               {t('assessment.reportBuilder.emptyReport', 'Report is empty')}
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mb-6">
-              {t('assessment.reportBuilder.emptyReportDesc', 'This report has no sections yet. Generate the report to get started.')}
+              {t(
+                'assessment.reportBuilder.emptyReportDesc',
+                'This report has no sections yet. Generate the report to get started.'
+              )}
             </p>
             <button
               onClick={handleRegenerate}
@@ -544,7 +570,9 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
           title={t('assessment.reportBuilder.showComments', 'Show comments')}
         >
           <MessageCircle className="w-5 h-5" />
-          <span className="text-sm font-medium">{t('assessment.reportBuilder.comments', 'Comments')}</span>
+          <span className="text-sm font-medium">
+            {t('assessment.reportBuilder.comments', 'Comments')}
+          </span>
         </button>
       )}
 
@@ -642,7 +670,9 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                 className="flex items-center gap-2 px-3 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg shadow-lg transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
-                <span className="text-sm font-medium">{t('assessment.reportBuilder.showChat', 'Show chat')}</span>
+                <span className="text-sm font-medium">
+                  {t('assessment.reportBuilder.showChat', 'Show chat')}
+                </span>
               </button>
             </div>
           )}

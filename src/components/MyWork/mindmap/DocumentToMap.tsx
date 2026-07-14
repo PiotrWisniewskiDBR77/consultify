@@ -155,7 +155,9 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
                     className="flex items-center gap-2 p-2 rounded-xl bg-c-surface-raised border border-c-info"
                   >
                     <Sparkles size={10} className="text-c-info shrink-0" />
-                    <span className="text-[11px] text-c-text-secondary dark:text-c-text">{idea}</span>
+                    <span className="text-[11px] text-c-text-secondary dark:text-c-text">
+                      {idea}
+                    </span>
                   </div>
                 ))}
               </div>

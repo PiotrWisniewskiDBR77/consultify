@@ -16,8 +16,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   fetchFormDataset,
   listConnectorTypes,
-  previewConnector,
   type MaterialDataset,
+  previewConnector,
 } from '@/services/materialData';
 
 const CONNECTOR_LABEL: Record<string, string> = {
@@ -139,9 +139,7 @@ export const DataSourcesTabContent: React.FC = () => {
         <header className="flex items-center gap-2">
           <Database size={18} className="text-c-text-muted" />
           <div>
-            <h2 className="text-sm font-semibold text-c-text">
-              Źródła danych materiału
-            </h2>
+            <h2 className="text-sm font-semibold text-c-text">Źródła danych materiału</h2>
             <p className="text-xs text-c-text-muted">
               Podłącz dane do generowanych materiałów — z konektora albo z formularza intake.
             </p>
@@ -150,9 +148,7 @@ export const DataSourcesTabContent: React.FC = () => {
 
         {/* Połącz źródło */}
         <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
-          <h3 className="mb-2 text-sm font-semibold text-c-text">
-            Połącz źródło
-          </h3>
+          <h3 className="mb-2 text-sm font-semibold text-c-text">Połącz źródło</h3>
           {types.length === 0 ? (
             <p className="text-xs text-c-text-muted" data-testid="rap-data-no-connectors">
               Brak dostępnych konektorów (warstwa danych wyłączona lub bez rejestru).
@@ -180,7 +176,11 @@ export const DataSourcesTabContent: React.FC = () => {
                   data-testid="rap-data-preview-btn"
                   className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
                 >
-                  {connectorBusy ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
+                  {connectorBusy ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Eye size={13} />
+                  )}
                   Podgląd danych
                 </button>
               </div>
@@ -205,9 +205,7 @@ export const DataSourcesTabContent: React.FC = () => {
 
         {/* Zbierz przez formularz */}
         <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
-          <h3 className="mb-2 text-sm font-semibold text-c-text">
-            Zbierz przez formularz
-          </h3>
+          <h3 className="mb-2 text-sm font-semibold text-c-text">Zbierz przez formularz</h3>
           <div className="flex flex-wrap items-center gap-2">
             <input
               value={formId}

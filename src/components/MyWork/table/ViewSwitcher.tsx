@@ -164,9 +164,14 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                       : 'text-c-text-secondary hover:bg-c-surface-raised'
                   }`}
                 >
-                  <Icon size={13} className={isActive ? 'text-c-text-secondary' : 'text-c-text-muted'} />
+                  <Icon
+                    size={13}
+                    className={isActive ? 'text-c-text-secondary' : 'text-c-text-muted'}
+                  />
                   <span className="flex-1 truncate">{view.name}</span>
-                  {view.isPersonal && <Lock size={10} className="text-c-text-muted flex-shrink-0" />}
+                  {view.isPersonal && (
+                    <Lock size={10} className="text-c-text-muted flex-shrink-0" />
+                  )}
                   {view.isShared && <Share2 size={10} className="text-c-success flex-shrink-0" />}
                   <button
                     type="button"

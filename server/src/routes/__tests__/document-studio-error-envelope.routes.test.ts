@@ -34,9 +34,8 @@ vi.mock('../../middleware/rbac.middleware.js', () => ({
 const RAW_SECRET = 'pg: column "schema_json" does not exist at /srv/app/dao/lifecycle.ts:117';
 
 vi.mock('../../services/documentStudio/documentStudioService.js', async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import('../../services/documentStudio/documentStudioService.js')
-  >();
+  const actual =
+    await importOriginal<typeof import('../../services/documentStudio/documentStudioService.js')>();
   return {
     ...actual,
     ensureDocumentLifecycleHydrated: vi.fn(async () => undefined),

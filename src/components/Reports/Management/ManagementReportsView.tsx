@@ -330,9 +330,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Sparkles size={20} className="text-c-accent" />
-                <h2 className="text-lg font-semibold text-c-text">
-                  Generate New Report
-                </h2>
+                <h2 className="text-lg font-semibold text-c-text">Generate New Report</h2>
               </div>
 
               <ReportTypeSelector
@@ -394,9 +392,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 </div>
 
                 <div className="p-4 rounded-xl border border-c-border-subtle">
-                  <h3 className="text-sm font-semibold text-c-text-secondary mb-3">
-                    Schedule
-                  </h3>
+                  <h3 className="text-sm font-semibold text-c-text-secondary mb-3">Schedule</h3>
                   <div className="flex gap-3">
                     <button
                       onClick={() => setScheduleMode('ONE_TIME')}
@@ -422,9 +418,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   {scheduleMode === 'RECURRING' && (
                     <div className="mt-4 space-y-3 text-sm">
                       <div>
-                        <label className="block text-xs text-c-text-muted mb-1">
-                          Frequency
-                        </label>
+                        <label className="block text-xs text-c-text-muted mb-1">Frequency</label>
                         <select
                           value={scheduleFrequency}
                           onChange={(event) =>
@@ -476,9 +470,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       )}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs text-c-text-muted mb-1">
-                            Time
-                          </label>
+                          <label className="block text-xs text-c-text-muted mb-1">Time</label>
                           <input
                             type="time"
                             value={scheduleTime}
@@ -487,9 +479,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-c-text-muted mb-1">
-                            Timezone
-                          </label>
+                          <label className="block text-xs text-c-text-muted mb-1">Timezone</label>
                           <input
                             value={scheduleTimezone}
                             onChange={(event) => setScheduleTimezone(event.target.value)}
@@ -567,9 +557,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             <div className="flex items-center justify-between bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               <div className="text-sm text-c-text-muted">
                 Report ID:{' '}
-                <code className="px-1 py-0.5 bg-c-surface-raised rounded">
-                  {currentReport.id}
-                </code>
+                <code className="px-1 py-0.5 bg-c-surface-raised rounded">{currentReport.id}</code>
               </div>
               <ExportControls
                 reportId={currentReport.id}
@@ -648,17 +636,11 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="rounded-lg border border-c-border-subtle p-4">
-                  <p className="font-medium text-c-text-secondary mb-2">
-                    Default Output
-                  </p>
-                  <p className="text-c-text-muted">
-                    Current default: {outputFormat}
-                  </p>
+                  <p className="font-medium text-c-text-secondary mb-2">Default Output</p>
+                  <p className="text-c-text-muted">Current default: {outputFormat}</p>
                 </div>
                 <div className="rounded-lg border border-c-border-subtle p-4">
-                  <p className="font-medium text-c-text-secondary mb-2">
-                    Schedule Timezone
-                  </p>
+                  <p className="font-medium text-c-text-secondary mb-2">Schedule Timezone</p>
                   <p className="text-c-text-muted">{scheduleTimezone}</p>
                 </div>
               </div>

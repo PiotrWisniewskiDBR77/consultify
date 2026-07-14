@@ -476,9 +476,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <CreditCard size={28} className="text-emerald-500" />
             {t('settings.billing', 'Billing & Subscription')}
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">
-            {t('access.upgrade.subtitle')}
-          </p>
+          <p className="text-c-text-muted text-sm mt-1">{t('access.upgrade.subtitle')}</p>
         </div>
         {(isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) && (
           <span
@@ -536,9 +534,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               {t('access.upgrade.whatChanges')}:{' '}
               {availablePlans.find((p) => p.id === checkoutPlanId)?.name || checkoutPlanId}
             </p>
-            <p className="text-xs text-c-accent mt-1">
-              {t('access.upgrade.instantUnlock')}
-            </p>
+            <p className="text-xs text-c-accent mt-1">{t('access.upgrade.instantUnlock')}</p>
           </div>
           {paymentMethods.length === 0 && (
             <div className="p-4 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/30">
@@ -787,9 +783,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   <div className="flex items-center gap-4">
                     <FileText size={20} className="text-c-text-secondary" />
                     <div>
-                      <p className="font-medium text-c-text">
-                        Invoice {invoice.id}
-                      </p>
+                      <p className="font-medium text-c-text">Invoice {invoice.id}</p>
                       <p className="text-sm text-c-text-muted">
                         {new Date(invoice.date).toLocaleDateString()}
                       </p>

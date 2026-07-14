@@ -8,9 +8,19 @@
  * liczba wynika z drivera (obronność > zmyślenie). SSOT: BUSINESS_PLAN_GENERATOR_SPEC.md.
  */
 import type {
-  PnLPeriod, ArrBridgePeriod, BalanceSheetPeriod, CashFlowPeriod,
-  UnitEconomics, SaasKpis, ValuationRange, ValuationSensitivityRow, FinancialModel, ScenarioName,
-  ValidationCheck, ValidationReport, AntiPatternFinding,
+  AntiPatternFinding,
+  ArrBridgePeriod,
+  BalanceSheetPeriod,
+  CashFlowPeriod,
+  FinancialModel,
+  PnLPeriod,
+  SaasKpis,
+  ScenarioName,
+  UnitEconomics,
+  ValidationCheck,
+  ValidationReport,
+  ValuationRange,
+  ValuationSensitivityRow,
 } from './businessPlanSpine.js';
 
 /** Typowane drivery (§B2) — wejście silnika; mapowane z rejestru Assumption[] wyżej. */
@@ -66,8 +76,12 @@ function buildArrBridge(d: FinancialDrivers): ArrBridgePeriod[] {
     const ending = retained + expansion - contraction + newLogo;
     out.push({
       period: d.startYearLabel(i),
-      beginning: r(beginning), newLogo: r(newLogo), expansion: r(expansion),
-      contraction: r(contraction), churned: r(churned), ending: r(ending),
+      beginning: r(beginning),
+      newLogo: r(newLogo),
+      expansion: r(expansion),
+      contraction: r(contraction),
+      churned: r(churned),
+      ending: r(ending),
     });
     endingPrev = ending;
   }
@@ -93,9 +107,16 @@ function buildPnL(d: FinancialDrivers, arr: ArrBridgePeriod[]): PnLPeriod[] {
     const netIncome = ebit > 0 ? ebit * (1 - d.taxRate) : ebit;
     return {
       period: a.period,
-      revenue: r(revenue), cogs: r(cogs), grossProfit: r(grossProfit),
-      opexSM: r(opexSM), opexRD: r(opexRD), opexGA: r(opexGA),
-      ebitda: r(ebitda), da: r(da), ebit: r(ebit), netIncome: r(netIncome),
+      revenue: r(revenue),
+      cogs: r(cogs),
+      grossProfit: r(grossProfit),
+      opexSM: r(opexSM),
+      opexRD: r(opexRD),
+      opexGA: r(opexGA),
+      ebitda: r(ebitda),
+      da: r(da),
+      ebit: r(ebit),
+      netIncome: r(netIncome),
     };
   });
 }
@@ -105,15 +126,20 @@ function buildPnL(d: FinancialDrivers, arr: ArrBridgePeriod[]): PnLPeriod[] {
  * corkscrew PP&E i gotówki, equity = paid-in + retained. Bilansuje TOŻSAMOŚCIOWO
  * (Assets = L+E) bo każda zmiana trafia w dwa miejsca — to jest test integralności.
  */
-function buildStatements(d: FinancialDrivers, pnl: PnLPeriod[]): { bs: BalanceSheetPeriod[]; cf: CashFlowPeriod[] } {
+function buildStatements(
+  d: FinancialDrivers,
+  pnl: PnLPeriod[]
+): { bs: BalanceSheetPeriod[]; cf: CashFlowPeriod[] } {
   const bs: BalanceSheetPeriod[] = [];
   const cf: CashFlowPeriod[] = [];
   let cash = d.startingCash;
   let retained = 0;
   let paidIn = d.startingCash; // equity otwarcia = gotówka otwarcia (all-equity)
-  let ppe = 0, prevAr = 0, prevDef = 0;
+  let ppe = 0,
+    prevAr = 0,
+    prevDef = 0;
   pnl.forEach((p, i) => {
-    const ar = p.revenue * 0.10;
+    const ar = p.revenue * 0.1;
     const deferred = p.revenue * 0.15;
     const capex = p.revenue * 0.02;
     const financing = i === 0 ? d.fundingRaised : 0;
@@ -124,12 +150,24 @@ function buildStatements(d: FinancialDrivers, pnl: PnLPeriod[]): { bs: BalanceSh
     ppe = ppe + capex - p.da;
     retained += p.netIncome;
     paidIn += financing;
-    cf.push({ period: p.period, operating: r(operating), investing: r(investing), financing: r(financing), endingCash: r(cash) });
-    bs.push({
-      period: p.period, cash: r(cash), receivables: r(ar), ppe: r(ppe),
-      deferredRevenue: r(deferred), debt: 0, equity: r(paidIn + retained),
+    cf.push({
+      period: p.period,
+      operating: r(operating),
+      investing: r(investing),
+      financing: r(financing),
+      endingCash: r(cash),
     });
-    prevAr = ar; prevDef = deferred;
+    bs.push({
+      period: p.period,
+      cash: r(cash),
+      receivables: r(ar),
+      ppe: r(ppe),
+      deferredRevenue: r(deferred),
+      debt: 0,
+      equity: r(paidIn + retained),
+    });
+    prevAr = ar;
+    prevDef = deferred;
   });
   return { bs, cf };
 }
@@ -164,9 +202,12 @@ function buildKpis(d: FinancialDrivers, pnl: PnLPeriod[], ue: UnitEconomics): Sa
 function buildValuation(pnl: PnLPeriod[], d: FinancialDrivers): ValuationRange {
   const last = pnl[pnl.length - 1];
   // DCF (uproszczony): suma zdyskontowanych EBITDA + terminal
-  const wacc = 0.20, g = 0.03;
+  const wacc = 0.2,
+    g = 0.03;
   let pv = 0;
-  pnl.forEach((p, i) => { pv += p.ebitda / Math.pow(1 + wacc, i + 1); });
+  pnl.forEach((p, i) => {
+    pv += p.ebitda / Math.pow(1 + wacc, i + 1);
+  });
   const terminal = (last.ebitda * (1 + g)) / (wacc - g);
   const pvTerminal = terminal / Math.pow(1 + wacc, pnl.length);
   const dcf = pv + pvTerminal;
@@ -174,14 +215,22 @@ function buildValuation(pnl: PnLPeriod[], d: FinancialDrivers): ValuationRange {
   const vc = (last.revenue * 8) / 3; // exit 8× / target 3× return (back-solve, uproszczony)
   const vals = [dcf, comps, vc].filter((v) => v > 0);
   return {
-    dcf: r(dcf), comparablesMultiple: r(comps), vcMethod: r(vc),
-    low: r(Math.min(...vals)), high: r(Math.max(...vals)),
+    dcf: r(dcf),
+    comparablesMultiple: r(comps),
+    vcMethod: r(vc),
+    low: r(Math.min(...vals)),
+    high: r(Math.max(...vals)),
     terminalValuePctOfEv: dcf > 0 ? r2(pvTerminal / dcf) : undefined,
   };
 }
 
 function applyScenario(d: FinancialDrivers, mult: number): FinancialDrivers {
-  return { ...d, saasSeatGrowthYoY: d.saasSeatGrowthYoY * mult, nrr: 1 + (d.nrr - 1) * mult, servicesGrowthYoY: d.servicesGrowthYoY * mult };
+  return {
+    ...d,
+    saasSeatGrowthYoY: d.saasSeatGrowthYoY * mult,
+    nrr: 1 + (d.nrr - 1) * mult,
+    servicesGrowthYoY: d.servicesGrowthYoY * mult,
+  };
 }
 
 /**
@@ -196,7 +245,7 @@ function buildValuationSensitivity(d: FinancialDrivers): ValuationSensitivityRow
     return buildValuation(pnl, dd);
   };
 
-  const DELTA = 0.20;
+  const DELTA = 0.2;
 
   return [
     {
@@ -249,11 +298,23 @@ export function computeFinancialModel(d: FinancialDrivers): FinancialModel {
   };
 
   return {
-    currency: d.currency, pnl, arrBridge, balanceSheet: bs, cashFlow: cf,
-    unitEconomics: [ue], kpis, breakEven: { ebitdaPositivePeriod: ebitdaPositive, runwayMonths },
+    currency: d.currency,
+    pnl,
+    arrBridge,
+    balanceSheet: bs,
+    cashFlow: cf,
+    unitEconomics: [ue],
+    kpis,
+    breakEven: { ebitdaPositivePeriod: ebitdaPositive, runwayMonths },
     valuation,
     // W12.2 — sensitivity matrix (fail-soft: nie blokuje gdy coś padnie)
-    valuationSensitivity: (() => { try { return buildValuationSensitivity(d); } catch { return undefined; } })(),
+    valuationSensitivity: (() => {
+      try {
+        return buildValuationSensitivity(d);
+      } catch {
+        return undefined;
+      }
+    })(),
     scenarios,
   };
 }
@@ -272,33 +333,68 @@ export function runCfoReview(model: FinancialModel, d: FinancialDrivers): Valida
     return Math.abs(assets - le) <= Math.max(5, assets * 0.02);
   });
   add('bs_balances', 'Bilans się bilansuje (Assets ≈ L+E)', bsOk);
-  const cfTies = model.balanceSheet.every((b, i) => Math.abs(b.cash - model.cashFlow[i].endingCash) <= 2);
+  const cfTies = model.balanceSheet.every(
+    (b, i) => Math.abs(b.cash - model.cashFlow[i].endingCash) <= 2
+  );
   add('cf_ties_cash', 'CF ending-cash = BS cash', cfTies);
 
   // C2 — marże w normach
-  add('gross_margin_band', 'Gross margin 70-90%', d.grossMargin >= 0.7 && d.grossMargin <= 0.95, r2(d.grossMargin), '0.70-0.90');
+  add(
+    'gross_margin_band',
+    'Gross margin 70-90%',
+    d.grossMargin >= 0.7 && d.grossMargin <= 0.95,
+    r2(d.grossMargin),
+    '0.70-0.90'
+  );
   const opexTotal = d.smPctRevenue + d.rdPctRevenue + d.gaPctRevenue;
-  add('opex_band', 'OpEx total 40-95% rev (early-stage)', opexTotal <= 0.95, r2(opexTotal), '≤0.95');
+  add(
+    'opex_band',
+    'OpEx total 40-95% rev (early-stage)',
+    opexTotal <= 0.95,
+    r2(opexTotal),
+    '≤0.95'
+  );
 
   // C3 — unit economics (z range-validatorami, W2.2 — head-to-head wykrył nierealne wartości)
   add('ltv_cac_min', 'LTV:CAC ≥ 3', ue.ltvCacRatio >= 3, ue.ltvCacRatio, '≥3');
   // Górny pułap: LTV:CAC > 8 zwykle = zaniżony CAC / fałszywa precyzja (nie hard-fail, flaga wiarygodności).
   add('ltv_cac_ceiling', 'LTV:CAC ≤ 8 (wiarygodne)', ue.ltvCacRatio <= 8, ue.ltvCacRatio, '≤8');
-  add('cac_payback', 'CAC payback ≤ 24 mies', ue.cacPaybackMonths <= 24, ue.cacPaybackMonths, '≤24');
+  add(
+    'cac_payback',
+    'CAC payback ≤ 24 mies',
+    ue.cacPaybackMonths <= 24,
+    ue.cacPaybackMonths,
+    '≤24'
+  );
   // Dolny pułap: payback < 3 mies dla B2B SaaS jest nierealistycznie szybki (flaga).
-  add('cac_payback_floor', 'CAC payback ≥ 3 mies (realny)', ue.cacPaybackMonths >= 3, ue.cacPaybackMonths, '≥3');
+  add(
+    'cac_payback_floor',
+    'CAC payback ≥ 3 mies (realny)',
+    ue.cacPaybackMonths >= 3,
+    ue.cacPaybackMonths,
+    '≥3'
+  );
   add('rule_of_40', 'Rule of 40 ≥ 40', model.kpis.ruleOf40 >= 40, model.kpis.ruleOf40, '≥40');
   // ARR > 0 gdy są przychody (ARR=0 przy SaaS = błąd modelu, wykryty w head-to-head).
   const lastArrEnding = model.arrBridge[model.arrBridge.length - 1]?.ending ?? 0;
   const hasRevenue = model.pnl[model.pnl.length - 1]?.revenue > 0;
-  add('arr_positive', 'ARR (ost.) > 0 gdy są przychody', !hasRevenue || lastArrEnding > 0, lastArrEnding, '>0');
+  add(
+    'arr_positive',
+    'ARR (ost.) > 0 gdy są przychody',
+    !hasRevenue || lastArrEnding > 0,
+    lastArrEnding,
+    '>0'
+  );
 
   // C4 — brak ujemnej gotówki bez finansowania
   const everNegative = model.cashFlow.some((c) => c.endingCash < 0);
   add('no_negative_cash', 'Brak ujemnej gotówki w horyzoncie', !everNegative);
 
   // C5 — ARR bridge reconciluje (ending > 0, monotoniczny start)
-  const arrOk = model.arrBridge.every((a) => Math.abs((a.beginning + a.newLogo + a.expansion - a.contraction - a.churned) - a.ending) <= 2);
+  const arrOk = model.arrBridge.every(
+    (a) =>
+      Math.abs(a.beginning + a.newLogo + a.expansion - a.contraction - a.churned - a.ending) <= 2
+  );
   add('arr_bridge_reconciles', 'ARR bridge się domyka', arrOk);
 
   // C9/B9 — terminal value nie dominuje wyceny
@@ -312,17 +408,44 @@ export function runCfoReview(model: FinancialModel, d: FinancialDrivers): Valida
     if (i > 0) {
       const prev = model.pnl[i - 1].revenue;
       if (prev > 0 && p.revenue / prev > 5) {
-        antiPatterns.push({ pattern: 'hockey_stick_no_driver', severity: 'flag', detail: `${p.period}: przychód ×${r2(p.revenue / prev)} r/r`, ref: p.period });
+        antiPatterns.push({
+          pattern: 'hockey_stick_no_driver',
+          severity: 'flag',
+          detail: `${p.period}: przychód ×${r2(p.revenue / prev)} r/r`,
+          ref: p.period,
+        });
       }
     }
   });
   // revenue ramp bez CAC
-  if (!d.cac || d.cac <= 0) antiPatterns.push({ pattern: 'revenue_ramp_without_cac', severity: 'reject', detail: 'Brak CAC przy rampie przychodu SaaS' });
+  if (!d.cac || d.cac <= 0)
+    antiPatterns.push({
+      pattern: 'revenue_ramp_without_cac',
+      severity: 'reject',
+      detail: 'Brak CAC przy rampie przychodu SaaS',
+    });
   // fałszywa precyzja: LTV:CAC absurdalnie wysoki (W2.2)
-  if (ue.ltvCacRatio > 8) antiPatterns.push({ pattern: 'false_precision', severity: 'flag', detail: `LTV:CAC ${r2(ue.ltvCacRatio)}× nierealnie wysoki — zweryfikuj CAC`, ref: 'ue.cac' });
+  if (ue.ltvCacRatio > 8)
+    antiPatterns.push({
+      pattern: 'false_precision',
+      severity: 'flag',
+      detail: `LTV:CAC ${r2(ue.ltvCacRatio)}× nierealnie wysoki — zweryfikuj CAC`,
+      ref: 'ue.cac',
+    });
 
   // hard gate = integralność modelu + kanoniczny próg fundowalności (LTV:CAC≥3, Rule of 40)
-  const hardFail = checks.some((c) => !c.passed && ['bs_balances', 'cf_ties_cash', 'no_negative_cash', 'arr_bridge_reconciles', 'ltv_cac_min', 'rule_of_40'].includes(c.id));
+  const hardFail = checks.some(
+    (c) =>
+      !c.passed &&
+      [
+        'bs_balances',
+        'cf_ties_cash',
+        'no_negative_cash',
+        'arr_bridge_reconciles',
+        'ltv_cac_min',
+        'rule_of_40',
+      ].includes(c.id)
+  );
   const rejected = antiPatterns.some((a) => a.severity === 'reject');
   return { checks, antiPatterns, passed: !hardFail && !rejected };
 }

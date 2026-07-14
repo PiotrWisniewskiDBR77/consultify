@@ -26,8 +26,8 @@ import {
   type ADMAPillarId,
 } from '../admaStructure';
 import {
-  computeADMATransformationScores,
   type ADMATransformationScore,
+  computeADMATransformationScores,
 } from '../admaTransformations';
 
 // ============================================
@@ -200,7 +200,10 @@ export function buildFoFRoad(
     dimensions: Object.fromEntries(
       ADMA_DIMENSIONS.map((d) => [
         d.id,
-        { current: data.dimensions?.[d.id]?.current ?? null, target: data.dimensions?.[d.id]?.target ?? null },
+        {
+          current: data.dimensions?.[d.id]?.current ?? null,
+          target: data.dimensions?.[d.id]?.target ?? null,
+        },
       ])
     ),
     fofBenchmark,
@@ -271,7 +274,10 @@ function buildExecutiveSummary(
   const strongestPillar = [...assessedPillars].sort((a, b) => b.current - a.current)[0];
   const weakestPillar = [...assessedPillars].sort((a, b) => a.current - b.current)[0];
 
-  const topGaps = dimRows.filter((r) => r.gap > 0).sort((a, b) => b.gap - a.gap).slice(0, 3);
+  const topGaps = dimRows
+    .filter((r) => r.gap > 0)
+    .sort((a, b) => b.gap - a.gap)
+    .slice(0, 3);
 
   const strongPName = strongestPillar?.name ?? (isPL ? 'brak' : 'none');
   const weakPName = weakestPillar?.name ?? (isPL ? 'brak' : 'none');
@@ -313,7 +319,9 @@ function buildExecutiveSummary(
       : `All transformations reached the FoF threshold — the organization meets the Factory of the Future criterion; the priority is to sustain and scale.`;
 
   // ---- K3: three gaps ----
-  const gapsList = topGaps.map((g) => `${g.name} (${round1(g.current)}→${round1(g.target)})`).join('; ');
+  const gapsList = topGaps
+    .map((g) => `${g.name} (${round1(g.current)}→${round1(g.target)})`)
+    .join('; ');
   const k3gaps = topGaps.length
     ? isPL
       ? `Trzy największe luki wymiarów, w kolejności pilności: ${gapsList}. Te luki są korzeniami transformacji poniżej progu FoF — ich zaniechanie utrwala dystans do Fabryki Przyszłości.`

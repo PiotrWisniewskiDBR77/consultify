@@ -209,11 +209,7 @@ export function payback(cashflows: number[], initial: number): number {
  * each period's flow is discounted at `ratePct` before being applied against the
  * (positive) `initial` investment. Returns `NaN` if never recovered.
  */
-export function discountedPayback(
-  cashflows: number[],
-  ratePct: number,
-  initial: number,
-): number {
+export function discountedPayback(cashflows: number[], ratePct: number, initial: number): number {
   const r = toFraction(ratePct);
   let remaining = Math.abs(initial);
   for (let t = 0; t < cashflows.length; t++) {
@@ -236,11 +232,7 @@ export function discountedPayback(
  * `initial` is the period-0 outlay; its magnitude is the denominator. Returns
  * `NaN` when the outlay is zero (PI undefined). PI > 1 ⇔ positive NPV.
  */
-export function profitabilityIndex(
-  cashflows: number[],
-  ratePct: number,
-  initial: number,
-): number {
+export function profitabilityIndex(cashflows: number[], ratePct: number, initial: number): number {
   const outlay = Math.abs(initial);
   if (outlay === 0) return NaN;
   const pvInflows = npv(cashflows, ratePct, 0); // initial excluded → pure inflow PV

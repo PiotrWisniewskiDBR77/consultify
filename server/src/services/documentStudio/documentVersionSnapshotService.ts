@@ -34,11 +34,6 @@ import {
   computeDocumentSchemaDiff,
   summarizeDocumentSchemaDiff,
 } from './documentSchemaDiffService.js';
-import {
-  __resetSnapshotRegistryDaoForTests,
-  loadSnapshotsForOrg as daoLoadSnapshotsForOrg,
-  persistSnapshot as daoPersistSnapshot,
-} from './documentVersionSnapshotRegistryDao.js';
 import type {
   DocumentAuditEntry,
   DocumentSchema,
@@ -46,6 +41,11 @@ import type {
   DocumentVersionSnapshot,
   DocumentVersionSnapshotOrigin,
 } from './documentStudioTypes.js';
+import {
+  __resetSnapshotRegistryDaoForTests,
+  loadSnapshotsForOrg as daoLoadSnapshotsForOrg,
+  persistSnapshot as daoPersistSnapshot,
+} from './documentVersionSnapshotRegistryDao.js';
 
 // =============================================================================
 // In-process registry (live cache) + write-through to Postgres DAO

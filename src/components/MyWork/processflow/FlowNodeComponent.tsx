@@ -271,9 +271,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
           className={`bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-border-strong w-full ${innerRotate}`}
         />
       ) : (
-        <div
-          className={`text-xs font-medium text-c-text text-center ${innerRotate}`}
-        >
+        <div className={`text-xs font-medium text-c-text text-center ${innerRotate}`}>
           {data?.label || shape}
         </div>
       )}
@@ -336,9 +334,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
       {/* VSM-specific data fields */}
       {shape === 'vsm_process' &&
         (data?.cycleTime || data?.changeoverTime || data?.uptimePercent) && (
-          <div
-            className={`text-[8px] text-c-text-muted mt-1 space-y-0.5 ${innerRotate}`}
-          >
+          <div className={`text-[8px] text-c-text-muted mt-1 space-y-0.5 ${innerRotate}`}>
             {data.cycleTime && <div>C/T: {data.cycleTime}</div>}
             {data.changeoverTime && <div>C/O: {data.changeoverTime}</div>}
             {data.uptimePercent != null && <div>Up: {data.uptimePercent}%</div>}
@@ -346,9 +342,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
           </div>
         )}
       {shape === 'vsm_inventory' && data?.inventory != null && (
-        <div
-          className={`text-[8px] font-bold text-c-warning mt-0.5 ${innerRotate}`}
-        >
+        <div className={`text-[8px] font-bold text-c-warning mt-0.5 ${innerRotate}`}>
           {data.inventory} pcs
         </div>
       )}

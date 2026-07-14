@@ -128,8 +128,24 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
           <button
             onClick={() => onToggleCollapse(lane.id)}
             className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
-            title={collapsed ? (isPl ? 'Rozwiń tor' : 'Expand lane') : isPl ? 'Zwiń tor' : 'Collapse lane'}
-            aria-label={collapsed ? (isPl ? 'Rozwiń tor' : 'Expand lane') : isPl ? 'Zwiń tor' : 'Collapse lane'}
+            title={
+              collapsed
+                ? isPl
+                  ? 'Rozwiń tor'
+                  : 'Expand lane'
+                : isPl
+                  ? 'Zwiń tor'
+                  : 'Collapse lane'
+            }
+            aria-label={
+              collapsed
+                ? isPl
+                  ? 'Rozwiń tor'
+                  : 'Expand lane'
+                : isPl
+                  ? 'Zwiń tor'
+                  : 'Collapse lane'
+            }
           >
             {collapsed ? (
               <ChevronRight size={11} className="text-slate-600 dark:text-slate-400" />

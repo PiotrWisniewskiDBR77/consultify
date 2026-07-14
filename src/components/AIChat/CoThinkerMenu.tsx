@@ -289,7 +289,9 @@ export const CoThinkerMenu: React.FC<{
                 >
                   {label}
                 </span>
-                {isActive && <Check size={16} className="shrink-0 text-slate-700 dark:text-slate-200" />}
+                {isActive && (
+                  <Check size={16} className="shrink-0 text-slate-700 dark:text-slate-200" />
+                )}
               </button>
             );
           })}

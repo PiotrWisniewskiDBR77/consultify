@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import type { FieldType, LinkedRecordFieldOptions } from '@/types/tablePlatform';
 
 import { CellEditor } from './CellEditor';
-import { getConditionalStyle, type FormatRule } from './ConditionalFormatting';
+import { type FormatRule, getConditionalStyle } from './ConditionalFormatting';
 import { LinkedRecordDisplay } from './LinkedRecordDisplay';
 import { PlatformCellRenderer } from './PlatformCellRenderer';
 import { RowGutterIndicator } from './provenance/RowGutterIndicator';
@@ -43,8 +43,7 @@ const VIRTUAL_BUFFER = 10;
 const headerCell =
   'bg-c-surface-raised text-xs uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle font-semibold text-left whitespace-nowrap select-none';
 
-const bodyCell =
-  'border-b border-c-border-subtle h-9 px-3 align-middle text-sm text-c-text';
+const bodyCell = 'border-b border-c-border-subtle h-9 px-3 align-middle text-sm text-c-text';
 
 const stickyTop = 'sticky top-0 z-10';
 
@@ -366,10 +365,7 @@ const DataGrid: React.FC<DataGridProps> = ({
     (row: TableNode, col: ColumnDef) => {
       if (isMissingField(col.key, viewConfig)) {
         return (
-          <div
-            className="text-xs text-c-warning italic select-none"
-            aria-hidden
-          >
+          <div className="text-xs text-c-warning italic select-none" aria-hidden>
             —
           </div>
         );
@@ -483,7 +479,9 @@ const DataGrid: React.FC<DataGridProps> = ({
         className="min-h-[320px] flex-1 overflow-y-auto overflow-x-auto"
         onScroll={onBodyScroll}
       >
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-max min-w-full border-collapse text-left">
+        <table
+          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-max min-w-full border-collapse text-left"
+        >
           <thead className={stickyTop}>
             <tr>
               <th
@@ -665,18 +663,13 @@ const DataGrid: React.FC<DataGridProps> = ({
                             ? 'bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] border-b border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] px-3 py-2 text-xs text-c-warning italic h-9 align-middle'
                             : bodyCell,
                           !missing && 'border-r border-c-border-subtle min-w-0',
-                          missing && 'border-r border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] min-w-0',
-                          isPrimary &&
-                            !missing &&
-                            'sticky z-[5] border-r border-c-border-subtle',
+                          missing &&
+                            'border-r border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] min-w-0',
+                          isPrimary && !missing && 'sticky z-[5] border-r border-c-border-subtle',
                           isPrimary &&
                             missing &&
                             'sticky z-[5] border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)]',
-                          isPrimary &&
-                            !missing &&
-                            (selected
-                              ? 'bg-c-accent-soft'
-                              : 'bg-c-surface'),
+                          isPrimary && !missing && (selected ? 'bg-c-accent-soft' : 'bg-c-surface'),
                           isPrimary &&
                             missing &&
                             (selected

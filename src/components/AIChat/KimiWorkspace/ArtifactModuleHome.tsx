@@ -107,7 +107,8 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   //            Saved leak WIP states (generated/editing/generating) so it
   //            mirrored Recent whenever no row happened to be a draft.
   const savedArtifacts = useMemo(
-    () => recentArtifacts.filter((a) => SAVED_STATUS_KEYS.has(String(a.statusKey || '').toLowerCase())),
+    () =>
+      recentArtifacts.filter((a) => SAVED_STATUS_KEYS.has(String(a.statusKey || '').toLowerCase())),
     [recentArtifacts]
   );
   // Block A / A-S5b — when ON, lane=tabele swaps to the
@@ -547,9 +548,7 @@ function TemplatesGrid({
           <p className="text-sm font-medium text-c-text group-hover:text-brand transition-colors line-clamp-1">
             {card.title}
           </p>
-          <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">
-            {card.desc}
-          </p>
+          <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">{card.desc}</p>
         </button>
       ))}
     </div>
@@ -608,9 +607,7 @@ function ArtifactsList({
             className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-c-text truncate">
-                {item.title}
-              </p>
+              <p className="text-sm font-medium text-c-text truncate">{item.title}</p>
               <p className="text-xs text-c-text-secondary mt-0.5">
                 {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                   day: 'numeric',

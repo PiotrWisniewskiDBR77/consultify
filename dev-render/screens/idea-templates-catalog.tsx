@@ -18,7 +18,8 @@ import {
 } from '../../src/components/MyWork/ideaConsultingTemplates';
 import type { TemplateDefinition } from '../../src/components/MyWork/IdeaTemplateGallery';
 
-const isPl = () => (new URLSearchParams(window.location.search).get('lang') || 'pl').startsWith('pl');
+const isPl = () =>
+  (new URLSearchParams(window.location.search).get('lang') || 'pl').startsWith('pl');
 
 const TOOL_LABEL: Record<string, string> = {
   whiteboard: 'Whiteboard',
@@ -46,7 +47,9 @@ function seedSummary(t: TemplateDefinition): { kind: string; items: string[] } {
   }
   if (t.tool === 'process_flow') {
     const lanes = ((t.extensions as any)?.processFlow?.lanes || []) as { label: string }[];
-    const steps = t.nodes.map((n: any) => String(n?.data?.label || '').split('\n')[0]).filter(Boolean);
+    const steps = t.nodes
+      .map((n: any) => String(n?.data?.label || '').split('\n')[0])
+      .filter(Boolean);
     return {
       kind: `${lanes.length} pasy · ${t.nodes.length} kroków`,
       items: lanes.length ? lanes.map((l) => `▸ ${l.label}`).concat(steps.slice(0, 4)) : steps,

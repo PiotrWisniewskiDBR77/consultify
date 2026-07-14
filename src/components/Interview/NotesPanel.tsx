@@ -273,7 +273,10 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                           <span
                             className={`px-1.5 py-0.5 text-xs rounded-token-xs ${categoryConfig.bgColor} ${categoryConfig.color}`}
                           >
-                            {t(`interview.workspace.categoryLabel.${note.category}`, categoryConfig.labelEn)}
+                            {t(
+                              `interview.workspace.categoryLabel.${note.category}`,
+                              categoryConfig.labelEn
+                            )}
                           </span>
                         )}
                       </div>
@@ -332,9 +335,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             variant="new"
             icon={FileText}
             title={t('interview.notesPanel.noNotesYet')}
-            description={
-              t('interview.notesPanel.addYourFirstNoteTo')
-            }
+            description={t('interview.notesPanel.addYourFirstNoteTo')}
             compact
             primaryAction={
               readOnly

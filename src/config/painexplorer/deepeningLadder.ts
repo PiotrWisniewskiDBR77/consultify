@@ -69,7 +69,7 @@ export const PAIN_DEEPENING_LADDER: Record<PainStageId, LadderRung[]> = {
       },
       rationale: {
         pl: 'Odkrywanie bólu zaczyna się od jego nazwania słowami ludzi z pierwszej linii, nie od gotowej listy problemów doradcy.',
-        en: 'Pain discovery starts by naming it in the words of front-line people, not from a consultant\'s ready-made problem list.',
+        en: "Pain discovery starts by naming it in the words of front-line people, not from a consultant's ready-made problem list.",
       },
     },
     {
@@ -186,7 +186,7 @@ export const PAIN_DEEPENING_LADDER: Record<PainStageId, LadderRung[]> = {
       label: { pl: 'Dowód', en: 'Evidence' },
       question: {
         pl: 'Czy ten czas jest zmierzony (log, obserwacja), czy oszacowany z pamięci zespołu?',
-        en: 'Is this time measured (a log, an observation) or estimated from the team\'s memory?',
+        en: "Is this time measured (a log, an observation) or estimated from the team's memory?",
       },
       rationale: {
         pl: 'Szacunek z pamięci potrafi mylić się kilkukrotnie; status dowodu decyduje, czy liczbę można pokazać zarządowi.',
@@ -253,7 +253,7 @@ export const PAIN_DEEPENING_LADDER: Record<PainStageId, LadderRung[]> = {
       label: { pl: 'Kwantyfikacja', en: 'Quantification' },
       question: {
         pl: 'Ile z rocznego kosztu bólu usunie zaadresowanie tej konkretnej przyczyny źródłowej?',
-        en: 'How much of the pain\'s annual cost would addressing this specific root cause remove?',
+        en: "How much of the pain's annual cost would addressing this specific root cause remove?",
       },
       rationale: {
         pl: 'Nie każda przyczyna źródłowa jest warta usunięcia; udział w koszcie bólu decyduje, którą przyczynę zaatakować najpierw.',
@@ -293,11 +293,11 @@ export const PAIN_PROPOSAL_BANK: Record<PainStageId, StageProposal[]> = {
       rung: 'surface',
       title: {
         pl: 'Zebrać bóle słowami pierwszej linii, nie doradcy',
-        en: 'Capture pains in front-line words, not the consultant\'s',
+        en: "Capture pains in front-line words, not the consultant's",
       },
       explanation: {
         pl: 'Zanim zaczniecie klasyfikować, zbierzcie surowe zgłoszenia od ludzi wykonujących pracę — ich sformułowania niosą kontekst, którego lista problemów doradcy nie odda.',
-        en: 'Before classifying anything, gather raw reports from the people doing the work — their phrasing carries context a consultant\'s problem list cannot reproduce.',
+        en: "Before classifying anything, gather raw reports from the people doing the work — their phrasing carries context a consultant's problem list cannot reproduce.",
       },
     },
     {
@@ -411,7 +411,7 @@ export const PAIN_PROPOSAL_BANK: Record<PainStageId, StageProposal[]> = {
       },
       explanation: {
         pl: 'Suma minut na wystąpienie × liczba wystąpień/rok × liczba osób daje roczny koszt bólu — liczbę, która porządkuje portfel wg zwrotu.',
-        en: 'Minutes per occurrence × occurrences/year × people gives the pain\'s annual cost — the number that ranks the portfolio by return.',
+        en: "Minutes per occurrence × occurrences/year × people gives the pain's annual cost — the number that ranks the portfolio by return.",
       },
     },
     {
@@ -453,11 +453,11 @@ export const PAIN_PROPOSAL_BANK: Record<PainStageId, StageProposal[]> = {
       rung: 'quantification',
       title: {
         pl: 'Oszacować udział przyczyny w koszcie bólu',
-        en: 'Estimate the cause\'s share of the pain cost',
+        en: "Estimate the cause's share of the pain cost",
       },
       explanation: {
         pl: 'Policzcie, ile rocznego kosztu bólu usunie zaadresowanie tej przyczyny — udział decyduje, którą przyczynę zaatakować najpierw.',
-        en: 'Compute how much of the pain\'s annual cost addressing this cause removes — its share decides which cause to attack first.',
+        en: "Compute how much of the pain's annual cost addressing this cause removes — its share decides which cause to attack first.",
       },
     },
     {

@@ -144,12 +144,8 @@ export const ValueJourneySection: React.FC = () => {
                     {index + 1}
                   </div>
                   <div>
-                    <p className="mb-1 text-sm font-black text-c-text">
-                      {title}
-                    </p>
-                    <p className="text-xs leading-relaxed text-c-text-muted">
-                      {description}
-                    </p>
+                    <p className="mb-1 text-sm font-black text-c-text">{title}</p>
+                    <p className="text-xs leading-relaxed text-c-text-muted">{description}</p>
                   </div>
                 </div>
               ))}
@@ -190,12 +186,8 @@ export const ValueJourneySection: React.FC = () => {
                     {index + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-black text-c-text mb-1">
-                      {title}
-                    </p>
-                    <p className="text-xs text-c-text-muted leading-relaxed">
-                      {description}
-                    </p>
+                    <p className="text-sm font-black text-c-text mb-1">{title}</p>
+                    <p className="text-xs text-c-text-muted leading-relaxed">{description}</p>
                   </div>
                 </div>
               ))}

@@ -79,7 +79,9 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-left hidden md:table">
+          <table
+            /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-left hidden md:table"
+          >
             <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase font-semibold">
               <tr>
                 <th className="p-4 w-1/4">Role</th>

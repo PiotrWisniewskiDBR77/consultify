@@ -73,7 +73,7 @@ export const whatIfHire = (
   newHires: number,
   loadedCostPerHire: number,
   startPeriod: number,
-  horizon: number,
+  horizon: number
 ): WhatIfHireResult => {
   const openingCash = num(baseline?.openingCash);
   const monthlyNetCash = num(baseline?.monthlyNetCash);
@@ -180,7 +180,7 @@ export interface WhatIfPriceChangeResult {
 export const whatIfPriceChange = (
   baseline: PriceBaseline,
   priceChangePct: number,
-  volumeElasticity: number,
+  volumeElasticity: number
 ): WhatIfPriceChangeResult => {
   const revenue = num(baseline?.revenue);
   const variableCostRatio = Math.min(1, Math.max(0, num(baseline?.variableCostRatio)));
@@ -277,7 +277,7 @@ const npvOfInitiative = (init: InitiativeForNpv, delayYears: number): number => 
  */
 export const whatIfDelayInitiative = (
   initiative: InitiativeForNpv,
-  delayMonths: number,
+  delayMonths: number
 ): WhatIfDelayResult => {
   const delayYears = Math.max(0, num(delayMonths)) / 12;
 

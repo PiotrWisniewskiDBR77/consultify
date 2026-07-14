@@ -36,8 +36,7 @@ export function buildInitiativeDeepLink(
 /** Odczytaj id inicjatywy z deep-linku (z podanego search lub bieżącego URL). */
 export function readInitiativeDeepLinkId(search?: string): string | null {
   try {
-    const qs =
-      search ?? (typeof window !== 'undefined' ? window.location.search : '');
+    const qs = search ?? (typeof window !== 'undefined' ? window.location.search : '');
     const v = new URLSearchParams(qs).get(INITIATIVE_DEEP_LINK_PARAM);
     return v && v.trim() ? v.trim() : null;
   } catch {

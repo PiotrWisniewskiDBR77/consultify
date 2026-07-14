@@ -150,7 +150,8 @@ export const FoFRoadBar: React.FC<{
                       : 'font-semibold text-c-warning'
                   }
                 >
-                  {it.current === null ? '—' : `${Math.round(cur * 10) / 10}/${scaleMax}`} · {gapLabel}
+                  {it.current === null ? '—' : `${Math.round(cur * 10) / 10}/${scaleMax}`} ·{' '}
+                  {gapLabel}
                 </span>
               </div>
               <div className="relative h-2.5 rounded-full bg-c-border-subtle overflow-hidden">
@@ -192,7 +193,10 @@ export const ConclusionGapCards: React.FC<{
   return (
     <div className="space-y-4">
       {cards.map((card, idx) => (
-        <div key={idx} className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
+        <div
+          key={idx}
+          className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5"
+        >
           <div className="flex items-start justify-between gap-3 mb-3">
             <h4 className="font-bold text-c-text">{card.title}</h4>
             <span className="shrink-0 rounded-md bg-c-accent-soft px-2 py-0.5 text-xs font-semibold text-c-accent">

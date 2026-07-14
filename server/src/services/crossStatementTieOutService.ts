@@ -134,11 +134,10 @@ export function validatePackTieOut(pack: StatementPack, tolerancePct = 1): TieOu
         actual: retainedChange,
         onFail: 'warning',
         pass: 'Net income ties to the change in retained earnings.',
-        fail:
-          'Net income does not match the change in retained earnings — check for dividends or unposted equity movements.',
+        fail: 'Net income does not match the change in retained earnings — check for dividends or unposted equity movements.',
       },
-      tolerancePct,
-    ),
+      tolerancePct
+    )
   );
 
   // 2. CLOSING_CASH_MATCH — cash flow closing cash equals the balance sheet cash line.
@@ -154,8 +153,8 @@ export function validatePackTieOut(pack: StatementPack, tolerancePct = 1): TieOu
         pass: 'Closing cash on the cash flow statement ties to balance sheet cash.',
         fail: 'Closing cash on the cash flow statement does not match balance sheet cash.',
       },
-      tolerancePct,
-    ),
+      tolerancePct
+    )
   );
 
   // 3. CF_INDIRECT_RECONCILE — operating cash flow reconciles from net income.
@@ -173,8 +172,8 @@ export function validatePackTieOut(pack: StatementPack, tolerancePct = 1): TieOu
         pass: 'Operating cash flow reconciles to net income + D&A − ΔWC.',
         fail: 'Operating cash flow does not reconcile to net income + D&A − ΔWC.',
       },
-      tolerancePct,
-    ),
+      tolerancePct
+    )
   );
 
   // 4. BS_BALANCES — the accounting identity: Assets = Liabilities + Equity.
@@ -191,8 +190,8 @@ export function validatePackTieOut(pack: StatementPack, tolerancePct = 1): TieOu
         pass: 'Balance sheet balances: assets equal liabilities plus equity.',
         fail: 'Balance sheet does not balance: assets do not equal liabilities plus equity.',
       },
-      tolerancePct,
-    ),
+      tolerancePct
+    )
   );
 
   // 5. CF_SECTIONS_SUM — operating + investing + financing = net change in cash.
@@ -209,8 +208,8 @@ export function validatePackTieOut(pack: StatementPack, tolerancePct = 1): TieOu
         pass: 'Cash flow sections sum to the reported net change in cash.',
         fail: 'Cash flow sections do not sum to the reported net change in cash.',
       },
-      tolerancePct,
-    ),
+      tolerancePct
+    )
   );
 
   return checks;

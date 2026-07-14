@@ -87,12 +87,8 @@ export default function PublicViewPage() {
             </div>
           </div>
           <div>
-            <h2 className="text-base font-semibold text-c-text">
-              {t('table.passwordProtected')}
-            </h2>
-            <p className="mt-1 text-xs text-c-text-muted">
-              {t('table.enterPasswordToView')}
-            </p>
+            <h2 className="text-base font-semibold text-c-text">{t('table.passwordProtected')}</h2>
+            <p className="mt-1 text-xs text-c-text-muted">{t('table.enterPasswordToView')}</p>
           </div>
           <input
             ref={inputRef}
@@ -122,7 +118,6 @@ export default function PublicViewPage() {
       <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <div className="rounded-xl border border-danger-200 bg-danger-50 dark:border-danger-800 dark:bg-danger-900/20 p-8 max-w-md text-center">
           <h2 className="text-lg font-semibold text-danger-800 dark:text-danger-200">
-
             {t('table.viewUnavailable')}
             View Unavailable
           </h2>

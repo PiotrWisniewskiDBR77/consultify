@@ -51,8 +51,10 @@ export function isValidViewport(v: unknown): v is ProcessFlowViewport {
 export function normalizeProcessFlowViewState(raw: unknown): ProcessFlowViewState {
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_PROCESS_FLOW_VIEW_STATE };
   const v = raw as Record<string, unknown>;
-  const layoutMode: ProcessFlowViewState['layoutMode'] = v.layoutMode === 'vertical' ? 'vertical' : 'horizontal';
-  const showGrid = typeof v.showGrid === 'boolean' ? v.showGrid : DEFAULT_PROCESS_FLOW_VIEW_STATE.showGrid;
+  const layoutMode: ProcessFlowViewState['layoutMode'] =
+    v.layoutMode === 'vertical' ? 'vertical' : 'horizontal';
+  const showGrid =
+    typeof v.showGrid === 'boolean' ? v.showGrid : DEFAULT_PROCESS_FLOW_VIEW_STATE.showGrid;
   const snap = typeof v.snap === 'boolean' ? v.snap : DEFAULT_PROCESS_FLOW_VIEW_STATE.snap;
   const viewport = isValidViewport(v.viewport) ? v.viewport : undefined;
   return { layoutMode, showGrid, snap, ...(viewport ? { viewport } : {}) };

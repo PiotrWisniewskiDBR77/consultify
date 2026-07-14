@@ -281,7 +281,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               <User size={14} />
             )
           }
-          label={currentAssignee?.name || (t('myWork.quickActions.unassigned', 'Unassigned'))}
+          label={currentAssignee?.name || t('myWork.quickActions.unassigned', 'Unassigned')}
         >
           <button
             onClick={() => {
@@ -348,10 +348,13 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             <Calendar size={14} />
             {!compact && dueDate && (
               <span className="hidden sm:inline">
-                {new Date(dueDate).toLocaleDateString(t('myWork.quickActions.toLocaleDateString', 'en-US'), {
-                  month: 'short',
-                  day: 'numeric',
-                })}
+                {new Date(dueDate).toLocaleDateString(
+                  t('myWork.quickActions.toLocaleDateString', 'en-US'),
+                  {
+                    month: 'short',
+                    day: 'numeric',
+                  }
+                )}
               </span>
             )}
           </button>

@@ -224,13 +224,7 @@ export function recommendLever(
     );
 
   const riskWord = (r: LeverRisk): string =>
-    isPL
-      ? r === 'low'
-        ? 'niskie'
-        : r === 'medium'
-          ? 'umiarkowane'
-          : 'wysokie'
-      : r;
+    isPL ? (r === 'low' ? 'niskie' : r === 'medium' ? 'umiarkowane' : 'wysokie') : r;
 
   const verdict = isPL
     ? `Rekomendacja: „${chosen.lever.name}" — najlepszy wynik po korekcie o ryzyko, nie najwyższa surowa liczba.`

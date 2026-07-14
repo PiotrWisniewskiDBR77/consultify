@@ -22,12 +22,7 @@
  * tests in isolation.
  */
 
-import {
-  PAIN_STAGES,
-  painStageLabel,
-  type Bilingual,
-  type PainStageId,
-} from './deepeningLadder';
+import { type Bilingual, PAIN_STAGES, type PainStageId, painStageLabel } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
 
@@ -372,15 +367,25 @@ export function buildW2MoveSequence(session: PainSession): SequencedMove[] {
       pl: 'Odrzucamy rozwiązywanie wszystkich bólów równolegle: bez skończonego pierwszego zysku zespół gubi wiarę, a żaden ból nie znika w całości.',
       en: 'We reject solving every pain in parallel: without a finished first win the team loses belief and no pain fully disappears.',
     },
-    expectedImpact: primaryScore.attractiveness >= 2.5 ? 'high' : primaryScore.attractiveness >= 1.7 ? 'medium' : 'low',
-    estimatedEffort: primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
+    expectedImpact:
+      primaryScore.attractiveness >= 2.5
+        ? 'high'
+        : primaryScore.attractiveness >= 1.7
+          ? 'medium'
+          : 'low',
+    estimatedEffort:
+      primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
     validation: VALID,
   });
 
   // Qualify is the cheapest structural filter — surface it explicitly if it has
   // scope and is not already the primary. Solving before qualifying wastes effort
   // on symptoms.
-  if (primary !== 'qualify' && scoreOf('qualify').minutesAddressed > 0 && ordered.includes('qualify')) {
+  if (
+    primary !== 'qualify' &&
+    scoreOf('qualify').minutesAddressed > 0 &&
+    ordered.includes('qualify')
+  ) {
     const qualifyScore = scoreOf('qualify');
     moves.push({
       order: order++,
@@ -395,7 +400,7 @@ export function buildW2MoveSequence(session: PainSession): SequencedMove[] {
       },
       tradeOff: {
         pl: 'Kosztem czasu na potwierdzenie bólu w drugim, niezależnym źródle — bez tego rozwiązujecie preferencję jednej osoby.',
-        en: 'At the cost of time to confirm the pain in a second, independent source — without it you would be solving one person\'s preference.',
+        en: "At the cost of time to confirm the pain in a second, independent source — without it you would be solving one person's preference.",
       },
       rejectedVariant: {
         pl: 'Odrzucamy rozwiązywanie objawu przed jego kwalifikacją: leczenie skutku bez procesu-źródła to gaszenie tego samego pożaru w kółko.',
@@ -418,12 +423,14 @@ export function buildW2MoveSequence(session: PainSession): SequencedMove[] {
       en: 'Diagnose the root cause before locking a fix',
     },
     rationale: {
-      pl: baseline.rootCount > 0
-        ? `${baseline.rootCount} z ${baseline.painCount} bólów wskazano jako usuwalny root; diagnoza chroni ${diagnoseScore.minutesAddressed} min/rok przed leczeniem objawu, do którego ból wróci.`
-        : `Żaden ból nie ma jeszcze nazwanej przyczyny źródłowej — diagnoza chroni ${diagnoseScore.minutesAddressed} min/rok przed rozwiązaniem, które leczy skutek, a ból wraca.`,
-      en: baseline.rootCount > 0
-        ? `${baseline.rootCount} of ${baseline.painCount} pains are flagged as a removable root; diagnosis protects ${diagnoseScore.minutesAddressed} min/yr from treating a symptom the pain will return to.`
-        : `No pain has a named root cause yet — diagnosis protects ${diagnoseScore.minutesAddressed} min/yr from a fix that treats the effect while the pain returns.`,
+      pl:
+        baseline.rootCount > 0
+          ? `${baseline.rootCount} z ${baseline.painCount} bólów wskazano jako usuwalny root; diagnoza chroni ${diagnoseScore.minutesAddressed} min/rok przed leczeniem objawu, do którego ból wróci.`
+          : `Żaden ból nie ma jeszcze nazwanej przyczyny źródłowej — diagnoza chroni ${diagnoseScore.minutesAddressed} min/rok przed rozwiązaniem, które leczy skutek, a ból wraca.`,
+      en:
+        baseline.rootCount > 0
+          ? `${baseline.rootCount} of ${baseline.painCount} pains are flagged as a removable root; diagnosis protects ${diagnoseScore.minutesAddressed} min/yr from treating a symptom the pain will return to.`
+          : `No pain has a named root cause yet — diagnosis protects ${diagnoseScore.minutesAddressed} min/yr from a fix that treats the effect while the pain returns.`,
     },
     tradeOff: {
       pl: 'Kosztem czasu na 5×dlaczego i nazwanie luki zdolności — zdolność analityczna, nie techniczna, ale bez niej ruch leczy skutek.',

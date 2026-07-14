@@ -33,7 +33,9 @@ export const GovernanceRules: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-left">
+          <table
+            /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-left"
+          >
             <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs font-semibold text-gray-500 uppercase">
               <tr>
                 <th className="px-6 py-4">Rule Name</th>

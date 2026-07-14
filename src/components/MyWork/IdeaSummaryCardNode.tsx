@@ -27,9 +27,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative w-[220px] p-3 rounded-2xl border-2 transition-all ${
-        selected
-          ? 'border-c-info ring-2 ring-c-info/30 shadow-lg'
-          : 'border-c-info/20 shadow-md'
+        selected ? 'border-c-info ring-2 ring-c-info/30 shadow-lg' : 'border-c-info/20 shadow-md'
       } bg-gradient-to-br from-c-info/5 to-c-info/5 dark:from-c-info/10 dark:to-c-info/10`}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-info !-top-1" />

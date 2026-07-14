@@ -66,6 +66,7 @@ import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
+import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
@@ -79,9 +80,9 @@ import {
   CollaborationOverlay,
   type CollaborationSessionState,
 } from './mindmap/CollaborationOverlay';
-import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { AIProposalPanel } from './processflow/AIProposalPanel';
 import type { ApplyPatchResult } from './processflow/applyProposalPatch';
+import { EdgeStylePopover } from './processflow/EdgeStylePopover';
 import { ExportDialog } from './processflow/ExportDialog';
 import { FlowEdgeComponent } from './processflow/FlowEdgeComponent';
 import {
@@ -90,6 +91,7 @@ import {
   LANE_HEIGHT,
   SHAPE_CONFIG,
 } from './processflow/FlowNodeComponent';
+import { isNodeInCollapsedLane, setLaneHeight, toggleLaneCollapsed } from './processflow/laneState';
 import {
   DEFAULT_LANES,
   FLOW_THEME_PRESETS,
@@ -97,14 +99,11 @@ import {
   LANE_COLORS,
 } from './processflow/LaneSystem';
 import { LaneSystem } from './processflow/LaneSystem';
-import { isNodeInCollapsedLane, setLaneHeight, toggleLaneCollapsed } from './processflow/laneState';
-import { appendComment, removeComment, type ProcessFlowNodeComment } from './processflow/nodeComments';
-import { ProcessFlowNodeCommentThread } from './processflow/ProcessFlowNodeCommentThread';
 import {
-  normalizeProcessFlowViewState,
-  processFlowViewportStorageKey,
-  resolveHydrationViewport,
-} from './processflow/viewState';
+  appendComment,
+  type ProcessFlowNodeComment,
+  removeComment,
+} from './processflow/nodeComments';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -117,8 +116,8 @@ import {
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
-import { EdgeStylePopover } from './processflow/EdgeStylePopover';
 import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
+import { ProcessFlowNodeCommentThread } from './processflow/ProcessFlowNodeCommentThread';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import {
   FLOW_MODE_GUIDANCE,
@@ -137,17 +136,22 @@ import {
   type ProcessFlowExternalRuntime,
   useProcessFlowPersistence,
 } from './processflow/useProcessFlowPersistence';
-import { useConfirmDialog } from './shared/ConfirmDialog';
-import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
-import { type ValidationWarning, validateFlowWarnings } from './processflow/validateFlow';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
+import { validateFlowWarnings, type ValidationWarning } from './processflow/validateFlow';
 import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
+import {
+  normalizeProcessFlowViewState,
+  processFlowViewportStorageKey,
+  resolveHydrationViewport,
+} from './processflow/viewState';
 import { ProcessKPIDashboard } from './ProcessKPIDashboard';
+import { useConfirmDialog } from './shared/ConfirmDialog';
 import { vsmNodeTypes } from './VSMNodeComponent';
 import { VSMTimelineBar } from './VSMTimelineBar';
+import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 
 type ReactFlowInstance = any;
 
@@ -2109,16 +2113,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [
-    addNode,
-    duplicateSelected,
-    flowMode,
-    handleSave,
-    open,
-    redo,
-    runBackendValidation,
-    undo,
-  ]);
+  }, [addNode, duplicateSelected, flowMode, handleSave, open, redo, runBackendValidation, undo]);
 
   // ── Graph update listener (from workspace proposals) ───────────────────
   useEffect(() => {
@@ -2267,60 +2262,60 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           breadcrumb card (IdeaMapWorkspace, z-57) which otherwise overlaps and
           blocks the Start / End / Action buttons. (M07 live-debug 2026-06-20) */}
       <div className="relative z-[60]">
-      <ProcessFlowToolbar
-        isPl={!!isPl}
-        locked={locked}
-        flowMode={flowMode}
-        setFlowMode={setFlowMode}
-        semanticKit={semanticKit}
-        availableShapes={availableShapes}
-        addNode={addNode}
-        addLane={addLane}
-        insertBetween={insertBetween}
-        splitPath={splitPath}
-        runValidation={runValidation}
-        showWarnings={showWarnings}
-        warnings={warnings}
-        showCoach={showCoach}
-        setShowCoach={setShowCoach}
-        coachLoading={coachLoading}
-        runProcessCoach={handleAICoach}
-        showSummary={showSummary}
-        setShowSummary={setShowSummary}
-        summaryLoading={summaryLoading}
-        generateSummary={handleProcessSummary}
-        showKPIDashboard={showKPIDashboard}
-        setShowKPIDashboard={setShowKPIDashboard}
-        showReadbackPanel={showReadbackPanel}
-        onOpenReadback={() => {
-          setShowReadbackPanel(true);
-          void fetchReadback();
-        }}
-        showAIPanel={showAIPanel}
-        onOpenAIProposal={() => setShowAIPanel(true)}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        undo={undo}
-        redo={redo}
-        handleAutoLayout={handleAutoLayout}
-        duplicateSelected={duplicateSelected}
-        deleteSelected={deleteSelected}
-        saving={saving}
-        syncLabel={saveStatusLabel}
-        handleSave={handleSave}
-        stepCount={nodes.length}
-        laneCount={lanes.length}
-        guidance={FLOW_MODE_GUIDANCE[flowMode]}
-        onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
-        onConvert={onQuickAction ? handleConvert : undefined}
-        onAIProposal={() => setShowAIPanel(true)}
-        onReadback={() => {
-          setShowReadbackPanel(true);
-          // Readback reads the existing graph (no user prompt needed) — fetch on open
-          // so the panel shows content immediately instead of an empty "fetch" prompt.
-          fetchReadback();
-        }}
-      />
+        <ProcessFlowToolbar
+          isPl={!!isPl}
+          locked={locked}
+          flowMode={flowMode}
+          setFlowMode={setFlowMode}
+          semanticKit={semanticKit}
+          availableShapes={availableShapes}
+          addNode={addNode}
+          addLane={addLane}
+          insertBetween={insertBetween}
+          splitPath={splitPath}
+          runValidation={runValidation}
+          showWarnings={showWarnings}
+          warnings={warnings}
+          showCoach={showCoach}
+          setShowCoach={setShowCoach}
+          coachLoading={coachLoading}
+          runProcessCoach={handleAICoach}
+          showSummary={showSummary}
+          setShowSummary={setShowSummary}
+          summaryLoading={summaryLoading}
+          generateSummary={handleProcessSummary}
+          showKPIDashboard={showKPIDashboard}
+          setShowKPIDashboard={setShowKPIDashboard}
+          showReadbackPanel={showReadbackPanel}
+          onOpenReadback={() => {
+            setShowReadbackPanel(true);
+            void fetchReadback();
+          }}
+          showAIPanel={showAIPanel}
+          onOpenAIProposal={() => setShowAIPanel(true)}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          undo={undo}
+          redo={redo}
+          handleAutoLayout={handleAutoLayout}
+          duplicateSelected={duplicateSelected}
+          deleteSelected={deleteSelected}
+          saving={saving}
+          syncLabel={saveStatusLabel}
+          handleSave={handleSave}
+          stepCount={nodes.length}
+          laneCount={lanes.length}
+          guidance={FLOW_MODE_GUIDANCE[flowMode]}
+          onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
+          onConvert={onQuickAction ? handleConvert : undefined}
+          onAIProposal={() => setShowAIPanel(true)}
+          onReadback={() => {
+            setShowReadbackPanel(true);
+            // Readback reads the existing graph (no user prompt needed) — fetch on open
+            // so the panel shows content immediately instead of an empty "fetch" prompt.
+            fetchReadback();
+          }}
+        />
       </div>
 
       {loadError && !loading && nodes.length === 0 && (
@@ -2644,7 +2639,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               type="button"
               onClick={() => setShowGrid((prev) => !prev)}
               className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                showGrid ? 'text-c-info bg-c-surface-raised' : 'text-c-text-muted hover:bg-c-surface-raised'
+                showGrid
+                  ? 'text-c-info bg-c-surface-raised'
+                  : 'text-c-text-muted hover:bg-c-surface-raised'
               }`}
               title={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
               aria-label={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
@@ -2784,7 +2781,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               className="bg-transparent"
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
-              {(() => { const bg = getCanvasBg('process_flow', isDarkFlow ? 'dark' : 'light', showGrid ? undefined : 'blank'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
+              {(() => {
+                const bg = getCanvasBg(
+                  'process_flow',
+                  isDarkFlow ? 'dark' : 'light',
+                  showGrid ? undefined : 'blank'
+                );
+                return (
+                  <Background
+                    color={bg.color}
+                    gap={bg.gap}
+                    size={bg.size}
+                    variant={bg.variant as any}
+                  />
+                );
+              })()}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
@@ -2891,7 +2902,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 setNodes((nds) =>
                   nds.map((n) =>
                     n.id === nodeId
-                      ? { ...n, data: { ...n.data, comments: appendComment(n.data?.comments, comment) } }
+                      ? {
+                          ...n,
+                          data: { ...n.data, comments: appendComment(n.data?.comments, comment) },
+                        }
                       : n
                   )
                 );
@@ -2900,7 +2914,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 setNodes((nds) =>
                   nds.map((n) =>
                     n.id === nodeId
-                      ? { ...n, data: { ...n.data, comments: removeComment(n.data?.comments, commentId) } }
+                      ? {
+                          ...n,
+                          data: { ...n.data, comments: removeComment(n.data?.comments, commentId) },
+                        }
                       : n
                   )
                 );

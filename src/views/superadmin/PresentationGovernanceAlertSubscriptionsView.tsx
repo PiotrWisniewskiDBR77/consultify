@@ -523,7 +523,9 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+      <table
+        /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full divide-y divide-slate-200 dark:divide-slate-800"
+      >
         <thead className="bg-slate-50 dark:bg-slate-900/60">
           <tr>
             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -1076,7 +1078,9 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
                 className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
               />
               {targetError && (
-                <div className="text-[11px] text-danger-700 dark:text-danger-300">{targetError}</div>
+                <div className="text-[11px] text-danger-700 dark:text-danger-300">
+                  {targetError}
+                </div>
               )}
             </div>
           )}

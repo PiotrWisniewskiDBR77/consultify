@@ -488,9 +488,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <p className="text-sm text-c-text-muted dark:text-c-text-muted">
                   {t('benefits.kpiCards.totalKpis', 'Total KPIs')}
                 </p>
-                <p className="text-2xl font-bold text-c-text dark:text-white">
-                  {kpiStats.total}
-                </p>
+                <p className="text-2xl font-bold text-c-text dark:text-white">{kpiStats.total}</p>
               </div>
             </div>
           </div>
@@ -546,9 +544,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <div className="px-4 py-3 bg-white dark:bg-c-surface border-b border-c-border dark:border-c-border flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5 text-green-400" />
-                    <h3 className="font-semibold text-c-text dark:text-white">
-                      {initiative.name}
-                    </h3>
+                    <h3 className="font-semibold text-c-text dark:text-white">{initiative.name}</h3>
                   </div>
                   <button
                     onClick={() => {
@@ -702,7 +698,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
               <div className="space-y-4 px-4 pt-2">
                 {/* Status pill */}
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${meta?.dotColor ?? 'bg-c-border-strong'}`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${meta?.dotColor ?? 'bg-c-border-strong'}`}
+                  />
                   <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary">
                     {meta?.label ?? initiative.status}
                   </span>
@@ -725,7 +723,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                   )}
                   {initiative.progress != null && (
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-c-text-muted">{t('benefits.progress', 'Progress')}</span>
+                      <span className="text-c-text-muted">
+                        {t('benefits.progress', 'Progress')}
+                      </span>
                       <span className="text-c-text-secondary dark:text-c-text-secondary font-medium">
                         {initiative.progress}%
                       </span>

@@ -329,7 +329,10 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {viewMode === 'list'
-                    ? t('myWork.taskTemplates.quicklyCreateTasksFrom', 'Quickly create tasks from templates')
+                    ? t(
+                        'myWork.taskTemplates.quicklyCreateTasksFrom',
+                        'Quickly create tasks from templates'
+                      )
                     : t('myWork.taskTemplates.defineTemplateDetails', 'Define template details')}
                 </p>
               </div>

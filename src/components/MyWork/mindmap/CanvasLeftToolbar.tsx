@@ -28,12 +28,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { getIdeaWorkspaceToolLabel, TOOL_CONFIG } from '../IdeaWorkspaceToolbar';
 import type {
   CanvasToolType,
   IdeaWorkspaceSelection,
   MindMapInteractionMode,
 } from '../ideaSelectionTypes';
+import { getIdeaWorkspaceToolLabel, TOOL_CONFIG } from '../IdeaWorkspaceToolbar';
 import {
   getMindmapConnectToolbarAction,
   getMindmapPointerToggleTooltip,

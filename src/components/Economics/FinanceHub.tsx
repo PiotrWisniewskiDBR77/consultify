@@ -44,10 +44,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
-  standardPreviewShortcuts,
   type StandardPreviewActions,
+  standardPreviewShortcuts,
   type StandardRowMenu,
   StandardTable,
 } from '@/components/standard';
@@ -56,8 +57,7 @@ import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { ROUTES } from '@/routes/routeConfig';
-import { EmptyState, LoadingState } from '@/components/shared/states';
-import { API_URL, Api, getHeaders } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
@@ -72,6 +72,7 @@ import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
 import { FinancialModelWorkspace } from '../Finance/FinancialModelWorkspace';
 import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
 import { FinancialStatementPackWorkspace } from '../Finance/FinancialStatementPackWorkspace';
+import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import {
   FilterChip,
   type GridItem,
@@ -96,10 +97,10 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
-import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
 import { getFinanceErrorMessage } from './financeErrorMap';
+import { isFinanceFlagEnabled } from './financeFeatureFlags';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
@@ -125,7 +126,6 @@ import { CreateBudgetModal } from './modals/CreateBudgetModal';
 import { CreateModelModal } from './modals/CreateModelModal';
 import { CreateValuationModal } from './modals/CreateValuationModal';
 import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
-import { isFinanceFlagEnabled } from './financeFeatureFlags';
 import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
 import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
 import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
@@ -138,8 +138,7 @@ import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
  * Time)" as a card name). If the value looks like a JS/ISO date-string, render a
  * compact locale date instead; otherwise pass the label through unchanged.
  */
-const JS_DATE_TOSTRING_RE =
-  /^[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4}\b/; // "Thu Dec 31 2026 ..."
+const JS_DATE_TOSTRING_RE = /^[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4}\b/; // "Thu Dec 31 2026 ..."
 function sanitizeStatementTitle(raw?: string | null): string {
   const value = String(raw ?? '').trim();
   if (!value) return '';
@@ -322,9 +321,7 @@ export const FinanceHub: React.FC = () => {
   // stale filter can never silently hide all rows on a tab that lacks that column.
   useEffect(() => {
     setActiveFilters((prev) =>
-      prev.some((f) => f.column !== 'status')
-        ? prev.filter((f) => f.column === 'status')
-        : prev
+      prev.some((f) => f.column !== 'status') ? prev.filter((f) => f.column === 'status') : prev
     );
   }, [activeTab]);
 
@@ -947,10 +944,13 @@ export const FinanceHub: React.FC = () => {
   );
   const predictionSubtypeFilterOptions = useMemo(
     () =>
-      buildFilterOptions(rowsForActiveTab as any[], (r) => r.predictionType, (v) =>
-        v === 'budget'
-          ? t('finance.prediction.budget', 'Budget')
-          : t('finance.prediction.model', 'Model')
+      buildFilterOptions(
+        rowsForActiveTab as any[],
+        (r) => r.predictionType,
+        (v) =>
+          v === 'budget'
+            ? t('finance.prediction.budget', 'Budget')
+            : t('finance.prediction.model', 'Model')
       ),
     [rowsForActiveTab, t]
   );
@@ -977,9 +977,7 @@ export const FinanceHub: React.FC = () => {
       id: 'title',
       label: t('common.name', 'Name'),
       render: (row: FinanceRow) => (
-        <span className="block text-sm text-c-text font-medium truncate">
-          {row.title}
-        </span>
+        <span className="block text-sm text-c-text font-medium truncate">{row.title}</span>
       ),
     }),
     [t]
@@ -1017,9 +1015,7 @@ export const FinanceHub: React.FC = () => {
           width: '170px',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
-              <span className="text-sm text-c-text-secondary">
-                {row.completenessLabel || '—'}
-              </span>
+              <span className="text-sm text-c-text-secondary">{row.completenessLabel || '—'}</span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
             ),
@@ -1090,9 +1086,7 @@ export const FinanceHub: React.FC = () => {
           width: '120px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-c-text-secondary">
-                {row.forecastWindowLabel}
-              </span>
+              <span className="text-sm text-c-text-secondary">{row.forecastWindowLabel}</span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
             ),
@@ -1114,9 +1108,7 @@ export const FinanceHub: React.FC = () => {
           width: '90px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-c-text-secondary">
-                {row.analyticalDepthLabel}
-              </span>
+              <span className="text-sm text-c-text-secondary">{row.analyticalDepthLabel}</span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
             ),
@@ -1137,9 +1129,7 @@ export const FinanceHub: React.FC = () => {
           filterOptions: analysisTypeFilterOptions,
           render: (row: FinanceRow) =>
             row.kind === 'analysis' || row.kind === 'investment' ? (
-              <span className="text-sm text-c-text-secondary capitalize">
-                {row.analysisType}
-              </span>
+              <span className="text-sm text-c-text-secondary capitalize">{row.analysisType}</span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
             ),
@@ -1184,7 +1174,8 @@ export const FinanceHub: React.FC = () => {
           filterable: true,
           filterOptions: predictionSubtypeFilterOptions,
           render: (row: FinanceRow) => {
-            if (row.kind !== 'prediction') return <span className="text-sm text-c-text-muted">—</span>;
+            if (row.kind !== 'prediction')
+              return <span className="text-sm text-c-text-muted">—</span>;
             const pRow = row as FinanceModelRow;
             const isBudget = pRow.predictionType === 'budget';
             return (
@@ -1217,7 +1208,8 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.horizon', 'Horizon'),
           width: '120px',
           render: (row: FinanceRow) => {
-            if (row.kind !== 'prediction') return <span className="text-sm text-c-text-muted">—</span>;
+            if (row.kind !== 'prediction')
+              return <span className="text-sm text-c-text-muted">—</span>;
             const pRow = row as FinanceModelRow;
             if (pRow.predictionType === 'budget')
               return (
@@ -1249,9 +1241,7 @@ export const FinanceHub: React.FC = () => {
         filterOptions: sourceTypeFilterOptions,
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
-            <span className="text-sm text-c-text-secondary capitalize">
-              {row.sourceType}
-            </span>
+            <span className="text-sm text-c-text-secondary capitalize">{row.sourceType}</span>
           ) : (
             <span className="text-sm text-c-text-muted">—</span>
           ),
@@ -1671,9 +1661,7 @@ export const FinanceHub: React.FC = () => {
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-medium text-c-text">
-                      {action.label}
-                    </div>
+                    <div className="text-[13px] font-medium text-c-text">{action.label}</div>
                     <div className="mt-0.5 text-[11px] leading-relaxed text-c-text-muted">
                       {action.description}
                     </div>
@@ -1978,7 +1966,9 @@ export const FinanceHub: React.FC = () => {
     [filteredRows]
   );
   const selectedStatementRow: FinanceStatementRow | null =
-    selectedId && selectedItem?.kind === 'statements' ? (selectedItem as FinanceStatementRow) : null;
+    selectedId && selectedItem?.kind === 'statements'
+      ? (selectedItem as FinanceStatementRow)
+      : null;
 
   const statementPreviewActions: StandardPreviewActions | undefined = useMemo(() => {
     if (!selectedStatementRow) return undefined;
@@ -1993,7 +1983,10 @@ export const FinanceHub: React.FC = () => {
                 label: t('finance.row.confirmStatement', 'Potwierdź'),
                 onClick: async () => {
                   try {
-                    await Api.post(`/api/finance-statements/${selectedStatementRow.id}/confirm`, {});
+                    await Api.post(
+                      `/api/finance-statements/${selectedStatementRow.id}/confirm`,
+                      {}
+                    );
                     await loadStatements();
                     toast.success(t('finance.toast.statementConfirmed', 'Statement potwierdzony'));
                   } catch (e: any) {
@@ -2141,7 +2134,8 @@ export const FinanceHub: React.FC = () => {
             }}
             rowMenu={(row): StandardRowMenu => {
               const statementRow = row as unknown as FinanceStatementRow;
-              const isConfirmed = String(statementRow.rawStatus || '').toLowerCase() === 'confirmed';
+              const isConfirmed =
+                String(statementRow.rawStatus || '').toLowerCase() === 'confirmed';
               return {
                 primary: [
                   {
@@ -2169,7 +2163,10 @@ export const FinanceHub: React.FC = () => {
                           label: t('finance.row.confirmStatement', 'Potwierdź'),
                           onClick: async () => {
                             try {
-                              await Api.post(`/api/finance-statements/${statementRow.id}/confirm`, {});
+                              await Api.post(
+                                `/api/finance-statements/${statementRow.id}/confirm`,
+                                {}
+                              );
                               await loadStatements();
                               toast.success(
                                 t('finance.toast.statementConfirmed', 'Statement potwierdzony')
@@ -2296,10 +2293,7 @@ export const FinanceHub: React.FC = () => {
   // RowAction ids folded into the manifest StandardTable already renders itself
   // (blocks 4-5: Open preview/Edit/Archive/Delete) — excluded from rowMenu/
   // preview mapping below to avoid duplicating them.
-  const MANIFEST_ACTION_IDS = useMemo(
-    () => new Set(['preview', 'edit', 'archive', 'delete']),
-    []
-  );
+  const MANIFEST_ACTION_IDS = useMemo(() => new Set(['preview', 'edit', 'archive', 'delete']), []);
 
   // Maps the existing per-kind getRowActions(row) (RowAction[]) onto the
   // StandardRowMenu 5-block contract (kebab). Blocks 4-5 (Open preview / Edit /
@@ -2336,7 +2330,14 @@ export const FinanceHub: React.FC = () => {
         },
       };
     },
-    [getRowActions, onSelectRow, handleOpenFull, handleFinanceDelete, MANIFEST_ACTION_IDS, RESOLUTION_ACTION_IDS]
+    [
+      getRowActions,
+      onSelectRow,
+      handleOpenFull,
+      handleFinanceDelete,
+      MANIFEST_ACTION_IDS,
+      RESOLUTION_ACTION_IDS,
+    ]
   );
 
   // Maps the same getRowActions(row) onto the StandardPreview action-button
@@ -2570,9 +2571,7 @@ export const FinanceHub: React.FC = () => {
           {!openStatement && (
             <div className="px-4 py-3 border-b border-c-border-subtle flex items-center justify-between">
               <div className="min-w-0">
-                <div className="text-[11px] uppercase tracking-wider text-c-text-muted">
-                  {code}
-                </div>
+                <div className="text-[11px] uppercase tracking-wider text-c-text-muted">{code}</div>
                 <div className="text-sm font-semibold text-c-text truncate">
                   {activeDocument.title}
                 </div>
@@ -2801,43 +2800,45 @@ export const FinanceHub: React.FC = () => {
       return (
         <>
           <div className="flex items-center justify-center p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-300">
-                <Target size={20} />
-              </div>
-              <div className="min-w-0">
-                <div className="text-lg font-semibold text-c-text">
-                  {t('finance.investment.emptyTitle', 'Investment analysis workspace')}
+            <div className="w-full max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
+              <div className="flex items-start gap-4">
+                <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-300">
+                  <Target size={20} />
                 </div>
-                <div className="mt-1 text-sm text-c-text-secondary">
-                  {t(
-                    'finance.investment.emptyBody',
-                    'Use this tab for initiative-level investment cases and go/no-go decisions based on NPV, IRR, payback, and ROI.'
-                  )}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {['NPV', 'IRR', 'Payback', 'ROI'].map((metric) => (
-                    <span
-                      key={metric}
-                      className="inline-flex items-center rounded-full bg-c-surface-raised px-3 py-1 text-xs font-medium text-c-text-secondary"
-                    >
-                      {metric}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
-                  {t(
-                    'finance.investment.emptyHint',
-                    'Create a dedicated investment case with NPV, IRR, payback, and ROI metrics from this tab.'
-                  )}
+                <div className="min-w-0">
+                  <div className="text-lg font-semibold text-c-text">
+                    {t('finance.investment.emptyTitle', 'Investment analysis workspace')}
+                  </div>
+                  <div className="mt-1 text-sm text-c-text-secondary">
+                    {t(
+                      'finance.investment.emptyBody',
+                      'Use this tab for initiative-level investment cases and go/no-go decisions based on NPV, IRR, payback, and ROI.'
+                    )}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {['NPV', 'IRR', 'Payback', 'ROI'].map((metric) => (
+                      <span
+                        key={metric}
+                        className="inline-flex items-center rounded-full bg-c-surface-raised px-3 py-1 text-xs font-medium text-c-text-secondary"
+                      >
+                        {metric}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
+                    {t(
+                      'finance.investment.emptyHint',
+                      'Create a dedicated investment case with NPV, IRR, payback, and ROI metrics from this tab.'
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          </div>
           {isFinanceFlagEnabled('investmentAppraisal') && (
-            <div className="px-6 pb-6"><InvestmentAppraisalPanel /></div>
+            <div className="px-6 pb-6">
+              <InvestmentAppraisalPanel />
+            </div>
           )}
         </>
       );
@@ -2845,65 +2846,69 @@ export const FinanceHub: React.FC = () => {
       return (
         <>
           <div className="flex items-center justify-center p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
-                <Calculator size={20} />
-              </div>
-              <div className="min-w-0">
-                <div className="text-lg font-semibold text-c-text">
-                  {t('finance.model.emptyTitle', 'Build your first financial model')}
+            <div className="w-full max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
+              <div className="flex items-start gap-4">
+                <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
+                  <Calculator size={20} />
                 </div>
-                <div className="mt-1 text-sm text-c-text-secondary">
-                  {t(
-                    'finance.model.emptyBody',
-                    'A financial model turns a statement pack into a board-ready business case: P&L, balance sheet, cash flow, and the NPV / ROI / payback story for the client.'
-                  )}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModelModal(true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-crimson-700"
-                  >
-                    <Plus size={14} />
-                    {t('finance.model.createModel', 'Create Financial Model')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      openChatWithContext({
-                        entityType: 'finance_module',
-                        entityId: 'finance',
-                        entityName: t('finance.aiChat', 'Finance'),
-                        contextData: {
-                          activeTab,
-                          organizationName: currentOrganization?.name,
-                          teresaPrompt: buildFinanceTeresaPrompt('models', t),
-                        },
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
-                  >
-                    <Sparkles size={14} />
-                    {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}
-                  </button>
-                </div>
-                <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
-                  {t(
-                    'finance.model.emptyHint',
-                    'Seed a model from a statement pack or start from scratch — Teresa proposes the assumptions.'
-                  )}
+                <div className="min-w-0">
+                  <div className="text-lg font-semibold text-c-text">
+                    {t('finance.model.emptyTitle', 'Build your first financial model')}
+                  </div>
+                  <div className="mt-1 text-sm text-c-text-secondary">
+                    {t(
+                      'finance.model.emptyBody',
+                      'A financial model turns a statement pack into a board-ready business case: P&L, balance sheet, cash flow, and the NPV / ROI / payback story for the client.'
+                    )}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModelModal(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-crimson-700"
+                    >
+                      <Plus size={14} />
+                      {t('finance.model.createModel', 'Create Financial Model')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openChatWithContext({
+                          entityType: 'finance_module',
+                          entityId: 'finance',
+                          entityName: t('finance.aiChat', 'Finance'),
+                          contextData: {
+                            activeTab,
+                            organizationName: currentOrganization?.name,
+                            teresaPrompt: buildFinanceTeresaPrompt('models', t),
+                          },
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
+                    >
+                      <Sparkles size={14} />
+                      {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}
+                    </button>
+                  </div>
+                  <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
+                    {t(
+                      'finance.model.emptyHint',
+                      'Seed a model from a statement pack or start from scratch — Teresa proposes the assumptions.'
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          </div>
           {isFinanceFlagEnabled('valueOffice') && (
-            <div className="px-6 pb-4"><ValueOfficePanel /></div>
+            <div className="px-6 pb-4">
+              <ValueOfficePanel />
+            </div>
           )}
           {isFinanceFlagEnabled('driverPlanner') && (
-            <div className="px-6 pb-6"><DriverPlannerPanel /></div>
+            <div className="px-6 pb-6">
+              <DriverPlannerPanel />
+            </div>
           )}
         </>
       );

@@ -6,10 +6,10 @@ import {
   getCanonicalStatementTypes,
 } from './financeCanonicalRegistry.js';
 import {
+  type PeriodStatements,
   RECONCILE_ENFORCE,
   reconcileStatements,
   shouldBlockReady,
-  type PeriodStatements,
 } from './reconciliationService.js';
 
 export type StatementPackReadinessStatus = 'pending' | 'recoverable' | 'ready' | 'rejected';
@@ -373,7 +373,11 @@ type StatementValueRow = { statement_id: string; line_code: string; value: numbe
 /** Load {CODE: sum(value)} maps keyed by statement type for the given statements. */
 export async function loadPackValueMaps(
   statements: Array<{ id: string; statement_type?: string | null }>
-): Promise<{ pnl: Record<string, number>; bs: Record<string, number>; cf: Record<string, number> }> {
+): Promise<{
+  pnl: Record<string, number>;
+  bs: Record<string, number>;
+  cf: Record<string, number>;
+}> {
   const maps = {
     pnl: {} as Record<string, number>,
     bs: {} as Record<string, number>,
@@ -400,7 +404,8 @@ export async function loadPackValueMaps(
     const value = Number(row.value);
     if (!Number.isFinite(value)) continue;
     const type = typeById.get(String(row.statement_id));
-    const target = type === 'P&L' ? maps.pnl : type === 'BS' ? maps.bs : type === 'CF' ? maps.cf : null;
+    const target =
+      type === 'P&L' ? maps.pnl : type === 'BS' ? maps.bs : type === 'CF' ? maps.cf : null;
     if (!target) continue;
     target[code] = (target[code] || 0) + value;
   }
@@ -414,7 +419,13 @@ async function loadPriorPeriodStatements(
   periodEnd: string
 ): Promise<PeriodStatements | null> {
   try {
-    const prior = await dbGet<{ id: string; period_end?: string; period_label?: string; currency?: string; scaling?: string }>(
+    const prior = await dbGet<{
+      id: string;
+      period_end?: string;
+      period_label?: string;
+      currency?: string;
+      scaling?: string;
+    }>(
       `SELECT id, period_end, period_label, currency, scaling
        FROM financial_statement_packs
        WHERE organization_id = ?

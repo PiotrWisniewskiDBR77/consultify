@@ -184,17 +184,13 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
               {/* Why it matters for the industry */}
               <section>
                 <SectionHeader icon={<span>🏭</span>} title="Industry Impact" />
-                <p className="mt-2 text-c-text-secondary text-justify">
-                  {industryImpact}
-                </p>
+                <p className="mt-2 text-c-text-secondary text-justify">{industryImpact}</p>
               </section>
 
               {/* Why it matters for YOUR company */}
               <section>
                 <SectionHeader icon={<span>👤</span>} title="Company Impact" />
-                <p className="mt-2 text-c-text-secondary text-justify">
-                  {companyImpact}
-                </p>
+                <p className="mt-2 text-c-text-secondary text-justify">{companyImpact}</p>
               </section>
             </div>
 
@@ -204,9 +200,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                 <SectionHeader icon={<span>🤖</span>} title="AI Insight" />
                 <div className="mt-4 space-y-4 text-c-text-secondary">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="font-semibold text-c-info">
-                      Suggested Ring:
-                    </span>
+                    <span className="font-semibold text-c-info">Suggested Ring:</span>
                     <span className="px-3 py-1 bg-c-info text-white rounded-full text-sm font-medium">
                       {aiSuggestion.ring}
                     </span>
@@ -224,9 +218,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                       </ul>
                     </div>
                     <div>
-                      <span className="font-semibold text-c-success block mb-2">
-                        Opportunities
-                      </span>
+                      <span className="font-semibold text-c-success block mb-2">Opportunities</span>
                       <ul className="list-disc list-inside space-y-1">
                         {aiSuggestion.opportunities.map((o, i) => (
                           <li key={i}>{o}</li>
@@ -234,9 +226,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                       </ul>
                     </div>
                     <div>
-                      <span className="font-semibold text-c-info block mb-2">
-                        Actions
-                      </span>
+                      <span className="font-semibold text-c-info block mb-2">Actions</span>
                       <ul className="list-disc list-inside space-y-1">
                         {aiSuggestion.actions.map((a, i) => (
                           <li key={i}>{a}</li>

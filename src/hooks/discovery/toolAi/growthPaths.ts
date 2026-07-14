@@ -1,3 +1,4 @@
+import { buildAnsoffConclusionPrompt } from '@/config/ansoff';
 import type {
   GrowthPathsData,
   GrowthQuadrantId,
@@ -6,12 +7,9 @@ import type {
   ToolType,
 } from '@/store/useToolStore';
 
-import { buildAnsoffConclusionPrompt } from '@/config/ansoff';
-
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 const QUADRANTS: GrowthQuadrantId[] = [
   'marketPenetration',
   'marketDevelopment',

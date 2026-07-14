@@ -32,15 +32,15 @@
  * - JSON columns may arrive as parsed objects (jsonb) or TEXT → parseMaybeJson.
  */
 
-import { getTableColumns } from '../utils/dbSchema.js';
-import logger from '../utils/Logger.js';
-import { parseMaybeJson } from '../utils/pgFlags.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   AUTO_SNAPSHOT_LABEL_PREFIX,
   createIdeaMapSnapshot,
   isAutoSnapshotLabel,
 } from '../services/ideaMapSnapshotService.js';
+import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
+import { parseMaybeJson } from '../utils/pgFlags.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 export const AUTO_SNAPSHOT_LABEL = `${AUTO_SNAPSHOT_LABEL_PREFIX}snapshot`;
 export const DEFAULT_INTERVAL_MINUTES = 15;

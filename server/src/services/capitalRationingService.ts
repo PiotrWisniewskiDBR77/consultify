@@ -59,7 +59,11 @@ export interface FrontierPoint {
  */
 function profitabilityIndex(project: CapitalProject): number {
   if (project.cost <= 0) {
-    return project.npv > 0 ? Number.POSITIVE_INFINITY : project.npv === 0 ? 0 : Number.NEGATIVE_INFINITY;
+    return project.npv > 0
+      ? Number.POSITIVE_INFINITY
+      : project.npv === 0
+        ? 0
+        : Number.NEGATIVE_INFINITY;
   }
   return (project.npv + project.cost) / project.cost;
 }
@@ -74,7 +78,7 @@ function profitabilityIndex(project: CapitalProject): number {
  */
 export function profitabilityIndexRank(
   projects: CapitalProject[],
-  budget: number = Number.POSITIVE_INFINITY,
+  budget: number = Number.POSITIVE_INFINITY
 ): PiRankRow[] {
   // Sort by forced-first, then PI descending. Stable tie-break on id keeps
   // output deterministic.
@@ -91,8 +95,7 @@ export function profitabilityIndexRank(
   const rows: PiRankRow[] = [];
 
   for (const project of ranked) {
-    const accepted =
-      project.forced === true || cumulativeCost + project.cost <= budget;
+    const accepted = project.forced === true || cumulativeCost + project.cost <= budget;
     if (accepted) {
       cumulativeCost += project.cost;
     }
@@ -124,7 +127,7 @@ export function profitabilityIndexRank(
 export function knapsack(
   projects: CapitalProject[],
   budget: number,
-  step: number = 1000,
+  step: number = 1000
 ): KnapsackResult {
   if (step <= 0) throw new Error('knapsack: step must be > 0');
 
@@ -212,7 +215,7 @@ export function knapsack(
 export function frontierByBudget(
   projects: CapitalProject[],
   budgetSteps: number[],
-  step: number = 1000,
+  step: number = 1000
 ): FrontierPoint[] {
   return budgetSteps.map((budget) => {
     const result = knapsack(projects, budget, step);

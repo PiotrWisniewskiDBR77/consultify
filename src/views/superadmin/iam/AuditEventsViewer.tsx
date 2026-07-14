@@ -232,7 +232,9 @@ const AuditEventsViewer: React.FC = () => {
 
       {/* Table */}
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-xs">
+        <table
+          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-xs"
+        >
           <thead>
             <tr className="bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200/40 dark:border-navy-700/40">
               <th className="text-left px-3 py-2 font-semibold text-slate-500">Timestamp</th>

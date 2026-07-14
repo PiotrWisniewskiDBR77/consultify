@@ -35,7 +35,7 @@ import {
 import { filterSlashCommands, type SlashCommand } from './composer/slashCommands';
 import { useComposerCommands } from './composer/useComposerCommands';
 import { useMentionSources } from './composer/useMentionSources';
-import { CoThinkerMenu, CoThinkerActivePill } from './CoThinkerMenu';
+import { CoThinkerActivePill, CoThinkerMenu } from './CoThinkerMenu';
 import { InputCharCounter } from './InputCharCounter';
 import { InputSoftLimitToast } from './InputSoftLimitToast';
 import { MoveToProjectModal } from './MoveToProjectModal';
@@ -1082,7 +1082,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                      2026-07-04: „irytująca ramka przy pisaniu — wyłącz").
                      Fokus sygnalizuje caret; przy fokusie tylko minimalnie
                      jaśniejsza neutralna ramka. */
-                  isFocused ? 'border-slate-300 dark:border-navy-600' : 'border-slate-200 dark:border-navy-700'
+                  isFocused
+                    ? 'border-slate-300 dark:border-navy-600'
+                    : 'border-slate-200 dark:border-navy-700'
                 }
                 ${isRecordingAny ? 'ring-2 ring-blue-500/50' : ''}
                 ${isDisabled ? 'opacity-60' : ''}

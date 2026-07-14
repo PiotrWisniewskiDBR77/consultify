@@ -110,7 +110,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
     color: 'bg-c-accent-soft text-c-accent',
     icon: <Award size={14} />,
   },
-  PLANNED: { label: 'Planned', color: 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info', icon: <MapPin size={14} /> },
+  PLANNED: {
+    label: 'Planned',
+    color: 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info',
+    icon: <MapPin size={14} />,
+  },
 };
 
 const AXIS_LABELS: Record<string, string> = {
@@ -222,9 +226,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
       return (
         <div className="h-full flex flex-col items-center justify-center bg-c-surface p-8 text-center">
           <AlertCircle className="w-12 h-12 text-danger-400 mb-3" />
-          <p className="text-c-text-muted">
-            {error || 'Nie znaleziono inicjatywy'}
-          </p>
+          <p className="text-c-text-muted">{error || 'Nie znaleziono inicjatywy'}</p>
           <button onClick={onClose} className="mt-4 text-c-accent hover:underline">
             Zamknij
           </button>
@@ -235,9 +237,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
         <div className="bg-c-surface rounded-xl p-8 text-center max-w-sm">
           <AlertCircle className="w-12 h-12 text-danger-400 mx-auto mb-3" />
-          <p className="text-c-text-muted">
-            {error || 'Nie znaleziono inicjatywy'}
-          </p>
+          <p className="text-c-text-muted">{error || 'Nie znaleziono inicjatywy'}</p>
           <button onClick={onClose} className="mt-4 text-c-accent hover:underline">
             Zamknij
           </button>
@@ -270,13 +270,9 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
                 </span>
               )}
             </div>
-            <h2 className="text-xl font-bold text-c-text truncate">
-              {initiative.name}
-            </h2>
+            <h2 className="text-xl font-bold text-c-text truncate">{initiative.name}</h2>
             {initiative.area && (
-              <p className="text-sm text-c-text-muted mt-1">
-                Obszar: {initiative.area}
-              </p>
+              <p className="text-sm text-c-text-muted mt-1">Obszar: {initiative.area}</p>
             )}
           </div>
           <button
@@ -315,9 +311,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
               <BarChart3 size={16} />
               <span className="text-xs font-medium">CAPEX</span>
             </div>
-            <p className="text-2xl font-bold text-c-info">
-              {formatCurrency(initiative.costCapex)}
-            </p>
+            <p className="text-2xl font-bold text-c-info">{formatCurrency(initiative.costCapex)}</p>
           </div>
           <div className="bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] rounded-xl p-4 border-l-2 border-c-warning">
             <div className="flex items-center gap-2 text-c-warning mb-1">
@@ -372,9 +366,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
               </p>
             </div>
             <div className="bg-c-surface-raised dark:bg-c-bg rounded-lg p-3">
-              <p className="text-xs text-c-text-muted mb-1">
-                Planowane zakończenie
-              </p>
+              <p className="text-xs text-c-text-muted mb-1">Planowane zakończenie</p>
               <p className="text-sm font-medium text-c-text">
                 {formatDate(initiative.plannedEndDate)}
               </p>

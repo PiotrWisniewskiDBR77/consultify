@@ -250,9 +250,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
               >
                 <ZoomOut size={18} />
               </button>
-              <span className="text-sm text-c-text-secondary">
-                {Math.round(zoom * 100)}%
-              </span>
+              <span className="text-sm text-c-text-secondary">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
                 className="p-2 rounded-lg bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-600 transition-colors"
@@ -307,9 +305,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-3">
               <Check className="text-green-500" size={24} />
-              <span className="text-c-text font-medium">
-                {selectedFile.name}
-              </span>
+              <span className="text-c-text font-medium">{selectedFile.name}</span>
               <span className="text-c-text-muted text-sm">
                 ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
               </span>

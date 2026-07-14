@@ -1,14 +1,13 @@
 import type {
-  InitiativeDraft,
   AmbitionDecomposerData,
+  InitiativeDraft,
   ProposalStatus,
   ToolType,
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 interface AmbitionDecomposerActionHandlers {
   updateInputData: (data: Partial<AmbitionDecomposerData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;

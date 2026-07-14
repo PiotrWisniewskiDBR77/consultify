@@ -106,15 +106,27 @@ export const SECTION_REQUIREMENTS: Record<string, SectionRequirement> = {
 
 /** Filler / placeholder phrases — §0.5 "Zero fillera" + generic anti-patterns. */
 const FILLER_PATTERNS: { re: RegExp; label: string; severity: ViolationSeverity }[] = [
-  { re: /\bw dzisiejszym dynamicznym (świecie|otoczeniu|rynku)\b/i, label: '„w dzisiejszym dynamicznym świecie"', severity: 'error' },
+  {
+    re: /\bw dzisiejszym dynamicznym (świecie|otoczeniu|rynku)\b/i,
+    label: '„w dzisiejszym dynamicznym świecie"',
+    severity: 'error',
+  },
   { re: /\blorem ipsum\b/i, label: 'Lorem ipsum', severity: 'error' },
   { re: /\bplaceholder\b/i, label: 'placeholder', severity: 'error' },
   { re: /\[[^\]]{0,40}\]/, label: 'nawias-placeholder', severity: 'error' },
-  { re: /\b(insert|add) (your )?(text|content) here\b/i, label: '„insert text here"', severity: 'error' },
+  {
+    re: /\b(insert|add) (your )?(text|content) here\b/i,
+    label: '„insert text here"',
+    severity: 'error',
+  },
   { re: /\bwpisz tutaj\b|\bwstaw tekst\b/i, label: '„wpisz tutaj"', severity: 'error' },
   { re: /\bxxx+\b/i, label: 'xxx', severity: 'error' },
   // "TBD" is only a hard FAIL when there's no accompanying plan to resolve it.
-  { re: /\bTBD\b(?!.{0,80}(plan|do ustalenia|zbadamy|ustalimy|proces))/i, label: '„TBD" bez planu uzupełnienia', severity: 'error' },
+  {
+    re: /\bTBD\b(?!.{0,80}(plan|do ustalenia|zbadamy|ustalimy|proces))/i,
+    label: '„TBD" bez planu uzupełnienia',
+    severity: 'error',
+  },
 ];
 
 /** Words that legitimise a bare number as an explicit assumption/estimate (§0.3). */
@@ -147,7 +159,11 @@ const ANY_NUMBER_RE = /\d/;
  * `uncertaintyMarkerRequiredIfInsufficientEvidence` policy, enforced here on
  * the actual generated content rather than only at the chat-turn level.
  */
-function validateMeasurableOutcome(fieldName: string, sectionKey: string, raw: unknown): ContentViolation[] {
+function validateMeasurableOutcome(
+  fieldName: string,
+  sectionKey: string,
+  raw: unknown
+): ContentViolation[] {
   const violations: ContentViolation[] = [];
   const text = typeof raw === 'string' ? raw.trim() : '';
 
@@ -265,7 +281,8 @@ export function validateCardContent(
   const violations: ContentViolation[] = [];
   const req = SECTION_REQUIREMENTS[sectionKey] || {};
   const { parsed, asText } = coerceContent(content);
-  const structured = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
+  const structured =
+    parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
 
   // ── Empty / too-short (§0 "brak treści" is the ultimate anti-pattern) ─────
   const allStrings = collectStrings(structured ?? content);
@@ -274,8 +291,7 @@ export function validateCardContent(
     : toWords(asText).length;
 
   const isEffectivelyEmpty =
-    (structured == null && !asText.trim()) ||
-    (structured != null && allStrings.length === 0);
+    (structured == null && !asText.trim()) || (structured != null && allStrings.length === 0);
 
   if (isEffectivelyEmpty) {
     violations.push({
@@ -377,7 +393,9 @@ export function checkTitleEcho(title: string, content: unknown): ContentViolatio
 
   const isEcho =
     combined === normTitle ||
-    (combined.length > 0 && combined.length <= normTitle.length + 8 && combined.startsWith(normTitle));
+    (combined.length > 0 &&
+      combined.length <= normTitle.length + 8 &&
+      combined.startsWith(normTitle));
 
   if (isEcho) {
     return {

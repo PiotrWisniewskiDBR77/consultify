@@ -96,9 +96,7 @@ export function isExecutionFlagEnabled(flag: ExecutionFlag): boolean {
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).
   // Reversible: drop this line to restore default-OFF.
-  return !isPublicProductionHost(
-    typeof window !== 'undefined' ? window.location.hostname : ''
-  );
+  return !isPublicProductionHost(typeof window !== 'undefined' ? window.location.hostname : '');
 }
 
 export const EXECUTION_FLAG_KEYS = FLAGS;

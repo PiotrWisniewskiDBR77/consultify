@@ -675,9 +675,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
 
           {/* Keyboard shortcut hint */}
           {canGoNext && !isLoading && !isGenerating && (
-            <span className="hidden md:inline text-[10px] text-c-text-secondary">
-              Ctrl+Enter
-            </span>
+            <span className="hidden md:inline text-[10px] text-c-text-secondary">Ctrl+Enter</span>
           )}
         </div>
       </div>

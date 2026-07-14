@@ -22,7 +22,7 @@ type Wave8Agent = {
 };
 
 export const Wave8AgentCatalogPanel: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [agents, setAgents] = React.useState<Wave8Agent[]>([]);
@@ -400,16 +400,23 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               <div className="font-medium">{selectedAgent.name}</div>
               <p className="mt-1 text-slate-500">{selectedAgent.purpose}</p>
               <div className="mt-2 text-xs text-slate-500">
-                {t('aios.wave8AgentCatalogPanel.definitionSource')}: {selectedAgent.source || (t('aios.wave8AgentCatalogPanel.code'))}; {t('aios.wave8AgentCatalogPanel.editable')}:{' '}
-                {selectedAgent.editable === false ? (t('aios.wave8AgentCatalogPanel.no')) : (t('aios.wave8AgentCatalogPanel.yes'))}
+                {t('aios.wave8AgentCatalogPanel.definitionSource')}:{' '}
+                {selectedAgent.source || t('aios.wave8AgentCatalogPanel.code')};{' '}
+                {t('aios.wave8AgentCatalogPanel.editable')}:{' '}
+                {selectedAgent.editable === false
+                  ? t('aios.wave8AgentCatalogPanel.no')
+                  : t('aios.wave8AgentCatalogPanel.yes')}
               </div>
-              <div className="mt-3 text-xs text-slate-500">{t('aios.wave8AgentCatalogPanel.persona')}: {selectedAgent.persona}</div>
-              <div className="mt-2 text-xs text-slate-500">
-                {t('aios.wave8AgentCatalogPanel.allowedTools')}: {selectedAgent.allowedTools.join(', ')}
+              <div className="mt-3 text-xs text-slate-500">
+                {t('aios.wave8AgentCatalogPanel.persona')}: {selectedAgent.persona}
               </div>
               <div className="mt-2 text-xs text-slate-500">
-                {t('aios.wave8AgentCatalogPanel.outputSchema')}: {selectedAgent.outputSchema?.type} /{' '}
-                {(selectedAgent.outputSchema?.required || []).join(', ')}
+                {t('aios.wave8AgentCatalogPanel.allowedTools')}:{' '}
+                {selectedAgent.allowedTools.join(', ')}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                {t('aios.wave8AgentCatalogPanel.outputSchema')}: {selectedAgent.outputSchema?.type}{' '}
+                / {(selectedAgent.outputSchema?.required || []).join(', ')}
               </div>
             </div>
           )}
@@ -473,7 +480,8 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                   </div>
                   <div className="mt-1 text-xs text-slate-500">{agent.purpose}</div>
                   <div className="mt-2 text-xs text-slate-500">
-                    {t('aios.wave8AgentCatalogPanel.policy')}: {agent.approvalPolicy}; {t('aios.wave8AgentCatalogPanel.cost')}: {agent.costClass}
+                    {t('aios.wave8AgentCatalogPanel.policy')}: {agent.approvalPolicy};{' '}
+                    {t('aios.wave8AgentCatalogPanel.cost')}: {agent.costClass}
                   </div>
                 </div>
               ))}
@@ -500,8 +508,10 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 >
                   {schedule.agentId} / {schedule.cadence} / owner {schedule.ownerUserId}
                   <div className="mt-1 text-slate-500">
-                    {t('aios.wave8AgentCatalogPanel.scheduler')}: {schedule.schedulerMode || 'manual_process_due_endpoint'}; {t('aios.wave8AgentCatalogPanel.next')}:{' '}
-                    {schedule.nextRunAt || (t('aios.wave8AgentCatalogPanel.onDemand'))}
+                    {t('aios.wave8AgentCatalogPanel.scheduler')}:{' '}
+                    {schedule.schedulerMode || 'manual_process_due_endpoint'};{' '}
+                    {t('aios.wave8AgentCatalogPanel.next')}:{' '}
+                    {schedule.nextRunAt || t('aios.wave8AgentCatalogPanel.onDemand')}
                   </div>
                 </div>
               ))}
@@ -527,18 +537,28 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                     {run.agentId} / {run.status}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    {t('aios.wave8AgentCatalogPanel.tool')}: {run.audit?.toolDecision?.reason || (t('aios.wave8AgentCatalogPanel.unknown'))}; {t('aios.wave8AgentCatalogPanel.swarm')}:{' '}
-                    {run.audit?.swarmDecision?.reason || (t('aios.wave8AgentCatalogPanel.unknown2'))}; {t('aios.wave8AgentCatalogPanel.approval')}:{' '}
-                    {run.audit?.approvalDecision?.reason || (t('aios.wave8AgentCatalogPanel.unknown3'))}
+                    {t('aios.wave8AgentCatalogPanel.tool')}:{' '}
+                    {run.audit?.toolDecision?.reason || t('aios.wave8AgentCatalogPanel.unknown')};{' '}
+                    {t('aios.wave8AgentCatalogPanel.swarm')}:{' '}
+                    {run.audit?.swarmDecision?.reason || t('aios.wave8AgentCatalogPanel.unknown2')};{' '}
+                    {t('aios.wave8AgentCatalogPanel.approval')}:{' '}
+                    {run.audit?.approvalDecision?.reason ||
+                      t('aios.wave8AgentCatalogPanel.unknown3')}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    {t('aios.scheduler')}: {run.audit?.scheduler?.status || (t('aios.unknown2'))} /{' '}
-                    {run.audit?.scheduler?.trigger || (t('aios.unknown2'))}; {t('aios.wave8AgentCatalogPanel.evalHook')}:{' '}
-                    {run.audit?.evalRunHook?.status || (t('aios.wave8AgentCatalogPanel.notRequested'))}
+                    {t('aios.scheduler')}: {run.audit?.scheduler?.status || t('aios.unknown2')} /{' '}
+                    {run.audit?.scheduler?.trigger || t('aios.unknown2')};{' '}
+                    {t('aios.wave8AgentCatalogPanel.evalHook')}:{' '}
+                    {run.audit?.evalRunHook?.status ||
+                      t('aios.wave8AgentCatalogPanel.notRequested')}
                   </div>
                 </div>
               ))}
-              {runs.length === 0 && <div className="text-sm text-slate-500">{t('aios.wave8AgentCatalogPanel.noRunsYet')}</div>}
+              {runs.length === 0 && (
+                <div className="text-sm text-slate-500">
+                  {t('aios.wave8AgentCatalogPanel.noRunsYet')}
+                </div>
+              )}
             </div>
           </div>
 
@@ -553,7 +573,8 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                   {notification.notificationType} / run {notification.runId} / owner{' '}
                   {notification.ownerUserId}
                   <div className="mt-1 text-slate-500">
-                    {t('aios.wave8AgentCatalogPanel.delivery')}: {notification.payload?.delivery?.dispatchMode || 'audit_log_only'}
+                    {t('aios.wave8AgentCatalogPanel.delivery')}:{' '}
+                    {notification.payload?.delivery?.dispatchMode || 'audit_log_only'}
                   </div>
                 </div>
               ))}

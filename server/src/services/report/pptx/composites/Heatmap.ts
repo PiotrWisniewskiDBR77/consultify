@@ -131,10 +131,7 @@ export function Heatmap(props: HeatmapProps, tokens: DesignTokens): RenderedElem
   const tableRegionH = p.h - (hasBadge ? badgeH + badgeGap : 0);
   const totalRows = dataRows.length + 1; // +1 header
   const naturalRowH = 0.35;
-  const fittedRowH = Math.min(
-    0.9,
-    Math.max(naturalRowH, tableRegionH / totalRows)
-  );
+  const fittedRowH = Math.min(0.9, Math.max(naturalRowH, tableRegionH / totalRows));
   const tableH = fittedRowH * totalRows;
 
   elements.push({

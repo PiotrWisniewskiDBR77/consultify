@@ -13,14 +13,10 @@
  * Read-only against the engine — this file is the conclusion LAYER only.
  */
 
-import { localizeLadder } from './index';
-import {
-  buildW2ThemeSequence,
-  rankThemes,
-  type AmbitionDecomposerData,
-} from './moveValidator';
-
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
+import { localizeLadder } from './index';
+import { type AmbitionDecomposerData, buildW2ThemeSequence, rankThemes } from './moveValidator';
 const loc = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

@@ -19,7 +19,12 @@ interface OkrCheckInModalProps {
   onSuccess: () => void;
 }
 
-const CONFIDENCE_OPTIONS: Array<{ value: 'green' | 'amber' | 'red'; labelPl: string; labelEn: string; dot: string }> = [
+const CONFIDENCE_OPTIONS: Array<{
+  value: 'green' | 'amber' | 'red';
+  labelPl: string;
+  labelEn: string;
+  dot: string;
+}> = [
   { value: 'green', labelPl: 'Na torze', labelEn: 'On track', dot: 'bg-emerald-500' },
   { value: 'amber', labelPl: 'Zagrożone', labelEn: 'At risk', dot: 'bg-amber-500' },
   { value: 'red', labelPl: 'Poza torem', labelEn: 'Off track', dot: 'bg-red-500' },
@@ -58,7 +63,9 @@ export const OkrCheckInModal: React.FC<OkrCheckInModalProps> = ({
         toast.success(t('results.okr.checkInSaved', 'Check-in saved'));
         onSuccess();
       } catch (error: any) {
-        toast.error(error?.message || t('results.okr.checkInFailed', 'Failed to save the check-in'));
+        toast.error(
+          error?.message || t('results.okr.checkInFailed', 'Failed to save the check-in')
+        );
       } finally {
         setSaving(false);
       }
@@ -79,7 +86,10 @@ export const OkrCheckInModal: React.FC<OkrCheckInModalProps> = ({
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               {t('results.okr.checkIn', 'Check-in')}
             </h2>
-            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400" title={keyResultLabel}>
+            <p
+              className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400"
+              title={keyResultLabel}
+            >
               {keyResultLabel}
             </p>
           </div>
@@ -115,7 +125,9 @@ export const OkrCheckInModal: React.FC<OkrCheckInModalProps> = ({
 
           {isManualMetric && (
             <div>
-              <label className={labelCls}>{t('results.okr.newValue', 'New value (optional)')}</label>
+              <label className={labelCls}>
+                {t('results.okr.newValue', 'New value (optional)')}
+              </label>
               <input
                 className={inputCls}
                 type="number"
@@ -149,7 +161,9 @@ export const OkrCheckInModal: React.FC<OkrCheckInModalProps> = ({
               disabled={saving}
               className="h-9 px-5 text-sm font-medium rounded-full bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {saving ? t('common.saving', 'Saving...') : t('results.okr.saveCheckIn', 'Save check-in')}
+              {saving
+                ? t('common.saving', 'Saving...')
+                : t('results.okr.saveCheckIn', 'Save check-in')}
             </button>
           </div>
         </form>

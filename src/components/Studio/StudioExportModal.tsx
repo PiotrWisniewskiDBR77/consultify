@@ -110,9 +110,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-c-text">Export Diagram</h2>
-              <p className="text-xs text-c-text-muted">
-                Choose format and settings
-              </p>
+              <p className="text-xs text-c-text-muted">Choose format and settings</p>
             </div>
           </div>
           <button
@@ -127,9 +125,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
         <div className="p-4 space-y-4">
           {/* Format Selection */}
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Format
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">Format</label>
             <div className="grid grid-cols-3 gap-2">
               {formats.map((f) => (
                 <button
@@ -164,9 +160,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
             <>
               {/* Background */}
               <div className="flex items-center justify-between">
-                <label className="text-sm text-c-text-secondary">
-                  Include background
-                </label>
+                <label className="text-sm text-c-text-secondary">Include background</label>
                 <button
                   onClick={() => setIncludeBackground(!includeBackground)}
                   className={`
@@ -186,9 +180,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
               {/* Quality (PNG only) */}
               {format === 'png' && (
                 <div>
-                  <label className="block text-sm text-c-text-secondary mb-2">
-                    Quality
-                  </label>
+                  <label className="block text-sm text-c-text-secondary mb-2">Quality</label>
                   <div className="flex gap-2">
                     {[1, 2, 3].map((q) => (
                       <button

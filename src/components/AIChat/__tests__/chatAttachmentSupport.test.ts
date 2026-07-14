@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
   SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
-  isSupportedChatAttachment,
 } from '../chatAttachmentSupport';
 
-const DOCX_MIME =
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const XLSX_MIME =
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 describe('SUPPORTED_CHAT_ATTACHMENT constants', () => {
   it('includes docx alongside the original text-extractable types', () => {

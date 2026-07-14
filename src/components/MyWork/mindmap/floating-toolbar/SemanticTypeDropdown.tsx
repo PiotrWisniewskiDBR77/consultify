@@ -77,7 +77,10 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
                 : 'text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
             }`}
           >
-            <Icon size={12} className={`shrink-0 ${isActive ? t.color : 'text-c-text-secondary'}`} />
+            <Icon
+              size={12}
+              className={`shrink-0 ${isActive ? t.color : 'text-c-text-secondary'}`}
+            />
             {isPl ? t.labelPl : t.labelEn}
           </button>
         );

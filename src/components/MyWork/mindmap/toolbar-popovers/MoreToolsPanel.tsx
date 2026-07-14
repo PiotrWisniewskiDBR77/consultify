@@ -180,7 +180,10 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
     <div className="w-[280px] max-h-[440px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl">
       <div className="p-2 sticky top-0 bg-c-surface-raised dark:bg-c-surface z-10">
         <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary" />
+          <Search
+            size={12}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary"
+          />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}

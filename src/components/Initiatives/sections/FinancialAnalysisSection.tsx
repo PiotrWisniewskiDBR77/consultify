@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { BarChart3, DollarSign, Loader2, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import { CollapsibleSection } from './CollapsibleSection';

@@ -41,26 +41,24 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  type FilterChip,
-  ModuleHub,
-} from '@/components/shared/ModuleHub';
+import { type FilterChip, ModuleHub } from '@/components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
-import {
-  StandardPreview,
-  standardPreviewShortcuts,
-  type StandardPreviewActions,
-  type StandardRowMenu,
-  StandardTable,
-  type TableColumn as StandardTableColumn,
-} from '@/components/standard';
-import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '@/components/shared/ModuleMenu3';
+import {
+  StandardPreview,
+  type StandardPreviewActions,
+  standardPreviewShortcuts,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
 
 import {
   type AuditProgram,
@@ -72,7 +70,6 @@ import {
   type ProgramCompletion,
 } from './auditApi';
 import { AuditOrchestratorWizard } from './AuditOrchestratorWizard';
-import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
 
 const PAGE_SIZE = 50;
 
@@ -140,7 +137,10 @@ export const AuditsHub: React.FC = () => {
       const msg = e instanceof Error ? e.message : '';
       setError(
         msg.toLowerCase().includes('transport safeguard') || msg.toLowerCase().includes('circuit')
-          ? t('audit.temporarilyUnavailable', 'Service temporarily unavailable. Please try again in a moment.')
+          ? t(
+              'audit.temporarilyUnavailable',
+              'Service temporarily unavailable. Please try again in a moment.'
+            )
           : msg || t('audit.failedToLoadPrograms')
       );
     } finally {
@@ -169,7 +169,10 @@ export const AuditsHub: React.FC = () => {
       const msg = e instanceof Error ? e.message : '';
       setError(
         msg.toLowerCase().includes('transport safeguard') || msg.toLowerCase().includes('circuit')
-          ? t('audit.temporarilyUnavailable', 'Service temporarily unavailable. Please try again in a moment.')
+          ? t(
+              'audit.temporarilyUnavailable',
+              'Service temporarily unavailable. Please try again in a moment.'
+            )
           : msg || t('audit.failedToLoadPrograms')
       );
     } finally {
@@ -304,7 +307,10 @@ export const AuditsHub: React.FC = () => {
           label: statusLabel(s),
         })),
         render: (row: AuditRow) => (
-          <EntityStatusChip status={STATUS_PILL_ALIAS[row.status]} label={statusLabel(row.status)} />
+          <EntityStatusChip
+            status={STATUS_PILL_ALIAS[row.status]}
+            label={statusLabel(row.status)}
+          />
         ),
       },
       {
@@ -493,7 +499,8 @@ export const AuditsHub: React.FC = () => {
     const shortcuts = standardPreviewShortcuts(previewActions);
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
       if (e.key === 'Escape') {
         setSelectedId(null);
         return;
@@ -729,7 +736,8 @@ export const AuditsHub: React.FC = () => {
                             completionSummary ? `${completionSummary.percent}%` : '—'
                           }`,
                           '',
-                          selectedProgram.description?.trim() || t('common.noDescription', 'No description'),
+                          selectedProgram.description?.trim() ||
+                            t('common.noDescription', 'No description'),
                         ].join('\n'),
                         onCopy: () => {
                           void navigator.clipboard?.writeText(
@@ -750,7 +758,9 @@ export const AuditsHub: React.FC = () => {
                           ? selectedProgram.config.plan.map((row, i) => ({
                               id: String((row as { areaKey?: string })?.areaKey ?? i),
                               label: String((row as { area?: string })?.area ?? '') || '—',
-                              value: String((row as { suggestedRole?: string })?.suggestedRole ?? '') || '—',
+                              value:
+                                String((row as { suggestedRole?: string })?.suggestedRole ?? '') ||
+                                '—',
                             }))
                           : []
                       }

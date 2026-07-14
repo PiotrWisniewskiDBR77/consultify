@@ -154,9 +154,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
               whileHover={allowed && !disabled ? { scale: 1.05 } : {}}
               whileTap={allowed && !disabled ? { scale: 0.98 } : {}}
             >
-              <ModeIcon
-                className={`w-5 h-5 ${isSelected ? config.color : 'text-c-text-muted'}`}
-              />
+              <ModeIcon className={`w-5 h-5 ${isSelected ? config.color : 'text-c-text-muted'}`} />
               {isSelected && (
                 <motion.div
                   layoutId="proactivity-indicator"
@@ -239,16 +237,12 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
               </div>
 
               {/* Title */}
-              <h4
-                className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900'}`}
-              >
+              <h4 className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900'}`}>
                 {config.title}
               </h4>
 
               {/* Short description */}
-              <p className="text-xs text-c-text-muted">
-                {config.shortDescription}
-              </p>
+              <p className="text-xs text-c-text-muted">{config.shortDescription}</p>
 
               {/* Locked indicator */}
               {!allowed && (
@@ -291,7 +285,9 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                 <h4 className={`font-semibold ${selectedConfig.color} mb-1`}>
                   {selectedConfig.title} Mode
                 </h4>
-                <p className="text-sm text-c-text-secondary mb-3">{selectedConfig.longDescription}</p>
+                <p className="text-sm text-c-text-secondary mb-3">
+                  {selectedConfig.longDescription}
+                </p>
 
                 {/* Behavior flags */}
                 <div className="grid grid-cols-2 gap-2">
@@ -302,11 +298,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                       ) : (
                         <X className="w-3.5 h-3.5 text-c-text-muted" />
                       )}
-                      <span
-                        className={
-                          enabled ? 'text-c-text-secondary' : 'text-c-text-muted'
-                        }
-                      >
+                      <span className={enabled ? 'text-c-text-secondary' : 'text-c-text-muted'}>
                         {formatBehaviorKey(key)}
                       </span>
                     </div>

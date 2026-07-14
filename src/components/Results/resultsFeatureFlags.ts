@@ -107,9 +107,7 @@ export function isResultsFlagEnabled(flag: ResultsFlag): boolean {
   // public production (consultify.ai). Demo/stage/dev → ON (Piotr's odbiór sees
   // the full cockpit without ?ff_ params); prod stays env-gated (D-G = no prod).
   // Reversible: drop this line to restore default-OFF.
-  return !isPublicProductionHost(
-    typeof window !== 'undefined' ? window.location.hostname : ''
-  );
+  return !isPublicProductionHost(typeof window !== 'undefined' ? window.location.hostname : '');
 }
 
 export const RESULTS_FLAG_KEYS = FLAGS;

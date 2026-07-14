@@ -114,9 +114,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           );
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load templates';
           if (err?.response?.status === 403) {
-            toast.error(
-              t('interview.assignModal.noPermissionToViewTemplates')
-            );
+            toast.error(t('interview.assignModal.noPermissionToViewTemplates'));
           } else {
             const msg = typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
             toast.error(t('interview.assignModal.failedToLoadTemplatesX', { msg }));
@@ -140,9 +138,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           );
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load users';
           if (err?.response?.status === 403) {
-            toast.error(
-              t('interview.assignModal.noPermissionToViewUsers')
-            );
+            toast.error(t('interview.assignModal.noPermissionToViewUsers'));
           } else {
             const msg = typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
             toast.error(t('interview.assignModal.failedToLoadUsersX', { msg }));
@@ -173,15 +169,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           console.warn(
             '[AssignInterviewModal] ⚠️ No templates found - check permissions or backend'
           );
-          toast.error(
-            t('interview.assignModal.noTemplatesAvailableCheckPermissions')
-          );
+          toast.error(t('interview.assignModal.noTemplatesAvailableCheckPermissions'));
         }
         if (allUsers.length === 0) {
           console.warn('[AssignInterviewModal] ⚠️ No users found - check permissions or backend');
-          toast.error(
-            t('interview.assignModal.noUsersAvailableCheckPermissions')
-          );
+          toast.error(t('interview.assignModal.noUsersAvailableCheckPermissions'));
         }
       } catch (error: any) {
         console.error('[AssignInterviewModal] Unexpected error in loadData:', error);
@@ -190,7 +182,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             ? error
             : error?.response?.data?.error ||
               error?.message ||
-              (t('interview.assignModal.failedToLoadData'));
+              t('interview.assignModal.failedToLoadData');
         const msg = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
         toast.error(msg);
       } finally {
@@ -278,9 +270,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       return;
     }
     if (selectedUserIds.length === 0) {
-      toast.error(
-        t('interview.assignModal.selectAtLeastOneUser')
-      );
+      toast.error(t('interview.assignModal.selectAtLeastOneUser'));
       return;
     }
     if (!dueDate) {
@@ -341,7 +331,10 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop — VISUAL_STANDARD §5.6: every modal dims the app behind it
           (same layer as the Modal primitive: black/30 light, black/50 dark). */}
-      <div className="absolute inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
       {/* Modal */}
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
@@ -376,9 +369,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             <>
               {/* Template Selection */}
               <Field>
-                <FieldLabel required>
-                  {t('interview.assignModal.interviewTemplate')}
-                </FieldLabel>
+                <FieldLabel required>{t('interview.assignModal.interviewTemplate')}</FieldLabel>
                 <Select
                   value={selectedTemplateId}
                   onChange={setSelectedTemplateId}
@@ -477,9 +468,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={
-                    t('interview.assignModal.additionalInstructionsForAssignees')
-                  }
+                  placeholder={t('interview.assignModal.additionalInstructionsForAssignees')}
                   rows={3}
                   className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus focus:outline-none resize-none transition-colors"
                 />

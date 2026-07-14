@@ -771,7 +771,9 @@ const ActionModal: React.FC<ActionModalProps> = ({
           placeholder={reasonRequired ? 'Required — explain replacement / risk' : 'Optional'}
         />
         <div className="mt-1 flex items-center justify-between text-[11px]">
-          <span className={`${overLimit ? 'text-danger-600' : 'text-slate-500 dark:text-slate-400'}`}>
+          <span
+            className={`${overLimit ? 'text-danger-600' : 'text-slate-500 dark:text-slate-400'}`}
+          >
             {reason.length}/{REASON_MAX}
           </span>
         </div>

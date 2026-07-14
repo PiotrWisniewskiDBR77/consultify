@@ -101,9 +101,7 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
           </button>
         )}
         {isImported && (
-          <span className="text-xs font-medium text-[var(--c-success)]">
-            ✓ Imported
-          </span>
+          <span className="text-xs font-medium text-[var(--c-success)]">✓ Imported</span>
         )}
       </div>
     );
@@ -119,9 +117,7 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-semibold text-[var(--c-text)]">
-              Interview Context Available
-            </h4>
+            <h4 className="font-semibold text-[var(--c-text)]">Interview Context Available</h4>
             <span className="px-2 py-0.5 text-xs font-medium bg-c-info/12 text-[var(--c-info)] rounded-token-pill">
               {completenessPercent}% complete
             </span>

@@ -31,13 +31,7 @@
  * `docSection` marker.
  */
 
-import type {
-  DocumentBlock,
-  DocumentSchema,
-  DocumentSection,
-  DocumentSourceRef,
-} from '../types';
-
+import type { DocumentBlock, DocumentSchema, DocumentSection, DocumentSourceRef } from '../types';
 import {
   CHART_NODE_NAME,
   DOC_IMAGE_NODE_NAME,
@@ -91,11 +85,7 @@ function textParagraph(text: string): PMNode {
 }
 
 /** An atom NodeView block carrying its entire content as `payloadJson`. */
-function atomBlockNode(
-  nodeName: string,
-  block: DocumentBlock,
-  sectionId: string
-): PMNode {
+function atomBlockNode(nodeName: string, block: DocumentBlock, sectionId: string): PMNode {
   let payloadJson = '';
   try {
     payloadJson = JSON.stringify(block.content ?? null);
@@ -131,9 +121,7 @@ export function blockToPMNodes(block: DocumentBlock, sectionId: string): PMNode[
           type: 'heading',
           attrs: { ...identity, level },
           content:
-            typeof c.text === 'string' && c.text.length > 0
-              ? [{ type: 'text', text: c.text }]
-              : [],
+            typeof c.text === 'string' && c.text.length > 0 ? [{ type: 'text', text: c.text }] : [],
         },
       ];
     }

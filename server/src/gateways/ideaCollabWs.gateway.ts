@@ -376,10 +376,12 @@ export function attachIdeaCollabWs(server: HttpServer): void {
               canWrite: m.canWrite,
             }))
           : await db
-              .get<{ id: string }>(
-                'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
-                [ideaId, activeOrg]
-              )
+              .get<{
+                id: string;
+              }>('SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?', [
+                ideaId,
+                activeOrg,
+              ])
               .then((idea) => ({ ok: !!idea, canWrite: true }));
 
         if (!gate.ok) {

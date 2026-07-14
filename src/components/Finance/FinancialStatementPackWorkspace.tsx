@@ -776,7 +776,11 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             type="button"
             onClick={toggleLineage}
             className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]"
-            title={isPl ? 'Ślad źródła (skąd ta liczba)' : 'Source lineage (where this number comes from)'}
+            title={
+              isPl
+                ? 'Ślad źródła (skąd ta liczba)'
+                : 'Source lineage (where this number comes from)'
+            }
           >
             <Search size={11} />
             {showLineage ? <ChevronDown size={11} /> : <ChevronRight size={11} />}

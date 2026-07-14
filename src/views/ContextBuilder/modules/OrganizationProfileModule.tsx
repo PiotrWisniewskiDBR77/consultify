@@ -899,9 +899,7 @@ export const OrganizationProfileModule: React.FC = () => {
               className={`flex items-center gap-3 p-2 rounded-lg border ${proposal.accepted === true ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : proposal.accepted === false ? 'bg-c-bg border-c-border-subtle dark:bg-navy-950 dark:border-navy-700 opacity-50' : 'bg-c-surface border-c-border-subtle dark:bg-navy-900 dark:border-navy-700'}`}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-c-text-muted">
-                  {proposal.label}
-                </div>
+                <div className="text-xs font-medium text-c-text-muted">{proposal.label}</div>
                 <div className="text-sm text-navy-900 dark:text-white truncate">
                   {proposal.value}
                 </div>
@@ -1034,9 +1032,7 @@ export const OrganizationProfileModule: React.FC = () => {
                       <div className="font-semibold text-sm text-navy-900 dark:text-white">
                         {ot.label}
                       </div>
-                      <div className="text-[10px] text-c-text-muted mt-1">
-                        {ot.hint}
-                      </div>
+                      <div className="text-[10px] text-c-text-muted mt-1">{ot.hint}</div>
                     </div>
                   </label>
                 ))}

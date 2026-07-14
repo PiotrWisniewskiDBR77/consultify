@@ -231,9 +231,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
           <Settings size={20} className="text-blue-500" />
           Context Window Size
         </h3>
-        <p className="text-sm text-c-text-muted">
-          How much context AI can consider at once
-        </p>
+        <p className="text-sm text-c-text-muted">How much context AI can consider at once</p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -405,9 +403,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                       >
                         <div className="text-left">
                           <p className="text-sm text-c-text">{member.name}</p>
-                          <p className="text-xs text-c-text-muted">
-                            {member.email}
-                          </p>
+                          <p className="text-xs text-c-text-muted">{member.email}</p>
                         </div>
                         {isSelected && <CheckCircle size={16} className="text-green-600" />}
                       </button>
@@ -426,9 +422,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
           <BookOpen size={20} className="text-c-accent" />
           Knowledge Bases
         </h3>
-        <p className="text-sm text-c-text-muted">
-          Additional knowledge sources for AI
-        </p>
+        <p className="text-sm text-c-text-muted">Additional knowledge sources for AI</p>
 
         <div className="space-y-3">
           {[
@@ -472,9 +466,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings.knowledgeBases as any)[kb.key]
-                    ? 'bg-navy-900'
-                    : 'bg-c-surface-raised'
+                  (settings.knowledgeBases as any)[kb.key] ? 'bg-navy-900' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
@@ -489,9 +481,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
 
         {/* Custom Sources */}
         <div className="pt-4 border-t border-c-border-subtle dark:border-navy-700">
-          <p className="font-medium text-c-text mb-3">
-            Custom Knowledge Sources
-          </p>
+          <p className="font-medium text-c-text mb-3">Custom Knowledge Sources</p>
           <div className="flex gap-2 mb-3">
             <input
               type="text"
@@ -515,10 +505,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 className="flex items-center gap-2 px-3 py-1.5 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-lg text-sm"
               >
                 {source}
-                <button
-                  onClick={() => removeCustomSource(source)}
-                  className="hover:text-c-accent"
-                >
+                <button onClick={() => removeCustomSource(source)} className="hover:text-c-accent">
                   <X size={14} />
                 </button>
               </span>

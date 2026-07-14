@@ -181,9 +181,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
             <span className="text-c-text-secondary">
               {isPolish ? 'Bieżący próg' : 'Current threshold'}
             </span>
-            <span className="font-semibold text-c-text">
-              {Math.round(threshold * 100)}%
-            </span>
+            <span className="font-semibold text-c-text">{Math.round(threshold * 100)}%</span>
           </div>
           <input
             type="range"
@@ -274,21 +272,15 @@ export const AIInboxAutomationSettings: React.FC = () => {
             <div className="mt-4 space-y-3 text-sm text-c-text-secondary">
               <div className="flex items-center justify-between">
                 <span>{isPolish ? 'Ostatnie runy eval' : 'Recent eval runs'}</span>
-                <span className="font-semibold text-c-text">
-                  {aiEvalRuns.length}
-                </span>
+                <span className="font-semibold text-c-text">{aiEvalRuns.length}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>{isPolish ? 'Koszt okna' : 'Cost window'}</span>
-                <span className="font-semibold text-c-text">
-                  {aiCostSummary?.days ?? 30}d
-                </span>
+                <span className="font-semibold text-c-text">{aiCostSummary?.days ?? 30}d</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>{isPolish ? 'Manual review' : 'Manual review'}</span>
-                <span className="font-semibold text-c-text">
-                  {manualReviewCount}
-                </span>
+                <span className="font-semibold text-c-text">{manualReviewCount}</span>
               </div>
             </div>
           </div>

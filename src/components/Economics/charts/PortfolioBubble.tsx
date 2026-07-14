@@ -78,8 +78,7 @@ export const PortfolioBubble: React.FC<PortfolioBubbleProps> = ({
     };
   }, [points]);
 
-  const xScale = (v: number) =>
-    PAD_LEFT + ((v - dom.xMin) / (dom.xMax - dom.xMin || 1)) * plotW;
+  const xScale = (v: number) => PAD_LEFT + ((v - dom.xMin) / (dom.xMax - dom.xMin || 1)) * plotW;
   const yScale = (v: number) =>
     PAD_TOP + plotH - ((v - dom.yMin) / (dom.yMax - dom.yMin || 1)) * plotH;
   const rScale = (s: number) =>
@@ -254,9 +253,7 @@ export const PortfolioBubble: React.FC<PortfolioBubbleProps> = ({
           <div className="text-slate-500 dark:text-slate-400">
             {xLabel}: {hovered.x} · {yLabel}: {hovered.y}
           </div>
-          <div className="text-slate-400 dark:text-slate-500">
-            nakład: {hovered.size}
-          </div>
+          <div className="text-slate-400 dark:text-slate-500">nakład: {hovered.size}</div>
         </div>
       )}
     </div>

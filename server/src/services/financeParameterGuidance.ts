@@ -324,10 +324,7 @@ export function waccGuidance(params: {
  * "assumed rate below the expected band → NPV likely overstated" without
  * re-deriving anything. Numbers only from the band + the supplied rate.
  */
-export function gradeWacc(
-  suppliedWaccPct: number,
-  band: RateBand
-): RateGrade {
+export function gradeWacc(suppliedWaccPct: number, band: RateBand): RateGrade {
   const rate = Number.isFinite(suppliedWaccPct) ? suppliedWaccPct : 0;
   if (rate < band.low) {
     const distancePp = round1(band.low - rate);

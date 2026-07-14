@@ -311,7 +311,9 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
             </span>
             <WifiOff size={16} className="text-danger-500" />
           </div>
-          <p className="text-2xl font-bold text-danger-600 dark:text-danger-400">{stats.inactive}</p>
+          <p className="text-2xl font-bold text-danger-600 dark:text-danger-400">
+            {stats.inactive}
+          </p>
         </div>
       </div>
 

@@ -956,10 +956,13 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           filter !== 'all' ? (
             <EmptyState
               variant="filter"
-              title={t('myWork.notifications.filterEmptyTitle', 'No notifications match this filter')}
+              title={t(
+                'myWork.notifications.filterEmptyTitle',
+                'No notifications match this filter'
+              )}
               description={t(
                 'myWork.notifications.filterEmptyDesc',
-                'Try a different filter to see more notifications.',
+                'Try a different filter to see more notifications.'
               )}
               primaryAction={{
                 label: t('common.clearFilters', 'Clear filters'),
@@ -973,7 +976,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
               title={t('myWork.noNotifications', 'No notifications')}
               description={t(
                 'myWork.notifications.newEmptyDesc',
-                'You are all caught up — new notifications will appear here.',
+                'You are all caught up — new notifications will appear here.'
               )}
             />
           )
@@ -996,7 +999,9 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
+            >
               <thead className="bg-slate-50 dark:bg-navy-900 sticky top-0 z-10">
                 <tr>
                   <th className="w-6 px-2 py-2"></th>

@@ -27,11 +27,17 @@ import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
 import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
 import { Tooltip } from '@/components/ui/primitives';
-import { getDRDKnowledge } from '@/services/assessmentKnowledge/drdKnowledge';
 import { getAssessmentGuidanceLive } from '@/services/assessmentKnowledge/assessmentGuidanceRuntime';
 import type { AssessmentGuidanceOutput } from '@/services/assessmentKnowledge/assessmentGuidanceService';
-import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE, DRDArea, DRDAxis, DRDLevel } from '@/services/drdStructure';
+import { getDRDKnowledge } from '@/services/assessmentKnowledge/drdKnowledge';
 import { getDRDAxisWhyHint } from '@/services/assessmentKnowledge/whyThisMatters';
+import {
+  DRD_AXIS_KEY_MAP,
+  DRD_STRUCTURE,
+  DRDArea,
+  DRDAxis,
+  DRDLevel,
+} from '@/services/drdStructure';
 
 type AreaState = {
   achievedLevel: number; // 0..levelCount
@@ -278,27 +284,24 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   );
 
   // Fetch canon-grounded AI guidance for one area×level (cached, non-blocking).
-  const requestGuidance = React.useCallback(
-    (area: DRDArea, level: DRDLevel) => {
-      const key = `${area.id}#${level.level}`;
-      setGuidance((prev) => {
-        if (prev[key]?.loading || prev[key]?.data) return prev;
-        return { ...prev, [key]: { loading: true } };
-      });
-      void getAssessmentGuidanceLive({
-        framework: 'DRD',
-        dimensionId: area.id,
-        dimensionName: area.namePL || area.name,
-        levelNumber: level.level,
-        levelTitle: level.title,
-        levelDescription: level.description,
-        language: 'pl',
-      })
-        .then((data) => setGuidance((prev) => ({ ...prev, [key]: { loading: false, data } })))
-        .catch(() => setGuidance((prev) => ({ ...prev, [key]: { loading: false } })));
-    },
-    []
-  );
+  const requestGuidance = React.useCallback((area: DRDArea, level: DRDLevel) => {
+    const key = `${area.id}#${level.level}`;
+    setGuidance((prev) => {
+      if (prev[key]?.loading || prev[key]?.data) return prev;
+      return { ...prev, [key]: { loading: true } };
+    });
+    void getAssessmentGuidanceLive({
+      framework: 'DRD',
+      dimensionId: area.id,
+      dimensionName: area.namePL || area.name,
+      levelNumber: level.level,
+      levelTitle: level.title,
+      levelDescription: level.description,
+      language: 'pl',
+    })
+      .then((data) => setGuidance((prev) => ({ ...prev, [key]: { loading: false, data } })))
+      .catch(() => setGuidance((prev) => ({ ...prev, [key]: { loading: false } })));
+  }, []);
 
   // When area changes, default focus to "next likely" level (achieved+1), unless controlled externally.
   React.useEffect(() => {
@@ -931,7 +934,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       >
                         {/* Top line: ID + badges */}
                         <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">{area.id}</span>
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">
+                            {area.id}
+                          </span>
                           <div className="flex items-center gap-1">
                             {achieved > 0 && (
                               <span className="px-1.5 py-0.5 rounded bg-slate-500/30 text-[9px] font-bold text-white">

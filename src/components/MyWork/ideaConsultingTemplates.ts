@@ -136,7 +136,13 @@ const frame = (
   data: { label, width: w, height: h, ...(bgColor ? { bgColor } : {}) },
 });
 
-const sticky = (id: string, label: string, x: number, y: number, semanticLabel?: string): AnyNode => ({
+const sticky = (
+  id: string,
+  label: string,
+  x: number,
+  y: number,
+  semanticLabel?: string
+): AnyNode => ({
   id,
   type: 'stickyNote',
   position: { x, y },
@@ -286,8 +292,10 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-bmc',
       nameEn: 'Business Model Canvas',
       namePl: 'Business Model Canvas',
-      descEn: '9 building blocks of a business model — use to design or challenge how the company creates, delivers and captures value.',
-      descPl: '9 bloków modelu biznesowego — użyj do zaprojektowania lub podważenia jak firma tworzy, dostarcza i przechwytuje wartość.',
+      descEn:
+        '9 building blocks of a business model — use to design or challenge how the company creates, delivers and captures value.',
+      descPl:
+        '9 bloków modelu biznesowego — użyj do zaprojektowania lub podważenia jak firma tworzy, dostarcza i przechwytuje wartość.',
       icon: LayoutGrid,
       group: 'strategy',
     },
@@ -318,8 +326,10 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-swot',
       nameEn: 'SWOT Analysis',
       namePl: 'Analiza SWOT',
-      descEn: 'Strengths, Weaknesses (internal) vs Opportunities, Threats (external) — a fast situational baseline before strategy choices.',
-      descPl: 'Mocne i słabe strony (wewnętrzne) vs Szanse i Zagrożenia (zewnętrzne) — szybka baza sytuacyjna przed wyborami strategicznymi.',
+      descEn:
+        'Strengths, Weaknesses (internal) vs Opportunities, Threats (external) — a fast situational baseline before strategy choices.',
+      descPl:
+        'Mocne i słabe strony (wewnętrzne) vs Szanse i Zagrożenia (zewnętrzne) — szybka baza sytuacyjna przed wyborami strategicznymi.',
       icon: Grid3x3,
       group: 'strategy',
     },
@@ -340,14 +350,21 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-porter5',
       nameEn: "Porter's Five Forces",
       namePl: '5 Sił Portera',
-      descEn: 'Assess industry attractiveness through five competitive forces — use to judge profit potential and positioning.',
-      descPl: 'Oceń atrakcyjność branży przez pięć sił konkurencyjnych — użyj do oceny potencjału zysku i pozycjonowania.',
+      descEn:
+        'Assess industry attractiveness through five competitive forces — use to judge profit potential and positioning.',
+      descPl:
+        'Oceń atrakcyjność branży przez pięć sił konkurencyjnych — użyj do oceny potencjału zysku i pozycjonowania.',
       icon: Compass,
       group: 'strategy',
     },
     [
       frame('rivalry', 'Competitive Rivalry (core)', 380, 200, 300, 160, BG.violet),
-      sticky('rivalry-h', 'Liczba i siła rywali, tempo wzrostu, różnicowanie, bariery wyjścia.', 394, 246),
+      sticky(
+        'rivalry-h',
+        'Liczba i siła rywali, tempo wzrostu, różnicowanie, bariery wyjścia.',
+        394,
+        246
+      ),
       frame('entrants', 'Threat of New Entrants', 380, 0, 300, 150, BG.blue),
       sticky('entrants-h', 'Bariery wejścia: kapitał, skala, marka, dostęp do kanałów.', 394, 44),
       frame('suppliers', 'Supplier Power', 0, 200, 320, 160, BG.amber),
@@ -355,7 +372,12 @@ const STRATEGY: TemplateDefinition[] = [
       frame('buyers', 'Buyer Power', 740, 200, 320, 160, BG.green),
       sticky('buy-h', 'Wrażliwość cenowa, koncentracja nabywców, koszt zmiany.', 754, 246),
       frame('subs', 'Threat of Substitutes', 380, 400, 300, 150, BG.pink),
-      sticky('subs-h', 'Alternatywy zaspokajające tę samą potrzebę; relacja cena/wartość.', 394, 444),
+      sticky(
+        'subs-h',
+        'Alternatywy zaspokajające tę samą potrzebę; relacja cena/wartość.',
+        394,
+        444
+      ),
     ]
   ),
   // 1.4 Blue Ocean ERRC grid
@@ -364,8 +386,10 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-blueocean',
       nameEn: 'Blue Ocean — ERRC Grid',
       namePl: 'Blue Ocean — Siatka ERRC',
-      descEn: 'Eliminate-Reduce-Raise-Create grid to break the value/cost trade-off and open uncontested market space.',
-      descPl: 'Siatka Wyeliminuj-Ogranicz-Podnieś-Stwórz — przełam kompromis wartość/koszt i otwórz nową przestrzeń rynkową.',
+      descEn:
+        'Eliminate-Reduce-Raise-Create grid to break the value/cost trade-off and open uncontested market space.',
+      descPl:
+        'Siatka Wyeliminuj-Ogranicz-Podnieś-Stwórz — przełam kompromis wartość/koszt i otwórz nową przestrzeń rynkową.',
       icon: Waypoints,
       group: 'strategy',
     },
@@ -377,7 +401,12 @@ const STRATEGY: TemplateDefinition[] = [
       frame('raise', 'Raise (above standard)', 0, 260, 360, 240, BG.blue),
       sticky('raise-h', 'Co podnieść znacznie powyżej standardu branży?', 14, 306),
       frame('create', 'Create (new)', 380, 260, 360, 240, BG.green),
-      sticky('create-h', 'Jakie nowe czynniki stworzyć, których branża nigdy nie oferowała?', 394, 306),
+      sticky(
+        'create-h',
+        'Jakie nowe czynniki stworzyć, których branża nigdy nie oferowała?',
+        394,
+        306
+      ),
     ]
   ),
   // 1.5 Ansoff Matrix 2x2
@@ -386,8 +415,10 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-ansoff',
       nameEn: 'Ansoff Growth Matrix',
       namePl: 'Macierz wzrostu Ansoffa',
-      descEn: 'Products × Markets 2×2 (Penetration, Development, New Products, Diversification) — frame growth options by risk.',
-      descPl: 'Produkty × Rynki 2×2 (Penetracja, Rozwój rynku, Nowe produkty, Dywersyfikacja) — uporządkuj opcje wzrostu wg ryzyka.',
+      descEn:
+        'Products × Markets 2×2 (Penetration, Development, New Products, Diversification) — frame growth options by risk.',
+      descPl:
+        'Produkty × Rynki 2×2 (Penetracja, Rozwój rynku, Nowe produkty, Dywersyfikacja) — uporządkuj opcje wzrostu wg ryzyka.',
       icon: TrendingUp,
       group: 'strategy',
     },
@@ -408,8 +439,10 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-pestel',
       nameEn: 'PESTEL Scan',
       namePl: 'Skan PESTEL',
-      descEn: 'Macro-environment scan — Political, Economic, Social, Technological, Environmental, Legal drivers shaping the market.',
-      descPl: 'Skan makrootoczenia — czynniki Polityczne, Ekonomiczne, Społeczne, Technologiczne, Środowiskowe, Prawne kształtujące rynek.',
+      descEn:
+        'Macro-environment scan — Political, Economic, Social, Technological, Environmental, Legal drivers shaping the market.',
+      descPl:
+        'Skan makrootoczenia — czynniki Polityczne, Ekonomiczne, Społeczne, Technologiczne, Środowiskowe, Prawne kształtujące rynek.',
       icon: Network,
       group: 'strategy',
     },
@@ -422,7 +455,14 @@ const STRATEGY: TemplateDefinition[] = [
       mbranch('b-env', 'Environmental — klimat, ESG, zasoby', 180, 520, 'environmental'),
       mbranch('b-l', 'Legal — prawo pracy, ochrona danych, compliance', 740, 520, 'legal'),
     ],
-    [medge('root', 'b-p'), medge('root', 'b-e'), medge('root', 'b-s'), medge('root', 'b-t'), medge('root', 'b-env'), medge('root', 'b-l')]
+    [
+      medge('root', 'b-p'),
+      medge('root', 'b-e'),
+      medge('root', 'b-s'),
+      medge('root', 'b-t'),
+      medge('root', 'b-env'),
+      medge('root', 'b-l'),
+    ]
   ),
   // 1.7 Value Proposition Canvas
   wb(
@@ -430,8 +470,10 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-vpc',
       nameEn: 'Value Proposition Canvas',
       namePl: 'Value Proposition Canvas',
-      descEn: 'Fit between customer profile (jobs, pains, gains) and the value map (products, pain relievers, gain creators).',
-      descPl: 'Dopasowanie profilu klienta (zadania, bóle, zyski) do mapy wartości (produkty, uśmierzacze bólu, generatory zysków).',
+      descEn:
+        'Fit between customer profile (jobs, pains, gains) and the value map (products, pain relievers, gain creators).',
+      descPl:
+        'Dopasowanie profilu klienta (zadania, bóle, zyski) do mapy wartości (produkty, uśmierzacze bólu, generatory zysków).',
       icon: Target,
       group: 'strategy',
     },
@@ -458,20 +500,44 @@ const STRATEGY: TemplateDefinition[] = [
       id: 'cx-strategic-roadmap',
       nameEn: 'Strategic Roadmap (Horizons)',
       namePl: 'Roadmapa strategiczna (Horyzonty)',
-      descEn: 'Now / Next / Later horizons sequencing strategic bets from core optimization to future options.',
-      descPl: 'Horyzonty Teraz / Dalej / Później — sekwencja strategicznych zakładów od optymalizacji rdzenia po opcje przyszłości.',
+      descEn:
+        'Now / Next / Later horizons sequencing strategic bets from core optimization to future options.',
+      descPl:
+        'Horyzonty Teraz / Dalej / Później — sekwencja strategicznych zakładów od optymalizacji rdzenia po opcje przyszłości.',
       icon: Route,
       group: 'strategy',
     },
     [
       pf('h1-a', 'Horizon 1: obroń i rozwiń rdzeń', 60, 60, 'start', 'lane-now', LANE.green),
       pf('h1-b', 'Quick wins & efektywność', 320, 60, 'action', 'lane-now', LANE.green),
-      pf('h2-a', 'Horizon 2: skaluj nowe silniki wzrostu', 320, 220, 'action', 'lane-next', LANE.amber),
+      pf(
+        'h2-a',
+        'Horizon 2: skaluj nowe silniki wzrostu',
+        320,
+        220,
+        'action',
+        'lane-next',
+        LANE.amber
+      ),
       pf('h2-b', 'Nowe segmenty / oferty', 600, 220, 'action', 'lane-next', LANE.amber),
-      pf('h3-a', 'Horizon 3: zasiej opcje przyszłości', 600, 380, 'action', 'lane-later', LANE.blue),
+      pf(
+        'h3-a',
+        'Horizon 3: zasiej opcje przyszłości',
+        600,
+        380,
+        'action',
+        'lane-later',
+        LANE.blue
+      ),
       pf('h3-b', 'Wizja docelowa', 880, 380, 'end', 'lane-later', LANE.blue),
     ],
-    [pfe('h1-a', 'h1-b'), pfe('h1-b', 'h2-a'), pfe('h2-a', 'h2-b'), pfe('h2-b', 'h3-a'), pfe('h3-a', 'h3-b')],
+    [
+      pfe('h1-a', 'h1-b'),
+      pfe('h1-b', 'h2-a'),
+      pfe('h2-a', 'h2-b'),
+      pfe('h2-b', 'h3-a'),
+      pfe('h3-a', 'h3-b'),
+    ],
     [
       { id: 'lane-now', label: 'Now (0–6 mies.)', color: LANE.green },
       { id: 'lane-next', label: 'Next (6–18 mies.)', color: LANE.amber },
@@ -490,8 +556,10 @@ const OPERATIONS: TemplateDefinition[] = [
       id: 'cx-vsm',
       nameEn: 'Value Stream Mapping',
       namePl: 'Value Stream Mapping (VSM)',
-      descEn: 'End-to-end material & information flow with process boxes and lead/cycle times — expose waste and improvement targets.',
-      descPl: 'Przepływ materiału i informacji end-to-end z boksami procesów i czasami — obnaża marnotrawstwo i cele usprawnień.',
+      descEn:
+        'End-to-end material & information flow with process boxes and lead/cycle times — expose waste and improvement targets.',
+      descPl:
+        'Przepływ materiału i informacji end-to-end z boksami procesów i czasami — obnaża marnotrawstwo i cele usprawnień.',
       icon: Workflow,
       group: 'operations',
     },
@@ -502,9 +570,23 @@ const OPERATIONS: TemplateDefinition[] = [
       pf('vsm-p2', 'Process 2\nC/T · C/O · uptime', 660, 60, 'action', 'lane-flow', LANE.blue),
       pf('vsm-p3', 'Process 3\nC/T · C/O · uptime', 880, 60, 'action', 'lane-flow', LANE.blue),
       pf('vsm-cust', 'Customer', 1100, 60, 'end', 'lane-flow', LANE.green),
-      pf('vsm-tl', 'Timeline: lead time vs value-added time', 240, 240, 'action', 'lane-time', LANE.pink),
+      pf(
+        'vsm-tl',
+        'Timeline: lead time vs value-added time',
+        240,
+        240,
+        'action',
+        'lane-time',
+        LANE.pink
+      ),
     ],
-    [pfe('vsm-sup', 'vsm-p1'), pfe('vsm-p1', 'vsm-i1'), pfe('vsm-i1', 'vsm-p2'), pfe('vsm-p2', 'vsm-p3'), pfe('vsm-p3', 'vsm-cust')],
+    [
+      pfe('vsm-sup', 'vsm-p1'),
+      pfe('vsm-p1', 'vsm-i1'),
+      pfe('vsm-i1', 'vsm-p2'),
+      pfe('vsm-p2', 'vsm-p3'),
+      pfe('vsm-p3', 'vsm-cust'),
+    ],
     [
       { id: 'lane-flow', label: 'Value stream', color: LANE.blue },
       { id: 'lane-time', label: 'Lead / cycle time', color: LANE.pink },
@@ -516,8 +598,10 @@ const OPERATIONS: TemplateDefinition[] = [
       id: 'cx-sipoc',
       nameEn: 'SIPOC Diagram',
       namePl: 'Diagram SIPOC',
-      descEn: 'Suppliers-Inputs-Process-Outputs-Customers — high-level scope of a process before a deep dive (Six Sigma Define).',
-      descPl: 'Dostawcy-Wejścia-Proces-Wyjścia-Klienci — wysokopoziomowy zakres procesu przed analizą (faza Define w Six Sigma).',
+      descEn:
+        'Suppliers-Inputs-Process-Outputs-Customers — high-level scope of a process before a deep dive (Six Sigma Define).',
+      descPl:
+        'Dostawcy-Wejścia-Proces-Wyjścia-Klienci — wysokopoziomowy zakres procesu przed analizą (faza Define w Six Sigma).',
       icon: Boxes,
       group: 'operations',
     },
@@ -540,8 +624,10 @@ const OPERATIONS: TemplateDefinition[] = [
       id: 'cx-rootcause',
       nameEn: 'Root Cause — Ishikawa + 5 Whys',
       namePl: 'Analiza przyczyn — Ishikawa + 5 Dlaczego',
-      descEn: 'Fishbone 6M categories with a 5-Whys drill on the leading cause — move from symptom to true root cause.',
-      descPl: 'Diagram Ishikawy (6M) z pogłębieniem 5×Dlaczego na wiodącej przyczynie — od objawu do prawdziwej przyczyny źródłowej.',
+      descEn:
+        'Fishbone 6M categories with a 5-Whys drill on the leading cause — move from symptom to true root cause.',
+      descPl:
+        'Diagram Ishikawy (6M) z pogłębieniem 5×Dlaczego na wiodącej przyczynie — od objawu do prawdziwej przyczyny źródłowej.',
       icon: GitBranch,
       group: 'operations',
     },
@@ -579,8 +665,10 @@ const OPERATIONS: TemplateDefinition[] = [
       id: 'cx-raci',
       nameEn: 'RACI Matrix',
       namePl: 'Macierz RACI',
-      descEn: 'Tasks × roles with R/A/C/I — remove ownership ambiguity (exactly one Accountable per row).',
-      descPl: 'Zadania × role z R/A/C/I — usuwa niejasność odpowiedzialności (dokładnie jedno A na wiersz).',
+      descEn:
+        'Tasks × roles with R/A/C/I — remove ownership ambiguity (exactly one Accountable per row).',
+      descPl:
+        'Zadania × role z R/A/C/I — usuwa niejasność odpowiedzialności (dokładnie jedno A na wiersz).',
       icon: Users,
       group: 'operations',
     },
@@ -593,11 +681,66 @@ const OPERATIONS: TemplateDefinition[] = [
       col('stakeholder', 'Interesariusz', 'select', { width: 120, options: ['R', 'A', 'C', 'I'] }),
     ],
     [
-      row('r1', { label: 'Zdefiniuj zakres i cele', sponsor: 'A', pm: 'R', lead: 'C', member: 'I', stakeholder: 'C' }, 'label'),
-      row('r2', { label: 'Zaplanuj harmonogram i budżet', sponsor: 'A', pm: 'R', lead: 'C', member: 'I', stakeholder: 'I' }, 'label'),
-      row('r3', { label: 'Zrealizuj kluczowe zadania', sponsor: 'I', pm: 'A', lead: 'R', member: 'R', stakeholder: 'I' }, 'label'),
-      row('r4', { label: 'Kontrola jakości / odbiór', sponsor: 'A', pm: 'R', lead: 'C', member: 'I', stakeholder: 'C' }, 'label'),
-      row('r5', { label: 'Komunikacja statusu', sponsor: 'I', pm: 'R', lead: 'C', member: 'I', stakeholder: 'A' }, 'label'),
+      row(
+        'r1',
+        {
+          label: 'Zdefiniuj zakres i cele',
+          sponsor: 'A',
+          pm: 'R',
+          lead: 'C',
+          member: 'I',
+          stakeholder: 'C',
+        },
+        'label'
+      ),
+      row(
+        'r2',
+        {
+          label: 'Zaplanuj harmonogram i budżet',
+          sponsor: 'A',
+          pm: 'R',
+          lead: 'C',
+          member: 'I',
+          stakeholder: 'I',
+        },
+        'label'
+      ),
+      row(
+        'r3',
+        {
+          label: 'Zrealizuj kluczowe zadania',
+          sponsor: 'I',
+          pm: 'A',
+          lead: 'R',
+          member: 'R',
+          stakeholder: 'I',
+        },
+        'label'
+      ),
+      row(
+        'r4',
+        {
+          label: 'Kontrola jakości / odbiór',
+          sponsor: 'A',
+          pm: 'R',
+          lead: 'C',
+          member: 'I',
+          stakeholder: 'C',
+        },
+        'label'
+      ),
+      row(
+        'r5',
+        {
+          label: 'Komunikacja statusu',
+          sponsor: 'I',
+          pm: 'R',
+          lead: 'C',
+          member: 'I',
+          stakeholder: 'A',
+        },
+        'label'
+      ),
     ]
   ),
   // 2.5 Kaizen board (whiteboard)
@@ -606,8 +749,10 @@ const OPERATIONS: TemplateDefinition[] = [
       id: 'cx-kaizen',
       nameEn: 'Kaizen Improvement Board',
       namePl: 'Tablica Kaizen',
-      descEn: 'Continuous-improvement board (Ideas → To Try → Doing → Done) with a PDCA lane — capture and run small experiments.',
-      descPl: 'Tablica ciągłego doskonalenia (Pomysły → Do przetestowania → W toku → Zrobione) z pasem PDCA — łap i realizuj małe eksperymenty.',
+      descEn:
+        'Continuous-improvement board (Ideas → To Try → Doing → Done) with a PDCA lane — capture and run small experiments.',
+      descPl:
+        'Tablica ciągłego doskonalenia (Pomysły → Do przetestowania → W toku → Zrobione) z pasem PDCA — łap i realizuj małe eksperymenty.',
       icon: Gauge,
       group: 'operations',
     },
@@ -628,8 +773,10 @@ const OPERATIONS: TemplateDefinition[] = [
       id: 'cx-capacity',
       nameEn: 'Capacity Plan',
       namePl: 'Plan zdolności (Capacity)',
-      descEn: 'Resource demand vs available capacity with the gap — surface over/under-utilization before it bites.',
-      descPl: 'Zapotrzebowanie vs dostępna zdolność z luką — pokazuje prze/niedociążenie zanim uderzy.',
+      descEn:
+        'Resource demand vs available capacity with the gap — surface over/under-utilization before it bites.',
+      descPl:
+        'Zapotrzebowanie vs dostępna zdolność z luką — pokazuje prze/niedociążenie zanim uderzy.',
       icon: Gauge,
       group: 'operations',
     },
@@ -642,9 +789,42 @@ const OPERATIONS: TemplateDefinition[] = [
       col('action', 'Działanie', 'text', { width: 220 }),
     ],
     [
-      row('c1', { label: 'Zespół A', demand: 120, capacity: 100, util: 120, gap: -20, action: 'Rekrutacja / outsourcing' }, 'label'),
-      row('c2', { label: 'Zespół B', demand: 80, capacity: 100, util: 80, gap: 20, action: 'Realokacja do A' }, 'label'),
-      row('c3', { label: 'Maszyna / linia', demand: 160, capacity: 150, util: 107, gap: -10, action: 'Dodatkowa zmiana' }, 'label'),
+      row(
+        'c1',
+        {
+          label: 'Zespół A',
+          demand: 120,
+          capacity: 100,
+          util: 120,
+          gap: -20,
+          action: 'Rekrutacja / outsourcing',
+        },
+        'label'
+      ),
+      row(
+        'c2',
+        {
+          label: 'Zespół B',
+          demand: 80,
+          capacity: 100,
+          util: 80,
+          gap: 20,
+          action: 'Realokacja do A',
+        },
+        'label'
+      ),
+      row(
+        'c3',
+        {
+          label: 'Maszyna / linia',
+          demand: 160,
+          capacity: 150,
+          util: 107,
+          gap: -10,
+          action: 'Dodatkowa zmiana',
+        },
+        'label'
+      ),
     ]
   ),
   // 2.7 Kanban board (whiteboard)
@@ -653,8 +833,10 @@ const OPERATIONS: TemplateDefinition[] = [
       id: 'cx-kanban',
       nameEn: 'Kanban Board (WIP-limited)',
       namePl: 'Tablica Kanban (limity WIP)',
-      descEn: 'Backlog → Ready → In Progress → Review → Done with WIP limits — visualize flow and stop overloading.',
-      descPl: 'Backlog → Gotowe → W toku → Przegląd → Zrobione z limitami WIP — wizualizuj przepływ i przestań przeciążać.',
+      descEn:
+        'Backlog → Ready → In Progress → Review → Done with WIP limits — visualize flow and stop overloading.',
+      descPl:
+        'Backlog → Gotowe → W toku → Przegląd → Zrobione z limitami WIP — wizualizuj przepływ i przestań przeciążać.',
       icon: LayoutGrid,
       group: 'operations',
     },
@@ -679,8 +861,10 @@ const FINANCE: TemplateDefinition[] = [
       id: 'cx-business-case',
       nameEn: 'Business Case / ROI',
       namePl: 'Business Case / ROI',
-      descEn: 'Structured investment case: Problem → Options → Costs → Benefits → ROI/Payback → Recommendation.',
-      descPl: 'Ustrukturyzowany case inwestycyjny: Problem → Opcje → Koszty → Korzyści → ROI/Payback → Rekomendacja.',
+      descEn:
+        'Structured investment case: Problem → Options → Costs → Benefits → ROI/Payback → Recommendation.',
+      descPl:
+        'Ustrukturyzowany case inwestycyjny: Problem → Opcje → Koszty → Korzyści → ROI/Payback → Rekomendacja.',
       icon: DollarSign,
       group: 'finance',
     },
@@ -705,8 +889,10 @@ const FINANCE: TemplateDefinition[] = [
       id: 'cx-cba',
       nameEn: 'Cost-Benefit Analysis',
       namePl: 'Analiza kosztów i korzyści',
-      descEn: 'Line-item costs vs quantified benefits with net value and timing — compare options on one page.',
-      descPl: 'Pozycje kosztów vs skwantyfikowane korzyści z wartością netto i horyzontem — porównaj opcje na jednej stronie.',
+      descEn:
+        'Line-item costs vs quantified benefits with net value and timing — compare options on one page.',
+      descPl:
+        'Pozycje kosztów vs skwantyfikowane korzyści z wartością netto i horyzontem — porównaj opcje na jednej stronie.',
       icon: Calculator,
       group: 'finance',
     },
@@ -719,10 +905,54 @@ const FINANCE: TemplateDefinition[] = [
       col('net', 'Wartość netto', 'currency', { width: 140 }),
     ],
     [
-      row('cb1', { label: 'Licencje / wdrożenie', type: 'Koszt', year1: -200000, year2: -40000, year3: -40000, net: -280000 }, 'label'),
-      row('cb2', { label: 'Oszczędność pracy', type: 'Korzyść', year1: 120000, year2: 180000, year3: 200000, net: 500000 }, 'label'),
-      row('cb3', { label: 'Wzrost przychodu', type: 'Korzyść', year1: 0, year2: 90000, year3: 150000, net: 240000 }, 'label'),
-      row('cb4', { label: 'Redukcja ryzyka', type: 'Korzyść', year1: 30000, year2: 30000, year3: 30000, net: 90000 }, 'label'),
+      row(
+        'cb1',
+        {
+          label: 'Licencje / wdrożenie',
+          type: 'Koszt',
+          year1: -200000,
+          year2: -40000,
+          year3: -40000,
+          net: -280000,
+        },
+        'label'
+      ),
+      row(
+        'cb2',
+        {
+          label: 'Oszczędność pracy',
+          type: 'Korzyść',
+          year1: 120000,
+          year2: 180000,
+          year3: 200000,
+          net: 500000,
+        },
+        'label'
+      ),
+      row(
+        'cb3',
+        {
+          label: 'Wzrost przychodu',
+          type: 'Korzyść',
+          year1: 0,
+          year2: 90000,
+          year3: 150000,
+          net: 240000,
+        },
+        'label'
+      ),
+      row(
+        'cb4',
+        {
+          label: 'Redukcja ryzyka',
+          type: 'Korzyść',
+          year1: 30000,
+          year2: 30000,
+          year3: 30000,
+          net: 90000,
+        },
+        'label'
+      ),
     ]
   ),
   // 3.3 Unit Economics (table)
@@ -731,8 +961,10 @@ const FINANCE: TemplateDefinition[] = [
       id: 'cx-unit-economics',
       nameEn: 'Unit Economics',
       namePl: 'Unit Economics',
-      descEn: 'Per-customer/unit metrics — CAC, LTV, contribution margin, payback — to test whether growth is profitable.',
-      descPl: 'Metryki na klienta/jednostkę — CAC, LTV, marża, payback — by sprawdzić czy wzrost jest rentowny.',
+      descEn:
+        'Per-customer/unit metrics — CAC, LTV, contribution margin, payback — to test whether growth is profitable.',
+      descPl:
+        'Metryki na klienta/jednostkę — CAC, LTV, marża, payback — by sprawdzić czy wzrost jest rentowny.',
       icon: Coins,
       group: 'finance',
     },
@@ -743,13 +975,43 @@ const FINANCE: TemplateDefinition[] = [
       col('note', 'Komentarz / benchmark', 'text', { width: 280 }),
     ],
     [
-      row('ue1', { label: 'CAC (koszt pozyskania)', value: 1200, unit: 'PLN', note: 'Cały marketing+sprzedaż / nowi klienci' }, 'label'),
-      row('ue2', { label: 'ARPU / przychód mies.', value: 350, unit: 'PLN', note: 'Średni przychód na klienta' }, 'label'),
-      row('ue3', { label: 'Marża brutto %', value: 70, unit: '%', note: 'Cel SaaS: >70%' }, 'label'),
-      row('ue4', { label: 'Churn miesięczny %', value: 3, unit: '%', note: 'Niżej = dłuższe życie klienta' }, 'label'),
+      row(
+        'ue1',
+        {
+          label: 'CAC (koszt pozyskania)',
+          value: 1200,
+          unit: 'PLN',
+          note: 'Cały marketing+sprzedaż / nowi klienci',
+        },
+        'label'
+      ),
+      row(
+        'ue2',
+        {
+          label: 'ARPU / przychód mies.',
+          value: 350,
+          unit: 'PLN',
+          note: 'Średni przychód na klienta',
+        },
+        'label'
+      ),
+      row(
+        'ue3',
+        { label: 'Marża brutto %', value: 70, unit: '%', note: 'Cel SaaS: >70%' },
+        'label'
+      ),
+      row(
+        'ue4',
+        { label: 'Churn miesięczny %', value: 3, unit: '%', note: 'Niżej = dłuższe życie klienta' },
+        'label'
+      ),
       row('ue5', { label: 'LTV', value: 8166, unit: 'PLN', note: 'ARPU×marża / churn' }, 'label'),
       row('ue6', { label: 'LTV : CAC', value: 6.8, unit: 'x', note: 'Zdrowo: >3x' }, 'label'),
-      row('ue7', { label: 'CAC Payback', value: 4.9, unit: 'mies.', note: 'Cel: <12 mies.' }, 'label'),
+      row(
+        'ue7',
+        { label: 'CAC Payback', value: 4.9, unit: 'mies.', note: 'Cel: <12 mies.' },
+        'label'
+      ),
     ]
   ),
   // 3.4 Budget vs Actual (table)
@@ -758,8 +1020,10 @@ const FINANCE: TemplateDefinition[] = [
       id: 'cx-budget-actual',
       nameEn: 'Budget vs Actual',
       namePl: 'Budżet vs Wykonanie',
-      descEn: 'Line items with budget, actual, variance and % — the core of financial control and forecasting.',
-      descPl: 'Pozycje z budżetem, wykonaniem, odchyleniem i % — rdzeń kontroli finansowej i prognozowania.',
+      descEn:
+        'Line items with budget, actual, variance and % — the core of financial control and forecasting.',
+      descPl:
+        'Pozycje z budżetem, wykonaniem, odchyleniem i % — rdzeń kontroli finansowej i prognozowania.',
       icon: LineChart,
       group: 'finance',
     },
@@ -772,11 +1036,66 @@ const FINANCE: TemplateDefinition[] = [
       col('status', 'Status', 'status', { width: 130, options: ['on_track', 'watch', 'over'] }),
     ],
     [
-      row('ba1', { label: 'Przychód', budget: 1000000, actual: 940000, forecast: 980000, variance: -60000, status: 'watch' }, 'label'),
-      row('ba2', { label: 'COGS', budget: 400000, actual: 410000, forecast: 415000, variance: -10000, status: 'watch' }, 'label'),
-      row('ba3', { label: 'Marketing', budget: 150000, actual: 130000, forecast: 145000, variance: 20000, status: 'on_track' }, 'label'),
-      row('ba4', { label: 'Personel', budget: 300000, actual: 305000, forecast: 305000, variance: -5000, status: 'on_track' }, 'label'),
-      row('ba5', { label: 'EBITDA', budget: 150000, actual: 95000, forecast: 115000, variance: -55000, status: 'over' }, 'label'),
+      row(
+        'ba1',
+        {
+          label: 'Przychód',
+          budget: 1000000,
+          actual: 940000,
+          forecast: 980000,
+          variance: -60000,
+          status: 'watch',
+        },
+        'label'
+      ),
+      row(
+        'ba2',
+        {
+          label: 'COGS',
+          budget: 400000,
+          actual: 410000,
+          forecast: 415000,
+          variance: -10000,
+          status: 'watch',
+        },
+        'label'
+      ),
+      row(
+        'ba3',
+        {
+          label: 'Marketing',
+          budget: 150000,
+          actual: 130000,
+          forecast: 145000,
+          variance: 20000,
+          status: 'on_track',
+        },
+        'label'
+      ),
+      row(
+        'ba4',
+        {
+          label: 'Personel',
+          budget: 300000,
+          actual: 305000,
+          forecast: 305000,
+          variance: -5000,
+          status: 'on_track',
+        },
+        'label'
+      ),
+      row(
+        'ba5',
+        {
+          label: 'EBITDA',
+          budget: 150000,
+          actual: 95000,
+          forecast: 115000,
+          variance: -55000,
+          status: 'over',
+        },
+        'label'
+      ),
     ]
   ),
   // 3.5 Scenarios / Sensitivity (table)
@@ -785,8 +1104,10 @@ const FINANCE: TemplateDefinition[] = [
       id: 'cx-scenarios',
       nameEn: 'Scenarios & Sensitivity',
       namePl: 'Scenariusze i wrażliwość',
-      descEn: 'Key drivers across Pessimistic / Base / Optimistic cases — see which assumption moves the outcome most.',
-      descPl: 'Kluczowe drivery w wariantach Pesymistyczny / Bazowy / Optymistyczny — które założenie najmocniej rusza wynikiem.',
+      descEn:
+        'Key drivers across Pessimistic / Base / Optimistic cases — see which assumption moves the outcome most.',
+      descPl:
+        'Kluczowe drivery w wariantach Pesymistyczny / Bazowy / Optymistyczny — które założenie najmocniej rusza wynikiem.',
       icon: TrendingUp,
       group: 'finance',
     },
@@ -798,11 +1119,31 @@ const FINANCE: TemplateDefinition[] = [
       col('impact', 'Wpływ na wynik', 'rating', { width: 140 }),
     ],
     [
-      row('sc1', { label: 'Wzrost przychodu %', pess: '+2%', base: '+8%', opt: '+15%', impact: 5 }, 'label'),
-      row('sc2', { label: 'Churn / retencja', pess: '5%', base: '3%', opt: '1.5%', impact: 4 }, 'label'),
-      row('sc3', { label: 'Koszt pozyskania (CAC)', pess: '+20%', base: '0%', opt: '−15%', impact: 4 }, 'label'),
-      row('sc4', { label: 'Marża brutto', pess: '60%', base: '70%', opt: '76%', impact: 5 }, 'label'),
-      row('sc5', { label: 'Wynik (EBITDA)', pess: 'strata', base: 'próg', opt: 'zysk', impact: 5 }, 'label'),
+      row(
+        'sc1',
+        { label: 'Wzrost przychodu %', pess: '+2%', base: '+8%', opt: '+15%', impact: 5 },
+        'label'
+      ),
+      row(
+        'sc2',
+        { label: 'Churn / retencja', pess: '5%', base: '3%', opt: '1.5%', impact: 4 },
+        'label'
+      ),
+      row(
+        'sc3',
+        { label: 'Koszt pozyskania (CAC)', pess: '+20%', base: '0%', opt: '−15%', impact: 4 },
+        'label'
+      ),
+      row(
+        'sc4',
+        { label: 'Marża brutto', pess: '60%', base: '70%', opt: '76%', impact: 5 },
+        'label'
+      ),
+      row(
+        'sc5',
+        { label: 'Wynik (EBITDA)', pess: 'strata', base: 'próg', opt: 'zysk', impact: 5 },
+        'label'
+      ),
     ]
   ),
   // 3.6 Payback model (table)
@@ -811,8 +1152,10 @@ const FINANCE: TemplateDefinition[] = [
       id: 'cx-payback',
       nameEn: 'Payback Model',
       namePl: 'Model okresu zwrotu',
-      descEn: 'Yearly cash flows with cumulative balance — read the break-even year and cumulative return.',
-      descPl: 'Roczne przepływy z bilansem skumulowanym — odczytaj rok progu rentowności i skumulowany zwrot.',
+      descEn:
+        'Yearly cash flows with cumulative balance — read the break-even year and cumulative return.',
+      descPl:
+        'Roczne przepływy z bilansem skumulowanym — odczytaj rok progu rentowności i skumulowany zwrot.',
       icon: Calculator,
       group: 'finance',
     },
@@ -824,11 +1167,43 @@ const FINANCE: TemplateDefinition[] = [
       col('cumulative', 'Skumulowane', 'currency', { width: 160 }),
     ],
     [
-      row('pb0', { label: 'Rok 0 (inwestycja)', outflow: 300000, inflow: 0, net: -300000, cumulative: -300000 }, 'label'),
-      row('pb1', { label: 'Rok 1', outflow: 20000, inflow: 120000, net: 100000, cumulative: -200000 }, 'label'),
-      row('pb2', { label: 'Rok 2', outflow: 20000, inflow: 160000, net: 140000, cumulative: -60000 }, 'label'),
-      row('pb3', { label: 'Rok 3 (break-even)', outflow: 20000, inflow: 180000, net: 160000, cumulative: 100000 }, 'label'),
-      row('pb4', { label: 'Rok 4', outflow: 20000, inflow: 200000, net: 180000, cumulative: 280000 }, 'label'),
+      row(
+        'pb0',
+        {
+          label: 'Rok 0 (inwestycja)',
+          outflow: 300000,
+          inflow: 0,
+          net: -300000,
+          cumulative: -300000,
+        },
+        'label'
+      ),
+      row(
+        'pb1',
+        { label: 'Rok 1', outflow: 20000, inflow: 120000, net: 100000, cumulative: -200000 },
+        'label'
+      ),
+      row(
+        'pb2',
+        { label: 'Rok 2', outflow: 20000, inflow: 160000, net: 140000, cumulative: -60000 },
+        'label'
+      ),
+      row(
+        'pb3',
+        {
+          label: 'Rok 3 (break-even)',
+          outflow: 20000,
+          inflow: 180000,
+          net: 160000,
+          cumulative: 100000,
+        },
+        'label'
+      ),
+      row(
+        'pb4',
+        { label: 'Rok 4', outflow: 20000, inflow: 200000, net: 180000, cumulative: 280000 },
+        'label'
+      ),
     ]
   ),
 ];
@@ -843,8 +1218,10 @@ const DIGITAL: TemplateDefinition[] = [
       id: 'cx-digital-maturity',
       nameEn: 'Digital Maturity Scan',
       namePl: 'Skan dojrzałości cyfrowej',
-      descEn: 'Score dimensions (strategy, data, tech, talent, culture) on a 1–5 maturity scale — baseline the transformation.',
-      descPl: 'Oceń wymiary (strategia, dane, technologia, kompetencje, kultura) na skali 1–5 — baza transformacji cyfrowej.',
+      descEn:
+        'Score dimensions (strategy, data, tech, talent, culture) on a 1–5 maturity scale — baseline the transformation.',
+      descPl:
+        'Oceń wymiary (strategia, dane, technologia, kompetencje, kultura) na skali 1–5 — baza transformacji cyfrowej.',
       icon: Cpu,
       group: 'digital',
     },
@@ -856,13 +1233,41 @@ const DIGITAL: TemplateDefinition[] = [
       col('priority', 'Priorytet', 'select', { width: 120, options: ['Low', 'Medium', 'High'] }),
     ],
     [
-      row('dm1', { label: 'Strategia cyfrowa', current: 2, target: 4, gap: 2, priority: 'High' }, 'label'),
-      row('dm2', { label: 'Dane i analityka', current: 2, target: 4, gap: 2, priority: 'High' }, 'label'),
-      row('dm3', { label: 'Technologia / architektura', current: 3, target: 4, gap: 1, priority: 'Medium' }, 'label'),
-      row('dm4', { label: 'Procesy i automatyzacja', current: 2, target: 4, gap: 2, priority: 'High' }, 'label'),
-      row('dm5', { label: 'Kompetencje / talenty', current: 3, target: 4, gap: 1, priority: 'Medium' }, 'label'),
-      row('dm6', { label: 'Kultura i przywództwo', current: 2, target: 4, gap: 2, priority: 'High' }, 'label'),
-      row('dm7', { label: 'Doświadczenie klienta', current: 3, target: 5, gap: 2, priority: 'High' }, 'label'),
+      row(
+        'dm1',
+        { label: 'Strategia cyfrowa', current: 2, target: 4, gap: 2, priority: 'High' },
+        'label'
+      ),
+      row(
+        'dm2',
+        { label: 'Dane i analityka', current: 2, target: 4, gap: 2, priority: 'High' },
+        'label'
+      ),
+      row(
+        'dm3',
+        { label: 'Technologia / architektura', current: 3, target: 4, gap: 1, priority: 'Medium' },
+        'label'
+      ),
+      row(
+        'dm4',
+        { label: 'Procesy i automatyzacja', current: 2, target: 4, gap: 2, priority: 'High' },
+        'label'
+      ),
+      row(
+        'dm5',
+        { label: 'Kompetencje / talenty', current: 3, target: 4, gap: 1, priority: 'Medium' },
+        'label'
+      ),
+      row(
+        'dm6',
+        { label: 'Kultura i przywództwo', current: 2, target: 4, gap: 2, priority: 'High' },
+        'label'
+      ),
+      row(
+        'dm7',
+        { label: 'Doświadczenie klienta', current: 3, target: 5, gap: 2, priority: 'High' },
+        'label'
+      ),
     ]
   ),
   // 4.2 RPA Candidate Finder (table)
@@ -871,8 +1276,10 @@ const DIGITAL: TemplateDefinition[] = [
       id: 'cx-rpa-finder',
       nameEn: 'RPA Candidate Finder',
       namePl: 'Wyszukiwarka kandydatów RPA',
-      descEn: 'Score processes by volume, rule-based-ness, stability and ROI — prioritize automation candidates.',
-      descPl: 'Oceń procesy wg wolumenu, regułowości, stabilności i ROI — priorytetyzuj kandydatów do automatyzacji.',
+      descEn:
+        'Score processes by volume, rule-based-ness, stability and ROI — prioritize automation candidates.',
+      descPl:
+        'Oceń procesy wg wolumenu, regułowości, stabilności i ROI — priorytetyzuj kandydatów do automatyzacji.',
       icon: Bot,
       group: 'digital',
     },
@@ -885,10 +1292,26 @@ const DIGITAL: TemplateDefinition[] = [
       col('score', 'Wynik', 'number', { width: 100 }),
     ],
     [
-      row('rpa1', { label: 'Wprowadzanie faktur', volume: 5, rules: 5, stability: 4, roi: 5, score: 19 }, 'label'),
-      row('rpa2', { label: 'Rekoncyliacja płatności', volume: 4, rules: 5, stability: 4, roi: 4, score: 17 }, 'label'),
-      row('rpa3', { label: 'Onboarding pracownika', volume: 3, rules: 3, stability: 3, roi: 3, score: 12 }, 'label'),
-      row('rpa4', { label: 'Raporty zarządcze', volume: 4, rules: 4, stability: 5, roi: 4, score: 17 }, 'label'),
+      row(
+        'rpa1',
+        { label: 'Wprowadzanie faktur', volume: 5, rules: 5, stability: 4, roi: 5, score: 19 },
+        'label'
+      ),
+      row(
+        'rpa2',
+        { label: 'Rekoncyliacja płatności', volume: 4, rules: 5, stability: 4, roi: 4, score: 17 },
+        'label'
+      ),
+      row(
+        'rpa3',
+        { label: 'Onboarding pracownika', volume: 3, rules: 3, stability: 3, roi: 3, score: 12 },
+        'label'
+      ),
+      row(
+        'rpa4',
+        { label: 'Raporty zarządcze', volume: 4, rules: 4, stability: 5, roi: 4, score: 17 },
+        'label'
+      ),
     ]
   ),
   // 4.3 Data Readiness (table)
@@ -897,23 +1320,71 @@ const DIGITAL: TemplateDefinition[] = [
       id: 'cx-data-readiness',
       nameEn: 'Data Readiness Assessment',
       namePl: 'Ocena gotowości danych',
-      descEn: 'Assess availability, quality, governance and access per data domain — the gate before analytics/AI.',
-      descPl: 'Oceń dostępność, jakość, governance i dostęp per domena danych — bramka przed analityką/AI.',
+      descEn:
+        'Assess availability, quality, governance and access per data domain — the gate before analytics/AI.',
+      descPl:
+        'Oceń dostępność, jakość, governance i dostęp per domena danych — bramka przed analityką/AI.',
       icon: Database,
       group: 'digital',
     },
     [
       col('label', 'Domena danych', 'text', { width: 200 }),
-      col('availability', 'Dostępność', 'status', { width: 130, options: ['ready', 'partial', 'missing'] }),
+      col('availability', 'Dostępność', 'status', {
+        width: 130,
+        options: ['ready', 'partial', 'missing'],
+      }),
       col('quality', 'Jakość', 'rating', { width: 110 }),
-      col('governance', 'Governance', 'status', { width: 130, options: ['ready', 'partial', 'missing'] }),
+      col('governance', 'Governance', 'status', {
+        width: 130,
+        options: ['ready', 'partial', 'missing'],
+      }),
       col('owner', 'Właściciel', 'person', { width: 140 }),
     ],
     [
-      row('dr1', { label: 'Klienci / CRM', availability: 'ready', quality: 4, governance: 'partial', owner: '' }, 'label'),
-      row('dr2', { label: 'Transakcje / ERP', availability: 'ready', quality: 4, governance: 'ready', owner: '' }, 'label'),
-      row('dr3', { label: 'Produkty / katalog', availability: 'partial', quality: 3, governance: 'partial', owner: '' }, 'label'),
-      row('dr4', { label: 'Web / behawioralne', availability: 'partial', quality: 2, governance: 'missing', owner: '' }, 'label'),
+      row(
+        'dr1',
+        {
+          label: 'Klienci / CRM',
+          availability: 'ready',
+          quality: 4,
+          governance: 'partial',
+          owner: '',
+        },
+        'label'
+      ),
+      row(
+        'dr2',
+        {
+          label: 'Transakcje / ERP',
+          availability: 'ready',
+          quality: 4,
+          governance: 'ready',
+          owner: '',
+        },
+        'label'
+      ),
+      row(
+        'dr3',
+        {
+          label: 'Produkty / katalog',
+          availability: 'partial',
+          quality: 3,
+          governance: 'partial',
+          owner: '',
+        },
+        'label'
+      ),
+      row(
+        'dr4',
+        {
+          label: 'Web / behawioralne',
+          availability: 'partial',
+          quality: 2,
+          governance: 'missing',
+          owner: '',
+        },
+        'label'
+      ),
     ]
   ),
   // 4.4 AI Use-Case Canvas (whiteboard)
@@ -922,8 +1393,10 @@ const DIGITAL: TemplateDefinition[] = [
       id: 'cx-ai-usecase',
       nameEn: 'AI Use-Case Canvas',
       namePl: 'AI Use-Case Canvas',
-      descEn: 'One-page frame for an AI use case: Problem, Data, Model/Approach, Value, Risks & Ethics, Success KPIs.',
-      descPl: 'Jednostronicowa rama use-case AI: Problem, Dane, Model/Podejście, Wartość, Ryzyka i etyka, KPI sukcesu.',
+      descEn:
+        'One-page frame for an AI use case: Problem, Data, Model/Approach, Value, Risks & Ethics, Success KPIs.',
+      descPl:
+        'Jednostronicowa rama use-case AI: Problem, Dane, Model/Podejście, Wartość, Ryzyka i etyka, KPI sukcesu.',
       icon: Bot,
       group: 'digital',
     },
@@ -948,8 +1421,10 @@ const DIGITAL: TemplateDefinition[] = [
       id: 'cx-tech-stack',
       nameEn: 'Tech Stack Map',
       namePl: 'Mapa stosu technologicznego',
-      descEn: 'Layered map (experience, applications, integration, data, infrastructure, security) — see coverage and gaps.',
-      descPl: 'Warstwowa mapa (doświadczenie, aplikacje, integracja, dane, infrastruktura, bezpieczeństwo) — pokaż pokrycie i luki.',
+      descEn:
+        'Layered map (experience, applications, integration, data, infrastructure, security) — see coverage and gaps.',
+      descPl:
+        'Warstwowa mapa (doświadczenie, aplikacje, integracja, dane, infrastruktura, bezpieczeństwo) — pokaż pokrycie i luki.',
       icon: Boxes,
       group: 'digital',
     },
@@ -968,8 +1443,10 @@ const DIGITAL: TemplateDefinition[] = [
       id: 'cx-digital-roadmap',
       nameEn: 'Digital Transformation Roadmap',
       namePl: 'Roadmapa transformacji cyfrowej',
-      descEn: 'Foundation → Scale → Innovate waves sequencing digital initiatives against readiness and value.',
-      descPl: 'Fale Fundament → Skala → Innowacja — sekwencja inicjatyw cyfrowych wobec gotowości i wartości.',
+      descEn:
+        'Foundation → Scale → Innovate waves sequencing digital initiatives against readiness and value.',
+      descPl:
+        'Fale Fundament → Skala → Innowacja — sekwencja inicjatyw cyfrowych wobec gotowości i wartości.',
       icon: Route,
       group: 'digital',
     },
@@ -981,7 +1458,13 @@ const DIGITAL: TemplateDefinition[] = [
       pf('dr-i1', 'Innowacja: AI/ML use-cases', 600, 380, 'action', 'lane-innov', LANE.green),
       pf('dr-i2', 'Nowe modele cyfrowe', 880, 380, 'end', 'lane-innov', LANE.green),
     ],
-    [pfe('dr-f1', 'dr-f2'), pfe('dr-f2', 'dr-s1'), pfe('dr-s1', 'dr-s2'), pfe('dr-s2', 'dr-i1'), pfe('dr-i1', 'dr-i2')],
+    [
+      pfe('dr-f1', 'dr-f2'),
+      pfe('dr-f2', 'dr-s1'),
+      pfe('dr-s1', 'dr-s2'),
+      pfe('dr-s2', 'dr-i1'),
+      pfe('dr-i1', 'dr-i2'),
+    ],
     [
       { id: 'lane-found', label: 'Foundation', color: LANE.blue },
       { id: 'lane-scale', label: 'Scale', color: LANE.amber },
@@ -1000,8 +1483,10 @@ const PEOPLE: TemplateDefinition[] = [
       id: 'cx-adkar',
       nameEn: 'ADKAR Change Plan',
       namePl: 'Plan zmiany ADKAR',
-      descEn: 'Awareness → Desire → Knowledge → Ability → Reinforcement — the individual change journey Prosci model.',
-      descPl: 'Świadomość → Chęć → Wiedza → Umiejętność → Utrwalenie — indywidualna ścieżka zmiany (model Prosci).',
+      descEn:
+        'Awareness → Desire → Knowledge → Ability → Reinforcement — the individual change journey Prosci model.',
+      descPl:
+        'Świadomość → Chęć → Wiedza → Umiejętność → Utrwalenie — indywidualna ścieżka zmiany (model Prosci).',
       icon: Milestone,
       group: 'people',
     },
@@ -1021,8 +1506,10 @@ const PEOPLE: TemplateDefinition[] = [
       id: 'cx-stakeholder-grid',
       nameEn: 'Stakeholder Power / Interest Grid',
       namePl: 'Siatka Wpływ / Zainteresowanie',
-      descEn: 'Map stakeholders on power × interest to choose engagement strategy (manage closely, keep satisfied/informed, monitor).',
-      descPl: 'Zmapuj interesariuszy na osi wpływ × zainteresowanie by dobrać strategię (zarządzaj blisko, informuj, monitoruj).',
+      descEn:
+        'Map stakeholders on power × interest to choose engagement strategy (manage closely, keep satisfied/informed, monitor).',
+      descPl:
+        'Zmapuj interesariuszy na osi wpływ × zainteresowanie by dobrać strategię (zarządzaj blisko, informuj, monitoruj).',
       icon: Users,
       group: 'people',
     },
@@ -1043,8 +1530,10 @@ const PEOPLE: TemplateDefinition[] = [
       id: 'cx-org-design',
       nameEn: 'Organization Design',
       namePl: 'Projekt organizacji',
-      descEn: 'Target operating-model hierarchy — leadership, functions and teams with owners and mandates.',
-      descPl: 'Hierarchia docelowego modelu operacyjnego — przywództwo, funkcje i zespoły z właścicielami i mandatem.',
+      descEn:
+        'Target operating-model hierarchy — leadership, functions and teams with owners and mandates.',
+      descPl:
+        'Hierarchia docelowego modelu operacyjnego — przywództwo, funkcje i zespoły z właścicielami i mandatem.',
       icon: UserCog,
       group: 'people',
     },
@@ -1078,8 +1567,10 @@ const PEOPLE: TemplateDefinition[] = [
       id: 'cx-competency-matrix',
       nameEn: 'Competency Matrix',
       namePl: 'Macierz kompetencji',
-      descEn: 'People × competencies scored 0–4 (skills matrix) — reveal single points of failure and training needs.',
-      descPl: 'Ludzie × kompetencje w skali 0–4 — pokazuje wąskie gardła wiedzy i potrzeby szkoleniowe.',
+      descEn:
+        'People × competencies scored 0–4 (skills matrix) — reveal single points of failure and training needs.',
+      descPl:
+        'Ludzie × kompetencje w skali 0–4 — pokazuje wąskie gardła wiedzy i potrzeby szkoleniowe.',
       icon: UserCog,
       group: 'people',
     },
@@ -1094,7 +1585,11 @@ const PEOPLE: TemplateDefinition[] = [
     [
       row('cm1', { label: 'Anna K.', c1: 4, c2: 3, c3: 4, c4: 3, gap: 'Mentoring PM' }, 'label'),
       row('cm2', { label: 'Marek W.', c1: 2, c2: 4, c3: 3, c4: 4, gap: 'Kurs analityki' }, 'label'),
-      row('cm3', { label: 'Ola P.', c1: 3, c2: 2, c3: 4, c4: 2, gap: 'Shadowing + domena' }, 'label'),
+      row(
+        'cm3',
+        { label: 'Ola P.', c1: 3, c2: 2, c3: 4, c4: 2, gap: 'Shadowing + domena' },
+        'label'
+      ),
     ]
   ),
   // 5.5 Communication Plan (table)
@@ -1103,23 +1598,68 @@ const PEOPLE: TemplateDefinition[] = [
       id: 'cx-comms-plan',
       nameEn: 'Communication Plan',
       namePl: 'Plan komunikacji',
-      descEn: 'Audience × message × channel × frequency × owner — keep change stakeholders aligned and informed.',
-      descPl: 'Odbiorca × komunikat × kanał × częstotliwość × właściciel — utrzymaj interesariuszy zmiany w jednym rytmie.',
+      descEn:
+        'Audience × message × channel × frequency × owner — keep change stakeholders aligned and informed.',
+      descPl:
+        'Odbiorca × komunikat × kanał × częstotliwość × właściciel — utrzymaj interesariuszy zmiany w jednym rytmie.',
       icon: MessageSquare,
       group: 'people',
     },
     [
       col('label', 'Odbiorca / grupa', 'text', { width: 180 }),
       col('message', 'Kluczowy komunikat', 'text', { width: 240 }),
-      col('channel', 'Kanał', 'select', { width: 150, options: ['E-mail', 'Spotkanie', 'Intranet', 'Warsztat', 'Newsletter'] }),
+      col('channel', 'Kanał', 'select', {
+        width: 150,
+        options: ['E-mail', 'Spotkanie', 'Intranet', 'Warsztat', 'Newsletter'],
+      }),
       col('freq', 'Częstotliwość', 'text', { width: 130 }),
       col('owner', 'Właściciel', 'person', { width: 140 }),
     ],
     [
-      row('cp1', { label: 'Zarząd', message: 'Postęp vs cele, ryzyka, decyzje', channel: 'Spotkanie', freq: 'Co 2 tyg.', owner: '' }, 'label'),
-      row('cp2', { label: 'Menedżerowie', message: 'Co zmienia się w zespołach', channel: 'Warsztat', freq: 'Miesięcznie', owner: '' }, 'label'),
-      row('cp3', { label: 'Pracownicy', message: 'Dlaczego zmiana i co dla mnie', channel: 'Intranet', freq: 'Tygodniowo', owner: '' }, 'label'),
-      row('cp4', { label: 'Klienci', message: 'Korzyści i harmonogram', channel: 'Newsletter', freq: 'Kwartalnie', owner: '' }, 'label'),
+      row(
+        'cp1',
+        {
+          label: 'Zarząd',
+          message: 'Postęp vs cele, ryzyka, decyzje',
+          channel: 'Spotkanie',
+          freq: 'Co 2 tyg.',
+          owner: '',
+        },
+        'label'
+      ),
+      row(
+        'cp2',
+        {
+          label: 'Menedżerowie',
+          message: 'Co zmienia się w zespołach',
+          channel: 'Warsztat',
+          freq: 'Miesięcznie',
+          owner: '',
+        },
+        'label'
+      ),
+      row(
+        'cp3',
+        {
+          label: 'Pracownicy',
+          message: 'Dlaczego zmiana i co dla mnie',
+          channel: 'Intranet',
+          freq: 'Tygodniowo',
+          owner: '',
+        },
+        'label'
+      ),
+      row(
+        'cp4',
+        {
+          label: 'Klienci',
+          message: 'Korzyści i harmonogram',
+          channel: 'Newsletter',
+          freq: 'Kwartalnie',
+          owner: '',
+        },
+        'label'
+      ),
     ]
   ),
 ];
@@ -1134,8 +1674,10 @@ const GROWTH: TemplateDefinition[] = [
       id: 'cx-cjm',
       nameEn: 'Customer Journey Map',
       namePl: 'Mapa podróży klienta',
-      descEn: 'Stages (Awareness→Advocacy) × lanes (touchpoints, emotions, pain points, opportunities) — design the experience.',
-      descPl: 'Etapy (Świadomość→Rzecznictwo) × pasy (punkty styku, emocje, bóle, szanse) — projektuj doświadczenie klienta.',
+      descEn:
+        'Stages (Awareness→Advocacy) × lanes (touchpoints, emotions, pain points, opportunities) — design the experience.',
+      descPl:
+        'Etapy (Świadomość→Rzecznictwo) × pasy (punkty styku, emocje, bóle, szanse) — projektuj doświadczenie klienta.',
       icon: MapIcon,
       group: 'growth',
     },
@@ -1161,8 +1703,10 @@ const GROWTH: TemplateDefinition[] = [
       id: 'cx-persona',
       nameEn: 'Persona Canvas',
       namePl: 'Persona Canvas',
-      descEn: 'One-page buyer persona: profile, goals, frustrations, behaviors, watering holes and a defining quote.',
-      descPl: 'Jednostronicowa persona kupującego: profil, cele, frustracje, zachowania, źródła i cytat definiujący.',
+      descEn:
+        'One-page buyer persona: profile, goals, frustrations, behaviors, watering holes and a defining quote.',
+      descPl:
+        'Jednostronicowa persona kupującego: profil, cele, frustracje, zachowania, źródła i cytat definiujący.',
       icon: Tag,
       group: 'growth',
     },
@@ -1185,8 +1729,10 @@ const GROWTH: TemplateDefinition[] = [
       id: 'cx-gtm',
       nameEn: 'Go-To-Market Plan',
       namePl: 'Plan Go-To-Market',
-      descEn: 'Segment, positioning, offer, pricing, channels and launch motion on one canvas — align the market entry.',
-      descPl: 'Segment, pozycjonowanie, oferta, cennik, kanały i mechanika startu na jednym płótnie — zgraj wejście na rynek.',
+      descEn:
+        'Segment, positioning, offer, pricing, channels and launch motion on one canvas — align the market entry.',
+      descPl:
+        'Segment, pozycjonowanie, oferta, cennik, kanały i mechanika startu na jednym płótnie — zgraj wejście na rynek.',
       icon: Flag,
       group: 'growth',
     },
@@ -1194,13 +1740,23 @@ const GROWTH: TemplateDefinition[] = [
       frame('gtm-seg', 'Target Segment & ICP', 0, 0, 360, 170, BG.blue),
       sticky('gtm-seg-h', 'Idealny profil klienta; kryteria kwalifikacji.', 14, 44),
       frame('gtm-pos', 'Positioning & Message', 380, 0, 360, 170, BG.violet),
-      sticky('gtm-pos-h', 'Dla [kogo], którzy [potrzeba], jesteśmy [kategoria] który [wartość].', 394, 44),
+      sticky(
+        'gtm-pos-h',
+        'Dla [kogo], którzy [potrzeba], jesteśmy [kategoria] który [wartość].',
+        394,
+        44
+      ),
       frame('gtm-offer', 'Offer & Pricing', 0, 190, 360, 170, BG.green),
       sticky('gtm-offer-h', 'Pakiety, model cenowy, oferta wejścia.', 14, 234),
       frame('gtm-chan', 'Channels & Motion', 380, 190, 360, 170, BG.amber),
       sticky('gtm-chan-h', 'Sales-led / product-led / partner; kanały akwizycji.', 394, 234),
       frame('gtm-launch', 'Launch plan & KPIs', 0, 380, 740, 150, BG.pink),
-      sticky('gtm-launch-h', 'Kamienie milowe, właściciele, metryki (pipeline, CAC, konwersja).', 14, 424),
+      sticky(
+        'gtm-launch-h',
+        'Kamienie milowe, właściciele, metryki (pipeline, CAC, konwersja).',
+        14,
+        424
+      ),
     ]
   ),
   // 6.4 Pricing Strategy (whiteboard)
@@ -1209,8 +1765,10 @@ const GROWTH: TemplateDefinition[] = [
       id: 'cx-pricing',
       nameEn: 'Pricing Strategy',
       namePl: 'Strategia cenowa',
-      descEn: 'Compare pricing logics (cost-plus, value-based, competitive) and tier design against willingness-to-pay.',
-      descPl: 'Porównaj logiki cenowe (koszt+, wartościowa, konkurencyjna) i projekt pakietów wobec gotowości do zapłaty.',
+      descEn:
+        'Compare pricing logics (cost-plus, value-based, competitive) and tier design against willingness-to-pay.',
+      descPl:
+        'Porównaj logiki cenowe (koszt+, wartościowa, konkurencyjna) i projekt pakietów wobec gotowości do zapłaty.',
       icon: Coins,
       group: 'growth',
     },
@@ -1222,7 +1780,12 @@ const GROWTH: TemplateDefinition[] = [
       frame('pr-comp', 'Competitive', 500, 0, 240, 220, BG.amber),
       sticky('pr-comp-h', 'Względem rynku; ryzyko wojny cenowej.', 512, 44),
       frame('pr-tiers', 'Tier / Package Design', 0, 240, 740, 200, BG.blue),
-      sticky('pr-tiers-h', 'Good-Better-Best; kotwiczenie; fencing; metryka rozliczeniowa.', 12, 284),
+      sticky(
+        'pr-tiers-h',
+        'Good-Better-Best; kotwiczenie; fencing; metryka rozliczeniowa.',
+        12,
+        284
+      ),
     ]
   ),
   // 6.5 VoC / NPS (table)
@@ -1231,22 +1794,57 @@ const GROWTH: TemplateDefinition[] = [
       id: 'cx-voc-nps',
       nameEn: 'Voice of Customer / NPS',
       namePl: 'Głos klienta / NPS',
-      descEn: 'Segment NPS with verbatim themes and drivers — turn feedback into prioritized actions.',
-      descPl: 'NPS per segment z tematami wypowiedzi i driverami — zamień feedback w priorytetowe działania.',
+      descEn:
+        'Segment NPS with verbatim themes and drivers — turn feedback into prioritized actions.',
+      descPl:
+        'NPS per segment z tematami wypowiedzi i driverami — zamień feedback w priorytetowe działania.',
       icon: Handshake,
       group: 'growth',
     },
     [
       col('label', 'Segment', 'text', { width: 180 }),
       col('nps', 'NPS', 'number', { width: 100 }),
-      col('sentiment', 'Sentyment', 'status', { width: 130, options: ['promoter', 'passive', 'detractor'] }),
+      col('sentiment', 'Sentyment', 'status', {
+        width: 130,
+        options: ['promoter', 'passive', 'detractor'],
+      }),
       col('theme', 'Główny temat', 'text', { width: 240 }),
       col('action', 'Działanie', 'text', { width: 220 }),
     ],
     [
-      row('voc1', { label: 'Enterprise', nps: 45, sentiment: 'promoter', theme: 'Niezawodność, wsparcie', action: 'Program referencyjny' }, 'label'),
-      row('voc2', { label: 'Mid-market', nps: 20, sentiment: 'passive', theme: 'Onboarding zbyt wolny', action: 'Skróć time-to-value' }, 'label'),
-      row('voc3', { label: 'SMB', nps: -5, sentiment: 'detractor', theme: 'Cena vs wartość', action: 'Rewizja pakietu wejścia' }, 'label'),
+      row(
+        'voc1',
+        {
+          label: 'Enterprise',
+          nps: 45,
+          sentiment: 'promoter',
+          theme: 'Niezawodność, wsparcie',
+          action: 'Program referencyjny',
+        },
+        'label'
+      ),
+      row(
+        'voc2',
+        {
+          label: 'Mid-market',
+          nps: 20,
+          sentiment: 'passive',
+          theme: 'Onboarding zbyt wolny',
+          action: 'Skróć time-to-value',
+        },
+        'label'
+      ),
+      row(
+        'voc3',
+        {
+          label: 'SMB',
+          nps: -5,
+          sentiment: 'detractor',
+          theme: 'Cena vs wartość',
+          action: 'Rewizja pakietu wejścia',
+        },
+        'label'
+      ),
     ]
   ),
 ];
@@ -1261,8 +1859,10 @@ const PMO: TemplateDefinition[] = [
       id: 'cx-charter',
       nameEn: 'Project Charter',
       namePl: 'Karta projektu (Charter)',
-      descEn: 'One-page mandate: purpose, scope (in/out), objectives, milestones, stakeholders, budget and top risks.',
-      descPl: 'Jednostronicowy mandat: cel, zakres (in/out), cele, kamienie milowe, interesariusze, budżet i kluczowe ryzyka.',
+      descEn:
+        'One-page mandate: purpose, scope (in/out), objectives, milestones, stakeholders, budget and top risks.',
+      descPl:
+        'Jednostronicowy mandat: cel, zakres (in/out), cele, kamienie milowe, interesariusze, budżet i kluczowe ryzyka.',
       icon: ClipboardList,
       group: 'pmo',
     },
@@ -1287,8 +1887,10 @@ const PMO: TemplateDefinition[] = [
       id: 'cx-risk-register',
       nameEn: 'Risk Register',
       namePl: 'Rejestr ryzyk',
-      descEn: 'Risks scored by probability × impact with mitigation, owner and status — the backbone of project risk control.',
-      descPl: 'Ryzyka oceniane prawdopodobieństwo × wpływ z mitygacją, właścicielem i statusem — kręgosłup kontroli ryzyka projektu.',
+      descEn:
+        'Risks scored by probability × impact with mitigation, owner and status — the backbone of project risk control.',
+      descPl:
+        'Ryzyka oceniane prawdopodobieństwo × wpływ z mitygacją, właścicielem i statusem — kręgosłup kontroli ryzyka projektu.',
       icon: ShieldAlert,
       group: 'pmo',
     },
@@ -1302,10 +1904,58 @@ const PMO: TemplateDefinition[] = [
       col('status', 'Status', 'status', { width: 130, options: ['open', 'mitigating', 'closed'] }),
     ],
     [
-      row('rr1', { label: 'Opóźnienie dostawcy', probability: 'Medium', impact: 'High', score: 6, mitigation: 'Bufor + alternatywny dostawca', owner: '', status: 'open' }, 'label'),
-      row('rr2', { label: 'Przekroczenie budżetu', probability: 'Medium', impact: 'High', score: 6, mitigation: 'Kontrola zmian + rezerwa', owner: '', status: 'mitigating' }, 'label'),
-      row('rr3', { label: 'Niska adopcja użytkowników', probability: 'High', impact: 'Medium', score: 6, mitigation: 'Plan zmiany (ADKAR) + szkolenia', owner: '', status: 'open' }, 'label'),
-      row('rr4', { label: 'Braki kompetencyjne', probability: 'Low', impact: 'Medium', score: 2, mitigation: 'Rekrutacja / partner', owner: '', status: 'open' }, 'label'),
+      row(
+        'rr1',
+        {
+          label: 'Opóźnienie dostawcy',
+          probability: 'Medium',
+          impact: 'High',
+          score: 6,
+          mitigation: 'Bufor + alternatywny dostawca',
+          owner: '',
+          status: 'open',
+        },
+        'label'
+      ),
+      row(
+        'rr2',
+        {
+          label: 'Przekroczenie budżetu',
+          probability: 'Medium',
+          impact: 'High',
+          score: 6,
+          mitigation: 'Kontrola zmian + rezerwa',
+          owner: '',
+          status: 'mitigating',
+        },
+        'label'
+      ),
+      row(
+        'rr3',
+        {
+          label: 'Niska adopcja użytkowników',
+          probability: 'High',
+          impact: 'Medium',
+          score: 6,
+          mitigation: 'Plan zmiany (ADKAR) + szkolenia',
+          owner: '',
+          status: 'open',
+        },
+        'label'
+      ),
+      row(
+        'rr4',
+        {
+          label: 'Braki kompetencyjne',
+          probability: 'Low',
+          impact: 'Medium',
+          score: 2,
+          mitigation: 'Rekrutacja / partner',
+          owner: '',
+          status: 'open',
+        },
+        'label'
+      ),
     ]
   ),
   // 7.3 OKR Planning (table)
@@ -1314,8 +1964,10 @@ const PMO: TemplateDefinition[] = [
       id: 'cx-okr-planning',
       nameEn: 'OKR Planning',
       namePl: 'Planowanie OKR',
-      descEn: 'Objectives with measurable Key Results (baseline → target), owner and confidence — align teams on outcomes.',
-      descPl: 'Cele z mierzalnymi Kluczowymi Rezultatami (baza → cel), właścicielem i pewnością — zgraj zespoły na rezultatach.',
+      descEn:
+        'Objectives with measurable Key Results (baseline → target), owner and confidence — align teams on outcomes.',
+      descPl:
+        'Cele z mierzalnymi Kluczowymi Rezultatami (baza → cel), właścicielem i pewnością — zgraj zespoły na rezultatach.',
       icon: Target,
       group: 'pmo',
     },
@@ -1328,12 +1980,78 @@ const PMO: TemplateDefinition[] = [
       col('confidence', 'Pewność', 'select', { width: 120, options: ['Low', 'Medium', 'High'] }),
     ],
     [
-      row('okr1', { label: 'O1: Zostań liderem NPS w segmencie', type: 'Objective', baseline: '', target: '', owner: '', confidence: 'Medium' }, 'label'),
-      row('okr2', { label: 'KR1.1: NPS z 20 → 40', type: 'Key Result', baseline: '20', target: '40', owner: '', confidence: 'Medium' }, 'label'),
-      row('okr3', { label: 'KR1.2: Churn z 3% → 1.5%', type: 'Key Result', baseline: '3%', target: '1.5%', owner: '', confidence: 'Low' }, 'label'),
-      row('okr4', { label: 'O2: Skaluj przychód powtarzalny', type: 'Objective', baseline: '', target: '', owner: '', confidence: 'Medium' }, 'label'),
-      row('okr5', { label: 'KR2.1: ARR z 5M → 8M', type: 'Key Result', baseline: '5M', target: '8M', owner: '', confidence: 'Medium' }, 'label'),
-      row('okr6', { label: 'KR2.2: Nowi klienci ent. 10 → 25', type: 'Key Result', baseline: '10', target: '25', owner: '', confidence: 'High' }, 'label'),
+      row(
+        'okr1',
+        {
+          label: 'O1: Zostań liderem NPS w segmencie',
+          type: 'Objective',
+          baseline: '',
+          target: '',
+          owner: '',
+          confidence: 'Medium',
+        },
+        'label'
+      ),
+      row(
+        'okr2',
+        {
+          label: 'KR1.1: NPS z 20 → 40',
+          type: 'Key Result',
+          baseline: '20',
+          target: '40',
+          owner: '',
+          confidence: 'Medium',
+        },
+        'label'
+      ),
+      row(
+        'okr3',
+        {
+          label: 'KR1.2: Churn z 3% → 1.5%',
+          type: 'Key Result',
+          baseline: '3%',
+          target: '1.5%',
+          owner: '',
+          confidence: 'Low',
+        },
+        'label'
+      ),
+      row(
+        'okr4',
+        {
+          label: 'O2: Skaluj przychód powtarzalny',
+          type: 'Objective',
+          baseline: '',
+          target: '',
+          owner: '',
+          confidence: 'Medium',
+        },
+        'label'
+      ),
+      row(
+        'okr5',
+        {
+          label: 'KR2.1: ARR z 5M → 8M',
+          type: 'Key Result',
+          baseline: '5M',
+          target: '8M',
+          owner: '',
+          confidence: 'Medium',
+        },
+        'label'
+      ),
+      row(
+        'okr6',
+        {
+          label: 'KR2.2: Nowi klienci ent. 10 → 25',
+          type: 'Key Result',
+          baseline: '10',
+          target: '25',
+          owner: '',
+          confidence: 'High',
+        },
+        'label'
+      ),
     ]
   ),
 ];

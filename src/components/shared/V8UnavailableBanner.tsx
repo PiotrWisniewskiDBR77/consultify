@@ -29,8 +29,8 @@ export const V8UnavailableBanner: React.FC<V8UnavailableBannerProps> = ({
           {moduleName ? `${moduleName} is unavailable` : 'Module unavailable'}
         </p>
         <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-          This module requires server-side V8 features to be enabled. Contact your administrator
-          to activate this module.
+          This module requires server-side V8 features to be enabled. Contact your administrator to
+          activate this module.
         </p>
       </div>
     );

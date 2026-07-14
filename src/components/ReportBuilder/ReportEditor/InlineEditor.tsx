@@ -275,15 +275,11 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
       {/* Keyboard shortcuts hint */}
       <div className="flex items-center gap-3 mt-1 px-1">
         <span className="text-[10px] text-c-text-secondary">
-          <kbd className="px-1 py-0.5 bg-c-surface-raised rounded text-[9px]">
-            Ctrl+S
-          </kbd>{' '}
+          <kbd className="px-1 py-0.5 bg-c-surface-raised rounded text-[9px]">Ctrl+S</kbd>{' '}
           {isPl ? 'zapisz' : 'save'}
         </span>
         <span className="text-[10px] text-c-text-secondary">
-          <kbd className="px-1 py-0.5 bg-c-surface-raised rounded text-[9px]">
-            Ctrl+Z
-          </kbd>{' '}
+          <kbd className="px-1 py-0.5 bg-c-surface-raised rounded text-[9px]">Ctrl+Z</kbd>{' '}
           {isPl ? 'cofnij' : 'undo'}
         </span>
         <span className="text-[10px] text-c-text-secondary">

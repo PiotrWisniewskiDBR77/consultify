@@ -245,7 +245,9 @@ export function PublicFormPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-c-text-secondary">Powered by Consultify Table Platform</p>
+      <p className="mt-4 text-center text-xs text-c-text-secondary">
+        Powered by Consultify Table Platform
+      </p>
     </div>
   );
 }

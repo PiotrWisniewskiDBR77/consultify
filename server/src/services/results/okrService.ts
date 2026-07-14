@@ -77,8 +77,7 @@ const clamp01 = (n: number): number => {
   return n;
 };
 
-const isNum = (n: unknown): n is number =>
-  typeof n === 'number' && Number.isFinite(n);
+const isNum = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 
 /**
  * Progress of a single Key Result on a 0–1 scale:
@@ -130,9 +129,7 @@ export function scoreObjective(o: Objective): ObjectiveScore {
  * The blend is a simple mean of [own score, ...child rollup scores], which
  * lets parent goals reflect progress cascaded up from sub-objectives.
  */
-export function cascadeRollup(
-  objectives: Objective[],
-): CascadedObjective[] {
+export function cascadeRollup(objectives: Objective[]): CascadedObjective[] {
   const list = objectives ?? [];
   const childrenByParent = new Map<string, Objective[]>();
   for (const o of list) {
@@ -312,7 +309,7 @@ export async function listCycles(organizationId: string): Promise<OkrCycle[]> {
               dept_id, team_id, closed_at, created_at
        FROM okr_cycles WHERE organization_id = ?
        ORDER BY period_year DESC, period_quarter DESC NULLS LAST, created_at DESC`,
-      [organizationId],
+      [organizationId]
     )) as CycleRow[] | undefined) ?? [];
   return rows.map(mapCycleRow);
 }
@@ -340,13 +337,13 @@ export async function createCycle(input: {
       input.deptId ?? null,
       input.teamId ?? null,
       input.createdBy ?? null,
-    ],
+    ]
   );
   const row = (await dbGet(
     `SELECT id, organization_id, name, period_quarter, period_year, status,
             dept_id, team_id, closed_at, created_at
      FROM okr_cycles WHERE id = ?`,
-    [id],
+    [id]
   )) as CycleRow;
   return mapCycleRow(row);
 }
@@ -366,28 +363,28 @@ export type ObjectiveCloseSummary = {
  */
 export async function closeCycle(
   cycleId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<{ cycle: OkrCycle; objectives: ObjectiveCloseSummary[]; avgScore: number } | null> {
   const cycleRow = (await dbGet(
     `SELECT id, organization_id, name, period_quarter, period_year, status,
             dept_id, team_id, closed_at, created_at
      FROM okr_cycles WHERE id = ? AND organization_id = ?`,
-    [cycleId, organizationId],
+    [cycleId, organizationId]
   )) as CycleRow | undefined;
   if (!cycleRow) return null;
 
   const objRows =
-    ((await dbAll(
-      `SELECT id FROM okr_objectives WHERE cycle_id = ? AND organization_id = ?`,
-      [cycleId, organizationId],
-    )) as Array<{ id: string }> | undefined) ?? [];
+    ((await dbAll(`SELECT id FROM okr_objectives WHERE cycle_id = ? AND organization_id = ?`, [
+      cycleId,
+      organizationId,
+    ])) as Array<{ id: string }> | undefined) ?? [];
 
   const summaries: ObjectiveCloseSummary[] = [];
   for (const o of objRows) {
     const krRows =
       ((await dbAll(
         `SELECT score, weight FROM okr_key_results WHERE objective_id = ? AND organization_id = ?`,
-        [o.id, organizationId],
+        [o.id, organizationId]
       )) as Array<{ score: number | null; weight: number | null }> | undefined) ?? [];
 
     let weightedSum = 0;
@@ -404,13 +401,14 @@ export async function closeCycle(
   const avgScore =
     summaries.length === 0 ? 0 : summaries.reduce((sum, s) => sum + s.score, 0) / summaries.length;
 
-  await dbRun(`UPDATE okr_cycles SET status = 'closed', closed_at = now(), updated_at = now() WHERE id = ?`, [
-    cycleId,
-  ]);
-  await dbRun(`UPDATE okr_objectives SET status = 'closed', updated_at = now() WHERE cycle_id = ? AND organization_id = ?`, [
-    cycleId,
-    organizationId,
-  ]);
+  await dbRun(
+    `UPDATE okr_cycles SET status = 'closed', closed_at = now(), updated_at = now() WHERE id = ?`,
+    [cycleId]
+  );
+  await dbRun(
+    `UPDATE okr_objectives SET status = 'closed', updated_at = now() WHERE cycle_id = ? AND organization_id = ?`,
+    [cycleId, organizationId]
+  );
 
   return { cycle: { ...mapCycleRow(cycleRow), status: 'closed' }, objectives: summaries, avgScore };
 }
@@ -440,7 +438,7 @@ export async function createObjective(input: {
       input.cycleId ?? null,
       input.ownerUserId ?? null,
       input.description ?? null,
-    ],
+    ]
   );
   return { id };
 }
@@ -455,22 +453,40 @@ export async function updateObjective(
     ownerUserId?: string | null;
     description?: string | null;
     status?: string;
-  },
+  }
 ): Promise<boolean> {
   const sets: string[] = [];
   const params: unknown[] = [];
-  if (patch.label !== undefined) { sets.push('label = ?'); params.push(patch.label); }
-  if (patch.parentId !== undefined) { sets.push('parent_id = ?'); params.push(patch.parentId); }
-  if (patch.cycleId !== undefined) { sets.push('cycle_id = ?'); params.push(patch.cycleId); }
-  if (patch.ownerUserId !== undefined) { sets.push('owner_user_id = ?'); params.push(patch.ownerUserId); }
-  if (patch.description !== undefined) { sets.push('description = ?'); params.push(patch.description); }
-  if (patch.status !== undefined) { sets.push('status = ?'); params.push(patch.status); }
+  if (patch.label !== undefined) {
+    sets.push('label = ?');
+    params.push(patch.label);
+  }
+  if (patch.parentId !== undefined) {
+    sets.push('parent_id = ?');
+    params.push(patch.parentId);
+  }
+  if (patch.cycleId !== undefined) {
+    sets.push('cycle_id = ?');
+    params.push(patch.cycleId);
+  }
+  if (patch.ownerUserId !== undefined) {
+    sets.push('owner_user_id = ?');
+    params.push(patch.ownerUserId);
+  }
+  if (patch.description !== undefined) {
+    sets.push('description = ?');
+    params.push(patch.description);
+  }
+  if (patch.status !== undefined) {
+    sets.push('status = ?');
+    params.push(patch.status);
+  }
   if (sets.length === 0) return false;
   sets.push('updated_at = now()');
   params.push(id, organizationId);
   const result = await dbRun(
     `UPDATE okr_objectives SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
-    params,
+    params
   );
   return (result.changes ?? 0) > 0;
 }
@@ -518,7 +534,7 @@ export async function createKeyResult(input: {
       input.krType ?? 'metric',
       input.kind ?? 'aspirational',
       input.ownerUserId ?? null,
-    ],
+    ]
   );
   const score = await recomputeKeyResultScore(id, input.organizationId);
   return { id, score };
@@ -537,26 +553,53 @@ export async function updateKeyResult(
     krType?: KrType;
     kind?: KrKind;
     ownerUserId?: string | null;
-  },
+  }
 ): Promise<{ updated: boolean; score: number }> {
   const sets: string[] = [];
   const params: unknown[] = [];
-  if (patch.label !== undefined) { sets.push('label = ?'); params.push(patch.label); }
-  if (patch.baseline !== undefined) { sets.push('baseline = ?'); params.push(patch.baseline); }
-  if (patch.target !== undefined) { sets.push('target = ?'); params.push(patch.target); }
-  if (patch.current !== undefined) { sets.push('current = ?'); params.push(patch.current); }
-  if (patch.weight !== undefined) { sets.push('weight = ?'); params.push(patch.weight); }
-  if (patch.kpiId !== undefined) { sets.push('kpi_id = ?'); params.push(patch.kpiId); }
-  if (patch.krType !== undefined) { sets.push('kr_type = ?'); params.push(patch.krType); }
-  if (patch.kind !== undefined) { sets.push('kind = ?'); params.push(patch.kind); }
-  if (patch.ownerUserId !== undefined) { sets.push('owner_user_id = ?'); params.push(patch.ownerUserId); }
+  if (patch.label !== undefined) {
+    sets.push('label = ?');
+    params.push(patch.label);
+  }
+  if (patch.baseline !== undefined) {
+    sets.push('baseline = ?');
+    params.push(patch.baseline);
+  }
+  if (patch.target !== undefined) {
+    sets.push('target = ?');
+    params.push(patch.target);
+  }
+  if (patch.current !== undefined) {
+    sets.push('current = ?');
+    params.push(patch.current);
+  }
+  if (patch.weight !== undefined) {
+    sets.push('weight = ?');
+    params.push(patch.weight);
+  }
+  if (patch.kpiId !== undefined) {
+    sets.push('kpi_id = ?');
+    params.push(patch.kpiId);
+  }
+  if (patch.krType !== undefined) {
+    sets.push('kr_type = ?');
+    params.push(patch.krType);
+  }
+  if (patch.kind !== undefined) {
+    sets.push('kind = ?');
+    params.push(patch.kind);
+  }
+  if (patch.ownerUserId !== undefined) {
+    sets.push('owner_user_id = ?');
+    params.push(patch.ownerUserId);
+  }
 
   if (sets.length > 0) {
     sets.push('updated_at = now()');
     params.push(id, organizationId);
     const result = await dbRun(
       `UPDATE okr_key_results SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
-      params,
+      params
     );
     if ((result.changes ?? 0) === 0) return { updated: false, score: 0 };
   }
@@ -584,12 +627,12 @@ export async function deleteKeyResult(id: string, organizationId: string): Promi
  */
 export async function recomputeKeyResultScore(
   keyResultId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<number> {
   const kr = (await dbGet(
     `SELECT id, baseline, target, current, weight, kr_type, label
      FROM okr_key_results WHERE id = ? AND organization_id = ?`,
-    [keyResultId, organizationId],
+    [keyResultId, organizationId]
   )) as
     | {
         id: string;
@@ -608,7 +651,7 @@ export async function recomputeKeyResultScore(
     `SELECT score FROM okr_check_ins
      WHERE key_result_id = ? AND score IS NOT NULL
      ORDER BY checked_at DESC LIMIT 1`,
-    [keyResultId],
+    [keyResultId]
   )) as { score: number | null } | undefined;
   if (latestCheckIn && isNum(latestCheckIn.score)) {
     score = clamp01(latestCheckIn.score);
@@ -623,7 +666,10 @@ export async function recomputeKeyResultScore(
     });
   }
 
-  await dbRun(`UPDATE okr_key_results SET score = ?, updated_at = now() WHERE id = ?`, [score, keyResultId]);
+  await dbRun(`UPDATE okr_key_results SET score = ?, updated_at = now() WHERE id = ?`, [
+    score,
+    keyResultId,
+  ]);
   return score;
 }
 
@@ -660,7 +706,7 @@ export async function createCheckIn(input: {
       input.score ?? null,
       input.note ?? null,
       input.checkedBy ?? null,
-    ],
+    ]
   );
 
   // D7 (manual-only): every check-in's `value` — regardless of any
@@ -679,12 +725,15 @@ export async function createCheckIn(input: {
   const row = (await dbGet(
     `SELECT id, key_result_id, confidence, value, score, note, checked_at, checked_by
      FROM okr_check_ins WHERE id = ?`,
-    [id],
+    [id]
   )) as CheckInRow;
   return { checkIn: mapCheckInRow(row), score };
 }
 
-export async function listCheckIns(keyResultId: string, organizationId: string): Promise<OkrCheckIn[]> {
+export async function listCheckIns(
+  keyResultId: string,
+  organizationId: string
+): Promise<OkrCheckIn[]> {
   const kr = (await dbGet(`SELECT id FROM okr_key_results WHERE id = ? AND organization_id = ?`, [
     keyResultId,
     organizationId,
@@ -694,7 +743,7 @@ export async function listCheckIns(keyResultId: string, organizationId: string):
     ((await dbAll(
       `SELECT id, key_result_id, confidence, value, score, note, checked_at, checked_by
        FROM okr_check_ins WHERE key_result_id = ? ORDER BY checked_at DESC`,
-      [keyResultId],
+      [keyResultId]
     )) as CheckInRow[] | undefined) ?? [];
   return rows.map(mapCheckInRow);
 }

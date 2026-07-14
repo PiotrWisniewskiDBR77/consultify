@@ -5,26 +5,103 @@
  */
 import React from 'react';
 
-import ResultsThreePairsView from '../../src/components/Results/ResultsThreePairsView';
 import type {
   ThreePairKpi,
-  ThreePairRoi,
   ThreePairObjective,
+  ThreePairRoi,
 } from '../../src/components/Results/ResultsThreePairsView';
+import ResultsThreePairsView from '../../src/components/Results/ResultsThreePairsView';
 
 const KPIS: ThreePairKpi[] = [
-  { id: 'k1', name: 'OEE linii pakowania', initiativeName: 'Automatyzacja raportowania OEE', unit: '%', baseline: 62, target: 78, current: 74, status: 'below', trend: 'up' },
-  { id: 'k2', name: 'Czas cyklu zamknięcia miesiąca', initiativeName: 'Rollup finansowy Q3', unit: 'dni', baseline: 9, target: 5, current: 5, status: 'on-target', trend: 'down' },
-  { id: 'k3', name: 'Redukcja kosztów pracy', initiativeName: 'Automatyzacja linii', unit: '%', baseline: 0, target: 22, current: 18, status: 'below', trend: 'up' },
-  { id: 'k4', name: 'Pokrycie audytu dostawców', initiativeName: 'Przegląd dostawców krytycznych', unit: '%', baseline: 40, target: 100, current: null, status: 'no-data' },
-  { id: 'k5', name: 'NPS wewnętrzny (zespoły)', initiativeName: 'Program szkoleń Lean', unit: 'pkt', baseline: 12, target: 30, current: 31, status: 'on-target', trend: 'up' },
+  {
+    id: 'k1',
+    name: 'OEE linii pakowania',
+    initiativeName: 'Automatyzacja raportowania OEE',
+    unit: '%',
+    baseline: 62,
+    target: 78,
+    current: 74,
+    status: 'below',
+    trend: 'up',
+  },
+  {
+    id: 'k2',
+    name: 'Czas cyklu zamknięcia miesiąca',
+    initiativeName: 'Rollup finansowy Q3',
+    unit: 'dni',
+    baseline: 9,
+    target: 5,
+    current: 5,
+    status: 'on-target',
+    trend: 'down',
+  },
+  {
+    id: 'k3',
+    name: 'Redukcja kosztów pracy',
+    initiativeName: 'Automatyzacja linii',
+    unit: '%',
+    baseline: 0,
+    target: 22,
+    current: 18,
+    status: 'below',
+    trend: 'up',
+  },
+  {
+    id: 'k4',
+    name: 'Pokrycie audytu dostawców',
+    initiativeName: 'Przegląd dostawców krytycznych',
+    unit: '%',
+    baseline: 40,
+    target: 100,
+    current: null,
+    status: 'no-data',
+  },
+  {
+    id: 'k5',
+    name: 'NPS wewnętrzny (zespoły)',
+    initiativeName: 'Program szkoleń Lean',
+    unit: 'pkt',
+    baseline: 12,
+    target: 30,
+    current: 31,
+    status: 'on-target',
+    trend: 'up',
+  },
 ];
 
 const ROI: ThreePairRoi[] = [
-  { initiativeId: 'i1', initiativeName: 'Automatyzacja linii pakowania', projectedBenefit: 480000, realizedBenefit: 512000, hasRealized: true, ownerName: 'Anna Kowalska' },
-  { initiativeId: 'i2', initiativeName: 'Rollup finansowy — jedno źródło', projectedBenefit: 220000, realizedBenefit: 140000, hasRealized: true, ownerName: 'Piotr Wiśniewski' },
-  { initiativeId: 'i3', initiativeName: 'Migracja legacy MES', projectedBenefit: 1250000, realizedBenefit: 0, hasRealized: false, ownerName: 'Tomasz Nowak' },
-  { initiativeId: 'i4', initiativeName: 'Program szkoleń Lean dla brygadzistów', projectedBenefit: 90000, realizedBenefit: 96000, hasRealized: true, ownerName: 'Anna Kowalska' },
+  {
+    initiativeId: 'i1',
+    initiativeName: 'Automatyzacja linii pakowania',
+    projectedBenefit: 480000,
+    realizedBenefit: 512000,
+    hasRealized: true,
+    ownerName: 'Anna Kowalska',
+  },
+  {
+    initiativeId: 'i2',
+    initiativeName: 'Rollup finansowy — jedno źródło',
+    projectedBenefit: 220000,
+    realizedBenefit: 140000,
+    hasRealized: true,
+    ownerName: 'Piotr Wiśniewski',
+  },
+  {
+    initiativeId: 'i3',
+    initiativeName: 'Migracja legacy MES',
+    projectedBenefit: 1250000,
+    realizedBenefit: 0,
+    hasRealized: false,
+    ownerName: 'Tomasz Nowak',
+  },
+  {
+    initiativeId: 'i4',
+    initiativeName: 'Program szkoleń Lean dla brygadzistów',
+    projectedBenefit: 90000,
+    realizedBenefit: 96000,
+    hasRealized: true,
+    ownerName: 'Anna Kowalska',
+  },
 ];
 
 const OBJECTIVES: ThreePairObjective[] = [

@@ -159,9 +159,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
    * fall back to a stable synthetic grouping key (see GENERIC_ATTACHMENTS_FIELD_ID). */
   const resolvedAttachmentFieldId = useMemo(() => {
     if (!isPlatform) return null;
-    const attachmentField = fields?.find(
-      (f) => 'fieldType' in f && f.fieldType === 'attachment'
-    );
+    const attachmentField = fields?.find((f) => 'fieldType' in f && f.fieldType === 'attachment');
     return attachmentField?.id ?? GENERIC_ATTACHMENTS_FIELD_ID;
   }, [isPlatform, fields]);
 
@@ -286,9 +284,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       })
       .catch(() => {
         if (cancelled) return;
-        setAttachmentsError(
-          t('ideas.table.failedToLoadAttachments', 'Failed to load attachments')
-        );
+        setAttachmentsError(t('ideas.table.failedToLoadAttachments', 'Failed to load attachments'));
       })
       .finally(() => {
         if (!cancelled) setAttachmentsLoading(false);
@@ -641,9 +637,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         const prev: NodeAttachment[] = node.data?.attachments || [];
         onFieldChange(node.id, 'attachments', [att, ...prev]);
       } catch (e: any) {
-        toast.error(
-          e?.message || (t('ideas.table.failedToUploadFile', 'Failed to upload file'))
-        );
+        toast.error(e?.message || t('ideas.table.failedToUploadFile', 'Failed to upload file'));
       } finally {
         setAttachmentUploading(false);
       }
@@ -932,9 +926,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 }}
                 disabled={locked}
                 rows={6}
-                placeholder={
-                  t('ideas.table.notesContextDetails', 'Notes, context, details...')
-                }
+                placeholder={t('ideas.table.notesContextDetails', 'Notes, context, details...')}
                 className="w-full bg-transparent border-0 outline-none text-xs text-c-text-secondary placeholder-c-text-muted resize-none leading-relaxed focus:ring-0"
               />
             ) : (
@@ -946,7 +938,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   children:
                     node.data?.bodyMarkdown ||
                     node.data?.description ||
-                    (t('ideas.table.noContent', 'No content')),
+                    t('ideas.table.noContent', 'No content'),
                 })}
               </div>
             )}
@@ -1009,7 +1001,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       {child.data?.label || child.id}
                     </span>
                     {child.data?.status && (
-                      <span className="text-[9px] text-c-text-muted">{String(child.data.status)}</span>
+                      <span className="text-[9px] text-c-text-muted">
+                        {String(child.data.status)}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -1062,7 +1056,11 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         {mode === 'full' && isPlatform && (
           <div className="flex items-center gap-1.5 px-5 py-2 border-b border-c-border-subtle flex-shrink-0 overflow-x-auto">
             {[
-              { id: 'fields' as const, label: t('ideas.table.tabFields', 'Fields'), Icon: FileText },
+              {
+                id: 'fields' as const,
+                label: t('ideas.table.tabFields', 'Fields'),
+                Icon: FileText,
+              },
               {
                 id: 'activity' as const,
                 label: t('ideas.table.tabActivity', 'Activity'),
@@ -1429,9 +1427,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         }
                       }}
                       rows={2}
-                      placeholder={
-                        t('ideas.table.addACommentToMention', 'Add a comment... (@ to mention)')
-                      }
+                      placeholder={t(
+                        'ideas.table.addACommentToMention',
+                        'Add a comment... (@ to mention)'
+                      )}
                       className="flex-1 min-h-[40px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-c-focus resize-y"
                     />
                     <button
@@ -1513,7 +1512,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               <input
                                 value={artifactSearch}
                                 onChange={(e) => setArtifactSearch(e.target.value)}
-                                placeholder={t('ideas.table.searchArtifacts', 'Search artifacts...')}
+                                placeholder={t(
+                                  'ideas.table.searchArtifacts',
+                                  'Search artifacts...'
+                                )}
                                 className="flex-1 bg-transparent text-xs text-c-text-secondary outline-none placeholder-c-text-muted"
                               />
                             </div>
@@ -1546,7 +1548,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                   }}
                                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-c-surface-raised text-[11px] text-c-text-secondary transition-colors"
                                 >
-                                  <StickyNote size={12} className="text-c-text-muted flex-shrink-0" />
+                                  <StickyNote
+                                    size={12}
+                                    className="text-c-text-muted flex-shrink-0"
+                                  />
                                   <span className="truncate">{n.data?.label || n.id}</span>
                                 </button>
                               ))}
@@ -1604,7 +1609,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                           {att.name}
                         </span>
                       )}
-                      <span className="text-[9px] text-c-text-muted">{formatTime(att.createdAt)}</span>
+                      <span className="text-[9px] text-c-text-muted">
+                        {formatTime(att.createdAt)}
+                      </span>
                     </div>
                     {!locked && (
                       <button
@@ -1738,10 +1745,14 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                             : act.action === 'attachment'
                               ? t('ideas.table.addedAttachment', 'added attachment')
                               : act.action === 'status_change'
-                                ? t('ideas.table.changedStatus', 'changed status: {{oldValue}} → {{newValue}}', {
-                                    oldValue: act.oldValue,
-                                    newValue: act.newValue,
-                                  })
+                                ? t(
+                                    'ideas.table.changedStatus',
+                                    'changed status: {{oldValue}} → {{newValue}}',
+                                    {
+                                      oldValue: act.oldValue,
+                                      newValue: act.newValue,
+                                    }
+                                  )
                                 : act.action === 'ai_suggestion'
                                   ? t('ideas.table.aiSuggested', 'AI suggested')
                                   : t('ideas.table.created', 'created')}
@@ -1775,12 +1786,18 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       <span className="text-[11px] text-c-text-secondary">
                         <strong>{act.author}</strong>{' '}
                         {act.action === 'edited'
-                          ? t('ideas.table.editedField', 'edited {{field}}', { field: act.field ?? '' })
+                          ? t('ideas.table.editedField', 'edited {{field}}', {
+                              field: act.field ?? '',
+                            })
                           : act.action === 'status_change'
-                            ? t('ideas.table.changedStatus', 'changed status: {{oldValue}} → {{newValue}}', {
-                                oldValue: act.oldValue,
-                                newValue: act.newValue,
-                              })
+                            ? t(
+                                'ideas.table.changedStatus',
+                                'changed status: {{oldValue}} → {{newValue}}',
+                                {
+                                  oldValue: act.oldValue,
+                                  newValue: act.newValue,
+                                }
+                              )
                             : act.action === 'created'
                               ? t('ideas.table.createdRecord', 'created record')
                               : String(act.action)}
@@ -1830,7 +1847,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 )}
                 {aiInsights.length === 0 && !aiLoading && (
                   <p className="text-[11px] text-c-text-muted text-center py-4">
-                    {t('ideas.table.clickToGenerateInsightsBasedOnCompanyContext', 'Click to generate insights based on company context')}
+                    {t(
+                      'ideas.table.clickToGenerateInsightsBasedOnCompanyContext',
+                      'Click to generate insights based on company context'
+                    )}
                   </p>
                 )}
               </div>
@@ -1847,7 +1867,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   height={300}
                 />
                 <p className="text-[9px] text-c-text-muted mt-2 text-center">
-                  {t('ideas.table.drawAddShapesAndArrowsToThisIdea', 'Draw, add shapes and arrows to this idea')}
+                  {t(
+                    'ideas.table.drawAddShapesAndArrowsToThisIdea',
+                    'Draw, add shapes and arrows to this idea'
+                  )}
                 </p>
               </div>
             )}
@@ -1889,7 +1912,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               onClick={onExpand}
               className="text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
             >
-              {t('ideas.table.doubleClickOrExpandToSeeFullDetails', 'Double-click or expand to see full details')}
+              {t(
+                'ideas.table.doubleClickOrExpandToSeeFullDetails',
+                'Double-click or expand to see full details'
+              )}
             </button>
           </div>
         )}

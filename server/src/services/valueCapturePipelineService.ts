@@ -77,7 +77,7 @@ export function nextGate(g: Gate): Gate | null {
 export function canAdvance(
   currentGate: Gate,
   criteriaMet: boolean,
-  signedOff: boolean,
+  signedOff: boolean
 ): AdvanceCheck {
   if (!GATE_ORDER.includes(currentGate)) {
     return { ok: false, reason: `Unknown gate: ${currentGate}` };
@@ -153,9 +153,7 @@ function mapRow(r: any): ValueCaptureGate {
     signedOffBy: r.signed_off_by ?? null,
     signedOffAt: r.signed_off_at ?? null,
     valueEvidence:
-      r.value_evidence === null || r.value_evidence === undefined
-        ? null
-        : Number(r.value_evidence),
+      r.value_evidence === null || r.value_evidence === undefined ? null : Number(r.value_evidence),
     createdAt: r.created_at ?? null,
     updatedAt: r.updated_at ?? null,
   };
@@ -169,10 +167,7 @@ function mapRow(r: any): ValueCaptureGate {
  * List value-capture gates for an organization, optionally filtered to a single
  * initiative, ordered by initiative then canonical gate order.
  */
-export async function listGates(
-  orgId: string,
-  initiativeId?: string,
-): Promise<ValueCaptureGate[]> {
+export async function listGates(orgId: string, initiativeId?: string): Promise<ValueCaptureGate[]> {
   const params: unknown[] = [orgId];
   let sql = `SELECT * FROM value_capture_gates WHERE organization_id = ?`;
   if (initiativeId) {
@@ -187,10 +182,7 @@ export async function listGates(
 /**
  * Create a new gate record for an initiative within an organization.
  */
-export async function createGate(
-  orgId: string,
-  data: CreateGateInput,
-): Promise<ValueCaptureGate> {
+export async function createGate(orgId: string, data: CreateGateInput): Promise<ValueCaptureGate> {
   if (!GATE_ORDER.includes(data.gate)) {
     throw new Error(`Invalid gate: ${data.gate}`);
   }
@@ -208,12 +200,12 @@ export async function createGate(
       status,
       data.criteria ?? null,
       data.valueEvidence ?? null,
-    ],
+    ]
   );
-  const row = await get(
-    `SELECT * FROM value_capture_gates WHERE id = ? AND organization_id = ?`,
-    [id, orgId],
-  );
+  const row = await get(`SELECT * FROM value_capture_gates WHERE id = ? AND organization_id = ?`, [
+    id,
+    orgId,
+  ]);
   if (!row) throw new Error('Failed to load created gate');
   return mapRow(row);
 }
@@ -226,12 +218,12 @@ export async function createGate(
 export async function advanceGate(
   orgId: string,
   id: string,
-  opts: { signedOffBy: string },
+  opts: { signedOffBy: string }
 ): Promise<ValueCaptureGate> {
-  const row = await get(
-    `SELECT * FROM value_capture_gates WHERE id = ? AND organization_id = ?`,
-    [id, orgId],
-  );
+  const row = await get(`SELECT * FROM value_capture_gates WHERE id = ? AND organization_id = ?`, [
+    id,
+    orgId,
+  ]);
   if (!row) throw new Error('Gate not found');
   const gate = mapRow(row);
 
@@ -247,12 +239,12 @@ export async function advanceGate(
     `UPDATE value_capture_gates
         SET status = 'passed', signed_off_by = ?, signed_off_at = datetime('now'), updated_at = datetime('now')
       WHERE id = ? AND organization_id = ?`,
-    [opts.signedOffBy, id, orgId],
+    [opts.signedOffBy, id, orgId]
   );
 
   const updated = await get(
     `SELECT * FROM value_capture_gates WHERE id = ? AND organization_id = ?`,
-    [id, orgId],
+    [id, orgId]
   );
   if (!updated) throw new Error('Failed to reload advanced gate');
   logger.info(`[valueCapture] gate ${id} advanced (${gate.gate}) by ${opts.signedOffBy}`);

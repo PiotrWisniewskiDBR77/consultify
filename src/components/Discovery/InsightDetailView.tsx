@@ -368,10 +368,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <InitiativeSuggestionBadge
-                  sourceType="interview_insight"
-                  sourceId={insightId}
-                />
+                <InitiativeSuggestionBadge sourceType="interview_insight" sourceId={insightId} />
                 <div
                   className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
                 >

@@ -55,7 +55,10 @@ function almostEqual(a: number, b: number, eps = 0.01): boolean {
  * Points listed in `protectedPts` (e.g. user waypoints) are never collapsed
  * away even when collinear — a waypoint is an intentional vertex.
  */
-export function simplifyPoints(points: RoutePoint[], protectedPts: RoutePoint[] = []): RoutePoint[] {
+export function simplifyPoints(
+  points: RoutePoint[],
+  protectedPts: RoutePoint[] = []
+): RoutePoint[] {
   const isProtected = (p: RoutePoint) =>
     protectedPts.some((w) => almostEqual(w.x, p.x) && almostEqual(w.y, p.y));
 
@@ -101,7 +104,12 @@ function orthogonalLeg(a: RoutePoint, b: RoutePoint): RoutePoint[] {
 }
 
 /** Right edge x / clearance-adjusted exit point away from a box. */
-function exitPoint(p: RoutePoint, box: RouteBox | undefined, offset: number, toward: RoutePoint): RoutePoint {
+function exitPoint(
+  p: RoutePoint,
+  box: RouteBox | undefined,
+  offset: number,
+  toward: RoutePoint
+): RoutePoint {
   if (!box) return p;
   // Step outward along the dominant axis toward the destination, keeping
   // `offset` clearance beyond the nearest box face.

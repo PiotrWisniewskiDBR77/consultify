@@ -124,7 +124,10 @@ const STATUS_CONFIG = {
   failed: { color: 'bg-c-danger', text: 'text-c-danger', icon: XCircle },
 };
 
-const fallbackBackupTypeConfig = { color: 'bg-c-text-muted/20 text-c-text-secondary', label: 'Unknown' };
+const fallbackBackupTypeConfig = {
+  color: 'bg-c-text-muted/20 text-c-text-secondary',
+  label: 'Unknown',
+};
 const fallbackStatusConfig = {
   color: 'bg-c-text-muted',
   text: 'text-c-text-secondary',
@@ -280,9 +283,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-c-text">
-            Backup & Recovery
-          </h2>
+          <h2 className="text-2xl font-semibold text-c-text">Backup & Recovery</h2>
           <p className="text-c-text-secondary text-sm">
             Manage database backups and disaster recovery procedures
           </p>
@@ -319,9 +320,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
             <div className="text-sm text-c-text-secondary">Total Backups</div>
-            <div className="text-2xl font-semibold text-c-text">
-              {backups.length}
-            </div>
+            <div className="text-2xl font-semibold text-c-text">{backups.length}</div>
           </div>
           <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
             <div className="text-sm text-c-text-secondary">Storage Used</div>
@@ -469,9 +468,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {activeTab === 'schedules' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-c-text">
-                  Backup Schedules
-                </h3>
+                <h3 className="text-lg font-medium text-c-text">Backup Schedules</h3>
                 <button
                   disabled
                   title={destructiveBackupActionReason}
@@ -512,9 +509,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-c-text">
-                                {schedule.name}
-                              </span>
+                              <span className="font-medium text-c-text">{schedule.name}</span>
                               <span
                                 className={`px-2 py-0.5 text-xs rounded ${BACKUP_TYPE_CONFIG[schedule.type].color}`}
                               >
@@ -572,9 +567,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
-                  <h4 className="font-medium text-c-text mb-4">
-                    Retention Policy
-                  </h4>
+                  <h4 className="font-medium text-c-text mb-4">Retention Policy</h4>
                   <div className="space-y-4">
                     <div>
                       <label
@@ -622,9 +615,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   <h4 className="font-medium text-c-text mb-4">Security</h4>
                   <div className="space-y-4">
                     <label className="flex items-center justify-between">
-                      <span className="text-sm text-c-text-secondary">
-                        Encrypt backups at rest
-                      </span>
+                      <span className="text-sm text-c-text-secondary">Encrypt backups at rest</span>
                       <input
                         type="checkbox"
                         checked={config.encryption_enabled}
@@ -656,9 +647,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     Cloud Storage
                   </h4>
                   <label className="flex items-center justify-between mb-4">
-                    <span className="text-sm text-c-text-secondary">
-                      Enable cloud backup sync
-                    </span>
+                    <span className="text-sm text-c-text-secondary">Enable cloud backup sync</span>
                     <input
                       type="checkbox"
                       checked={config.cloud_storage_enabled}
@@ -734,9 +723,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
               </div>
 
               <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
-                <h4 className="font-medium text-c-text mb-2">
-                  DR Test History
-                </h4>
+                <h4 className="font-medium text-c-text mb-2">DR Test History</h4>
                 <p className="text-sm text-c-text-muted">
                   No verified disaster recovery test history is available until the backend job
                   lifecycle is connected.
@@ -751,9 +738,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
           <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-c-text mb-4">
-              Create Backup
-            </h3>
+            <h3 className="text-xl font-bold text-c-text mb-4">Create Backup</h3>
             <div className="space-y-4">
               <p className="text-sm text-c-text-secondary">Select backup type:</p>
               <div className="grid grid-cols-2 gap-3">
@@ -763,9 +748,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   className="p-4 bg-c-accent-soft border border-c-accent/30 rounded-lg text-left hover:bg-c-accent-soft/70 transition-colors disabled:opacity-50"
                 >
                   <div className="font-medium text-c-accent mb-1">Full Backup</div>
-                  <div className="text-xs text-c-text-muted">
-                    Complete database snapshot
-                  </div>
+                  <div className="text-xs text-c-text-muted">Complete database snapshot</div>
                 </button>
                 <button
                   onClick={() => handleCreateBackup('incremental')}
@@ -773,9 +756,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   className="p-4 bg-c-info/10 border border-c-info/30 rounded-lg text-left hover:bg-c-info/20 transition-colors disabled:opacity-50"
                 >
                   <div className="font-medium text-c-info mb-1">Incremental</div>
-                  <div className="text-xs text-c-text-muted">
-                    Changes since last backup
-                  </div>
+                  <div className="text-xs text-c-text-muted">Changes since last backup</div>
                 </button>
               </div>
               <button

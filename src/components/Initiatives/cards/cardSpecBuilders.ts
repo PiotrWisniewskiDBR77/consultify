@@ -75,7 +75,7 @@ const PROBLEM_FALLBACK_LABELS: Required<ProblemCardLabels> = {
  */
 export function buildProblemCardSpec(
   data: ProblemCardData | null | undefined,
-  labels: ProblemCardLabels = {},
+  labels: ProblemCardLabels = {}
 ): CardSpec {
   const L = { ...PROBLEM_FALLBACK_LABELS, ...labels };
   const blocks: CardBlock[] = [];
@@ -140,7 +140,7 @@ const TARGET_FALLBACK_LABELS: Required<TargetStateCardLabels> = {
  */
 export function buildTargetStateCardSpec(
   data: TargetStateCardData | null | undefined,
-  labels: TargetStateCardLabels = {},
+  labels: TargetStateCardLabels = {}
 ): CardSpec {
   const L = { ...TARGET_FALLBACK_LABELS, ...labels };
   const blocks: CardBlock[] = [];
@@ -210,7 +210,7 @@ const BUSINESS_CASE_FALLBACK_LABELS: Required<BusinessCaseCardLabels> = {
  */
 export function buildBusinessCaseCardSpec(
   data: BusinessCaseCardData | null | undefined,
-  labels: BusinessCaseCardLabels = {},
+  labels: BusinessCaseCardLabels = {}
 ): CardSpec {
   const L = { ...BUSINESS_CASE_FALLBACK_LABELS, ...labels };
   const blocks: CardBlock[] = [];
@@ -291,7 +291,7 @@ const SCOPE_FALLBACK_LABELS: Required<ScopeCardLabels> = {
  */
 export function buildScopeCardSpec(
   data: ScopeCardData | null | undefined,
-  labels: ScopeCardLabels = {},
+  labels: ScopeCardLabels = {}
 ): CardSpec {
   const L = { ...SCOPE_FALLBACK_LABELS, ...labels };
   const blocks: CardBlock[] = [];
@@ -352,7 +352,7 @@ const CONTROL_FALLBACK_LABELS: Required<ControlCardLabels> = {
  */
 export function buildControlCardSpec(
   data: ControlCardData | null | undefined,
-  labels: ControlCardLabels = {},
+  labels: ControlCardLabels = {}
 ): CardSpec {
   const L = { ...CONTROL_FALLBACK_LABELS, ...labels };
   const tiles: KpiTile[] = [];
@@ -412,7 +412,7 @@ const KPI_DASH = '—';
  */
 export function buildKpisCardSpec(
   rows: KpiRowData[] | null | undefined,
-  labels: KpisCardLabels = {},
+  labels: KpisCardLabels = {}
 ): CardSpec {
   const L = { ...KPIS_FALLBACK_LABELS, ...labels };
   const blocks: CardBlock[] = [];
@@ -422,13 +422,7 @@ export function buildKpisCardSpec(
     : [];
 
   if (valid.length > 0) {
-    const columns = [
-      L.columnName,
-      L.columnBaseline,
-      L.columnCurrent,
-      L.columnTarget,
-      L.columnUnit,
-    ];
+    const columns = [L.columnName, L.columnBaseline, L.columnCurrent, L.columnTarget, L.columnUnit];
     const tableRows = valid.map((r) => [
       clean(r.name) ?? KPI_DASH,
       clean(r.baseline) ?? KPI_DASH,

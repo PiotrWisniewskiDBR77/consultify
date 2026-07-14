@@ -585,9 +585,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 'AI discovered potential dependencies'
               )}
             </h3>
-            <span className="text-xs text-c-info dark:text-c-info">
-              ({discoveredDeps.length})
-            </span>
+            <span className="text-xs text-c-info dark:text-c-info">({discoveredDeps.length})</span>
           </div>
           <button
             onClick={closeWorkspacePanels}
@@ -727,7 +725,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
           </button>
         </div>
         {cycles.map((c, idx) => (
-          <div key={idx} className="px-4 py-3 border-b border-danger-200/50 dark:border-danger-900/30">
+          <div
+            key={idx}
+            className="px-4 py-3 border-b border-danger-200/50 dark:border-danger-900/30"
+          >
             <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
               {c.pathNames.map((name, ni) => (
                 <React.Fragment key={ni}>
@@ -1495,7 +1496,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       {/* Dependencies table */}
       {dependencies.length > 0 && (
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-sm">
+          <table
+            /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-sm"
+          >
             <thead className="sticky top-0 z-10">
               <tr className="bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
                 <th className="w-8 px-4 py-2.5" />
@@ -1619,10 +1622,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                   </p>
                                   {relatedIssue.fixSuggestion && (
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                      <Sparkles
-                                        size={10}
-                                        className="inline mr-1 text-c-info"
-                                      />
+                                      <Sparkles size={10} className="inline mr-1 text-c-info" />
                                       {relatedIssue.fixSuggestion}
                                     </p>
                                   )}

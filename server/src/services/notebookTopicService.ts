@@ -94,7 +94,18 @@ const ARTIFACT_BUCKETS: Array<{ bucket: 'output' | 'initiative'; needles: string
   },
   {
     bucket: 'output',
-    needles: ['output', 'deliverable', 'report', 'raport', 'artifact', 'artefakt', 'document', 'sheet', 'deck', 'presentation'],
+    needles: [
+      'output',
+      'deliverable',
+      'report',
+      'raport',
+      'artifact',
+      'artefakt',
+      'document',
+      'sheet',
+      'deck',
+      'presentation',
+    ],
   },
 ];
 
@@ -122,12 +133,74 @@ function mapTopicRow(row: any): NotebookTopic {
 
 // Stopwords (EN + PL) to avoid deriving noise topics.
 const STOPWORDS = new Set<string>([
-  'the', 'and', 'for', 'are', 'but', 'not', 'you', 'with', 'this', 'that', 'have', 'from',
-  'they', 'will', 'would', 'there', 'their', 'what', 'about', 'which', 'when', 'them', 'then',
-  'into', 'than', 'your', 'been', 'were', 'also', 'some', 'more', 'such', 'only', 'over',
-  'oraz', 'jest', 'sie', 'nie', 'tak', 'jak', 'dla', 'ale', 'lub', 'czy', 'aby', 'tez', 'bez',
-  'pod', 'nad', 'przy', 'ten', 'tej', 'tym', 'tych', 'jego', 'jej', 'ich', 'gdy', 'oraz',
-  'bardzo', 'tylko', 'mozna', 'wiec', 'jako', 'przez', 'ktore', 'ktory', 'ktora',
+  'the',
+  'and',
+  'for',
+  'are',
+  'but',
+  'not',
+  'you',
+  'with',
+  'this',
+  'that',
+  'have',
+  'from',
+  'they',
+  'will',
+  'would',
+  'there',
+  'their',
+  'what',
+  'about',
+  'which',
+  'when',
+  'them',
+  'then',
+  'into',
+  'than',
+  'your',
+  'been',
+  'were',
+  'also',
+  'some',
+  'more',
+  'such',
+  'only',
+  'over',
+  'oraz',
+  'jest',
+  'sie',
+  'nie',
+  'tak',
+  'jak',
+  'dla',
+  'ale',
+  'lub',
+  'czy',
+  'aby',
+  'tez',
+  'bez',
+  'pod',
+  'nad',
+  'przy',
+  'ten',
+  'tej',
+  'tym',
+  'tych',
+  'jego',
+  'jej',
+  'ich',
+  'gdy',
+  'oraz',
+  'bardzo',
+  'tylko',
+  'mozna',
+  'wiec',
+  'jako',
+  'przez',
+  'ktore',
+  'ktory',
+  'ktora',
 ]);
 
 /**
@@ -182,17 +255,19 @@ export function deriveTopicsFromText(input: {
   // TODO(LLM): optionally call an LLM to extract higher-order semantic topics
   // and merge with the heuristic candidates (dedupe by slug, keep max score).
 
-  return Array.from(freq.entries())
-    .map(([key, v]) => ({
-      name: v.display,
-      slug: slugifyTopic(v.display) || key,
-      score: v.score,
-    }))
-    .filter((t) => t.slug.length > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, max)
-    // normalize score into 0..1 relative to the top candidate
-    .map((t, _i, arr) => ({ ...t, score: Math.round((t.score / arr[0].score) * 100) / 100 }));
+  return (
+    Array.from(freq.entries())
+      .map(([key, v]) => ({
+        name: v.display,
+        slug: slugifyTopic(v.display) || key,
+        score: v.score,
+      }))
+      .filter((t) => t.slug.length > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, max)
+      // normalize score into 0..1 relative to the top candidate
+      .map((t, _i, arr) => ({ ...t, score: Math.round((t.score / arr[0].score) * 100) / 100 }))
+  );
 }
 
 // ── CRUD ─────────────────────────────────────────────────────────────────────
@@ -206,7 +281,9 @@ export async function listTopics(orgId: string): Promise<NotebookTopic[]> {
       ORDER BY t.name ASC`,
     [orgId]
   );
-  return (rows || []).map((r) => ({ ...mapTopicRow(r), pageCount: Number(r.page_count ?? 0) }) as any);
+  return (rows || []).map(
+    (r) => ({ ...mapTopicRow(r), pageCount: Number(r.page_count ?? 0) }) as any
+  );
 }
 
 export async function getTopicById(orgId: string, topicId: string): Promise<NotebookTopic | null> {
@@ -224,10 +301,7 @@ export async function getTopicById(orgId: string, topicId: string): Promise<Note
  * Create a topic, or return the existing one with the same slug within the org
  * (idempotent on slug — re-derivation never duplicates).
  */
-export async function createTopic(
-  orgId: string,
-  name: string
-): Promise<NotebookTopic> {
+export async function createTopic(orgId: string, name: string): Promise<NotebookTopic> {
   const trimmed = String(name || '').trim();
   if (!trimmed) throw new Error('Topic name required');
   const slug = slugifyTopic(trimmed);

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { NotebookPage } from '@/types/myWork';
 
-import { type ConvertTarget, AIChatInlinePanel } from './AIChatInlinePanel';
+import { AIChatInlinePanel, type ConvertTarget } from './AIChatInlinePanel';
 import { NotebookContextPanel } from './NotebookContextPanel';
 
 interface NotebookRailPage {
@@ -114,7 +114,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       </div>
 
       {/* Tab A: Work — AI tools */}
-      <div className={`flex flex-1 flex-col overflow-hidden ${activeTab === 'work' ? '' : 'hidden'}`}>
+      <div
+        className={`flex flex-1 flex-col overflow-hidden ${activeTab === 'work' ? '' : 'hidden'}`}
+      >
         <AIChatInlinePanel
           open={true}
           onClose={onClose}
@@ -136,7 +138,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       </div>
 
       {/* Tab B: Context — linked workspace items */}
-      <div className={`flex flex-1 flex-col overflow-hidden ${activeTab === 'context' ? '' : 'hidden'}`}>
+      <div
+        className={`flex flex-1 flex-col overflow-hidden ${activeTab === 'context' ? '' : 'hidden'}`}
+      >
         <NotebookContextPanel
           open={true}
           onClose={onClose}

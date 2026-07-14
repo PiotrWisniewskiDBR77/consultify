@@ -132,9 +132,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
             disabled={!initiativeId.trim() || !modelRef.trim() || saving}
             className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 disabled:opacity-50"
           >
-            {saving
-              ? t('common.saving', 'Saving…')
-              : t('finance.link.cta', 'Link initiative')}
+            {saving ? t('common.saving', 'Saving…') : t('finance.link.cta', 'Link initiative')}
           </button>
         </div>
       </div>

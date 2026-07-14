@@ -20,10 +20,10 @@ import type {
   UnifiedReportMeta,
   UnifiedSlide,
 } from '../types.js';
-import { resolveDeckLayoutTemplateId, topologyOfTemplate } from './deckLayoutDecision.js';
 import { AppendixLayout } from './AppendixLayout.js';
 import { ComparisonLayout } from './ComparisonLayout.js';
 import { CoverLayout } from './CoverLayout.js';
+import { resolveDeckLayoutTemplateId, topologyOfTemplate } from './deckLayoutDecision.js';
 import { ExecutiveSummaryLayout } from './ExecutiveSummaryLayout.js';
 import { HeatmapLayout } from './HeatmapLayout.js';
 import { InitiativePortfolioLayout } from './InitiativePortfolioLayout.js';
@@ -100,9 +100,9 @@ export function resolveLayoutContext(slide: UnifiedSlide): LayoutContext {
 
 export { LAYOUT_REGISTRY };
 export {
+  ARCHETYPE_TO_TEMPLATE,
   resolveDeckLayoutTemplateId,
   topologyOfTemplate,
-  ARCHETYPE_TO_TEMPLATE,
 } from './deckLayoutDecision.js';
 
 // Re-export individual layouts

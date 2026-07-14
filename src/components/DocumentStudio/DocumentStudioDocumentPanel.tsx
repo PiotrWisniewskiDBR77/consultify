@@ -6,6 +6,7 @@
  * Properties, QA, and AI Editor.
  */
 
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   Bot,
@@ -24,7 +25,6 @@ import {
   Table2,
   Users,
 } from 'lucide-react';
-import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -369,9 +369,7 @@ function SourceListPanel({
               key={`${key}:${index}`}
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
             >
-              <div className="font-medium text-c-text">
-                {ref.sourceTitle || ref.sourceId}
-              </div>
+              <div className="font-medium text-c-text">{ref.sourceTitle || ref.sourceId}</div>
               <div className="mt-1 text-c-text-secondary">
                 {ref.sourceType} · {ref.sourceId}
               </div>
@@ -738,9 +736,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
             className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-c-text">
-                {link.label || link.shareLinkId}
-              </div>
+              <div className="font-medium text-c-text">{link.label || link.shareLinkId}</div>
               <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {link.runtimeStatus?.effectiveStatus ?? link.status}
               </span>
@@ -843,9 +839,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
             key={variant.profile.profileId}
             className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
           >
-            <div className="font-medium text-c-text">
-              {variant.profile.name}
-            </div>
+            <div className="font-medium text-c-text">{variant.profile.name}</div>
             <div className="mt-1 text-c-text-secondary">
               {variant.profile.audienceLabels.join(', ') ||
                 t('documentStudio.panel.inheritsAudience', 'inherits audience')}{' '}
@@ -979,16 +973,30 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {[
-              [t('documentStudio.panel.diffSectionsAdded', 'Sections +'), result.diff.stats.addedSectionCount],
-              [t('documentStudio.panel.diffSectionsModified', 'Sections Δ'), result.diff.stats.modifiedSectionCount],
-              [t('documentStudio.panel.diffBlocksAdded', 'Blocks +'), result.diff.stats.addedBlockCount],
-              [t('documentStudio.panel.diffBlocksModified', 'Blocks Δ'), result.diff.stats.modifiedBlockCount],
+              [
+                t('documentStudio.panel.diffSectionsAdded', 'Sections +'),
+                result.diff.stats.addedSectionCount,
+              ],
+              [
+                t('documentStudio.panel.diffSectionsModified', 'Sections Δ'),
+                result.diff.stats.modifiedSectionCount,
+              ],
+              [
+                t('documentStudio.panel.diffBlocksAdded', 'Blocks +'),
+                result.diff.stats.addedBlockCount,
+              ],
+              [
+                t('documentStudio.panel.diffBlocksModified', 'Blocks Δ'),
+                result.diff.stats.modifiedBlockCount,
+              ],
             ].map(([label, value]) => (
               <div
                 key={label}
                 className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2"
               >
-                <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
+                <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">
+                  {label}
+                </div>
                 <div className="mt-1 font-semibold text-c-text">{value}</div>
               </div>
             ))}
@@ -1025,7 +1033,10 @@ function ManifestGatePanel(): React.ReactElement {
       setError(
         err instanceof Error
           ? err.message
-          : t('documentStudio.panel.manifestValidateFailed', 'Failed to validate DOC_BUILDER_MANIFEST')
+          : t(
+              'documentStudio.panel.manifestValidateFailed',
+              'Failed to validate DOC_BUILDER_MANIFEST'
+            )
       );
     } finally {
       setLoading(false);
@@ -1073,7 +1084,10 @@ function ManifestGatePanel(): React.ReactElement {
             <div className="font-semibold">
               {result.ok
                 ? t('documentStudio.panel.manifestPasses', 'DOC_BUILDER_MANIFEST passes')
-                : t('documentStudio.panel.manifestViolations', 'DOC_BUILDER_MANIFEST has violations')}
+                : t(
+                    'documentStudio.panel.manifestViolations',
+                    'DOC_BUILDER_MANIFEST has violations'
+                  )}
             </div>
             <div className="mt-1">
               {t('documentStudio.panel.manifestCounts', {
@@ -1326,7 +1340,8 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
             </div>
             <div className="mt-1 text-c-text-secondary">
               {t('documentStudio.panel.approvalMeta', {
-                defaultValue: '{{participants}} participants · {{quorum}} · {{decisions}} decisions',
+                defaultValue:
+                  '{{participants}} participants · {{quorum}} · {{decisions}} decisions',
                 participants: approval.participants.length,
                 quorum: approval.quorumPolicy,
                 decisions: approval.decisions.length,
@@ -2016,7 +2031,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   // Picking a row sets `overflowSelection`, which routes the panel to
   // that tool's real content (rendered below via `effectiveToolId`).
   const renderOverflowMenu = (): React.ReactNode => (
-    <div className="flex h-full flex-col overflow-y-auto p-2" data-testid="document-studio-rail-overflow-menu">
+    <div
+      className="flex h-full flex-col overflow-y-auto p-2"
+      data-testid="document-studio-rail-overflow-menu"
+    >
       {overflowRightRailTools.map((tool) => (
         <button
           key={tool.id}
@@ -2091,9 +2109,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const renderRightRailPanel = (activeToolId: string | null): React.ReactNode => {
     if (activeToolId === 'more') {
-      return overflowSelection
-        ? renderOverflowToolPanel(overflowSelection)
-        : renderOverflowMenu();
+      return overflowSelection ? renderOverflowToolPanel(overflowSelection) : renderOverflowMenu();
     }
     if (activeToolId === 'sources') {
       return (
@@ -2344,7 +2360,12 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             </Button>
           </div>
         </div>
-        <DocumentTipTapEditor schema={schema} onSchemaUpdated={onSchemaUpdated} editable artifactId={artifactId} />
+        <DocumentTipTapEditor
+          schema={schema}
+          onSchemaUpdated={onSchemaUpdated}
+          editable
+          artifactId={artifactId}
+        />
       </div>
     </div>
   );

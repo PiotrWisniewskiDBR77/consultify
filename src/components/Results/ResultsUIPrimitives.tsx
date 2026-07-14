@@ -18,8 +18,8 @@
  * 10. ValueDrawer      — 7-section KPI/benefit detail drawer
  */
 
-import React from 'react';
 import { ArrowDown, ArrowRight, ArrowUp, Minus } from 'lucide-react';
+import React from 'react';
 
 // ─── 1. ValueCard ─────────────────────────────────────────────────────────────
 
@@ -43,15 +43,32 @@ const RAG_BG: Record<RagStatus, string> = {
 };
 
 export const ValueCard: React.FC<ValueCardProps> = ({
-  title, value, subValue, trend, status = 'grey', confidence, className = '',
+  title,
+  value,
+  subValue,
+  trend,
+  status = 'grey',
+  confidence,
+  className = '',
 }) => (
-  <div data-testid="value-card" className={`rounded-xl border bg-c-surface p-4 ${RAG_BG[status]} ${className}`}>
+  <div
+    data-testid="value-card"
+    className={`rounded-xl border bg-c-surface p-4 ${RAG_BG[status]} ${className}`}
+  >
     <div className="text-xs text-c-text-muted mb-1">{title}</div>
     <div className="flex items-end gap-2">
       <div className="text-2xl font-bold text-c-text">{value}</div>
       {trend && (
-        <div className={`mb-0.5 ${trend === 'up' ? 'text-emerald-500' : trend === 'down' ? 'text-red-500' : 'text-c-text-muted'}`}>
-          {trend === 'up' ? <ArrowUp size={16} /> : trend === 'down' ? <ArrowDown size={16} /> : <Minus size={16} />}
+        <div
+          className={`mb-0.5 ${trend === 'up' ? 'text-emerald-500' : trend === 'down' ? 'text-red-500' : 'text-c-text-muted'}`}
+        >
+          {trend === 'up' ? (
+            <ArrowUp size={16} />
+          ) : trend === 'down' ? (
+            <ArrowDown size={16} />
+          ) : (
+            <Minus size={16} />
+          )}
         </div>
       )}
     </div>
@@ -59,9 +76,14 @@ export const ValueCard: React.FC<ValueCardProps> = ({
     {confidence != null && (
       <div className="mt-2">
         <div className="h-1 rounded-full bg-c-surface-raised overflow-hidden">
-          <div className="h-full rounded-full bg-c-info" style={{ width: `${Math.round(confidence * 100)}%` }} />
+          <div
+            className="h-full rounded-full bg-c-info"
+            style={{ width: `${Math.round(confidence * 100)}%` }}
+          />
         </div>
-        <div className="text-xs text-c-text-muted mt-0.5">{Math.round(confidence * 100)}% confidence</div>
+        <div className="text-xs text-c-text-muted mt-0.5">
+          {Math.round(confidence * 100)}% confidence
+        </div>
       </div>
     )}
   </div>
@@ -97,7 +119,10 @@ const RAG_LABELS: Record<RagStatus, string> = {
 };
 
 export const RagPill: React.FC<RagPillProps> = ({ status, label, confidence }) => (
-  <span data-testid="rag-pill" className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${RAG_PILL[status]}`}>
+  <span
+    data-testid="rag-pill"
+    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${RAG_PILL[status]}`}
+  >
     <span className={`h-1.5 w-1.5 rounded-full ${RAG_DOT[status]}`} />
     {label ?? RAG_LABELS[status]}
     {confidence != null && <span className="opacity-70">{Math.round(confidence * 100)}%</span>}
@@ -118,14 +143,22 @@ interface DriverTreeNodeProps {
 }
 
 const NODE_STYLE: Record<NodeType, string> = {
-  objective: 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-800 dark:text-indigo-200',
-  driver: 'bg-sky-100 dark:bg-sky-900/30 border-sky-300 dark:border-sky-600 text-sky-800 dark:text-sky-200',
+  objective:
+    'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-800 dark:text-indigo-200',
+  driver:
+    'bg-sky-100 dark:bg-sky-900/30 border-sky-300 dark:border-sky-600 text-sky-800 dark:text-sky-200',
   kpi: 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-600 text-emerald-800 dark:text-emerald-200',
-  initiative: 'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200',
+  initiative:
+    'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200',
 };
 
 export const DriverTreeNode: React.FC<DriverTreeNodeProps> = ({
-  label, type, value, isExpanded, hasChildren, onClick,
+  label,
+  type,
+  value,
+  isExpanded,
+  hasChildren,
+  onClick,
 }) => (
   <button
     type="button"
@@ -161,9 +194,12 @@ const WATERFALL_COLOR = {
 };
 
 export const WaterfallBar: React.FC<WaterfallBarProps> = ({
-  label, value, maxValue = 100, color = 'blue',
+  label,
+  value,
+  maxValue = 100,
+  color = 'blue',
 }) => {
-  const pct = maxValue > 0 ? Math.min(Math.abs(value) / maxValue * 100, 100) : 0;
+  const pct = maxValue > 0 ? Math.min((Math.abs(value) / maxValue) * 100, 100) : 0;
   return (
     <div data-testid="waterfall-bar" className="flex items-center gap-3">
       <div className="w-32 text-xs text-c-text-secondary truncate">{label}</div>
@@ -171,7 +207,8 @@ export const WaterfallBar: React.FC<WaterfallBarProps> = ({
         <div className={`h-full rounded ${WATERFALL_COLOR[color]}`} style={{ width: `${pct}%` }} />
       </div>
       <div className="w-20 text-right text-xs font-medium text-c-text-secondary">
-        {value >= 0 ? '+' : ''}{value.toLocaleString()}
+        {value >= 0 ? '+' : ''}
+        {value.toLocaleString()}
       </div>
     </div>
   );
@@ -188,13 +225,18 @@ interface FunnelStageProps {
 }
 
 export const FunnelStage: React.FC<FunnelStageProps> = ({
-  label, count, value, conversionPct, isActive = false,
+  label,
+  count,
+  value,
+  conversionPct,
+  isActive = false,
 }) => (
-  <div data-testid="funnel-stage" className={`rounded-xl border p-3 text-center ${
-    isActive
-      ? 'border-c-info bg-c-accent-soft'
-      : 'border-c-border-subtle bg-c-surface'
-  }`}>
+  <div
+    data-testid="funnel-stage"
+    className={`rounded-xl border p-3 text-center ${
+      isActive ? 'border-c-info bg-c-accent-soft' : 'border-c-border-subtle bg-c-surface'
+    }`}
+  >
     <div className="text-xs text-c-text-muted mb-1">{label}</div>
     <div className="text-xl font-bold text-c-text">{count}</div>
     {value != null && (
@@ -224,12 +266,20 @@ export const ScorecardGrid: React.FC<ScorecardGridProps> = ({ cells }) => (
   <div data-testid="scorecard-grid" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
     {cells.map((cell) => {
       const h = Math.round(cell.health * 100);
-      const color = h >= 70 ? 'text-emerald-600 dark:text-emerald-400'
-        : h >= 40 ? 'text-amber-600 dark:text-amber-400'
-        : 'text-red-600 dark:text-red-400';
+      const color =
+        h >= 70
+          ? 'text-emerald-600 dark:text-emerald-400'
+          : h >= 40
+            ? 'text-amber-600 dark:text-amber-400'
+            : 'text-red-600 dark:text-red-400';
       return (
-        <div key={cell.perspective} className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-center">
-          <div className="text-xs text-c-text-muted uppercase tracking-wide mb-1">{cell.perspective}</div>
+        <div
+          key={cell.perspective}
+          className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-center"
+        >
+          <div className="text-xs text-c-text-muted uppercase tracking-wide mb-1">
+            {cell.perspective}
+          </div>
           <div className={`text-xl font-bold ${color}`}>{h}%</div>
           <div className="text-xs text-c-text-muted mt-0.5">{cell.kpiCount} KPI</div>
         </div>
@@ -247,7 +297,10 @@ interface BdnStatCardProps {
 }
 
 export const BdnStatCard: React.FC<BdnStatCardProps> = ({ label, value, icon }) => (
-  <div data-testid="bdn-stat-card" className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 flex items-center gap-3">
+  <div
+    data-testid="bdn-stat-card"
+    className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 flex items-center gap-3"
+  >
     {icon && <div className="text-c-text-muted shrink-0">{icon}</div>}
     <div>
       <div className="text-xs text-c-text-muted">{label}</div>
@@ -266,7 +319,10 @@ interface TrendSparklineProps {
 }
 
 export const TrendSparkline: React.FC<TrendSparklineProps> = ({
-  points, width = 80, height = 24, color = 'currentColor',
+  points,
+  width = 80,
+  height = 24,
+  color = 'currentColor',
 }) => {
   if (points.length < 2) return null;
   const min = Math.min(...points);
@@ -279,7 +335,14 @@ export const TrendSparkline: React.FC<TrendSparklineProps> = ({
   });
   return (
     <svg data-testid="trend-sparkline" width={width} height={height} className="overflow-visible">
-      <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <polyline
+        points={pts.join(' ')}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 };
@@ -301,13 +364,26 @@ function fmtM(v: number): string {
 }
 
 export const ExecValueHeader: React.FC<ExecValueHeaderProps> = ({
-  banked, forecast, atRisk, target, label,
+  banked,
+  forecast,
+  atRisk,
+  target,
+  label,
 }) => (
-  <div data-testid="exec-value-header" className="flex flex-wrap gap-6 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-6 py-4">
-    {label && <div className="w-full text-xs font-semibold uppercase tracking-widest text-c-text-muted mb-1">{label}</div>}
+  <div
+    data-testid="exec-value-header"
+    className="flex flex-wrap gap-6 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-6 py-4"
+  >
+    {label && (
+      <div className="w-full text-xs font-semibold uppercase tracking-widest text-c-text-muted mb-1">
+        {label}
+      </div>
+    )}
     <div>
       <div className="text-xs text-c-text-muted">BANKED</div>
-      <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{fmtM(banked)}</div>
+      <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+        {fmtM(banked)}
+      </div>
     </div>
     <div>
       <div className="text-xs text-c-text-muted">IN PROGRESS</div>
@@ -343,7 +419,11 @@ interface ValueDrawerProps {
 }
 
 export const ValueDrawer: React.FC<ValueDrawerProps> = ({
-  title, sections, activeSection, onSectionChange, onClose,
+  title,
+  sections,
+  activeSection,
+  onSectionChange,
+  onClose,
 }) => {
   const active = activeSection ?? sections[0]?.id;
   const current = sections.find((s) => s.id === active);
@@ -353,7 +433,11 @@ export const ValueDrawer: React.FC<ValueDrawerProps> = ({
       <div className="flex items-center justify-between px-5 py-3 border-b border-c-border-subtle">
         <h2 className="font-semibold text-c-text">{title}</h2>
         {onClose && (
-          <button type="button" onClick={onClose} className="text-c-text-muted hover:text-c-text text-xs">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-c-text-muted hover:text-c-text text-xs"
+          >
             ✕
           </button>
         )}
@@ -374,9 +458,7 @@ export const ValueDrawer: React.FC<ValueDrawerProps> = ({
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-auto p-5">
-        {current?.content}
-      </div>
+      <div className="flex-1 overflow-auto p-5">{current?.content}</div>
     </div>
   );
 };

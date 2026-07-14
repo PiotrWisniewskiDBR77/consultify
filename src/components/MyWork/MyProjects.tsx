@@ -261,9 +261,7 @@ export const MyProjects: React.FC = () => {
     } catch (err: any) {
       console.error('[MyProjects] programs error:', err);
       setProgramsError(
-        String(
-          err?.message || (t('myWork.projects.failedToLoadPrograms', 'Failed to load programs'))
-        )
+        String(err?.message || t('myWork.projects.failedToLoadPrograms', 'Failed to load programs'))
       );
     } finally {
       setProgramsLoading(false);
@@ -293,7 +291,7 @@ export const MyProjects: React.FC = () => {
           setProgramRollupError(
             String(
               err?.message ||
-                (t('myWork.projects.failedToLoadProgram', 'Failed to load program rollup'))
+                t('myWork.projects.failedToLoadProgram', 'Failed to load program rollup')
             )
           );
       })
@@ -330,7 +328,7 @@ export const MyProjects: React.FC = () => {
           setStakeholdersError(
             String(
               err?.message ||
-                (t('myWork.projects.failedToLoadStakeholders', 'Failed to load stakeholders'))
+                t('myWork.projects.failedToLoadStakeholders', 'Failed to load stakeholders')
             )
           );
       })
@@ -349,8 +347,7 @@ export const MyProjects: React.FC = () => {
         if (!cancelled)
           setFinanceError(
             String(
-              err?.message ||
-                (t('myWork.projects.failedToLoadFinance', 'Failed to load finance'))
+              err?.message || t('myWork.projects.failedToLoadFinance', 'Failed to load finance')
             )
           );
       })
@@ -369,9 +366,7 @@ export const MyProjects: React.FC = () => {
         console.error('[MyProjects] project team error:', err);
         if (!cancelled)
           setTeamError(
-            String(
-              err?.message || (t('myWork.projects.failedToLoadTeam', 'Failed to load team'))
-            )
+            String(err?.message || t('myWork.projects.failedToLoadTeam', 'Failed to load team'))
           );
       })
       .finally(() => {
@@ -389,9 +384,7 @@ export const MyProjects: React.FC = () => {
         console.error('[MyProjects] project tasks error:', err);
         if (!cancelled)
           setTasksError(
-            String(
-              err?.message || (t('myWork.projects.failedToLoadTasks', 'Failed to load tasks'))
-            )
+            String(err?.message || t('myWork.projects.failedToLoadTasks', 'Failed to load tasks'))
           );
       })
       .finally(() => {
@@ -506,7 +499,10 @@ export const MyProjects: React.FC = () => {
       },
       {
         id: 'initiativeCount',
-        label: t('myWork.projects.table.initiatives', t('myWork.projects.initiatives', 'Initiatives')),
+        label: t(
+          'myWork.projects.table.initiatives',
+          t('myWork.projects.initiatives', 'Initiatives')
+        ),
         width: '110px',
         sortable: true,
         sortAccessor: (row: TableRow) => Number(row.initiativeCount) || 0,
@@ -536,7 +532,7 @@ export const MyProjects: React.FC = () => {
       } catch (err: any) {
         toast.error(
           err?.message ||
-            (t('myWork.projects.failedToAssignProject', 'Failed to assign project to program'))
+            t('myWork.projects.failedToAssignProject', 'Failed to assign project to program')
         );
       }
     },
@@ -691,7 +687,7 @@ export const MyProjects: React.FC = () => {
         await fetchPrograms();
       } catch (err: any) {
         toast.error(
-          err?.message || (t('myWork.projects.failedToDeleteProgram', 'Failed to delete program'))
+          err?.message || t('myWork.projects.failedToDeleteProgram', 'Failed to delete program')
         );
       }
     },
@@ -713,7 +709,10 @@ export const MyProjects: React.FC = () => {
           onClick: () => handleDeleteProgram(program.id),
           note:
             program.initiativeCount > 0 || program.childProgramCount > 0
-              ? t('myWork.projects.programHasLinkedInitiatives', 'Program has linked initiatives/sub-programs — unlink them first')
+              ? t(
+                  'myWork.projects.programHasLinkedInitiatives',
+                  'Program has linked initiatives/sub-programs — unlink them first'
+                )
               : undefined,
         },
       };
@@ -789,7 +788,11 @@ export const MyProjects: React.FC = () => {
           activeMainTab === 'projects'
             ? [
                 { id: 'all', label: t('common.all', 'All'), count: stats.total },
-                { id: 'active', label: t('myWork.projects.label13', 'Active'), count: stats.active },
+                {
+                  id: 'active',
+                  label: t('myWork.projects.label13', 'Active'),
+                  count: stats.active,
+                },
                 {
                   id: 'completed',
                   label: t('myWork.projects.label14', 'Completed'),
@@ -839,7 +842,10 @@ export const MyProjects: React.FC = () => {
               empty={{
                 icon: Layers,
                 title: t('myWork.projects.title', 'No programs yet'),
-                description: t('myWork.projects.description', 'A program groups multiple projects under a shared finance rollup.'),
+                description: t(
+                  'myWork.projects.description',
+                  'A program groups multiple projects under a shared finance rollup.'
+                ),
                 actionLabel: t('myWork.projects.actionLabel', 'New program'),
                 onAction: () => {
                   setEditingProgram(null);
@@ -876,7 +882,10 @@ export const MyProjects: React.FC = () => {
                   text:
                     programRollup?.program.description ||
                     previewProgramListRow.description ||
-                    (t('myWork.projects.rollupBudgetValueROI', 'Rollup: budget/value/ROI summed across the program’s projects.')),
+                    t(
+                      'myWork.projects.rollupBudgetValueROI',
+                      'Rollup: budget/value/ROI summed across the program’s projects.'
+                    ),
                 }}
                 actions={{
                   informational: [
@@ -993,7 +1002,10 @@ export const MyProjects: React.FC = () => {
                   </div>
                   {!programRollup || programRollup.projects.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {t('myWork.projects.noProjectsAssignedTo', 'No projects assigned to this program yet.')}
+                      {t(
+                        'myWork.projects.noProjectsAssignedTo',
+                        'No projects assigned to this program yet.'
+                      )}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">
@@ -1052,7 +1064,10 @@ export const MyProjects: React.FC = () => {
                 ),
                 description: t(
                   'myWork.projects.emptyState.description',
-                  t('myWork.projects.projectsCreatedInThe', 'Projects created in the Initiatives module will appear here.')
+                  t(
+                    'myWork.projects.projectsCreatedInThe',
+                    'Projects created in the Initiatives module will appear here.'
+                  )
                 ),
               }}
               selectedRowId={previewId}
@@ -1068,7 +1083,7 @@ export const MyProjects: React.FC = () => {
           {previewProject ? (
             <aside className="w-[420px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
               <StandardPreview
-                title={previewProject.name || (t('myWork.projects.project2', 'Project'))}
+                title={previewProject.name || t('myWork.projects.project2', 'Project')}
                 onClose={() => {
                   setPreviewId(null);
                   setPreviewPinned(false);
@@ -1094,7 +1109,10 @@ export const MyProjects: React.FC = () => {
                   ),
                 }}
                 details={{
-                  text: t('myWork.projects.text', 'Zwornik: project stakeholder registry and finance rollup (read-only).'),
+                  text: t(
+                    'myWork.projects.text',
+                    'Zwornik: project stakeholder registry and finance rollup (read-only).'
+                  ),
                 }}
                 actions={previewActions}
               >
@@ -1116,7 +1134,10 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : stakeholders.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {t('myWork.projects.noStakeholdersForThis', 'No stakeholders for this project yet.')}
+                      {t(
+                        'myWork.projects.noStakeholdersForThis',
+                        'No stakeholders for this project yet.'
+                      )}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">
@@ -1138,9 +1159,7 @@ export const MyProjects: React.FC = () => {
                             {s.inherited ? (
                               <span
                                 className="px-1.5 py-0.5 rounded-full bg-c-info/15 text-[10px] font-semibold text-[var(--c-info)]"
-                                title={
-                                  t('myWork.projects.inheritedFromOrg', 'Inherited from org')
-                                }
+                                title={t('myWork.projects.inheritedFromOrg', 'Inherited from org')}
                               >
                                 {t('myWork.projects.inherited', 'inherited')}
                               </span>
@@ -1148,9 +1167,10 @@ export const MyProjects: React.FC = () => {
                             {s.assessmentRedacted ? (
                               <span
                                 className="text-[10px] text-c-text-muted"
-                                title={
-                                  t('myWork.projects.influenceInterestHiddenMissing', 'Influence/interest hidden — missing stakeholder.assessment.view')
-                                }
+                                title={t(
+                                  'myWork.projects.influenceInterestHiddenMissing',
+                                  'Influence/interest hidden — missing stakeholder.assessment.view'
+                                )}
                               >
                                 🔒
                               </span>
@@ -1191,7 +1211,10 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {t('myWork.projects.initiativeBudgetsPlanned', 'Σ initiative budgets (planned)')}
+                          {t(
+                            'myWork.projects.initiativeBudgetsPlanned',
+                            'Σ initiative budgets (planned)'
+                          )}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(finance.initiativesBudget?.totalPlanned, finance.currency)}
@@ -1199,7 +1222,10 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {t('myWork.projects.initiativeBudgetsActual', 'Σ initiative budgets (actual)')}
+                          {t(
+                            'myWork.projects.initiativeBudgetsActual',
+                            'Σ initiative budgets (actual)'
+                          )}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(finance.initiativesBudget?.totalActual, finance.currency)}
@@ -1226,7 +1252,10 @@ export const MyProjects: React.FC = () => {
                       {finance.variance?.overCommitted ? (
                         <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
                           <AlertTriangle size={12} />
-                          {t('myWork.projects.initiativeBudgetsExceedThe', 'Σ initiative budgets exceed the project budget (soft warning).')}
+                          {t(
+                            'myWork.projects.initiativeBudgetsExceedThe',
+                            'Σ initiative budgets exceed the project budget (soft warning).'
+                          )}
                         </p>
                       ) : null}
                     </div>
@@ -1256,7 +1285,10 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : team.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {t('myWork.projects.noTeamMembersFor', 'No team members for this project yet.')}
+                      {t(
+                        'myWork.projects.noTeamMembersFor',
+                        'No team members for this project yet.'
+                      )}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">
@@ -1300,10 +1332,7 @@ export const MyProjects: React.FC = () => {
                   ) : (
                     <ul className="space-y-1.5">
                       {roleGroups.map(({ role, members }) => (
-                        <li
-                          key={role}
-                          className="flex items-center justify-between gap-2 text-xs"
-                        >
+                        <li key={role} className="flex items-center justify-between gap-2 text-xs">
                           <span className="flex items-center gap-1.5 min-w-0">
                             <span className="px-1.5 py-0.5 rounded bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary shrink-0">
                               {role}

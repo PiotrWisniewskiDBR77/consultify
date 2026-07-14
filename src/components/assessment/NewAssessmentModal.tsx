@@ -44,59 +44,59 @@ type FrameworkCardMeta = {
 
 const FRAMEWORKS: FrameworkCardMeta[] = (
   [
-  {
-    value: 'DRD',
-    name: 'Digital Readiness Diagnosis',
-    shortName: 'DRD',
-    description:
-      'Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)',
-    icon: <Activity size={20} />,
-    gradient: 'from-primary-500/20 to-primary-600/10',
-    border: 'border-primary-500/30 hover:border-primary-500/60',
-    textColor: 'text-primary-400',
-  },
-  {
-    value: 'SIRI',
-    name: 'Smart Industry Readiness Index',
-    shortName: 'SIRI',
-    description:
-      'Industry 4.0 readiness framework focusing on process, technology and organization',
-    icon: <Cpu size={20} />,
-    gradient: 'from-blue-500/20 to-blue-600/10',
-    border: 'border-blue-500/30 hover:border-blue-500/60',
-    textColor: 'text-blue-400',
-  },
-  {
-    value: 'ADMA',
-    name: 'Advanced Digital Maturity Assessment',
-    shortName: 'ADMA',
-    description: 'Advanced assessment model for digital transformation capabilities',
-    icon: <Database size={20} />,
-    gradient: 'from-blue-500/20 to-blue-600/10',
-    border: 'border-blue-500/30 hover:border-blue-500/60',
-    textColor: 'text-blue-400',
-  },
-  {
-    value: 'CMMI',
-    name: 'Capability Maturity Model Integration',
-    shortName: 'CMMI',
-    description: 'Process improvement framework for software and product development',
-    icon: <Layers size={20} />,
-    gradient: 'from-amber-500/20 to-amber-600/10',
-    border: 'border-amber-500/30 hover:border-amber-500/60',
-    textColor: 'text-amber-400',
-  },
-  {
-    value: 'LEAN',
-    name: 'Lean 4.0',
-    shortName: 'LEAN',
-    description: 'Lean manufacturing principles integrated with Industry 4.0 technologies',
-    icon: <Workflow size={20} />,
-    gradient: 'from-green-500/20 to-green-600/10',
-    border: 'border-green-500/30 hover:border-green-500/60',
-    textColor: 'text-green-400',
-  },
-] as FrameworkCardMeta[]
+    {
+      value: 'DRD',
+      name: 'Digital Readiness Diagnosis',
+      shortName: 'DRD',
+      description:
+        'Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)',
+      icon: <Activity size={20} />,
+      gradient: 'from-primary-500/20 to-primary-600/10',
+      border: 'border-primary-500/30 hover:border-primary-500/60',
+      textColor: 'text-primary-400',
+    },
+    {
+      value: 'SIRI',
+      name: 'Smart Industry Readiness Index',
+      shortName: 'SIRI',
+      description:
+        'Industry 4.0 readiness framework focusing on process, technology and organization',
+      icon: <Cpu size={20} />,
+      gradient: 'from-blue-500/20 to-blue-600/10',
+      border: 'border-blue-500/30 hover:border-blue-500/60',
+      textColor: 'text-blue-400',
+    },
+    {
+      value: 'ADMA',
+      name: 'Advanced Digital Maturity Assessment',
+      shortName: 'ADMA',
+      description: 'Advanced assessment model for digital transformation capabilities',
+      icon: <Database size={20} />,
+      gradient: 'from-blue-500/20 to-blue-600/10',
+      border: 'border-blue-500/30 hover:border-blue-500/60',
+      textColor: 'text-blue-400',
+    },
+    {
+      value: 'CMMI',
+      name: 'Capability Maturity Model Integration',
+      shortName: 'CMMI',
+      description: 'Process improvement framework for software and product development',
+      icon: <Layers size={20} />,
+      gradient: 'from-amber-500/20 to-amber-600/10',
+      border: 'border-amber-500/30 hover:border-amber-500/60',
+      textColor: 'text-amber-400',
+    },
+    {
+      value: 'LEAN',
+      name: 'Lean 4.0',
+      shortName: 'LEAN',
+      description: 'Lean manufacturing principles integrated with Industry 4.0 technologies',
+      icon: <Workflow size={20} />,
+      gradient: 'from-green-500/20 to-green-600/10',
+      border: 'border-green-500/30 hover:border-green-500/60',
+      textColor: 'text-green-400',
+    },
+  ] as FrameworkCardMeta[]
 ).map((f) => ({ ...f, comingSoon: isFrameworkComingSoon(f.value) }));
 
 export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
@@ -290,9 +290,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                 <button
                   key={framework.value}
                   onClick={
-                    framework.comingSoon
-                      ? undefined
-                      : () => handleFrameworkSelect(framework.value)
+                    framework.comingSoon ? undefined : () => handleFrameworkSelect(framework.value)
                   }
                   disabled={framework.comingSoon}
                   className={`
@@ -370,7 +368,9 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     >
                       {selectedFrameworkData.shortName}
                     </div>
-                    <div className="text-sm text-c-text-secondary">{selectedFrameworkData.name}</div>
+                    <div className="text-sm text-c-text-secondary">
+                      {selectedFrameworkData.name}
+                    </div>
                   </div>
                   <button
                     type="button"

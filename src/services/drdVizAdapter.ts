@@ -13,8 +13,8 @@ import type { AssessmentVisualizationData } from '../components/assessment/repor
 import DRD_STRUCTURE, {
   calculateAxisScore,
   calculateOverallScore,
-  getTotalAreaCount,
   DRD_AXIS_KEY_MAP,
+  getTotalAreaCount,
 } from './drdStructure';
 
 /**
@@ -58,8 +58,7 @@ export const buildDRDVisualizationData = (
   const assessedAreas = Object.values(areaScores).filter(
     (s) => s && (s.actual > 0 || s.target > 0)
   ).length;
-  const completionPercent =
-    totalAreas > 0 ? Math.round((assessedAreas / totalAreas) * 100) : 0;
+  const completionPercent = totalAreas > 0 ? Math.round((assessedAreas / totalAreas) * 100) : 0;
 
   return {
     framework: 'DRD',
@@ -89,8 +88,7 @@ export const buildDRDVisualizationDataFromAxes = (
     // (The backend divergence itself is fixed in a separate wave.)
     const namedKey = DRD_AXIS_KEY_MAP[axis.id];
     const numericKey = String(axis.id);
-    const entry =
-      (namedKey && axisData[namedKey]) || axisData[numericKey] || {};
+    const entry = (namedKey && axisData[namedKey]) || axisData[numericKey] || {};
     return {
       id: String(axis.id),
       name: axis.name,
@@ -111,9 +109,7 @@ export const buildDRDVisualizationDataFromAxes = (
     dimensions,
     overallScore: avg(dimensions.map((d) => d.current)),
     targetScore: avg(dimensions.map((d) => d.target)),
-    completionPercent: dimensions.length
-      ? Math.round((assessed / dimensions.length) * 100)
-      : 0,
+    completionPercent: dimensions.length ? Math.round((assessed / dimensions.length) * 100) : 0,
   };
 };
 

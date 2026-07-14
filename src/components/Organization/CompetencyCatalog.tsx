@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { API_URL, fetchWithRetry, getHeaders, handleResponse } from '../../services/api/baseClient';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import { EmptyState } from '../ui/composed/EmptyState';
 import { LoadingState } from '../ui/primitives';
 

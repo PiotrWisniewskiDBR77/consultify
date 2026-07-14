@@ -485,7 +485,9 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                     const parts = line.split('**');
                     return (
                       <p key={i} className="text-sm text-slate-600 dark:text-slate-400">
-                        <span className="font-medium text-slate-600 dark:text-slate-400">{parts[1]}</span>
+                        <span className="font-medium text-slate-600 dark:text-slate-400">
+                          {parts[1]}
+                        </span>
                         {parts[2]}
                       </p>
                     );

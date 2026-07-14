@@ -143,7 +143,8 @@ function tidyChildLabel(label: string): string {
   const l = clamp(label);
   return l.replace(
     /^(cel|ryzyko|goal|risk|objective|threat)([:：])/i,
-    (_m, word: string, sep: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() + sep
+    (_m, word: string, sep: string) =>
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() + sep
   );
 }
 
@@ -215,7 +216,8 @@ const MindmapBranchSchema = z.preprocess(
     const goal = b.goal ?? b.cel;
     const risk = b.risk ?? b.ryzyko;
     if (goal && !norm.some((c) => /^cel[:：]/i.test(String(c)))) norm.push(`Cel: ${String(goal)}`);
-    if (risk && !norm.some((c) => /^ryzyko[:：]/i.test(String(c)))) norm.push(`Ryzyko: ${String(risk)}`);
+    if (risk && !norm.some((c) => /^ryzyko[:：]/i.test(String(c))))
+      norm.push(`Ryzyko: ${String(risk)}`);
     b.children = norm;
     return b;
   },
@@ -314,12 +316,16 @@ const TableLlmSchema = z.object({
       z.object({
         key: z
           .string()
-          .describe('Column header EXACTLY as named in the prompt, e.g. "ROI", "Budżet PLN", "Ryzyko".'),
+          .describe(
+            'Column header EXACTLY as named in the prompt, e.g. "ROI", "Budżet PLN", "Ryzyko".'
+          ),
         type: z
           .enum(['text', 'number', 'currency', 'select'])
           .optional()
           .default('text')
-          .describe('Cell kind: number for ratios/counts, currency for money (PLN), select for a small enum (e.g. risk low/med/high), else text.'),
+          .describe(
+            'Cell kind: number for ratios/counts, currency for money (PLN), select for a small enum (e.g. risk low/med/high), else text.'
+          ),
       })
     )
     .optional()
@@ -437,7 +443,10 @@ async function callStructured<T>(
   if (!llm) return null;
   const attempt = async (temp: number): Promise<{ ok: true; value: T | null } | { ok: false }> => {
     try {
-      return { ok: true, value: await callStructuredOnce(llm, schema, systemPrompt, userPrompt, temp) };
+      return {
+        ok: true,
+        value: await callStructuredOnce(llm, schema, systemPrompt, userPrompt, temp),
+      };
     } catch (err) {
       logger.warn(
         `[canvasGraphLlm] structured call failed: ${err instanceof Error ? err.message : String(err)}`
@@ -605,7 +614,9 @@ export async function generateProcessFlowGraph(
 
   let edges: LlmGraphEdge[];
   const validIdx = (n: number) => Number.isInteger(n) && n >= 0 && n < nodes.length;
-  const modelEdges = (parsed.edges || []).filter((e) => validIdx(e.from) && validIdx(e.to) && e.from !== e.to);
+  const modelEdges = (parsed.edges || []).filter(
+    (e) => validIdx(e.from) && validIdx(e.to) && e.from !== e.to
+  );
   if (modelEdges.length > 0) {
     edges = modelEdges.map((e, i) => ({
       id: `e-${e.from}-${e.to}-${i}`,
@@ -705,7 +716,12 @@ export async function generateWhiteboardGraph(
     nodes.push({
       id: frameId,
       type: 'frameNode',
-      data: { label: groupTitle || `Grupa ${gi + 1}`, width: FRAME_W, height: frameH, collapsed: false },
+      data: {
+        label: groupTitle || `Grupa ${gi + 1}`,
+        width: FRAME_W,
+        height: frameH,
+        collapsed: false,
+      },
       position: { x: frameX, y: 0 },
       // A concrete style box so the FE resizer/fill wrapper works on first mount.
       style: { width: FRAME_W, height: frameH },
@@ -940,9 +956,7 @@ export async function generateTableGraph(
       // Match the cell either by exact key or case-insensitively (models drift case).
       let val = rawCells[col.key];
       if (val == null) {
-        const hit = Object.keys(rawCells).find(
-          (k) => k.toLowerCase() === col.key.toLowerCase()
-        );
+        const hit = Object.keys(rawCells).find((k) => k.toLowerCase() === col.key.toLowerCase());
         if (hit) val = rawCells[hit];
       }
       const str = clamp(val, 120);

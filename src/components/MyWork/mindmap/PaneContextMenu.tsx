@@ -176,29 +176,32 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
     <ContextMenuPortal>
       <div ref={ref} className={MENU_CONTAINER_CLASS} style={{ left: clampedX, top: clampedY }}>
         {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <React.Fragment key={item.id}>
-            <button
-              type="button"
-              disabled={item.disabled}
-              onClick={() => handleClick(item.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors ${menuItemClass(item)}`}
-            >
-              <Icon size={13} className="text-c-text-secondary dark:text-c-text-secondary shrink-0" />
-              <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
-              {item.shortcut && (
-                <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary font-mono ml-3">
-                  {item.shortcut}
-                </span>
+          const Icon = item.icon;
+          return (
+            <React.Fragment key={item.id}>
+              <button
+                type="button"
+                disabled={item.disabled}
+                onClick={() => handleClick(item.id)}
+                className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors ${menuItemClass(item)}`}
+              >
+                <Icon
+                  size={13}
+                  className="text-c-text-secondary dark:text-c-text-secondary shrink-0"
+                />
+                <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
+                {item.shortcut && (
+                  <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary font-mono ml-3">
+                    {item.shortcut}
+                  </span>
+                )}
+              </button>
+              {item.dividerAfter && (
+                <div className="my-1 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
               )}
-            </button>
-            {item.dividerAfter && (
-              <div className="my-1 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
-            )}
-          </React.Fragment>
-        );
-      })}
+            </React.Fragment>
+          );
+        })}
       </div>
     </ContextMenuPortal>
   );

@@ -251,10 +251,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   {t('task.dueDate', 'Due Date')}
                 </label>
                 <div className="relative">
-                  <Calendar
-                    className="absolute left-3 top-2.5 text-c-text-muted"
-                    size={16}
-                  />
+                  <Calendar className="absolute left-3 top-2.5 text-c-text-muted" size={16} />
                   <input
                     type="date"
                     value={dueDate}
@@ -268,9 +265,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between mb-1">
-                    <label className="text-sm font-medium text-c-text-secondary">
-                      Progress
-                    </label>
+                    <label className="text-sm font-medium text-c-text-secondary">Progress</label>
                     <span className="text-sm font-bold text-blue-600">{progress}%</span>
                   </div>
                   <input
@@ -356,9 +351,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     </div>
                   ))}
                   {checklist.length === 0 && (
-                    <div className="text-xs text-c-text-muted italic">
-                      No subtasks
-                    </div>
+                    <div className="text-xs text-c-text-muted italic">No subtasks</div>
                   )}
                 </div>
               </div>

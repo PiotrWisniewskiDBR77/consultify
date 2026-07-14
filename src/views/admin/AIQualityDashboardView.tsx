@@ -487,7 +487,9 @@ const AIQualityDashboardView: React.FC = () => {
 
           {/* Feedback List */}
           <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
-            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
+            <table
+              /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+            >
               <thead className="bg-c-surface-raised/50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
@@ -621,8 +623,12 @@ const AIQualityDashboardView: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Pewność
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">Akcje</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
+                    Akcje
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -710,9 +716,7 @@ const AIQualityDashboardView: React.FC = () => {
           {/* Context Analytics */}
           <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
             <div className="p-4 border-b border-c-border-subtle">
-              <h3 className="font-medium text-c-text">
-                Analiza według kontekstu
-              </h3>
+              <h3 className="font-medium text-c-text">Analiza według kontekstu</h3>
               <p className="text-sm text-c-text-muted mt-1">
                 Satysfakcja i jakość odpowiedzi w różnych kontekstach ekranu
               </p>
@@ -740,12 +744,8 @@ const AIQualityDashboardView: React.FC = () => {
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {contextAnalytics.map((ctx) => (
                   <tr key={ctx.context} className="hover:bg-c-surface-raised/50">
-                    <td className="px-4 py-3 text-sm font-medium text-c-text">
-                      {ctx.context}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-c-text-secondary">
-                      {ctx.total}
-                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-c-text">{ctx.context}</td>
+                    <td className="px-4 py-3 text-sm text-c-text-secondary">{ctx.total}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${

@@ -126,9 +126,7 @@ const FieldRenderer: React.FC<{
                   onChange(next);
                 }}
                 className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all ${
-                  isSelected
-                    ? 'ring-2 ring-c-focus shadow-sm'
-                    : 'opacity-50 hover:opacity-80'
+                  isSelected ? 'ring-2 ring-c-focus shadow-sm' : 'opacity-50 hover:opacity-80'
                 }`}
                 style={{ backgroundColor: bgColor, color: 'var(--c-text-secondary)' }}
               >
@@ -152,11 +150,7 @@ const FieldRenderer: React.FC<{
             >
               <Star
                 size={18}
-                className={
-                  n <= numVal
-                    ? 'text-c-warning fill-amber-400'
-                    : 'text-c-text-secondary'
-                }
+                className={n <= numVal ? 'text-c-warning fill-amber-400' : 'text-c-text-secondary'}
               />
             </button>
           ))}
@@ -176,9 +170,7 @@ const FieldRenderer: React.FC<{
             onChange={(e) => onChange(Number(e.target.value))}
             className="flex-1 h-2 rounded-full appearance-none bg-c-surface-raised accent-c-accent"
           />
-          <span className="text-xs font-bold text-c-text-muted w-10 text-right">
-            {pct}%
-          </span>
+          <span className="text-xs font-bold text-c-text-muted w-10 text-right">{pct}%</span>
         </div>
       );
     }
@@ -345,9 +337,7 @@ export const FormView: React.FC<FormViewProps> = ({
             return (
               <div key={col.key}>
                 <label className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[11px] font-bold text-c-text">
-                    {col.header}
-                  </span>
+                  <span className="text-[11px] font-bold text-c-text">{col.header}</span>
                   <span className="text-[8px] font-medium text-c-text-muted uppercase tracking-wider">
                     {isPl ? typeLabel?.pl : typeLabel?.en}
                   </span>

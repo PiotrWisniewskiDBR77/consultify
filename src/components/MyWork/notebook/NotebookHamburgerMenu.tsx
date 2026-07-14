@@ -9,8 +9,8 @@ import {
   Paperclip,
   Presentation,
   Rocket,
-  ShieldCheck,
   Share2,
+  ShieldCheck,
   Sparkles,
   Trash2,
 } from 'lucide-react';
@@ -171,7 +171,8 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
 
   // --- Group: Convert to ---------------------------------------------------
   if (onConvert) {
-    const targets = convertTargets && convertTargets.length > 0 ? convertTargets : ALL_CONVERT_TARGETS;
+    const targets =
+      convertTargets && convertTargets.length > 0 ? convertTargets : ALL_CONVERT_TARGETS;
     targets.forEach((target, idx) => {
       const meta = CONVERT_META[target];
       items.push({
@@ -258,9 +259,7 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
     >
       {actions.map((action) => (
         <React.Fragment key={action.id}>
-          {action.separatorBefore && (
-            <div className="my-1 border-t border-c-border-subtle" />
-          )}
+          {action.separatorBefore && <div className="my-1 border-t border-c-border-subtle" />}
           {action.id.startsWith('convert-') && action.separatorBefore && (
             <div className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
               {convertHeading(isPolish)}

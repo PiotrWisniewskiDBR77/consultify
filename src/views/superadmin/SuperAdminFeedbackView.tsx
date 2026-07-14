@@ -242,7 +242,11 @@ const SLA_WINDOW_HOURS: Record<string, number> = {
 const OPEN_TICKET_STATUSES = new Set(['NEW', 'PENDING', 'IN_PROGRESS']);
 const SEVERITY_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
 
-function isTicketOverdue(item: { severity?: string; status?: string; created_at: string }): boolean {
+function isTicketOverdue(item: {
+  severity?: string;
+  status?: string;
+  created_at: string;
+}): boolean {
   if (!OPEN_TICKET_STATUSES.has(String(item.status || 'NEW').toUpperCase())) return false;
   const windowH = SLA_WINDOW_HOURS[String(item.severity || 'MEDIUM').toUpperCase()] ?? 72;
   const created = new Date(item.created_at).getTime();
@@ -1549,7 +1553,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       <span className="text-slate-600">
                         {n.at ? format(new Date(n.at), 'HH:mm:ss') : ''}
                       </span>{' '}
-                      <span className="text-danger-600 dark:text-danger-400">{n.status ?? 'ERR'}</span>{' '}
+                      <span className="text-danger-600 dark:text-danger-400">
+                        {n.status ?? 'ERR'}
+                      </span>{' '}
                       {n.method} {n.url} ({n.durationMs ?? '?'}ms)
                       {n.error ? ` — ${n.error}` : ''}
                     </li>

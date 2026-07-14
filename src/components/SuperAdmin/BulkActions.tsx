@@ -463,7 +463,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         {activeMode === 'removeTags' && (
           <div className="px-4 py-3 border-t border-c-border-subtle/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-c-text">Remove Tags from {selectedCount} items</span>
+              <span className="font-medium text-c-text">
+                Remove Tags from {selectedCount} items
+              </span>
               <button
                 onClick={() => {
                   setActiveMode(null);
@@ -525,7 +527,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         {activeMode === 'setCategory' && (
           <div className="px-4 py-3 border-t border-c-border-subtle/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-c-text">Set Category for {selectedCount} items</span>
+              <span className="font-medium text-c-text">
+                Set Category for {selectedCount} items
+              </span>
               <button
                 onClick={() => {
                   setActiveMode(null);

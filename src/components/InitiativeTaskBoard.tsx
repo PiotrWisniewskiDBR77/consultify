@@ -102,10 +102,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
       {/* Header */}
       <div className="h-16 border-b border-c-border dark:border-white/10 flex items-center justify-between px-6 bg-c-surface">
         <div className="flex items-center gap-4">
-          <button
-            onClick={onClose}
-            className="text-c-text-muted hover:text-c-text"
-          >
+          <button onClick={onClose} className="text-c-text-muted hover:text-c-text">
             Back
           </button>
           <div className="h-6 w-px bg-c-border"></div>

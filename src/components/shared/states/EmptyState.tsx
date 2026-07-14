@@ -28,7 +28,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { AlertTriangle, FilterX, Inbox, Lock, RotateCw, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, FilterX, Inbox, Lock, type LucideIcon, RotateCw } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

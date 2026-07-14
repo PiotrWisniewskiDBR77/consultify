@@ -1,10 +1,8 @@
-import TeresaMark from '../../components/shared/TeresaMark';
 /**
  * AIPreferencesModule - AI Preferences & Personalization
  *
  * Tabs: Instructions | Memory | Response Style | Automation | Chat History | Voice
  */
-
 import { Brain, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +12,7 @@ import { AIMemorySettings } from '../../components/settings/AIMemorySettings';
 import { AISettings } from '../../components/settings/AISettings';
 import { ChatHistorySettings as CanonicalChatHistorySettings } from '../../components/settings/ChatHistorySettings';
 import { VoiceSettingsPanel } from '../../components/settings/VoiceSettingsPanel';
+import TeresaMark from '../../components/shared/TeresaMark';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
 

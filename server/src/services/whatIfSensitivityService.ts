@@ -74,7 +74,7 @@ export function oneWaySensitivity(
   baseDrivers: Drivers,
   targetFn: TargetFn,
   driverId: string,
-  rangePct: number[] = [-20, -10, 0, 10, 20],
+  rangePct: number[] = [-20, -10, 0, 10, 20]
 ): OneWayPoint[] {
   return rangePct.map((deltaPct) => ({
     deltaPct,
@@ -91,7 +91,7 @@ export function tornado(
   baseDrivers: Drivers,
   targetFn: TargetFn,
   driverIds: string[],
-  swingPct = 20,
+  swingPct = 20
 ): TornadoResult {
   const base = targetFn(baseDrivers);
 
@@ -117,7 +117,7 @@ export function dataTable2D(
   xDriver: string,
   yDriver: string,
   xRange: number[],
-  yRange: number[],
+  yRange: number[]
 ): DataTable2DResult {
   const matrix: DataTableCell[] = [];
 
@@ -145,7 +145,7 @@ export function breakEven(
   baseDrivers: Drivers,
   targetFn: TargetFn,
   driverId: string,
-  target = 0,
+  target = 0
 ): number | null {
   const evalAt = (value: number): number =>
     targetFn(withDriverSet(baseDrivers, driverId, value)) - target;

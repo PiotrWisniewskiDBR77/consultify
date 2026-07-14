@@ -557,7 +557,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                     {statusBadge(selectedSchedule.lastRunStatus, selectedSchedule.isActive)}
                   </div>
                   {selectedSchedule.description && (
-                    <p className="text-sm text-c-text-secondary mt-1">{selectedSchedule.description}</p>
+                    <p className="text-sm text-c-text-secondary mt-1">
+                      {selectedSchedule.description}
+                    </p>
                   )}
                   <div className="flex items-center gap-4 mt-2 text-xs text-c-text-muted">
                     <span>
@@ -730,7 +732,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           {showAddTrigger && (
             <div className="mt-4 p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle space-y-3">
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">{tp('triggerType')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">
+                  {tp('triggerType')}
+                </label>
                 <select
                   value={triggerFormType}
                   onChange={(e) => setTriggerFormType(e.target.value)}
@@ -746,7 +750,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'delay_threshold' && (
                 <div>
-                  <label className="block text-xs text-c-text-secondary mb-1">{tp('delayDays')}</label>
+                  <label className="block text-xs text-c-text-secondary mb-1">
+                    {tp('delayDays')}
+                  </label>
                   <input
                     type="number"
                     value={triggerFormDelayDays}
@@ -759,7 +765,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'risk_high' && (
                 <div>
-                  <label className="block text-xs text-c-text-secondary mb-1">{tp('riskSeverity')}</label>
+                  <label className="block text-xs text-c-text-secondary mb-1">
+                    {tp('riskSeverity')}
+                  </label>
                   <select
                     value={triggerFormSeverity}
                     onChange={(e) => setTriggerFormSeverity(e.target.value)}
@@ -773,7 +781,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'budget_threshold' && (
                 <div>
-                  <label className="block text-xs text-c-text-secondary mb-1">{tp('budgetPercent')}</label>
+                  <label className="block text-xs text-c-text-secondary mb-1">
+                    {tp('budgetPercent')}
+                  </label>
                   <input
                     type="number"
                     value={triggerFormBudgetPct}
@@ -786,7 +796,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">{tp('throttleHours')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">
+                  {tp('throttleHours')}
+                </label>
                 <input
                   type="number"
                   value={triggerFormThrottleHours}
@@ -912,7 +924,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           <div className="px-6 py-5 space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-xs text-c-text-secondary mb-1">{tp('scheduleName')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">
+                {tp('scheduleName')}
+              </label>
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
@@ -933,7 +947,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Schedule type */}
             <div>
-              <label className="block text-xs text-c-text-secondary mb-1">{tp('scheduleType')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">
+                {tp('scheduleType')}
+              </label>
               <select
                 value={formScheduleType}
                 onChange={(e) => setFormScheduleType(e.target.value)}
@@ -949,7 +965,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Deliverable type */}
             <div>
-              <label className="block text-xs text-c-text-secondary mb-1">{tp('deliverableType')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">
+                {tp('deliverableType')}
+              </label>
               <select
                 value={formDeliverableType}
                 onChange={(e) => setFormDeliverableType(e.target.value)}
@@ -966,7 +984,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             {/* Frequency (for time-based) */}
             {formScheduleType !== 'event_triggered' && (
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">{tp('frequency')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">
+                  {tp('frequency')}
+                </label>
                 <select
                   value={formFrequency}
                   onChange={(e) => setFormFrequency(e.target.value)}
@@ -984,7 +1004,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             {/* Cron expression (for custom frequency) */}
             {formFrequency === 'custom' && formScheduleType !== 'event_triggered' && (
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">{tp('cronExpression')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">
+                  {tp('cronExpression')}
+                </label>
                 <input
                   value={formCron}
                   onChange={(e) => setFormCron(e.target.value)}
@@ -1036,7 +1058,10 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               <label className="block text-xs text-c-text-secondary mb-1">{tp('delivery')}</label>
               <div className="flex items-center gap-4 mt-1">
                 {(['dashboard', 'email', 'webhook'] as const).map((method) => (
-                  <label key={method} className="flex items-center gap-1.5 text-sm text-c-text-secondary">
+                  <label
+                    key={method}
+                    className="flex items-center gap-1.5 text-sm text-c-text-secondary"
+                  >
                     <input
                       type="checkbox"
                       checked={formDeliveryMethods.includes(method)}

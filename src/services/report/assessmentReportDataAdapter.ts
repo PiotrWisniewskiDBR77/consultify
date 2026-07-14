@@ -209,9 +209,13 @@ export function buildADMAAssessmentData(
 
 /** True when the reconstructed data carries at least one assessed dimension. */
 export function siriDataHasContent(data: SIRIAssessmentData): boolean {
-  return Object.values(data.dimensions || {}).some((d) => (d?.current ?? 0) > 0 || (d?.target ?? 0) > 0);
+  return Object.values(data.dimensions || {}).some(
+    (d) => (d?.current ?? 0) > 0 || (d?.target ?? 0) > 0
+  );
 }
 
 export function admaDataHasContent(data: ADMAAssessmentData): boolean {
-  return Object.values(data.dimensions || {}).some((d) => (d?.current ?? 0) > 0 || (d?.target ?? 0) > 0);
+  return Object.values(data.dimensions || {}).some(
+    (d) => (d?.current ?? 0) > 0 || (d?.target ?? 0) > 0
+  );
 }

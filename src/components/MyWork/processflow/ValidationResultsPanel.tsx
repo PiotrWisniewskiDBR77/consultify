@@ -59,9 +59,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
     <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm text-c-text shadow-sm">
       <div className="flex items-center justify-between gap-2 border-b border-c-border-subtle px-4 py-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Walidacja' : 'Validation'}
-          </h2>
+          <h2 className="text-sm font-semibold text-c-text">{isPl ? 'Walidacja' : 'Validation'}</h2>
           {validBadge}
         </div>
         <Button variant="outline" size="sm" onClick={onValidate} disabled={isValidating}>
@@ -127,9 +125,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                         <>
                           <Icon className={`mt-0.5 shrink-0 ${iconClass}`} size={16} aria-hidden />
                           <span className="min-w-0 flex-1">
-                            <span className="font-semibold text-c-text">
-                              {issue.rule}
-                            </span>
+                            <span className="font-semibold text-c-text">{issue.rule}</span>
                             <span className="mt-0.5 block text-c-text-secondary">
                               {issue.message}
                             </span>

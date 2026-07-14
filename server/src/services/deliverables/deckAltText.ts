@@ -12,14 +12,27 @@
  */
 
 // Kształty chart-speców (zbieżne z DeckPlanSlide['chartSpec']).
-type BarSeriesSpec = { type: 'bar_series'; labels: string[]; series: Array<{ name: string; values: number[] }> };
+type BarSeriesSpec = {
+  type: 'bar_series';
+  labels: string[];
+  series: Array<{ name: string; values: number[] }>;
+};
 type RagSpec = { type: 'rag'; items: Array<{ label: string; status: 'green' | 'amber' | 'red' }> };
-type MarimekkoSpec = { type: 'marimekko'; columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }> };
+type MarimekkoSpec = {
+  type: 'marimekko';
+  columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }>;
+};
 type HarveySpec = { type: 'harvey_balls'; rows: Array<{ label: string; level: number }> };
 type AnyChartSpec = BarSeriesSpec | RagSpec | MarimekkoSpec | HarveySpec | null | undefined;
 
 const RAG_PL: Record<string, string> = { green: 'zielony', amber: 'żółty', red: 'czerwony' };
-const HARVEY_PL: Record<number, string> = { 0: 'brak', 1: 'niski', 2: 'średni', 3: 'wysoki', 4: 'pełny' };
+const HARVEY_PL: Record<number, string> = {
+  0: 'brak',
+  1: 'niski',
+  2: 'średni',
+  3: 'wysoki',
+  4: 'pełny',
+};
 
 /** Zwięzłe formatowanie liczby do alt-textu (bez waluty, separatory PL). */
 function fmtNum(v: number): string {
@@ -38,12 +51,15 @@ function altBarSeries(spec: BarSeriesSpec): string {
   const vals = main.values ?? [];
   const first = vals[0];
   const last = vals[vals.length - 1];
-  const trend = first != null && last != null
-    ? (last > first ? 'rosnący' : last < first ? 'malejący' : 'stabilny')
-    : 'mieszany';
-  const range = first != null && last != null
-    ? ` od ${fmtNum(first)} do ${fmtNum(last)}`
-    : '';
+  const trend =
+    first != null && last != null
+      ? last > first
+        ? 'rosnący'
+        : last < first
+          ? 'malejący'
+          : 'stabilny'
+      : 'mieszany';
+  const range = first != null && last != null ? ` od ${fmtNum(first)} do ${fmtNum(last)}` : '';
   const seriesNote = series.length > 1 ? `, ${series.length} serie` : '';
   return `Wykres słupkowy „${main.name}" — trend ${trend}${range} w ${spec.labels.length} okresach${seriesNote}.`;
 }
@@ -67,9 +83,10 @@ function altMarimekko(spec: MarimekkoSpec): string {
   const colNames = cols.map((c) => c.label).join(', ');
   // największy segment ogółem
   let top: { name: string; value: number } | null = null;
-  for (const c of cols) for (const s of c.segments ?? []) {
-    if (!top || s.value > top.value) top = { name: s.name, value: s.value };
-  }
+  for (const c of cols)
+    for (const s of c.segments ?? []) {
+      if (!top || s.value > top.value) top = { name: s.name, value: s.value };
+    }
   const topNote = top ? ` Największy udział: „${top.name}".` : '';
   return `Wykres marimekko, ${cols.length} kolumny (${colNames}).${topNote}`;
 }
@@ -92,11 +109,16 @@ function altHarvey(spec: HarveySpec): string {
 export function chartAltText(spec: AnyChartSpec): string {
   if (!spec) return '';
   switch (spec.type) {
-    case 'bar_series': return altBarSeries(spec);
-    case 'rag': return altRag(spec);
-    case 'marimekko': return altMarimekko(spec);
-    case 'harvey_balls': return altHarvey(spec);
-    default: return '';
+    case 'bar_series':
+      return altBarSeries(spec);
+    case 'rag':
+      return altRag(spec);
+    case 'marimekko':
+      return altMarimekko(spec);
+    case 'harvey_balls':
+      return altHarvey(spec);
+    default:
+      return '';
   }
 }
 

@@ -43,8 +43,7 @@ export function CapabilityMapperLibraryGraphic({
         ] as Array<[string, string]>,
         currentLabel: 'Obecna',
         targetLabel: 'Docelowa',
-        footer:
-          'Capability Mapper = brief -> zdolności -> dojrzałość -> luki -> ruchy -> outputy',
+        footer: 'Capability Mapper = brief -> zdolności -> dojrzałość -> luki -> ruchy -> outputy',
       }
     : {
         eyebrow: 'Capability Mapper',
@@ -80,27 +79,30 @@ export function CapabilityMapperLibraryGraphic({
         ] as Array<[string, string]>,
         currentLabel: 'Current',
         targetLabel: 'Target',
-        footer:
-          'Capability Mapper = brief -> capabilities -> maturity -> gaps -> moves -> outputs',
+        footer: 'Capability Mapper = brief -> capabilities -> maturity -> gaps -> moves -> outputs',
       };
 
   // Static decorative capability rows for the maturity ladder (current → target on a 1-5 scale).
-  const rows: Array<{ name: string; current: number; target: number; gap: 'critical' | 'moderate' | 'minor' }> =
-    isPolish
-      ? [
-          { name: 'Dane i analityka', current: 2, target: 5, gap: 'critical' },
-          { name: 'Talenty AI', current: 1, target: 4, gap: 'critical' },
-          { name: 'Procesy', current: 3, target: 4, gap: 'moderate' },
-          { name: 'Technologia', current: 3, target: 5, gap: 'moderate' },
-          { name: 'Partnerstwa', current: 4, target: 5, gap: 'minor' },
-        ]
-      : [
-          { name: 'Data & analytics', current: 2, target: 5, gap: 'critical' },
-          { name: 'AI talent', current: 1, target: 4, gap: 'critical' },
-          { name: 'Processes', current: 3, target: 4, gap: 'moderate' },
-          { name: 'Technology', current: 3, target: 5, gap: 'moderate' },
-          { name: 'Partnerships', current: 4, target: 5, gap: 'minor' },
-        ];
+  const rows: Array<{
+    name: string;
+    current: number;
+    target: number;
+    gap: 'critical' | 'moderate' | 'minor';
+  }> = isPolish
+    ? [
+        { name: 'Dane i analityka', current: 2, target: 5, gap: 'critical' },
+        { name: 'Talenty AI', current: 1, target: 4, gap: 'critical' },
+        { name: 'Procesy', current: 3, target: 4, gap: 'moderate' },
+        { name: 'Technologia', current: 3, target: 5, gap: 'moderate' },
+        { name: 'Partnerstwa', current: 4, target: 5, gap: 'minor' },
+      ]
+    : [
+        { name: 'Data & analytics', current: 2, target: 5, gap: 'critical' },
+        { name: 'AI talent', current: 1, target: 4, gap: 'critical' },
+        { name: 'Processes', current: 3, target: 4, gap: 'moderate' },
+        { name: 'Technology', current: 3, target: 5, gap: 'moderate' },
+        { name: 'Partnerships', current: 4, target: 5, gap: 'minor' },
+      ];
 
   const gapTone: Record<'critical' | 'moderate' | 'minor', string> = {
     critical: 'bg-amber-500',

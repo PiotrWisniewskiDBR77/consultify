@@ -114,9 +114,7 @@ function applyDbMocks() {
       const orgId = String(params[params.length - 1]);
       const id = String(params[params.length - 2]);
       const table = tableForMutateOrSelect(s);
-      const row = (store[table] || []).find(
-        (r) => r.id === id && r.organization_id === orgId
-      );
+      const row = (store[table] || []).find((r) => r.id === id && r.organization_id === orgId);
       if (!row) return [];
       // Apply `col = COALESCE(?, col)` SET pairs positionally so a reload
       // reflects the PATCH (route binds SET params first, then id, org).
@@ -141,9 +139,7 @@ function applyDbMocks() {
     // exist-checks look up by (id, organization_id)
     const id = String(params[0]);
     const orgId = String(params[1]);
-    const row = (store[table] || []).find(
-      (r) => r.id === id && r.organization_id === orgId
-    );
+    const row = (store[table] || []).find((r) => r.id === id && r.organization_id === orgId);
     return row;
   });
 
@@ -253,9 +249,7 @@ describe('Rollout registers — persist + reload (admin)', () => {
     const create = await request(app).post('/api/rollout/risks').send({ title: 'Vendor delay' });
     const id = create.body.risk.id;
 
-    const patch = await request(app)
-      .patch(`/api/rollout/risks/${id}`)
-      .send({ status: 'CLOSED' });
+    const patch = await request(app).patch(`/api/rollout/risks/${id}`).send({ status: 'CLOSED' });
     expect(patch.status).toBe(200);
 
     const list = await request(app).get('/api/rollout/risks');
@@ -354,9 +348,7 @@ describe('Rollout registers — L-01 server-side write gating', () => {
     const id = create.body.risk.id;
 
     mockUser = USER_A;
-    const patch = await request(app)
-      .patch(`/api/rollout/risks/${id}`)
-      .send({ status: 'CLOSED' });
+    const patch = await request(app).patch(`/api/rollout/risks/${id}`).send({ status: 'CLOSED' });
     expect(patch.status).toBe(403);
 
     const del = await request(app).delete(`/api/rollout/risks/${id}`);

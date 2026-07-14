@@ -225,7 +225,9 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                       setSelectedStage(selectedStage === item.stage.id ? null : item.stage.id)
                     }
                     className={`flex-1 rounded-xl px-3 py-2.5 transition-all cursor-pointer ${selectedStage === item.stage.id ? 'ring-2 ring-c-focus' : 'hover:ring-1 hover:ring-c-border'}`}
-                    style={{ backgroundColor: `color-mix(in srgb, ${item.stage.color} 10%, transparent)` }}
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${item.stage.color} 10%, transparent)`,
+                    }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       <span style={{ color: item.stage.color }}>{item.stage.icon}</span>
@@ -236,9 +238,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                         {isPl ? item.stage.labelPl : item.stage.label}
                       </span>
                     </div>
-                    <div className="text-lg font-black text-c-text">
-                      {item.count}
-                    </div>
+                    <div className="text-lg font-black text-c-text">{item.count}</div>
                     <div className="mt-1 h-1 rounded-full bg-c-border-subtle overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
@@ -247,10 +247,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                     </div>
                   </button>
                   {idx < funnelData.length - 1 && (
-                    <ChevronRight
-                      size={14}
-                      className="text-c-text-secondary flex-shrink-0"
-                    />
+                    <ChevronRight size={14} className="text-c-text-secondary flex-shrink-0" />
                   )}
                 </React.Fragment>
               );
@@ -333,7 +330,9 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                                   style={{
                                     width: `${(eval_.met / Math.max(eval_.total, 1)) * 100}%`,
                                     backgroundColor:
-                                      eval_.met === eval_.total ? 'var(--c-success)' : 'var(--c-warning)',
+                                      eval_.met === eval_.total
+                                        ? 'var(--c-success)'
+                                        : 'var(--c-warning)',
                                   }}
                                 />
                               </div>

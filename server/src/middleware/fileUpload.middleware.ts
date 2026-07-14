@@ -5,9 +5,9 @@
  * Secure file upload handling for assessment documents
  */
 
+import * as crypto from 'crypto';
 import { Request } from 'express';
 import * as fs from 'fs';
-import * as crypto from 'crypto';
 import multer from 'multer';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -30,10 +30,7 @@ interface _FileRequest extends AuthRequest {
 // CONSTANTS - upload roots
 // ==========================================
 
-export const ASSESSMENTS_UPLOAD_ROOT = path.resolve(
-  __dirname,
-  '../../../uploads/assessments'
-);
+export const ASSESSMENTS_UPLOAD_ROOT = path.resolve(__dirname, '../../../uploads/assessments');
 
 export const MAX_CLIENT_ORIGINALNAME_LENGTH = 255;
 
@@ -46,17 +43,13 @@ export const FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE =
   'Only PDF, Excel, and Word documents are allowed';
 
 export const FILE_UPLOAD_INVALID_FILENAME_CODE = 'FILE_UPLOAD_INVALID_FILENAME';
-export const FILE_UPLOAD_INVALID_FILENAME_MESSAGE =
-  'Filename contains disallowed characters';
+export const FILE_UPLOAD_INVALID_FILENAME_MESSAGE = 'Filename contains disallowed characters';
 
 export const FILE_UPLOAD_FILTER_RUNTIME_CODE = 'FILE_UPLOAD_FILTER_RUNTIME';
-export const FILE_UPLOAD_FILTER_RUNTIME_MESSAGE =
-  'Failed to validate uploaded file metadata';
+export const FILE_UPLOAD_FILTER_RUNTIME_MESSAGE = 'Failed to validate uploaded file metadata';
 
-export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE =
-  'FILE_UPLOAD_WORKSPACE_UNAVAILABLE';
-export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE =
-  'Upload workspace unavailable';
+export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE = 'FILE_UPLOAD_WORKSPACE_UNAVAILABLE';
+export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE = 'Upload workspace unavailable';
 
 // ==========================================
 // HELPERS
@@ -80,8 +73,10 @@ function makeCodedError(message: string, code: string): Error & { code: string }
  */
 // eslint-disable-next-line no-control-regex
 // Two forms: test (stateless, no /g) and strip (replaces all occurrences)
-const DISALLOWED_FILENAME_RE = /[\x00-\x1f\x7f\x80-\x9f\u200b-\u200f\u2028\u2029\u202a-\u202e\ufeff]/;
-const DISALLOWED_FILENAME_STRIP_RE = /[\x00-\x1f\x7f\x80-\x9f\u200b-\u200f\u2028\u2029\u202a-\u202e\ufeff]/g;
+const DISALLOWED_FILENAME_RE =
+  /[\x00-\x1f\x7f\x80-\x9f\u200b-\u200f\u2028\u2029\u202a-\u202e\ufeff]/;
+const DISALLOWED_FILENAME_STRIP_RE =
+  /[\x00-\x1f\x7f\x80-\x9f\u200b-\u200f\u2028\u2029\u202a-\u202e\ufeff]/g;
 
 /**
  * Reject org ids that contain path separators, traversal sequences, or are
@@ -115,13 +110,9 @@ export function isPathInsideDir(parent: string, child: string): boolean {
 // Mapping: file extension -> ordered list of allowed MIME base-types (exact match)
 const EXT_TO_MIME_BASES: Record<string, string[]> = {
   pdf: ['application/pdf'],
-  docx: [
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ],
+  docx: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
   doc: ['application/msword'],
-  xlsx: [
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  ],
+  xlsx: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
   xls: ['application/vnd.ms-excel'],
 };
 
@@ -166,7 +157,7 @@ export function buildSafeUploadedFilename(originalname: unknown): string {
   rawName = rawName.replace(DISALLOWED_FILENAME_STRIP_RE, '');
 
   const dotExt = path.extname(rawName).toLowerCase(); // e.g. ".pdf"
-  const ext = dotExt.slice(1);                         // e.g. "pdf"
+  const ext = dotExt.slice(1); // e.g. "pdf"
   const basename = path.basename(rawName, dotExt);
 
   const safeExt = KNOWN_SAFE_EXTS.has(ext) ? ext : 'bin';
@@ -240,10 +231,7 @@ export function resolveUploadDestinationForMulter(
     const dest = resolver(req);
     cb(null, dest);
   } catch (err) {
-    const error =
-      err instanceof Error
-        ? err
-        : new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE);
+    const error = err instanceof Error ? err : new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE);
     cb(error, ASSESSMENTS_UPLOAD_ROOT);
   }
 }
@@ -277,25 +265,16 @@ export const fileFilter = (
     mimetype = file.mimetype;
   } catch {
     cb(
-      makeCodedError(
-        FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE,
-        FILE_UPLOAD_DISALLOWED_TYPE_CODE
-      ),
+      makeCodedError(FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE, FILE_UPLOAD_DISALLOWED_TYPE_CODE),
       false
     );
     return;
   }
 
   // Reject oversized metadata before anything else
-  if (
-    typeof originalname !== 'string' ||
-    originalname.length > MAX_CLIENT_ORIGINALNAME_LENGTH
-  ) {
+  if (typeof originalname !== 'string' || originalname.length > MAX_CLIENT_ORIGINALNAME_LENGTH) {
     cb(
-      makeCodedError(
-        FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE,
-        FILE_UPLOAD_DISALLOWED_TYPE_CODE
-      ),
+      makeCodedError(FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE, FILE_UPLOAD_DISALLOWED_TYPE_CODE),
       false
     );
     return;
@@ -304,10 +283,7 @@ export const fileFilter = (
   // Reject filenames containing control characters or zero-width Unicode
   if (DISALLOWED_FILENAME_RE.test(originalname)) {
     cb(
-      makeCodedError(
-        FILE_UPLOAD_INVALID_FILENAME_MESSAGE,
-        FILE_UPLOAD_INVALID_FILENAME_CODE
-      ),
+      makeCodedError(FILE_UPLOAD_INVALID_FILENAME_MESSAGE, FILE_UPLOAD_INVALID_FILENAME_CODE),
       false
     );
     return;
@@ -324,10 +300,7 @@ export const fileFilter = (
 
   if (!allowedMimesForExt || !allowedMimesForExt.includes(mimeBase)) {
     cb(
-      makeCodedError(
-        FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE,
-        FILE_UPLOAD_DISALLOWED_TYPE_CODE
-      ),
+      makeCodedError(FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE, FILE_UPLOAD_DISALLOWED_TYPE_CODE),
       false
     );
     return;
@@ -363,10 +336,10 @@ const storage = multer.diskStorage({
 
 export const uploadLimits = {
   fileSize: 10 * 1024 * 1024, // 10 MB max
-  files: 1,                    // Single file upload
+  files: 1, // Single file upload
   fields: 24,
   parts: 48,
-  fieldSize: 256 * 1024,       // 256 KB per field
+  fieldSize: 256 * 1024, // 256 KB per field
   fieldNameSize: 256,
   headerPairs: 1000,
 };

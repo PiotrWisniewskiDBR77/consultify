@@ -208,7 +208,9 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
         {/* Content */}
         <div className="px-4 py-3">
-          <p className="text-sm text-c-text-secondary dark:text-c-text-muted leading-relaxed">{content}</p>
+          <p className="text-sm text-c-text-secondary dark:text-c-text-muted leading-relaxed">
+            {content}
+          </p>
         </div>
 
         {/* Footer */}
@@ -234,7 +236,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
             {onNext && (
               <button
                 onClick={onNext}
- className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium bg-c-text text-c-surface hover:opacity-90 rounded-lg transition-colors"
+                className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium bg-c-text text-c-surface hover:opacity-90 rounded-lg transition-colors"
               >
                 {step && step.current === step.total ? 'Zakończ' : 'Dalej'}
                 {step && step.current !== step.total && <ChevronRight size={14} />}

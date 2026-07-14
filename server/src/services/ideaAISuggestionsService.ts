@@ -451,8 +451,13 @@ Return exactly one JSON action object.`;
       maxTokens: 1000,
     });
 
-    const rawContent = String((response as any)?.content || (response as any)?.message?.content || '');
-    const content = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+    const rawContent = String(
+      (response as any)?.content || (response as any)?.message?.content || ''
+    );
+    const content = rawContent
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .trim();
     return JSON.parse(content);
   } catch {
     return {
@@ -511,8 +516,13 @@ Return a JSON array: [{ "rowId": "...", "value": "..." }]`;
       maxTokens: 2000,
     });
 
-    const rawContent = String((response as any)?.content || (response as any)?.message?.content || '');
-    const content = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+    const rawContent = String(
+      (response as any)?.content || (response as any)?.message?.content || ''
+    );
+    const content = rawContent
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .trim();
     const parsed = JSON.parse(content);
     return (Array.isArray(parsed) ? parsed : parsed?.results || []).map((r: any) => ({
       rowId: String(r.rowId || r.row_id || ''),

@@ -215,10 +215,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
         const isBetween = rule.operator === 'between';
 
         return (
-          <div
-            key={rule.id}
-            className="p-2.5 rounded-xl border border-c-border-subtle space-y-2"
-          >
+          <div key={rule.id} className="p-2.5 rounded-xl border border-c-border-subtle space-y-2">
             {/* Row 1: field + operator */}
             <div className="flex items-center gap-2">
               <select

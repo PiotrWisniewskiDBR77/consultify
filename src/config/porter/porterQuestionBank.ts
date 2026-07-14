@@ -75,20 +75,25 @@ const RIVALRY_QUESTIONS: PorterQuestionNode[] = [
     id: 'riv1-surface',
     force: 'rivalry',
     level: 1,
-    intentEn: 'Name the actual rivals and the axis they fight on — "competition" is weather, named rivals are structure.',
-    intentPl: 'Nazwać realnych rywali i oś, na której walczą — „konkurencja" to pogoda, nazwani rywale to struktura.',
+    intentEn:
+      'Name the actual rivals and the axis they fight on — "competition" is weather, named rivals are structure.',
+    intentPl:
+      'Nazwać realnych rywali i oś, na której walczą — „konkurencja" to pogoda, nazwani rywale to struktura.',
     textEn:
       'Who are the 2-3 competitors you actually lose deals to, and do they beat you mainly on price or on differentiation? Name the last deal you lost and to whom.',
     textPl:
       'Kto to 2-3 konkurenci, którym realnie przegrywacie kontrakty, i biją Was głównie ceną czy różnicowaniem? Podaj ostatni przegrany kontrakt i komu.',
-    probeEn: 'If you cannot name who you lose to, the rivalry is not yet understood — it is assumed.',
-    probePl: 'Jeśli nie umiecie nazwać, komu przegrywacie, rywalizacja nie jest jeszcze zrozumiana — jest założona.',
+    probeEn:
+      'If you cannot name who you lose to, the rivalry is not yet understood — it is assumed.',
+    probePl:
+      'Jeśli nie umiecie nazwać, komu przegrywacie, rywalizacja nie jest jeszcze zrozumiana — jest założona.',
     answerOptions: [
       {
         key: 'price-war',
         labelEn: 'Mostly on price — discounting decides deals',
         labelPl: 'Głównie ceną — o kontraktach decyduje rabat',
-        consultantSignalEn: 'Price-based rivalry erodes margin structurally — probe concentration next.',
+        consultantSignalEn:
+          'Price-based rivalry erodes margin structurally — probe concentration next.',
         consultantSignalPl: 'Rywalizacja cenowa strukturalnie zjada marżę — badaj koncentrację.',
         intensityDelta: 1,
       },
@@ -117,8 +122,10 @@ const RIVALRY_QUESTIONS: PorterQuestionNode[] = [
       'Is this market concentrated (a few players hold most of it) or fragmented (many small players)? And is capacity growing faster than demand — forcing everyone to fight for the same volume?',
     textPl:
       'Czy ten rynek jest skoncentrowany (kilku graczy trzyma większość), czy rozdrobniony (wielu małych)? I czy moce rosną szybciej niż popyt — zmuszając wszystkich do walki o ten sam wolumen?',
-    probeEn: 'Overcapacity in a fragmented market is the textbook setup for a margin-destroying price war.',
-    probePl: 'Nadmiar mocy na rozdrobnionym rynku to podręcznikowy układ pod wyniszczającą marże wojnę cenową.',
+    probeEn:
+      'Overcapacity in a fragmented market is the textbook setup for a margin-destroying price war.',
+    probePl:
+      'Nadmiar mocy na rozdrobnionym rynku to podręcznikowy układ pod wyniszczającą marże wojnę cenową.',
     answerOptions: [
       {
         key: 'fragmented-overcapacity',
@@ -133,7 +140,8 @@ const RIVALRY_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'Concentrated with rational, disciplined players',
         labelPl: 'Skoncentrowany, z racjonalnymi, zdyscyplinowanymi graczami',
         consultantSignalEn: 'Oligopoly discipline dampens rivalry — still quantify to confirm.',
-        consultantSignalPl: 'Dyscyplina oligopolu tłumi rywalizację — i tak skwantyfikuj, by potwierdzić.',
+        consultantSignalPl:
+          'Dyscyplina oligopolu tłumi rywalizację — i tak skwantyfikuj, by potwierdzić.',
         intensityDelta: -1,
       },
     ],
@@ -147,21 +155,26 @@ const RIVALRY_QUESTIONS: PorterQuestionNode[] = [
     id: 'riv3-quantify',
     force: 'rivalry',
     level: 3,
-    intentEn: 'A force you cannot put a number on is an opinion — anchor rivalry in a share or a spread.',
-    intentPl: 'Siła, której nie umiesz zmierzyć, to opinia — zakotwicz rywalizację w udziale lub rozpiętości.',
+    intentEn:
+      'A force you cannot put a number on is an opinion — anchor rivalry in a share or a spread.',
+    intentPl:
+      'Siła, której nie umiesz zmierzyć, to opinia — zakotwicz rywalizację w udziale lub rozpiętości.',
     textEn:
       'Put one number on the rivalry: your market share vs the top rival, or the price spread between the cheapest and most expensive credible offer. Which number would you show a board?',
     textPl:
       'Podaj jedną liczbę rywalizacji: Wasz udział vs czołowy rywal, albo rozpiętość cen między najtańszą a najdroższą wiarygodną ofertą. Którą liczbę pokazalibyście zarządowi?',
-    probeEn: 'No number? Then name where it lives and make retrieving it the first action — never invent it.',
-    probePl: 'Brak liczby? Wskaż, gdzie mieszka, i zdobądź ją jako pierwszą akcję — nigdy jej nie wymyślaj.',
+    probeEn:
+      'No number? Then name where it lives and make retrieving it the first action — never invent it.',
+    probePl:
+      'Brak liczby? Wskaż, gdzie mieszka, i zdobądź ją jako pierwszą akcję — nigdy jej nie wymyślaj.',
     answerOptions: [
       {
         key: 'quantified-tight',
         labelEn: 'We have a number and it shows tight, brutal competition',
         labelPl: 'Mamy liczbę i pokazuje ostrą, brutalną konkurencję',
         consultantSignalEn: 'Quantified high rivalry — trend decides how fast we must respond.',
-        consultantSignalPl: 'Skwantyfikowana wysoka rywalizacja — trend decyduje, jak szybko musimy reagować.',
+        consultantSignalPl:
+          'Skwantyfikowana wysoka rywalizacja — trend decyduje, jak szybko musimy reagować.',
         intensityDelta: 1,
       },
       {
@@ -169,15 +182,18 @@ const RIVALRY_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'We have a number and there is room — differentiation holds price',
         labelPl: 'Mamy liczbę i jest przestrzeń — różnicowanie utrzymuje cenę',
         consultantSignalEn: 'Quantified moderate rivalry — confirm the trend before relaxing.',
-        consultantSignalPl: 'Skwantyfikowana umiarkowana rywalizacja — potwierdź trend, zanim odpuścisz.',
+        consultantSignalPl:
+          'Skwantyfikowana umiarkowana rywalizacja — potwierdź trend, zanim odpuścisz.',
         intensityDelta: -1,
       },
       {
         key: 'no-number',
         labelEn: 'We cannot put a number on it yet',
         labelPl: 'Jeszcze nie umiemy podać liczby',
-        consultantSignalEn: 'Keep qualitative, mark "to be established" — the intensity verdict stays provisional.',
-        consultantSignalPl: 'Zostaw jakościowo, oznacz „do ustalenia" — werdykt natężenia zostaje wstępny.',
+        consultantSignalEn:
+          'Keep qualitative, mark "to be established" — the intensity verdict stays provisional.',
+        consultantSignalPl:
+          'Zostaw jakościowo, oznacz „do ustalenia" — werdykt natężenia zostaje wstępny.',
         intensityDelta: 0,
       },
     ],
@@ -192,8 +208,10 @@ const RIVALRY_QUESTIONS: PorterQuestionNode[] = [
     id: 'riv4-trend',
     force: 'rivalry',
     level: 4,
-    intentEn: 'A force is a trajectory, not a snapshot — intensifying rivalry outranks high-but-stable rivalry.',
-    intentPl: 'Siła to trajektoria, nie zdjęcie — nasilająca się rywalizacja wyprzedza wysoką-ale-stabilną.',
+    intentEn:
+      'A force is a trajectory, not a snapshot — intensifying rivalry outranks high-but-stable rivalry.',
+    intentPl:
+      'Siła to trajektoria, nie zdjęcie — nasilająca się rywalizacja wyprzedza wysoką-ale-stabilną.',
     textEn:
       'Over the next 24 months, is rivalry intensifying (new capacity, consolidation, a funded entrant getting aggressive) or easing (exits, discipline, demand catching up)? What is the evidence?',
     textPl:
@@ -203,8 +221,10 @@ const RIVALRY_QUESTIONS: PorterQuestionNode[] = [
         key: 'intensifying',
         labelEn: 'Intensifying — pressure is building',
         labelPl: 'Nasila się — presja rośnie',
-        consultantSignalEn: 'Rising rivalry — the strategic response fights for slot #1 in sequencing.',
-        consultantSignalPl: 'Rosnąca rywalizacja — odpowiedź strategiczna walczy o slot #1 w kolejności.',
+        consultantSignalEn:
+          'Rising rivalry — the strategic response fights for slot #1 in sequencing.',
+        consultantSignalPl:
+          'Rosnąca rywalizacja — odpowiedź strategiczna walczy o slot #1 w kolejności.',
         intensityDelta: 1,
       },
       {
@@ -230,14 +250,18 @@ const NEW_ENTRANT_QUESTIONS: PorterQuestionNode[] = [
     id: 'ent1-surface',
     force: 'newEntrants',
     level: 1,
-    intentEn: 'Locate the realistic entrant — the threat is not "anyone could", it is "who plausibly would".',
-    intentPl: 'Zlokalizować realistycznego wchodzącego — zagrożeniem nie jest „każdy mógłby", lecz „kto realnie wejdzie".',
+    intentEn:
+      'Locate the realistic entrant — the threat is not "anyone could", it is "who plausibly would".',
+    intentPl:
+      'Zlokalizować realistycznego wchodzącego — zagrożeniem nie jest „każdy mógłby", lecz „kto realnie wejdzie".',
     textEn:
       'Who could plausibly enter this market in the next two years — an adjacent player extending, a foreign entrant, a well-funded startup? Or are barriers high enough that nobody realistically will?',
     textPl:
       'Kto realistycznie mógłby wejść na ten rynek w ciągu dwóch lat — gracz z sąsiedztwa rozszerzający ofertę, wchodzący zza granicy, dobrze dofinansowany startup? Czy bariery są na tyle wysokie, że realnie nikt nie wejdzie?',
-    probeEn: 'Name the most plausible entrant. "No one" is a claim that needs the barrier evidence to back it.',
-    probePl: 'Nazwij najbardziej prawdopodobnego wchodzącego. „Nikt" to teza, którą musi poprzeć dowód barier.',
+    probeEn:
+      'Name the most plausible entrant. "No one" is a claim that needs the barrier evidence to back it.',
+    probePl:
+      'Nazwij najbardziej prawdopodobnego wchodzącego. „Nikt" to teza, którą musi poprzeć dowód barier.',
     answerOptions: [
       {
         key: 'plausible-entrant',
@@ -266,14 +290,18 @@ const NEW_ENTRANT_QUESTIONS: PorterQuestionNode[] = [
     id: 'ent2-barriers',
     force: 'newEntrants',
     level: 2,
-    intentEn: 'Name the barrier: capital, regulation, brand, network effects, know-how, distribution access.',
-    intentPl: 'Nazwij barierę: kapitał, regulacje, marka, efekty sieciowe, know-how, dostęp do dystrybucji.',
+    intentEn:
+      'Name the barrier: capital, regulation, brand, network effects, know-how, distribution access.',
+    intentPl:
+      'Nazwij barierę: kapitał, regulacje, marka, efekty sieciowe, know-how, dostęp do dystrybucji.',
     textEn:
       'What actually stops a new entrant — capital intensity, regulation/licensing, brand and switching costs, network effects, proprietary know-how, or locked-up distribution? Which is the real gate?',
     textPl:
       'Co naprawdę zatrzymuje nowego wchodzącego — kapitałochłonność, regulacje/licencje, marka i koszty zmiany, efekty sieciowe, zastrzeżone know-how czy zamknięta dystrybucja? Która bariera jest realną bramą?',
-    probeEn: 'A barrier you cannot name is a barrier you do not have — it just has not been tested yet.',
-    probePl: 'Bariera, której nie umiesz nazwać, to bariera, której nie masz — po prostu nikt jej jeszcze nie przetestował.',
+    probeEn:
+      'A barrier you cannot name is a barrier you do not have — it just has not been tested yet.',
+    probePl:
+      'Bariera, której nie umiesz nazwać, to bariera, której nie masz — po prostu nikt jej jeszcze nie przetestował.',
     answerOptions: [
       {
         key: 'hard-barriers',
@@ -287,8 +315,10 @@ const NEW_ENTRANT_QUESTIONS: PorterQuestionNode[] = [
         key: 'soft-barriers',
         labelEn: 'Mostly soft barriers (execution, relationships, first-mover habit)',
         labelPl: 'Głównie miękkie bariery (egzekucja, relacje, przyzwyczajenie pierwszego gracza)',
-        consultantSignalEn: 'Soft barriers fall to a funded, patient entrant — treat threat as real.',
-        consultantSignalPl: 'Miękkie bariery padają przed dofinansowanym, cierpliwym wchodzącym — traktuj zagrożenie jako realne.',
+        consultantSignalEn:
+          'Soft barriers fall to a funded, patient entrant — treat threat as real.',
+        consultantSignalPl:
+          'Miękkie bariery padają przed dofinansowanym, cierpliwym wchodzącym — traktuj zagrożenie jako realne.',
         intensityDelta: 1,
       },
     ],
@@ -302,21 +332,25 @@ const NEW_ENTRANT_QUESTIONS: PorterQuestionNode[] = [
     id: 'ent3-quantify',
     force: 'newEntrants',
     level: 3,
-    intentEn: 'Quantify the barrier — the minimum capital or time to reach viable scale is the entry test.',
-    intentPl: 'Skwantyfikuj barierę — minimalny kapitał lub czas do rentownej skali to test wejścia.',
+    intentEn:
+      'Quantify the barrier — the minimum capital or time to reach viable scale is the entry test.',
+    intentPl:
+      'Skwantyfikuj barierę — minimalny kapitał lub czas do rentownej skali to test wejścia.',
     textEn:
       'What would a serious entrant have to spend or wait to reach viable scale here — an order-of-magnitude capital figure, months to first revenue, a licence lead time? Anchor it in one real number.',
     textPl:
       'Ile musiałby wydać albo odczekać poważny wchodzący, by osiągnąć tu rentowną skalę — rząd wielkości kapitału, miesiące do pierwszego przychodu, czas oczekiwania na licencję? Zakotwicz to w jednej realnej liczbie.',
     probeEn: 'If entry costs little and takes months, the barrier is decorative — say so plainly.',
-    probePl: 'Jeśli wejście kosztuje niewiele i trwa miesiące, bariera jest dekoracyjna — powiedz to wprost.',
+    probePl:
+      'Jeśli wejście kosztuje niewiele i trwa miesiące, bariera jest dekoracyjna — powiedz to wprost.',
     answerOptions: [
       {
         key: 'high-cost',
         labelEn: 'High — years and serious capital to reach scale',
         labelPl: 'Wysoki — lata i poważny kapitał do osiągnięcia skali',
         consultantSignalEn: 'Quantified tall barrier — entry threat low; confirm the trend.',
-        consultantSignalPl: 'Skwantyfikowana wysoka bariera — zagrożenie wejściem niskie; potwierdź trend.',
+        consultantSignalPl:
+          'Skwantyfikowana wysoka bariera — zagrożenie wejściem niskie; potwierdź trend.',
         intensityDelta: -1,
       },
       {
@@ -324,14 +358,16 @@ const NEW_ENTRANT_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'Low — modest capital, months to enter',
         labelPl: 'Niski — skromny kapitał, miesiące do wejścia',
         consultantSignalEn: 'Quantified low barrier — entry threat high; trend decides urgency.',
-        consultantSignalPl: 'Skwantyfikowana niska bariera — zagrożenie wejściem wysokie; trend decyduje o pilności.',
+        consultantSignalPl:
+          'Skwantyfikowana niska bariera — zagrożenie wejściem wysokie; trend decyduje o pilności.',
         intensityDelta: 1,
       },
       {
         key: 'no-number',
         labelEn: 'We cannot size the entry cost yet',
         labelPl: 'Jeszcze nie umiemy wycenić kosztu wejścia',
-        consultantSignalEn: 'Keep qualitative, mark "to be established" — verdict stays provisional.',
+        consultantSignalEn:
+          'Keep qualitative, mark "to be established" — verdict stays provisional.',
         consultantSignalPl: 'Zostaw jakościowo, oznacz „do ustalenia" — werdykt zostaje wstępny.',
         intensityDelta: 0,
       },
@@ -347,8 +383,10 @@ const NEW_ENTRANT_QUESTIONS: PorterQuestionNode[] = [
     id: 'ent4-trend',
     force: 'newEntrants',
     level: 4,
-    intentEn: 'Barriers erode — technology and capital shifts can drop an entry gate in a single cycle.',
-    intentPl: 'Bariery erodują — zmiany technologii i kapitału potrafią opuścić bramę wejścia w jednym cyklu.',
+    intentEn:
+      'Barriers erode — technology and capital shifts can drop an entry gate in a single cycle.',
+    intentPl:
+      'Bariery erodują — zmiany technologii i kapitału potrafią opuścić bramę wejścia w jednym cyklu.',
     textEn:
       'Is the entry barrier rising or falling — is technology, cheap capital, or a platform lowering the cost to enter, or is regulation/scale raising it? What is the evidence over the next 24 months?',
     textPl:
@@ -359,7 +397,8 @@ const NEW_ENTRANT_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'Barrier is falling — entry is getting easier',
         labelPl: 'Bariera maleje — wejście staje się łatwiejsze',
         consultantSignalEn: 'Opening gate — pre-empt entry now, while the moat still holds.',
-        consultantSignalPl: 'Otwierająca się brama — uprzedź wejście teraz, póki fosa jeszcze trzyma.',
+        consultantSignalPl:
+          'Otwierająca się brama — uprzedź wejście teraz, póki fosa jeszcze trzyma.',
         intensityDelta: 1,
       },
       {
@@ -385,14 +424,16 @@ const SUBSTITUTE_QUESTIONS: PorterQuestionNode[] = [
     id: 'sub1-surface',
     force: 'substitutes',
     level: 1,
-    intentEn: 'A substitute is a different way to get the job done, not a competitor selling the same thing.',
+    intentEn:
+      'A substitute is a different way to get the job done, not a competitor selling the same thing.',
     intentPl: 'Substytut to inny sposób wykonania zadania, nie konkurent sprzedający to samo.',
     textEn:
       'What is the completely different way your customers could get the same job done without your category at all — an in-house alternative, a new technology, simply doing nothing? Name the most credible one.',
     textPl:
       'Jaki jest zupełnie inny sposób, w jaki klienci mogą wykonać to samo zadanie bez Waszej kategorii — rozwiązanie własne, nowa technologia, po prostu nic-nie-robienie? Nazwij najbardziej wiarygodny.',
     probeEn: 'If no substitute exists, say so — but "none" is rare; even inertia is a substitute.',
-    probePl: 'Jeśli substytut nie istnieje, powiedz to — ale „żaden" jest rzadki; nawet bezwład jest substytutem.',
+    probePl:
+      'Jeśli substytut nie istnieje, powiedz to — ale „żaden" jest rzadki; nawet bezwład jest substytutem.',
     answerOptions: [
       {
         key: 'credible-substitute',
@@ -406,8 +447,10 @@ const SUBSTITUTE_QUESTIONS: PorterQuestionNode[] = [
         key: 'weak-substitute',
         labelEn: 'Only weak or inconvenient alternatives',
         labelPl: 'Tylko słabe lub niewygodne alternatywy',
-        consultantSignalEn: 'Low substitution threat — still test the trend; substitutes improve fast.',
-        consultantSignalPl: 'Niskie zagrożenie substytucją — i tak sprawdź trend; substytuty szybko dojrzewają.',
+        consultantSignalEn:
+          'Low substitution threat — still test the trend; substitutes improve fast.',
+        consultantSignalPl:
+          'Niskie zagrożenie substytucją — i tak sprawdź trend; substytuty szybko dojrzewają.',
         intensityDelta: -1,
       },
     ],
@@ -421,14 +464,17 @@ const SUBSTITUTE_QUESTIONS: PorterQuestionNode[] = [
     id: 'sub2-priceperf',
     force: 'substitutes',
     level: 2,
-    intentEn: 'Substitution is decided by relative price/performance and the cost of switching to it.',
+    intentEn:
+      'Substitution is decided by relative price/performance and the cost of switching to it.',
     intentPl: 'O substytucji decyduje relatywna cena/wydajność i koszt przejścia na nią.',
     textEn:
       'How does the substitute compare on price and performance — cheaper but worse, comparable, or better and cheaper? And how painful is it for a customer to switch to it?',
     textPl:
       'Jak substytut wypada cenowo i wydajnościowo — tańszy ale gorszy, porównywalny, czy lepszy i tańszy? I jak bolesne jest dla klienta przejście na niego?',
-    probeEn: 'A substitute that is better AND cheaper AND easy to adopt is an extinction event, not a threat.',
-    probePl: 'Substytut lepszy ORAZ tańszy ORAZ łatwy do wdrożenia to wydarzenie wymierające, nie zagrożenie.',
+    probeEn:
+      'A substitute that is better AND cheaper AND easy to adopt is an extinction event, not a threat.',
+    probePl:
+      'Substytut lepszy ORAZ tańszy ORAZ łatwy do wdrożenia to wydarzenie wymierające, nie zagrożenie.',
     answerOptions: [
       {
         key: 'better-cheaper',
@@ -457,8 +503,10 @@ const SUBSTITUTE_QUESTIONS: PorterQuestionNode[] = [
     id: 'sub3-quantify',
     force: 'substitutes',
     level: 3,
-    intentEn: 'Size the exposure — what share of your demand could realistically defect to the substitute?',
-    intentPl: 'Wymierz ekspozycję — jaka część Waszego popytu realnie mogłaby przejść na substytut?',
+    intentEn:
+      'Size the exposure — what share of your demand could realistically defect to the substitute?',
+    intentPl:
+      'Wymierz ekspozycję — jaka część Waszego popytu realnie mogłaby przejść na substytut?',
     textEn:
       'What share of your revenue serves a job that the substitute could plausibly take over — and have you already seen any of it move? Anchor it in one real number or observation.',
     textPl:
@@ -471,7 +519,8 @@ const SUBSTITUTE_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'A large share of revenue is exposed',
         labelPl: 'Duża część przychodu jest wyeksponowana',
         consultantSignalEn: 'Quantified high exposure — trend decides how fast to react.',
-        consultantSignalPl: 'Skwantyfikowana wysoka ekspozycja — trend decyduje, jak szybko reagować.',
+        consultantSignalPl:
+          'Skwantyfikowana wysoka ekspozycja — trend decyduje, jak szybko reagować.',
         intensityDelta: 1,
       },
       {
@@ -486,7 +535,8 @@ const SUBSTITUTE_QUESTIONS: PorterQuestionNode[] = [
         key: 'no-number',
         labelEn: 'We cannot size the exposure yet',
         labelPl: 'Jeszcze nie umiemy zmierzyć ekspozycji',
-        consultantSignalEn: 'Keep qualitative, mark "to be established" — verdict stays provisional.',
+        consultantSignalEn:
+          'Keep qualitative, mark "to be established" — verdict stays provisional.',
         consultantSignalPl: 'Zostaw jakościowo, oznacz „do ustalenia" — werdykt zostaje wstępny.',
         intensityDelta: 0,
       },
@@ -502,8 +552,10 @@ const SUBSTITUTE_QUESTIONS: PorterQuestionNode[] = [
     id: 'sub4-trend',
     force: 'substitutes',
     level: 4,
-    intentEn: 'Substitutes improve on a curve — a weak substitute today can be the default in three years.',
-    intentPl: 'Substytuty poprawiają się po krzywej — słaby substytut dziś może być standardem za trzy lata.',
+    intentEn:
+      'Substitutes improve on a curve — a weak substitute today can be the default in three years.',
+    intentPl:
+      'Substytuty poprawiają się po krzywej — słaby substytut dziś może być standardem za trzy lata.',
     textEn:
       'Is the substitute getting better/cheaper fast (technology curve, scale, investment) or stalling? What is the evidence that its price/performance is moving toward your customers?',
     textPl:
@@ -540,14 +592,18 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
     id: 'buy1-surface',
     force: 'buyerPower',
     level: 1,
-    intentEn: 'Buyer power starts with buyer concentration — one buyer at 40% of revenue dictates terms.',
-    intentPl: 'Siła nabywcy zaczyna się od jego koncentracji — jeden nabywca na 40% przychodu dyktuje warunki.',
+    intentEn:
+      'Buyer power starts with buyer concentration — one buyer at 40% of revenue dictates terms.',
+    intentPl:
+      'Siła nabywcy zaczyna się od jego koncentracji — jeden nabywca na 40% przychodu dyktuje warunki.',
     textEn:
       'How concentrated are your customers — does a handful of them account for most of your revenue, or is it spread across many small accounts? Name your largest customer’s share.',
     textPl:
       'Jak skoncentrowani są Wasi klienci — czy garstka odpowiada za większość przychodu, czy rozkłada się on na wielu małych? Podaj udział największego klienta.',
-    probeEn: 'A customer who could walk with a chunk of your revenue already has power — whether they use it yet or not.',
-    probePl: 'Klient, który może odejść z kawałkiem Waszego przychodu, już ma siłę — niezależnie od tego, czy jej używa.',
+    probeEn:
+      'A customer who could walk with a chunk of your revenue already has power — whether they use it yet or not.',
+    probePl:
+      'Klient, który może odejść z kawałkiem Waszego przychodu, już ma siłę — niezależnie od tego, czy jej używa.',
     answerOptions: [
       {
         key: 'concentrated-buyers',
@@ -576,14 +632,18 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
     id: 'buy2-switching',
     force: 'buyerPower',
     level: 2,
-    intentEn: 'Switching costs are the real lever — a buyer locked in by integration cannot use their size.',
-    intentPl: 'Koszty zmiany to realna dźwignia — nabywca zamknięty integracją nie może użyć swojej wielkości.',
+    intentEn:
+      'Switching costs are the real lever — a buyer locked in by integration cannot use their size.',
+    intentPl:
+      'Koszty zmiany to realna dźwignia — nabywca zamknięty integracją nie może użyć swojej wielkości.',
     textEn:
       'How hard is it for a customer to leave you — deep integration, contracts, data lock-in, retraining, or one email and they are gone? What actually holds them?',
     textPl:
       'Jak trudno klientowi od Was odejść — głęboka integracja, kontrakty, zamknięcie danych, przeuczenie, czy jeden e-mail i już go nie ma? Co realnie go trzyma?',
-    probeEn: 'Switching costs you cannot name are switching costs the buyer will discover they do not have.',
-    probePl: 'Koszty zmiany, których nie umiesz nazwać, to koszty, których nabywca — jak odkryje — nie ma.',
+    probeEn:
+      'Switching costs you cannot name are switching costs the buyer will discover they do not have.',
+    probePl:
+      'Koszty zmiany, których nie umiesz nazwać, to koszty, których nabywca — jak odkryje — nie ma.',
     answerOptions: [
       {
         key: 'high-switching',
@@ -598,7 +658,8 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'Low — customers can switch easily',
         labelPl: 'Niskie — klienci mogą łatwo odejść',
         consultantSignalEn: 'Easy exit amplifies buyer power — quantify concentration exposure.',
-        consultantSignalPl: 'Łatwe wyjście wzmacnia siłę nabywcy — skwantyfikuj ekspozycję koncentracji.',
+        consultantSignalPl:
+          'Łatwe wyjście wzmacnia siłę nabywcy — skwantyfikuj ekspozycję koncentracji.',
         intensityDelta: 1,
       },
     ],
@@ -612,7 +673,8 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
     id: 'buy3-quantify',
     force: 'buyerPower',
     level: 3,
-    intentEn: 'Quantify the dependency — the revenue share of the top buyers is the exposure number.',
+    intentEn:
+      'Quantify the dependency — the revenue share of the top buyers is the exposure number.',
     intentPl: 'Skwantyfikuj zależność — udział top-nabywców w przychodzie to liczba ekspozycji.',
     textEn:
       'What share of revenue sits with your top 1-3 customers, and how often do they push you on price at renewal? Anchor buyer power in one real number.',
@@ -625,8 +687,10 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
         key: 'high-dependency',
         labelEn: 'High — top customers hold a large revenue share and press on price',
         labelPl: 'Wysoka — top-klienci trzymają duży udział i naciskają cenowo',
-        consultantSignalEn: 'Quantified high buyer power — trend decides urgency of de-concentration.',
-        consultantSignalPl: 'Skwantyfikowana wysoka siła nabywcy — trend decyduje o pilności de-koncentracji.',
+        consultantSignalEn:
+          'Quantified high buyer power — trend decides urgency of de-concentration.',
+        consultantSignalPl:
+          'Skwantyfikowana wysoka siła nabywcy — trend decyduje o pilności de-koncentracji.',
         intensityDelta: 1,
       },
       {
@@ -634,14 +698,16 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'Low — revenue is spread and price pressure is mild',
         labelPl: 'Niska — przychód rozłożony, presja cenowa łagodna',
         consultantSignalEn: 'Quantified low buyer power — confirm the trend before relaxing.',
-        consultantSignalPl: 'Skwantyfikowana niska siła nabywcy — potwierdź trend, zanim odpuścisz.',
+        consultantSignalPl:
+          'Skwantyfikowana niska siła nabywcy — potwierdź trend, zanim odpuścisz.',
         intensityDelta: -1,
       },
       {
         key: 'no-number',
         labelEn: 'We cannot put a number on it yet',
         labelPl: 'Jeszcze nie umiemy podać liczby',
-        consultantSignalEn: 'Keep qualitative, mark "to be established" — verdict stays provisional.',
+        consultantSignalEn:
+          'Keep qualitative, mark "to be established" — verdict stays provisional.',
         consultantSignalPl: 'Zostaw jakościowo, oznacz „do ustalenia" — werdykt zostaje wstępny.',
         intensityDelta: 0,
       },
@@ -657,8 +723,10 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
     id: 'buy4-trend',
     force: 'buyerPower',
     level: 4,
-    intentEn: 'Buyer power shifts with consolidation and transparency — both hand buyers more leverage.',
-    intentPl: 'Siła nabywcy zmienia się z konsolidacją i przejrzystością — obie dają nabywcom więcej dźwigni.',
+    intentEn:
+      'Buyer power shifts with consolidation and transparency — both hand buyers more leverage.',
+    intentPl:
+      'Siła nabywcy zmienia się z konsolidacją i przejrzystością — obie dają nabywcom więcej dźwigni.',
     textEn:
       'Are your buyers gaining power — consolidating, gaining price transparency, building in-house alternatives — or losing it as your product becomes more embedded? What is the evidence?',
     textPl:
@@ -668,8 +736,10 @@ const BUYER_QUESTIONS: PorterQuestionNode[] = [
         key: 'gaining',
         labelEn: 'Gaining power — consolidation / transparency rising',
         labelPl: 'Zyskują siłę — rośnie konsolidacja / przejrzystość',
-        consultantSignalEn: 'Rising buyer power — raise switching costs before the next renewal cycle.',
-        consultantSignalPl: 'Rosnąca siła nabywcy — podnieś koszty zmiany przed kolejnym cyklem odnowień.',
+        consultantSignalEn:
+          'Rising buyer power — raise switching costs before the next renewal cycle.',
+        consultantSignalPl:
+          'Rosnąca siła nabywcy — podnieś koszty zmiany przed kolejnym cyklem odnowień.',
         intensityDelta: 1,
       },
       {
@@ -696,7 +766,8 @@ const SUPPLIER_QUESTIONS: PorterQuestionNode[] = [
     force: 'supplierPower',
     level: 1,
     intentEn: 'Supplier power starts with how few and how critical your key suppliers are.',
-    intentPl: 'Siła dostawcy zaczyna się od tego, jak nieliczni i jak krytyczni są Wasi kluczowi dostawcy.',
+    intentPl:
+      'Siła dostawcy zaczyna się od tego, jak nieliczni i jak krytyczni są Wasi kluczowi dostawcy.',
     textEn:
       'For your most critical input — component, talent, platform, licence — how many credible suppliers exist? Is it one, a few, or many interchangeable ones?',
     textPl:
@@ -717,7 +788,8 @@ const SUPPLIER_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'Many interchangeable suppliers',
         labelPl: 'Wielu wymiennych dostawców',
         consultantSignalEn: 'Diluted supplier power — still test whether switching is truly cheap.',
-        consultantSignalPl: 'Rozproszona siła dostawcy — i tak sprawdź, czy zmiana jest naprawdę tania.',
+        consultantSignalPl:
+          'Rozproszona siła dostawcy — i tak sprawdź, czy zmiana jest naprawdę tania.',
         intensityDelta: -1,
       },
     ],
@@ -767,8 +839,10 @@ const SUPPLIER_QUESTIONS: PorterQuestionNode[] = [
     id: 'sup3-quantify',
     force: 'supplierPower',
     level: 3,
-    intentEn: 'Quantify the dependency — the supplier’s share of your COGS or the switching lead time.',
-    intentPl: 'Skwantyfikuj zależność — udział dostawcy w Waszym koszcie własnym lub czas przełączenia.',
+    intentEn:
+      'Quantify the dependency — the supplier’s share of your COGS or the switching lead time.',
+    intentPl:
+      'Skwantyfikuj zależność — udział dostawcy w Waszym koszcie własnym lub czas przełączenia.',
     textEn:
       'What share of your cost base does this supplier control, or how many months would it take to qualify an alternative? Anchor supplier power in one real number.',
     textPl:
@@ -780,8 +854,10 @@ const SUPPLIER_QUESTIONS: PorterQuestionNode[] = [
         key: 'high-dependency',
         labelEn: 'High — large cost share and long time to qualify an alternative',
         labelPl: 'Wysoka — duży udział kosztów i długi czas na alternatywę',
-        consultantSignalEn: 'Quantified high supplier power — trend decides urgency of dual-sourcing.',
-        consultantSignalPl: 'Skwantyfikowana wysoka siła dostawcy — trend decyduje o pilności drugiego źródła.',
+        consultantSignalEn:
+          'Quantified high supplier power — trend decides urgency of dual-sourcing.',
+        consultantSignalPl:
+          'Skwantyfikowana wysoka siła dostawcy — trend decyduje o pilności drugiego źródła.',
         intensityDelta: 1,
       },
       {
@@ -789,14 +865,16 @@ const SUPPLIER_QUESTIONS: PorterQuestionNode[] = [
         labelEn: 'Low — modest cost share, alternatives qualify quickly',
         labelPl: 'Niska — skromny udział kosztów, alternatywy szybko do zakwalifikowania',
         consultantSignalEn: 'Quantified low supplier power — confirm the trend before relaxing.',
-        consultantSignalPl: 'Skwantyfikowana niska siła dostawcy — potwierdź trend, zanim odpuścisz.',
+        consultantSignalPl:
+          'Skwantyfikowana niska siła dostawcy — potwierdź trend, zanim odpuścisz.',
         intensityDelta: -1,
       },
       {
         key: 'no-number',
         labelEn: 'We cannot put a number on it yet',
         labelPl: 'Jeszcze nie umiemy podać liczby',
-        consultantSignalEn: 'Keep qualitative, mark "to be established" — verdict stays provisional.',
+        consultantSignalEn:
+          'Keep qualitative, mark "to be established" — verdict stays provisional.',
         consultantSignalPl: 'Zostaw jakościowo, oznacz „do ustalenia" — werdykt zostaje wstępny.',
         intensityDelta: 0,
       },
@@ -823,8 +901,10 @@ const SUPPLIER_QUESTIONS: PorterQuestionNode[] = [
         key: 'gaining',
         labelEn: 'Gaining leverage — scarcity / consolidation rising',
         labelPl: 'Zyskuje dźwignię — rośnie niedobór / konsolidacja',
-        consultantSignalEn: 'Rising supplier power — secure supply / dual-source before the squeeze.',
-        consultantSignalPl: 'Rosnąca siła dostawcy — zabezpiecz dostawy / drugie źródło przed ściskiem.',
+        consultantSignalEn:
+          'Rising supplier power — secure supply / dual-source before the squeeze.',
+        consultantSignalPl:
+          'Rosnąca siła dostawcy — zabezpiecz dostawy / drugie źródło przed ściskiem.',
         intensityDelta: 1,
       },
       {
@@ -970,10 +1050,7 @@ export function validatePorterQuestionBank(): string[] {
  * Serialize the ladder for a force into a prompt block, so the AI mentor asks
  * EXACTLY these questions in conversation (single source of truth with the UI).
  */
-export function buildForceLadderPromptBlock(
-  force: PorterForceId,
-  language: 'pl' | 'en'
-): string {
+export function buildForceLadderPromptBlock(force: PorterForceId, language: 'pl' | 'en'): string {
   const questions = PORTER_QUESTION_BANK[force];
   return questions
     .map((q) => {

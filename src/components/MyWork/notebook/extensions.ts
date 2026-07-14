@@ -1,7 +1,6 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Image from '@tiptap/extension-image';
-import { createLowlight } from 'lowlight';
 import bash from 'highlight.js/lib/languages/bash';
 import css from 'highlight.js/lib/languages/css';
 import go from 'highlight.js/lib/languages/go';
@@ -15,6 +14,7 @@ import sql from 'highlight.js/lib/languages/sql';
 import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
+import { createLowlight } from 'lowlight';
 
 /* ------------------------------------------------------------------ */
 /*  Callout  (info | warning | success | critical)                     */
@@ -308,12 +308,17 @@ export const NotebookBookmark = Node.create({
     if (favicon) linkRow.push(['img', { class: 'nb-bookmark-favicon', src: favicon, alt: '' }]);
     linkRow.push(['span', {}, host || url]);
 
-    const body: any[] = ['div', { class: 'nb-bookmark-body' }, ['div', { class: 'nb-bookmark-title' }, title]];
+    const body: any[] = [
+      'div',
+      { class: 'nb-bookmark-body' },
+      ['div', { class: 'nb-bookmark-title' }, title],
+    ];
     if (description) body.push(['div', { class: 'nb-bookmark-desc' }, description]);
     body.push(linkRow);
 
     const children: any[] = [body];
-    if (image) children.push(['div', { class: 'nb-bookmark-thumb' }, ['img', { src: image, alt: '' }]]);
+    if (image)
+      children.push(['div', { class: 'nb-bookmark-thumb' }, ['img', { src: image, alt: '' }]]);
 
     return [
       'a',
@@ -361,7 +366,10 @@ export const NotebookImage = Image.extend({
         renderHTML: (attrs) => {
           if (!attrs.width) return {};
           const w = String(attrs.width);
-          return { width: w, style: `width: ${w.endsWith('%') || w.endsWith('px') ? w : `${w}px`}` };
+          return {
+            width: w,
+            style: `width: ${w.endsWith('%') || w.endsWith('px') ? w : `${w}px`}`,
+          };
         },
       },
     };

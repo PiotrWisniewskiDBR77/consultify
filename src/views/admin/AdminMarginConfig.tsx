@@ -14,6 +14,7 @@ import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
+
 import { Api } from '../../services/api';
 
 export const AdminMarginConfig = () => {
@@ -116,7 +117,10 @@ export const AdminMarginConfig = () => {
           <div>
             <p className="font-bold">Error Loading Data</p>
             <p>{error}</p>
-            <button onClick={loadMargins} className="text-c-text underline mt-2 hover:text-white/80">
+            <button
+              onClick={loadMargins}
+              className="text-c-text underline mt-2 hover:text-white/80"
+            >
               Try Again
             </button>
           </div>

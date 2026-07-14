@@ -116,35 +116,32 @@ export function useCandidates(status: CandidateStatus = 'pending'): UseCandidate
     }
   }, [refresh]);
 
-  const accept = useCallback(
-    async (id: string): Promise<AcceptCandidatePayload | null> => {
-      setBusyId(id);
-      try {
-        const res = await fetch(`${CANDIDATES_BASE}/${encodeURIComponent(id)}/accept`, {
-          method: 'POST',
-          headers: getHeaders(),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await readJson(res);
-        setCandidates((prev) => prev.filter((c) => c.id !== id));
-        // Serwer tworzy+wypełnia inicjatywę i zwraca initiativeId — scal do payloadu,
-        // żeby hub nawigował do niej zamiast tworzyć drugą (anty-dublet F2→F1).
-        const payload = (data?.payload as AcceptCandidatePayload) ?? null;
-        if (!payload && !data?.initiativeId) return null;
-        return {
-          ...(payload ?? ({} as AcceptCandidatePayload)),
-          initiativeId: data?.initiativeId ?? null,
-          filled: !!data?.filled,
-        };
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'error');
-        return null;
-      } finally {
-        setBusyId(null);
-      }
-    },
-    []
-  );
+  const accept = useCallback(async (id: string): Promise<AcceptCandidatePayload | null> => {
+    setBusyId(id);
+    try {
+      const res = await fetch(`${CANDIDATES_BASE}/${encodeURIComponent(id)}/accept`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await readJson(res);
+      setCandidates((prev) => prev.filter((c) => c.id !== id));
+      // Serwer tworzy+wypełnia inicjatywę i zwraca initiativeId — scal do payloadu,
+      // żeby hub nawigował do niej zamiast tworzyć drugą (anty-dublet F2→F1).
+      const payload = (data?.payload as AcceptCandidatePayload) ?? null;
+      if (!payload && !data?.initiativeId) return null;
+      return {
+        ...(payload ?? ({} as AcceptCandidatePayload)),
+        initiativeId: data?.initiativeId ?? null,
+        filled: !!data?.filled,
+      };
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'error');
+      return null;
+    } finally {
+      setBusyId(null);
+    }
+  }, []);
 
   const dismiss = useCallback(async (id: string): Promise<boolean> => {
     setBusyId(id);

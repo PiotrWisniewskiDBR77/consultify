@@ -26,7 +26,7 @@ export async function listConnectorTypes(): Promise<string[]> {
   try {
     const res = await fetch(`${DATA_BASE}/connectors`, { headers: getHeaders() as HeadersInit });
     if (!res.ok) return [];
-    const data = await res.json() as { success: boolean; types?: string[] };
+    const data = (await res.json()) as { success: boolean; types?: string[] };
     return data.types ?? [];
   } catch {
     return [];
@@ -37,7 +37,7 @@ export async function listConnectorTypes(): Promise<string[]> {
 export async function previewConnector(
   type: string,
   config: Record<string, unknown>,
-  limit = 25,
+  limit = 25
 ): Promise<MaterialDataset | null> {
   try {
     const res = await fetch(`${DATA_BASE}/connectors/preview`, {
@@ -46,7 +46,7 @@ export async function previewConnector(
       body: JSON.stringify({ type, config, limit }),
     });
     if (!res.ok) return null;
-    const data = await res.json() as { success: boolean; dataset?: MaterialDataset };
+    const data = (await res.json()) as { success: boolean; dataset?: MaterialDataset };
     return data.dataset ?? null;
   } catch {
     return null;
@@ -62,7 +62,7 @@ export async function fetchFormDataset(formId: string): Promise<MaterialDataset 
       body: '{}',
     });
     if (!res.ok) return null;
-    const data = await res.json() as { success: boolean; dataset?: MaterialDataset };
+    const data = (await res.json()) as { success: boolean; dataset?: MaterialDataset };
     return data.dataset ?? null;
   } catch {
     return null;

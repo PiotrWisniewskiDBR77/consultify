@@ -57,17 +57,31 @@ export interface ValueChainStaircaseIssue {
  * Substring match on lowercased text (PL + EN forms).
  */
 const VAGUE_TERMS: { pattern: RegExp; labelEn: string; labelPl: string }[] = [
-  { pattern: /inefficien|nieefektywn|nieoptymaln/i, labelEn: 'inefficiency', labelPl: 'nieefektywność' },
+  {
+    pattern: /inefficien|nieefektywn|nieoptymaln/i,
+    labelEn: 'inefficiency',
+    labelPl: 'nieefektywność',
+  },
   { pattern: /expensive|kosztown|drog[iea]/i, labelEn: 'expensive', labelPl: 'kosztowność' },
-  { pattern: /outdated|przestarza|legacy|stare\b/i, labelEn: 'outdated', labelPl: 'przestarzałość' },
+  {
+    pattern: /outdated|przestarza|legacy|stare\b/i,
+    labelEn: 'outdated',
+    labelPl: 'przestarzałość',
+  },
   { pattern: /manual|ręczn|reczn/i, labelEn: 'manual', labelPl: 'ręczność' },
-  { pattern: /bottleneck|wąsk|wask.*gardł|waskie gardlo/i, labelEn: 'bottleneck', labelPl: 'wąskie gardło' },
-  { pattern: /world.?class|klasy świat|klasy swiat/i, labelEn: 'world-class', labelPl: 'klasa światowa' },
+  {
+    pattern: /bottleneck|wąsk|wask.*gardł|waskie gardlo/i,
+    labelEn: 'bottleneck',
+    labelPl: 'wąskie gardło',
+  },
+  {
+    pattern: /world.?class|klasy świat|klasy swiat/i,
+    labelEn: 'world-class',
+    labelPl: 'klasa światowa',
+  },
 ];
 
-export function detectVagueDriver(
-  text: string
-): { labelEn: string; labelPl: string } | null {
+export function detectVagueDriver(text: string): { labelEn: string; labelPl: string } | null {
   for (const term of VAGUE_TERMS) {
     if (term.pattern.test(text)) return { labelEn: term.labelEn, labelPl: term.labelPl };
   }
@@ -144,8 +158,10 @@ export function validateValueChainStaircase(
     if (item.evidenceStatus === 'confirmed') {
       issues.push({
         code: 'missing-proof-refs',
-        messageEn: 'Activity is marked confirmed but its cost-value proof references no session evidence.',
-        messagePl: 'Ogniwo oznaczone jako potwierdzone, ale dowód kosztowo-wartościowy nie wskazuje dowodu z sesji.',
+        messageEn:
+          'Activity is marked confirmed but its cost-value proof references no session evidence.',
+        messagePl:
+          'Ogniwo oznaczone jako potwierdzone, ale dowód kosztowo-wartościowy nie wskazuje dowodu z sesji.',
       });
     }
   }
@@ -156,8 +172,10 @@ export function validateValueChainStaircase(
     if (surface === proof || (proof.length > 20 && surface.includes(proof))) {
       issues.push({
         code: 'proof-restates-surface',
-        messageEn: 'Cost-value proof restates the surface description instead of adding cost/value evidence.',
-        messagePl: 'Dowód kosztowo-wartościowy powtarza opis powierzchni zamiast dodawać dowód kosztu/wartości.',
+        messageEn:
+          'Cost-value proof restates the surface description instead of adding cost/value evidence.',
+        messagePl:
+          'Dowód kosztowo-wartościowy powtarza opis powierzchni zamiast dodawać dowód kosztu/wartości.',
       });
     }
     // A proof must speak to BOTH cost and value, or explain which side dominates.

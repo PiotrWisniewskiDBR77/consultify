@@ -124,20 +124,13 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                   >
                     <div
                       className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                        isCompleted
-                          ? 'bg-emerald-500/20'
-                          : isActive
-                            ? 'bg-white/15'
-                            : 'bg-white/5'
+                        isCompleted ? 'bg-emerald-500/20' : isActive ? 'bg-white/15' : 'bg-white/5'
                       }`}
                     >
                       {isCompleted ? (
                         <CheckCircle2 size={20} className="text-emerald-400" />
                       ) : (
-                        <Icon
-                          size={20}
-                          className={isActive ? 'text-white/90' : 'text-white/30'}
-                        />
+                        <Icon size={20} className={isActive ? 'text-white/90' : 'text-white/30'} />
                       )}
                     </div>
                     <span

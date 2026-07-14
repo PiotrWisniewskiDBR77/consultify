@@ -255,10 +255,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
               className="inline-flex items-center gap-2 px-3 py-1.5 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-lg text-sm font-medium"
             >
               {skill}
-              <button
-                onClick={() => removeSkill(skill)}
-                className="hover:text-c-accent"
-              >
+              <button onClick={() => removeSkill(skill)} className="hover:text-c-accent">
                 <X size={14} />
               </button>
             </span>
@@ -671,9 +668,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
         <div className="flex-1">
           <h4 className="font-semibold text-c-text">{edu.degree}</h4>
           <p className="text-sm text-c-text-secondary">{edu.institution}</p>
-          {edu.fieldOfStudy && (
-            <p className="text-xs text-c-text-muted mt-1">{edu.fieldOfStudy}</p>
-          )}
+          {edu.fieldOfStudy && <p className="text-xs text-c-text-muted mt-1">{edu.fieldOfStudy}</p>}
           <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
             <span>{new Date(edu.startDate).getFullYear()}</span>
             {edu.endDate && <span>- {new Date(edu.endDate).getFullYear()}</span>}
@@ -796,9 +791,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
         <div className="flex-1">
           <h4 className="font-semibold text-c-text">{work.position}</h4>
           <p className="text-sm text-c-text-secondary">{work.company}</p>
-          {work.location && (
-            <p className="text-xs text-c-text-muted mt-1">{work.location}</p>
-          )}
+          {work.location && <p className="text-xs text-c-text-muted mt-1">{work.location}</p>}
           <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
             <span>{new Date(work.startDate).toLocaleDateString()}</span>
             {work.endDate && <span>- {new Date(work.endDate).toLocaleDateString()}</span>}
@@ -835,9 +828,7 @@ const SocialLinkInput: React.FC<SocialLinkInputProps> = ({
     <div className="flex items-center gap-3">
       <div className="text-c-text-secondary">{icon}</div>
       <div className="flex-1">
-        <label className="block text-sm font-medium text-c-text-secondary mb-1">
-          {label}
-        </label>
+        <label className="block text-sm font-medium text-c-text-secondary mb-1">{label}</label>
         <input
           type="text"
           value={value}

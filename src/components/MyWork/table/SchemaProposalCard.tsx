@@ -272,9 +272,7 @@ const OperationItem: React.FC<{
   return (
     <div
       className={`rounded-xl border transition-all duration-150 ${
-        selected
-          ? 'border-c-accent bg-c-accent-soft'
-          : 'border-c-border-subtle bg-c-surface'
+        selected ? 'border-c-accent bg-c-accent-soft' : 'border-c-border-subtle bg-c-surface'
       }`}
     >
       <div className="flex items-center gap-2 px-3 py-2">
@@ -481,12 +479,8 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
 
       {/* Summary */}
       <div className="px-4 py-3 bg-c-surface-raised border-b border-c-border-subtle">
-        <p className="text-sm text-c-text leading-relaxed">
-          {proposal.summary}
-        </p>
-        <p className="mt-1.5 text-[11px] text-c-text-muted font-medium">
-          {impactText}
-        </p>
+        <p className="text-sm text-c-text leading-relaxed">{proposal.summary}</p>
+        <p className="mt-1.5 text-[11px] text-c-text-muted font-medium">{impactText}</p>
       </div>
 
       {/* Operations */}
@@ -501,17 +495,11 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
           </button>
           {allOpsVisible && (
             <div className="flex gap-1">
-              <button
-                onClick={selectAll}
-                className="text-[10px] text-c-accent hover:underline"
-              >
+              <button onClick={selectAll} className="text-[10px] text-c-accent hover:underline">
                 {isPl ? 'Wszystkie' : 'All'}
               </button>
               <span className="text-c-text-secondary">|</span>
-              <button
-                onClick={selectNone}
-                className="text-[10px] text-c-accent hover:underline"
-              >
+              <button onClick={selectNone} className="text-[10px] text-c-accent hover:underline">
                 {isPl ? 'Żadne' : 'None'}
               </button>
               {onShowDiff && (

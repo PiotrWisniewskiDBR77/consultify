@@ -392,7 +392,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           <section className="relative z-10 px-4 sm:px-6 pb-6 sm:pb-8">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-                <Tag size={14} className="flex-shrink-0 text-c-text-secondary dark:text-c-text-muted" />
+                <Tag
+                  size={14}
+                  className="flex-shrink-0 text-c-text-secondary dark:text-c-text-muted"
+                />
                 {tags.slice(0, 18).map((tag: any) => (
                   <button
                     key={tag.id}

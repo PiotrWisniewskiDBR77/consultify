@@ -221,7 +221,9 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               >
                 <Icon
                   size={24}
-                  className={isSelected ? colors.text : 'text-c-text-secondary dark:text-c-text-muted'}
+                  className={
+                    isSelected ? colors.text : 'text-c-text-secondary dark:text-c-text-muted'
+                  }
                 />
               </div>
 
@@ -266,7 +268,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                         flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all
                         ${
                           selectedGoalId
- ? 'bg-c-text text-c-surface hover:opacity-90 shadow-lg'
+                            ? 'bg-c-text text-c-surface hover:opacity-90 shadow-lg'
                             : 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                         }
                     `}

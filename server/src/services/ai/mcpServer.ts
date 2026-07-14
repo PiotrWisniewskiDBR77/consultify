@@ -245,9 +245,7 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       'After it returns ok:true, confirm in one sentence. Do NOT claim you created a decision unless this tool returned ok:true.',
     type: TOOL_TYPE.READ,
     parameters: z.object({
-      title: z
-        .string()
-        .describe('The decision to be made / recorded. Use the user language.'),
+      title: z.string().describe('The decision to be made / recorded. Use the user language.'),
       description: z
         .string()
         .optional()
@@ -339,9 +337,7 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       'Returns each map title plus a markdown outline of its nodes.',
     type: TOOL_TYPE.READ,
     parameters: z.object({
-      query: z
-        .string()
-        .describe('Topic or phrase to search mind maps for (user language is fine)'),
+      query: z.string().describe('Topic or phrase to search mind maps for (user language is fine)'),
       limit: z.number().optional().default(5).describe('Max results to return (1-10)'),
     }),
     returns: z.object({

@@ -70,7 +70,9 @@ function Table({
   }
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-navy-700">
-      <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-[11px]">
+      <table
+        /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-[11px]"
+      >
         <thead>
           <tr className="bg-slate-50 dark:bg-navy-800/60">
             {columns.map((c) => (

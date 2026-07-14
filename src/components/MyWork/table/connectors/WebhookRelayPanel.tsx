@@ -238,9 +238,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-c-text truncate">
-                    {relay.name}
-                  </span>
+                  <span className="text-sm font-medium text-c-text truncate">{relay.name}</span>
                   {!relay.is_active && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-secondary">
                       {isPl ? 'Wył.' : 'Off'}
@@ -493,10 +491,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
                 >
                   {eventTypes.includes(opt.value) && <Check size={10} className="text-c-text" />}
                 </div>
-                <span
-                  className="text-sm text-c-text-muted"
-                  onClick={() => toggleEvent(opt.value)}
-                >
+                <span className="text-sm text-c-text-muted" onClick={() => toggleEvent(opt.value)}>
                   {isPl ? opt.labelPl : opt.labelEn}
                 </span>
               </label>

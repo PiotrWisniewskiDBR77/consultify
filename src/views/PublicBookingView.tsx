@@ -62,7 +62,10 @@ function fmtTime(iso: string): string {
   });
 }
 
-export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewProps = {}): React.ReactElement {
+export function PublicBookingView({
+  slugOverride,
+  mockData,
+}: PublicBookingViewProps = {}): React.ReactElement {
   const slug = useMemo(() => slugOverride || getSlugFromPath(), [slugOverride]);
 
   const [state, setState] = useState<ViewState>(mockData ? 'pick' : 'loading');
@@ -74,7 +77,11 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
   const [email, setEmail] = useState('');
   const [topic, setTopic] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
-  const [confirmed, setConfirmed] = useState<{ startAt: string; endAt: string; consultantName: string } | null>(null);
+  const [confirmed, setConfirmed] = useState<{
+    startAt: string;
+    endAt: string;
+    consultantName: string;
+  } | null>(null);
 
   const loadAvailability = useCallback(async () => {
     if (mockData) return;
@@ -110,7 +117,8 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
     e.preventDefault();
     setFormError(null);
     if (!name.trim()) return setFormError('Podaj imię i nazwisko.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setFormError('Podaj poprawny e-mail.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      return setFormError('Podaj poprawny e-mail.');
     if (!selectedSlot) return setFormError('Wybierz termin.');
 
     if (mockData) {
@@ -124,7 +132,12 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
       const res = await fetch(`${API_BASE}/${encodeURIComponent(slug)}/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), topic: topic.trim(), startAt: selectedSlot.startAt }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          topic: topic.trim(),
+          startAt: selectedSlot.startAt,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -132,7 +145,11 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
         setFormError(data.error || 'Nie udało się zarezerwować. Spróbuj innego terminu.');
         return;
       }
-      setConfirmed({ startAt: data.startAt, endAt: data.endAt, consultantName: data.consultantName });
+      setConfirmed({
+        startAt: data.startAt,
+        endAt: data.endAt,
+        consultantName: data.consultantName,
+      });
       setState('done');
     } catch {
       setState('form');
@@ -240,7 +257,11 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
                 <>
                   <div className="mb-3 flex items-center gap-2 text-sm font-medium">
                     <Clock className="h-4 w-4 text-c-text-muted" />
-                    {activeDay ? <span className="capitalize">{fmtDayLabel(activeDay.date)}</span> : 'Wybierz dzień'}
+                    {activeDay ? (
+                      <span className="capitalize">{fmtDayLabel(activeDay.date)}</span>
+                    ) : (
+                      'Wybierz dzień'
+                    )}
                   </div>
                   {activeDay ? (
                     <div className="grid grid-cols-3 gap-2">
@@ -272,11 +293,14 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
                   </button>
 
                   <div className="mb-4 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm">
-                    <span className="capitalize">{fmtDayLabel(activeDate!)}</span>, {fmtTime(selectedSlot.startAt)}–{fmtTime(selectedSlot.endAt)}
+                    <span className="capitalize">{fmtDayLabel(activeDate!)}</span>,{' '}
+                    {fmtTime(selectedSlot.startAt)}–{fmtTime(selectedSlot.endAt)}
                   </div>
 
                   <label className="mb-3 block">
-                    <span className="mb-1 block text-xs font-medium text-c-text-muted">Imię i nazwisko</span>
+                    <span className="mb-1 block text-xs font-medium text-c-text-muted">
+                      Imię i nazwisko
+                    </span>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -295,7 +319,9 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
                     />
                   </label>
                   <label className="mb-4 block">
-                    <span className="mb-1 block text-xs font-medium text-c-text-muted">Temat (opcjonalnie)</span>
+                    <span className="mb-1 block text-xs font-medium text-c-text-muted">
+                      Temat (opcjonalnie)
+                    </span>
                     <textarea
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
@@ -305,9 +331,7 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
                     />
                   </label>
 
-                  {formError && (
-                    <p className="mb-3 text-sm text-c-danger">{formError}</p>
-                  )}
+                  {formError && <p className="mb-3 text-sm text-c-danger">{formError}</p>}
 
                   {/* CTA NEUTRALNY — zero crimson (bg-c-text/text-c-bg). */}
                   <button
@@ -334,7 +358,8 @@ export function PublicBookingView({ slugOverride, mockData }: PublicBookingViewP
               Spotkanie z {confirmed.consultantName}:
             </p>
             <p className="mt-1 text-sm font-medium">
-              <span className="capitalize">{fmtDayLabel(confirmed.startAt.slice(0, 10))}</span>, {fmtTime(confirmed.startAt)}–{fmtTime(confirmed.endAt)}
+              <span className="capitalize">{fmtDayLabel(confirmed.startAt.slice(0, 10))}</span>,{' '}
+              {fmtTime(confirmed.startAt)}–{fmtTime(confirmed.endAt)}
             </p>
             <p className="mt-4 text-xs text-c-text-muted">
               Wyślemy potwierdzenie na podany adres e-mail po akceptacji terminu.

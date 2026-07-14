@@ -349,9 +349,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
             >
               <span
                 className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
-                  isSelected
-                    ? 'bg-c-text border-c-text'
-                    : 'border-c-border-subtle'
+                  isSelected ? 'bg-c-text border-c-text' : 'border-c-border-subtle'
                 }`}
               >
                 {isSelected && <Check size={9} className="text-c-surface" />}

@@ -274,9 +274,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // not `ideaId` (a workspace id). Record broadcasts target `table:${tp_tables.id}`,
   // so joining ideaId would never receive them. Falls back to ideaId only until
   // the real table id resolves (presence continuity).
-  const realtimeTableId = platformActive
-    ? (platformIntegration.realtimeTableId ?? ideaId)
-    : null;
+  const realtimeTableId = platformActive ? (platformIntegration.realtimeTableId ?? ideaId) : null;
   const realtime = useTableRealtime({
     tableId: realtimeTableId,
     userId: currentUserId,
@@ -837,9 +835,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             t.id === _tableId && previousName !== undefined ? { ...t, name: previousName } : t
           )
         );
-        toast.error(
-          t('ideas.table.failedToSaveTableName', 'Failed to save table name')
-        );
+        toast.error(t('ideas.table.failedToSaveTableName', 'Failed to save table name'));
       });
     },
     [isPl]
@@ -878,7 +874,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     async (tableId: string) => {
       if (
         !window.confirm(
-          t('ideas.table.areYouSureYouWantToDeleteThisTable', 'Are you sure you want to delete this table?')
+          t(
+            'ideas.table.areYouSureYouWantToDeleteThisTable',
+            'Are you sure you want to delete this table?'
+          )
         )
       )
         return;
@@ -1385,9 +1384,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       className="w-full h-full flex overflow-hidden"
       ref={tableRef}
       role="region"
-      aria-label={
-        t('ideas.table.ideasTableWithBulkOperations', 'Ideas table with bulk operations')
-      }
+      aria-label={t('ideas.table.ideasTableWithBulkOperations', 'Ideas table with bulk operations')}
     >
       <div className="flex-1 flex flex-col overflow-hidden">
         <TableDataProvider
@@ -1758,7 +1755,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     { id: 'table', icon: Table2, label: t('ideas.table.table', 'Table') },
                     { id: 'kanban', icon: KanbanSquare, label: 'Kanban' },
                     { id: 'timeline', icon: GanttChart, label: 'Timeline / Gantt' },
-                    { id: 'calendar', icon: Calendar, label: t('ideas.table.calendar', 'Calendar') },
+                    {
+                      id: 'calendar',
+                      icon: Calendar,
+                      label: t('ideas.table.calendar', 'Calendar'),
+                    },
                     { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
                     { id: 'grid', icon: Grid3X3, label: t('ideas.table.gallery', 'Gallery') },
                   ] as const
@@ -1941,7 +1942,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     title={t('ideas.table.frameworkGenerator', 'Framework Generator')}
                   >
                     <LayoutGrid size={12} />
-                    <span className="hidden lg:inline">{t('ideas.table.framework', 'Framework')}</span>
+                    <span className="hidden lg:inline">
+                      {t('ideas.table.framework', 'Framework')}
+                    </span>
                   </button>
                 )}
 
@@ -2492,7 +2495,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 }`}
               >
                 {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {_saving ? (t('ideas.table.saving', 'Saving…')) : t('ideas.table.save', 'Save')}
+                {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
               </button>
             </div>
           )}
@@ -2554,7 +2557,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   {t('ideas.table.readOnlyMode', 'Read-only mode')}
                 </div>
                 <div className="mt-1 text-xs text-c-text-muted">
-                  {t('ideas.table.youCanReviewTheTableButEditingAndSavingAreCurrentlyDisabled', 'You can review the table, but editing and saving are currently disabled.')}
+                  {t(
+                    'ideas.table.youCanReviewTheTableButEditingAndSavingAreCurrentlyDisabled',
+                    'You can review the table, but editing and saving are currently disabled.'
+                  )}
                 </div>
               </div>
             </div>
@@ -2565,12 +2571,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <EmptyStateInline
                 icon={Table2}
                 dashed={false}
-                message={
-                  t('ideas.table.tableViewIsTemporarilyUnavailable', 'Table view is temporarily unavailable.')
-                }
-                hint={
-                  t('ideas.table.thisDoesNotMeanTheTableIsEmptyRetryLoadingTheDataAndCheckAga', 'This does not mean the table is empty. Retry loading the data and check again.')
-                }
+                message={t(
+                  'ideas.table.tableViewIsTemporarilyUnavailable',
+                  'Table view is temporarily unavailable.'
+                )}
+                hint={t(
+                  'ideas.table.thisDoesNotMeanTheTableIsEmptyRetryLoadingTheDataAndCheckAga',
+                  'This does not mean the table is empty. Retry loading the data and check again.'
+                )}
                 action={{
                   label: t('ideas.table.retry', 'Retry'),
                   onClick: () => {
@@ -2932,7 +2940,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 colSpan={_visCols.length + 2}
                                 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted"
                               >
-                                {groupKey || (t('ideas.table.empty', '(empty)'))}{' '}
+                                {groupKey || t('ideas.table.empty', '(empty)')}{' '}
                                 <span className="text-c-text-muted font-normal ml-1">
                                   ({rows.length})
                                 </span>
@@ -2946,10 +2954,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
                             <div className="mx-auto max-w-xl text-c-text-muted">
                               <div className="text-sm font-semibold mb-1">
-                                {t('ideas.table.thisTableIsStillEmpty', 'This table is still empty')}
+                                {t(
+                                  'ideas.table.thisTableIsStillEmpty',
+                                  'This table is still empty'
+                                )}
                               </div>
                               <div className="text-[11px] leading-relaxed">
-                                {t('ideas.table.startWithStructureChooseAFrameworkAddTheFirstRowOrUseATempla', 'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.')}
+                                {t(
+                                  'ideas.table.startWithStructureChooseAFrameworkAddTheFirstRowOrUseATempla',
+                                  'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'
+                                )}
                               </div>
                               {!locked && (
                                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -3018,7 +3032,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
                         {t('ideas.table.edges', 'Edges')} ({edges.length})
                       </div>
-                      <table /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left">
+                      <table
+                        /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left"
+                      >
                         <thead>
                           <tr className="border-b border-c-border-subtle">
                             <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
@@ -3034,10 +3050,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         </thead>
                         <tbody>
                           {edges.map((e) => (
-                            <tr
-                              key={e.id}
-                              className="border-b border-c-border-subtle"
-                            >
+                            <tr key={e.id} className="border-b border-c-border-subtle">
                               <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
                                 {e.source}
                               </td>
@@ -3388,7 +3401,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onConvertToInitiative={(nodeId) => {
           if (onConvertProp) onConvertProp('initiative');
           else
-            toast.success(t('ideas.table.convertingIdeaToInitiative', 'Converting idea to initiative'));
+            toast.success(
+              t('ideas.table.convertingIdeaToInitiative', 'Converting idea to initiative')
+            );
         }}
       />
 

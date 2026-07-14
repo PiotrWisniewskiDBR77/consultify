@@ -135,9 +135,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
         <h3 className="mb-2 min-h-[3.5rem] text-lg font-bold text-c-text transition-colors line-clamp-2 group-hover:text-c-accent">
           {article.title}
         </h3>
-        <p className="mb-4 flex-1 text-sm text-c-text-secondary line-clamp-3">
-          {article.summary}
-        </p>
+        <p className="mb-4 flex-1 text-sm text-c-text-secondary line-clamp-3">{article.summary}</p>
         <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:opacity-90">
           {t('landing.knowledge.readMore', 'Read Full Article')}
           <ArrowRight size={14} />
@@ -189,9 +187,7 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
 
   if (isLoading) {
     return (
-      <section
-        className={`py-20 bg-c-bg ${className}`}
-      >
+      <section className={`py-20 bg-c-bg ${className}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-c-accent" />

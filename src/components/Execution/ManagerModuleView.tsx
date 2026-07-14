@@ -11,8 +11,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
-
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
+
 import { Api } from '../../services/api';
 import {
   V8ExecutionControlApi,
@@ -349,83 +349,83 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
 
   return (
     <V8UnavailableBanner moduleName="Manager Cockpit">
-    <div className="h-full flex flex-col bg-c-bg overflow-hidden">
-      {/* ─── Body: Table + Preview ─── */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Table (left) */}
-        <div
-          className={`flex-1 min-w-0 ${
-            selectedProblem || workspaceMode ? 'border-r border-c-border-subtle' : ''
-          }`}
-        >
-          <ProblemTable
-            rows={rows}
-            selectedId={selectedId}
-            onSelect={handleSelect}
-            onDoubleClick={handleDoubleClick}
-            onAction={handleAction}
-            loading={loading}
-            emptyMessage={
-              loading
-                ? undefined
-                : t('manager.noProblems', 'No problems detected — everything is on track.')
-            }
-          />
-        </div>
-
-        {/* Preview (right) */}
-        {!workspaceMode && selectedProblem && (
-          <div className="w-[380px] shrink-0 flex flex-col">
-            <ProblemPreview
-              problem={selectedProblem}
-              onAction={handlePreviewAction}
-              onClose={() => setSelectedId(null)}
-              onOpenEntity={onOpenEntity}
-              confirmedOutcome={
-                selectedProblem.sourceEntityType === 'DECISION'
-                  ? decisionOutcomes[selectedProblem.sourceEntityId]
-                  : undefined
+      <div className="h-full flex flex-col bg-c-bg overflow-hidden">
+        {/* ─── Body: Table + Preview ─── */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Table (left) */}
+          <div
+            className={`flex-1 min-w-0 ${
+              selectedProblem || workspaceMode ? 'border-r border-c-border-subtle' : ''
+            }`}
+          >
+            <ProblemTable
+              rows={rows}
+              selectedId={selectedId}
+              onSelect={handleSelect}
+              onDoubleClick={handleDoubleClick}
+              onAction={handleAction}
+              loading={loading}
+              emptyMessage={
+                loading
+                  ? undefined
+                  : t('manager.noProblems', 'No problems detected — everything is on track.')
               }
             />
-            {/* AI Suggest button at bottom of preview */}
-            <div className="shrink-0 border-t border-c-border-subtle px-3 py-2">
-              <button
-                type="button"
-                onClick={() => toggleAiRecommend(selectedProblem.id)}
-                className={`${getMenu3AiButtonClass(
-                  workspaceMode === 'recommend' && aiProblemId === selectedProblem.id
-                )} w-full justify-center`}
-              >
-                <Sparkles size={13} />
-                {t('execution.manager.ai.suggest', 'AI — How to manage this?')}
-              </button>
-            </div>
           </div>
-        )}
 
-        {workspaceMode && (
-          <div className="w-[460px] shrink-0 min-w-0 border-l border-c-border-subtle">
-            <AiRecommendationPanel
-              isOpen={Boolean(workspaceMode)}
-              onClose={closeWorkspacePanel}
-              mode={workspaceMode}
-              laneId={moduleId}
-              problemId={aiProblemId}
-              projectId={projectId}
-              rows={rows}
-              onSelectProblem={(problemId) => {
-                const row = rows.find((item) => item.id === problemId);
-                if (row) {
-                  setSelectedId(problemId);
-                  setAiProblemId(undefined);
-                  setWorkspaceMode(null);
+          {/* Preview (right) */}
+          {!workspaceMode && selectedProblem && (
+            <div className="w-[380px] shrink-0 flex flex-col">
+              <ProblemPreview
+                problem={selectedProblem}
+                onAction={handlePreviewAction}
+                onClose={() => setSelectedId(null)}
+                onOpenEntity={onOpenEntity}
+                confirmedOutcome={
+                  selectedProblem.sourceEntityType === 'DECISION'
+                    ? decisionOutcomes[selectedProblem.sourceEntityId]
+                    : undefined
                 }
-              }}
-            />
-          </div>
-        )}
+              />
+              {/* AI Suggest button at bottom of preview */}
+              <div className="shrink-0 border-t border-c-border-subtle px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => toggleAiRecommend(selectedProblem.id)}
+                  className={`${getMenu3AiButtonClass(
+                    workspaceMode === 'recommend' && aiProblemId === selectedProblem.id
+                  )} w-full justify-center`}
+                >
+                  <Sparkles size={13} />
+                  {t('execution.manager.ai.suggest', 'AI — How to manage this?')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {workspaceMode && (
+            <div className="w-[460px] shrink-0 min-w-0 border-l border-c-border-subtle">
+              <AiRecommendationPanel
+                isOpen={Boolean(workspaceMode)}
+                onClose={closeWorkspacePanel}
+                mode={workspaceMode}
+                laneId={moduleId}
+                problemId={aiProblemId}
+                projectId={projectId}
+                rows={rows}
+                onSelectProblem={(problemId) => {
+                  const row = rows.find((item) => item.id === problemId);
+                  if (row) {
+                    setSelectedId(problemId);
+                    setAiProblemId(undefined);
+                    setWorkspaceMode(null);
+                  }
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </V8UnavailableBanner>
   );
 };

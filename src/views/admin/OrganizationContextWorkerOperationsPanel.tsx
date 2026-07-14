@@ -193,9 +193,7 @@ export function OrganizationContextWorkerOperationsPanel({
             <RefreshCw size={14} />
             Processing Jobs
           </p>
-          {summary && (
-            <span className="text-xs text-c-text-muted">{configuredBackend}</span>
-          )}
+          {summary && <span className="text-xs text-c-text-muted">{configuredBackend}</span>}
         </div>
       </div>
 
@@ -203,21 +201,15 @@ export function OrganizationContextWorkerOperationsPanel({
         <div className="grid grid-cols-2 gap-2 border-b border-c-border-subtle p-3 text-xs">
           <div className="rounded bg-c-surface-raised p-2">
             <p className="text-c-text-muted">Pending</p>
-            <p className="text-lg font-semibold text-c-text">
-              {summary.pendingCount}
-            </p>
+            <p className="text-lg font-semibold text-c-text">{summary.pendingCount}</p>
           </div>
           <div className="rounded bg-c-surface-raised p-2">
             <p className="text-c-text-muted">Needs attention</p>
-            <p className="text-lg font-semibold text-c-text">
-              {summary.blockedCount}
-            </p>
+            <p className="text-lg font-semibold text-c-text">{summary.blockedCount}</p>
           </div>
           <div className="rounded bg-c-surface-raised p-2">
             <p className="text-c-text-muted">Claimed</p>
-            <p className="text-lg font-semibold text-c-text">
-              {Number(summary.claimedCount || 0)}
-            </p>
+            <p className="text-lg font-semibold text-c-text">{Number(summary.claimedCount || 0)}</p>
           </div>
           <div className="rounded bg-c-surface-raised p-2">
             <p className="text-c-text-muted">Stale locks</p>
@@ -751,20 +743,14 @@ export function OrganizationContextWorkerOperationsPanel({
       )}
 
       {jobs.length === 0 ? (
-        <p className="p-3 text-sm text-c-text-muted">
-          No context processing jobs found.
-        </p>
+        <p className="p-3 text-sm text-c-text-muted">No context processing jobs found.</p>
       ) : (
         <div className="divide-y divide-slate-200 dark:divide-navy-700">
           {jobs.map((job) => (
             <div key={job.id} className="p-3 text-sm">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-c-text">
-                  {job.status.replaceAll('_', ' ')}
-                </span>
-                <span className="text-xs text-c-text-muted">
-                  {formatTimestamp(job.createdAt)}
-                </span>
+                <span className="font-medium text-c-text">{job.status.replaceAll('_', ' ')}</span>
+                <span className="text-xs text-c-text-muted">{formatTimestamp(job.createdAt)}</span>
               </div>
               <p className="mt-1 text-c-text-secondary">
                 Document: <span className="font-mono">{job.documentId}</span>

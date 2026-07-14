@@ -27,8 +27,8 @@
  */
 import React, { useMemo } from 'react';
 
-import StandardTable from '../standard/StandardTable';
 import type { TableColumn } from '../standard/StandardTable';
+import StandardTable from '../standard/StandardTable';
 
 // ── Modele danych (kształty 1:1 z ExecutiveAggregateSnapshot + actionCenter) ──
 export interface OneLookHealth {
@@ -139,7 +139,8 @@ const ragUpBar = (pct: number | null): string => {
 };
 
 const riskBand = (score: number): { dot: string; text: string; pl: string; en: string } => {
-  if (score >= 15) return { dot: 'bg-c-danger', text: 'text-c-danger', pl: 'Krytyczne', en: 'Critical' };
+  if (score >= 15)
+    return { dot: 'bg-c-danger', text: 'text-c-danger', pl: 'Krytyczne', en: 'Critical' };
   if (score >= 8) return { dot: 'bg-c-warning', text: 'text-c-warning', pl: 'Wysokie', en: 'High' };
   return { dot: 'bg-c-success', text: 'text-c-success', pl: 'Umiarkowane', en: 'Moderate' };
 };
@@ -181,7 +182,8 @@ const AnswerCard: React.FC<{
 const fmtMoney = (n: number, currency: string): string => {
   const abs = Math.abs(n);
   const sign = n < 0 ? '−' : '';
-  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)} mln ${currency}`;
+  if (abs >= 1_000_000)
+    return `${sign}${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)} mln ${currency}`;
   if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)} tys. ${currency}`;
   return `${sign}${Math.round(abs)} ${currency}`;
 };
@@ -320,7 +322,11 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
         width: '150px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
-          return <span className={`text-sm font-medium ${band.text}`}>{decisionKindLabel(row.kind)}</span>;
+          return (
+            <span className={`text-sm font-medium ${band.text}`}>
+              {decisionKindLabel(row.kind)}
+            </span>
+          );
         },
       },
       {
@@ -373,10 +379,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
         {/* ── RZĄD ODPOWIEDZI (one-look) ── */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {/* 1. Kondycja / postęp */}
-          <AnswerCard
-            question={tr('Kondycja', 'Health')}
-            footer={<Bar pct={healthPct} />}
-          >
+          <AnswerCard question={tr('Kondycja', 'Health')} footer={<Bar pct={healthPct} />}>
             <div className="flex items-baseline gap-1">
               <span className={`text-2xl font-bold tabular-nums ${ragUp(healthPct)}`}>
                 {healthPct != null ? healthPct : '—'}
@@ -391,19 +394,22 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
           </AnswerCard>
 
           {/* 2. On-time */}
-          <AnswerCard
-            question={tr('Na czas', 'On-time')}
-            footer={<Bar pct={onTimePct} />}
-          >
+          <AnswerCard question={tr('Na czas', 'On-time')} footer={<Bar pct={onTimePct} />}>
             <div className="flex items-baseline gap-1">
               <span className={`text-2xl font-bold tabular-nums ${ragUp(onTimePct)}`}>
                 {onTimePct != null ? `${onTimePct}%` : '—'}
               </span>
             </div>
             <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-c-text-muted">
-              <span className="text-c-success">{onTime.onTrackCount} {tr('na tor', 'on-track')}</span>
-              <span className="text-c-warning">{onTime.atRiskCount} {tr('ryzyko', 'at-risk')}</span>
-              <span className="text-c-danger">{onTime.delayedCount} {tr('opóźn.', 'delayed')}</span>
+              <span className="text-c-success">
+                {onTime.onTrackCount} {tr('na tor', 'on-track')}
+              </span>
+              <span className="text-c-warning">
+                {onTime.atRiskCount} {tr('ryzyko', 'at-risk')}
+              </span>
+              <span className="text-c-danger">
+                {onTime.delayedCount} {tr('opóźn.', 'delayed')}
+              </span>
             </div>
           </AnswerCard>
 
@@ -442,7 +448,9 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
               utilPct != null ? (
                 <Bar
                   pct={utilPct}
-                  barClass={utilPct > 100 ? 'bg-c-danger' : utilPct >= 60 ? 'bg-c-success' : 'bg-c-warning'}
+                  barClass={
+                    utilPct > 100 ? 'bg-c-danger' : utilPct >= 60 ? 'bg-c-success' : 'bg-c-warning'
+                  }
                 />
               ) : undefined
             }
@@ -459,9 +467,13 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                 </span>
               )}
               {people.underutilizedCount > 0 && (
-                <span>{people.underutilizedCount} {tr('wolne', 'free')}</span>
+                <span>
+                  {people.underutilizedCount} {tr('wolne', 'free')}
+                </span>
               )}
-              <span>{people.headcount} {tr('osób', 'ppl')}</span>
+              <span>
+                {people.headcount} {tr('osób', 'ppl')}
+              </span>
             </div>
           </AnswerCard>
 
@@ -482,7 +494,8 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                 {decisions.filter((d) => d.kind === 'blocker').length} {tr('blokery', 'blockers')}
               </span>
               <span className="text-c-danger">
-                {decisions.filter((d) => d.kind === 'overdue').length} {tr('przetermin.', 'overdue')}
+                {decisions.filter((d) => d.kind === 'overdue').length}{' '}
+                {tr('przetermin.', 'overdue')}
               </span>
             </div>
           </AnswerCard>
@@ -505,7 +518,9 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
             <StandardTable
               columns={riskColumns}
               data={topRisks as unknown as Array<Record<string, unknown> & { id: string }>}
-              onRowClick={onOpenEntity ? (row) => onOpenEntity('risk', String((row as any).id)) : undefined}
+              onRowClick={
+                onOpenEntity ? (row) => onOpenEntity('risk', String((row as any).id)) : undefined
+              }
               empty={{
                 title: tr('Brak ryzyk krytycznych', 'No critical risks'),
                 description: tr(
@@ -535,7 +550,9 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
               columns={decisionColumns}
               data={decisions as unknown as Array<Record<string, unknown> & { id: string }>}
               onRowClick={
-                onOpenEntity ? (row) => onOpenEntity('decision', String((row as any).id)) : undefined
+                onOpenEntity
+                  ? (row) => onOpenEntity('decision', String((row as any).id))
+                  : undefined
               }
               empty={{
                 title: tr('Skrzynka pusta', 'Inbox zero'),
@@ -570,9 +587,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                       {fmtDate(m.targetDate, isPolish)}
                     </span>
-                    {m.status && (
-                      <span className="text-[11px] text-c-text-muted">{m.status}</span>
-                    )}
+                    {m.status && <span className="text-[11px] text-c-text-muted">{m.status}</span>}
                   </div>
                   <div className="mt-1 truncate text-sm font-medium text-c-text">{m.name}</div>
                   <div className="truncate text-xs text-c-text-muted">{m.initiativeName}</div>

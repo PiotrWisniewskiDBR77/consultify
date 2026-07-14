@@ -11,15 +11,11 @@
  *   - drdConclusionContract.ts — narrative layer (deterministic stub; LLM = TODO)
  */
 
+import { type DrdLlmNarratorOptions, type LlmLike, makeLlmNarrator } from './drdLlmNarrator';
 import { buildDrdReportHtml } from './drdReportHtml';
 import {
-  makeLlmNarrator,
-  type DrdLlmNarratorOptions,
-  type LlmLike,
-} from './drdLlmNarrator';
-import {
-  buildDrdReportModel,
   type AreaScores,
+  buildDrdReportModel,
   type DrdReportMeta,
   type DrdReportModel,
   type DrdReportOptions,
@@ -54,16 +50,18 @@ export async function generateDrdReport(
   // narrator itself is fail-safe.
   const narrator =
     options.narrator ??
-    (options.llm ? makeLlmNarrator({ llm: options.llm, ...(options.llmOptions || {}) }) : undefined);
+    (options.llm
+      ? makeLlmNarrator({ llm: options.llm, ...(options.llmOptions || {}) })
+      : undefined);
 
   const model = await buildDrdReportModel(areaScores, meta, { narrator });
   const html = buildDrdReportHtml(model);
   return { html, model };
 }
 
+export * from './drdConclusionContract';
+export * from './drdIndustryBenchmark';
+export * from './drdLlmNarrator';
+export * from './drdReportHtml';
 export * from './drdReportModel';
 export * from './drdReportSvg';
-export * from './drdReportHtml';
-export * from './drdConclusionContract';
-export * from './drdLlmNarrator';
-export * from './drdIndustryBenchmark';

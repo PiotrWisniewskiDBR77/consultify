@@ -28,7 +28,7 @@ interface AssignmentRow {
 }
 
 export const InterviewAssignmentsPanel: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -107,7 +107,7 @@ export const InterviewAssignmentsPanel: React.FC = () => {
   const handleSendBack = async (assignmentId: string) => {
     const reason =
       window.prompt(t('admin.interviewAssignmentsPanel.sendBackReason')) ||
-      (t('admin.interviewAssignmentsPanel.pleaseCompleteTheInterview'));
+      t('admin.interviewAssignmentsPanel.pleaseCompleteTheInterview');
     try {
       await Api.post(`/interview/assignments/${assignmentId}/send-back`, { reason });
       await refresh();
@@ -227,7 +227,9 @@ export const InterviewAssignmentsPanel: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-sm"
+            >
               <thead>
                 <tr className="text-left text-xs text-slate-500 dark:text-slate-400">
                   <th className="py-2 pr-3">{t('admin.interviewAssignmentsPanel.template')}</th>

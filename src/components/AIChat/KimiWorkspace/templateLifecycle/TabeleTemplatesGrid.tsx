@@ -110,9 +110,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
                 />
               </div>
               {tpl.description && (
-                <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">
-                  {tpl.description}
-                </p>
+                <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">{tpl.description}</p>
               )}
               {(tpl.usage_count > 0 || tpl.is_featured) && (
                 <p className="mt-2 text-[10px] text-c-text-secondary tabular-nums">

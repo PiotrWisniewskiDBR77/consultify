@@ -183,7 +183,14 @@ export function buildPortfolioAdvisory(
   }
 
   const conclusion = narratePortfolio(
-    { sequence, synergies: resolvedSynergies, totalCapex, budget: num(budget), budgetVerdict, deferred },
+    {
+      sequence,
+      synergies: resolvedSynergies,
+      totalCapex,
+      budget: num(budget),
+      budgetVerdict,
+      deferred,
+    },
     isPL
   );
 
@@ -198,10 +205,7 @@ export function buildPortfolioAdvisory(
   };
 }
 
-function narratePortfolio(
-  a: Omit<PortfolioAdvisory, 'conclusion'>,
-  isPL: boolean
-): string {
+function narratePortfolio(a: Omit<PortfolioAdvisory, 'conclusion'>, isPL: boolean): string {
   const fmt = (n: number): string =>
     new Intl.NumberFormat(isPL ? 'pl-PL' : 'en-US', { maximumFractionDigits: 0 }).format(
       Math.round(n)

@@ -8,19 +8,19 @@
  * System-template'y NIE przechodzą tym flow (seed migracjami).
  */
 
-import { ArrowLeft, ArrowRight, Check, FileText, LayoutTemplate, Table2, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, FileText, LayoutTemplate, Table2, X } from 'lucide-react';
 import React, { useState } from 'react';
 
 import Button from '@/components/ui/primitives/Button';
 
+import { TextInput } from './templateBuilderFields';
 import {
   SCOPE_LABELS,
   TEMPLATE_TYPE_LABELS,
   type TemplateScope,
   type TemplateType,
 } from './templateBuilderModel';
-import { TextInput } from './templateBuilderFields';
 
 export interface TemplateCreateWizardProps {
   open: boolean;
@@ -31,7 +31,11 @@ export interface TemplateCreateWizardProps {
 }
 
 const TYPE_CARDS: { type: TemplateType; icon: LucideIcon; desc: string }[] = [
-  { type: 'deck', icon: LayoutTemplate, desc: 'Reużywalny układ slajdów: archetypy, kolejność, placeholdery.' },
+  {
+    type: 'deck',
+    icon: LayoutTemplate,
+    desc: 'Reużywalny układ slajdów: archetypy, kolejność, placeholdery.',
+  },
   { type: 'doc', icon: FileText, desc: 'Struktura dokumentu: sekcje, typy bloków, głębokość.' },
   { type: 'table', icon: Table2, desc: 'Schemat arkusza: kolumny, typy danych, formuły.' },
 ];
@@ -79,7 +83,12 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
       aria-label="Nowy szablon"
       data-testid="template-create-wizard"
     >
-      <button type="button" aria-label="Zamknij" className="absolute inset-0 bg-black/50 z-overlay" onClick={cancel} />
+      <button
+        type="button"
+        aria-label="Zamknij"
+        className="absolute inset-0 bg-black/50 z-overlay"
+        onClick={cancel}
+      />
       <div className="relative z-modal w-full max-w-lg rounded-xl border border-c-border bg-c-surface shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
@@ -112,7 +121,12 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
           {step === 1 && (
             <div className="space-y-3" data-testid="wizard-step-name">
               <label className="block text-sm font-medium text-c-text">Nazwa szablonu</label>
-              <TextInput value={name} onChange={setName} placeholder="np. Raport statusu projektu" testId="wizard-name" />
+              <TextInput
+                value={name}
+                onChange={setName}
+                placeholder="np. Raport statusu projektu"
+                testId="wizard-name"
+              />
               <p className="text-xs text-c-text-muted">Nazwę zmienisz później w builderze.</p>
             </div>
           )}
@@ -170,13 +184,17 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
                     onClick={() => setScope(s)}
                     className={[
                       'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                      active ? 'border-c-focus bg-c-focus/10' : 'border-c-border bg-c-surface hover:bg-c-bg',
+                      active
+                        ? 'border-c-focus bg-c-focus/10'
+                        : 'border-c-border bg-c-surface hover:bg-c-bg',
                     ].join(' ')}
                     data-testid={`wizard-scope-${s}`}
                     aria-pressed={active}
                   >
                     <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-c-text">{SCOPE_LABELS[s]}</span>
+                      <span className="block text-sm font-semibold text-c-text">
+                        {SCOPE_LABELS[s]}
+                      </span>
                       <span className="block text-xs text-c-text-muted">
                         {s === 'private'
                           ? 'Widoczny tylko dla Ciebie. Domyślnie.'

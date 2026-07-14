@@ -156,9 +156,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                   </button>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold text-c-text">
-                        {model.name}
-                      </h4>
+                      <h4 className="text-sm font-semibold text-c-text">{model.name}</h4>
                       {isPreferred && (
                         <span className="px-2 py-0.5 bg-navy-900 text-white text-xs rounded-full dark:bg-c-surface dark:text-navy-950">
                           {t('settings.ai.modelSelection.preferred', 'Preferred')}

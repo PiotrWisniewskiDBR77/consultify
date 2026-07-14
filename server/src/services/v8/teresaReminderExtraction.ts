@@ -74,7 +74,9 @@ export function extractReminder(message: string, now: Date = new Date()): Remind
   }
 
   // 2) „za N dni/tygodni/godzin" / „in N days/weeks/hours"
-  const relPl = text.match(/\bza\s+(\d{1,3})\s+(godzin\w*|dni|dzie[ńn]|tydzie[ńn]|tygodni\w*|miesi[ąa]c\w*)/i);
+  const relPl = text.match(
+    /\bza\s+(\d{1,3})\s+(godzin\w*|dni|dzie[ńn]|tydzie[ńn]|tygodni\w*|miesi[ąa]c\w*)/i
+  );
   const relEn = text.match(/\bin\s+(\d{1,3})\s+(hours?|days?|weeks?|months?)\b/i);
   const rel = relPl || relEn;
   if (rel) {

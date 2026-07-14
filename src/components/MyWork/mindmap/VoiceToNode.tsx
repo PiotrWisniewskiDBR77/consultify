@@ -194,7 +194,9 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
                     className="flex items-center gap-2 p-2 rounded-xl bg-c-surface-raised border border-c-success"
                   >
                     <Sparkles size={10} className="text-c-success shrink-0" />
-                    <span className="text-[11px] text-c-text-secondary dark:text-c-text">{label}</span>
+                    <span className="text-[11px] text-c-text-secondary dark:text-c-text">
+                      {label}
+                    </span>
                   </div>
                 ))}
               </div>

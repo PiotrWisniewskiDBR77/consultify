@@ -120,15 +120,14 @@ function parseFindings(raw: string | null | undefined): AuditFinding[] {
  */
 function findingToDraft(finding: AuditFinding, auditName?: string | null) {
   const rawTitle = (finding.title || finding.name || '').toString().trim();
-  const title = (
-    rawTitle || `Audyt: ${auditName || 'ustalenie'} — działanie naprawcze`
-  ).slice(0, 200);
+  const title = (rawTitle || `Audyt: ${auditName || 'ustalenie'} — działanie naprawcze`).slice(
+    0,
+    200
+  );
 
   const descParts = [
     finding.description?.toString().trim(),
-    finding.recommendation
-      ? `Rekomendacja: ${finding.recommendation.toString().trim()}`
-      : '',
+    finding.recommendation ? `Rekomendacja: ${finding.recommendation.toString().trim()}` : '',
   ].filter(Boolean);
 
   const problemStatement = finding.description?.toString().trim() || rawTitle || null;
@@ -227,7 +226,9 @@ export async function createInitiativeFromAudit(
   // post-create UPDATE, exactly like assessmentInitiativeService.
   try {
     const cols = await queryHelpers.getTableColumns('initiatives').catch(() => null);
-    const colSet = cols ? new Set((cols || []).map((c) => c.name).filter(Boolean) as string[]) : null;
+    const colSet = cols
+      ? new Set((cols || []).map((c) => c.name).filter(Boolean) as string[])
+      : null;
     const upCols: string[] = [];
     const upVals: unknown[] = [];
     const setIf = (col: string, value: unknown) => {

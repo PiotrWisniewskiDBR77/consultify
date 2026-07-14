@@ -290,7 +290,9 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
           Macierz Obszarów Praktyk
         </h2>
         <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl overflow-hidden">
-          <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-sm">
+          <table
+            /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-sm"
+          >
             <thead>
               <tr className="bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800">
                 <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400">

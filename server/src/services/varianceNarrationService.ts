@@ -152,8 +152,7 @@ export function narrateVariance(bridge: VarianceBridge): VarianceNarration {
     });
 
   const top = drivers[0];
-  const netDir =
-    netVariance > 0 ? 'favorably' : netVariance < 0 ? 'unfavorably' : 'neutrally';
+  const netDir = netVariance > 0 ? 'favorably' : netVariance < 0 ? 'unfavorably' : 'neutrally';
 
   // Headline: "Budget swung -120k (-8.0%), 62% driven by COGS."
   let headline: string;
@@ -161,7 +160,7 @@ export function narrateVariance(bridge: VarianceBridge): VarianceNarration {
     headline = 'Budget on plan — no material variance.';
   } else if (top && top.pct > 0) {
     headline = `Budget swung ${fmtAmount(roundTo(netVariance))} (${fmtPct(
-      netPctOfPlan,
+      netPctOfPlan
     )}), ${fmtPct(top.pct)} driven by ${top.line}.`;
   } else {
     headline = `Budget swung ${fmtAmount(roundTo(netVariance))} (${fmtPct(netPctOfPlan)}).`;
@@ -178,21 +177,21 @@ export function narrateVariance(bridge: VarianceBridge): VarianceNarration {
   const parts: string[] = [];
   parts.push(
     `Actuals deviated ${netDir} from plan by ${fmtAmount(
-      roundTo(netVariance),
-    )} (${fmtPct(netPctOfPlan)} of planned base).`,
+      roundTo(netVariance)
+    )} (${fmtPct(netPctOfPlan)} of planned base).`
   );
   if (worst) {
     parts.push(
       `The largest drag was ${worst.line} at ${fmtAmount(
-        worst.contribution,
-      )} (${fmtPct(worst.pct)} of total variance).`,
+        worst.contribution
+      )} (${fmtPct(worst.pct)} of total variance).`
     );
   }
   if (best) {
     parts.push(
       `Offsetting it, ${best.line} contributed ${fmtAmount(
-        best.contribution,
-      )} favorably (${fmtPct(best.pct)} of total variance).`,
+        best.contribution
+      )} favorably (${fmtPct(best.pct)} of total variance).`
     );
   }
   const severity = varianceSeverity(lines);
@@ -201,7 +200,7 @@ export function narrateVariance(bridge: VarianceBridge): VarianceNarration {
       ? 'Overall the budget is on track.'
       : severity === 'watch'
         ? 'This warrants monitoring.'
-        : 'This is materially off-track and needs action.',
+        : 'This is materially off-track and needs action.'
   );
 
   return {

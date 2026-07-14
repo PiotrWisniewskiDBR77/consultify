@@ -1,15 +1,15 @@
+import { buildPorterStaircasePromptRules } from '@/config/porter/porterInsightStaircase';
 import {
   buildForceLadderPromptBlock,
   PORTER_FORCE_IDS,
   PORTER_FORCE_LABELS,
 } from '@/config/porter/porterQuestionBank';
-import { buildPorterStaircasePromptRules } from '@/config/porter/porterInsightStaircase';
 import {
   buildPorterMoveConclusionPromptRules,
   intensityFromScore,
   mapIndustryProfitability,
-  synthesizeForceIntensity,
   type PorterForceVerdict,
+  synthesizeForceIntensity,
 } from '@/config/porter/porterSynthesisEngine';
 import type {
   InitiativeDraft,
@@ -20,9 +20,8 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 const FORCE_IDS: PorterForceId[] = PORTER_FORCE_IDS;
 
 /**
@@ -54,7 +53,9 @@ export function buildPorterFactsBlock(porterData: PorterData | undefined): strin
         : signal.evidenceType === 'hypothesis'
           ? 'missing'
           : 'declared';
-    lines.push(`- [${signal.id}] (${signal.type}, ${conf}) ${signal.content} — source: ${signal.sourceLabel}`);
+    lines.push(
+      `- [${signal.id}] (${signal.type}, ${conf}) ${signal.content} — source: ${signal.sourceLabel}`
+    );
   });
   return lines.join('\n');
 }
@@ -194,7 +195,9 @@ export function buildMarketForcesImplicationsPrompt(porterData: PorterData): str
   const verdicts = {} as Record<PorterForceId, PorterForceVerdict>;
   FORCE_IDS.forEach((forceId) => {
     const force = porterData.forces[forceId];
-    const answers = Array.isArray((force as any)?.ladderAnswers) ? (force as any).ladderAnswers : [];
+    const answers = Array.isArray((force as any)?.ladderAnswers)
+      ? (force as any).ladderAnswers
+      : [];
     verdicts[forceId] =
       answers.length > 0
         ? synthesizeForceIntensity(forceId, answers)
@@ -380,28 +383,36 @@ export function applyMarketForcesPendingAction({
       // split the structured ones into structuralDrivers.
       const rawDrivers = Array.isArray(force.drivers) ? force.drivers : [];
       const stringDrivers = rawDrivers
-        .map((d: any) => (typeof d === 'string' ? d : typeof d?.finding === 'string' ? d.finding : ''))
+        .map((d: any) =>
+          typeof d === 'string' ? d : typeof d?.finding === 'string' ? d.finding : ''
+        )
         .filter(Boolean);
       const structuralDrivers = rawDrivers
         .filter(
           (d: any) =>
             d &&
             typeof d === 'object' &&
-            ['concentration', 'switching-costs', 'barriers', 'scale-economics'].includes(d.dimension) &&
+            ['concentration', 'switching-costs', 'barriers', 'scale-economics'].includes(
+              d.dimension
+            ) &&
             typeof d.finding === 'string' &&
             d.finding.trim()
         )
         .map((d: any) => ({ dimension: d.dimension, finding: String(d.finding) }));
 
       const staircase =
-        force.staircase && typeof force.staircase === 'object' && typeof force.staircase.fact === 'string'
+        force.staircase &&
+        typeof force.staircase === 'object' &&
+        typeof force.staircase.fact === 'string'
           ? {
               fact: force.staircase.fact,
               factRefs: Array.isArray(force.staircase.factRefs)
                 ? force.staircase.factRefs.filter(Boolean).map(String)
                 : [],
               interpretation:
-                typeof force.staircase.interpretation === 'string' ? force.staircase.interpretation : '',
+                typeof force.staircase.interpretation === 'string'
+                  ? force.staircase.interpretation
+                  : '',
               implication:
                 typeof force.staircase.implication === 'string' ? force.staircase.implication : '',
             }

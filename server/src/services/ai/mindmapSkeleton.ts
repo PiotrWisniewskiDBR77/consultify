@@ -69,7 +69,7 @@ const SKELETON_FRAGMENT_PREFIX =
  * and dangling parentheses so a survivor reads cleanly.
  */
 function cleanBranch(raw: string): string {
-  let l = clampLabel(raw)
+  const l = clampLabel(raw)
     // Strip a leading "N filarów"/"N pod-węzłów" counter that leaked in.
     .replace(/^\d+\s+(?:filar\w*|pod[- ]?w[eę]z\w*)\s*/i, '')
     // Drop an unbalanced trailing ")" or leading "(" from split parentheticals.
@@ -175,10 +175,7 @@ function deriveBranches(intent: string): string[] {
  * @param intent  User's restated request (topic + optional list).
  * @param title   Optional explicit title; falls back to the derived root.
  */
-export function buildMindmapSkeleton(
-  intent: string,
-  title?: string
-): MindmapSkeletonGraph {
+export function buildMindmapSkeleton(intent: string, title?: string): MindmapSkeletonGraph {
   const topic = stripMindmapPreamble(String(intent || ''));
   const rootLabel =
     clampLabel(title || '') || clampLabel(topic.split(/[:\n]/)[0] || '') || 'Mapa myśli';

@@ -639,7 +639,7 @@ function buildResponseStyleDirective(lang: PersonaLanguage, style: ResponseStyle
     },
     professional: {
       pl: 'Tryb profesjonalny (konsultingowy): ton partnera doradczego, jakbyś rozmawiał z zarządem klienta płacącego za twój czas. Rzeczowo, z klasą, bez spoufalania — nacisk na rekomendacje, dane klienta i kolejne kroki. Domyślny standard relacji klient–konsultant.',
-      en: 'Professional mode (consulting): the tone of an advisory partner speaking to a paying client\'s leadership team. Substantive, polished, no false familiarity — focused on recommendations, this client\'s data, and next steps. The default client–consultant register.',
+      en: "Professional mode (consulting): the tone of an advisory partner speaking to a paying client's leadership team. Substantive, polished, no false familiarity — focused on recommendations, this client's data, and next steps. The default client–consultant register.",
     },
     friendly: {
       pl: 'Tryb przyjazny: ciepły, bezpośredni, zwracaj się na „Ty". Zachowaj pełną rzeczowość i strukturę — przyjazny ton nie oznacza gadulstwa ani spadku jakości merytorycznej.',
@@ -649,7 +649,9 @@ function buildResponseStyleDirective(lang: PersonaLanguage, style: ResponseStyle
 
   const d = directives[style];
   const body = pl ? d.pl : d.en;
-  const header = pl ? '## STYL ODPOWIEDZI (preferencja użytkownika)' : '## RESPONSE STYLE (user preference)';
+  const header = pl
+    ? '## STYL ODPOWIEDZI (preferencja użytkownika)'
+    : '## RESPONSE STYLE (user preference)';
   return `${header}\n${body}`;
 }
 

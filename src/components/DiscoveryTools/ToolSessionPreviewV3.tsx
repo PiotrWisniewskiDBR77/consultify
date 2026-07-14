@@ -26,7 +26,9 @@ import { getToolCategoryLabel } from './ToolSessionPreview';
  * Falls back to a humanized key (never the raw uppercase enum) when unmapped.
  */
 function toolStatusLabel(t: TFunction, raw: string | null | undefined): string {
-  const key = String(raw ?? '').trim().toLowerCase();
+  const key = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   const map: Record<string, string> = {
     draft: t('preview.statuses.draft', 'Draft'),
     review: t('preview.statuses.review', 'In review'),

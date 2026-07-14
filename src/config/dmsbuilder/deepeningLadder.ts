@@ -63,7 +63,7 @@ export const DMS_DEEPENING_LADDER: Record<DmsLayerId, LadderRung[]> = {
       label: { pl: 'Powierzchnia', en: 'Surface' },
       question: {
         pl: 'Które nieliczne wskaźniki naprawdę rządzą dniem zespołu i czy są widoczne w jednym miejscu przy stanowisku pracy?',
-        en: 'Which few KPIs actually govern the team\'s day, and are they visible in one place at the point of work?',
+        en: "Which few KPIs actually govern the team's day, and are they visible in one place at the point of work?",
       },
       rationale: {
         pl: 'DMS zaczyna się od nielicznych właściwych wskaźników — tablica z 30 metrykami to nie widoczność, to szum.',
@@ -106,7 +106,7 @@ export const DMS_DEEPENING_LADDER: Record<DmsLayerId, LadderRung[]> = {
       },
       rationale: {
         pl: 'Wskaźnik poza wpływem zespołu demotywuje zamiast sterować — widoczność musi być sparowana ze sprawczością.',
-        en: 'A KPI beyond the team\'s influence demotivates instead of steering — visibility must be paired with agency.',
+        en: "A KPI beyond the team's influence demotivates instead of steering — visibility must be paired with agency.",
       },
     },
   ],
@@ -160,7 +160,7 @@ export const DMS_DEEPENING_LADDER: Record<DmsLayerId, LadderRung[]> = {
       },
       rationale: {
         pl: 'Rytm zależny od jednej osoby zawala się przy jej urlopie — trwała kadencja to wyszkolona zdolność, nie charyzma lidera.',
-        en: 'A rhythm dependent on one person collapses on their leave — durable cadence is a trained capability, not a leader\'s charisma.',
+        en: "A rhythm dependent on one person collapses on their leave — durable cadence is a trained capability, not a leader's charisma.",
       },
     },
   ],
@@ -324,7 +324,7 @@ export const DMS_PROPOSAL_BANK: Record<DmsLayerId, LayerProposal[]> = {
       rung: 'risk-capability',
       title: {
         pl: 'Usunąć wskaźniki poza wpływem zespołu',
-        en: 'Drop metrics beyond the team\'s influence',
+        en: "Drop metrics beyond the team's influence",
       },
       explanation: {
         pl: 'Metryka, na którą zespół nie ma wpływu, demotywuje i uczy ignorowania tablicy — zostawcie tylko te, na które codzienne działania realnie oddziałują.',
@@ -374,7 +374,7 @@ export const DMS_PROPOSAL_BANK: Record<DmsLayerId, LayerProposal[]> = {
       },
       explanation: {
         pl: 'Gdy huddle potrafi poprowadzić kilku przeszkolonych członków zespołu, rytm przetrwa urlop lidera — trwała kadencja to wyszkolona zdolność, nie charyzma jednej osoby.',
-        en: 'When several trained team members can run the huddle, the rhythm survives the leader\'s leave — durable cadence is a trained capability, not one person\'s charisma.',
+        en: "When several trained team members can run the huddle, the rhythm survives the leader's leave — durable cadence is a trained capability, not one person's charisma.",
       },
     },
   ],

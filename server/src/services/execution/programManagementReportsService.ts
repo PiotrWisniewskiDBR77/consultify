@@ -28,18 +28,21 @@
  * osobną, jawnie oznaczoną pozycję "korekty nieprzypisane", zamiast zgadywać.
  */
 
-import { getInitiativeFunnel } from '../initiative/initiativeLineageService.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
-import { getTimelineWarningsSnapshot, type TimelineWarning } from '../executionControlReadService.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import AIRiskChangeControl from '../aiRiskChangeControl.js';
-import * as workloadCapacityService from '../workloadCapacityService.js';
-import ReportBuilderService from '../reportBuilderService.js';
 import {
+  getTimelineWarningsSnapshot,
+  type TimelineWarning,
+} from '../executionControlReadService.js';
+import { getInitiativeFunnel } from '../initiative/initiativeLineageService.js';
+import ReportBuilderService from '../reportBuilderService.js';
+import * as workloadCapacityService from '../workloadCapacityService.js';
+import {
+  type AxisReading,
   buildThreeAxisReport,
   type ThreeAxisReport,
   type ThreeAxisScope,
-  type AxisReading,
 } from './threeAxisReportService.js';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -105,13 +108,22 @@ export async function fetchValueAxisSplit(
     ]);
 
     const deltaByIni = new Map<string, number>();
-    for (const row of ledgerRows || []) deltaByIni.set(String(row.initiative_id), Number(row.delta_total) || 0);
+    for (const row of ledgerRows || [])
+      deltaByIni.set(String(row.initiative_id), Number(row.delta_total) || 0);
 
-    const totalsByIni = new Map<string, { finCurrent: number; finTarget: number; opCurrent: number; opTarget: number }>();
+    const totalsByIni = new Map<
+      string,
+      { finCurrent: number; finTarget: number; opCurrent: number; opTarget: number }
+    >();
     for (const row of bucketRows || []) {
       const id = String(row.initiative_id);
       const isFinancial = CURRENCY_UNITS.has(String(row.unit || '').toUpperCase());
-      const entry = totalsByIni.get(id) || { finCurrent: 0, finTarget: 0, opCurrent: 0, opTarget: 0 };
+      const entry = totalsByIni.get(id) || {
+        finCurrent: 0,
+        finTarget: 0,
+        opCurrent: 0,
+        opTarget: 0,
+      };
       const baseline = Number(row.baseline_total) || 0;
       const target = Number(row.target_total) || 0;
       if (isFinancial) {
@@ -235,9 +247,12 @@ export interface PendingDecisionRow {
 
 /** Decyzje czekające, ORG/PROJECT-scoped (nie per-user — raport PM nie ma jednego
  *  odbiorcy, w przeciwieństwie do `decisionService.getPendingDecisions(userId, orgId)`). */
-async function fetchPendingDecisions(scope: PmReportScope, limit = 10): Promise<PendingDecisionRow[]> {
+async function fetchPendingDecisions(
+  scope: PmReportScope,
+  limit = 10
+): Promise<PendingDecisionRow[]> {
   try {
-    let where = 'organization_id = ? AND status IN (\'pending\', \'escalated\')';
+    let where = "organization_id = ? AND status IN ('pending', 'escalated')";
     const params: unknown[] = [scope.organizationId];
     if (scope.projectId) {
       where += ' AND project_id = ?';
@@ -274,7 +289,10 @@ export async function buildSponsorOnePager(scope: PmReportScope): Promise<Sponso
   };
   const [threeAxis, alerts, pendingDecisions] = await Promise.all([
     buildThreeAxisReport(axisScope),
-    getTimelineWarningsSnapshot(scope.organizationId, scope.projectId).catch(() => ({ warnings: [], total: 0 })),
+    getTimelineWarningsSnapshot(scope.organizationId, scope.projectId).catch(() => ({
+      warnings: [],
+      total: 0,
+    })),
     fetchPendingDecisions(scope, 5),
   ]);
 
@@ -291,7 +309,8 @@ export async function buildSponsorOnePager(scope: PmReportScope): Promise<Sponso
 
 export function renderSponsorOnePagerMarkdown(data: SponsorOnePagerData): Record<string, string> {
   const { threeAxis, valueSplit, topAlerts, pendingDecisions } = data;
-  const ragEmoji = (r: string) => (r === 'GREEN' ? '🟢' : r === 'AMBER' ? '🟡' : r === 'RED' ? '🔴' : '⚪');
+  const ragEmoji = (r: string) =>
+    r === 'GREEN' ? '🟢' : r === 'AMBER' ? '🟡' : r === 'RED' ? '🔴' : '⚪';
 
   const header = [
     `# Sponsor One-Pager — ${threeAxis.scope.level}`,
@@ -384,7 +403,8 @@ export async function buildSteering(scope: PmReportScope): Promise<SteeringData>
 
 export function renderSteeringMarkdown(data: SteeringData): Record<string, string> {
   const { threeAxis, risks, scopeChanges } = data;
-  const ragEmoji = (r: string) => (r === 'GREEN' ? '🟢' : r === 'AMBER' ? '🟡' : r === 'RED' ? '🔴' : '⚪');
+  const ragEmoji = (r: string) =>
+    r === 'GREEN' ? '🟢' : r === 'AMBER' ? '🟡' : r === 'RED' ? '🔴' : '⚪';
 
   const header = [
     `# Raport Steering — ${threeAxis.scope.level}`,
@@ -395,7 +415,10 @@ export function renderSteeringMarkdown(data: SteeringData): Record<string, strin
 
   const overviewHeader = '| Inicjatywa | T | Z | W | RAG |\n|---|---|---|---|---|';
   const rows = threeAxis.rows
-    .map((r) => `| ${r.name} | ${bar(r.T.pct)} | ${bar(r.Z.pct)} | ${bar(r.W.pct)} | ${ragEmoji(r.rag)} |`)
+    .map(
+      (r) =>
+        `| ${r.name} | ${bar(r.T.pct)} | ${bar(r.Z.pct)} | ${bar(r.W.pct)} | ${ragEmoji(r.rag)} |`
+    )
     .join('\n');
   const threeAxisByInitiative = [
     '## Trzy osie per inicjatywa',
@@ -426,7 +449,11 @@ export function renderSteeringMarkdown(data: SteeringData): Record<string, strin
       ? [
           `- Łącznie zmian: ${scopeChanges.totalChanges} (niekontrolowanych: ${scopeChanges.totalUncontrolled})`,
           `- Wskaźnik kontroli: ${scopeChanges.controlRate}%`,
-          `- Wg typu: ${Object.entries(scopeChanges.byChangeType).map(([k, v]) => `${k}=${v}`).join(', ') || '—'}`,
+          `- Wg typu: ${
+            Object.entries(scopeChanges.byChangeType)
+              .map(([k, v]) => `${k}=${v}`)
+              .join(', ') || '—'
+          }`,
         ].join('\n')
       : '_Zakres raportu = program/organizacja — zmiany zakresu śledzone per-projekt; podaj `projectId`, by je zobaczyć._',
   ].join('\n');
@@ -525,11 +552,7 @@ export function renderPmoWeeklyMarkdown(data: PmoWeeklyData): Record<string, str
   const onTimePct =
     taskStats.doneCount > 0 ? round1((taskStats.doneOnTime / taskStats.doneCount) * 100) : null;
 
-  const header = [
-    '# PMO Weekly',
-    '',
-    `**Stan na:** ${new Date().toISOString()}`,
-  ].join('\n');
+  const header = ['# PMO Weekly', '', `**Stan na:** ${new Date().toISOString()}`].join('\n');
 
   const tasksSection = [
     '## Zadania — on-time / late',
@@ -546,7 +569,15 @@ export function renderPmoWeeklyMarkdown(data: PmoWeeklyData): Record<string, str
     `- Pojemność łączna: ${capacity.summary.totalCapacity}h, przydzielone: ${capacity.summary.totalAllocated}h, backlog: ${capacity.summary.totalBacklog}h`,
     '',
     overloads.length
-      ? ['### Przeciążeni (overload)', ...overloads.slice(0, 10).map((o) => `- **${o.severity.toUpperCase()}** — ${o.name}: +${o.overloadHours}h ponad pojemność`)].join('\n')
+      ? [
+          '### Przeciążeni (overload)',
+          ...overloads
+            .slice(0, 10)
+            .map(
+              (o) =>
+                `- **${o.severity.toUpperCase()}** — ${o.name}: +${o.overloadHours}h ponad pojemność`
+            ),
+        ].join('\n')
       : '_Brak przeciążonych osób w bieżącym tygodniu._',
   ].join('\n');
 
@@ -634,7 +665,9 @@ export async function publishPmReport(
     : params.programId
       ? `program ${params.programId}`
       : 'organizacja';
-  const title = params.title || `${TITLE_BY_KIND[kind]} — ${scopeLabel} (${new Date().toISOString().slice(0, 10)})`;
+  const title =
+    params.title ||
+    `${TITLE_BY_KIND[kind]} — ${scopeLabel} (${new Date().toISOString().slice(0, 10)})`;
 
   const sections = await buildPmReportSections(kind, params);
 
@@ -656,7 +689,12 @@ export async function publishPmReport(
 
   for (const [sectionKey, content] of Object.entries(sections)) {
     try {
-      await ReportBuilderService.updateSectionContent(rb.report.id, sectionKey, content, params.createdBy);
+      await ReportBuilderService.updateSectionContent(
+        rb.report.id,
+        sectionKey,
+        content,
+        params.createdBy
+      );
     } catch (err) {
       logger.warn(
         `[programManagementReportsService] updateSectionContent(${sectionKey}) failed (non-fatal): ${(err as Error)?.message || err}`

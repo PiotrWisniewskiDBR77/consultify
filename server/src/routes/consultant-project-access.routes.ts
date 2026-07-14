@@ -219,72 +219,69 @@ router.get(
 
       // Get all consultant access records grouped by consultant
       const accessRecords = await dbAll<{
-      id: string;
-      consultant_email: string;
-      consultant_id: string | null;
-      project_id: string;
-      project_role: string | null;
-      access_code: string | null;
-      permissions: string;
-      status: string;
-      invited_at: string;
-      accepted_at: string | null;
-    }>(
-      `SELECT cpa.*, p.name as project_name
+        id: string;
+        consultant_email: string;
+        consultant_id: string | null;
+        project_id: string;
+        project_role: string | null;
+        access_code: string | null;
+        permissions: string;
+        status: string;
+        invited_at: string;
+        accepted_at: string | null;
+      }>(
+        `SELECT cpa.*, p.name as project_name
              FROM consultant_project_access cpa
              LEFT JOIN projects p ON cpa.project_id = p.id
              WHERE cpa.organization_id = ?
              ORDER BY cpa.consultant_email, cpa.invited_at DESC`,
-      [orgId]
-    );
+        [orgId]
+      );
 
-    // Group by consultant
-    const consultantsMap = new Map<string, any>();
+      // Group by consultant
+      const consultantsMap = new Map<string, any>();
 
-    for (const record of accessRecords) {
-      const email = record.consultant_email;
+      for (const record of accessRecords) {
+        const email = record.consultant_email;
 
-      if (!consultantsMap.has(email)) {
-        // Get consultant user info if they've accepted
-        let consultantInfo = null;
-        if (record.consultant_id) {
-          consultantInfo = await dbGet<{
-            first_name: string;
-            last_name: string;
-            avatar_url: string | null;
-          }>(`SELECT first_name, last_name, avatar_url FROM users WHERE id = ?`, [
-            record.consultant_id,
-          ]);
+        if (!consultantsMap.has(email)) {
+          // Get consultant user info if they've accepted
+          let consultantInfo = null;
+          if (record.consultant_id) {
+            consultantInfo = await dbGet<{
+              first_name: string;
+              last_name: string;
+              avatar_url: string | null;
+            }>(`SELECT first_name, last_name, avatar_url FROM users WHERE id = ?`, [
+              record.consultant_id,
+            ]);
+          }
+
+          consultantsMap.set(email, {
+            consultant_id: record.consultant_id || email,
+            email: email,
+            firstName: consultantInfo?.first_name || null,
+            lastName: consultantInfo?.last_name || null,
+            avatarUrl: consultantInfo?.avatar_url || null,
+            projects: [],
+          });
         }
 
-        consultantsMap.set(email, {
-          consultant_id: record.consultant_id || email,
-          email: email,
-          firstName: consultantInfo?.first_name || null,
-          lastName: consultantInfo?.last_name || null,
-          avatarUrl: consultantInfo?.avatar_url || null,
-          projects: [],
+        consultantsMap.get(email).projects.push({
+          access_id: record.id,
+          project_id: record.project_id,
+          projectName: (record as any).project_name || 'Unknown Project',
+          status: record.status,
+          projectRole: record.project_role || null,
+          permissions: JSON.parse(record.permissions || '{}'),
+          invited_at: record.invited_at,
+          accepted_at: record.accepted_at,
         });
       }
 
-      consultantsMap.get(email).projects.push({
-        access_id: record.id,
-        project_id: record.project_id,
-        projectName: (record as any).project_name || 'Unknown Project',
-        status: record.status,
-        projectRole: record.project_role || null,
-        permissions: JSON.parse(record.permissions || '{}'),
-        invited_at: record.invited_at,
-        accepted_at: record.accepted_at,
-      });
-    }
-
       return res.json(Array.from(consultantsMap.values()));
     } catch (err) {
-      console.error(
-        '[consultant-project-access] GET / failed (fail-soft, returning empty):',
-        err
-      );
+      console.error('[consultant-project-access] GET / failed (fail-soft, returning empty):', err);
       return res.json([]);
     }
   })

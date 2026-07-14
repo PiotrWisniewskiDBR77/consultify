@@ -216,9 +216,7 @@ export function validateEnv(): ValidationResult {
   // demo/staging can be verified without guessing.
   const openaiStt = (process.env.OPENAI_API_KEY || '').trim();
   const hasWhisperKey =
-    (openaiStt.length > 0 &&
-      !openaiStt.startsWith('sk-or-') &&
-      !openaiStt.startsWith('sk-test')) ||
+    (openaiStt.length > 0 && !openaiStt.startsWith('sk-or-') && !openaiStt.startsWith('sk-test')) ||
     !!(process.env.GROQ_API_KEY || '').trim();
   const geminiStt = (
     process.env.GEMINI_API_KEY ||

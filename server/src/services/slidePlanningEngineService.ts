@@ -121,10 +121,7 @@ function intentKeyMessage(intent: SlideIntent, isPl: boolean): string | undefine
     executive_summary: ['Podsumowanie kluczowych ustaleń', 'Summary of key findings'],
     key_messages: ['Kluczowe wnioski', 'Key Messages'],
     root_cause: ['Źródła problemu', 'Root causes'],
-    performance_overview: [
-      'Przegląd kluczowych wskaźników',
-      'Key performance indicators overview',
-    ],
+    performance_overview: ['Przegląd kluczowych wskaźników', 'Key performance indicators overview'],
     recommendation_portfolio: [
       'Rekomendacje wynikające z diagnozy',
       'Recommendations derived from the diagnostic',

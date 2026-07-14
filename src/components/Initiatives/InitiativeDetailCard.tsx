@@ -390,9 +390,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
               <Target size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-c-text">
-                {initiative.name}
-              </h2>
+              <h2 className="text-xl font-bold text-c-text">{initiative.name}</h2>
               <div className="flex items-center gap-2 text-xs text-c-text-muted">
                 <span>ID: {initiative.id?.slice(0, 8)}</span>
                 <span className="w-1 h-1 bg-c-border rounded-full" />
@@ -406,9 +404,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
           {/* Readiness Score */}
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-xs text-c-text-muted mb-1">
-                Charter Readiness
-              </div>
+              <div className="text-xs text-c-text-muted mb-1">Charter Readiness</div>
               <div
                 className={`text-2xl font-bold ${
                   readiness.total >= 70
@@ -608,9 +604,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <FileText size={16} className="text-c-text-secondary" />
-                <span className="text-xs font-semibold text-c-text-muted uppercase">
-                  Summary
-                </span>
+                <span className="text-xs font-semibold text-c-text-muted uppercase">Summary</span>
               </div>
               <textarea
                 value={initiative.summary || ''}

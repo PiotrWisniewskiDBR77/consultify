@@ -361,7 +361,15 @@ describe('C3 — Teresa copilot → handoff targets', () => {
   it('all P0 handoff targets are defined with required fields', () => {
     expect(P08_HANDOFF_TARGET_MODULES).toHaveLength(7);
     expect(P08_HANDOFF_TARGET_MODULES).toEqual(
-      expect.arrayContaining(['radar', 'initiatives', 'calendar', 'notebook', 'interview', 'excele', 'ideas'])
+      expect.arrayContaining([
+        'radar',
+        'initiatives',
+        'calendar',
+        'notebook',
+        'interview',
+        'excele',
+        'ideas',
+      ])
     );
 
     for (const mod of P08_HANDOFF_TARGET_MODULES) {
@@ -923,8 +931,7 @@ describe('C8 — Source Truth → Initiative materialization chain', () => {
   });
 
   it('validateMaterializationChain reports gaps when no materializations exist', async () => {
-    mockDbAll
-      .mockResolvedValueOnce([]); // JOIN query — function returns early, no second call
+    mockDbAll.mockResolvedValueOnce([]); // JOIN query — function returns early, no second call
 
     const result = await validateMaterializationChain(INITIATIVE_ID, ORG);
 

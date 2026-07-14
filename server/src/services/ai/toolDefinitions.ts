@@ -462,9 +462,9 @@ export const AI_TOOLS: ToolDefinition[] = [
           due_date: {
             type: 'string',
             description:
-              "Optional ISO date (YYYY-MM-DD), STRICTLY in the future relative to today. " +
+              'Optional ISO date (YYYY-MM-DD), STRICTLY in the future relative to today. ' +
               "Never invent a date before today's date. Omit this field entirely if the user " +
-              "did not state or imply a deadline — the system will assign a sane default from priority.",
+              'did not state or imply a deadline — the system will assign a sane default from priority.',
           },
           assignee_id: {
             type: 'string',

@@ -539,7 +539,9 @@ export const PerformanceMetricsTab: React.FC = () => {
                 No provider performance data for this period.
               </div>
             ) : (
-              <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
+              <table
+                /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+              >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-navy-700">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">

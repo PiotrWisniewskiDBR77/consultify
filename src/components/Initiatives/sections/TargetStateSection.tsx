@@ -34,7 +34,6 @@ import { Api } from '@/services/api';
 
 import { CardBlockRenderer } from '../cards/CardBlockRenderer';
 import { buildTargetStateCardSpec } from '../cards/cardSpecBuilders';
-
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -118,9 +117,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
           <h4 className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {title}
           </h4>
-          <p className="text-[10px] text-c-text-secondary mt-0.5 leading-snug">
-            {description}
-          </p>
+          <p className="text-[10px] text-c-text-secondary mt-0.5 leading-snug">{description}</p>
         </div>
 
         {/* Right: AI button + Add item */}
@@ -205,9 +202,7 @@ const ItemRow: React.FC<ItemRowProps> = ({ children, onRemove, color, badge }) =
       >
         {badge}
       </div>
-      <span className="flex-1 text-xs text-c-text-secondary leading-snug">
-        {children}
-      </span>
+      <span className="flex-1 text-xs text-c-text-secondary leading-snug">{children}</span>
       <button
         onClick={onRemove}
         className="text-c-text-secondary hover:text-danger-500 transition-colors shrink-0"
@@ -826,13 +821,9 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               className="mt-1"
                             />
                             <div className="min-w-0">
-                              <span className="text-sm font-medium text-c-text">
-                                {a.text}
-                              </span>
+                              <span className="text-sm font-medium text-c-text">{a.text}</span>
                               {a.rationale ? (
-                                <p className="text-[11px] text-c-text-muted mt-1">
-                                  {a.rationale}
-                                </p>
+                                <p className="text-[11px] text-c-text-muted mt-1">{a.rationale}</p>
                               ) : null}
                             </div>
                           </label>
@@ -1011,13 +1002,9 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               className="mt-1"
                             />
                             <div className="min-w-0">
-                              <span className="text-sm font-medium text-c-text">
-                                {a.text}
-                              </span>
+                              <span className="text-sm font-medium text-c-text">{a.text}</span>
                               {a.rationale ? (
-                                <p className="text-[11px] text-c-text-muted mt-1">
-                                  {a.rationale}
-                                </p>
+                                <p className="text-[11px] text-c-text-muted mt-1">{a.rationale}</p>
                               ) : null}
                             </div>
                           </label>

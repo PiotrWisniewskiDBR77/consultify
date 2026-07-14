@@ -19,7 +19,7 @@
 
 import type { OperationalItem, OperationalToolData } from '@/store/useToolStore';
 
-import { SOP_SECTIONS, type SopSectionId, type Bilingual } from './deepeningLadder';
+import { type Bilingual, SOP_SECTIONS, type SopSectionId } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
 
@@ -43,8 +43,8 @@ const localize = (text: Bilingual, isPolish: boolean) => (isPolish ? text.pl : t
 const isMeasurable = (item: OperationalItem): boolean =>
   Boolean(
     (item.threshold && item.threshold.trim()) ||
-      (item.target && item.target.trim()) ||
-      typeof item.durationMinutes === 'number'
+    (item.target && item.target.trim()) ||
+    typeof item.durationMinutes === 'number'
   );
 
 const sectionItems = (data: OperationalToolData, section: SopSectionId): OperationalItem[] =>
@@ -72,7 +72,15 @@ const scoreSection = (data: OperationalToolData, section: SopSectionId): Section
   const items = sectionItems(data, section);
   const label = SECTION_LABEL[section];
   if (items.length === 0) {
-    return { section, label, itemCount: 0, criticality: 0, measurableRatio: 0, measurableCount: 0, score: 0 };
+    return {
+      section,
+      label,
+      itemCount: 0,
+      criticality: 0,
+      measurableRatio: 0,
+      measurableCount: 0,
+      score: 0,
+    };
   }
 
   const criticality =
@@ -365,14 +373,19 @@ export function buildW2MoveSequence(data: OperationalToolData): SequencedMove[] 
 }
 
 /** Flatten a SequencedMove into the store's OperationalItem shape (localized). */
-export function toOperationalItem(seq: SequencedMove, isPolish: boolean, id: string): OperationalItem {
+export function toOperationalItem(
+  seq: SequencedMove,
+  isPolish: boolean,
+  id: string
+): OperationalItem {
   return {
     id,
     title: localize(seq.title, isPolish),
-    description: `${localize(seq.rationale, isPolish)} ${localize(seq.tradeOff, isPolish)} ${localize(
-      seq.rejectedVariant,
-      isPolish
-    )}`.trim(),
+    description:
+      `${localize(seq.rationale, isPolish)} ${localize(seq.tradeOff, isPolish)} ${localize(
+        seq.rejectedVariant,
+        isPolish
+      )}`.trim(),
     impact: seq.expectedImpact,
     effort: seq.estimatedEffort,
     category: seq.category,

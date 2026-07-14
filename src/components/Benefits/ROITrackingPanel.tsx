@@ -236,7 +236,9 @@ export const ROITrackingPanel: React.FC = () => {
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
+          <table
+            /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-sm"
+          >
             <thead className="bg-slate-50 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 text-left font-medium">

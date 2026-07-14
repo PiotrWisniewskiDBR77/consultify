@@ -98,9 +98,7 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
       data-testid="benefits-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">
-          Rejestr korzyści (handoff M14→M15)
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-900">Rejestr korzyści (handoff M14→M15)</h3>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400">{benefits.length}</span>
           <button
@@ -129,14 +127,9 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
       ) : (
         <ul className="flex flex-col gap-2" data-testid="benefits-list">
           {benefits.map((b) => (
-            <li
-              key={b.id}
-              className="flex flex-col gap-1 rounded-lg border border-gray-100 p-2"
-            >
+            <li key={b.id} className="flex flex-col gap-1 rounded-lg border border-gray-100 p-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-gray-900">
-                  {b.kpi_name || b.name}
-                </span>
+                <span className="text-sm font-medium text-gray-900">{b.kpi_name || b.name}</span>
                 <div className="flex items-center gap-1">
                   {b.source === HANDOFF_SOURCE && (
                     <span className="inline-block rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">

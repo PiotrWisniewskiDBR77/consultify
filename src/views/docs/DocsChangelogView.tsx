@@ -310,7 +310,9 @@ function ReleaseCard({ release }: { release: Release }) {
         <div
           className={cn(
             'relative z-10 flex-shrink-0 w-4 h-4 rounded-full border-2',
-            release.isMajor ? 'bg-blue-500 border-blue-400' : 'bg-c-surface-raised border-c-border-strong'
+            release.isMajor
+              ? 'bg-blue-500 border-blue-400'
+              : 'bg-c-surface-raised border-c-border-strong'
           )}
         />
 

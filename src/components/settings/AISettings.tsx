@@ -619,9 +619,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   </div>
 
                   <h3 className="text-lg font-bold text-c-text mb-1">{tier.label}</h3>
-                  <p className="text-sm text-c-text-secondary mb-4 h-10">
-                    {tier.desc}
-                  </p>
+                  <p className="text-sm text-c-text-secondary mb-4 h-10">{tier.desc}</p>
 
                   <div className="flex items-center gap-2 text-xs text-c-text-muted font-mono bg-c-surface-raised p-2 rounded">
                     <Server size={12} />
@@ -754,9 +752,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   ))}
                 </div>
                 <div className="mt-4 pt-4 border-t border-c-border-subtle flex justify-between items-center">
-                  <span className="text-xs text-c-text-muted">
-                    Period: Jan 1 - Jan 31, 2026
-                  </span>
+                  <span className="text-xs text-c-text-muted">Period: Jan 1 - Jan 31, 2026</span>
                   <button className="text-xs text-c-accent hover:text-c-accent flex items-center gap-1">
                     View Full History <ChevronRight size={12} />
                   </button>
@@ -833,10 +829,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       API Secret Key
                     </label>
                     <div className="relative">
-                      <Key
-                        className="absolute left-4 top-3.5 text-c-text-secondary"
-                        size={16}
-                      />
+                      <Key className="absolute left-4 top-3.5 text-c-text-secondary" size={16} />
                       <input
                         type="password"
                         placeholder="sk-..."
@@ -869,7 +862,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             )}
 
             <div className="border border-c-border-subtle rounded-xl overflow-hidden bg-c-surface-raised">
-              <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-left border-collapse">
+              <table
+                /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full text-left border-collapse"
+              >
                 <thead>
                   <tr className="bg-c-surface-raised border-b border-c-border-subtle text-xs uppercase tracking-wider text-c-text-muted font-semibold">
                     <th className="px-6 py-4">Friendly Name</th>
@@ -910,10 +905,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   ))}
                   {apiProviders.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-12 text-center text-c-text-muted"
-                      >
+                      <td colSpan={4} className="px-6 py-12 text-center text-c-text-muted">
                         <Key className="mx-auto mb-3 opacity-20" size={32} />
                         No personal API keys added yet.
                       </td>
@@ -1005,10 +997,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       Endpoint URL
                     </label>
                     <div className="relative">
-                      <Wifi
-                        className="absolute left-4 top-3.5 text-c-text-secondary"
-                        size={16}
-                      />
+                      <Wifi className="absolute left-4 top-3.5 text-c-text-secondary" size={16} />
                       <input
                         placeholder="http://localhost:11434"
                         value={newProvider.endpoint}
@@ -1063,9 +1052,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 Active for Chat
                               </div>
                             ) : (
-                              <div className="text-[10px] text-c-text-muted mt-0.5">
-                                Not active
-                              </div>
+                              <div className="text-[10px] text-c-text-muted mt-0.5">Not active</div>
                             )}
                           </div>
                         </div>
@@ -1102,10 +1089,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   ))}
                   {localHostProviders.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-12 text-center text-c-text-muted"
-                      >
+                      <td colSpan={4} className="px-6 py-12 text-center text-c-text-muted">
                         <Server className="mx-auto mb-3 opacity-20" size={32} />
                         No local inference engines connected.
                       </td>
@@ -1363,9 +1347,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Standard Mode Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-c-text-secondary">
-                      Standard Mode
-                    </span>
+                    <span className="text-xs text-c-text-secondary">Standard Mode</span>
                     <span className="text-xs font-mono text-blue-400">
                       {preferences.responseLength?.standard || 'medium'}
                     </span>
@@ -1402,9 +1384,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Deep Study Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-c-text-secondary">
-                      Deep Study Mode
-                    </span>
+                    <span className="text-xs text-c-text-secondary">Deep Study Mode</span>
                     <span className="text-xs font-mono text-c-accent">
                       {preferences.responseLength?.deepStudy || 'long'}
                     </span>
@@ -1733,9 +1713,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-c-text">PII Redaction</h3>
-                      <p className="text-xs text-c-text-muted">
-                        Auto-remove sensitive data
-                      </p>
+                      <p className="text-xs text-c-text-muted">Auto-remove sensitive data</p>
                     </div>
                   </div>
                   <Toggle
@@ -1763,9 +1741,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-c-text">Web Connectivity</h3>
-                      <p className="text-xs text-c-text-muted">
-                        Allow external searches
-                      </p>
+                      <p className="text-xs text-c-text-muted">Allow external searches</p>
                     </div>
                   </div>
                   <Toggle
@@ -1837,10 +1813,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
       {/* Minimal Footer */}
       <div className="mt-12 border-t border-c-border-subtle pt-6 flex justify-between items-center text-[10px] text-c-text-secondary uppercase tracking-widest">
         <span>AI Governance v2.4.0</span>
-        <Link
-          to="/legal/ai-policy"
-          className="hover:text-c-text-muted transition-colors"
-        >
+        <Link to="/legal/ai-policy" className="hover:text-c-text-muted transition-colors">
           Safety Policy &rarr;
         </Link>
       </div>

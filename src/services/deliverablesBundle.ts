@@ -23,7 +23,7 @@ export interface BundleExportOptions {
  */
 export async function downloadBundleZip(
   brief: string,
-  opts: BundleExportOptions = {},
+  opts: BundleExportOptions = {}
 ): Promise<boolean> {
   try {
     const { token, orgId } = _extractAuth();
@@ -78,11 +78,7 @@ function _extractAuth(): { token: string; orgId: string } {
   return { token, orgId };
 }
 
-function _buildHeaders(
-  token: string,
-  orgId: string,
-  contentType?: string,
-): Record<string, string> {
+function _buildHeaders(token: string, orgId: string, contentType?: string): Record<string, string> {
   const h: Record<string, string> = {
     Authorization: token ? `Bearer ${token}` : '',
   };
@@ -116,7 +112,7 @@ export async function listBundles(): Promise<BundleListItem[]> {
     const headers = _buildHeaders(token, orgId, 'application/json');
     const res = await fetch(`${API_URL}/deliverables/generations/bundles`, { headers });
     if (!res.ok) return [];
-    const data = await res.json() as { success: boolean; bundles?: BundleListItem[] };
+    const data = (await res.json()) as { success: boolean; bundles?: BundleListItem[] };
     return data.bundles ?? [];
   } catch {
     return [];

@@ -28,7 +28,7 @@
 
 import { run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { computeValuation, getValuation, type DcfResult } from './valuationService.js';
+import { computeValuation, type DcfResult, getValuation } from './valuationService.js';
 
 // ── Typy ────────────────────────────────────────────────────────────────────
 
@@ -214,7 +214,9 @@ export function synthesizeBasket(
     topDriver,
     message: triggered
       ? `Metody wyceny rozjeżdżają się o ${round(maxDivergencePct, 1)}% (próg ${threshold}%) — przejrzyj założenia.${
-          topDriver ? ` Największa różnica: ${topDriver.methods[0]} vs ${topDriver.methods[1]}.` : ''
+          topDriver
+            ? ` Największa różnica: ${topDriver.methods[0]} vs ${topDriver.methods[1]}.`
+            : ''
         }`
       : methods.length >= 2
         ? `Metody wyceny spójne w granicach progu ${threshold}% (max rozbieżność ${round(maxDivergencePct, 1)}%).`
@@ -305,7 +307,14 @@ export function dcfMethod(
   }
 
   // 3) Pojedynczy punkt — zakres zdegenerowany.
-  return { key: 'M1', label, low: baseEv, mid: baseEv, high: baseEv, note: 'Punkt (brak scenariuszy)' };
+  return {
+    key: 'M1',
+    label,
+    low: baseEv,
+    mid: baseEv,
+    high: baseEv,
+    note: 'Punkt (brak scenariuszy)',
+  };
 }
 
 /** Kształt comps zwracany przez valuationService.computeComps. */

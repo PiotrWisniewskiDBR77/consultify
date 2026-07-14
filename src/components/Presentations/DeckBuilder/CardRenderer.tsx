@@ -7,6 +7,7 @@ import type { CardBlock, CuratedColorSet, DeckCard } from '../wizard/types';
 import { CURATED_COLOR_SETS } from '../wizard/types';
 import { AnimatedBlock, AnimatedCard } from './AnimatedBlock';
 import { ArtifactEmbedBlock } from './blocks/ArtifactEmbedBlock';
+import type { BlockDensity } from './blocks/blockDensity';
 import { BulletListBlock } from './blocks/BulletListBlock';
 import { CalloutBlock } from './blocks/CalloutBlock';
 import { ChartBlock } from './blocks/ChartBlock';
@@ -21,13 +22,12 @@ import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
 import { sanitizeDeckBlock, sanitizeDeckDisplayText } from './deckTextSanitizer';
-import type { BlockDensity } from './blocks/blockDensity';
 import {
   assignBlocksToRegions,
   blockDensityFor,
   selectLayout,
-  verticalFillMode,
   type VerticalFillMode,
+  verticalFillMode,
 } from './layouts/LayoutEngine';
 import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 

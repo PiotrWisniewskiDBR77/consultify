@@ -63,7 +63,10 @@ vi.mock('../../utils/DbPromise.js', () => ({
   run: (...a: unknown[]) => mockDbRun(...a),
 }));
 
-vi.mock('../../utils/pgFlags.js', () => ({ flagOn: () => false, parseMaybeJson: (v: unknown) => v }));
+vi.mock('../../utils/pgFlags.js', () => ({
+  flagOn: () => false,
+  parseMaybeJson: (v: unknown) => v,
+}));
 
 let mockUser: { id: string; organizationId: string } | null = null;
 
@@ -152,9 +155,7 @@ describe('economics routes — cross-org IDOR', () => {
 
   it('POST /analyses/:id/scenarios (same org) inserts scoped to the caller org', async () => {
     // Parent guard: analysis belongs to attacker org. Then: no existing scenario.
-    mockDbGet
-      .mockResolvedValueOnce({ id: FOREIGN_ANALYSIS })
-      .mockResolvedValueOnce(undefined);
+    mockDbGet.mockResolvedValueOnce({ id: FOREIGN_ANALYSIS }).mockResolvedValueOnce(undefined);
     mockNormalizeFinancialData.mockReturnValue({ assumptions: [] });
     mockCalculateFinancialMetrics.mockReturnValue({
       npv: 0,

@@ -576,7 +576,9 @@ export const AccessLimitsTab: React.FC = () => {
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-left text-sm">
+              <table
+                /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-left text-sm"
+              >
                 <thead className="bg-black/20 text-xs uppercase text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-6 py-3">User</th>

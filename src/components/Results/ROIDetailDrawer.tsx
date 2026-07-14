@@ -365,9 +365,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                                 className="w-1/2 rounded-t transition-all"
                                 style={{
                                   height: `${Math.max(realPct, 2)}%`,
-                                  backgroundColor: d.isAbove
-                                    ? 'var(--c-tag-12)'
-                                    : 'var(--c-tag-4)',
+                                  backgroundColor: d.isAbove ? 'var(--c-tag-12)' : 'var(--c-tag-4)',
                                 }}
                               />
                             </div>

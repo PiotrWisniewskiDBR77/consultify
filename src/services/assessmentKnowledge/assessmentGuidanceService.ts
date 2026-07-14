@@ -34,7 +34,7 @@
 
 import { getADMAKnowledge } from './admaKnowledge';
 import { getDRDKnowledge } from './drdKnowledge';
-import { getFrameworkKnowledge, type FrameworkLevelKnowledge } from './index';
+import { type FrameworkLevelKnowledge, getFrameworkKnowledge } from './index';
 import { getSIRIKnowledge } from './siriKnowledge';
 
 // ============================================================================
@@ -167,11 +167,7 @@ function orgLine(org: GuidanceOrgContext | undefined, isPL: boolean): string {
   if (!org || (!org.name && !org.industrySegment && !org.sizeBand)) {
     return isPL ? 'Organizacja: nieokreślona.' : 'Organisation: unspecified.';
   }
-  const parts = [
-    org.name,
-    org.industrySegment,
-    org.sizeBand,
-  ].filter(Boolean);
+  const parts = [org.name, org.industrySegment, org.sizeBand].filter(Boolean);
   return (isPL ? 'Organizacja: ' : 'Organisation: ') + parts.join(' · ');
 }
 
@@ -297,7 +293,12 @@ function normConfidence(raw: unknown): GuidanceConfidence {
 interface ValidateResult {
   ok: boolean;
   reason?: string;
-  fields?: { whyItMatters: string; levelInterpretation: string; canonContext: string; confidence: GuidanceConfidence };
+  fields?: {
+    whyItMatters: string;
+    levelInterpretation: string;
+    canonContext: string;
+    confidence: GuidanceConfidence;
+  };
 }
 
 /** Validate the parsed model output. Rejects empty/too-short/filler fields. */

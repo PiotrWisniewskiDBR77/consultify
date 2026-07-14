@@ -351,9 +351,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 <Sparkles className="w-5 h-5 text-c-accent dark:text-c-accent" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-c-text">
-                  Generuj Inicjatywy
-                </h3>
+                <h3 className="text-lg font-bold text-c-text">Generuj Inicjatywy</h3>
                 <p className="text-sm text-c-text-muted">
                   {step === 'select-report' && 'Wybierz raport źródłowy'}
                   {step === 'configure' && 'Skonfiguruj parametry AI'}
@@ -392,9 +390,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                     {isPast ? <CheckCircle2 size={14} /> : <span>{idx + 1}</span>}
                     {stepLabels[idx]}
                   </div>
-                  {idx < 2 && (
-                    <ChevronRight size={16} className="text-c-text-muted" />
-                  )}
+                  {idx < 2 && <ChevronRight size={16} className="text-c-text-muted" />}
                 </React.Fragment>
               );
             })}
@@ -409,9 +405,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
-              <p className="text-lg font-medium text-c-text">
-                Inicjatywy zapisane!
-              </p>
+              <p className="text-lg font-medium text-c-text">Inicjatywy zapisane!</p>
               <p className="text-sm text-c-text-muted mt-1">
                 {selectedInitiatives.size} inicjatyw dodano do rejestru
               </p>
@@ -428,9 +422,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               ) : reports.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
-                  <p className="text-c-text-muted font-medium">
-                    Brak sfinalizowanych raportów
-                  </p>
+                  <p className="text-c-text-muted font-medium">Brak sfinalizowanych raportów</p>
                   <p className="text-sm text-c-text-muted mt-1">
                     Najpierw sfinalizuj raport w zakładce Reports
                   </p>
@@ -483,12 +475,12 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                                 }
                                                             `}
                               >
-                                {isSelected && <CheckCircle2 size={12} className="text-c-surface" />}
+                                {isSelected && (
+                                  <CheckCircle2 size={12} className="text-c-surface" />
+                                )}
                               </div>
                               <div>
-                                <p className="font-medium text-c-text">
-                                  {report.name}
-                                </p>
+                                <p className="font-medium text-c-text">{report.name}</p>
                                 <p className="text-xs text-c-text-muted mt-0.5">
                                   Assessment: {report.assessmentName}
                                 </p>
@@ -522,12 +514,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                   <div className="flex items-center gap-3">
                     <FileText className="w-5 h-5 text-c-accent dark:text-c-accent" />
                     <div>
-                      <p className="font-medium text-c-text">
-                        {selectedReport.name}
-                      </p>
-                      <p className="text-xs text-c-text-muted">
-                        {selectedReport.assessmentName}
-                      </p>
+                      <p className="font-medium text-c-text">{selectedReport.name}</p>
+                      <p className="text-xs text-c-text-muted">{selectedReport.assessmentName}</p>
                     </div>
                   </div>
                 </div>
@@ -547,9 +535,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                     onChange={(e) => setMaxInitiatives(parseInt(e.target.value))}
                     className="flex-1"
                   />
-                  <span className="w-8 text-center font-medium text-c-text">
-                    {maxInitiatives}
-                  </span>
+                  <span className="w-8 text-center font-medium text-c-text">{maxInitiatives}</span>
                 </div>
               </div>
 
@@ -586,9 +572,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               <div className="flex items-start gap-3 p-4 bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] rounded-lg border-l-2 border-c-warning">
                 <Sparkles className="w-5 h-5 text-c-warning shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-c-warning">
-                    Generowanie AI
-                  </p>
+                  <p className="text-sm font-medium text-c-warning">Generowanie AI</p>
                   <p className="text-xs text-c-warning mt-1">
                     AI przeanalizuje luki w assessment i wygeneruje rekomendacje inicjatyw
                     transformacyjnych. Każda inicjatywa będzie zawierać szacowany ROI, budżet i
@@ -653,9 +637,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <p className="font-medium text-c-text">
-                                {initiative.name}
-                              </p>
+                              <p className="font-medium text-c-text">{initiative.name}</p>
                               <p className="text-xs text-c-text-muted mt-0.5">
                                 {AXIS_LABELS[initiative.sourceAxisId] || initiative.sourceAxisId}
                                 {initiative.area && ` • ${initiative.area}`}
@@ -710,9 +692,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               {generatedInitiatives.length === 0 && (
                 <div className="text-center py-8">
                   <Lightbulb className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
-                  <p className="text-c-text-muted">
-                    Nie wygenerowano żadnych inicjatyw
-                  </p>
+                  <p className="text-c-text-muted">Nie wygenerowano żadnych inicjatyw</p>
                   <button
                     onClick={() => setStep('configure')}
                     className="mt-4 text-c-accent dark:text-c-accent hover:underline text-sm"
@@ -728,9 +708,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
           {step === 'saving' && !success && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-12 h-12 text-c-accent animate-spin mb-4" />
-              <p className="text-lg font-medium text-c-text">
-                Zapisuję inicjatywy...
-              </p>
+              <p className="text-lg font-medium text-c-text">Zapisuję inicjatywy...</p>
               <p className="text-sm text-c-text-muted mt-1">
                 {selectedInitiatives.size} inicjatyw zostanie dodanych do rejestru
               </p>

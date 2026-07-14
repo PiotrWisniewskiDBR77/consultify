@@ -1260,14 +1260,12 @@ describe('V8 results read-only routes', () => {
   it('POST /api/v8/results/signals returns 403 when role cannot create_signal', async () => {
     mockUser = { ...mockUser!, role: 'viewer' };
     const app = createApp();
-    const res = await request(app)
-      .post('/api/v8/results/signals')
-      .send({
-        kpiId: KPI_UUID,
-        signalType: 'data_quality',
-        severity: 'high',
-        description: 'Gap',
-      });
+    const res = await request(app).post('/api/v8/results/signals').send({
+      kpiId: KPI_UUID,
+      signalType: 'data_quality',
+      severity: 'high',
+      description: 'Gap',
+    });
 
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('P04_PERMISSION_DENIED');

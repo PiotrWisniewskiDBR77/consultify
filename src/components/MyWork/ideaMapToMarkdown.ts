@@ -56,8 +56,7 @@ function utf8ByteLength(value: string): number {
 }
 
 function nodeLabel(node: IdeaMapNodeLike, isPolish: boolean): string {
-  const raw =
-    (node?.data?.label ?? node?.data?.text ?? node?.label ?? node?.text ?? '') + '';
+  const raw = (node?.data?.label ?? node?.data?.text ?? node?.label ?? node?.text ?? '') + '';
   const trimmed = raw.trim();
   if (trimmed) return trimmed;
   const id = node?.id != null ? String(node.id) : '';
@@ -162,7 +161,10 @@ export function ideaMapToMarkdown(
     }
   }
 
-  let out = lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  let out = lines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
   // Soft byte cap — truncate cleanly at a line boundary.
   if (utf8ByteLength(out) > maxBytes) {

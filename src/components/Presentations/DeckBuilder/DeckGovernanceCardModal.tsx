@@ -49,7 +49,10 @@ const CONFIDENTIALITY_STYLE: Record<string, { bg: string; text: string }> = {
     text: 'text-emerald-700 dark:text-emerald-300',
   },
   internal: { bg: 'bg-blue-100 dark:bg-blue-500/20', text: 'text-blue-700 dark:text-blue-300' },
-  confidential: { bg: 'bg-danger-100 dark:bg-danger-500/20', text: 'text-danger-700 dark:text-danger-300' },
+  confidential: {
+    bg: 'bg-danger-100 dark:bg-danger-500/20',
+    text: 'text-danger-700 dark:text-danger-300',
+  },
 };
 
 function formatTimestamp(value: string | null | undefined): string {
@@ -88,9 +91,7 @@ const StatTile: React.FC<{
   };
   return (
     <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">
-        {label}
-      </div>
+      <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
       <div className={`text-lg font-semibold ${toneClass[tone]}`}>{value}</div>
     </div>
   );
@@ -156,10 +157,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-c-accent" />
-            <h2
-              id="deck-governance-card-title"
-              className="text-sm font-semibold text-c-text"
-            >
+            <h2 id="deck-governance-card-title" className="text-sm font-semibold text-c-text">
               {t('presentations.governance.title', 'Governance Card')}
             </h2>
           </div>

@@ -83,18 +83,14 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
-  requireOrgRole:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
+  requireOrgAccess: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
+  requireOrgRole: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
   validateOrgMembership: (req: any, res: any, next: () => void) => {
     if (!req.user) return res.status(401).json({ error: 'No token' });
     next();
@@ -189,7 +185,10 @@ describe('M17 HOLE-2/3 — report-builder section writes reject a foreign-org re
   });
 
   it('POST /:id/sections → 201 + addCustomSection when the report is owned', async () => {
-    mockGetReport.mockResolvedValue({ report: { id: 'report-owned', status: 'DRAFT' }, sections: [] });
+    mockGetReport.mockResolvedValue({
+      report: { id: 'report-owned', status: 'DRAFT' },
+      sections: [],
+    });
     const app = await buildReportBuilderApp();
 
     const res = await request(app)
@@ -206,9 +205,7 @@ describe('M17 HOLE-2/3 — report-builder section writes reject a foreign-org re
     mockGetReport.mockResolvedValue(null);
     const app = await buildReportBuilderApp();
 
-    const res = await request(app).delete(
-      '/api/report-builder/report-from-org-b/sections/sec-1'
-    );
+    const res = await request(app).delete('/api/report-builder/report-from-org-b/sections/sec-1');
 
     expect(res.status).toBe(404);
     expect(mockGetReport).toHaveBeenCalledWith('report-from-org-b', ORG_A);
@@ -216,7 +213,10 @@ describe('M17 HOLE-2/3 — report-builder section writes reject a foreign-org re
   });
 
   it('DELETE /:id/sections/:sectionKey → 200 + removeSection when the report is owned', async () => {
-    mockGetReport.mockResolvedValue({ report: { id: 'report-owned', status: 'DRAFT' }, sections: [] });
+    mockGetReport.mockResolvedValue({
+      report: { id: 'report-owned', status: 'DRAFT' },
+      sections: [],
+    });
     const app = await buildReportBuilderApp();
 
     const res = await request(app).delete('/api/report-builder/report-owned/sections/sec-1');
@@ -269,7 +269,8 @@ describe('M17 HOLE-1 — presentations analytics/view deck lookup carries an org
     // A deck lookup by id that is NOT immediately followed by an org filter is the
     // IDOR shape we just closed. (share_token / share_expires_at lookups are
     // intentionally token-scoped and excluded by the `id = ?` anchor.)
-    const bareById = src.match(/FROM presentation_decks\s+WHERE id = \?(?!\s*AND organization_id)/g) || [];
+    const bareById =
+      src.match(/FROM presentation_decks\s+WHERE id = \?(?!\s*AND organization_id)/g) || [];
     expect(bareById).toEqual([]);
   });
 });
@@ -285,7 +286,11 @@ describe('M17 GATE-NOTION — report-builder Notion export enforces export-readi
   // proves the block is the gate, not a missing-config short-circuit.
   const notionPrefsRow = {
     preferences_data: JSON.stringify([
-      { provider: 'notion', status: 'active', config: { apiKey: 'secret', parentPageId: 'page-1' } },
+      {
+        provider: 'notion',
+        status: 'active',
+        config: { apiKey: 'secret', parentPageId: 'page-1' },
+      },
     ]),
   };
 
@@ -316,7 +321,15 @@ describe('M17 GATE-NOTION — report-builder Notion export enforces export-readi
       reportId: 'report-owned',
       canExport: false,
       canApprove: false,
-      gates: [{ id: 'g1', gateType: 'empty_report', severity: 'error', message: 'x', category: 'structure' }],
+      gates: [
+        {
+          id: 'g1',
+          gateType: 'empty_report',
+          severity: 'error',
+          message: 'x',
+          category: 'structure',
+        },
+      ],
       score: 0,
       checkedAt: new Date().toISOString(),
     });

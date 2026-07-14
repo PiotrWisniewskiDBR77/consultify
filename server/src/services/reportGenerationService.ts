@@ -1198,7 +1198,9 @@ async function buildDrdBookGroundingBlock(
       .filter((r: any) => r?.branded === true)
       .map((r: any, idx: number) => {
         const cite =
-          r.branded && r.sourceAuthor ? `„${r.source}", ${r.sourceAuthor}` : r.source || 'DRD Methodology';
+          r.branded && r.sourceAuthor
+            ? `„${r.source}", ${r.sourceAuthor}`
+            : r.source || 'DRD Methodology';
         return `[${idx + 1}] (${cite})\n${String(r.content).slice(0, 600).trim()}`;
       });
 

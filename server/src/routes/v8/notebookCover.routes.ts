@@ -23,8 +23,8 @@ import type { Response, Router } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 
 /** Max stored cover size — data: URLs can be large; cap to keep rows sane (~6MB). */
 const MAX_COVER_URL_LENGTH = 8_000_000;
@@ -92,7 +92,9 @@ export function registerNotebookCoverRoutes(router: Router): Router {
       const { organizationId, userId } = getV8Context(req);
       const id = String(req.params.id || '').trim();
       if (!id) {
-        return res.status(400).json({ error: 'Missing page id', code: 'NOTEBOOK_PAGE_ID_REQUIRED' });
+        return res
+          .status(400)
+          .json({ error: 'Missing page id', code: 'NOTEBOOK_PAGE_ID_REQUIRED' });
       }
       if (!(await hasCoverColumn())) {
         // No column yet → treat as "no cover" rather than erroring.
@@ -127,7 +129,9 @@ export function registerNotebookCoverRoutes(router: Router): Router {
       const { organizationId, userId } = getV8Context(req);
       const id = String(req.params.id || '').trim();
       if (!id) {
-        return res.status(400).json({ error: 'Missing page id', code: 'NOTEBOOK_PAGE_ID_REQUIRED' });
+        return res
+          .status(400)
+          .json({ error: 'Missing page id', code: 'NOTEBOOK_PAGE_ID_REQUIRED' });
       }
 
       // Degrade gracefully if the migration has not run yet — never 500.

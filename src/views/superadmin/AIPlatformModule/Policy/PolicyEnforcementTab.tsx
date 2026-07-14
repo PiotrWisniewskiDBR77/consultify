@@ -263,7 +263,9 @@ export const PolicyEnforcementTab: React.FC = () => {
           </div>
 
           <div className="mt-4 overflow-x-auto">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full text-sm">
+            <table
+              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full text-sm"
+            >
               <thead>
                 <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-navy-700">
                   <th className="px-3 py-2 font-medium">Domain</th>

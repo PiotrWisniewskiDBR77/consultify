@@ -38,8 +38,8 @@ import {
   type CartesianSpec,
   type DeckChartSpec,
   type HarveySpec,
-  type Matrix2x2Spec,
   type MarimekkoSpec,
+  type Matrix2x2Spec,
   type PieSpec,
   type RagSpec,
   type WaterfallSpec,
@@ -302,7 +302,10 @@ const MatrixChart: React.FC<{ spec: Matrix2x2Spec; theme: CuratedColorSet; chart
             className="w-2.5 h-2.5 rounded-full flex-shrink-0"
             style={{ backgroundColor: theme.chartPalette[i % theme.chartPalette.length] }}
           />
-          <span className="text-[8px] whitespace-nowrap" style={{ color: theme.colors.textPrimary }}>
+          <span
+            className="text-[8px] whitespace-nowrap"
+            style={{ color: theme.colors.textPrimary }}
+          >
             {p.label}
           </span>
         </div>

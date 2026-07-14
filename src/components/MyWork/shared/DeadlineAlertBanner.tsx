@@ -154,7 +154,10 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
             <p className={`text-sm font-semibold ${currentConfig.textColor}`}>{message}</p>
             {urgency === 'overdue' && (
               <p className="text-xs text-danger-600/70 dark:text-danger-400/70 mt-0.5">
-                {t('myWork.deadlineAlert.thisDecisionRequiresImmediate', 'This decision requires immediate attention')}
+                {t(
+                  'myWork.deadlineAlert.thisDecisionRequiresImmediate',
+                  'This decision requires immediate attention'
+                )}
               </p>
             )}
           </div>

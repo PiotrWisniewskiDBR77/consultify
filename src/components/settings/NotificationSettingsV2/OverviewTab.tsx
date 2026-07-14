@@ -141,9 +141,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-c-surface-raised dark:hover:bg-navy-700/50 transition-colors"
               >
                 <div className="col-span-4">
-                  <h4 className="text-sm font-semibold text-c-text">
-                    {row.title}
-                  </h4>
+                  <h4 className="text-sm font-semibold text-c-text">{row.title}</h4>
                   <p className="text-xs text-c-text-muted">{row.description}</p>
                 </div>
                 <div className="col-span-8 grid grid-cols-2 gap-4">

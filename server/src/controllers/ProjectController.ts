@@ -382,7 +382,8 @@ export class ProjectController {
         return;
       }
 
-      const { getProjectFinanceRollup } = await import('../services/projectFinanceRollupService.js');
+      const { getProjectFinanceRollup } =
+        await import('../services/projectFinanceRollupService.js');
       const rollup = await getProjectFinanceRollup(orgId, id);
       res.json(rollup);
     }

@@ -29,6 +29,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import { DegradedState } from '../../components/Admin/AdminState';
 import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../services/api';
@@ -735,9 +736,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         <h4 className="font-semibold text-navy-900 dark:text-white">{plan.name}</h4>
                         <p className="text-2xl font-bold text-navy-900 dark:text-white mt-2">
                           ${plan.price_monthly}
-                          <span className="text-sm font-normal text-c-text-muted">
-                            /mo
-                          </span>
+                          <span className="text-sm font-normal text-c-text-muted">/mo</span>
                         </p>
                         <div className="mt-4 space-y-2 text-sm text-c-text-secondary">
                           <p className="flex items-center gap-2">
@@ -783,9 +782,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                       </div>
                       {planComparison.comparison.isUpgrade ? (
                         <div>
-                          <p className="text-c-text-muted">
-                            Prorated charge today
-                          </p>
+                          <p className="text-c-text-muted">Prorated charge today</p>
                           <p className="font-medium text-navy-900 dark:text-white">
                             ${planComparison.comparison.proratedAmount.toFixed(2)}
                           </p>
@@ -892,9 +889,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                               <h4 className="font-medium text-navy-900 dark:text-white">
                                 {addon.name}
                               </h4>
-                              <p className="text-sm text-c-text-muted">
-                                {addon.description}
-                              </p>
+                              <p className="text-sm text-c-text-muted">{addon.description}</p>
                             </div>
                           </div>
                           <div className="text-right">
@@ -912,9 +907,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         </div>
                       ))}
                     {!addonsLoadError && addons.length === 0 && (
-                      <p className="text-center py-8 text-c-text-muted">
-                        No add-ons available
-                      </p>
+                      <p className="text-center py-8 text-c-text-muted">No add-ons available</p>
                     )}
                   </div>
                 ) : (
@@ -930,14 +923,10 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                       <h4 className="font-semibold text-navy-900 dark:text-white">
                         {selectedAddon.name}
                       </h4>
-                      <p className="text-sm text-c-text-muted mt-1">
-                        {selectedAddon.description}
-                      </p>
+                      <p className="text-sm text-c-text-muted mt-1">{selectedAddon.description}</p>
 
                       <div className="mt-4 flex items-center gap-4">
-                        <label className="text-sm text-c-text-muted">
-                          Quantity:
-                        </label>
+                        <label className="text-sm text-c-text-muted">Quantity:</label>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setAddonQuantity(Math.max(1, addonQuantity - 1))}
@@ -962,9 +951,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         <span className="text-xl font-bold text-navy-900 dark:text-white">
                           ${(selectedAddon.price * addonQuantity).toFixed(2)}
                           {selectedAddon.recurring && (
-                            <span className="text-sm font-normal text-c-text-muted">
-                              /month
-                            </span>
+                            <span className="text-sm font-normal text-c-text-muted">/month</span>
                           )}
                         </span>
                       </div>

@@ -180,7 +180,9 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                       />
                     </div>
 
-                    {error && <p className="text-xs text-danger-500 dark:text-danger-400">{error}</p>}
+                    {error && (
+                      <p className="text-xs text-danger-500 dark:text-danger-400">{error}</p>
+                    )}
 
                     <button
                       type="submit"

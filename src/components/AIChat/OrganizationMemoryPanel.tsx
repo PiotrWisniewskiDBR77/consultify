@@ -12,6 +12,7 @@
  * - "Use in conversation" to inject context into current chat
  */
 
+import type { TFunction } from 'i18next';
 import {
   BookOpen,
   ChevronDown,
@@ -24,7 +25,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 
 import { OrgPattern, PastDecision } from '../../hooks/useOrgMemory';
 

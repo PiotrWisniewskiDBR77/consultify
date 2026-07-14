@@ -83,7 +83,9 @@ const ICONS: Record<string, LucideIcon> = {
 
 export function resolveSectionIcon(name?: string | null): LucideIcon {
   if (!name) return LayoutGrid;
-  const key = String(name).toLowerCase().replace(/[^a-z]/g, '');
+  const key = String(name)
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
   return ICONS[key] || LayoutGrid;
 }
 

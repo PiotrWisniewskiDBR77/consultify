@@ -273,7 +273,9 @@ export const RevenueForecastView: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
+            <table
+              /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+            >
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/10">
                   <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">

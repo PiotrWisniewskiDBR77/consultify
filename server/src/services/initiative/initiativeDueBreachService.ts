@@ -90,7 +90,7 @@ export function isDueBreach(candidate: DueBreachCandidate, now: Date): boolean {
 /** The actionable subset of `candidates` as of `now`. */
 export function selectDueBreaches(
   candidates: DueBreachCandidate[],
-  now: Date,
+  now: Date
 ): DueBreachCandidate[] {
   return candidates.filter((c) => isDueBreach(c, now));
 }
@@ -102,7 +102,7 @@ export function selectDueBreaches(
  */
 export async function scanAndNotifyDueBreaches(
   now: Date,
-  deps: DueBreachDeps,
+  deps: DueBreachDeps
 ): Promise<DueBreachResult> {
   let candidates: DueBreachCandidate[];
   try {

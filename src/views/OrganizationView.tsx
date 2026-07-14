@@ -16,9 +16,9 @@ import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
+import { useOrgContextSync } from '../hooks/useOrgContextSync';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
-import { useOrgContextSync } from '../hooks/useOrgContextSync';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import { ChallengeMapModule } from './ContextBuilder/modules/ChallengeMapModule';
@@ -138,10 +138,15 @@ export const OrganizationView: React.FC = () => {
       navigate(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, { replace: true });
       return;
     }
-    const section = path.replace(`${ROUTES.ORGANIZATION.ROOT}/`, '').replace(/^\/+|\/+$/g, '') || 'profile';
+    const section =
+      path.replace(`${ROUTES.ORGANIZATION.ROOT}/`, '').replace(/^\/+|\/+$/g, '') || 'profile';
     const adminRedirect = ADMIN_REDIRECTS[section as OrganizationSection];
     if (adminRedirect) {
-      trackFunnelEvent('org_workspace_admin_handoff', { section, target: adminRedirect, via: 'url' });
+      trackFunnelEvent('org_workspace_admin_handoff', {
+        section,
+        target: adminRedirect,
+        via: 'url',
+      });
       navigate(adminRedirect, { replace: true });
     }
   }, [location.pathname, navigate]);

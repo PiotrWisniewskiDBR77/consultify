@@ -449,16 +449,12 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-c-text">
-                          {type.name}
-                        </h4>
+                        <h4 className="font-semibold text-c-text">{type.name}</h4>
                         <span className="px-1.5 py-0.5 bg-c-surface-raised text-c-text-muted text-[10px] rounded">
                           SYSTEM
                         </span>
                       </div>
-                      <p className="text-xs text-c-text-muted mt-1">
-                        {type.description}
-                      </p>
+                      <p className="text-xs text-c-text-muted mt-1">{type.description}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -552,9 +548,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-c-text text-sm">
-                                  {role.name}
-                                </h4>
+                                <h4 className="font-medium text-c-text text-sm">{role.name}</h4>
                                 {role.isSystem ? (
                                   <span className="px-1.5 py-0.5 bg-c-surface-raised text-c-text-muted text-[10px] rounded">
                                     STANDARD
@@ -565,9 +559,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-c-text-muted mt-0.5">
-                                {role.description}
-                              </p>
+                              <p className="text-xs text-c-text-muted mt-0.5">{role.description}</p>
                               <div className="flex items-center gap-2 mt-2">
                                 <span className="text-[10px] text-c-text-muted">
                                   {role.defaultPermissions?.length || 0} permissions
@@ -648,13 +640,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                             >
                               {hasPermission ? <Check size={12} /> : <X size={12} />}
                             </div>
-                            <span
-                              className={
-                                hasPermission
-                                  ? 'text-c-text'
-                                  : 'text-c-text-muted'
-                              }
-                            >
+                            <span className={hasPermission ? 'text-c-text' : 'text-c-text-muted'}>
                               {perm.label}
                             </span>
                           </div>

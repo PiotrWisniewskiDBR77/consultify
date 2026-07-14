@@ -196,25 +196,21 @@ describe('P04 KPI Workflow Canon', () => {
 
     it('PUT /kpis/:kpiId returns 403 for viewer', async () => {
       mockUser = { ...mockUser!, role: 'viewer' };
-      const res = await request(app)
-        .put('/api/v8/results/kpis/kpi-001')
-        .send({ name: 'Updated' });
+      const res = await request(app).put('/api/v8/results/kpis/kpi-001').send({ name: 'Updated' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('DELETE /kpis/:kpiId returns 403 for viewer', async () => {
       mockUser = { ...mockUser!, role: 'viewer' };
-      const res = await request(app)
-        .delete('/api/v8/results/kpis/kpi-001');
+      const res = await request(app).delete('/api/v8/results/kpis/kpi-001');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('DELETE /kpis/:kpiId returns 403 for finance_owner', async () => {
       mockUser = { ...mockUser!, role: 'manager' };
-      const res = await request(app)
-        .delete('/api/v8/results/kpis/kpi-001');
+      const res = await request(app).delete('/api/v8/results/kpis/kpi-001');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
@@ -239,16 +235,14 @@ describe('P04 KPI Workflow Canon', () => {
 
     it('POST /kpi-reports/:snapshotId/refresh returns 403 for commenter', async () => {
       mockUser = { ...mockUser!, role: 'commenter' };
-      const res = await request(app)
-        .post('/api/v8/results/kpi-reports/snap-001/refresh');
+      const res = await request(app).post('/api/v8/results/kpi-reports/snap-001/refresh');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /deviation-cases/:caseId/acknowledge returns 403 for viewer', async () => {
       mockUser = { ...mockUser!, role: 'viewer' };
-      const res = await request(app)
-        .post('/api/v8/results/deviation-cases/case-001/acknowledge');
+      const res = await request(app).post('/api/v8/results/deviation-cases/case-001/acknowledge');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
@@ -264,8 +258,7 @@ describe('P04 KPI Workflow Canon', () => {
 
     it('POST /deviation-cases/:caseId/resolve returns 403 for viewer', async () => {
       mockUser = { ...mockUser!, role: 'viewer' };
-      const res = await request(app)
-        .post('/api/v8/results/deviation-cases/case-001/resolve');
+      const res = await request(app).post('/api/v8/results/deviation-cases/case-001/resolve');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });

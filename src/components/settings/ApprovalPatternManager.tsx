@@ -267,9 +267,7 @@ export const ApprovalPatternManager: React.FC = () => {
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle dark:border-navy-700">
-            <div className="text-2xl font-bold text-c-text">
-              {stats.totalPatterns}
-            </div>
+            <div className="text-2xl font-bold text-c-text">{stats.totalPatterns}</div>
             <div className="text-xs text-c-text-muted flex items-center gap-1 mt-1">
               <Brain size={12} />
               {language === 'pl' ? 'Wzorców' : 'Patterns'}
@@ -453,9 +451,7 @@ export const ApprovalPatternManager: React.FC = () => {
                         <span className="text-c-text-muted text-xs">
                           {language === 'pl' ? 'Poziom ryzyka' : 'Risk level'}
                         </span>
-                        <p className="font-semibold text-c-text-secondary">
-                          {pattern.risk_level}
-                        </p>
+                        <p className="font-semibold text-c-text-secondary">{pattern.risk_level}</p>
                       </div>
                     </div>
 

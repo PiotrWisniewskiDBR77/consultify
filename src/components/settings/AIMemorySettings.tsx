@@ -181,7 +181,9 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                       onChange={(e) => update('retentionDays', parseInt(e.target.value) || 30)}
                       className="w-28"
                     />
-                    <span className="text-sm text-c-text-muted">{t('settings.ai.days', 'days')}</span>
+                    <span className="text-sm text-c-text-muted">
+                      {t('settings.ai.days', 'days')}
+                    </span>
                   </div>
                 </SettingsFormRow>
 

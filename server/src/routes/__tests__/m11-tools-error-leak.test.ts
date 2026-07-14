@@ -56,12 +56,10 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
+  requireOrgAccess: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
 }));
 
 vi.mock('../../middleware/demoGuard.middleware.js', () => ({

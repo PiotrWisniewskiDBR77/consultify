@@ -127,12 +127,13 @@ function extractRoiFromText(text: string): string | undefined {
   //    „-" → łapie ZAKRES który Claude realnie generuje: „ROI 2.5-3.5x" (bez „-"
   //    poprzedni regex kończył na „2.5" i wymagał „x" natychmiast → 0 trafień, demo
   //    2026-07-07: expected_roi = NULL mimo „ROI 2.5-3.5x" w karcie).
-  const roiMult = s.match(/(?:roi|zwrot|return)[^0-9\n]{0,16}?(\d[\d.,-]*\s*x)\b/i) ||
+  const roiMult =
+    s.match(/(?:roi|zwrot|return)[^0-9\n]{0,16}?(\d[\d.,-]*\s*x)\b/i) ||
     s.match(/\b(\d[\d.,-]*\s*x)\s*(?:roi|zwrot|return)/i);
   if (roiMult) return `ROI ${roiMult[1].replace(/\s+/g, '')}`;
   // 3) Payback / okres zwrotu "payback 14 miesięcy" / "zwrot w 12 mies.".
   const payback = s.match(
-    /(?:payback|okres zwrotu|zwrot(?:\s+w)?)[^0-9\n]{0,16}?(\d[\d.,-]*)\s*(mies|month|m-?cy|lat|year|rok)/i,
+    /(?:payback|okres zwrotu|zwrot(?:\s+w)?)[^0-9\n]{0,16}?(\d[\d.,-]*)\s*(mies|month|m-?cy|lat|year|rok)/i
   );
   if (payback) {
     const unit = payback[2].toLowerCase();
@@ -145,7 +146,7 @@ function extractRoiFromText(text: string): string | undefined {
   //    rentowności (demo 2026-07-07 INI-1: „Break-even produktu: Q1 2028. Pełna
   //    rentowność inicjatywy: Q2 2028"). To realny wskaźnik zwrotu — lepszy niż NULL.
   const breakEven = s.match(
-    /(?:break-?even|pr[oó]g rentowno[śs]ci|pe[łl]na rentowno[śs][ćc]|rentowno[śs][ćc])[^\n]{0,40}?((?:Q[1-4]\s*)?\d{4}|\d{1,3}\s*(?:mies|month|m-?cy))/i,
+    /(?:break-?even|pr[oó]g rentowno[śs]ci|pe[łl]na rentowno[śs][ćc]|rentowno[śs][ćc])[^\n]{0,40}?((?:Q[1-4]\s*)?\d{4}|\d{1,3}\s*(?:mies|month|m-?cy))/i
   );
   if (breakEven) return `rentowność ${breakEven[1].replace(/\s+/g, ' ').trim()}`;
   return undefined;
@@ -170,7 +171,7 @@ const MONEY_TOKEN_RE = new RegExp(
     `|(?:\\d[\\d\\s.,]*\\s*${MONEY_SCALE}\\s*${MONEY_CUR}?)` +
     // 3) liczba + WALUTA bez skrótu: „500000 PLN", „750 tys" łapie (2)
     `|(?:\\d[\\d\\s.,]*\\s*${MONEY_CUR})`,
-  'gi',
+  'gi'
 );
 
 /** Pierwszy token kwotowy w oknie o wartości ≥1000 (odrzuca gołe małe liczby). */
@@ -246,7 +247,11 @@ function buildRiskLines(j: any): string[] {
     const title = cleanStr(it.risk ?? it.title ?? it.name ?? it.description ?? it.text);
     if (!title) continue;
     const mitigation = cleanStr(
-      it.mitigation ?? it.mitigationPlan ?? it.mitigation_plan ?? it.proposedAction ?? it.contingency,
+      it.mitigation ??
+        it.mitigationPlan ??
+        it.mitigation_plan ??
+        it.proposedAction ??
+        it.contingency
     );
     lines.push(mitigation ? `${title} — mitygacja: ${mitigation}` : title);
   }
@@ -320,7 +325,7 @@ function isGarbageRoi(v: unknown): boolean {
 export function buildTypedColumnUpdates(
   cards: Record<string, unknown> | null | undefined,
   existingCols: Set<string>,
-  existingRow: Record<string, unknown> = {},
+  existingRow: Record<string, unknown> = {}
 ): TypedColumnUpdate[] {
   const out: TypedColumnUpdate[] = [];
   if (!cards || typeof cards !== 'object') return out;
@@ -339,9 +344,7 @@ export function buildTypedColumnUpdates(
         (column === 'estimated_budget' &&
           isGarbageBudget(existingRow[column]) &&
           !isGarbageBudget(value)) ||
-        (column === 'expected_roi' &&
-          isGarbageRoi(existingRow[column]) &&
-          !isGarbageRoi(value));
+        (column === 'expected_roi' && isGarbageRoi(existingRow[column]) && !isGarbageRoi(value));
       if (!isGarbageOverride) return;
     }
     // dedup: pierwszy wygrywa
@@ -382,7 +385,9 @@ export function buildTypedColumnUpdates(
     if (j && typeof j === 'object') {
       const successCriteria = cleanList(j.successCriteria ?? j.criteria);
       const deliverables = cleanList(j.deliverables);
-      const description = cleanStr(j.targetDescription ?? j.description ?? j.vision ?? j.targetState);
+      const description = cleanStr(
+        j.targetDescription ?? j.description ?? j.vision ?? j.targetState
+      );
       pushList('success_criteria', successCriteria);
       pushList('deliverables', deliverables);
       // target_state jako OBIEKT (JSON.stringify obiektu, nie tablicy) — parytet z
@@ -449,8 +454,9 @@ export function buildTypedColumnUpdates(
       // estimated_budget: jawne pole → inaczej suma capex+opex (gdy liczbowe) →
       // inaczej wyłuskaj kwotę z narracji (FIX 1b). Kolumna liczbowa/skalarna →
       // zapisz gołą wartość, nie tekst z jednostką.
-      const explicitBudget =
-        parseAmount(j.estimatedBudget ?? j.budget ?? j.totalCost ?? j.totalBudget);
+      const explicitBudget = parseAmount(
+        j.estimatedBudget ?? j.budget ?? j.totalCost ?? j.totalBudget
+      );
       if (explicitBudget !== undefined) {
         push('estimated_budget', String(explicitBudget));
       } else {

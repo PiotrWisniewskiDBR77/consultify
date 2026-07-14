@@ -20,10 +20,13 @@ import {
 } from '../constants/initiativeStatuses.js';
 import activityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { fireClosureHandoff } from '../services/executionResultsBridge.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
 import { recordGateAiEvent } from '../services/initiative/gateAiTelemetryService.js';
 import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
+import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import {
@@ -40,14 +43,14 @@ import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
-import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import {
   addLinkedItem,
   listLinkedItems,
   removeLinkedItem,
 } from '../services/initiative/initiativeLinkedItemsService.js';
 import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
-import { fireClosureHandoff } from '../services/executionResultsBridge.js';
+import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
+import { isRequireInitiativeProjectEnabled } from '../services/initiativeProjectPolicyService.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -67,9 +70,6 @@ import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
-import { isRequireInitiativeProjectEnabled } from '../services/initiativeProjectPolicyService.js';
-import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import type {
   CreateInitiativeRequest,
   UpdateInitiativeRequest,
@@ -606,7 +606,10 @@ export class InitiativeController {
       // going through the funnel below get the soft auto-anchor instead (see
       // createInitiativeService.ts). Runs BEFORE the funnel/raw-insert branch so
       // it applies regardless of INITIATIVE_FUNNEL_ENABLED.
-      if (isRequireInitiativeProjectEnabled() && !(req.body as { projectId?: unknown })?.projectId) {
+      if (
+        isRequireInitiativeProjectEnabled() &&
+        !(req.body as { projectId?: unknown })?.projectId
+      ) {
         res.status(400).json({
           error: 'projectId is required — every initiative must belong to a project',
           code: 'INITIATIVE_PROJECT_REQUIRED',
@@ -2056,7 +2059,13 @@ export class InitiativeController {
 
       // Uspójnienie F2.2–2.5/2.7 — record the stage-boundary handoff (event + lineage)
       // on every successful status transition. Fail-safe (never throws/blocks).
-      void recordStageHandoff(orgId, String(req.params.id), currentStatus, nextStatus, req.user?.id);
+      void recordStageHandoff(
+        orgId,
+        String(req.params.id),
+        currentStatus,
+        nextStatus,
+        req.user?.id
+      );
 
       // M13 Depth · Seria R (M13d) — the status-change notification to
       // watchers/owners is emitted by the canonical block below ("Emit

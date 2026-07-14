@@ -12,22 +12,17 @@
  * never have to reach into section internals.
  */
 
+import type { ChangeoverStep, ImprovementItem, SmedSession, StepKind } from './changeoverEngine';
 import {
+  type LadderRung,
   SMED_DEEPENING_LADDER,
   SMED_LADDER_RUNG_ORDER,
-  type LadderRung,
   type SmedPhaseId,
 } from './deepeningLadder';
-import type {
-  ChangeoverStep,
-  ImprovementItem,
-  SmedSession,
-  StepKind,
-} from './changeoverEngine';
 
-export * from './deepeningLadder';
 export * from './changeoverEngine';
 export * from './conclusionPrompts';
+export * from './deepeningLadder';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
@@ -75,17 +70,14 @@ const asPhase = (raw: unknown): SmedPhaseId | undefined =>
  * Convention on OperationalItem: `category` carries internal/external OR the
  * improvement phase; `threshold` carries the step's improvement potential.
  */
-export function toSmedSession(
-  sections: Record<string, unknown[]> | undefined
-): SmedSession {
+export function toSmedSession(sections: Record<string, unknown[]> | undefined): SmedSession {
   const rawSteps = (sections?.['changeover-steps'] || []) as Array<Record<string, unknown>>;
   const rawImprovements = (sections?.['improvements'] || []) as Array<Record<string, unknown>>;
 
   const steps: ChangeoverStep[] = rawSteps.map((item, idx) => ({
     id: String(item.id ?? `step-${idx}`),
     kind: asKind(item.category),
-    durationMinutes:
-      typeof item.durationMinutes === 'number' ? item.durationMinutes : undefined,
+    durationMinutes: typeof item.durationMinutes === 'number' ? item.durationMinutes : undefined,
     measured: typeof item.durationMinutes === 'number',
     potential: asPotential(item.threshold),
   }));

@@ -58,10 +58,7 @@ export const TornadoChart: React.FC<TornadoChartProps> = ({
   const [hover, setHover] = useState<number | null>(null);
 
   const sorted = useMemo(
-    () =>
-      [...bars].sort(
-        (a, b) => Math.abs(b.high - b.low) - Math.abs(a.high - a.low)
-      ),
+    () => [...bars].sort((a, b) => Math.abs(b.high - b.low) - Math.abs(a.high - a.low)),
     [bars]
   );
 
@@ -199,8 +196,7 @@ export const TornadoChart: React.FC<TornadoChartProps> = ({
             {sorted[hover].label}
           </div>
           <div className="text-slate-500 dark:text-slate-400">
-            min {formatValue(sorted[hover].low)} · max{' '}
-            {formatValue(sorted[hover].high)}
+            min {formatValue(sorted[hover].low)} · max {formatValue(sorted[hover].high)}
           </div>
           <div className="text-slate-400 dark:text-slate-500">
             wpływ {formatValue(Math.abs(sorted[hover].high - sorted[hover].low))}

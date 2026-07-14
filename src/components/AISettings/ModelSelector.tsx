@@ -142,10 +142,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     return (
       <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 ${className}`}>
         {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="h-24 rounded-xl bg-c-surface-raised animate-pulse"
-          />
+          <div key={i} className="h-24 rounded-xl bg-c-surface-raised animate-pulse" />
         ))}
       </div>
     );
@@ -222,14 +219,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 </div>
 
                 {/* Model name */}
-                <h4 className="font-medium text-c-text truncate mb-1">
-                  {model.name}
-                </h4>
+                <h4 className="font-medium text-c-text truncate mb-1">{model.name}</h4>
 
                 {/* Model ID */}
-                <p className="text-xs text-c-text-muted truncate mb-2">
-                  {model.model_id}
-                </p>
+                <p className="text-xs text-c-text-muted truncate mb-2">{model.model_id}</p>
 
                 {/* Capabilities */}
                 {model.capabilities && model.capabilities.length > 0 && (

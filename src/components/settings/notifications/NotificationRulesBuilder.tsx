@@ -295,9 +295,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       {activeTab === 'rules' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-c-text">
-              Custom Notification Rules
-            </h3>
+            <h3 className="text-lg font-semibold text-c-text">Custom Notification Rules</h3>
             <button
               onClick={addRule}
               className="flex items-center gap-2 px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors"
@@ -507,9 +505,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   className="rounded"
                 />
                 <div>
-                  <p className="font-medium text-c-text">
-                    Allow Urgent Notifications
-                  </p>
+                  <p className="font-medium text-c-text">Allow Urgent Notifications</p>
                   <p className="text-sm text-c-text-muted">
                     Still receive critical notifications during quiet hours
                   </p>
@@ -548,9 +544,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-c-text-secondary">
-                    Volume
-                  </label>
+                  <label className="text-sm font-medium text-c-text-secondary">Volume</label>
                   <span className="text-sm text-blue-600">{soundSettings.volume}%</span>
                 </div>
                 <input
@@ -620,9 +614,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  deviceSettings.desktop.enabled
-                    ? 'bg-navy-900'
-                    : 'bg-c-surface-raised'
+                  deviceSettings.desktop.enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
@@ -649,9 +641,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg cursor-pointer"
                   >
                     <div>
-                      <p className="font-medium text-c-text text-sm">
-                        {item.label}
-                      </p>
+                      <p className="font-medium text-c-text text-sm">{item.label}</p>
                       <p className="text-xs text-c-text-muted">{item.desc}</p>
                     </div>
                     <input
@@ -716,9 +706,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg cursor-pointer"
                   >
                     <div>
-                      <p className="font-medium text-c-text text-sm">
-                        {item.label}
-                      </p>
+                      <p className="font-medium text-c-text text-sm">{item.label}</p>
                       <p className="text-xs text-c-text-muted">{item.desc}</p>
                     </div>
                     <input

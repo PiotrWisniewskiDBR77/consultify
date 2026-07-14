@@ -33,7 +33,9 @@ export const AssessmentMatrix: React.FC<{ data: AssessmentMatrixData }> = ({ dat
       </div>
 
       <div className="overflow-auto">
-        <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="min-w-full">
+        <table
+          /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="min-w-full"
+        >
           <thead className="sticky top-0 bg-white dark:bg-navy-900">
             <tr className="border-b border-slate-200 dark:border-slate-700">
               <th className="text-left px-4 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider w-64">

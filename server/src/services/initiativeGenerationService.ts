@@ -12,21 +12,21 @@ import DbPromise from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import initiativeSectionTypeService from './initiativeSectionTypeService.js';
-import { buildOrgFinancialsSummary } from './initiative/financialsGrounding.js';
 import {
-  type CardSpec,
   CARD_BLOCK_TYPES,
+  type CardIssue,
+  type CardSpec,
   coerceToCardSpec,
   hasCriticalIssues,
   summarizeIssues,
   validateCardSpec,
-  type CardIssue,
 } from './initiative/cardSpecSchema.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { buildOrgFinancialsSummary } from './initiative/financialsGrounding.js';
 import { findDuplicateInitiative } from './initiative/initiativeCandidateService.js';
 import { resolveProjectIdFromSource } from './initiative/sourceProjectResolver.js';
 import { isRequireInitiativeProjectEnabled } from './initiativeProjectPolicyService.js';
+import initiativeSectionTypeService from './initiativeSectionTypeService.js';
 
 // ==========================================
 // TYPES
@@ -381,7 +381,8 @@ export function heuristicReview(sectionKey: string, content: string): SectionRev
   // "do ustalenia"/"do określenia"/"do uzupełnienia" jako WARTOŚĆ celu/KPI/ROI =
   // niefalsyfikowalny cel (defekt sędziego BCG #1). Doktryna wymaga szacunku z
   // założeniem — nie pustej frazy. Karzemy je jak placeholder w sekcjach celów.
-  const unquantifiedGoalRe = /\bdo ustalenia\b|\bdo określenia\b|\bdo uzupełnienia\b|\bto be determined\b/i;
+  const unquantifiedGoalRe =
+    /\bdo ustalenia\b|\bdo określenia\b|\bdo uzupełnienia\b|\bto be determined\b/i;
   const isGoalSection =
     sectionKey === 'kpis' ||
     sectionKey === 'kpi' ||
@@ -393,8 +394,12 @@ export function heuristicReview(sectionKey: string, content: string): SectionRev
     sectionKey === 'financialImpact';
   if (isGoalSection && unquantifiedGoalRe.test(text)) {
     failedValidators.push('quantified_goal');
-    qualityGaps.push('Cel/KPI/ROI z frazą „do ustalenia" zamiast liczbowego szacunku — niefalsyfikowalny.');
-    fixes.push('Zastąp „do ustalenia" szacunkiem z jawnym założeniem, np. „redukcja o 15% (szacunek; zakładając X)".');
+    qualityGaps.push(
+      'Cel/KPI/ROI z frazą „do ustalenia" zamiast liczbowego szacunku — niefalsyfikowalny.'
+    );
+    fixes.push(
+      'Zastąp „do ustalenia" szacunkiem z jawnym założeniem, np. „redukcja o 15% (szacunek; zakładając X)".'
+    );
     score -= 30;
   }
 
@@ -624,15 +629,20 @@ export function getCoreFallbackPrompt(sectionKey: string): string | null {
  */
 export function buildGroundingBlock(context: GenerationContext): string | null {
   const lines: string[] = [];
-  if (context.orgContext) lines.push(`Kontekst organizacji: ${String(context.orgContext).slice(0, 800)}`);
-  if (context.summary) lines.push(`Streszczenie inicjatywy: ${String(context.summary).slice(0, 800)}`);
+  if (context.orgContext)
+    lines.push(`Kontekst organizacji: ${String(context.orgContext).slice(0, 800)}`);
+  if (context.summary)
+    lines.push(`Streszczenie inicjatywy: ${String(context.summary).slice(0, 800)}`);
   if (context.problemStatement)
     lines.push(`Problem: ${String(context.problemStatement).slice(0, 800)}`);
   if (context.sourceLineage) lines.push(`Pochodzenie (lineage): ${context.sourceLineage}`);
   if (context.existingKpis) lines.push(`Istniejące KPI: ${context.existingKpis}`);
-  if (context.financialsSummary) lines.push(`Dane finansowe org: ${String(context.financialsSummary).slice(0, 800)}`);
+  if (context.financialsSummary)
+    lines.push(`Dane finansowe org: ${String(context.financialsSummary).slice(0, 800)}`);
   if (context.portfolioSummary)
-    lines.push(`Istniejące inicjatywy w organizacji (NIE duplikuj; dopasuj do luk): ${String(context.portfolioSummary).slice(0, 1000)}`);
+    lines.push(
+      `Istniejące inicjatywy w organizacji (NIE duplikuj; dopasuj do luk): ${String(context.portfolioSummary).slice(0, 1000)}`
+    );
   if (context.category) lines.push(`Kategoria: ${context.category}`);
   if (context.module) lines.push(`Obszar/moduł: ${context.module}`);
   // §6 downstream Insight seeds (#57/Z60) — inherited, not guessed: when the
@@ -678,7 +688,13 @@ export class InitiativeGenerationService {
       const content = isPolish
         ? `[${name}] — Uzupełnij tę sekcję po zakończeniu analizy. Spróbuj ponownie gdy provider AI będzie dostępny.`
         : `[${name}] — Please fill in this section. AI generation requires a configured LLM provider.`;
-      return { content, isJson: false, parsedContent: undefined, tokensUsed: 0, model: 'placeholder' };
+      return {
+        content,
+        isJson: false,
+        parsedContent: undefined,
+        tokensUsed: 0,
+        model: 'placeholder',
+      };
     }
 
     // 1. Get section type definition (with prompt template)
@@ -716,7 +732,7 @@ export class InitiativeGenerationService {
     if (!sectionType) {
       if (coreFallback) {
         logger.warn(
-          `[InitiativeGeneration] section type "${sectionKey}" not found — using built-in core fallback prompt`,
+          `[InitiativeGeneration] section type "${sectionKey}" not found — using built-in core fallback prompt`
         );
       } else {
         throw new Error(`Section type "${sectionKey}" not found`);
@@ -728,7 +744,7 @@ export class InitiativeGenerationService {
       if (coreFallback) {
         if (sectionType) {
           logger.warn(
-            `[InitiativeGeneration] ai_prompt_template NULL for core section "${sectionKey}" — using built-in fallback (check migration 20260628/542)`,
+            `[InitiativeGeneration] ai_prompt_template NULL for core section "${sectionKey}" — using built-in fallback (check migration 20260628/542)`
           );
         }
         promptTemplate = coreFallback;
@@ -763,8 +779,7 @@ export class InitiativeGenerationService {
     const lang = String(enrichedContext.language || context.language || 'en').toLowerCase();
     const isPolish = lang === 'pl' || lang === 'polish';
     const systemPrompt =
-      (isPolish ? DOCTRINE_SYSTEM_PROMPT : DOCTRINE_SYSTEM_PROMPT_EN) +
-      buildTemporalRule(isPolish);
+      (isPolish ? DOCTRINE_SYSTEM_PROMPT : DOCTRINE_SYSTEM_PROMPT_EN) + buildTemporalRule(isPolish);
 
     const llm = llmEarly;
 
@@ -873,7 +888,9 @@ export class InitiativeGenerationService {
     }
 
     const guidance = getFormulaGuidance(sectionKey);
-    const sectionLabel = options?.sectionName ? `${options.sectionName} (${sectionKey})` : sectionKey;
+    const sectionLabel = options?.sectionName
+      ? `${options.sectionName} (${sectionKey})`
+      : sectionKey;
     const userPrompt = [
       isPolish
         ? `Oceń poniższą treść sekcji „${sectionLabel}" karty inicjatywy.`
@@ -1120,7 +1137,10 @@ Return valid JSON array only.`;
         let financialsSummary: string | undefined;
         try {
           if (initiative.organization_id) {
-            financialsSummary = await buildOrgFinancialsSummary(this.db, initiative.organization_id);
+            financialsSummary = await buildOrgFinancialsSummary(
+              this.db,
+              initiative.organization_id
+            );
           }
         } catch {
           /* best-effort — financialsGrounding fail-soft */
@@ -1137,7 +1157,9 @@ Return valid JSON array only.`;
               [orgId]
             );
             if (org) {
-              const parts = [org.name, org.industry ? `branża: ${org.industry}` : ''].filter(Boolean);
+              const parts = [org.name, org.industry ? `branża: ${org.industry}` : ''].filter(
+                Boolean
+              );
               if (parts.length) orgContext = parts.join(' — ');
             }
           }
@@ -1187,7 +1209,14 @@ Return valid JSON array only.`;
   ): Promise<CardSpecGenerationResult> {
     const llm = await getLLMServiceInstance();
     if (!llm) {
-      return { cardSpec: null, issues: [], ok: false, regenerated: false, tokensUsed: 0, model: 'placeholder' };
+      return {
+        cardSpec: null,
+        issues: [],
+        ok: false,
+        regenerated: false,
+        tokensUsed: 0,
+        model: 'placeholder',
+      };
     }
 
     // Enrich for grounding parity (fail-soft: DB hiccup nie psuje generacji).

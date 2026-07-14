@@ -547,9 +547,7 @@ function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
     style: DOCX_STYLE_IDS.CALLOUT,
     shading: { type: 'clear', fill },
     border: { left: { color: accent, space: 12, style: 'single', size: 24 } },
-    children: [
-      new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont }),
-    ],
+    children: [new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont })],
   });
 }
 
@@ -742,8 +740,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   const clamp = clampTableColumns(columnCount);
   if (clamp.overflowed) {
     const foldLabel = `+${clamp.folded.length} more`;
-    const pick = <T,>(arr: T[], fallback: T): T[] =>
-      clamp.keep.map((i) => arr[i] ?? fallback);
+    const pick = <T>(arr: T[], fallback: T): T[] => clamp.keep.map((i) => arr[i] ?? fallback);
     if (headers.length > 0) {
       headers = [...pick(headers, ''), foldLabel];
     }
@@ -958,7 +955,12 @@ function renderFootnoteBlock(block: DocumentBlock, ctx: RenderContext): Paragrap
     new Paragraph({
       style: DOCX_STYLE_IDS.BODY_TEXT,
       children: [
-        new TextRun({ text: 'Note ', italics: true, font: ctx.bodyFont, color: DOCX_PALETTE.muted }),
+        new TextRun({
+          text: 'Note ',
+          italics: true,
+          font: ctx.bodyFont,
+          color: DOCX_PALETTE.muted,
+        }),
         new FootnoteReferenceRun(id),
       ],
     }),

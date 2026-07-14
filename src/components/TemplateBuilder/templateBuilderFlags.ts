@@ -58,7 +58,5 @@ export function isTemplateBuilderEnabled(): boolean {
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
   if (readEnv()) return true;
-  return !isPublicProductionHost(
-    typeof window !== 'undefined' ? window.location.hostname : ''
-  );
+  return !isPublicProductionHost(typeof window !== 'undefined' ? window.location.hostname : '');
 }

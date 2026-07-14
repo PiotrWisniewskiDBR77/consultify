@@ -3,7 +3,7 @@ import type { Edge, Node } from 'reactflow';
 
 import { generateReadback, type LaneLike } from './generateReadback';
 
-export type { ReadbackStep, ReadbackResult } from './generateReadback';
+export type { ReadbackResult, ReadbackStep } from './generateReadback';
 import type { ReadbackResult } from './generateReadback';
 
 interface UseProcessFlowReadbackOpts {

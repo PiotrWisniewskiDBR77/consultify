@@ -595,9 +595,7 @@ export const InfoSections: React.FC = () => {
                     <Icon size={36} strokeWidth={1.5} />
                   </div>
                   <div className="space-y-3">
-                    <h4 className="text-2xl font-black text-c-text tracking-tight">
-                      {step.title}
-                    </h4>
+                    <h4 className="text-2xl font-black text-c-text tracking-tight">{step.title}</h4>
                     <p className="text-c-text-muted text-base leading-relaxed font-medium">
                       {step.desc}
                     </p>
@@ -709,10 +707,7 @@ export const InfoSections: React.FC = () => {
           <div className="text-center mt-8 space-y-6">
             <p className="text-c-text-muted">
               {t('landing.faq.more', 'Have more questions?')}{' '}
-              <a
-                href="/contact"
-                className="text-c-accent font-semibold hover:underline"
-              >
+              <a href="/contact" className="text-c-accent font-semibold hover:underline">
                 {t('landing.faq.contact', 'Contact us')}
               </a>
             </p>

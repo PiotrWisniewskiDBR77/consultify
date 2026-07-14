@@ -152,9 +152,7 @@ const FocusTaskCard: React.FC<FocusTaskCardProps> = ({ task, onToggle, onClick, 
       <div className="flex-1 min-w-0">
         <span
           className={`text-sm truncate block ${
-            task.isDone
-              ? 'text-c-text-muted line-through'
-              : 'text-c-text'
+            task.isDone ? 'text-c-text-muted line-through' : 'text-c-text'
           }`}
         >
           {task.title}

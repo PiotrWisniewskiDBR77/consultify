@@ -320,7 +320,10 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                   key={key}
                   onClick={() => handleQuickAction(key)}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-bold transition-colors hover:opacity-80"
-                  style={{ backgroundColor: `color-mix(in srgb, ${config.color} 8%, transparent)`, color: config.color }}
+                  style={{
+                    backgroundColor: `color-mix(in srgb, ${config.color} 8%, transparent)`,
+                    color: config.color,
+                  }}
                 >
                   {config.icon}
                   {isPl ? config.labelPl : config.label}

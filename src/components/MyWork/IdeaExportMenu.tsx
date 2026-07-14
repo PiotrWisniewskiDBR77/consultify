@@ -37,8 +37,7 @@ import type { IdeaWorkspaceImportPayload } from './ideaSelectionTypes';
  * is presented as a working action. All genuinely-working CLIENT-side exports (PNG/SVG/PDF/
  * Markdown/JSON/package/mapping/share + report/presentation conversion) remain fully functional.
  */
-export const IDEA_SERVER_EXPORT_ENABLED =
-  import.meta.env.VITE_ENABLE_IDEA_SERVER_EXPORT === 'true';
+export const IDEA_SERVER_EXPORT_ENABLED = import.meta.env.VITE_ENABLE_IDEA_SERVER_EXPORT === 'true';
 
 interface ExportFormat {
   id: string;

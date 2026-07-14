@@ -12,22 +12,17 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { AssigneeCell } from '@/components/ui/primitives/cells';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
-import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
-import {
-  type FilterChip,
-  type GridItem,
-  GridView,
-  type ViewMode,
-} from '../shared/ModuleHub';
+import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
   type MetaPill,
   StandardPreview,
-  StandardTable,
   type StandardRowMenu,
+  StandardTable,
   type TableColumn as StandardTableColumn,
 } from '../standard';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
@@ -152,7 +147,9 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         render: (row: Record<string, unknown>) => {
           const item = row as unknown as PresentationItem;
           const meta = PRESENTATION_STATUS_META[item.status] || PRESENTATION_STATUS_META.draft;
-          return <EntityStatusChip status={item.status} label={isPolish ? meta.labelPl : meta.label} />;
+          return (
+            <EntityStatusChip status={item.status} label={isPolish ? meta.labelPl : meta.label} />
+          );
         },
       },
       {
@@ -205,7 +202,11 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         align: 'right' as const,
         render: (row: Record<string, unknown>) => {
           const item = row as unknown as PresentationItem;
-          return <span className="text-sm tabular-nums text-c-text-secondary">{item.slideCount ?? '—'}</span>;
+          return (
+            <span className="text-sm tabular-nums text-c-text-secondary">
+              {item.slideCount ?? '—'}
+            </span>
+          );
         },
       },
     ],
@@ -386,8 +387,10 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     ? [
         {
           label: isPolish
-            ? (PRESENTATION_STATUS_META[previewItem.status] || PRESENTATION_STATUS_META.draft).labelPl
-            : (PRESENTATION_STATUS_META[previewItem.status] || PRESENTATION_STATUS_META.draft).label,
+            ? (PRESENTATION_STATUS_META[previewItem.status] || PRESENTATION_STATUS_META.draft)
+                .labelPl
+            : (PRESENTATION_STATUS_META[previewItem.status] || PRESENTATION_STATUS_META.draft)
+                .label,
           tone: statusChipTone(previewItem.status),
         },
         {
@@ -464,9 +467,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                 exportLabel: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
               }}
               ai={{
-                hints: [
-                  t('rap.actions.discuss', 'Discuss'),
-                ],
+                hints: [t('rap.actions.discuss', 'Discuss')],
                 disabled: true,
                 disabledTooltip: t('common.comingSoon', 'Coming soon'),
               }}

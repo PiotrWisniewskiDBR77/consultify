@@ -270,9 +270,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
 
         <div className="flex items-center gap-3 p-3 bg-c-surface-raised rounded-lg">
           <div className="w-8 h-8 rounded" style={{ backgroundColor: settings.accentColor }} />
-          <span className="font-mono text-sm text-c-text-secondary">
-            {settings.accentColor}
-          </span>
+          <span className="font-mono text-sm text-c-text-secondary">{settings.accentColor}</span>
         </div>
       </div>
 

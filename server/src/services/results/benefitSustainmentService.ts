@@ -65,7 +65,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function nextReviewDate(
   cadence: string,
   lastReviewIso: string | null,
-  nowMs: number,
+  nowMs: number
 ): string {
   const baseMs = lastReviewIso ? Date.parse(lastReviewIso) : nowMs;
   const safeBaseMs = Number.isFinite(baseMs) ? baseMs : nowMs;
@@ -77,11 +77,7 @@ export function nextReviewDate(
  * Czy przegląd jest należny (przeterminowany lub dokładnie teraz).
  * Gdy nigdy nie przeprowadzono przeglądu → należny (true).
  */
-export function reviewDue(
-  cadence: string,
-  lastReviewIso: string | null,
-  nowMs: number,
-): boolean {
+export function reviewDue(cadence: string, lastReviewIso: string | null, nowMs: number): boolean {
   if (!lastReviewIso) return true;
   const nextMs = Date.parse(nextReviewDate(cadence, lastReviewIso, nowMs));
   return nowMs >= nextMs;
@@ -96,10 +92,7 @@ export function reviewDue(
  *  4. w innym wypadku                     → 'sustained'
  * Reasons gromadzą wszystkie wykryte sygnały (nie tylko zwycięski).
  */
-export function sustainmentStatus(
-  input: SustainmentInput,
-  nowMs: number,
-): SustainmentResult {
+export function sustainmentStatus(input: SustainmentInput, nowMs: number): SustainmentResult {
   const reasons: string[] = [];
 
   const unowned = input.ownershipTransferred !== true;
@@ -141,7 +134,7 @@ export function sustainmentStatus(
  */
 export function buildGovernanceCalendar(
   items: Array<GovernanceCalendarItem>,
-  nowMs: number,
+  nowMs: number
 ): Array<GovernanceCalendarEntry> {
   return items
     .map((item) => {

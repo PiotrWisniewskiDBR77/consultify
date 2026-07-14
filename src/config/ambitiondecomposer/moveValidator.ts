@@ -23,11 +23,7 @@
  * prompt registry already reads (ambData.themes[]).
  */
 
-import {
-  AMBITION_THEME_ARCHETYPES,
-  type Bilingual,
-  type ThemeArchetype,
-} from './deepeningLadder';
+import { AMBITION_THEME_ARCHETYPES, type Bilingual, type ThemeArchetype } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
 type Horizon = 'short' | 'medium' | 'long';
@@ -108,7 +104,8 @@ const isAccepted = (theme: ThemeItem) =>
  * - otherwise                       -> accelerator(pace lever on the foundation)
  */
 export function deriveArchetype(theme: ThemeItem): ThemeArchetype {
-  if (theme.archetype && AMBITION_THEME_ARCHETYPES.includes(theme.archetype)) return theme.archetype;
+  if (theme.archetype && AMBITION_THEME_ARCHETYPES.includes(theme.archetype))
+    return theme.archetype;
   const importance = asLevel(theme.importance);
   const horizon = asHorizon(theme.horizon);
   if (importance === 'low') return 'enabler';
@@ -190,7 +187,8 @@ export function rankThemes(data: AmbitionDecomposerData): ThemeRanking {
     .map((s) => s.id);
 
   const first = scores.find((s) => s.id === ordered[0]);
-  const last = ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
+  const last =
+    ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
 
   const rationale: Bilingual = first
     ? {
@@ -310,9 +308,14 @@ const impactFromScore = (priorityScore: number): Level =>
   priorityScore >= 6 ? 'high' : priorityScore >= 3 ? 'medium' : 'low';
 
 const effortFromArchetype = (archetype: ThemeArchetype): Level =>
-  archetype === 'foundation' || archetype === 'bet' ? 'high' : archetype === 'enabler' ? 'medium' : 'medium';
+  archetype === 'foundation' || archetype === 'bet'
+    ? 'high'
+    : archetype === 'enabler'
+      ? 'medium'
+      : 'medium';
 
-const riskLevelFrom = (risk: number): Level => (risk <= 1.4 ? 'low' : risk <= 2.2 ? 'medium' : 'high');
+const riskLevelFrom = (risk: number): Level =>
+  risk <= 1.4 ? 'low' : risk <= 2.2 ? 'medium' : 'high';
 
 /**
  * Build a W2-validated theme sequence from the ranked ambition. The rule of the
@@ -367,12 +370,14 @@ export function buildW2ThemeSequence(data: AmbitionDecomposerData): SequencedThe
         en: `Validate "${primary.title}" with a cheap experiment before committing capital`,
       },
       rationale: {
-        pl: primary.archetype === 'bet'
-          ? 'To zakład o niepewnym upside — falsyfikowalny test zamienia hazard w policzalne ryzyko, zanim zamrozicie budżet.'
-          : 'Brak twardego dowodu pod tym wątkiem — mały test odbiera ryzyko, zanim uczynicie go osią sekwencji.',
-        en: primary.archetype === 'bet'
-          ? 'This is a bet with uncertain upside — a falsifiable test turns a gamble into computable risk before you lock budget.'
-          : 'No hard evidence under this theme yet — a small test de-risks it before you make it the spine of the sequence.',
+        pl:
+          primary.archetype === 'bet'
+            ? 'To zakład o niepewnym upside — falsyfikowalny test zamienia hazard w policzalne ryzyko, zanim zamrozicie budżet.'
+            : 'Brak twardego dowodu pod tym wątkiem — mały test odbiera ryzyko, zanim uczynicie go osią sekwencji.',
+        en:
+          primary.archetype === 'bet'
+            ? 'This is a bet with uncertain upside — a falsifiable test turns a gamble into computable risk before you lock budget.'
+            : 'No hard evidence under this theme yet — a small test de-risks it before you make it the spine of the sequence.',
       },
       tradeOff: {
         pl: 'Kosztem ~1 cyklu opóźnienia pełnego uruchomienia, w zamian za znacznie niższe ryzyko przepalenia.',

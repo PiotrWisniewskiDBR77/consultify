@@ -603,9 +603,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-c-text">
-                            {key.name}
-                          </span>
+                          <span className="font-medium text-c-text">{key.name}</span>
                           <code className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded font-mono">
                             {key.key_prefix}...
                           </code>
@@ -738,9 +736,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                   </div>
                 </div>
                 <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
-                  <div className="text-sm text-c-text-secondary">
-                    Avg Response Time
-                  </div>
+                  <div className="text-sm text-c-text-secondary">Avg Response Time</div>
                   <div className="text-2xl font-bold text-c-text">
                     {Math.round(selectedKeyUsage.usage.totals?.avg_response_time || 0)}ms
                   </div>
@@ -779,15 +775,11 @@ export const EnterpriseApiManagement: React.FC = () => {
                             height: `${Math.max(5, (day.requests / Math.max(1, ...selectedKeyUsage.usage.usage.map((d) => d.requests))) * 100)}%`,
                           }}
                         />
-                        <div className="text-xs text-c-text-muted mt-2">
-                          {formatDate(day.date)}
-                        </div>
+                        <div className="text-xs text-c-text-muted mt-2">{formatDate(day.date)}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="w-full text-center text-c-text-secondary">
-                      No usage data
-                    </div>
+                    <div className="w-full text-center text-c-text-secondary">No usage data</div>
                   )}
                 </div>
               </div>
@@ -947,9 +939,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 <div key={scope.id} className="p-3 bg-c-surface rounded-lg">
                   <div className="flex items-center justify-between mb-1">
                     <code className="text-sm text-c-info">{scope.id}</code>
-                    <span className="text-xs text-c-text-muted">
-                      {scope.category}
-                    </span>
+                    <span className="text-xs text-c-text-muted">{scope.category}</span>
                   </div>
                   <p className="text-xs text-c-text-secondary">{scope.description}</p>
                 </div>
@@ -1039,17 +1029,16 @@ const ApiKeyModal: React.FC<{
           <h3 className="text-xl font-bold text-c-text">
             {editKey ? 'Edit API Key' : 'Create API Key'}
           </h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-c-surface-raised rounded-lg"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-c-surface-raised rounded-lg">
             <X className="w-5 h-5 text-c-text-secondary" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-1">Organization *</label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
+              Organization *
+            </label>
             <select
               required
               value={formData.organizationId}
@@ -1078,7 +1067,9 @@ const ApiKeyModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-1">Description</label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
+              Description
+            </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -1090,7 +1081,9 @@ const ApiKeyModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-1">Key Type</label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
+                Key Type
+              </label>
               <select
                 value={formData.key_type}
                 onChange={(e) =>
@@ -1104,7 +1097,9 @@ const ApiKeyModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-1">Expires</label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
+                Expires
+              </label>
               <input
                 type="date"
                 value={formData.expires_at}

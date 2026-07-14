@@ -93,7 +93,10 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
         data-testid="qa-suggestion-list-empty"
       >
         {emptyLabel ??
-          t('kimi.tabeleShell.qa.noSuggestions', 'No actionable suggestions. Table is in great shape.')}
+          t(
+            'kimi.tabeleShell.qa.noSuggestions',
+            'No actionable suggestions. Table is in great shape.'
+          )}
       </div>
     );
   }
@@ -147,7 +150,8 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                     className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:text-c-text"
                     data-testid="qa-suggestion-dismiss"
                   >
-                    <X className="h-3 w-3" /> {t('kimi.tabeleShell.qa.markNotApplicable', 'Mark not applicable')}
+                    <X className="h-3 w-3" />{' '}
+                    {t('kimi.tabeleShell.qa.markNotApplicable', 'Mark not applicable')}
                   </button>
                 )}
               </div>

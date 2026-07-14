@@ -35,18 +35,18 @@ import { useTranslation } from 'react-i18next';
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
 import {
-  IDEA_STAGE_COLORS,
-  IDEA_STAGE_LABELS,
-  IDEA_STAGES_V5,
-  normalizeStageToV5,
-} from './ideaEntryTypes';
-import {
   IDEA_CONVERT_GROUP_LABELS,
   IDEA_CONVERT_GROUP_ORDER,
   IDEA_CONVERT_TARGETS,
   type IdeaConvertGroup,
   type IdeaConvertTarget,
 } from './ideaConvertTargets';
+import {
+  IDEA_STAGE_COLORS,
+  IDEA_STAGE_LABELS,
+  IDEA_STAGES_V5,
+  normalizeStageToV5,
+} from './ideaEntryTypes';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
@@ -271,18 +271,66 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     ConvertTarget,
     { icon: React.ComponentType<any>; gradient: string; textColor: string }
   > = {
-    initiative: { icon: Rocket, gradient: 'from-amber-500/15 to-amber-500/10', textColor: 'text-amber-600 dark:text-amber-400' },
-    task_set: { icon: CheckSquare, gradient: 'from-emerald-500/15 to-green-500/10', textColor: 'text-emerald-600 dark:text-emerald-400' },
-    decision: { icon: Star, gradient: 'from-blue-500/15 to-blue-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
-    team_chat: { icon: MessageSquarePlus, gradient: 'from-violet-500/15 to-violet-500/10', textColor: 'text-violet-600 dark:text-violet-400' },
-    report: { icon: FileText, gradient: 'from-slate-500/15 to-gray-500/10', textColor: 'text-slate-600 dark:text-slate-400' },
-    presentation: { icon: Presentation, gradient: 'from-indigo-500/15 to-blue-500/10', textColor: 'text-indigo-600 dark:text-indigo-400' },
-    action_plan: { icon: ListChecks, gradient: 'from-blue-500/15 to-blue-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
-    raid_log: { icon: Shield, gradient: 'from-danger-500/15 to-amber-500/10', textColor: 'text-danger-600 dark:text-danger-400' },
-    financial_model: { icon: Activity, gradient: 'from-emerald-500/15 to-emerald-500/10', textColor: 'text-emerald-600 dark:text-emerald-400' },
-    budget: { icon: ListChecks, gradient: 'from-slate-500/15 to-gray-500/10', textColor: 'text-slate-600 dark:text-slate-400' },
-    valuation: { icon: Activity, gradient: 'from-indigo-500/15 to-indigo-500/10', textColor: 'text-indigo-600 dark:text-indigo-400' },
-    analysis: { icon: Lightbulb, gradient: 'from-amber-500/15 to-amber-500/10', textColor: 'text-amber-600 dark:text-amber-400' },
+    initiative: {
+      icon: Rocket,
+      gradient: 'from-amber-500/15 to-amber-500/10',
+      textColor: 'text-amber-600 dark:text-amber-400',
+    },
+    task_set: {
+      icon: CheckSquare,
+      gradient: 'from-emerald-500/15 to-green-500/10',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    decision: {
+      icon: Star,
+      gradient: 'from-blue-500/15 to-blue-500/10',
+      textColor: 'text-blue-600 dark:text-blue-400',
+    },
+    team_chat: {
+      icon: MessageSquarePlus,
+      gradient: 'from-violet-500/15 to-violet-500/10',
+      textColor: 'text-violet-600 dark:text-violet-400',
+    },
+    report: {
+      icon: FileText,
+      gradient: 'from-slate-500/15 to-gray-500/10',
+      textColor: 'text-slate-600 dark:text-slate-400',
+    },
+    presentation: {
+      icon: Presentation,
+      gradient: 'from-indigo-500/15 to-blue-500/10',
+      textColor: 'text-indigo-600 dark:text-indigo-400',
+    },
+    action_plan: {
+      icon: ListChecks,
+      gradient: 'from-blue-500/15 to-blue-500/10',
+      textColor: 'text-blue-600 dark:text-blue-400',
+    },
+    raid_log: {
+      icon: Shield,
+      gradient: 'from-danger-500/15 to-amber-500/10',
+      textColor: 'text-danger-600 dark:text-danger-400',
+    },
+    financial_model: {
+      icon: Activity,
+      gradient: 'from-emerald-500/15 to-emerald-500/10',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    budget: {
+      icon: ListChecks,
+      gradient: 'from-slate-500/15 to-gray-500/10',
+      textColor: 'text-slate-600 dark:text-slate-400',
+    },
+    valuation: {
+      icon: Activity,
+      gradient: 'from-indigo-500/15 to-indigo-500/10',
+      textColor: 'text-indigo-600 dark:text-indigo-400',
+    },
+    analysis: {
+      icon: Lightbulb,
+      gradient: 'from-amber-500/15 to-amber-500/10',
+      textColor: 'text-amber-600 dark:text-amber-400',
+    },
   };
   const convertActions = IDEA_CONVERT_TARGETS.map((t) => ({
     id: t.id,

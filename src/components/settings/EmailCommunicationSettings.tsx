@@ -275,16 +275,12 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
             >
               <p
                 className={`font-medium ${
-                  emailPrefs.digestFrequency === option.value
-                    ? 'text-c-accent'
-                    : 'text-navy-900'
+                  emailPrefs.digestFrequency === option.value ? 'text-c-accent' : 'text-navy-900'
                 }`}
               >
                 {option.label}
               </p>
-              <p className="text-xs text-c-text-muted mt-0.5">
-                {option.description}
-              </p>
+              <p className="text-xs text-c-text-muted mt-0.5">{option.description}</p>
             </button>
           ))}
         </div>

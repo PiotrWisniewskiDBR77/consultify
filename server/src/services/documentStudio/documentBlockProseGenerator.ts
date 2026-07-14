@@ -191,8 +191,8 @@ export async function generateBlockProse(
 
   // Scale token budget with block count: tables take ~400-600 tokens each.
   // Cap at 8192 to stay within provider limits.
-  const dynamicMaxTokens = options.maxTokens
-    ?? Math.min(8192, Math.max(MAX_TOKENS_DEFAULT, targets.length * 550));
+  const dynamicMaxTokens =
+    options.maxTokens ?? Math.min(8192, Math.max(MAX_TOKENS_DEFAULT, targets.length * 550));
 
   let response: { content: string };
   try {

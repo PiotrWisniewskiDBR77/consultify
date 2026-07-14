@@ -16,12 +16,15 @@ import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import { getVerifiedPackSeed } from './financialStatementPackService.js';
 import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
 import {
+  type PeriodStatements,
   RECONCILE_ENFORCE,
   reconcileStatements,
   shouldBlockReady,
-  type PeriodStatements,
 } from './reconciliationService.js';
-import { financialModelToAssumptions, FINANCIAL_MODEL_DRIVERS } from './shared/assumptionsFinancialModelDrivers.js';
+import {
+  FINANCIAL_MODEL_DRIVERS,
+  financialModelToAssumptions,
+} from './shared/assumptionsFinancialModelDrivers.js';
 import { auditCoverage, listAssumptions } from './shared/assumptionsRegistry.js';
 
 // ---------------------------------------------------------------------------
@@ -980,7 +983,8 @@ export async function persistComputeResult(
           outputsInserted++;
         } catch (err) {
           outputsFailed++;
-          if (!firstOutputError) firstOutputError = err instanceof Error ? err.message : String(err);
+          if (!firstOutputError)
+            firstOutputError = err instanceof Error ? err.message : String(err);
         }
       }
     }
@@ -1276,7 +1280,9 @@ export async function reseedModelFromSource(
     | 'statement'
     | 'statement_pack'
     | undefined;
-  const missingBaselineLines = Array.isArray((seeded.assumptions?.seedStatus as any)?.missingBaselineLines)
+  const missingBaselineLines = Array.isArray(
+    (seeded.assumptions?.seedStatus as any)?.missingBaselineLines
+  )
     ? ((seeded.assumptions?.seedStatus as any).missingBaselineLines as string[])
     : [];
 

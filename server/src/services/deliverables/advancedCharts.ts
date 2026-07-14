@@ -54,14 +54,14 @@ export interface MarimekkoLayout {
  */
 export function computeMarimekkoLayout(
   spec: MarimekkoSpec,
-  opts?: { columnGutter?: number },
+  opts?: { columnGutter?: number }
 ): MarimekkoLayout {
   const empty: MarimekkoLayout = { rects: [], total: 0, columnBounds: [] };
   if (!spec || !Array.isArray(spec.columns) || spec.columns.length === 0) return empty;
 
   const gutter = Math.max(0, Math.min(opts?.columnGutter ?? 0, 0.05));
   const colTotals = spec.columns.map((c) =>
-    (c.segments ?? []).reduce((s, seg) => s + Math.max(0, seg.value || 0), 0),
+    (c.segments ?? []).reduce((s, seg) => s + Math.max(0, seg.value || 0), 0)
   );
   const total = colTotals.reduce((a, b) => a + b, 0);
   if (total <= 0) return empty;
@@ -125,7 +125,11 @@ export interface HarveyBall {
 }
 
 const HARVEY_LABELS_PL: Record<HarveyLevel, string> = {
-  0: 'brak', 1: 'niski', 2: 'średni', 3: 'wysoki', 4: 'pełny',
+  0: 'brak',
+  1: 'niski',
+  2: 'średni',
+  3: 'wysoki',
+  4: 'pełny',
 };
 
 /** Klampuje dowolną liczbę do poziomu 0..4 (round, fail-soft). */

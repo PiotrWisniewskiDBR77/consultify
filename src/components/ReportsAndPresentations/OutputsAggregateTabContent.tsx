@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { Button, ErrorState } from '@/components/ui/primitives';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
@@ -41,18 +41,13 @@ import {
 } from '@/utils/sheetArtifactOpen';
 
 import { API_URL, getHeaders } from '../../services/api';
-import {
-  type FilterChip,
-  type GridItem,
-  GridView,
-  type ViewMode,
-} from '../shared/ModuleHub';
+import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
   StandardPreview,
-  standardPreviewShortcuts,
   type StandardPreviewActions,
-  StandardTable,
+  standardPreviewShortcuts,
   type StandardRowMenu,
+  StandardTable,
   type TableColumn as StandardTableColumn,
 } from '../standard';
 import { resolveArtifactOpenPath } from './artifactNavigation';
@@ -321,7 +316,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   // EntityStatusChip owns the colored dot (tone), this only supplies the text.
   const statusLabel = useCallback(
     (statusKey: string | null | undefined): string => {
-      const key = String(statusKey || '').trim().toLowerCase();
+      const key = String(statusKey || '')
+        .trim()
+        .toLowerCase();
       const labels: Record<string, [string, string]> = {
         draft: ['Szkic', 'Draft'],
         generated: ['Wygenerowana', 'Generated'],
@@ -422,7 +419,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         width: '160px',
         render: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;
-          return <span className="text-sm text-c-text-secondary truncate block">{row.owner || '—'}</span>;
+          return (
+            <span className="text-sm text-c-text-secondary truncate block">{row.owner || '—'}</span>
+          );
         },
       },
       {
@@ -573,10 +572,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               toast.success(t('reports.createdAnEditableCopy'), { id: toastId });
               navigate(chatUrl);
             } catch (e: any) {
-              toast.error(
-                e?.message ? String(e.message) : t('reports.couldNotCreateACopy'),
-                { id: toastId }
-              );
+              toast.error(e?.message ? String(e.message) : t('reports.couldNotCreateACopy'), {
+                id: toastId,
+              });
             }
           },
         });
@@ -596,7 +594,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             if (!aid) return;
             // #83b: real modal (name + type + visibility) replaces the old
             // window.prompt()/window.confirm() sequence — see SaveAsTemplateModal.
-            setSaveAsTemplateSource({ artifactId: aid, title: row.title, kind: row.kind as 'document' | 'presentation' });
+            setSaveAsTemplateSource({
+              artifactId: aid,
+              title: row.title,
+              kind: row.kind as 'document' | 'presentation',
+            });
           },
         });
       }
@@ -1170,10 +1172,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                 previewItem.sourceInitiativeId
                   ? [
                       {
-                        label: t(
-                          'rap.outputs.source.initiativeLinked',
-                          'Initiative linked'
-                        ),
+                        label: t('rap.outputs.source.initiativeLinked', 'Initiative linked'),
                       },
                     ]
                   : []

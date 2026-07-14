@@ -52,8 +52,7 @@ const GENERATION_PENDING_MARKER_EN = 'sections fill in once generation completes
 /** Czy treść draftu to wciąż SZKIELET (PL lub EN)? Używane w fallbacku statusu. */
 function isSkeletonContent(content: string): boolean {
   return (
-    content.includes(GENERATION_PENDING_MARKER) ||
-    content.includes(GENERATION_PENDING_MARKER_EN)
+    content.includes(GENERATION_PENDING_MARKER) || content.includes(GENERATION_PENDING_MARKER_EN)
   );
 }
 
@@ -237,7 +236,7 @@ const SECTION_TITLE_PL: Record<string, string> = {
 function ensureTableSpacing(markdown: string): string {
   if (!markdown) return markdown;
   // 1) Rozbij opener bloku sklejony na końcu poprzedniej linii.
-  let pre = markdown
+  const pre = markdown
     .replace(/(\S)[ \t]+(#{1,6}[ \t]+\S)/g, '$1\n\n$2') // nagłówek mid-line
     .replace(/(\S)[ \t]+(\d+\.[ \t]+\S)/g, '$1\n\n$2') // lista numerowana mid-line
     .replace(/(\S)[ \t]+([-*+][ \t]+\S)/g, '$1\n\n$2'); // lista punktowana mid-line
@@ -283,7 +282,10 @@ function localizeOutlineTitles(outline: DocumentOutline, language: 'pl' | 'en'):
   if (language !== 'pl') return outline;
   return {
     ...outline,
-    sections: outline.sections.map((s) => ({ ...s, title: localizeSectionTitle(s.title, language) })),
+    sections: outline.sections.map((s) => ({
+      ...s,
+      title: localizeSectionTitle(s.title, language),
+    })),
   };
 }
 
@@ -389,7 +391,9 @@ function failureContentMarkdown(
   reason: string | undefined,
   language: 'pl' | 'en'
 ): string {
-  const safeReason = String(reason || '').trim().slice(0, 300);
+  const safeReason = String(reason || '')
+    .trim()
+    .slice(0, 300);
   if (language === 'en') {
     return [
       `# ${title}`,
@@ -646,10 +650,7 @@ function outlineSkeletonMarkdown(
   // hint that READS like real prose. If the fill was slow or failed, the user saw
   // it as content. The skeleton now emits a NEUTRAL, explicitly-pending line per
   // section (never the raw purpose), so nothing masquerades as finished content.
-  const pending =
-    language === 'en'
-      ? '_Writing this section…_'
-      : '_Trwa pisanie tej sekcji…_';
+  const pending = language === 'en' ? '_Writing this section…_' : '_Trwa pisanie tej sekcji…_';
   const footer =
     language === 'en'
       ? '> Teresa is writing — sections fill in once generation completes.'

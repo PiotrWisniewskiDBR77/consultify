@@ -13,7 +13,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { InterviewPipelineStepper, type InterviewPipelineStep } from '../InterviewPipelineStepper';
+import { type InterviewPipelineStep, InterviewPipelineStepper } from '../InterviewPipelineStepper';
 
 const STEPS: InterviewPipelineStep[] = [
   { id: 'templates' as any, numeral: '①', label: 'Szablony', count: 0 },
@@ -78,7 +78,11 @@ describe('InterviewPipelineStepper (D-03)', () => {
 
   it('renders nothing for an empty step list', () => {
     const { container } = render(
-      <InterviewPipelineStepper steps={[]} activeTab={'my_assignments' as any} onStepChange={vi.fn()} />
+      <InterviewPipelineStepper
+        steps={[]}
+        activeTab={'my_assignments' as any}
+        onStepChange={vi.fn()}
+      />
     );
     expect(container).toBeEmptyDOMElement();
   });

@@ -29,8 +29,8 @@ import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { ActionRequiredStrip } from './ActionRequiredStrip';
 import { AIOperatorOverviewCard } from './AIOperatorOverviewCard';
-import { dedupeActionItems } from './executiveData';
 import { DecisionQueuePreview } from './DecisionQueuePreview';
+import { dedupeActionItems } from './executiveData';
 import { KPIGrid } from './KPIGrid';
 import { PortfolioHealthScore } from './PortfolioHealthScore';
 import { TeamPerformancePreview } from './TeamPerformancePreview';
@@ -557,7 +557,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             const analyticsMemberCount =
               teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)
                 ? teamRes.value.length
-                : (Array.isArray(analytics.overloads) ? analytics.overloads.length : 0);
+                : Array.isArray(analytics.overloads)
+                  ? analytics.overloads.length
+                  : 0;
             setKpiData((prev) => ({
               ...prev,
               team: {

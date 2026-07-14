@@ -58,9 +58,9 @@ import logger from '../utils/Logger.js';
 import { llmService } from './ai/llmService.js';
 import {
   buildRepairBriefFromVerdict,
-  validateInsightCard,
   type FormulaVerdict,
   type InsightCardData,
+  validateInsightCard,
 } from './cardContentFormulaValidator.js';
 
 const LOG = '[insightMaterializationService]';
@@ -364,10 +364,13 @@ export function reconcileEvidenceRefs(
     // §6 (#57/Z60): issues/opportunities also carry the downstream-seed fields
     // (suggestedOwnerRole/metric/baseline/target/horizon), normalized to a real
     // value or explicit `null` — never left as an unvalidated LLM guess.
-    issues: arrayWithEvidenceRefs<InsightCandidateIssue>(candidate.issues, validIds).map(withSeedFields),
-    opportunities: arrayWithEvidenceRefs<InsightCandidateOpportunity>(candidate.opportunities, validIds).map(
+    issues: arrayWithEvidenceRefs<InsightCandidateIssue>(candidate.issues, validIds).map(
       withSeedFields
     ),
+    opportunities: arrayWithEvidenceRefs<InsightCandidateOpportunity>(
+      candidate.opportunities,
+      validIds
+    ).map(withSeedFields),
     evidence_map: evidenceMap,
   };
 }
@@ -411,7 +414,9 @@ export function buildGenericMaterialQuality(
     limitations.push(`${evidenceGapCount} twierdzeń bez evidence_ref do pozycji wyniku.`);
   }
   if (items.length <= 2) {
-    limitations.push('Materiał źródłowy ma bardzo mało pozycji — traktuj jako hipotezę do weryfikacji.');
+    limitations.push(
+      'Materiał źródłowy ma bardzo mało pozycji — traktuj jako hipotezę do weryfikacji.'
+    );
   }
 
   return {
@@ -551,7 +556,10 @@ export async function materializeInsightCandidates(
     const rawText = String(response?.content ?? response?.text ?? '');
     let candidate = reconcileEvidenceRefs(parseDistillationResponse(rawText), validIds);
 
-    if (!String(candidate.title || '').trim() && !String(candidate.executive_summary || '').trim()) {
+    if (
+      !String(candidate.title || '').trim() &&
+      !String(candidate.executive_summary || '').trim()
+    ) {
       return { ...degradedOutcome('unparseable_response'), tokensUsed };
     }
 

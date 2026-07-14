@@ -197,9 +197,7 @@ const DimensionCard: React.FC<{
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="text-xs text-c-text-muted mt-2 line-clamp-2">
-        {dimension.description}
-      </p>
+      <p className="text-xs text-c-text-muted mt-2 line-clamp-2">{dimension.description}</p>
     </button>
   );
 };
@@ -273,9 +271,7 @@ const LevelSelector: React.FC<{
       {/* Level Description */}
       {currentLevelData && (
         <div className="bg-c-surface-raised rounded-lg p-4">
-          <h4 className="font-medium text-c-text mb-2">
-            {currentLevelData.title}
-          </h4>
+          <h4 className="font-medium text-c-text mb-2">{currentLevelData.title}</h4>
           <p className="text-sm text-c-text-secondary dark:text-c-text-muted mb-3">
             {currentLevelData.description}
           </p>
@@ -286,10 +282,7 @@ const LevelSelector: React.FC<{
               </h5>
               <ul className="space-y-1">
                 {currentLevelData.characteristics.map((char, i) => (
-                  <li
-                    key={i}
-                    className="text-xs text-c-text-muted flex items-start gap-2"
-                  >
+                  <li key={i} className="text-xs text-c-text-muted flex items-start gap-2">
                     <CheckCircle2 size={12} className="text-c-success mt-0.5 shrink-0" />
                     {char}
                   </li>
@@ -364,7 +357,12 @@ const RadarChart: React.FC<{
         })}
 
         {/* Score polygon */}
-        <path d={pathD} fill="color-mix(in srgb, var(--c-tag-1) 30%, transparent)" stroke="var(--c-tag-1)" strokeWidth="2" />
+        <path
+          d={pathD}
+          fill="color-mix(in srgb, var(--c-tag-1) 30%, transparent)"
+          stroke="var(--c-tag-1)"
+          strokeWidth="2"
+        />
 
         {/* Labels */}
         {pillars.map((pillarId, i) => {
@@ -432,9 +430,7 @@ const ScoreSummaryPanel: React.FC<{
   return (
     <div className="bg-c-surface-raised rounded-xl p-4 space-y-4">
       <div className="text-center">
-        <div className="text-4xl font-bold text-c-text">
-          {overallScore.toFixed(1)}
-        </div>
+        <div className="text-4xl font-bold text-c-text">{overallScore.toFixed(1)}</div>
         <div className="text-sm text-c-text-muted">
           {isPolish ? 'Dojrzałość ogólna' : 'Overall Maturity'} / 5
         </div>
@@ -729,7 +725,9 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
 
               {/* Matrix Table */}
               <div className="overflow-x-auto">
-                <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full border-collapse">
+                <table
+                  /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full border-collapse"
+                >
                   <thead>
                     <tr>
                       <th className="p-3 text-left bg-c-surface-raised border border-c-border-subtle">
@@ -741,9 +739,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                           className="p-3 text-center bg-c-surface-raised border border-c-border-subtle min-w-[100px]"
                         >
                           <div className="font-bold">{level.level}</div>
-                          <div className="text-xs text-c-text-muted">
-                            {level.title}
-                          </div>
+                          <div className="text-xs text-c-text-muted">{level.title}</div>
                         </th>
                       ))}
                     </tr>

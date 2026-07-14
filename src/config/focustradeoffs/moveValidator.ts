@@ -120,7 +120,8 @@ export function rankPriorities(data: FocusTradeoffData): FocusRanking {
     .map((s) => s.id);
 
   const top = scores.find((s) => s.id === ordered[0]);
-  const bottom = ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
+  const bottom =
+    ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
 
   const rationale: Bilingual = top
     ? {

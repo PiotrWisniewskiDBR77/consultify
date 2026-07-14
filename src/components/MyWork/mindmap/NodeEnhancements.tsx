@@ -57,7 +57,13 @@ export const MaturityRing: React.FC<MaturityRingProps> = ({
   const offset = circumference - (score / 100) * circumference;
 
   const color =
-    score >= 75 ? 'var(--c-success)' : score >= 50 ? 'var(--c-warning)' : score >= 25 ? 'var(--c-warning)' : 'var(--c-tag-8)';
+    score >= 75
+      ? 'var(--c-success)'
+      : score >= 50
+        ? 'var(--c-warning)'
+        : score >= 25
+          ? 'var(--c-warning)'
+          : 'var(--c-tag-8)';
 
   return (
     <svg width={size} height={size} className="transform -rotate-90">
@@ -167,7 +173,9 @@ export const VoteStars: React.FC<VoteStarsProps> = ({
           onClick={() => onVote?.(i + 1 === votes ? 0 : i + 1)}
           disabled={disabled || !onVote}
           className={`transition-colors ${
-            i < votes ? 'text-c-warning' : 'text-c-text-secondary dark:text-c-text-secondary hover:text-c-warning'
+            i < votes
+              ? 'text-c-warning'
+              : 'text-c-text-secondary dark:text-c-text-secondary hover:text-c-warning'
           } disabled:cursor-default`}
         >
           <svg

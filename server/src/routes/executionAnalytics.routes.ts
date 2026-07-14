@@ -21,33 +21,33 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import {
-  predictInitiative,
-  type PredictionInputs,
-} from '../services/executionPredictionService.js';
-import {
-  groupByInitiative,
-  triageSignals,
-  type Signal,
-} from '../services/executionTriageService.js';
-import {
-  cascadeImpact,
-  criticalDependencyChain,
-  detectCycles,
-  topoOrder,
-  type DepEdge,
-} from '../services/raidDependencyService.js';
-import {
   capacityVsDemand,
   computeUtilization,
   overloadAlerts,
-  resourceHeatmap,
   type ResourceAllocation,
   type ResourceCapacity,
+  resourceHeatmap,
 } from '../services/capacityModelService.js';
 import {
   buildExecutionIntelligence,
   type IntelligenceInitiative,
 } from '../services/executionIntelligenceService.js';
+import {
+  predictInitiative,
+  type PredictionInputs,
+} from '../services/executionPredictionService.js';
+import {
+  groupByInitiative,
+  type Signal,
+  triageSignals,
+} from '../services/executionTriageService.js';
+import {
+  cascadeImpact,
+  criticalDependencyChain,
+  type DepEdge,
+  detectCycles,
+  topoOrder,
+} from '../services/raidDependencyService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -109,9 +109,7 @@ router.post(
     const orgId = requireOrg(req, res);
     if (!orgId) return;
     const edges = Array.isArray(req.body?.edges) ? (req.body.edges as DepEdge[]) : [];
-    const delayedIds = Array.isArray(req.body?.delayedIds)
-      ? (req.body.delayedIds as string[])
-      : [];
+    const delayedIds = Array.isArray(req.body?.delayedIds) ? (req.body.delayedIds as string[]) : [];
     // durations arrives as a plain object { id: days }; the service wants a Map.
     const durationsObj =
       req.body?.durations && typeof req.body.durations === 'object'
@@ -186,10 +184,9 @@ router.get(
       WHERE ${projFilter}organization_id = ?
     `;
     const initiatives =
-      ((await queryHelpers.queryAll(
-        initiativesSql,
-        orgWide ? [orgId] : [projectId, orgId]
-      )) as IntelligenceInitiative[] | undefined) || [];
+      ((await queryHelpers.queryAll(initiativesSql, orgWide ? [orgId] : [projectId, orgId])) as
+        | IntelligenceInitiative[]
+        | undefined) || [];
 
     // Open BLOCKED task counts per initiative.
     const blockedSql = `
@@ -201,10 +198,9 @@ router.get(
       GROUP BY initiative_id
     `;
     const blockedRows =
-      ((await queryHelpers.queryAll(
-        blockedSql,
-        orgWide ? [orgId] : [projectId, orgId]
-      )) as Array<{ initiative_id: string; cnt: number | string }> | undefined) || [];
+      ((await queryHelpers.queryAll(blockedSql, orgWide ? [orgId] : [projectId, orgId])) as
+        | Array<{ initiative_id: string; cnt: number | string }>
+        | undefined) || [];
 
     // Open high-severity RISK counts per initiative (RAID risks, still open).
     const riskSql = `

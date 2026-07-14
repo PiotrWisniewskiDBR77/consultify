@@ -12,16 +12,16 @@
  * operational summary renderer consumes Inventory output the same way.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
+import { type InventoryLeverId } from './deepeningLadder';
+import { localizeLadder } from './index';
 import {
   buildW2MoveSequence,
   computeBaseline,
-  rankLevers,
   type InventorySession,
+  rankLevers,
 } from './inventoryEngine';
-import { localizeLadder } from './index';
-import { type InventoryLeverId } from './deepeningLadder';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

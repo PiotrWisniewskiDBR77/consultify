@@ -16,7 +16,6 @@ import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 
 import { CardBlockRenderer } from '../cards/CardBlockRenderer';
 import { buildProblemCardSpec } from '../cards/cardSpecBuilders';
-
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';

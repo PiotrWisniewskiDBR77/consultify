@@ -228,12 +228,8 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
           <div className="bg-c-surface rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <div>
-                <h3 className="text-lg font-semibold text-c-text">
-                  {selectedDoc.title}
-                </h3>
-                <p className="text-sm text-c-text-muted">
-                  Version {selectedDoc.version}
-                </p>
+                <h3 className="text-lg font-semibold text-c-text">{selectedDoc.title}</h3>
+                <p className="text-sm text-c-text-muted">Version {selectedDoc.version}</p>
               </div>
               <button
                 onClick={() => setSelectedDoc(null)}

@@ -164,7 +164,10 @@ const DRIVER_RULES: DriverRule[] = [
   // Customers / klienci / users
   {
     name: 'customers',
-    re: new RegExp(`${NUM}\\s*(?:klient[oó]w|klienci|klienta|customers?|clients?|users?|u[zż]ytkownik[oó]w)`, 'i'),
+    re: new RegExp(
+      `${NUM}\\s*(?:klient[oó]w|klienci|klienta|customers?|clients?|users?|u[zż]ytkownik[oó]w)`,
+      'i'
+    ),
   },
   // Churn — explicitly percentage
   {
@@ -172,7 +175,10 @@ const DRIVER_RULES: DriverRule[] = [
     unit: '%',
     // Either "churn ... <num>%" or "<num>% churn"; the trailing form requires a
     // percent sign so it can't greedily swallow an unrelated preceding number.
-    re: new RegExp(`(?:churn[a-z]*\\s*(?:rate)?\\s*(?:wynosi|=|:)?\\s*${NUM}\\s*%?|(\\d[\\d.,]*)\\s*%\\s*churn)`, 'i'),
+    re: new RegExp(
+      `(?:churn[a-z]*\\s*(?:rate)?\\s*(?:wynosi|=|:)?\\s*${NUM}\\s*%?|(\\d[\\d.,]*)\\s*%\\s*churn)`,
+      'i'
+    ),
   },
   // ARPU
   {
@@ -197,7 +203,10 @@ const DRIVER_RULES: DriverRule[] = [
   // Average order value (ecommerce)
   {
     name: 'aov',
-    re: new RegExp(`(?:aov|[sś]rednia?\\s*warto[sś][cć]\\s*zam[oó]wienia)\\s*(?:wynosi|=|:|of)?\\s*${NUM}`, 'i'),
+    re: new RegExp(
+      `(?:aov|[sś]rednia?\\s*warto[sś][cć]\\s*zam[oó]wienia)\\s*(?:wynosi|=|:|of)?\\s*${NUM}`,
+      'i'
+    ),
   },
   // Orders / transactions
   {
@@ -208,13 +217,19 @@ const DRIVER_RULES: DriverRule[] = [
   {
     name: 'conversionPct',
     unit: '%',
-    re: new RegExp(`(?:konwersj[ai]|conversion)\\s*(?:rate)?\\s*(?:wynosi|=|:|of)?\\s*${NUM}\\s*%?`, 'i'),
+    re: new RegExp(
+      `(?:konwersj[ai]|conversion)\\s*(?:rate)?\\s*(?:wynosi|=|:|of)?\\s*${NUM}\\s*%?`,
+      'i'
+    ),
   },
   // Gross margin
   {
     name: 'grossMarginPct',
     unit: '%',
-    re: new RegExp(`(?:mar[zż][ay]?\\s*(?:brutto)?|gross\\s*margin)\\s*(?:wynosi|=|:|of)?\\s*${NUM}\\s*%`, 'i'),
+    re: new RegExp(
+      `(?:mar[zż][ay]?\\s*(?:brutto)?|gross\\s*margin)\\s*(?:wynosi|=|:|of)?\\s*${NUM}\\s*%`,
+      'i'
+    ),
   },
 ];
 
@@ -258,7 +273,12 @@ function detectBusinessType(text: string, drivers: ModelDriver[]): BusinessType 
   const lower = text.toLowerCase();
   const has = (name: string) => drivers.some((d) => d.name === name);
 
-  if (/\bsaas\b|subskrypcj|subscription/.test(lower) || has('churnPct') || has('arpu') || has('mrr')) {
+  if (
+    /\bsaas\b|subskrypcj|subscription/.test(lower) ||
+    has('churnPct') ||
+    has('arpu') ||
+    has('mrr')
+  ) {
     return 'SaaS';
   }
   if (/e-?commerce|sklep|shop|store/.test(lower) || has('aov') || has('orders')) {

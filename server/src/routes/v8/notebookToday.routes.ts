@@ -78,8 +78,7 @@ export function registerNotebookTodayRoutes(router: Router): Router {
 
       const cols = await probeColumns();
       const has = (c: string) => cols.size === 0 || cols.has(c);
-      const sel = (c: string, fallback: string) =>
-        has(c) ? c : `${fallback} AS ${c}`;
+      const sel = (c: string, fallback: string) => (has(c) ? c : `${fallback} AS ${c}`);
 
       // Defensive projection — only reference optional columns that exist.
       const projection = [

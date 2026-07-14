@@ -21,9 +21,9 @@
 import { sendMessageToAI } from '@/services/ai/gemini';
 
 import {
-  getAssessmentGuidance,
   type AssessmentGuidanceInput,
   type AssessmentGuidanceOutput,
+  getAssessmentGuidance,
   type GuidanceLlm,
 } from './assessmentGuidanceService';
 

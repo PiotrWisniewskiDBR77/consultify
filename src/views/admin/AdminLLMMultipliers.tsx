@@ -106,7 +106,9 @@ export const AdminLLMMultipliers = () => {
       </div>
 
       <div className="flex-1 overflow-auto">
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left text-sm">
+        <table
+          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left text-sm"
+        >
           <thead className="sticky top-0 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm z-10">
             <tr className="border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 uppercase tracking-wider text-xs">
               <th className="py-4 px-6 font-medium">Provider / Model</th>

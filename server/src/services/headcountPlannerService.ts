@@ -133,10 +133,7 @@ export function roleCost(role: HeadcountRole, period: number): RoleCostResult {
  * @param periods  ordered period labels (index = timeline position)
  * @returns one row per period: active headcount, total base salary, total loaded.
  */
-export function headcountOpex(
-  roles: HeadcountRole[],
-  periods: string[],
-): HeadcountOpexRow[] {
+export function headcountOpex(roles: HeadcountRole[], periods: string[]): HeadcountOpexRow[] {
   const safeRoles = Array.isArray(roles) ? roles : [];
   const safePeriods = Array.isArray(periods) ? periods : [];
 
@@ -180,7 +177,7 @@ export function headcountOpex(
 export function headcountToCash(
   roles: HeadcountRole[],
   periods: string[],
-  payLagPeriods = 0,
+  payLagPeriods = 0
 ): HeadcountCashRow[] {
   const opex = headcountOpex(roles, periods);
   const lag = Math.max(0, Math.floor(safeNum(payLagPeriods)));
@@ -189,9 +186,7 @@ export function headcountToCash(
   return opex.map((_, periodIndex) => {
     const sourceIndex = periodIndex - lag;
     const cashOut =
-      sourceIndex >= 0 && sourceIndex < opex.length
-        ? opex[sourceIndex].totalLoaded
-        : 0;
+      sourceIndex >= 0 && sourceIndex < opex.length ? opex[sourceIndex].totalLoaded : 0;
     return {
       period: opex[periodIndex].period,
       cashOut: round2(cashOut),
@@ -220,8 +215,7 @@ export function costPerHire(roles: HeadcountRole[]): CostPerHireResult {
   const PERIODS_PER_YEAR = 12;
   let sumLoadedAnnual = 0;
   for (const role of safeRoles) {
-    const loadedPerPeriod =
-      safeNum(role.baseSalary) * (1 + safeNum(role.benefitsLoadPct));
+    const loadedPerPeriod = safeNum(role.baseSalary) * (1 + safeNum(role.benefitsLoadPct));
     sumLoadedAnnual += loadedPerPeriod * PERIODS_PER_YEAR;
   }
 

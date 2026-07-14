@@ -228,10 +228,7 @@ async function ensureSchema(): Promise<void> {
       // content_md normally arrives via the routes-layer ALTER; updateDraft now
       // writes it directly, so the column must exist even when this service
       // boots before any work-canvas route ran.
-      await dbRun(
-        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT',
-        []
-      );
+      await dbRun('ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT', []);
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_proposals (
           id TEXT PRIMARY KEY,
@@ -460,7 +457,12 @@ export async function updateDraft(params: {
   // content_md a client autosave froze earlier (audit P0-1/D2 — generated
   // documents were lost to the skeleton). String content therefore must land
   // in content_md too; non-string content leaves the projection untouched.
-  const nextContentMd = typeof nextContent === 'string' ? (nextContent.startsWith('"') ? JSON.parse(nextContent) : nextContent) : null;
+  const nextContentMd =
+    typeof nextContent === 'string'
+      ? nextContent.startsWith('"')
+        ? JSON.parse(nextContent)
+        : nextContent
+      : null;
   await dbRun(
     `UPDATE work_canvas_drafts
      SET kind = ?, title = ?, content_json = ?, content_md = COALESCE(?, content_md),

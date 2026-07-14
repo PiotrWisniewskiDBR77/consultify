@@ -631,7 +631,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           reason:
             weak.depthHint?.trim() ||
             weak.feedback?.trim() ||
-            (t('interview.workspace.aiNeedsImprovement')),
+            t('interview.workspace.aiNeedsImprovement'),
         });
       }
 
@@ -920,9 +920,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           error?.code === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN' ||
           error?.message?.includes('transport safeguard');
         setLoadError({
-          message:
-            error?.message ||
-            (t('interview.workspace.failedToLoadSession')),
+          message: error?.message || t('interview.workspace.failedToLoadSession'),
           isTransportBlock,
         });
         toast.error(t('interview.workspace.failedToLoadSession'));
@@ -1261,17 +1259,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const performSubmit = useCallback(async () => {
     if (isSubmittingSession) return;
     if (!session) {
-      toast.error(
-        t('interview.workspace.sessionNotLoadedRefreshThe')
-      );
+      toast.error(t('interview.workspace.sessionNotLoadedRefreshThe'));
       return;
     }
 
     if (isLocked) {
-      toast(
-        t('interview.workspace.thisInterviewIsAlreadySubmitted'),
-        { icon: 'ℹ️' }
-      );
+      toast(t('interview.workspace.thisInterviewIsAlreadySubmitted'), { icon: 'ℹ️' });
       return;
     }
 
@@ -1300,10 +1293,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             missingItems: [],
           }));
         } else setAssignmentStatus('submitted');
-        toast.success(
-          t('interview.workspace.submittedForReviewPct', { pct: completeness ?? 0 }),
-          { id: toastId }
-        );
+        toast.success(t('interview.workspace.submittedForReviewPct', { pct: completeness ?? 0 }), {
+          id: toastId,
+        });
         void runAiQualityReview({ silent: true });
         onComplete?.(session.id);
         onClose?.();
@@ -1342,7 +1334,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         const items = blocked.map((b: any, i: number) => ({
           questionId: String(b.questionId || b.key || `blocked_${i}`),
           index: b.questionId ? indexById.get(String(b.questionId)) || 0 : 0,
-          label: String(b.label || (t('interview.workspace.requiredAnswer'))),
+          label: String(b.label || t('interview.workspace.requiredAnswer')),
           reason: t('interview.workspace.requiredNoAnswerYet'),
           severity: 'hard' as const,
         }));
@@ -1351,10 +1343,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           items: items.length > 0 ? items : [],
           checking: false,
         });
-        toast.error(
-          t('interview.workspace.cannotSubmitCompleteTheRequired'),
-          { id: toastId }
-        );
+        toast.error(t('interview.workspace.cannotSubmitCompleteTheRequired'), { id: toastId });
         return;
       }
 
@@ -1763,10 +1752,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return (
       <div className="min-h-screen bg-c-surface p-8">
         <div className="mx-auto max-w-3xl">
-          <LoadingState
-            template="panel"
-            label={t('interview.workspace.loadingInterview')}
-          />
+          <LoadingState template="panel" label={t('interview.workspace.loadingInterview')} />
         </div>
       </div>
     );
@@ -1867,7 +1853,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         id: 'locked',
         label: { en: 'Editable', pl: 'Edycja' },
         type: 'text',
-        value: isLocked ? (t('interview.workspace.locked')) : t('interview.workspace.active'),
+        value: isLocked ? t('interview.workspace.locked') : t('interview.workspace.active'),
         onChange: () => {},
         readOnly: true,
       },
@@ -1958,7 +1944,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           </span>
           <EntityStatusChip
             status={lifecycleStatus}
-            label={t(`interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`, lifecycleConfig.label.en)}
+            label={t(
+              `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
+              lifecycleConfig.label.en
+            )}
           />
           <span className="text-xs text-c-text-muted tabular-nums">
             {completionPercent}% {t('interview.workspace.complete')}
@@ -1967,19 +1956,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {isReviewerMode && (
           <Callout variant="warning" title={t('interview.workspace.reviewerMode')} compact>
             <div className="space-y-1">
-              <p>
-                {t('interview.workspace.youAreReviewingAnswersFor')}
-              </p>
+              <p>{t('interview.workspace.youAreReviewingAnswersFor')}</p>
               {!canApprove && <p className="font-medium">{approveBlockedHint}</p>}
             </div>
           </Callout>
         )}
         {!isReviewerMode && reviewFeedback && (
-          <Callout
-            variant="warning"
-            title={t('interview.workspace.managerFeedback')}
-            compact
-          >
+          <Callout variant="warning" title={t('interview.workspace.managerFeedback')} compact>
             <div className="space-y-2">
               {reviewFeedback.reason && <p>{reviewFeedback.reason}</p>}
               {reviewFeedback.missingItems.length > 0 && (
@@ -2015,9 +1998,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             }}
           >
             {isAiEvaluating ? (
-              <p>
-                {t('interview.workspace.aiIsReviewingAnswerQuality')}
-              </p>
+              <p>{t('interview.workspace.aiIsReviewingAnswerQuality')}</p>
             ) : aiEvaluation ? (
               <div className="space-y-2">
                 <p>
@@ -2055,9 +2036,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 )}
                 {aiEvaluation.recommendations.length > 0 && (
                   <div>
-                    <p className="font-medium">
-                      {t('interview.workspace.aiRecommendations')}
-                    </p>
+                    <p className="font-medium">{t('interview.workspace.aiRecommendations')}</p>
                     <ul className="list-disc pl-4 space-y-1">
                       {aiEvaluation.recommendations.map((item, index) => (
                         <li key={`${index}-${item}`}>{item}</li>
@@ -2087,9 +2066,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               onChange={(e) => setSendBackReason(e.target.value)}
               rows={3}
               className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-              placeholder={
-                t('interview.workspace.describeWhatNeedsImprovement')
-              }
+              placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
             />
             {sendBackMissingItems.length > 0 && (
               <div className="space-y-1">
@@ -2175,7 +2152,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {!isReviewerMode && !isLocked && liveWeakAnswers.length > 0 && (
           <Callout
             variant="warning"
-            title={t('interview.workspace.answersNeedMoreDetail', { count: liveWeakAnswers.length })}
+            title={t('interview.workspace.answersNeedMoreDetail', {
+              count: liveWeakAnswers.length,
+            })}
             compact
             action={{
               label: t('interview.workspace.goToFirst'),
@@ -2195,9 +2174,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               },
             }}
           >
-            <p className="mb-1">
-              {t('interview.workspace.theseAnswersLookShortAdd')}
-            </p>
+            <p className="mb-1">{t('interview.workspace.theseAnswersLookShortAdd')}</p>
             <ul className="list-disc pl-4 space-y-0.5">
               {liveWeakAnswers.slice(0, 6).map((item) => (
                 <li key={item.id}>
@@ -2495,9 +2472,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 <Users size={14} className="text-blue-500" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-c-text-secondary truncate">
-                  {s.name}
-                </div>
+                <div className="text-sm font-medium text-c-text-secondary truncate">{s.name}</div>
                 <div className="text-xs text-slate-500 truncate">{s.role}</div>
               </div>
             </div>
@@ -2626,19 +2601,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               {summaryData.facts.length > 0 ? (
                 <ul className="space-y-2">
                   {summaryData.facts.map((f, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-sm text-c-text-secondary"
-                    >
+                    <li key={idx} className="flex items-start gap-2 text-sm text-c-text-secondary">
                       <Check size={14} className="text-emerald-500 mt-0.5" />
                       {f}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <div className="text-sm text-slate-600">
-                  {t('interview.workspace.noFactsYet')}
-                </div>
+                <div className="text-sm text-slate-600">{t('interview.workspace.noFactsYet')}</div>
               )}
             </div>
           </NModeSectionWrapper>
@@ -2718,13 +2688,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                         </p>
                         <p
                           className={`text-xs ${
-                            hard
-                              ? 'text-c-danger'
-                              : 'text-amber-600 dark:text-amber-400'
+                            hard ? 'text-c-danger' : 'text-amber-600 dark:text-amber-400'
                           }`}
                         >
                           {item.reason}
-                          {hard ? (t('interview.workspace.required')) : ''}
+                          {hard ? t('interview.workspace.required') : ''}
                         </p>
                       </div>
                     </li>
@@ -2797,11 +2765,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             </button>
             <div className="h-4 w-px bg-white/[0.08]" />
             <span className="text-sm font-medium text-c-text-secondary truncate max-w-[300px]">
-              {sessionName || (t('interview.workspace.interviewSession'))}
+              {sessionName || t('interview.workspace.interviewSession')}
             </span>
             <EntityStatusChip
               status={lifecycleStatus}
-              label={t(`interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`, lifecycleConfig.label.en)}
+              label={t(
+                `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
+                lifecycleConfig.label.en
+              )}
             />
             <div className="flex-1" />
             <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
@@ -2889,9 +2860,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   onChange={(e) => setSendBackReason(e.target.value)}
                   rows={2}
                   className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  placeholder={
-                    t('interview.workspace.describeWhatNeedsImprovement')
-                  }
+                  placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
                 />
                 {sendBackMissingItems.length > 0 && (
                   <div className="flex flex-wrap gap-2">

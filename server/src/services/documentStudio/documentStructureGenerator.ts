@@ -16,13 +16,13 @@
  *   - NIE wpięte w żywy pipeline. Gotowe do wpięcia gdy premium doc-gen ruszy.
  */
 
+import logger from '../../utils/Logger.js';
 import {
-  resolveDeliverableTier,
   DELIVERABLE_GENERATION_PURPOSE,
   deliverableModelConfig,
+  resolveDeliverableTier,
 } from '../deliverableGenerationTier.js';
 import { resolveDeliverableDefaults } from '../deliverables/deliverableDefaults.js';
-import logger from '../../utils/Logger.js';
 
 // ── Defaults (czytane RAZ) ───────────────────────────────────────────────────
 const REPORT_DEFAULTS = resolveDeliverableDefaults('report');
@@ -82,10 +82,7 @@ export interface PlanDocumentStructureOptions {
 
 /** Czy typ bloku jest dozwolony? */
 function isAllowedBlockType(type: unknown): type is AllowedBlockType {
-  return (
-    typeof type === 'string' &&
-    (ALLOWED_BLOCK_TYPES as readonly string[]).includes(type)
-  );
+  return typeof type === 'string' && (ALLOWED_BLOCK_TYPES as readonly string[]).includes(type);
 }
 
 /** Mapuj nieprawidłowy typ na 'paragraph'. */
@@ -140,9 +137,7 @@ function premiumPlanPassesQuality(sections: StructurePlanSection[]): boolean {
   if (sections.some((s) => s.blocks.length === 0)) return false;
 
   // (a) ≥1 blok poza zbiorem trywialnym = premium dodał wartość TYPOWĄ.
-  const hasRichBlock = sections.some((s) =>
-    s.blocks.some((b) => !TRIVIAL_BLOCK_TYPES.has(b.type))
-  );
+  const hasRichBlock = sections.some((s) => s.blocks.some((b) => !TRIVIAL_BLOCK_TYPES.has(b.type)));
   if (hasRichBlock) return true;
 
   // (b) Prozowy, ale BOGATSZY niż fallback (heading+paragraph = 2/sekcję): premium
@@ -203,10 +198,7 @@ async function planViaLlm(
   const { z } = await import('zod');
 
   const outlineList = outline
-    .map(
-      (s, i) =>
-        `${i + 1}. "${s.title}"${s.purpose ? ` — ${s.purpose}` : ''}`
-    )
+    .map((s, i) => `${i + 1}. "${s.title}"${s.purpose ? ` — ${s.purpose}` : ''}`)
     .join('\n');
 
   // CALIBRATE richness to document SIZE: a short memo / brief / one-pager (few
@@ -248,7 +240,7 @@ async function planViaLlm(
     'never maximise block variety for its own sake. ' +
     `${blocksPerSectionGuide} ` +
     `${registerGuide} ${answerFirstGuide} ${actionTitlesGuide} ` +
-    "A section's purpose may carry HARD CONSTRAINTS (e.g. \"data-only, no prose\", " +
+    'A section\'s purpose may carry HARD CONSTRAINTS (e.g. "data-only, no prose", ' +
     '"exactly N items", a required block type) — those OVERRIDE the generic guidance ' +
     'above; obey them exactly. ' +
     `Allowed block types: ${ALLOWED_BLOCK_TYPES.join(', ')}. ` +
@@ -366,10 +358,10 @@ export async function planDocumentStructure(
     }
 
     // LLM nie dał użytecznego / jakościowego planu → fallback.
-    logger.warn(
-      '[docStructure] premium plan failed quality gate, using fallback',
-      { purpose: DELIVERABLE_GENERATION_PURPOSE, orgId: opts.orgId }
-    );
+    logger.warn('[docStructure] premium plan failed quality gate, using fallback', {
+      purpose: DELIVERABLE_GENERATION_PURPOSE,
+      orgId: opts.orgId,
+    });
   } catch (err) {
     // Fail-open: generacja nie może się wywalić bo LLM kichnął.
     logger.warn('[docStructure] premium plan threw, using fallback', {

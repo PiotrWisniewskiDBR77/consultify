@@ -111,7 +111,7 @@ function allocationCoversPeriod(alloc: ResourceAllocation, period: string): bool
  */
 export function computeUtilization(
   allocations: ResourceAllocation[],
-  capacities: ResourceCapacity[],
+  capacities: ResourceCapacity[]
 ): ResourceUtilization[] {
   const caps = capacityMap(capacities);
 
@@ -146,14 +146,10 @@ export function computeUtilization(
 
 export function capacityVsDemand(
   allocations: ResourceAllocation[],
-  capacities: ResourceCapacity[],
+  capacities: ResourceCapacity[]
 ): CapacityVsDemand {
-  const totalCapacity = round2(
-    capacities.reduce((sum, c) => sum + (c.availableFte ?? 0), 0),
-  );
-  const totalDemand = round2(
-    allocations.reduce((sum, a) => sum + (a.allocatedFte ?? 0), 0),
-  );
+  const totalCapacity = round2(capacities.reduce((sum, c) => sum + (c.availableFte ?? 0), 0));
+  const totalDemand = round2(allocations.reduce((sum, a) => sum + (a.allocatedFte ?? 0), 0));
   const gap = round2(totalCapacity - totalDemand);
   const coveragePct = totalDemand > 0 ? round2((totalCapacity / totalDemand) * 100) : 0;
 
@@ -171,7 +167,7 @@ export function capacityVsDemand(
 export function resourceHeatmap(
   allocations: ResourceAllocation[],
   capacities: ResourceCapacity[],
-  periods: string[],
+  periods: string[]
 ): ResourceHeatmapRow[] {
   const caps = capacityMap(capacities);
 

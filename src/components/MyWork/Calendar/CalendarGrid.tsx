@@ -77,7 +77,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
         return {
           id: e.id,
-          title: isFreeBusy ? (t('myWork.calendarGrid.busy', 'Busy')) : e.title,
+          title: isFreeBusy ? t('myWork.calendarGrid.busy', 'Busy') : e.title,
           start: e.start,
           end: e.end || undefined,
           allDay: e.allDay ?? false,
@@ -238,10 +238,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             &rsaquo;
           </button>
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white ml-2">
-            {currentDate.toLocaleDateString(t('myWork.calendarGrid.currentDateToLocaleDateString', 'en-US'), {
-              month: 'long',
-              year: 'numeric',
-            })}
+            {currentDate.toLocaleDateString(
+              t('myWork.calendarGrid.currentDateToLocaleDateString', 'en-US'),
+              {
+                month: 'long',
+                year: 'numeric',
+              }
+            )}
           </h3>
         </div>
 

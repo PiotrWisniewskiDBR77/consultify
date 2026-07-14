@@ -114,7 +114,11 @@ const scoreQuadrant = (quadrant: GrowthQuadrantId, options: GrowthPathItem[]): P
     options.reduce((sum, opt) => sum + LEVEL_SCORE[asLevel(opt.riskLevel, 'medium')], 0) /
     options.length;
   // Residual risk blends declared option risk with Ansoff base risk, reduced by evidence.
-  const risk = clamp(round1((optionRiskAvg * 0.5 + baseRisk * 0.5) * (1 - evidenceRatio * 0.3)), 1, 3);
+  const risk = clamp(
+    round1((optionRiskAvg * 0.5 + baseRisk * 0.5) * (1 - evidenceRatio * 0.3)),
+    1,
+    3
+  );
 
   const attractiveness = round1(impactAvg);
   const score = round1(attractiveness * feasibility);
@@ -158,7 +162,8 @@ export function rankGrowthPaths(data: GrowthPathsData): PathRanking {
     .map((s) => s.quadrant);
 
   const top = scores.find((s) => s.quadrant === ordered[0]);
-  const bottom = ordered.length > 1 ? scores.find((s) => s.quadrant === ordered[ordered.length - 1]) : undefined;
+  const bottom =
+    ordered.length > 1 ? scores.find((s) => s.quadrant === ordered[ordered.length - 1]) : undefined;
 
   const rationale: Bilingual = top
     ? {
@@ -282,8 +287,14 @@ export function buildW2MoveSequence(data: GrowthPathsData): SequencedMove[] {
       pl: 'Odrzucamy „rośniemy wszędzie po trochu": rozproszenie zabija zdolność egzekucji i rozmywa dowód wzrostu.',
       en: 'We reject "grow everywhere a little": spreading kills execution capacity and dilutes the proof of growth.',
     },
-    expectedImpact: primaryScore.attractiveness >= 2.5 ? 'high' : primaryScore.attractiveness >= 1.7 ? 'medium' : 'low',
-    estimatedEffort: primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
+    expectedImpact:
+      primaryScore.attractiveness >= 2.5
+        ? 'high'
+        : primaryScore.attractiveness >= 1.7
+          ? 'medium'
+          : 'low',
+    estimatedEffort:
+      primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
     riskLevel: primaryScore.risk <= 1.4 ? 'low' : primaryScore.risk <= 2.2 ? 'medium' : 'high',
     validation: { valid: true, missing: [], weak: [] },
   });
@@ -341,8 +352,14 @@ export function buildW2MoveSequence(data: GrowthPathsData): SequencedMove[] {
         pl: 'Odrzucamy równoległy start obu ścieżek: przy obecnej zdolności egzekucji to podwaja ryzyko obu.',
         en: 'We reject a parallel start of both paths: at current execution capacity it doubles the risk of both.',
       },
-      expectedImpact: secondScore.attractiveness >= 2.5 ? 'high' : secondScore.attractiveness >= 1.7 ? 'medium' : 'low',
-      estimatedEffort: secondScore.feasibility >= 2.4 ? 'low' : secondScore.feasibility >= 1.6 ? 'medium' : 'high',
+      expectedImpact:
+        secondScore.attractiveness >= 2.5
+          ? 'high'
+          : secondScore.attractiveness >= 1.7
+            ? 'medium'
+            : 'low',
+      estimatedEffort:
+        secondScore.feasibility >= 2.4 ? 'low' : secondScore.feasibility >= 1.6 ? 'medium' : 'high',
       riskLevel: secondScore.risk <= 1.4 ? 'low' : secondScore.risk <= 2.2 ? 'medium' : 'high',
       validation: { valid: true, missing: [], weak: [] },
     });

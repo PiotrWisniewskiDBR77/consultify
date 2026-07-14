@@ -147,10 +147,7 @@ const TONE_OPTIONS = [
 const EXPLAIN_PROMPT =
   'Do not rewrite or modify this text. Instead, return a brief explanation of it: what it means, the key terms, and the relevant context. Output only the explanation itself. Respond in the same language as the text.';
 
-type ExplainState =
-  | { status: 'loading' }
-  | { status: 'done'; text: string }
-  | { status: 'error' };
+type ExplainState = { status: 'loading' } | { status: 'done'; text: string } | { status: 'error' };
 
 export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
   editor,
@@ -361,10 +358,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
             )}
             {explainState.status === 'error' && (
               <p className="py-1 text-sm text-red-600 dark:text-red-400">
-                {t(
-                  'canvas.aiMenu.explainError',
-                  'Could not get an explanation. Please try again.'
-                )}
+                {t('canvas.aiMenu.explainError', 'Could not get an explanation. Please try again.')}
               </p>
             )}
             {explainState.status === 'done' && (
@@ -474,10 +468,7 @@ interface AIAcceptRejectBarProps {
   isPolish?: boolean;
 }
 
-export const AIAcceptRejectBar: React.FC<AIAcceptRejectBarProps> = ({
-  onAccept,
-  onReject,
-}) => {
+export const AIAcceptRejectBar: React.FC<AIAcceptRejectBarProps> = ({ onAccept, onReject }) => {
   const { t } = useTranslation();
   return (
     <div className="sticky bottom-4 flex justify-center z-50 pointer-events-none">

@@ -249,7 +249,9 @@ export const CloudDataSettings: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-8 text-c-text-secondary">{t('common.loading', 'Loading...')}</div>
+        <div className="text-center py-8 text-c-text-secondary">
+          {t('common.loading', 'Loading...')}
+        </div>
       ) : sources.length === 0 && !loadError ? (
         <EmptyState
           icon={<Cloud />}
@@ -265,9 +267,7 @@ export const CloudDataSettings: React.FC = () => {
               <div className="flex items-center gap-3">
                 <span className="text-xl">{PROVIDER_ICONS[source.provider] || '📁'}</span>
                 <div>
-                  <div className="text-sm font-medium text-navy-900">
-                    {source.name}
-                  </div>
+                  <div className="text-sm font-medium text-navy-900">{source.name}</div>
                   <div className="text-xs text-c-text-secondary">
                     {getProviderLabel(source.provider)} ·{' '}
                     <span

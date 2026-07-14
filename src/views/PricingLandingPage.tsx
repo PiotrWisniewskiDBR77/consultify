@@ -217,9 +217,7 @@ export const PricingLandingPage: React.FC = () => {
                   <p className="text-sm font-black uppercase tracking-[0.18em] text-c-accent">
                     {pack.name}
                   </p>
-                  <p className="mt-3 text-4xl font-black text-c-text">
-                    {pack.price}
-                  </p>
+                  <p className="mt-3 text-4xl font-black text-c-text">{pack.price}</p>
                   <p className="mt-1 text-sm text-c-text-muted">{pack.subtitle}</p>
                 </div>
                 {(pack as { featured?: boolean }).featured ? (
@@ -240,10 +238,7 @@ export const PricingLandingPage: React.FC = () => {
               <div className="mt-6 space-y-3">
                 {pack.features.map((bullet) => (
                   <div key={bullet} className="flex items-start gap-3">
-                    <CheckCircle2
-                      size={16}
-                      className="mt-0.5 shrink-0 text-c-accent"
-                    />
+                    <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-c-accent" />
                     <span className="text-sm text-c-text-secondary">{bullet}</span>
                   </div>
                 ))}
@@ -338,9 +333,7 @@ export const PricingLandingPage: React.FC = () => {
                   className="flex items-start gap-3 rounded-2xl border border-c-border bg-c-surface-raised p-4"
                 >
                   <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-amber-500" />
-                  <span className="text-sm leading-6 text-c-text-secondary">
-                    {item}
-                  </span>
+                  <span className="text-sm leading-6 text-c-text-secondary">{item}</span>
                 </div>
               ))}
             </div>
@@ -498,12 +491,8 @@ export const PricingLandingPage: React.FC = () => {
                       <Icon size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-c-text">
-                        {item.title}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-c-text-secondary">
-                        {item.body}
-                      </p>
+                      <p className="text-sm font-black text-c-text">{item.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-c-text-secondary">{item.body}</p>
                     </div>
                   </div>
                 </button>

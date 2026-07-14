@@ -22,12 +22,7 @@
 
 export type SmedPhaseId = 'separate' | 'convert' | 'streamline' | 'standardize';
 
-export const SMED_PHASES: SmedPhaseId[] = [
-  'separate',
-  'convert',
-  'streamline',
-  'standardize',
-];
+export const SMED_PHASES: SmedPhaseId[] = ['separate', 'convert', 'streamline', 'standardize'];
 
 export type Bilingual = { pl: string; en: string };
 
@@ -127,7 +122,7 @@ export const SMED_DEEPENING_LADDER: Record<SmedPhaseId, LadderRung[]> = {
       },
       rationale: {
         pl: 'Konwersja internal→external to najtańszy zysk SMED — nie skracacie pracy, tylko wyjmujecie ją z postoju.',
-        en: 'Internal→external conversion is SMED\'s cheapest win — you do not shorten the work, you take it out of the downtime.',
+        en: "Internal→external conversion is SMED's cheapest win — you do not shorten the work, you take it out of the downtime.",
       },
     },
     {

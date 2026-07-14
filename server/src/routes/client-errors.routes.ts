@@ -21,9 +21,9 @@ import { randomUUID } from 'node:crypto';
 
 import { Request, Response, Router } from 'express';
 
+import { sendSystemAlert } from '../services/systemAlertNotifier.js';
 import { run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { sendSystemAlert } from '../services/systemAlertNotifier.js';
 
 const router = Router();
 

@@ -125,7 +125,10 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       {/* Search */}
       <div className="px-3 py-2">
         <div className="relative">
-          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary" />
+          <Search
+            size={12}
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary"
+          />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}

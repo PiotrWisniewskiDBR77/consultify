@@ -15,17 +15,22 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
-import { createKPI, getKPI, recordROIRealization, getROIByInitiative } from '../v8/resultsROIService.js';
-import { getAuditLogger } from '../AuditLogger.js';
-import {
-  listArtifactsForUser,
-  getRecentArtifactRefsForOrg,
-} from '../v8/artifactRegistryService.js';
-import { createInitiative as createInitiativeViaFunnel } from '../initiative/createInitiativeService.js';
-import { handoffFromClosure, CLOSURE_HANDOFF_SOURCE } from '../executionResultsBridge.js';
-import { pullAndReconcileInitiative } from '../v8/resultsFinanceReconciliationService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { getAuditLogger } from '../AuditLogger.js';
+import { CLOSURE_HANDOFF_SOURCE, handoffFromClosure } from '../executionResultsBridge.js';
+import { createInitiative as createInitiativeViaFunnel } from '../initiative/createInitiativeService.js';
+import {
+  getRecentArtifactRefsForOrg,
+  listArtifactsForUser,
+} from '../v8/artifactRegistryService.js';
+import { pullAndReconcileInitiative } from '../v8/resultsFinanceReconciliationService.js';
+import {
+  createKPI,
+  getKPI,
+  getROIByInitiative,
+  recordROIRealization,
+} from '../v8/resultsROIService.js';
 
 const LOG_PREFIX = '[HealthPanel]';
 
@@ -92,7 +97,8 @@ const probeM15KpiRoundTrip: HealthProbe = {
   id: 'm15_kpi_round_trip',
   module: 'M15',
   title: 'KPI create → read → delete',
-  description: 'Creates a KPI via the V8 results service, reads it back org-scoped, then hard-deletes.',
+  description:
+    'Creates a KPI via the V8 results service, reads it back org-scoped, then hard-deletes.',
   run: async ({ organizationId }) => {
     let kpiId: string | null = null;
     try {
@@ -165,10 +171,10 @@ const probeM15RoiRoundTrip: HealthProbe = {
       return { entryId, initiativeId };
     } finally {
       if (entryId) {
-        await dbRun(`DELETE FROM v8_roi_realization_entries WHERE entry_id = ? AND organization_id = ?`, [
-          entryId,
-          organizationId,
-        ]).catch((e) => logger.warn(`${LOG_PREFIX} m15_roi entry cleanup failed`, e));
+        await dbRun(
+          `DELETE FROM v8_roi_realization_entries WHERE entry_id = ? AND organization_id = ?`,
+          [entryId, organizationId]
+        ).catch((e) => logger.warn(`${LOG_PREFIX} m15_roi entry cleanup failed`, e));
       }
       if (kpiId) {
         await dbRun(`DELETE FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ?`, [
@@ -207,10 +213,15 @@ const probeM16Statements: HealthProbe = {
     const { createModelSchema } = await import('../../routes/financial-modeling.routes.js').catch(
       () => ({ createModelSchema: null as unknown })
     );
-    if (createModelSchema && typeof (createModelSchema as { safeParse?: unknown }).safeParse === 'function') {
-      const parsed = (createModelSchema as {
-        safeParse: (v: unknown) => { success: boolean };
-      }).safeParse({
+    if (
+      createModelSchema &&
+      typeof (createModelSchema as { safeParse?: unknown }).safeParse === 'function'
+    ) {
+      const parsed = (
+        createModelSchema as {
+          safeParse: (v: unknown) => { success: boolean };
+        }
+      ).safeParse({
         name: label('MODEL'),
         startDate: '2026-01-01',
         sourceStatementId: 'stmt-contract-check',
@@ -338,11 +349,10 @@ const probeM17ArtifactsFilter: HealthProbe = {
       }
       return { seededDraft: draftId, seededReady: readyId, listedCount: listed.length };
     } finally {
-      await dbRun(`DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id IN (?, ?)`, [
-        organizationId,
-        draftId,
-        readyId,
-      ]).catch((e) => logger.warn(`${LOG_PREFIX} m17 artifact cleanup failed`, e));
+      await dbRun(
+        `DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id IN (?, ?)`,
+        [organizationId, draftId, readyId]
+      ).catch((e) => logger.warn(`${LOG_PREFIX} m17 artifact cleanup failed`, e));
     }
   },
 };
@@ -400,10 +410,10 @@ const probeM14M15Handoff: HealthProbe = {
       return { initiativeId, kpiId, entryId };
     } finally {
       if (entryId) {
-        await dbRun(`DELETE FROM v8_roi_realization_entries WHERE entry_id = ? AND organization_id = ?`, [
-          entryId,
-          organizationId,
-        ]).catch((e) => logger.warn(`${LOG_PREFIX} handoff roi cleanup failed`, e));
+        await dbRun(
+          `DELETE FROM v8_roi_realization_entries WHERE entry_id = ? AND organization_id = ?`,
+          [entryId, organizationId]
+        ).catch((e) => logger.warn(`${LOG_PREFIX} handoff roi cleanup failed`, e));
       }
       if (kpiId) {
         await dbRun(`DELETE FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ?`, [
@@ -442,7 +452,8 @@ const probeInterviewInsights: HealthProbe = {
   id: 'gp_interview_insights_live',
   module: 'Wywiad→Insights',
   title: 'Interview insights surface live',
-  description: 'Runs the org-scoped interview_insights list query (empty allowed) to prove the surface is alive.',
+  description:
+    'Runs the org-scoped interview_insights list query (empty allowed) to prove the surface is alive.',
   run: async ({ organizationId }) => {
     const count = await countOrgScoped(
       `SELECT id FROM interview_insights WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
@@ -457,7 +468,8 @@ const probeInitiativesList: HealthProbe = {
   id: 'gp_initiatives_list_live',
   module: 'M13',
   title: 'Initiatives list surface live',
-  description: 'Runs the org-scoped initiatives list query (the Insights→Initiative landing surface).',
+  description:
+    'Runs the org-scoped initiatives list query (the Insights→Initiative landing surface).',
   run: async ({ organizationId }) => {
     const count = await countOrgScoped(
       `SELECT id FROM initiatives WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
@@ -492,7 +504,8 @@ const probeToolsToInitiatives: HealthProbe = {
   id: 'gp_tools_to_initiatives_live',
   module: 'Tools→M13',
   title: 'Tools → generated initiatives live',
-  description: 'Reads generated_initiatives org-scoped (tools-source slice) to prove the Tools→Initiative sink is alive.',
+  description:
+    'Reads generated_initiatives org-scoped (tools-source slice) to prove the Tools→Initiative sink is alive.',
   run: async ({ organizationId }) => {
     const count = await countOrgScoped(
       `SELECT id FROM generated_initiatives
@@ -549,7 +562,8 @@ const probeAssessmentsList: HealthProbe = {
   id: 'gp_assessments_list_live',
   module: 'Assessment',
   title: 'Assessments list surface live',
-  description: 'Runs the org-scoped assessments list query to prove the Assessment module surface is alive.',
+  description:
+    'Runs the org-scoped assessments list query to prove the Assessment module surface is alive.',
   run: async ({ organizationId }) => {
     const count = await countOrgScoped(
       `SELECT id FROM assessments WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
@@ -576,7 +590,8 @@ const probeDrdReport: HealthProbe = {
     let routeLoaded = false;
     const mod = await import('../../routes/assessment-reports.routes.js').catch(() => null);
     routeLoaded = mod != null;
-    if (!routeLoaded) throw new Error('assessment-reports route module failed to import (DRD endpoint dead)');
+    if (!routeLoaded)
+      throw new Error('assessment-reports route module failed to import (DRD endpoint dead)');
     return { reportCount, routeLoaded };
   },
 };
@@ -723,7 +738,16 @@ const probeInitiativeToExecutionRoundTrip: HealthProbe = {
         `INSERT INTO initiatives (
            id, organization_id, project_id, title, summary, status, created_at, updated_at
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [initiativeId, organizationId, null, label('EXEC-INITIATIVE'), 'health probe', 'IN_PROGRESS', now, now]
+        [
+          initiativeId,
+          organizationId,
+          null,
+          label('EXEC-INITIATIVE'),
+          'health probe',
+          'IN_PROGRESS',
+          now,
+          now,
+        ]
       );
       await dbRun(
         `INSERT INTO tasks (
@@ -740,9 +764,10 @@ const probeInitiativeToExecutionRoundTrip: HealthProbe = {
       if (!row) throw new Error('Task not readable back through initiative_id linkage');
       return { initiativeId, taskId };
     } finally {
-      await dbRun(`DELETE FROM tasks WHERE id = ? AND organization_id = ?`, [taskId, organizationId]).catch(
-        (e) => logger.warn(`${LOG_PREFIX} gp6 task cleanup failed`, e)
-      );
+      await dbRun(`DELETE FROM tasks WHERE id = ? AND organization_id = ?`, [
+        taskId,
+        organizationId,
+      ]).catch((e) => logger.warn(`${LOG_PREFIX} gp6 task cleanup failed`, e));
       await dbRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
         initiativeId,
         organizationId,
@@ -769,7 +794,16 @@ const probeExecutionClosureToResultsRoundTrip: HealthProbe = {
         `INSERT INTO initiatives (
            id, organization_id, project_id, title, summary, status, created_at, updated_at
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [initiativeId, organizationId, null, label('CLOSURE-INITIATIVE'), 'health probe', 'DONE', now, now]
+        [
+          initiativeId,
+          organizationId,
+          null,
+          label('CLOSURE-INITIATIVE'),
+          'health probe',
+          'DONE',
+          now,
+          now,
+        ]
       );
       await dbRun(
         `INSERT INTO initiative_kpis (id, initiative_id, name, target_value, unit, created_at, updated_at)
@@ -848,7 +882,9 @@ const probeResultsFinanceReconciliationRoundTrip: HealthProbe = {
         { kpiId, driverKey, unitMultiplier: 1000 },
       ]);
       if (!result || result.reconciledCount !== 1) {
-        throw new Error(`Reconciliation did not reconcile the KPI (count=${result?.reconciledCount})`);
+        throw new Error(
+          `Reconciliation did not reconcile the KPI (count=${result?.reconciledCount})`
+        );
       }
       const item = result.items[0];
       // Unit-consistency contract (the OEE bug class): both sides must be on the
@@ -860,11 +896,16 @@ const probeResultsFinanceReconciliationRoundTrip: HealthProbe = {
         );
       }
       if (item.deviationAbsolute !== -18000) {
-        throw new Error(`Deviation not on finance basis: ${item.deviationAbsolute} (expected -18000)`);
+        throw new Error(
+          `Deviation not on finance basis: ${item.deviationAbsolute} (expected -18000)`
+        );
       }
 
       // Reload: the persisted reconciliation row must carry the multiplier + deviation.
-      const row = await dbGet<{ unit_multiplier: number | string; deviation_absolute: number | string }>(
+      const row = await dbGet<{
+        unit_multiplier: number | string;
+        deviation_absolute: number | string;
+      }>(
         `SELECT unit_multiplier, deviation_absolute
            FROM v8_kpi_finance_reconciliations
           WHERE organization_id = ? AND kpi_id = ? AND driver_key = ?
@@ -929,10 +970,7 @@ export function getProbeById(probeId: string): HealthProbe | undefined {
 // ---------------------------------------------------------------------------
 
 /** Run a single probe (pure — no DB cache write). Never throws. */
-export async function runProbe(
-  probe: HealthProbe,
-  ctx: HealthProbeContext
-): Promise<ProbeResult> {
+export async function runProbe(probe: HealthProbe, ctx: HealthProbeContext): Promise<ProbeResult> {
   const startedAt = Date.now();
   const base = {
     probeId: probe.id,
@@ -1090,7 +1128,8 @@ export function summarizeResults(results: ProbeResult[]): {
   const passed = results.filter((r) => r.status === 'pass').length;
   const failed = results.filter((r) => r.status === 'fail').length;
   const unknown = results.filter((r) => r.status === 'unknown').length;
-  const overall: ProbeStatus = failed > 0 ? 'fail' : unknown === results.length ? 'unknown' : 'pass';
+  const overall: ProbeStatus =
+    failed > 0 ? 'fail' : unknown === results.length ? 'unknown' : 'pass';
   return { total: results.length, passed, failed, unknown, overall };
 }
 

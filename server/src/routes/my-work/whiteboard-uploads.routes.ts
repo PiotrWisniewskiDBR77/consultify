@@ -18,10 +18,10 @@
  * the previous behavior. Flipping STORAGE_PROVIDER=s3 moves these images to
  * durable S3/R2 storage with no change here (fixes the Railway redeploy-wipe).
  */
+import type { Response } from 'express';
+import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
-import { Router } from 'express';
-import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';

@@ -50,10 +50,7 @@ export const QaAxisCard: React.FC<QaAxisCardProps> = ({
   const label = labelOverride ?? t(AXIS_LABEL_KEY[axisName], AXIS_LABEL[axisName]);
   const pct = Math.round(detail.score * 100);
   return (
-    <div
-      className="rounded-md border border-c-border-subtle"
-      data-testid={`qa-axis-${axisName}`}
-    >
+    <div className="rounded-md border border-c-border-subtle" data-testid={`qa-axis-${axisName}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

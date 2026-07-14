@@ -1501,12 +1501,17 @@ router.post(
     // the caller's org matches the requested organizationId.
     const callerIsSuperAdmin = (req as any).user?.isSuperAdmin === true;
     if (!organizationId && !callerIsSuperAdmin) {
-      return res.status(403).json({ success: false, error: 'Super admin required for global purpose assignments' });
+      return res
+        .status(403)
+        .json({ success: false, error: 'Super admin required for global purpose assignments' });
     }
     if (organizationId && !callerIsSuperAdmin) {
       const callerOrgId = (req as any).organizationId || (req as any).user?.organizationId;
       if (callerOrgId !== organizationId) {
-        return res.status(403).json({ success: false, error: 'Cannot create assignments for a different organization' });
+        return res.status(403).json({
+          success: false,
+          error: 'Cannot create assignments for a different organization',
+        });
       }
     }
     const executivePurposes = new Set(

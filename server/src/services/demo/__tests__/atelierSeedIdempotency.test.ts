@@ -135,7 +135,9 @@ const ANCHOR = '2026-06-01T00:00:00.000Z';
 
 function idsFor(run: 1 | 2, table: string): Set<string> {
   return new Set(
-    writes.filter((w) => w.run === run && w.table === table && w.id != null).map((w) => w.id as string)
+    writes
+      .filter((w) => w.run === run && w.table === table && w.id != null)
+      .map((w) => w.id as string)
   );
 }
 

@@ -152,7 +152,13 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
         raw.slice(0, 6).forEach((i: any) => {
           const title = String(i.title || i.name || '').trim();
           if (!i.id || !title) return;
-          collected.push({ type, id: String(i.id), title, status: i.status, snippet: i.body || i.summary });
+          collected.push({
+            type,
+            id: String(i.id),
+            title,
+            status: i.status,
+            snippet: i.body || i.summary,
+          });
         });
       };
       if (initRes.status === 'fulfilled') push('initiative', toArray(initRes.value, 'initiatives'));
@@ -270,7 +276,9 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
                       onSelect(entity);
                     }}
                     className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors ${
-                      isActive ? 'bg-c-surface-raised' : 'hover:bg-c-surface-raised dark:hover:bg-white/[0.04]'
+                      isActive
+                        ? 'bg-c-surface-raised'
+                        : 'hover:bg-c-surface-raised dark:hover:bg-white/[0.04]'
                     }`}
                   >
                     <span className="text-[15px] leading-none">{cfg.emoji}</span>

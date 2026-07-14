@@ -106,9 +106,7 @@ const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 
       <div className="flex items-center gap-1.5 mb-1">
         <StickyNote size={12} className="text-c-tag-9 shrink-0" />
-        <span className="text-[9px] font-bold uppercase tracking-wider text-c-tag-9">
-          Note
-        </span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-c-tag-9">Note</span>
       </div>
 
       {editing ? (

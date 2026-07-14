@@ -85,7 +85,8 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           {STATUS_ORDER.map((status, idx) => {
             const items = grouped[status] || [];
             const Icon = STATUS_ICONS[status] || Lightbulb;
-            const colorClass = STATUS_COLORS[status] || 'bg-c-surface-raised border-c-border-subtle';
+            const colorClass =
+              STATUS_COLORS[status] || 'bg-c-surface-raised border-c-border-subtle';
 
             return (
               <React.Fragment key={status}>
@@ -98,7 +99,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     <span className="text-[11px] font-bold text-c-text-secondary dark:text-c-text capitalize">
                       {status.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-[9px] text-c-text-secondary font-medium">({items.length})</span>
+                    <span className="text-[9px] text-c-text-secondary font-medium">
+                      ({items.length})
+                    </span>
                   </div>
 
                   {/* Nodes */}
@@ -112,7 +115,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                         <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text truncate">
                           {node.label}
                         </div>
-                        <div className="text-[9px] text-c-text-secondary mt-0.5">{node.branchKey}</div>
+                        <div className="text-[9px] text-c-text-secondary mt-0.5">
+                          {node.branchKey}
+                        </div>
                       </button>
                     ))}
                     {items.length === 0 && (

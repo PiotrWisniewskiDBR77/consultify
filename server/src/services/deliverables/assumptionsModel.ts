@@ -6,10 +6,15 @@
  * Rozdział: generateAssumptions (LLM, flaky) ≠ buildery (czyste, testowalne).
  */
 import { z } from 'zod';
+
 import llmService from '../ai/llmService.js';
 import { deliverableModelConfig, resolveDeliverableTier } from '../deliverableGenerationTier.js';
 import type {
-  Assumption, MarketSizing, AntiPatternFinding, Provenance, ValueClass,
+  AntiPatternFinding,
+  Assumption,
+  MarketSizing,
+  Provenance,
+  ValueClass,
 } from './businessPlanSpine.js';
 import type { FinancialDrivers } from './financialEngine.js';
 
@@ -25,17 +30,32 @@ export interface BusinessPlanInput {
   currency: string;
   /** Drivery liczbowe (bez funkcji/horyzontu — te dokleja mapper). */
   drivers: {
-    saasPricePerSeatMonth: number; saasSeatsStart: number; saasSeatGrowthYoY: number;
-    grossChurnAnnual: number; nrr: number;
-    servicesRevenueStart: number; servicesGrowthYoY: number;
-    grossMargin: number; smPctRevenue: number; rdPctRevenue: number; gaPctRevenue: number; daPctRevenue: number;
+    saasPricePerSeatMonth: number;
+    saasSeatsStart: number;
+    saasSeatGrowthYoY: number;
+    grossChurnAnnual: number;
+    nrr: number;
+    servicesRevenueStart: number;
+    servicesGrowthYoY: number;
+    grossMargin: number;
+    smPctRevenue: number;
+    rdPctRevenue: number;
+    gaPctRevenue: number;
+    daPctRevenue: number;
     opexLeverageYoY: number;
-    cac: number; arpuAnnual: number; startingCash: number; fundingRaised: number; taxRate: number;
+    cac: number;
+    arpuAnnual: number;
+    startingCash: number;
+    fundingRaised: number;
+    taxRate: number;
   };
   market: {
-    tamTopDown: number; tamSource: string;
-    samValue: number; somValue: number;
-    bottomUpCustomers: number; bottomUpArpu: number; // bottom-up = customers × arpu
+    tamTopDown: number;
+    tamSource: string;
+    samValue: number;
+    somValue: number;
+    bottomUpCustomers: number;
+    bottomUpArpu: number; // bottom-up = customers × arpu
     unit: string;
   };
   /** Źródło/benchmark per kluczowy driver (§A6); klucz = pole w drivers/market. */
@@ -44,18 +64,42 @@ export interface BusinessPlanInput {
 
 const num = z.number();
 const InputSchema = z.object({
-  company: z.string(), language: z.enum(['PL', 'EN']), product: z.string(),
-  thesis: z.string(), ask: z.string(), startYear: num, years: num, currency: z.string(),
+  company: z.string(),
+  language: z.enum(['PL', 'EN']),
+  product: z.string(),
+  thesis: z.string(),
+  ask: z.string(),
+  startYear: num,
+  years: num,
+  currency: z.string(),
   drivers: z.object({
-    saasPricePerSeatMonth: num, saasSeatsStart: num, saasSeatGrowthYoY: num,
-    grossChurnAnnual: num, nrr: num, servicesRevenueStart: num, servicesGrowthYoY: num,
-    grossMargin: num, smPctRevenue: num, rdPctRevenue: num, gaPctRevenue: num, daPctRevenue: num,
+    saasPricePerSeatMonth: num,
+    saasSeatsStart: num,
+    saasSeatGrowthYoY: num,
+    grossChurnAnnual: num,
+    nrr: num,
+    servicesRevenueStart: num,
+    servicesGrowthYoY: num,
+    grossMargin: num,
+    smPctRevenue: num,
+    rdPctRevenue: num,
+    gaPctRevenue: num,
+    daPctRevenue: num,
     opexLeverageYoY: num,
-    cac: num, arpuAnnual: num, startingCash: num, fundingRaised: num, taxRate: num,
+    cac: num,
+    arpuAnnual: num,
+    startingCash: num,
+    fundingRaised: num,
+    taxRate: num,
   }),
   market: z.object({
-    tamTopDown: num, tamSource: z.string(), samValue: num, somValue: num,
-    bottomUpCustomers: num, bottomUpArpu: num, unit: z.string(),
+    tamTopDown: num,
+    tamSource: z.string(),
+    samValue: num,
+    somValue: num,
+    bottomUpCustomers: num,
+    bottomUpArpu: num,
+    unit: z.string(),
   }),
   sources: z.record(z.string(), z.string()).optional(),
 });
@@ -71,10 +115,17 @@ Zwróć WYŁĄCZNIE obiekt zgodny ze schematem. Reguły konsultanckie (twarde):
 - W "sources" podaj źródło/benchmark dla kluczowych driverów (cena, churn, nrr, cac, grossMargin, tam).
 - Waluta i język wg briefu (domyślnie PL/EUR). years=3 jeśli brief nie mówi inaczej.`;
 
-export interface GenOpts { orgId?: string; preferPremium?: boolean; }
+export interface GenOpts {
+  orgId?: string;
+  preferPremium?: boolean;
+}
 
 /** LLM: brief → BusinessPlanInput (fail-open null). `feedback` = błędy CFO-review do naprawy. */
-export async function generateAssumptions(brief: string, opts: GenOpts = {}, feedback?: string): Promise<BusinessPlanInput | null> {
+export async function generateAssumptions(
+  brief: string,
+  opts: GenOpts = {},
+  feedback?: string
+): Promise<BusinessPlanInput | null> {
   const tier = resolveDeliverableTier({ orgId: opts.orgId, preferPremium: opts.preferPremium });
   const userContent = feedback
     ? `Brief biznesplanu:\n${brief}\n\nPOPRZEDNIA WERSJA NIE PRZESZŁA CFO-review. NAPRAW dokładnie te problemy (zachowaj resztę realistyczną):\n${feedback}`
@@ -124,12 +175,35 @@ export function buildMarketSizing(input: BusinessPlanInput): MarketSizing {
   const ref = m.somValue || bottomUp;
   const gapPct = ref > 0 ? Math.abs(bottomUp - ref) / ref : 1;
   return {
-    tam: { value: m.tamTopDown, unit: m.unit, method: 'top-down', provenance: prov(input, 'tam', m.tamSource || 'estymata') },
-    sam: { value: m.samValue, unit: m.unit, provenance: prov(input, 'sam', 'build top-down→segment') },
-    som: { value: m.somValue, unit: m.unit, derivedFromGtm: true, provenance: prov(input, 'som', 'build GTM+capacity') },
-    bottomUp: { value: Math.round(bottomUp), unit: m.unit, formula: `${m.bottomUpCustomers} klientów × ${m.bottomUpArpu} ${m.unit}` },
+    tam: {
+      value: m.tamTopDown,
+      unit: m.unit,
+      method: 'top-down',
+      provenance: prov(input, 'tam', m.tamSource || 'estymata'),
+    },
+    sam: {
+      value: m.samValue,
+      unit: m.unit,
+      provenance: prov(input, 'sam', 'build top-down→segment'),
+    },
+    som: {
+      value: m.somValue,
+      unit: m.unit,
+      derivedFromGtm: true,
+      provenance: prov(input, 'som', 'build GTM+capacity'),
+    },
+    bottomUp: {
+      value: Math.round(bottomUp),
+      unit: m.unit,
+      formula: `${m.bottomUpCustomers} klientów × ${m.bottomUpArpu} ${m.unit}`,
+    },
     // triangulacja: bottom-up build vs SOM (oba = realnie zdobywalne); spójne z gapPct.
-    reconciliation: { topDown: Math.round(ref), bottomUp: Math.round(bottomUp), gapPct: Math.round(gapPct * 100) / 100, reconciled: gapPct <= 0.15 },
+    reconciliation: {
+      topDown: Math.round(ref),
+      bottomUp: Math.round(bottomUp),
+      gapPct: Math.round(gapPct * 100) / 100,
+      reconciled: gapPct <= 0.15,
+    },
   };
 }
 
@@ -138,11 +212,25 @@ export function buildAssumptionRegistry(input: BusinessPlanInput): Assumption[] 
   const d = input.drivers;
   // [key, label, base, unit, sensitivityRank, parent]
   const defs: Array<[string, string, number, string, number, string?]> = [
-    ['saas.price_per_seat_month', 'Cena SaaS / seat / mies', d.saasPricePerSeatMonth, input.currency + '/seat/mies', 2, 'revenue'],
+    [
+      'saas.price_per_seat_month',
+      'Cena SaaS / seat / mies',
+      d.saasPricePerSeatMonth,
+      input.currency + '/seat/mies',
+      2,
+      'revenue',
+    ],
     ['saas.seat_growth_yoy', 'Wzrost seatów r/r', d.saasSeatGrowthYoY, '×', 5, 'revenue'],
     ['saas.gross_churn', 'Churn brutto roczny', d.grossChurnAnnual, '%', 4, 'retention'],
     ['saas.nrr', 'Net revenue retention', d.nrr, '×', 5, 'retention'],
-    ['services.revenue_start', 'Przychód usług R1', d.servicesRevenueStart, input.currency, 2, 'revenue'],
+    [
+      'services.revenue_start',
+      'Przychód usług R1',
+      d.servicesRevenueStart,
+      input.currency,
+      2,
+      'revenue',
+    ],
     ['cost.gross_margin', 'Marża brutto', d.grossMargin, '%', 4, 'cost'],
     ['cost.sm_pct', 'S&M % przychodu', d.smPctRevenue, '%', 3, 'cost'],
     ['ue.cac', 'CAC', d.cac, input.currency, 4, 'unit_econ'],
@@ -154,10 +242,18 @@ export function buildAssumptionRegistry(input: BusinessPlanInput): Assumption[] 
     const src = input.sources?.[key.split('.').pop() ?? ''] ?? input.sources?.[key];
     const valueClass: ValueClass = 'input';
     return {
-      key, label, base, unit,
-      range: [Math.round(base * (1 - spread) * 100) / 100, Math.round(base * (1 + spread) * 100) / 100],
+      key,
+      label,
+      base,
+      unit,
+      range: [
+        Math.round(base * (1 - spread) * 100) / 100,
+        Math.round(base * (1 + spread) * 100) / 100,
+      ],
       provenance: { source: src ?? 'model wewnętrzny', benchmarked: !!src },
-      sensitivityRank: rank, parent, valueClass,
+      sensitivityRank: rank,
+      parent,
+      valueClass,
     };
   });
 }
@@ -168,29 +264,54 @@ export function validateAssumptions(input: BusinessPlanInput): AntiPatternFindin
   const m = input.market;
   // TAM całkiem bez źródła → TWARDY gate (§A6/F3.1): blokuje + pętla naprawcza wymusza źródło.
   if (!m.tamSource || !m.tamSource.trim()) {
-    out.push({ pattern: 'tam_unsourced_or_topdown_only', severity: 'reject', detail: 'TAM bez źródła — niedopuszczalne dla inwestora', ref: 'market.tam' });
+    out.push({
+      pattern: 'tam_unsourced_or_topdown_only',
+      severity: 'reject',
+      detail: 'TAM bez źródła — niedopuszczalne dla inwestora',
+      ref: 'market.tam',
+    });
   }
   // "1% wielkiego rynku" — SOM ≈ płaski ułamek TAM zamiast z buildu (heurystyka: SOM/TAM bardzo małe i okrągłe)
   if (m.tamTopDown > 0) {
     const ratio = m.somValue / m.tamTopDown;
     if (ratio > 0 && ratio <= 0.012 && Math.abs(ratio - 0.01) < 0.003) {
-      out.push({ pattern: 'one_percent_of_market', severity: 'flag', detail: `SOM ≈ ${(ratio * 100).toFixed(1)}% TAM — wygląda na "1% rynku", nie z buildu GTM`, ref: 'market.som' });
+      out.push({
+        pattern: 'one_percent_of_market',
+        severity: 'flag',
+        detail: `SOM ≈ ${(ratio * 100).toFixed(1)}% TAM — wygląda na "1% rynku", nie z buildu GTM`,
+        ref: 'market.som',
+      });
     }
   }
   // triangulacja rozjazd >15%
   const bottomUp = m.bottomUpCustomers * m.bottomUpArpu;
   const ref = m.somValue || bottomUp;
   if (ref > 0 && Math.abs(bottomUp - ref) / ref > 0.15) {
-    out.push({ pattern: 'tam_unsourced_or_topdown_only', severity: 'flag', detail: `bottom-up (${Math.round(bottomUp)}) vs SOM (${m.somValue}) rozjazd >15%`, ref: 'market.reconciliation' });
+    out.push({
+      pattern: 'tam_unsourced_or_topdown_only',
+      severity: 'flag',
+      detail: `bottom-up (${Math.round(bottomUp)}) vs SOM (${m.somValue}) rozjazd >15%`,
+      ref: 'market.reconciliation',
+    });
   }
   // przychód SaaS bez CAC
   if ((!input.drivers.cac || input.drivers.cac <= 0) && input.drivers.saasSeatsStart > 0) {
-    out.push({ pattern: 'revenue_ramp_without_cac', severity: 'reject', detail: 'Rampa SaaS bez CAC', ref: 'ue.cac' });
+    out.push({
+      pattern: 'revenue_ramp_without_cac',
+      severity: 'reject',
+      detail: 'Rampa SaaS bez CAC',
+      ref: 'ue.cac',
+    });
   }
   // false precision: nierealnie precyzyjne udziały bez źródła (np. churn 0.1234)
-  const tooPrecise = (v: number) => Math.abs(v * 10000 % 1) > 0 && v < 1 && v > 0;
+  const tooPrecise = (v: number) => Math.abs((v * 10000) % 1) > 0 && v < 1 && v > 0;
   if (tooPrecise(input.drivers.grossChurnAnnual) && !input.sources?.['churn']) {
-    out.push({ pattern: 'false_precision', severity: 'flag', detail: `churn ${input.drivers.grossChurnAnnual} zbyt precyzyjny bez źródła`, ref: 'saas.gross_churn' });
+    out.push({
+      pattern: 'false_precision',
+      severity: 'flag',
+      detail: `churn ${input.drivers.grossChurnAnnual} zbyt precyzyjny bez źródła`,
+      ref: 'saas.gross_churn',
+    });
   }
   return out;
 }

@@ -62,9 +62,7 @@ afterEach(() => vi.clearAllMocks());
 
 describe('ProblemTable smoke (canon §27)', () => {
   it('renders rows as read-only canonical cells (text, not inputs)', () => {
-    render(
-      <ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />
-    );
+    render(<ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />);
     expect(screen.getByText('Critical blocker')).toBeInTheDocument();
     expect(screen.getByText('Informational note')).toBeInTheDocument();
     // Read-only: titles are plain text, never editable inputs.
@@ -86,9 +84,7 @@ describe('ProblemTable smoke (canon §27)', () => {
   });
 
   it('severity column-header filter narrows the visible rows', async () => {
-    render(
-      <ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />
-    );
+    render(<ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />);
     // Both rows visible initially.
     expect(screen.getByText('Critical blocker')).toBeInTheDocument();
     expect(screen.getByText('Informational note')).toBeInTheDocument();
@@ -128,9 +124,7 @@ describe('ProblemTable smoke (canon §27)', () => {
   });
 
   it('free-text search narrows the visible rows (in-component pre-filter)', async () => {
-    render(
-      <ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />
-    );
+    render(<ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />);
     // Both rows visible initially.
     expect(screen.getByText('Critical blocker')).toBeInTheDocument();
     expect(screen.getByText('Informational note')).toBeInTheDocument();
@@ -148,9 +142,7 @@ describe('ProblemTable smoke (canon §27)', () => {
   });
 
   it('per-severity count badges reflect the data', () => {
-    render(
-      <ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />
-    );
+    render(<ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={noop} />);
     // rows = 1 critical, 0 warning, 1 info.
     expect(screen.getByTestId('severity-count-critical')).toHaveTextContent('1');
     expect(screen.getByTestId('severity-count-warning')).toHaveTextContent('0');
@@ -159,9 +151,7 @@ describe('ProblemTable smoke (canon §27)', () => {
 
   it('kebab exposes the row triage action and fires onAction', async () => {
     const onAction = vi.fn();
-    render(
-      <ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={onAction} />
-    );
+    render(<ProblemTable rows={rows} selectedId={null} onSelect={noop} onAction={onAction} />);
     // Open the first row's kebab.
     fireEvent.click(screen.getAllByLabelText('Row actions')[0]);
     fireEvent.click(await screen.findByText('Unblock now'));

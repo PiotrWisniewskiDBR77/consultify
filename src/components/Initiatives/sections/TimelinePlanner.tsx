@@ -3913,9 +3913,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                 className="h-9 flex items-center gap-1.5 px-2 border-b border-c-border-subtle"
               >
                 <Icon size={11} className={meta.color} />
-                <span className="text-[10px] text-c-text-muted truncate">
-                  {row.name || '—'}
-                </span>
+                <span className="text-[10px] text-c-text-muted truncate">{row.name || '—'}</span>
               </div>
             );
           })}
@@ -3931,7 +3929,9 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                 style={{ left: `${m.pct}%` }}
               >
                 <div className="w-px h-full bg-c-border-subtle" />
-                <span className="text-[8px] text-c-text-secondary pl-1 whitespace-nowrap">{m.label}</span>
+                <span className="text-[8px] text-c-text-secondary pl-1 whitespace-nowrap">
+                  {m.label}
+                </span>
               </div>
             ))}
           </div>

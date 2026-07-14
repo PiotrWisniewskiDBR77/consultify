@@ -1,14 +1,13 @@
 import type {
-  InitiativeDraft,
   FocusTradeoffData,
+  InitiativeDraft,
   ProposalStatus,
   ToolType,
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
-import { pickW2SummaryFields } from './w2SummaryFields';
-
 import { GROUNDING_RULES_BOTH } from './groundingRules';
+import { pickW2SummaryFields } from './w2SummaryFields';
 interface FocusTradeoffActionHandlers {
   updateInputData: (data: Partial<FocusTradeoffData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
@@ -87,9 +86,7 @@ Return one JSON object with this exact structure:
 }`;
 }
 
-export function buildFocusTradeoffTradeoffsPrompt(
-  focusData: FocusTradeoffData
-): string | null {
+export function buildFocusTradeoffTradeoffsPrompt(focusData: FocusTradeoffData): string | null {
   const priorities = (focusData.priorities || [])
     .map((priority) => {
       if (!priority) return '';
@@ -183,8 +180,7 @@ export function applyFocusTradeoffPendingAction({
     actions.updateInputData({
       context: {
         ...focusData.context,
-        competingPriorities:
-          mission.competingPriorities || focusData.context.competingPriorities,
+        competingPriorities: mission.competingPriorities || focusData.context.competingPriorities,
         decisionCriteria: mission.decisionCriteria || focusData.context.decisionCriteria,
         goal: mission.goal || focusData.context.goal,
         successSignal: mission.successSignal || focusData.context.successSignal,
@@ -242,9 +238,7 @@ export function applyFocusTradeoffPendingAction({
                 ? priority.recommendation
                 : 'defer',
               drivers: Array.isArray(priority.drivers) ? priority.drivers.filter(Boolean) : [],
-              evidence: Array.isArray(priority.evidence)
-                ? priority.evidence.filter(Boolean)
-                : [],
+              evidence: Array.isArray(priority.evidence) ? priority.evidence.filter(Boolean) : [],
               implication:
                 typeof priority.implication === 'string' ? priority.implication : undefined,
               confidence: typeof priority.confidence === 'number' ? priority.confidence : 3,

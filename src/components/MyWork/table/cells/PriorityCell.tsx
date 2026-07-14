@@ -60,10 +60,7 @@ export const PriorityCell: React.FC<PriorityCellProps> = ({ value, fieldOptions 
 
   if (value == null || value === '') {
     return (
-      <span
-        className="text-xs text-c-text-muted px-1"
-        data-testid="priority-empty"
-      >
+      <span className="text-xs text-c-text-muted px-1" data-testid="priority-empty">
         —
       </span>
     );

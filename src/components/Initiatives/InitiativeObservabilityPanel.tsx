@@ -15,8 +15,8 @@ import { useTranslation } from 'react-i18next';
 
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
-  InitiativeApi,
   type Initiative,
+  InitiativeApi,
   type InitiativeFunnelStats,
   type InitiativeLineageChain,
 } from '@/services/api/initiatives.api';
@@ -31,13 +31,24 @@ function ConversionStep({ label, value }: { label: string; value: number }) {
 }
 
 /** Horizontal share bar (no hex/rose — primary token). */
-function ShareBar({ label, count, total }: { label: React.ReactNode; count: number; total: number }) {
+function ShareBar({
+  label,
+  count,
+  total,
+}: {
+  label: React.ReactNode;
+  count: number;
+  total: number;
+}) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
     <div className="flex items-center gap-3 py-1">
       <div className="w-32 shrink-0 text-xs text-slate-600 dark:text-slate-300">{label}</div>
       <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        <div className="absolute inset-y-0 left-0 rounded-full bg-c-info" style={{ width: `${pct}%` }} />
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-c-info"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <div className="w-14 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
         {count} · {pct}%
@@ -47,13 +58,24 @@ function ShareBar({ label, count, total }: { label: React.ReactNode; count: numb
 }
 
 /** Horizontal bar scaled to a max value, labelled in days (not %). */
-function DwellBar({ label, days, maxDays }: { label: React.ReactNode; days: number; maxDays: number }) {
+function DwellBar({
+  label,
+  days,
+  maxDays,
+}: {
+  label: React.ReactNode;
+  days: number;
+  maxDays: number;
+}) {
   const pct = maxDays > 0 ? Math.min(100, Math.round((days / maxDays) * 100)) : 0;
   return (
     <div className="flex items-center gap-3 py-1">
       <div className="w-32 shrink-0 text-xs text-slate-600 dark:text-slate-300">{label}</div>
       <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        <div className="absolute inset-y-0 left-0 rounded-full bg-c-info" style={{ width: `${pct}%` }} />
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-c-info"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <div className="w-16 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
         {days.toLocaleString(undefined, { maximumFractionDigits: 1 })}d
@@ -266,7 +288,11 @@ export function InitiativeObservabilityPanel({
             >
               {initiatives.map((i) => (
                 <option key={i.id} value={i.id}>
-                  {String((i as { title?: string; name?: string }).title || (i as { name?: string }).name || i.id).slice(0, 60)}
+                  {String(
+                    (i as { title?: string; name?: string }).title ||
+                      (i as { name?: string }).name ||
+                      i.id
+                  ).slice(0, 60)}
                 </option>
               ))}
             </select>
@@ -282,7 +308,9 @@ export function InitiativeObservabilityPanel({
           <div className="flex flex-wrap items-center gap-2 text-sm">
             {/* Source */}
             <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.source', 'Source')}</div>
+              <div className="text-xs text-slate-400">
+                {t('initiatives.observability.source', 'Source')}
+              </div>
               <div className="font-medium text-slate-700 dark:text-slate-200">
                 {lineage.source
                   ? lineage.source.type
@@ -292,7 +320,9 @@ export function InitiativeObservabilityPanel({
             <ArrowRight className="h-4 w-4 text-slate-300" />
             {/* Initiative */}
             <div className="rounded-lg border border-c-info bg-c-info/10 px-3 py-2 dark:border-c-info dark:bg-c-info/20">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.initiative', 'Initiative')}</div>
+              <div className="text-xs text-slate-400">
+                {t('initiatives.observability.initiative', 'Initiative')}
+              </div>
               <div className="max-w-[16rem] truncate font-medium text-slate-800 dark:text-slate-100">
                 {lineage.initiative.title}
               </div>
@@ -303,17 +333,19 @@ export function InitiativeObservabilityPanel({
             <ArrowRight className="h-4 w-4 text-slate-300" />
             {/* Execution */}
             <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.execution', 'Execution')}</div>
+              <div className="text-xs text-slate-400">
+                {t('initiatives.observability.execution', 'Execution')}
+              </div>
               <div className="font-medium text-slate-700 dark:text-slate-200">
-                {lineage.downstream.executionStatus
-                  ? lineage.downstream.executionStatus
-                  : '—'}
+                {lineage.downstream.executionStatus ? lineage.downstream.executionStatus : '—'}
               </div>
             </div>
             <ArrowRight className="h-4 w-4 text-slate-300" />
             {/* Results */}
             <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.results', 'Results')}</div>
+              <div className="text-xs text-slate-400">
+                {t('initiatives.observability.results', 'Results')}
+              </div>
               <div className="font-medium text-slate-700 dark:text-slate-200">
                 {lineage.downstream.benefits && lineage.downstream.benefits.length > 0
                   ? t('initiatives.observability.kpiCount', '{{count}} KPI', {
@@ -325,7 +357,10 @@ export function InitiativeObservabilityPanel({
           </div>
         ) : (
           <p className="py-4 text-sm text-slate-500">
-            {t('initiatives.observability.noLineage', 'No lineage chain for the selected initiative.')}
+            {t(
+              'initiatives.observability.noLineage',
+              'No lineage chain for the selected initiative.'
+            )}
           </p>
         )}
       </section>

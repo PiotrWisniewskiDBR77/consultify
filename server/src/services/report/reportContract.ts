@@ -218,10 +218,7 @@ export async function readLive(defId: string, scope: ReportScope): Promise<LiveR
  * (już deleguje do createReport({sourceType:'RESULTS_KPI_REPORT'})). Wtedy snapshot niesie
  * lineage.source_rows[] + EvidenceEnvelope (§3.2). Do tego czasu ta ścieżka rzuca jawny błąd.
  */
-export async function createSnapshot(
-  defId: string,
-  scope: ReportScope
-): Promise<ReportSnapshot> {
+export async function createSnapshot(defId: string, scope: ReportScope): Promise<ReportSnapshot> {
   const definition = await getDefinition(defId);
   if (!definition) throw new Error(`report_definition not found: ${defId}`);
 
@@ -278,7 +275,9 @@ export async function exportFile(
   ctx: { exportedBy: string; filePath?: string; fileSize?: number; language?: string }
 ): Promise<{ exportId: string; snapshotId: string; format: ReportExportFormat }> {
   if (!snapshot?.immutable || !snapshot.snapshotId) {
-    throw new Error('exportFile: eksport dozwolony WYŁĄCZNIE od snapshotu (reguła: nie ma eksportu z live).');
+    throw new Error(
+      'exportFile: eksport dozwolony WYŁĄCZNIE od snapshotu (reguła: nie ma eksportu z live).'
+    );
   }
   const record = await ReportBuilderService.createExportRecord({
     reportId: snapshot.reportId,

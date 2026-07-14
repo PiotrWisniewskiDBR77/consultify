@@ -7,8 +7,20 @@
  * Behind flag resultsFeatureFlags('strategicLayer').
  */
 import {
-  AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2,
-  Layers, ListChecks, MessageSquare, Minus, Pencil, Plus, Target, Trash2, TrendingUp,
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  CheckCircle2,
+  Layers,
+  ListChecks,
+  MessageSquare,
+  Minus,
+  Pencil,
+  Plus,
+  Target,
+  Trash2,
+  TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -214,7 +226,12 @@ function okrStatus(score: number): RagStatus {
 
 type OkrModalState =
   | { kind: 'objective'; mode: 'create' | 'edit'; objective?: OkrObjectiveModalObjective | null }
-  | { kind: 'keyResult'; mode: 'create' | 'edit'; objectiveId: string; keyResult?: OkrKeyResultModalKeyResult | null }
+  | {
+      kind: 'keyResult';
+      mode: 'create' | 'edit';
+      objectiveId: string;
+      keyResult?: OkrKeyResultModalKeyResult | null;
+    }
   | { kind: 'checkIn'; keyResultId: string; keyResultLabel: string; isManualMetric: boolean }
   | null;
 
@@ -230,7 +247,7 @@ const OkrKeyResultRow: React.FC<{
   onDelete: (id: string, label: string) => void;
   t: (key: string, fallback: string, opts?: Record<string, unknown>) => string;
 }> = ({ kr, objectiveId, setOkrModal, onDelete, t }) => {
-  const denom = (kr.target - kr.baseline) || 1;
+  const denom = kr.target - kr.baseline || 1;
   const pct = Math.max(0, Math.min(100, Math.round(((kr.current - kr.baseline) / denom) * 100)));
   // D7 (manual-only): every metric-KR takes its "current" reading from
   // check-ins — `kpiId` (if set) is an informational reference only and no
@@ -239,7 +256,9 @@ const OkrKeyResultRow: React.FC<{
   const isManualMetric = kr.krType !== 'milestone';
   return (
     <div className="flex items-center gap-2 group">
-      <span className="w-40 text-xs text-slate-500 dark:text-slate-400 truncate" title={kr.label}>{kr.label}</span>
+      <span className="w-40 text-xs text-slate-500 dark:text-slate-400 truncate" title={kr.label}>
+        {kr.label}
+      </span>
       <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
         <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
       </div>
@@ -251,7 +270,12 @@ const OkrKeyResultRow: React.FC<{
           type="button"
           title={t('results.okr.checkIn', 'Check-in')}
           onClick={() =>
-            setOkrModal({ kind: 'checkIn', keyResultId: kr.id, keyResultLabel: kr.label, isManualMetric })
+            setOkrModal({
+              kind: 'checkIn',
+              keyResultId: kr.id,
+              keyResultLabel: kr.label,
+              isManualMetric,
+            })
           }
           className="p-1 rounded-md text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
         >
@@ -331,19 +355,29 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       Api.get(`/results-extended/${projectId}/benefit-profiles`),
       Api.get(`/results-strategic/${projectId}/okr`),
       listOkrCycles(projectId),
-    ]).then(([s, a, su, bp, ok, cycles]) => {
-      if (s.status === 'fulfilled') setStrategic((s.value as any)?.data ?? s.value);
-      if (a.status === 'fulfilled') setAdoption((a.value as any)?.data ?? a.value);
-      if (su.status === 'fulfilled') setSustainment((su.value as any)?.data ?? su.value);
-      if (bp.status === 'fulfilled') setBenefitProfiles((bp.value as any)?.data ?? bp.value);
-      if (ok.status === 'fulfilled') setOkr((ok.value as any)?.data ?? ok.value);
-      if (cycles.status === 'fulfilled') setOkrCycles(cycles.value);
-    }).finally(() => setLoading(false));
+    ])
+      .then(([s, a, su, bp, ok, cycles]) => {
+        if (s.status === 'fulfilled') setStrategic((s.value as any)?.data ?? s.value);
+        if (a.status === 'fulfilled') setAdoption((a.value as any)?.data ?? a.value);
+        if (su.status === 'fulfilled') setSustainment((su.value as any)?.data ?? su.value);
+        if (bp.status === 'fulfilled') setBenefitProfiles((bp.value as any)?.data ?? bp.value);
+        if (ok.status === 'fulfilled') setOkr((ok.value as any)?.data ?? ok.value);
+        if (cycles.status === 'fulfilled') setOkrCycles(cycles.value);
+      })
+      .finally(() => setLoading(false));
   }, [projectId]);
 
   const handleDeleteObjective = useCallback(
     (objectiveId: string, label: string) => {
-      if (!window.confirm(t('results.okr.confirmDeleteObjective', 'Delete objective "{{label}}" and all its key results?', { label }))) {
+      if (
+        !window.confirm(
+          t(
+            'results.okr.confirmDeleteObjective',
+            'Delete objective "{{label}}" and all its key results?',
+            { label }
+          )
+        )
+      ) {
         return;
       }
       deleteOkrObjective(projectId, objectiveId)
@@ -360,7 +394,11 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
 
   const handleDeleteKeyResult = useCallback(
     (keyResultId: string, label: string) => {
-      if (!window.confirm(t('results.okr.confirmDeleteKr', 'Delete key result "{{label}}"?', { label }))) {
+      if (
+        !window.confirm(
+          t('results.okr.confirmDeleteKr', 'Delete key result "{{label}}"?', { label })
+        )
+      ) {
         return;
       }
       deleteOkrKeyResult(projectId, keyResultId)
@@ -390,13 +428,23 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         toast.success(t('results.okr.cycleCreated', 'Cycle created'));
         reloadOkr();
       })
-      .catch((error: any) => toast.error(error?.message || t('results.okr.cycleSaveFailed', 'Failed to create cycle')))
+      .catch((error: any) =>
+        toast.error(error?.message || t('results.okr.cycleSaveFailed', 'Failed to create cycle'))
+      )
       .finally(() => setCreatingCycle(false));
   }, [projectId, reloadOkr, t]);
 
   const handleCloseCycle = useCallback(
     (cycleId: string, name: string) => {
-      if (!window.confirm(t('results.okr.confirmCloseCycle', 'Close cycle "{{name}}"? This grades all its objectives.', { name }))) {
+      if (
+        !window.confirm(
+          t(
+            'results.okr.confirmCloseCycle',
+            'Close cycle "{{name}}"? This grades all its objectives.',
+            { name }
+          )
+        )
+      ) {
         return;
       }
       setClosingCycleId(cycleId);
@@ -405,7 +453,9 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           toast.success(t('results.okr.cycleClosed', 'Cycle closed'));
           reloadOkr();
         })
-        .catch((error: any) => toast.error(error?.message || t('results.okr.cycleCloseFailed', 'Failed to close cycle')))
+        .catch((error: any) =>
+          toast.error(error?.message || t('results.okr.cycleCloseFailed', 'Failed to close cycle'))
+        )
         .finally(() => setClosingCycleId(null));
     },
     [projectId, reloadOkr, t]
@@ -413,7 +463,10 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
 
   if (loading) {
     return (
-      <div data-testid="strategic-layer-loading" className="flex items-center justify-center py-12 text-slate-400 text-sm">
+      <div
+        data-testid="strategic-layer-loading"
+        className="flex items-center justify-center py-12 text-slate-400 text-sm"
+      >
         <Layers size={16} className="mr-2 animate-pulse" />
         {t('common.loading', 'Loading...')}
       </div>
@@ -437,7 +490,6 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
 
   return (
     <div data-testid="strategic-layer-panel" className="space-y-6">
-
       {/* BSC — 4 perspectives */}
       <section>
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
@@ -449,14 +501,17 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             </span>
           )}
           {strategic?.bsc?.overallHealthPct != null && (
-            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
-              strategic.bsc.overallHealthPct >= 0.7
-                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                : strategic.bsc.overallHealthPct >= 0.4
-                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-            }`}>
-              {Math.round(strategic.bsc.overallHealthPct * 100)}% {t('results.strategic.bscHealth', 'health')}
+            <span
+              className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+                strategic.bsc.overallHealthPct >= 0.7
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                  : strategic.bsc.overallHealthPct >= 0.4
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                    : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+              }`}
+            >
+              {Math.round(strategic.bsc.overallHealthPct * 100)}%{' '}
+              {t('results.strategic.bscHealth', 'health')}
             </span>
           )}
         </h3>
@@ -464,7 +519,10 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         {strategic?.bsc?.balanced === false && bscPerspectives && (
           <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
             <AlertTriangle size={12} className="shrink-0" />
-            {t('results.strategic.bscUnbalanced', 'Scorecard unbalanced — a KPI is missing in at least one perspective.')}
+            {t(
+              'results.strategic.bscUnbalanced',
+              'Scorecard unbalanced — a KPI is missing in at least one perspective.'
+            )}
           </div>
         )}
 
@@ -476,11 +534,17 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(['financial', 'customer', 'process', 'learning'] as const).map((persp) => {
               const p = bscPerspectives[persp] ?? null;
-              const healthColor = p && p.healthPct >= 0.7 ? 'text-emerald-600 dark:text-emerald-400'
-                : p && p.healthPct >= 0.4 ? 'text-amber-600 dark:text-amber-400'
-                : 'text-red-600 dark:text-red-400';
+              const healthColor =
+                p && p.healthPct >= 0.7
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : p && p.healthPct >= 0.4
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-red-600 dark:text-red-400';
               return (
-                <div key={persp} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
+                <div
+                  key={persp}
+                  className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4"
+                >
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
                     {t(`results.strategic.perspective.${persp}`, PERSPECTIVE_LABELS[persp])}
                   </div>
@@ -497,7 +561,10 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                         {p.onTarget} OK / {p.below} below / {p.noData} none
                       </div>
                       <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
-                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(p.healthPct * 100)}%` }} />
+                        <div
+                          className="h-full rounded-full bg-emerald-500"
+                          style={{ width: `${Math.round(p.healthPct * 100)}%` }}
+                        />
                       </div>
                     </>
                   )}
@@ -517,13 +584,24 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </h3>
           <div className="flex flex-wrap gap-3">
             {[
-              { label: t('results.strategic.bdnBenefits', 'Benefits'), value: bdnStats.byType?.benefit ?? 0 },
-              { label: t('results.strategic.bdnEnablers', 'Enablers'), value: bdnStats.byType?.enabler ?? 0 },
+              {
+                label: t('results.strategic.bdnBenefits', 'Benefits'),
+                value: bdnStats.byType?.benefit ?? 0,
+              },
+              {
+                label: t('results.strategic.bdnEnablers', 'Enablers'),
+                value: bdnStats.byType?.enabler ?? 0,
+              },
               { label: t('results.strategic.bdnLinks', 'Links'), value: bdnStats.edgeCount },
             ].map((s) => (
-              <div key={s.label} className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-4 py-2.5">
+              <div
+                key={s.label}
+                className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-4 py-2.5"
+              >
                 <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
-                <div className="text-xl font-semibold text-slate-800 dark:text-slate-100">{s.value}</div>
+                <div className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                  {s.value}
+                </div>
               </div>
             ))}
           </div>
@@ -541,11 +619,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             </span>
           )}
           {adoption?.dataSource && (
-            <span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${
-              adoption.dataSource === 'change-management'
-                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300'
-            }`}>
+            <span
+              className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${
+                adoption.dataSource === 'change-management'
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300'
+              }`}
+            >
               {adoption.dataSource === 'change-management'
                 ? t('results.strategic.adoptionSourceCm', 'Source: change management (ADKAR)')
                 : t('results.strategic.adoptionSourceProxy', 'Source: delivery proxy (v1)')}
@@ -561,14 +641,23 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           <>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {richAdoptionFlags.map((f) => (
-                <div key={f.id} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-3">
+                <div
+                  key={f.id}
+                  className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-3"
+                >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" title={f.name ?? f.id}>
+                    <span
+                      className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
+                      title={f.name ?? f.id}
+                    >
                       {f.name ?? `ID ${f.id.slice(0, 8)}…`}
                     </span>
                     {f.diceZone && (
-                      <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${DICE_ZONE_PILL[f.diceZone]}`}>
-                        DICE {f.diceScore ?? '—'} · {t(`results.strategic.diceZone.${f.diceZone}`, f.diceZone)}
+                      <span
+                        className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${DICE_ZONE_PILL[f.diceZone]}`}
+                      >
+                        DICE {f.diceScore ?? '—'} ·{' '}
+                        {t(`results.strategic.diceZone.${f.diceZone}`, f.diceZone)}
                       </span>
                     )}
                   </div>
@@ -576,7 +665,9 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                     {f.adoptionScore != null && (
                       <span>
                         {t('results.strategic.adoptionScore', 'Adoption')}:{' '}
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">{Math.round(f.adoptionScore * 100)}%</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                          {Math.round(f.adoptionScore * 100)}%
+                        </span>
                       </span>
                     )}
                     {f.sentimentTrend && (
@@ -597,18 +688,28 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                     {f.championCoveragePct != null && (
                       <span>
                         {t('results.strategic.championCoverage', 'Change champions')}:{' '}
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">{Math.round(f.championCoveragePct)}%</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                          {Math.round(f.championCoveragePct)}%
+                        </span>
                       </span>
                     )}
-                    {f.risk && <RagPill status={RISK_TO_RAG[f.risk]} label={t(`results.strategic.risk.${f.risk}`, f.risk)} />}
+                    {f.risk && (
+                      <RagPill
+                        status={RISK_TO_RAG[f.risk]}
+                        label={t(`results.strategic.risk.${f.risk}`, f.risk)}
+                      />
+                    )}
                   </div>
                   {f.riskReasons && f.riskReasons.length > 0 && (
                     <details className="mt-2 group">
                       <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 select-none">
-                        {t('results.strategic.riskReasons', 'Risk reasons')} ({f.riskReasons.length})
+                        {t('results.strategic.riskReasons', 'Risk reasons')} ({f.riskReasons.length}
+                        )
                       </summary>
                       <ul className="mt-1 ml-3 list-disc space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        {f.riskReasons.map((r, i) => (<li key={i}>{r}</li>))}
+                        {f.riskReasons.map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
                       </ul>
                     </details>
                   )}
@@ -617,7 +718,11 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             </div>
             {proxyAdoptionFlags.length > 0 && (
               <div className="mt-2 text-xs text-slate-400">
-                {t('results.strategic.adoptionProxyMore', '+{{count}} flagged from proxy data (no sentiment signal)', { count: proxyAdoptionFlags.length })}
+                {t(
+                  'results.strategic.adoptionProxyMore',
+                  '+{{count}} flagged from proxy data (no sentiment signal)',
+                  { count: proxyAdoptionFlags.length }
+                )}
               </div>
             )}
           </>
@@ -638,11 +743,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   total: profileSummary.total,
                   financial: profileSummary.financial,
                   withTarget: profileSummary.withTarget,
-                },
+                }
               )}
               {profileSummary.disBenefits > 0 && (
                 <span className="ml-2 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                  {t('results.strategic.disBenefits', '{{count}} dis-benefit', { count: profileSummary.disBenefits })}
+                  {t('results.strategic.disBenefits', '{{count}} dis-benefit', {
+                    count: profileSummary.disBenefits,
+                  })}
                 </span>
               )}
             </span>
@@ -650,14 +757,25 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         </h3>
         {profiles.length === 0 ? (
           <div className="text-sm text-slate-400 py-4 text-center">
-            {t('results.strategic.benefitProfilesNoData', 'No benefit profiles — define KPIs with a type and target.')}
+            {t(
+              'results.strategic.benefitProfilesNoData',
+              'No benefit profiles — define KPIs with a type and target.'
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {profiles.map((p) => (
-              <div key={p.kpiId} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-3">
+              <div
+                key={p.kpiId}
+                className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-3"
+              >
                 <div className="flex items-start gap-2">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" title={p.name}>{p.name}</span>
+                  <span
+                    className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
+                    title={p.name}
+                  >
+                    {p.name}
+                  </span>
                   {p.isDisBenefit && (
                     <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
                       {t('results.strategic.disBenefitTag', 'dis-benefit')}
@@ -668,17 +786,23 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${BENEFIT_TYPE_PILL[p.type]}`}>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${BENEFIT_TYPE_PILL[p.type]}`}
+                  >
                     {t(`results.strategic.benefitType.${p.type}`, p.type)}
                   </span>
                   <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">
                     {t(`results.strategic.benefitCategory.${p.category}`, p.category)}
                   </span>
                   {!p.hasTarget && (
-                    <span className="text-xs text-slate-400">{t('results.strategic.benefitNoTarget', 'no target')}</span>
+                    <span className="text-xs text-slate-400">
+                      {t('results.strategic.benefitNoTarget', 'no target')}
+                    </span>
                   )}
                   {p.businessOwner && (
-                    <span className="ml-auto text-xs text-slate-400 truncate">{p.businessOwner}</span>
+                    <span className="ml-auto text-xs text-slate-400 truncate">
+                      {p.businessOwner}
+                    </span>
                   )}
                 </div>
               </div>
@@ -697,9 +821,15 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               <span className="font-semibold text-slate-700 dark:text-slate-200">
                 {Math.round(okrSummary.avgScore * 100)}% {t('results.strategic.okrAvg', 'avg')}
               </span>
-              <span className="text-emerald-600 dark:text-emerald-400">{okrSummary.onTrack} {t('results.strategic.okrOnTrack', 'on track')}</span>
-              <span className="text-amber-600 dark:text-amber-400">{okrSummary.atRisk} {t('results.strategic.okrAtRisk', 'at risk')}</span>
-              <span className="text-red-600 dark:text-red-400">{okrSummary.offTrack} {t('results.strategic.okrOffTrack', 'off track')}</span>
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {okrSummary.onTrack} {t('results.strategic.okrOnTrack', 'on track')}
+              </span>
+              <span className="text-amber-600 dark:text-amber-400">
+                {okrSummary.atRisk} {t('results.strategic.okrAtRisk', 'at risk')}
+              </span>
+              <span className="text-red-600 dark:text-red-400">
+                {okrSummary.offTrack} {t('results.strategic.okrOffTrack', 'off track')}
+              </span>
             </span>
           )}
           <button
@@ -725,7 +855,9 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             >
               {cycle.name}
               <span className="text-slate-400">
-                {cycle.status === 'closed' ? t('results.okr.cycleClosedTag', 'closed') : cycle.status}
+                {cycle.status === 'closed'
+                  ? t('results.okr.cycleClosedTag', 'closed')
+                  : cycle.status}
               </span>
               {cycle.status !== 'closed' && (
                 <button
@@ -760,10 +892,18 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             {okrParents.map((parent) => {
               const children = objectives.filter((o) => o.parentId === parent.id);
               return (
-                <div key={parent.id} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
+                <div
+                  key={parent.id}
+                  className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4"
+                >
                   <div className="flex items-center gap-2">
                     <Target size={14} className="text-slate-400 shrink-0" />
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate" title={parent.label}>{parent.label}</span>
+                    <span
+                      className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate"
+                      title={parent.label}
+                    >
+                      {parent.label}
+                    </span>
                     <span className="shrink-0">
                       <RagPill
                         status={okrStatus(parent.rollupScore)}
@@ -774,7 +914,9 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                       <button
                         type="button"
                         title={t('results.okr.addKeyResult', 'Add key result')}
-                        onClick={() => setOkrModal({ kind: 'keyResult', mode: 'create', objectiveId: parent.id })}
+                        onClick={() =>
+                          setOkrModal({ kind: 'keyResult', mode: 'create', objectiveId: parent.id })
+                        }
                         className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                       >
                         <Plus size={13} />
@@ -786,7 +928,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                           setOkrModal({
                             kind: 'objective',
                             mode: 'edit',
-                            objective: { id: parent.id, label: parent.label, parentId: parent.parentId, cycleId: parent.cycleId, description: parent.description },
+                            objective: {
+                              id: parent.id,
+                              label: parent.label,
+                              parentId: parent.parentId,
+                              cycleId: parent.cycleId,
+                              description: parent.description,
+                            },
                           })
                         }
                         className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
@@ -810,7 +958,12 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                         <div key={child.id}>
                           <div className="flex items-center gap-2">
                             <ArrowRight size={12} className="text-slate-400 shrink-0" />
-                            <span className="text-sm text-slate-700 dark:text-slate-300 truncate" title={child.label}>{child.label}</span>
+                            <span
+                              className="text-sm text-slate-700 dark:text-slate-300 truncate"
+                              title={child.label}
+                            >
+                              {child.label}
+                            </span>
                             <span className="shrink-0">
                               <RagPill
                                 status={okrStatus(child.score)}
@@ -821,7 +974,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                               <button
                                 type="button"
                                 title={t('results.okr.addKeyResult', 'Add key result')}
-                                onClick={() => setOkrModal({ kind: 'keyResult', mode: 'create', objectiveId: child.id })}
+                                onClick={() =>
+                                  setOkrModal({
+                                    kind: 'keyResult',
+                                    mode: 'create',
+                                    objectiveId: child.id,
+                                  })
+                                }
                                 className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                               >
                                 <Plus size={12} />
@@ -833,7 +992,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                                   setOkrModal({
                                     kind: 'objective',
                                     mode: 'edit',
-                                    objective: { id: child.id, label: child.label, parentId: child.parentId, cycleId: child.cycleId, description: child.description },
+                                    objective: {
+                                      id: child.id,
+                                      label: child.label,
+                                      parentId: child.parentId,
+                                      cycleId: child.cycleId,
+                                      description: child.description,
+                                    },
                                   })
                                 }
                                 className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
@@ -853,7 +1018,14 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                           {child.keyResults.length > 0 && (
                             <div className="mt-1.5 ml-5 space-y-1.5">
                               {child.keyResults.map((kr) => (
-                                <OkrKeyResultRow key={kr.id} kr={kr} objectiveId={child.id} setOkrModal={setOkrModal} onDelete={handleDeleteKeyResult} t={t} />
+                                <OkrKeyResultRow
+                                  key={kr.id}
+                                  kr={kr}
+                                  objectiveId={child.id}
+                                  setOkrModal={setOkrModal}
+                                  onDelete={handleDeleteKeyResult}
+                                  t={t}
+                                />
                               ))}
                             </div>
                           )}
@@ -865,7 +1037,14 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   {parent.keyResults.length > 0 && (
                     <div className="mt-2 ml-5 space-y-1.5">
                       {parent.keyResults.map((kr) => (
-                        <OkrKeyResultRow key={kr.id} kr={kr} objectiveId={parent.id} setOkrModal={setOkrModal} onDelete={handleDeleteKeyResult} t={t} />
+                        <OkrKeyResultRow
+                          key={kr.id}
+                          kr={kr}
+                          objectiveId={parent.id}
+                          setOkrModal={setOkrModal}
+                          onDelete={handleDeleteKeyResult}
+                          t={t}
+                        />
                       ))}
                     </div>
                   )}
@@ -926,12 +1105,35 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { key: 'total', label: 'Total', value: sustainSummary.total, color: 'text-slate-700 dark:text-slate-200' },
-              { key: 'sustained', label: 'Sustained', value: sustainSummary.sustained, color: 'text-emerald-600 dark:text-emerald-400' },
-              { key: 'atRisk', label: 'At risk', value: sustainSummary.atRisk, color: 'text-amber-600 dark:text-amber-400' },
-              { key: 'unowned', label: 'Unowned', value: sustainSummary.unowned, color: 'text-red-600 dark:text-red-400' },
+              {
+                key: 'total',
+                label: 'Total',
+                value: sustainSummary.total,
+                color: 'text-slate-700 dark:text-slate-200',
+              },
+              {
+                key: 'sustained',
+                label: 'Sustained',
+                value: sustainSummary.sustained,
+                color: 'text-emerald-600 dark:text-emerald-400',
+              },
+              {
+                key: 'atRisk',
+                label: 'At risk',
+                value: sustainSummary.atRisk,
+                color: 'text-amber-600 dark:text-amber-400',
+              },
+              {
+                key: 'unowned',
+                label: 'Unowned',
+                value: sustainSummary.unowned,
+                color: 'text-red-600 dark:text-red-400',
+              },
             ].map((s) => (
-              <div key={s.key} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4 text-center">
+              <div
+                key={s.key}
+                className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4 text-center"
+              >
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{s.label}</div>
               </div>
@@ -944,13 +1146,20 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                 .filter((s) => s.status !== 'sustained')
                 .slice(0, 5)
                 .map((s) => (
-                  <div key={s.id} className="flex items-start gap-2 rounded-lg bg-slate-50 dark:bg-white/[0.03] px-3 py-2 text-sm">
-                    <span className={`font-medium shrink-0 ${STATUS_COLORS[s.status] ?? 'text-slate-500'}`}>
+                  <div
+                    key={s.id}
+                    className="flex items-start gap-2 rounded-lg bg-slate-50 dark:bg-white/[0.03] px-3 py-2 text-sm"
+                  >
+                    <span
+                      className={`font-medium shrink-0 ${STATUS_COLORS[s.status] ?? 'text-slate-500'}`}
+                    >
                       {STATUS_LABELS[s.status] ?? s.status}
                     </span>
                     <span className="text-slate-700 dark:text-slate-300 truncate">{s.name}</span>
                     {s.reasons[0] && (
-                      <span className="text-xs text-slate-400 ml-auto shrink-0">{s.reasons[0]}</span>
+                      <span className="text-xs text-slate-400 ml-auto shrink-0">
+                        {s.reasons[0]}
+                      </span>
                     )}
                   </div>
                 ))}

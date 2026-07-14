@@ -12,15 +12,15 @@
  * SAFETY: fail-open — any error returns the original result, never throws.
  */
 
+import logger from '../../utils/Logger.js';
 import type {
   DeckLayoutDirectorResult,
   SlideLayoutPlan,
 } from '../presentationLayoutDirectorService.js';
 import { resolveDeliverableDefaults } from './deliverableDefaults.js';
-import logger from '../../utils/Logger.js';
 
 // ── Thresholds ───────────────────────────────────────────────────────────────
-export const BEAUTY_THRESHOLD = 0.70;
+export const BEAUTY_THRESHOLD = 0.7;
 const MAX_REGENS = 2;
 
 // ── Config (from defaults) ───────────────────────────────────────────────────
@@ -44,12 +44,7 @@ export interface BeautyGateResult extends DeckLayoutDirectorResult {
 
 // ── Scoring ──────────────────────────────────────────────────────────────────
 
-const HEAVY_INTENTS = new Set([
-  'key_messages',
-  'performance_overview',
-  'assessment',
-  'root_cause',
-]);
+const HEAVY_INTENTS = new Set(['key_messages', 'performance_overview', 'assessment', 'root_cause']);
 
 const STRONG_CLOSERS = new Set([
   'next_steps',

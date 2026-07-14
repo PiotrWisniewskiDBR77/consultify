@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import type { FullInitiative, PortfolioInitiative, RelatedInitiative } from '../../types';
-import { ExecutionTimelineView, type CriticalPathInfo } from '../Execution/ExecutionTimelineView';
+import { type CriticalPathInfo, ExecutionTimelineView } from '../Execution/ExecutionTimelineView';
 
 interface Dependency {
   id: string;

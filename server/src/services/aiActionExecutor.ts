@@ -17,13 +17,13 @@ import {
 } from '../types/chatExecutionIntegration.js';
 import logger from '../utils/Logger.js';
 import AIPolicyEngine from './aiPolicyEngine.js';
-import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import {
   ensureRunForAction,
   getAIRunByAction,
   recordAIRunEvent,
   recordLegacyAuditSafely,
 } from './aiRunLedgerService.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 // Enums and Constants
 export const ACTION_TYPES = {

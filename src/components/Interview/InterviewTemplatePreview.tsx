@@ -50,8 +50,7 @@ export interface InterviewTemplatePreviewBodyProps {
   canDelete?: boolean;
 }
 
-const TEMPLATE_BADGE_CLASS =
-  'border border-c-info/20 bg-c-info/10 text-[var(--c-info)]';
+const TEMPLATE_BADGE_CLASS = 'border border-c-info/20 bg-c-info/10 text-[var(--c-info)]';
 const NEUTRAL_PILL_CLASS =
   'border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]';
 
@@ -169,10 +168,7 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
                 q?.questionText || q?.text || q?.title || q?.question || ''
               ).trim();
               return (
-                <div
-                  key={`${template.id}:q:${idx}`}
-                  className="text-xs text-[var(--c-text)]"
-                >
+                <div key={`${template.id}:q:${idx}`} className="text-xs text-[var(--c-text)]">
                   <span className="text-[var(--c-text-muted)] mr-2">{idx + 1}.</span>
                   <span className="line-clamp-2">{text}</span>
                 </div>
@@ -238,7 +234,9 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
             ]
           : []),
         {
-          label: canAssign ? (t('interview.templatePreview.edit')) : t('interview.templatePreview.open'),
+          label: canAssign
+            ? t('interview.templatePreview.edit')
+            : t('interview.templatePreview.open'),
           icon: ExternalLink,
           onClick: onOpenFull,
           colorScheme: onAssign ? 'primary' : 'primary',

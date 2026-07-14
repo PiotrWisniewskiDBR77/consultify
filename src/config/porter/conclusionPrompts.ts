@@ -13,6 +13,7 @@
  * engine — this file is the conclusion LAYER, it does not re-score anything.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { ForceData, PorterForceId } from '@/store/useToolStore';
 
 import { PORTER_FORCE_IDS, PORTER_FORCE_LABELS } from './porterQuestionBank';
@@ -22,8 +23,6 @@ import {
   mapIndustryProfitability,
   type PorterForceVerdict,
 } from './porterSynthesisEngine';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 type PorterForcesMap = Partial<Record<PorterForceId, ForceData>>;
 
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
@@ -43,8 +42,7 @@ function reconstructVerdicts(
     const force = forces[id];
     const hasScore = typeof force?.score === 'number' && force.score > 0;
     if (force && (force.intensity || hasScore)) scored += 1;
-    const intensity =
-      force?.intensity ?? (hasScore ? intensityFromScore(force!.score) : 'medium');
+    const intensity = force?.intensity ?? (hasScore ? intensityFromScore(force!.score) : 'medium');
     // mapIndustryProfitability only reads `intensity`; the rest is filled to
     // satisfy the type without re-deriving what the engine already scored.
     verdicts[id] = {
@@ -81,7 +79,8 @@ export function buildPorterConclusionPrompt(
     const force = forces[id];
     const label = localize(PORTER_FORCE_LABELS[id].pl, PORTER_FORCE_LABELS[id].en, isPolish);
     const intensity = verdicts[id].intensity;
-    const scoreTxt = typeof force?.score === 'number' && force.score > 0 ? `${force.score}/5` : 'n/a';
+    const scoreTxt =
+      typeof force?.score === 'number' && force.score > 0 ? `${force.score}/5` : 'n/a';
     const impl = force?.implication ? ` — ${force.implication}` : '';
     const ev = force?.evidenceStatus === 'confirmed' ? 'confirmed' : 'declared';
     return `- ${label}: intensity ${intensity} (score ${scoreTxt}, trend ${force?.trend || 'stable'}, ${ev})${impl}`;
@@ -89,11 +88,13 @@ export function buildPorterConclusionPrompt(
 
   const industryVerdict = localize(map.verdictPl, map.verdictEn, isPolish);
   const dominant =
-    map.dominantForces.map((f) => localize(PORTER_FORCE_LABELS[f].pl, PORTER_FORCE_LABELS[f].en, isPolish)).join(', ') ||
-    localize('brak', 'none', isPolish);
+    map.dominantForces
+      .map((f) => localize(PORTER_FORCE_LABELS[f].pl, PORTER_FORCE_LABELS[f].en, isPolish))
+      .join(', ') || localize('brak', 'none', isPolish);
   const favorable =
-    map.favorableForces.map((f) => localize(PORTER_FORCE_LABELS[f].pl, PORTER_FORCE_LABELS[f].en, isPolish)).join(', ') ||
-    localize('brak', 'none', isPolish);
+    map.favorableForces
+      .map((f) => localize(PORTER_FORCE_LABELS[f].pl, PORTER_FORCE_LABELS[f].en, isPolish))
+      .join(', ') || localize('brak', 'none', isPolish);
 
   const header = isPolish
     ? 'Działaj jako partner ds. strategii. Poniżej masz ugruntowany na sesji werdykt o atrakcyjności branży (która siła dominuje marżę) i zasady ruchów W2. Napisz blok domykający wg CONCLUSION_LAYER_STANDARD wariant W2. NIE wymyślaj sił ani ocen niepopartych sesją; liczby (score, presja) wyłącznie z bloku faktów.'

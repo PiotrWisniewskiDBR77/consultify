@@ -258,7 +258,9 @@ export const PricingRegistryTab: React.FC = () => {
           <div className="text-xs text-slate-500 dark:text-slate-400">{rows.length} rows</div>
         </div>
         <div className="overflow-x-auto">
-          <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="min-w-full text-sm">
+          <table
+            /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="min-w-full text-sm"
+          >
             <thead className="bg-slate-50 dark:bg-navy-900/60">
               <tr className="text-left text-slate-600 dark:text-slate-300">
                 <th className="px-4 py-3">Provider</th>

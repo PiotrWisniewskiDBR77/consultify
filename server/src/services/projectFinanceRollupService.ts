@@ -35,9 +35,12 @@
  * §4.2's closing note: "rollup liczy PO initiatives.project_id, więc Delta C
  * jest warunkiem jakości Delty B").
  */
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
-import { getPortfolioBudgetSummary, type PortfolioBudgetSummary } from './executionBudgetService.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
+import {
+  getPortfolioBudgetSummary,
+  type PortfolioBudgetSummary,
+} from './executionBudgetService.js';
 
 export interface ProjectBudgetContainer {
   id: string;
@@ -209,16 +212,23 @@ export async function getValueRollup(
     ]);
 
     const baselineByInit = new Map<string, number>();
-    for (const row of baselineRows || []) baselineByInit.set(String(row.initiative_id), toNumber(row.total));
+    for (const row of baselineRows || [])
+      baselineByInit.set(String(row.initiative_id), toNumber(row.total));
     const ledgerByInit = new Map<string, number>();
-    for (const row of ledgerRows || []) ledgerByInit.set(String(row.initiative_id), toNumber(row.total));
+    for (const row of ledgerRows || [])
+      ledgerByInit.set(String(row.initiative_id), toNumber(row.total));
 
     const perInitiative: ProjectInitiativeValueRow[] = initiativeIds
       .filter((id) => baselineByInit.has(id) || ledgerByInit.has(id))
       .map((id) => {
         const baselineTotal = baselineByInit.get(id) ?? 0;
         const ledgerDelta = ledgerByInit.get(id) ?? 0;
-        return { initiativeId: id, baselineTotal, ledgerDelta, current: baselineTotal + ledgerDelta };
+        return {
+          initiativeId: id,
+          baselineTotal,
+          ledgerDelta,
+          current: baselineTotal + ledgerDelta,
+        };
       });
 
     return { perInitiative, total: perInitiative.reduce((s, r) => s + r.current, 0) };
@@ -232,7 +242,10 @@ export async function getValueRollup(
   }
 }
 
-export async function getBenefitsRollup(orgId: string, initiativeIds: string[]): Promise<ProjectBenefitsRollup> {
+export async function getBenefitsRollup(
+  orgId: string,
+  initiativeIds: string[]
+): Promise<ProjectBenefitsRollup> {
   const empty: ProjectBenefitsRollup = { count: 0, targetTotal: 0, currentTotal: 0, byStatus: {} };
   if (initiativeIds.length === 0) return empty;
   try {
@@ -274,7 +287,10 @@ export async function getBenefitsRollup(orgId: string, initiativeIds: string[]):
   }
 }
 
-export async function getRoiRollup(orgId: string, initiativeIds: string[]): Promise<ProjectRoiRollup> {
+export async function getRoiRollup(
+  orgId: string,
+  initiativeIds: string[]
+): Promise<ProjectRoiRollup> {
   const empty: ProjectRoiRollup = {
     capexTotal: 0,
     opexAnnualTotal: 0,

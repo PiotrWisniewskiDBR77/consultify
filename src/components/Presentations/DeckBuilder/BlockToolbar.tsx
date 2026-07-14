@@ -2,14 +2,7 @@ import { BarChart3, Image, LayoutGrid, Search, Share2, Type } from 'lucide-react
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-type ToolbarPanel =
-  | 'search'
-  | 'basic'
-  | 'images'
-  | 'layouts'
-  | 'diagrams'
-  | 'charts'
-  | null;
+type ToolbarPanel = 'search' | 'basic' | 'images' | 'layouts' | 'diagrams' | 'charts' | null;
 
 interface BlockToolbarProps {
   onInsertBlock?: (blockType: string, content?: Record<string, unknown>) => void;
@@ -287,4 +280,3 @@ const SearchPanel: React.FC = () => (
     <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all cards</p>
   </div>
 );
-

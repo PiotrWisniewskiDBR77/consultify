@@ -88,9 +88,7 @@ export function actionForType(type: string): string {
  * title (and, when present, its initiative association).
  */
 function buildRationale(signal: Signal): string {
-  const initiativePart = signal.initiativeId
-    ? ` on initiative "${signal.initiativeId}"`
-    : '';
+  const initiativePart = signal.initiativeId ? ` on initiative "${signal.initiativeId}"` : '';
   return (
     `Signal "${signal.id}" of type ${signal.type} ` +
     `flagged ${signal.severity}${initiativePart}: "${signal.title}". ` +

@@ -134,7 +134,10 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
         {/* Search + Category tabs */}
         <div className="px-6 py-3 border-b border-c-border-subtle space-y-3">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
+            />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -197,17 +200,13 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                         <CatIcon size={18} className="text-c-accent" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-c-text truncate">
-                          {tpl.name}
-                        </h3>
+                        <h3 className="text-sm font-semibold text-c-text truncate">{tpl.name}</h3>
                         <span className="text-[10px] font-medium text-c-text-secondary uppercase tracking-wide">
                           {tpl.category?.replace('-', ' ')}
                         </span>
                       </div>
                     </div>
-                    <p className="text-xs text-c-text-muted mb-3 line-clamp-2">
-                      {tpl.description}
-                    </p>
+                    <p className="text-xs text-c-text-muted mb-3 line-clamp-2">{tpl.description}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-c-text-secondary">
                         {tpl.usage_count > 0

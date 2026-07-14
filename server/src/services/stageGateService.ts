@@ -405,7 +405,10 @@ export async function passGate(
   notes?: string,
   actorRole?: string | null
 ): Promise<GatePassageResult> {
-  if (actorRole != null && STAGE_GATE_FORBIDDEN_ROLE_BANDS.has(normalizeApplicationRole(actorRole))) {
+  if (
+    actorRole != null &&
+    STAGE_GATE_FORBIDDEN_ROLE_BANDS.has(normalizeApplicationRole(actorRole))
+  ) {
     throw new StageGateForbiddenError();
   }
 

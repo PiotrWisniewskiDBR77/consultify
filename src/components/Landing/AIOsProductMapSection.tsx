@@ -80,9 +80,7 @@ export const AIOsProductMapSection: React.FC = () => {
                 <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-c-accent">
                   {item.badge}
                 </div>
-                <h3 className="text-lg font-black text-c-text leading-snug">
-                  {item.title}
-                </h3>
+                <h3 className="text-lg font-black text-c-text leading-snug">{item.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-c-text-secondary">
                   {item.description}
                 </p>

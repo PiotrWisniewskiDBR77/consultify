@@ -22,7 +22,13 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/providers/V8Provider', () => ({
-  useV8: () => ({ isV8Enabled: true, isV8ChatEnabled: false, isV8AICoreEnabled: false, isLoading: false, flags: undefined }),
+  useV8: () => ({
+    isV8Enabled: true,
+    isV8ChatEnabled: false,
+    isV8AICoreEnabled: false,
+    isLoading: false,
+    flags: undefined,
+  }),
   V8Provider: ({ children }: { children: React.ReactNode }) => children,
 }));
 

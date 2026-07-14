@@ -375,10 +375,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   if (viewState === 'result' && aiResult) {
     return (
-      <div
-        className="min-h-screen bg-c-bg p-4 md:p-8"
-        dir={lang === 'ar' ? 'rtl' : 'ltr'}
-      >
+      <div className="min-h-screen bg-c-bg p-4 md:p-8" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         <div className="max-w-2xl mx-auto">
           <div className="bg-c-surface rounded-2xl shadow-xl overflow-hidden">
             {/* Score header */}
@@ -436,10 +433,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
               </h2>
               <ul className="space-y-2">
                 {aiResult.insights.map((insight, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-start gap-2 text-sm text-c-text-secondary"
-                  >
+                  <li key={idx} className="flex items-start gap-2 text-sm text-c-text-secondary">
                     <TrendingUp className="w-4 h-4 text-c-accent mt-0.5 flex-shrink-0" />
                     {insight}
                   </li>
@@ -483,13 +477,8 @@ export const PublicMiniAssessmentView: React.FC = () => {
               </h2>
               <div className="space-y-3">
                 {aiResult.answerSummary.map((entry) => (
-                  <div
-                    key={entry.questionId}
-                    className="rounded-xl bg-c-surface-raised p-3"
-                  >
-                    <p className="text-xs font-medium text-c-text-muted mb-1">
-                      {entry.question}
-                    </p>
+                  <div key={entry.questionId} className="rounded-xl bg-c-surface-raised p-3">
+                    <p className="text-xs font-medium text-c-text-muted mb-1">{entry.question}</p>
                     <p className="text-sm text-c-text-secondary">{entry.answer}</p>
                   </div>
                 ))}

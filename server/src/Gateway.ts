@@ -2,12 +2,12 @@ import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
+import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
 import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
 import { trialEntryGuard } from './middleware/trialEntryGuard.middleware.js';
-import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
@@ -15,9 +15,9 @@ import effectiveAccessRoutes from './routes/access.routes.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
-import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
+import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
@@ -70,6 +70,7 @@ import backupRoutes from './routes/backup.routes.js';
 import baselinesRoutes from './routes/baselines.routes.js';
 import benchmarkRoutes from './routes/benchmark.routes.js';
 import benefitsRoutes from './routes/benefits.routes.js';
+import benefitsRegisterRoutes from './routes/benefitsRegister.routes.js';
 import billingRoutes from './routes/billing/billing.routes.js';
 import billingAdminRoutes from './routes/billing/billingAdmin.routes.js';
 import pricingRoutes from './routes/billing/pricing.routes.js';
@@ -109,6 +110,7 @@ import economicsRoutes from './routes/economics.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
 import evidenceRoutes from './routes/evidence.routes.js';
 import executionModulesRoutes from './routes/execution-modules.routes.js';
+import executionAnalyticsRoutes from './routes/executionAnalytics.routes.js';
 import executionControlRoutes from './routes/executionControl.routes.js';
 import executiveAggregateRoutes from './routes/executiveAggregate.routes.js';
 import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
@@ -131,6 +133,10 @@ import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import inboxEnterpriseRoutes from './routes/inbox-enterprise.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import initiativeGovernanceRoutes from './routes/initiative-governance.routes.js';
+import initiativeBackboneRoutes from './routes/initiativeBackbone.routes.js';
+import initiativeCandidatesRouter from './routes/initiativeCandidates.routes.js';
+import initiativeGeneratorBrainRoutes from './routes/initiativeGeneratorBrain.routes.js';
+import initiativeMaterializeRoutes from './routes/initiativeMaterialize.routes.js';
 import initiativesAdditiveRoutes from './routes/initiatives-additive.routes.js';
 import insightSourceBasketsRouter from './routes/insightSourceBaskets.routes.js';
 import automationRoutes from './routes/integrations/automation.routes.js';
@@ -199,10 +205,6 @@ import decisionsRoutes from './routes/pmo/decisions.routes.js';
 import executionRoutes from './routes/pmo/execution.routes.js';
 import governanceRoutes from './routes/pmo/governance.routes.js';
 import initiativesRoutes from './routes/pmo/initiatives.routes.js';
-import initiativeCandidatesRouter from './routes/initiativeCandidates.routes.js';
-import initiativeMaterializeRoutes from './routes/initiativeMaterialize.routes.js';
-import initiativeBackboneRoutes from './routes/initiativeBackbone.routes.js';
-import initiativeGeneratorBrainRoutes from './routes/initiativeGeneratorBrain.routes.js';
 import pmoRoutes from './routes/pmo/pmo.routes.js';
 import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
 import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
@@ -230,39 +232,39 @@ import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import publicPartnerApplicationsRoutes from './routes/public-partner-applications.routes.js';
 import publicApiV1Routes from './routes/publicApiV1.routes.js';
 import raidRoutes from './routes/raid.routes.js';
+import raidGovernanceRoutes from './routes/raidGovernance.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import realtimePlatformRoutes from './routes/realtime-platform.routes.js';
+import referralsRoutes from './routes/referrals.routes.js';
 import reportBuilderRoutes from './routes/report-builder.routes.js';
 import reportBuilderPublicRoutes from './routes/report-builder-public.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
 import reportEnterpriseRoutes from './routes/report-enterprise.routes.js';
 import reportImportRoutes from './routes/report-import.routes.js';
 import reportInitiativesRoutes from './routes/report-initiatives.routes.js';
+import reportPdfRoutes from './routes/reportPdf.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
-import globalSearchRoutes from './routes/search.routes.js';
 import researchRoutes from './routes/research.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
 import resultsKpiReportsRoutes from './routes/results-kpi-reports.routes.js';
-import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.routes.js';
-import resultsStrategicRoutes from './routes/resultsStrategic.routes.js';
 import resultsDriverTreeRoutes from './routes/resultsDriverTree.routes.js';
 import resultsExtendedRoutes from './routes/resultsExtended.routes.js';
+import resultsStrategicRoutes from './routes/resultsStrategic.routes.js';
+import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
 import rolloutExtensionsRoutes from './routes/rolloutExtensions.routes.js';
-import executionAnalyticsRoutes from './routes/executionAnalytics.routes.js';
-import benefitsRegisterRoutes from './routes/benefitsRegister.routes.js';
-import raidGovernanceRoutes from './routes/raidGovernance.routes.js';
-import reportPdfRoutes from './routes/reportPdf.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
 import scheduledReportsRoutes from './routes/scheduled-reports.routes.js';
+import globalSearchRoutes from './routes/search.routes.js';
 import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import shareRoutes from './routes/share.routes.js';
 import skillsGapRoutes from './routes/skills-gap.routes.js';
+import slackInboundRoutes from './routes/slack/slackInbound.routes.js';
 import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
 import stabilizationRoutes from './routes/stabilization.routes.js';
 import stageGatesRoutes from './routes/stageGates.routes.js';
@@ -316,14 +318,12 @@ import wave8AgentsRoutes from './routes/wave8-agents.routes.js';
 import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
-import slackInboundRoutes from './routes/slack/slackInbound.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
 import workCanvasRoutes from './routes/work-canvas.routes.js';
 import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
-import referralsRoutes from './routes/referrals.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
 import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
@@ -488,7 +488,12 @@ export class ApiGateway {
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeCandidatesRouter);
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeBackboneRoutes);
       // F1 — mózg generatora: POST /propose-cards (przed POST /:id), POST /:id/generate-full.
-      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeGeneratorBrainRoutes);
+      app.use(
+        '/api/initiatives',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        initiativeGeneratorBrainRoutes
+      );
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
       // F5 — „Zrób materiał": /:id/materialize + /portfolio/materialize (additive POST sub-paths, po głównym OK).
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeMaterializeRoutes);
@@ -663,12 +668,7 @@ export class ApiGateway {
       app.use('/api/artifact-conversions', artifactConversionsRoutes);
       app.use('/api/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
       // Zwornik Delta A (Z95/#78): org/project stakeholder registry.
-      app.use(
-        '/api/stakeholders',
-        gatewayVerifyToken,
-        trialEntryGuard,
-        stakeholderRegistryRoutes
-      );
+      app.use('/api/stakeholders', gatewayVerifyToken, trialEntryGuard, stakeholderRegistryRoutes);
       app.use(
         '/api/knowledge',
         gatewayVerifyToken,

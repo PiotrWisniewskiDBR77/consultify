@@ -61,11 +61,7 @@ export const SCurve: React.FC<SCurveProps> = ({
     const innerW = VB_W - PAD.left - PAD.right;
     const innerH = height - PAD.top - PAD.bottom;
 
-    const allCum = [
-      ...plan.map((p) => p.cum),
-      ...(hasActual ? actual!.map((a) => a.cum) : []),
-      0,
-    ];
+    const allCum = [...plan.map((p) => p.cum), ...(hasActual ? actual!.map((a) => a.cum) : []), 0];
     const maxY = Math.max(1, ...allCum);
     const minY = Math.min(0, ...allCum);
     const rangeY = maxY - minY || 1;
@@ -78,9 +74,7 @@ export const SCurve: React.FC<SCurveProps> = ({
     const y = (v: number) => PAD.top + innerH - ((v - minY) / rangeY) * innerH;
 
     const planPts = plan.map((p, i) => ({ ...p, px: x(i), py: y(p.cum) }));
-    const actualPts = hasActual
-      ? actual!.map((a, i) => ({ ...a, px: x(i), py: y(a.cum) }))
-      : [];
+    const actualPts = hasActual ? actual!.map((a, i) => ({ ...a, px: x(i), py: y(a.cum) })) : [];
 
     // Ocena realizacji w ostatnim wspólnym punkcie.
     const lastIdx = hasActual ? actualPts.length - 1 : -1;
@@ -102,7 +96,7 @@ export const SCurve: React.FC<SCurveProps> = ({
     const baselineY = y(Math.max(0, minY));
     const actualArea = hasActual
       ? `${actualPath} L${actualPts[actualPts.length - 1].px.toFixed(2)},${baselineY.toFixed(
-          2,
+          2
         )} L${actualPts[0].px.toFixed(2)},${baselineY.toFixed(2)} Z`
       : '';
 
@@ -188,13 +182,7 @@ export const SCurve: React.FC<SCurveProps> = ({
             stroke={COLOR.grid}
             strokeWidth={1}
           />
-          <text
-            x={PAD.left - 6}
-            y={tick.py + 3}
-            textAnchor="end"
-            fontSize={9}
-            fill={COLOR.axis}
-          >
+          <text x={PAD.left - 6} y={tick.py + 3} textAnchor="end" fontSize={9} fill={COLOR.axis}>
             {formatValue(tick.v)}
           </text>
         </g>
@@ -253,13 +241,7 @@ export const SCurve: React.FC<SCurveProps> = ({
             strokeWidth={1}
             strokeDasharray="2 3"
           />
-          <text
-            x={model.todayX}
-            y={PAD.top - 4}
-            textAnchor="middle"
-            fontSize={8}
-            fill={COLOR.axis}
-          >
+          <text x={model.todayX} y={PAD.top - 4} textAnchor="middle" fontSize={8} fill={COLOR.axis}>
             dziś
           </text>
         </g>

@@ -414,9 +414,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">
-                    Password Expires
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Password Expires</span>
                   <span className="font-medium text-c-text">
                     {passwordPolicy.policy?.max_age_days > 0
                       ? `${passwordPolicy.policy.max_age_days} days`
@@ -432,9 +430,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">
-                    Require Uppercase
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Require Uppercase</span>
                   {passwordPolicy.policy?.require_uppercase ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
@@ -442,9 +438,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">
-                    Require Numbers
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Require Numbers</span>
                   {passwordPolicy.policy?.require_numbers ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
@@ -452,9 +446,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">
-                    Require Special Chars
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Require Special Chars</span>
                   {passwordPolicy.policy?.require_special_chars ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
@@ -559,9 +551,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   <div>
                     <p className="font-medium text-c-text">{rule.ip_address}</p>
                     {rule.description && (
-                      <p className="text-sm text-c-text-muted">
-                        {rule.description}
-                      </p>
+                      <p className="text-sm text-c-text-muted">{rule.description}</p>
                     )}
                   </div>
                 </div>
@@ -574,9 +564,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {ipRules.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">
-                No IP rules configured
-              </p>
+              <p className="text-center text-c-text-muted py-8">No IP rules configured</p>
             )}
           </div>
         </div>
@@ -674,9 +662,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {securityQuestions.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">
-                No security questions set up
-              </p>
+              <p className="text-center text-c-text-muted py-8">No security questions set up</p>
             )}
           </div>
         </div>
@@ -799,9 +785,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {recoveryContacts.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">
-                No recovery contacts configured
-              </p>
+              <p className="text-center text-c-text-muted py-8">No recovery contacts configured</p>
             )}
           </div>
         </div>
@@ -882,9 +866,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {loginLocations.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">
-                No login locations recorded
-              </p>
+              <p className="text-center text-c-text-muted py-8">No login locations recorded</p>
             )}
           </div>
         </div>
@@ -928,9 +910,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       <p className="font-medium text-c-text capitalize">
                         {activity.activity_type.replace(/_/g, ' ')}
                       </p>
-                      <p className="text-sm text-c-text-secondary">
-                        {activity.description}
-                      </p>
+                      <p className="text-sm text-c-text-secondary">{activity.description}</p>
                       <p className="text-xs text-c-text-muted mt-1">
                         {activity.ip_address} • {new Date(activity.created_at).toLocaleString()}
                       </p>
@@ -977,12 +957,8 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
               <div>
-                <label className="font-medium text-c-text">
-                  Geolocation Alerts
-                </label>
-                <p className="text-sm text-c-text-muted">
-                  Alert on login from new locations
-                </p>
+                <label className="font-medium text-c-text">Geolocation Alerts</label>
+                <p className="text-sm text-c-text-muted">Alert on login from new locations</p>
               </div>
               <button
                 onClick={() =>
@@ -1007,12 +983,8 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
             <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
               <div>
-                <label className="font-medium text-c-text">
-                  Single Session Only
-                </label>
-                <p className="text-sm text-c-text-muted">
-                  Only allow one active session at a time
-                </p>
+                <label className="font-medium text-c-text">Single Session Only</label>
+                <p className="text-sm text-c-text-muted">Only allow one active session at a time</p>
               </div>
               <button
                 onClick={() =>
@@ -1022,9 +994,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  securitySettings.single_session_only
-                    ? 'bg-danger-500'
-                    : 'bg-c-surface-raised'
+                  securitySettings.single_session_only ? 'bg-danger-500' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
@@ -1058,9 +1028,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             </div>
 
             <div className="border-t border-c-border-subtle dark:border-navy-700 pt-4">
-              <h4 className="font-medium text-c-text mb-4">
-                Notification Preferences
-              </h4>
+              <h4 className="font-medium text-c-text mb-4">Notification Preferences</h4>
               <div className="space-y-3">
                 {[
                   { key: 'notify_new_login', label: 'New login alerts' },

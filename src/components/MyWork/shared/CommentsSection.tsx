@@ -488,7 +488,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       ) : (
                         <>
                           <Send size={18} />
-                          <span className="hidden sm:inline">{t('myWork.comments.send', 'Send')}</span>
+                          <span className="hidden sm:inline">
+                            {t('myWork.comments.send', 'Send')}
+                          </span>
                         </>
                       )}
                     </motion.button>

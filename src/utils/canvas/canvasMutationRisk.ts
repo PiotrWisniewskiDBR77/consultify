@@ -35,10 +35,7 @@ export interface InsertElementOp {
   contentMd: string;
 }
 
-export type CanvasMutationOperation =
-  | ReplaceSelectionOp
-  | UpdateDocumentOp
-  | InsertElementOp;
+export type CanvasMutationOperation = ReplaceSelectionOp | UpdateDocumentOp | InsertElementOp;
 
 export interface CanvasMutationPolicyResult {
   risk: CanvasMutationRisk;
@@ -62,9 +59,7 @@ const sizeRisk = (chars: number): CanvasMutationRisk => {
  * - update_document → always `high` (replaces the whole document)
  * - replace_selection / insert_element → sized by content length
  */
-export function classifyCanvasMutationRisk(
-  operation: CanvasMutationOperation
-): CanvasMutationRisk {
+export function classifyCanvasMutationRisk(operation: CanvasMutationOperation): CanvasMutationRisk {
   switch (operation.type) {
     case 'update_document':
       return 'high';

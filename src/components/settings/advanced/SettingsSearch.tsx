@@ -368,9 +368,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                     <span className="text-2xl">{result.icon}</span>
                     <div>
                       <p className="font-medium text-c-text">{result.title}</p>
-                      <p className="text-sm text-c-text-muted">
-                        {result.description}
-                      </p>
+                      <p className="text-sm text-c-text-muted">{result.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -408,9 +406,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
               Favorites
             </h3>
             {favoriteSettings.length === 0 ? (
-              <p className="text-sm text-c-text-muted">
-                Star settings to add them here
-              </p>
+              <p className="text-sm text-c-text-muted">Star settings to add them here</p>
             ) : (
               <div className="space-y-2">
                 {favoriteSettings.map((setting) => (
@@ -434,9 +430,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
               Recent Searches
             </h3>
             {recentSearches.length === 0 ? (
-              <p className="text-sm text-c-text-muted">
-                Your recent searches will appear here
-              </p>
+              <p className="text-sm text-c-text-muted">Your recent searches will appear here</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {recentSearches.map((search, i) => (
@@ -486,8 +480,8 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
       {/* Keyboard Hint */}
       <div className="text-center text-sm text-c-text-secondary">
-        Press <kbd className="px-2 py-0.5 bg-c-surface-raised rounded text-xs">⌘K</kbd>{' '}
-        anywhere to search settings
+        Press <kbd className="px-2 py-0.5 bg-c-surface-raised rounded text-xs">⌘K</kbd> anywhere to
+        search settings
       </div>
     </div>
   );

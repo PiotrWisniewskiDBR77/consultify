@@ -64,7 +64,6 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
-import { LoadingState } from '@/components/shared/states';
 import {
   MENU_2_TAB_ACTIVE,
   MENU_2_TAB_INACTIVE,
@@ -82,6 +81,7 @@ import {
   MENU_3_RIGHT_CLASS,
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
+import { LoadingState } from '@/components/shared/states';
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
@@ -89,6 +89,7 @@ import {
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
+import i18n from '@/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -139,7 +140,6 @@ import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
 import { resolveOpenItemRoute } from './openItemRouting';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
-import i18n from '@/i18n';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -1156,7 +1156,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const crumbs = [base, tabLabel];
 
     if (activeIdeaDoc && activeTab === 'ideas') {
-      crumbs.push(activeIdeaDoc.name || (t('myWork.hub.idea', 'Idea')));
+      crumbs.push(activeIdeaDoc.name || t('myWork.hub.idea', 'Idea'));
       if (activeIdeaToolLabel) crumbs.push(activeIdeaToolLabel);
     }
     setMyWorkBreadcrumbs(crumbs);
@@ -1641,10 +1641,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const newId = `new-idea-${Date.now()}`;
       const preferredSystem = normalizePreferredSystem(seedIntent.preferredSystem);
       const body = composeIdeaBodyFromSeedIntent(seedIntent);
-      const title = deriveIdeaTitleFromSeedIntent(
-        seedIntent,
-        t('myWork.hub.newIdea', 'New Idea')
-      );
+      const title = deriveIdeaTitleFromSeedIntent(seedIntent, t('myWork.hub.newIdea', 'New Idea'));
       handleOpenDocument({
         id: newId,
         type: 'idea',
@@ -1686,7 +1683,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleOpenDocument({
         id: ideaId,
         type: 'idea',
-        name: ideaData?.title || (t('myWork.hub.idea2', 'Idea')),
+        name: ideaData?.title || t('myWork.hub.idea2', 'Idea'),
         status: 'idea',
         data: {
           ...ideaData,
@@ -2028,8 +2025,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         isInbox
           ? t('myWork.hub.analyzeMyInboxAnd', 'Analyze my inbox and propose the next best action.')
           : isDecisions
-            ? t('myWork.hub.analyzeMyDecisionsAnd', 'Analyze my decisions and propose which to make first.')
-            : t('myWork.hub.analyzeMyTasksAnd', 'Analyze my tasks and propose priorities for today.')
+            ? t(
+                'myWork.hub.analyzeMyDecisionsAnd',
+                'Analyze my decisions and propose which to make first.'
+              )
+            : t(
+                'myWork.hub.analyzeMyTasksAnd',
+                'Analyze my tasks and propose priorities for today.'
+              )
       );
       if (isChatCollapsed) {
         toggleChatCollapse();
@@ -2595,7 +2598,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 /
               </span>
               <span className="max-w-[180px] truncate text-[12px] font-semibold text-c-text">
-                {notebookOpenTitle || (t('myWork.hub.notebook2', 'Notebook'))}
+                {notebookOpenTitle || t('myWork.hub.notebook2', 'Notebook')}
               </span>
               <span className="mx-1.5 h-4 w-px shrink-0 bg-c-border-subtle" aria-hidden="true" />
               {statusPresets.map((p) => {
@@ -3405,7 +3408,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <div className="flex h-64 items-center justify-center">
               <div className="text-center">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {t('myWork.hub.accessRestrictedAdminOr', 'Access restricted. Admin or Manager role required.')}
+                  {t(
+                    'myWork.hub.accessRestrictedAdminOr',
+                    'Access restricted. Admin or Manager role required.'
+                  )}
                 </p>
               </div>
             </div>

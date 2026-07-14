@@ -259,7 +259,9 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
         </div>
       ) : (
         <div className="bg-c-surface rounded-lg border border-c-border-subtle overflow-hidden">
-          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full divide-y divide-gray-200 dark:divide-navy-700">
+          <table
+            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full divide-y divide-gray-200 dark:divide-navy-700"
+          >
             <thead className="bg-c-surface-raised">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider">
@@ -372,15 +374,11 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
           <div className="bg-c-surface rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden">
             <div className="px-6 py-4 border-b border-c-border-subtle">
               <h3 className="text-lg font-semibold text-c-text">Audit Trail</h3>
-              <p className="text-sm text-c-text-muted">
-                Invitation to {selectedInvitation.email}
-              </p>
+              <p className="text-sm text-c-text-muted">Invitation to {selectedInvitation.email}</p>
             </div>
             <div className="p-6 overflow-y-auto max-h-96">
               {auditEvents.length === 0 ? (
-                <p className="text-c-text-muted text-center">
-                  No audit events found
-                </p>
+                <p className="text-c-text-muted text-center">No audit events found</p>
               ) : (
                 <div className="space-y-4">
                   {auditEvents.map((event) => (
@@ -398,9 +396,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                           {formatDate(event.createdAt)}
                         </p>
                         {event.ipAddress && (
-                          <p className="text-xs text-c-text-muted">
-                            IP: {event.ipAddress}
-                          </p>
+                          <p className="text-xs text-c-text-muted">IP: {event.ipAddress}</p>
                         )}
                       </div>
                     </div>

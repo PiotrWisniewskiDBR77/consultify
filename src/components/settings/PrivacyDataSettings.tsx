@@ -275,9 +275,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                   />
                   <div
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-c-border-subtle'
+                      isSelected ? 'border-blue-500 bg-blue-500' : 'border-c-border-subtle'
                     }`}
                   >
                     {isSelected && <Check size={12} className="text-white" />}
@@ -288,9 +286,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                     >
                       {option.label}
                     </span>
-                    <p className="text-xs text-c-text-muted mt-0.5">
-                      {option.description}
-                    </p>
+                    <p className="text-xs text-c-text-muted mt-0.5">{option.description}</p>
                   </div>
                 </div>
                 {isSelected ? (
@@ -470,9 +466,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 )
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.allowThirdPartyIntegrations
-                  ? 'bg-c-focus'
-                  : 'bg-c-surface-raised'
+                preferences.allowThirdPartyIntegrations ? 'bg-c-focus' : 'bg-c-surface-raised'
               }`}
             >
               <span

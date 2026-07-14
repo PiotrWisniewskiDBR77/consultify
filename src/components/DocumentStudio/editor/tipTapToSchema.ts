@@ -18,13 +18,7 @@
  * is the legacy `'list'` is tolerated and resolved by the live node type.
  */
 
-import type {
-  DocumentBlock,
-  DocumentSchema,
-  DocumentSection,
-  DocumentSourceRef,
-} from '../types';
-
+import type { DocumentBlock, DocumentSchema, DocumentSection, DocumentSourceRef } from '../types';
 import { DOC_SECTION_NODE_NAME } from './nodeNames';
 import type { PMDoc, PMNode } from './schemaToTipTap';
 
@@ -81,7 +75,8 @@ function recoverIdentity(node: PMNode): {
   isAssumption: boolean;
 } {
   const attrs = (node.attrs ?? {}) as Record<string, unknown>;
-  const blockId = typeof attrs.blockId === 'string' && attrs.blockId ? attrs.blockId : synthBlockId();
+  const blockId =
+    typeof attrs.blockId === 'string' && attrs.blockId ? attrs.blockId : synthBlockId();
   const sourceRef = parseSourceRef(attrs.sourceRef);
   const isAssumption = attrs.isAssumption === true;
   return { blockId, sourceRef, isAssumption };
@@ -193,8 +188,8 @@ function regroupSections(nodes: PMNode[], priorSections: DocumentSection[]): Doc
     current = {
       sectionId,
       orderIndex: orderIndex++,
-      level: (typeof attrs.level === 'number' ? attrs.level : prior?.level ?? 1) as 1 | 2 | 3,
-      title: node ? nodeText(node) : prior?.title ?? '',
+      level: (typeof attrs.level === 'number' ? attrs.level : (prior?.level ?? 1)) as 1 | 2 | 3,
+      title: node ? nodeText(node) : (prior?.title ?? ''),
       purpose:
         typeof attrs.purpose === 'string' && attrs.purpose.length > 0
           ? attrs.purpose

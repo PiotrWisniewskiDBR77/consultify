@@ -35,6 +35,7 @@ import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
+
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
@@ -536,9 +537,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                 </p>
               </div>
               {contextLineage.length === 0 ? (
-                <p className="p-3 text-sm text-c-text-muted">
-                  No context lineage events found.
-                </p>
+                <p className="p-3 text-sm text-c-text-muted">No context lineage events found.</p>
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-navy-700">
                   {contextLineage.map((event) => (
@@ -573,9 +572,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                 </p>
               </div>
               {contextStorageEvents.length === 0 ? (
-                <p className="p-3 text-sm text-c-text-muted">
-                  No context storage events found.
-                </p>
+                <p className="p-3 text-sm text-c-text-muted">No context storage events found.</p>
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-navy-700">
                   {contextStorageEvents.map((event) => (
@@ -707,9 +704,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-c-text">
-                          {log.userName}
-                        </span>
+                        <span className="font-medium text-c-text">{log.userName}</span>
                         <span
                           className={`px-2 py-0.5 rounded-full text-xs ${getActionBadgeColor(log.actionType)}`}
                         >
@@ -744,9 +739,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                 {expandedLog === log.id && log.details && (
                   <div className="px-4 pb-4 ml-14">
                     <div className="p-3 bg-c-surface-raised rounded-lg text-sm">
-                      <p className="text-xs font-medium text-c-text-muted mb-2">
-                        Details
-                      </p>
+                      <p className="text-xs font-medium text-c-text-muted mb-2">Details</p>
                       <pre className="text-c-text-secondary overflow-x-auto">
                         {JSON.stringify(log.details, null, 2)}
                       </pre>

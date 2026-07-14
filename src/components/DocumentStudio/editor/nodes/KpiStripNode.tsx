@@ -16,14 +16,10 @@ import { mergeAttributes, Node } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import React from 'react';
 
-import {
-  DocKpiStrip,
-  DocTableBlock,
-  narrowTableContent,
-} from '@/components/DocumentStudio/blocks';
+import { DocKpiStrip, DocTableBlock, narrowTableContent } from '@/components/DocumentStudio/blocks';
 
 import { KPI_STRIP_NODE_NAME } from '../nodeNames';
-import { payloadBlockAttributes, parseNodePayload } from './payloadAttrs';
+import { parseNodePayload, payloadBlockAttributes } from './payloadAttrs';
 
 const KpiStripNodeComponent: React.FC<{
   node: { attrs: Record<string, unknown> };

@@ -730,7 +730,9 @@ export const PurposeAssignmentsTab: React.FC = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full text-sm">
+                <table
+                  /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full text-sm"
+                >
                   <thead className="bg-slate-50 dark:bg-navy-900/60">
                     <tr className="text-left text-slate-600 dark:text-slate-300">
                       <th className="px-4 py-3">Priority</th>

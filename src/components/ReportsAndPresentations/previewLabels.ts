@@ -23,7 +23,9 @@ function humanizeKey(value: string | null | undefined): string {
 
 /** Localized report/presentation status label (shared with list table). */
 export function statusLabel(t: TFunction, raw: string | null | undefined): string {
-  const key = String(raw ?? '').trim().toLowerCase();
+  const key = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   const map: Record<string, string> = {
     draft: t('reports.draft', 'Draft'),
     ready: t('reports.ready', 'Ready'),
@@ -51,7 +53,9 @@ export function reportTypeLabel(t: TFunction, raw: string | null | undefined): s
 
 /** Localized presentation source-type label. */
 export function sourceTypeLabel(t: TFunction, raw: string | null | undefined): string {
-  const key = String(raw ?? '').trim().toLowerCase();
+  const key = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   const map: Record<string, string> = {
     tool: t('reports.tool', 'Tool'),
     assessment: t('reports.assessment', 'Assessment'),

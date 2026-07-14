@@ -47,10 +47,30 @@ export function NarrativeEngineLibraryGraphic({
         footer:
           'Narrative Engine = brief -> myśl przewodnia -> filary -> dowody -> narracja -> outputy',
         pillars: [
-          { title: 'Tempo rynku', message: 'Konkurenci już wdrażają', proofs: 3, resonance: 'high' as const },
-          { title: 'Marża', message: 'Automatyzacja podnosi marżę', proofs: 2, resonance: 'high' as const },
-          { title: 'Talent', message: 'Zespół jest gotowy', proofs: 2, resonance: 'medium' as const },
-          { title: 'Ryzyko', message: 'Pilot ogranicza ryzyko', proofs: 1, resonance: 'low' as const },
+          {
+            title: 'Tempo rynku',
+            message: 'Konkurenci już wdrażają',
+            proofs: 3,
+            resonance: 'high' as const,
+          },
+          {
+            title: 'Marża',
+            message: 'Automatyzacja podnosi marżę',
+            proofs: 2,
+            resonance: 'high' as const,
+          },
+          {
+            title: 'Talent',
+            message: 'Zespół jest gotowy',
+            proofs: 2,
+            resonance: 'medium' as const,
+          },
+          {
+            title: 'Ryzyko',
+            message: 'Pilot ogranicza ryzyko',
+            proofs: 1,
+            resonance: 'low' as const,
+          },
         ],
       }
     : {
@@ -91,9 +111,24 @@ export function NarrativeEngineLibraryGraphic({
         footer:
           'Narrative Engine = brief -> core message -> pillars -> proof -> narrative -> outputs',
         pillars: [
-          { title: 'Market pace', message: 'Competitors already shipping', proofs: 3, resonance: 'high' as const },
-          { title: 'Margin', message: 'Automation lifts margin', proofs: 2, resonance: 'high' as const },
-          { title: 'Talent', message: 'The team is ready', proofs: 2, resonance: 'medium' as const },
+          {
+            title: 'Market pace',
+            message: 'Competitors already shipping',
+            proofs: 3,
+            resonance: 'high' as const,
+          },
+          {
+            title: 'Margin',
+            message: 'Automation lifts margin',
+            proofs: 2,
+            resonance: 'high' as const,
+          },
+          {
+            title: 'Talent',
+            message: 'The team is ready',
+            proofs: 2,
+            resonance: 'medium' as const,
+          },
           { title: 'Risk', message: 'A pilot caps the risk', proofs: 1, resonance: 'low' as const },
         ],
       };

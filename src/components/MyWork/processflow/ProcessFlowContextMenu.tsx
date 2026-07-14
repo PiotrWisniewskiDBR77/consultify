@@ -63,9 +63,7 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
     >
       {actions.map((action) => (
         <React.Fragment key={action.id}>
-          {action.separatorBefore && (
-            <div className="my-1 border-t border-c-border-subtle" />
-          )}
+          {action.separatorBefore && <div className="my-1 border-t border-c-border-subtle" />}
           <button
             onClick={() => {
               action.onClick();

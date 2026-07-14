@@ -158,7 +158,9 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                           const value = (instructions[index] ?? '').trim();
                           if (value) runRewrite(index, value);
                         }}
-                        disabled={regeneratingIndex === index || !(instructions[index] ?? '').trim()}
+                        disabled={
+                          regeneratingIndex === index || !(instructions[index] ?? '').trim()
+                        }
                         title={t('presentations.builder.rewriteSlide', 'Rewrite slide')}
                         className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium bg-c-accent-soft0 text-c-text hover:bg-c-accent-soft disabled:opacity-40 disabled:cursor-not-allowed"
                       >

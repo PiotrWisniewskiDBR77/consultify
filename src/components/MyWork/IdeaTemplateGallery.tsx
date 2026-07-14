@@ -1876,11 +1876,11 @@ const EXTRA_MINDMAP_TEMPLATES: TemplateDefinition[] = [
 // #10-AB dedup: kuratorowane szablony konsultingowe (cx-*) zastępują legacy-duble.
 // Retirujemy legacy o tym samym frameworku (definicje zostają w kodzie — filtr jest odwracalny).
 const RETIRED_LEGACY_TEMPLATE_IDS = new Set<string>([
-  'mm-swot',     // → cx-swot
-  'mm-porter5',  // → cx-porter5
-  'wb-bmc',      // → cx-bmc
-  'wb-cjm',      // → cx-cjm
-  'mm-okr',      // → cx-okr-planning
+  'mm-swot', // → cx-swot
+  'mm-porter5', // → cx-porter5
+  'wb-bmc', // → cx-bmc
+  'wb-cjm', // → cx-cjm
+  'mm-okr', // → cx-okr-planning
 ]);
 
 const ALL_TEMPLATES = [
@@ -2089,141 +2089,143 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
   return (
     <>
       {confirmDialog}
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-navy-700/60 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-          <div>
-            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-              {isPl ? 'Galeria szablonów' : 'Template Gallery'}
-            </h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              {isPl
-                ? 'Wybierz szablon aby szybko rozpocząć'
-                : 'Choose a template to get started quickly'}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-          >
-            <X size={16} className="text-slate-500" />
-          </button>
-        </div>
-
-        <div className="px-5 py-3 border-b border-slate-200/60 dark:border-navy-700/60 flex flex-wrap gap-2">
-          {(['all', 'global', 'organization', 'project', 'private'] as const).map((scope) => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-navy-700/60 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+            <div>
+              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                {isPl ? 'Galeria szablonów' : 'Template Gallery'}
+              </h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {isPl
+                  ? 'Wybierz szablon aby szybko rozpocząć'
+                  : 'Choose a template to get started quickly'}
+              </p>
+            </div>
             <button
-              key={scope}
-              type="button"
-              onClick={() => setScopeFilter(scope)}
-              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
-                scopeFilter === scope
-                  ? 'bg-c-info/10 text-c-info'
-                  : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
-              }`}
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
-              {scope}
+              <X size={16} className="text-slate-500" />
             </button>
-          ))}
-          {(['all', 'process', 'system', 'org', 'strategy', 'workshop'] as const).map(
-            (category) => (
+          </div>
+
+          <div className="px-5 py-3 border-b border-slate-200/60 dark:border-navy-700/60 flex flex-wrap gap-2">
+            {(['all', 'global', 'organization', 'project', 'private'] as const).map((scope) => (
               <button
-                key={category}
+                key={scope}
                 type="button"
-                onClick={() => setCategoryFilter(category)}
+                onClick={() => setScopeFilter(scope)}
                 className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
-                  categoryFilter === category
+                  scopeFilter === scope
                     ? 'bg-c-info/10 text-c-info'
                     : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
                 }`}
               >
-                {category}
+                {scope}
               </button>
-            )
-          )}
-        </div>
+            ))}
+            {(['all', 'process', 'system', 'org', 'strategy', 'workshop'] as const).map(
+              (category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setCategoryFilter(category)}
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
+                    categoryFilter === category
+                      ? 'bg-c-info/10 text-c-info'
+                      : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
+                  }`}
+                >
+                  {category}
+                </button>
+              )
+            )}
+          </div>
 
-        {/* Templates grid */}
-        <div className="flex-1 overflow-y-auto p-5">
-          {templates.length === 0 ? (
-            <div className="text-center py-8 text-[11px] text-slate-500 dark:text-slate-400">
-              {isPl ? 'Brak szablonów dla tego narzędzia' : 'No templates available for this tool'}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {templates.map((template) => {
-                const Icon = template.icon;
-                const governance = template.governance;
-                return (
-                  <div
-                    key={template.id}
-                    className="group text-left p-4 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-c-info/40 hover:bg-c-info/[0.02] transition-all duration-200"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-c-info/10 to-c-info/10 flex items-center justify-center text-c-info shrink-0">
-                        <Icon size={18} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100 mb-0.5">
-                          {isPl ? template.namePl : template.nameEn}
+          {/* Templates grid */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {templates.length === 0 ? (
+              <div className="text-center py-8 text-[11px] text-slate-500 dark:text-slate-400">
+                {isPl
+                  ? 'Brak szablonów dla tego narzędzia'
+                  : 'No templates available for this tool'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {templates.map((template) => {
+                  const Icon = template.icon;
+                  const governance = template.governance;
+                  return (
+                    <div
+                      key={template.id}
+                      className="group text-left p-4 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-c-info/40 hover:bg-c-info/[0.02] transition-all duration-200"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-c-info/10 to-c-info/10 flex items-center justify-center text-c-info shrink-0">
+                          <Icon size={18} />
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                          {isPl ? template.descPl : template.descEn}
-                        </div>
-                        {governance && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                              {governance.category}
-                            </span>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                              {governance.scope}
-                            </span>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                              v{governance.version}
-                            </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100 mb-0.5">
+                            {isPl ? template.namePl : template.nameEn}
                           </div>
-                        )}
-                        <div className="mt-2 flex items-center gap-2">
-                          <button
-                            onClick={() => handleApply(template)}
-                            disabled={!!applying}
-                            className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
-                          >
-                            {applying === template.id && !aiFilling
-                              ? isPl
-                                ? 'Stosowanie…'
-                                : 'Applying…'
-                              : isPl
-                                ? 'Użyj szablonu'
-                                : 'Use template'}
-                            <ArrowRight size={10} />
-                          </button>
-                          {template.nodes.length > 0 && (
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            {isPl ? template.descPl : template.descEn}
+                          </div>
+                          {governance && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                                {governance.category}
+                              </span>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                                {governance.scope}
+                              </span>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                                v{governance.version}
+                              </span>
+                            </div>
+                          )}
+                          <div className="mt-2 flex items-center gap-2">
                             <button
-                              onClick={() => handleApply(template, true)}
+                              onClick={() => handleApply(template)}
                               disabled={!!applying}
                               className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
                             >
-                              {aiFilling === template.id ? (
-                                <Loader2 size={10} className="animate-spin" />
-                              ) : (
-                                <Sparkles size={10} />
-                              )}
-                              {isPl ? 'AI wypełni' : 'AI fill'}
+                              {applying === template.id && !aiFilling
+                                ? isPl
+                                  ? 'Stosowanie…'
+                                  : 'Applying…'
+                                : isPl
+                                  ? 'Użyj szablonu'
+                                  : 'Use template'}
+                              <ArrowRight size={10} />
                             </button>
-                          )}
+                            {template.nodes.length > 0 && (
+                              <button
+                                onClick={() => handleApply(template, true)}
+                                disabled={!!applying}
+                                className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
+                              >
+                                {aiFilling === template.id ? (
+                                  <Loader2 size={10} className="animate-spin" />
+                                ) : (
+                                  <Sparkles size={10} />
+                                )}
+                                {isPl ? 'AI wypełni' : 'AI fill'}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

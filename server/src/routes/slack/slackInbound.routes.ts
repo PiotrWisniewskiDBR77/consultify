@@ -23,15 +23,12 @@ import crypto from 'node:crypto';
 
 import { type NextFunction, type Request, type Response, Router } from 'express';
 
-import {
-  createFeedbackInternal,
-  type FeedbackIntakeInput,
-} from '../feedback.routes.js';
 import { anchorSlackThread } from '../../services/slack/feedbackThreadAnchor.js';
 import { routeToSlack } from '../../services/slack/slackRouter.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { createFeedbackInternal, type FeedbackIntakeInput } from '../feedback.routes.js';
 
 const router = Router();
 
@@ -314,15 +311,12 @@ interface SlackActor {
  *   - user: the fallback user (looked up by LOWER(email)).
  */
 export async function resolveSlackActor(): Promise<SlackActor> {
-  const fallbackEmail = (
-    process.env.SLACK_INBOUND_FALLBACK_EMAIL || DEFAULT_FALLBACK_EMAIL
-  )
+  const fallbackEmail = (process.env.SLACK_INBOUND_FALLBACK_EMAIL || DEFAULT_FALLBACK_EMAIL)
     .trim()
     .toLowerCase();
 
   let userId: string | null = null;
-  let organizationId: string | null =
-    (process.env.SLACK_INBOUND_ORG_ID || '').trim() || null;
+  let organizationId: string | null = (process.env.SLACK_INBOUND_ORG_ID || '').trim() || null;
 
   try {
     const userRow = await dbGet<{ id?: string; organization_id?: string }>(
@@ -362,10 +356,10 @@ function normalizeFeedbackType(rawType: string): 'BUG' | 'IDEA' {
 
 function extractSubmittedValues(view: any): SubmittedValues {
   const state = view?.state?.values || {};
-  const rawType = String(
-    state?.type_block?.type?.selected_option?.value || 'BUG'
-  ).toUpperCase();
-  const title = String(state?.title_block?.title?.value || '').trim().slice(0, 120);
+  const rawType = String(state?.type_block?.type?.selected_option?.value || 'BUG').toUpperCase();
+  const title = String(state?.title_block?.title?.value || '')
+    .trim()
+    .slice(0, 120);
   const description = String(state?.description_block?.description?.value || '').trim();
   const severity = String(
     state?.priority_block?.priority?.selected_option?.value || 'MEDIUM'

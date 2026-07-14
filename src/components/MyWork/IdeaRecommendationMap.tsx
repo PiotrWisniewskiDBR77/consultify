@@ -87,6 +87,7 @@ import { AIProposalDiffModal } from './mindmap/AIProposalDiffModal';
 import { AISentimentOverlay, type SentimentResult } from './mindmap/AISentimentOverlay';
 import { detectMindmapIntent, type SidekickContext } from './mindmap/aiSidekickContext';
 import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
+import { type AlignMode, computeAlignDistribute } from './mindmap/alignDistribute';
 import { AssignPersonModal } from './mindmap/AssignPersonModal';
 import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
 import { BatchConvertModal } from './mindmap/BatchConvertModal';
@@ -103,8 +104,6 @@ import { EmbedInReports } from './mindmap/EmbedInReports';
 import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
 import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
 import { FloatingNodeToolbar } from './mindmap/FloatingNodeToolbar';
-import { type AlignMode, computeAlignDistribute } from './mindmap/alignDistribute';
-import { SmartGuidesOverlay } from './mindmap/SmartGuidesOverlay';
 import { GradientEdge } from './mindmap/GradientEdge';
 import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
 import { ImageUrlModal } from './mindmap/ImageUrlModal';
@@ -112,7 +111,6 @@ import { ImportExternalMap } from './mindmap/ImportExternalMap';
 import { InterviewToMap } from './mindmap/InterviewToMap';
 import { LabeledEdge } from './mindmap/LabeledEdge';
 import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
-import { shouldVirtualize } from './mindmap/virtualization';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
 import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
@@ -127,7 +125,6 @@ import {
 import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
 import { NodeContextMenu } from './mindmap/NodeContextMenu';
 import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
-import { UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import {
   GlowWrapper,
   MaturityRing,
@@ -137,6 +134,7 @@ import {
 } from './mindmap/NodeEnhancements';
 import { PaneContextMenu } from './mindmap/PaneContextMenu';
 import { PresentationMode } from './mindmap/PresentationMode';
+import { SmartGuidesOverlay } from './mindmap/SmartGuidesOverlay';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { applyStructureLayout } from './mindmap/StructureLayouts';
 import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
@@ -144,6 +142,7 @@ import { resolveTagColor } from './mindmap/tagColorMapping';
 import { TimeHeatmap } from './mindmap/TimeHeatmap';
 import { TimelineView } from './mindmap/TimelineView';
 import { StructurePickerPopover } from './mindmap/toolbar-popovers/StructurePickerPopover';
+import { UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
 import { useMapExportPdf } from './mindmap/useMapExportPdf';
@@ -155,6 +154,7 @@ import {
 } from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
+import { shouldVirtualize } from './mindmap/virtualization';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
@@ -1240,11 +1240,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       <div
         onDoubleClick={handleDoubleClick}
         style={nodeSurfaceStyle}
-        title={
-          isRemoteLocked
-            ? t('mindmap.thisNodeIsBeingEditedBy')
-            : undefined
-        }
+        title={isRemoteLocked ? t('mindmap.thisNodeIsBeingEditedBy') : undefined}
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
           data._searchHit
             ? 'ring-offset-2 shadow-hig-focus animate-pulse'
@@ -1454,7 +1450,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <div
                     className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
                   >
-                    {data.label || (t('mindmap.clickToType'))}
+                    {data.label || t('mindmap.clickToType')}
                   </div>
                   {data.nodeType && (
                     <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
@@ -1507,9 +1503,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     );
                   }}
                   className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-600 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
-                  title={
-                    data._collapsed ? (t('mindmap.expand')) : t('mindmap.collapse')
-                  }
+                  title={data._collapsed ? t('mindmap.expand') : t('mindmap.collapse')}
                 >
                   {data._collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
                   {data._collapsed && (data._childCount ?? 0) > 0 && (
@@ -2199,10 +2193,7 @@ function MindMapInner({
       }))
     );
 
-    toast(
-      t('mindmap.selectionMovedBranchCollapsed'),
-      { id: 'mm-op-cue', duration: 2000 }
-    );
+    toast(t('mindmap.selectionMovedBranchCollapsed'), { id: 'mm-op-cue', duration: 2000 });
   }, [edges, isPolish, setNodes, visibleNodes]);
 
   const visibleEdges = useMemo(() => {
@@ -2790,10 +2781,10 @@ function MindMapInner({
       pushUndo();
       const wasCollapsed = collapsedNodeIds.has(nodeId);
       toggleCollapseNode(nodeId, setCollapsedNodeIds);
-      toast(
-        wasCollapsed ? (t('mindmap.expanded')) : t('mindmap.collapsed'),
-        { id: 'mm-op-cue', duration: 1200 }
-      );
+      toast(wasCollapsed ? t('mindmap.expanded') : t('mindmap.collapsed'), {
+        id: 'mm-op-cue',
+        duration: 1200,
+      });
     },
     [collapsedNodeIds, isPolish, pushUndo, toggleCollapseNode, setCollapsedNodeIds]
   );
@@ -2902,13 +2893,11 @@ function MindMapInner({
       .filter(Boolean)
       .join(' ')
       .trim();
-    return fullName || currentUser?.email || (t('mindmap.you'));
+    return fullName || currentUser?.email || t('mindmap.you');
   }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPolish]);
 
   const notifyLockedNode = useCallback(() => {
-    toast.error(
-      t('mindmap.thisNodeIsCurrentlyLockedBy')
-    );
+    toast.error(t('mindmap.thisNodeIsCurrentlyLockedBy'));
   }, [isPolish]);
 
   const handleCollabSessionStateChange = useCallback(
@@ -3761,10 +3750,7 @@ function MindMapInner({
 
       if (action === 'edge_add_label') {
         const current = targetEdge.data?.label || '';
-        const label = window.prompt(
-          t('mindmap.connectionLabel'),
-          current
-        );
+        const label = window.prompt(t('mindmap.connectionLabel'), current);
         if (label !== null) {
           setEdges((prev: Edge[]) =>
             prev.map((e) => (e.id === targetEdge.id ? { ...e, data: { ...e.data, label } } : e))
@@ -4018,7 +4004,7 @@ function MindMapInner({
     async (overrideSelectedIdx?: Record<number, boolean>) => {
       if (!aiProposal) return;
       if (locked) {
-        toast((t('mindmap.acceptTheChallengeFirst')) as any);
+        toast(t('mindmap.acceptTheChallengeFirst') as any);
         return;
       }
       const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
@@ -4026,7 +4012,7 @@ function MindMapInner({
       const toAddEdges = aiProposal.add?.edges || [];
 
       if (toAddNodes.length === 0) {
-        toast((t('mindmap.noSelectedChanges')) as any);
+        toast(t('mindmap.noSelectedChanges') as any);
         return;
       }
 
@@ -4100,23 +4086,16 @@ function MindMapInner({
           setLastSavedAt(Date.now());
         }
 
-        toast.success(
-          t('mindmap.appliedAiProposalsCount', { count: toAddNodes.length }),
-          { duration: 1200 }
-        );
+        toast.success(t('mindmap.appliedAiProposalsCount', { count: toAddNodes.length }), {
+          duration: 1200,
+        });
         closeAIModal();
       } catch (err: any) {
         if (err?.status === 409) {
-          toast(
-            t('mindmap.changeConflictDetectedRefreshingMapFrom'),
-            { icon: '⚠️' }
-          );
+          toast(t('mindmap.changeConflictDetectedRefreshingMapFrom'), { icon: '⚠️' });
           closeAIModal();
         } else {
-          toast.error(
-            err?.message ||
-              (t('mindmap.failedToApplyProposals'))
-          );
+          toast.error(err?.message || t('mindmap.failedToApplyProposals'));
         }
       } finally {
         setSaving(false);
@@ -4144,11 +4123,11 @@ function MindMapInner({
   const handleAIExpand = useCallback(
     async (targetNodeId?: string) => {
       if (locked) {
-        toast((t('mindmap.acceptTheChallengeFirst')) as any);
+        toast(t('mindmap.acceptTheChallengeFirst') as any);
         return;
       }
       if (persistence !== 'online') {
-        toast((t('mindmap.aiRequiresBackend')) as any);
+        toast(t('mindmap.aiRequiresBackend') as any);
         return;
       }
       setSaving(true);
@@ -4193,7 +4172,7 @@ function MindMapInner({
           return [];
         })();
         if (!proposedNodes.length) {
-          toast((t('mindmap.noNewSuggestions')) as any);
+          toast(t('mindmap.noNewSuggestions') as any);
           return;
         }
 
@@ -4212,7 +4191,7 @@ function MindMapInner({
         setApplySuggestedOrder(false);
         setShowAIModal(true);
       } catch (err: any) {
-        toast.error(err?.message || (t('mindmap.aiFailed')));
+        toast.error(err?.message || t('mindmap.aiFailed'));
       } finally {
         setSaving(false);
       }
@@ -4535,10 +4514,9 @@ function MindMapInner({
 
       setNodes((prev: Node[]) => [...prev, ...newNodes]);
       setEdges((prev: Edge[]) => [...prev, ...newEdges]);
-      toast.success(
-        t('mindmap.duplicatedBranchCount', { count: newNodes.length }),
-        { duration: 1000 }
-      );
+      toast.success(t('mindmap.duplicatedBranchCount', { count: newNodes.length }), {
+        duration: 1000,
+      });
     },
     [collectDescendants, edges, getContextTargetNode, isPolish, nodes, setEdges, setNodes]
   );
@@ -4655,9 +4633,7 @@ function MindMapInner({
       if (action === 'ctx_open_linked_artifacts' && ctxNode) {
         const links = Array.isArray(ctxNode.data?.artifactLinks) ? ctxNode.data.artifactLinks : [];
         if (links.length === 0) {
-          toast(
-            t('mindmap.thisNodeHasNoLinkedArtifacts')
-          );
+          toast(t('mindmap.thisNodeHasNoLinkedArtifacts'));
         } else if (links.length === 1) {
           const link = links[0];
           window.dispatchEvent(
@@ -4686,9 +4662,7 @@ function MindMapInner({
         const peerId = priorIds.find((id) => id !== ctxNode.id);
         const peer = peerId ? nodes.find((n) => n.id === peerId) : undefined;
         if (!peer) {
-          toast(
-            t('mindmap.selectAnotherNodeToCreateA')
-          );
+          toast(t('mindmap.selectAnotherNodeToCreateA'));
         } else {
           setEdges((prev: Edge[]) => [
             ...prev,
@@ -5189,10 +5163,7 @@ function MindMapInner({
                 if (err?.status === 409 && externalRuntime) {
                   await externalRuntime.refresh().catch(() => {});
                 }
-                toast.error(
-                  err?.message ||
-                    (t('mindmap.failedToDetachArtifact'))
-                );
+                toast.error(err?.message || t('mindmap.failedToDetachArtifact'));
               }
             })();
           }}
@@ -5409,9 +5380,7 @@ function MindMapInner({
               className={`bg-slate-50 dark:bg-navy-950 ${
                 interactionMode === 'connect' ? 'cursor-crosshair' : 'cursor-default'
               }`}
-              aria-label={
-                t('mindmap.ideaRecommendationMapArrowNavigationEnte')
-              }
+              aria-label={t('mindmap.ideaRecommendationMapArrowNavigationEnte')}
               defaultEdgeOptions={reactFlowDefaultEdgeOptions}
               onDragOver={(event: React.DragEvent) => {
                 if (event.dataTransfer.types.includes('application/idea-context-item')) {
@@ -5607,7 +5576,6 @@ function MindMapInner({
               )}
 
               {/* Active branch info removed — redundant with visual branch nodes on canvas */}
-
             </ReactFlow>
             {showHealthScore && (
               <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
@@ -6366,9 +6334,7 @@ function MindMapInner({
                     { includeMetadata: true },
                     `${ideaTitle || 'mindmap'}.md`
                   );
-                  toast.success(
-                    t('mindmap.markdownCopiedToClipboard')
-                  );
+                  toast.success(t('mindmap.markdownCopiedToClipboard'));
                 },
               },
             ].map((opt) => (
@@ -6447,10 +6413,7 @@ function MindMapInner({
                   if (err?.status === 409 && externalRuntime) {
                     await externalRuntime.refresh().catch(() => {});
                   }
-                  toast.error(
-                    err?.message ||
-                      (t('mindmap.failedToAttachArtifact'))
-                  );
+                  toast.error(err?.message || t('mindmap.failedToAttachArtifact'));
                 }
               })();
             }

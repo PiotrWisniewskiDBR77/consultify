@@ -31,9 +31,9 @@ import { LocalDiskAdapter } from './LocalDiskAdapter.js';
 import { S3Adapter } from './S3Adapter.js';
 import type { StorageAdapter } from './types.js';
 
-export type { StorageAdapter, PutObjectInput, GetObjectResult, GetUrlOptions } from './types.js';
 export { LocalDiskAdapter } from './LocalDiskAdapter.js';
 export { S3Adapter } from './S3Adapter.js';
+export type { GetObjectResult, GetUrlOptions, PutObjectInput, StorageAdapter } from './types.js';
 
 /**
  * Absolute base directory for the local `uploads/` tree. Matches the historic

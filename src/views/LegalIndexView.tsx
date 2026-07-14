@@ -410,30 +410,24 @@ export const LegalIndexView: React.FC = () => {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
             <div className="space-y-1">
-              <p className="font-semibold text-c-text">
-                DBR77 Robotics Sp. z o.o.
-              </p>
+              <p className="font-semibold text-c-text">DBR77 Robotics Sp. z o.o.</p>
               <p className="text-c-text-secondary">ul. Żółkiewskiego 31</p>
               <p className="text-c-text-secondary">87-100 Toruń, Poland</p>
             </div>
             <div className="space-y-1">
               <p className="text-c-text-secondary">
-                <span className="font-medium text-c-text">NIP:</span>{' '}
-                8792725331
+                <span className="font-medium text-c-text">NIP:</span> 8792725331
               </p>
               <p className="text-c-text-secondary">
-                <span className="font-medium text-c-text">KRS:</span>{' '}
-                0000860440
+                <span className="font-medium text-c-text">KRS:</span> 0000860440
               </p>
               <p className="text-c-text-secondary">
-                <span className="font-medium text-c-text">REGON:</span>{' '}
-                387073039
+                <span className="font-medium text-c-text">REGON:</span> 387073039
               </p>
             </div>
             <div className="space-y-1">
               <p className="text-c-text-secondary">
-                <span className="font-medium text-c-text">Type:</span> Polish
-                LLC (Sp. z o.o.)
+                <span className="font-medium text-c-text">Type:</span> Polish LLC (Sp. z o.o.)
               </p>
               <a
                 href="https://dbr77.com"
@@ -473,9 +467,7 @@ const ContactCard: React.FC<{ label: string; email: string; gradient: string }> 
       <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${gradient}`} />
       <p className="text-sm font-semibold text-c-text">{label}</p>
     </div>
-    <p className="text-sm text-c-accent group-hover:text-c-accent/80 transition-colors">
-      {email}
-    </p>
+    <p className="text-sm text-c-accent group-hover:text-c-accent/80 transition-colors">{email}</p>
   </a>
 );
 

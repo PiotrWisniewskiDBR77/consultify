@@ -230,9 +230,7 @@ describe('audit-programs CRUD org-scoping', () => {
 
   it('PATCH /programs/:id returns 400 when name is empty string', async () => {
     const app = await makeApp(ORG_A);
-    const res = await request(app)
-      .patch(`/api/audit/programs/${PROG_ID}`)
-      .send({ name: '' });
+    const res = await request(app).patch(`/api/audit/programs/${PROG_ID}`).send({ name: '' });
     expect(res.status).toBe(400);
   });
 

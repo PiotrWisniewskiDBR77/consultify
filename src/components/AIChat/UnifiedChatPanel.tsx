@@ -1838,9 +1838,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           console.warn('[UnifiedChatPanel] note deliverable navigation failed', err);
           return;
         }
-        toast.success(
-          t('myWork.notebook.savedFromChatToast', 'Saved from chat to Notebook')
-        );
+        toast.success(t('myWork.notebook.savedFromChatToast', 'Saved from chat to Notebook'));
         return;
       }
 
@@ -1888,7 +1886,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       const kind = payload.kind === 'sheet' ? 'sheet' : payload.kind === 'deck' ? 'deck' : 'doc';
       const title =
-        payload.title || (kind === 'sheet' ? 'Arkusz' : kind === 'deck' ? 'Prezentacja' : 'Dokument');
+        payload.title ||
+        (kind === 'sheet' ? 'Arkusz' : kind === 'deck' ? 'Prezentacja' : 'Dokument');
       if (kind === 'deck') {
         setRequestedCanvasDraftId(null);
         setRequestedCanvasDeckId(draftId);
@@ -4574,42 +4573,39 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // B4 (auto-emission) — lift a document-shaped chat answer into a fresh Canvas
   // draft and open it. No artifact existed yet (unlike handleOpenDeliverableArtifact),
   // so we create one from the message content, then mount it like a doc deliverable.
-  const handleEmitArtifactFromMessage = useCallback(
-    async (content: string, title: string) => {
-      try {
-        const token = window.localStorage.getItem('token') || '';
-        const conversationId =
-          useConversationStore.getState().activeConversationId || `canvas-${Date.now()}`;
-        const response = await fetch('/api/work-canvas/drafts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            conversationId,
-            kind: 'document',
-            title: title || 'Dokument z czatu',
-            content,
-            contentMd: content,
-            canonicalFormat: 'markdown',
-            provenance: { source: 'chat-auto-emit' },
-          }),
-        });
-        if (!response.ok) throw new Error(`draft create failed: ${response.status}`);
-        const json = await response.json();
-        const draftId = json?.data?.draft?.id || json?.draft?.id || json?.data?.id;
-        if (!draftId) throw new Error('draft id missing in response');
-        setRequestedCanvasDeckId(null);
-        setRequestedCanvasDraftId(draftId);
-        setRequestedCanvasStarterId('document');
-        setIsWorkPanelOpen(true);
-      } catch (err) {
-        console.error('[UnifiedChatPanel] auto-emit to document failed:', err);
-      }
-    },
-    []
-  );
+  const handleEmitArtifactFromMessage = useCallback(async (content: string, title: string) => {
+    try {
+      const token = window.localStorage.getItem('token') || '';
+      const conversationId =
+        useConversationStore.getState().activeConversationId || `canvas-${Date.now()}`;
+      const response = await fetch('/api/work-canvas/drafts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          conversationId,
+          kind: 'document',
+          title: title || 'Dokument z czatu',
+          content,
+          contentMd: content,
+          canonicalFormat: 'markdown',
+          provenance: { source: 'chat-auto-emit' },
+        }),
+      });
+      if (!response.ok) throw new Error(`draft create failed: ${response.status}`);
+      const json = await response.json();
+      const draftId = json?.data?.draft?.id || json?.draft?.id || json?.data?.id;
+      if (!draftId) throw new Error('draft id missing in response');
+      setRequestedCanvasDeckId(null);
+      setRequestedCanvasDraftId(draftId);
+      setRequestedCanvasStarterId('document');
+      setIsWorkPanelOpen(true);
+    } catch (err) {
+      console.error('[UnifiedChatPanel] auto-emit to document failed:', err);
+    }
+  }, []);
 
   // Deep Thinking: Save output as Decision
   const handleSaveAsDecision = useCallback(
@@ -5424,9 +5420,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     <div
       ref={splitShellRef}
       className={`relative flex h-full overflow-hidden bg-c-bg ${
-        isPrivateMode
-          ? 'ring-1 ring-c-accent/30'
-          : 'ring-1 ring-transparent'
+        isPrivateMode ? 'ring-1 ring-c-accent/30' : 'ring-1 ring-transparent'
       } ${className}`}
       style={rootStyle}
     >
@@ -5630,9 +5624,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             /* Loading state — conversation selected but messages still loading */
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-8 h-8 border-2 border-c-accent border-t-transparent rounded-full animate-spin mb-3" />
-              <p
-                className={`${isCompact ? 'text-xs' : 'text-sm'} text-c-text-secondary`}
-              >
+              <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-c-text-secondary`}>
                 {t('aiChat.loadingConversation', 'Loading conversation…')}
               </p>
             </div>
@@ -5648,9 +5640,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 {currentUser?.firstName && (
                   // Imię w kolorze tytułu (wzorzec 2026-07-04: czerwień TYLKO
                   // dla semantyki krytycznej, nie jako akcent ozdobny).
-                  <span className="text-c-text">
-                    , {currentUser.firstName}
-                  </span>
+                  <span className="text-c-text">, {currentUser.firstName}</span>
                 )}
               </h3>
               <p
@@ -5849,9 +5839,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       <cap.icon size={15} className={cap.color} />
                     </div>
                     <div>
-                      <div className="text-[11px] font-semibold text-c-text">
-                        {cap.label}
-                      </div>
+                      <div className="text-[11px] font-semibold text-c-text">{cap.label}</div>
                       <div className="mt-0.5 text-[9px] leading-tight text-c-text-secondary">
                         {cap.desc}
                       </div>
@@ -5869,9 +5857,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </p>
 
               <div className="mt-12 flex flex-col items-center gap-1.5 pointer-events-none select-none">
-                <p className="text-3xl font-semibold tracking-tight text-c-text/70">
-                  Consultify®
-                </p>
+                <p className="text-3xl font-semibold tracking-tight text-c-text/70">Consultify®</p>
                 <p className="text-center text-[11px] uppercase tracking-[0.25em] text-c-text/30">
                   DBR77 Industrial Intelligence
                 </p>
@@ -6002,10 +5988,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <div
                 className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03] flex items-center justify-center shrink-0 mt-0.5`}
               >
-                <TeresaMark
-                  size={isCompact ? 12 : 14}
-                  className="text-c-text-secondary"
-                />
+                <TeresaMark size={isCompact ? 12 : 14} className="text-c-text-secondary" />
               </div>
               <div className="bg-c-surface-raised border border-c-border-subtle rounded-xl rounded-tl-none px-3 py-2 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-c-text-muted rounded-full animate-bounce"></span>
@@ -6020,10 +6003,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         {/* Input Area */}
         {!showFullWelcomeEmptyState && (
-          <div
-            id="chat-input"
-            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} bg-c-bg`}
-          >
+          <div id="chat-input" className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} bg-c-bg`}>
             <div className="mx-auto w-full max-w-5xl">
               {!!lastError && !isStreaming && (
                 <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
@@ -6063,7 +6043,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       {action.busy ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
                       ) : (
-                        action.icon ?? null
+                        (action.icon ?? null)
                       )}
                       <span>{action.label}</span>
                     </button>

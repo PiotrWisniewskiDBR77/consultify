@@ -653,7 +653,10 @@ export function InitiativesGenerationWizardModal(props: {
               <div className="relative">
                 <div className="w-16 h-16 rounded-full border-4 border-slate-200 dark:border-white/[0.12]" />
                 <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-navy-900 dark:border-slate-100 border-t-transparent animate-spin" />
-                <Sparkles size={24} className="absolute inset-0 m-auto text-slate-500 dark:text-slate-300" />
+                <Sparkles
+                  size={24}
+                  className="absolute inset-0 m-auto text-slate-500 dark:text-slate-300"
+                />
               </div>
               <div className="mt-4 text-base font-semibold text-slate-900 dark:text-white">
                 Generowanie inicjatyw…

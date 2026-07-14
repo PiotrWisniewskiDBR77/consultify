@@ -396,9 +396,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-c-text">
-            Configuration Management
-          </h2>
+          <h2 className="text-2xl font-bold text-c-text">Configuration Management</h2>
           <p className="text-c-text-secondary text-sm">
             Manage system settings and environment configurations
           </p>
@@ -497,9 +495,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
             <div className="text-sm text-c-text-secondary">Total Configs</div>
-            <div className="text-2xl font-bold text-c-text">
-              {configs.length}
-            </div>
+            <div className="text-2xl font-bold text-c-text">{configs.length}</div>
           </div>
           <div className="p-4 bg-c-warning/10 rounded-xl border border-c-warning/30">
             <div className="text-sm text-c-text-secondary">Sensitive</div>
@@ -548,9 +544,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{catInfo.icon}</span>
-                    <span className="font-medium text-c-text">
-                      {catInfo.label}
-                    </span>
+                    <span className="font-medium text-c-text">{catInfo.label}</span>
                     <span className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded">
                       {items.length}
                     </span>
@@ -635,12 +629,8 @@ const ConfigRow: React.FC<{
     <div className="flex items-center justify-between p-4 hover:bg-c-surface-raised transition-colors border-b border-c-border-subtle last:border-b-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <code className="text-sm text-c-accent font-mono">
-            {config.key}
-          </code>
-          <span className="text-xs text-c-text-muted">
-            {TYPE_ICONS[config.type]}
-          </span>
+          <code className="text-sm text-c-accent font-mono">{config.key}</code>
+          <span className="text-xs text-c-text-muted">{TYPE_ICONS[config.type]}</span>
           {config.is_sensitive && <Lock className="w-3 h-3 text-c-warning" />}
           {config.is_locked && <Lock className="w-3 h-3 text-c-text-muted" />}
         </div>
@@ -731,10 +721,7 @@ const ConfigEditModal: React.FC<{
       <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text">Edit Configuration</h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-c-surface-raised rounded-lg"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-c-surface-raised rounded-lg">
             <X className="w-5 h-5 text-c-text-secondary" />
           </button>
         </div>
@@ -750,9 +737,7 @@ const ConfigEditModal: React.FC<{
           )}
 
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-1">
-              Key
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">Key</label>
             <code className="block w-full px-3 py-2 bg-c-surface-raised text-c-info rounded-lg font-mono">
               {config.key}
             </code>
@@ -868,7 +853,9 @@ const ConfigAddModal: React.FC<{
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
       <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Add Configuration</h3>
+          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">
+            Add Configuration
+          </h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
@@ -888,9 +875,7 @@ const ConfigAddModal: React.FC<{
           )}
 
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-1">
-              Key *
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">Key *</label>
             <input
               type="text"
               required
@@ -903,9 +888,7 @@ const ConfigAddModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                Type
-              </label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">Type</label>
               <select
                 value={formData.type}
                 onChange={(e) =>
@@ -939,9 +922,7 @@ const ConfigAddModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-1">
-              Value *
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">Value *</label>
             {formData.type === 'boolean' ? (
               <select
                 value={formData.value}
@@ -984,9 +965,7 @@ const ConfigAddModal: React.FC<{
               onChange={(e) => setFormData({ ...formData, is_sensitive: e.target.checked })}
               className="rounded border-c-border-subtle bg-c-surface text-c-accent dark:text-c-accent"
             />
-            <span className="text-sm text-c-text-secondary">
-              Sensitive value (will be masked)
-            </span>
+            <span className="text-sm text-c-text-secondary">Sensitive value (will be masked)</span>
           </label>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -1024,7 +1003,9 @@ const ConfigHistoryModal: React.FC<{
     <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Version History</h3>
+          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">
+            Version History
+          </h3>
           <code className="text-sm text-c-accent dark:text-c-accent">{config.key}</code>
         </div>
         <button
@@ -1060,9 +1041,7 @@ const ConfigHistoryModal: React.FC<{
                   >
                     {versions.length - index}
                   </span>
-                  <span className="text-sm text-c-text-secondary">
-                    {version.changed_by}
-                  </span>
+                  <span className="text-sm text-c-text-secondary">{version.changed_by}</span>
                 </div>
                 <span className="text-xs text-c-text-muted">
                   {formatDateTime(version.changed_at)}
@@ -1083,9 +1062,7 @@ const ConfigHistoryModal: React.FC<{
                 </div>
               </div>
               {version.reason && (
-                <p className="text-xs text-c-text-muted mt-2">
-                  Reason: {version.reason}
-                </p>
+                <p className="text-xs text-c-text-muted mt-2">Reason: {version.reason}</p>
               )}
               {index > 0 && (
                 <button

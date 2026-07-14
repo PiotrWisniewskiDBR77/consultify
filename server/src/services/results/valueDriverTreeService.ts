@@ -229,9 +229,7 @@ export function buildTreeFromMappings(input: BuildTreeInput): {
       fromId: m.initiativeId,
       toId: m.kpiId,
       weight:
-        typeof m.impactWeight === 'number' && Number.isFinite(m.impactWeight)
-          ? m.impactWeight
-          : 1,
+        typeof m.impactWeight === 'number' && Number.isFinite(m.impactWeight) ? m.impactWeight : 1,
     });
   }
 

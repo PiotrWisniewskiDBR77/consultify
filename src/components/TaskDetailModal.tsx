@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Api } from '@/services/api';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
+import { Api } from '@/services/api';
 
 import {
   DecisionImpact,
@@ -138,12 +138,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
                   <Target size={12} className="text-white" />
                 </div>
-                <span className="text-xs font-medium text-c-text-secondary">
-                  Initiative:
-                </span>
-                <span className="text-sm font-bold text-c-text">
-                  {initiative.name}
-                </span>
+                <span className="text-xs font-medium text-c-text-secondary">Initiative:</span>
+                <span className="text-sm font-bold text-c-text">{initiative.name}</span>
               </div>
               <div className="flex-1" />
               <EntityStatusChip status={initiative.status} />
@@ -171,11 +167,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                   className="bg-transparent text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 outline-none border-b border-dashed border-blue-500/30 hover:text-blue-500 dark:hover:text-blue-300"
                 >
                   {TASK_TYPES.map((t: any) => (
-                    <option
-                      key={t}
-                      value={t}
-                      className="bg-c-surface text-c-text"
-                    >
+                    <option key={t} value={t} className="bg-c-surface text-c-text">
                       {t}
                     </option>
                   ))}
@@ -263,15 +255,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       <div className="flex justify-between text-[10px] text-c-text-muted">
                         <span>
                           Relevance:{' '}
-                          <span className="text-c-text">
-                            {task.aiInsight.strategicRelevance}
-                          </span>
+                          <span className="text-c-text">{task.aiInsight.strategicRelevance}</span>
                         </span>
                         <span>
-                          Risk:{' '}
-                          <span className="text-c-text">
-                            {task.aiInsight.executionRisk}
-                          </span>
+                          Risk: <span className="text-c-text">{task.aiInsight.executionRisk}</span>
                         </span>
                       </div>
                       <p className="text-[10px] text-c-text-secondary leading-relaxed italic">
@@ -342,8 +329,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 <div className="space-y-6 max-w-3xl animate-in slide-in-from-right-4 duration-300">
                   <div>
                     <h3 className="text-sm font-bold text-c-text mb-1 flex items-center gap-2">
-                      <Target size={16} className="text-c-info" />{' '}
-                      Expected Strategic Outcome
+                      <Target size={16} className="text-c-info" /> Expected Strategic Outcome
                     </h3>
                     <p className="text-xs text-c-text-muted mb-2">
                       What specifically will change in the business once this task is done?
@@ -442,9 +428,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       <h3 className="text-xs font-bold text-c-info flex items-center gap-2">
                         <Target size={14} /> Task Weight (Progress Impact)
                       </h3>
-                      <span className="text-lg font-bold text-c-info">
-                        {task.weight || 1}x
-                      </span>
+                      <span className="text-lg font-bold text-c-info">{task.weight || 1}x</span>
                     </div>
                     <p className="text-[10px] text-c-text-muted mb-3">
                       Higher weight = more contribution to initiative progress when completed
@@ -661,9 +645,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                                 {log.changedBy}
                               </span>{' '}
                               changed{' '}
-                              <span className="font-mono text-c-text-muted">
-                                {log.field}
-                              </span>
+                              <span className="font-mono text-c-text-muted">{log.field}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-1 text-c-text-muted">
                               <span className="line-through opacity-50">
@@ -681,9 +663,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-c-text-secondary italic">
-                        No history available.
-                      </p>
+                      <p className="text-xs text-c-text-secondary italic">No history available.</p>
                     )}
                   </div>
                 </div>

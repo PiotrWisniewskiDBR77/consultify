@@ -138,13 +138,16 @@ function KebabOpen({ isPl }: { isPl: boolean }): React.ReactElement {
   return (
     <div>
       <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-        (B) {isPl
+        (B){' '}
+        {isPl
           ? 'Kebab „⋯" — sekcje Manual editing + Markdown actions (skrót)'
           : 'Kebab "⋯" — Manual editing + Markdown actions sections (excerpt)'}
       </div>
       <div className="w-[360px] rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800">
         <div className="px-1 pb-2 text-[10px] text-slate-400 dark:text-slate-500">
-          {isPl ? '⋯ (pozostałe sekcje kebaba pominięte w tym story)' : '⋯ (rest of the kebab omitted in this story)'}
+          {isPl
+            ? '⋯ (pozostałe sekcje kebaba pominięte w tym story)'
+            : '⋯ (rest of the kebab omitted in this story)'}
         </div>
 
         {/* Manual editing */}
@@ -182,7 +185,9 @@ function KebabOpen({ isPl }: { isPl: boolean }): React.ReactElement {
             data-testid="canvas-import-markdown-preview"
           >
             <Upload size={14} />
-            <span className="flex-1">{isPl ? 'Wgraj Markdown (.md)' : 'Import Markdown (.md)'}</span>
+            <span className="flex-1">
+              {isPl ? 'Wgraj Markdown (.md)' : 'Import Markdown (.md)'}
+            </span>
             <NewBadge isPl={isPl} />
           </div>
           <div className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 dark:text-slate-200">
@@ -221,22 +226,19 @@ export default function CanvasToolbarMdHistoryScreen(): React.ReactElement {
           </div>
           {isPl ? (
             <>
-              Kebab „⋯" ma płaskie ikony na głównym pasku (bez tradycyjnego
-              overflow-menu) — ALE sam dropdown „⋯" (Canvas menu) jest wciąż
-              mega-kebabem: Widok canvas, Most common actions, Add element, AI
-              on selection, Ręczna edycja (+ nowa Historia), Starter templates
-              + builder, Workspace actions, materializedTo, Markdown actions
-              (+ nowy Import — 12+ pozycji), MD file properties, Capabilities i
-              workflow, workflow ledger. #87d NIE jest rozwiązane — jest osobną
-              robotą (restrukturyzacja kebaba na sekcje/karty), poza zakresem
-              tej naprawy.
+              Kebab „⋯" ma płaskie ikony na głównym pasku (bez tradycyjnego overflow-menu) — ALE sam
+              dropdown „⋯" (Canvas menu) jest wciąż mega-kebabem: Widok canvas, Most common actions,
+              Add element, AI on selection, Ręczna edycja (+ nowa Historia), Starter templates +
+              builder, Workspace actions, materializedTo, Markdown actions (+ nowy Import — 12+
+              pozycji), MD file properties, Capabilities i workflow, workflow ledger. #87d NIE jest
+              rozwiązane — jest osobną robotą (restrukturyzacja kebaba na sekcje/karty), poza
+              zakresem tej naprawy.
             </>
           ) : (
             <>
-              The "⋯" trigger itself is a flat icon (no traditional overflow
-              button) — but the dropdown it opens (Canvas menu) is still a
-              mega-kebab with 10+ sections. #87d is NOT resolved; restructuring
-              that dropdown is separate follow-up work, out of scope here.
+              The "⋯" trigger itself is a flat icon (no traditional overflow button) — but the
+              dropdown it opens (Canvas menu) is still a mega-kebab with 10+ sections. #87d is NOT
+              resolved; restructuring that dropdown is separate follow-up work, out of scope here.
             </>
           )}
         </div>

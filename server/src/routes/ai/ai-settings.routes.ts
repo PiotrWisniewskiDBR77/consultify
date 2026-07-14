@@ -211,9 +211,13 @@ router.get(
       const userRole = req.user?.role;
       const userOrgId = req.user?.organizationId || req.user?.organization_id;
 
-      const normalizedGetRole = String(userRole || '').trim().toLowerCase();
-      const isSuperAdmin = normalizedGetRole === 'superadmin' || normalizedGetRole === 'super_admin';
-      const isOrgAdmin = userOrgId === orgId && ['owner', 'admin', 'administrator'].includes(normalizedGetRole);
+      const normalizedGetRole = String(userRole || '')
+        .trim()
+        .toLowerCase();
+      const isSuperAdmin =
+        normalizedGetRole === 'superadmin' || normalizedGetRole === 'super_admin';
+      const isOrgAdmin =
+        userOrgId === orgId && ['owner', 'admin', 'administrator'].includes(normalizedGetRole);
       if (!isSuperAdmin && !isOrgAdmin) {
         return res.status(403).json({ error: 'Admin access required' });
       }
@@ -284,9 +288,7 @@ router.put(
       // Mirror the change into the admin audit surface (H2.12). Fail-safe: an
       // audit-write failure must never block the settings update.
       try {
-        const { default: adminAuditService } = await import(
-          '../../services/adminAuditService.js'
-        );
+        const { default: adminAuditService } = await import('../../services/adminAuditService.js');
         await adminAuditService.logAction({
           adminId: actorId,
           organizationId: orgId,
@@ -644,8 +646,7 @@ router.get(
         .toLowerCase();
       const isSuperAdmin = normalizedRole === 'superadmin' || normalizedRole === 'super_admin';
       const isSameOrgAdmin =
-        userOrgId === orgId &&
-        ['owner', 'admin', 'administrator'].includes(normalizedRole);
+        userOrgId === orgId && ['owner', 'admin', 'administrator'].includes(normalizedRole);
       if (!isSuperAdmin && !isSameOrgAdmin) {
         return res.status(403).json({ error: 'Access denied' });
       }

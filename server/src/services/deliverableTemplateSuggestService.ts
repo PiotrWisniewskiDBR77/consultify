@@ -7,9 +7,9 @@
  * Fail-open: błąd → null suggestion, nigdy wyjątek do callera.
  */
 
+import logger from '../utils/Logger.js';
 import type { DeliverableTemplateType } from './deliverableTemplateService.js';
 import { listDeliverableTemplates } from './deliverableTemplateService.js';
-import logger from '../utils/Logger.js';
 
 export interface TemplateSuggestion {
   templateId: string;
@@ -22,28 +22,80 @@ export interface TemplateSuggestion {
 // ──────────────────────────────────────────────────────────────
 const INTENT_KEYWORDS: Record<string, string[]> = {
   'dbr77-doc-audit-report': [
-    'audit', 'audyt', 'raport', 'report', 'przegląd', 'review',
-    'kontrola', 'weryfikacja', 'check', 'inspekcja', 'ocena',
+    'audit',
+    'audyt',
+    'raport',
+    'report',
+    'przegląd',
+    'review',
+    'kontrola',
+    'weryfikacja',
+    'check',
+    'inspekcja',
+    'ocena',
   ],
   'dbr77-doc-exec-memo': [
-    'memo', 'decyzj', 'zarząd', 'executive', 'brief', 'decyz',
-    'notatka służbowa', 'nota', 'executive summary', 'kierownictwo', 'management',
+    'memo',
+    'decyzj',
+    'zarząd',
+    'executive',
+    'brief',
+    'decyz',
+    'notatka służbowa',
+    'nota',
+    'executive summary',
+    'kierownictwo',
+    'management',
   ],
   'dbr77-deck-board': [
-    'board', 'zarząd', 'rada', 'nadzorcz', 'akcjonariusz',
-    'nadzorczy', 'supervisory', 'stakeholder', 'udziałowiec', 'dyrekcja',
+    'board',
+    'zarząd',
+    'rada',
+    'nadzorcz',
+    'akcjonariusz',
+    'nadzorczy',
+    'supervisory',
+    'stakeholder',
+    'udziałowiec',
+    'dyrekcja',
   ],
   'dbr77-deck-diagnostic': [
-    'diagnoz', 'diagnostic', 'analiz', 'ocen', 'assess',
-    'diagnoza', 'analysis', 'ocena', 'read-out', 'readout', 'wyniki',
+    'diagnoz',
+    'diagnostic',
+    'analiz',
+    'ocen',
+    'assess',
+    'diagnoza',
+    'analysis',
+    'ocena',
+    'read-out',
+    'readout',
+    'wyniki',
   ],
   'dbr77-table-risk-register': [
-    'ryzyko', 'risk', 'zagrożen', 'rejestr',
-    'ryzyk', 'zagrożenie', 'hazard', 'threat', 'mitigat', 'rejestr ryzyk',
+    'ryzyko',
+    'risk',
+    'zagrożen',
+    'rejestr',
+    'ryzyk',
+    'zagrożenie',
+    'hazard',
+    'threat',
+    'mitigat',
+    'rejestr ryzyk',
   ],
   'dbr77-table-kpi-dashboard': [
-    'kpi', 'wskaźnik', 'dashboard', 'metric', 'wynik',
-    'kpis', 'miernik', 'scorecard', 'indicator', 'performance', 'wyniki',
+    'kpi',
+    'wskaźnik',
+    'dashboard',
+    'metric',
+    'wynik',
+    'kpis',
+    'miernik',
+    'scorecard',
+    'indicator',
+    'performance',
+    'wyniki',
   ],
 };
 

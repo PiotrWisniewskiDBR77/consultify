@@ -629,13 +629,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           className="flex items-start justify-between gap-2 text-[11px] bg-c-surface-raised border border-c-border rounded-md px-2 py-1"
                         >
                           <div className="min-w-0">
-                            <div className="text-c-text-secondary truncate">
-                              {it.label}
-                            </div>
+                            <div className="text-c-text-secondary truncate">{it.label}</div>
                             {it.rationale ? (
-                              <div className="text-c-text-muted truncate">
-                                {it.rationale}
-                              </div>
+                              <div className="text-c-text-muted truncate">{it.rationale}</div>
                             ) : null}
                           </div>
                           <div className="flex-shrink-0 text-c-text-muted">
@@ -760,9 +756,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         Suggested reviewers (Agent Audit Layer)
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <label className="text-[11px] text-c-text-muted">
-                          Intent
-                        </label>
+                        <label className="text-[11px] text-c-text-muted">Intent</label>
                         <select
                           value={dtPendingConfirm.agentAudit?.userIntent || 'validate'}
                           onChange={(e) => {
@@ -787,9 +781,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           <option value="approve">Approve</option>
                         </select>
 
-                        <label className="text-[11px] text-c-text-muted ml-2">
-                          Max agents
-                        </label>
+                        <label className="text-[11px] text-c-text-muted ml-2">Max agents</label>
                         <select
                           value={dtPendingConfirm.agentAudit?.maxAgents || 3}
                           onChange={(e) => {
@@ -850,13 +842,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 }}
                               />
                               <div className="min-w-0">
-                                <div className="text-c-text-secondary truncate">
-                                  {label}
-                                </div>
+                                <div className="text-c-text-secondary truncate">{label}</div>
                                 {why ? (
-                                  <div className="text-c-text-muted truncate">
-                                    {why}
-                                  </div>
+                                  <div className="text-c-text-muted truncate">{why}</div>
                                 ) : null}
                               </div>
                             </label>
@@ -1127,9 +1115,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               const label = String(s.title || s.domain || url);
                               return (
                                 <div key={`${s.type}-${idx}`} className="text-[11px]">
-                                  <span className="font-medium text-c-text-secondary">
-                                    Web
-                                  </span>
+                                  <span className="font-medium text-c-text-secondary">Web</span>
                                   {': '}
                                   <a
                                     href={url}
@@ -1690,7 +1676,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               className="group inline-flex max-w-full items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised px-3 py-1.5 text-left transition-colors hover:border-primary-200 hover:bg-primary-50/70 dark:hover:border-primary-700/50 dark:hover:bg-primary-900/20"
               title={t('chat.message.emitDocumentTooltip', 'Create a document from this answer')}
             >
-              <FilePlus2 size={14} className="shrink-0 text-c-text-muted group-hover:text-primary-500" />
+              <FilePlus2
+                size={14}
+                className="shrink-0 text-c-text-muted group-hover:text-primary-500"
+              />
               <span className="truncate text-xs font-medium text-c-text-secondary group-hover:text-primary-600">
                 {t('chat.message.openAsDocument', 'Open as document')}
               </span>

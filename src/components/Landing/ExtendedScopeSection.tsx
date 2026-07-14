@@ -86,9 +86,7 @@ export const ExtendedScopeSection: React.FC = () => {
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-c-accent/20 bg-c-accent-soft">
                   <Icon size={22} className="text-c-accent" />
                 </div>
-                <h3 className="text-2xl font-black text-c-text mb-3">
-                  {scope.title}
-                </h3>
+                <h3 className="text-2xl font-black text-c-text mb-3">{scope.title}</h3>
                 <p className="text-sm text-c-text-secondary leading-relaxed mb-5">
                   {scope.description}
                 </p>

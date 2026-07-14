@@ -27,23 +27,23 @@
 import DRD_STRUCTURE, {
   calculateAxisScore,
   calculateOverallScore,
-  getTotalAreaCount,
   type DRDArea,
+  getTotalAreaCount,
 } from '../../data/drdStructure.js';
-import { buildDRDVisualizationData } from './drdVizAdapter.js';
+import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles.js';
 import {
-  deterministicNarrator,
   type ConclusionEvidenceRef,
   type ConclusionOutput,
+  deterministicNarrator,
   type DrdNarrator,
 } from './drdConclusionContract.js';
-import type { DrdGroundingProvider } from './drdReportGrounding.js';
 import {
   buildDrdIndustryBenchmarkSection,
   DEFAULT_DRD_BENCHMARK_INDUSTRY,
   type DrdIndustryBenchmarkSection,
 } from './drdIndustryBenchmark.js';
-import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles.js';
+import type { DrdGroundingProvider } from './drdReportGrounding.js';
+import { buildDRDVisualizationData } from './drdVizAdapter.js';
 
 export type AreaScores = Record<string, { actual: number; target: number }>;
 

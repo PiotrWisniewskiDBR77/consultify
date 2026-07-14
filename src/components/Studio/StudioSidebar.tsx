@@ -145,11 +145,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
               <div className="flex items-start gap-3">
                 <FileText
                   size={16}
-                  className={
-                    doc.id === currentDocumentId
-                      ? 'text-c-accent'
-                      : 'text-c-text-muted'
-                  }
+                  className={doc.id === currentDocumentId ? 'text-c-accent' : 'text-c-text-muted'}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-c-text truncate">{doc.name}</div>

@@ -36,7 +36,10 @@ export const MATERIAL_DATASET_MAX_ROWS = 500;
  * ExternalRecord[] (z konektora) lub surowe obiekty (z formularza) → kolumny+wiersze.
  * Kolumny = unia kluczy w stabilnej kolejności pierwszego wystąpienia.
  */
-function rowsToColumns(rawRows: Array<Record<string, unknown>>, maxRows: number): {
+function rowsToColumns(
+  rawRows: Array<Record<string, unknown>>,
+  maxRows: number
+): {
   columns: string[];
   rows: Array<Record<string, unknown>>;
   truncated: boolean;
@@ -47,7 +50,10 @@ function rowsToColumns(rawRows: Array<Record<string, unknown>>, maxRows: number)
   const columns: string[] = [];
   for (const r of rows) {
     for (const key of Object.keys(r ?? {})) {
-      if (!seen.has(key)) { seen.add(key); columns.push(key); }
+      if (!seen.has(key)) {
+        seen.add(key);
+        columns.push(key);
+      }
     }
   }
   return { columns, rows, truncated };
@@ -60,7 +66,7 @@ function rowsToColumns(rawRows: Array<Record<string, unknown>>, maxRows: number)
 export async function connectorDataset(
   type: string,
   config: Record<string, unknown>,
-  opts: { limit?: number; offset?: number } = {},
+  opts: { limit?: number; offset?: number } = {}
 ): Promise<MaterialDataset | null> {
   try {
     if (!connectorRegistry.listTypes().includes(type)) {
@@ -69,7 +75,10 @@ export async function connectorDataset(
     }
     const impl = connectorRegistry.get(type);
     const limit = Math.min(opts.limit ?? MATERIAL_DATASET_MAX_ROWS, MATERIAL_DATASET_MAX_ROWS);
-    const records: ExternalRecord[] = await impl.fetchRecords(config, { limit, offset: opts.offset });
+    const records: ExternalRecord[] = await impl.fetchRecords(config, {
+      limit,
+      offset: opts.offset,
+    });
     const rawRows = (records ?? []).map((rec) => rec?.data ?? {});
     const { columns, rows, truncated } = rowsToColumns(rawRows, MATERIAL_DATASET_MAX_ROWS);
     return {
@@ -80,7 +89,9 @@ export async function connectorDataset(
       truncated,
     };
   } catch (err) {
-    logger.warn(`${LOG} connectorDataset(${type}) failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} connectorDataset(${type}) failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }
@@ -100,7 +111,7 @@ export interface FormDatasetDeps {
  */
 export async function formDataset(
   formId: string,
-  deps: FormDatasetDeps,
+  deps: FormDatasetDeps
 ): Promise<MaterialDataset | null> {
   try {
     const { records } = await deps.fetchSubmissions(formId);
@@ -123,7 +134,9 @@ export async function formDataset(
       truncated,
     };
   } catch (err) {
-    logger.warn(`${LOG} formDataset(${formId}) failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `${LOG} formDataset(${formId}) failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }
@@ -136,9 +149,10 @@ export async function formDataset(
 export function datasetToTableIntent(dataset: MaterialDataset | null, title: string): string {
   if (!dataset || dataset.columns.length === 0) return '';
   const sample = dataset.rows.slice(0, 8);
-  const srcLabel = dataset.source.kind === 'connector'
-    ? `konektor ${dataset.source.ref}`
-    : `formularz ${dataset.source.ref}`;
+  const srcLabel =
+    dataset.source.kind === 'connector'
+      ? `konektor ${dataset.source.ref}`
+      : `formularz ${dataset.source.ref}`;
   return [
     `Tabela: ${title}.`,
     `Źródło danych: ${srcLabel} (${dataset.rowCount} wierszy${dataset.truncated ? ', ucięte do limitu' : ''}).`,

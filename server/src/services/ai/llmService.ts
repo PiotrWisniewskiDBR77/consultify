@@ -1125,8 +1125,17 @@ export class LLMService {
                 // authoritative type token (never a stale/other tool's message).
                 const k = wrapped?.data?.kind;
                 const KNOWN = new Set([
-                  'initiative', 'task', 'decision', 'note',
-                  'doc', 'sheet', 'deck', 'mindmap', 'process_flow', 'table', 'whiteboard',
+                  'initiative',
+                  'task',
+                  'decision',
+                  'note',
+                  'doc',
+                  'sheet',
+                  'deck',
+                  'mindmap',
+                  'process_flow',
+                  'table',
+                  'whiteboard',
                 ]);
                 if (typeof k === 'string' && KNOWN.has(k)) {
                   lastCreatedKind = k as typeof lastCreatedKind;
@@ -1315,7 +1324,7 @@ export class LLMService {
                   toolMsg = buildCreationConfirmation(
                     lastCreatedKind,
                     lastCreatedTitle || '',
-                    confirmationLang,
+                    confirmationLang
                   );
                 } catch {
                   /* fall back to the raw tool message */
@@ -1369,7 +1378,7 @@ export class LLMService {
                 canonicalConfirmation = buildCreationConfirmation(
                   lastCreatedKind,
                   lastCreatedTitle || '',
-                  confirmationLang,
+                  confirmationLang
                 );
               } catch {
                 /* fall through to raw tool message below */
@@ -1384,11 +1393,7 @@ export class LLMService {
             // surface the kind-derived confirmation (or the raw tool message).
             if (!emittedText && (canonicalConfirmation || lastToolMessage)) {
               yield (canonicalConfirmation || lastToolMessage) as string;
-            } else if (
-              emittedText &&
-              lastCreatedKind &&
-              canonicalConfirmation
-            ) {
+            } else if (emittedText && lastCreatedKind && canonicalConfirmation) {
               // narracja ≠ kind GUARD: the model DID write a confirmation, but it
               // names a DIFFERENT artifact type than the one actually created
               // (verbatim live bug: "Utworzyłem DECYZJĘ…" after creating an
@@ -1483,7 +1488,8 @@ export class LLMService {
       let schemaHint = '';
       try {
         const js = (asSchema(zodSchema as any) as any)?.jsonSchema;
-        if (js) schemaHint = `\n\nThe JSON MUST conform exactly to this JSON Schema (produce every required field):\n${JSON.stringify(js)}`;
+        if (js)
+          schemaHint = `\n\nThe JSON MUST conform exactly to this JSON Schema (produce every required field):\n${JSON.stringify(js)}`;
       } catch {
         /* schema introspection best-effort */
       }
@@ -1505,7 +1511,10 @@ export class LLMService {
         {
           timeout: structuredTimeoutMs,
           onRetry: (attempt: number) =>
-            aiLogger.info('LLMService', `Retrying structured(text) call to ${providerId} (attempt ${attempt})`),
+            aiLogger.info(
+              'LLMService',
+              `Retrying structured(text) call to ${providerId} (attempt ${attempt})`
+            ),
         }
       );
       const raw = String((textResult as any)?.text || '').trim();

@@ -160,9 +160,7 @@ export async function loadProposalsForArtifact(
  * whether to log loudly (`db_error`) or tolerate quietly
  * (`schema_missing`, i.e. pre-migration environment).
  */
-export async function persistProposal(
-  proposal: DocumentEditorProposal
-): Promise<PersistOutcome> {
+export async function persistProposal(proposal: DocumentEditorProposal): Promise<PersistOutcome> {
   if (!proposal?.proposalId || !proposal.artifactId || !proposal.organizationId) {
     return { ok: false, degraded: 'db_error', reason: 'invalid_proposal_input' };
   }

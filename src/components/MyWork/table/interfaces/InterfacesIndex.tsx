@@ -236,9 +236,7 @@ export function InterfacesIndex({
           >
             &larr; {t('interfacesIndex.backToList', 'Back to interfaces')}
           </button>
-          <span className="text-sm font-medium text-c-text-muted">
-            {editingInterface.name}
-          </span>
+          <span className="text-sm font-medium text-c-text-muted">{editingInterface.name}</span>
         </div>
         <div className="flex-1 overflow-hidden">
           <InterfaceDesigner
@@ -324,9 +322,7 @@ export function InterfacesIndex({
               <div className="mb-3 rounded-xl bg-c-accent p-3 text-c-accent transition-colors group-hover:bg-c-accent-soft text-c-accent">
                 {tpl.icon}
               </div>
-              <h4 className="mb-1 text-sm font-semibold text-c-text">
-                {tpl.label}
-              </h4>
+              <h4 className="mb-1 text-sm font-semibold text-c-text">{tpl.label}</h4>
               <p className="text-xs text-c-text-muted">{tpl.description}</p>
             </button>
           ))}
@@ -371,9 +367,7 @@ export function InterfacesIndex({
             </div>
 
             {/* Name */}
-            <h3 className="mb-1 text-sm font-semibold text-c-text">
-              {iface.name}
-            </h3>
+            <h3 className="mb-1 text-sm font-semibold text-c-text">{iface.name}</h3>
 
             {/* Last modified */}
             {iface.updatedAt && (

@@ -560,10 +560,19 @@ describe('V8 finance read-only routes', () => {
     // Model źródłowy wskazuje na usuniętą/syntetyczną inicjatywę (jak seed na demo).
     mockGetModel.mockImplementation((id: string) =>
       id === 'copy-1'
-        ? Promise.resolve({ id: 'copy-1', organization_id: ORG, name: 'Src (kopia)', start_date: '2026-01-01' })
+        ? Promise.resolve({
+            id: 'copy-1',
+            organization_id: ORG,
+            name: 'Src (kopia)',
+            start_date: '2026-01-01',
+          })
         : Promise.resolve({
-            id: 'src-1', organization_id: ORG, name: 'Src',
-            initiative_id: 'ghost-initiative', start_date: '2026-01-01', currency: 'PLN',
+            id: 'src-1',
+            organization_id: ORG,
+            name: 'Src',
+            initiative_id: 'ghost-initiative',
+            start_date: '2026-01-01',
+            currency: 'PLN',
           })
     );
     // 1. próba (z FK) rzuca guard cross-org; 2. (bez FK) sukces.
@@ -586,12 +595,20 @@ describe('V8 finance read-only routes', () => {
     // 1. próba (z FK) rzuca "not found" → catch → retry BEZ initiativeId I BEZ pack → sukces.
     mockGetModel.mockImplementation((id: string) =>
       id === 'copy-2'
-        ? Promise.resolve({ id: 'copy-2', organization_id: ORG, name: 'Src2 (kopia)', start_date: '2026-01-01' })
+        ? Promise.resolve({
+            id: 'copy-2',
+            organization_id: ORG,
+            name: 'Src2 (kopia)',
+            start_date: '2026-01-01',
+          })
         : Promise.resolve({
-            id: 'src-2', organization_id: ORG, name: 'Src2',
+            id: 'src-2',
+            organization_id: ORG,
+            name: 'Src2',
             initiative_id: 'ghost-init-2',
             source_statement_pack_id: 'ghost-pack',
-            start_date: '2026-01-01', currency: 'PLN',
+            start_date: '2026-01-01',
+            currency: 'PLN',
           })
     );
     mockCreateModel
@@ -613,15 +630,25 @@ describe('V8 finance read-only routes', () => {
     // Model NIE ma stale FK ale pack jest niekompletny → 1. próba rzuca "must contain" → catch → retry bez pack.
     mockGetModel.mockImplementation((id: string) =>
       id === 'copy-3'
-        ? Promise.resolve({ id: 'copy-3', organization_id: ORG, name: 'Src3 (kopia)', start_date: '2026-01-01' })
+        ? Promise.resolve({
+            id: 'copy-3',
+            organization_id: ORG,
+            name: 'Src3 (kopia)',
+            start_date: '2026-01-01',
+          })
         : Promise.resolve({
-            id: 'src-3', organization_id: ORG, name: 'Src3',
+            id: 'src-3',
+            organization_id: ORG,
+            name: 'Src3',
             source_statement_pack_id: 'bad-pack',
-            start_date: '2026-01-01', currency: 'PLN',
+            start_date: '2026-01-01',
+            currency: 'PLN',
           })
     );
     mockCreateModel
-      .mockRejectedValueOnce(new Error('Statement pack must contain P&L, Balance Sheet, and Cash Flow'))
+      .mockRejectedValueOnce(
+        new Error('Statement pack must contain P&L, Balance Sheet, and Cash Flow')
+      )
       .mockResolvedValueOnce('copy-3');
 
     const app = createApp();

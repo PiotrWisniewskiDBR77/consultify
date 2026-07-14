@@ -590,9 +590,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           )}
                         </div>
 
-                        <h3 className="font-semibold text-c-text mb-2 text-lg">
-                          {c.content}
-                        </h3>
+                        <h3 className="font-semibold text-c-text mb-2 text-lg">{c.content}</h3>
                         <p className="text-c-text-secondary text-sm mb-3 bg-c-surface-raised/50 p-3 rounded-lg flex gap-3">
                           <MessageSquare size={16} className="text-primary-500 shrink-0 mt-0.5" />
                           {c.reasoning || 'No reasoning provided.'}
@@ -624,9 +622,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         {c.related_axis && (
                           <div className="text-xs text-c-text-muted flex items-center gap-2 mb-2">
                             <Activity size={12} /> Related to:{' '}
-                            <span className="text-c-text-secondary">
-                              {c.related_axis}
-                            </span>
+                            <span className="text-c-text-secondary">{c.related_axis}</span>
                           </div>
                         )}
 
@@ -708,9 +704,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs text-c-text-secondary mb-1">
-                          Category
-                        </label>
+                        <label className="block text-xs text-c-text-secondary mb-1">Category</label>
                         <select
                           value={uploadCategory}
                           onChange={(e) => setUploadCategory(e.target.value)}
@@ -890,9 +884,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="mb-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-bold text-c-text">
-                          {s.title}
-                        </h3>
+                        <h3 className="text-xl font-bold text-c-text">{s.title}</h3>
                         {s.priority && (
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
@@ -907,7 +899,9 @@ export const AdminKnowledgeView: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-c-text-secondary text-sm leading-relaxed mb-2">{s.description}</p>
+                      <p className="text-c-text-secondary text-sm leading-relaxed mb-2">
+                        {s.description}
+                      </p>
                       {s.target_date && (
                         <p className="text-xs text-c-text-muted">
                           Target: {new Date(s.target_date).toLocaleDateString()}
@@ -1043,7 +1037,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-500 ${s.is_active ? "w-full bg-c-surface" : "w-0"}`}
+                        className={`h-full transition-all duration-500 ${s.is_active ? 'w-full bg-c-surface' : 'w-0'}`}
                       />
                     </div>
                     <div className="mt-2 text-xs text-right text-c-text-muted">
@@ -1124,9 +1118,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               <div className="flex items-center gap-2 text-xs text-c-text-secondary bg-c-surface-raised p-2 rounded border border-c-border-subtle">
                                 <Target size={12} className="text-blue-600" />
                                 Recommendation:{' '}
-                                <span className="text-c-text">
-                                  {item.action_item}
-                                </span>
+                                <span className="text-c-text">{item.action_item}</span>
                               </div>
                             </div>
                           ))}
@@ -1169,9 +1161,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               <div className="flex items-center gap-2 text-xs text-c-text-secondary bg-c-surface-raised p-2 rounded border border-c-border-subtle">
                                 <Lightbulb size={12} className="text-primary-600" />
                                 Missing Topic:{' '}
-                                <span className="text-c-text">
-                                  {item.action_item}
-                                </span>
+                                <span className="text-c-text">{item.action_item}</span>
                               </div>
                             </div>
                           ))}
@@ -1209,17 +1199,11 @@ export const AdminKnowledgeView: React.FC = () => {
             </div>
             <div className="space-y-4">
               <div className="bg-c-surface-raised p-4 rounded-lg border border-c-border-subtle">
-                <p className="text-c-text font-medium mb-2">
-                  {approvingIdea.content}
-                </p>
-                <p className="text-c-text-secondary text-sm">
-                  {approvingIdea.reasoning}
-                </p>
+                <p className="text-c-text font-medium mb-2">{approvingIdea.content}</p>
+                <p className="text-c-text-secondary text-sm">{approvingIdea.reasoning}</p>
               </div>
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  Category
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">Category</label>
                 <select
                   value={approveIdeaCategory}
                   onChange={(e) => setApproveIdeaCategory(e.target.value)}
@@ -1275,9 +1259,7 @@ export const AdminKnowledgeView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-c-text">
-                Apply Idea in Project
-              </h2>
+              <h2 className="text-xl font-bold text-c-text">Apply Idea in Project</h2>
               <button
                 onClick={() => {
                   setLinkingIdea(null);
@@ -1294,9 +1276,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <p className="text-c-text font-medium">{linkingIdea.content}</p>
               </div>
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  Select Project
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">Select Project</label>
                 <select
                   value={linkProjectId}
                   onChange={(e) => setLinkProjectId(e.target.value)}
@@ -1367,9 +1347,7 @@ export const AdminKnowledgeView: React.FC = () => {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-c-text-secondary mb-1">
-                  Category
-                </label>
+                <label className="block text-xs text-c-text-secondary mb-1">Category</label>
                 <select
                   value={editDocCategory}
                   onChange={(e) => setEditDocCategory(e.target.value)}
@@ -1440,9 +1418,7 @@ export const AdminKnowledgeView: React.FC = () => {
             </div>
             <div className="space-y-4">
               <div className="bg-c-surface-raised p-4 rounded-lg border border-c-border-subtle">
-                <p className="text-c-text font-medium">
-                  {linkingStrategy.title}
-                </p>
+                <p className="text-c-text font-medium">{linkingStrategy.title}</p>
               </div>
               <div>
                 <label className="block text-xs text-c-text-secondary mb-1">
@@ -1563,9 +1539,7 @@ export const AdminKnowledgeView: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-c-text-secondary mb-1">
-                    Priority
-                  </label>
+                  <label className="block text-xs text-c-text-secondary mb-1">Priority</label>
                   <select
                     value={strategyForm.priority}
                     onChange={(e) =>
@@ -1582,9 +1556,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-c-text-secondary mb-1">
-                    Target Date
-                  </label>
+                  <label className="block text-xs text-c-text-secondary mb-1">Target Date</label>
                   <input
                     type="date"
                     value={strategyForm.target_date}
@@ -1614,9 +1586,7 @@ export const AdminKnowledgeView: React.FC = () => {
               </div>
               {editingStrategy && (
                 <div>
-                  <label className="block text-xs text-c-text-secondary mb-1">
-                    Progress (%)
-                  </label>
+                  <label className="block text-xs text-c-text-secondary mb-1">Progress (%)</label>
                   <input
                     type="number"
                     min="0"

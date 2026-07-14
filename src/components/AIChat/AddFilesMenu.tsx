@@ -23,8 +23,8 @@ import { SUPPORTED_CHAT_ATTACHMENT_ACCEPT } from './chatAttachmentSupport';
 import {
   pushRecentAttachment,
   readRecentAttachments,
-  removeRecentAttachment,
   type RecentAttachment,
+  removeRecentAttachment,
 } from './chatRecentAttachments';
 
 // ─── Brand SVG icons (no background, true colours) ──────────────────────────

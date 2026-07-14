@@ -204,9 +204,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
                     🇺🇸
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-c-text">
-                      {COMPANY.usa.name}
-                    </p>
+                    <p className="text-[13px] font-semibold text-c-text">{COMPANY.usa.name}</p>
                     <p className="mt-0.5 text-[11px] leading-5 text-c-text-muted">
                       {COMPANY.usa.address}
                       <br />
@@ -225,9 +223,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
                     🇩🇪
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-c-text">
-                      {COMPANY.germany.name}
-                    </p>
+                    <p className="text-[13px] font-semibold text-c-text">{COMPANY.germany.name}</p>
                     <p className="mt-0.5 text-[11px] leading-5 text-c-text-muted">
                       {COMPANY.germany.address}
                       <br />
@@ -380,9 +376,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
 
           <p className="mt-7 text-center text-[11px] text-c-text-muted">
             {legalOperatorLine}:{' '}
-            <span className="font-semibold text-c-text-secondary">
-              {COMPANY.headquarters.name}
-            </span>
+            <span className="font-semibold text-c-text-secondary">{COMPANY.headquarters.name}</span>
             {` (${COMPANY.headquarters.address}, ${COMPANY.headquarters.city}, NIP ${COMPANY.headquarters.nip}, KRS ${COMPANY.headquarters.krs})`}
           </p>
 

@@ -433,7 +433,9 @@ export const AuditComplianceTab: React.FC = () => {
           {/* Events List */}
           <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
             <div className="overflow-x-auto">
-              <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-left text-sm">
+              <table
+                /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full text-left text-sm"
+              >
                 <thead className="bg-slate-50 dark:bg-black/20 text-xs uppercase text-slate-600 dark:text-slate-500">
                   <tr>
                     <th className="px-6 py-3">Event</th>

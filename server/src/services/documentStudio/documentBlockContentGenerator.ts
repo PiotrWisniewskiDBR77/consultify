@@ -20,12 +20,12 @@
  * @module services/documentStudio/documentBlockContentGenerator
  */
 
+import logger from '../../utils/Logger.js';
 import {
-  resolveDeliverableTier,
   DELIVERABLE_GENERATION_PURPOSE,
   deliverableModelConfig,
+  resolveDeliverableTier,
 } from '../deliverableGenerationTier.js';
-import logger from '../../utils/Logger.js';
 import { resolveDeliverableDefaults } from '../deliverables/deliverableDefaults.js';
 
 const LOG_PREFIX = '[docContentGen]';
@@ -45,15 +45,7 @@ const DENSITY_GUIDANCE = DENSITY_WORDS[REPORT_DEFAULTS.content.density] ?? DENSI
 const KPI_MIN = 3;
 const KPI_MAX = 5;
 const CHART_MAX_SERIES = 6;
-const CHART_PALETTE = [
-  '#2563EB',
-  '#0D9488',
-  '#7C3AED',
-  '#DC2626',
-  '#EA580C',
-  '#0891B2',
-  '#65A30D',
-]; // ≤7 (kanon)
+const CHART_PALETTE = ['#2563EB', '#0D9488', '#7C3AED', '#DC2626', '#EA580C', '#0891B2', '#65A30D']; // ≤7 (kanon)
 const CHART_KINDS = new Set(['bar', 'line', 'pie', 'donut', 'scatter', 'area']);
 const CALLOUT_TONES = new Set(['info', 'warning', 'danger', 'success']);
 
@@ -353,7 +345,10 @@ function normalizeBlockContent(
     case 'heading':
       return { text: String((raw as any)?.text ?? '').trim() || hint };
     case 'image':
-      return { alt: String((raw as any)?.alt ?? '').trim() || hint, url: (raw as any)?.url ?? null };
+      return {
+        alt: String((raw as any)?.alt ?? '').trim() || hint,
+        url: (raw as any)?.url ?? null,
+      };
     case 'divider':
       return {};
     default:
@@ -411,7 +406,10 @@ function parseBlockContentJson(raw: unknown): Record<string, unknown> {
   let s = raw.trim();
   if (!s) return {};
   // Strip accidental markdown fences.
-  s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  s = s
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
   try {
     const parsed = JSON.parse(s);
     return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
@@ -501,7 +499,8 @@ async function fillSectionViaLlm(
   for (const b of rawBlocks) {
     const id = (b as { blockId?: unknown })?.blockId;
     if (typeof id === 'string') {
-      const rawContent = (b as { contentJson?: unknown; content?: unknown })?.contentJson ??
+      const rawContent =
+        (b as { contentJson?: unknown; content?: unknown })?.contentJson ??
         (b as { content?: unknown })?.content; // back-compat if model still nests an object
       byId.set(id, parseBlockContentJson(rawContent));
     }
@@ -541,8 +540,7 @@ async function fillViaLlm(
         anyOk = true;
         for (const [k, v] of res.value) merged.set(k, v);
       } else {
-        const reason =
-          res.status === 'rejected' ? (res.reason as Error)?.message : 'empty result';
+        const reason = res.status === 'rejected' ? (res.reason as Error)?.message : 'empty result';
         logger.warn(`${LOG_PREFIX} section ${si} content failed, will default its blocks`, {
           purpose: DELIVERABLE_GENERATION_PURPOSE,
           reason,

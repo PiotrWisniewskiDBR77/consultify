@@ -14,11 +14,11 @@
  *
  * Bez logowania, bez store/API — czyste propsy. Motyw/lang z URL (?theme, ?lang).
  */
-import { Calendar, Download, DollarSign, ExternalLink, TrendingUp } from 'lucide-react';
+import { Calendar, DollarSign, Download, ExternalLink, TrendingUp } from 'lucide-react';
 import React from 'react';
 
-import { StandardGridCard } from '../../src/components/standard';
 import type { StandardGridCard as StandardGridCardData } from '../../src/components/standard';
+import { StandardGridCard } from '../../src/components/standard';
 
 const CARDS: StandardGridCardData[] = [
   {
@@ -108,16 +108,20 @@ export default function StandardGridCardScreen(): React.ReactElement {
           #76a — JEDEN kanon karty grid/kafelkowej (StandardGridCard)
         </h1>
         <p className="text-xs text-c-text-muted mt-1">
-          4 warianty: portfolio initiative (bez kebaba), hub report (kebab RowActionsMenu),
-          pilność critical (pasek czerwony wygrywa nad akcentem kategorii), deck z
-          customFooterActions (Export/Otwórz źródło). Akcent kategorii WYŁĄCZNIE z palety
-          --c-tag-1..10, zero primary/crimson.
+          4 warianty: portfolio initiative (bez kebaba), hub report (kebab RowActionsMenu), pilność
+          critical (pasek czerwony wygrywa nad akcentem kategorii), deck z customFooterActions
+          (Export/Otwórz źródło). Akcent kategorii WYŁĄCZNIE z palety --c-tag-1..10, zero
+          primary/crimson.
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
         {CARDS.map((card) => (
-          <StandardGridCard key={card.id} card={card} onClick={() => console.log('click', card.id)} />
+          <StandardGridCard
+            key={card.id}
+            card={card}
+            onClick={() => console.log('click', card.id)}
+          />
         ))}
       </div>
     </div>

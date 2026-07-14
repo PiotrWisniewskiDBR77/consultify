@@ -179,12 +179,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
   };
 
   return (
-    <div
-      className={cn(
-        'w-72 shrink-0 border-r border-c-border-subtle bg-c-surface/60',
-        className
-      )}
-    >
+    <div className={cn('w-72 shrink-0 border-r border-c-border-subtle bg-c-surface/60', className)}>
       <div className="p-4">
         {onBack && (
           <button

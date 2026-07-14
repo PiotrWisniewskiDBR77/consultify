@@ -6,26 +6,26 @@
  * payload: Balanced Scorecard (BSC) + Benefits Dependency Network (BDN) +
  * value narrative. Org-wide when projectId is 'all'/'null'/absent. Read-only.
  */
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 
 import verifyToken, { type AuthRequest } from '../middleware/auth.middleware.js';
 import { requireProjectCapability } from '../middleware/effectiveCapability.middleware.js';
 import {
   cascadeRollup,
-  okrSummary,
-  createCycle,
-  listCycles,
   closeCycle,
-  createObjective,
-  updateObjective,
-  deleteObjective,
-  createKeyResult,
-  updateKeyResult,
-  deleteKeyResult,
   createCheckIn,
-  listCheckIns,
-  type Objective,
+  createCycle,
+  createKeyResult,
+  createObjective,
+  deleteKeyResult,
+  deleteObjective,
   type KeyResult,
+  listCheckIns,
+  listCycles,
+  type Objective,
+  okrSummary,
+  updateKeyResult,
+  updateObjective,
 } from '../services/results/okrService.js';
 import {
   buildStrategicView,
@@ -33,8 +33,8 @@ import {
   type StrategicInitiativeToKpi,
   type StrategicKpi,
 } from '../services/results/resultsStrategicViewService.js';
-import { all as dbAll, exec as dbExec } from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll, exec as dbExec } from '../utils/DbPromise.js';
 
 /**
  * D10: OKR cascade tables (lazy-DDL so staging+demo provision on first hit —
@@ -109,7 +109,9 @@ async function ensureOkrTables(): Promise<void> {
   await dbExec(
     `ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft';`
   );
-  await dbExec(`ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();`);
+  await dbExec(
+    `ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();`
+  );
   await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kpi_id TEXT;`);
   await dbExec(
     `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kr_type TEXT NOT NULL DEFAULT 'metric';`
@@ -121,7 +123,9 @@ async function ensureOkrTables(): Promise<void> {
     `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'aspirational';`
   );
   await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS owner_user_id TEXT;`);
-  await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();`);
+  await dbExec(
+    `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();`
+  );
   okrTablesReady = true;
 }
 
@@ -161,29 +165,29 @@ router.get(
     }
     const projectId = req.params.projectId;
     const orgWide =
-      !projectId ||
-      projectId === 'all' ||
-      projectId === 'null' ||
-      projectId === 'undefined';
+      !projectId || projectId === 'all' || projectId === 'null' || projectId === 'undefined';
 
-    const initiativeRows = ((await dbAll(
-      orgWide
-        ? `SELECT id, name FROM initiatives WHERE organization_id = ?`
-        : `SELECT id, name FROM initiatives WHERE project_id = ? AND organization_id = ?`,
-      orgWide ? [orgId] : [projectId, orgId]
-    )) as InitiativeRow[] | undefined) || [];
+    const initiativeRows =
+      ((await dbAll(
+        orgWide
+          ? `SELECT id, name FROM initiatives WHERE organization_id = ?`
+          : `SELECT id, name FROM initiatives WHERE project_id = ? AND organization_id = ?`,
+        orgWide ? [orgId] : [projectId, orgId]
+      )) as InitiativeRow[] | undefined) || [];
 
-    const kpiRows = ((await dbAll(
-      `SELECT id, name, current_value, target_value, measurement_frequency
+    const kpiRows =
+      ((await dbAll(
+        `SELECT id, name, current_value, target_value, measurement_frequency
        FROM initiative_kpis WHERE organization_id = ?`,
-      [orgId]
-    )) as KpiRow[] | undefined) || [];
+        [orgId]
+      )) as KpiRow[] | undefined) || [];
 
-    const mappingRows = ((await dbAll(
-      `SELECT initiative_id, kpi_id
+    const mappingRows =
+      ((await dbAll(
+        `SELECT initiative_id, kpi_id
        FROM initiative_kpi_mappings WHERE organization_id = ?`,
-      [orgId]
-    )) as MappingRow[] | undefined) || [];
+        [orgId]
+      )) as MappingRow[] | undefined) || [];
 
     const initiatives: StrategicInitiative[] = initiativeRows.map((r) => ({
       id: r.id,
@@ -230,26 +234,40 @@ router.get(
     // objects is safe (cascadeRollup spreads `...o` into its return value).
     // FE edit forms need these to prefill (see OkrObjectiveModal/
     // OkrKeyResultModal) — the CRUD write endpoints already accept/persist them.
-    const objRows = ((await dbAll(
-      `SELECT id, label, parent_id, cycle_id, owner_user_id, description, status
+    const objRows =
+      ((await dbAll(
+        `SELECT id, label, parent_id, cycle_id, owner_user_id, description, status
        FROM okr_objectives WHERE organization_id = ?`,
-      [orgId],
-    )) as Array<{
-      id: string; label: string; parent_id: string | null;
-      cycle_id: string | null; owner_user_id: string | null;
-      description: string | null; status: string | null;
-    }>) || [];
-    const krRows = ((await dbAll(
-      `SELECT id, objective_id, label, baseline, target, current, weight,
+        [orgId]
+      )) as Array<{
+        id: string;
+        label: string;
+        parent_id: string | null;
+        cycle_id: string | null;
+        owner_user_id: string | null;
+        description: string | null;
+        status: string | null;
+      }>) || [];
+    const krRows =
+      ((await dbAll(
+        `SELECT id, objective_id, label, baseline, target, current, weight,
               kpi_id, kr_type, kind, owner_user_id, score
        FROM okr_key_results WHERE organization_id = ?`,
-      [orgId],
-    )) as Array<{
-      id: string; objective_id: string; label: string;
-      baseline: number | null; target: number | null; current: number | null; weight: number | null;
-      kpi_id: string | null; kr_type: string | null; kind: string | null;
-      owner_user_id: string | null; score: number | null;
-    }>) || [];
+        [orgId]
+      )) as Array<{
+        id: string;
+        objective_id: string;
+        label: string;
+        baseline: number | null;
+        target: number | null;
+        current: number | null;
+        weight: number | null;
+        kpi_id: string | null;
+        kr_type: string | null;
+        kind: string | null;
+        owner_user_id: string | null;
+        score: number | null;
+      }>) || [];
 
     const krByObjective = new Map<string, KeyResult[]>();
     for (const k of krRows) {
@@ -272,22 +290,25 @@ router.get(
       krByObjective.set(String(k.objective_id), list);
     }
 
-    const objectives: Objective[] = objRows.map((o) => ({
-      id: String(o.id),
-      label: o.label,
-      parentId: o.parent_id ?? undefined,
-      keyResults: krByObjective.get(String(o.id)) ?? [],
-      // extra passthrough for FE edit forms (see comment above)
-      ...(o.cycle_id != null ? { cycleId: o.cycle_id } : {}),
-      ...(o.owner_user_id != null ? { ownerUserId: o.owner_user_id } : {}),
-      ...(o.description != null ? { description: o.description } : {}),
-      ...(o.status != null ? { status: o.status } : {}),
-    } as Objective));
+    const objectives: Objective[] = objRows.map(
+      (o) =>
+        ({
+          id: String(o.id),
+          label: o.label,
+          parentId: o.parent_id ?? undefined,
+          keyResults: krByObjective.get(String(o.id)) ?? [],
+          // extra passthrough for FE edit forms (see comment above)
+          ...(o.cycle_id != null ? { cycleId: o.cycle_id } : {}),
+          ...(o.owner_user_id != null ? { ownerUserId: o.owner_user_id } : {}),
+          ...(o.description != null ? { description: o.description } : {}),
+          ...(o.status != null ? { status: o.status } : {}),
+        }) as Objective
+    );
 
     const cascaded = cascadeRollup(objectives);
     const summary = okrSummary(objectives);
     res.json({ objectives: cascaded, summary });
-  }),
+  })
 );
 
 // ─── CRUD (D7 slice) ────────────────────────────────────────────────────────
@@ -337,7 +358,7 @@ router.get(
     if (!orgId) return;
     const cycles = await listCycles(orgId);
     res.json({ cycles });
-  }),
+  })
 );
 
 router.post(
@@ -370,7 +391,7 @@ router.post(
       createdBy: req.user?.id ?? null,
     });
     res.status(201).json({ success: true, cycle });
-  }),
+  })
 );
 
 router.post(
@@ -389,7 +410,7 @@ router.post(
       return;
     }
     res.json({ success: true, ...result });
-  }),
+  })
 );
 
 // ─── Objectives ─────────────────────────────────────────────────────────
@@ -420,7 +441,7 @@ router.post(
       description: description ?? null,
     });
     res.status(201).json({ success: true, id });
-  }),
+  })
 );
 
 router.patch(
@@ -447,7 +468,7 @@ router.patch(
       return;
     }
     res.json({ success: true });
-  }),
+  })
 );
 
 router.delete(
@@ -466,7 +487,7 @@ router.delete(
       return;
     }
     res.json({ success: true });
-  }),
+  })
 );
 
 // ─── Key Results ────────────────────────────────────────────────────────
@@ -509,7 +530,7 @@ router.post(
       ownerUserId: ownerUserId ?? null,
     });
     res.status(201).json({ success: true, ...result });
-  }),
+  })
 );
 
 router.patch(
@@ -548,7 +569,7 @@ router.patch(
       return;
     }
     res.json({ success: true, score: result.score });
-  }),
+  })
 );
 
 router.delete(
@@ -567,7 +588,7 @@ router.delete(
       return;
     }
     res.json({ success: true });
-  }),
+  })
 );
 
 // ─── Check-ins ──────────────────────────────────────────────────────────
@@ -580,7 +601,7 @@ router.get(
     if (!orgId) return;
     const checkIns = await listCheckIns(req.params.id, orgId);
     res.json({ checkIns });
-  }),
+  })
 );
 
 router.post(
@@ -612,7 +633,7 @@ router.post(
       return;
     }
     res.status(201).json({ success: true, ...result });
-  }),
+  })
 );
 
 export default router;

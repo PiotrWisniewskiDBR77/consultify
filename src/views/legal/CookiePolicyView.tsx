@@ -30,7 +30,9 @@ export const CookiePolicyView: React.FC = () => {
 
   const renderCookieTable = (cookies: typeof COOKIES.essential) => (
     <div className="overflow-x-auto my-4">
-      <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden">
+      <table
+        /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-sm border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden"
+      >
         <thead className="bg-slate-50 dark:bg-navy-900">
           <tr>
             <th className="px-4 py-2 text-left font-medium text-navy-900 dark:text-white">

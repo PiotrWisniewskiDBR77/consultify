@@ -12,14 +12,14 @@
  * Read-only against the engine — this file is the conclusion LAYER only.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
 import { localizeLadder } from './index';
 import {
   buildW2SourcingSequence,
-  rankCapabilities,
   type CapabilityMapperData,
+  rankCapabilities,
 } from './moveValidator';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const loc = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

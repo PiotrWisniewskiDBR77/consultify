@@ -244,7 +244,10 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
                 : 'text-c-text-muted hover:bg-c-surface-raised'
             }`}
           >
-            {t(`initiatives.gantt.zoom.${z}`, z === 'day' ? 'Day' : z === 'week' ? 'Week' : 'Month')}
+            {t(
+              `initiatives.gantt.zoom.${z}`,
+              z === 'day' ? 'Day' : z === 'week' ? 'Week' : 'Month'
+            )}
           </button>
         ))}
       </div>

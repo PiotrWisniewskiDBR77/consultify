@@ -10,9 +10,9 @@
 
 import type { Response } from 'express';
 
-import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
-import { getActualCostByInitiative } from '../services/executionBudgetService.js';
 import { derivePortfolioEvm, evmScheduleHealth } from '../services/evmService.js';
+import { getActualCostByInitiative } from '../services/executionBudgetService.js';
+import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import {
   calculateRiskScore,
   categorizeScore,

@@ -650,7 +650,10 @@ export function isSplitLikeLayout(layout: LayoutTemplate): boolean {
  * Heavier blocks (charts, KPIs, long lists) count for more than a one-line
  * heading or callout.
  */
-export function estimateBlockWeight(block: { type: string; content?: Record<string, unknown> }): number {
+export function estimateBlockWeight(block: {
+  type: string;
+  content?: Record<string, unknown>;
+}): number {
   const c = (block.content || {}) as Record<string, unknown>;
   const textLen = (v: unknown): number => (typeof v === 'string' ? v.length : 0);
   const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
@@ -742,9 +745,7 @@ export function shouldAvoidSplit(
     composition
   );
   const colBlocks = bandAreas.map((area) => assigned.get(area) || []);
-  const colWeights = colBlocks.map((bs) =>
-    bs.reduce((s, b) => s + estimateBlockWeight(b), 0)
-  );
+  const colWeights = colBlocks.map((bs) => bs.reduce((s, b) => s + estimateBlockWeight(b), 0));
 
   // (a) any column empty → half-empty look.
   if (colWeights.some((w) => w <= 0)) return true;
@@ -812,8 +813,7 @@ export function resolveExplicitLayout(card: DeckCard): LayoutTemplate | undefine
 
   for (const id of candidates) {
     const direct = LAYOUT_TEMPLATES.find((l) => l.id === id);
-    const mapped =
-      direct || LAYOUT_TEMPLATES.find((l) => l.id === ARCHETYPE_TO_TEMPLATE[id]);
+    const mapped = direct || LAYOUT_TEMPLATES.find((l) => l.id === ARCHETYPE_TO_TEMPLATE[id]);
     if (mapped) {
       if (shouldAvoidSplit(card.blocks, mapped, card.composition)) {
         return stackedFallbackFor(card.intent);
@@ -1074,7 +1074,9 @@ export function blockDensityFor(
 
   // How much OTHER weight competes in the region (excludes this block + chrome).
   const competing = siblings
-    .filter((b) => b !== block && b.type !== 'divider' && b.type !== 'icon_row' && b.type !== 'heading')
+    .filter(
+      (b) => b !== block && b.type !== 'divider' && b.type !== 'icon_row' && b.type !== 'heading'
+    )
     .reduce((s, b) => s + estimateBlockWeight(b), 0);
 
   // A hero metric on a single-insight / big_number slide is the archetype's
@@ -1100,7 +1102,9 @@ export function blockDensityFor(
     const TALL = new Set(['chart', 'image', 'table', 'smart_diagram', 'smart_layout']);
     const competingTall = siblings.some((b) => b !== block && TALL.has(b.type));
     const competingText = siblings
-      .filter((b) => b !== block && b.type !== 'divider' && b.type !== 'icon_row' && b.type !== 'heading')
+      .filter(
+        (b) => b !== block && b.type !== 'divider' && b.type !== 'icon_row' && b.type !== 'heading'
+      )
       .reduce((s, b) => s + estimateBlockWeight(b), 0);
     return !competingTall && competingText <= 3 ? 'hero' : 'default';
   }

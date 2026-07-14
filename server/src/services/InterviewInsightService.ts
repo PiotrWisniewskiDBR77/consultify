@@ -12,11 +12,11 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
-import { llmService } from './ai/llmService.js';
 import {
   buildInsightRepairHints,
   buildInsightTypeGuidanceBlock,
 } from './ai/insightTypePromptRegistry.js';
+import { llmService } from './ai/llmService.js';
 import {
   buildRepairBriefFromVerdict,
   type FormulaVerdict,
@@ -2627,7 +2627,12 @@ Rules:
       // (best-effort — sqlite/postgres store the chunk text under different
       // column names, see embeddingService.storeChunk).
       const docIds = Array.from(
-        new Set(rows.map((r: any) => r.knowledge_document_id).filter(Boolean).map(String))
+        new Set(
+          rows
+            .map((r: any) => r.knowledge_document_id)
+            .filter(Boolean)
+            .map(String)
+        )
       );
       const excerptByDocId = new Map<string, string>();
       if (docIds.length > 0) {

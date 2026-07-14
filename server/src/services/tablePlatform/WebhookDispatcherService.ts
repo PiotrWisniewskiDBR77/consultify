@@ -6,8 +6,8 @@
 import crypto from 'crypto';
 
 import { getDatabase } from '../../database/Database.js';
-import { decryptSecret, encryptSecret } from '../../utils/secretEncryption.js';
 import logger from '../../utils/Logger.js';
+import { decryptSecret, encryptSecret } from '../../utils/secretEncryption.js';
 
 export interface WebhookEvent {
   source: 'client' | 'publicApi' | 'formSubmission' | 'automation';
@@ -39,7 +39,13 @@ export class WebhookDispatcherService {
     const result = await db.query(
       `INSERT INTO tp_webhooks (base_id, notification_url, specification, hmac_secret, created_by)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [baseId, notificationUrl, JSON.stringify(specification), encryptSecret(hmacSecret), createdBy ?? null]
+      [
+        baseId,
+        notificationUrl,
+        JSON.stringify(specification),
+        encryptSecret(hmacSecret),
+        createdBy ?? null,
+      ]
     );
     const webhook = result.rows[0] as Record<string, unknown>;
     return {

@@ -396,10 +396,7 @@ function ArtifactPreviewPane({
               <textarea
                 value={goalInput}
                 onChange={(e) => setGoalInput(e.target.value)}
-                placeholder={t(
-                  `kimi.shell.inputPlaceholder.${lane}`,
-                  config.inputPlaceholder
-                )}
+                placeholder={t(`kimi.shell.inputPlaceholder.${lane}`, config.inputPlaceholder)}
                 rows={3}
                 className="w-full rounded-hig-md border border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 resize-none"
               />
@@ -434,9 +431,7 @@ function ArtifactPreviewPane({
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-c-border-subtle bg-c-surface-raised shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <Icon size={16} className="text-c-text-secondary flex-shrink-0" />
-          <span className="text-sm font-medium text-c-text truncate">
-            {preview.title}
-          </span>
+          <span className="text-sm font-medium text-c-text truncate">{preview.title}</span>
           {preview.pageCount && (
             <span className="text-xs text-c-text-secondary flex-shrink-0">
               {preview.pageCount} {preview.pageCount === 1 ? 'page' : 'pages'}
@@ -479,9 +474,7 @@ function ArtifactPreviewPane({
           <div className="flex items-center justify-center h-full min-h-[400px]">
             <div className="text-center space-y-3">
               <FileText size={48} className="mx-auto text-c-text-secondary" />
-              <p className="text-sm font-medium text-c-text">
-                {preview.title}
-              </p>
+              <p className="text-sm font-medium text-c-text">{preview.title}</p>
               <p className="text-xs text-c-text-secondary">
                 {t('kimi.docReady', 'Document ready — use Preview File or Download')}
               </p>
@@ -503,9 +496,7 @@ function ArtifactPreviewPane({
                     className="p-3 bg-c-surface rounded-hig-sm border border-c-border-subtle"
                   >
                     <p className="text-xs text-c-text-secondary">{kpi.label}</p>
-                    <p className="text-lg font-semibold text-c-text mt-0.5">
-                      {kpi.value}
-                    </p>
+                    <p className="text-lg font-semibold text-c-text mt-0.5">{kpi.value}</p>
                   </div>
                 ))}
               </div>
@@ -519,7 +510,9 @@ function ArtifactPreviewPane({
                   {(() => {
                     const sheetData = (preview.perSheetData?.[activeSheet] ?? preview.tableData)!;
                     return (
-                      <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-xs">
+                      <table
+                        /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-xs"
+                      >
                         <thead>
                           <tr className="bg-c-surface-raised">
                             {sheetData.columns.map((col) => (
@@ -615,9 +608,7 @@ function ArtifactPreviewPane({
                     className="p-3 bg-c-surface rounded-hig-sm border border-c-border-subtle"
                   >
                     <p className="text-xs text-c-text-secondary">{kpi.label}</p>
-                    <p className="text-lg font-semibold text-c-text mt-0.5">
-                      {kpi.value}
-                    </p>
+                    <p className="text-lg font-semibold text-c-text mt-0.5">{kpi.value}</p>
                   </div>
                 ))}
               </div>
@@ -634,9 +625,7 @@ function ArtifactPreviewPane({
                         {i + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-c-text truncate">
-                          {slide.title}
-                        </p>
+                        <p className="text-sm font-medium text-c-text truncate">{slide.title}</p>
                         <p className="text-xs text-c-text-secondary">
                           {slide.intent.replace(/_/g, ' ')}
                         </p>

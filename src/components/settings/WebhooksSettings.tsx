@@ -459,7 +459,8 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
           <div>
             <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              {t('settings.webhooks.url', 'Endpoint URL')} <span className="text-danger-500">*</span>
+              {t('settings.webhooks.url', 'Endpoint URL')}{' '}
+              <span className="text-danger-500">*</span>
             </label>
             <input
               type="url"

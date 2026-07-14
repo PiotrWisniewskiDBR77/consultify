@@ -51,9 +51,7 @@ export const EmailNotificationsSettings: React.FC<EmailNotificationsSettingsProp
             className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
           >
             <div>
-              <p className="font-medium text-c-text">
-                {t(`settings.notifications.${key}`, label)}
-              </p>
+              <p className="font-medium text-c-text">{t(`settings.notifications.${key}`, label)}</p>
               <p className="text-sm text-c-text-muted">
                 {t(`settings.notifications.${key}Desc`, desc)}
               </p>

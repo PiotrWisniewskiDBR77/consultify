@@ -18,9 +18,9 @@
 
 import {
   DRD_INDUSTRY_PROFILE_SOURCE,
-  getDRDIndustryProfile,
   type DRDDimensionId,
   type DRDIndustryId,
+  getDRDIndustryProfile,
 } from '../assessmentKnowledge/drdIndustryProfiles.js';
 import type { DrdDimension } from './drdReportModel.js';
 

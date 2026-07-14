@@ -348,10 +348,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
           </p>
         </div>
         {onClose && (
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-c-surface-raised"
-          >
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-c-surface-raised">
             <X size={16} className="text-c-text-secondary" />
           </button>
         )}
@@ -411,9 +408,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
       {selectedNode && (
         <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold text-c-text">
-              {selectedNode.label}
-            </h4>
+            <h4 className="text-sm font-semibold text-c-text">{selectedNode.label}</h4>
             <button
               onClick={() => setSelectedNode(null)}
               className="p-1 rounded hover:bg-c-surface-raised"

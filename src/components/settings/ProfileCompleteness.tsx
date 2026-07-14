@@ -253,9 +253,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
     return (
       <div className="p-4 bg-gradient-to-r from-c-accent-soft to-c-accent  rounded-lg border border-c-accent dark:border-c-accent">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-c-text-secondary">
-            Profile Completion
-          </span>
+          <span className="text-sm font-medium text-c-text-secondary">Profile Completion</span>
           <div className="flex items-center gap-2">
             {milestoneBadges.length > 0 && (
               <div className="flex gap-1">
@@ -329,9 +327,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                 </div>
                 <div>
                   <p className="font-medium text-c-text-secondary">{item.label}</p>
-                  <p className="text-xs text-c-text-secondary">
-                    +{item.weight}% completion
-                  </p>
+                  <p className="text-xs text-c-text-secondary">+{item.weight}% completion</p>
                 </div>
               </div>
               {item.action && onNavigate && (
@@ -397,10 +393,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
           </h4>
           <div className="space-y-2">
             {suggestions.map((suggestion, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-2 p-2 bg-c-surface rounded-lg"
-              >
+              <div key={idx} className="flex items-start gap-2 p-2 bg-c-surface rounded-lg">
                 <AlertCircle
                   size={16}
                   className={`mt-0.5 ${

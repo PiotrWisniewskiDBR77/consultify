@@ -239,13 +239,9 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(status.status)}
                       <div>
-                        <p className="font-semibold text-c-text text-sm">
-                          {integration.provider}
-                        </p>
+                        <p className="font-semibold text-c-text text-sm">{integration.provider}</p>
                         {integration.name && (
-                          <p className="text-xs text-c-text-muted">
-                            {integration.name}
-                          </p>
+                          <p className="text-xs text-c-text-muted">{integration.name}</p>
                         )}
                       </div>
                     </div>

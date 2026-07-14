@@ -16,9 +16,9 @@ import {
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
-import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
+import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
@@ -1396,7 +1396,9 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_PREZENTACJE_GEN">
-                <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
+                <MainLayout
+                  breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}
+                >
                   <RouteErrorBoundary>
                     <PrezentacjeView />
                   </RouteErrorBoundary>

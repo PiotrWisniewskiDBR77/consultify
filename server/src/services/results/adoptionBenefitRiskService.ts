@@ -125,7 +125,7 @@ export function diceScore(input: DiceInput): DiceResult {
  * coverage each push risk upward. Returns the risk band plus human-readable reasons.
  */
 export function adoptionToBenefitRisk(
-  input: AdoptionToBenefitRiskInput,
+  input: AdoptionToBenefitRiskInput
 ): AdoptionToBenefitRiskResult {
   const reasons: string[] = [];
   let points = 0;
@@ -180,7 +180,7 @@ export function adoptionToBenefitRisk(
  * zone. A benefit is flagged when diceZone === 'woe' OR adoptionScore < 0.4.
  */
 export function flagBenefitAtRiskByAdoption(
-  items: Array<BenefitAdoptionItem>,
+  items: Array<BenefitAdoptionItem>
 ): Array<BenefitAdoptionFlag> {
   if (!Array.isArray(items)) return [];
 

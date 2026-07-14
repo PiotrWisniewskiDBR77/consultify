@@ -8,7 +8,15 @@
  * and the persistent "Discuss with Teresa" entry. Panel navigation lives
  * separately in the right-side WorkspacePanelStrip.
  */
-import { GitBranch, HelpCircle, MessagesSquare, Search, StickyNote, Table2, Workflow } from 'lucide-react';
+import {
+  GitBranch,
+  HelpCircle,
+  MessagesSquare,
+  Search,
+  StickyNote,
+  Table2,
+  Workflow,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -79,7 +79,9 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
   if (block.locked) {
     return (
       <div className="overflow-x-auto p-4">
-        <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */  className="w-full border-collapse text-left text-sm">
+        <table
+          /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full border-collapse text-left text-sm"
+        >
           <thead>
             <tr className="border-b border-slate-200 dark:border-navy-700">
               {headers.map((h, i) => (

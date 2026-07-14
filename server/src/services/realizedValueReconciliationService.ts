@@ -161,9 +161,7 @@ export function reconcilePortfolio(
  * This is a best-effort assembler: schema drift or missing tables degrade to
  * an empty list rather than throwing, so the pure functions remain the SoT.
  */
-export async function loadReconciliationRows(
-  organizationId: string
-): Promise<ReconcileRow[]> {
+export async function loadReconciliationRows(organizationId: string): Promise<ReconcileRow[]> {
   try {
     const rows = await dbAll(
       `SELECT

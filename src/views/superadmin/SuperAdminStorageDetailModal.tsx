@@ -215,7 +215,9 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
               {searchTerm ? 'No matching files found' : 'No files stored for this organization'}
             </div>
           ) : (
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left border-collapse">
+            <table
+              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left border-collapse"
+            >
               <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase sticky top-0">
                 <tr>
                   <th className="p-4">File Name</th>

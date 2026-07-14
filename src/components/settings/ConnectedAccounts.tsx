@@ -168,7 +168,12 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
       {loadError && (
         <div className="flex items-center gap-2 rounded-md border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
           <AlertTriangle size={16} />
-          <span>{t('settings.connectedAccounts.loadError', 'Unable to load connection status. Shown status may be inaccurate.')}</span>
+          <span>
+            {t(
+              'settings.connectedAccounts.loadError',
+              'Unable to load connection status. Shown status may be inaccurate.'
+            )}
+          </span>
           <button
             type="button"
             onClick={loadAccounts}
@@ -199,9 +204,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-c-text">
-                        {provider.name}
-                      </h4>
+                      <h4 className="font-semibold text-c-text">{provider.name}</h4>
                       {connected && (
                         <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
                           <Check size={12} />

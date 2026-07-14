@@ -17,10 +17,7 @@ import { useBundleList } from './useBundleList';
 // Lifecycle badge
 // ---------------------------------------------------------------------------
 
-const LIFECYCLE_BADGE: Record<
-  string,
-  { label: string; classes: string }
-> = {
+const LIFECYCLE_BADGE: Record<string, { label: string; classes: string }> = {
   draft: {
     label: 'Draft',
     classes: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
@@ -243,9 +240,7 @@ export function BundleHistoryPanel({ refreshSignal }: BundleHistoryPanelProps = 
                   <p className="truncate text-sm font-medium text-c-text">
                     {truncate(bundle.title)}
                   </p>
-                  <p className="text-xs text-c-text-muted">
-                    {formatDate(bundle.createdAt)}
-                  </p>
+                  <p className="text-xs text-c-text-muted">{formatDate(bundle.createdAt)}</p>
                 </div>
 
                 {/* Lifecycle badge */}
@@ -260,9 +255,7 @@ export function BundleHistoryPanel({ refreshSignal }: BundleHistoryPanelProps = 
       )}
 
       {/* Detail overlay */}
-      {selected && (
-        <BundleDetailModal bundle={selected} onClose={() => setSelected(null)} />
-      )}
+      {selected && <BundleDetailModal bundle={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }

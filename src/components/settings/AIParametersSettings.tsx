@@ -113,9 +113,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
           <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.temperature', 'Temperature')}
           </label>
-          <span className="text-sm text-c-text-muted">
-            {temperature.toFixed(1)}
-          </span>
+          <span className="text-sm text-c-text-muted">{temperature.toFixed(1)}</span>
         </div>
         <div className="space-y-2">
           <input
@@ -146,9 +144,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
           <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.maxTokens', 'Max Tokens per Response')}
           </label>
-          <span className="text-sm text-c-text-muted">
-            {maxTokens.toLocaleString()}
-          </span>
+          <span className="text-sm text-c-text-muted">{maxTokens.toLocaleString()}</span>
         </div>
         <input
           type="number"
@@ -167,9 +163,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
           <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.contextWindow', 'Context Window Size')}
           </label>
-          <span className="text-sm text-c-text-muted">
-            {contextWindowSize.toLocaleString()}
-          </span>
+          <span className="text-sm text-c-text-muted">{contextWindowSize.toLocaleString()}</span>
         </div>
         <select
           value={contextWindowSize}
@@ -202,16 +196,12 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
             >
               <div
                 className={`text-sm font-medium ${
-                  responseSpeed === option.value
-                    ? 'text-c-accent'
-                    : 'text-c-text-secondary'
+                  responseSpeed === option.value ? 'text-c-accent' : 'text-c-text-secondary'
                 }`}
               >
                 {option.label}
               </div>
-              <div className="text-xs text-c-text-muted mt-1">
-                {option.description}
-              </div>
+              <div className="text-xs text-c-text-muted mt-1">{option.description}</div>
             </button>
           ))}
         </div>

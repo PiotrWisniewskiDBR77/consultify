@@ -13,8 +13,8 @@
  *
  * Read-only, additive, fail-soft: brak koszyka → pusty stan „uruchom wycenę".
  */
-import React, { useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 /** Metoda koszyka (podzbiór BasketResult z valuationBasketService). */
 export interface EvBasketMethod {
@@ -223,7 +223,9 @@ export const EvBasketFootballField: React.FC<Props> = ({
                 >
                   {/* Etykieta metody */}
                   <div className="py-1 pr-3">
-                    <div className="text-[13px] font-medium leading-tight text-c-text">{m.label}</div>
+                    <div className="text-[13px] font-medium leading-tight text-c-text">
+                      {m.label}
+                    </div>
                     {m.note ? (
                       <div className="mt-0.5 text-[11px] leading-tight text-c-text-muted">
                         {m.note}
@@ -273,8 +275,7 @@ export const EvBasketFootballField: React.FC<Props> = ({
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-warning" aria-hidden="true" />
             <div>
               <span className="font-semibold text-c-warning">
-                {tr('valuation.basket.divergence', 'Rozjazd')} {flag.maxDivergencePct}%
-                {' > '}
+                {tr('valuation.basket.divergence', 'Rozjazd')} {flag.maxDivergencePct}%{' > '}
                 {tr('valuation.basket.threshold', 'próg')} {flag.thresholdPct}%.
               </span>{' '}
               {flag.message}
@@ -305,7 +306,8 @@ export const EvBasketFootballField: React.FC<Props> = ({
             </span>
           </div>
           <div>
-            {tr('valuation.basket.engine', 'silnik')}: <span className="font-medium">koszyk metod</span>
+            {tr('valuation.basket.engine', 'silnik')}:{' '}
+            <span className="font-medium">koszyk metod</span>
             {' · '}
             {tr('valuation.basket.deterministic', 'deterministyczny, zero LLM')}
           </div>

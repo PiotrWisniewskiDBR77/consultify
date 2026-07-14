@@ -13,13 +13,8 @@
  * HARD RULE: every number rendered comes from `DrdReportModel` (engine-derived).
  */
 
-import type {
-  DrdChapter,
-  DrdGapCard,
-  DrdReportModel,
-  DrdRoadmapItem,
-} from './drdReportModel';
 import type { DrdIndustryBenchmarkSection } from './drdIndustryBenchmark';
+import type { DrdChapter, DrdGapCard, DrdReportModel, DrdRoadmapItem } from './drdReportModel';
 import {
   buildDimensionBarsSvg,
   buildMatrixSvg,

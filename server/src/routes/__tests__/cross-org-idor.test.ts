@@ -80,18 +80,14 @@ vi.mock('../../middleware/admin.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
-  requireOrgAccess:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
-  requireOrgRole:
-    () =>
-    (req: any, res: any, next: () => void) => {
-      if (!req.user) return res.status(401).json({ error: 'No token' });
-      next();
-    },
+  requireOrgAccess: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
+  requireOrgRole: () => (req: any, res: any, next: () => void) => {
+    if (!req.user) return res.status(401).json({ error: 'No token' });
+    next();
+  },
   validateOrgMembership: (req: any, res: any, next: () => void) => {
     if (!req.user) return res.status(401).json({ error: 'No token' });
     next();
@@ -280,14 +276,12 @@ describe('W3 — x-kpi-role header is ignored; role derived from JWT', () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     mockDbRun.mockResolvedValueOnce({ lastID: 'kpi-new' });
     const app = await buildV8App();
-    const res = await request(app)
-      .post('/api/v8/results/kpis')
-      .send({
-        name: 'Legitimate KPI',
-        targetValue: 50,
-        measurementFrequency: 'MONTHLY',
-        direction: 'HIGHER_IS_BETTER',
-      });
+    const res = await request(app).post('/api/v8/results/kpis').send({
+      name: 'Legitimate KPI',
+      targetValue: 50,
+      measurementFrequency: 'MONTHLY',
+      direction: 'HIGHER_IS_BETTER',
+    });
 
     // admin → kpi_owner via JWT; should NOT be 403
     expect(res.status).not.toBe(403);
@@ -518,7 +512,9 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
   });
 
   it('POST /benefits/kpi-mappings → 200 + UPSERT when both parents are owned', async () => {
-    mockDbGet.mockResolvedValueOnce({ id: 'init-owned' }).mockResolvedValueOnce({ id: 'kpi-owned' });
+    mockDbGet
+      .mockResolvedValueOnce({ id: 'init-owned' })
+      .mockResolvedValueOnce({ id: 'kpi-owned' });
     const app = await buildBenefitsApp();
     const res = await request(app)
       .post('/api/benefits/kpi-mappings')
@@ -578,14 +574,12 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     // Both parent lookups owned: 1st get (KPI ownership) → owned; 2nd (statement line) → owned.
     mockDbGet.mockResolvedValueOnce({ id: 'kpi-x' }).mockResolvedValueOnce({ id: 'line-x' });
     const app = await buildBenefitsApp();
-    const res = await request(app)
-      .post('/api/benefits/financial/kpi-mappings')
-      .send({
-        kpiId: 'kpi-x',
-        statementLineId: 'line-x',
-        direction: 'positive',
-        multiplier: 'not-a-number',
-      });
+    const res = await request(app).post('/api/benefits/financial/kpi-mappings').send({
+      kpiId: 'kpi-x',
+      statementLineId: 'line-x',
+      direction: 'positive',
+      multiplier: 'not-a-number',
+    });
 
     expect(res.status).toBe(200);
     const upsert = mockDbRun.mock.calls.find((c) =>
@@ -632,14 +626,12 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     // Parent-line ownership SELECT returns null → neither owned nor a shared system line.
     mockDbGet.mockResolvedValue(null);
     const app = await buildBenefitsApp();
-    const res = await request(app)
-      .post('/api/benefits/financial/statement-lines')
-      .send({
-        statementType: 'PL',
-        lineCode: 'REV',
-        lineName: 'Revenue',
-        parentLineId: 'line-from-org-b',
-      });
+    const res = await request(app).post('/api/benefits/financial/statement-lines').send({
+      statementType: 'PL',
+      lineCode: 'REV',
+      lineName: 'Revenue',
+      parentLineId: 'line-from-org-b',
+    });
 
     expect(res.status).toBe(404);
     const insert = mockDbRun.mock.calls.find((c) =>
@@ -961,11 +953,10 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
 
     expect(res.status).toBe(404);
     // The parent SELECT ran org-scoped against the caller's org.
-    const ownershipCall = mockQueryFirst.mock.calls.find(
-      (c) =>
-        /FROM\s+initiatives\s+WHERE\s+id\s*=\s*\?\s+AND\s+organization_id\s*=\s*\?/i.test(
-          String(c?.[0])
-        )
+    const ownershipCall = mockQueryFirst.mock.calls.find((c) =>
+      /FROM\s+initiatives\s+WHERE\s+id\s*=\s*\?\s+AND\s+organization_id\s*=\s*\?/i.test(
+        String(c?.[0])
+      )
     );
     expect(ownershipCall?.[1]).toEqual(['init-from-org-b', ORG_A]);
     // No evidence row was written.
@@ -998,9 +989,7 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     const tables = mockQueryFirst.mock.calls
       .map((c) => String(c?.[0]).match(/FROM\s+(initiatives|benefits|financial_models)\s/i)?.[1])
       .filter(Boolean);
-    expect(tables).toEqual(
-      expect.arrayContaining(['initiatives', 'benefits', 'financial_models'])
-    );
+    expect(tables).toEqual(expect.arrayContaining(['initiatives', 'benefits', 'financial_models']));
   });
 
   // ── SEC-3: results-v4 wallboard-alert parent-ownership precheck ──
@@ -1163,9 +1152,8 @@ describe('W1 — initiativeGovernanceService cross-org isolation', () => {
   });
 
   it('getGoalInitiatives returns [] when goal belongs to a different org', async () => {
-    const { initiativeGovernanceService } = await import(
-      '../../services/initiativeGovernanceService.js'
-    );
+    const { initiativeGovernanceService } =
+      await import('../../services/initiativeGovernanceService.js');
     const result = await initiativeGovernanceService.getGoalInitiatives(ORG_A, 'goal-from-org-b');
     expect(result).toEqual([]);
     // Verify org-scoped query was issued
@@ -1176,18 +1164,16 @@ describe('W1 — initiativeGovernanceService cross-org isolation', () => {
   });
 
   it('linkGoalToInitiative throws 404 when goal belongs to a different org', async () => {
-    const { initiativeGovernanceService } = await import(
-      '../../services/initiativeGovernanceService.js'
-    );
+    const { initiativeGovernanceService } =
+      await import('../../services/initiativeGovernanceService.js');
     await expect(
       initiativeGovernanceService.linkGoalToInitiative(ORG_A, 'goal-from-org-b', 'init-1')
     ).rejects.toMatchObject({ status: 404 });
   });
 
   it('getInitiativeDecisions returns [] when initiative belongs to a different org', async () => {
-    const { initiativeGovernanceService } = await import(
-      '../../services/initiativeGovernanceService.js'
-    );
+    const { initiativeGovernanceService } =
+      await import('../../services/initiativeGovernanceService.js');
     const result = await initiativeGovernanceService.getInitiativeDecisions(
       ORG_A,
       'init-from-org-b'
@@ -1200,9 +1186,8 @@ describe('W1 — initiativeGovernanceService cross-org isolation', () => {
   });
 
   it('linkDecisionToInitiative throws 404 when initiative belongs to a different org', async () => {
-    const { initiativeGovernanceService } = await import(
-      '../../services/initiativeGovernanceService.js'
-    );
+    const { initiativeGovernanceService } =
+      await import('../../services/initiativeGovernanceService.js');
     await expect(
       initiativeGovernanceService.linkDecisionToInitiative(ORG_A, 'init-from-org-b', 'dec-1')
     ).rejects.toMatchObject({ status: 404 });
@@ -1376,9 +1361,7 @@ describe('M15 — PUT /benefits/kpis/:kpiId is blocked on a locked KPI', () => {
     mockDbGet.mockResolvedValue({ id: 'kpi-active', status: 'active' });
     const app = await buildBenefitsApp();
 
-    const res = await request(app)
-      .put('/api/benefits/kpis/kpi-active')
-      .send({ targetValue: 999 });
+    const res = await request(app).put('/api/benefits/kpis/kpi-active').send({ targetValue: 999 });
 
     expect(res.status).toBe(200);
     const updateCall = mockDbRun.mock.calls.find((c) =>

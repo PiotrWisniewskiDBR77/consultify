@@ -86,10 +86,9 @@ describe('M19 presentations — every deck lookup is org-scoped (static source g
     for (const lookup of allDeckLookups) {
       const hasOrg = /organization_id = \?/.test(lookup);
       const isShareToken = /share_token = \?/.test(lookup);
-      expect(
-        hasOrg || isShareToken,
-        `unscoped deck lookup found: ${lookup.slice(0, 120)}`
-      ).toBe(true);
+      expect(hasOrg || isShareToken, `unscoped deck lookup found: ${lookup.slice(0, 120)}`).toBe(
+        true
+      );
     }
   });
 
@@ -100,7 +99,8 @@ describe('M19 presentations — every deck lookup is org-scoped (static source g
     const src = await readRouterSource();
     const flat = src.replace(/\s+/g, ' ');
     const writes =
-      flat.match(/(UPDATE presentation_decks SET|DELETE FROM presentation_decks) [^;]*?(?=`)/g) || [];
+      flat.match(/(UPDATE presentation_decks SET|DELETE FROM presentation_decks) [^;]*?(?=`)/g) ||
+      [];
     expect(writes.length).toBeGreaterThan(0);
     for (const w of writes) {
       expect(
@@ -117,9 +117,9 @@ describe('M19 presentations — every deck lookup is org-scoped (static source g
     const src = await readRouterSource();
     const block = sliceHandler(src, "'/decks/:deckId/agent-history'");
     const flat = block.replace(/\s+/g, ' ');
-    expect(/FROM presentation_ai_operations WHERE deck_id = \? AND organization_id = \?/.test(flat)).toBe(
-      true
-    );
+    expect(
+      /FROM presentation_ai_operations WHERE deck_id = \? AND organization_id = \?/.test(flat)
+    ).toBe(true);
   });
 
   it('runtime-events reads are scoped by organization_id AND deck_id', async () => {

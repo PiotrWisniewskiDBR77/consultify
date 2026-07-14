@@ -11,12 +11,11 @@
  *   output -> { summary{verdict,tradeoffs,expectedEffect}, threads[], moves[], initiatives[], outputCandidates[] } (W2)
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { NarrativeEngineData } from '@/store/useToolStore';
 
 import { localizeLadder } from './index';
-import { rankPillars, buildW2MoveSequence } from './moveValidator';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+import { buildW2MoveSequence, rankPillars } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

@@ -164,7 +164,10 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
             <div>
               <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {t('myWork.decisionReviewNext.jKNavigateA', 'J/K navigate, A approve, R reject, S snooze, ? help')}
+                {t(
+                  'myWork.decisionReviewNext.jKNavigateA',
+                  'J/K navigate, A approve, R reject, S snooze, ? help'
+                )}
               </div>
             </div>
           </div>

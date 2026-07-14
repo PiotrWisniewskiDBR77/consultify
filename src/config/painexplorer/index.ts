@@ -13,21 +13,16 @@
  */
 
 import {
+  type LadderRung,
   PAIN_DEEPENING_LADDER,
   PAIN_LADDER_RUNG_ORDER,
-  type LadderRung,
   type PainStageId,
 } from './deepeningLadder';
-import type {
-  PainNature,
-  PainPoint,
-  PainSession,
-  SolutionCandidate,
-} from './painSynthesisEngine';
+import type { PainNature, PainPoint, PainSession, SolutionCandidate } from './painSynthesisEngine';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './painSynthesisEngine';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
@@ -80,9 +75,7 @@ const asNumber = (raw: unknown): number | undefined =>
  * `threshold` carries the pain nature (root/symptom); `target` optionally
  * carries the annual occurrence count; `durationMinutes` the per-occurrence time.
  */
-export function toPainSession(
-  sections: Record<string, unknown[]> | undefined
-): PainSession {
+export function toPainSession(sections: Record<string, unknown[]> | undefined): PainSession {
   const rawPains = (sections?.['pain-points'] || []) as Array<Record<string, unknown>>;
   const rawSolutions = (sections?.['solutions'] || []) as Array<Record<string, unknown>>;
 

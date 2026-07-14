@@ -673,9 +673,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
                   {t('reports.unsaved', 'Unsaved')}
                 </span>
               )}
-              {reportId && (
-                <InitiativeSuggestionBadge sourceType="audit" sourceId={reportId} />
-              )}
+              {reportId && <InitiativeSuggestionBadge sourceType="audit" sourceId={reportId} />}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {report?.organizationName} • {report?.sections.length}{' '}

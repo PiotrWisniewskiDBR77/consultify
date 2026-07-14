@@ -1748,13 +1748,7 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
  * marker of test/throwaway scaffolding. Used by both the SQL backfill (migration)
  * and the runtime guard below so the two stay in lockstep. Pure, side-effect free.
  */
-const DRAFT_TITLE_MARKERS = [
-  'e2e',
-  'throwaway',
-  'probe',
-  'smoke',
-  'toreport-',
-] as const;
+const DRAFT_TITLE_MARKERS = ['e2e', 'throwaway', 'probe', 'smoke', 'toreport-'] as const;
 
 export function isDraftHeuristicTitle(title: string | null | undefined): boolean {
   if (!title) return false;
@@ -2473,7 +2467,10 @@ function inferArtifactPlan(
   return {
     artifactFamily: explicitFamily || 'document',
     outputType: request.requestedOutputType || 'report',
-    titleHint: deriveArtifactTitle(request.goal, goal.includes('brief') ? 'Working brief' : 'Raport'),
+    titleHint: deriveArtifactTitle(
+      request.goal,
+      goal.includes('brief') ? 'Working brief' : 'Raport'
+    ),
     governancePath: 'execution_spine',
     visibilityScope: 'private',
   };

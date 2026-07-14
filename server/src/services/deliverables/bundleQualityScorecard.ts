@@ -41,13 +41,13 @@ export interface QualityScorecard {
 
 // ── Wagi wymiarów (sumują się; brakujące renormalizowane) ────────────────────
 const WEIGHTS = {
-  content: 0.20,
+  content: 0.2,
   factual: 0.15,
   beauty: 0.15,
   design: 0.15,
-  antiPatterns: 0.10,
+  antiPatterns: 0.1,
   docQa: 0.15,
-  deckQa: 0.10,
+  deckQa: 0.1,
 } as const;
 
 // Cap przy twardej wadzie — materiał z krytycznym defektem nie przekroczy 59 (D).
@@ -79,8 +79,10 @@ function scoreContent(q: BundleQuality): number | null {
 function scoreFactual(q: BundleQuality, spine?: BusinessPlanSpine | null): number | null {
   const contradictions = q.factContradictions?.length ?? 0;
   // hockey-stick + inne flagi finansowe ze spine (jeśli dostępny)
-  const spineFlags = spine?.validation?.antiPatterns?.filter((a) => a.severity === 'flag').length ?? 0;
-  const spineRejects = spine?.validation?.antiPatterns?.filter((a) => a.severity === 'reject').length ?? 0;
+  const spineFlags =
+    spine?.validation?.antiPatterns?.filter((a) => a.severity === 'flag').length ?? 0;
+  const spineRejects =
+    spine?.validation?.antiPatterns?.filter((a) => a.severity === 'reject').length ?? 0;
   if (q.factContradictions == null && !spine) return null;
   return clampScore(100 - contradictions * 25 - spineRejects * 30 - spineFlags * 8);
 }
@@ -119,12 +121,18 @@ function scoreDeckQa(q: BundleQuality): number | null {
 
 function detectCaps(q: BundleQuality, spine?: BusinessPlanSpine | null): string[] {
   const reasons: string[] = [];
-  if (q.content && !q.content.passed) reasons.push('Content gate FAIL (placeholdery / niespójne hero-numbers).');
-  if ((q.factContradictions?.length ?? 0) > 0) reasons.push(`${q.factContradictions.length} sprzeczności faktów z kanonem.`);
-  if ((q.antiPatterns?.criticalCount ?? 0) > 0) reasons.push(`${q.antiPatterns!.criticalCount} krytycznych anti-patternów decka.`);
-  if ((q.deckQa?.errorCount ?? 0) > 0) reasons.push(`${q.deckQa!.errorCount} błędów strukturalnych M19.`);
-  if (q.designCritique && !q.designCritique.passed) reasons.push(`Slajdy do regeneracji: ${q.designCritique.regenerateSlides.join(', ')}.`);
-  const spineRejects = spine?.validation?.antiPatterns?.filter((a) => a.severity === 'reject') ?? [];
+  if (q.content && !q.content.passed)
+    reasons.push('Content gate FAIL (placeholdery / niespójne hero-numbers).');
+  if ((q.factContradictions?.length ?? 0) > 0)
+    reasons.push(`${q.factContradictions.length} sprzeczności faktów z kanonem.`);
+  if ((q.antiPatterns?.criticalCount ?? 0) > 0)
+    reasons.push(`${q.antiPatterns!.criticalCount} krytycznych anti-patternów decka.`);
+  if ((q.deckQa?.errorCount ?? 0) > 0)
+    reasons.push(`${q.deckQa!.errorCount} błędów strukturalnych M19.`);
+  if (q.designCritique && !q.designCritique.passed)
+    reasons.push(`Slajdy do regeneracji: ${q.designCritique.regenerateSlides.join(', ')}.`);
+  const spineRejects =
+    spine?.validation?.antiPatterns?.filter((a) => a.severity === 'reject') ?? [];
   for (const r of spineRejects) reasons.push(`Finanse: ${r.detail}`);
   return reasons;
 }
@@ -134,10 +142,14 @@ function detectCaps(q: BundleQuality, spine?: BusinessPlanSpine | null): string[
 function collectTopIssues(q: BundleQuality, spine?: BusinessPlanSpine | null): string[] {
   const issues: string[] = [];
   for (const m of q.content?.heroNumberMismatches ?? []) {
-    issues.push(`Hero „${m.key}": oczekiwano ${m.expected}, znaleziono warianty ${m.foundVariants.join(' / ')}.`);
+    issues.push(
+      `Hero „${m.key}": oczekiwano ${m.expected}, znaleziono warianty ${m.foundVariants.join(' / ')}.`
+    );
   }
   for (const c of q.factContradictions ?? []) {
-    issues.push(`Sprzeczność faktu: ${(c as { detail?: string; message?: string }).detail ?? (c as { message?: string }).message ?? 'liczba niezgodna z kanonem'}.`);
+    issues.push(
+      `Sprzeczność faktu: ${(c as { detail?: string; message?: string }).detail ?? (c as { message?: string }).message ?? 'liczba niezgodna z kanonem'}.`
+    );
   }
   for (const hit of q.antiPatterns?.hits ?? []) {
     if (hit.severity === 'CRITICAL') issues.push(`${hit.code}: ${hit.message}`);
@@ -160,28 +172,66 @@ function collectTopIssues(q: BundleQuality, spine?: BusinessPlanSpine | null): s
  */
 export function buildQualityScorecard(
   quality: BundleQuality | null | undefined,
-  spine?: BusinessPlanSpine | null,
+  spine?: BusinessPlanSpine | null
 ): QualityScorecard {
   if (!quality) {
-    return { overall: 0, grade: 'F', dimensions: [], capped: true, capReasons: ['Brak danych jakości.'], topIssues: [] };
+    return {
+      overall: 0,
+      grade: 'F',
+      dimensions: [],
+      capped: true,
+      capReasons: ['Brak danych jakości.'],
+      topIssues: [],
+    };
   }
 
   const dims: DimensionScore[] = [
-    { key: 'content', label: 'Treść (placeholdery / hero)', score: scoreContent(quality), weight: WEIGHTS.content },
-    { key: 'factual', label: 'Integralność faktów', score: scoreFactual(quality, spine), weight: WEIGHTS.factual },
-    { key: 'beauty', label: 'Estetyka układu', score: scoreBeauty(quality), weight: WEIGHTS.beauty },
-    { key: 'design', label: 'Reguły projektowe', score: scoreDesign(quality), weight: WEIGHTS.design },
-    { key: 'antiPatterns', label: 'Anti-patterny decka', score: scoreAntiPatterns(quality), weight: WEIGHTS.antiPatterns },
-    { key: 'docQa', label: 'QA dokumentu (M18)', score: scoreDocQa(quality), weight: WEIGHTS.docQa },
+    {
+      key: 'content',
+      label: 'Treść (placeholdery / hero)',
+      score: scoreContent(quality),
+      weight: WEIGHTS.content,
+    },
+    {
+      key: 'factual',
+      label: 'Integralność faktów',
+      score: scoreFactual(quality, spine),
+      weight: WEIGHTS.factual,
+    },
+    {
+      key: 'beauty',
+      label: 'Estetyka układu',
+      score: scoreBeauty(quality),
+      weight: WEIGHTS.beauty,
+    },
+    {
+      key: 'design',
+      label: 'Reguły projektowe',
+      score: scoreDesign(quality),
+      weight: WEIGHTS.design,
+    },
+    {
+      key: 'antiPatterns',
+      label: 'Anti-patterny decka',
+      score: scoreAntiPatterns(quality),
+      weight: WEIGHTS.antiPatterns,
+    },
+    {
+      key: 'docQa',
+      label: 'QA dokumentu (M18)',
+      score: scoreDocQa(quality),
+      weight: WEIGHTS.docQa,
+    },
     { key: 'deckQa', label: 'QA decka (M19)', score: scoreDeckQa(quality), weight: WEIGHTS.deckQa },
   ];
 
   // ważona średnia tylko z dostępnych wymiarów (renormalizacja)
   const available = dims.filter((d) => d.score !== null);
   const totalWeight = available.reduce((s, d) => s + d.weight, 0);
-  const weighted = totalWeight > 0
-    ? available.reduce((s, d) => s + (d.score as number) * d.weight, 0) / totalWeight
-    : 0;
+  const weighted =
+    totalWeight > 0
+      ? available.reduce((s, d) => s + (d.score as number) * d.weight, 0) / totalWeight
+      : 0;
 
   const capReasons = detectCaps(quality, spine);
   const capped = capReasons.length > 0;

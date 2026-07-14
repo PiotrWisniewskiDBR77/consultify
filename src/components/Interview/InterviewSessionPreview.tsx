@@ -60,8 +60,7 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   const pills: MetaPill[] = [
     {
       label: t('interview.sessionPreview.session'),
-      className:
-        'bg-c-info/10 text-[var(--c-info)] border-c-info/20',
+      className: 'bg-c-info/10 text-[var(--c-info)] border-c-info/20',
     },
     {
       label: `${t('interview.sessionPreview.progress')}: ${progress}%`,
@@ -86,7 +85,9 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   const customActions: DetailsAction[] = [
     {
       id: 'toggle',
-      label: detailsExpanded ? (t('interview.sessionPreview.collapse')) : t('interview.sessionPreview.expand'),
+      label: detailsExpanded
+        ? t('interview.sessionPreview.collapse')
+        : t('interview.sessionPreview.expand'),
       onClick: onToggleDetailsExpanded,
     },
     {
@@ -195,9 +196,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
           hints={aiHints}
           onRunHint={onRunAiHint}
           disabled={!canRunAi}
-          disabledTooltip={
-            t('interview.sessionPreview.aiAvailableAfterCompletion')
-          }
+          disabledTooltip={t('interview.sessionPreview.aiAvailableAfterCompletion')}
         />
       </div>
 

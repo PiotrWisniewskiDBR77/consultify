@@ -422,7 +422,9 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
           </div>
         ) : (
           <>
-            <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full">
+            <table
+              /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="w-full"
+            >
               <thead className="bg-slate-50 dark:bg-navy-800">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">

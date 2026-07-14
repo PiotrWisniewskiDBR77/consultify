@@ -2801,17 +2801,7 @@ router.post(
       await dbRun(
         `INSERT INTO payment_methods (id, organization_id, stripe_payment_method_id, type, brand, last4, exp_month, exp_year, holder_name, is_default)
          VALUES (?, ?, ?, 'card', ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          orgId,
-          pmId,
-          brand,
-          last4,
-          expMonth,
-          expYear,
-          holder,
-          isDefault,
-        ]
+        [id, orgId, pmId, brand, last4, expMonth, expYear, holder, isDefault]
       );
 
       const created = await dbGet(`SELECT * FROM payment_methods WHERE id = ?`, [id]);
@@ -3768,9 +3758,10 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      await dbRun('UPDATE tax_rates SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [
-        id,
-      ]);
+      await dbRun(
+        'UPDATE tax_rates SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [id]
+      );
       return res.json({ success: true });
     } catch (error: any) {
       logger.error('[Billing] Delete tax rate error:', error);
@@ -5165,7 +5156,7 @@ router.put(
       if (fields.length === 0) {
         return res.status(400).json({ error: 'No fields to update' });
       }
-      fields.push("updated_at = CURRENT_TIMESTAMP");
+      fields.push('updated_at = CURRENT_TIMESTAMP');
       values.push(req.params.id);
 
       await dbRun(`UPDATE usage_pricing_tiers SET ${fields.join(', ')} WHERE id = ?`, values);

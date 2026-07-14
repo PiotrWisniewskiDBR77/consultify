@@ -22,12 +22,7 @@
  * tests in isolation.
  */
 
-import {
-  RPA_GATES,
-  rpaGateLabel,
-  type Bilingual,
-  type RpaGateId,
-} from './deepeningLadder';
+import { type Bilingual, RPA_GATES, type RpaGateId, rpaGateLabel } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
 
@@ -374,15 +369,25 @@ export function buildW2MoveSequence(session: RpaSession): SequencedMove[] {
       pl: 'Odrzucamy automatyzację całego backlogu równolegle: bez skończonego pierwszego bota zespół gubi wzorzec utrzymania, a każdy bot rośnie w kruchości.',
       en: 'We reject automating the whole backlog in parallel: without a finished first bot the team loses the maintenance pattern and every bot grows brittle.',
     },
-    expectedImpact: primaryScore.attractiveness >= 2.5 ? 'high' : primaryScore.attractiveness >= 1.7 ? 'medium' : 'low',
-    estimatedEffort: primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
+    expectedImpact:
+      primaryScore.attractiveness >= 2.5
+        ? 'high'
+        : primaryScore.attractiveness >= 1.7
+          ? 'medium'
+          : 'low',
+    estimatedEffort:
+      primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
     validation: VALID,
   });
 
   // Standardize is the cheapest structural gate — surface it explicitly if it
   // has scope and is not already the primary. Automating an unstable process
   // locks a moving target.
-  if (primary !== 'standardize' && scoreOf('standardize').minutesAddressed > 0 && ordered.includes('standardize')) {
+  if (
+    primary !== 'standardize' &&
+    scoreOf('standardize').minutesAddressed > 0 &&
+    ordered.includes('standardize')
+  ) {
     const standardizeScore = scoreOf('standardize');
     moves.push({
       order: order++,
@@ -397,7 +402,7 @@ export function buildW2MoveSequence(session: RpaSession): SequencedMove[] {
       },
       tradeOff: {
         pl: 'Kosztem czasu na spisanie jednej ścieżki i zmierzenie udziału wyjątków — bez tego automatyzujecie wariant jednej osoby.',
-        en: 'At the cost of time to write one path and measure the exception share — without it you automate one person\'s variant.',
+        en: "At the cost of time to write one path and measure the exception share — without it you automate one person's variant.",
       },
       rejectedVariant: {
         pl: 'Odrzucamy automatyzację procesu „jak jest": bot na złym procesie daje szybszy zły proces, a jego przeróbka jest droższa niż standaryzacja przed budową.',
@@ -420,12 +425,14 @@ export function buildW2MoveSequence(session: RpaSession): SequencedMove[] {
       en: 'Prove feasibility with a PoC before approving the build',
     },
     rationale: {
-      pl: baseline.ruleBasedCount > 0
-        ? `${baseline.ruleBasedCount} z ${baseline.candidateCount} kandydatów jest w pełni regułowych; ocena wykonalności chroni ${feasibilityScore.minutesAddressed} min/rok przed budżetem na bota, który nie ruszy na produkcji.`
-        : `Żaden kandydat nie jest jeszcze w pełni regułowy — ocena wykonalności chroni ${feasibilityScore.minutesAddressed} min/rok przed budową, która utrwala kruchość zamiast zwrotu.`,
-      en: baseline.ruleBasedCount > 0
-        ? `${baseline.ruleBasedCount} of ${baseline.candidateCount} candidates are fully rule-based; the feasibility gate protects ${feasibilityScore.minutesAddressed} min/yr from budgeting a bot that never goes live.`
-        : `No candidate is fully rule-based yet — the feasibility gate protects ${feasibilityScore.minutesAddressed} min/yr from a build that locks in brittleness instead of return.`,
+      pl:
+        baseline.ruleBasedCount > 0
+          ? `${baseline.ruleBasedCount} z ${baseline.candidateCount} kandydatów jest w pełni regułowych; ocena wykonalności chroni ${feasibilityScore.minutesAddressed} min/rok przed budżetem na bota, który nie ruszy na produkcji.`
+          : `Żaden kandydat nie jest jeszcze w pełni regułowy — ocena wykonalności chroni ${feasibilityScore.minutesAddressed} min/rok przed budową, która utrwala kruchość zamiast zwrotu.`,
+      en:
+        baseline.ruleBasedCount > 0
+          ? `${baseline.ruleBasedCount} of ${baseline.candidateCount} candidates are fully rule-based; the feasibility gate protects ${feasibilityScore.minutesAddressed} min/yr from budgeting a bot that never goes live.`
+          : `No candidate is fully rule-based yet — the feasibility gate protects ${feasibilityScore.minutesAddressed} min/yr from a build that locks in brittleness instead of return.`,
     },
     tradeOff: {
       pl: 'Kosztem czasu na PoC i wycenę kosztu utrzymania — zdolność inżynierska, nie zakupowa, ale bez niej budujecie zobowiązanie utrzymaniowe w ciemno.',
@@ -433,7 +440,7 @@ export function buildW2MoveSequence(session: RpaSession): SequencedMove[] {
     },
     rejectedVariant: {
       pl: 'Odrzucamy zatwierdzenie budowy na zapewnieniu dostawcy: wykonalność zakładana bez PoC to najczęstsza przyczyna botów, które nie ruszają.',
-      en: 'We reject approving the build on the vendor\'s assurance: feasibility assumed without a PoC is the top reason bots never go live.',
+      en: "We reject approving the build on the vendor's assurance: feasibility assumed without a PoC is the top reason bots never go live.",
     },
     expectedImpact: 'medium',
     estimatedEffort: 'medium',

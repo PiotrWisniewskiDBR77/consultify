@@ -291,9 +291,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
       {signatures.length === 0 && !isCreating ? (
         <div className={cardClass + ' p-8 text-center'}>
           <FileText className="w-12 h-12 text-c-text-muted mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-c-text mb-2">
-            No signatures yet
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text mb-2">No signatures yet</h3>
           <p className="text-c-text-muted mb-4">
             Create your first email signature to use across your communications.
           </p>
@@ -312,9 +310,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
               {/* Header */}
               <div className="p-4 flex items-center justify-between border-b border-c-border-subtle dark:border-navy-700">
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-c-text">
-                    {signature.name}
-                  </span>
+                  <span className="font-semibold text-c-text">{signature.name}</span>
                   {signature.isDefault && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full flex items-center gap-1">
                       <Star size={12} />

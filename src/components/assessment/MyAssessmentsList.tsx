@@ -264,9 +264,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           </div>
           <div>
             <h1 className="text-2xl font-bold text-c-text">My Assessments</h1>
-            <p className="text-c-text-muted">
-              {assessments.length} assessments total
-            </p>
+            <p className="text-c-text-muted">{assessments.length} assessments total</p>
           </div>
         </div>
 
@@ -476,9 +474,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <span className="text-sm text-c-text-muted tabular-nums">
-                        {progress}%
-                      </span>
+                      <span className="text-sm text-c-text-muted tabular-nums">{progress}%</span>
                     </div>
                     <p className="text-xs text-c-text-muted mt-1">
                       {assessment.completedAxes}/{assessment.totalAxes} axes
@@ -487,12 +483,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
                   {/* Updated */}
                   <div className="col-span-2">
-                    <p className="text-sm text-c-text">
-                      {getTimeAgo(assessment.updatedAt)}
-                    </p>
-                    <p className="text-xs text-c-text-muted">
-                      {formatDate(assessment.createdAt)}
-                    </p>
+                    <p className="text-sm text-c-text">{getTimeAgo(assessment.updatedAt)}</p>
+                    <p className="text-xs text-c-text-muted">{formatDate(assessment.createdAt)}</p>
                   </div>
 
                   {/* Actions */}

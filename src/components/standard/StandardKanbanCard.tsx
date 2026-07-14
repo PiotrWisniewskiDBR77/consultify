@@ -230,9 +230,7 @@ export const StandardKanbanCard: React.FC<StandardKanbanCardProps> = ({
       ) : null}
 
       {draggable ? (
-        <span className="sr-only">
-          {t('common.dragToMove', 'Drag to move to another column')}
-        </span>
+        <span className="sr-only">{t('common.dragToMove', 'Drag to move to another column')}</span>
       ) : null}
     </div>
   );

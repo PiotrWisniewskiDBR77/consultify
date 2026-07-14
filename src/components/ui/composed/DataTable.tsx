@@ -165,7 +165,9 @@ export const DataTable = forwardRef<HTMLDivElement, DataTableProps<Record<string
     return (
       <div ref={ref} className={`w-full ${className}`}>
         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700">
-          <table /* §27-exempt: generyczny prymityw tabeli, FilterableTable = kanon dla list */  className="w-full">
+          <table
+            /* §27-exempt: generyczny prymityw tabeli, FilterableTable = kanon dla list */ className="w-full"
+          >
             {/* Header */}
             <thead className="bg-slate-50 dark:bg-navy-900">
               <tr>

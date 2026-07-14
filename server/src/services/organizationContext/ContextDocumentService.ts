@@ -4,8 +4,8 @@ import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import PDFParserService from '../pdfParserService.js';
 import logger from '../../utils/Logger.js';
+import PDFParserService from '../pdfParserService.js';
 import organizationContextService from './OrganizationContextService.js';
 
 export type ContextDocumentScope = 'project' | 'user';

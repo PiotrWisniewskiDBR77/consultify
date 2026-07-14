@@ -577,7 +577,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const handleDelete = async () => {
     if (
       !confirm(
-        t('myWork.notificationDetail.areYouSureYou', 'Are you sure you want to delete this notification?')
+        t(
+          'myWork.notificationDetail.areYouSureYou',
+          'Are you sure you want to delete this notification?'
+        )
       )
     )
       return;
@@ -781,7 +784,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         const aiRes = await Api.post('/ai/chat', {
           message: prompt,
           history: [],
-          systemInstruction: t('myWork.notificationDetail.systemInstruction', 'You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.'),
+          systemInstruction: t(
+            'myWork.notificationDetail.systemInstruction',
+            'You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.'
+          ),
           roleName: 'Notification Context Builder',
         });
 
@@ -818,7 +824,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         if (!silent) {
           setActiveNSection('whats-happening');
           toast.success(
-            t('myWork.notificationDetail.aIFilledNotificationContext', 'AI filled notification context')
+            t(
+              'myWork.notificationDetail.aIFilledNotificationContext',
+              'AI filled notification context'
+            )
           );
         }
       } catch (err) {
@@ -1048,38 +1057,65 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         ? `To opóźnienie${daysOverdue > 0 ? ` (${daysOverdue} dni)` : ''} może wpłynąć na powiązane zadania${blockingCount > 0 ? ` i blokuje ${blockingCount} innych zadań` : ''}.`
         : `This delay${daysOverdue > 0 ? ` (${daysOverdue} days)` : ''} may impact related tasks${blockingCount > 0 ? ` and blocks ${blockingCount} other task(s)` : ''}.`;
     } else if (type.includes('BLOCKED')) {
-      impact = t('myWork.notificationDetail.blockedTaskIsHalting', 'Blocked task is halting project progress.');
+      impact = t(
+        'myWork.notificationDetail.blockedTaskIsHalting',
+        'Blocked task is halting project progress.'
+      );
     } else if (type.includes('DECISION')) {
       const deadlineDays = Number(data.deadline_days || 0);
       impact = isPolish
         ? `Decyzja jest wymagana${deadlineDays > 0 ? ` w ciągu ${deadlineDays} dni` : ''} do kontynuowania prac.`
         : `Decision is required${deadlineDays > 0 ? ` within ${deadlineDays} days` : ''} to continue work.`;
     } else if (type.includes('AI_RISK')) {
-      impact = t('myWork.notificationDetail.aIDetectedAPotential', 'AI detected a potential risk that requires attention.');
+      impact = t(
+        'myWork.notificationDetail.aIDetectedAPotential',
+        'AI detected a potential risk that requires attention.'
+      );
     } else if (type.includes('AI_RECOMMENDATION')) {
       const savings = data.savings_annual as string;
       impact = savings
         ? isPolish
           ? `AI zidentyfikowało potencjalne oszczędności: ${savings}/rok.`
           : `AI identified potential savings of ${savings}/year.`
-        : t('myWork.notificationDetail.aIHasAnOptimization', 'AI has an optimization recommendation.');
+        : t(
+            'myWork.notificationDetail.aIHasAnOptimization',
+            'AI has an optimization recommendation.'
+          );
     } else {
-      impact = t('myWork.notificationDetail.thisNotificationRequiresYour', 'This notification requires your attention.');
+      impact = t(
+        'myWork.notificationDetail.thisNotificationRequiresYour',
+        'This notification requires your attention.'
+      );
     }
 
     let recommendation: string;
     if (enrichedRecommendation) {
       recommendation = enrichedRecommendation;
     } else if (type.includes('OVERDUE')) {
-      recommendation = t('myWork.notificationDetail.recommendedImmediatelyUpdateStatus', 'Recommended: Immediately update status or delegate the task.');
+      recommendation = t(
+        'myWork.notificationDetail.recommendedImmediatelyUpdateStatus',
+        'Recommended: Immediately update status or delegate the task.'
+      );
     } else if (type.includes('BLOCKED')) {
-      recommendation = t('myWork.notificationDetail.recommendedResolveBlockerOr', 'Recommended: Resolve blocker or escalate to manager.');
+      recommendation = t(
+        'myWork.notificationDetail.recommendedResolveBlockerOr',
+        'Recommended: Resolve blocker or escalate to manager.'
+      );
     } else if (type.includes('DECISION')) {
-      recommendation = t('myWork.notificationDetail.recommendedAnalyzeOptionsAnd', 'Recommended: Analyze options and make a decision.');
+      recommendation = t(
+        'myWork.notificationDetail.recommendedAnalyzeOptionsAnd',
+        'Recommended: Analyze options and make a decision.'
+      );
     } else if (type.includes('AI')) {
-      recommendation = t('myWork.notificationDetail.recommendedReviewAIRecommendation', 'Recommended: Review AI recommendation and decide.');
+      recommendation = t(
+        'myWork.notificationDetail.recommendedReviewAIRecommendation',
+        'Recommended: Review AI recommendation and decide.'
+      );
     } else {
-      recommendation = t('myWork.notificationDetail.recommendedReviewAndTake', 'Recommended: Review and take appropriate action.');
+      recommendation = t(
+        'myWork.notificationDetail.recommendedReviewAndTake',
+        'Recommended: Review and take appropriate action.'
+      );
     }
 
     const priLabel = priorityMap[computedPriority] || priorityMap.MEDIUM;
@@ -1357,7 +1393,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             ? 'AI'
             : isSystemCreated
               ? 'System'
-              : notification.data?.createdByName || (t('myWork.notificationDetail.user', 'User'));
+              : notification.data?.createdByName || t('myWork.notificationDetail.user', 'User');
           const CreatorIcon = isAICreated ? Bot : isSystemCreated ? Monitor : Users;
           const creatorColor = isAICreated
             ? 'text-primary-500 bg-primary-500/10 border-primary-400/40'
@@ -1379,7 +1415,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                    {t('myWork.notificationDetail.whatSHappening', 'What\'s Happening')}
+                    {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
                   </h2>
                   {isAnalyzingWorksheet && (
                     <span className="inline-flex items-center gap-1.5 text-[11px] text-primary-500 dark:text-primary-400 animate-pulse">
@@ -1412,7 +1448,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </label>
                 {relatedNotifItems.length === 0 ? (
                   <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
-                    {t('myWork.notificationDetail.noLinkedSourceSystem', 'No linked source — system notification')}
+                    {t(
+                      'myWork.notificationDetail.noLinkedSourceSystem',
+                      'No linked source — system notification'
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -1447,7 +1486,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigator.clipboard.writeText(item.id);
-                                toast.success(t('myWork.notificationDetail.toastSuccess9', 'ID copied'));
+                                toast.success(
+                                  t('myWork.notificationDetail.toastSuccess9', 'ID copied')
+                                );
                               }}
                               title={t('myWork.notificationDetail.title', 'Copy ID')}
                             >
@@ -1492,9 +1533,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   onChange={(e) => setDescriptionDraft(e.target.value)}
                   rows={3}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[48px]"
-                  placeholder={
-                    t('myWork.notificationDetail.whatHappenedDescribeThe', 'What happened — describe the notification event...')
-                  }
+                  placeholder={t(
+                    'myWork.notificationDetail.whatHappenedDescribeThe',
+                    'What happened — describe the notification event...'
+                  )}
                 />
               </div>
 
@@ -1523,9 +1565,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   onChange={(e) => setWhyImportantDraft(e.target.value)}
                   rows={2}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
-                  placeholder={
-                    t('myWork.notificationDetail.explainTheImpactAnd', 'Explain the impact and consequences...')
-                  }
+                  placeholder={t(
+                    'myWork.notificationDetail.explainTheImpactAnd',
+                    'Explain the impact and consequences...'
+                  )}
                 />
               </div>
 
@@ -1540,9 +1583,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     onChange={(e) => setBlockedDraft(e.target.value)}
                     rows={2}
                     className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
-                    placeholder={
-                      t('myWork.notificationDetail.whatIsBlockedBy', 'What is blocked by this issue...')
-                    }
+                    placeholder={t(
+                      'myWork.notificationDetail.whatIsBlockedBy',
+                      'What is blocked by this issue...'
+                    )}
                   />
                 </div>
               )}
@@ -1597,7 +1641,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     </span>
                     {aiAnalysis.confidence && (
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
-                        {t('myWork.notificationDetail.confidence', 'Confidence')}: {aiAnalysis.confidence}
+                        {t('myWork.notificationDetail.confidence', 'Confidence')}:{' '}
+                        {aiAnalysis.confidence}
                       </span>
                     )}
                     {aiAnalysis.aiGenerated && (
@@ -1748,7 +1793,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
                     />
                     <p className="text-xs text-slate-600 dark:text-slate-500">
-                      {t('myWork.notificationDetail.noStepsClickAI', 'No steps — click AI to generate a checklist')}
+                      {t(
+                        'myWork.notificationDetail.noStepsClickAI',
+                        'No steps — click AI to generate a checklist'
+                      )}
                     </p>
                   </div>
                 ) : (
@@ -1856,9 +1904,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       handleAddComment();
                     }
                   }}
-                  placeholder={
-                    t('myWork.notificationDetail.writeACommentCmd', 'Write a comment... (Cmd+Enter to send)')
-                  }
+                  placeholder={t(
+                    'myWork.notificationDetail.writeACommentCmd',
+                    'Write a comment... (Cmd+Enter to send)'
+                  )}
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 dark:focus:border-primary-500 transition-all"
                   rows={3}
                 />
@@ -2267,7 +2316,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         <div className="max-w-6xl mx-auto space-y-0">
           {/* ── Header — shared NModeHeader ─────────────────────────────── */}
           <NModeHeader
-            title={notification.title || (t('myWork.notificationDetail.notification', 'Notification'))}
+            title={
+              notification.title || t('myWork.notificationDetail.notification', 'Notification')
+            }
             onTitleChange={() => {}}
             titleReadOnly={true}
             artifactId={notificationId}
@@ -2406,7 +2457,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/40">
                             <p className="text-[10px] text-slate-600 dark:text-slate-500">
                               {t('myWork.notificationDetail.snoozedUntil', 'Snoozed until')}:{' '}
-                              {new Date(snoozedUntil).toLocaleString(t('myWork.notificationDetail.toLocaleString', 'en-US'))}
+                              {new Date(snoozedUntil).toLocaleString(
+                                t('myWork.notificationDetail.toLocaleString', 'en-US')
+                              )}
                             </p>
                           </div>
                         )}
@@ -2520,7 +2573,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <Info size={18} className="text-blue-500 dark:text-blue-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {t('myWork.notificationDetail.whatSHappening2', 'What\'s happening')}
+                          {t('myWork.notificationDetail.whatSHappening2', "What's happening")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2615,11 +2668,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               <span
                                 className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-danger-500/10 text-danger-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}
                               >
-                                {t('myWork.notificationDetail.priority2', 'Priority')}: {aiAnalysis.priority}
+                                {t('myWork.notificationDetail.priority2', 'Priority')}:{' '}
+                                {aiAnalysis.priority}
                               </span>
                               {aiAnalysis.confidence && (
                                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
-                                  {t('myWork.notificationDetail.confidence2', 'Confidence')}: {aiAnalysis.confidence}
+                                  {t('myWork.notificationDetail.confidence2', 'Confidence')}:{' '}
+                                  {aiAnalysis.confidence}
                                 </span>
                               )}
                               {aiAnalysis.aiGenerated && (
@@ -2644,7 +2699,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors text-sm font-medium"
                             >
                               <MessageSquare size={14} />
-                              {t('myWork.notificationDetail.askAIForMore2', 'Ask AI for more details')}
+                              {t(
+                                'myWork.notificationDetail.askAIForMore2',
+                                'Ask AI for more details'
+                              )}
                             </button>
                           </div>
                         </motion.div>
@@ -2697,7 +2755,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <div className="p-5 space-y-4">
                             <div className="flex items-center justify-between">
                               <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                                {t('myWork.notificationDetail.whatNeedsToBe2', 'What needs to be done')}
+                                {t(
+                                  'myWork.notificationDetail.whatNeedsToBe2',
+                                  'What needs to be done'
+                                )}
                               </label>
                               <AIFieldEnhancer
                                 fieldKey="c-notification-expected-action"
@@ -2720,7 +2781,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               onChange={(e) => setExpectedActionDraft(e.target.value)}
                               rows={3}
                               className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
-                              placeholder={t('myWork.notificationDetail.placeholder2', 'Expected action...')}
+                              placeholder={t(
+                                'myWork.notificationDetail.placeholder2',
+                                'Expected action...'
+                              )}
                             />
 
                             <div className="flex items-center justify-between pt-1">
@@ -2822,7 +2886,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               className="w-full px-4 py-2.5 rounded-xl border border-dashed border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:border-primary-400 dark:hover:border-primary-400/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 transition-colors text-sm flex items-center justify-center gap-2"
                             >
                               <MessageSquare size={14} />
-                              {t('myWork.notificationDetail.openContextualChat2', 'Open contextual chat')}
+                              {t(
+                                'myWork.notificationDetail.openContextualChat2',
+                                'Open contextual chat'
+                              )}
                             </button>
                           </div>
                         </motion.div>
@@ -2875,7 +2942,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               </div>
                               <div>
                                 <p className="text-sm text-slate-700 dark:text-slate-300">
-                                  {t('myWork.notificationDetail.notificationCreated', 'Notification created')}
+                                  {t(
+                                    'myWork.notificationDetail.notificationCreated',
+                                    'Notification created'
+                                  )}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {formatDate(notification.createdAt)}
@@ -3093,7 +3163,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             )}
                             {!sourceEntity?.assignee && !sourceEntity?.decider && (
                               <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-2">
-                                {t('myWork.notificationDetail.noStakeholdersAssigned', 'No stakeholders assigned')}
+                                {t(
+                                  'myWork.notificationDetail.noStakeholdersAssigned',
+                                  'No stakeholders assigned'
+                                )}
                               </p>
                             )}
                           </div>

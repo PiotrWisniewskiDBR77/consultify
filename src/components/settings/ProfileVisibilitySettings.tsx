@@ -204,16 +204,12 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                 <div>
                   <p
                     className={`font-medium ${
-                      visibility.profile === option.value
-                        ? 'text-c-accent'
-                        : 'text-navy-900'
+                      visibility.profile === option.value ? 'text-c-accent' : 'text-navy-900'
                     }`}
                   >
                     {option.label}
                   </p>
-                  <p className="text-xs text-c-text-muted mt-0.5">
-                    {option.description}
-                  </p>
+                  <p className="text-xs text-c-text-muted mt-0.5">{option.description}</p>
                 </div>
               </div>
             </button>

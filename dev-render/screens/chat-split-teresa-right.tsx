@@ -13,14 +13,7 @@
  * stronie + gdzie divider). Tokeny c-* (light+dark), zero crimson, focus=c-focus.
  * Bez store/API/logowania. Motyw/lang z URL (?theme, ?lang).
  */
-import {
-  ArrowUp,
-  FileText,
-  History,
-  Plus,
-  Sparkles,
-  UserRound,
-} from 'lucide-react';
+import { ArrowUp, FileText, History, Plus, Sparkles, UserRound } from 'lucide-react';
 import React from 'react';
 
 // ── Mock: LEWA strona = artefakt (dokument roboczy w canvasie) ─────────────
@@ -53,11 +46,20 @@ function ArtifactMock({ isPl }: { isPl: boolean }): React.ReactElement {
           </h2>
           <ul className="flex flex-col gap-2">
             {[
-              isPl ? 'Popyt: 4 z 6 wywiadów potwierdza lukę w kanałach.' : 'Demand: 4 of 6 interviews confirm the channel gap.',
-              isPl ? 'Konkurencja: 2 lokalnych graczy, brak lidera premium.' : 'Competition: 2 local players, no premium leader.',
-              isPl ? 'Ryzyka: bariery regulacyjne DE — do zweryfikowania.' : 'Risks: DE regulatory barriers — to verify.',
+              isPl
+                ? 'Popyt: 4 z 6 wywiadów potwierdza lukę w kanałach.'
+                : 'Demand: 4 of 6 interviews confirm the channel gap.',
+              isPl
+                ? 'Konkurencja: 2 lokalnych graczy, brak lidera premium.'
+                : 'Competition: 2 local players, no premium leader.',
+              isPl
+                ? 'Ryzyka: bariery regulacyjne DE — do zweryfikowania.'
+                : 'Risks: DE regulatory barriers — to verify.',
             ].map((t, i) => (
-              <li key={i} className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+              <li
+                key={i}
+                className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
+              >
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-c-surface text-[10px] font-semibold text-c-text-muted">
                   {i + 1}
                 </span>
@@ -105,7 +107,9 @@ function TeresaChatMock({ isPl }: { isPl: boolean }): React.ReactElement {
             <Sparkles size={13} className="text-c-text-muted" />
           </span>
           <span className="text-sm font-semibold text-c-text">Teresa</span>
-          <span className="text-[11px] text-c-text-muted">{isPl ? '· asystent' : '· assistant'}</span>
+          <span className="text-[11px] text-c-text-muted">
+            {isPl ? '· asystent' : '· assistant'}
+          </span>
         </div>
         <div className="flex items-center gap-0.5">
           <button

@@ -250,9 +250,7 @@ export const StatusPageView: React.FC = () => {
 
         {/* Services */}
         <section>
-          <h3 className="text-lg font-semibold text-c-text mb-4">
-            {t.services[lang]}
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text mb-4">{t.services[lang]}</h3>
           <div className="bg-c-surface rounded-xl overflow-hidden shadow-sm">
             {status &&
               Object.entries(status.services).map(([key, service], i) => {
@@ -277,9 +275,7 @@ export const StatusPageView: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {service.latency && (
-                        <span className="text-sm text-c-text-muted">
-                          {service.latency}ms
-                        </span>
+                        <span className="text-sm text-c-text-muted">{service.latency}ms</span>
                       )}
                       <StatusIcon size={18} className={serviceConfig.color} />
                       <span className={`text-sm ${serviceConfig.color}`}>
@@ -308,9 +304,7 @@ export const StatusPageView: React.FC = () => {
               <div className="grid grid-cols-5 gap-4">
                 {Object.entries(uptime.services).map(([key, value]) => (
                   <div key={key} className="text-center">
-                    <div className="text-lg font-semibold text-c-text">
-                      {value}%
-                    </div>
+                    <div className="text-lg font-semibold text-c-text">{value}%</div>
                     <div className="text-xs text-c-text-muted">
                       {SERVICE_NAMES[key]?.[lang] || key}
                     </div>
@@ -323,9 +317,7 @@ export const StatusPageView: React.FC = () => {
 
         {/* Scheduled Maintenance */}
         <section>
-          <h3 className="text-lg font-semibold text-c-text mb-4">
-            {t.maintenance[lang]}
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text mb-4">{t.maintenance[lang]}</h3>
           <div className="bg-c-surface rounded-xl shadow-sm overflow-hidden">
             {maintenance.length === 0 ? (
               <div className="px-6 py-8 text-center text-c-text-muted">
@@ -341,9 +333,7 @@ export const StatusPageView: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium text-c-text">{item.title}</h4>
-                      <p className="text-sm text-c-text-secondary">
-                        {item.description}
-                      </p>
+                      <p className="text-sm text-c-text-secondary">{item.description}</p>
                     </div>
                     <div className="text-sm text-c-text-muted">
                       {new Date(item.scheduledStart).toLocaleDateString()}
@@ -357,9 +347,7 @@ export const StatusPageView: React.FC = () => {
 
         {/* Recent Incidents */}
         <section>
-          <h3 className="text-lg font-semibold text-c-text mb-4">
-            {t.incidents[lang]}
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text mb-4">{t.incidents[lang]}</h3>
           <div className="bg-c-surface rounded-xl shadow-sm overflow-hidden">
             {incidents.length === 0 ? (
               <div className="px-6 py-8 text-center text-c-text-muted">
@@ -368,10 +356,7 @@ export const StatusPageView: React.FC = () => {
               </div>
             ) : (
               incidents.map((incident) => (
-                <div
-                  key={incident.id}
-                  className="border-b border-c-border-subtle last:border-0"
-                >
+                <div key={incident.id} className="border-b border-c-border-subtle last:border-0">
                   <button
                     onClick={() =>
                       setExpandedIncident(expandedIncident === incident.id ? null : incident.id)
@@ -379,9 +364,7 @@ export const StatusPageView: React.FC = () => {
                     className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-c-surface-raised"
                   >
                     <div>
-                      <h4 className="font-medium text-c-text">
-                        {incident.title}
-                      </h4>
+                      <h4 className="font-medium text-c-text">{incident.title}</h4>
                       <p className="text-sm text-c-text-secondary">
                         {new Date(incident.createdAt).toLocaleDateString()} • {incident.status}
                       </p>
@@ -394,18 +377,14 @@ export const StatusPageView: React.FC = () => {
                   </button>
                   {expandedIncident === incident.id && (
                     <div className="px-6 pb-4">
-                      <p className="text-c-text-secondary mb-4">
-                        {incident.description}
-                      </p>
+                      <p className="text-c-text-secondary mb-4">{incident.description}</p>
                       <div className="space-y-2">
                         {incident.updates.map((update, i) => (
                           <div key={i} className="flex gap-3 text-sm">
                             <span className="text-c-text-muted">
                               {new Date(update.timestamp).toLocaleTimeString()}
                             </span>
-                            <span className="text-c-text-secondary">
-                              {update.message}
-                            </span>
+                            <span className="text-c-text-secondary">{update.message}</span>
                           </div>
                         ))}
                       </div>
@@ -421,9 +400,7 @@ export const StatusPageView: React.FC = () => {
         <section className="bg-c-surface rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
             <Bell size={20} className="text-c-accent" />
-            <h3 className="text-lg font-semibold text-c-text">
-              {t.subscribe[lang]}
-            </h3>
+            <h3 className="text-lg font-semibold text-c-text">{t.subscribe[lang]}</h3>
           </div>
           <p className="text-c-text-secondary mb-4">{t.subscribeDesc[lang]}</p>
           <form onSubmit={handleSubscribe} className="flex gap-3">

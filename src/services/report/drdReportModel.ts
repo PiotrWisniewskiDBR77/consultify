@@ -24,16 +24,17 @@
  *   canon lands, extend `buildDimensions()` with the grounded mapping.
  */
 
+import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles';
 import DRD_STRUCTURE, {
   calculateAxisScore,
   calculateOverallScore,
-  getTotalAreaCount,
   type DRDArea,
+  getTotalAreaCount,
 } from '../drdStructure';
 import { buildDRDVisualizationData } from '../drdVizAdapter';
 import {
-  deterministicNarrator,
   type ConclusionOutput,
+  deterministicNarrator,
   type DrdNarrator,
 } from './drdConclusionContract';
 import {
@@ -41,7 +42,6 @@ import {
   DEFAULT_DRD_BENCHMARK_INDUSTRY,
   type DrdIndustryBenchmarkSection,
 } from './drdIndustryBenchmark';
-import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles';
 
 export type AreaScores = Record<string, { actual: number; target: number }>;
 

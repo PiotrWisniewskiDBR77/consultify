@@ -159,7 +159,9 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
 
         {/* Economics Table */}
         <div className="border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden bg-slate-50 dark:bg-navy-950/50 shadow-xl">
-          <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-left border-collapse">
+          <table
+            /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-left border-collapse"
+          >
             <thead>
               <tr className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="p-3">{ti.tableHeader.initiative}</th>

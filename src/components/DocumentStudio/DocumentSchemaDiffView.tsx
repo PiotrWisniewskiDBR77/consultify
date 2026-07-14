@@ -27,11 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { diffTextSegments } from './diffText';
 import { AGGREGATE_DIFF_SECTION_ID, isTextualBlockType } from './documentDiffModel';
-import type {
-  DocumentBlockDiffEntry,
-  DocumentSchemaDiff,
-  DocumentSectionDiffEntry,
-} from './types';
+import type { DocumentBlockDiffEntry, DocumentSchemaDiff, DocumentSectionDiffEntry } from './types';
 
 const ADDED_SEGMENT_CLASS =
   'rounded-sm bg-success-500/15 text-success-800 dark:bg-success-500/20 dark:text-emerald-300';
@@ -70,7 +66,11 @@ export function InlineTextDiff({
   );
 }
 
-function SectionKindBadge({ kind }: { kind: DocumentSectionDiffEntry['kind'] }): React.ReactElement {
+function SectionKindBadge({
+  kind,
+}: {
+  kind: DocumentSectionDiffEntry['kind'];
+}): React.ReactElement {
   const { t } = useTranslation();
   const label =
     kind === 'added'

@@ -24,10 +24,10 @@
  */
 
 import {
-  INVENTORY_LEVERS,
-  inventoryLeverLabel,
   type Bilingual,
+  INVENTORY_LEVERS,
   type InventoryLeverId,
+  inventoryLeverLabel,
 } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
@@ -108,7 +108,9 @@ export function computeBaseline(session: InventorySession): InventoryBaseline {
   const tailStockValue = segs
     .filter((s) => s.valueClass === 'C')
     .reduce((acc, s) => acc + (s.stockValue || 0), 0);
-  const deadStockValue = segs.filter((s) => s.dead).reduce((acc, s) => acc + (s.stockValue || 0), 0);
+  const deadStockValue = segs
+    .filter((s) => s.dead)
+    .reduce((acc, s) => acc + (s.stockValue || 0), 0);
   const belowServiceCount = segs.filter((s) => s.belowService).length;
   const measured = segs.filter((s) => s.measured).length;
   return {
@@ -191,8 +193,10 @@ const scoreLever = (
     };
   }
 
-  const impactAvg = moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.impact)], 0) / moves.length;
-  const effortAvg = moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.effort)], 0) / moves.length;
+  const impactAvg =
+    moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.impact)], 0) / moves.length;
+  const effortAvg =
+    moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.effort)], 0) / moves.length;
   const evidenceBacked = moves.filter((m) => (m.evidence?.length || 0) > 0).length;
   const evidenceRatio = evidenceBacked / moves.length;
 
@@ -373,7 +377,11 @@ export function buildW2MoveSequence(session: InventorySession): SequencedMove[] 
       en: 'We reject reworking all policies in parallel: without a finished first lever the team loses the standard and the cash effect reverts.',
     },
     expectedImpact:
-      primaryScore.attractiveness >= 2.5 ? 'high' : primaryScore.attractiveness >= 1.7 ? 'medium' : 'low',
+      primaryScore.attractiveness >= 2.5
+        ? 'high'
+        : primaryScore.attractiveness >= 1.7
+          ? 'medium'
+          : 'low',
     estimatedEffort:
       primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
     validation: VALID,
@@ -402,7 +410,8 @@ export function buildW2MoveSequence(session: InventorySession): SequencedMove[] 
         pl: 'Odrzucamy odpisanie wszystkiego hurtem: część pozycji jest sezonowa lub serwisowa i ich brak kosztuje więcej niż trzymanie.',
         en: 'We reject writing everything off wholesale: some items are seasonal or service parts whose absence costs more than holding them.',
       },
-      expectedImpact: deadScore.moveCount > 0 && deadScore.attractiveness >= 2.5 ? 'high' : 'medium',
+      expectedImpact:
+        deadScore.moveCount > 0 && deadScore.attractiveness >= 2.5 ? 'high' : 'medium',
       estimatedEffort: 'low',
       validation: VALID,
     });

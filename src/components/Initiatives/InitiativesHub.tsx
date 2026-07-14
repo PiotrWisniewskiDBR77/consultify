@@ -37,9 +37,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
+import {
   StandardPreview,
-  standardPreviewShortcuts,
   type StandardPreviewActions,
+  standardPreviewShortcuts,
   type StandardRowMenu,
   StandardTable,
   type TableColumn as StandardTableColumn,
@@ -67,6 +71,7 @@ import {
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
 import { useConversationStore } from '@/store/useConversationStore';
+import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import {
   ACTIVE_STATUSES,
@@ -77,10 +82,6 @@ import {
 } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
-import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
-import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
-import { CandidatesPanel, type AcceptCandidatePayload } from './CandidatesPanel';
-import PortfolioHealthView from './PortfolioHealthView';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
@@ -94,17 +95,7 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 // ModuleHub components
-import {
-  FilterChip,
-  ModuleHub,
-  ModuleTab,
-  OpenDocument,
-  ViewMode,
-} from '../shared/ModuleHub';
-import {
-  EmptyState as SharedEmptyState,
-  LoadingState as SharedLoadingState,
-} from '@/components/shared/states';
+import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ACTION_DANGER,
@@ -120,20 +111,23 @@ import {
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
+import { type AcceptCandidatePayload, CandidatesPanel } from './CandidatesPanel';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
-import { getSourceDisplayLabel } from './InitiativeSourceLink';
+import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
+import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import PortfolioHealthView from './PortfolioHealthView';
 import { InitiativeCharterWizard } from './Wizard/InitiativeCharterWizard';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
@@ -1051,8 +1045,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         // never produces, so it was always undefined and silently hid the
         // real reason behind a generic toast.
         toast.error(
-          error?.message ||
-            t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
+          error?.message || t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
         );
       }
     },
@@ -1775,7 +1768,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         extraActionsAfterSlot={
           <button
             type="button"
-            onClick={() => navigate(buildInitiativeDeepLink(item.id, { module: 'economics', tab: 'models' }))}
+            onClick={() =>
+              navigate(buildInitiativeDeepLink(item.id, { module: 'economics', tab: 'models' }))
+            }
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition"
           >
             {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
@@ -1967,7 +1962,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
               <StandardTable
                 columns={initiativeColumns}
-                data={searchedInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
+                data={
+                  searchedInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
+                }
                 selectedRowId={previewInitiativeId}
                 onRowClick={(row) => handleInitiativeClick(row as unknown as PortfolioInitiative)}
                 onRowDoubleClick={(row) =>
@@ -2038,7 +2035,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             {selectedTableRow ? (
               <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
                 <StandardPreview
-                  title={selectedTableRow.name || t('initiatives.document.untitled', 'Untitled initiative')}
+                  title={
+                    selectedTableRow.name ||
+                    t('initiatives.document.untitled', 'Untitled initiative')
+                  }
                   onClose={() => handlePreviewSelection(null)}
                   onOpenFull={() => handleOpenInitiativeDocument(selectedTableRow)}
                   meta={{
@@ -2726,10 +2726,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               {/* D1.1: Level info callout */}
               {newLevel && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle">
-                  <Shield
-                    size={14}
-                    className="text-c-text-muted mt-0.5 flex-shrink-0"
-                  />
+                  <Shield size={14} className="text-c-text-muted mt-0.5 flex-shrink-0" />
                   <div className="text-xs text-c-text-muted">
                     <span className="font-medium text-c-text-secondary">
                       {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}

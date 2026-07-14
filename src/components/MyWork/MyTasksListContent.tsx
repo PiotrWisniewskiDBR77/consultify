@@ -67,7 +67,10 @@ import {
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState } from '@/components/ui/primitives';
 import { deriveDueRisk, DueChip } from '@/components/ui/primitives/chips/DueChip';
-import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
+import {
+  EntityStatusChip,
+  statusChipTone,
+} from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -831,9 +834,7 @@ const TaskTableRow: React.FC<{
             )}
             <span
               className={`text-xs truncate max-w-[120px] ${
-                assigneeName === 'Unassigned'
-                  ? 'text-c-text-muted italic'
-                  : 'text-c-text-secondary'
+                assigneeName === 'Unassigned' ? 'text-c-text-muted italic' : 'text-c-text-secondary'
               }`}
             >
               {assigneeName}
@@ -2021,9 +2022,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             const trailing = (
               <span
                 className={`text-[11px] font-semibold ${
-                  due === 'No due date'
-                    ? 'text-c-text-muted italic'
-                    : 'text-c-text-secondary'
+                  due === 'No due date' ? 'text-c-text-muted italic' : 'text-c-text-secondary'
                 }`}
               >
                 {due}
@@ -2270,7 +2269,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                               type="button"
                               onClick={() => handleSort('status')}
                               className={`inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary ${
-                                (tableFilters.status as string[])?.length ? 'text-c-text-secondary' : ''
+                                (tableFilters.status as string[])?.length
+                                  ? 'text-c-text-secondary'
+                                  : ''
                               }`}
                             >
                               Status
@@ -2428,10 +2429,14 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                               showDescription={showRowDescription}
                               onToggleDescription={updateRowDescriptionSetting}
                               label={t('myWork.tasksList.label9', 'View settings')}
-                              columnsHeading={t('myWork.tasksList.columnsHeading', 'Visible columns')}
-                              descriptionLabel={
-                                t('myWork.tasksList.showRowDescription', 'Show row description')
-                              }
+                              columnsHeading={t(
+                                'myWork.tasksList.columnsHeading',
+                                'Visible columns'
+                              )}
+                              descriptionLabel={t(
+                                'myWork.tasksList.showRowDescription',
+                                'Show row description'
+                              )}
                             />
                           </div>
                         </th>

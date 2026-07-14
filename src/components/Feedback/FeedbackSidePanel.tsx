@@ -553,8 +553,7 @@ export const FeedbackSidePanel: React.FC = () => {
       });
       // Surface a short ticket reference (first block of the UUID) so the user
       // can quote it when following up. Backend returns { success, id, taskId }.
-      const rawId =
-        (submitResult && (submitResult.id || submitResult.feedbackId)) || undefined;
+      const rawId = (submitResult && (submitResult.id || submitResult.feedbackId)) || undefined;
       const reference =
         typeof rawId === 'string' && rawId.length >= 8
           ? rawId.slice(0, 8).toUpperCase()

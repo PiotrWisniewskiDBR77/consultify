@@ -52,9 +52,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
               {t('myWork.whiteboard.sessionPanel.layer')}
             </div>
-            <div className="text-[11px] font-semibold text-c-text">
-              {roleLabel}
-            </div>
+            <div className="text-[11px] font-semibold text-c-text">{roleLabel}</div>
           </div>
           <div className="text-right">
             <div className="text-[10px] font-semibold text-c-text-secondary">

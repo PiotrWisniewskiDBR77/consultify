@@ -685,7 +685,9 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
           className="overflow-x-auto rounded-md border border-slate-200 dark:border-slate-800"
           data-testid={`${testId}-diff-table`}
         >
-          <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800">
+          <table
+            /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800"
+          >
             <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
               <tr>
                 <th scope="col" className="px-3 py-2 text-left font-medium">

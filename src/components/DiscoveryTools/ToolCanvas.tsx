@@ -25,10 +25,28 @@ import { ReasoningStep } from './steps/ReasoningStep';
 import { ReportStep } from './steps/ReportStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
+import {
+  AmbitionDecomposerBuildPhase,
+  AmbitionDecomposerInputPhase,
+  AmbitionDecomposerInsightsPhase,
+  AmbitionDecomposerOutputsPhase,
+} from './tools/AmbitionDecomposer';
+import {
+  CapabilityMapperBuildPhase,
+  CapabilityMapperInputPhase,
+  CapabilityMapperInsightsPhase,
+  CapabilityMapperOutputsPhase,
+} from './tools/CapabilityMapper';
 import { GenericDomainStep } from './tools/Digital';
 import { SWOTBuildPhase } from './tools/DynamicSWOT/SWOTBuildPhase';
 import { SWOTInputExplorationPhase } from './tools/DynamicSWOT/SWOTInputExplorationPhase';
 import { SWOTInsightsPhase } from './tools/DynamicSWOT/SWOTInsightsPhase';
+import {
+  FocusTradeoffBuildPhase,
+  FocusTradeoffInputPhase,
+  FocusTradeoffInsightsPhase,
+  FocusTradeoffOutputsPhase,
+} from './tools/FocusTradeoff';
 import {
   GrowthPathsInputPhase,
   GrowthPathsInsightsPhase,
@@ -42,35 +60,11 @@ import {
   MarketForcesOutputsPhase,
 } from './tools/MarketForces/MarketForcesPhases';
 import {
-  AmbitionDecomposerBuildPhase,
-  AmbitionDecomposerInputPhase,
-  AmbitionDecomposerInsightsPhase,
-  AmbitionDecomposerOutputsPhase,
-} from './tools/AmbitionDecomposer';
-import {
-  CapabilityMapperBuildPhase,
-  CapabilityMapperInputPhase,
-  CapabilityMapperInsightsPhase,
-  CapabilityMapperOutputsPhase,
-} from './tools/CapabilityMapper';
-import {
-  FocusTradeoffBuildPhase,
-  FocusTradeoffInputPhase,
-  FocusTradeoffInsightsPhase,
-  FocusTradeoffOutputsPhase,
-} from './tools/FocusTradeoff';
-import {
   NarrativeEngineBuildPhase,
   NarrativeEngineInputPhase,
   NarrativeEngineInsightsPhase,
   NarrativeEngineOutputsPhase,
 } from './tools/NarrativeEngine';
-import {
-  ValueChainBuildPhase,
-  ValueChainInputPhase,
-  ValueChainInsightsPhase,
-  ValueChainOutputsPhase,
-} from './tools/ValueChain/ValueChainPhases';
 import {
   A3CountermeasuresStep,
   A3ProblemStep,
@@ -97,6 +91,12 @@ import {
   RiskMapPhase,
   RiskOutputsPhase,
 } from './tools/RiskUncertainty/RiskUncertaintyPhases';
+import {
+  ValueChainBuildPhase,
+  ValueChainInputPhase,
+  ValueChainInsightsPhase,
+  ValueChainOutputsPhase,
+} from './tools/ValueChain/ValueChainPhases';
 
 // ==================== TYPES ====================
 

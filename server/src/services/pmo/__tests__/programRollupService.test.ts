@@ -56,7 +56,13 @@ function projectRollup(overrides: Partial<any> = {}): any {
     initiativesBudget: { totalPlanned: 500, totalActual: 0, initiatives: [] },
     value: { perInitiative: [], total: 200 },
     benefits: { count: 1, targetTotal: 100, currentTotal: 50, byStatus: {} },
-    roi: { capexTotal: 300, opexAnnualTotal: 40, avgExpectedRoiPercent: null, npvTotal: 90, initiativeCount: 2 },
+    roi: {
+      capexTotal: 300,
+      opexAnnualTotal: 40,
+      avgExpectedRoiPercent: null,
+      npvTotal: 90,
+      initiativeCount: 2,
+    },
     variance: { containerBudget: 1000, initiativesPlanned: 500, delta: 500, overCommitted: false },
     ...overrides,
   };
@@ -256,7 +262,12 @@ describe('programRollupService — getProgramRollup (DB-mocked)', () => {
       });
     });
     mockGetValueRollup.mockResolvedValueOnce({ perInitiative: [], total: 75 });
-    mockGetBenefitsRollup.mockResolvedValueOnce({ count: 1, targetTotal: 50, currentTotal: 25, byStatus: {} });
+    mockGetBenefitsRollup.mockResolvedValueOnce({
+      count: 1,
+      targetTotal: 50,
+      currentTotal: 25,
+      byStatus: {},
+    });
     mockGetRoiRollup.mockResolvedValueOnce({
       capexTotal: 100,
       opexAnnualTotal: 10,
@@ -314,7 +325,12 @@ describe('programRollupService — getProgramRollup (DB-mocked)', () => {
     mockQueryOne.mockResolvedValueOnce({ total: 0 });
 
     mockGetValueRollup.mockResolvedValueOnce({ perInitiative: [], total: 0 });
-    mockGetBenefitsRollup.mockResolvedValueOnce({ count: 0, targetTotal: 0, currentTotal: 0, byStatus: {} });
+    mockGetBenefitsRollup.mockResolvedValueOnce({
+      count: 0,
+      targetTotal: 0,
+      currentTotal: 0,
+      byStatus: {},
+    });
     mockGetRoiRollup.mockResolvedValueOnce({
       capexTotal: 0,
       opexAnnualTotal: 0,

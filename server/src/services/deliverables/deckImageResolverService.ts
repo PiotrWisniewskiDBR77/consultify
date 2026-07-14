@@ -29,15 +29,15 @@
  * @module services/deliverables/deckImageResolverService
  */
 
+import logger from '../../utils/Logger.js';
 import type { SlideLayoutPlan } from '../presentationLayoutDirectorService.js';
 import {
   selectStockImageProvider,
+  type StockImageFetchOptions,
   type StockImageProvider,
   type StockImageProviderConfig,
   type StockImageProviderName,
-  type StockImageFetchOptions,
 } from './stockImageProvider.js';
-import logger from '../../utils/Logger.js';
 
 const LOG_PREFIX = '[deckImageResolver]';
 
@@ -181,7 +181,10 @@ export async function resolveImageBriefs(
     } catch (err) {
       // Provider already fails-open to null, but belt-and-suspenders here so a
       // single bad brief can never poison the whole deck.
-      logger.warn(`${LOG_PREFIX} resolve failed for slide ${entry.slideIndex}`, (err as Error).message);
+      logger.warn(
+        `${LOG_PREFIX} resolve failed for slide ${entry.slideIndex}`,
+        (err as Error).message
+      );
       return emptyResult(entry.slideIndex, brief);
     }
   });
@@ -245,7 +248,10 @@ export async function resolveDeckImages(
         height: hit.height ?? null,
       } satisfies ResolvedSlideImage;
     } catch (err) {
-      logger.warn(`${LOG_PREFIX} resolve failed for slide ${plan.slideIndex}`, (err as Error).message);
+      logger.warn(
+        `${LOG_PREFIX} resolve failed for slide ${plan.slideIndex}`,
+        (err as Error).message
+      );
       return emptyResult(plan.slideIndex, brief);
     }
   });

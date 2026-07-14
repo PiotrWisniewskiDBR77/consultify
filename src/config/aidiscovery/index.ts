@@ -25,9 +25,9 @@ import type {
   DiscoverySession,
 } from './useCaseEngine';
 
+export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './useCaseEngine';
-export * from './conclusionPrompts';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {
@@ -93,12 +93,12 @@ const present = (raw: unknown): boolean =>
 export function toDiscoverySession(
   sections: Record<string, unknown[]> | undefined
 ): DiscoverySession {
-  const rawUseCases = ((sections?.['usecases'] ||
+  const rawUseCases = (sections?.['usecases'] ||
     sections?.['use-cases'] ||
-    []) as unknown[]) as Array<Record<string, unknown>>;
-  const rawMoves = ((sections?.['moves'] || sections?.['prioritization'] || []) as unknown[]) as Array<
-    Record<string, unknown>
-  >;
+    []) as unknown[] as Array<Record<string, unknown>>;
+  const rawMoves = (sections?.['moves'] ||
+    sections?.['prioritization'] ||
+    []) as unknown[] as Array<Record<string, unknown>>;
 
   const useCases: AiUseCase[] = rawUseCases.map((item, idx) => ({
     id: String(item.id ?? `uc-${idx}`),

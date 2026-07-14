@@ -459,10 +459,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                       {secondaryEntries.length > 0 && (
                         <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
                           {secondaryEntries.map(([key, val]) => (
-                            <span
-                              key={key}
-                              className="text-[10px] text-c-text-secondary"
-                            >
+                            <span key={key} className="text-[10px] text-c-text-secondary">
                               <span className="font-medium">{key}:</span> {val}
                             </span>
                           ))}

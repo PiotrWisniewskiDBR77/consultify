@@ -394,9 +394,7 @@ export const PricingView: React.FC = () => {
                           <X
                             size={16}
                             className={`flex-shrink-0 ${
-                              tier.highlight
-                                ? 'text-primary-300/50'
-                                : 'text-c-text-secondary'
+                              tier.highlight ? 'text-primary-300/50' : 'text-c-text-secondary'
                             }`}
                           />
                         )}
@@ -501,9 +499,7 @@ export const PricingView: React.FC = () => {
                   <span className="font-bold text-navy-950 dark:text-white">€0.04/credit</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-c-text-secondary">
-                    Enterprise overage
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Enterprise overage</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.03/credit</span>
                 </div>
               </div>
@@ -533,21 +529,15 @@ export const PricingView: React.FC = () => {
               </p>
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
-                  <span className="text-sm text-c-text-secondary">
-                    Scale orchestration
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Scale orchestration</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.015/credit</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
-                  <span className="text-sm text-c-text-secondary">
-                    Enterprise orchestration
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Enterprise orchestration</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.01/credit</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-c-text-secondary">
-                    Local LLM (Llama, Mistral)
-                  </span>
+                  <span className="text-sm text-c-text-secondary">Local LLM (Llama, Mistral)</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.01/credit</span>
                 </div>
               </div>

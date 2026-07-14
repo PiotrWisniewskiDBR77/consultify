@@ -196,10 +196,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
 
                 {reminders.length === 0 ? (
                   <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                    <Bell
-                      size={24}
-                      className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
-                    />
+                    <Bell size={24} className="mx-auto mb-2 text-slate-700 dark:text-slate-400" />
                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {t('myWork.escalationRules.noReminders', 'No reminders')}
                     </p>
@@ -261,7 +258,9 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                         <div className="grid grid-cols-2 gap-3">
                           {/* When - Type */}
                           <div>
-                            <label className={LABEL_CLASS}>{t('myWork.escalationRules.when', 'When')}</label>
+                            <label className={LABEL_CLASS}>
+                              {t('myWork.escalationRules.when', 'When')}
+                            </label>
                             <select
                               value={reminder.type}
                               onChange={(e) =>
@@ -283,7 +282,9 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
 
                           {/* Days */}
                           <div>
-                            <label className={LABEL_CLASS}>{t('myWork.escalationRules.days', 'Days')}</label>
+                            <label className={LABEL_CLASS}>
+                              {t('myWork.escalationRules.days', 'Days')}
+                            </label>
                             <input
                               type="number"
                               min="1"
@@ -417,9 +418,10 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                               onChange={(e) =>
                                 updateReminder(reminder.id, { message: e.target.value })
                               }
-                              placeholder={
-                                t('myWork.escalationRules.optionalReminderMessage', 'Optional reminder message...')
-                              }
+                              placeholder={t(
+                                'myWork.escalationRules.optionalReminderMessage',
+                                'Optional reminder message...'
+                              )}
                               disabled={readOnly || !reminder.enabled}
                               className={INPUT_CLASS}
                             />
@@ -524,7 +526,10 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           onChange={(e) =>
                             onEscalationChange({ ...escalation, message: e.target.value })
                           }
-                          placeholder={t('myWork.escalationRules.placeholder', 'Escalation reason...')}
+                          placeholder={t(
+                            'myWork.escalationRules.placeholder',
+                            'Escalation reason...'
+                          )}
                           disabled={readOnly}
                           className={INPUT_CLASS}
                         />
@@ -540,7 +545,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           : `If decision is not made ${escalation.afterDays} days after due, it will be escalated to: `}
                         <span className="font-medium">
                           {escalation.escalateToName ||
-                            (t('myWork.escalationRules.selectPerson2', '(select person)'))}
+                            t('myWork.escalationRules.selectPerson2', '(select person)')}
                         </span>
                       </p>
                     </div>

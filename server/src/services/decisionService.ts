@@ -77,11 +77,7 @@ export interface MakeDecisionInput {
 // nothing here auto-mutates or transitions the decision.
 
 /** Section keys aligned with the DecisionDetailView N-cards (camelCase). */
-export type DecisionSectionKey =
-  | 'description'
-  | 'alternatives'
-  | 'risk'
-  | 'consequencesOfInaction';
+export type DecisionSectionKey = 'description' | 'alternatives' | 'risk' | 'consequencesOfInaction';
 
 /** BCG doctrine (§0) — one system prompt for every Decision card. */
 const DECISION_DOCTRINE_SYSTEM_PROMPT_PL = `Jesteś partnerem konsultingowym poziomu BCG, przygotowującym JEDNĄ kartę (sekcję) decyzji dla kadry zarządzającej.
@@ -174,10 +170,7 @@ async function getDecisionLLM(): Promise<any> {
   }
 }
 
-function interpolateDecisionTemplate(
-  template: string,
-  vars: Record<string, string>
-): string {
+function interpolateDecisionTemplate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_m, key) => {
     const v = vars[key];
     if (v === undefined || v === null || v === '') return '[nie podano]';
@@ -784,8 +777,7 @@ class DecisionService {
     let parsedContent: any = undefined;
     if (spec.returnsJson) {
       try {
-        const jsonMatch =
-          content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, content];
+        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, content];
         parsedContent = JSON.parse(jsonMatch[1] || content);
       } catch {
         parsedContent = undefined;

@@ -271,9 +271,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
         </div>
 
         <div className="mt-8 border-t pt-4">
-          <h4 className="text-xs font-semibold text-c-text-secondary uppercase mb-2">
-            Add Block
-          </h4>
+          <h4 className="text-xs font-semibold text-c-text-secondary uppercase mb-2">Add Block</h4>
           <div className="grid grid-cols-2 gap-2">
             {(['text', 'table', 'cards', 'callout'] as BlockType[]).map((type) => (
               <button
@@ -325,9 +323,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
 
           {report.blockOrder.length === 0 && (
             <div className="border-2 border-dashed border-c-border-subtle rounded-xl p-12 text-center">
-              <p className="text-c-text-secondary mb-4">
-                No blocks yet. Add one to start.
-              </p>
+              <p className="text-c-text-secondary mb-4">No blocks yet. Add one to start.</p>
               <button
                 onClick={() => handleAddBlock('text')}
                 className="bg-c-text text-c-bg px-4 py-2 rounded-lg hover:opacity-90"

@@ -324,9 +324,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               >
                 <span
                   className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
-                    isSelected
-                      ? 'bg-c-surface border-c-border-subtle'
-                      : 'border-c-border-subtle'
+                    isSelected ? 'bg-c-surface border-c-border-subtle' : 'border-c-border-subtle'
                   }`}
                 >
                   {isSelected && <Check size={9} className="text-white" />}
@@ -443,9 +441,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-c-text">
-            {isPl ? 'Filtry' : 'Filters'}
-          </span>
+          <span className="text-xs font-bold text-c-text">{isPl ? 'Filtry' : 'Filters'}</span>
           {filters.rules.length > 1 && (
             <button
               type="button"

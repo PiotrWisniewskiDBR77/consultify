@@ -232,7 +232,9 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
             <h3 className="font-semibold text-navy-900 dark:text-white">Project Breakdown</h3>
           </div>
           <div className="overflow-x-auto">
-            <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full">
+            <table
+              /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full"
+            >
               <thead>
                 <tr className="bg-slate-50 dark:bg-navy-800/50">
                   <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">

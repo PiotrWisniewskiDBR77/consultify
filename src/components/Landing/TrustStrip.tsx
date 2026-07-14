@@ -89,9 +89,7 @@ export const TrustStrip: React.FC = () => {
                     }}
                   >
                     <Icon size={16} className={badge.color} strokeWidth={2} />
-                    <span className="text-sm font-bold text-c-text-secondary">
-                      {badge.label}
-                    </span>
+                    <span className="text-sm font-bold text-c-text-secondary">{badge.label}</span>
                   </motion.div>
                 );
               })}
@@ -120,9 +118,7 @@ export const TrustStrip: React.FC = () => {
                     }}
                   >
                     <Icon size={16} className={badge.color} strokeWidth={2} />
-                    <span className="text-sm font-bold text-c-text-secondary">
-                      {badge.label}
-                    </span>
+                    <span className="text-sm font-bold text-c-text-secondary">{badge.label}</span>
                   </motion.div>
                 );
               })}

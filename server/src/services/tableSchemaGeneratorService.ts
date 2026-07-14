@@ -28,9 +28,9 @@
 
 import logger from '../utils/Logger.js';
 import {
-  resolveDeliverableTier,
   DELIVERABLE_GENERATION_PURPOSE,
   deliverableModelConfig,
+  resolveDeliverableTier,
 } from './deliverableGenerationTier.js';
 import { resolveDeliverableDefaults } from './deliverables/deliverableDefaults.js';
 
@@ -260,10 +260,7 @@ function canonicalKey(k: string): string {
     .replace(/[^a-z0-9]+/g, '');
 }
 
-function normalizeSeedRows(
-  rawRows: unknown,
-  fields: GeneratedField[]
-): Record<string, unknown>[] {
+function normalizeSeedRows(rawRows: unknown, fields: GeneratedField[]): Record<string, unknown>[] {
   const arr = Array.isArray(rawRows) ? rawRows : [];
   // Map BOTH the exact field key and its canonical (alnum-only) form to the
   // canonical field key. The LLM frequently emits seed-row keys in a different
@@ -415,7 +412,7 @@ async function generateViaLlm(
     '"no text columns"), obey it for EVERY column — including the identifier: use a typed field ' +
     '(number id, date, or singleSelect code) instead of singleLineText. Zero exceptions.\n' +
     '• When the intent is an open-ended DOMAIN table (a project portfolio, CRM, ops dashboard, risk ' +
-    'register), build a RICH but bounded schema — typically 10–12 columns covering the domain\'s key ' +
+    "register), build a RICH but bounded schema — typically 10–12 columns covering the domain's key " +
     'attributes (e.g. a portfolio: name, owner, 1–2 status/phase selects, 2 dates, budget vs actual, ' +
     'progress, variance). Cap at 12 columns.\n' +
     '• If the intent is TERSE and centers on ONE behavior (e.g. "pipeline: highlight value >100k", a ' +
@@ -490,9 +487,7 @@ async function generateViaLlm(
     key: z.string(),
     header: z.string(),
     type: z.string(),
-    options: z
-      .array(z.object({ label: z.string(), color: z.string().optional() }))
-      .optional(),
+    options: z.array(z.object({ label: z.string(), color: z.string().optional() })).optional(),
   });
 
   const CfEntrySchema = z.object({
@@ -580,8 +575,7 @@ async function generateViaLlm(
     }
   }
 
-  const hasFormulas =
-    rowsHaveFormula(seedRows) || (sheets ?? []).some((s) => s.hasFormulas);
+  const hasFormulas = rowsHaveFormula(seedRows) || (sheets ?? []).some((s) => s.hasFormulas);
 
   return { fields: topFields, seedRows, conditionalFormatting, hasFormulas, sheets };
 }

@@ -32,8 +32,8 @@ import React, { useCallback, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
-import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../services/api';
 
 interface ImportResult {
@@ -352,9 +352,7 @@ export const BulkOperationsView: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center">
               <Upload className="text-primary-600" size={32} />
             </div>
-            <h3 className="text-lg font-semibold text-c-text mb-2">
-              Upload CSV File
-            </h3>
+            <h3 className="text-lg font-semibold text-c-text mb-2">Upload CSV File</h3>
             <p className="text-c-text-muted mb-6">
               Import users from a CSV file. Download our template for the correct format.
             </p>
@@ -390,9 +388,7 @@ export const BulkOperationsView: React.FC = () => {
       {/* Mapping Step */}
       {importStep === 'mapping' && (
         <div className="bg-c-surface rounded-xl p-6 border border-c-border-subtle">
-          <h3 className="text-lg font-semibold text-c-text mb-4">
-            Map CSV Columns
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text mb-4">Map CSV Columns</h3>
           <p className="text-c-text-muted mb-6">
             Match your CSV columns to the user fields. Required fields are marked with *.
           </p>
@@ -446,15 +442,15 @@ export const BulkOperationsView: React.FC = () => {
       {/* Preview Step */}
       {importStep === 'preview' && (
         <div className="bg-c-surface rounded-xl p-6 border border-c-border-subtle">
-          <h3 className="text-lg font-semibold text-c-text mb-4">
-            Preview Import
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text mb-4">Preview Import</h3>
           <p className="text-c-text-muted mb-4">
             Review the data before importing. {csvData.length} users will be imported.
           </p>
 
           <div className="max-h-64 overflow-auto border border-c-border-subtle rounded-lg mb-6">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
+            <table
+              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+            >
               <thead className="sticky top-0 bg-c-surface-raised">
                 <tr>
                   {ALL_FIELDS.map((field) => (
@@ -471,10 +467,7 @@ export const BulkOperationsView: React.FC = () => {
                 {csvData.slice(0, 10).map((row, idx) => (
                   <tr key={idx}>
                     {ALL_FIELDS.map((field) => (
-                      <td
-                        key={field}
-                        className="px-4 py-2 text-sm text-c-text-secondary"
-                      >
+                      <td key={field} className="px-4 py-2 text-sm text-c-text-secondary">
                         {row[columnMapping[field]] || '-'}
                       </td>
                     ))}
@@ -484,9 +477,7 @@ export const BulkOperationsView: React.FC = () => {
             </table>
           </div>
           {csvData.length > 10 && (
-            <p className="text-sm text-c-text-muted mb-4">
-              Showing 10 of {csvData.length} rows
-            </p>
+            <p className="text-sm text-c-text-muted mb-4">Showing 10 of {csvData.length} rows</p>
           )}
 
           <div className="flex justify-between">
@@ -511,9 +502,7 @@ export const BulkOperationsView: React.FC = () => {
       {importStep === 'importing' && (
         <div className="bg-c-surface rounded-xl p-12 border border-c-border-subtle text-center">
           <Loader2 size={48} className="mx-auto mb-4 text-primary-600 animate-spin" />
-          <h3 className="text-lg font-semibold text-c-text mb-2">
-            Importing Users...
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text mb-2">Importing Users...</h3>
           <p className="text-c-text-muted">
             Please wait while we import your users. This may take a moment.
           </p>
@@ -533,9 +522,7 @@ export const BulkOperationsView: React.FC = () => {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
                   <CheckCircle2 className="text-emerald-600" size={32} />
                 </div>
-                <h3 className="text-lg font-semibold text-c-text mb-2">
-                  Import Complete!
-                </h3>
+                <h3 className="text-lg font-semibold text-c-text mb-2">Import Complete!</h3>
                 <p className="text-c-text-muted">
                   Successfully imported {importResult.success} users.
                 </p>
@@ -590,12 +577,8 @@ export const BulkOperationsView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-c-text">
-            Bulk Role Assignment
-          </h3>
-          <p className="text-c-text-muted">
-            Select users and assign roles in bulk
-          </p>
+          <h3 className="text-lg font-semibold text-c-text">Bulk Role Assignment</h3>
+          <p className="text-c-text-muted">Select users and assign roles in bulk</p>
         </div>
         <button
           onClick={fetchUsers}
@@ -729,9 +712,7 @@ export const BulkOperationsView: React.FC = () => {
     <div className="space-y-6">
       <div className="bg-c-surface rounded-xl p-6 border border-c-border-subtle">
         <h3 className="text-lg font-semibold text-c-text mb-4">Mass Email</h3>
-        <p className="text-c-text-muted mb-6">
-          Send emails to multiple users at once
-        </p>
+        <p className="text-c-text-muted mb-6">Send emails to multiple users at once</p>
 
         <div className="space-y-4">
           <div>
@@ -754,9 +735,7 @@ export const BulkOperationsView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Template
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">Template</label>
             <select
               value={emailForm.template}
               onChange={(e) => setEmailForm((prev) => ({ ...prev, template: e.target.value }))}
@@ -770,9 +749,7 @@ export const BulkOperationsView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Subject
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">Subject</label>
             <input
               type="text"
               placeholder="Email subject"
@@ -783,9 +760,7 @@ export const BulkOperationsView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Message
-            </label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">Message</label>
             <textarea
               rows={6}
               placeholder="Write your message..."
@@ -884,9 +859,7 @@ export const BulkOperationsView: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-c-text">Export Users</h4>
-              <p className="text-sm text-c-text-muted">
-                Download all user data as CSV
-              </p>
+              <p className="text-sm text-c-text-muted">Download all user data as CSV</p>
             </div>
           </div>
           <button
@@ -907,9 +880,7 @@ export const BulkOperationsView: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-c-text">Export Activity Log</h4>
-              <p className="text-sm text-c-text-muted">
-                Download user activity report
-              </p>
+              <p className="text-sm text-c-text-muted">Download user activity report</p>
             </div>
           </div>
           <button
@@ -930,9 +901,7 @@ export const BulkOperationsView: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-c-text">Export Audit Log</h4>
-              <p className="text-sm text-c-text-muted">
-                Download security audit trail
-              </p>
+              <p className="text-sm text-c-text-muted">Download security audit trail</p>
             </div>
           </div>
           <button
@@ -953,9 +922,7 @@ export const BulkOperationsView: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-c-text">Export Settings</h4>
-              <p className="text-sm text-c-text-muted">
-                Download organization settings
-              </p>
+              <p className="text-sm text-c-text-muted">Download organization settings</p>
             </div>
           </div>
           <button

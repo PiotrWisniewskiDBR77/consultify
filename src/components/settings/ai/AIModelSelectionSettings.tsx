@@ -254,18 +254,12 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             <DollarSign size={20} className="text-c-accent" />
             <div>
               <p className="font-medium text-c-text">Estimated Monthly Cost</p>
-              <p className="text-sm text-c-text-muted">
-                Based on average usage patterns
-              </p>
+              <p className="text-sm text-c-text-muted">Based on average usage patterns</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-c-accent">
-              ${costEstimate.monthly.toFixed(2)}
-            </p>
-            <p className="text-sm text-c-text-muted">
-              ${costEstimate.daily.toFixed(2)}/day
-            </p>
+            <p className="text-2xl font-bold text-c-accent">${costEstimate.monthly.toFixed(2)}</p>
+            <p className="text-sm text-c-text-muted">${costEstimate.daily.toFixed(2)}/day</p>
           </div>
         </div>
       </div>
@@ -298,9 +292,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       {/* Default Model Tab */}
       {activeTab === 'models' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-c-text">
-            Select Default AI Model
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text">Select Default AI Model</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {availableModels.map((model) => (
@@ -325,9 +317,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     <CheckCircle size={20} className="text-c-accent" />
                   )}
                 </div>
-                <p className="text-sm text-c-text-secondary mt-2">
-                  {model.description}
-                </p>
+                <p className="text-sm text-c-text-secondary mt-2">{model.description}</p>
                 <div className="flex items-center gap-4 mt-3 text-xs">
                   <span
                     className={`px-2 py-0.5 rounded ${
@@ -341,9 +331,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     <Clock size={10} className="inline mr-1" />
                     {model.speed}
                   </span>
-                  <span className="text-c-text-muted">
-                    ${model.costPer1kTokens}/1K tokens
-                  </span>
+                  <span className="text-c-text-muted">${model.costPer1kTokens}/1K tokens</span>
                 </div>
               </button>
             ))}
@@ -354,12 +342,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       {/* Use Cases Tab */}
       {activeTab === 'usecases' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-c-text">
-            Model per Use Case
-          </h3>
-          <p className="text-sm text-c-text-muted">
-            Select different models for specific tasks
-          </p>
+          <h3 className="text-lg font-semibold text-c-text">Model per Use Case</h3>
+          <p className="text-sm text-c-text-muted">Select different models for specific tasks</p>
 
           {useCases.map((useCase) => {
             const Icon = useCase.icon;
@@ -373,9 +357,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                   </div>
                   <div>
                     <p className="font-medium text-c-text">{useCase.label}</p>
-                    <p className="text-sm text-c-text-muted">
-                      {useCase.description}
-                    </p>
+                    <p className="text-sm text-c-text-muted">{useCase.description}</p>
                   </div>
                 </div>
                 <select
@@ -401,17 +383,13 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       {/* Advanced Tab */}
       {activeTab === 'advanced' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-c-text">
-            Advanced Settings
-          </h3>
+          <h3 className="text-lg font-semibold text-c-text">Advanced Settings</h3>
 
           {/* Temperature Slider */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <label className="font-medium text-c-text">
-                  Temperature / Creativity
-                </label>
+                <label className="font-medium text-c-text">Temperature / Creativity</label>
                 <p className="text-sm text-c-text-muted">
                   Higher = more creative, Lower = more focused
                 </p>
@@ -442,12 +420,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <label className="font-medium text-c-text">
-                  Max Response Tokens
-                </label>
-                <p className="text-sm text-c-text-muted">
-                  Maximum length of AI responses
-                </p>
+                <label className="font-medium text-c-text">Max Response Tokens</label>
+                <p className="text-sm text-c-text-muted">Maximum length of AI responses</p>
               </div>
               <span className="text-lg font-mono text-c-accent">
                 {settings.maxTokens.toLocaleString()}
@@ -473,9 +447,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
             <div>
               <label className="font-medium text-c-text">Stream Responses</label>
-              <p className="text-sm text-c-text-muted">
-                Show responses as they're generated
-              </p>
+              <p className="text-sm text-c-text-muted">Show responses as they're generated</p>
             </div>
             <button
               onClick={() => setSettings({ ...settings, streamResponse: !settings.streamResponse })}

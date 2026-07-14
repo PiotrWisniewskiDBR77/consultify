@@ -79,10 +79,7 @@ function sanitize(initiatives: FrontierInitiative[]): FrontierInitiative[] {
  * concentrate risk, negatively correlated ones diversify it. This keeps the
  * model simple while still rewarding diversification.
  */
-function weightedRisk(
-  members: FrontierInitiative[],
-  correlation?: CorrelationMatrix
-): number {
+function weightedRisk(members: FrontierInitiative[], correlation?: CorrelationMatrix): number {
   if (members.length === 0) return 0;
 
   const totalCost = members.reduce((s, m) => s + m.cost, 0);
@@ -151,10 +148,7 @@ function selectAtRiskLevel(
   return chosen;
 }
 
-function pointOf(
-  members: FrontierInitiative[],
-  correlation?: CorrelationMatrix
-): FrontierPoint {
+function pointOf(members: FrontierInitiative[], correlation?: CorrelationMatrix): FrontierPoint {
   const value = members.reduce((s, m) => s + m.value, 0);
   const risk = weightedRisk(members, correlation);
   const mix = members.map((m) => m.id).sort();

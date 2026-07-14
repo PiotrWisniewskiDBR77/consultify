@@ -318,7 +318,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-c-text">{cmd.label}</p>
                         {cmd.description && (
-                          <p className="text-[10px] text-c-text-secondary truncate">{cmd.description}</p>
+                          <p className="text-[10px] text-c-text-secondary truncate">
+                            {cmd.description}
+                          </p>
                         )}
                       </div>
                       {cmd.shortcut && (

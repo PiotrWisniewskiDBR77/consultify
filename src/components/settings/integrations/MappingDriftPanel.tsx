@@ -413,7 +413,9 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
 
           {activeTab === 'entities' && (
             <div className="overflow-x-auto">
-              <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
+              <table
+                /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full text-sm"
+              >
                 <thead>
                   <tr className="text-left text-xs text-c-text-muted uppercase tracking-wider border-b border-c-border-subtle dark:border-navy-700">
                     <th className="pb-2 pr-4">
@@ -433,16 +435,16 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                 <tbody>
                   {data.entityMappings.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="py-8 text-center text-c-text-secondary"
-                      >
+                      <td colSpan={6} className="py-8 text-center text-c-text-secondary">
                         {t('common.noData', 'No data')}
                       </td>
                     </tr>
                   ) : (
                     data.entityMappings.map((m) => (
-                      <tr key={m.id} className="border-b border-c-border-subtle dark:border-navy-700/50">
+                      <tr
+                        key={m.id}
+                        className="border-b border-c-border-subtle dark:border-navy-700/50"
+                      >
                         <td className="py-2 pr-4 font-mono text-xs">{m.localType}</td>
                         <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">
                           {m.localId}
@@ -483,9 +485,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-c-text">
-                        {d.driftType}
-                      </span>
+                      <span className="text-sm font-medium text-c-text">{d.driftType}</span>
                       {d.resolvedAt ? (
                         <span className="text-xs text-green-600 dark:text-green-400">
                           {t('common.resolved', 'Resolved')}
@@ -532,16 +532,16 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                 <tbody>
                   {data.syncStates.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={5}
-                        className="py-8 text-center text-c-text-secondary"
-                      >
+                      <td colSpan={5} className="py-8 text-center text-c-text-secondary">
                         {t('common.noData', 'No data')}
                       </td>
                     </tr>
                   ) : (
                     data.syncStates.map((s) => (
-                      <tr key={s.id} className="border-b border-c-border-subtle dark:border-navy-700/50">
+                      <tr
+                        key={s.id}
+                        className="border-b border-c-border-subtle dark:border-navy-700/50"
+                      >
                         <td className="py-2 pr-4 text-xs">{s.objectType}</td>
                         <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">
                           {s.objectId}

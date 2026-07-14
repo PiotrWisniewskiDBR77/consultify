@@ -243,11 +243,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
             isDragging ? 'bg-c-accent-soft' : 'bg-c-surface-raised'
           }`}
         >
-          <Upload
-            className={`w-8 h-8 ${
-              isDragging ? 'text-c-accent' : 'text-c-text-secondary'
-            }`}
-          />
+          <Upload className={`w-8 h-8 ${isDragging ? 'text-c-accent' : 'text-c-text-secondary'}`} />
         </div>
 
         <p className="text-sm font-semibold text-c-text">
@@ -285,12 +281,8 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
               >
                 <FileText className="w-4 h-4 text-c-text-secondary flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-c-text truncate">
-                    {f.name}
-                  </p>
-                  <p className="text-xs text-c-text-secondary">
-                    {formatFileSize(f.size)}
-                  </p>
+                  <p className="text-sm font-medium text-c-text truncate">{f.name}</p>
+                  <p className="text-xs text-c-text-secondary">{formatFileSize(f.size)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {f.status === 'uploading' && (
@@ -346,28 +338,18 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="px-3 py-2 rounded-lg bg-c-surface">
-              <div className="text-lg font-bold text-c-accent">
-                {knowledgeMap.sourceCount}
-              </div>
-              <div className="text-xs text-c-text-secondary">
-                {isPl ? 'Pliki' : 'Files'}
-              </div>
+              <div className="text-lg font-bold text-c-accent">{knowledgeMap.sourceCount}</div>
+              <div className="text-xs text-c-text-secondary">{isPl ? 'Pliki' : 'Files'}</div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
-              <div className="text-lg font-bold text-c-accent">
-                {knowledgeMap.keyTopics.length}
-              </div>
-              <div className="text-xs text-c-text-secondary">
-                {isPl ? 'Tematy' : 'Topics'}
-              </div>
+              <div className="text-lg font-bold text-c-accent">{knowledgeMap.keyTopics.length}</div>
+              <div className="text-xs text-c-text-secondary">{isPl ? 'Tematy' : 'Topics'}</div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-lg font-bold text-c-accent">
                 {knowledgeMap.extractedEntities.length}
               </div>
-              <div className="text-xs text-c-text-secondary">
-                {isPl ? 'Encje' : 'Entities'}
-              </div>
+              <div className="text-xs text-c-text-secondary">{isPl ? 'Encje' : 'Entities'}</div>
             </div>
             <div className="px-3 py-2 rounded-lg bg-c-surface">
               <div className="text-xs font-semibold text-c-accent truncate">
@@ -399,9 +381,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           )}
 
           {/* Summary */}
-          <p className="text-sm text-c-text-secondary leading-relaxed">
-            {knowledgeMap.summary}
-          </p>
+          <p className="text-sm text-c-text-secondary leading-relaxed">{knowledgeMap.summary}</p>
 
           {/* Path selection buttons */}
           <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">

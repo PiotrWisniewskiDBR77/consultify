@@ -182,12 +182,8 @@ export function AISecuritySettings() {
       <div className="flex items-center gap-3">
         <Shield className="w-8 h-8 text-indigo-600" />
         <div>
-          <h1 className="text-2xl font-bold text-c-text">
-            Ustawienia bezpieczeństwa AI
-          </h1>
-          <p className="text-sm text-c-text-muted">
-            Konfiguracja funkcji AI dla organizacji
-          </p>
+          <h1 className="text-2xl font-bold text-c-text">Ustawienia bezpieczeństwa AI</h1>
+          <p className="text-sm text-c-text-muted">Konfiguracja funkcji AI dla organizacji</p>
         </div>
       </div>
 
@@ -231,9 +227,7 @@ export function AISecuritySettings() {
                   />
                   <div>
                     <p className="font-medium text-c-text">{feature.label}</p>
-                    <p className="text-sm text-c-text-muted">
-                      {feature.description}
-                    </p>
+                    <p className="text-sm text-c-text-muted">{feature.description}</p>
                   </div>
                 </label>
               ))}
@@ -266,9 +260,7 @@ export function AISecuritySettings() {
                     className="rounded border-c-border-subtle"
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-c-text text-sm">
-                      {model.label}
-                    </p>
+                    <p className="font-medium text-c-text text-sm">{model.label}</p>
                   </div>
                   <span
                     className={`text-xs px-2 py-0.5 rounded ${

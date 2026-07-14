@@ -120,9 +120,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             >
               <span className="text-c-text-muted">{col.name}:</span>
               {mode !== 'none' && value ? (
-                <span className="font-mono font-medium text-c-text-secondary">
-                  {value}
-                </span>
+                <span className="font-mono font-medium text-c-text-secondary">{value}</span>
               ) : (
                 <span className="text-c-text-muted">—</span>
               )}
@@ -138,9 +136,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                   <button
                     key={opt.value}
                     className={`w-full px-3 py-1 text-xs text-left hover:bg-c-surface-raised transition-colors ${
-                      mode === opt.value
-                        ? 'text-c-info font-medium'
-                        : 'text-c-text-secondary'
+                      mode === opt.value ? 'text-c-info font-medium' : 'text-c-text-secondary'
                     }`}
                     onClick={() => {
                       onAggregateChange(col.id, opt.value);

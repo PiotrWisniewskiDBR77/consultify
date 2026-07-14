@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Callout } from '@/components/shared/NModeBlocks';
 
@@ -84,10 +84,13 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const daysInMonth = lastDay.getDate();
   const today = new Date();
 
-  const monthLabel = currentDate.toLocaleDateString(t('myWork.calendarSidebar.currentDateToLocaleDateString', 'en-US'), {
-    month: 'long',
-    year: 'numeric',
-  });
+  const monthLabel = currentDate.toLocaleDateString(
+    t('myWork.calendarSidebar.currentDateToLocaleDateString', 'en-US'),
+    {
+      month: 'long',
+      year: 'numeric',
+    }
+  );
 
   return (
     <div className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-navy-700 p-4 space-y-6">
@@ -189,7 +192,10 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                   </span>
                   {!isAvailable && isExternalSource && (
                     <span className="block text-[10px] font-normal normal-case text-primary-500 dark:text-primary-400">
-                      {t('myWork.calendarSidebar.connectInIntegrations', 'Connect in Integrations →')}
+                      {t(
+                        'myWork.calendarSidebar.connectInIntegrations',
+                        'Connect in Integrations →'
+                      )}
                     </span>
                   )}
                 </span>

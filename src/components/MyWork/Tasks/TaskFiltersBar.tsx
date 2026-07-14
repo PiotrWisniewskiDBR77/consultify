@@ -175,7 +175,9 @@ const MultiSelectDropdown: React.FC<{
                 >
                   <CheckSquare
                     size={14}
-                    className={selected.includes(opt.value) ? 'text-[var(--c-info)]' : 'text-slate-600'}
+                    className={
+                      selected.includes(opt.value) ? 'text-[var(--c-info)]' : 'text-slate-600'
+                    }
                   />
                   {opt.avatar && <img src={opt.avatar} alt="" className="w-5 h-5 rounded-full" />}
                   <span className="truncate">{opt.label}</span>

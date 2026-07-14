@@ -170,9 +170,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {risks.length}{' '}
-            <span className="text-lg font-normal text-c-text-secondary">
-              identified
-            </span>
+            <span className="text-lg font-normal text-c-text-secondary">identified</span>
           </div>
           <div className="text-sm text-c-text-muted">
             {criticalRisks.length} critical/high priority requiring immediate attention
@@ -204,13 +202,9 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {strengths.length}{' '}
-            <span className="text-lg font-normal text-c-text-secondary">
-              identified
-            </span>
+            <span className="text-lg font-normal text-c-text-secondary">identified</span>
           </div>
-          <div className="text-sm text-c-text-muted">
-            Key enablers for transformation success
-          </div>
+          <div className="text-sm text-c-text-muted">Key enablers for transformation success</div>
           <div className="mt-4 pt-4 border-t border-c-border-subtle">
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
               Top Strengths
@@ -240,9 +234,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             {challenges.declaredChallenges.length}{' '}
             <span className="text-lg font-normal text-c-text-secondary">declared</span>
           </div>
-          <div className="text-sm text-c-text-muted">
-            Operational pain points to address
-          </div>
+          <div className="text-sm text-c-text-muted">Operational pain points to address</div>
           <div className="mt-4 pt-4 border-t border-c-border-subtle">
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
               Top Challenges
@@ -330,9 +322,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
               Strategic Goals
             </div>
             {goals.strategicGoals.length === 0 ? (
-              <p className="text-c-text-muted italic">
-                No strategic goals defined yet
-              </p>
+              <p className="text-c-text-muted italic">No strategic goals defined yet</p>
             ) : (
               <ul className="space-y-2">
                 {goals.strategicGoals.map((goal) => (
@@ -357,9 +347,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
               Success Metrics (KPIs)
             </div>
             {goals.successMetrics.length === 0 ? (
-              <p className="text-c-text-muted italic">
-                No success metrics defined yet
-              </p>
+              <p className="text-c-text-muted italic">No success metrics defined yet</p>
             ) : (
               <ul className="space-y-2">
                 {goals.successMetrics.map((metric) => (

@@ -362,16 +362,12 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Users size={14} className="text-c-text-muted" />
-                  <span className="text-xs text-c-text-muted uppercase tracking-wider">
-                    Seats
-                  </span>
+                  <span className="text-xs text-c-text-muted uppercase tracking-wider">Seats</span>
                 </div>
               </div>
               <div className="mb-2">
                 <span className="text-2xl font-semibold text-c-text">{usage?.seats.used || 0}</span>
-                <span className="text-c-text-muted text-sm ml-1">
-                  / {usage?.seats.limit || 0}
-                </span>
+                <span className="text-c-text-muted text-sm ml-1">/ {usage?.seats.limit || 0}</span>
               </div>
               <div className="w-full bg-c-surface/[0.05] rounded-full h-1.5 mb-2">
                 <div
@@ -621,7 +617,9 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             </div>
 
             <div className="overflow-x-auto">
-              <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
+              <table
+                /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+              >
                 <thead>
                   <tr className="border-b border-white/[0.05]">
                     <th className="text-left text-xs font-medium text-c-text-muted uppercase tracking-wider py-3 px-4">
@@ -648,10 +646,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 <tbody>
                   {currentBreakdown.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={5}
-                        className="text-center py-8 text-c-text-muted text-sm"
-                      >
+                      <td colSpan={5} className="text-center py-8 text-c-text-muted text-sm">
                         No usage data available
                       </td>
                     </tr>
@@ -671,9 +666,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                                 {item.name || item.feature || 'Unknown'}
                               </p>
                               {item.email && (
-                                <p className="text-xs text-c-text-muted">
-                                  {item.email}
-                                </p>
+                                <p className="text-xs text-c-text-muted">{item.email}</p>
                               )}
                             </div>
                           </td>

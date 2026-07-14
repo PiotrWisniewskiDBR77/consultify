@@ -363,7 +363,9 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                               : 'Running'}
                       </span>
                       {run.duration_ms != null && (
-                        <span className="text-[10px] text-c-text-secondary">{run.duration_ms}ms</span>
+                        <span className="text-[10px] text-c-text-secondary">
+                          {run.duration_ms}ms
+                        </span>
                       )}
                     </div>
                     <div className="mt-0.5 text-[11px] text-c-text-muted">
@@ -460,9 +462,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                 {/* Info */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-c-text">
-                      {auto.name}
-                    </span>
+                    <span className="truncate text-sm font-medium text-c-text">{auto.name}</span>
                     {!auto.enabled && (
                       <span className="rounded bg-c-surface-raised px-1.5 py-0.5 text-[10px] text-c-text-secondary bg-c-surface-raised">
                         {isPl ? 'Wstrzymana' : 'Paused'}

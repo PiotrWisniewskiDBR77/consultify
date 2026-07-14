@@ -13,17 +13,16 @@
  * Read-only against the engine — this file is the conclusion LAYER only.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { PortfolioItem, PortfolioPriorityData } from '@/store/useToolStore';
 
 import {
   buildPortfolioMovePromptRules,
   classifyPortfolio,
-  sequencePortfolio,
-  QUADRANT_META,
   type PortfolioElement,
+  QUADRANT_META,
+  sequencePortfolio,
 } from './portfolioMatrixEngine';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 const isAccepted = (item: PortfolioItem) =>

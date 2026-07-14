@@ -716,9 +716,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <Sparkles className="text-c-accent" size={32} />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-c-text mb-2">
-          {t('auth.demoMode', 'Demo Mode')}
-        </h2>
+        <h2 className="text-2xl font-bold text-c-text mb-2">{t('auth.demoMode', 'Demo Mode')}</h2>
         <p className="text-c-text-muted text-sm max-w-xs mx-auto leading-relaxed">
           {t(
             'auth.demoModeDescriptionSigned',
@@ -923,9 +921,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         {!hasInviteCode && (
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-c-text-secondary">
-              {t('auth.company')}
-            </label>
+            <label className="text-xs font-medium text-c-text-secondary">{t('auth.company')}</label>
             <input
               value={formData.companyName}
               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}

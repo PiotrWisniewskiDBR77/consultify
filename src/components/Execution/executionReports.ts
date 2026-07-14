@@ -396,7 +396,9 @@ export function buildReportHtml(report: ReportDef, rag: string): string {
       ? section(
           'Key Metrics',
           `<table class="tbl"><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody>${report.highlights
-            .map((h) => `<tr><td>${escHtml(h.label)}</td><td class="num">${escHtml(h.value)}</td></tr>`)
+            .map(
+              (h) => `<tr><td>${escHtml(h.label)}</td><td class="num">${escHtml(h.value)}</td></tr>`
+            )
             .join('')}</tbody></table>`
         )
       : '';

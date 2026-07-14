@@ -28,10 +28,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import {
-  RegisterArtifactOriginParamsSchema,
   type ArtifactOriginRuntime,
   type RegisterArtifactOriginParams,
+  RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -88,10 +89,7 @@ async function findExistingLink(
   );
 }
 
-async function getOutputType(
-  artifactId: string,
-  organizationId: string
-): Promise<string | null> {
+async function getOutputType(artifactId: string, organizationId: string): Promise<string | null> {
   const row = await dbGet<ExistingArtifactRow>(
     `SELECT artifact_id, organization_id, output_type
      FROM v8_output_artifacts
@@ -134,20 +132,14 @@ export async function registerOutputArtifactTransactional(
   );
 
   if (fastPath) {
-    const outputType = await getOutputType(
-      fastPath.artifact_id,
-      validated.organizationId
-    );
+    const outputType = await getOutputType(fastPath.artifact_id, validated.organizationId);
     return {
       artifactId: fastPath.artifact_id,
       isNew: false,
       lineage: {
         artifactId: fastPath.artifact_id,
         organizationId: validated.organizationId,
-        outputType: (outputType ?? validated.outputType) as
-          | 'report'
-          | 'presentation'
-          | 'sheet',
+        outputType: (outputType ?? validated.outputType) as 'report' | 'presentation' | 'sheet',
         originRuntime: validated.originRuntime,
         originRecordId: validated.originRecordId,
         isPrimaryOrigin: Boolean(fastPath.is_primary_origin),
@@ -175,20 +167,14 @@ export async function registerOutputArtifactTransactional(
 
     if (rechecked) {
       await dbRun('COMMIT', [], { fallback: false });
-      const outputType = await getOutputType(
-        rechecked.artifact_id,
-        validated.organizationId
-      );
+      const outputType = await getOutputType(rechecked.artifact_id, validated.organizationId);
       return {
         artifactId: rechecked.artifact_id,
         isNew: false,
         lineage: {
           artifactId: rechecked.artifact_id,
           organizationId: validated.organizationId,
-          outputType: (outputType ?? validated.outputType) as
-            | 'report'
-            | 'presentation'
-            | 'sheet',
+          outputType: (outputType ?? validated.outputType) as 'report' | 'presentation' | 'sheet',
           originRuntime: validated.originRuntime,
           originRecordId: validated.originRecordId,
           isPrimaryOrigin: Boolean(rechecked.is_primary_origin),

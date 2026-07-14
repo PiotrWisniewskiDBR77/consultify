@@ -296,9 +296,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                     </div>
 
                     {/* Title */}
-                    <h2 className="text-lg font-semibold text-c-text">
-                      {decision.title}
-                    </h2>
+                    <h2 className="text-lg font-semibold text-c-text">{decision.title}</h2>
                   </div>
 
                   <button
@@ -391,13 +389,9 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                 Blocking
                               </span>
                             )}
-                            <span className="text-xs text-c-text-muted">
-                              {impact.impactedType}
-                            </span>
+                            <span className="text-xs text-c-text-muted">{impact.impactedType}</span>
                           </div>
-                          <p className="text-c-text-secondary mt-1">
-                            {impact.impactDescription}
-                          </p>
+                          <p className="text-c-text-secondary mt-1">{impact.impactDescription}</p>
                         </div>
                       ))}
                     </div>
@@ -408,37 +402,23 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                 <Section title={t('decisions.details', 'Details')} icon={<Calendar size={14} />}>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-xs text-c-text-muted">
-                        Owner
-                      </span>
-                      <p className="text-c-text-secondary">
-                        {decision.ownerName || 'Unassigned'}
-                      </p>
+                      <span className="text-xs text-c-text-muted">Owner</span>
+                      <p className="text-c-text-secondary">{decision.ownerName || 'Unassigned'}</p>
                     </div>
                     <div>
-                      <span className="text-xs text-c-text-muted">
-                        Requested by
-                      </span>
+                      <span className="text-xs text-c-text-muted">Requested by</span>
                       <p className="text-c-text-secondary">
                         {decision.requestedByName || 'Unknown'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs text-c-text-muted">
-                        Created
-                      </span>
-                      <p className="text-c-text-secondary">
-                        {formatDateTime(decision.createdAt)}
-                      </p>
+                      <span className="text-xs text-c-text-muted">Created</span>
+                      <p className="text-c-text-secondary">{formatDateTime(decision.createdAt)}</p>
                     </div>
                     {decision.dueDate && (
                       <div>
-                        <span className="text-xs text-c-text-muted">
-                          Due Date
-                        </span>
-                        <p className="text-c-text-secondary">
-                          {formatDateTime(decision.dueDate)}
-                        </p>
+                        <span className="text-xs text-c-text-muted">Due Date</span>
+                        <p className="text-c-text-secondary">{formatDateTime(decision.dueDate)}</p>
                       </div>
                     )}
                   </div>
@@ -456,18 +436,13 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                               {entry.action}
                             </span>
                             {entry.byName && (
-                              <span className="text-c-text-muted">
-                                {' '}
-                                by {entry.byName}
-                              </span>
+                              <span className="text-c-text-muted"> by {entry.byName}</span>
                             )}
                             <span className="text-xs text-c-text-muted ml-2">
                               {formatDateTime(entry.at)}
                             </span>
                             {entry.notes && (
-                              <p className="text-c-text-muted mt-0.5">
-                                "{entry.notes}"
-                              </p>
+                              <p className="text-c-text-muted mt-0.5">"{entry.notes}"</p>
                             )}
                           </div>
                         </div>
@@ -543,9 +518,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center p-12">
-              <p className="text-c-text-muted">
-                {t('decisions.notFound', 'Decision not found')}
-              </p>
+              <p className="text-c-text-muted">{t('decisions.notFound', 'Decision not found')}</p>
             </div>
           )}
         </motion.div>

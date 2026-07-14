@@ -185,9 +185,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       width: '35%',
       render: (row: TableRow) => (
         <div className="flex items-center gap-2">
-          {row.hasMismatch && (
-            <AlertTriangle size={13} className="shrink-0 text-danger-400" />
-          )}
+          {row.hasMismatch && <AlertTriangle size={13} className="shrink-0 text-danger-400" />}
           <span className="text-slate-700 dark:text-c-text-secondary">{row.kpiName}</span>
         </div>
       ),
@@ -198,10 +196,26 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       width: '18%',
       filterable: true,
       filterOptions: [
-        { value: 'reconciled', label: t('results.reconciliation.status.reconciled', 'Reconciled'), color: 'bg-emerald-500' },
-        { value: 'pending', label: t('results.reconciliation.status.pending', 'Pending'), color: 'bg-amber-500' },
-        { value: 'disputed', label: t('results.reconciliation.status.disputed', 'Disputed'), color: 'bg-danger-500' },
-        { value: 'escalated', label: t('results.reconciliation.status.escalated', 'Escalated'), color: 'bg-danger-600' },
+        {
+          value: 'reconciled',
+          label: t('results.reconciliation.status.reconciled', 'Reconciled'),
+          color: 'bg-emerald-500',
+        },
+        {
+          value: 'pending',
+          label: t('results.reconciliation.status.pending', 'Pending'),
+          color: 'bg-amber-500',
+        },
+        {
+          value: 'disputed',
+          label: t('results.reconciliation.status.disputed', 'Disputed'),
+          color: 'bg-danger-500',
+        },
+        {
+          value: 'escalated',
+          label: t('results.reconciliation.status.escalated', 'Escalated'),
+          color: 'bg-danger-600',
+        },
       ],
       render: (row: TableRow) => (
         <StatusChip
@@ -262,7 +276,9 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
 
   const reconciliationRows: TableRow[] = items.map((item) => ({
     id: item.reconciliationId,
-    kpiName: item.kpiName || t('results.reconciliation.unnamedKpi', 'KPI {{id}}', { id: item.kpiId.slice(0, 8) }),
+    kpiName:
+      item.kpiName ||
+      t('results.reconciliation.unnamedKpi', 'KPI {{id}}', { id: item.kpiId.slice(0, 8) }),
     unit: item.unit ?? null,
     hasMismatch: item.hasMismatch,
     reconciliationStatus: item.reconciliationStatus,

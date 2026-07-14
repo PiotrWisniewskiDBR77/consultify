@@ -13,9 +13,18 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
-import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import {
+  createDeckComment,
+  DeckCommentError,
+  deleteDeckComment,
+  ensureDeckCommentsHydrated,
+  getDeckCommentCounts,
+  listDeckCommentThreads,
+  replyToDeckComment,
+  setDeckCommentResolved,
+} from '../services/deckCommentsService.js';
 import { send as sendNotification } from '../services/notificationService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import {
@@ -52,16 +61,6 @@ import {
   evaluateBulkRevertEligibility,
   planBulkRevert,
 } from '../services/presentationDeckBulkRevertService.js';
-import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
-import {
-  deckDocumentToRenderableUnifiedJson,
-  normalizeDeckDocument,
-} from '../services/presentationDeckDocumentService.js';
-import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
-import {
-  evaluateRevertEligibility,
-  type RevertEligibilityReason,
-} from '../services/presentationDeckRevertService.js';
 import {
   type CollaboratorRole,
   isValidRole,
@@ -70,16 +69,15 @@ import {
   revokeCollaborator,
   upsertCollaborator,
 } from '../services/presentationDeckCollaboratorService.js';
+import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import {
-  createDeckComment,
-  DeckCommentError,
-  deleteDeckComment,
-  ensureDeckCommentsHydrated,
-  getDeckCommentCounts,
-  listDeckCommentThreads,
-  replyToDeckComment,
-  setDeckCommentResolved,
-} from '../services/deckCommentsService.js';
+  deckDocumentToRenderableUnifiedJson,
+  normalizeDeckDocument,
+} from '../services/presentationDeckDocumentService.js';
+import {
+  evaluateRevertEligibility,
+  type RevertEligibilityReason,
+} from '../services/presentationDeckRevertService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -162,10 +160,12 @@ import {
   applyPdfLayoutTruncationMarker,
   buildPdfLayoutTruncationMarker,
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
+import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 
 const router = Router();
 
@@ -520,9 +520,7 @@ const PUBLIC_DECK_DENY_FIELDS = new Set([
 
 function toPublicDeckRow(row: any) {
   const full = normalizeDeckRow(row);
-  return Object.fromEntries(
-    Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k))
-  );
+  return Object.fromEntries(Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k)));
 }
 
 function parseDeckPayload(row: any): any {
@@ -2101,7 +2099,9 @@ router.post(
         .json({ success: false, error: 'email or userId is required', code: 'INVALID_INVITE' });
     }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ success: false, error: 'Invalid email', code: 'INVALID_EMAIL' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid email', code: 'INVALID_EMAIL' });
     }
 
     const role: CollaboratorRole = isValidRole(body.role)
@@ -2163,7 +2163,10 @@ router.delete(
       after: { collaboratorId: req.params.collaboratorId },
       metadata: { organizationId: orgId, title: deck.title },
     });
-    res.json({ success: true, data: { revoked: result.status === 'ok', degraded: result.status !== 'ok' } });
+    res.json({
+      success: true,
+      data: { revoked: result.status === 'ok', degraded: result.status !== 'ok' },
+    });
   })
 );
 
@@ -6520,8 +6523,15 @@ router.get(
     res.json({
       success: true,
       data: {
-        summary: { unique_viewers: Number(tv.unique_viewers ?? 0), total_views: Number(tv.total_views ?? 0) },
-        perCard: (perCard || []).map((r: any) => ({ ...r, views: Number(r.views ?? 0), avg_duration_ms: Number(r.avg_duration_ms ?? 0) })),
+        summary: {
+          unique_viewers: Number(tv.unique_viewers ?? 0),
+          total_views: Number(tv.total_views ?? 0),
+        },
+        perCard: (perCard || []).map((r: any) => ({
+          ...r,
+          views: Number(r.views ?? 0),
+          avg_duration_ms: Number(r.avg_duration_ms ?? 0),
+        })),
         dailyViews: (dailyViews || []).map((r: any) => ({ ...r, viewers: Number(r.viewers ?? 0) })),
       },
     });

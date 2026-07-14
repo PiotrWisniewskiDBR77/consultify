@@ -24,8 +24,8 @@
  */
 
 import {
-  CAPABILITY_SOURCING_ARCHETYPES,
   type Bilingual,
+  CAPABILITY_SOURCING_ARCHETYPES,
   type SourcingArchetype,
 } from './deepeningLadder';
 
@@ -178,7 +178,8 @@ export function rankCapabilities(data: CapabilityMapperData): CapabilityRanking 
     .map((s) => s.id);
 
   const top = scores.find((s) => s.id === ordered[0]);
-  const bottom = ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
+  const bottom =
+    ordered.length > 1 ? scores.find((s) => s.id === ordered[ordered.length - 1]) : undefined;
 
   const rationale: Bilingual = top
     ? {
@@ -305,7 +306,8 @@ const impactFromScore = (priorityScore: number): Level =>
 const effortFromSourcing = (sourcing: SourcingArchetype): Level =>
   sourcing === 'build' ? 'high' : sourcing === 'sustain' ? 'low' : 'medium';
 
-const riskLevelFrom = (risk: number): Level => (risk <= 1.4 ? 'low' : risk <= 2.2 ? 'medium' : 'high');
+const riskLevelFrom = (risk: number): Level =>
+  risk <= 1.4 ? 'low' : risk <= 2.2 ? 'medium' : 'high';
 
 /**
  * Build a W2-validated sourcing sequence from the ranked capability gaps. The

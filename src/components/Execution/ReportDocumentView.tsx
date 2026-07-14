@@ -700,7 +700,11 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
             d.ownerName ?? '—',
             <span
               className={
-                d.ageDays > 7 ? 'text-danger-400 font-medium' : d.ageDays > 0 ? 'text-amber-400' : ''
+                d.ageDays > 7
+                  ? 'text-danger-400 font-medium'
+                  : d.ageDays > 0
+                    ? 'text-amber-400'
+                    : ''
               }
             >
               {d.ageDays > 0 ? `${d.ageDays}d overdue` : 'Due now'}
@@ -815,7 +819,9 @@ const monthlyPmoRenderer: Renderer = (data, _report, nav) => {
               .map((s) => [
                 s.initiativeName,
                 s.signalType,
-                <span className="text-danger-400 font-medium">{Math.round(s.variancePercent)}%</span>,
+                <span className="text-danger-400 font-medium">
+                  {Math.round(s.variancePercent)}%
+                </span>,
                 s.message,
               ]),
             ...data.capacityAlerts
@@ -1227,7 +1233,9 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
               w.allocatedHours,
               w.capacityHours,
               <span
-                className={w.availableHours < 0 ? 'text-danger-400 font-medium' : 'text-emerald-400'}
+                className={
+                  w.availableHours < 0 ? 'text-danger-400 font-medium' : 'text-emerald-400'
+                }
               >
                 {w.availableHours}
               </span>,
@@ -1375,7 +1383,11 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
             d.ownerName ?? '—',
             <span
               className={
-                d.ageDays > 14 ? 'text-danger-400 font-medium' : d.ageDays > 7 ? 'text-amber-400' : ''
+                d.ageDays > 14
+                  ? 'text-danger-400 font-medium'
+                  : d.ageDays > 7
+                    ? 'text-amber-400'
+                    : ''
               }
             >
               {d.ageDays > 0 ? `${d.ageDays}d` : 'Due now'}

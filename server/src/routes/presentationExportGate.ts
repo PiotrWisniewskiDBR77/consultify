@@ -27,9 +27,7 @@ export async function enforceQualityGateForExport(params: {
   format: 'pdf' | 'pptx' | 'png' | 'html';
   allowOverride?: boolean;
 }) {
-  const { checkDeckQualityGates } = await import(
-    '../services/presentationQualityGatesService.js'
-  );
+  const { checkDeckQualityGates } = await import('../services/presentationQualityGatesService.js');
   const report = await checkDeckQualityGates(params.organizationId, params.deckId);
   if (!report.canExport && !params.allowOverride) {
     return {

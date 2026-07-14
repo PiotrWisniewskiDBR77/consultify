@@ -59,10 +59,7 @@ export const DocSectionNode = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       'h2',
-      mergeAttributes(
-        { 'data-doc-section': '', class: 'doc-section-title' },
-        HTMLAttributes
-      ),
+      mergeAttributes({ 'data-doc-section': '', class: 'doc-section-title' }, HTMLAttributes),
       0,
     ];
   },

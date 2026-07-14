@@ -49,11 +49,19 @@ vi.mock('react-hot-toast', () => ({
 // The kill-switches-off test must override both to false explicitly.
 vi.mock('@/utils/tabeleAiEditorFlag', () => ({
   isTabeleAiEditorEnabled: vi.fn(() => false),
-  TABELE_AI_EDITOR_FLAG_KEYS: { localStorage: 'ff.tabele_ai_editor', query: 'ff_tabeleAiEditor', env: 'VITE_TABELE_AI_EDITOR' },
+  TABELE_AI_EDITOR_FLAG_KEYS: {
+    localStorage: 'ff.tabele_ai_editor',
+    query: 'ff_tabeleAiEditor',
+    env: 'VITE_TABELE_AI_EDITOR',
+  },
 }));
 vi.mock('@/utils/tabeleQaFlag', () => ({
   isTabeleQaEnabled: vi.fn(() => false),
-  TABELE_QA_FLAG_KEYS: { localStorage: 'ff.tabele_qa', query: 'ff_tabeleQa', env: 'VITE_TABELE_QA' },
+  TABELE_QA_FLAG_KEYS: {
+    localStorage: 'ff.tabele_qa',
+    query: 'ff_tabeleQa',
+    env: 'VITE_TABELE_QA',
+  },
 }));
 
 import { useTabeleRightRailPanels } from '../useTabeleRightRailPanels';

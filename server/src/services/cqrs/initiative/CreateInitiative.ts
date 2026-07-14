@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../../database/Database.js';
-import { CommandHandler } from '../CommandBus.js';
 import { createInitiative as funnelCreateInitiative } from '../../initiative/createInitiativeService.js';
+import { CommandHandler } from '../CommandBus.js';
 
 export class CreateInitiativeCommand {
   constructor(

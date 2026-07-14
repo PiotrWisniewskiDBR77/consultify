@@ -23,9 +23,9 @@ import { MaturityMatrix } from '@/components/MaturityMatrix';
 import {
   DRD_AXIS_KEY_MAP,
   DRD_STRUCTURE,
+  type DRDArea,
   getAxisById,
   getQuestionsForAxis,
-  type DRDArea,
 } from '@/services/drdStructure';
 import type { AxisId } from '@/types';
 
@@ -89,10 +89,7 @@ export const DRDMatrixPreview: React.FC = () => {
     };
   };
 
-  const totalAreas = useMemo(
-    () => DRD_STRUCTURE.reduce((sum, a) => sum + a.areas.length, 0),
-    []
-  );
+  const totalAreas = useMemo(() => DRD_STRUCTURE.reduce((sum, a) => sum + a.areas.length, 0), []);
 
   return (
     <div className="flex flex-col h-screen bg-c-bg text-c-text">

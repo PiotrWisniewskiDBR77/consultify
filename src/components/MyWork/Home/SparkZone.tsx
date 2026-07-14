@@ -2,8 +2,9 @@ import { Clock, FileText, Lightbulb, Plus, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { SparkData, SparkItem } from './useHomeData';
 import i18n from '@/i18n';
+
+import type { SparkData, SparkItem } from './useHomeData';
 
 interface SparkZoneProps {
   data: SparkData;

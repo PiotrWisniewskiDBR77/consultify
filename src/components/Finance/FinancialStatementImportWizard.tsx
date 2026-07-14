@@ -281,9 +281,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       ) {
         setFile(f);
       } else {
-        setError(
-          t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS')
-        );
+        setError(t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS'));
       }
     },
     [t]

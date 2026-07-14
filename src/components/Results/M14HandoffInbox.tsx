@@ -1,4 +1,4 @@
-import { Inbox, Check, X, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Check, Inbox, Loader2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -127,10 +127,7 @@ export const M14HandoffInbox: React.FC<{ onPromoted?: () => void }> = ({ onPromo
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-c-border-subtle py-16 text-center">
           <Inbox size={28} className="text-c-text-secondary/60" />
           <p className="text-sm text-c-text-secondary">
-            {t(
-              'results.handoffInbox.empty',
-              'No new benefits from closed initiatives.'
-            )}
+            {t('results.handoffInbox.empty', 'No new benefits from closed initiatives.')}
           </p>
         </div>
       ) : (

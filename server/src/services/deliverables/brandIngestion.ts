@@ -103,8 +103,7 @@ export async function extractBrandTheme(buffer: Buffer): Promise<BrandThemeOverr
       if (body) fontPair.body = body;
     }
 
-    const sourceName: string | undefined =
-      clr?.['@_name'] ?? fonts?.['@_name'] ?? undefined;
+    const sourceName: string | undefined = clr?.['@_name'] ?? fonts?.['@_name'] ?? undefined;
 
     if (Object.keys(palette).length === 0 && Object.keys(fontPair).length === 0) {
       logger.info(`${LOG} theme part present but no usable colors/fonts`);

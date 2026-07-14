@@ -525,18 +525,18 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           style={posStyle}
         >
           {groups.map((group, gi) => (
-          <React.Fragment key={gi}>
-            {group.titlePl && (
-              <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-                {isPl ? group.titlePl : group.titleEn}
-              </div>
-            )}
-            {group.items.map(renderItem)}
-            {gi < groups.length - 1 && (
-              <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
-            )}
-          </React.Fragment>
-        ))}
+            <React.Fragment key={gi}>
+              {group.titlePl && (
+                <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
+                  {isPl ? group.titlePl : group.titleEn}
+                </div>
+              )}
+              {group.items.map(renderItem)}
+              {gi < groups.length - 1 && (
+                <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
+              )}
+            </React.Fragment>
+          ))}
         </div>
       </ContextMenuPortal>
     );
@@ -553,54 +553,54 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         className={`${MENU_CONTAINER_CLASS} min-w-[230px] overflow-y-auto`}
         style={posStyle}
       >
-      {mainItems.map((group, gi) => (
-        <React.Fragment key={gi}>
-          <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-            {isPl ? group.titlePl : group.titleEn}
-          </div>
-          {group.items.map(renderItem)}
-          <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
-        </React.Fragment>
-      ))}
-
-      {subGroups.map((group) => (
-        <div
-          key={group.titleEn}
-          className="relative"
-          onMouseEnter={() => {
-            if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
-            setSubmenu(group.titleEn);
-          }}
-          onMouseLeave={() => {
-            submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
-          }}
-        >
-          <button
-            type="button"
-            className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-md"
-          >
-            <span className="flex-1">{isPl ? group.titlePl : group.titleEn}</span>
-            <ChevronRight size={11} className="text-c-text-secondary" />
-          </button>
-
-          {submenu === group.titleEn && (
-            <div
-              className="absolute left-full top-0 ml-1 min-w-[200px] max-h-[70vh] overflow-y-auto py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
-              onMouseEnter={() => {
-                if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
-              }}
-              onMouseLeave={() => {
-                submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
-              }}
-            >
-              <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-                {isPl ? group.titlePl : group.titleEn}
-              </div>
-              {group.items.map(renderItem)}
+        {mainItems.map((group, gi) => (
+          <React.Fragment key={gi}>
+            <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
+              {isPl ? group.titlePl : group.titleEn}
             </div>
-          )}
-        </div>
-      ))}
+            {group.items.map(renderItem)}
+            <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
+          </React.Fragment>
+        ))}
+
+        {subGroups.map((group) => (
+          <div
+            key={group.titleEn}
+            className="relative"
+            onMouseEnter={() => {
+              if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+              setSubmenu(group.titleEn);
+            }}
+            onMouseLeave={() => {
+              submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
+            }}
+          >
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-md"
+            >
+              <span className="flex-1">{isPl ? group.titlePl : group.titleEn}</span>
+              <ChevronRight size={11} className="text-c-text-secondary" />
+            </button>
+
+            {submenu === group.titleEn && (
+              <div
+                className="absolute left-full top-0 ml-1 min-w-[200px] max-h-[70vh] overflow-y-auto py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
+                onMouseEnter={() => {
+                  if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+                }}
+                onMouseLeave={() => {
+                  submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
+                }}
+              >
+                <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
+                  {isPl ? group.titlePl : group.titleEn}
+                </div>
+                {group.items.map(renderItem)}
+              </div>
+            )}
+          </div>
+        ))}
 
         <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
         {deleteGroup.items.map(renderItem)}

@@ -267,7 +267,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
                 title={t('genericReports.empty.filterTitle', 'No reports match your filter')}
                 description={t(
                   'genericReports.empty.filterDesc',
-                  'Try a different search term or report type.',
+                  'Try a different search term or report type.'
                 )}
                 primaryAction={{
                   label: t('common.clearFilters', 'Clear filters'),
@@ -284,7 +284,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
                 title={t('genericReports.empty.newTitle', 'No reports yet')}
                 description={t(
                   'genericReports.empty.newDesc',
-                  'Drag and drop a file above to upload your first report.',
+                  'Drag and drop a file above to upload your first report.'
                 )}
               />
             )}

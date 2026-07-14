@@ -175,7 +175,8 @@ function buildExecutiveSummary(
   // Top-3 gaps (for the "three gaps" paragraph).
   const topGaps = [...withGap].sort((a, b) => b.gap - a.gap).slice(0, 3);
 
-  const strongName = strongest?.name ?? (isPL ? 'brak ocenionego wymiaru' : 'no assessed dimension');
+  const strongName =
+    strongest?.name ?? (isPL ? 'brak ocenionego wymiaru' : 'no assessed dimension');
   const weakName = weakest?.name ?? (isPL ? 'brak luki' : 'no gap');
   const weakBlockName = weakest ? blockName(weakest.block, isPL) : '';
   const weakGap = weakest?.gap ?? 0;

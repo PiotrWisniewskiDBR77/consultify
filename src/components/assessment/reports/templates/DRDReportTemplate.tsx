@@ -16,22 +16,15 @@
  * gaps. NO crimson (`primary-*`) classes.
  */
 
-import {
-  AlertTriangle,
-  ArrowRight,
-  BarChart3,
-  Clock,
-  Target,
-  TrendingUp,
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Clock, Target, TrendingUp } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { buildDRDVisualizationData } from '../../../../services/drdVizAdapter';
 import type { AssessmentVisualizationData } from '../AssessmentReportVisualizations';
 import {
-  DimensionBars,
   AssessmentRadarChart,
+  DimensionBars,
   GapHeatmap,
   ScoreCardsGrid,
 } from '../AssessmentReportVisualizations';

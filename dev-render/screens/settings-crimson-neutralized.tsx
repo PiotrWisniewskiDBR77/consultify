@@ -151,12 +151,18 @@ const SettingsCrimsonNeutralizedScreen: React.FC = () => {
             Archetyp 3 · Wskaźnik kroku aktywnego (SecurityOverview)
           </h3>
           <div className="flex gap-8 flex-wrap">
-            {(
-              [
-                { title: 'Przed · isActive = bg-c-accent', active: 'bg-c-accent text-white', tone: 'before' as const },
-                { title: 'Po · isActive = bg-c-text', active: 'bg-c-text text-c-surface', tone: 'after' as const },
-              ]
-            ).map((v) => (
+            {[
+              {
+                title: 'Przed · isActive = bg-c-accent',
+                active: 'bg-c-accent text-white',
+                tone: 'before' as const,
+              },
+              {
+                title: 'Po · isActive = bg-c-text',
+                active: 'bg-c-text text-c-surface',
+                tone: 'after' as const,
+              },
+            ].map((v) => (
               <Col key={v.title} title={v.title} tone={v.tone}>
                 <div className="flex items-center gap-2">
                   {[1, 2, 3].map((n) => {
@@ -197,13 +203,17 @@ const SettingsCrimsonNeutralizedScreen: React.FC = () => {
               </div>
             </div>
             <div className="space-y-2 min-w-[220px]">
-              <div className="text-xs text-c-text-muted">SecurityDashboard · pasek postępu (dane)</div>
+              <div className="text-xs text-c-text-muted">
+                SecurityDashboard · pasek postępu (dane)
+              </div>
               <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                 <div className="h-full bg-c-accent rounded-full" style={{ width: '68%' }} />
               </div>
             </div>
             <div className="space-y-2">
-              <div className="text-xs text-c-text-muted">SecurityEvents · ikona-gradient nagłówka</div>
+              <div className="text-xs text-c-text-muted">
+                SecurityEvents · ikona-gradient nagłówka
+              </div>
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-c-accent-soft to-c-accent flex items-center justify-center shadow-lg shadow-c-accent text-white">
                 <ShieldCheck size={22} />
               </div>

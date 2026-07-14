@@ -624,9 +624,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   <Loader2 className="w-6 h-6 animate-spin text-c-accent" />
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="p-8 text-center text-c-text-muted">
-                  No active sessions found
-                </div>
+                <div className="p-8 text-center text-c-text-muted">No active sessions found</div>
               ) : (
                 sessions.map((session) => {
                   const DeviceIcon = getDeviceIcon(session.deviceInfo || session.device || '');
@@ -693,9 +691,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
               <h3 className="font-semibold text-c-text">
                 {t('settings.security.recoveryOptions', 'Recovery Options')}
               </h3>
-              <p className="text-sm text-c-text-muted">
-                Backup methods to recover your account
-              </p>
+              <p className="text-sm text-c-text-muted">Backup methods to recover your account</p>
             </div>
           </div>
           {expandedSections.recovery ? (
@@ -721,9 +717,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     <div className="flex items-center gap-3">
                       <Mail className="w-5 h-5 text-c-text-muted" />
                       <div>
-                        <p className="text-sm font-medium text-c-text-secondary">
-                          Recovery Email
-                        </p>
+                        <p className="text-sm font-medium text-c-text-secondary">Recovery Email</p>
                         <p className="text-sm text-c-text-muted">
                           {recoveryOptions.recoveryEmail || 'Not set'}
                         </p>
@@ -740,9 +734,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     <div className="flex items-center gap-3">
                       <Phone className="w-5 h-5 text-c-text-muted" />
                       <div>
-                        <p className="text-sm font-medium text-c-text-secondary">
-                          Recovery Phone
-                        </p>
+                        <p className="text-sm font-medium text-c-text-secondary">Recovery Phone</p>
                         <p className="text-sm text-c-text-muted">
                           {recoveryOptions.recoveryPhone || 'Not set'}
                         </p>
@@ -759,9 +751,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     <div className="flex items-center gap-3">
                       <Download className="w-5 h-5 text-c-text-muted" />
                       <div>
-                        <p className="text-sm font-medium text-c-text-secondary">
-                          Backup Codes
-                        </p>
+                        <p className="text-sm font-medium text-c-text-secondary">Backup Codes</p>
                         <p className="text-sm text-c-text-muted">
                           {recoveryOptions.backupCodesCount > 0
                             ? `${recoveryOptions.backupCodesCount} codes remaining`
@@ -875,9 +865,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 <Loader2 className="w-6 h-6 animate-spin text-c-accent" />
               </div>
             ) : securityEvents.length === 0 ? (
-              <div className="p-8 text-center text-c-text-muted">
-                No recent security events
-              </div>
+              <div className="p-8 text-center text-c-text-muted">No recent security events</div>
             ) : (
               <div className="divide-y divide-c-border-subtle dark:divide-white/5">
                 {securityEvents.map((event) => (
@@ -900,9 +888,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-c-text">
-                        {event.description}
-                      </p>
+                      <p className="font-medium text-c-text">{event.description}</p>
                       <div className="flex items-center gap-3 text-sm text-c-text-muted mt-1">
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />

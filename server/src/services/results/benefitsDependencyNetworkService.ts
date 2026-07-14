@@ -74,13 +74,7 @@ function nodeId(type: BdnNodeType, sourceId: string): string {
  * Krawędzie są deduplikowane.
  */
 export function buildBdn(input: BuildBdnInput): BdnGraph {
-  const {
-    initiatives,
-    kpis,
-    objectives = [],
-    initiativeToKpi,
-    kpiToObjective = [],
-  } = input;
+  const { initiatives, kpis, objectives = [], initiativeToKpi, kpiToObjective = [] } = input;
 
   const nodes: BdnNode[] = [];
   const knownNodeIds = new Set<string>();
@@ -135,11 +129,7 @@ export function buildBdn(input: BuildBdnInput): BdnGraph {
  * - Krawędź zamykająca cykl jest pomijana; ścieżka kończy się na ostatnim
  *   nowym węźle.
  */
-export function tracePaths(
-  nodes: BdnNode[],
-  edges: BdnEdge[],
-  fromId: string,
-): string[][] {
+export function tracePaths(nodes: BdnNode[], edges: BdnEdge[], fromId: string): string[][] {
   const nodeIds = new Set(nodes.map((n) => n.id));
   if (!nodeIds.has(fromId)) return [];
 

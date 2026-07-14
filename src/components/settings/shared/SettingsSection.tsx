@@ -123,9 +123,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-semibold text-c-text leading-tight">{title}</h3>
-            <p className="text-sm text-c-text-secondary mt-1 leading-relaxed">
-              {description}
-            </p>
+            <p className="text-sm text-c-text-secondary mt-1 leading-relaxed">{description}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -211,12 +209,7 @@ interface SettingsInputProps extends React.InputHTMLAttributes<HTMLInputElement>
   error?: string;
 }
 
-export const SettingsInput: React.FC<SettingsInputProps> = ({
-  error,
-  className,
-  id,
-  ...props
-}) => {
+export const SettingsInput: React.FC<SettingsInputProps> = ({ error, className, id, ...props }) => {
   const reactId = React.useId();
   const fieldId = id ?? reactId;
   const errorId = error ? `${fieldId}-error` : undefined;
@@ -359,9 +352,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
   <div className="flex items-start justify-between gap-4">
     <div className="flex-1">
       <span className="text-sm font-medium text-c-text">{label}</span>
-      {description && (
-        <p className="text-xs text-c-text-secondary mt-0.5">{description}</p>
-      )}
+      {description && <p className="text-xs text-c-text-secondary mt-0.5">{description}</p>}
     </div>
     <button
       role="switch"

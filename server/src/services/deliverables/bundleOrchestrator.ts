@@ -8,16 +8,25 @@
  * SPINE na wejścia B4/B3/B1 (jedno źródło prawdy → 3 artefakty). SSOT: spec.
  */
 import {
-  type BusinessPlanSpine, type BizPlanSection, type HeroNumber, type ValidationReport,
-  type AntiPatternFinding, formatHero,
-} from './businessPlanSpine.js';
-import { computeFinancialModel, runCfoReview } from './financialEngine.js';
-import { detectFinancialAntiPatterns } from './financialAntiPatterns.js';
-import {
-  type BusinessPlanInput, type GenOpts, generateAssumptions, toFinancialDrivers,
-  buildMarketSizing, buildAssumptionRegistry, validateAssumptions,
+  buildAssumptionRegistry,
+  buildMarketSizing,
+  type BusinessPlanInput,
+  generateAssumptions,
+  type GenOpts,
+  toFinancialDrivers,
+  validateAssumptions,
 } from './assumptionsModel.js';
+import {
+  type AntiPatternFinding,
+  type BizPlanSection,
+  type BusinessPlanSpine,
+  formatHero,
+  type HeroNumber,
+  type ValidationReport,
+} from './businessPlanSpine.js';
 import { resolveDeliverableDefaults } from './deliverableDefaults.js';
+import { detectFinancialAntiPatterns } from './financialAntiPatterns.js';
+import { computeFinancialModel, runCfoReview } from './financialEngine.js';
 
 /** Limit długości action-title (headline) z defaultów — najściślejszy (deck). */
 const MAX_TITLE_WORDS = resolveDeliverableDefaults('deck').content.maxWordsPerTitle ?? 12;
@@ -33,34 +42,122 @@ export function clampActionTitle(text: string | undefined, maxWords = MAX_TITLE_
   const firstSentence = trimmed.split(/\.\s+/)[0]?.trim() || trimmed;
   const words = firstSentence.split(/\s+/);
   if (words.length <= maxWords) return firstSentence.replace(/[\s.,;:—–-]+$/, '');
-  return words.slice(0, maxWords).join(' ').replace(/[\s.,;:—–-]+$/, '') + '…';
+  return (
+    words
+      .slice(0, maxWords)
+      .join(' ')
+      .replace(/[\s.,;:—–-]+$/, '') + '…'
+  );
 }
 
 /** Pojedyncze policzenie+sformatowanie hero-number → reużywane przez 3 generatory (§D3). */
-function makeHero(key: string, label: string, value: number, unit: string, lang: 'PL' | 'EN'): HeroNumber {
+function makeHero(
+  key: string,
+  label: string,
+  value: number,
+  unit: string,
+  lang: 'PL' | 'EN'
+): HeroNumber {
   return { key, label, value, unit, formatted: formatHero(value, unit, lang) };
 }
 
 /** Kanon sekcji (§E1) z action-titles z hero-numbers + mapowaniem na deck (§E4). */
-function buildSections(input: BusinessPlanInput, hero: Record<string, HeroNumber>): BizPlanSection[] {
+function buildSections(
+  input: BusinessPlanInput,
+  hero: Record<string, HeroNumber>
+): BizPlanSection[] {
   const lastYear = input.startYear + input.years - 1;
   const h = (k: string) => hero[k]?.formatted ?? '';
   return [
-    { id: 'exec_summary', actionTitle: clampActionTitle(input.thesis), heroNumberKeys: ['revenue_last', 'ebitda_last', 'ask'], deck: { slideIntent: 'executive_summary', reusesTable: false, needsProductGraphic: false } },
-    { id: 'problem', actionTitle: 'Status quo jest wolny i kosztowny — to realny ból rynku', heroNumberKeys: ['tam'], deck: { slideIntent: 'root_cause', reusesTable: false, needsProductGraphic: true } },
-    { id: 'solution', actionTitle: clampActionTitle(input.product), heroNumberKeys: [], deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true } },
-    { id: 'market', actionTitle: `Rynek ${h('tam')} (TAM); realnie zdobywalne ${h('som')} (SOM)`, heroNumberKeys: ['tam', 'sam', 'som'], deck: { slideIntent: 'performance_overview', reusesTable: true, needsProductGraphic: false } },
-    { id: 'business_model', actionTitle: 'Hybryda usługi + SaaS — dwa wzmacniające się strumienie', heroNumberKeys: ['arr_last'], deck: { slideIntent: 'comparison', reusesTable: true, needsProductGraphic: false } },
-    { id: 'gtm', actionTitle: 'Land-and-expand: usługi otwierają drzwi, SaaS skaluje', heroNumberKeys: [], deck: { slideIntent: 'process_flow', reusesTable: false, needsProductGraphic: false } },
-    { id: 'competition', actionTitle: 'Strukturalna przewaga kosztowa = trwały moat', heroNumberKeys: [], deck: { slideIntent: 'comparison', reusesTable: false, needsProductGraphic: false } },
-    { id: 'traction', actionTitle: `ARR rośnie do ${h('arr_last')} w ${lastYear}`, heroNumberKeys: ['arr_last'], deck: { slideIntent: 'performance_overview', reusesTable: true, needsProductGraphic: false } },
-    { id: 'financial_plan', actionTitle: `Przychód ${h('revenue_last')}, EBITDA ${h('ebitda_last')} (marża ${h('ebitda_margin_last')}) w ${lastYear}`, heroNumberKeys: ['revenue_last', 'ebitda_last', 'ebitda_margin_last'], deck: { slideIntent: 'performance_overview', reusesTable: true, needsProductGraphic: false } },
-    { id: 'unit_economics', actionTitle: `LTV/CAC ${h('ltv_cac')}, payback ${h('cac_payback')} — ekonomika zdrowa`, heroNumberKeys: ['ltv_cac', 'cac_payback'], deck: { slideIntent: 'recommendation_portfolio', reusesTable: true, needsProductGraphic: false } },
-    { id: 'team', actionTitle: 'Zespół łączy ekspertyzę doradczą z inżynierią AI', heroNumberKeys: [], deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true } },
-    { id: 'risks', actionTitle: 'Ryzyka zidentyfikowane i zmitygowane', heroNumberKeys: [], deck: { slideIntent: 'risk_management', reusesTable: false, needsProductGraphic: false } },
+    {
+      id: 'exec_summary',
+      actionTitle: clampActionTitle(input.thesis),
+      heroNumberKeys: ['revenue_last', 'ebitda_last', 'ask'],
+      deck: { slideIntent: 'executive_summary', reusesTable: false, needsProductGraphic: false },
+    },
+    {
+      id: 'problem',
+      actionTitle: 'Status quo jest wolny i kosztowny — to realny ból rynku',
+      heroNumberKeys: ['tam'],
+      deck: { slideIntent: 'root_cause', reusesTable: false, needsProductGraphic: true },
+    },
+    {
+      id: 'solution',
+      actionTitle: clampActionTitle(input.product),
+      heroNumberKeys: [],
+      deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true },
+    },
+    {
+      id: 'market',
+      actionTitle: `Rynek ${h('tam')} (TAM); realnie zdobywalne ${h('som')} (SOM)`,
+      heroNumberKeys: ['tam', 'sam', 'som'],
+      deck: { slideIntent: 'performance_overview', reusesTable: true, needsProductGraphic: false },
+    },
+    {
+      id: 'business_model',
+      actionTitle: 'Hybryda usługi + SaaS — dwa wzmacniające się strumienie',
+      heroNumberKeys: ['arr_last'],
+      deck: { slideIntent: 'comparison', reusesTable: true, needsProductGraphic: false },
+    },
+    {
+      id: 'gtm',
+      actionTitle: 'Land-and-expand: usługi otwierają drzwi, SaaS skaluje',
+      heroNumberKeys: [],
+      deck: { slideIntent: 'process_flow', reusesTable: false, needsProductGraphic: false },
+    },
+    {
+      id: 'competition',
+      actionTitle: 'Strukturalna przewaga kosztowa = trwały moat',
+      heroNumberKeys: [],
+      deck: { slideIntent: 'comparison', reusesTable: false, needsProductGraphic: false },
+    },
+    {
+      id: 'traction',
+      actionTitle: `ARR rośnie do ${h('arr_last')} w ${lastYear}`,
+      heroNumberKeys: ['arr_last'],
+      deck: { slideIntent: 'performance_overview', reusesTable: true, needsProductGraphic: false },
+    },
+    {
+      id: 'financial_plan',
+      actionTitle: `Przychód ${h('revenue_last')}, EBITDA ${h('ebitda_last')} (marża ${h('ebitda_margin_last')}) w ${lastYear}`,
+      heroNumberKeys: ['revenue_last', 'ebitda_last', 'ebitda_margin_last'],
+      deck: { slideIntent: 'performance_overview', reusesTable: true, needsProductGraphic: false },
+    },
+    {
+      id: 'unit_economics',
+      actionTitle: `LTV/CAC ${h('ltv_cac')}, payback ${h('cac_payback')} — ekonomika zdrowa`,
+      heroNumberKeys: ['ltv_cac', 'cac_payback'],
+      deck: {
+        slideIntent: 'recommendation_portfolio',
+        reusesTable: true,
+        needsProductGraphic: false,
+      },
+    },
+    {
+      id: 'team',
+      actionTitle: 'Zespół łączy ekspertyzę doradczą z inżynierią AI',
+      heroNumberKeys: [],
+      deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true },
+    },
+    {
+      id: 'risks',
+      actionTitle: 'Ryzyka zidentyfikowane i zmitygowane',
+      heroNumberKeys: [],
+      deck: { slideIntent: 'risk_management', reusesTable: false, needsProductGraphic: false },
+    },
     // W12.2: wycena 3-metody pojawia się na slajdzie ASK (low-high range z DCF/comps/VC)
-    { id: 'ask', actionTitle: clampActionTitle(input.ask), heroNumberKeys: ['ask', 'valuation_low', 'valuation_high'], deck: { slideIntent: 'recommendation_single', reusesTable: true, needsProductGraphic: false } },
-    { id: 'roadmap', actionTitle: `Roadmapa do ${lastYear}`, heroNumberKeys: [], deck: { slideIntent: 'roadmap', reusesTable: false, needsProductGraphic: false } },
+    {
+      id: 'ask',
+      actionTitle: clampActionTitle(input.ask),
+      heroNumberKeys: ['ask', 'valuation_low', 'valuation_high'],
+      deck: { slideIntent: 'recommendation_single', reusesTable: true, needsProductGraphic: false },
+    },
+    {
+      id: 'roadmap',
+      actionTitle: `Roadmapa do ${lastYear}`,
+      heroNumberKeys: [],
+      deck: { slideIntent: 'roadmap', reusesTable: false, needsProductGraphic: false },
+    },
   ];
 }
 
@@ -103,7 +200,11 @@ export function buildSpine(input: BusinessPlanInput): BusinessPlanSpine {
   const assumptionAnti = validateAssumptions(input);
   // W12.1 (finanse) — hockey-stick na wyliczonej trajektorii przychodu.
   const financialAnti = detectFinancialAntiPatterns(model.pnl);
-  const antiPatterns: AntiPatternFinding[] = [...assumptionAnti, ...financialAnti, ...cfo.antiPatterns];
+  const antiPatterns: AntiPatternFinding[] = [
+    ...assumptionAnti,
+    ...financialAnti,
+    ...cfo.antiPatterns,
+  ];
   const validation: ValidationReport = {
     checks: cfo.checks,
     antiPatterns,
@@ -112,7 +213,9 @@ export function buildSpine(input: BusinessPlanInput): BusinessPlanSpine {
 
   return {
     meta: { company: input.company, language: lang, thesis: input.thesis, ask: input.ask },
-    assumptions, market, financials: model,
+    assumptions,
+    market,
+    financials: model,
     glossary: {
       ARR: 'Annual Recurring Revenue — roczny powtarzalny przychód SaaS',
       NRR: 'Net Revenue Retention — utrzymanie + ekspansja na istniejącej bazie',
@@ -133,26 +236,37 @@ export function buildSpine(input: BusinessPlanInput): BusinessPlanSpine {
 function validationFeedback(spine: BusinessPlanSpine): string {
   const ue = spine.financials.unitEconomics[0];
   const lines: string[] = [];
-  const failedById = new Map(spine.validation.checks.filter((c) => !c.passed).map((c) => [c.id, c]));
+  const failedById = new Map(
+    spine.validation.checks.filter((c) => !c.passed).map((c) => [c.id, c])
+  );
 
   if (failedById.has('ltv_cac_min')) {
     const targetCac = Math.round(ue.ltv / 3.2);
-    lines.push(`- LTV:CAC = ${ue.ltvCacRatio} (<3). LTV=${ue.ltv}. NAPRAW: ustaw cac ≤ ${targetCac} (obecnie ${ue.cac}) LUB podnieś arpuAnnual/saasPricePerSeatMonth LUB obniż grossChurnAnnual. CAC to najtwardszy lever.`);
+    lines.push(
+      `- LTV:CAC = ${ue.ltvCacRatio} (<3). LTV=${ue.ltv}. NAPRAW: ustaw cac ≤ ${targetCac} (obecnie ${ue.cac}) LUB podnieś arpuAnnual/saasPricePerSeatMonth LUB obniż grossChurnAnnual. CAC to najtwardszy lever.`
+    );
   }
   if (failedById.has('cac_payback')) {
     const monthlyGm = ue.cac / Math.max(1, ue.cacPaybackMonths); // = arpu×marża/12
     const targetCac = Math.round(monthlyGm * 18);
-    lines.push(`- CAC payback = ${ue.cacPaybackMonths} mies (>24). NAPRAW: cac ≤ ${targetCac} (cel ~18 mies) lub wyższe arpuAnnual.`);
+    lines.push(
+      `- CAC payback = ${ue.cacPaybackMonths} mies (>24). NAPRAW: cac ≤ ${targetCac} (cel ~18 mies) lub wyższe arpuAnnual.`
+    );
   }
   if (failedById.has('rule_of_40')) {
-    lines.push(`- Rule of 40 = ${spine.financials.kpis.ruleOf40} (<40). NAPRAW: podnieś wzrost (saasSeatGrowthYoY/nrr) LUB marżę EBITDA ost. roku (niższe opexLeverageYoY ~0.80, niższe smPctRevenue).`);
+    lines.push(
+      `- Rule of 40 = ${spine.financials.kpis.ruleOf40} (<40). NAPRAW: podnieś wzrost (saasSeatGrowthYoY/nrr) LUB marżę EBITDA ost. roku (niższe opexLeverageYoY ~0.80, niższe smPctRevenue).`
+    );
   }
   // pozostałe nieprzeszłe checki + anty-wzorce — ogólnie
   for (const [id, c] of failedById) {
     if (['ltv_cac_min', 'cac_payback', 'rule_of_40'].includes(id)) continue;
-    lines.push(`- ${c.label}${c.value !== undefined ? ` (jest ${c.value}, oczekiwane ${c.benchmark ?? 'w normie'})` : ''}`);
+    lines.push(
+      `- ${c.label}${c.value !== undefined ? ` (jest ${c.value}, oczekiwane ${c.benchmark ?? 'w normie'})` : ''}`
+    );
   }
-  for (const a of spine.validation.antiPatterns) lines.push(`- [${a.severity}] ${a.pattern}: ${a.detail}`);
+  for (const a of spine.validation.antiPatterns)
+    lines.push(`- [${a.severity}] ${a.pattern}: ${a.detail}`);
   return lines.join('\n');
 }
 
@@ -162,7 +276,9 @@ function validationFeedback(spine: BusinessPlanSpine): string {
  * Zwraca najlepszy SPINE (przeszły jeśli się udało, inaczej ostatni — z jawną walidacją).
  */
 export async function generateBusinessPlan(
-  brief: string, opts: GenOpts = {}, maxRepairs = 3,
+  brief: string,
+  opts: GenOpts = {},
+  maxRepairs = 3
 ): Promise<BusinessPlanSpine | null> {
   let input = await generateAssumptions(brief, opts);
   if (!input) return null;
@@ -197,7 +313,13 @@ export function spineToDocOutline(spine: BusinessPlanSpine) {
   const hero = (k: string) => spine.heroNumbers.find((h) => h.key === k);
   return spine.sections.map((s) => ({
     title: s.actionTitle,
-    purpose: `Sekcja ${s.id}. ${s.actionTitle}. Hero: ${s.heroNumberKeys.map((k) => { const h = hero(k); return h ? `${h.label} ${h.formatted}` : ''; }).filter(Boolean).join(', ')}`,
+    purpose: `Sekcja ${s.id}. ${s.actionTitle}. Hero: ${s.heroNumberKeys
+      .map((k) => {
+        const h = hero(k);
+        return h ? `${h.label} ${h.formatted}` : '';
+      })
+      .filter(Boolean)
+      .join(', ')}`,
   }));
 }
 
@@ -208,48 +330,144 @@ export function spineToDocOutline(spine: BusinessPlanSpine) {
  * Zwraca kształt DocumentStructurePlan dla generateDocumentContent.
  */
 export function spineToDocPlan(spine: BusinessPlanSpine) {
-  const hero = (k: string) => { const h = spine.heroNumbers.find((x) => x.key === k); return h ? `${h.label} ${h.formatted}` : ''; };
+  const hero = (k: string) => {
+    const h = spine.heroNumbers.find((x) => x.key === k);
+    return h ? `${h.label} ${h.formatted}` : '';
+  };
   const heroes = (keys: string[]) => keys.map(hero).filter(Boolean).join('; ');
-  const pnlRows = spine.financials.pnl.map((p) => ({ rok: p.period, przychod: p.revenue, ebitda: p.ebitda, marza: p.revenue > 0 ? Math.round(p.ebitda / p.revenue * 100) + '%' : '0%' }));
+  const pnlRows = spine.financials.pnl.map((p) => ({
+    rok: p.period,
+    przychod: p.revenue,
+    ebitda: p.ebitda,
+    marza: p.revenue > 0 ? Math.round((p.ebitda / p.revenue) * 100) + '%' : '0%',
+  }));
   const market = spine.market;
   // defensibility (§A10/B11/F3.4)
-  const lastScenarioEbitda = (s: 'base' | 'bull' | 'bear') => { const arr = spine.financials.scenarios[s]?.pnl; return arr?.[arr.length - 1]?.ebitda ?? 'n/d'; };
+  const lastScenarioEbitda = (s: 'base' | 'bull' | 'bear') => {
+    const arr = spine.financials.scenarios[s]?.pnl;
+    return arr?.[arr.length - 1]?.ebitda ?? 'n/d';
+  };
   const defensibilityRows = spine.assumptions
     .slice()
     .sort((a, b) => b.sensitivityRank - a.sensitivityRank)
-    .map((a) => ({ zalozenie: a.label, wartosc: `${a.base}${a.unit}`, zrodlo: a.provenance.source, zakres: `${a.range[0]}–${a.range[1]}`, ranga: a.sensitivityRank }));
+    .map((a) => ({
+      zalozenie: a.label,
+      wartosc: `${a.base}${a.unit}`,
+      zrodlo: a.provenance.source,
+      zakres: `${a.range[0]}–${a.range[1]}`,
+      ranga: a.sensitivityRank,
+    }));
 
   // recepta bloków per typ sekcji (block types z ALLOWED_BLOCK_TYPES)
   const recipe: Record<string, Array<{ type: string; hint: string }>> = {
     exec_summary: [
-      { type: 'kpi_strip', hint: `4 metryki: ${heroes(['revenue_last', 'ebitda_last', 'arr_last', 'ask'])}` },
+      {
+        type: 'kpi_strip',
+        hint: `4 metryki: ${heroes(['revenue_last', 'ebitda_last', 'arr_last', 'ask'])}`,
+      },
       { type: 'paragraph', hint: `Teza answer-first: ${spine.meta.thesis}. Co i dla kogo.` },
-      { type: 'paragraph', hint: `Dlaczego teraz i czego oczekuje inwestor. Ask: ${spine.meta.ask}.` },
+      {
+        type: 'paragraph',
+        hint: `Dlaczego teraz i czego oczekuje inwestor. Ask: ${spine.meta.ask}.`,
+      },
     ],
-    problem: [{ type: 'paragraph', hint: 'Status quo: jak dziś rozwiązywany jest problem i dlaczego jest drogi/wolny.' }, { type: 'callout', hint: `Skala bólu rynkowego. TAM ${hero('tam')}.` }],
-    solution: [{ type: 'paragraph', hint: `Produkt: ${spine.sections.find((s) => s.id === 'solution')?.actionTitle}. Jak działa.` }, { type: 'bullet_list', hint: '5 kluczowych możliwości produktu.' }, { type: 'callout', hint: 'Główna przewaga (np. kosztowa/technologiczna).' }],
-    market: [{ type: 'kpi_strip', hint: `TAM/SAM/SOM: ${heroes(['tam', 'sam', 'som'])}` }, { type: 'paragraph', hint: `Sizing: TAM top-down (${market.tam.provenance.source}); SOM z buildu GTM; bottom-up ${market.bottomUp.formula}.` }],
-    business_model: [{ type: 'bullet_list', hint: `Założenia modelu: ${spine.assumptions.slice(0, 5).map((a) => `${a.label} ${a.base}${a.unit}`).join('; ')}` }, { type: 'paragraph', hint: 'Jak zarabiamy: hybryda usługi + SaaS.' }],
-    gtm: [{ type: 'paragraph', hint: 'Go-to-market: kanały, cykl sprzedaży, land-and-expand.' }, { type: 'numbered_list', hint: 'Etapy ruchu sprzedażowego.' }],
-    competition: [{ type: 'paragraph', hint: 'Krajobraz konkurencji i dlaczego wygrywamy (moat).' }, { type: 'callout', hint: 'Trwała przewaga.' }],
-    traction: [{ type: 'kpi_strip', hint: `Trakcja: ${heroes(['arr_last'])}` }, { type: 'paragraph', hint: 'Dowody działania, kamienie milowe.' }, { type: 'chart', hint: `Wzrost ARR/przychodu 3 lata: ${JSON.stringify(pnlRows.map((r) => ({ rok: r.rok, przychod: r.przychod })))}` }],
+    problem: [
+      {
+        type: 'paragraph',
+        hint: 'Status quo: jak dziś rozwiązywany jest problem i dlaczego jest drogi/wolny.',
+      },
+      { type: 'callout', hint: `Skala bólu rynkowego. TAM ${hero('tam')}.` },
+    ],
+    solution: [
+      {
+        type: 'paragraph',
+        hint: `Produkt: ${spine.sections.find((s) => s.id === 'solution')?.actionTitle}. Jak działa.`,
+      },
+      { type: 'bullet_list', hint: '5 kluczowych możliwości produktu.' },
+      { type: 'callout', hint: 'Główna przewaga (np. kosztowa/technologiczna).' },
+    ],
+    market: [
+      { type: 'kpi_strip', hint: `TAM/SAM/SOM: ${heroes(['tam', 'sam', 'som'])}` },
+      {
+        type: 'paragraph',
+        hint: `Sizing: TAM top-down (${market.tam.provenance.source}); SOM z buildu GTM; bottom-up ${market.bottomUp.formula}.`,
+      },
+    ],
+    business_model: [
+      {
+        type: 'bullet_list',
+        hint: `Założenia modelu: ${spine.assumptions
+          .slice(0, 5)
+          .map((a) => `${a.label} ${a.base}${a.unit}`)
+          .join('; ')}`,
+      },
+      { type: 'paragraph', hint: 'Jak zarabiamy: hybryda usługi + SaaS.' },
+    ],
+    gtm: [
+      { type: 'paragraph', hint: 'Go-to-market: kanały, cykl sprzedaży, land-and-expand.' },
+      { type: 'numbered_list', hint: 'Etapy ruchu sprzedażowego.' },
+    ],
+    competition: [
+      { type: 'paragraph', hint: 'Krajobraz konkurencji i dlaczego wygrywamy (moat).' },
+      { type: 'callout', hint: 'Trwała przewaga.' },
+    ],
+    traction: [
+      { type: 'kpi_strip', hint: `Trakcja: ${heroes(['arr_last'])}` },
+      { type: 'paragraph', hint: 'Dowody działania, kamienie milowe.' },
+      {
+        type: 'chart',
+        hint: `Wzrost ARR/przychodu 3 lata: ${JSON.stringify(pnlRows.map((r) => ({ rok: r.rok, przychod: r.przychod })))}`,
+      },
+    ],
     financial_plan: [
       { type: 'table', hint: `Model 3-letni: ${JSON.stringify(pnlRows)}` },
-      { type: 'chart', hint: `Przychód i EBITDA 3 lata: ${JSON.stringify(spine.financials.pnl.map((p) => ({ rok: p.period, przychod: p.revenue, ebitda: p.ebitda })))}` },
-      { type: 'paragraph', hint: `Interpretacja: trajektoria do rentowności, break-even ${spine.financials.breakEven.ebitdaPositivePeriod ?? 'n/d'}.` },
+      {
+        type: 'chart',
+        hint: `Przychód i EBITDA 3 lata: ${JSON.stringify(spine.financials.pnl.map((p) => ({ rok: p.period, przychod: p.revenue, ebitda: p.ebitda })))}`,
+      },
+      {
+        type: 'paragraph',
+        hint: `Interpretacja: trajektoria do rentowności, break-even ${spine.financials.breakEven.ebitdaPositivePeriod ?? 'n/d'}.`,
+      },
       // defensibility (§B11/F3.4): scenariusze base/bull/bear EBITDA ostatniego roku
-      { type: 'callout', hint: `Scenariusze (EBITDA ${spine.financials.pnl[spine.financials.pnl.length - 1]?.period}): base ${lastScenarioEbitda('base')}; bull ${lastScenarioEbitda('bull')}; bear ${lastScenarioEbitda('bear')}. Base = konserwatywny.` },
+      {
+        type: 'callout',
+        hint: `Scenariusze (EBITDA ${spine.financials.pnl[spine.financials.pnl.length - 1]?.period}): base ${lastScenarioEbitda('base')}; bull ${lastScenarioEbitda('bull')}; bear ${lastScenarioEbitda('bear')}. Base = konserwatywny.`,
+      },
     ],
-    unit_economics: [{ type: 'kpi_strip', hint: `Unit-econ: ${heroes(['ltv_cac', 'cac_payback'])}` }, { type: 'paragraph', hint: `LTV/CAC, payback, NRR ${spine.financials.kpis.nrr}%, Rule of 40 ${spine.financials.kpis.ruleOf40}.` }],
-    team: [{ type: 'paragraph', hint: 'Zespół: dlaczego wygrywa, unikalne dopasowanie do problemu.' }],
+    unit_economics: [
+      { type: 'kpi_strip', hint: `Unit-econ: ${heroes(['ltv_cac', 'cac_payback'])}` },
+      {
+        type: 'paragraph',
+        hint: `LTV/CAC, payback, NRR ${spine.financials.kpis.nrr}%, Rule of 40 ${spine.financials.kpis.ruleOf40}.`,
+      },
+    ],
+    team: [
+      { type: 'paragraph', hint: 'Zespół: dlaczego wygrywa, unikalne dopasowanie do problemu.' },
+    ],
     risks: [
-      { type: 'risk_table', hint: 'Rejestr 4-5 ryzyk: ryzyko, prawdopodobieństwo, wpływ, mitygacja, właściciel.' },
+      {
+        type: 'risk_table',
+        hint: 'Rejestr 4-5 ryzyk: ryzyko, prawdopodobieństwo, wpływ, mitygacja, właściciel.',
+      },
       { type: 'callout', hint: 'Ryzyko krytyczne z planem mitygacji.' },
       // defensibility appendix (§A10): założenia ze źródłem, zakresem i rangą sensitivity
-      { type: 'table', hint: `Appendix obronności założeń (założenie/wartość/źródło/zakres/ranga sensitivity), posortowane po wpływie: ${JSON.stringify(defensibilityRows)}` },
+      {
+        type: 'table',
+        hint: `Appendix obronności założeń (założenie/wartość/źródło/zakres/ranga sensitivity), posortowane po wpływie: ${JSON.stringify(defensibilityRows)}`,
+      },
     ],
-    ask: [{ type: 'kpi_strip', hint: `Ask: ${hero('ask')}` }, { type: 'paragraph', hint: `Use of funds: alokacja, kamienie milowe, runway. ${spine.meta.ask}` }],
-    roadmap: [{ type: 'paragraph', hint: 'Roadmapa: fazy do końca horyzontu.' }, { type: 'numbered_list', hint: 'Kamienie milowe etapami.' }],
+    ask: [
+      { type: 'kpi_strip', hint: `Ask: ${hero('ask')}` },
+      {
+        type: 'paragraph',
+        hint: `Use of funds: alokacja, kamienie milowe, runway. ${spine.meta.ask}`,
+      },
+    ],
+    roadmap: [
+      { type: 'paragraph', hint: 'Roadmapa: fazy do końca horyzontu.' },
+      { type: 'numbered_list', hint: 'Kamienie milowe etapami.' },
+    ],
   };
 
   return {
@@ -277,7 +495,7 @@ export function spineToDocPlan(spine: BusinessPlanSpine) {
  */
 export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: unknown }>(
   plans: T[],
-  spine: BusinessPlanSpine,
+  spine: BusinessPlanSpine
 ): T[] {
   const pnl = spine.financials?.pnl ?? [];
   const labels = pnl.map((p) => String(p.period ?? `Y${pnl.indexOf(p) + 1}`));
@@ -289,7 +507,10 @@ export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: u
     .slice(0, 5);
 
   return plans.map((plan) => {
-    if (plan.layoutIntent === 'performance_overview' || plan.layoutIntent === 'key_metrics_overview') {
+    if (
+      plan.layoutIntent === 'performance_overview' ||
+      plan.layoutIntent === 'key_metrics_overview'
+    ) {
       if (labels.length === 0) return plan;
       return {
         ...plan,
@@ -312,7 +533,12 @@ export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: u
           items: assumptions.map((a) => ({
             label: String(a.label ?? a.key),
             value: a.sensitivityRank ?? 0,
-            status: (a.sensitivityRank ?? 0) >= 8 ? 'red' as const : (a.sensitivityRank ?? 0) >= 5 ? 'amber' as const : 'green' as const,
+            status:
+              (a.sensitivityRank ?? 0) >= 8
+                ? ('red' as const)
+                : (a.sensitivityRank ?? 0) >= 5
+                  ? ('amber' as const)
+                  : ('green' as const),
           })),
         },
       };
@@ -330,14 +556,20 @@ export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: u
           chartSpec: {
             type: 'marimekko' as const,
             columns: [
-              { label: 'TAM → SAM', segments: [
-                { name: 'SAM (osiągalny)', value: sam },
-                { name: 'Reszta rynku', value: tam - sam },
-              ] },
-              { label: 'SAM → SOM', segments: [
-                { name: 'SOM (cel)', value: som },
-                { name: 'Reszta SAM', value: sam - som },
-              ] },
+              {
+                label: 'TAM → SAM',
+                segments: [
+                  { name: 'SAM (osiągalny)', value: sam },
+                  { name: 'Reszta rynku', value: tam - sam },
+                ],
+              },
+              {
+                label: 'SAM → SOM',
+                segments: [
+                  { name: 'SOM (cel)', value: som },
+                  { name: 'Reszta SAM', value: sam - som },
+                ],
+              },
             ],
           },
         };
@@ -351,7 +583,10 @@ export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: u
 /** Intent tabeli finansowej z SPINE — realne wiersze P&L (single source of truth, §D2). */
 export function spineToTableIntent(spine: BusinessPlanSpine): string {
   const rows = spine.financials.pnl.map((p) => ({
-    rok: p.period, przychod: p.revenue, cogs: p.cogs, ebitda: p.ebitda,
+    rok: p.period,
+    przychod: p.revenue,
+    cogs: p.cogs,
+    ebitda: p.ebitda,
     marza: p.revenue > 0 ? Math.round((p.ebitda / p.revenue) * 100) + '%' : '0%',
   }));
   return `Tabela modelu finansowego ${spine.meta.company} w rozbiciu na lata: kolumny Rok (text), Przychód (currency), COGS (currency), EBITDA (currency, conditional formatting colorScale), Marża EBITDA (percent, dataBar). Wiersze dokładnie wg danych: ${JSON.stringify(rows)}. Waluta ${spine.financials.currency}.`;

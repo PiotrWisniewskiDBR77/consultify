@@ -58,9 +58,7 @@ function truncate(value: string, max: number): string {
 /** A response we can actually write a JSON error to. */
 function isResponseUsable(res: unknown): res is Response {
   return (
-    !!res &&
-    typeof (res as any).status === 'function' &&
-    typeof (res as any).json === 'function'
+    !!res && typeof (res as any).status === 'function' && typeof (res as any).json === 'function'
   );
 }
 
@@ -74,7 +72,11 @@ function responseFinalized(res: any): string | null {
 }
 
 /** Write a JSON response, skipping (with a log) when the stream is finalized. */
-function respond(res: Response, status: number, body: { error: string; [k: string]: unknown }): void {
+function respond(
+  res: Response,
+  status: number,
+  body: { error: string; [k: string]: unknown }
+): void {
   const skipReason = responseFinalized(res);
   if (skipReason) {
     logger.warn('[featureGate] Skipped JSON response write (response already finalized)', {
@@ -284,7 +286,10 @@ export function requireFeature(featureId: string) {
       errors.push({ type: 'STATE', required: requirements.state, current: currentState });
     }
     // Fail closed: a role-gated feature denies when no role is present.
-    if (requirements.role.length > 0 && (!currentRole || !requirements.role.includes(currentRole))) {
+    if (
+      requirements.role.length > 0 &&
+      (!currentRole || !requirements.role.includes(currentRole))
+    ) {
       errors.push({ type: 'ROLE', required: requirements.role, current: currentRole });
     }
 
@@ -400,11 +405,19 @@ export function requireAccess(requirements: FeatureRequirements) {
     const currentRole = safeGetRole(req);
 
     if (effective.phase.length > 0 && !effective.phase.includes(currentPhase ?? '')) {
-      respond(res, 403, { error: 'PHASE_REQUIRED', required: effective.phase, current: currentPhase });
+      respond(res, 403, {
+        error: 'PHASE_REQUIRED',
+        required: effective.phase,
+        current: currentPhase,
+      });
       return;
     }
     if (effective.state.length > 0 && !effective.state.includes(currentState ?? '')) {
-      respond(res, 403, { error: 'STATE_REQUIRED', required: effective.state, current: currentState });
+      respond(res, 403, {
+        error: 'STATE_REQUIRED',
+        required: effective.state,
+        current: currentState,
+      });
       return;
     }
     if (effective.role.length > 0 && !effective.role.includes((currentRole ?? '').toUpperCase())) {

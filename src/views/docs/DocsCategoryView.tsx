@@ -39,9 +39,7 @@ export const DocsCategoryView: React.FC = () => {
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
-        <span className="text-c-text font-medium">
-          {currentCategory?.name || categorySlug}
-        </span>
+        <span className="text-c-text font-medium">{currentCategory?.name || categorySlug}</span>
       </nav>
 
       {/* Header */}
@@ -50,9 +48,7 @@ export const DocsCategoryView: React.FC = () => {
           {currentCategory?.name || t('docs.category.fallbackTitle', 'Category')}
         </h1>
         {currentCategory?.description && (
-          <p className="text-lg text-c-text-secondary">
-            {currentCategory.description}
-          </p>
+          <p className="text-lg text-c-text-secondary">{currentCategory.description}</p>
         )}
       </div>
 
@@ -73,10 +69,7 @@ export const DocsCategoryView: React.FC = () => {
         {isLoading ? (
           // Loading skeleton
           Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="p-6 rounded-xl border border-c-border animate-pulse"
-            >
+            <div key={i} className="p-6 rounded-xl border border-c-border animate-pulse">
               <div className="h-5 w-3/4 rounded bg-c-border mb-2" />
               <div className="h-4 w-full rounded bg-c-border mb-4" />
               <div className="h-3 w-32 rounded bg-c-border" />

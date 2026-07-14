@@ -44,9 +44,7 @@ interface TargetModelOption {
 async function getModelsListForBridge(): Promise<TargetModelOption[]> {
   try {
     const data = await V8FinanceApi.getModels();
-    return Array.isArray(data?.models)
-      ? data.models.map((m) => ({ id: m.id, name: m.name }))
-      : [];
+    return Array.isArray(data?.models) ? data.models.map((m) => ({ id: m.id, name: m.name })) : [];
   } catch (error) {
     if (!shouldFallbackToLegacyFinance(error)) throw error;
     const data = (await Api.get('/api/financial-modeling/models')) as any;
@@ -372,9 +370,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
       setTargetModels(models);
       if (models.length > 0) setTargetModelId((prev) => prev || models[0].id);
     } catch {
-      toast.error(
-        t('finance.analysis.bridgeModelsLoadFailed', 'Failed to load financial models')
-      );
+      toast.error(t('finance.analysis.bridgeModelsLoadFailed', 'Failed to load financial models'));
     } finally {
       setTargetModelsLoading(false);
     }
@@ -417,9 +413,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
       setShowUseAsAssumptions(false);
       setSelectedRatioIds(new Set());
     } catch {
-      toast.error(
-        t('finance.analysis.bridgeApplyFailed', 'Failed to update model assumptions')
-      );
+      toast.error(t('finance.analysis.bridgeApplyFailed', 'Failed to update model assumptions'));
     } finally {
       setApplyingAssumptions(false);
     }
@@ -629,9 +623,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
               )}
             </p>
             {targetModelsLoading ? (
-              <div className="py-4 text-sm text-slate-500">
-                {t('common.loading', 'Loading…')}
-              </div>
+              <div className="py-4 text-sm text-slate-500">{t('common.loading', 'Loading…')}</div>
             ) : targetModels.length === 0 ? (
               <div className="mb-4 rounded-xl bg-white/[0.03] px-3 py-4 text-sm text-slate-500">
                 {t(
@@ -702,7 +694,9 @@ const RatioBlocksTable: React.FC<{
             <p className="mt-1 text-xs text-slate-500">{block.subtitle}</p>
           </div>
           <div className="overflow-x-auto">
-            <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full min-w-[980px] text-sm">
+            <table
+              /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full min-w-[980px] text-sm"
+            >
               <thead>
                 <tr className="border-y border-white/[0.06] text-left text-[11px] uppercase tracking-wide text-slate-500">
                   <th className="w-10 px-5 py-3" />

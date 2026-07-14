@@ -268,7 +268,9 @@ export const ProcessAutomationView: React.FC = () => {
         {/* Process Table */}
         <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <div className="overflow-x-auto">
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
+            >
               <thead className="bg-slate-50 dark:bg-navy-800">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
@@ -311,9 +313,7 @@ export const ProcessAutomationView: React.FC = () => {
               <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
                 {steps.map((step) => (
                   <tr key={step.id} className="hover:bg-slate-50 dark:hover:bg-navy-800">
-                    <td className="px-4 py-3 text-sm text-c-text-muted">
-                      {step.lp}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-c-text-muted">{step.lp}</td>
                     <td className="px-4 py-3">
                       <input
                         type="text"

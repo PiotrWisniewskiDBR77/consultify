@@ -1,85 +1,85 @@
-import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import {
   A3_SECTIONS,
+  type A3SectionId,
   assessA3,
   buildA3ConclusionPrompt,
   buildA3DeepenPrompt,
-  type A3SectionId,
 } from '@/config/a3problemsolving';
 import {
-  DMS_LAYERS,
-  buildDmsConclusionPrompt,
-  buildDmsDeepenPrompt,
-  toDmsSession,
-  type DmsLayerId,
-} from '@/config/dmsbuilder';
-import {
-  AUTOMATION_PHASES,
-  buildProcessAutomationConclusionPrompt,
-  buildProcessAutomationDeepenPrompt,
-  toAutomationSession,
-  type AutomationPhaseId,
-} from '@/config/processautomation';
-import {
-  INVENTORY_LEVERS,
-  buildInventoryConclusionPrompt,
-  buildInventoryDeepenPrompt,
-  toInventorySession,
-  type InventoryLeverId,
-} from '@/config/inventoryautopilot';
-import {
   AI_PHASES,
+  type AiPhaseId,
   buildAiDiscoveryConclusionPrompt,
   buildAiDiscoveryDeepenPrompt,
   toDiscoverySession,
-  type AiPhaseId,
 } from '@/config/aidiscovery';
+import { buildAmbitionDecomposerConclusionPrompt } from '@/config/ambitiondecomposer/conclusionPrompts';
+import { buildCapabilityMapperConclusionPrompt } from '@/config/capabilitymapper/conclusionPrompts';
+import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import {
-  SMED_PHASES,
-  buildSmedConclusionPrompt,
-  buildSmedDeepenPrompt,
-  toSmedSession,
-  type SmedPhaseId,
-} from '@/config/smedplanner';
+  buildDmsConclusionPrompt,
+  buildDmsDeepenPrompt,
+  DMS_LAYERS,
+  type DmsLayerId,
+  toDmsSession,
+} from '@/config/dmsbuilder';
+import { buildFocusConclusionPrompt } from '@/config/focustradeoffs';
 import {
-  PAIN_STAGES,
+  buildInventoryConclusionPrompt,
+  buildInventoryDeepenPrompt,
+  INVENTORY_LEVERS,
+  type InventoryLeverId,
+  toInventorySession,
+} from '@/config/inventoryautopilot';
+import { buildNarrativeConclusionPrompt } from '@/config/narrativeengine';
+import {
   buildPainConclusionPrompt,
   buildPainDeepenPrompt,
-  toPainSession,
+  PAIN_STAGES,
   type PainStageId,
+  toPainSession,
 } from '@/config/painexplorer';
+import { buildPorterConclusionPrompt } from '@/config/porter/conclusionPrompts';
+import { buildPortfolioConclusionPrompt } from '@/config/portfolio/conclusionPrompts';
 import {
-  RPA_GATES,
+  AUTOMATION_PHASES,
+  type AutomationPhaseId,
+  buildProcessAutomationConclusionPrompt,
+  buildProcessAutomationDeepenPrompt,
+  toAutomationSession,
+} from '@/config/processautomation';
+import { buildRiskConclusionPrompt } from '@/config/riskuncertainty';
+import {
   buildRpaConclusionPrompt,
   buildRpaDeepenPrompt,
-  toRpaSession,
+  RPA_GATES,
   type RpaGateId,
+  toRpaSession,
 } from '@/config/rpascanner';
 import {
-  SOP_SECTIONS,
+  buildSmedConclusionPrompt,
+  buildSmedDeepenPrompt,
+  SMED_PHASES,
+  type SmedPhaseId,
+  toSmedSession,
+} from '@/config/smedplanner';
+import {
   assessSop,
   buildSopConclusionPrompt,
   buildSopDeepenPrompt,
+  SOP_SECTIONS,
   type SopSectionId,
 } from '@/config/sopbuilder';
 import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
-import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueChainInsightStaircase';
-import { buildPorterConclusionPrompt } from '@/config/porter/conclusionPrompts';
-import { buildValueChainConclusionPrompt } from '@/config/valuechain/conclusionPrompts';
-import { buildPortfolioConclusionPrompt } from '@/config/portfolio/conclusionPrompts';
-import { buildCapabilityMapperConclusionPrompt } from '@/config/capabilitymapper/conclusionPrompts';
-import { buildAmbitionDecomposerConclusionPrompt } from '@/config/ambitiondecomposer/conclusionPrompts';
-import { buildFocusConclusionPrompt } from '@/config/focustradeoffs';
-import { buildNarrativeConclusionPrompt } from '@/config/narrativeengine';
-import { buildRiskConclusionPrompt } from '@/config/riskuncertainty';
-import {
-  buildValueChainMovePromptRules,
-  deriveLeverCandidates,
-} from '@/config/valuechain/valueChainMarginEngine';
 import {
   buildMoveConclusionPromptRules,
   deriveTensionCandidates,
 } from '@/config/swot/swotTensionEngine';
+import { buildValueChainConclusionPrompt } from '@/config/valuechain/conclusionPrompts';
+import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueChainInsightStaircase';
+import {
+  buildValueChainMovePromptRules,
+  deriveLeverCandidates,
+} from '@/config/valuechain/valueChainMarginEngine';
 import { buildSwotFactsBlock } from '@/hooks/discovery/toolAi/dynamicSwot';
 import { GROUNDING_RULES_BOTH } from '@/hooks/discovery/toolAi/groundingRules';
 import { pickWeakestRung } from '@/hooks/discovery/toolAi/pickWeakestRung';
@@ -110,9 +110,7 @@ const OPERATIONAL_TOOL_TYPES: ToolType[] = [
 ];
 
 const humanizeStepId = (stepId: string): string =>
-  stepId
-    .replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  stepId.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 /**
  * Best-effort language detection for the grounded conclusion prompts, mirroring
@@ -308,8 +306,15 @@ Return JSON:
     }
   }
 
-  if (toolType === 'process-automation' && AUTOMATION_PHASES.includes(stepId as AutomationPhaseId)) {
-    const deepen = buildProcessAutomationDeepenPrompt(stepId as AutomationPhaseId, 'evidence', false);
+  if (
+    toolType === 'process-automation' &&
+    AUTOMATION_PHASES.includes(stepId as AutomationPhaseId)
+  ) {
+    const deepen = buildProcessAutomationDeepenPrompt(
+      stepId as AutomationPhaseId,
+      'evidence',
+      false
+    );
     if (deepen) {
       return `Act as an operational-excellence partner running Process Automation. Propose 3-5 concrete items for the "${stepId}" phase, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
 
@@ -911,7 +916,9 @@ function getToolSummaryPromptInner(toolType: ToolType, inputData: unknown): stri
   // baseline. Falls through to the generic operational summary when the session
   // has no candidates yet (builder returns null).
   if (toolType === 'process-automation') {
-    const op = inputData as (OperationalToolData & { flow?: { processAutomation?: unknown } }) | undefined;
+    const op = inputData as
+      | (OperationalToolData & { flow?: { processAutomation?: unknown } })
+      | undefined;
     const prompt = buildProcessAutomationConclusionPrompt(
       toAutomationSession(op?.sections, (op?.flow?.processAutomation as any) ?? undefined),
       isPolish
@@ -982,8 +989,7 @@ Return as JSON:
     const tensionCandidates = swotData
       ? deriveTensionCandidates(
           (swotData.items || []).filter(
-            (item) =>
-              item.proposalStatus !== 'rejected' && item.proposalStatus !== 'rethinking'
+            (item) => item.proposalStatus !== 'rejected' && item.proposalStatus !== 'rethinking'
           ),
           2
         )
@@ -991,7 +997,10 @@ Return as JSON:
     const candidateLines =
       tensionCandidates.length > 0
         ? tensionCandidates
-            .map((c) => `- ${c.type} [${c.linkedItemIds[0]} x ${c.linkedItemIds[1]}] (weight ${c.weight})`)
+            .map(
+              (c) =>
+                `- ${c.type} [${c.linkedItemIds[0]} x ${c.linkedItemIds[1]}] (weight ${c.weight})`
+            )
             .join('\n')
         : '- (no accepted item pairs available)';
 
@@ -1088,7 +1097,7 @@ ${forcesSummary || '- no force scored yet'}
 
 ${w2FallbackInstructions({
   verdictHint:
-    'what this five-forces structure means for the client\'s MARGIN decision — lead with the force that squeezes margin hardest (where to defend, where to reposition), not an average of the five',
+    "what this five-forces structure means for the client's MARGIN decision — lead with the force that squeezes margin hardest (where to defend, where to reposition), not an average of the five",
   tradeoffHint:
     'the canonical rejected alternative is "fight every force at once -> spread thin, win none".',
   effectHint: 'the margin / positioning change',
@@ -1209,7 +1218,10 @@ Return as JSON:
     if (grounded) return grounded;
 
     const themesSummary = (ambData?.themes || [])
-      .map((t: any) => `- ${t.title}: ${t.targetMetric} → ${t.targetValue} (${t.horizon}, ${t.importance})`)
+      .map(
+        (t: any) =>
+          `- ${t.title}: ${t.targetMetric} → ${t.targetValue} (${t.horizon}, ${t.importance})`
+      )
       .join('\n');
 
     return `Act as a strategy partner closing this Ambition Decomposition session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
@@ -1223,7 +1235,7 @@ ${w2FallbackInstructions({
     'which theme to sequence FIRST and why — name the foundation the rest depend on, not a wish-list of all themes at once',
   tradeoffHint:
     'sequencing is the trade-off: starting one theme first defers another — name what waits and the cost of waiting.',
-  effectHint: 'the progress toward the ambition\'s target metric',
+  effectHint: "the progress toward the ambition's target metric",
   isPolish,
 })}
 - Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
@@ -1247,7 +1259,10 @@ Return as JSON:
     if (grounded) return grounded;
 
     const prioritiesSummary = (focData?.priorities || [])
-      .map((p: any) => `- ${p.title}: value ${p.valueScore}, effort ${p.effortScore}, fit ${p.strategicFit} → ${p.recommendation}`)
+      .map(
+        (p: any) =>
+          `- ${p.title}: value ${p.valueScore}, effort ${p.effortScore}, fit ${p.strategicFit} → ${p.recommendation}`
+      )
       .join('\n');
 
     return `Act as a strategy partner closing this Focus & Trade-offs session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.
@@ -1284,7 +1299,10 @@ Return as JSON:
     if (grounded) return grounded;
 
     const pillarsSummary = (narData?.pillars || [])
-      .map((p: any) => `- ${p.title}: ${p.message} (${(p.proofPoints || []).length} proof, ${p.audienceResonance})`)
+      .map(
+        (p: any) =>
+          `- ${p.title}: ${p.message} (${(p.proofPoints || []).length} proof, ${p.audienceResonance})`
+      )
       .join('\n');
 
     return `Act as a strategy partner closing this Narrative session. You sign the finishing block with your own name in front of the client. Write it per CONCLUSION_LAYER_STANDARD variant W2.

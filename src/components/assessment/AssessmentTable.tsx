@@ -15,10 +15,10 @@ import { useTranslation } from 'react-i18next';
 import {
   StandardModuleBar,
   StandardPreview,
-  standardPreviewShortcuts,
   type StandardPreviewActions,
-  StandardTable,
+  standardPreviewShortcuts,
   type StandardRowMenu,
+  StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
@@ -418,8 +418,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                         {
                           label: previewAssessment.projectName,
                           tone: 'neutral' as const,
-                          className:
-                            'bg-transparent text-c-text-secondary truncate max-w-[120px]',
+                          className: 'bg-transparent text-c-text-secondary truncate max-w-[120px]',
                         },
                       ]
                     : []),
@@ -497,13 +496,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                 disabled={isDeleting}
                 className="flex-1 py-2.5 bg-danger-600 hover:bg-danger-500 text-white font-medium rounded-lg transition-colors disabled:opacity-60"
               >
-                {isDeleting
-                  ? isPolish
-                    ? 'Usuwanie…'
-                    : 'Deleting…'
-                  : isPolish
-                    ? 'Usuń'
-                    : 'Delete'}
+                {isDeleting ? (isPolish ? 'Usuwanie…' : 'Deleting…') : isPolish ? 'Usuń' : 'Delete'}
               </button>
             </div>
           </div>

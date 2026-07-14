@@ -72,10 +72,7 @@ function sum(values: number[]): number {
  *
  * FY total = YTD actual + remaining forecast (see {@link fyBridge}).
  */
-export function reforecast(
-  plan: PeriodValue[],
-  actuals: PeriodValue[],
-): ReforecastLine[] {
+export function reforecast(plan: PeriodValue[], actuals: PeriodValue[]): ReforecastLine[] {
   const actualMap = toActualMap(actuals);
 
   return plan.map((p) => {
@@ -98,10 +95,7 @@ export function reforecast(
  * (e.g. "2026-M03" -> "2026-M04"); if no numeric suffix exists, an index is
  * appended (e.g. "FY" -> "FY+1").
  */
-export function rollForward(
-  forecast: PeriodValue[],
-  byPeriods = 1,
-): PeriodValue[] {
+export function rollForward(forecast: PeriodValue[], byPeriods = 1): PeriodValue[] {
   const n = Math.max(0, Math.floor(byPeriods));
   if (n === 0 || forecast.length === 0) {
     return [];
@@ -180,7 +174,7 @@ export function fyBridge(plan: PeriodValue[], actuals: PeriodValue[]): FyBridge 
 export function snapshotForecast(
   forecast: PeriodValue[],
   label: string,
-  createdPeriod: string,
+  createdPeriod: string
 ): ForecastSnapshot {
   return {
     label,

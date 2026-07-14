@@ -281,9 +281,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-c-text">
-            {rulesLoadError ? '--' : rules.length}
-          </p>
+          <p className="text-2xl font-bold text-c-text">{rulesLoadError ? '--' : rules.length}</p>
           <p className="text-sm text-c-text-muted">
             {t('settings.personalAutomation.stats.active', 'Active Automations')}
           </p>
@@ -443,12 +441,8 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                     <span className="text-xs bg-c-surface-raised text-c-text-secondary px-2 py-0.5 rounded">
                       {getTemplateCategory(template.category)}
                     </span>
-                    <h4 className="font-semibold text-c-text mt-2">
-                      {getTemplateName(template)}
-                    </h4>
-                    <p className="text-sm text-c-text-muted">
-                      {getTemplateDescription(template)}
-                    </p>
+                    <h4 className="font-semibold text-c-text mt-2">{getTemplateName(template)}</h4>
+                    <p className="text-sm text-c-text-muted">{getTemplateDescription(template)}</p>
                   </div>
                 </div>
                 <button

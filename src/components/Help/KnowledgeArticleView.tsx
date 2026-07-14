@@ -407,7 +407,9 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
               ),
               table: ({ children }) => (
                 <div className="overflow-x-auto mb-4">
-                  <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="min-w-full text-sm border-collapse border border-slate-200 dark:border-navy-700">
+                  <table
+                    /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */ className="min-w-full text-sm border-collapse border border-slate-200 dark:border-navy-700"
+                  >
                     {children}
                   </table>
                 </div>

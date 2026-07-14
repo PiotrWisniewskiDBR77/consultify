@@ -169,7 +169,10 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
 
                   {idx < FUNNEL_STAGES.length - 1 && (
                     <div className="flex justify-center py-1">
-                      <ArrowDown size={16} className="text-c-text-secondary dark:text-c-text-muted" />
+                      <ArrowDown
+                        size={16}
+                        className="text-c-text-secondary dark:text-c-text-muted"
+                      />
                     </div>
                   )}
                 </React.Fragment>

@@ -427,9 +427,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
             <div className="text-sm text-c-text-secondary">Total Flags</div>
-            <div className="text-2xl font-bold text-c-text">
-              {flags.length}
-            </div>
+            <div className="text-2xl font-bold text-c-text">{flags.length}</div>
           </div>
           <div className="p-4 bg-c-success/10 rounded-xl border border-c-success/30">
             <div className="text-sm text-c-text-secondary">Enabled</div>
@@ -514,15 +512,11 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
           <div className="flex items-center gap-2 mb-3">
             <Eye className="w-4 h-4 text-c-info" />
-            <span className="text-sm font-medium text-c-text">
-              Test Evaluation Context
-            </span>
+            <span className="text-sm font-medium text-c-text">Test Evaluation Context</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                User ID
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">User ID</label>
               <input
                 type="text"
                 value={testContext.userId}
@@ -542,9 +536,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">
-                Organization ID
-              </label>
+              <label className="block text-xs text-c-text-muted mb-1">Organization ID</label>
               <input
                 type="text"
                 value={testContext.orgId}
@@ -603,9 +595,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-c-text font-medium">
-                            {flag.name}
-                          </h3>
+                          <h3 className="text-c-text font-medium">{flag.name}</h3>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -627,9 +617,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           </span>
                         </div>
                         {flag.description && (
-                          <p className="text-sm text-c-text-muted">
-                            {flag.description}
-                          </p>
+                          <p className="text-sm text-c-text-muted">{flag.description}</p>
                         )}
                       </div>
                     </div>
@@ -704,24 +692,16 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                     <div className="pt-4 space-y-4">
                       {/* Evaluation Reason */}
                       <div className="p-3 bg-c-surface-raised rounded-lg border border-c-border-subtle">
-                        <div className="text-xs text-c-text-muted mb-1">
-                          Evaluation Reason
-                        </div>
-                        <div className="text-sm text-c-text-secondary">
-                          {evaluation.reason}
-                        </div>
+                        <div className="text-xs text-c-text-muted mb-1">Evaluation Reason</div>
+                        <div className="text-sm text-c-text-secondary">{evaluation.reason}</div>
                       </div>
 
                       {/* Percentage Rollout */}
                       {flag.flag_type === 'percentage' && (
                         <div>
                           <div className="flex justify-between text-sm mb-2">
-                            <span className="text-c-text-secondary">
-                              Rollout Progress
-                            </span>
-                            <span className="text-c-text">
-                              {flag.rollout_percentage}%
-                            </span>
+                            <span className="text-c-text-secondary">Rollout Progress</span>
+                            <span className="text-c-text">{flag.rollout_percentage}%</span>
                           </div>
                           <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                             <div
@@ -735,9 +715,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       {/* Targeting Rules */}
                       {flag.flag_type === 'targeting' && flag.targeting_rules?.length > 0 && (
                         <div>
-                          <div className="text-sm text-c-text-secondary mb-2">
-                            Targeting Rules
-                          </div>
+                          <div className="text-sm text-c-text-secondary mb-2">Targeting Rules</div>
                           <div className="space-y-2">
                             {flag.targeting_rules.map((rule, i) => (
                               <div
@@ -751,16 +729,12 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                 <div className="flex items-center gap-2 text-sm">
                                   <span
                                     className={
-                                      rule.enabled
-                                        ? 'text-c-accent'
-                                        : 'text-c-text-muted '
+                                      rule.enabled ? 'text-c-accent' : 'text-c-text-muted '
                                     }
                                   >
                                     {rule.type}
                                   </span>
-                                  <span className="text-c-text-muted">
-                                    {rule.operator}
-                                  </span>
+                                  <span className="text-c-text-muted">{rule.operator}</span>
                                   <code className="text-xs bg-c-surface px-1 rounded text-c-text-secondary border border-c-border-subtle dark:border-transparent">
                                     {rule.values.join(', ')}
                                   </code>
@@ -774,9 +748,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       {/* A/B Test Variants */}
                       {flag.flag_type === 'ab_test' && flag.variants && (
                         <div>
-                          <div className="text-sm text-c-text-secondary mb-2">
-                            Variants
-                          </div>
+                          <div className="text-sm text-c-text-secondary mb-2">Variants</div>
                           <div className="space-y-2">
                             {flag.variants.map((variant) => (
                               <div
@@ -811,15 +783,11 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                         <div>
                           <span className="text-c-text-muted">Created</span>
-                          <div className="text-c-text-secondary">
-                            {formatDate(flag.created_at)}
-                          </div>
+                          <div className="text-c-text-secondary">{formatDate(flag.created_at)}</div>
                         </div>
                         <div>
                           <span className="text-c-text-muted">Updated</span>
-                          <div className="text-c-text-secondary">
-                            {formatDate(flag.updated_at)}
-                          </div>
+                          <div className="text-c-text-secondary">{formatDate(flag.updated_at)}</div>
                         </div>
                         {flag.organization_id && (
                           <div>
@@ -958,9 +926,7 @@ const FeatureFlagModal: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                Name *
-              </label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">Name *</label>
               <input
                 type="text"
                 required
@@ -986,9 +952,7 @@ const FeatureFlagModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                Type *
-              </label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">Type *</label>
               <select
                 value={formData.flag_type}
                 onChange={(e) =>
@@ -1127,9 +1091,7 @@ const FlagHistoryModal: React.FC<{
         ) : (
           <div className="space-y-2">
             {history.length === 0 ? (
-              <p className="text-c-text-secondary text-center py-8">
-                No history available
-              </p>
+              <p className="text-c-text-secondary text-center py-8">No history available</p>
             ) : (
               history.map((item) => (
                 <div
@@ -1143,9 +1105,7 @@ const FlagHistoryModal: React.FC<{
                     </span>
                   </div>
                   {item.changed_by && (
-                    <p className="text-xs text-c-text-secondary">
-                      Changed by: {item.changed_by}
-                    </p>
+                    <p className="text-xs text-c-text-secondary">Changed by: {item.changed_by}</p>
                   )}
                 </div>
               ))

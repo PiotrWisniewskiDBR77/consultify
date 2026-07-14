@@ -80,22 +80,27 @@ router.get(
  * POST /api/organizations/:orgId/members
  * Add member to organization (with audit logging)
  */
-router.post('/:orgId/members', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), validateBody(AddMemberSchema), async (req, res, next) => {
-  const originalJson = res.json.bind(res);
-  res.json = function (body: any) {
-    if (res.statusCode < 400) {
-      adminAuditService
-        .logAction({
-          adminId: (req as any).userId || (req as any).user?.id || 'unknown',
-          actionType: 'add_member',
-          details: { orgId: req.params.orgId, member: req.body, isSensitive: true },
-        })
-        .catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
-    }
-    return originalJson(body);
-  } as any;
-  return OrganizationController.addMember(req, res, next);
-});
+router.post(
+  '/:orgId/members',
+  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
+  validateBody(AddMemberSchema),
+  async (req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = function (body: any) {
+      if (res.statusCode < 400) {
+        adminAuditService
+          .logAction({
+            adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+            actionType: 'add_member',
+            details: { orgId: req.params.orgId, member: req.body, isSensitive: true },
+          })
+          .catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
+      }
+      return originalJson(body);
+    } as any;
+    return OrganizationController.addMember(req, res, next);
+  }
+);
 
 /**
  * PATCH /api/organizations/:orgId/members/:memberId/role
@@ -132,21 +137,25 @@ router.patch(
  * DELETE /api/organizations/:orgId/members/:memberId
  * Remove member from organization (with audit logging)
  */
-router.delete('/:orgId/members/:memberId', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), async (req, res, next) => {
-  const originalJson = res.json.bind(res);
-  res.json = function (body: any) {
-    if (res.statusCode < 400) {
-      adminAuditService
-        .logAction({
-          adminId: (req as any).userId || (req as any).user?.id || 'unknown',
-          actionType: 'remove_member',
-          details: { orgId: req.params.orgId, memberId: req.params.memberId, isSensitive: true },
-        })
-        .catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
-    }
-    return originalJson(body);
-  } as any;
-  return OrganizationController.removeMember(req, res, next);
-});
+router.delete(
+  '/:orgId/members/:memberId',
+  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
+  async (req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = function (body: any) {
+      if (res.statusCode < 400) {
+        adminAuditService
+          .logAction({
+            adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+            actionType: 'remove_member',
+            details: { orgId: req.params.orgId, memberId: req.params.memberId, isSensitive: true },
+          })
+          .catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
+      }
+      return originalJson(body);
+    } as any;
+    return OrganizationController.removeMember(req, res, next);
+  }
+);
 
 export default router;

@@ -3,9 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
-import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 
 export const AdminAuditLogPanel: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
@@ -114,9 +114,7 @@ export const AdminAuditLogPanel: React.FC = () => {
       id: 'actor',
       label: 'Actor',
       width: '180px',
-      render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.actor}</span>
-      ),
+      render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.actor}</span>,
     },
     {
       id: 'risk',
@@ -146,17 +144,13 @@ export const AdminAuditLogPanel: React.FC = () => {
         { value: 'OPEN', label: 'Open' },
         { value: 'PENDING', label: 'Pending' },
       ],
-      render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.logStatus}</span>
-      ),
+      render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.logStatus}</span>,
     },
     {
       id: 'createdAt',
       label: 'Created',
       width: '180px',
-      render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.createdAt}</span>
-      ),
+      render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.createdAt}</span>,
     },
   ];
 

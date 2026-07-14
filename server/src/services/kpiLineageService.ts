@@ -45,7 +45,7 @@ function isFlat(deltaPct: number, threshold: number): boolean {
  */
 export function detectEarlyWarnings(
   pairs: KpiLineagePair[],
-  threshold: number = DEFAULT_MOVEMENT_THRESHOLD_PCT,
+  threshold: number = DEFAULT_MOVEMENT_THRESHOLD_PCT
 ): EarlyWarning[] {
   if (!Array.isArray(pairs)) return [];
 

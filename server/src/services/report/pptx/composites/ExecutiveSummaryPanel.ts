@@ -54,8 +54,7 @@ export function ExecutiveSummaryPanel(
 
   // Findings biorą cały „luz" regionu: liczymy ile zostaje po stałych blokach
   // i minimalnych odstępach, by stos sięgał dołu zamiast się zbijać u góry.
-  const fixed =
-    headlineH + (hasKpis ? kpiH : 0) + dividerH + (hasReco ? recoH : 0);
+  const fixed = headlineH + (hasKpis ? kpiH : 0) + dividerH + (hasReco ? recoH : 0);
   const blockCount = 2 + (hasKpis ? 1 : 0) + (hasReco ? 1 : 0); // headline, divider, findings + opcje
   const minGap = 0.18;
   const findingsH = Math.max(1.2, p.h - fixed - minGap * (blockCount - 1));
@@ -186,7 +185,11 @@ function recoCallout(text: string, pos: ElementPosition, tokens: DesignTokens): 
   ];
 }
 
-function headlineElement(text: string, pos: ElementPosition, tokens: DesignTokens): RenderedElement {
+function headlineElement(
+  text: string,
+  pos: ElementPosition,
+  tokens: DesignTokens
+): RenderedElement {
   return BodyText(
     {
       text,

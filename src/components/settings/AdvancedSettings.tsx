@@ -378,9 +378,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-c-text">
-                      {apiKey.name}
-                    </span>
+                    <span className="font-medium text-c-text">{apiKey.name}</span>
                     {apiKey.permissions.map((perm) => (
                       <span
                         key={perm}
@@ -541,9 +539,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
               updatePreference('keyboardShortcutsEnabled', !preferences.keyboardShortcutsEnabled)
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.keyboardShortcutsEnabled
-                ? 'bg-c-focus'
-                : 'bg-c-surface-raised'
+              preferences.keyboardShortcutsEnabled ? 'bg-c-focus' : 'bg-c-surface-raised'
             }`}
           >
             <span
@@ -754,9 +750,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 </div>
 
                 <div className="bg-c-surface-raised p-4 rounded-lg mb-4">
-                  <code className="text-sm font-mono text-c-text break-all">
-                    {newlyCreatedKey}
-                  </code>
+                  <code className="text-sm font-mono text-c-text break-all">{newlyCreatedKey}</code>
                 </div>
 
                 <div className="flex gap-3">
@@ -817,9 +811,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                             }}
                             className="w-4 h-4 rounded border-c-border-subtle dark:border-navy-700 text-amber-600 focus:ring-amber-500"
                           />
-                          <span className="text-sm text-c-text-secondary capitalize">
-                            {perm}
-                          </span>
+                          <span className="text-sm text-c-text-secondary capitalize">{perm}</span>
                         </label>
                       ))}
                     </div>
@@ -862,9 +854,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           <span className="text-2xl">{getProviderIcon(provider)}</span>
           <div>
             <span className="font-medium text-c-text-secondary">{name}</span>
-            {isConnected && (
-              <p className="text-xs text-c-text-muted">{account.email}</p>
-            )}
+            {isConnected && <p className="text-xs text-c-text-muted">{account.email}</p>}
           </div>
         </div>
         {isConnected ? (

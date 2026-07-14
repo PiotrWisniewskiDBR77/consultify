@@ -389,10 +389,7 @@ export const SecurityView: React.FC = () => {
                   </p>
                   <ul className="space-y-2">
                     {model.bullets.map((b, bIdx) => (
-                      <li
-                        key={b}
-                        className="flex items-start gap-2 text-sm text-c-text-secondary"
-                      >
+                      <li key={b} className="flex items-start gap-2 text-sm text-c-text-secondary">
                         <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                         {t(`security.deployment.models.${idx}.bullets.${bIdx}`, b)}
                       </li>
@@ -442,10 +439,7 @@ export const SecurityView: React.FC = () => {
                       'Full GDPR compliance with Data Processing Agreements'
                     ),
                   ].map((item, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-sm text-c-text-secondary"
-                    >
+                    <li key={i} className="flex items-start gap-3 text-sm text-c-text-secondary">
                       <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                       {item}
                     </li>
@@ -478,10 +472,7 @@ export const SecurityView: React.FC = () => {
                       'Transparent methodology available for security review'
                     ),
                   ].map((item, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-sm text-c-text-secondary"
-                    >
+                    <li key={i} className="flex items-start gap-3 text-sm text-c-text-secondary">
                       <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                       {item}
                     </li>
@@ -591,7 +582,9 @@ export const SecurityView: React.FC = () => {
             {...fadeUp}
             className="overflow-x-auto rounded-2xl border border-c-border-subtle dark:border-white/[0.08]"
           >
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full text-sm"
+            >
               <thead>
                 <tr className="bg-c-surface-raised dark:bg-c-surface/[0.04]">
                   <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">

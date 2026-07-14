@@ -149,12 +149,12 @@ export type ScenarioName = 'base' | 'bull' | 'bear';
 
 /** W12.2 — sensitivity matrix: jak zmienia się wycena gdy ruszamy kluczowy driver ±20%. */
 export interface ValuationSensitivityRow {
-  driver: string;      // np. "Wzrost przychodów"
-  driverKey: string;   // np. "revenueGrowth"
-  unit: string;        // "%" | "×" | "EUR"
+  driver: string; // np. "Wzrost przychodów"
+  driverKey: string; // np. "revenueGrowth"
+  unit: string; // "%" | "×" | "EUR"
   pessimistic: ValuationRange; // driver −20%
-  base: ValuationRange;        // base case
-  optimistic: ValuationRange;  // driver +20%
+  base: ValuationRange; // base case
+  optimistic: ValuationRange; // driver +20%
 }
 
 export interface FinancialModel {
@@ -194,9 +194,20 @@ export interface ValidationReport {
 
 /** Kanoniczne sekcje biznesplanu (§E1), exec summary zawsze pierwszy. */
 export type BizPlanSectionId =
-  | 'exec_summary' | 'problem' | 'solution' | 'market' | 'business_model'
-  | 'gtm' | 'competition' | 'traction' | 'financial_plan' | 'unit_economics'
-  | 'team' | 'risks' | 'ask' | 'roadmap';
+  | 'exec_summary'
+  | 'problem'
+  | 'solution'
+  | 'market'
+  | 'business_model'
+  | 'gtm'
+  | 'competition'
+  | 'traction'
+  | 'financial_plan'
+  | 'unit_economics'
+  | 'team'
+  | 'risks'
+  | 'ask'
+  | 'roadmap';
 
 export interface BizPlanSection {
   id: BizPlanSectionId;
@@ -256,7 +267,10 @@ export function normalizeCurrencyUnit(unit: string): string {
   if (!unit) return unit;
   // tnij wiodące słowa skali (z opcjonalnym separatorem), case-insensitive
   const cleaned = unit
-    .replace(/\b(thousands?|tys(?:i[ąa]ce|\.)?|tysi[ęe]cy|millions?|mln|mld|miliard(?:y|ów)?|milion(?:y|ów)?|billions?|'?000)\b\s*/gi, '')
+    .replace(
+      /\b(thousands?|tys(?:i[ąa]ce|\.)?|tysi[ęe]cy|millions?|mln|mld|miliard(?:y|ów)?|milion(?:y|ów)?|billions?|'?000)\b\s*/gi,
+      ''
+    )
     .replace(/\s{2,}/g, ' ')
     .trim();
   return cleaned.length > 0 ? cleaned : unit; // jeśli zostałoby puste, zachowaj oryginał
@@ -278,8 +292,11 @@ export function formatHero(value: number, unit: string, language: 'PL' | 'EN' = 
     const s = Number.isInteger(r) ? String(r) : String(r).replace('.', isPl ? ',' : '.');
     return `${s} ${isPl ? 'mld' : 'B'}${u ? ' ' + u : ''}`;
   }
-  const grouped = abs >= 1000
-    ? Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep)
-    : value.toString();
+  const grouped =
+    abs >= 1000
+      ? Math.round(value)
+          .toString()
+          .replace(/\B(?=(\d{3})+(?!\d))/g, sep)
+      : value.toString();
   return `${grouped}${u ? ' ' + u : ''}`;
 }

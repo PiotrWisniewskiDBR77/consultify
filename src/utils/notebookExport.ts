@@ -378,7 +378,10 @@ export async function exportNotebookAsDocx(page: NotebookExportPage): Promise<vo
         children.push(new Paragraph({ children: runsFor(bullet[1]), bullet: { level: 0 } }));
       } else if (ordered) {
         children.push(
-          new Paragraph({ children: runsFor(ordered[2]), numbering: { reference: 'nb-ol', level: 0 } })
+          new Paragraph({
+            children: runsFor(ordered[2]),
+            numbering: { reference: 'nb-ol', level: 0 },
+          })
         );
       } else {
         children.push(new Paragraph({ children: runsFor(line) }));

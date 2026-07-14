@@ -554,7 +554,9 @@ const ReviewStep: React.FC<{
       {scores.length > 0 ? (
         <div className="bg-white dark:bg-navy-950/50 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="max-h-64 overflow-y-auto">
-            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
+            <table
+              /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
+            >
               <thead className="sticky top-0 bg-slate-50 dark:bg-navy-800">
                 <tr>
                   <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">

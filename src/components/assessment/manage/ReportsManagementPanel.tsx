@@ -188,7 +188,12 @@ const formatReportDate = (dateStr: string): string => {
 };
 
 const EDITABLE_STATUSES: ReportStatus[] = ['DRAFT', 'CONFIGURING', 'GENERATING', 'GENERATED'];
-const EXPORTABLE_STATUSES: ReportStatus[] = ['APPROVED', 'SENT_INTERNAL', 'SENT_EXTERNAL', 'UTILIZED'];
+const EXPORTABLE_STATUSES: ReportStatus[] = [
+  'APPROVED',
+  'SENT_INTERNAL',
+  'SENT_EXTERNAL',
+  'UTILIZED',
+];
 const DELETABLE_STATUSES: ReportStatus[] = ['DRAFT', 'CONFIGURING', 'GENERATED'];
 
 // ============================================
@@ -593,7 +598,15 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
           : {},
       };
     },
-    [canManage, handleOpenReport, handleFinalize, handleExportPDF, handleExportPPTX, handleExportWord, handleDelete]
+    [
+      canManage,
+      handleOpenReport,
+      handleFinalize,
+      handleExportPDF,
+      handleExportPPTX,
+      handleExportWord,
+      handleDelete,
+    ]
   );
 
   return (

@@ -537,18 +537,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-xs font-medium text-c-text truncate">
-            {title}
-          </div>
+          <div className="text-xs font-medium text-c-text truncate">{title}</div>
           {subtitle ? (
-            <div className="mt-0.5 text-[11px] text-c-text-muted line-clamp-2">
-              {subtitle}
-            </div>
+            <div className="mt-0.5 text-[11px] text-c-text-muted line-clamp-2">{subtitle}</div>
           ) : null}
           {badge ? (
-            <div className="mt-1 text-[10px] text-c-text-muted capitalize">
-              {badge}
-            </div>
+            <div className="mt-1 text-[10px] text-c-text-muted capitalize">{badge}</div>
           ) : null}
         </div>
         <button
@@ -696,66 +690,68 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               </EmbeddedView>
             </div>
 
-            {allLinkedOutputRows.length === 0 && !linkedOutputsBusy && !linkedOutputsErrorMessage ? (
+            {allLinkedOutputRows.length === 0 &&
+            !linkedOutputsBusy &&
+            !linkedOutputsErrorMessage ? (
               <div className="flex items-center gap-2 px-3 py-2 border-b border-c-border-subtle text-[11px] text-c-text-muted">
                 <Link2 size={12} />
                 <span>{pl ? 'Brak powiązanych outputów' : 'No linked outputs'}</span>
               </div>
             ) : (
               <div className="px-3 py-3 border-b border-c-border-subtle">
-              <EmbeddedView
-                title={pl ? 'Powiązane outputy' : 'Linked outputs'}
-                count={allLinkedOutputRows.length}
-                loading={linkedOutputsBusy}
-                readOnly
-                viewModes={['list']}
-              >
-                {linkedOutputsErrorMessage ? (
-                  <div className="rounded-xl border border-c-warning/30 bg-c-warning/8 px-3 py-2 text-[11px] text-c-warning">
-                    {linkedOutputsErrorMessage}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {allLinkedOutputRows.slice(0, 8).map((row) => (
-                      <div
-                        key={row.artifactId || `${row.kind}:${row.originRecordId}`}
-                        className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="text-xs font-medium text-c-text truncate">
-                              {row.title}
+                <EmbeddedView
+                  title={pl ? 'Powiązane outputy' : 'Linked outputs'}
+                  count={allLinkedOutputRows.length}
+                  loading={linkedOutputsBusy}
+                  readOnly
+                  viewModes={['list']}
+                >
+                  {linkedOutputsErrorMessage ? (
+                    <div className="rounded-xl border border-c-warning/30 bg-c-warning/8 px-3 py-2 text-[11px] text-c-warning">
+                      {linkedOutputsErrorMessage}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {allLinkedOutputRows.slice(0, 8).map((row) => (
+                        <div
+                          key={row.artifactId || `${row.kind}:${row.originRecordId}`}
+                          className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-c-text truncate">
+                                {row.title}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-c-text-muted truncate">
+                                {row.kind} · {row.statusKey} ·{' '}
+                                {row.governance?.visibilityScope || 'private'}
+                              </div>
                             </div>
-                            <div className="mt-0.5 text-[11px] text-c-text-muted truncate">
-                              {row.kind} · {row.statusKey} ·{' '}
-                              {row.governance?.visibilityScope || 'private'}
-                            </div>
+                            <button
+                              onClick={() =>
+                                openItem(
+                                  row.kind === 'assessment'
+                                    ? 'assessment'
+                                    : row.kind === 'document'
+                                      ? 'report'
+                                      : row.kind === 'presentation'
+                                        ? 'presentation'
+                                        : 'sheet',
+                                  row.originRecordId,
+                                  row.title
+                                )
+                              }
+                              className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
+                            >
+                              <ExternalLink size={12} />
+                              {pl ? 'Otwórz' : 'Open'}
+                            </button>
                           </div>
-                          <button
-                            onClick={() =>
-                              openItem(
-                                row.kind === 'assessment'
-                                  ? 'assessment'
-                                  : row.kind === 'document'
-                                    ? 'report'
-                                    : row.kind === 'presentation'
-                                      ? 'presentation'
-                                      : 'sheet',
-                                row.originRecordId,
-                                row.title
-                              )
-                            }
-                            className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
-                          >
-                            <ExternalLink size={12} />
-                            {pl ? 'Otwórz' : 'Open'}
-                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </EmbeddedView>
+                      ))}
+                    </div>
+                  )}
+                </EmbeddedView>
               </div>
             )}
 

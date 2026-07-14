@@ -387,9 +387,7 @@ export const PartnerSettlementsView: React.FC = () => {
             </div>
             <span className="text-sm text-c-text-secondary">Pending Commissions</span>
           </div>
-          <p className="text-2xl font-bold text-c-text">
-            {summary?.totalPendingCommissions}
-          </p>
+          <p className="text-2xl font-bold text-c-text">{summary?.totalPendingCommissions}</p>
           <p className="text-sm text-c-text-muted mt-1">
             €{summary?.pendingCommissionAmount.toLocaleString()} total
           </p>
@@ -402,9 +400,7 @@ export const PartnerSettlementsView: React.FC = () => {
             </div>
             <span className="text-sm text-c-text-secondary">Pending Payouts</span>
           </div>
-          <p className="text-2xl font-bold text-c-text">
-            {summary?.totalPendingPayouts}
-          </p>
+          <p className="text-2xl font-bold text-c-text">{summary?.totalPendingPayouts}</p>
           <p className="text-sm text-c-text-muted mt-1">
             €{summary?.pendingPayoutAmount.toLocaleString()} total
           </p>
@@ -415,9 +411,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="p-2 rounded-lg bg-c-success/20">
               <TrendingUp className="w-5 h-5 text-c-success" />
             </div>
-            <span className="text-sm text-c-text-secondary">
-              This Month Commissions
-            </span>
+            <span className="text-sm text-c-text-secondary">This Month Commissions</span>
           </div>
           <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthCommissions.toLocaleString()}
@@ -536,7 +530,9 @@ export const PartnerSettlementsView: React.FC = () => {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
+            <table
+              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
+            >
               <thead>
                 <tr className="border-b border-c-border-subtle dark:border-white/10">
                   <th className="text-left px-3 py-2">
@@ -590,9 +586,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-c-text-secondary">
-                        {commission.organizationName}
-                      </span>
+                      <span className="text-c-text-secondary">{commission.organizationName}</span>
                     </td>
                     <td className="px-3 py-3">
                       <span className="text-sm text-c-text-secondary capitalize">
@@ -631,9 +625,7 @@ export const PartnerSettlementsView: React.FC = () => {
           {commissions.length === 0 && (
             <div className="text-center py-12">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-c-text-secondary">
-                No pending commissions to approve
-              </p>
+              <p className="text-c-text-secondary">No pending commissions to approve</p>
             </div>
           )}
         </div>
@@ -955,9 +947,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         )}
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-c-text-secondary">
-                          {attr.partnerName}
-                        </span>
+                        <span className="text-c-text-secondary">{attr.partnerName}</span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         {attr.discountPercent ? (
@@ -1072,9 +1062,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-c-text-secondary">
-                          {code.partnerName}
-                        </span>
+                        <span className="text-c-text-secondary">{code.partnerName}</span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span className="text-c-text-secondary dark:text-white">

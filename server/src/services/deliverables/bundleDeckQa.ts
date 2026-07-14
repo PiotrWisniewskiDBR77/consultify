@@ -11,8 +11,8 @@
  */
 import logger from '../../utils/Logger.js';
 import { validateReport } from '../report/pptx/RulesEngine.js';
-import { spineToUnifiedReport } from './spineToUnifiedReport.js';
 import type { BusinessPlanSpine } from './businessPlanSpine.js';
+import { spineToUnifiedReport } from './spineToUnifiedReport.js';
 
 /** Zwięzłe podsumowanie M19 deck-validation dla raportu jakości wiązki. */
 export interface BundleDeckQaSummary {
@@ -44,7 +44,9 @@ export function runBundleDeckQa(spine: BusinessPlanSpine): BundleDeckQaSummary |
         .map((v) => ({ rule: v.rule, severity: v.severity, message: v.message })),
     };
   } catch (err) {
-    logger.warn(`[bundleDeckQa] M19 validateReport failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(
+      `[bundleDeckQa] M19 validateReport failed (fail-soft): ${err instanceof Error ? err.message : String(err)}`
+    );
     return null;
   }
 }

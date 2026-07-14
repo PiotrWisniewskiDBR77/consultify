@@ -545,9 +545,7 @@ export const PublicReportBuilderView: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isPl ? 'Hasło' : 'Password'}
                 className={`w-full px-4 py-3 border rounded-xl bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-transparent transition-all ${
-                  passwordError
-                    ? 'border-danger-400 ring-2 ring-danger-100'
-                    : 'border-c-border'
+                  passwordError ? 'border-danger-400 ring-2 ring-danger-100' : 'border-c-border'
                 }`}
                 autoFocus
               />
@@ -703,9 +701,7 @@ export const PublicReportBuilderView: React.FC = () => {
                   >
                     {/* Section Header */}
                     <div className="px-6 py-4 border-b border-c-border-subtle">
-                      <h3 className="text-lg font-semibold text-c-text">
-                        {section.title}
-                      </h3>
+                      <h3 className="text-lg font-semibold text-c-text">{section.title}</h3>
                     </div>
 
                     {/* Section Content */}

@@ -292,7 +292,10 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                         <textarea
                           value={alt.description}
                           onChange={(e) => onUpdate(alt.id, { description: e.target.value })}
-                          placeholder={t('myWork.alternatives.placeholder2', 'Option description...')}
+                          placeholder={t(
+                            'myWork.alternatives.placeholder2',
+                            'Option description...'
+                          )}
                           rows={2}
                           className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                         />
@@ -321,7 +324,10 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                       onUpdate(alt.id, { pros: newPros });
                                     }}
                                     className="flex-1 text-xs bg-transparent text-slate-600 dark:text-slate-400 focus:outline-none"
-                                    placeholder={t('myWork.alternatives.placeholder3', 'Add pro...')}
+                                    placeholder={t(
+                                      'myWork.alternatives.placeholder3',
+                                      'Add pro...'
+                                    )}
                                   />
                                   <button
                                     onClick={() => {
@@ -367,7 +373,10 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                       onUpdate(alt.id, { cons: newCons });
                                     }}
                                     className="flex-1 text-xs bg-transparent text-slate-600 dark:text-slate-400 focus:outline-none"
-                                    placeholder={t('myWork.alternatives.placeholder4', 'Add con...')}
+                                    placeholder={t(
+                                      'myWork.alternatives.placeholder4',
+                                      'Add con...'
+                                    )}
                                   />
                                   <button
                                     onClick={() => {
@@ -417,7 +426,9 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
               ) : (
                 // Comparison View
                 <div className="overflow-x-auto">
-                  <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
+                  <table
+                    /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
+                  >
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-navy-700">
                         <th className="text-left py-3 px-2 text-slate-500 dark:text-slate-400 font-medium">
@@ -527,7 +538,10 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                   <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
                     <Star size={14} />
                     <span>
-                      {t('myWork.alternatives.tipMarkOneAlternative', 'Tip: Mark one alternative as recommended')}
+                      {t(
+                        'myWork.alternatives.tipMarkOneAlternative',
+                        'Tip: Mark one alternative as recommended'
+                      )}
                     </span>
                   </div>
                 </div>

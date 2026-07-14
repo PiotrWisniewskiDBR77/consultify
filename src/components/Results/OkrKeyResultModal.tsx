@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { V8ResultsApi } from '@/services/api/v8/results';
 import {
+  type CreateKeyResultInput,
   createOkrKeyResult,
   updateOkrKeyResult,
-  type CreateKeyResultInput,
 } from '@/services/api/okrStrategic';
+import { V8ResultsApi } from '@/services/api/v8/results';
 
 export interface OkrKeyResultModalKeyResult {
   id: string;
@@ -96,12 +96,28 @@ export const OkrKeyResultModal: React.FC<OkrKeyResultModalProps> = ({
         }
         onSuccess();
       } catch (error: any) {
-        toast.error(error?.message || t('results.okr.krSaveFailed', 'Failed to save the key result'));
+        toast.error(
+          error?.message || t('results.okr.krSaveFailed', 'Failed to save the key result')
+        );
       } finally {
         setSaving(false);
       }
     },
-    [isEdit, keyResult, label, baseline, target, current, kpiId, krType, kind, projectId, objectiveId, onSuccess, t]
+    [
+      isEdit,
+      keyResult,
+      label,
+      baseline,
+      target,
+      current,
+      kpiId,
+      krType,
+      kind,
+      projectId,
+      objectiveId,
+      onSuccess,
+      t,
+    ]
   );
 
   const inputCls =
@@ -141,7 +157,9 @@ export const OkrKeyResultModal: React.FC<OkrKeyResultModalProps> = ({
           </div>
 
           <div>
-            <label className={labelCls}>{t('results.okr.linkedKpi', 'Related KPI (reference only, optional)')}</label>
+            <label className={labelCls}>
+              {t('results.okr.linkedKpi', 'Related KPI (reference only, optional)')}
+            </label>
             <select className={selectCls} value={kpiId} onChange={(e) => setKpiId(e.target.value)}>
               <option value="">{t('results.okr.noKpiLink', '— No related KPI —')}</option>
               {kpis.map((k) => (
@@ -210,7 +228,9 @@ export const OkrKeyResultModal: React.FC<OkrKeyResultModalProps> = ({
                 value={kind}
                 onChange={(e) => setKind(e.target.value as 'committed' | 'aspirational')}
               >
-                <option value="aspirational">{t('results.okr.kindAspirational', 'Aspirational (stretch)')}</option>
+                <option value="aspirational">
+                  {t('results.okr.kindAspirational', 'Aspirational (stretch)')}
+                </option>
                 <option value="committed">{t('results.okr.kindCommitted', 'Committed')}</option>
               </select>
             </div>

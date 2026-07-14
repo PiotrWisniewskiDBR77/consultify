@@ -29,18 +29,14 @@ import {
   ADMAPillarConfig,
 } from '../../../../services/admaStructure';
 import { computeADMATransformationScores } from '../../../../services/admaTransformations';
-import { ADMAAssessmentData, ADMAPillarId } from '../../../../types';
 import { buildADMAConclusionModel } from '../../../../services/report/admaConclusion';
 import {
   buildAdmaConclusionPayload,
   pushReportConclusion,
   type ReportConclusionSource,
 } from '../../../../services/report/conclusionPush';
-import {
-  ConclusionExecutiveSummary,
-  ConclusionGapCards,
-  FoFRoadBar,
-} from '../ConclusionSummary';
+import { ADMAAssessmentData, ADMAPillarId } from '../../../../types';
+import { ConclusionExecutiveSummary, ConclusionGapCards, FoFRoadBar } from '../ConclusionSummary';
 import { MaturityPathwaySection } from '../MaturityPathwaySection';
 
 interface ADMAReportTemplateProps {
@@ -365,7 +361,9 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
           Transformations (T1–T7) + FoF benchmark
         </h2>
         <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 overflow-x-auto">
-          <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-sm">
+          <table
+            /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-sm"
+          >
             <thead>
               <tr className="text-left text-slate-500 dark:text-slate-400">
                 <th className="py-2 pr-4">Area</th>

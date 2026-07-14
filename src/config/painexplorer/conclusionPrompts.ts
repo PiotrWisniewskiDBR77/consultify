@@ -11,16 +11,16 @@
  * summary renderer consumes Pain Explorer output the same way.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
+
+import { type PainStageId } from './deepeningLadder';
+import { localizeLadder } from './index';
 import {
   buildW2MoveSequence,
   computeBaseline,
-  rankPainStages,
   type PainSession,
+  rankPainStages,
 } from './painSynthesisEngine';
-import { localizeLadder } from './index';
-import { type PainStageId } from './deepeningLadder';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -28,10 +28,7 @@ const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl :
  * stage ranking and W2 sequence so its output stays consistent with the scored
  * facts. Returns null when there is nothing to conclude on.
  */
-export function buildPainConclusionPrompt(
-  session: PainSession,
-  isPolish: boolean
-): string | null {
+export function buildPainConclusionPrompt(session: PainSession, isPolish: boolean): string | null {
   const ranking = rankPainStages(session);
   if (ranking.ordered.length === 0) return null;
 

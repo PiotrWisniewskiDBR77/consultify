@@ -110,10 +110,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
     });
 
   return (
-    <div
-      className="bg-c-surface rounded-xl shadow-lg p-6 space-y-4"
-      ref={containerRef}
-    >
+    <div className="bg-c-surface rounded-xl shadow-lg p-6 space-y-4" ref={containerRef}>
       <h2 className="text-2xl font-semibold text-c-text">Trend Radar Map</h2>
 
       {loading && (

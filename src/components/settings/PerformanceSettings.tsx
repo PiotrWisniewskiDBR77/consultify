@@ -244,9 +244,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
             >
               <p
                 className={`text-sm font-medium ${
-                  performance.imageQuality === option.value
-                    ? 'text-c-accent'
-                    : 'text-navy-900'
+                  performance.imageQuality === option.value ? 'text-c-accent' : 'text-navy-900'
                 }`}
               >
                 {option.label}
@@ -291,9 +289,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
             >
               <p
                 className={`text-sm font-medium ${
-                  performance.videoQuality === option.value
-                    ? 'text-c-accent'
-                    : 'text-navy-900'
+                  performance.videoQuality === option.value ? 'text-c-accent' : 'text-navy-900'
                 }`}
               >
                 {option.label}

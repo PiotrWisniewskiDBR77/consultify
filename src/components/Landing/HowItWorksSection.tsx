@@ -108,9 +108,7 @@ export const HowItWorksSection: React.FC = () => {
                 transition={{ delay: idx * 0.08 }}
                 onClick={() => setActiveStep(idx)}
                 className={`text-left p-5 rounded-2xl transition-all duration-300 ${
-                  isActive
-                    ? ''
-                    : 'bg-c-surface border border-c-border'
+                  isActive ? '' : 'bg-c-surface border border-c-border'
                 }`}
                 style={{
                   background: isActive
@@ -232,9 +230,7 @@ export const HowItWorksSection: React.FC = () => {
                     border: `1px solid ${item.color}25`,
                   }}
                 >
-                  <div className="text-sm font-black text-c-text mb-0.5">
-                    {t(item.labelKey)}
-                  </div>
+                  <div className="text-sm font-black text-c-text mb-0.5">{t(item.labelKey)}</div>
                   <div className="text-[11px] text-c-text-muted leading-snug">
                     {t(item.descKey)}
                   </div>

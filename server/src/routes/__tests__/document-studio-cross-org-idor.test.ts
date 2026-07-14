@@ -151,7 +151,9 @@ describe('Source packs — cross-org IDOR', () => {
     const app = createApp();
     const packId = await createPackAsVictim(app);
     asAttacker();
-    const res = await request(app).post(`/api/document-studio/source-packs/${packId}/ready`).send({});
+    const res = await request(app)
+      .post(`/api/document-studio/source-packs/${packId}/ready`)
+      .send({});
     expect(res.status).toBe(404);
   });
 
@@ -349,9 +351,7 @@ describe('Approvals — cross-org IDOR', () => {
     const app = createApp();
     const id = await createApprovalAsVictim(app);
     asAttacker();
-    const res = await request(app).get(
-      `/api/document-studio/${ARTIFACT_B}/approvals/${id}`
-    );
+    const res = await request(app).get(`/api/document-studio/${ARTIFACT_B}/approvals/${id}`);
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('approval_not_found');
   });
@@ -403,9 +403,7 @@ describe('Comments — cross-org IDOR', () => {
     const app = createApp();
     const id = await createCommentAsVictim(app);
     asAttacker();
-    const res = await request(app).get(
-      `/api/document-studio/${ARTIFACT_B}/comments/${id}`
-    );
+    const res = await request(app).get(`/api/document-studio/${ARTIFACT_B}/comments/${id}`);
     expect(res.status).toBe(404);
   });
 
@@ -433,9 +431,7 @@ describe('Comments — cross-org IDOR', () => {
     const app = createApp();
     const id = await createCommentAsVictim(app);
     asAttacker();
-    const res = await request(app).delete(
-      `/api/document-studio/${ARTIFACT_B}/comments/${id}`
-    );
+    const res = await request(app).delete(`/api/document-studio/${ARTIFACT_B}/comments/${id}`);
     expect(res.status).toBe(404);
   });
 
@@ -475,9 +471,7 @@ describe('Templates — cross-org IDOR', () => {
     const app = createApp();
     const id = await createTemplateAsVictim(app);
     asAttacker('OWNER');
-    const res = await request(app)
-      .post(`/api/document-studio/templates/${id}/approve`)
-      .send({});
+    const res = await request(app).post(`/api/document-studio/templates/${id}/approve`).send({});
     expect(res.status).toBe(404);
   });
 
@@ -486,9 +480,7 @@ describe('Templates — cross-org IDOR', () => {
     const id = await createTemplateAsVictim(app);
     // Same-tenant member without admin/owner/superadmin must still be denied.
     mockUser = { id: 'member-B', organizationId: ORG_B, role: 'MEMBER' };
-    const res = await request(app)
-      .post(`/api/document-studio/templates/${id}/approve`)
-      .send({});
+    const res = await request(app).post(`/api/document-studio/templates/${id}/approve`).send({});
     expect(res.status).toBe(403);
   });
 
@@ -496,9 +488,7 @@ describe('Templates — cross-org IDOR', () => {
     const app = createApp();
     const id = await createTemplateAsVictim(app);
     asAttacker('OWNER');
-    const res = await request(app)
-      .post(`/api/document-studio/templates/${id}/deprecate`)
-      .send({});
+    const res = await request(app).post(`/api/document-studio/templates/${id}/deprecate`).send({});
     expect(res.status).toBe(404);
   });
 
@@ -546,9 +536,7 @@ describe('Assets — cross-org IDOR', () => {
     const app = createApp();
     const id = await createLogoAsVictim(app);
     asAttacker();
-    const res = await request(app)
-      .post(`/api/document-studio/assets/${id}/archive`)
-      .send({});
+    const res = await request(app).post(`/api/document-studio/assets/${id}/archive`).send({});
     expect(res.status).toBe(404);
   });
 

@@ -269,9 +269,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
 
               {sourceType === 'csv_url' && (
                 <div className="space-y-2">
-                  <label className="block text-xs font-medium text-c-text-muted">
-                    CSV URL
-                  </label>
+                  <label className="block text-xs font-medium text-c-text-muted">CSV URL</label>
                   <input
                     type="url"
                     value={sourceTableId}
@@ -316,7 +314,10 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 ))}
               </select>
               <p className="text-[11px] text-c-text-secondary">
-                {t('ideas.table.dataFromTheSourceWillBeSyncedToThisTable', 'Data from the source will be synced to this table.')}
+                {t(
+                  'ideas.table.dataFromTheSourceWillBeSyncedToThisTable',
+                  'Data from the source will be synced to this table.'
+                )}
               </p>
             </div>
           )}
@@ -327,15 +328,16 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 {t('ideas.table.fieldMapping', 'Field Mapping')}
               </h4>
               <p className="text-[11px] text-c-text-secondary">
-                {t('ideas.table.mapSourceFieldsToTargetFieldsLeaveEmptyForAutoMatching', 'Map source fields to target fields. Leave empty for auto-matching.')}
+                {t(
+                  'ideas.table.mapSourceFieldsToTargetFieldsLeaveEmptyForAutoMatching',
+                  'Map source fields to target fields. Leave empty for auto-matching.'
+                )}
               </p>
               {fields.length > 0 ? (
                 <div className="space-y-2">
                   {fields.map((f) => (
                     <div key={f.id} className="flex items-center gap-2">
-                      <span className="w-1/3 truncate text-xs text-c-text-muted">
-                        {f.name}
-                      </span>
+                      <span className="w-1/3 truncate text-xs text-c-text-muted">{f.name}</span>
                       <ArrowRight size={12} className="text-c-text-secondary" />
                       <input
                         type="text"
@@ -354,7 +356,10 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-c-border-subtle p-4 text-center text-xs text-c-text-secondary border-c-border-subtle">
-                  {t('ideas.table.fieldsWillBeAutoMatchedByName', 'Fields will be auto-matched by name.')}
+                  {t(
+                    'ideas.table.fieldsWillBeAutoMatchedByName',
+                    'Fields will be auto-matched by name.'
+                  )}
                 </div>
               )}
             </div>
@@ -398,8 +403,14 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 {t('ideas.table.summary', 'Summary')}
               </h4>
               <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border-subtle bg-c-surface">
-                <Row label={t('ideas.table.source', 'Source')} value={getTableName(sourceTableId)} />
-                <Row label={t('ideas.table.target', 'Target')} value={getTableName(targetTableId)} />
+                <Row
+                  label={t('ideas.table.source', 'Source')}
+                  value={getTableName(sourceTableId)}
+                />
+                <Row
+                  label={t('ideas.table.target', 'Target')}
+                  value={getTableName(targetTableId)}
+                />
                 <Row
                   label={t('ideas.table.mode', 'Mode')}
                   value={
@@ -430,7 +441,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             }}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors hover:text-c-text-secondary"
           >
-            {stepIndex === 0 ? (t('ideas.table.cancel', 'Cancel')) : t('ideas.table.back', 'Back')}
+            {stepIndex === 0 ? t('ideas.table.cancel', 'Cancel') : t('ideas.table.back', 'Back')}
           </button>
           {wizardStep === 'review' ? (
             <button
@@ -500,7 +511,10 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               {t('ideas.table.noSyncsConfigured', 'No syncs configured')}
             </p>
             <p className="mb-4 max-w-xs text-xs text-c-text-muted">
-              {t('ideas.table.syncDataBetweenTablesFromCsvOrGoogleSheets', 'Sync data between tables, from CSV, or Google Sheets.')}
+              {t(
+                'ideas.table.syncDataBetweenTablesFromCsvOrGoogleSheets',
+                'Sync data between tables, from CSV, or Google Sheets.'
+              )}
             </p>
             <button
               onClick={() => setShowWizard(true)}

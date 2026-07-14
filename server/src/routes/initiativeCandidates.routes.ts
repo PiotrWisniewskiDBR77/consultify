@@ -23,10 +23,10 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import {
   acceptCandidate,
+  type CandidateStatus,
   dismissCandidate,
   listCandidates,
   scanForCandidates,
-  type CandidateStatus,
 } from '../services/initiative/initiativeCandidateService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';

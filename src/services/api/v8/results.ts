@@ -643,10 +643,7 @@ export const V8ResultsApi = {
       {}
     ),
   dismissClosureBenefit: (benefitId: string) =>
-    v8Post<{ success: boolean }>(
-      `/results/benefits/${encodeURIComponent(benefitId)}/dismiss`,
-      {}
-    ),
+    v8Post<{ success: boolean }>(`/results/benefits/${encodeURIComponent(benefitId)}/dismiss`, {}),
 };
 
 /** A closure-handoff benefit awaiting triage in the M15 Results inbox. */

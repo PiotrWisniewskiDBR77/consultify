@@ -20,8 +20,7 @@ function formatRelativeTime(iso: string, t: (key: string, fallback: string) => s
   const deltaMs = Date.now() - timestamp;
   const minutes = Math.floor(deltaMs / 60000);
   if (minutes < 1) return t('canvas.versionHistory.justNow', 'just now');
-  if (minutes < 60)
-    return `${minutes} ${t('canvas.versionHistory.minutesAgo', 'min ago')}`;
+  if (minutes < 60) return `${minutes} ${t('canvas.versionHistory.minutesAgo', 'min ago')}`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} ${t('canvas.versionHistory.hoursAgo', 'h ago')}`;
   const days = Math.floor(hours / 24);

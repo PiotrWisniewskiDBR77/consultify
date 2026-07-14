@@ -356,9 +356,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               style={{ height: ROW_HEIGHT }}
               onClick={() => onRecordClick?.(tr.record.id)}
             >
-              <span className="text-[11px] font-medium text-c-text truncate">
-                {tr.title}
-              </span>
+              <span className="text-[11px] font-medium text-c-text truncate">{tr.title}</span>
             </div>
           ))}
         </div>
@@ -374,9 +372,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               <div
                 key={i}
                 className={`flex-shrink-0 flex items-center justify-center border-r border-c-border-subtle text-[9px] font-medium ${
-                  slot.isToday
-                    ? 'text-c-accent bg-c-accent-soft'
-                    : 'text-c-text-muted'
+                  slot.isToday ? 'text-c-accent bg-c-accent-soft' : 'text-c-text-muted'
                 }`}
                 style={{ width: colWidth }}
               >

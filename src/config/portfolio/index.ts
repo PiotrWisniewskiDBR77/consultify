@@ -6,7 +6,7 @@
  * sequencing engine with the CONCLUSION_LAYER W2 move gate. All pure, PL/EN.
  */
 
-export * from './portfolioQuestionBank';
-export * from './portfolioValueStaircase';
 export * from './portfolioMatrixEngine';
 export * from './portfolioOrgImport';
+export * from './portfolioQuestionBank';
+export * from './portfolioValueStaircase';

@@ -7,12 +7,8 @@
  */
 export {
   EmptyState,
+  type EmptyStateActionSpec,
   type EmptyStateProps,
   type EmptyStateVariant,
-  type EmptyStateActionSpec,
 } from './EmptyState';
-export {
-  LoadingState,
-  type LoadingStateProps,
-  type LoadingTemplate,
-} from './LoadingState';
+export { LoadingState, type LoadingStateProps, type LoadingTemplate } from './LoadingState';

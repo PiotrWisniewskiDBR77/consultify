@@ -17,8 +17,8 @@
  */
 import React, { useMemo } from 'react';
 
-import StandardTable from '../standard/StandardTable';
 import type { TableColumn, TableRow } from '../standard/StandardTable';
+import StandardTable from '../standard/StandardTable';
 
 // ── Modele danych (kształty 1:1 z istniejącymi silnikami) ───────────────────
 export type ThreePairKpiStatus = 'on-target' | 'below' | 'no-data';
@@ -107,7 +107,12 @@ const STATUS_META: Record<
 > = {
   'on-target': { dot: 'bg-c-success', text: 'text-c-success', pl: 'W celu', en: 'On target' },
   below: { dot: 'bg-c-danger', text: 'text-c-danger', pl: 'Poniżej celu', en: 'Below target' },
-  'no-data': { dot: 'bg-c-text-muted', text: 'text-c-text-muted', pl: 'Brak danych', en: 'No data' },
+  'no-data': {
+    dot: 'bg-c-text-muted',
+    text: 'text-c-text-muted',
+    pl: 'Brak danych',
+    en: 'No data',
+  },
 };
 
 const ragColor = (pct: number): string =>
@@ -524,7 +529,9 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
           'Korzyści netto inicjatyw: prognoza względem realizacji.',
           'Net initiative benefits: forecast vs realization.'
         )}
-        cta={<NeutralCta label={tr('+ Nowa analiza ROI', '+ New ROI analysis')} onClick={onNewRoi} />}
+        cta={
+          <NeutralCta label={tr('+ Nowa analiza ROI', '+ New ROI analysis')} onClick={onNewRoi} />
+        }
       >
         <div className="mb-3">
           <PairSummary
@@ -534,10 +541,7 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
             actualValue={fmtCurrency(roiAgg.realized, currency)}
             actualClass={roiAgg.variance >= 0 ? 'text-c-success' : 'text-c-warning'}
             pct={roiAgg.pct}
-            note={tr(
-              `Pokrycie realizacji: ${roiAgg.pct}%`,
-              `Realization coverage: ${roiAgg.pct}%`
-            )}
+            note={tr(`Pokrycie realizacji: ${roiAgg.pct}%`, `Realization coverage: ${roiAgg.pct}%`)}
           />
         </div>
         <StandardTable
@@ -546,7 +550,10 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
           onRowClick={onOpenRoi ? (row) => onOpenRoi(String(row.id)) : undefined}
           empty={{
             title: tr('Brak analiz ROI', 'No ROI analyses'),
-            description: tr('Uruchom pierwszą analizę ROI per inicjatywa.', 'Run the first per-initiative ROI analysis.'),
+            description: tr(
+              'Uruchom pierwszą analizę ROI per inicjatywa.',
+              'Run the first per-initiative ROI analysis.'
+            ),
           }}
         />
       </Section>
@@ -582,7 +589,10 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
           }
           empty={{
             title: tr('Brak OKR', 'No OKRs'),
-            description: tr('Zdefiniuj pierwszy cel strategiczny i jego KR.', 'Define the first strategic objective and its KRs.'),
+            description: tr(
+              'Zdefiniuj pierwszy cel strategiczny i jego KR.',
+              'Define the first strategic objective and its KRs.'
+            ),
           }}
         />
       </Section>

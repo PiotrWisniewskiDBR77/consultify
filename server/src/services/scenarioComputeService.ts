@@ -106,7 +106,7 @@ export interface ScenarioComparison<M extends ScenarioMetrics = ScenarioMetrics>
  */
 export function compareScenarios<M extends ScenarioMetrics>(
   baseAssumptions: Assumptions,
-  computeFn: (modified: Assumptions) => M,
+  computeFn: (modified: Assumptions) => M
 ): ScenarioComparison<M> {
   const base = computeFn(applyScenario(baseAssumptions, 'base'));
   const optimistic = computeFn(applyScenario(baseAssumptions, 'optimistic'));
@@ -148,7 +148,7 @@ export interface ScenarioFanData {
  */
 export function scenarioFanData(
   scenarios: Partial<Record<ScenarioName, Record<string, number[]>>>,
-  metric: string,
+  metric: string
 ): ScenarioFanData {
   const seriesFor = (name: ScenarioName): number[] => scenarios[name]?.[metric] ?? [];
 

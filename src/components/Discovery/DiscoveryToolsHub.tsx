@@ -38,8 +38,8 @@ import {
   Settings,
   Shield,
   Target,
-  TrendingUp,
   Trash2,
+  TrendingUp,
   User,
   Users,
   Workflow,
@@ -51,21 +51,27 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
+// #63: ekrany listowe Tools = kanoniczny StandardTable (Triada), NIE surowy
+// FilterableTable. StandardTable dokłada pstryczek „Edit Columns" (Settings2 →
+// TableSettingsPopover), checkbox zaznaczania, per-kolumnowe lejki filtrów,
+// 5-blokowy kebab sekcyjny i stany empty/loading — 1:1 jak Interview/Assessment.
+import { StandardTable } from '@/components/standard';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
-import { formatRoiDisplay } from '@/utils/safeFormat';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
-import {
-  type FrameworkId,
-  isFrameworkComingSoon,
-} from '@/services/frameworkRegistry';
+import { type FrameworkId, isFrameworkComingSoon } from '@/services/frameworkRegistry';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
+import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import {
   type AssessmentFrameworkPreviewModel,
@@ -110,11 +116,6 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-// #63: ekrany listowe Tools = kanoniczny StandardTable (Triada), NIE surowy
-// FilterableTable. StandardTable dokłada pstryczek „Edit Columns" (Settings2 →
-// TableSettingsPopover), checkbox zaznaczania, per-kolumnowe lejki filtrów,
-// 5-blokowy kebab sekcyjny i stany empty/loading — 1:1 jak Interview/Assessment.
-import { StandardTable } from '@/components/standard';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -128,10 +129,6 @@ import { type RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu'
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
-import {
-  EmptyState as SharedEmptyState,
-  LoadingState as SharedLoadingState,
-} from '@/components/shared/states';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -838,7 +835,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [isLoadingInitiative, setIsLoadingInitiative] = useState(false);
 
   // #69: org users, for resolving createdBy → display name in the Author column.
-  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
+  const [orgUsers, setOrgUsers] = useState<
+    Array<{ id: string; firstName: string; lastName: string }>
+  >([]);
   useEffect(() => {
     let cancelled = false;
     Api.getUsers()
@@ -1593,7 +1592,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => (
           <div className="min-w-0">
             <span className="block text-sm font-semibold text-c-text truncate">
-              {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')}
+              {String(row.name || '')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')}
             </span>
           </div>
         ),
@@ -1610,7 +1613,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-c-text-muted'}`} />}>
+            <ChipBase
+              leading={
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-c-text-muted'}`}
+                />
+              }
+            >
               {meta?.name || row.category}
             </ChipBase>
           );
@@ -1709,7 +1718,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => (
           <div className="min-w-0">
             <span className="block text-sm font-semibold text-c-text truncate">
-              {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')}
+              {String(row.name || '')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')}
             </span>
           </div>
         ),
@@ -1726,7 +1739,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-c-text-muted'}`} />}>
+            <ChipBase
+              leading={
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-c-text-muted'}`}
+                />
+              }
+            >
               {meta?.name || row.category}
             </ChipBase>
           );
@@ -1796,7 +1815,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 }`}
                 title={String(row.name || '').replace(/&amp;/g, '&')}
               >
-                {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
+                {String(row.name || '')
+                  .replace(/&amp;/g, '&')
+                  .replace(/&lt;/g, '<')
+                  .replace(/&gt;/g, '>')}
               </div>
               {row.isComingSoon ? (
                 <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-c-text-muted">
@@ -1912,9 +1934,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.initiatives.columns.initiative', 'Initiative'),
         render: (row) => (
           <div className="min-w-0">
-            <span className="block text-sm font-semibold text-c-text truncate">
-              {row.name}
-            </span>
+            <span className="block text-sm font-semibold text-c-text truncate">{row.name}</span>
           </div>
         ),
       },
@@ -3022,9 +3042,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold text-c-text">
-                {selectedInitiative.name}
-              </h1>
+              <h1 className="text-xl font-bold text-c-text">{selectedInitiative.name}</h1>
               {selectedInitiative.description && (
                 <p className="text-sm text-c-text-muted mt-1 line-clamp-2">
                   {selectedInitiative.description}
@@ -3287,9 +3305,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
               {/* Next Steps */}
               <div className="bg-c-accent-soft rounded-xl border border-c-accent/20 p-5">
-                <h3 className="text-xs font-semibold text-c-accent uppercase mb-3">
-                  Next Steps
-                </h3>
+                <h3 className="text-xs font-semibold text-c-accent uppercase mb-3">Next Steps</h3>
                 <ul className="space-y-2 text-sm text-c-text-secondary">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 size={14} className="mt-0.5 text-c-accent" />
@@ -3489,9 +3505,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         return (
           <SharedEmptyState
             variant="error"
-            title={
-              isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'
-            }
+            title={isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'}
             description={knownToolsError}
             onRetry={() => {
               // IMPACT-TR-002: clear any latched guard before retrying.
@@ -3953,7 +3967,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                                 duration: 1500,
                               });
                             } catch {
-                              toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+                              toast.error(
+                                t('tools.hub.toast.chatOpenError', 'Failed to open chat')
+                              );
                             }
                           })();
                         },
@@ -4691,9 +4707,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           : 'border-c-border-subtle bg-c-surface-raised text-c-text-secondary hover:bg-c-surface'
                       }`}
                     >
-                      {c.icon ? (
-                        <span className="text-c-text-muted">{c.icon}</span>
-                      ) : null}
+                      {c.icon ? <span className="text-c-text-muted">{c.icon}</span> : null}
                       <span>{c.label}</span>
                       {c.count != null ? (
                         <span className="ml-1 px-1.5 py-0.5 rounded-full text-[11px] bg-c-border-subtle text-c-text-secondary">
@@ -4755,9 +4769,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-c-text truncate">
-                            {s.name}
-                          </span>
+                          <span className="text-sm font-medium text-c-text truncate">{s.name}</span>
                           <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-c-border-subtle text-c-text-secondary">
                             {s.confidence === 'high'
                               ? isPolish
@@ -4828,12 +4840,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                         {item.kind === 'catalog' ? 'DOCS' : item.shortCode}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-c-text truncate">
-                          {item.name}
-                        </div>
-                        <div className="text-xs text-c-text-muted truncate">
-                          {item.description}
-                        </div>
+                        <div className="text-sm font-medium text-c-text truncate">{item.name}</div>
+                        <div className="text-xs text-c-text-muted truncate">{item.description}</div>
                         {item.kind !== 'assessment' ? (
                           <div className="mt-1 text-[11px] text-c-text-muted">
                             {item.isActive

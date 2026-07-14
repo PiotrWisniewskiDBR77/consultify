@@ -201,7 +201,9 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
                         <Icon
                           size={18}
                           className={
-                            isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'
+                            isSelected
+                              ? 'text-slate-700 dark:text-slate-200'
+                              : 'text-slate-500 dark:text-slate-400'
                           }
                         />
                       </div>

@@ -133,9 +133,7 @@ export const ForWhomSection: React.FC = () => {
                           className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ background: visual.color }}
                         />
-                        <span className="text-xs text-c-text-muted font-medium">
-                          {point}
-                        </span>
+                        <span className="text-xs text-c-text-muted font-medium">{point}</span>
                       </div>
                     ))}
                   </div>

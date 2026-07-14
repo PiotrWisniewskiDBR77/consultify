@@ -12,6 +12,7 @@
  * Read-only against the engine — this file is the conclusion LAYER only.
  */
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { ValueChainData } from '@/store/useToolStore';
 
 import {
@@ -19,8 +20,6 @@ import {
   computeMarginMap,
   deriveLeverCandidates,
 } from './valueChainMarginEngine';
-
-import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**

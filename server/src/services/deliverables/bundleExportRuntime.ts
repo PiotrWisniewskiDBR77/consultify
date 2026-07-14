@@ -7,6 +7,7 @@
  * (wymaga pipeline'u składania decka z planów B1). SSOT: spec §F5.
  */
 import { randomUUID } from 'node:crypto';
+
 import logger from '../../utils/Logger.js';
 import { renderDocumentSchemaToDocxBuffer } from '../documentStudio/documentDocxRenderer.js';
 import {
@@ -15,15 +16,15 @@ import {
   type DocumentBlockType,
   type DocumentSchema,
 } from '../documentStudio/documentStudioTypes.js';
+import { PptxPipelineService } from '../report/pptx/PptxPipelineService.js';
 import { buildWorkbookBuffer, tableSchemaToWorkbook } from '../workbook/WorkbookBuilder.js';
-import type { BusinessPlanSpine } from './businessPlanSpine.js';
-import type { GeneratedBundle } from './bundleGenerationRuntime.js';
-import { resolveTheme } from './themeRegistry.js';
 import type { BrandThemeOverride } from './brandIngestion.js';
-import { deckPlansToPptxBuffer, type DeckPlanSlide } from './bundlePptxRuntime.js';
+import type { GeneratedBundle } from './bundleGenerationRuntime.js';
+import { type DeckPlanSlide, deckPlansToPptxBuffer } from './bundlePptxRuntime.js';
+import type { BusinessPlanSpine } from './businessPlanSpine.js';
 import { buildAudienceVariant } from './deckAudienceVariants.js';
 import { spineToUnifiedReport } from './spineToUnifiedReport.js';
-import { PptxPipelineService } from '../report/pptx/PptxPipelineService.js';
+import { resolveTheme } from './themeRegistry.js';
 
 const LOG = '[bundleExportRuntime]';
 
@@ -42,7 +43,11 @@ const CONTENT_TO_DOC: Record<string, DocumentBlockType> = {
 };
 
 interface GenContentLike {
-  sections: Array<{ heading?: string; title?: string; blocks: Array<{ blockId?: string; type: string; content: unknown }> }>;
+  sections: Array<{
+    heading?: string;
+    title?: string;
+    blocks: Array<{ blockId?: string; type: string; content: unknown }>;
+  }>;
 }
 
 /** ContentSection[] (z SPINE-driven content-gen) → DocumentSchema gotowy do DOCX.
@@ -124,7 +129,7 @@ function extractDeckPlans(deck: unknown): DeckPlanSlide[] {
 async function spinePptxViaPipeline(
   bundle: GeneratedBundle,
   themeId: string | undefined,
-  brandColor: string,
+  brandColor: string
 ): Promise<Buffer | null> {
   try {
     const report = spineToUnifiedReport(bundle.spine, {
@@ -160,13 +165,18 @@ async function spinePptxViaPipeline(
 export async function exportBundleFiles(
   bundle: GeneratedBundle,
   themeId?: string,
-  brandOverride?: BrandThemeOverride,
+  brandOverride?: BrandThemeOverride
 ): Promise<BundleFiles> {
   const theme = resolveTheme(themeId, brandOverride);
   let docx: Buffer | null = null;
   try {
     if (bundle.doc && (bundle.doc as GenContentLike).sections?.length) {
-      const schema = contentToDocumentSchema(bundle.doc as GenContentLike, bundle.spine, themeId, brandOverride);
+      const schema = contentToDocumentSchema(
+        bundle.doc as GenContentLike,
+        bundle.spine,
+        themeId,
+        brandOverride
+      );
       docx = await renderDocumentSchemaToDocxBuffer(schema);
     }
   } catch (err) {
@@ -212,7 +222,8 @@ export async function exportBundleFiles(
     const plans = extractDeckPlans(bundle.deck);
     if (!pptx && plans.length > 0) {
       pptx = await deckPlansToPptxBuffer(plans, {
-        themeId, brandOverride,
+        themeId,
+        brandOverride,
         title: `${bundle.spine.meta.company} — Biznesplan inwestorski`,
         company: bundle.spine.meta.company,
         language: lang,
@@ -224,7 +235,8 @@ export async function exportBundleFiles(
       const board = buildAudienceVariant(plans as never, 'board');
       if (board.droppedSlideIndices.length > 0) {
         pptxBoard = await deckPlansToPptxBuffer(board.plans as never, {
-          themeId, brandOverride,
+          themeId,
+          brandOverride,
           title: `${bundle.spine.meta.company} — Wersja dla zarządu`,
           company: bundle.spine.meta.company,
           language: lang,
@@ -251,7 +263,10 @@ export function safeBundleBaseName(company?: string): string {
  * F4.2 — „Pobierz komplet": 3 bufory (docx/xlsx/pptx) → jedna TECZKA .zip.
  * Pomija formaty których nie ma. Zwraca Buffer zip (lub null gdy 0 plików).
  */
-export async function bundleFilesToZip(files: BundleFiles, baseName: string): Promise<Buffer | null> {
+export async function bundleFilesToZip(
+  files: BundleFiles,
+  baseName: string
+): Promise<Buffer | null> {
   if (!files.docx && !files.xlsx && !files.pptx && !files.pptxBoard) return null;
   const { default: JSZip } = await import('jszip');
   const zip = new JSZip();

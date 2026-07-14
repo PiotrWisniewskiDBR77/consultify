@@ -12,10 +12,10 @@ import React, { useState } from 'react';
 import {
   ProposalCardType,
   ToolSession,
+  useToolStore,
   ValueActivity,
   ValueActivityId,
   ValueChainData,
-  useToolStore,
 } from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';

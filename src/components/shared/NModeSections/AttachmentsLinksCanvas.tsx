@@ -138,7 +138,8 @@ const FileIcon: React.FC<{ name: string; className?: string }> = ({ name, classN
     return <FileImage size={15} className={`text-blue-400 ${className}`} />;
   if (['xlsx', 'xls', 'csv', 'numbers'].includes(ext))
     return <FileSpreadsheet size={15} className={`text-emerald-400 ${className}`} />;
-  if (['pdf'].includes(ext)) return <FileText size={15} className={`text-danger-400 ${className}`} />;
+  if (['pdf'].includes(ext))
+    return <FileText size={15} className={`text-danger-400 ${className}`} />;
   if (['doc', 'docx', 'odt', 'rtf', 'txt', 'md'].includes(ext))
     return <FileText size={15} className={`text-blue-500 ${className}`} />;
   return <File size={15} className={`text-slate-600 ${className}`} />;

@@ -400,7 +400,9 @@ export const SubscriptionAnalytics: React.FC = () => {
             Churn Analysis
           </h3>
           <div className="overflow-x-auto">
-            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
+            <table
+              /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */ className="w-full"
+            >
               <thead>
                 <tr className="text-left text-xs text-slate-500 dark:text-slate-400">
                   <th className="pb-2">Month</th>

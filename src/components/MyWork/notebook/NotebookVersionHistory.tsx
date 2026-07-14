@@ -171,9 +171,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
       </div>
 
       {error && (
-        <p className="rounded-lg bg-c-warning/8 px-3 py-2 text-[12px] text-c-warning">
-          {error}
-        </p>
+        <p className="rounded-lg bg-c-warning/8 px-3 py-2 text-[12px] text-c-warning">{error}</p>
       )}
 
       {!loading && !error && versions.length === 0 && (

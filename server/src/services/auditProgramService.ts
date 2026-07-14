@@ -173,8 +173,14 @@ function mapRow(row: Record<string, unknown> | undefined | null): AuditProgram |
     preset: (row.preset as string) ?? null,
     config: parseConfig(row.config),
     createdBy: String(row.created_by ?? ''),
-    createdAt: row.created_at instanceof Date ? (row.created_at as Date).toISOString() : String(row.created_at ?? ''),
-    updatedAt: row.updated_at instanceof Date ? (row.updated_at as Date).toISOString() : String(row.updated_at ?? ''),
+    createdAt:
+      row.created_at instanceof Date
+        ? (row.created_at as Date).toISOString()
+        : String(row.created_at ?? ''),
+    updatedAt:
+      row.updated_at instanceof Date
+        ? (row.updated_at as Date).toISOString()
+        : String(row.updated_at ?? ''),
   };
 }
 
@@ -444,7 +450,9 @@ export async function generateSurveys(
     ? await dbAll<{ id: string }>(
         `SELECT id FROM interview_library_templates WHERE id IN (${templateIds
           .map(() => '?')
-          .join(',')}) AND (organization_id = ? OR organization_id IS NULL OR template_scope = 'system')`,
+          .join(
+            ','
+          )}) AND (organization_id = ? OR organization_id IS NULL OR template_scope = 'system')`,
         [...templateIds, organizationId],
         { fallback: true }
       )

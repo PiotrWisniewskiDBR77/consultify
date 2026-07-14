@@ -58,11 +58,7 @@ export const NotebookPresenceStack: React.FC<NotebookPresenceStackProps> = ({
     : `${others.length} viewing now`;
 
   return (
-    <div
-      className="flex items-center gap-2"
-      data-testid="notebook-presence-stack"
-      title={label}
-    >
+    <div className="flex items-center gap-2" data-testid="notebook-presence-stack" title={label}>
       <span
         className={`inline-block w-2 h-2 rounded-full ${
           connectionStatus === 'connected' ? 'bg-c-success' : 'bg-c-border'

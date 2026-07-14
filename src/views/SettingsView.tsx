@@ -57,12 +57,12 @@ import { AuthenticationAccessPage } from '../components/settings/security/Authen
 import { SecurityOverviewPage } from '../components/settings/security/SecurityOverviewPage';
 import SettingsOwnershipPanels from '../components/settings/SettingsOwnershipPanels';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
-import { EmptyState } from '../components/shared/states';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
 import { WorkingHoursSettings } from '../components/settings/WorkingHoursSettings';
 import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
+import { EmptyState } from '../components/shared/states';
 // UI components
 import { Button } from '../components/ui/primitives/Button';
 import { ScrollArea } from '../components/ui/scroll-area';

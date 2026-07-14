@@ -35,8 +35,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { EmptyState as SharedEmptyState } from '@/components/shared/states';
 
-import { isFinanceFlagEnabled } from '../Economics/financeFeatureFlags';
-import { ModelVersionHistory } from '../Economics/ModelVersionHistory';
 import Api from '../../services/api';
 import {
   shouldFallbackToLegacyFinance,
@@ -45,6 +43,8 @@ import {
   type V8FinanceModelEventCreatePayload,
 } from '../../services/api/v8/finance';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { isFinanceFlagEnabled } from '../Economics/financeFeatureFlags';
+import { ModelVersionHistory } from '../Economics/ModelVersionHistory';
 import { ExportButton } from './ExportButton';
 
 // ---------------------------------------------------------------------------
@@ -395,7 +395,9 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   // Assumptions
   const [assumptions, setAssumptions] = useState<Record<string, number>>({});
   // #82f — assumptionsRegistry status (imported/ai_assumed/missing) per driver, keyed by driver key.
-  const [assumptionsStatus, setAssumptionsStatus] = useState<Record<string, AssumptionStatusRow>>({});
+  const [assumptionsStatus, setAssumptionsStatus] = useState<Record<string, AssumptionStatusRow>>(
+    {}
+  );
 
   // ── Load models ──
   const loadModels = useCallback(async () => {
@@ -436,7 +438,9 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
             warning: number;
           }
         );
-        const statusRows: AssumptionStatusRow[] = Array.isArray((assumptionsStatusData as any)?.assumptions)
+        const statusRows: AssumptionStatusRow[] = Array.isArray(
+          (assumptionsStatusData as any)?.assumptions
+        )
           ? (assumptionsStatusData as any).assumptions
           : [];
         setAssumptionsStatus(Object.fromEntries(statusRows.map((row) => [row.key, row])));

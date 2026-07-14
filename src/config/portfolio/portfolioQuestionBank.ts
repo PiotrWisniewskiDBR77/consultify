@@ -116,7 +116,8 @@ const ELEMENT_QUESTIONS: PortfolioQuestionNode[] = [
         labelEn: 'It is our assumption for now',
         labelPl: 'Na razie to nasze założenie',
         consultantSignalEn: 'Keep as declared assumption; do not let strategy lean on it as fact.',
-        consultantSignalPl: 'Zostaw jako jawne założenie; strategia nie może się na tym oprzeć jak na fakcie.',
+        consultantSignalPl:
+          'Zostaw jako jawne założenie; strategia nie może się na tym oprzeć jak na fakcie.',
       },
     ],
     branches: { sourced: 'e3-feasibility', assumed: 'e3-feasibility' },
@@ -147,8 +148,10 @@ const ELEMENT_QUESTIONS: PortfolioQuestionNode[] = [
         key: 'needs-prereq',
         labelEn: 'It needs another element done first',
         labelPl: 'Wymaga wcześniejszego zrobienia innego elementu',
-        consultantSignalEn: 'Declare the hard dependency; sequencing must order it after the prerequisite.',
-        consultantSignalPl: 'Zadeklaruj twardą zależność; sekwencja musi ją ustawić po warunku wstępnym.',
+        consultantSignalEn:
+          'Declare the hard dependency; sequencing must order it after the prerequisite.',
+        consultantSignalPl:
+          'Zadeklaruj twardą zależność; sekwencja musi ją ustawić po warunku wstępnym.',
       },
       {
         key: 'capability-gap',
@@ -171,7 +174,8 @@ const ELEMENT_QUESTIONS: PortfolioQuestionNode[] = [
     rung: 'urgency',
     level: 4,
     intentEn: 'Urgency reorders a portfolio — a closing window beats a bigger-but-patient prize.',
-    intentPl: 'Pilność przestawia portfel — zamykające się okno bije większą, lecz cierpliwą nagrodę.',
+    intentPl:
+      'Pilność przestawia portfel — zamykające się okno bije większą, lecz cierpliwą nagrodę.',
     textEn:
       'Does the value decay if you wait — a closing market window, a regulatory date, a competitor move — or is the prize stable in time?',
     textPl:
@@ -253,9 +257,7 @@ export interface PortfolioLadderHints {
   urgent: boolean;
 }
 
-export function readPortfolioLadderHints(
-  answers: PortfolioLadderAnswer[]
-): PortfolioLadderHints {
+export function readPortfolioLadderHints(answers: PortfolioLadderAnswer[]): PortfolioLadderHints {
   const byQ = new Map(answers.map((a) => [a.questionId, a.answerKey]));
   const value = byQ.get('e2-value-source');
   const feas = byQ.get('e3-feasibility');

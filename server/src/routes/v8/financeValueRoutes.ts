@@ -18,12 +18,12 @@ import type { Response } from 'express';
 import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { knapsack } from '../../services/capitalRationingService.js';
 import { varianceBridge } from '../../services/budgetVarianceService.js';
+import { knapsack } from '../../services/capitalRationingService.js';
 import { appraise } from '../../services/investmentAppraisalService.js';
 import { prioritize } from '../../services/portfolioPrioritizationService.js';
-import { buildValueBridge } from '../../services/valueBridgeService.js';
 import { assuranceSummary } from '../../services/valueAssuranceService.js';
+import { buildValueBridge } from '../../services/valueBridgeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -125,7 +125,12 @@ router.post(
       initialInvestment = -Number(flows[0]);
       flows = flows.slice(1);
     }
-    const result = appraise({ cashflows: flows, initialInvestment, discountRatePct, hurdleRatePct });
+    const result = appraise({
+      cashflows: flows,
+      initialInvestment,
+      discountRatePct,
+      hurdleRatePct,
+    });
     return res.json({ data: result, meta: financeValueMeta() });
   })
 );

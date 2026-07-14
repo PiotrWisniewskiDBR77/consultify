@@ -94,9 +94,7 @@ export function readAssessmentChartColors(): AssessmentChartColors {
  * re-resolved whenever the `dark`/`light` class on <html> flips.
  */
 export function useAssessmentChartColors(): AssessmentChartColors {
-  const [colors, setColors] = useState<AssessmentChartColors>(() =>
-    readAssessmentChartColors()
-  );
+  const [colors, setColors] = useState<AssessmentChartColors>(() => readAssessmentChartColors());
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const resolve = () => setColors(readAssessmentChartColors());

@@ -1,7 +1,7 @@
 import { AlertCircle, MessageSquare, PhoneIncoming, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';

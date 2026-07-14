@@ -21,9 +21,9 @@
  */
 
 import {
-  validateCardStructure,
   type CardValidationResult,
   type InitiativeCardData,
+  validateCardStructure,
 } from './initiative/initiativeCardValidators.js';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -65,18 +65,69 @@ const PASS_THRESHOLD = 90;
 /** §A5 — acronyms/methodologies allowed inside otherwise-Polish prose. */
 const ALLOWED_TOKENS = new Set(
   [
-    'sipoc', 'flowchart', 'raci', 'raid', 'kpi', 'sla', 'otif', 'tto', 'ttr',
-    'nps', 'mece', 'pmo', 'wbs', 'capex', 'opex', 'roi', 'npv', 'scada', 'osd',
-    'osp', 'pse', 'go', 'no', 'ok',
+    'sipoc',
+    'flowchart',
+    'raci',
+    'raid',
+    'kpi',
+    'sla',
+    'otif',
+    'tto',
+    'ttr',
+    'nps',
+    'mece',
+    'pmo',
+    'wbs',
+    'capex',
+    'opex',
+    'roi',
+    'npv',
+    'scada',
+    'osd',
+    'osp',
+    'pse',
+    'go',
+    'no',
+    'ok',
   ].map((s) => s.toLowerCase())
 );
 
 /** Common English function words — 2+ in prose signal EN drift (§A6.1). */
 const EN_STOPWORDS = new Set([
-  'the', 'and', 'with', 'this', 'that', 'for', 'are', 'will', 'from', 'which',
-  'have', 'has', 'these', 'those', 'their', 'them', 'they', 'because', 'should',
-  'would', 'could', 'about', 'into', 'over', 'between', 'process', 'value',
-  'improve', 'increase', 'reduce', 'ensure', 'provide', 'across', 'within',
+  'the',
+  'and',
+  'with',
+  'this',
+  'that',
+  'for',
+  'are',
+  'will',
+  'from',
+  'which',
+  'have',
+  'has',
+  'these',
+  'those',
+  'their',
+  'them',
+  'they',
+  'because',
+  'should',
+  'would',
+  'could',
+  'about',
+  'into',
+  'over',
+  'between',
+  'process',
+  'value',
+  'improve',
+  'increase',
+  'reduce',
+  'ensure',
+  'provide',
+  'across',
+  'within',
 ]);
 
 /**
@@ -120,9 +171,7 @@ function sentenceCount(text: string): number {
 
 /** Detect ≥2 English stopwords in prose (outside §A5 dictionary). */
 function looksEnglish(text: string): string[] {
-  const hits = new Set(
-    words(text).filter((w) => EN_STOPWORDS.has(w) && !ALLOWED_TOKENS.has(w))
-  );
+  const hits = new Set(words(text).filter((w) => EN_STOPWORDS.has(w) && !ALLOWED_TOKENS.has(w)));
   return [...hits];
 }
 
@@ -197,16 +246,57 @@ function rec(item: unknown): Record<string, unknown> {
 // ────────────────────────────────────────────────────────────────────────────
 
 /** §5.1 title_is_thesis — connectors/relations that make a title a thesis. */
-const TITLE_CONNECTOR_RE = /(\bvs\b|\bversus\b|\bkontra\b|\bniż\b|\bbo\b|\bponieważ\b|\bprzez\b)|[⟷↔⇔→⟶]/i;
+const TITLE_CONNECTOR_RE =
+  /(\bvs\b|\bversus\b|\bkontra\b|\bniż\b|\bbo\b|\bponieważ\b|\bprzez\b)|[⟷↔⇔→⟶]/i;
 
 /** Curated finite verbs common in consulting theses (3rd person present). */
 const THESIS_VERBS = new Set([
-  'rośnie', 'rosną', 'spada', 'spadają', 'blokuje', 'blokują', 'wydłuża', 'wydłużają',
-  'skraca', 'skróci', 'skrócą', 'napędza', 'napędzają', 'utknie', 'utyka', 'omija', 'omijają',
-  'rozjeżdża', 'hamuje', 'wygrywa', 'traci', 'tracą', 'kosztuje', 'zabije', 'wykolei',
-  'odblokuje', 'przewiduje', 'decyduje', 'obniża', 'podnosi', 'zwiększa', 'zmniejsza',
-  'ujawnia', 'wyjaśnia', 'utrudnia', 'ogranicza', 'wymusza', 'skupia', 'koreluje', 'żyje',
-  'powtarza', 'napędzana', 'blokada', 'skaluje', 'grzęźnie', 'ugrzęźnie',
+  'rośnie',
+  'rosną',
+  'spada',
+  'spadają',
+  'blokuje',
+  'blokują',
+  'wydłuża',
+  'wydłużają',
+  'skraca',
+  'skróci',
+  'skrócą',
+  'napędza',
+  'napędzają',
+  'utknie',
+  'utyka',
+  'omija',
+  'omijają',
+  'rozjeżdża',
+  'hamuje',
+  'wygrywa',
+  'traci',
+  'tracą',
+  'kosztuje',
+  'zabije',
+  'wykolei',
+  'odblokuje',
+  'przewiduje',
+  'decyduje',
+  'obniża',
+  'podnosi',
+  'zwiększa',
+  'zmniejsza',
+  'ujawnia',
+  'wyjaśnia',
+  'utrudnia',
+  'ogranicza',
+  'wymusza',
+  'skupia',
+  'koreluje',
+  'żyje',
+  'powtarza',
+  'napędzana',
+  'blokada',
+  'skaluje',
+  'grzęźnie',
+  'ugrzęźnie',
 ]);
 
 /** A single token reads as a verb (infinitive on -ć, or a curated finite verb). */
@@ -271,7 +361,9 @@ function tensionTwoSided(item: unknown): boolean {
   if (a && b) return true;
   if (refsOf(item).length >= 2) return true;
   // Two distinct H# references inside the prose count as two-sided evidence.
-  const hrefs = new Set((`${titleOf(item)} ${descOf(item)}`.match(/\bH\d+\b/gi) || []).map((x) => x.toUpperCase()));
+  const hrefs = new Set(
+    (`${titleOf(item)} ${descOf(item)}`.match(/\bH\d+\b/gi) || []).map((x) => x.toUpperCase())
+  );
   return hrefs.size >= 2;
 }
 
@@ -288,7 +380,9 @@ function patternMultiSource(item: unknown): boolean {
 /** §3.12 model_heldby — a mental model names WHO holds it + an implication. */
 function modelGrounded(item: unknown): boolean {
   const o = rec(item);
-  const heldBy = asArray(o.held_by ?? o.heldBy ?? o.holders).length > 0 || str(o.held_by ?? o.heldBy).trim().length > 0;
+  const heldBy =
+    asArray(o.held_by ?? o.heldBy ?? o.holders).length > 0 ||
+    str(o.held_by ?? o.heldBy).trim().length > 0;
   const impl =
     str(o.implication ?? o.implications ?? o.so_what ?? o.soWhat).trim().length > 0 ||
     /implikacj|program musi|dopóki|zanim|inaczej/i.test(descOf(item));
@@ -312,18 +406,24 @@ function quoteComparisonMultivoice(item: unknown): boolean {
   if (quotes.length < 2) return false;
   const roles = new Set(
     quotes
-      .map((q) => str(rec(q).role ?? rec(q).rola ?? rec(q).speaker ?? rec(q).actor).toLowerCase().trim())
+      .map((q) =>
+        str(rec(q).role ?? rec(q).rola ?? rec(q).speaker ?? rec(q).actor)
+          .toLowerCase()
+          .trim()
+      )
       .filter(Boolean)
   );
   const soWhat =
-    str(o.so_what ?? o.soWhat ?? o.implication ?? o.takeaway).trim().length > 0 || descOf(item).trim().length > 0;
+    str(o.so_what ?? o.soWhat ?? o.implication ?? o.takeaway).trim().length > 0 ||
+    descOf(item).trim().length > 0;
   return roles.size >= 2 && soWhat;
 }
 
 /** A quote carries attribution: a role field, an H#, an evidence_ref, or "— Author". */
 function quoteHasAttribution(q: unknown): boolean {
   const o = rec(q);
-  if (str(o.role ?? o.rola ?? o.speaker ?? o.attribution ?? o.author ?? o.source).trim()) return true;
+  if (str(o.role ?? o.rola ?? o.speaker ?? o.attribution ?? o.author ?? o.source).trim())
+    return true;
   if (refsOf(q).length > 0) return true;
   const text = typeof q === 'string' ? q : str(o.quote ?? o.text ?? o.cytat ?? o.excerpt);
   return /\bH\d+\b/i.test(text) || /—\s*\S+/.test(text) || /\(\s*[^)]*\bH\d+\b[^)]*\)/i.test(text);
@@ -333,7 +433,10 @@ function quoteHasAttribution(q: unknown): boolean {
 function findingHasQuote(item: unknown): boolean {
   const o = rec(item);
   const single = str(o.quote ?? o.cytat ?? o.evidence_quote ?? o.verbatim).trim();
-  if (single && quoteHasAttribution({ quote: single, role: o.role ?? o.rola, evidence_refs: o.evidence_refs })) {
+  if (
+    single &&
+    quoteHasAttribution({ quote: single, role: o.role ?? o.rola, evidence_refs: o.evidence_refs })
+  ) {
     return true;
   }
   const quotes = asArray(o.quotes ?? o.cytaty);
@@ -341,7 +444,8 @@ function findingHasQuote(item: unknown): boolean {
 }
 
 /** §3.7 reco_measurable — a recommendation carries a measurable effect + horizon. */
-const HORIZON_RE = /(\bmies\b|miesi[aą]c|tygod|kwarta[łl]|\bQ[1-4]\b|\bdni\b|\bdzień\b|\blat\b|\brok\b|\broku\b|0-1|1-3|3-6|6-12|\bdo\b\s*\d)/i;
+const HORIZON_RE =
+  /(\bmies\b|miesi[aą]c|tygod|kwarta[łl]|\bQ[1-4]\b|\bdni\b|\bdzień\b|\blat\b|\brok\b|\broku\b|0-1|1-3|3-6|6-12|\bdo\b\s*\d)/i;
 function recommendationMeasurable(item: unknown): boolean {
   const o = rec(item);
   const t = `${titleOf(item)} ${descOf(item)} ${str(o.expected_effect ?? o.effect ?? o.efekt)} ${str(o.horizon ?? o.horyzont ?? o.timeframe)}`;
@@ -491,7 +595,11 @@ export function validateInsightCard(
 
   // §A2 Tytuł — required, ≤14 words.
   if (!title.trim()) {
-    violations.push({ code: `${P}.title_present`, severity: 'hard', message: 'Brak tytułu wniosku.' });
+    violations.push({
+      code: `${P}.title_present`,
+      severity: 'hard',
+      message: 'Brak tytułu wniosku.',
+    });
   } else {
     if (words(title).length > 14) {
       violations.push({
@@ -569,7 +677,10 @@ export function validateInsightCard(
     }
     // §5.2 theme_strength_grounded — strength=strong wymaga ≥2 evidence_refs.
     const strength = str(rec(t).strength).toLowerCase();
-    if ((strength === 'strong' || strength === 'silny' || strength === 'silna') && refsOf(t).length < 2) {
+    if (
+      (strength === 'strong' || strength === 'silny' || strength === 'silna') &&
+      refsOf(t).length < 2
+    ) {
       violations.push({
         code: `${P}.theme_strength_grounded`,
         severity: 'soft',
@@ -778,7 +889,8 @@ export function validateInsightCard(
       violations.push({
         code: `${P}.readout_sections`,
         severity: 'soft',
-        message: 'Readout bez łańcucha nagłówków Obserwacja→Mechanizm→Dowody→Wpływ→Rekomendacja (§3.5).',
+        message:
+          'Readout bez łańcucha nagłówków Obserwacja→Mechanizm→Dowody→Wpływ→Rekomendacja (§3.5).',
       });
     }
     const rw = words(consultingReadout).length;
@@ -932,7 +1044,11 @@ export function validateInitiativeCard(
 
   // §A3 Tytuł — required, ≤14 words, action-title (verb-first, not generic "Improve X").
   if (!title.trim()) {
-    violations.push({ code: `${P}.title_present`, severity: 'hard', message: 'Brak tytułu inicjatywy.' });
+    violations.push({
+      code: `${P}.title_present`,
+      severity: 'hard',
+      message: 'Brak tytułu inicjatywy.',
+    });
   } else {
     if (words(title).length > 14) {
       violations.push({
@@ -945,7 +1061,8 @@ export function validateInitiativeCard(
       violations.push({
         code: `${P}.title_generic`,
         severity: 'soft',
-        message: 'Tytuł jest generyczny („Improve/Poprawić…") bez konkretu — użyj action-title oddającego zmianę.',
+        message:
+          'Tytuł jest generyczny („Improve/Poprawić…") bez konkretu — użyj action-title oddającego zmianę.',
       });
     }
   }
@@ -979,7 +1096,8 @@ export function validateInitiativeCard(
     violations.push({
       code: `${P}.hypothesis_format`,
       severity: 'hard',
-      message: 'Teza nie-falsyfikowalna — wymagany format „Jeśli … to … bo/ponieważ …" z mierzalnym Y (§A6.2).',
+      message:
+        'Teza nie-falsyfikowalna — wymagany format „Jeśli … to … bo/ponieważ …" z mierzalnym Y (§A6.2).',
     });
   }
 

@@ -3,8 +3,8 @@
  */
 
 export {
-  AmbitionDecomposerInputPhase,
   AmbitionDecomposerBuildPhase,
+  AmbitionDecomposerInputPhase,
   AmbitionDecomposerInsightsPhase,
   AmbitionDecomposerOutputsPhase,
 } from './AmbitionDecomposerPhases';

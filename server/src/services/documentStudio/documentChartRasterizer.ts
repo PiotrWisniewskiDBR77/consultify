@@ -46,7 +46,10 @@ class NapiChartCanvas {
     this.height = opts.height;
     this.bg = opts.backgroundColour || 'white';
   }
-  async renderToBuffer(configuration: ChartConfiguration, _mimeType = 'image/png'): Promise<Buffer> {
+  async renderToBuffer(
+    configuration: ChartConfiguration,
+    _mimeType = 'image/png'
+  ): Promise<Buffer> {
     const { createCanvas } = await import('@napi-rs/canvas');
     const ChartJSModule = await import('chart.js/auto');
     const ChartJS = ChartJSModule.default;

@@ -47,8 +47,8 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState } from '@/components/ui/primitives';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
@@ -533,7 +533,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       showStarredOnly,
       recents: recentIdeas.map((idea) => ({
         id: idea.id,
-        title: idea.title || (t('myWork.ideasList.untitled', 'Untitled')),
+        title: idea.title || t('myWork.ideasList.untitled', 'Untitled'),
       })),
       selectFolder: (folderId) => setActiveFolderId(folderId),
       createFolder: handleCreateFolder,
@@ -840,7 +840,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       clearSelection();
       await fetchIdeas();
     } catch (err: any) {
-      toast.error(err?.message || (t('myWork.ideasList.failed', 'Failed')));
+      toast.error(err?.message || t('myWork.ideasList.failed', 'Failed'));
     } finally {
       setBulkBusy(false);
     }
@@ -870,7 +870,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       clearSelection();
       await fetchIdeas();
     } catch (err: any) {
-      toast.error(err?.message || (t('myWork.ideasList.failed2', 'Failed')));
+      toast.error(err?.message || t('myWork.ideasList.failed2', 'Failed'));
     } finally {
       setBulkBusy(false);
     }
@@ -894,7 +894,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         toast.success(t('myWork.ideasList.toastSuccess3', 'Deleted'));
         await fetchIdeas();
       } catch (err: any) {
-        toast.error(err?.message || (t('myWork.ideasList.failedToDelete', 'Failed to delete')));
+        toast.error(err?.message || t('myWork.ideasList.failedToDelete', 'Failed to delete'));
       }
     },
     [showConfirm, fetchIdeas, isPolish]
@@ -1018,7 +1018,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         }
         await fetchIdeas();
       } catch (err: any) {
-        toast.error(err?.message || (t('myWork.ideasList.failed3', 'Failed')));
+        toast.error(err?.message || t('myWork.ideasList.failed3', 'Failed'));
       } finally {
         setConverting(false);
       }
@@ -1039,9 +1039,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           },
         });
       } catch (err: any) {
-        toast.error(
-          err?.message || (t('myWork.ideasList.failedToOpenChat', 'Failed to open chat'))
-        );
+        toast.error(err?.message || t('myWork.ideasList.failedToOpenChat', 'Failed to open chat'));
       }
     },
     [isPolish, openChatWithContext]
@@ -1058,13 +1056,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             ...idea,
             source: 'my-work-ideas-row-menu',
             requestedAnalysis: 'ai_insights',
-            promptHint: t('myWork.ideasList.promptHint', 'Prepare concise AI insights for this idea: potential, risks, next steps and possible conversions.'),
+            promptHint: t(
+              'myWork.ideasList.promptHint',
+              'Prepare concise AI insights for this idea: potential, risks, next steps and possible conversions.'
+            ),
           },
         });
       } catch (err: any) {
         toast.error(
-          err?.message ||
-            (t('myWork.ideasList.failedToOpenAI', 'Failed to open AI Insights'))
+          err?.message || t('myWork.ideasList.failedToOpenAI', 'Failed to open AI Insights')
         );
       }
     },
@@ -1183,7 +1183,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
           ) : null}
         </PreviewMetaCard>
-        <PreviewDetailsSection text={idea.body || ''} label={t('myWork.ideasList.label', 'Details')} />
+        <PreviewDetailsSection
+          text={idea.body || ''}
+          label={t('myWork.ideasList.label', 'Details')}
+        />
       </div>
     );
   };
@@ -1660,7 +1663,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           {t('myWork.ideasList.yourIdeaGardenAwaits', 'Your Idea Garden awaits')}
         </h3>
         <p className="text-sm text-c-text-muted mb-4 max-w-md">
-          {t('myWork.ideasList.plantYourFirstIdea', 'Plant your first idea — AI will help it grow, research context, and propose creative variants.')}
+          {t(
+            'myWork.ideasList.plantYourFirstIdea',
+            'Plant your first idea — AI will help it grow, research context, and propose creative variants.'
+          )}
         </p>
         <button
           onClick={onCreateIdea}
@@ -1856,7 +1862,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         className="font-semibold text-sm text-c-text line-clamp-2 leading-snug"
                         title={idea.title || ''}
                       >
-                        {idea.title || (t('myWork.ideasList.untitled2', 'Untitled'))}
+                        {idea.title || t('myWork.ideasList.untitled2', 'Untitled')}
                       </h4>
 
                       {/* Zone 3 — Description (when available) */}

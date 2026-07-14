@@ -252,9 +252,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-c-text-secondary text-sm leading-relaxed">
-            {description[lang]}
-          </p>
+          <p className="text-c-text-secondary text-sm leading-relaxed">{description[lang]}</p>
 
           {/* Actions */}
           <div className="flex items-center justify-between mt-4">

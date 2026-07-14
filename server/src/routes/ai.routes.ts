@@ -9,11 +9,9 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import PDFParserService from '../services/pdfParserService.js';
-import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { featureFlags } from '../config/FeatureFlags.js';
-import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
   validateBody,
   validateParams,
@@ -37,6 +35,8 @@ import {
   triggerAIRiskDetected,
 } from '../services/aiNotificationTriggers.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import PDFParserService from '../services/pdfParserService.js';
+import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1840,7 +1840,9 @@ router.post(
     try {
       const steerLang = (language || 'en').split('-')[0];
       const ci = String((body as any).customInstructions || '').trim();
-      const rs = String(responseStyle || '').trim().toLowerCase();
+      const rs = String(responseStyle || '')
+        .trim()
+        .toLowerCase();
       const styleMap: Record<string, { pl: string; en: string }> = {
         concise: {
           pl: 'Odpowiadaj maksymalnie zwięźle (1–3 zdania lub do 3 punktów).',
@@ -4385,7 +4387,9 @@ router.post(
             // SEPARATE SSE event so the frontend accumulates them into the
             // message's reasoning trace; visible answer text is untouched.
             if (chunk && typeof chunk === 'object' && typeof chunk.reasoning === 'string') {
-              res.write(`data: ${JSON.stringify({ type: 'reasoning', delta: chunk.reasoning })}\n\n`);
+              res.write(
+                `data: ${JSON.stringify({ type: 'reasoning', delta: chunk.reasoning })}\n\n`
+              );
               continue;
             }
 

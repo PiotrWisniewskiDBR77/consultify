@@ -24,12 +24,7 @@ import React from 'react';
 
 import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 
-export type DeckBuilderRightRailToolId =
-  | 'blocks'
-  | 'media'
-  | 'comments'
-  | 'activity'
-  | 'relations';
+export type DeckBuilderRightRailToolId = 'blocks' | 'media' | 'comments' | 'activity' | 'relations';
 
 export interface DeckBuilderRightRailLabels {
   blocks?: string;

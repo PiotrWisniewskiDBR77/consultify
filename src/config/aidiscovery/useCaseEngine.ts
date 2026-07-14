@@ -24,12 +24,7 @@
  * and tests in isolation.
  */
 
-import {
-  AI_PHASES,
-  aiPhaseLabel,
-  type AiPhaseId,
-  type Bilingual,
-} from './deepeningLadder';
+import { AI_PHASES, type AiPhaseId, aiPhaseLabel, type Bilingual } from './deepeningLadder';
 
 type Level = 'high' | 'medium' | 'low';
 
@@ -188,8 +183,10 @@ const scorePhase = (
     };
   }
 
-  const impactAvg = moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.impact)], 0) / moves.length;
-  const effortAvg = moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.effort)], 0) / moves.length;
+  const impactAvg =
+    moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.impact)], 0) / moves.length;
+  const effortAvg =
+    moves.reduce((sum, m) => sum + LEVEL_SCORE[asLevel(m.effort)], 0) / moves.length;
   const evidenceBacked = moves.filter((m) => (m.evidence?.length || 0) > 0).length;
   const evidenceRatio = evidenceBacked / moves.length;
 
@@ -371,7 +368,11 @@ export function buildW2MoveSequence(session: DiscoverySession): SequencedMove[] 
       en: 'We reject running all use cases in parallel: spreading the one scarce resource — the data team — thin means none reaches production.',
     },
     expectedImpact:
-      primaryScore.attractiveness >= 2.5 ? 'high' : primaryScore.attractiveness >= 1.7 ? 'medium' : 'low',
+      primaryScore.attractiveness >= 2.5
+        ? 'high'
+        : primaryScore.attractiveness >= 1.7
+          ? 'medium'
+          : 'low',
     estimatedEffort:
       primaryScore.feasibility >= 2.4 ? 'low' : primaryScore.feasibility >= 1.6 ? 'medium' : 'high',
     validation: VALID,

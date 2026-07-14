@@ -129,7 +129,7 @@ export function buildBusinessCaseFromAnalysis(
   const horizonYears = Math.max(1, Math.round(num(opts.horizonYears, 5)));
   const discountRatePct = num(opts.discountRatePct, 10);
 
-  let revenueDelta = clampNonNeg(num(opts.revenueDelta, 0));
+  const revenueDelta = clampNonNeg(num(opts.revenueDelta, 0));
   let costSavings = clampNonNeg(num(opts.costSavings, 0));
 
   // If the caller gave no explicit benefit drivers, reconstruct a flat
@@ -185,30 +185,22 @@ export function computeNpvOnRead(
   waccPct: number
 ): ComputedBusinessCase {
   const capex = clampNonNeg(num(econ?.capex, 0));
-  const cashflows = Array.isArray(econ?.cashflows)
-    ? econ.cashflows.map((c) => num(c, 0))
-    : [];
+  const cashflows = Array.isArray(econ?.cashflows) ? econ.cashflows.map((c) => num(c, 0)) : [];
 
   // Real WACC param wins; fall back to the case's baked-in rate, then 0.
   const rawWacc = num(waccPct, NaN);
   const effectiveRatePct =
-    Number.isFinite(rawWacc) && rawWacc > -100
-      ? rawWacc
-      : num(econ?.discountRatePct, 0);
+    Number.isFinite(rawWacc) && rawWacc > -100 ? rawWacc : num(econ?.discountRatePct, 0);
   const r = effectiveRatePct / 100;
 
   // PV of the benefit stream (t = 1..N).
-  const pvBenefits = cashflows.reduce(
-    (acc, cf, idx) => acc + cf / Math.pow(1 + r, idx + 1),
-    0
-  );
+  const pvBenefits = cashflows.reduce((acc, cf, idx) => acc + cf / Math.pow(1 + r, idx + 1), 0);
 
   const npv = pvBenefits - capex;
 
   // ---- IRR via bisection on NPV(rate) = 0 ----
   const npvAt = (rate: number): number =>
-    cashflows.reduce((acc, cf, idx) => acc + cf / Math.pow(1 + rate, idx + 1), 0) -
-    capex;
+    cashflows.reduce((acc, cf, idx) => acc + cf / Math.pow(1 + rate, idx + 1), 0) - capex;
 
   let irr: number | null = null;
   let low = -0.99;
@@ -274,8 +266,7 @@ export function toRoiAssumptions(econ: BusinessCaseEconomics): Record<string, un
   const computed = computeNpvOnRead(econ, econ.discountRatePct);
 
   const totalNetBenefit = (econ.cashflows || []).reduce((acc, cf) => acc + num(cf, 0), 0);
-  const expectedRoiPercent =
-    econ.capex > 0 ? (totalNetBenefit / econ.capex) * 100 : null;
+  const expectedRoiPercent = econ.capex > 0 ? (totalNetBenefit / econ.capex) * 100 : null;
 
   const expectedPaybackMonths =
     computed.paybackYears == null ? null : Math.round(computed.paybackYears * 12);

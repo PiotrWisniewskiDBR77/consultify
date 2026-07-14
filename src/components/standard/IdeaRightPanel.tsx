@@ -24,7 +24,7 @@
  *  - Identyczny co do piksela dla 4 narzędzi (mindmap/process_flow/whiteboard/
  *    table) — różni się WYŁĄCZNIE deklaracja treści.
  */
-import { Link2, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { Link2, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import {

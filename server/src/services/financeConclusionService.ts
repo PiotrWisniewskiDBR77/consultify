@@ -561,7 +561,8 @@ function buildIndicatorHeadline(
   }
 ): string {
   if (ctx.passesThreshold === true && ctx.trend && !ctx.trend.improving) {
-    const n = ctx.toThreshold != null ? fmt(ctx.toThreshold, isPL ? 'pl' : 'en') : isPL ? 'kilka' : 'a few';
+    const n =
+      ctx.toThreshold != null ? fmt(ctx.toThreshold, isPL ? 'pl' : 'en') : isPL ? 'kilka' : 'a few';
     return isPL
       ? `${ind.name} formalnie w normie, ale trend zjada bufor — próg za ~${n} okresów.`
       : `${ind.name} formally healthy, but the trend eats the buffer — threshold in ~${n} periods.`;

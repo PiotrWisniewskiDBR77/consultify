@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -61,9 +62,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <SharedLoadingState variant="progress" label="Crunching your organization's data…" />
-    );
+    return <SharedLoadingState variant="progress" label="Crunching your organization's data…" />;
   }
 
   return (
@@ -163,9 +162,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                   <h2 className="text-xl font-bold text-navy-900 dark:text-white">
                     Team Onboarding Funnel
                   </h2>
-                  <p className="text-xs text-c-text-muted">
-                    How your team is joining the platform
-                  </p>
+                  <p className="text-xs text-c-text-muted">How your team is joining the platform</p>
                 </div>
               </div>
             </div>
@@ -395,16 +392,12 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, t
           </span>
         </div>
       </div>
-      <h3 className="text-c-text-secondary text-xs font-bold uppercase tracking-widest">
-        {title}
-      </h3>
+      <h3 className="text-c-text-secondary text-xs font-bold uppercase tracking-widest">{title}</h3>
       <div className="flex items-baseline gap-2 mt-1">
         <p className="text-3xl font-black text-navy-900 dark:text-white tracking-tighter">
           {value}
         </p>
-        <p className="text-[10px] text-c-text-muted font-medium truncate">
-          {subtitle}
-        </p>
+        <p className="text-[10px] text-c-text-muted font-medium truncate">{subtitle}</p>
       </div>
     </div>
   );
@@ -466,9 +459,7 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
         <p className="text-xs font-bold text-navy-900 dark:text-white uppercase tracking-tight truncate">
           {event.event_type.replace(/_/g, ' ')}
         </p>
-        <p className="text-[10px] text-c-text-muted mt-0.5 truncate">
-          {formatContext()}
-        </p>
+        <p className="text-[10px] text-c-text-muted mt-0.5 truncate">{formatContext()}</p>
       </div>
       <div className="text-right shrink-0">
         <p className="text-[10px] font-bold text-c-text-muted">

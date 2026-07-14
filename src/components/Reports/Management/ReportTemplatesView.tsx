@@ -258,7 +258,9 @@ export const ReportTemplatesView: React.FC = () => {
                       {section.icon && (
                         <span
                           className={
-                            isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+                            isSelected
+                              ? 'text-slate-700 dark:text-slate-200'
+                              : 'text-slate-400 dark:text-slate-500'
                           }
                         >
                           {section.icon}

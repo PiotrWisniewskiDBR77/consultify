@@ -542,85 +542,83 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
         />
       )}
       <motion.div
-      onClick={onClick}
-      drag={onDragEnd ? 'x' : false}
-      dragMomentum={false}
-      dragElastic={0}
-      onDrag={(_, info) => {
-        setDragOffset((info.offset.x / window.innerWidth) * 100);
-      }}
-      onDragEnd={handleDragEnd}
-      className={`
+        onClick={onClick}
+        drag={onDragEnd ? 'x' : false}
+        dragMomentum={false}
+        dragElastic={0}
+        onDrag={(_, info) => {
+          setDragOffset((info.offset.x / window.innerWidth) * 100);
+        }}
+        onDragEnd={handleDragEnd}
+        className={`
         absolute top-2 h-10 rounded-lg group transition-shadow hover:shadow-lg hover:z-10
         ${colors.bg} border ${colors.border}
         ${isOnCriticalPath ? 'ring-2 ring-danger-500/50' : ''}
         ${hasWarning ? 'ring-1 ring-amber-400/70' : ''}
         ${onDragEnd ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
       `}
-      style={{ left: `${leftPercent}%`, width: `${widthPercent}%`, minWidth: '60px' }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={onDragEnd ? { scale: 0.98 } : undefined}
-      title={barTooltip}
-    >
-      {hasWarning && (
-        <div
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20"
-          title={warningMessage}
-        >
-          <AlertTriangle size={10} className="text-c-text" />
-        </div>
-      )}
-      {hasRiskSignal && (
-        <div
-          className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center z-20 ${
-            riskSeverity === 'CRITICAL'
-              ? 'bg-danger-600'
-              : riskSeverity === 'HIGH'
-                ? 'bg-amber-500'
-                : 'bg-yellow-500'
-          }`}
-          title={`Risk: ${riskSeverity}`}
-        >
-          <Shield size={9} className="text-white" />
-        </div>
-      )}
-      {delaySignal && (
-        <div
-          className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold z-20 whitespace-nowrap ${
-            delaySignal.severity === 'CRITICAL'
-              ? 'bg-danger-600 text-white'
-              : 'bg-amber-500 text-c-text'
-          }`}
-          title={`${delaySignal.deviationType}: ${delaySignal.daysDeviation}d${delaySignal.whySlipReasons.length > 0 ? ' — ' + delaySignal.whySlipReasons.map((r) => r.detail).join(', ') : ''}`}
-        >
-          {delaySignal.deviationType === 'OVERDUE'
-            ? 'SLIP'
-            : delaySignal.deviationType === 'LATE_START'
-              ? 'LATE'
-              : 'RISK'}{' '}
-          {delaySignal.daysDeviation}d
-        </div>
-      )}
-      <div
-        className={`absolute inset-y-0 left-0 ${colors.progress} opacity-30 rounded-l-lg`}
-        style={{ width: `${progress}%` }}
-      />
-      <div className="relative h-full flex items-center gap-2 px-3 overflow-hidden">
-        {onDragEnd && (
-          <GripHorizontal
-            size={12}
-            className="opacity-30 shrink-0 group-hover:opacity-70 transition-opacity"
-          />
+        style={{ left: `${leftPercent}%`, width: `${widthPercent}%`, minWidth: '60px' }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={onDragEnd ? { scale: 0.98 } : undefined}
+        title={barTooltip}
+      >
+        {hasWarning && (
+          <div
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20"
+            title={warningMessage}
+          >
+            <AlertTriangle size={10} className="text-c-text" />
+          </div>
         )}
-        <div className={`w-2 h-2 rounded-full ${colors.progress} shrink-0`} />
-        <span className={`text-sm font-medium truncate ${colors.text}`}>{initiative.name}</span>
-        {initiative.priority === 'Critical' && (
-          <AlertTriangle size={14} className="shrink-0 text-danger-500" />
+        {hasRiskSignal && (
+          <div
+            className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center z-20 ${
+              riskSeverity === 'CRITICAL'
+                ? 'bg-danger-600'
+                : riskSeverity === 'HIGH'
+                  ? 'bg-amber-500'
+                  : 'bg-yellow-500'
+            }`}
+            title={`Risk: ${riskSeverity}`}
+          >
+            <Shield size={9} className="text-white" />
+          </div>
         )}
-        <span className="ml-auto text-xs text-c-text-muted shrink-0">
-          {progress}%
-        </span>
-      </div>
+        {delaySignal && (
+          <div
+            className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold z-20 whitespace-nowrap ${
+              delaySignal.severity === 'CRITICAL'
+                ? 'bg-danger-600 text-white'
+                : 'bg-amber-500 text-c-text'
+            }`}
+            title={`${delaySignal.deviationType}: ${delaySignal.daysDeviation}d${delaySignal.whySlipReasons.length > 0 ? ' — ' + delaySignal.whySlipReasons.map((r) => r.detail).join(', ') : ''}`}
+          >
+            {delaySignal.deviationType === 'OVERDUE'
+              ? 'SLIP'
+              : delaySignal.deviationType === 'LATE_START'
+                ? 'LATE'
+                : 'RISK'}{' '}
+            {delaySignal.daysDeviation}d
+          </div>
+        )}
+        <div
+          className={`absolute inset-y-0 left-0 ${colors.progress} opacity-30 rounded-l-lg`}
+          style={{ width: `${progress}%` }}
+        />
+        <div className="relative h-full flex items-center gap-2 px-3 overflow-hidden">
+          {onDragEnd && (
+            <GripHorizontal
+              size={12}
+              className="opacity-30 shrink-0 group-hover:opacity-70 transition-opacity"
+            />
+          )}
+          <div className={`w-2 h-2 rounded-full ${colors.progress} shrink-0`} />
+          <span className={`text-sm font-medium truncate ${colors.text}`}>{initiative.name}</span>
+          {initiative.priority === 'Critical' && (
+            <AlertTriangle size={14} className="shrink-0 text-danger-500" />
+          )}
+          <span className="ml-auto text-xs text-c-text-muted shrink-0">{progress}%</span>
+        </div>
       </motion.div>
     </>
   );
@@ -1350,9 +1348,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                               <div className="text-xs text-c-text truncate">
                                 {from || d.fromInitiativeId} → {to || d.toInitiativeId}
                               </div>
-                              <div className="text-[10px] text-c-text-muted">
-                                {d.type}
-                              </div>
+                              <div className="text-[10px] text-c-text-muted">{d.type}</div>
                             </div>
                             <button
                               onClick={() => handleDeleteDependency(d.id)}
@@ -1396,9 +1392,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                 key={`week-${idx}`}
                 className="flex-1 px-1 py-2 text-center border-r border-c-border-subtle last:border-r-0"
               >
-                <div className="text-xs font-medium text-c-text-muted">
-                  {week.label}
-                </div>
+                <div className="text-xs font-medium text-c-text-muted">{week.label}</div>
                 <div className="text-[10px] text-c-text-muted">
                   {week.date.toLocaleDateString('en-US', { day: 'numeric' })}
                 </div>
@@ -1502,10 +1496,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               </div>
             ) : (
               initiativeRows.map((row, rowIdx) => (
-                <div
-                  key={rowIdx}
-                  className="relative h-14 border-b border-c-border-subtle"
-                >
+                <div key={rowIdx} className="relative h-14 border-b border-c-border-subtle">
                   {row.map((initiative) => {
                     const initWarnings = warningsByInit.get(initiative.id) || [];
                     const initRisks = riskSignalsByInit.get(initiative.id) || [];
@@ -1525,7 +1516,9 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                         hasRiskSignal={initRisks.length > 0}
                         riskSeverity={initRisks.length > 0 ? initRisks[0].severity : undefined}
                         delaySignal={initDelay}
-                        baselineStartIdx={(initiative as { baselineStartIdx?: number }).baselineStartIdx}
+                        baselineStartIdx={
+                          (initiative as { baselineStartIdx?: number }).baselineStartIdx
+                        }
                         baselineEndIdx={(initiative as { baselineEndIdx?: number }).baselineEndIdx}
                         showBaseline={isExecutionFlagEnabled('ganttBaseline')}
                         onDragEnd={
@@ -1569,24 +1562,18 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
         {riskSignals && riskSignals.length > 0 && (
           <div className="flex items-center gap-1.5">
             <Shield size={12} className="text-danger-500" />
-            <span className="text-c-text-muted">
-              {t('execution.riskSignals.title')}
-            </span>
+            <span className="text-c-text-muted">{t('execution.riskSignals.title')}</span>
           </div>
         )}
         {depWarnings.length > 0 && (
           <div className="flex items-center gap-1.5">
             <AlertTriangle size={12} className="text-amber-500" />
-            <span className="text-c-text-muted">
-              {t('execution.timeline.scheduleWarning')}
-            </span>
+            <span className="text-c-text-muted">{t('execution.timeline.scheduleWarning')}</span>
           </div>
         )}
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-danger-500" />
-          <span className="text-c-text-muted">
-            {t('execution.timeline.today')}
-          </span>
+          <span className="text-c-text-muted">{t('execution.timeline.today')}</span>
         </div>
       </div>
     </div>

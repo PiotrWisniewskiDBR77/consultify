@@ -26,20 +26,20 @@
  * @module services/presentationLayoutVariantsService
  */
 
-import type { SlideIntent, UnifiedReportMeta, UnifiedSlide } from './report/pptx/types.js';
-import {
-  LAYOUT_INTENT_CATALOG,
-  PALETTE_CATALOG,
-  planDeckLayout,
-  type DeckLayoutDirectorResult,
-  type PlanDeckLayoutOptions,
-  type SlideLayoutPlan,
-} from './presentationLayoutDirectorService.js';
+import logger from '../utils/Logger.js';
 import {
   DELIVERABLE_GENERATION_PURPOSE,
   resolveDeliverableTier,
 } from './deliverableGenerationTier.js';
-import logger from '../utils/Logger.js';
+import {
+  type DeckLayoutDirectorResult,
+  LAYOUT_INTENT_CATALOG,
+  PALETTE_CATALOG,
+  planDeckLayout,
+  type PlanDeckLayoutOptions,
+  type SlideLayoutPlan,
+} from './presentationLayoutDirectorService.js';
+import type { SlideIntent, UnifiedReportMeta, UnifiedSlide } from './report/pptx/types.js';
 
 // ──────────────────────────────────────────────────────────────
 // Stałe + helpery walidujące (mirror B1 — bez re-exportu wewnętrznych)
@@ -85,9 +85,7 @@ export interface RemixDeckOptions extends PlanDeckLayoutOptions {
 
 function summarizeSlideForLlm(slide: UnifiedSlide, index: number): string {
   const content = (slide?.content ?? {}) as Record<string, unknown>;
-  const km = slide?.key_message
-    ? ` key_message="${String(slide.key_message).slice(0, 160)}"`
-    : '';
+  const km = slide?.key_message ? ` key_message="${String(slide.key_message).slice(0, 160)}"` : '';
   const currentIntent = isValidLayoutIntent(slide?.intent) ? slide.intent : '(none)';
   const hintKeys = ['title', 'headline', 'section_title', 'problem', 'verdict', 'closing_message'];
   const hints = hintKeys
@@ -388,7 +386,8 @@ async function remixViaLlm(
 
   // Wybierz paletę z PIERWSZEGO ważnego planu z LLM (do enforceSinglePalette).
   const firstRawPalette = rawPlans.find((p) => isValidPalette((p as any)?.paletteId)) as any;
-  const paletteFallback: string = firstRawPalette?.paletteId ?? currentPlans[0]?.paletteId ?? 'harvard';
+  const paletteFallback: string =
+    firstRawPalette?.paletteId ?? currentPlans[0]?.paletteId ?? 'harvard';
 
   const plans = normalizeLlmPlans(rawPlans, slides, paletteFallback);
   return enforceSinglePalette(plans, paletteFallback);

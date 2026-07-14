@@ -95,7 +95,9 @@ function traverse(
     // Cycle: close the branch here rather than recursing again.
     return {
       type: 'step',
-      label: isPl ? `Powrót do: ${nodeLabel(node, lanes, isPl)}` : `Back to: ${nodeLabel(node, lanes, isPl)}`,
+      label: isPl
+        ? `Powrót do: ${nodeLabel(node, lanes, isPl)}`
+        : `Back to: ${nodeLabel(node, lanes, isPl)}`,
       object_id: `cycle-${nodeId}-${Math.random().toString(36).slice(2, 6)}`,
     };
   }
@@ -192,7 +194,15 @@ export function generateReadback(
   const paths: ReadbackStep[] = [];
 
   for (const root of rootsInOrder) {
-    const step = traverse(root.id, nodesById, outgoingByNode, lanes, isPl, new Set(), globalVisited);
+    const step = traverse(
+      root.id,
+      nodesById,
+      outgoingByNode,
+      lanes,
+      isPl,
+      new Set(),
+      globalVisited
+    );
     if (step) paths.push(step);
   }
 
@@ -217,9 +227,7 @@ export function generateReadback(
   }
 
   if (rootsInOrder.length === 0 && flowNodes.length > 0) {
-    warnings.push(
-      isPl ? 'Nie znaleziono węzła startowego' : 'No start node found for traversal'
-    );
+    warnings.push(isPl ? 'Nie znaleziono węzła startowego' : 'No start node found for traversal');
   }
 
   return { paths, warnings };

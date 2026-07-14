@@ -20,6 +20,7 @@ import { type AuthRequest, requireRole, verifyToken } from '../middleware/auth.m
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { assertIdeaMembership, selectCanonicalMapRow } from '../realtime/ideaMapAccess.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
@@ -36,7 +37,6 @@ import {
   validateTaskStatusTransition,
 } from '../services/taskWorkflowService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
-import { assertIdeaMembership, selectCanonicalMapRow } from '../realtime/ideaMapAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -4022,10 +4022,10 @@ router.post(
       body.template === 'minimal' || body.template === 'modern' ? body.template : 'corporate';
 
     try {
-      const { mapMindMapToUnifiedReport } = await import(
-        '../services/mindmap/mindMapToUnifiedReport.js'
-      );
-      const { PptxPipelineService } = await import('../services/report/pptx/PptxPipelineService.js');
+      const { mapMindMapToUnifiedReport } =
+        await import('../services/mindmap/mindMapToUnifiedReport.js');
+      const { PptxPipelineService } =
+        await import('../services/report/pptx/PptxPipelineService.js');
 
       const report = mapMindMapToUnifiedReport(ideaTitle, branches, {
         language,
@@ -4346,9 +4346,9 @@ router.put(
             [ideaId, orgId]
           );
           if (raced) {
-            return res.status(409).json(
-              buildMapConflictPayload(raced, { id: ideaId, title: '', isPl: false })
-            );
+            return res
+              .status(409)
+              .json(buildMapConflictPayload(raced, { id: ideaId, title: '', isPl: false }));
           }
         }
         throw insertErr;
@@ -4673,9 +4673,9 @@ router.post(
             [ideaId, orgId]
           );
           if (raced) {
-            return res.status(409).json(
-              buildMapConflictPayload(raced, { id: ideaId, title: '', isPl: false })
-            );
+            return res
+              .status(409)
+              .json(buildMapConflictPayload(raced, { id: ideaId, title: '', isPl: false }));
           }
         }
         throw insertErr;

@@ -158,7 +158,11 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
             : trustStyle
               ? trustStyle.bg
               : 'color-mix(in srgb, var(--c-info) 15%, transparent)',
-          color: manuallyOverridden ? 'var(--c-warning)' : trustStyle ? trustStyle.color : 'var(--c-info)',
+          color: manuallyOverridden
+            ? 'var(--c-warning)'
+            : trustStyle
+              ? trustStyle.color
+              : 'var(--c-info)',
           cursor: hasChain ? 'pointer' : 'default',
         }}
         title={titleParts.join(' \u2022 ')}
@@ -171,7 +175,10 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
 
         {/* Legacy trust icon for backward compat */}
         {!trustStyle && trusted !== undefined && (
-          <ShieldCheck size={10} style={{ color: trusted ? 'var(--c-success)' : 'var(--c-warning)' }} />
+          <ShieldCheck
+            size={10}
+            style={{ color: trusted ? 'var(--c-success)' : 'var(--c-warning)' }}
+          />
         )}
 
         {manuallyOverridden && <span className="text-[9px]">&#9998;</span>}
@@ -245,9 +252,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
                   )}
                 </div>
                 <div className="flex-1 min-w-0 pb-1">
-                  <p className="text-[10px] font-medium text-c-text truncate">
-                    {step.label}
-                  </p>
+                  <p className="text-[10px] font-medium text-c-text truncate">{step.label}</p>
                   {step.detail && (
                     <p className="text-[9px] text-c-text-secondary truncate">{step.detail}</p>
                   )}

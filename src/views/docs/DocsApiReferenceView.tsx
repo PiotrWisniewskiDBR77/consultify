@@ -15,9 +15,7 @@ export function DocsApiReferenceView() {
           {t('docs.common.docs', 'Docs')}
         </Link>
         <span>/</span>
-        <span className="text-c-text font-medium">
-          {t('docs.api.title', 'API Reference')}
-        </span>
+        <span className="text-c-text font-medium">{t('docs.api.title', 'API Reference')}</span>
       </nav>
 
       <div className="rounded-2xl border border-c-border bg-c-surface p-6 lg:p-8">

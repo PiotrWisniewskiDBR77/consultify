@@ -5,8 +5,11 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import {
+  FINANCIAL_MODEL_DRIVERS,
+  financialModelToAssumptions,
+} from '../assumptionsFinancialModelDrivers.js';
 import { auditCoverage, listAssumptions } from '../assumptionsRegistry.js';
-import { FINANCIAL_MODEL_DRIVERS, financialModelToAssumptions } from '../assumptionsFinancialModelDrivers.js';
 
 describe('financialModelToAssumptions (#82f)', () => {
   it('grounded model: seeded baseline lines → imported, missing lines → ai_assumed', () => {

@@ -716,7 +716,9 @@ export const LLMManagementView: React.FC = () => {
                     </div>
                   )}
                   <div className="overflow-x-auto">
-                    <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left">
+                    <table
+                      /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full text-left"
+                    >
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-white/[0.06]">
                           <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">

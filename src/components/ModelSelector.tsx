@@ -323,7 +323,9 @@ export const ModelSelector: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    {isSelected && <Check size={14} className="text-[var(--c-info)] flex-shrink-0" />}
+                    {isSelected && (
+                      <Check size={14} className="text-[var(--c-info)] flex-shrink-0" />
+                    )}
                   </button>
                 );
               })

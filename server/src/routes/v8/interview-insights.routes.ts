@@ -6,6 +6,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { EmbeddingService } from '../../services/ai/embeddingService.js';
+import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import type { InsightStatus } from '../../services/InterviewInsightService.js';
 import { getById as getInsightById } from '../../services/InterviewInsightService.js';
 import notificationService from '../../services/notificationService.js';
@@ -14,7 +15,6 @@ import {
   rebuildOrganizationContextSnapshot,
 } from '../../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../../services/permissionService.js';
-import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
 import { buildInsightAnalysis } from '../../services/v8/interviewInsightAnalysisService.js';
 import {

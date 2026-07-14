@@ -72,12 +72,8 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-c-text">
-                {provider.name}
-              </h3>
-              <p className="text-sm text-c-text-muted mt-0.5">
-                {provider.description}
-              </p>
+              <h3 className="text-lg font-semibold text-c-text">{provider.name}</h3>
+              <p className="text-sm text-c-text-muted mt-0.5">{provider.description}</p>
 
               {/* Connection status */}
               {isConnected && connection && (

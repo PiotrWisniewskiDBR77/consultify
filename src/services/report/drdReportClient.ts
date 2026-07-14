@@ -38,7 +38,10 @@ export function areaScoresFromAxisData(
 }
 
 /** Open an already-generated HTML document string in a new print-ready window. */
-export function openHtmlForPrint(html: string, { autoPrint = false }: { autoPrint?: boolean } = {}): void {
+export function openHtmlForPrint(
+  html: string,
+  { autoPrint = false }: { autoPrint?: boolean } = {}
+): void {
   const win = window.open('', '_blank');
   if (!win) return;
   win.document.open();

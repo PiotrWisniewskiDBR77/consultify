@@ -11,23 +11,21 @@
 
 export {
   narrowChartContent,
-  narrowTableContent,
-  narrowKpiContent,
-  type NarrowedTableContent,
   type NarrowedKpiContent,
   type NarrowedKpiItem,
+  type NarrowedTableContent,
+  narrowKpiContent,
+  narrowTableContent,
 } from './docBlockContent';
-
+export { DocChartBlock, type DocChartBlockProps } from './DocChartBlock';
 export {
-  HARVARD_CHART_PALETTE,
-  PALETTE_CAP,
-  MAX_SERIES,
-  MAX_PIE_SLICES,
-  PRIMARY_COLOR,
   clampPalette,
   colorAt,
+  HARVARD_CHART_PALETTE,
+  MAX_PIE_SLICES,
+  MAX_SERIES,
+  PALETTE_CAP,
+  PRIMARY_COLOR,
 } from './docChartPalette';
-
-export { DocChartBlock, type DocChartBlockProps } from './DocChartBlock';
-export { DocTableBlock, type DocTableBlockProps } from './DocTableBlock';
 export { DocKpiStrip, type DocKpiStripProps } from './DocKpiStrip';
+export { DocTableBlock, type DocTableBlockProps } from './DocTableBlock';

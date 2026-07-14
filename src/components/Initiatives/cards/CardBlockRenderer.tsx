@@ -96,10 +96,7 @@ function KpiStripView({ block }: { block: Extract<CardBlock, { type: 'kpi_strip'
   const tiles = (block.tiles ?? []).filter((t) => t && t.label && t.value);
   if (tiles.length === 0) return null;
   return (
-    <div
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3"
-      data-block="kpi_strip"
-    >
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" data-block="kpi_strip">
       {tiles.map((tile, i) => (
         <div
           key={i}
@@ -160,10 +157,7 @@ function TableView({ block }: { block: Extract<CardBlock, { type: 'table' }> }) 
         </thead>
         <tbody>
           {rows.map((row, ri) => (
-            <tr
-              key={ri}
-              className="border-b border-slate-100 last:border-0 dark:border-slate-800"
-            >
+            <tr key={ri} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
               {columns.map((_, ci) => (
                 <td key={ci} className="px-2 py-1.5 text-slate-700 dark:text-slate-300">
                   {row?.[ci] ?? ''}
@@ -179,7 +173,8 @@ function TableView({ block }: { block: Extract<CardBlock, { type: 'table' }> }) 
 
 function ChartView({ block }: { block: Extract<CardBlock, { type: 'chart' }> }) {
   const series = (block.series ?? []).filter(
-    (s) => s && typeof s.label === 'string' && typeof s.value === 'number' && Number.isFinite(s.value),
+    (s) =>
+      s && typeof s.label === 'string' && typeof s.value === 'number' && Number.isFinite(s.value)
   );
   if (series.length === 0) return null;
   const max = Math.max(...series.map((s) => Math.abs(s.value)), 1);
@@ -250,7 +245,7 @@ function blockHasContent(block: CardBlock): boolean {
       return (block.columns ?? []).length > 0;
     case 'chart':
       return (block.series ?? []).some(
-        (s) => s && typeof s.value === 'number' && Number.isFinite(s.value),
+        (s) => s && typeof s.value === 'number' && Number.isFinite(s.value)
       );
     default:
       return false;

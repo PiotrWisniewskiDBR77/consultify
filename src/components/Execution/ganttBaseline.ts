@@ -61,7 +61,7 @@ function clampPct(value: number): number {
 export function computeBaselineComparison(
   planned: DateRangeInput,
   actual: DateRangeInput,
-  asOf: number,
+  asOf: number
 ): BaselineComparison {
   const plannedStart = parseDate(planned?.start);
   const plannedEnd = parseDate(planned?.end);
@@ -120,7 +120,7 @@ function placeBar(
   start: number | null,
   end: number | null,
   windowStart: number,
-  windowEnd: number,
+  windowEnd: number
 ): BarPlacement | null {
   if (start === null || end === null) return null;
 
@@ -145,7 +145,7 @@ export function baselineBarGeometry(
   planned: DateRangeInput,
   actual: DateRangeInput,
   windowStart: number,
-  windowEnd: number,
+  windowEnd: number
 ): BaselineBarGeometry {
   return {
     baseline: placeBar(parseDate(planned?.start), parseDate(planned?.end), windowStart, windowEnd),

@@ -24,15 +24,9 @@
  */
 import logger from '../../../utils/Logger.js';
 import * as queryHelpers from '../../../utils/queryHelpers.js';
+import { buildTypedColumnUpdates, toUpdateSql } from '../../initiative/cardColumnHydration.js';
+import { defaultDeps, generateFullInitiative } from '../../initiative/initiativeGeneratorBrain.js';
 import { createInitiative as createInitiativeRecord } from '../../initiativeGenerationService.js';
-import {
-  generateFullInitiative,
-  defaultDeps,
-} from '../../initiative/initiativeGeneratorBrain.js';
-import {
-  buildTypedColumnUpdates,
-  toUpdateSql,
-} from '../../initiative/cardColumnHydration.js';
 
 type ToolContext = {
   userId?: string;
@@ -61,7 +55,7 @@ async function stampLineage(
   initiativeId: string,
   organizationId: string,
   sourceType: string,
-  sourceId: string,
+  sourceId: string
 ): Promise<void> {
   try {
     const cols = await queryHelpers.getTableColumns('initiatives').catch(() => null);
@@ -83,7 +77,7 @@ async function stampLineage(
 
     await queryHelpers.queryRun(
       `UPDATE initiatives SET ${upCols.join(', ')} WHERE id = ? AND organization_id = ?`,
-      [...upVals, initiativeId, organizationId],
+      [...upVals, initiativeId, organizationId]
     );
   } catch (e: any) {
     logger.warn('[teresa] generate_initiative lineage stamp failed (ignored):', e?.message || e);
@@ -100,7 +94,7 @@ async function stampLineage(
 export async function persistCards(
   initiativeId: string,
   organizationId: string,
-  cards: Record<string, string>,
+  cards: Record<string, string>
 ): Promise<void> {
   if (!cards || Object.keys(cards).length === 0) return;
   try {
@@ -113,7 +107,7 @@ export async function persistCards(
     if (!colSet.has('ai_generated_sections')) {
       try {
         await queryHelpers.queryRun(
-          `ALTER TABLE initiatives ADD COLUMN ai_generated_sections TEXT`,
+          `ALTER TABLE initiatives ADD COLUMN ai_generated_sections TEXT`
         );
       } catch (err: any) {
         const m = String(err?.message || err).toLowerCase();
@@ -123,7 +117,7 @@ export async function persistCards(
 
     await queryHelpers.queryRun(
       `UPDATE initiatives SET ai_generated_sections = ? WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(cards), initiativeId, organizationId],
+      [JSON.stringify(cards), initiativeId, organizationId]
     );
 
     // R3 — HYDRATE TYPED COLUMNS (non-destructive): so generated cards land in the
@@ -144,7 +138,7 @@ export async function hydrateTypedColumns(
   initiativeId: string,
   organizationId: string,
   cards: Record<string, string>,
-  colSet: Set<string>,
+  colSet: Set<string>
 ): Promise<void> {
   try {
     // Candidate target columns we know how to hydrate.
@@ -170,7 +164,7 @@ export async function hydrateTypedColumns(
     try {
       const row = await queryHelpers.queryOne<Record<string, unknown>>(
         `SELECT ${TARGETS.join(', ')} FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, organizationId],
+        [initiativeId, organizationId]
       );
       if (row) existingRow = row;
     } catch {
@@ -190,13 +184,13 @@ export async function hydrateTypedColumns(
         // Happy path: one bulk UPDATE for all columns.
         await queryHelpers.queryRun(
           `UPDATE initiatives SET ${setClause} WHERE id = ? AND organization_id = ?`,
-          [...params, initiativeId, organizationId],
+          [...params, initiativeId, organizationId]
         );
         actuallyHydrated.push(...updates.map((u) => u.column));
         logger.info(
           `[teresa] hydrated ${updates.length} typed column(s) for initiative ${initiativeId}: ${updates
             .map((u) => u.column)
-            .join(', ')}`,
+            .join(', ')}`
         );
       } catch (bulkErr: any) {
         // DEFENSE IN DEPTH: the bulk UPDATE failed — most likely one column's
@@ -208,14 +202,14 @@ export async function hydrateTypedColumns(
         // one is skipped.
         logger.error(
           `[teresa] bulk typed-column UPDATE failed for initiative ${initiativeId}, falling back to ` +
-            `per-column writes. Root cause: ${bulkErr?.message || bulkErr}`,
+            `per-column writes. Root cause: ${bulkErr?.message || bulkErr}`
         );
         const skipped: string[] = [];
         for (const u of updates) {
           try {
             await queryHelpers.queryRun(
               `UPDATE initiatives SET ${u.column} = ? WHERE id = ? AND organization_id = ?`,
-              [u.value, initiativeId, organizationId],
+              [u.value, initiativeId, organizationId]
             );
             actuallyHydrated.push(u.column);
           } catch (colErr: any) {
@@ -223,7 +217,7 @@ export async function hydrateTypedColumns(
             logger.warn(
               `[teresa] per-column hydration skipped '${u.column}' for initiative ${initiativeId}: ${
                 colErr?.message || colErr
-              }`,
+              }`
             );
           }
         }
@@ -232,7 +226,7 @@ export async function hydrateTypedColumns(
             `[teresa] per-column fallback hydrated ${actuallyHydrated.length}/${updates.length} column(s) for ` +
               `initiative ${initiativeId}: ${actuallyHydrated.join(', ')}${
                 skipped.length ? `; skipped: ${skipped.join(', ')}` : ''
-              }`,
+              }`
           );
         }
       }
@@ -246,15 +240,15 @@ export async function hydrateTypedColumns(
       if (!isColEmpty(existingRow[col])) filledNow.add(col);
     }
     const KEY_COLS = ['problem_statement', 'target_state', 'scope_in', 'success_criteria'].filter(
-      (c) => (colSet as Set<string>).has(c),
+      (c) => (colSet as Set<string>).has(c)
     );
     const stillEmpty = KEY_COLS.filter((c) => !filledNow.has(c));
     if (Object.keys(cards).length > 0 && stillEmpty.length > 0) {
       logger.error(
         `[teresa] COMPLETENESS GATE: initiative ${initiativeId} still has EMPTY key typed columns ` +
-          `after full-fill hydration: ${stillEmpty.join(', ')}. Cards present: ${Object.keys(cards).join(
-            ', ',
-          )}. The object/UI/judge read typed columns → they will see an empty skeleton.`,
+          `after full-fill hydration: ${stillEmpty.join(', ')}. Cards present: ${Object.keys(
+            cards
+          ).join(', ')}. The object/UI/judge read typed columns → they will see an empty skeleton.`
       );
     }
   } catch (e: any) {
@@ -271,7 +265,7 @@ function isColEmpty(v: unknown): boolean {
 
 export async function generateInitiative(
   params: { title?: string; problem?: string },
-  context: ToolContext = {},
+  context: ToolContext = {}
 ): Promise<Record<string, unknown>> {
   const orgId = context.organizationId;
   if (!orgId) {
@@ -349,18 +343,18 @@ export async function generateInitiative(
           // it is never invisible again. The brain already logged per-card errors.
           logger.error(
             `[teresa] generate_initiative background full-fill produced ZERO cards for ${id} ` +
-              `— all core sections came back empty (see [GeneratorBrain] errors above).`,
+              `— all core sections came back empty (see [GeneratorBrain] errors above).`
           );
         } else {
           logger.info(
-            `[teresa] generate_initiative background full-fill done for ${id} (${n} cards)`,
+            `[teresa] generate_initiative background full-fill done for ${id} (${n} cards)`
           );
         }
       } catch (fillErr: any) {
         // LOUD: a thrown full-fill is a real defect, not routine noise → ERROR.
         logger.error(
           '[teresa] generate_initiative background full-fill FAILED:',
-          fillErr?.message || fillErr,
+          fillErr?.message || fillErr
         );
       }
     })();

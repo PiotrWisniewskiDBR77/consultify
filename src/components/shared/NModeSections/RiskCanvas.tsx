@@ -81,7 +81,8 @@ export const getRiskScore = (risk: RiskItem): number =>
   riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
 
 const getRiskScoreClass = (score: number): string => {
-  if (score >= 12) return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
+  if (score >= 12)
+    return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
   if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
   if (score >= 4)
     return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -90,7 +91,8 @@ const getRiskScoreClass = (score: number): string => {
 
 const getRiskLevelClass = (level?: string): string => {
   const n = String(level || '').toLowerCase();
-  if (n === 'critical') return 'border-danger-500/60 bg-danger-500/10 text-danger-700 dark:text-danger-300';
+  if (n === 'critical')
+    return 'border-danger-500/60 bg-danger-500/10 text-danger-700 dark:text-danger-300';
   if (n === 'high') return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (n === 'medium')
     return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';

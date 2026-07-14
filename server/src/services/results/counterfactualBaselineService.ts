@@ -118,15 +118,13 @@ export function attributableDelta(input: AttributableDeltaInput): AttributableDe
   }
 
   const attributable = observedValue - counterfactual;
-  const attributablePct =
-    counterfactual === 0 ? null : attributable / Math.abs(counterfactual);
+  const attributablePct = counterfactual === 0 ? null : attributable / Math.abs(counterfactual);
 
   return {
     counterfactual,
     attributable,
-    attributablePct: attributablePct != null && Number.isFinite(attributablePct)
-      ? attributablePct
-      : null,
+    attributablePct:
+      attributablePct != null && Number.isFinite(attributablePct) ? attributablePct : null,
   };
 }
 

@@ -292,9 +292,7 @@ export function WorkflowDashboard({
       {/* Header */}
       <div className="flex items-center gap-2 mb-5">
         <Bell size={16} className="text-indigo-500" />
-        <h2 className="text-sm font-semibold text-c-text">
-          {isPl ? 'Workflow' : 'Workflow'}
-        </h2>
+        <h2 className="text-sm font-semibold text-c-text">{isPl ? 'Workflow' : 'Workflow'}</h2>
         {loading && <Loader2 size={12} className="animate-spin text-c-text-secondary" />}
       </div>
 
@@ -323,9 +321,7 @@ export function WorkflowDashboard({
                   <h3 className="text-xs font-semibold text-c-text">
                     {isPl ? card.titlePl : card.titleEn}
                   </h3>
-                  <p className="text-[10px] text-c-text-secondary mt-0.5">
-                    {card.stat}
-                  </p>
+                  <p className="text-[10px] text-c-text-secondary mt-0.5">{card.stat}</p>
                 </div>
                 <ArrowRight
                   size={14}

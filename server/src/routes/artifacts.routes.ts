@@ -7,6 +7,10 @@ import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
 import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
 import activityService from '../services/ActivityService.js';
 import * as organizationService from '../services/organizationService.js';
+import {
+  computeDeckListScorecard,
+  type DeckListScorecard,
+} from '../services/presentationDeckScorecard.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as executionSpineService from '../services/v8/executionSpineService.js';
 import * as publishReviewService from '../services/v8/publishReviewService.js';
@@ -29,10 +33,6 @@ import {
   WAVE5_ARTIFACT_LIFECYCLE,
   WAVE5_ARTIFACT_TYPES,
 } from '../services/wave5ArtifactRuntimeService.js';
-import {
-  computeDeckListScorecard,
-  type DeckListScorecard,
-} from '../services/presentationDeckScorecard.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -520,10 +520,22 @@ router.post(
     // Map chat kind → registry taxonomy (mirrors DocumentStudio/Presentations conventions).
     const mapping =
       rawKind === 'deck'
-        ? { outputType: 'presentation' as const, artifactFamily: 'presentation' as const, originRuntime: 'presentation' as const }
+        ? {
+            outputType: 'presentation' as const,
+            artifactFamily: 'presentation' as const,
+            originRuntime: 'presentation' as const,
+          }
         : rawKind === 'sheet'
-          ? { outputType: 'sheet' as const, artifactFamily: 'sheet' as const, originRuntime: 'sheet' as const }
-          : { outputType: 'report' as const, artifactFamily: 'document' as const, originRuntime: 'native_artifact' as const };
+          ? {
+              outputType: 'sheet' as const,
+              artifactFamily: 'sheet' as const,
+              originRuntime: 'sheet' as const,
+            }
+          : {
+              outputType: 'report' as const,
+              artifactFamily: 'document' as const,
+              originRuntime: 'native_artifact' as const,
+            };
 
     const artifact = await artifactRegistryService.registerArtifactOrigin({
       organizationId,

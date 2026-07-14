@@ -127,7 +127,11 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
           <input
             value={capability.domain}
             onChange={(event) => updateCapability({ domain: event.target.value })}
-            placeholder={isPolish ? 'Domena (np. technologia, talenty)...' : 'Domain (e.g. technology, talent)...'}
+            placeholder={
+              isPolish
+                ? 'Domena (np. technologia, talenty)...'
+                : 'Domain (e.g. technology, talent)...'
+            }
             className="w-full border-0 bg-transparent p-0 text-xs text-slate-500 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-400"
           />
         </div>
@@ -298,7 +302,9 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
         value={capability.implication || ''}
         onChange={(event) => updateCapability({ implication: event.target.value })}
         rows={2}
-        placeholder={isPolish ? 'Implikacja luki kompetencyjnej...' : 'Implication of the capability gap...'}
+        placeholder={
+          isPolish ? 'Implikacja luki kompetencyjnej...' : 'Implication of the capability gap...'
+        }
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
       />
 
