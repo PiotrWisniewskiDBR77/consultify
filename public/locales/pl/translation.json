@@ -3806,6 +3806,54 @@
       "selectAll": "Zaznacz wszystko",
       "clearSelection": "Wyczyść zaznaczenie",
       "showHideHelp": "Pokaż / ukryj pomoc klawiaturową"
+    },
+    "taskInbox": {
+      "loadFailed": "Nie udało się wczytać zadań",
+      "confirmDelete": "Czy na pewno chcesz usunąć to zadanie?",
+      "delete": "Usuń",
+      "unpin": "Odepnij",
+      "pinToTop": "Przypnij na górze",
+      "newTask": "Nowe zadanie",
+      "showing": "Pokazuję:",
+      "quickFilters": "Szybkie filtry",
+      "view": "Widok:",
+      "syncing": "Synchronizacja zadań...",
+      "noTasksFound": "Nie znaleziono zadań",
+      "noDueDate": "Brak terminu",
+      "noDescription": "Brak opisu",
+      "priorityNormal": "Normalny",
+      "unassigned": "Nieprzypisane",
+      "filter": {
+        "allTasks": "Wszystkie zadania",
+        "overdue": "Po terminie",
+        "urgent": "Pilne",
+        "dueToday": "Termin dziś"
+      },
+      "section": {
+        "pinned": "Przypięte"
+      },
+      "columns": {
+        "task": "Zadanie",
+        "status": "Status",
+        "priority": "Priorytet",
+        "assignee": "Osoba przypisana",
+        "due": "Termin"
+      },
+      "header": {
+        "title": "Moje zadania",
+        "subtitle": "Zarządzaj swoim planem działań"
+      },
+      "viewMode": {
+        "pmoPriority": "Priorytet PMO",
+        "list": "Lista",
+        "listView": "Widok listy"
+      },
+      "toast": {
+        "taskUpdated": "Zadanie zaktualizowane",
+        "updateFailed": "Nie udało się zaktualizować zadania",
+        "taskDeleted": "Zadanie usunięte",
+        "deleteFailed": "Nie udało się usunąć zadania"
+      }
     }
   },
   "step1": {

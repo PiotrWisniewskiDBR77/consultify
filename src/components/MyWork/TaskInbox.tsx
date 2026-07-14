@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { Virtuoso } from 'react-virtuoso';
 
 import { Api } from '../../services/api';
@@ -49,6 +50,7 @@ interface TaskInboxProps {
 type QuickFilter = 'all' | 'overdue' | 'urgent' | 'today';
 
 export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }) => {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -79,10 +81,10 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
 
   // Quick filter labels
   const quickFilterLabels: Record<QuickFilter, string> = {
-    all: 'All Tasks',
-    overdue: 'Overdue',
-    urgent: 'Urgent',
-    today: 'Due Today',
+    all: t('myWork.taskInbox.filter.allTasks', 'All Tasks'),
+    overdue: t('myWork.taskInbox.filter.overdue', 'Overdue'),
+    urgent: t('myWork.taskInbox.filter.urgent', 'Urgent'),
+    today: t('myWork.taskInbox.filter.dueToday', 'Due Today'),
   };
 
   // Toggle pin for a task
@@ -110,7 +112,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks', error);
-      setLoadError('Failed to load tasks');
+      setLoadError(t('myWork.taskInbox.loadFailed', 'Failed to load tasks'));
     } finally {
       setLoading(false);
     }
@@ -127,23 +129,24 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
       setTasks((prev) =>
         prev.map((t) => (t.id === task.id ? { ...t, status: newStatus as any } : t))
       );
-      toast.success('Task updated');
+      toast.success(t('myWork.taskInbox.toast.taskUpdated', 'Task updated'));
     } catch (error) {
       console.error('Failed to update task', error);
-      toast.error('Failed to update task');
+      toast.error(t('myWork.taskInbox.toast.updateFailed', 'Failed to update task'));
     }
   };
 
   const handleDelete = async (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (!confirm('Are you sure you want to delete this task?')) return;
+    if (!confirm(t('myWork.taskInbox.confirmDelete', 'Are you sure you want to delete this task?')))
+      return;
     try {
       await Api.deleteTask(id);
       setTasks((prev) => prev.filter((t) => t.id !== id));
-      toast.success('Task deleted');
+      toast.success(t('myWork.taskInbox.toast.taskDeleted', 'Task deleted'));
     } catch (error) {
       console.error('Failed to delete task', error);
-      toast.error('Failed to delete task');
+      toast.error(t('myWork.taskInbox.toast.deleteFailed', 'Failed to delete task'));
     }
   };
 
@@ -373,36 +376,36 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     if (pinnedItems.length > 0)
       sections.push({
         id: 'pinned',
-        label: 'Pinned',
+        label: t('myWork.taskInbox.section.pinned', 'Pinned'),
         items: pinnedItems,
         accentColor: 'text-amber-500',
       });
     if (overdueItems.length > 0)
       sections.push({
         id: 'overdue',
-        label: 'Overdue',
+        label: t('myWork.taskInbox.filter.overdue', 'Overdue'),
         items: overdueItems,
         accentColor: 'text-rose-500',
       });
     if (restItems.length > 0)
       sections.push({
         id: 'tasks',
-        label: 'All Tasks',
+        label: t('myWork.taskInbox.filter.allTasks', 'All Tasks'),
         items: restItems,
         accentColor: 'text-blue-500',
       });
     return sections;
-  }, [filteredTasks, pinnedTaskIds, taskToGenericItem]);
+  }, [filteredTasks, pinnedTaskIds, taskToGenericItem, t]);
 
   const TASK_INBOX_COLUMNS: ListColumn[] = useMemo(
     () => [
-      { key: 'title', label: 'Task', width: 'flex-1 min-w-0' },
-      { key: 'status', label: 'Status', width: 'w-28' },
-      { key: 'priority', label: 'Priority', width: 'w-24' },
-      { key: 'assignee', label: 'Assignee', width: 'w-32' },
-      { key: 'dueDate', label: 'Due', width: 'w-24' },
+      { key: 'title', label: t('myWork.taskInbox.columns.task', 'Task'), width: 'flex-1 min-w-0' },
+      { key: 'status', label: t('myWork.taskInbox.columns.status', 'Status'), width: 'w-28' },
+      { key: 'priority', label: t('myWork.taskInbox.columns.priority', 'Priority'), width: 'w-24' },
+      { key: 'assignee', label: t('myWork.taskInbox.columns.assignee', 'Assignee'), width: 'w-32' },
+      { key: 'dueDate', label: t('myWork.taskInbox.columns.due', 'Due'), width: 'w-24' },
     ],
-    []
+    [t]
   );
 
   const handleGenericItemClick = useCallback(
@@ -483,13 +486,15 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 {task.dueDate ? (
                   new Date(task.dueDate).toLocaleDateString()
                 ) : (
-                  <span className="italic">No due date</span>
+                  <span className="italic">{t('myWork.taskInbox.noDueDate', 'No due date')}</span>
                 )}
               </div>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-2 line-clamp-1">
-              {task.why || task.description || 'No description'}
+              {task.why ||
+                task.description ||
+                t('myWork.taskInbox.noDescription', 'No description')}
             </p>
 
             {/* Metadata Row */}
@@ -499,7 +504,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 className={`text-[10px] px-2 py-0.5 rounded font-medium flex items-center gap-1 ${getPriorityColor(task.priority)}`}
               >
                 <AlertTriangle size={8} />
-                <span className="capitalize">{task.priority || 'Normal'}</span>
+                <span className="capitalize">
+                  {task.priority || t('myWork.taskInbox.priorityNormal', 'Normal')}
+                </span>
               </span>
               {/* Assignee */}
               <div
@@ -512,8 +519,10 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 <User size={10} />
                 <span className="truncate max-w-[80px]">
                   {task.assignee
-                    ? task.assignee.lastName || task.assignee.firstName || 'Unassigned'
-                    : 'Unassigned'}
+                    ? task.assignee.lastName ||
+                      task.assignee.firstName ||
+                      t('myWork.taskInbox.unassigned', 'Unassigned')
+                    : t('myWork.taskInbox.unassigned', 'Unassigned')}
                 </span>
               </div>
             </div>
@@ -531,14 +540,16 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     actions: [
                       {
                         id: 'pin',
-                        label: pinnedTaskIds.has(task.id) ? 'Unpin' : 'Pin to top',
+                        label: pinnedTaskIds.has(task.id)
+                          ? t('myWork.taskInbox.unpin', 'Unpin')
+                          : t('myWork.taskInbox.pinToTop', 'Pin to top'),
                         icon: Pin,
                         onClick: () => togglePinTask(task.id),
                         variant: pinnedTaskIds.has(task.id) ? 'primary' : 'default',
                       },
                       {
                         id: 'delete',
-                        label: 'Delete',
+                        label: t('myWork.taskInbox.delete', 'Delete'),
                         icon: Trash2,
                         onClick: () => {
                           if (confirm('Are you sure you want to delete this task?')) {
@@ -570,8 +581,12 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             <CheckCircle2 size={20} />
           </div>
           <div>
-            <h3 className="font-bold text-navy-900 dark:text-white">My Tasks</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Manage your action plan</p>
+            <h3 className="font-bold text-navy-900 dark:text-white">
+              {t('myWork.taskInbox.header.title', 'My Tasks')}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('myWork.taskInbox.header.subtitle', 'Manage your action plan')}
+            </p>
           </div>
         </div>
         <button
@@ -579,14 +594,16 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           className="text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
         >
           <Plus size={14} />
-          New Task
+          {t('myWork.taskInbox.newTask', 'New Task')}
         </button>
       </div>
 
       {/* Filter Row (h-12 = 48px) */}
       <div className="h-12 p-4 flex items-center justify-between border-b border-slate-200 dark:border-navy-700 shrink-0">
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-600 dark:text-slate-500 text-xs">Showing:</span>
+          <span className="text-slate-600 dark:text-slate-500 text-xs">
+            {t('myWork.taskInbox.showing', 'Showing:')}
+          </span>
 
           {/* Quick Filter Dropdown */}
           <div className="relative">
@@ -607,25 +624,29 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
                 <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-3 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700">
-                    Quick Filters
+                    {t('myWork.taskInbox.quickFilters', 'Quick Filters')}
                   </div>
                   {[
-                    { id: 'all' as QuickFilter, label: 'All Tasks', icon: '📋' },
+                    {
+                      id: 'all' as QuickFilter,
+                      label: t('myWork.taskInbox.filter.allTasks', 'All Tasks'),
+                      icon: '📋',
+                    },
                     {
                       id: 'overdue' as QuickFilter,
-                      label: 'Overdue',
+                      label: t('myWork.taskInbox.filter.overdue', 'Overdue'),
                       icon: '🔴',
                       color: 'text-rose-600',
                     },
                     {
                       id: 'urgent' as QuickFilter,
-                      label: 'Urgent',
+                      label: t('myWork.taskInbox.filter.urgent', 'Urgent'),
                       icon: '⚡',
                       color: 'text-amber-600',
                     },
                     {
                       id: 'today' as QuickFilter,
-                      label: 'Due Today',
+                      label: t('myWork.taskInbox.filter.dueToday', 'Due Today'),
                       icon: '📅',
                       color: 'text-blue-600',
                     },
@@ -656,14 +677,18 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         {/* View Toggle */}
         <div className="flex items-center gap-2">
           <CardViewSwitcher moduleId="tasks" value={cardStyle} onChange={setCardStyle} compact />
-          <span className="text-slate-600 dark:text-slate-500 text-xs hidden sm:inline">View:</span>
+          <span className="text-slate-600 dark:text-slate-500 text-xs hidden sm:inline">
+            {t('myWork.taskInbox.view', 'View:')}
+          </span>
           <div className="relative">
             <button
               onClick={() => toggleFilter('view')}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white font-medium text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
             >
               <Layers size={12} className="text-primary-500" />
-              {viewMode === 'pmo' ? 'PMO Priority' : 'List'}
+              {viewMode === 'pmo'
+                ? t('myWork.taskInbox.viewMode.pmoPriority', 'PMO Priority')
+                : t('myWork.taskInbox.viewMode.list', 'List')}
               <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
             </button>
 
@@ -679,7 +704,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'pmo' ? 'font-semibold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-200'}`}
                   >
                     <Layers size={12} />
-                    PMO Priority
+                    {t('myWork.taskInbox.viewMode.pmoPriority', 'PMO Priority')}
                   </button>
                   <button
                     onClick={() => {
@@ -689,7 +714,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'list' ? 'font-semibold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}
                   >
                     <CheckCircle2 size={12} />
-                    List View
+                    {t('myWork.taskInbox.viewMode.listView', 'List View')}
                   </button>
                 </div>
               </>
@@ -703,7 +728,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         {loading && (
           <div className="text-center p-8">
             <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-xs text-slate-600 dark:text-slate-500">Syncing tasks...</p>
+            <p className="text-xs text-slate-600 dark:text-slate-500">
+              {t('myWork.taskInbox.syncing', 'Syncing tasks...')}
+            </p>
           </div>
         )}
 
@@ -714,7 +741,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         {!loading && !loadError && filteredTasks.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-600 dark:text-slate-500 opacity-50">
             <CheckCircle2 size={32} className="mb-3" />
-            <p className="text-sm">No tasks found</p>
+            <p className="text-sm">{t('myWork.taskInbox.noTasksFound', 'No tasks found')}</p>
             <button onClick={onCreateTask} className="mt-2 text-xs text-blue-500 hover:underline">
               Create one?
             </button>
