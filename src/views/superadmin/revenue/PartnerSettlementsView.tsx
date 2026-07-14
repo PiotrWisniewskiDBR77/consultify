@@ -6,9 +6,16 @@
  * - Approve pending commissions
  * - Process and complete payouts
  * - Attribution manager (manual org-partner linking)
- * - Settlement analytics
+ * - Expiring attributions & discounts
+ * - Referral code analytics
  *
- * Part of SuperAdmin Revenue Module
+ * Part of SuperAdmin Revenue Module.
+ *
+ * Kanon TRIADA: 4 z 5 zakładek renderują listy encji (Commissions/Attribution/
+ * Expiring/Analytics) → StandardModuleBar (Menu 2 tabs + search/CTA/bulk) +
+ * StandardTable + StandardPreview per zakładka. Zakładka Payouts to karty
+ * procesu (proces zatwierdzania), nie lista encji — poza zakresem kanonu list,
+ * bez zmian.
  */
 
 import {
@@ -17,27 +24,31 @@ import {
   Banknote,
   BarChart3,
   Building2,
-  Calendar,
   Check,
   CheckCircle,
   Clock,
   DollarSign,
-  Download,
-  Eye,
-  Filter,
   Link2,
   Plus,
   RefreshCw,
-  Search,
   TrendingUp,
   Unlink,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { EmptyState, LoadingState } from '@/components/shared/states';
+import { LoadingState } from '@/components/shared/states';
+import {
+  StandardModuleBar,
+  StandardPreview,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
 
@@ -130,6 +141,38 @@ interface CodeAnalytics {
 
 type TabType = 'commissions' | 'payouts' | 'attribution' | 'expiring' | 'analytics';
 
+// Neutral identity chip (canon §4.0a) — dot + text, never a crimson/colored fill.
+const NEUTRAL_CHIP =
+  'inline-flex items-center gap-1.5 rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-xs font-medium text-c-text-secondary';
+
+const ATTRIBUTION_STATUS_OPTIONS = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'EXPIRED', label: 'Expired' },
+];
+
+const formatDate = (value?: string): string => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+};
+
+// ── FIX (odkryte podczas migracji, blokowało render — realny bug produkcyjny) ──
+// `Api.get()` (services/api.ts `toAxiosLikeResponse`) proxuje surowy JSON tak,
+// że `response.data` alias-uje CAŁY body (kompatybilność "axios style:
+// response.data.success"), NIE zagnieżdżone pole `data`. Backend tego
+// modułu (server/src/routes/partners.routes.ts) odpowiada `{success, data}`,
+// więc realna wartość to `response.data.data` — poprzedni kod robił
+// `setX(res.data)` i zapisywał CAŁY obiekt `{success,data}` zamiast tablicy,
+// co wywalało `.map is not a function` na każdej z 5 zakładek. Odkryte
+// wizualnie przy weryfikacji tej migracji (zero danych = strona zawsze pusta/
+// crashowała w produkcji, niezależnie od kanonu tabel).
+const unwrapApiData = <T,>(res: any): T | undefined => {
+  const body = res?.data ?? res;
+  return (body?.data ?? body) as T | undefined;
+};
+
 export const PartnerSettlementsView: React.FC = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('commissions');
@@ -143,117 +186,114 @@ export const PartnerSettlementsView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedCommissions, setSelectedCommissions] = useState<Set<string>>(new Set());
   const [processing, setProcessing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [commissionSearch, setCommissionSearch] = useState('');
+  const [attributionSearch, setAttributionSearch] = useState('');
   const [expiringDays, setExpiringDays] = useState(30);
 
-  // Fetch data from API
+  // Per-tabela lejki kolumn (StandardTable/FilterableTable) — niezależne per zakładka.
+  const [commissionFilters, setCommissionFilters] = useState<
+    { id: string; column: string; value: string; label: string }[]
+  >([]);
+  const [attributionFilters, setAttributionFilters] = useState<
+    { id: string; column: string; value: string; label: string }[]
+  >([]);
+
+  // Preview panel — jeden aktywny podglad na zakladke (rozne encje per tab).
+  const [previewCommissionId, setPreviewCommissionId] = useState<string | null>(null);
+  const [previewAttributionId, setPreviewAttributionId] = useState<string | null>(null);
+  const [previewExpiringId, setPreviewExpiringId] = useState<string | null>(null);
+  const [previewAnalyticsCode, setPreviewAnalyticsCode] = useState<string | null>(null);
+
+  // Fetch data from API. Kazdy fetch niezalezny (Promise.allSettled) — jeden
+  // endpoint 503/nieudany (np. attributions bywa "feature unavailable" na
+  // backendzie) NIE moze ubijac pozostalych 5 zakladek (poprzednio jeden
+  // sekwencyjny try/catch przerywal caly lancuch na pierwszym bledzie).
   const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      // Fetch summary
-      const summaryRes = await Api.get('/api/superadmin/partner-settlements/summary');
-      if (summaryRes?.success && summaryRes?.data) {
-        setSummary(summaryRes.data);
-      }
+    const [summaryR, commissionsR, payoutsR, attributionsR, expiringR, analyticsR] =
+      await Promise.allSettled([
+        Api.get('/api/superadmin/partner-settlements/summary'),
+        Api.get('/api/superadmin/partner-settlements/pending-commissions'),
+        Api.get('/api/superadmin/partner-settlements/pending-payouts'),
+        Api.get('/api/superadmin/partner-settlements/attributions'),
+        Api.get(`/api/superadmin/partner-settlements/expiring-attributions?days=${expiringDays}`),
+        Api.get('/api/superadmin/partner-settlements/code-analytics?days=90'),
+      ]);
 
-      // Fetch pending commissions
-      const commissionsRes = await Api.get(
-        '/api/superadmin/partner-settlements/pending-commissions'
-      );
-      if (commissionsRes?.success && commissionsRes?.data) {
-        setCommissions(commissionsRes.data);
-      }
-
-      // Fetch pending payouts
-      const payoutsRes = await Api.get('/api/superadmin/partner-settlements/pending-payouts');
-      if (payoutsRes?.success && payoutsRes?.data) {
-        setPayouts(payoutsRes.data);
-      }
-
-      // Fetch attributions
-      const attributionsRes = await Api.get('/api/superadmin/partner-settlements/attributions');
-      if (attributionsRes?.success && attributionsRes?.data) {
-        setAttributions(attributionsRes.data);
-      }
-
-      // GAP-PARTNER-004: Fetch expiring attributions
-      const expiringRes = await Api.get(
-        `/api/superadmin/partner-settlements/expiring-attributions?days=${expiringDays}`
-      );
-      if (expiringRes?.success && expiringRes?.data) {
-        setExpiringAttributions(expiringRes.data);
-      }
-
-      // GAP-PARTNER-003: Fetch code analytics
-      const analyticsRes = await Api.get(
-        '/api/superadmin/partner-settlements/code-analytics?days=90'
-      );
-      if (analyticsRes?.success && analyticsRes?.data) {
-        setCodeAnalytics(analyticsRes.data);
-      }
-    } catch (err: any) {
-      console.error('Error fetching settlements:', err);
-      setError(err?.message || 'Failed to load data');
-    } finally {
-      setLoading(false);
+    if (summaryR.status === 'fulfilled' && summaryR.value?.success) {
+      setSummary(unwrapApiData<SettlementsSummary>(summaryR.value) ?? null);
     }
+    if (commissionsR.status === 'fulfilled' && commissionsR.value?.success) {
+      setCommissions(unwrapApiData<PendingCommission[]>(commissionsR.value) ?? []);
+    }
+    if (payoutsR.status === 'fulfilled' && payoutsR.value?.success) {
+      setPayouts(unwrapApiData<PendingPayout[]>(payoutsR.value) ?? []);
+    }
+    if (attributionsR.status === 'fulfilled' && attributionsR.value?.success) {
+      setAttributions(unwrapApiData<Attribution[]>(attributionsR.value) ?? []);
+    }
+    if (expiringR.status === 'fulfilled' && expiringR.value?.success) {
+      setExpiringAttributions(unwrapApiData<ExpiringAttribution[]>(expiringR.value) ?? []);
+    }
+    if (analyticsR.status === 'fulfilled' && analyticsR.value?.success) {
+      setCodeAnalytics(unwrapApiData<CodeAnalytics[]>(analyticsR.value) ?? []);
+    }
+
+    const firstRejected = [
+      summaryR,
+      commissionsR,
+      payoutsR,
+      attributionsR,
+      expiringR,
+      analyticsR,
+    ].find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
+    if (firstRejected) {
+      console.error('Error fetching settlements:', firstRejected.reason);
+      setError(firstRejected.reason?.message || 'Failed to load data');
+    }
+
+    setLoading(false);
   }, [expiringDays]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Toggle commission selection
-  const toggleCommissionSelection = (id: string) => {
-    setSelectedCommissions((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+  // Approve selected commissions (bulk or single-row reuse)
+  const handleApproveCommissions = useCallback(
+    async (ids?: string[]) => {
+      const targetIds = ids ?? Array.from(selectedCommissions);
+      if (targetIds.length === 0) {
+        toast.error('No commissions selected');
+        return;
       }
-      return next;
-    });
-  };
 
-  // Select all commissions
-  const selectAllCommissions = () => {
-    if (selectedCommissions.size === commissions.length) {
-      setSelectedCommissions(new Set());
-    } else {
-      setSelectedCommissions(new Set(commissions.map((c) => c.id)));
-    }
-  };
+      try {
+        setProcessing(true);
+        const response = await Api.post('/api/superadmin/partner-settlements/approve-commissions', {
+          commissionIds: targetIds,
+        });
 
-  // Approve selected commissions
-  const handleApproveCommissions = async () => {
-    if (selectedCommissions.size === 0) {
-      toast.error('No commissions selected');
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      const response = await Api.post('/api/superadmin/partner-settlements/approve-commissions', {
-        commissionIds: Array.from(selectedCommissions),
-      });
-
-      if (response?.success) {
-        toast.success(`Approved ${selectedCommissions.size} commissions`);
-        setSelectedCommissions(new Set());
-        await fetchData();
-      } else {
-        toast.error(response?.error || 'Failed to approve commissions');
+        if (response?.success) {
+          toast.success(`Approved ${targetIds.length} commissions`);
+          setSelectedCommissions(new Set());
+          setPreviewCommissionId((prev) => (prev && targetIds.includes(prev) ? null : prev));
+          await fetchData();
+        } else {
+          toast.error(response?.error || 'Failed to approve commissions');
+        }
+      } catch (err: any) {
+        console.error('Error approving commissions:', err);
+        toast.error(err?.message || 'Failed to approve commissions');
+      } finally {
+        setProcessing(false);
       }
-    } catch (err: any) {
-      console.error('Error approving commissions:', err);
-      toast.error(err?.message || 'Failed to approve commissions');
-    } finally {
-      setProcessing(false);
-    }
-  };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [selectedCommissions, fetchData]
+  );
 
   // Process payout
   const handleProcessPayout = async (payoutId: string) => {
@@ -328,30 +368,529 @@ export const PartnerSettlementsView: React.FC = () => {
   };
 
   // Remove attribution
-  const handleRemoveAttribution = async (attributionId: string) => {
-    if (!confirm('Are you sure you want to remove this attribution?')) {
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      const response = await Api.delete(
-        `/api/superadmin/partner-settlements/attributions/${attributionId}`
-      );
-
-      if (response?.success) {
-        toast.success('Attribution removed');
-        await fetchData();
-      } else {
-        toast.error(response?.error || 'Failed to remove attribution');
+  const handleRemoveAttribution = useCallback(
+    async (attributionId: string) => {
+      if (!confirm('Are you sure you want to remove this attribution?')) {
+        return;
       }
-    } catch (err: any) {
-      console.error('Error removing attribution:', err);
-      toast.error(err?.message || 'Failed to remove attribution');
-    } finally {
-      setProcessing(false);
-    }
-  };
+
+      try {
+        setProcessing(true);
+        const response = await Api.delete(
+          `/api/superadmin/partner-settlements/attributions/${attributionId}`
+        );
+
+        if (response?.success) {
+          toast.success('Attribution removed');
+          setPreviewAttributionId((prev) => (prev === attributionId ? null : prev));
+          await fetchData();
+        } else {
+          toast.error(response?.error || 'Failed to remove attribution');
+        }
+      } catch (err: any) {
+        console.error('Error removing attribution:', err);
+        toast.error(err?.message || 'Failed to remove attribution');
+      } finally {
+        setProcessing(false);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [fetchData]
+  );
+
+  // ── Zakladka Commissions: filtrowanie + wiersze + kolumny + kebab ─────────
+  const filteredCommissions = useMemo(() => {
+    if (!commissionSearch.trim()) return commissions;
+    const q = commissionSearch.toLowerCase();
+    return commissions.filter(
+      (c) =>
+        c.partnerName?.toLowerCase().includes(q) || c.organizationName?.toLowerCase().includes(q)
+    );
+  }, [commissions, commissionSearch]);
+
+  const commissionRows = useMemo<TableRow[]>(
+    () => filteredCommissions.map((c) => ({ ...c, id: c.id })),
+    [filteredCommissions]
+  );
+
+  const previewCommission = previewCommissionId
+    ? (commissions.find((c) => c.id === previewCommissionId) ?? null)
+    : null;
+
+  const commissionColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'partnerName',
+        label: 'Partner',
+        sortable: true,
+        render: (row: TableRow) => (
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-c-text-muted" />
+            <span className="font-medium text-c-text">{row.partnerName as string}</span>
+          </div>
+        ),
+      },
+      {
+        id: 'organizationName',
+        label: 'Customer',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text-secondary">{row.organizationName as string}</span>
+        ),
+      },
+      {
+        id: 'transactionType',
+        label: 'Type',
+        width: '120px',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-c-text-secondary capitalize">
+            {String(row.transactionType || '').toLowerCase()}
+          </span>
+        ),
+      },
+      {
+        id: 'grossAmount',
+        label: 'Amount',
+        width: '120px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text-secondary">
+            €{(row.grossAmount as number).toLocaleString()}
+          </span>
+        ),
+      },
+      {
+        id: 'commissionAmount',
+        label: 'Commission',
+        width: '140px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span>
+            <span className="font-medium text-emerald-400">
+              €{(row.commissionAmount as number).toLocaleString()}
+            </span>
+            <span className="text-xs text-c-text-muted ml-1">({row.commissionRate}%)</span>
+          </span>
+        ),
+      },
+      {
+        id: 'transactionDate',
+        label: 'Date',
+        width: '120px',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-c-text-secondary">{row.transactionDate as string}</span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const commissionRowMenu = useCallback(
+    (row: TableRow): StandardRowMenu => {
+      const commission = row as unknown as PendingCommission;
+      return {
+        primary: [
+          {
+            id: 'approve',
+            label: 'Approve',
+            icon: Check,
+            disabled: processing,
+            onClick: () => handleApproveCommissions([commission.id]),
+          },
+        ],
+        universalHandlers: {
+          preview: () => setPreviewCommissionId(commission.id),
+        },
+        destructive: { note: 'Commissions are approved, not deleted' },
+      };
+    },
+    [processing, handleApproveCommissions]
+  );
+
+  const commissionPreviewActions: StandardPreviewActions | undefined = previewCommission
+    ? {
+        resolutions: [
+          {
+            id: 'approve',
+            variant: 'positive',
+            label: 'Approve',
+            icon: Check,
+            disabled: processing,
+            onClick: () => handleApproveCommissions([previewCommission.id]),
+          },
+        ],
+      }
+    : undefined;
+
+  // ── Zakladka Attribution: filtrowanie + wiersze + kolumny + kebab ────────
+  const filteredAttributions = useMemo(() => {
+    if (!attributionSearch.trim()) return attributions;
+    const q = attributionSearch.toLowerCase();
+    return attributions.filter(
+      (a) =>
+        a.organizationName?.toLowerCase().includes(q) || a.partnerName?.toLowerCase().includes(q)
+    );
+  }, [attributions, attributionSearch]);
+
+  const attributionRows = useMemo<TableRow[]>(
+    () => filteredAttributions.map((a) => ({ ...a, id: a.id })),
+    [filteredAttributions]
+  );
+
+  const previewAttribution = previewAttributionId
+    ? (attributions.find((a) => a.id === previewAttributionId) ?? null)
+    : null;
+
+  const attributionColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'organizationName',
+        label: 'Organization',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="font-medium text-c-text">
+            {(row.organizationName as string) || (row.organizationId as string)}
+          </span>
+        ),
+      },
+      {
+        id: 'partnerName',
+        label: 'Partner',
+        sortable: true,
+        render: (row: TableRow) => (
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-c-text-muted" />
+            <span className="text-c-text-secondary">
+              {(row.partnerName as string) || (row.partnerOrgId as string)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'attributionType',
+        label: 'Type',
+        width: '140px',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-c-text-secondary">
+            {String(row.attributionType || '').replace('_', ' ')}
+          </span>
+        ),
+      },
+      {
+        id: 'referralCodeUsed',
+        label: 'Code Used',
+        width: '130px',
+        render: (row: TableRow) =>
+          row.referralCodeUsed ? (
+            <code className={NEUTRAL_CHIP}>{row.referralCodeUsed as string}</code>
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          ),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        width: '110px',
+        align: 'center',
+        sortable: true,
+        filterable: true,
+        filterOptions: ATTRIBUTION_STATUS_OPTIONS,
+        render: (row: TableRow) => (
+          <span
+            className={cn(
+              'px-2 py-1 text-xs font-medium rounded-full',
+              row.status === 'ACTIVE' && 'bg-emerald-500/20 text-emerald-400',
+              row.status === 'PENDING' && 'bg-amber-500/20 text-amber-400',
+              row.status === 'EXPIRED' && 'bg-c-surface-raised text-c-text-secondary'
+            )}
+          >
+            {String(row.status || '').toLowerCase()}
+          </span>
+        ),
+      },
+      {
+        id: 'attributedAt',
+        label: 'Date',
+        width: '120px',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-c-text-secondary">
+            {formatDate(row.attributedAt as string)}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const attributionRowMenu = useCallback(
+    (row: TableRow): StandardRowMenu => {
+      const attribution = row as unknown as Attribution;
+      return {
+        universalHandlers: {
+          preview: () => setPreviewAttributionId(attribution.id),
+        },
+        destructive: {
+          label: 'Remove attribution',
+          icon: Unlink,
+          onClick: () => handleRemoveAttribution(attribution.id),
+        },
+      };
+    },
+    [handleRemoveAttribution]
+  );
+
+  const attributionPreviewActions: StandardPreviewActions | undefined = previewAttribution
+    ? {
+        resolutions: [
+          {
+            id: 'remove',
+            variant: 'destructive',
+            label: 'Remove attribution',
+            icon: Unlink,
+            disabled: processing,
+            onClick: () => handleRemoveAttribution(previewAttribution.id),
+          },
+        ],
+      }
+    : undefined;
+
+  // ── Zakladka Expiring: wiersze + kolumny + kebab (read-only) ─────────────
+  const expiringRows = useMemo<TableRow[]>(
+    () => expiringAttributions.map((a) => ({ ...a, id: a.id })),
+    [expiringAttributions]
+  );
+
+  const previewExpiring = previewExpiringId
+    ? (expiringAttributions.find((a) => a.id === previewExpiringId) ?? null)
+    : null;
+
+  const expiringColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'organizationName',
+        label: 'Organization',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span>
+            <span className="font-medium text-c-text">{row.organizationName as string}</span>
+            {row.referralCodeUsed ? (
+              <span className="ml-2 text-xs text-c-text-muted">
+                ({row.referralCodeUsed as string})
+              </span>
+            ) : null}
+          </span>
+        ),
+      },
+      {
+        id: 'partnerName',
+        label: 'Partner',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text-secondary">{row.partnerName as string}</span>
+        ),
+      },
+      {
+        id: 'discountPercent',
+        label: 'Discount',
+        width: '110px',
+        align: 'center',
+        sortable: true,
+        render: (row: TableRow) =>
+          row.discountPercent ? (
+            <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
+              {row.discountPercent as number}% off
+            </span>
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          ),
+      },
+      {
+        id: 'daysRemaining',
+        label: 'Expires In',
+        width: '110px',
+        align: 'center',
+        sortable: true,
+        render: (row: TableRow) => {
+          const days = row.daysRemaining as number;
+          return (
+            <span
+              className={cn(
+                'px-2 py-1 text-xs rounded-full',
+                days <= 7
+                  ? 'bg-danger-500/20 text-danger-400'
+                  : days <= 14
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'bg-c-surface-raised text-c-text-secondary'
+              )}
+            >
+              {days} days
+            </span>
+          );
+        },
+      },
+      {
+        id: 'lifetimeValue',
+        label: 'Lifetime Value',
+        width: '140px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text font-medium">
+            €{(row.lifetimeValue as number).toLocaleString()}
+          </span>
+        ),
+      },
+      {
+        id: 'totalCommissionEarned',
+        label: 'Commission Earned',
+        width: '150px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-emerald-400">
+            €{(row.totalCommissionEarned as number).toLocaleString()}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const expiringRowMenu = useCallback((row: TableRow): StandardRowMenu => {
+    const attr = row as unknown as ExpiringAttribution;
+    return {
+      universalHandlers: {
+        preview: () => setPreviewExpiringId(attr.id),
+      },
+    };
+  }, []);
+
+  // ── Zakladka Analytics: wiersze + kolumny + kebab (read-only) ────────────
+  const analyticsRows = useMemo<TableRow[]>(
+    () => codeAnalytics.map((c) => ({ ...c, id: c.referralCode })),
+    [codeAnalytics]
+  );
+
+  const previewAnalytics = previewAnalyticsCode
+    ? (codeAnalytics.find((c) => c.referralCode === previewAnalyticsCode) ?? null)
+    : null;
+
+  const analyticsColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'referralCode',
+        label: 'Code',
+        sortable: true,
+        render: (row: TableRow) => (
+          <code className={`${NEUTRAL_CHIP} font-mono`}>{row.referralCode as string}</code>
+        ),
+      },
+      {
+        id: 'partnerName',
+        label: 'Partner',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text-secondary">{row.partnerName as string}</span>
+        ),
+      },
+      {
+        id: 'totalClicks',
+        label: 'Clicks',
+        width: '90px',
+        align: 'center',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text">{(row.totalClicks as number).toLocaleString()}</span>
+        ),
+      },
+      {
+        id: 'totalSignups',
+        label: 'Signups',
+        width: '90px',
+        align: 'center',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text">{(row.totalSignups as number).toLocaleString()}</span>
+        ),
+      },
+      {
+        id: 'conversionRate',
+        label: 'Conv. Rate',
+        width: '100px',
+        align: 'center',
+        sortable: true,
+        render: (row: TableRow) => {
+          const rate = row.conversionRate as number;
+          return (
+            <span
+              className={cn(
+                'text-sm font-medium',
+                rate >= 20
+                  ? 'text-emerald-400'
+                  : rate >= 10
+                    ? 'text-amber-400'
+                    : 'text-c-text-secondary'
+              )}
+            >
+              {rate}%
+            </span>
+          );
+        },
+      },
+      {
+        id: 'activeAttributions',
+        label: 'Active Orgs',
+        width: '110px',
+        align: 'center',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+            {row.activeAttributions as number}
+          </span>
+        ),
+      },
+      {
+        id: 'totalRevenue',
+        label: 'Revenue',
+        width: '120px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-c-text font-medium">
+            €{(row.totalRevenue as number).toLocaleString()}
+          </span>
+        ),
+      },
+      {
+        id: 'totalCommissions',
+        label: 'Commissions',
+        width: '130px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-emerald-400 font-medium">
+            €{(row.totalCommissions as number).toLocaleString()}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const analyticsRowMenu = useCallback((row: TableRow): StandardRowMenu => {
+    const code = row as unknown as CodeAnalytics;
+    return {
+      universalHandlers: {
+        preview: () => setPreviewAnalyticsCode(code.referralCode),
+      },
+    };
+  }, []);
 
   if (loading) {
     return <LoadingState template="list" className="py-12" />;
@@ -419,219 +958,182 @@ export const PartnerSettlementsView: React.FC = () => {
         </div>
 
         <div className="bg-c-surface rounded-xl border border-c-border p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-c-accent/20">
-              <DollarSign className="w-5 h-5 text-c-accent" />
-            </div>
-            <span className="text-sm text-c-text-secondary">This Month Payouts</span>
+          <div className="p-2 rounded-lg bg-c-surface-raised w-fit mb-3">
+            <DollarSign className="w-5 h-5 text-c-text-secondary" />
           </div>
+          <span className="text-sm text-c-text-secondary">This Month Payouts</span>
           <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthPayouts.toLocaleString()}
           </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-c-surface border border-c-border-subtle dark:border-white/5 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab('commissions')}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-            activeTab === 'commissions'
-              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
-              : 'text-c-text-secondary hover:text-c-text'
-          )}
-        >
-          Pending Commissions
-        </button>
-        <button
-          onClick={() => setActiveTab('payouts')}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-            activeTab === 'payouts'
-              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
-              : 'text-c-text-secondary hover:text-c-text'
-          )}
-        >
-          Pending Payouts
-        </button>
-        <button
-          onClick={() => setActiveTab('attribution')}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-            activeTab === 'attribution'
-              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
-              : 'text-c-text-secondary hover:text-c-text'
-          )}
-        >
-          Attribution Manager
-        </button>
-        <button
-          onClick={() => setActiveTab('expiring')}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
-            activeTab === 'expiring'
-              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
-              : 'text-c-text-secondary hover:text-c-text'
-          )}
-        >
-          <AlertTriangle className="w-4 h-4" />
-          Expiring
-          {expiringAttributions.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-amber-500 text-white rounded-full">
-              {expiringAttributions.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
-            activeTab === 'analytics'
-              ? 'bg-c-surface-raised text-c-text ring-1 ring-c-focus'
-              : 'text-c-text-secondary hover:text-c-text'
-          )}
-        >
-          <BarChart3 className="w-4 h-4" />
-          Code Analytics
-        </button>
-      </div>
+      {/* MENU 2 — pigulki zakladek (Commissions/Payouts/Attribution/Expiring/Analytics) */}
+      <StandardModuleBar
+        tabs={[
+          { id: 'commissions', label: 'Pending Commissions' },
+          { id: 'payouts', label: 'Pending Payouts' },
+          { id: 'attribution', label: 'Attribution Manager' },
+          {
+            id: 'expiring',
+            label: 'Expiring',
+            icon: <AlertTriangle className="w-4 h-4" />,
+          },
+          { id: 'analytics', label: 'Code Analytics', icon: <BarChart3 className="w-4 h-4" /> },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as TabType)}
+        onSearch={
+          activeTab === 'commissions'
+            ? setCommissionSearch
+            : activeTab === 'attribution'
+              ? setAttributionSearch
+              : undefined
+        }
+        searchValue={
+          activeTab === 'commissions'
+            ? commissionSearch
+            : activeTab === 'attribution'
+              ? attributionSearch
+              : undefined
+        }
+        primaryCta={
+          activeTab === 'attribution'
+            ? {
+                label: t('superadmin.settlements.createAttribution', 'Create Attribution'),
+                icon: Plus,
+                onClick: () => toast('Attribution creation flow not yet implemented'),
+              }
+            : undefined
+        }
+        filterControls={
+          activeTab === 'expiring' ? (
+            <div className="flex items-center gap-2">
+              <select
+                value={expiringDays}
+                onChange={(e) => setExpiringDays(Number(e.target.value))}
+                className="h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text"
+              >
+                <option value={7}>Next 7 days</option>
+                <option value={14}>Next 14 days</option>
+                <option value={30}>Next 30 days</option>
+                <option value={60}>Next 60 days</option>
+                <option value={90}>Next 90 days</option>
+              </select>
+              <button
+                onClick={fetchData}
+                className="p-2 text-c-text-secondary hover:text-c-text border border-c-border-subtle rounded-lg"
+                title="Refresh"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+          ) : activeTab === 'analytics' ? (
+            <button
+              onClick={fetchData}
+              className="p-2 text-c-text-secondary hover:text-c-text border border-c-border-subtle rounded-lg"
+              title="Refresh"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          ) : undefined
+        }
+        bulk={
+          activeTab === 'commissions' && selectedCommissions.size > 0
+            ? {
+                count: selectedCommissions.size,
+                selectedLabel: `${selectedCommissions.size} selected`,
+                onSelectAll: () =>
+                  setSelectedCommissions(new Set(commissionRows.map((r) => String(r.id)))),
+                selectAllLabel: 'Select all',
+                onClear: () => setSelectedCommissions(new Set()),
+                clearLabel: 'Clear',
+                actions: [
+                  {
+                    id: 'approve',
+                    label: `Approve Selected (${selectedCommissions.size})`,
+                    icon: Check,
+                    onClick: () => handleApproveCommissions(),
+                  },
+                ],
+              }
+            : null
+        }
+        activeFilters={
+          activeTab === 'commissions'
+            ? commissionFilters
+            : activeTab === 'attribution'
+              ? attributionFilters
+              : []
+        }
+        onRemoveFilter={(id) => {
+          if (activeTab === 'commissions') {
+            setCommissionFilters((prev) => prev.filter((f) => f.id !== id));
+          } else if (activeTab === 'attribution') {
+            setAttributionFilters((prev) => prev.filter((f) => f.id !== id));
+          }
+        }}
+        onClearFilters={() => {
+          if (activeTab === 'commissions') setCommissionFilters([]);
+          else if (activeTab === 'attribution') setAttributionFilters([]);
+        }}
+      />
 
       {/* Commissions Tab */}
       {activeTab === 'commissions' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary" />
-                <input
-                  type="text"
-                  placeholder="Search partners..."
-                  className="pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white w-64"
-                />
-              </div>
-              <button className="flex items-center gap-2 px-3 py-2 text-sm text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg">
-                <Filter className="w-4 h-4" />
-                Filter
-              </button>
-            </div>
-            {selectedCommissions.size > 0 && (
-              <button
-                onClick={handleApproveCommissions}
-                disabled={processing}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-              >
-                <Check className="w-4 h-4" />
-                Approve Selected ({selectedCommissions.size})
-              </button>
-            )}
+        <div className="flex min-h-0 overflow-hidden -mx-0">
+          <div className="flex-1 min-w-0 overflow-auto">
+            <StandardTable
+              columns={commissionColumns}
+              data={commissionRows}
+              empty={{
+                icon: CheckCircle,
+                title: 'No pending commissions to approve',
+              }}
+              selectedRowId={previewCommissionId}
+              onRowClick={(row) => setPreviewCommissionId(String(row.id))}
+              rowMenu={commissionRowMenu}
+              activeFilters={commissionFilters}
+              onFilterChange={setCommissionFilters}
+              persistKey="superadmin.settlements.commissions"
+              selection={{ selectedIds: selectedCommissions, onChange: setSelectedCommissions }}
+            />
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table
-              /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-            >
-              <thead>
-                <tr className="border-b border-c-border-subtle dark:border-white/10">
-                  <th className="text-left px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedCommissions.size === commissions.length && commissions.length > 0
-                      }
-                      onChange={selectAllCommissions}
-                      className="rounded text-c-accent"
-                    />
-                  </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                    Partner
-                  </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                    Customer
-                  </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                    Type
-                  </th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                    Amount
-                  </th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                    Commission
-                  </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                    Date
-                  </th>
-                  <th className="px-3 py-2"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
-                {commissions.map((commission) => (
-                  <tr key={commission.id} className="hover:bg-c-surface dark:hover:bg-c-surface/20">
-                    <td className="px-3 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedCommissions.has(commission.id)}
-                        onChange={() => toggleCommissionSelection(commission.id)}
-                        className="rounded text-c-accent"
-                      />
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-c-text-muted" />
-                        <span className="font-medium text-c-text-secondary dark:text-white">
-                          {commission.partnerName}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-c-text-secondary">{commission.organizationName}</span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-sm text-c-text-secondary capitalize">
-                        {commission.transactionType.toLowerCase()}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="text-c-text-secondary">
-                        €{commission.grossAmount.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="font-medium text-emerald-400">
-                        €{commission.commissionAmount.toLocaleString()}
-                      </span>
-                      <span className="text-xs text-c-text-muted ml-1">
-                        ({commission.commissionRate}%)
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-sm text-c-text-secondary">
-                        {commission.transactionDate}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <button className="p-1.5 text-c-text-muted hover:text-c-text-secondary dark:hover:text-white rounded transition-colors">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {commissions.length === 0 && (
-            <div className="text-center py-12">
-              <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-c-text-secondary">No pending commissions to approve</p>
-            </div>
-          )}
+          {previewCommission ? (
+            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <StandardPreview
+                title={previewCommission.partnerName || previewCommission.id}
+                onClose={() => setPreviewCommissionId(null)}
+                meta={{
+                  pills: [
+                    { label: previewCommission.transactionType, tone: 'neutral' },
+                    { label: previewCommission.status, tone: 'neutral' },
+                  ],
+                  trailing: (
+                    <span className="text-xs text-c-text-secondary">
+                      {previewCommission.transactionDate}
+                    </span>
+                  ),
+                }}
+                details={{
+                  text: [
+                    `Customer: ${previewCommission.organizationName || '—'}`,
+                    `Gross amount: €${previewCommission.grossAmount.toLocaleString()}`,
+                    `Commission: €${previewCommission.commissionAmount.toLocaleString()} (${previewCommission.commissionRate}%)`,
+                  ].join('\n\n'),
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(previewCommission.id);
+                  },
+                }}
+                actions={commissionPreviewActions}
+              />
+            </aside>
+          ) : null}
         </div>
       )}
 
-      {/* Payouts Tab */}
+      {/* Payouts Tab — proces zatwierdzania (karty), nie lista encji: poza kanonem list */}
       {activeTab === 'payouts' && (
         <div className="space-y-4">
           {payouts.map((payout) => (
@@ -718,402 +1220,171 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Attribution Tab */}
       {activeTab === 'attribution' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white">
-                {t('superadmin.settlements.attributionManager', 'Attribution Manager')}
-              </h3>
-              <p className="text-sm text-c-text-secondary">
-                {t(
-                  'superadmin.settlements.attributionDesc',
-                  'Manually link organizations to partners or view existing attributions'
-                )}
-              </p>
-            </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium">
-              <Plus className="w-4 h-4" />
-              {t('superadmin.settlements.createAttribution', 'Create Attribution')}
-            </button>
+        <div className="flex min-h-0 overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-auto">
+            <StandardTable
+              columns={attributionColumns}
+              data={attributionRows}
+              empty={{
+                icon: Link2,
+                title: 'No attributions found',
+                description: 'Create a new attribution to link an organization with a partner',
+              }}
+              selectedRowId={previewAttributionId}
+              onRowClick={(row) => setPreviewAttributionId(String(row.id))}
+              rowMenu={attributionRowMenu}
+              activeFilters={attributionFilters}
+              onFilterChange={setAttributionFilters}
+              persistKey="superadmin.settlements.attribution"
+            />
           </div>
 
-          {/* Search */}
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary" />
-              <input
-                type="text"
-                placeholder="Search by organization or partner name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white"
+          {previewAttribution ? (
+            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <StandardPreview
+                title={previewAttribution.organizationName || previewAttribution.organizationId}
+                onClose={() => setPreviewAttributionId(null)}
+                meta={{
+                  pills: [
+                    {
+                      label: previewAttribution.attributionType.replace('_', ' '),
+                      tone: 'neutral',
+                    },
+                    {
+                      label: previewAttribution.status,
+                      tone:
+                        previewAttribution.status === 'ACTIVE'
+                          ? 'success'
+                          : previewAttribution.status === 'PENDING'
+                            ? 'warning'
+                            : 'neutral',
+                    },
+                  ],
+                  trailing: (
+                    <span className="text-xs text-c-text-secondary">
+                      {formatDate(previewAttribution.attributedAt)}
+                    </span>
+                  ),
+                }}
+                details={{
+                  text: [
+                    `Partner: ${previewAttribution.partnerName || previewAttribution.partnerOrgId}`,
+                    previewAttribution.referralCodeUsed
+                      ? `Referral code: ${previewAttribution.referralCodeUsed}`
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n'),
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(previewAttribution.id);
+                  },
+                }}
+                actions={attributionPreviewActions}
               />
-            </div>
-          </div>
-
-          {/* Attributions Table */}
-          {attributions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-c-border-subtle dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Organization
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Partner
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Type
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Code Used
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Status
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Date
-                    </th>
-                    <th className="px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
-                  {attributions
-                    .filter(
-                      (a) =>
-                        !searchTerm ||
-                        a.organizationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        a.partnerName?.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((attribution) => (
-                      <tr
-                        key={attribution.id}
-                        className="hover:bg-c-surface dark:hover:bg-c-surface/20"
-                      >
-                        <td className="px-3 py-3">
-                          <span className="font-medium text-c-text-secondary dark:text-white">
-                            {attribution.organizationName || attribution.organizationId}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-c-text-muted" />
-                            <span className="text-c-text-secondary">
-                              {attribution.partnerName || attribution.partnerOrgId}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className="text-sm text-c-text-secondary">
-                            {attribution.attributionType?.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          {attribution.referralCodeUsed ? (
-                            <code className="text-xs bg-c-surface px-2 py-1 rounded text-c-accent">
-                              {attribution.referralCodeUsed}
-                            </code>
-                          ) : (
-                            <span className="text-c-text-muted">-</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <span
-                            className={cn(
-                              'px-2 py-1 text-xs font-medium rounded-full',
-                              attribution.status === 'ACTIVE' &&
-                                'bg-emerald-500/20 text-emerald-400',
-                              attribution.status === 'PENDING' && 'bg-amber-500/20 text-amber-400',
-                              attribution.status === 'EXPIRED' &&
-                                'bg-c-surface-raised/20 text-c-text-secondary '
-                            )}
-                          >
-                            {attribution.status?.toLowerCase()}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className="text-sm text-c-text-secondary">
-                            {attribution.attributedAt
-                              ? new Date(attribution.attributedAt).toLocaleDateString()
-                              : '-'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-1 justify-end">
-                            <button
-                              className="p-1.5 text-c-text-secondary hover:text-white rounded transition-colors"
-                              title="View details"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleRemoveAttribution(attribution.id)}
-                              disabled={processing}
-                              className="p-1.5 text-c-text-secondary hover:text-danger-400 rounded transition-colors"
-                              title="Remove attribution"
-                            >
-                              <Unlink className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Link2 className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
-              <p className="text-c-text-secondary">No attributions found</p>
-              <p className="text-sm text-c-text-muted mt-1">
-                Create a new attribution to link an organization with a partner
-              </p>
-            </div>
-          )}
+            </aside>
+          ) : null}
         </div>
       )}
 
       {/* GAP-PARTNER-004: Expiring Attributions Tab */}
       {activeTab === 'expiring' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Expiring Attributions & Discounts
-              </h3>
-              <p className="text-sm text-c-text-secondary">
-                Partner discounts expiring within the selected timeframe
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={expiringDays}
-                onChange={(e) => setExpiringDays(Number(e.target.value))}
-                className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white"
-              >
-                <option value={7}>Next 7 days</option>
-                <option value={14}>Next 14 days</option>
-                <option value={30}>Next 30 days</option>
-                <option value={60}>Next 60 days</option>
-                <option value={90}>Next 90 days</option>
-              </select>
-              <button
-                onClick={fetchData}
-                className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            </div>
+        <div className="flex min-h-0 overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-auto">
+            <StandardTable
+              columns={expiringColumns}
+              data={expiringRows}
+              empty={{
+                icon: CheckCircle,
+                title: 'No expiring discounts in the selected timeframe',
+              }}
+              selectedRowId={previewExpiringId}
+              onRowClick={(row) => setPreviewExpiringId(String(row.id))}
+              rowMenu={expiringRowMenu}
+              persistKey="superadmin.settlements.expiring"
+            />
           </div>
 
-          {expiringAttributions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-c-border-subtle dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Organization
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Partner
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Discount
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Expires In
-                    </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Lifetime Value
-                    </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Commission Earned
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
-                  {expiringAttributions.map((attr) => (
-                    <tr key={attr.id} className="hover:bg-c-surface dark:hover:bg-c-surface/20">
-                      <td className="px-3 py-3">
-                        <span className="font-medium text-c-text-secondary dark:text-white">
-                          {attr.organizationName}
-                        </span>
-                        {attr.referralCodeUsed && (
-                          <span className="ml-2 text-xs text-c-text-muted">
-                            ({attr.referralCodeUsed})
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="text-c-text-secondary">{attr.partnerName}</span>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        {attr.discountPercent ? (
-                          <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
-                            {attr.discountPercent}% off
-                          </span>
-                        ) : (
-                          <span className="text-c-text-muted">-</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span
-                          className={cn(
-                            'px-2 py-1 text-xs rounded-full',
-                            attr.daysRemaining <= 7
-                              ? 'bg-danger-500/20 text-danger-400'
-                              : attr.daysRemaining <= 14
-                                ? 'bg-amber-500/20 text-amber-400'
-                                : 'bg-c-surface-raised/20 text-c-text-secondary '
-                          )}
-                        >
-                          {attr.daysRemaining} days
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="text-c-text-secondary dark:text-white font-medium">
-                          €{attr.lifetimeValue.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="text-emerald-400">
-                          €{attr.totalCommissionEarned.toLocaleString()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-c-text-secondary">
-                No expiring discounts in the selected timeframe
-              </p>
-            </div>
-          )}
+          {previewExpiring ? (
+            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <StandardPreview
+                title={previewExpiring.organizationName}
+                onClose={() => setPreviewExpiringId(null)}
+                meta={{
+                  pills: [
+                    previewExpiring.discountPercent
+                      ? { label: `${previewExpiring.discountPercent}% off`, tone: 'success' }
+                      : { label: 'No discount', tone: 'neutral' },
+                  ],
+                  trailing: (
+                    <span className="text-xs text-c-text-secondary">
+                      {previewExpiring.daysRemaining} days left
+                    </span>
+                  ),
+                }}
+                details={{
+                  text: [
+                    `Partner: ${previewExpiring.partnerName}`,
+                    previewExpiring.referralCodeUsed
+                      ? `Referral code: ${previewExpiring.referralCodeUsed}`
+                      : '',
+                    `Lifetime value: €${previewExpiring.lifetimeValue.toLocaleString()}`,
+                    `Commission earned: €${previewExpiring.totalCommissionEarned.toLocaleString()}`,
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n'),
+                }}
+              />
+            </aside>
+          ) : null}
         </div>
       )}
 
       {/* GAP-PARTNER-003: Code Analytics Tab */}
       {activeTab === 'analytics' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-c-accent" />
-                Referral Code Analytics
-              </h3>
-              <p className="text-sm text-c-text-secondary">
-                Performance metrics per partner referral code (last 90 days)
-              </p>
-            </div>
-            <button
-              onClick={fetchData}
-              className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+        <div className="flex min-h-0 overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-auto">
+            <StandardTable
+              columns={analyticsColumns}
+              data={analyticsRows}
+              empty={{
+                icon: BarChart3,
+                title: 'No code analytics data available',
+              }}
+              selectedRowId={previewAnalyticsCode}
+              onRowClick={(row) => setPreviewAnalyticsCode(String(row.id))}
+              rowMenu={analyticsRowMenu}
+              persistKey="superadmin.settlements.analytics"
+            />
           </div>
 
-          {codeAnalytics.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-c-border-subtle dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Code
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Partner
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Clicks
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Signups
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Conv. Rate
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Active Orgs
-                    </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Revenue
-                    </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
-                      Commissions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
-                  {codeAnalytics.map((code) => (
-                    <tr
-                      key={code.referralCode}
-                      className="hover:bg-c-surface dark:hover:bg-c-surface/20"
-                    >
-                      <td className="px-3 py-3">
-                        <span className="font-mono text-sm px-2 py-1 bg-c-accent/20 text-c-accent rounded">
-                          {code.referralCode}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="text-c-text-secondary">{code.partnerName}</span>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span className="text-c-text-secondary dark:text-white">
-                          {code.totalClicks.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span className="text-c-text-secondary dark:text-white">
-                          {code.totalSignups.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span
-                          className={cn(
-                            'text-sm font-medium',
-                            code.conversionRate >= 20
-                              ? 'text-emerald-400'
-                              : code.conversionRate >= 10
-                                ? 'text-amber-400'
-                                : 'text-c-text-secondary '
-                          )}
-                        >
-                          {code.conversionRate}%
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                          {code.activeAttributions}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="text-c-text-secondary dark:text-white font-medium">
-                          €{code.totalRevenue.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="text-emerald-400 font-medium">
-                          €{code.totalCommissions.toLocaleString()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <BarChart3 className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
-              <p className="text-c-text-secondary">No code analytics data available</p>
-            </div>
-          )}
+          {previewAnalytics ? (
+            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <StandardPreview
+                title={previewAnalytics.referralCode}
+                onClose={() => setPreviewAnalyticsCode(null)}
+                meta={{
+                  pills: [{ label: previewAnalytics.partnerName, tone: 'neutral' }],
+                  trailing: (
+                    <span className="text-xs text-c-text-secondary">
+                      {previewAnalytics.conversionRate}% conv.
+                    </span>
+                  ),
+                }}
+                details={{
+                  text: [
+                    `Clicks: ${previewAnalytics.totalClicks.toLocaleString()}`,
+                    `Signups: ${previewAnalytics.totalSignups.toLocaleString()}`,
+                    `Active orgs: ${previewAnalytics.activeAttributions}`,
+                    `Revenue: €${previewAnalytics.totalRevenue.toLocaleString()}`,
+                    `Commissions: €${previewAnalytics.totalCommissions.toLocaleString()}`,
+                  ].join('\n\n'),
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(previewAnalytics.referralCode);
+                  },
+                }}
+              />
+            </aside>
+          ) : null}
         </div>
       )}
     </div>

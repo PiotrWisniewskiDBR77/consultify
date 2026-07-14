@@ -37,9 +37,14 @@ import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
+||||||| 61c7c571ac
+import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
+import PartnerSettlementsViewScreen from './screens/partner-settlements-view';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
+import ReportBuilderBlockTypesScreen from './screens/report-builder-block-types';
+import ReportBuilderTemplatesScreen from './screens/report-builder-templates';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
 import RoseDangerTokenParityScreen from './screens/rose-danger-token-parity';
 import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
@@ -123,6 +128,22 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-initiatives-table': {
     label: '§27-todo batch2: InitiativesTable (Assessment→Board→Initiatives) → StandardTable',
     render: () => <AssessmentInitiativesTableScreen />,
+  },
+  'report-builder-block-types': {
+    label: '§27-todo: BlockTypesManager (Report Builder → Block Types) → StandardTable',
+    render: () => <ReportBuilderBlockTypesScreen />,
+  },
+  'report-builder-templates': {
+    label: '§27-todo: TemplatesManager (Report Builder → Templates) → StandardTable',
+    render: () => <ReportBuilderTemplatesScreen />,
+  },
+  'model-catalog-table': {
+    label: '§27-todo: ModelCatalogTable (SuperAdmin → Model Registry) → StandardTable',
+    render: () => <ModelCatalogTableScreen />,
+  },
+  'partner-settlements-view': {
+    label: '§27-todo: PartnerSettlementsView (SuperAdmin → Revenue) → StandardTable ×4',
+    render: () => <PartnerSettlementsViewScreen />,
   },
   'assessment-reports-table': {
     label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',

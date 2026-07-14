@@ -223,9 +223,12 @@ export const PURPOSE_KIND_MAP: Record<Purpose, ModelKind> = {
   process_optimization: 'BUSINESS_MODEL',
 };
 
+// kanon TRIADA pułapka #1: `primary-*` = crimson (zarezerwowane dla semantyki
+// krytycznej). IMAGE_MODEL to identyfikator kategorii, nie stan krytyczny —
+// purple (HBS Purple, patrz tailwind.config central remap) zamiast primary.
 export const KIND_BADGE_STYLES: Record<ModelKind, { bg: string; text: string }> = {
   TEXT_LLM: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-  IMAGE_MODEL: { bg: 'bg-primary-500/10', text: 'text-primary-400' },
+  IMAGE_MODEL: { bg: 'bg-purple-500/10', text: 'text-purple-400' },
   BUSINESS_MODEL: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
 };
 
