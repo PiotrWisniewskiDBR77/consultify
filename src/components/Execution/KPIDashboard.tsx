@@ -73,8 +73,8 @@ const STATUS_CONFIG: Record<
     label: 'At Risk',
   },
   OFF_TARGET: {
-    color: 'text-rose-600',
-    bgColor: 'bg-rose-100 dark:bg-rose-900/20',
+    color: 'text-danger-600',
+    bgColor: 'bg-danger-100 dark:bg-danger-900/20',
     icon: <TrendingDown size={14} />,
     label: 'Off Target',
   },
@@ -166,7 +166,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
       case 'UP':
         return <TrendingUp size={14} className="text-green-500" />;
       case 'DOWN':
-        return <TrendingDown size={14} className="text-rose-500" />;
+        return <TrendingDown size={14} className="text-danger-500" />;
       default:
         return <span className="w-3 h-0.5 bg-slate-400 rounded" />;
     }
@@ -281,7 +281,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Off Target</div>
-          <div className="text-2xl font-bold text-rose-400">{stats.offTarget}</div>
+          <div className="text-2xl font-bold text-danger-400">{stats.offTarget}</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Achieved</div>
@@ -291,13 +291,13 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
 
       {/* Off Target Alert */}
       {stats.offTarget > 0 && (
-        <div className="flex items-start gap-3 p-4 bg-rose-900/10 border border-rose-500/20 rounded-xl">
-          <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-danger-900/10 border border-danger-500/20 rounded-xl">
+          <AlertTriangle size={20} className="text-danger-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-rose-300">
+            <p className="text-sm font-medium text-danger-300">
               {stats.offTarget} KPI{stats.offTarget > 1 ? 's are' : ' is'} off target
             </p>
-            <p className="text-xs text-rose-400/70 mt-1">
+            <p className="text-xs text-danger-400/70 mt-1">
               Review and create corrective actions to get back on track
             </p>
           </div>
@@ -339,7 +339,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
               key={kpi.id}
               className={`bg-white dark:bg-navy-900 rounded-xl border-2 p-4 transition-all ${
                 kpi.status === 'OFF_TARGET'
-                  ? 'border-rose-500/30'
+                  ? 'border-danger-500/30'
                   : 'border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -383,7 +383,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                         ? 'text-green-600'
                         : progressPercent >= 80
                           ? 'text-amber-600'
-                          : 'text-rose-600'
+                          : 'text-danger-600'
                     }`}
                   >
                     {Math.round(progressPercent)}%
@@ -400,7 +400,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                       ? 'bg-green-500'
                       : progressPercent >= 80
                         ? 'bg-amber-500'
-                        : 'bg-rose-500'
+                        : 'bg-danger-500'
                   }`}
                   style={{ width: `${Math.min(progressPercent, 100)}%` }}
                 />
@@ -415,7 +415,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                 {needsAction && (
                   <button
                     onClick={() => onCreateCorrectiveAction?.(kpi.id)}
-                    className="text-xs font-medium text-rose-400 hover:underline flex items-center gap-1"
+                    className="text-xs font-medium text-danger-400 hover:underline flex items-center gap-1"
                   >
                     Create Action
                     <ChevronRight size={12} />

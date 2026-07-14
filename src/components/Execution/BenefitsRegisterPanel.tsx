@@ -32,7 +32,7 @@ const STATUS_STYLE: Record<string, string> = {
   tracking: 'bg-blue-100 text-blue-700 border-blue-200',
   achieved: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   at_risk: 'bg-amber-100 text-amber-700 border-amber-200',
-  missed: 'bg-rose-100 text-rose-700 border-rose-200',
+  missed: 'bg-danger-100 text-danger-700 border-danger-200',
 };
 
 const statusStyle = (status: string): string =>
