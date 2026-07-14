@@ -170,6 +170,7 @@ const WizardCandidateTriageSchema = z.object({
 router.post(
   '/wizard/sessions',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
   requireInitiativeWriteAccess(),
   validateBody(WizardSessionSchema),
   async (req: any, res: any) => {
@@ -195,6 +196,7 @@ router.get('/wizard/sessions/:sessionId', requireOrgRole('user'), async (req: an
 router.post(
   '/wizard/sessions/:sessionId/candidates/generate',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
   requireInitiativeWriteAccess(),
   async (req: any, res: any) => {
     const orgId = req.user?.organizationId;
@@ -239,6 +241,7 @@ router.get(
 router.patch(
   '/wizard/candidates/:candidateId/triage',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
   requireInitiativeWriteAccess(),
   validateBody(WizardCandidateTriageSchema),
   async (req: any, res: any) => {
@@ -293,6 +296,7 @@ const WizardDraftsCreatedSchema = z.object({
 router.post(
   '/wizard/sessions/:sessionId/drafts-created',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
   requireInitiativeWriteAccess(),
   validateBody(WizardDraftsCreatedSchema),
   async (req: any, res: any) => {
@@ -603,6 +607,7 @@ async function handleMergeOrExtendFromInsight(req: any, res: any, mode: 'merge' 
 router.post(
   '/:id/merge-from-insight',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.update', { shadow: true }),
   validateBody(MergeExtendFromInsightSchema),
   async (req: any, res: any) => handleMergeOrExtendFromInsight(req, res, 'merge')
 );
@@ -610,6 +615,7 @@ router.post(
 router.post(
   '/:id/extend-from-insight',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.update', { shadow: true }),
   validateBody(MergeExtendFromInsightSchema),
   async (req: any, res: any) => handleMergeOrExtendFromInsight(req, res, 'extend')
 );
@@ -708,6 +714,10 @@ router.get('/portfolio/dependencies', InitiativeController.getPortfolioDependenc
 router.post(
   '/portfolio/dependencies',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.dependency.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   InitiativeController.createPortfolioDependency
 );
 
@@ -718,6 +728,10 @@ router.post(
 router.delete(
   '/portfolio/dependencies/:id',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.dependency.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   InitiativeController.deletePortfolioDependency
 );
 
@@ -782,63 +796,71 @@ router.get('/programs', async (req: any, res: any) => {
   }
 });
 
-router.post('/programs', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/programs',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.program.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
-      req.body;
-    if (!name || typeof name !== 'string' || !name.trim()) {
-      return res.status(400).json({ error: 'name is required' });
-    }
+      const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
+        req.body;
+      if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: 'name is required' });
+      }
 
-    if (parentProgramId) {
-      const parent = await queryHelpers.queryOne(
-        `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
-        [String(parentProgramId), String(orgId)]
-      );
-      if (!parent) return res.status(400).json({ error: 'Parent program not found' });
-    }
+      if (parentProgramId) {
+        const parent = await queryHelpers.queryOne(
+          `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+          [String(parentProgramId), String(orgId)]
+        );
+        if (!parent) return res.status(400).json({ error: 'Parent program not found' });
+      }
 
-    const id = uuidv4();
-    const now = new Date().toISOString();
+      const id = uuidv4();
+      const now = new Date().toISOString();
 
-    await queryHelpers.queryRun(
-      `INSERT INTO programs (id, organization_id, name, description, parent_program_id, status, owner_user_id, start_date, end_date, created_at, updated_at)
+      await queryHelpers.queryRun(
+        `INSERT INTO programs (id, organization_id, name, description, parent_program_id, status, owner_user_id, start_date, end_date, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        String(orgId),
-        name.trim(),
-        description || null,
-        parentProgramId || null,
-        status || 'active',
-        ownerUserId || null,
-        startDate || null,
-        endDate || null,
-        now,
-        now,
-      ]
-    );
+        [
+          id,
+          String(orgId),
+          name.trim(),
+          description || null,
+          parentProgramId || null,
+          status || 'active',
+          ownerUserId || null,
+          startDate || null,
+          endDate || null,
+          now,
+          now,
+        ]
+      );
 
-    return res.status(201).json({
-      id,
-      organizationId: String(orgId),
-      name: name.trim(),
-      description: description || null,
-      parentProgramId: parentProgramId || null,
-      status: status || 'active',
-      ownerUserId: ownerUserId || null,
-      startDate: startDate || null,
-      endDate: endDate || null,
-      createdAt: now,
-      updatedAt: now,
-    });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to create program', 'PROGRAM_CREATE_FAILED', err);
+      return res.status(201).json({
+        id,
+        organizationId: String(orgId),
+        name: name.trim(),
+        description: description || null,
+        parentProgramId: parentProgramId || null,
+        status: status || 'active',
+        ownerUserId: ownerUserId || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to create program', 'PROGRAM_CREATE_FAILED', err);
+    }
   }
-});
+);
 
 router.get('/programs/:programId', async (req: any, res: any) => {
   try {
@@ -933,36 +955,43 @@ router.get('/programs/:programId/rollup', async (req: any, res: any) => {
   }
 });
 
-router.put('/programs/:programId', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+  '/programs/:programId',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.program.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { programId } = req.params;
-    const existing = await queryHelpers.queryOne(
-      `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
-      [String(programId), String(orgId)]
-    );
-    if (!existing) return res.status(404).json({ error: 'Program not found' });
-
-    const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
-      req.body;
-
-    if (parentProgramId === programId) {
-      return res.status(400).json({ error: 'Program cannot be its own parent' });
-    }
-
-    if (parentProgramId) {
-      const parent = await queryHelpers.queryOne(
+      const { programId } = req.params;
+      const existing = await queryHelpers.queryOne(
         `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
-        [String(parentProgramId), String(orgId)]
+        [String(programId), String(orgId)]
       );
-      if (!parent) return res.status(400).json({ error: 'Parent program not found' });
-    }
+      if (!existing) return res.status(404).json({ error: 'Program not found' });
 
-    const now = new Date().toISOString();
-    await queryHelpers.queryRun(
-      `UPDATE programs
+      const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
+        req.body;
+
+      if (parentProgramId === programId) {
+        return res.status(400).json({ error: 'Program cannot be its own parent' });
+      }
+
+      if (parentProgramId) {
+        const parent = await queryHelpers.queryOne(
+          `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+          [String(parentProgramId), String(orgId)]
+        );
+        if (!parent) return res.status(400).json({ error: 'Parent program not found' });
+      }
+
+      const now = new Date().toISOString();
+      await queryHelpers.queryRun(
+        `UPDATE programs
        SET name = COALESCE(?, name),
            description = COALESCE(?, description),
            parent_program_id = ?,
@@ -972,85 +1001,94 @@ router.put('/programs/:programId', requireOrgRole('user'), async (req: any, res:
            end_date = ?,
            updated_at = ?
        WHERE id = ? AND organization_id = ?`,
-      [
-        name || null,
-        description !== undefined ? description : null,
-        parentProgramId !== undefined ? parentProgramId || null : null,
-        status || null,
-        ownerUserId !== undefined ? ownerUserId || null : null,
-        startDate !== undefined ? startDate || null : null,
-        endDate !== undefined ? endDate || null : null,
-        now,
+        [
+          name || null,
+          description !== undefined ? description : null,
+          parentProgramId !== undefined ? parentProgramId || null : null,
+          status || null,
+          ownerUserId !== undefined ? ownerUserId || null : null,
+          startDate !== undefined ? startDate || null : null,
+          endDate !== undefined ? endDate || null : null,
+          now,
+          String(programId),
+          String(orgId),
+        ]
+      );
+
+      const updated = (await queryHelpers.queryOne(
+        `SELECT * FROM programs WHERE id = ? AND organization_id = ?`,
+        [String(programId), String(orgId)]
+      )) as any;
+
+      return res.json({
+        id: updated.id,
+        organizationId: updated.organization_id,
+        name: updated.name,
+        description: updated.description,
+        parentProgramId: updated.parent_program_id || null,
+        status: updated.status,
+        ownerUserId: updated.owner_user_id || null,
+        startDate: updated.start_date || null,
+        endDate: updated.end_date || null,
+        createdAt: updated.created_at,
+        updatedAt: updated.updated_at,
+      });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to update program', 'PROGRAM_UPDATE_FAILED', err);
+    }
+  }
+);
+
+router.delete(
+  '/programs/:programId',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.program.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { programId } = req.params;
+      const existing = await queryHelpers.queryOne(
+        `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+        [String(programId), String(orgId)]
+      );
+      if (!existing) return res.status(404).json({ error: 'Program not found' });
+
+      const initiativeCount = (await queryHelpers.queryOne(
+        `SELECT COUNT(*) AS cnt FROM initiatives WHERE program_id = ? AND organization_id = ?`,
+        [String(programId), String(orgId)]
+      )) as any;
+      if (Number(initiativeCount?.cnt) > 0) {
+        return res.status(409).json({
+          error: 'Cannot delete program with linked initiatives. Reassign or remove them first.',
+        });
+      }
+
+      const childCount = (await queryHelpers.queryOne(
+        `SELECT COUNT(*) AS cnt FROM programs WHERE parent_program_id = ?`,
+        [String(programId)]
+      )) as any;
+      if (Number(childCount?.cnt) > 0) {
+        return res.status(409).json({
+          error: 'Cannot delete program with child programs. Reassign or remove them first.',
+        });
+      }
+
+      await queryHelpers.queryRun(`DELETE FROM programs WHERE id = ? AND organization_id = ?`, [
         String(programId),
         String(orgId),
-      ]
-    );
+      ]);
 
-    const updated = (await queryHelpers.queryOne(
-      `SELECT * FROM programs WHERE id = ? AND organization_id = ?`,
-      [String(programId), String(orgId)]
-    )) as any;
-
-    return res.json({
-      id: updated.id,
-      organizationId: updated.organization_id,
-      name: updated.name,
-      description: updated.description,
-      parentProgramId: updated.parent_program_id || null,
-      status: updated.status,
-      ownerUserId: updated.owner_user_id || null,
-      startDate: updated.start_date || null,
-      endDate: updated.end_date || null,
-      createdAt: updated.created_at,
-      updatedAt: updated.updated_at,
-    });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to update program', 'PROGRAM_UPDATE_FAILED', err);
-  }
-});
-
-router.delete('/programs/:programId', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { programId } = req.params;
-    const existing = await queryHelpers.queryOne(
-      `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
-      [String(programId), String(orgId)]
-    );
-    if (!existing) return res.status(404).json({ error: 'Program not found' });
-
-    const initiativeCount = (await queryHelpers.queryOne(
-      `SELECT COUNT(*) AS cnt FROM initiatives WHERE program_id = ? AND organization_id = ?`,
-      [String(programId), String(orgId)]
-    )) as any;
-    if (Number(initiativeCount?.cnt) > 0) {
-      return res.status(409).json({
-        error: 'Cannot delete program with linked initiatives. Reassign or remove them first.',
-      });
+      return res.json({ success: true });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to delete program', 'PROGRAM_DELETE_FAILED', err);
     }
-
-    const childCount = (await queryHelpers.queryOne(
-      `SELECT COUNT(*) AS cnt FROM programs WHERE parent_program_id = ?`,
-      [String(programId)]
-    )) as any;
-    if (Number(childCount?.cnt) > 0) {
-      return res.status(409).json({
-        error: 'Cannot delete program with child programs. Reassign or remove them first.',
-      });
-    }
-
-    await queryHelpers.queryRun(`DELETE FROM programs WHERE id = ? AND organization_id = ?`, [
-      String(programId),
-      String(orgId),
-    ]);
-
-    return res.json({ success: true });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to delete program', 'PROGRAM_DELETE_FAILED', err);
   }
-});
+);
 
 // ==========================================
 // INITIATIVE CRUD
@@ -1251,118 +1289,151 @@ router.get('/templates/:templateId', async (req: any, res: any) => {
  * POST /api/initiatives/templates
  * Create a new initiative template (org-scoped)
  */
-router.post('/templates', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/templates',
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const template = await initiativeTemplateService.createTemplate(
-      { ...req.body, organizationId: String(orgId) },
-      String(userId)
-    );
-    return res.status(201).json({ template });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to create template', 'TEMPLATE_CREATE_FAILED', err);
+      const template = await initiativeTemplateService.createTemplate(
+        { ...req.body, organizationId: String(orgId) },
+        String(userId)
+      );
+      return res.status(201).json({ template });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to create template', 'TEMPLATE_CREATE_FAILED', err);
+    }
   }
-});
+);
 
 /**
  * PUT /api/initiatives/templates/:templateId
  * Update an initiative template (org-scoped only)
  */
-router.put('/templates/:templateId', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+  '/templates/:templateId',
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { templateId } = req.params;
-    const existing = await initiativeTemplateService.getTemplateById(String(templateId));
-    if (!existing) return res.status(404).json({ error: 'Template not found' });
-    if (existing.isPublic && !existing.organizationId) {
-      return res.status(403).json({ error: 'Cannot edit system templates' });
-    }
-    if (existing.organizationId && existing.organizationId !== String(orgId)) {
-      return res.status(403).json({ error: 'Not authorized to edit this template' });
-    }
+      const { templateId } = req.params;
+      const existing = await initiativeTemplateService.getTemplateById(String(templateId));
+      if (!existing) return res.status(404).json({ error: 'Template not found' });
+      if (existing.isPublic && !existing.organizationId) {
+        return res.status(403).json({ error: 'Cannot edit system templates' });
+      }
+      if (existing.organizationId && existing.organizationId !== String(orgId)) {
+        return res.status(403).json({ error: 'Not authorized to edit this template' });
+      }
 
-    const updated = await initiativeTemplateService.updateTemplate(
-      String(templateId),
-      req.body,
-      req.user?.id
-    );
-    return res.json({ template: updated });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to update template', 'TEMPLATE_UPDATE_FAILED', err);
+      const updated = await initiativeTemplateService.updateTemplate(
+        String(templateId),
+        req.body,
+        req.user?.id
+      );
+      return res.json({ template: updated });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to update template', 'TEMPLATE_UPDATE_FAILED', err);
+    }
   }
-});
+);
 
 /**
  * DELETE /api/initiatives/templates/:templateId
  * Delete an initiative template (org-scoped only, cannot delete system)
  */
-router.delete('/templates/:templateId', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.delete(
+  '/templates/:templateId',
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { templateId } = req.params;
-    const existing = await initiativeTemplateService.getTemplateById(String(templateId));
-    if (!existing) return res.status(404).json({ error: 'Template not found' });
-    if (existing.isPublic && !existing.organizationId) {
-      return res.status(403).json({ error: 'Cannot delete system templates' });
-    }
-    if (existing.organizationId && existing.organizationId !== String(orgId)) {
-      return res.status(403).json({ error: 'Not authorized to delete this template' });
-    }
+      const { templateId } = req.params;
+      const existing = await initiativeTemplateService.getTemplateById(String(templateId));
+      if (!existing) return res.status(404).json({ error: 'Template not found' });
+      if (existing.isPublic && !existing.organizationId) {
+        return res.status(403).json({ error: 'Cannot delete system templates' });
+      }
+      if (existing.organizationId && existing.organizationId !== String(orgId)) {
+        return res.status(403).json({ error: 'Not authorized to delete this template' });
+      }
 
-    await initiativeTemplateService.deleteTemplate(String(templateId));
-    return res.json({ success: true });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to delete template', 'TEMPLATE_DELETE_FAILED', err);
+      await initiativeTemplateService.deleteTemplate(String(templateId));
+      return res.json({ success: true });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to delete template', 'TEMPLATE_DELETE_FAILED', err);
+    }
   }
-});
+);
 
 /**
  * POST /api/initiatives/templates/:templateId/duplicate
  * Duplicate a template to the org scope
  */
-router.post('/templates/:templateId/duplicate', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/templates/:templateId/duplicate',
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { templateId } = req.params;
-    const source = await initiativeTemplateService.getTemplateById(String(templateId));
-    if (!source) return res.status(404).json({ error: 'Source template not found' });
+      const { templateId } = req.params;
+      const source = await initiativeTemplateService.getTemplateById(String(templateId));
+      if (!source) return res.status(404).json({ error: 'Source template not found' });
 
-    const newName = req.body?.name || `${source.name} (Copy)`;
+      const newName = req.body?.name || `${source.name} (Copy)`;
 
-    // Create a duplicate as org-scoped
-    const duplicate = await initiativeTemplateService.createTemplate(
-      {
-        name: newName,
-        category: source.category,
-        description: source.description || undefined,
-        applicableAxes: source.applicableAxes,
-        problemStructured: source.problemStructured || undefined,
-        targetState: source.targetState || undefined,
-        killCriteria: source.killCriteria,
-        suggestedTasks: source.suggestedTasks,
-        suggestedRoles: source.suggestedRoles,
-        typicalTimeline: source.typicalTimeline || undefined,
-        typicalBudgetRange: source.typicalBudgetRange || undefined,
-        isPublic: false,
-        organizationId: String(orgId),
-      },
-      String(userId)
-    );
-    return res.status(201).json({ template: duplicate });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to duplicate template', 'TEMPLATE_DUPLICATE_FAILED', err);
+      // Create a duplicate as org-scoped
+      const duplicate = await initiativeTemplateService.createTemplate(
+        {
+          name: newName,
+          category: source.category,
+          description: source.description || undefined,
+          applicableAxes: source.applicableAxes,
+          problemStructured: source.problemStructured || undefined,
+          targetState: source.targetState || undefined,
+          killCriteria: source.killCriteria,
+          suggestedTasks: source.suggestedTasks,
+          suggestedRoles: source.suggestedRoles,
+          typicalTimeline: source.typicalTimeline || undefined,
+          typicalBudgetRange: source.typicalBudgetRange || undefined,
+          isPublic: false,
+          organizationId: String(orgId),
+        },
+        String(userId)
+      );
+      return res.status(201).json({ template: duplicate });
+    } catch (err: any) {
+      return failInitiative500(
+        res,
+        'Failed to duplicate template',
+        'TEMPLATE_DUPLICATE_FAILED',
+        err
+      );
+    }
   }
-});
+);
 
 // ==========================================
 // V4-INIT-03: BLUEPRINT WBS & VALIDATION
@@ -1433,42 +1504,50 @@ router.get('/templates/:templateId/wbs', async (req: any, res: any) => {
  * POST /api/initiatives/templates/:templateId/wbs
  * Add a WBS item to a blueprint template
  */
-router.post('/templates/:templateId/wbs', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const { templateId } = req.params;
-    if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'write'))) return;
+router.post(
+  '/templates/:templateId/wbs',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const { templateId } = req.params;
+      if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'write'))) return;
 
-    const {
-      parentId,
-      title,
-      itemType,
-      level,
-      sortOrder,
-      estimatedHours,
-      deliverables,
-      acceptanceCriteria,
-      assignedRole,
-    } = req.body;
-    if (!title || typeof title !== 'string' || !title.trim()) {
-      return res.status(400).json({ error: 'title is required' });
+      const {
+        parentId,
+        title,
+        itemType,
+        level,
+        sortOrder,
+        estimatedHours,
+        deliverables,
+        acceptanceCriteria,
+        assignedRole,
+      } = req.body;
+      if (!title || typeof title !== 'string' || !title.trim()) {
+        return res.status(400).json({ error: 'title is required' });
+      }
+
+      const item = await blueprintService.addWbsItem(String(templateId), {
+        parentId,
+        title: title.trim(),
+        itemType,
+        level,
+        sortOrder,
+        estimatedHours,
+        deliverables,
+        acceptanceCriteria,
+        assignedRole,
+      });
+      return res.status(201).json({ item });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to add WBS item', 'WBS_ADD_FAILED', err);
     }
-
-    const item = await blueprintService.addWbsItem(String(templateId), {
-      parentId,
-      title: title.trim(),
-      itemType,
-      level,
-      sortOrder,
-      estimatedHours,
-      deliverables,
-      acceptanceCriteria,
-      assignedRole,
-    });
-    return res.status(201).json({ item });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to add WBS item', 'WBS_ADD_FAILED', err);
   }
-});
+);
 
 /**
  * PUT /api/initiatives/templates/:templateId/wbs/:itemId
@@ -1477,6 +1556,10 @@ router.post('/templates/:templateId/wbs', requireOrgRole('user'), async (req: an
 router.put(
   '/templates/:templateId/wbs/:itemId',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   async (req: any, res: any) => {
     try {
       const { templateId, itemId } = req.params;
@@ -1502,6 +1585,10 @@ router.put(
 router.delete(
   '/templates/:templateId/wbs/:itemId',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   async (req: any, res: any) => {
     try {
       const { templateId, itemId } = req.params;
@@ -1523,6 +1610,10 @@ router.delete(
 router.post(
   '/templates/:templateId/wbs/reorder',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   async (req: any, res: any) => {
     try {
       const { templateId } = req.params;
@@ -1561,27 +1652,35 @@ router.get('/templates/:templateId/validate', async (req: any, res: any) => {
  * POST /api/initiatives/templates/:templateId/clone
  * Deep clone a blueprint template (including WBS items)
  */
-router.post('/templates/:templateId/clone', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/templates/:templateId/clone',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.template.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { templateId } = req.params;
-    // Read intent: cloning a system/public OR own-org template into your org is
-    // allowed; a foreign-org private source must 404 (no cross-org read).
-    if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'read'))) return;
+      const { templateId } = req.params;
+      // Read intent: cloning a system/public OR own-org template into your org is
+      // allowed; a foreign-org private source must 404 (no cross-org read).
+      if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'read'))) return;
 
-    const result = await blueprintService.cloneBlueprint(
-      String(templateId),
-      String(orgId),
-      String(userId)
-    );
-    return res.status(201).json(result);
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to clone blueprint', 'BLUEPRINT_CLONE_FAILED', err);
+      const result = await blueprintService.cloneBlueprint(
+        String(templateId),
+        String(orgId),
+        String(userId)
+      );
+      return res.status(201).json(result);
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to clone blueprint', 'BLUEPRINT_CLONE_FAILED', err);
+    }
   }
-});
+);
 
 /**
  * PATCH /api/initiatives/:id/template
@@ -1589,6 +1688,7 @@ router.post('/templates/:templateId/clone', requireOrgRole('user'), async (req: 
  */
 router.patch(
   '/:id/template',
+  requireInitiativeCapability('initiative.template.apply', { shadow: true }),
   validateBody(UpdateInitiativeTemplateSchema),
   async (req: any, res: any) => {
     try {
@@ -1636,70 +1736,49 @@ router.patch(
  * POST /api/initiatives/:id/apply-template
  * Apply a template to an initiative: creates suggested tasks, milestones, decisions, KPIs, RAID items
  */
-router.post('/:id/apply-template', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/:id/apply-template',
+  requireInitiativeCapability('initiative.template.apply', { shadow: true }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.params;
-    const { templateId } = req.body;
-    if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+      const { id } = req.params;
+      const { templateId } = req.body;
+      if (!templateId) return res.status(400).json({ error: 'templateId is required' });
 
-    // Verify initiative exists
-    const initiative = (await queryHelpers.queryOne(
-      `SELECT id, name, title FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [String(id), String(orgId)]
-    )) as any;
-    if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+      // Verify initiative exists
+      const initiative = (await queryHelpers.queryOne(
+        `SELECT id, name, title FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [String(id), String(orgId)]
+      )) as any;
+      if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
 
-    // Fetch template
-    const template = await initiativeTemplateService.getTemplateById(String(templateId));
-    if (!template) return res.status(404).json({ error: 'Template not found' });
+      // Fetch template
+      const template = await initiativeTemplateService.getTemplateById(String(templateId));
+      if (!template) return res.status(404).json({ error: 'Template not found' });
 
-    const now = new Date().toISOString();
-    const created = { tasks: 0, milestones: 0, decisions: 0, kpis: 0, raidItems: 0 };
+      const now = new Date().toISOString();
+      const created = { tasks: 0, milestones: 0, decisions: 0, kpis: 0, raidItems: 0 };
 
-    // 1. Create suggested tasks (V3: suggestedTaskItems)
-    const taskItems = template.suggestedTaskItems || [];
-    for (const task of taskItems) {
-      try {
-        const taskId = uuidv4();
-        await queryHelpers.queryRun(
-          `INSERT INTO tasks (id, organization_id, initiative_id, title, type, priority, status, step_phase, created_by, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'TODO', ?, ?, ?, ?)`,
-          [
-            taskId,
-            String(orgId),
-            String(id),
-            String(task.title || 'Untitled task'),
-            String(task.taskType || task.type || 'general'),
-            String(task.priority || 'medium'),
-            String(task.stepPhase || task.phase || null),
-            String(userId || 'system'),
-            now,
-            now,
-          ]
-        );
-        created.tasks++;
-      } catch {
-        // table schema may differ — skip individual failures
-      }
-    }
-
-    // Fallback: V1 suggestedTasks (simple string array)
-    if (taskItems.length === 0 && template.suggestedTasks?.length) {
-      for (const taskTitle of template.suggestedTasks) {
+      // 1. Create suggested tasks (V3: suggestedTaskItems)
+      const taskItems = template.suggestedTaskItems || [];
+      for (const task of taskItems) {
         try {
           const taskId = uuidv4();
           await queryHelpers.queryRun(
-            `INSERT INTO tasks (id, organization_id, initiative_id, title, status, created_by, created_at, updated_at)
-             VALUES (?, ?, ?, ?, 'TODO', ?, ?, ?)`,
+            `INSERT INTO tasks (id, organization_id, initiative_id, title, type, priority, status, step_phase, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'TODO', ?, ?, ?, ?)`,
             [
               taskId,
               String(orgId),
               String(id),
-              String(taskTitle),
+              String(task.title || 'Untitled task'),
+              String(task.taskType || task.type || 'general'),
+              String(task.priority || 'medium'),
+              String(task.stepPhase || task.phase || null),
               String(userId || 'system'),
               now,
               now,
@@ -1707,237 +1786,267 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
           );
           created.tasks++;
         } catch {
+          // table schema may differ — skip individual failures
+        }
+      }
+
+      // Fallback: V1 suggestedTasks (simple string array)
+      if (taskItems.length === 0 && template.suggestedTasks?.length) {
+        for (const taskTitle of template.suggestedTasks) {
+          try {
+            const taskId = uuidv4();
+            await queryHelpers.queryRun(
+              `INSERT INTO tasks (id, organization_id, initiative_id, title, status, created_by, created_at, updated_at)
+             VALUES (?, ?, ?, ?, 'TODO', ?, ?, ?)`,
+              [
+                taskId,
+                String(orgId),
+                String(id),
+                String(taskTitle),
+                String(userId || 'system'),
+                now,
+                now,
+              ]
+            );
+            created.tasks++;
+          } catch {
+            // skip
+          }
+        }
+      }
+
+      // 2. Create suggested milestones
+      const milestones = template.suggestedMilestones || [];
+      for (let i = 0; i < milestones.length; i++) {
+        const ms = milestones[i];
+        try {
+          const msId = uuidv4();
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_milestones (id, initiative_id, organization_id, name, description, status, is_gate, order_index, created_at)
+           VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
+            [
+              msId,
+              String(id),
+              String(orgId),
+              String(ms.name || `Milestone ${i + 1}`),
+              String(ms.description || ''),
+              ms.isGate ? 1 : 0,
+              ms.order ?? i,
+              now,
+            ]
+          );
+          created.milestones++;
+        } catch {
           // skip
         }
       }
-    }
 
-    // 2. Create suggested milestones
-    const milestones = template.suggestedMilestones || [];
-    for (let i = 0; i < milestones.length; i++) {
-      const ms = milestones[i];
-      try {
-        const msId = uuidv4();
-        await queryHelpers.queryRun(
-          `INSERT INTO initiative_milestones (id, initiative_id, organization_id, name, description, status, is_gate, order_index, created_at)
-           VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
-          [
-            msId,
-            String(id),
-            String(orgId),
-            String(ms.name || `Milestone ${i + 1}`),
-            String(ms.description || ''),
-            ms.isGate ? 1 : 0,
-            ms.order ?? i,
-            now,
-          ]
-        );
-        created.milestones++;
-      } catch {
-        // skip
-      }
-    }
-
-    // 3. Create suggested decisions (gate decisions)
-    const decisions = template.suggestedDecisions || [];
-    for (const dec of decisions) {
-      try {
-        const decId = uuidv4();
-        await queryHelpers.queryRun(
-          `INSERT INTO decisions (id, organization_id, initiative_id, title, type, priority, status, pmo_domain, trigger_status, created_by, created_at, updated_at)
+      // 3. Create suggested decisions (gate decisions)
+      const decisions = template.suggestedDecisions || [];
+      for (const dec of decisions) {
+        try {
+          const decId = uuidv4();
+          await queryHelpers.queryRun(
+            `INSERT INTO decisions (id, organization_id, initiative_id, title, type, priority, status, pmo_domain, trigger_status, created_by, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
-          [
-            decId,
-            String(orgId),
-            String(id),
-            String(dec.title || 'Untitled decision'),
-            String(dec.type || 'APPROVAL'),
-            String(dec.priority || 'medium'),
-            String(dec.pmoDomain || dec.pmo_domain || null),
-            String(dec.triggerStatus || dec.trigger_status || null),
-            String(userId || 'system'),
-            now,
-            now,
-          ]
-        );
-        created.decisions++;
-      } catch {
-        // skip — decisions table schema may vary
+            [
+              decId,
+              String(orgId),
+              String(id),
+              String(dec.title || 'Untitled decision'),
+              String(dec.type || 'APPROVAL'),
+              String(dec.priority || 'medium'),
+              String(dec.pmoDomain || dec.pmo_domain || null),
+              String(dec.triggerStatus || dec.trigger_status || null),
+              String(userId || 'system'),
+              now,
+              now,
+            ]
+          );
+          created.decisions++;
+        } catch {
+          // skip — decisions table schema may vary
+        }
       }
-    }
 
-    // 4. Create suggested KPIs
-    const kpis = template.suggestedKpis || [];
-    for (const kpi of kpis) {
-      try {
-        const observationPhase =
-          String(kpi.observationPhase || '').trim() === 'realization' ||
-          String(kpi.observationPhase || '').trim() === 'both'
-            ? String(kpi.observationPhase)
-            : 'post-implementation';
-        const measurementFrequency =
-          String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() === 'DAILY'
-            ? 'DAILY'
-            : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
-                'WEEKLY'
-              ? 'WEEKLY'
+      // 4. Create suggested KPIs
+      const kpis = template.suggestedKpis || [];
+      for (const kpi of kpis) {
+        try {
+          const observationPhase =
+            String(kpi.observationPhase || '').trim() === 'realization' ||
+            String(kpi.observationPhase || '').trim() === 'both'
+              ? String(kpi.observationPhase)
+              : 'post-implementation';
+          const measurementFrequency =
+            String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() === 'DAILY'
+              ? 'DAILY'
               : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
-                  'QUARTERLY'
-                ? 'QUARTERLY'
-                : 'MONTHLY';
-        const baselineValue = kpi.baselineValue ?? kpi.baseline ?? null;
-        const targetValue = kpi.targetValue ?? kpi.target ?? kpi.target_value ?? null;
-        const realizationTargetValue =
-          kpi.realizationExpectation?.targetValue ?? kpi.realizationTarget ?? targetValue;
-        const postImplementationTargetValue =
-          kpi.postImplementationExpectation?.targetValue ??
-          kpi.postImplementationTarget ??
-          targetValue;
+                  'WEEKLY'
+                ? 'WEEKLY'
+                : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
+                    'QUARTERLY'
+                  ? 'QUARTERLY'
+                  : 'MONTHLY';
+          const baselineValue = kpi.baselineValue ?? kpi.baseline ?? null;
+          const targetValue = kpi.targetValue ?? kpi.target ?? kpi.target_value ?? null;
+          const realizationTargetValue =
+            kpi.realizationExpectation?.targetValue ?? kpi.realizationTarget ?? targetValue;
+          const postImplementationTargetValue =
+            kpi.postImplementationExpectation?.targetValue ??
+            kpi.postImplementationTarget ??
+            targetValue;
 
-        await upsertInitiativeKpiAssignment({
-          initiativeId: String(id),
-          organizationId: String(orgId),
-          userId: String(userId || 'system'),
-          name: String(kpi.name || 'Untitled KPI'),
-          description: String(kpi.description || ''),
-          category: String(kpi.category || 'benefits'),
-          unit: String(kpi.unit || '%'),
-          baselineValue,
-          targetValue,
-          measurementFrequency,
-          currentValue: baselineValue,
-          definitionSource: 'initiative-custom',
-          observationPhase:
-            observationPhase === 'realization' || observationPhase === 'both'
-              ? (observationPhase as 'realization' | 'both')
-              : 'post-implementation',
-          trackedInRealization: observationPhase === 'realization' || observationPhase === 'both',
-          trackedPostImplementation:
-            observationPhase === 'post-implementation' || observationPhase === 'both',
-          realizationExpectation: {
+          await upsertInitiativeKpiAssignment({
+            initiativeId: String(id),
+            organizationId: String(orgId),
+            userId: String(userId || 'system'),
+            name: String(kpi.name || 'Untitled KPI'),
+            description: String(kpi.description || ''),
+            category: String(kpi.category || 'benefits'),
+            unit: String(kpi.unit || '%'),
             baselineValue,
-            targetValue: realizationTargetValue,
+            targetValue,
             measurementFrequency,
-          },
-          postImplementationExpectation: {
-            baselineValue,
-            targetValue: postImplementationTargetValue,
-            measurementFrequency,
-          },
-        });
-        created.kpis++;
-      } catch {
-        // skip
+            currentValue: baselineValue,
+            definitionSource: 'initiative-custom',
+            observationPhase:
+              observationPhase === 'realization' || observationPhase === 'both'
+                ? (observationPhase as 'realization' | 'both')
+                : 'post-implementation',
+            trackedInRealization: observationPhase === 'realization' || observationPhase === 'both',
+            trackedPostImplementation:
+              observationPhase === 'post-implementation' || observationPhase === 'both',
+            realizationExpectation: {
+              baselineValue,
+              targetValue: realizationTargetValue,
+              measurementFrequency,
+            },
+            postImplementationExpectation: {
+              baselineValue,
+              targetValue: postImplementationTargetValue,
+              measurementFrequency,
+            },
+          });
+          created.kpis++;
+        } catch {
+          // skip
+        }
       }
-    }
 
-    // 5. Create RAID template items
-    const raidItems = template.raidTemplates || [];
-    for (const item of raidItems) {
-      try {
-        const raidId = uuidv4();
-        await queryHelpers.queryRun(
-          `INSERT INTO raid_items (id, initiative_id, organization_id, type, title, description, severity, status, created_at, updated_at)
+      // 5. Create RAID template items
+      const raidItems = template.raidTemplates || [];
+      for (const item of raidItems) {
+        try {
+          const raidId = uuidv4();
+          await queryHelpers.queryRun(
+            `INSERT INTO raid_items (id, initiative_id, organization_id, type, title, description, severity, status, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?)`,
-          [
-            raidId,
-            String(id),
-            String(orgId),
-            String(item.type || 'RISK').toUpperCase(),
-            String(item.title || 'Untitled'),
-            String(item.description || ''),
-            String(item.impact || item.severity || 'MEDIUM').toUpperCase(),
-            now,
-            now,
-          ]
-        );
-        created.raidItems++;
-      } catch {
-        // skip
+            [
+              raidId,
+              String(id),
+              String(orgId),
+              String(item.type || 'RISK').toUpperCase(),
+              String(item.title || 'Untitled'),
+              String(item.description || ''),
+              String(item.impact || item.severity || 'MEDIUM').toUpperCase(),
+              now,
+              now,
+            ]
+          );
+          created.raidItems++;
+        } catch {
+          // skip
+        }
       }
+
+      // Update initiative template reference
+      await queryHelpers.queryRun(
+        `UPDATE initiatives SET initiative_template_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [String(templateId), now, String(id), String(orgId)]
+      );
+
+      return res.json({
+        success: true,
+        initiativeId: id,
+        templateId,
+        templateName: template.name,
+        created,
+      });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to apply template', 'TEMPLATE_APPLY_FAILED', err);
     }
-
-    // Update initiative template reference
-    await queryHelpers.queryRun(
-      `UPDATE initiatives SET initiative_template_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
-      [String(templateId), now, String(id), String(orgId)]
-    );
-
-    return res.json({
-      success: true,
-      initiativeId: id,
-      templateId,
-      templateName: template.name,
-      created,
-    });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to apply template', 'TEMPLATE_APPLY_FAILED', err);
   }
-});
+);
 
 /**
  * POST /api/initiatives/:id/apply-blueprint
  * Enhanced apply that includes WBS tasks, milestone dependencies, role templates, and DoD per level
  */
-router.post('/:id/apply-blueprint', requireOrgRole('user'), async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/:id/apply-blueprint',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.template.apply', { shadow: true }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.params;
-    const { templateId } = req.body;
-    if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+      const { id } = req.params;
+      const { templateId } = req.body;
+      if (!templateId) return res.status(400).json({ error: 'templateId is required' });
 
-    const initiative = await queryHelpers.queryOne(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [String(id), String(orgId)]
-    );
-    if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+      const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [String(id), String(orgId)]
+      );
+      if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
 
-    const template = await initiativeTemplateService.getTemplateById(String(templateId));
-    if (!template) return res.status(404).json({ error: 'Template not found' });
+      const template = await initiativeTemplateService.getTemplateById(String(templateId));
+      if (!template) return res.status(404).json({ error: 'Template not found' });
 
-    const wbsResult = await blueprintService.applyWbs(
-      String(templateId),
-      String(id),
-      String(orgId),
-      String(userId)
-    );
-    const msResult = await blueprintService.applyMilestoneDependencies(
-      String(templateId),
-      String(id),
-      String(orgId)
-    );
-    const roleResult = await blueprintService.applyRoleTemplates(
-      String(templateId),
-      String(id),
-      String(orgId),
-      String(userId)
-    );
-    const dodResult = await blueprintService.applyDoDPerLevel(String(templateId), String(id));
+      const wbsResult = await blueprintService.applyWbs(
+        String(templateId),
+        String(id),
+        String(orgId),
+        String(userId)
+      );
+      const msResult = await blueprintService.applyMilestoneDependencies(
+        String(templateId),
+        String(id),
+        String(orgId)
+      );
+      const roleResult = await blueprintService.applyRoleTemplates(
+        String(templateId),
+        String(id),
+        String(orgId),
+        String(userId)
+      );
+      const dodResult = await blueprintService.applyDoDPerLevel(String(templateId), String(id));
 
-    await queryHelpers.queryRun(
-      `UPDATE initiatives SET initiative_template_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
-      [String(templateId), new Date().toISOString(), String(id), String(orgId)]
-    );
+      await queryHelpers.queryRun(
+        `UPDATE initiatives SET initiative_template_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [String(templateId), new Date().toISOString(), String(id), String(orgId)]
+      );
 
-    return res.json({
-      success: true,
-      initiativeId: id,
-      templateId,
-      templateName: template.name,
-      applied: {
-        tasksCreated: wbsResult.tasksCreated,
-        milestonesCreated: msResult.milestonesCreated,
-        rolesCreated: roleResult.rolesCreated,
-        dodLevelsApplied: dodResult.levelsApplied,
-      },
-    });
-  } catch (err: any) {
-    return failInitiative500(res, 'Failed to apply blueprint', 'BLUEPRINT_APPLY_FAILED', err);
+      return res.json({
+        success: true,
+        initiativeId: id,
+        templateId,
+        templateName: template.name,
+        applied: {
+          tasksCreated: wbsResult.tasksCreated,
+          milestonesCreated: msResult.milestonesCreated,
+          rolesCreated: roleResult.rolesCreated,
+          dodLevelsApplied: dodResult.levelsApplied,
+        },
+      });
+    } catch (err: any) {
+      return failInitiative500(res, 'Failed to apply blueprint', 'BLUEPRINT_APPLY_FAILED', err);
+    }
   }
-});
+);
 
 function isMissingInitiativeSectionTypesTable(error: unknown): boolean {
   const message = String((error as any)?.message || error || '').toLowerCase();
@@ -1999,131 +2108,159 @@ router.get('/section-types/:id', async (req: any, res: any) => {
  * POST /api/initiatives/section-types
  * Create a new organization section type
  */
-router.post('/section-types', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/section-types',
+  requireInitiativeCapability('initiative.section_type.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const created = await initiativeSectionTypeService.createSectionType({
-      ...req.body,
-      organizationId: orgId,
-      createdBy: req.user?.id,
-    });
-    return res.status(201).json(created);
-  } catch (err: any) {
-    return failInitiative500(
-      res,
-      'Failed to create section type',
-      'SECTION_TYPE_CREATE_FAILED',
-      err
-    );
+      const created = await initiativeSectionTypeService.createSectionType({
+        ...req.body,
+        organizationId: orgId,
+        createdBy: req.user?.id,
+      });
+      return res.status(201).json(created);
+    } catch (err: any) {
+      return failInitiative500(
+        res,
+        'Failed to create section type',
+        'SECTION_TYPE_CREATE_FAILED',
+        err
+      );
+    }
   }
-});
+);
 
 /**
  * PUT /api/initiatives/section-types/:id
  * Update an organization section type
  */
-router.put('/section-types/:id', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+  '/section-types/:id',
+  requireInitiativeCapability('initiative.section_type.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // SECURITY (M13 cross-org IDOR): the service updates by id only and never
-    // checks the owning org, so without this guard org A could rewrite org B's
-    // private section type. A foreign-org (non-system) row must 404, never write.
-    const existing = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
-    if (!existing) return res.status(404).json({ error: 'Section type not found' });
-    if (existing.isSystem || !existing.organizationId) {
-      return res.status(403).json({ error: 'Cannot modify system section types' });
-    }
-    if (existing.organizationId !== String(orgId)) {
-      return res.status(404).json({ error: 'Section type not found' });
-    }
+      // SECURITY (M13 cross-org IDOR): the service updates by id only and never
+      // checks the owning org, so without this guard org A could rewrite org B's
+      // private section type. A foreign-org (non-system) row must 404, never write.
+      const existing = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
+      if (!existing) return res.status(404).json({ error: 'Section type not found' });
+      if (existing.isSystem || !existing.organizationId) {
+        return res.status(403).json({ error: 'Cannot modify system section types' });
+      }
+      if (existing.organizationId !== String(orgId)) {
+        return res.status(404).json({ error: 'Section type not found' });
+      }
 
-    const updated = await initiativeSectionTypeService.updateSectionType(req.params.id, req.body);
-    return res.json(updated);
-  } catch (err: any) {
-    if (err.message?.includes('system')) {
-      return res.status(403).json({ error: err.message });
+      const updated = await initiativeSectionTypeService.updateSectionType(req.params.id, req.body);
+      return res.json(updated);
+    } catch (err: any) {
+      if (err.message?.includes('system')) {
+        return res.status(403).json({ error: err.message });
+      }
+      return failInitiative500(
+        res,
+        'Failed to update section type',
+        'SECTION_TYPE_UPDATE_FAILED',
+        err
+      );
     }
-    return failInitiative500(
-      res,
-      'Failed to update section type',
-      'SECTION_TYPE_UPDATE_FAILED',
-      err
-    );
   }
-});
+);
 
 /**
  * DELETE /api/initiatives/section-types/:id
  * Deactivate a section type (soft delete)
  */
-router.delete('/section-types/:id', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.delete(
+  '/section-types/:id',
+  requireInitiativeCapability('initiative.section_type.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // SECURITY (M13 cross-org IDOR): mirror the update guard — the service
-    // soft-deletes by id only. A foreign-org (non-system) row must 404, never
-    // be deactivated by another org.
-    const existing = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
-    if (!existing) return res.status(404).json({ error: 'Section type not found' });
-    if (existing.isSystem || !existing.organizationId) {
-      return res.status(403).json({ error: 'Cannot delete system section types' });
-    }
-    if (existing.organizationId !== String(orgId)) {
-      return res.status(404).json({ error: 'Section type not found' });
-    }
+      // SECURITY (M13 cross-org IDOR): mirror the update guard — the service
+      // soft-deletes by id only. A foreign-org (non-system) row must 404, never
+      // be deactivated by another org.
+      const existing = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
+      if (!existing) return res.status(404).json({ error: 'Section type not found' });
+      if (existing.isSystem || !existing.organizationId) {
+        return res.status(403).json({ error: 'Cannot delete system section types' });
+      }
+      if (existing.organizationId !== String(orgId)) {
+        return res.status(404).json({ error: 'Section type not found' });
+      }
 
-    await initiativeSectionTypeService.deleteSectionType(req.params.id);
-    return res.json({ success: true });
-  } catch (err: any) {
-    if (err.message?.includes('system')) {
-      return res.status(403).json({ error: err.message });
+      await initiativeSectionTypeService.deleteSectionType(req.params.id);
+      return res.json({ success: true });
+    } catch (err: any) {
+      if (err.message?.includes('system')) {
+        return res.status(403).json({ error: err.message });
+      }
+      return failInitiative500(
+        res,
+        'Failed to delete section type',
+        'SECTION_TYPE_DELETE_FAILED',
+        err
+      );
     }
-    return failInitiative500(
-      res,
-      'Failed to delete section type',
-      'SECTION_TYPE_DELETE_FAILED',
-      err
-    );
   }
-});
+);
 
 /**
  * POST /api/initiatives/section-types/:id/duplicate
  * Duplicate a section type to organization
  */
-router.post('/section-types/:id/duplicate', async (req: any, res: any) => {
-  try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+  '/section-types/:id/duplicate',
+  requireInitiativeCapability('initiative.section_type.manage', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // SECURITY (M13 cross-org IDOR): you may only duplicate a system section type
-    // or one your own org owns — never read a foreign org's private type.
-    const source = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
-    if (!source) return res.status(404).json({ error: 'Source section type not found' });
-    if (source.organizationId && source.organizationId !== String(orgId)) {
-      return res.status(404).json({ error: 'Source section type not found' });
+      // SECURITY (M13 cross-org IDOR): you may only duplicate a system section type
+      // or one your own org owns — never read a foreign org's private type.
+      const source = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
+      if (!source) return res.status(404).json({ error: 'Source section type not found' });
+      if (source.organizationId && source.organizationId !== String(orgId)) {
+        return res.status(404).json({ error: 'Source section type not found' });
+      }
+
+      const duplicated = await initiativeSectionTypeService.duplicateSectionType(
+        req.params.id,
+        orgId,
+        req.user?.id
+      );
+      return res.status(201).json(duplicated);
+    } catch (err: any) {
+      return failInitiative500(
+        res,
+        'Failed to duplicate section type',
+        'SECTION_TYPE_DUPLICATE_FAILED',
+        err
+      );
     }
-
-    const duplicated = await initiativeSectionTypeService.duplicateSectionType(
-      req.params.id,
-      orgId,
-      req.user?.id
-    );
-    return res.status(201).json(duplicated);
-  } catch (err: any) {
-    return failInitiative500(
-      res,
-      'Failed to duplicate section type',
-      'SECTION_TYPE_DUPLICATE_FAILED',
-      err
-    );
   }
-});
+);
 
 // ==========================================
 // AI GENERATION ENDPOINTS
@@ -2661,7 +2798,11 @@ router.get('/:id/kpis', InitiativeController.getInitiativeKpis);
  * POST /api/initiatives/:id/kpis
  * Create a new KPI for an initiative
  */
-router.post('/:id/kpis', InitiativeController.createInitiativeKpi);
+router.post(
+  '/:id/kpis',
+  requireInitiativeCapability('kpi.update', { shadow: true }),
+  InitiativeController.createInitiativeKpi
+);
 
 /**
  * PUT /api/initiatives/:id/kpis/:kpiId
@@ -2677,7 +2818,11 @@ router.put(
  * DELETE /api/initiatives/:id/kpis/:kpiId
  * Delete KPI assignment for an initiative
  */
-router.delete('/:id/kpis/:kpiId', InitiativeController.deleteInitiativeKpi);
+router.delete(
+  '/:id/kpis/:kpiId',
+  requireInitiativeCapability('kpi.update', { shadow: true }),
+  InitiativeController.deleteInitiativeKpi
+);
 
 // ==========================================
 // ROADMAP MODULE: MILESTONES ENDPOINTS
@@ -2693,19 +2838,31 @@ router.get('/:id/milestones', InitiativeController.getMilestones);
  * POST /api/initiatives/:id/milestones
  * Create a new milestone for an initiative
  */
-router.post('/:id/milestones', InitiativeController.createMilestone);
+router.post(
+  '/:id/milestones',
+  requireInitiativeCapability('initiative.milestone.manage', { shadow: true }),
+  InitiativeController.createMilestone
+);
 
 /**
  * PUT /api/initiatives/:id/milestones/:milestoneId
  * Update a milestone
  */
-router.put('/:id/milestones/:milestoneId', InitiativeController.updateMilestone);
+router.put(
+  '/:id/milestones/:milestoneId',
+  requireInitiativeCapability('initiative.milestone.manage', { shadow: true }),
+  InitiativeController.updateMilestone
+);
 
 /**
  * DELETE /api/initiatives/:id/milestones/:milestoneId
  * Delete a milestone
  */
-router.delete('/:id/milestones/:milestoneId', InitiativeController.deleteMilestone);
+router.delete(
+  '/:id/milestones/:milestoneId',
+  requireInitiativeCapability('initiative.milestone.manage', { shadow: true }),
+  InitiativeController.deleteMilestone
+);
 
 // ==========================================
 // ROADMAP MODULE: SCHEDULE BASELINES (Timeline lock)
@@ -2746,19 +2903,31 @@ router.get('/:id/resources', InitiativeController.getResources);
  * POST /api/initiatives/:id/resources
  * Add a resource to an initiative
  */
-router.post('/:id/resources', InitiativeController.addResource);
+router.post(
+  '/:id/resources',
+  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
+  InitiativeController.addResource
+);
 
 /**
  * DELETE /api/initiatives/:id/resources/:resourceId
  * Remove a resource from an initiative
  */
-router.delete('/:id/resources/:resourceId', InitiativeController.deleteResource);
+router.delete(
+  '/:id/resources/:resourceId',
+  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
+  InitiativeController.deleteResource
+);
 
 /**
  * PUT /api/initiatives/:id/resources/:resourceId
  * Update a resource in an initiative
  */
-router.put('/:id/resources/:resourceId', InitiativeController.updateResource);
+router.put(
+  '/:id/resources/:resourceId',
+  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
+  InitiativeController.updateResource
+);
 
 /**
  * POST /api/initiatives/:id/resources/ai-apply-log
@@ -2766,6 +2935,7 @@ router.put('/:id/resources/:resourceId', InitiativeController.updateResource);
  */
 router.post(
   '/:id/resources/ai-apply-log',
+  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
   validateBody(ResourcesAiApplyLogSchema),
   InitiativeController.logResourcesAiApply
 );
@@ -2775,32 +2945,42 @@ router.post(
 // ==========================================
 
 router.get('/:id/staffing-plans', StaffingPlanController.listPlans);
-router.post('/:id/staffing-plans', requireOrgRole('user'), StaffingPlanController.createPlan);
+router.post(
+  '/:id/staffing-plans',
+  requireOrgRole('user'),
+  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  StaffingPlanController.createPlan
+);
 router.get('/:id/staffing-plans/:planId', StaffingPlanController.getPlan);
 router.put(
   '/:id/staffing-plans/:planId',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.updatePlan
 );
 router.delete(
   '/:id/staffing-plans/:planId',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.deletePlan
 );
 
 router.post(
   '/:id/staffing-plans/:planId/roles',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.addRole
 );
 router.put(
   '/:id/staffing-plans/:planId/roles/:roleId',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.updateRole
 );
 router.delete(
   '/:id/staffing-plans/:planId/roles/:roleId',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.deleteRole
 );
 
@@ -2808,6 +2988,7 @@ router.get('/:id/staffing-plans/:planId/gaps', StaffingPlanController.getGaps);
 router.post(
   '/:id/staffing-plans/:planId/sync-capacity',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.syncCapacity
 );
 
@@ -2825,19 +3006,31 @@ router.get('/:id/budget-items', InitiativeController.getBudgetItems);
  * POST /api/initiatives/:id/budget-items
  * Add a budget item to an initiative
  */
-router.post('/:id/budget-items', InitiativeController.addBudgetItem);
+router.post(
+  '/:id/budget-items',
+  requireInitiativeCapability('initiative.budget.manage', { shadow: true }),
+  InitiativeController.addBudgetItem
+);
 
 /**
  * PUT /api/initiatives/:id/budget-items/:itemId
  * Update a budget item
  */
-router.put('/:id/budget-items/:itemId', InitiativeController.updateBudgetItem);
+router.put(
+  '/:id/budget-items/:itemId',
+  requireInitiativeCapability('initiative.budget.manage', { shadow: true }),
+  InitiativeController.updateBudgetItem
+);
 
 /**
  * DELETE /api/initiatives/:id/budget-items/:itemId
  * Delete a budget item
  */
-router.delete('/:id/budget-items/:itemId', InitiativeController.deleteBudgetItem);
+router.delete(
+  '/:id/budget-items/:itemId',
+  requireInitiativeCapability('initiative.budget.manage', { shadow: true }),
+  InitiativeController.deleteBudgetItem
+);
 
 // ==========================================
 // ROADMAP MODULE: TOOLS ENDPOINTS
@@ -2853,19 +3046,31 @@ router.get('/:id/tools', InitiativeController.getTools);
  * POST /api/initiatives/:id/tools
  * Add a tool to an initiative
  */
-router.post('/:id/tools', InitiativeController.addTool);
+router.post(
+  '/:id/tools',
+  requireInitiativeCapability('initiative.tool.manage', { shadow: true }),
+  InitiativeController.addTool
+);
 
 /**
  * PUT /api/initiatives/:id/tools/:toolId
  * Update a tool
  */
-router.put('/:id/tools/:toolId', InitiativeController.updateTool);
+router.put(
+  '/:id/tools/:toolId',
+  requireInitiativeCapability('initiative.tool.manage', { shadow: true }),
+  InitiativeController.updateTool
+);
 
 /**
  * DELETE /api/initiatives/:id/tools/:toolId
  * Delete a tool
  */
-router.delete('/:id/tools/:toolId', InitiativeController.deleteTool);
+router.delete(
+  '/:id/tools/:toolId',
+  requireInitiativeCapability('initiative.tool.manage', { shadow: true }),
+  InitiativeController.deleteTool
+);
 
 // ==========================================
 // ROADMAP MODULE: INTANGIBLE ASSETS ENDPOINTS
@@ -2881,36 +3086,76 @@ router.get('/:id/intangible-assets', InitiativeController.getIntangibleAssets);
  * POST /api/initiatives/:id/intangible-assets
  * Add an intangible asset to an initiative
  */
-router.post('/:id/intangible-assets', InitiativeController.addIntangibleAsset);
+router.post(
+  '/:id/intangible-assets',
+  requireInitiativeCapability('initiative.intangible.manage', { shadow: true }),
+  InitiativeController.addIntangibleAsset
+);
 
 /**
  * PUT /api/initiatives/:id/intangible-assets/:assetId
  * Update an intangible asset
  */
-router.put('/:id/intangible-assets/:assetId', InitiativeController.updateIntangibleAsset);
+router.put(
+  '/:id/intangible-assets/:assetId',
+  requireInitiativeCapability('initiative.intangible.manage', { shadow: true }),
+  InitiativeController.updateIntangibleAsset
+);
 
 /**
  * DELETE /api/initiatives/:id/intangible-assets/:assetId
  * Delete an intangible asset
  */
-router.delete('/:id/intangible-assets/:assetId', InitiativeController.deleteIntangibleAsset);
+router.delete(
+  '/:id/intangible-assets/:assetId',
+  requireInitiativeCapability('initiative.intangible.manage', { shadow: true }),
+  InitiativeController.deleteIntangibleAsset
+);
 
 // ==========================================
 // P0: RAID / Stakeholders / Watchers / History
 // ==========================================
 
 router.get('/:id/stakeholders', InitiativeController.getStakeholders);
-router.post('/:id/stakeholders', InitiativeController.addStakeholder);
-router.delete('/:id/stakeholders/:stakeholderId', InitiativeController.deleteStakeholder);
+router.post(
+  '/:id/stakeholders',
+  requireInitiativeCapability('initiative.stakeholder.manage', { shadow: true }),
+  InitiativeController.addStakeholder
+);
+router.delete(
+  '/:id/stakeholders/:stakeholderId',
+  requireInitiativeCapability('initiative.stakeholder.manage', { shadow: true }),
+  InitiativeController.deleteStakeholder
+);
 
 router.get('/:id/watchers', InitiativeController.getWatchers);
-router.post('/:id/watchers', InitiativeController.addWatcher);
-router.delete('/:id/watchers/:watcherId', InitiativeController.deleteWatcher);
+router.post(
+  '/:id/watchers',
+  requireInitiativeCapability('initiative.watcher.manage', { shadow: true }),
+  InitiativeController.addWatcher
+);
+router.delete(
+  '/:id/watchers/:watcherId',
+  requireInitiativeCapability('initiative.watcher.manage', { shadow: true }),
+  InitiativeController.deleteWatcher
+);
 
 router.get('/:id/raid', InitiativeController.getRaid);
-router.post('/:id/raid', InitiativeController.createRaidItem);
-router.patch('/:id/raid/:raidId', InitiativeController.updateRaidItem);
-router.delete('/:id/raid/:raidId', InitiativeController.deleteRaidItem);
+router.post(
+  '/:id/raid',
+  requireInitiativeCapability('initiative.raid.manage', { shadow: true }),
+  InitiativeController.createRaidItem
+);
+router.patch(
+  '/:id/raid/:raidId',
+  requireInitiativeCapability('initiative.raid.manage', { shadow: true }),
+  InitiativeController.updateRaidItem
+);
+router.delete(
+  '/:id/raid/:raidId',
+  requireInitiativeCapability('initiative.raid.manage', { shadow: true }),
+  InitiativeController.deleteRaidItem
+);
 
 router.get('/:id/history', InitiativeController.getHistory);
 
@@ -2945,13 +3190,25 @@ router.get('/:id/task-dependencies', InitiativeController.getInitiativeTaskDepen
 // ==========================================
 
 router.get('/:id/gate-roles', InitiativeController.getGateRoles);
-router.put('/:id/gate-roles', InitiativeController.updateGateRoles);
+router.put(
+  '/:id/gate-roles',
+  requireInitiativeCapability('initiative.gate_role.manage', { shadow: true }),
+  InitiativeController.updateGateRoles
+);
 router.post('/similar-check', InitiativeController.checkSimilarInitiatives);
 router.post('/validate-card', InitiativeController.validateCard);
 router.post('/:id/gate-ai-check', InitiativeController.getGateAiCheck);
 router.get('/:id/linked-items', InitiativeController.getLinkedItems);
-router.post('/:id/linked-items', InitiativeController.addLinkedItem);
-router.delete('/:id/linked-items/:linkId', InitiativeController.removeLinkedItem);
+router.post(
+  '/:id/linked-items',
+  requireInitiativeCapability('initiative.link.manage', { shadow: true }),
+  InitiativeController.addLinkedItem
+);
+router.delete(
+  '/:id/linked-items/:linkId',
+  requireInitiativeCapability('initiative.link.manage', { shadow: true }),
+  InitiativeController.removeLinkedItem
+);
 router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
 router.get('/:id/status-history', InitiativeController.getStatusHistory);
 
