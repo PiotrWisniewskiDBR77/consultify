@@ -22,7 +22,7 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
   status,
   onExtendRequest,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const { urgency, daysRemaining, message } = useMemo(() => {
@@ -50,10 +50,10 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
         : `Overdue by ${overdueDays} ${overdueDays === 1 ? 'day' : 'days'}!`;
     } else if (diffDays === 0) {
       urgency = 'critical';
-      message = isPolish ? 'Termin upływa dzisiaj!' : 'Due today!';
+      message = t('myWork.deadlineAlert.dueToday', 'Due today!');
     } else if (diffDays === 1) {
       urgency = 'critical';
-      message = isPolish ? 'Termin upływa jutro!' : 'Due tomorrow!';
+      message = t('myWork.deadlineAlert.dueTomorrow', 'Due tomorrow!');
     } else if (diffDays <= 3) {
       urgency = 'warning';
       message = isPolish ? `Pozostały ${diffDays} dni do terminu` : `${diffDays} days remaining`;
@@ -154,9 +154,7 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
             <p className={`text-sm font-semibold ${currentConfig.textColor}`}>{message}</p>
             {urgency === 'overdue' && (
               <p className="text-xs text-danger-600/70 dark:text-danger-400/70 mt-0.5">
-                {isPolish
-                  ? 'Ta decyzja wymaga natychmiastowej uwagi'
-                  : 'This decision requires immediate attention'}
+                {t('myWork.deadlineAlert.thisDecisionRequiresImmediate', 'This decision requires immediate attention')}
               </p>
             )}
           </div>
@@ -177,11 +175,9 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
           <Clock size={14} className={currentConfig.iconColor} />
           <span className={`text-sm font-bold ${currentConfig.textColor}`}>
             {urgency === 'overdue'
-              ? `${Math.abs(daysRemaining!)}d ${isPolish ? 'po terminie' : 'overdue'}`
+              ? `${Math.abs(daysRemaining!)}d ${t('myWork.deadlineAlert.overdue', 'overdue')}`
               : daysRemaining === 0
-                ? isPolish
-                  ? 'Dziś'
-                  : 'Today'
+                ? t('myWork.deadlineAlert.today', 'Today')
                 : `${daysRemaining}d`}
           </span>
         </div>

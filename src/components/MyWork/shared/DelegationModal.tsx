@@ -91,7 +91,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
   currentDeciderId,
   onDelegated,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [delegationType, setDelegationType] = useState<DelegationType>('input');
@@ -118,12 +118,12 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
   const handleSubmit = async () => {
     // Validate required fields before API call
     if (!decisionId) {
-      toast.error(isPolish ? 'Brak identyfikatora decyzji' : 'Missing decision ID');
+      toast.error(t('myWork.delegation.toastError', 'Missing decision ID'));
       return;
     }
 
     if (selectedUsers.length === 0) {
-      toast.error(isPolish ? 'Wybierz co najmniej jedną osobę' : 'Select at least one person');
+      toast.error(t('myWork.delegation.toastError2', 'Select at least one person'));
       return;
     }
 
@@ -135,7 +135,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
         delegationType === 'review') &&
       !delegateeId
     ) {
-      toast.error(isPolish ? 'Wybierz osobę do delegacji' : 'Select a person to delegate to');
+      toast.error(t('myWork.delegation.toastError3', 'Select a person to delegate to'));
       return;
     }
 
@@ -179,9 +179,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
       const serverMessage = error?.response?.data?.error;
       toast.error(
         serverMessage ||
-          (isPolish
-            ? 'Nie udało się wysłać żądania delegacji'
-            : 'Failed to send delegation request')
+          (t('myWork.delegation.failedToSendDelegation', 'Failed to send delegation request'))
       );
     } finally {
       setSubmitting(false);
@@ -225,7 +223,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-                  {isPolish ? 'Deleguj / Poproś o opinię' : 'Delegate / Request Input'}
+                  {t('myWork.delegation.delegateRequestInput', 'Delegate / Request Input')}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-xs">
                   {decisionTitle}
@@ -245,7 +243,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
             {/* Delegation Type Selection */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                {isPolish ? 'Typ akcji' : 'Action Type'}
+                {t('myWork.delegation.actionType', 'Action Type')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {DELEGATION_TYPES.map((dt) => {
@@ -284,12 +282,8 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 {delegationType === 'input'
-                  ? isPolish
-                    ? 'Wybierz osoby (można wiele)'
-                    : 'Select people (multiple allowed)'
-                  : isPolish
-                    ? 'Wybierz osobę'
-                    : 'Select person'}
+                  ? t('myWork.delegation.selectPeopleMultipleAllowed', 'Select people (multiple allowed)')
+                  : t('myWork.delegation.selectPerson', 'Select person')}
               </label>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {filteredUsers.map((user) => (
@@ -322,7 +316,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                 ))}
                 {filteredUsers.length === 0 && (
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 text-center py-4">
-                    {isPolish ? 'Brak dostępnych użytkowników' : 'No users available'}
+                    {t('myWork.delegation.noUsersAvailable', 'No users available')}
                   </p>
                 )}
               </div>
@@ -332,16 +326,14 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
             {delegationType === 'full' && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Powód przekazania' : 'Reason for delegation'}
+                  {t('myWork.delegation.reasonForDelegation', 'Reason for delegation')}
                 </label>
                 <input
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder={
-                    isPolish
-                      ? 'np. Nieobecność, brak kompetencji...'
-                      : 'e.g., Absence, lack of expertise...'
+                    t('myWork.delegation.eGAbsenceLack', 'e.g., Absence, lack of expertise...')
                   }
                   className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500"
                 />
@@ -351,7 +343,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
             {/* Comment */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                {isPolish ? 'Wiadomość (opcjonalnie)' : 'Message (optional)'}
+                {t('myWork.delegation.messageOptional', 'Message (optional)')}
               </label>
               <textarea
                 value={comment}
@@ -359,12 +351,8 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                 rows={3}
                 placeholder={
                   delegationType === 'input'
-                    ? isPolish
-                      ? 'Co chcesz wiedzieć? Jakie pytania masz?'
-                      : 'What do you want to know? What questions do you have?'
-                    : isPolish
-                      ? 'Dodatkowe informacje dla odbiorcy...'
-                      : 'Additional information for the recipient...'
+                    ? t('myWork.delegation.whatDoYouWant', 'What do you want to know? What questions do you have?')
+                    : t('myWork.delegation.additionalInformationForThe', 'Additional information for the recipient...')
                 }
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500 resize-none"
               />
@@ -377,7 +365,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
               onClick={handleClose}
               className="px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
             >
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('myWork.delegation.cancel', 'Cancel')}
             </button>
             <button
               onClick={handleSubmit}
@@ -387,16 +375,10 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
               {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               <span>
                 {delegationType === 'full'
-                  ? isPolish
-                    ? 'Przekaż'
-                    : 'Delegate'
+                  ? t('myWork.delegation.delegate', 'Delegate')
                   : delegationType === 'input'
-                    ? isPolish
-                      ? 'Wyślij prośbę'
-                      : 'Send Request'
-                    : isPolish
-                      ? 'Wyślij'
-                      : 'Send'}
+                    ? t('myWork.delegation.sendRequest', 'Send Request')
+                    : t('myWork.delegation.send', 'Send')}
               </span>
             </button>
           </div>

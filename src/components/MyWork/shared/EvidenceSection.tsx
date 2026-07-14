@@ -110,7 +110,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
   onToggleExpand,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [showAddEvidence, setShowAddEvidence] = useState(false);
   const [newEvidenceType, setNewEvidenceType] = useState<EvidenceType>('DOCUMENT');
@@ -166,12 +166,12 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
             />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Dowody i akceptacja' : 'Evidence & Acceptance'}
+            {t('myWork.evidence.evidenceAcceptance', 'Evidence & Acceptance')}
           </span>
           {signedOff && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 size={10} />
-              {isPolish ? 'Podpisane' : 'Signed off'}
+              {t('myWork.evidence.signedOff', 'Signed off')}
             </span>
           )}
         </div>
@@ -200,7 +200,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
               {/* Evidence Required */}
               <div>
                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-                  {isPolish ? 'Wymagane dowody' : 'Required Evidence'}
+                  {t('myWork.evidence.requiredEvidence', 'Required Evidence')}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(EVIDENCE_TYPES).map(([type, config]) => {
@@ -230,7 +230,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Załączone dowody' : 'Attached Evidence'}
+                    {t('myWork.evidence.attachedEvidence', 'Attached Evidence')}
                   </label>
                   {!readOnly && (
                     <button
@@ -238,7 +238,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                       className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
                     >
                       <Plus size={12} />
-                      {isPolish ? 'Dodaj' : 'Add'}
+                      {t('myWork.evidence.add', 'Add')}
                     </button>
                   )}
                 </div>
@@ -250,7 +250,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                       className="mx-auto mb-1 text-slate-700 dark:text-slate-400"
                     />
                     <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Brak załączonych dowodów' : 'No evidence attached'}
+                      {t('myWork.evidence.noEvidenceAttached', 'No evidence attached')}
                     </p>
                   </div>
                 ) : (
@@ -281,7 +281,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                               <button
                                 onClick={() => onVerifyEvidence(item.id)}
                                 className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors"
-                                title={isPolish ? 'Zweryfikuj' : 'Verify'}
+                                title={t('myWork.evidence.title', 'Verify')}
                               >
                                 <Check size={14} />
                               </button>
@@ -306,7 +306,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
               <div className="border-t border-slate-200 dark:border-navy-700 pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Wymaga akceptacji' : 'Requires Acceptance'}
+                    {t('myWork.evidence.requiresAcceptance', 'Requires Acceptance')}
                   </label>
                   <button
                     onClick={() =>
@@ -340,7 +340,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         }`}
                       >
                         <User size={12} className="inline mr-1" />
-                        {isPolish ? 'Ręczna' : 'Manual'}
+                        {t('myWork.evidence.manual', 'Manual')}
                       </button>
                       <button
                         onClick={() =>
@@ -354,7 +354,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         }`}
                       >
                         <Check size={12} className="inline mr-1" />
-                        {isPolish ? 'Automatyczna' : 'Automatic'}
+                        {t('myWork.evidence.automatic', 'Automatic')}
                       </button>
                     </div>
 
@@ -362,7 +362,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                     {acceptanceType === 'manual' && (
                       <div>
                         <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                          {isPolish ? 'Akceptujący' : 'Acceptor'}
+                          {t('myWork.evidence.acceptor', 'Acceptor')}
                         </label>
                         <select
                           value={acceptorId || ''}
@@ -372,7 +372,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                           disabled={readOnly}
                           className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                         >
-                          <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
+                          <option value="">{t('myWork.evidence.select', 'Select...')}</option>
                           {availableUsers.map((user) => (
                             <option key={user.id} value={user.id}>
                               {user.name}
@@ -394,7 +394,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-medium hover:brightness-110 transition-all shadow-lg shadow-emerald-500/20"
                 >
                   <CheckCircle2 size={18} />
-                  <span>{isPolish ? 'Podpisz (Sign-off)' : 'Sign Off'}</span>
+                  <span>{t('myWork.evidence.signOff', 'Sign Off')}</span>
                 </motion.button>
               )}
 
@@ -404,7 +404,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                   <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
                     <CheckCircle2 size={16} />
                     <span>
-                      {isPolish ? 'Podpisane przez' : 'Signed off by'} {signedOffBy || 'Unknown'}
+                      {t('myWork.evidence.signedOffBy', 'Signed off by')} {signedOffBy || 'Unknown'}
                       {signedOffAt && (
                         <span className="text-emerald-600/70 dark:text-emerald-400/70 ml-1">
                           ({new Date(signedOffAt).toLocaleDateString()})
@@ -438,7 +438,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Dodaj dowód' : 'Add Evidence'}
+                  {t('myWork.evidence.addEvidence', 'Add Evidence')}
                 </h3>
                 <button
                   onClick={() => setShowAddEvidence(false)}
@@ -450,7 +450,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
               <div className="p-5 space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                    {isPolish ? 'Typ' : 'Type'}
+                    {t('myWork.evidence.type', 'Type')}
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(EVIDENCE_TYPES).map(([type, config]) => {
@@ -477,13 +477,13 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                    {isPolish ? 'Tytuł' : 'Title'}
+                    {t('myWork.evidence.title2', 'Title')}
                   </label>
                   <input
                     type="text"
                     value={newEvidenceTitle}
                     onChange={(e) => setNewEvidenceTitle(e.target.value)}
-                    placeholder={isPolish ? 'Nazwa dowodu...' : 'Evidence name...'}
+                    placeholder={t('myWork.evidence.placeholder', 'Evidence name...')}
                     className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400"
                     autoFocus
                   />
@@ -493,7 +493,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                   disabled={!newEvidenceTitle.trim()}
                   className="w-full px-4 py-2.5 rounded-lg bg-c-text text-c-bg font-medium hover:bg-c-text-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isPolish ? 'Dodaj' : 'Add'}
+                  {t('myWork.evidence.add2', 'Add')}
                 </button>
               </div>
             </motion.div>

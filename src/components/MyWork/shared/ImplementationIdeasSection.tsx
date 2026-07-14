@@ -91,7 +91,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
   readOnly = false,
   isGenerating = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -124,7 +124,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
             <Zap size={18} className="text-blue-500 dark:text-blue-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Pomysły realizacji' : 'Implementation Ideas'}
+            {t('myWork.implementationIdeas.implementationIdeas', 'Implementation Ideas')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                 }}
                 disabled={isGenerating}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
-                title={isPolish ? 'Generuj AI' : 'Generate AI'}
+                title={t('myWork.implementationIdeas.title', 'Generate AI')}
               >
                 {isGenerating ? (
                   <Sparkles size={14} className="animate-pulse" />
@@ -183,12 +183,10 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                     className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'Brak pomysłów' : 'No ideas yet'}
+                    {t('myWork.implementationIdeas.noIdeasYet', 'No ideas yet')}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-                    {isPolish
-                      ? 'Dodaj pomysły jak zrealizować to zadanie'
-                      : 'Add ideas on how to implement this task'}
+                    {t('myWork.implementationIdeas.addIdeasOnHow', 'Add ideas on how to implement this task')}
                   </p>
                 </div>
               ) : (
@@ -249,7 +247,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                                 className="w-full text-sm font-medium bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none truncate"
-                                placeholder={isPolish ? 'Nazwa pomysłu...' : 'Idea name...'}
+                                placeholder={t('myWork.implementationIdeas.placeholder', 'Idea name...')}
                                 readOnly={readOnly}
                               />
                               <div className="flex items-center gap-2 mt-1">
@@ -314,7 +312,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                             >
                               <div className="px-4 pb-4 pt-2 border-t border-slate-200 dark:border-navy-600">
                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                  {isPolish ? 'Opis' : 'Description'}
+                                  {t('myWork.implementationIdeas.description', 'Description')}
                                 </label>
                                 <textarea
                                   value={idea.description}
@@ -325,9 +323,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                                   disabled={readOnly}
                                   className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 resize-none"
                                   placeholder={
-                                    isPolish
-                                      ? 'Opisz szczegóły pomysłu...'
-                                      : 'Describe the idea details...'
+                                    t('myWork.implementationIdeas.describeTheIdeaDetails', 'Describe the idea details...')
                                   }
                                 />
                               </div>
@@ -351,7 +347,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                   >
                     <Plus size={18} />
                     <span className="text-sm font-medium">
-                      {isPolish ? 'Dodaj pomysł' : 'Add idea'}
+                      {t('myWork.implementationIdeas.addIdea', 'Add idea')}
                     </span>
                   </motion.button>
                 </div>
