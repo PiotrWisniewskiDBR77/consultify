@@ -21802,6 +21802,19 @@
         "failedToInitializeBaseOrTable": "Failed to initialize base or table",
         "failedToLoadTableData": "Failed to load table data",
         "failedToLoadMoreRecords": "Failed to load more records"
+      },
+      "quickActions": {
+        "selectRowsToAutofill": "Select rows to autofill",
+        "generatingAutofillMappings": "Generating autofill mappings...",
+        "appliedFieldsFromMappings": "Applied {{appliedCount}} fields from {{mappingCount}} mappings",
+        "noMappingsFoundToApply": "No mappings found to apply",
+        "autofillFailed": "Autofill failed",
+        "refreshingDataFromArtifacts": "Refreshing data from artifacts...",
+        "noRowsWithLinkedArtifacts": "No rows with linked artifacts",
+        "refreshedFields": "Refreshed {{count}} fields",
+        "noChangesToApply": "No changes to apply",
+        "refreshFailed": "Refresh failed",
+        "selectRowFirst": "Select a row first"
       }
     },
     "mindmap": {

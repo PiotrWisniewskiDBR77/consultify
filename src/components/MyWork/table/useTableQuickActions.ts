@@ -7,6 +7,7 @@
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -136,17 +137,26 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
       if (action === 'tbl_autofill_from_artifact') {
         const selectedRows = nodes.filter((n) => n.data?._selected);
         if (selectedRows.length === 0) {
-          toast(isPl ? 'Zaznacz wiersze do autofill' : 'Select rows to autofill', { icon: '⚠️' });
+          toast(
+            i18n.t('ideas.table.quickActions.selectRowsToAutofill', 'Select rows to autofill'),
+            { icon: '⚠️' }
+          );
           return;
         }
         trackFunnelEvent('ideas_table_autofill_triggered', {
           ideaId,
           rowCount: selectedRows.length,
         });
-        toast(isPl ? 'Generuję mapowania autofill...' : 'Generating autofill mappings...', {
-          icon: '🤖',
-          duration: 2000,
-        });
+        toast(
+          i18n.t(
+            'ideas.table.quickActions.generatingAutofillMappings',
+            'Generating autofill mappings...'
+          ),
+          {
+            icon: '🤖',
+            duration: 2000,
+          }
+        );
         try {
           const result = await Api.generateIdeaAI(ideaId, {
             generatorType: 'ai_autofill_mappings',
@@ -181,18 +191,26 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
               })
             );
             toast.success(
-              isPl
-                ? `Zastosowano ${appliedCount} pól z ${mappings.length} mapowań`
-                : `Applied ${appliedCount} fields from ${mappings.length} mappings`,
+              i18n.t(
+                'ideas.table.quickActions.appliedFieldsFromMappings',
+                'Applied {{appliedCount}} fields from {{mappingCount}} mappings',
+                { appliedCount, mappingCount: mappings.length }
+              ),
               { duration: 3000 }
             );
           } else {
-            toast(isPl ? 'Brak mapowań do zastosowania' : 'No mappings found to apply', {
-              icon: 'ℹ️',
-            });
+            toast(
+              i18n.t(
+                'ideas.table.quickActions.noMappingsFoundToApply',
+                'No mappings found to apply'
+              ),
+              {
+                icon: 'ℹ️',
+              }
+            );
           }
         } catch {
-          toast.error(isPl ? 'Autofill nie powiódł się' : 'Autofill failed');
+          toast.error(i18n.t('ideas.table.quickActions.autofillFailed', 'Autofill failed'));
         }
         return;
       }
@@ -200,18 +218,30 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
       // Refresh artifact data
       if (action === 'tbl_refresh_artifact_data') {
         trackFunnelEvent('ideas_table_refresh_triggered', { ideaId });
-        toast(isPl ? 'Odświeżanie danych z artefaktów...' : 'Refreshing data from artifacts...', {
-          icon: '🔄',
-          duration: 2000,
-        });
+        toast(
+          i18n.t(
+            'ideas.table.quickActions.refreshingDataFromArtifacts',
+            'Refreshing data from artifacts...'
+          ),
+          {
+            icon: '🔄',
+            duration: 2000,
+          }
+        );
         try {
           const rowsWithArtifacts = nodes.filter(
             (n) => Array.isArray(n.data?.artifactLinks) && n.data.artifactLinks.length > 0
           );
           if (rowsWithArtifacts.length === 0) {
-            toast(isPl ? 'Brak wierszy z artefaktami' : 'No rows with linked artifacts', {
-              icon: 'ℹ️',
-            });
+            toast(
+              i18n.t(
+                'ideas.table.quickActions.noRowsWithLinkedArtifacts',
+                'No rows with linked artifacts'
+              ),
+              {
+                icon: 'ℹ️',
+              }
+            );
           } else {
             const refreshResult = await Api.generateIdeaAI(ideaId, {
               generatorType: 'ai_autofill_mappings',
@@ -248,15 +278,19 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
                 })
               );
               toast.success(
-                isPl ? `Odświeżono ${refreshedCount} pól` : `Refreshed ${refreshedCount} fields`,
+                i18n.t('ideas.table.quickActions.refreshedFields', 'Refreshed {{count}} fields', {
+                  count: refreshedCount,
+                }),
                 { duration: 3000 }
               );
             } else {
-              toast(isPl ? 'Brak zmian do zastosowania' : 'No changes to apply', { icon: 'ℹ️' });
+              toast(i18n.t('ideas.table.quickActions.noChangesToApply', 'No changes to apply'), {
+                icon: 'ℹ️',
+              });
             }
           }
         } catch {
-          toast.error(isPl ? 'Odświeżanie nie powiodło się' : 'Refresh failed');
+          toast.error(i18n.t('ideas.table.quickActions.refreshFailed', 'Refresh failed'));
         }
         return;
       }
@@ -271,7 +305,7 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
             })
           );
         } else {
-          toast(isPl ? 'Najpierw zaznacz wiersz' : 'Select a row first', {
+          toast(i18n.t('ideas.table.quickActions.selectRowFirst', 'Select a row first'), {
             icon: '🔗',
             duration: 2000,
           });

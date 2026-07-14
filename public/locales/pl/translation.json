@@ -22878,6 +22878,19 @@
         "failedToInitializeBaseOrTable": "Nie udało się zainicjować bazy lub tabeli",
         "failedToLoadTableData": "Nie udało się załadować danych tabeli",
         "failedToLoadMoreRecords": "Nie udało się załadować kolejnych rekordów"
+      },
+      "quickActions": {
+        "selectRowsToAutofill": "Zaznacz wiersze do autofill",
+        "generatingAutofillMappings": "Generuję mapowania autofill...",
+        "appliedFieldsFromMappings": "Zastosowano {{appliedCount}} pól z {{mappingCount}} mapowań",
+        "noMappingsFoundToApply": "Brak mapowań do zastosowania",
+        "autofillFailed": "Autofill nie powiódł się",
+        "refreshingDataFromArtifacts": "Odświeżanie danych z artefaktów...",
+        "noRowsWithLinkedArtifacts": "Brak wierszy z artefaktami",
+        "refreshedFields": "Odświeżono {{count}} pól",
+        "noChangesToApply": "Brak zmian do zastosowania",
+        "refreshFailed": "Odświeżanie nie powiodło się",
+        "selectRowFirst": "Najpierw zaznacz wiersz"
       }
     },
     "mindmap": {
