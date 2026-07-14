@@ -536,7 +536,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // State
@@ -567,42 +567,12 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const applyPromptPreset = (type: InsightPromptType) => {
     if (type === 'between_the_lines') {
       setCustomPrompt(
-        isPolish
-          ? `Przeanalizuj odpowiedzi respondentów na głębokim poziomie. Szukaj:
-1. UKRYTE INTENCJE — co respondent naprawdę chce osiągnąć, ale nie mówi wprost
-2. SPRZECZNOŚCI — gdzie odpowiedzi jednej osoby są niespójne lub sprzeczne z innymi
-3. UNIKI I OMIJANIE — tematy, których respondenci unikają lub bagatelizują
-4. NIEWYPOWIEDZIANE CELE — cele polityczne, osobiste interesy, ukryte agendy
-5. EMOCJE I NAPIĘCIA — gdzie widać frustrację, strach, entuzjazm lub opór
-6. KŁAMSTWA I PRZESADA — odpowiedzi, które wydają się nieprawdopodobne lub przesadzone
-
-Dla każdego znaleziska podaj: cytat, interpretację, poziom pewności (wysoki/średni/niski) i rekomendację.`
-          : `Analyze respondent answers at a deep level. Look for:
-1. HIDDEN INTENTIONS — what the respondent really wants to achieve but doesn't say directly
-2. CONTRADICTIONS — where one person's answers are inconsistent or contradict others
-3. EVASIONS — topics respondents avoid or downplay
-4. UNSPOKEN GOALS — political goals, personal interests, hidden agendas
-5. EMOTIONS & TENSIONS — where you see frustration, fear, enthusiasm, or resistance
-6. LIES & EXAGGERATION — answers that seem implausible or exaggerated
-
-For each finding provide: quote, interpretation, confidence level (high/medium/low), and recommendation.`
+        t('interview.insightCreatorModal.analyzeRespondentAnswersAtA')
       );
     } else if (type === 'summary' && !customPrompt) {
       // E7.4: Precise formula for executive summaries
       setCustomPrompt(
-        isPolish
-          ? `Użyj precyzyjnej formuły konsultingowej:
-1. KONTEKST (2-3 zdania) — cel wywiadów, zakres, liczba respondentów
-2. KLUCZOWE WNIOSKI (5-7 punktów) — najważniejsze odkrycia, uszeregowane wg wpływu
-3. WZORCE I TRENDY — powtarzające się tematy, wspólne obawy
-4. ROZBIEŻNOŚCI — gdzie opinie się różnią i dlaczego
-5. RYZYKA I SZANSE — zidentyfikowane zagrożenia i możliwości (tylko na podstawie danych, bez planów działań)`
-          : `Use a precise consulting formula:
-1. CONTEXT (2-3 sentences) — interview purpose, scope, number of respondents
-2. KEY FINDINGS (5-7 points) — most important discoveries, ranked by impact
-3. PATTERNS & TRENDS — recurring themes, common concerns
-4. DIVERGENCES — where opinions differ and why
-5. RISKS & OPPORTUNITIES — identified threats and possibilities (facts-only; no recommendations or next steps)`
+        t('interview.insightCreatorModal.useAPreciseConsultingFormula')
       );
     }
   };
@@ -685,9 +655,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     } catch (error) {
       console.error('[InsightCreatorModal] Failed to load context documents:', error);
       toast.error(
-        isPolish
-          ? 'Nie udało się wczytać dokumentów kontekstowych.'
-          : 'Failed to load context documents.'
+        t('interview.insightCreatorModal.failedToLoadContextDocuments')
       );
     } finally {
       setIsLoadingContextDocuments(false);
@@ -748,9 +716,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     }
     if (nextSessions.length < basket.sessionIds.length) {
       toast(
-        isPolish
-          ? 'Niektóre sesje z koszyka nie są już dostępne i zostały pominięte.'
-          : 'Some sessions from the basket are no longer available and were skipped.'
+        t('interview.insightCreatorModal.someSessionsFromTheBasket')
       );
     }
     return nextSessions;
@@ -767,9 +733,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     const appliedSessions = applyBasket(basketId);
     if (!appliedSessions || appliedSessions.length === 0) {
       toast.error(
-        isPolish
-          ? 'Koszyk nie zawiera już dostępnych sesji źródłowych.'
-          : 'This basket has no available source sessions left.'
+        t('interview.insightCreatorModal.thisBasketHasNoAvailable')
       );
       return;
     }
@@ -784,9 +748,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     setCurrentStep(refineIndex >= 0 ? refineIndex : currentStep);
     setAdvancedOpen(true);
     toast.success(
-      isPolish
-        ? 'Nowy kąt — wybierz soczewkę i wygeneruj.'
-        : 'New lens — pick an angle and generate.'
+      t('interview.insightCreatorModal.newLensPickAnAngle')
     );
   };
 
@@ -794,11 +756,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const handleSaveBasket = async () => {
     const name = basketNameDraft.trim();
     if (!name) {
-      toast.error(isPolish ? 'Podaj nazwę koszyka' : 'Enter a basket name');
+      toast.error(t('interview.insightCreatorModal.enterABasketName'));
       return;
     }
     if (selectedSessions.length === 0) {
-      toast.error(isPolish ? 'Wybierz przynajmniej jedną sesję' : 'Select at least one session');
+      toast.error(t('interview.insightCreatorModal.selectAtLeastOneSession'));
       return;
     }
     setIsSavingBasket(true);
@@ -823,10 +785,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       if (created?.id) setActiveBasketId(created.id);
       setShowSaveBasket(false);
       setBasketNameDraft('');
-      toast.success(isPolish ? 'Koszyk zapisany' : 'Basket saved');
+      toast.success(t('interview.insightCreatorModal.basketSaved'));
     } catch (error) {
       console.error('[InsightCreatorModal] Failed to save source basket:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać koszyka' : 'Failed to save basket');
+      toast.error(t('interview.insightCreatorModal.failedToSaveBasket'));
     } finally {
       setIsSavingBasket(false);
     }
@@ -837,10 +799,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       await Api.delete(`/interview/insight-baskets/${basketId}`);
       if (activeBasketId === basketId) setActiveBasketId('');
       await fetchBaskets();
-      toast.success(isPolish ? 'Koszyk usunięty' : 'Basket deleted');
+      toast.success(t('interview.insightCreatorModal.basketDeleted'));
     } catch (error) {
       console.error('[InsightCreatorModal] Failed to delete source basket:', error);
-      toast.error(isPolish ? 'Nie udało się usunąć koszyka' : 'Failed to delete basket');
+      toast.error(t('interview.insightCreatorModal.failedToDeleteBasket'));
     }
   };
 
@@ -848,13 +810,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     const projectName = completedSessions.find(
       (s) => selectedSessions.includes(s.id) && s.projectId
     )?.projectId;
-    const base = projectName ? String(projectName) : isPolish ? 'Wybrane' : 'Selected';
-    return isPolish ? `${base} — sesje` : `${base} sessions`;
+    const base = projectName ? String(projectName) : t('interview.insightCreatorModal.selected');
+    return t('interview.insightCreatorModal.baseSessionsSuffix', { base });
   };
 
   const openSaveBasket = () => {
     if (selectedSessions.length === 0) {
-      toast.error(isPolish ? 'Najpierw wybierz sesje źródłowe' : 'Select source sessions first');
+      toast.error(t('interview.insightCreatorModal.selectSourceSessionsFirst'));
       return;
     }
     setBasketNameDraft(defaultBasketName());
@@ -868,9 +830,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     const toUpload = files.slice(0, remainingSlots);
     if (files.length > remainingSlots) {
       toast(
-        isPolish
-          ? `Dodano tylko ${remainingSlots} plików (limit ${MAX_CONTEXT_FILES})`
-          : `Only ${remainingSlots} file(s) added (limit ${MAX_CONTEXT_FILES})`
+        t('interview.insightCreatorModal.onlyNFilesAdded', {
+          remaining: remainingSlots,
+          max: MAX_CONTEXT_FILES,
+        })
       );
     }
 
@@ -887,11 +850,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       const uploadProjectId = selectedProjects.length === 1 ? selectedProjects[0] : undefined;
       for (const file of toUpload) {
         if (file.size > MAX_CONTEXT_FILE_SIZE_BYTES) {
-          toast.error(
-            isPolish
-              ? `Plik ${file.name} jest za duży (max 10 MB)`
-              : `File ${file.name} is too large (max 10 MB)`
-          );
+          toast.error(t('interview.insightCreatorModal.fileTooLarge', { name: file.name }));
           continue;
         }
         await V8InterviewApi.uploadContextDocument({
@@ -902,16 +861,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       }
       await fetchContextDocuments();
       toast.success(
-        isPolish
-          ? 'Dokumenty zostały wysłane do przetwarzania.'
-          : 'Documents uploaded and sent for processing.'
+        t('interview.insightCreatorModal.documentsUploadedAndSentFor')
       );
     } catch (error) {
       console.error('[InsightCreatorModal] Upload context document failed:', error);
       toast.error(
-        isPolish
-          ? 'Nie udało się wysłać dokumentu kontekstowego.'
-          : 'Failed to upload context document.'
+        t('interview.insightCreatorModal.failedToUploadContextDocument')
       );
     } finally {
       setIsUploadingContextDocument(false);
@@ -951,21 +906,21 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     const manualPrompt = customPrompt.trim();
     const artifactLinks = getInternalArtifactLinks();
     const selectedOutputLabels = ANALYSIS_TYPES.filter((type) => selectedTypes.includes(type.id))
-      .map((type) => (isPolish ? type.namePl : type.name))
+      .map((type) => t(`interview.insightCreatorModal.analysisTypeName.${type.id}`, type.name))
       .join(', ');
     const selectedAnalysisModeLabels = ANALYSIS_MODE_OPTIONS.filter((mode) =>
       selectedAnalysisModes.includes(mode.id)
     )
-      .map((mode) => (isPolish ? mode.labelPl : mode.labelEn))
+      .map((mode) => t(`interview.insightCreatorModal.analysisModeLabel.${mode.id}`, mode.labelEn))
       .join(', ');
     const selectionContext =
       selectedTypes.length > 1 || selectedAnalysisModes.length > 1
         ? [
             selectedTypes.length > 1
-              ? `${isPolish ? 'Wybrane typy wyniku' : 'Selected output types'}: ${selectedOutputLabels}`
+              ? `${t('interview.insightCreatorModal.selectedOutputTypes')}: ${selectedOutputLabels}`
               : '',
             selectedAnalysisModes.length > 1
-              ? `${isPolish ? 'Wybrane soczewki analizy' : 'Selected analysis lenses'}: ${selectedAnalysisModeLabels}`
+              ? `${t('interview.insightCreatorModal.selectedAnalysisLenses')}: ${selectedAnalysisModeLabels}`
               : '',
           ]
             .filter(Boolean)
@@ -985,7 +940,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     const composed = [
       manualPrompt,
       selectionContext
-        ? `${isPolish ? 'Dodatkowe instrukcje wyboru' : 'Additional selection instructions'}:\n${selectionContext}`
+        ? `${t('interview.insightCreatorModal.additionalSelectionInstructions')}:\n${selectionContext}`
         : '',
       artifactLinkContext,
     ]
@@ -1027,14 +982,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             | Error
             | undefined;
           const status = (reason as { status?: number } | undefined)?.status;
-          setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
+          setLoadError(t('interview.insightCreatorModal.insightGeneratorUnavailable'));
         }
         await fetchContextDocuments();
         await fetchBaskets();
         await fetchExistingInsights();
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
-        setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
+        setLoadError(t('interview.insightCreatorModal.insightGeneratorUnavailable'));
       } finally {
         setIsLoading(false);
       }
@@ -1163,7 +1118,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         name:
           existing?.name ||
           trimmedName ||
-          (isPolish ? 'Respondent bez nazwy' : 'Unnamed respondent'),
+          (t('interview.insightCreatorModal.unnamedRespondent')),
         role: existing?.role || session.respondentRole?.trim() || undefined,
         department: existing?.department || session.department?.trim() || undefined,
         sessionCount: (existing?.sessionCount ?? 0) + 1,
@@ -1302,18 +1257,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error(isPolish ? 'Podaj tytuł wniosków' : 'Enter insight title');
+      toast.error(t('interview.insightCreatorModal.enterInsightTitle'));
       return;
     }
 
     if (selectedSessions.length === 0) {
-      toast.error(isPolish ? 'Wybierz przynajmniej jedną sesję' : 'Select at least one session');
+      toast.error(t('interview.insightCreatorModal.selectAtLeastOneSession'));
       return;
     }
 
     setIsGenerating(true);
     const toastId = toast.loading(
-      isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...'
+      t('interview.insightCreatorModal.generatingAiInsights')
     );
     const customPromptWithAttachments = buildPromptWithAttachmentContext();
     const artifactLinks = getInternalArtifactLinks();
@@ -1433,7 +1388,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       }
 
       toast.dismiss(toastId);
-      toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
+      toast.success(t('interview.insightCreatorModal.insightsGenerated'));
       onSuccess();
       onClose();
     } catch (error) {
@@ -1453,23 +1408,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         message.includes('econnrefused');
       if (status === 401 || status === 403) {
         toast.error(
-          isPolish
-            ? 'Brak uprawnień do generowania wniosków (capability INTERVIEW_INSIGHT_CREATE / AI_LLM_USE).'
-            : 'No permission to generate insights (capability INTERVIEW_INSIGHT_CREATE / AI_LLM_USE).',
+          t('interview.insightCreatorModal.noPermissionToGenerateInsights'),
           { duration: 6000 }
         );
       } else if (looksLikeLlm) {
         toast.error(
-          isPolish
-            ? 'Nie udało się wygenerować: model LLM jest niedostępny lub klucz API nie jest skonfigurowany. Skontaktuj się z administratorem.'
-            : 'Generation failed: the LLM model is unavailable or the API key is not configured. Contact your administrator.',
+          t('interview.insightCreatorModal.generationFailedTheLlmModel'),
           { duration: 6000 }
         );
       } else {
         toast.error(
-          isPolish
-            ? 'Nie udało się wygenerować wniosków. Sprawdź połączenie i spróbuj ponownie.'
-            : 'Failed to generate insights. Check the connection and retry.'
+          t('interview.insightCreatorModal.failedToGenerateInsightsCheck')
         );
       }
       console.error('[InsightCreatorModal] Failed to generate insight:', error);
@@ -1530,7 +1479,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         if (sessionsResult.status === 'rejected') {
           const reason = sessionsResult.reason as { status?: number } | undefined;
           const status = reason?.status;
-          setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
+          setLoadError(t('interview.insightCreatorModal.insightGeneratorUnavailable'));
         }
         await fetchContextDocuments();
       } finally {
@@ -1549,17 +1498,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const getStepBlockerMessage = (stepIndex: number): string | null => {
     const stepId = CREATOR_STEPS[stepIndex]?.id;
     if (stepId === 'define' && !title.trim()) {
-      return isPolish ? 'Podaj tytuł wniosków.' : 'Enter an insight title.';
+      return t('interview.insightCreatorModal.enterAnInsightTitle');
     }
     if (stepId === 'define' && selectedTypes.length === 0) {
-      return isPolish
-        ? 'Wybierz przynajmniej jeden typ wyniku.'
-        : 'Select at least one output type.';
+      return t('interview.insightCreatorModal.selectAtLeastOneOutput');
     }
     if (stepId === 'material' && selectedSessions.length === 0) {
-      return isPolish
-        ? 'Wybierz przynajmniej jedną sesję źródłową.'
-        : 'Select at least one source session.';
+      return t('interview.insightCreatorModal.selectAtLeastOneSource');
     }
     return null;
   };
@@ -1607,20 +1552,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const selectedSourceSummary =
     selectedSessions.length > 0
-      ? isPolish
-        ? `${selectedSessions.length} zatwierdzonych sesji`
-        : `${selectedSessions.length} approved session(s)`
-      : isPolish
-        ? 'Nie wybrano sesji'
-        : 'No sessions selected';
+      ? t('interview.insightCreatorModal.approvedSessionsCount', { count: selectedSessions.length })
+      : t('interview.insightCreatorModal.noSessionsSelected');
   const selectedPeopleSummary =
     selectedRespondents.length === 0
-      ? isPolish
-        ? 'Wszystkie osoby'
-        : 'All people'
-      : isPolish
-        ? `${selectedRespondents.length} wybranych osób`
-        : `${selectedRespondents.length} selected people`;
+      ? t('interview.insightCreatorModal.allPeople')
+      : t('interview.insightCreatorModal.selectedPeopleCount', { count: selectedRespondents.length });
 
   const isLastStep = currentStep === CREATOR_STEPS.length - 1;
   const canGenerate = !isGenerating;
@@ -1628,24 +1565,24 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     switch (status) {
       case 'ready':
         return {
-          label: isPolish ? 'Gotowe' : 'Ready',
+          label: t('interview.insightCreatorModal.ready'),
           className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
         };
       case 'processing':
       case 'uploaded':
         return {
-          label: isPolish ? 'Przetwarzanie' : 'Processing',
+          label: t('interview.insightCreatorModal.processing'),
           className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
         };
       case 'ocr_required':
         return {
-          label: isPolish ? 'Wymaga OCR' : 'OCR required',
+          label: t('interview.insightCreatorModal.ocrRequired'),
           className: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300',
         };
       case 'unreadable':
       case 'failed':
         return {
-          label: isPolish ? 'Błąd odczytu' : 'Unreadable',
+          label: t('interview.insightCreatorModal.unreadable'),
           className: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300',
         };
       default:
@@ -1695,9 +1632,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         icon={AlertTriangle}
         dashed={false}
         message={loadError}
-        hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
+        hint={t('interview.insightCreatorModal.retryLoadingHint')}
         action={{
-          label: isPolish ? 'Ponów' : 'Retry',
+          label: t('interview.insightCreatorModal.retry'),
           onClick: retryLoadData,
         }}
         className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
@@ -1716,9 +1653,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
-              {isPolish
-                ? 'Podobny wniosek może już istnieć:'
-                : 'A similar insight may already exist:'}
+              {t('interview.insightCreatorModal.aSimilarInsightMayAlready')}
             </p>
             <ul className="mt-1 space-y-1">
               {similarHits.map((hit) => (
@@ -1727,7 +1662,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     href={`/interview?tab=insights&insightId=${encodeURIComponent(hit.id)}`}
                     onClick={onClose}
                     className="inline-flex items-center gap-1 truncate text-xs font-medium text-amber-800 underline decoration-amber-400/60 underline-offset-2 transition-colors hover:text-amber-900 dark:text-amber-200 dark:hover:text-amber-100"
-                    title={isPolish ? 'Otwórz istniejący wniosek' : 'Open the existing insight'}
+                    title={t('interview.insightCreatorModal.openTheExistingInsight')}
                   >
                     <span className="truncate">{hit.title}</span>
                     <ExternalLink size={11} className="shrink-0" />
@@ -1744,14 +1679,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 onClick={() => setSimilarDismissed(true)}
                 className="text-[11px] font-medium text-amber-700 transition-colors hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
               >
-                {isPolish ? 'Generuj mimo to' : 'Proceed anyway'}
+                {t('interview.insightCreatorModal.proceedAnyway')}
               </button>
               <a
                 href={`/interview?tab=insights&insightId=${encodeURIComponent(top.id)}`}
                 onClick={onClose}
                 className="text-[11px] font-medium text-amber-700 underline underline-offset-2 transition-colors hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
               >
-                {isPolish ? 'Otwórz najbliższy' : 'Open closest match'}
+                {t('interview.insightCreatorModal.openClosestMatch')}
               </a>
             </div>
           </div>
@@ -1787,10 +1722,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {isPolish ? type.namePl : type.name}
+            {t(`interview.insightCreatorModal.analysisTypeName.${type.id}`, type.name)}
           </div>
           <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-            {isPolish ? type.descriptionPl : type.description}
+            {t(`interview.insightCreatorModal.analysisTypeDescription.${type.id}`, type.description)}
           </p>
         </div>
         <StyledCheck checked={isSelected} />
@@ -1808,16 +1743,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
+            {t('interview.insightCreatorModal.insightTitle')} *
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={
-              isPolish
-                ? 'np. Analiza transformacji cyfrowej Q1 2024'
-                : 'e.g. Digital Transformation Analysis Q1 2024'
+              t('interview.insightCreatorModal.eGDigitalTransformationAnalysis')
             }
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
@@ -1828,9 +1761,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             !similarDismissed && (
               <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 size={12} />
-                {isPolish
-                  ? 'Brak podobnych wniosków o tej nazwie.'
-                  : 'No similar insights with this name.'}
+                {t('interview.insightCreatorModal.noSimilarInsightsWithThis')}
               </p>
             )}
         </div>
@@ -1838,10 +1769,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Typ wyniku' : 'Output type'} *
+              {t('interview.insightCreatorModal.outputType')} *
             </label>
             <span className="text-xs text-c-info">
-              {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
+              {t('interview.insightCreatorModal.selectedCountColon', { count: selectedTypes.length })}
             </span>
           </div>
           <div className="max-h-[280px] space-y-3 overflow-auto pr-1">
@@ -1851,7 +1782,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               return (
                 <div key={cat.key} className="space-y-1.5">
                   <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {isPolish ? cat.labelPl : cat.labelEn}
+                    {t(`interview.insightCreatorModal.analysisCategoryLabel.${cat.key}`, cat.labelEn)}
                   </p>
                   {items.map(renderTypeRow)}
                 </div>
@@ -1859,9 +1790,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             })}
           </div>
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Typ wyniku kształtuje zawartość tego insightu. Nie tworzy automatycznie raportu, prezentacji ani obiektu w aplikacji.'
-              : 'Output type shapes this insight only. It does not automatically create a report, presentation, or app object.'}
+            {t('interview.insightCreatorModal.outputTypeShapesThisInsight')}
           </p>
         </div>
       </div>
@@ -1873,12 +1802,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Wybierz osoby' : 'Select people'}
+            {t('interview.insightCreatorModal.selectPeople')}
             <InfoHint
               text={
-                isPolish
-                  ? 'Zawęź analizę do odpowiedzi wybranych respondentów. Brak wyboru = wszystkie osoby z wybranego materiału.'
-                  : 'Narrow the analysis to selected respondents. No selection = everyone in the chosen material.'
+                t('interview.insightCreatorModal.narrowTheAnalysisToSelected')
               }
             />
           </label>
@@ -1887,7 +1814,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             onClick={selectAllRespondents}
             className="text-xs text-c-info transition-colors hover:text-c-info"
           >
-            {isPolish ? 'Wszystkie osoby' : 'All people'}
+            {t('interview.insightCreatorModal.allPeople')}
           </button>
         </div>
 
@@ -1895,14 +1822,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
             <Users size={32} className="mx-auto mb-2 opacity-50" />
             <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              {isPolish
-                ? 'Nie znaleziono respondentów dla tego materiału'
-                : 'No respondents found for this source'}
+              {t('interview.insightCreatorModal.noRespondentsFoundForThis')}
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              {isPolish
-                ? 'Wybrane sesje nie mają przypisanych osób. Analiza obejmie cały wybrany materiał.'
-                : 'The selected sessions have no people attached. The analysis will cover the full selected material.'}
+              {t('interview.insightCreatorModal.theSelectedSessionsHaveNo')}
             </p>
           </div>
         ) : (
@@ -1919,7 +1842,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               <StyledCheck checked={selectedRespondents.length === 0} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                  {isPolish ? 'Wszystkie osoby' : 'All people'}
+                  {t('interview.insightCreatorModal.allPeople')}
                 </div>
               </div>
             </button>
@@ -1954,13 +1877,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       </div>
                       <div className="mt-0.5 text-[11px] text-slate-400">
                         {respondent.sessionCount}{' '}
-                        {isPolish
-                          ? respondent.sessionCount === 1
-                            ? 'sesja'
-                            : 'sesji'
-                          : respondent.sessionCount === 1
-                            ? 'session'
-                            : 'sessions'}
+                        {respondent.sessionCount === 1
+                          ? t('interview.insightCreatorModal.sessionUnitOne')
+                          : t('interview.insightCreatorModal.sessionUnitOther')}
                       </div>
                     </div>
                   </label>
@@ -1982,12 +1901,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div className="mb-1.5 flex items-center gap-2">
           <Package size={15} className="text-c-info" />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {isPolish ? 'Koszyk źródeł' : 'Source basket'}
+            {t('interview.insightCreatorModal.sourceBasket')}
           </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? '— zapisz raz, użyj do wielu insightów'
-              : '— save once, reuse across insights'}
+            {t('interview.insightCreatorModal.saveOnceReuseAcrossInsights')}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -1995,17 +1912,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <Select
               value={activeBasketId}
               onChange={(value) => applyBasket(value)}
-              aria-label={isPolish ? 'Wybierz koszyk źródeł' : 'Select source basket'}
+              aria-label={t('interview.insightCreatorModal.selectSourceBasket')}
               options={[
                 {
                   value: '',
-                  label: isPolish ? 'Zbuduj nowy (bez koszyka)' : 'Build new (no basket)',
+                  label: t('interview.insightCreatorModal.buildNewNoBasket'),
                 },
                 ...baskets.map((basket) => ({
                   value: basket.id,
-                  label: `${basket.name} · ${basket.sessionIds.length} ${
-                    isPolish ? 'sesji' : 'sessions'
-                  } · ${isPolish ? `użyto ${basket.usageCount}×` : `used ${basket.usageCount}×`}`,
+                  label: `${basket.name} · ${basket.sessionIds.length} ${t(
+                    'interview.insightCreatorModal.sessions'
+                  )} · ${t('interview.insightCreatorModal.usedNTimes', { count: basket.usageCount })}`,
                 })),
               ]}
             />
@@ -2016,13 +1933,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               onClick={() => startNewLensFromBasket(activeBasket.id)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-2 text-sm font-medium text-c-bg shadow-sm shadow-black/10 transition-colors hover:bg-c-text-secondary"
               title={
-                isPolish
-                  ? 'Użyj tych źródeł i przejdź od razu do wyboru kąta analizy'
-                  : 'Reuse these sources and jump straight to choosing the analysis angle'
+                t('interview.insightCreatorModal.reuseTheseSourcesAndJump')
               }
             >
               <Sparkles size={14} />
-              {isPolish ? 'Nowy kąt' : 'New lens'}
+              {t('interview.insightCreatorModal.newLens')}
             </button>
           )}
           <button
@@ -2031,15 +1946,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
           >
             <Save size={14} />
-            {isPolish ? 'Zapisz jako koszyk' : 'Save as basket'}
+            {t('interview.insightCreatorModal.saveAsBasket')}
           </button>
           {activeBasket && (
             <button
               type="button"
               onClick={() => handleDeleteBasket(activeBasket.id)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-danger-600 transition-colors hover:bg-danger-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-danger-300 dark:hover:bg-danger-500/10"
-              aria-label={isPolish ? 'Usuń koszyk' : 'Delete basket'}
-              title={isPolish ? 'Usuń koszyk' : 'Delete basket'}
+              aria-label={t('interview.insightCreatorModal.deleteBasket')}
+              title={t('interview.insightCreatorModal.deleteBasket')}
             >
               <Trash2 size={14} />
             </button>
@@ -2051,7 +1966,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="text"
               value={basketNameDraft}
               onChange={(event) => setBasketNameDraft(event.target.value)}
-              placeholder={isPolish ? 'Nazwa koszyka' : 'Basket name'}
+              placeholder={t('interview.insightCreatorModal.basketName')}
               className="min-w-[200px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-500 focus:border-c-focus-solid dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
             />
             <button
@@ -2061,7 +1976,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-1.5 text-sm font-medium text-c-bg transition-colors hover:bg-c-text-secondary disabled:opacity-50"
             >
               {isSavingBasket ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {isPolish ? 'Zapisz' : 'Save'}
+              {t('interview.insightCreatorModal.save')}
             </button>
             <button
               type="button"
@@ -2071,7 +1986,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               }}
               className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('interview.insightCreatorModal.cancel')}
             </button>
           </div>
         )}
@@ -2086,7 +2001,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Zakres dat materiału' : 'Material date range'}
+            {t('interview.insightCreatorModal.materialDateRange')}
           </label>
           {(filterDateFrom || filterDateTo) && (
             <button
@@ -2098,7 +2013,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               }}
               className="text-xs text-c-info transition-colors hover:text-c-info"
             >
-              {isPolish ? 'Cały okres' : 'All dates'}
+              {t('interview.insightCreatorModal.allDates')}
             </button>
           )}
         </div>
@@ -2106,22 +2021,22 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           <DatePicker
             value={filterDateFrom}
             isPolish={isPolish}
-            placeholder={isPolish ? 'Data od' : 'Date from'}
+            placeholder={t('interview.insightCreatorModal.dateFrom')}
             onChange={(nextFrom) => {
               setFilterDateFrom(nextFrom);
               setUseDateFilter(Boolean(nextFrom || filterDateTo));
             }}
-            aria-label={isPolish ? 'Data od' : 'Date from'}
+            aria-label={t('interview.insightCreatorModal.dateFrom')}
           />
           <DatePicker
             value={filterDateTo}
             isPolish={isPolish}
-            placeholder={isPolish ? 'Data do' : 'Date to'}
+            placeholder={t('interview.insightCreatorModal.dateTo')}
             onChange={(nextTo) => {
               setFilterDateTo(nextTo);
               setUseDateFilter(Boolean(filterDateFrom || nextTo));
             }}
-            aria-label={isPolish ? 'Data do' : 'Date to'}
+            aria-label={t('interview.insightCreatorModal.dateTo')}
           />
         </div>
       </div>
@@ -2130,7 +2045,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Rola respondenta' : 'Respondent role'}
+              {t('interview.insightCreatorModal.respondentRole')}
             </label>
             {filterRole && (
               <button
@@ -2141,7 +2056,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 }}
                 className="text-xs text-c-info transition-colors hover:text-c-info"
               >
-                {isPolish ? 'Wszystkie role' : 'All roles'}
+                {t('interview.insightCreatorModal.allRoles')}
               </button>
             )}
           </div>
@@ -2151,9 +2066,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               setFilterRole(nextRole);
               setUseRoleFilter(Boolean(nextRole));
             }}
-            aria-label={isPolish ? 'Filtr roli respondenta' : 'Respondent role filter'}
+            aria-label={t('interview.insightCreatorModal.respondentRoleFilter')}
             options={[
-              { value: '', label: isPolish ? 'Wszystkie role' : 'All roles' },
+              { value: '', label: t('interview.insightCreatorModal.allRoles') },
               ...roleOptions.map((role) => ({ value: role, label: role })),
             ]}
           />
@@ -2162,7 +2077,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Dział respondenta' : 'Respondent department'}
+              {t('interview.insightCreatorModal.respondentDepartment')}
             </label>
             {filterDepartment && (
               <button
@@ -2173,7 +2088,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 }}
                 className="text-xs text-c-info transition-colors hover:text-c-info"
               >
-                {isPolish ? 'Wszystkie działy' : 'All departments'}
+                {t('interview.insightCreatorModal.allDepartments')}
               </button>
             )}
           </div>
@@ -2183,9 +2098,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               setFilterDepartment(nextDepartment);
               setUseDepartmentFilter(Boolean(nextDepartment));
             }}
-            aria-label={isPolish ? 'Filtr działu respondenta' : 'Respondent department filter'}
+            aria-label={t('interview.insightCreatorModal.respondentDepartmentFilter')}
             options={[
-              { value: '', label: isPolish ? 'Wszystkie działy' : 'All departments' },
+              { value: '', label: t('interview.insightCreatorModal.allDepartments') },
               ...departmentOptions.map((department) => ({
                 value: department,
                 label: department,
@@ -2201,7 +2116,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     <div>
       <div className="flex items-center justify-between mb-2">
         <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-          {isPolish ? 'Wybierz sesje źródłowe' : 'Select source sessions'} *
+          {t('interview.insightCreatorModal.selectSourceSessions')} *
         </label>
         {filteredSessions.length > 0 && (
           <button
@@ -2210,12 +2125,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             className="text-xs text-c-info hover:text-c-info transition-colors"
           >
             {filteredSessions.every((session) => selectedSessions.includes(session.id))
-              ? isPolish
-                ? 'Odznacz wszystkie'
-                : 'Deselect all'
-              : isPolish
-                ? 'Zaznacz wszystkie'
-                : 'Select all'}
+              ? t('interview.insightCreatorModal.deselectAll')
+              : t('interview.insightCreatorModal.selectAll')}
           </button>
         )}
       </div>
@@ -2227,9 +2138,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           icon={AlertTriangle}
           dashed={false}
           message={loadError}
-          hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
+          hint={t('interview.insightCreatorModal.retryLoadingHint')}
           action={{
-            label: isPolish ? 'Ponów' : 'Retry',
+            label: t('interview.insightCreatorModal.retry'),
             onClick: retryLoadData,
           }}
           className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
@@ -2238,9 +2149,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
           <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
           <p className="text-sm">
-            {isPolish
-              ? 'Brak zatwierdzonych i zakończonych sesji'
-              : 'No approved completed sessions'}
+            {t('interview.insightCreatorModal.noApprovedCompletedSessions')}
           </p>
           {(filterTemplate ||
             filterRespondent ||
@@ -2249,7 +2158,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             filterDateFrom ||
             filterDateTo) && (
             <p className="text-xs mt-1">
-              {isPolish ? 'Spróbuj zmienić filtry' : 'Try changing filters'}
+              {t('interview.insightCreatorModal.tryChangingFilters')}
             </p>
           )}
         </div>
@@ -2278,7 +2187,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     {session.name || 'Interview Session'}
                     <span className="ml-2 font-normal text-slate-500">
                       {session.answeredQuestions}/{session.totalQuestions}{' '}
-                      {isPolish ? 'pytań' : 'questions'}
+                      {t('interview.insightCreatorModal.questions')}
                     </span>
                     {session.templateName && (
                       <span className="ml-2 font-normal text-slate-500">
@@ -2317,8 +2226,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       {renderSessionsBlock()}
       <Disclosure
         icon={SlidersHorizontal}
-        title={isPolish ? 'Filtruj' : 'Filter'}
-        hint={isPolish ? 'osoby, daty, rola, dział' : 'people, dates, role, department'}
+        title={t('interview.insightCreatorModal.filter')}
+        hint={t('interview.insightCreatorModal.peopleDatesRoleDepartment')}
         count={activeFilterCount}
         open={filtersOpen}
         onToggle={() => setFiltersOpen((v) => !v)}
@@ -2333,12 +2242,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     <div className="space-y-4">
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
-          {isPolish ? 'Tryb analizy' : 'Analysis mode'}
+          {t('interview.insightCreatorModal.analysisMode')}
           <InfoHint
             text={
-              isPolish
-                ? 'Soczewka promptu — określa, jak AI czyta materiał. Możesz wybrać kilka.'
-                : 'Prompt lens — controls how the AI reads the material. You may pick several.'
+              t('interview.insightCreatorModal.promptLensControlsHowThe')
             }
           />
         </label>
@@ -2363,10 +2270,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 <StyledCheck checked={isSelected} className="mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                    {isPolish ? mode.labelPl : mode.labelEn}
+                    {t(`interview.insightCreatorModal.analysisModeLabel.${mode.id}`, mode.labelEn)}
                   </div>
                   <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? mode.hintPl : mode.hintEn}
+                    {t(`interview.insightCreatorModal.analysisModeHint.${mode.id}`, mode.hintEn)}
                   </p>
                 </div>
               </label>
@@ -2374,21 +2281,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           })}
         </div>
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Tryby analizy są soczewkami promptu dla jednego insightu. Nie uruchamiają downstream actions bez osobnego zatwierdzenia.'
-            : 'Analysis modes are prompt lenses for one insight. They do not run downstream actions without separate approval.'}
+          {t('interview.insightCreatorModal.analysisModesArePromptLenses')}
         </p>
         <p className="mt-2 text-xs text-c-info">
-          {isPolish
-            ? `Wybrano: ${selectedAnalysisModes.length}`
-            : `Selected: ${selectedAnalysisModes.length}`}
+          {t('interview.insightCreatorModal.selectedCountColon', { count: selectedAnalysisModes.length })}
         </p>
       </div>
 
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Zakres tematyczny' : 'Topic focus'}
+            {t('interview.insightCreatorModal.topicFocus')}
           </label>
           {selectedTopicFocus.length > 0 && (
             <button
@@ -2396,7 +2299,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               onClick={() => setSelectedTopicFocus([])}
               className="text-xs text-c-info transition-colors hover:text-c-info"
             >
-              {isPolish ? 'Ogólnie' : 'General'}
+              {t('interview.insightCreatorModal.general')}
             </button>
           )}
         </div>
@@ -2414,30 +2317,24 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     : 'border-slate-200 bg-white text-slate-700 hover:border-c-info/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-200'
                 }`}
               >
-                {isPolish ? topic.labelPl : topic.labelEn}
+                {t(`interview.insightCreatorModal.topicFocusLabel.${topic.id}`, topic.labelEn)}
               </button>
             );
           })}
         </div>
         <p className="mt-1.5 text-xs text-c-info">
           {selectedTopicFocus.length === 0
-            ? isPolish
-              ? 'Brak wyboru = ogólna synteza konsultingowa'
-              : 'No selection = general consulting synthesis'
-            : isPolish
-              ? `Wybrano: ${selectedTopicFocus.length}`
-              : `Selected: ${selectedTopicFocus.length}`}
+            ? t('interview.insightCreatorModal.noSelectionGeneralConsultingSynthesis')
+            : t('interview.insightCreatorModal.selectedCountColon', { count: selectedTopicFocus.length })}
         </p>
       </div>
 
       <div>
         <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
-          {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
+          {t('interview.insightCreatorModal.aiContextBoundary')}
           <InfoHint
             text={
-              isPolish
-                ? 'Decyduje, czy AI może sięgnąć poza wybrane wywiady do zaakceptowanej wiedzy organizacji.'
-                : 'Decides whether the AI may reach beyond the selected interviews into approved organization knowledge.'
+              t('interview.insightCreatorModal.decidesWhetherTheAiMay')
             }
           />
         </div>
@@ -2471,10 +2368,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 }`}
               >
                 <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {isPolish ? option.titlePl : option.titleEn}
+                  {t(`interview.insightCreatorModal.contextModeTitle.${option.value}`, option.titleEn)}
                 </div>
                 <p className="mt-0.5 line-clamp-2 text-[11px] font-normal text-slate-500 dark:text-slate-400">
-                  {isPolish ? option.hintPl : option.hintEn}
+                  {t(`interview.insightCreatorModal.contextModeHint.${option.value}`, option.hintEn)}
                 </p>
               </button>
             );
@@ -2488,16 +2385,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-          {isPolish ? 'Uwagi' : 'Notes'}
+          {t('interview.insightCreatorModal.notes')}
         </label>
         <textarea
           value={customPrompt}
           onChange={(e) => setCustomPrompt(e.target.value)}
           rows={3}
           placeholder={
-            isPolish
-              ? 'np. Skup się na różnicach między działem IT a biznesem. Użyj języka polskiego.'
-              : 'e.g. Focus on differences between IT and business departments. Use formal language.'
+            t('interview.insightCreatorModal.eGFocusOnDifferences')
           }
           className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
@@ -2505,12 +2400,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
         <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
-          {isPolish ? 'Dokumenty kontekstowe' : 'Context documents'}
+          {t('interview.insightCreatorModal.contextDocuments')}
           <InfoHint
             text={
-              isPolish
-                ? 'Pliki dodają kontekst organizacji/projektu do analizy. Wybierz gotowe dokumenty poniżej, aby AI je uwzględniła.'
-                : 'Files add organization/project context to the analysis. Tick ready documents below so the AI uses them.'
+              t('interview.insightCreatorModal.filesAddOrganizationProjectContext')
             }
           />
         </div>
@@ -2541,21 +2434,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           )}
           <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
             {isUploadingContextDocument
-              ? isPolish
-                ? 'Wysyłanie...'
-                : 'Uploading...'
+              ? t('interview.insightCreatorModal.uploading')
               : isContextDragActive
-                ? isPolish
-                  ? 'Upuść pliki tutaj'
-                  : 'Drop files here'
-                : isPolish
-                  ? 'Przeciągnij pliki lub kliknij, aby wybrać'
-                  : 'Drag files here or click to browse'}
+                ? t('interview.insightCreatorModal.dropFilesHere')
+                : t('interview.insightCreatorModal.dragFilesHereOrClick')}
           </span>
           <span className="text-[11px] text-slate-400">
-            {isPolish
-              ? 'TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT · max 5 plików · 10 MB każdy'
-              : 'TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT · max 5 files · 10 MB each'}
+            {t('interview.insightCreatorModal.txtMdCsvJsonPdf')}
           </span>
           <input
             ref={fileInputRef}
@@ -2573,9 +2458,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           </div>
         ) : contextDocuments.length === 0 ? (
           <div className="mt-3 rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-xs text-slate-500 dark:border-white/[0.15] dark:bg-navy-900/60">
-            {isPolish
-              ? 'Brak dokumentów kontekstowych. Dodaj pliki, aby zbudować kontekst organizacji/projektu.'
-              : 'No context documents yet. Upload files to build organization/project context.'}
+            {t('interview.insightCreatorModal.noContextDocumentsYetUpload')}
           </div>
         ) : (
           <div className="mt-3 max-h-44 space-y-1.5 overflow-auto pr-1">
@@ -2623,32 +2506,28 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         )}
         <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
           <span>
-            {isPolish
-              ? `Wybrane dokumenty: ${selectedContextDocumentIds.length}`
-              : `Selected documents: ${selectedContextDocumentIds.length}`}
+            {t('interview.insightCreatorModal.selectedDocumentsCountColon', { count: selectedContextDocumentIds.length })}
           </span>
           <button
             type="button"
             onClick={() => void fetchContextDocuments()}
             className="text-c-info hover:text-c-info"
           >
-            {isPolish ? 'Odśwież' : 'Refresh'}
+            {t('interview.insightCreatorModal.refresh')}
           </button>
         </div>
       </div>
 
       <div>
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-          {isPolish ? 'Linki do artefaktów wewnętrznych' : 'Internal artifact links'}
+          {t('interview.insightCreatorModal.internalArtifactLinks')}
         </label>
         <textarea
           value={internalArtifactLinks}
           onChange={(e) => setInternalArtifactLinks(e.target.value)}
           rows={2}
           placeholder={
-            isPolish
-              ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
-              : 'Paste one link or artifact identifier per line.'
+            t('interview.insightCreatorModal.pasteOneLinkOrArtifact')
           }
           className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
@@ -2669,12 +2548,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       {renderSimilarWarning()}
       <div className="rounded-xl border border-c-info/60 bg-c-info/50 p-3.5 dark:border-c-info/20 dark:bg-c-info/[0.07]">
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          {isPolish ? 'Pytanie przewodnie / hipoteza' : 'Leading question / hypothesis'}
+          {t('interview.insightCreatorModal.leadingQuestionHypothesis')}
           <InfoHint
             text={
-              isPolish
-                ? 'Opcjonalne. Skieruj analizę na konkretne pytanie lub hipotezę, którą AI ma sprawdzić.'
-                : 'Optional. Point the analysis at a specific question or hypothesis for the AI to test.'
+              t('interview.insightCreatorModal.optionalPointTheAnalysisAt')
             }
           />
         </label>
@@ -2683,26 +2560,20 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           value={leadingQuestion}
           onChange={(event) => setLeadingQuestion(event.target.value)}
           placeholder={
-            isPolish
-              ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
-              : 'e.g. Where do ownership handoffs most often break?'
+            t('interview.insightCreatorModal.eGWhereDoOwnership')
           }
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'To jedyne pole, którego zwykle potrzebujesz. Reszta poniżej jest opcjonalna.'
-            : 'This is usually the only field you need. Everything below is optional.'}
+          {t('interview.insightCreatorModal.thisIsUsuallyTheOnly')}
         </p>
       </div>
 
       <Disclosure
         icon={SlidersHorizontal}
-        title={isPolish ? 'Zaawansowane' : 'Advanced'}
+        title={t('interview.insightCreatorModal.advanced')}
         hint={
-          isPolish
-            ? 'soczewka, tematy, kontekst AI, dokumenty'
-            : 'lens, topics, AI context, documents'
+          t('interview.insightCreatorModal.lensTopicsAiContextDocuments')
         }
         count={advancedCount}
         open={advancedOpen}
@@ -2732,7 +2603,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-crimson-50 text-crimson-700 dark:bg-crimson-500/15 dark:text-crimson-300">
               <TeresaMark size={16} />
             </span>
-            {isPolish ? 'Kreator Wniosków AI' : 'AI Insight Creator'}
+            {t('interview.insightCreatorModal.aiInsightCreator')}
           </h2>
           <button
             onClick={onClose}
@@ -2760,7 +2631,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         {/* Footer */}
         <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
           <Button type="button" variant="ghost" onClick={onClose} disabled={isGenerating}>
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('interview.insightCreatorModal.cancel')}
           </Button>
           <div className="flex-1" />
           {currentStep > 0 && (
@@ -2770,7 +2641,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               onClick={goToPreviousStep}
               disabled={isGenerating}
             >
-              {isPolish ? 'Wstecz' : 'Back'}
+              {t('interview.insightCreatorModal.back')}
             </Button>
           )}
           {!isLastStep && (
@@ -2781,7 +2652,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               disabled={isGenerating}
               className="min-w-[180px]"
             >
-              {isPolish ? 'Dalej' : 'Next'}
+              {t('interview.insightCreatorModal.next')}
             </Button>
           )}
           {isLastStep && (
@@ -2795,12 +2666,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               className="min-w-[180px]"
             >
               {isGenerating
-                ? isPolish
-                  ? 'Wykonywanie...'
-                  : 'Running...'
-                : isPolish
-                  ? 'Wykonaj'
-                  : 'Run'}
+                ? t('interview.insightCreatorModal.running')
+                : t('interview.insightCreatorModal.run')}
             </Button>
           )}
         </div>
