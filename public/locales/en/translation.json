@@ -21874,6 +21874,18 @@
         "couldNotAddRows": "Could not add rows",
         "rowInsertRequiresPlatformTable": "Row insert is available once the platform table is loaded.",
         "addedRows": "Added {{count}} rows"
+      },
+      "templateGallery": {
+        "templateApplied": "Template \"{{name}}\" applied!",
+        "failedToApplyTemplate": "Failed to apply template",
+        "templateGalleryTitle": "Template Gallery",
+        "searchTemplatesPlaceholder": "Search templates…",
+        "loadingTemplates": "Loading templates…",
+        "noTemplatesFound": "No templates found",
+        "adjustFilterOrSearch": "Adjust the filter or search to see available templates.",
+        "usesCount": "{{count}} uses",
+        "newBadge": "New",
+        "use": "Use"
       }
     },
     "mindmap": {

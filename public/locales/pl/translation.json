@@ -22950,6 +22950,18 @@
         "couldNotAddRows": "Błąd zapisu wierszy",
         "rowInsertRequiresPlatformTable": "Dodawanie wierszy jest dostępne po załadowaniu tabeli platformy.",
         "addedRows": "Dodano {{count}} wierszy"
+      },
+      "templateGallery": {
+        "templateApplied": "Szablon \"{{name}}\" zastosowany!",
+        "failedToApplyTemplate": "Nie udało się zastosować szablonu",
+        "templateGalleryTitle": "Galeria szablonów",
+        "searchTemplatesPlaceholder": "Szukaj szablonów…",
+        "loadingTemplates": "Ładowanie szablonów…",
+        "noTemplatesFound": "Brak szablonów",
+        "adjustFilterOrSearch": "Zmień filtr lub wyszukiwanie, aby zobaczyć dostępne szablony.",
+        "usesCount": "{{count}} użyć",
+        "newBadge": "Nowy",
+        "use": "Użyj"
       }
     },
     "mindmap": {
