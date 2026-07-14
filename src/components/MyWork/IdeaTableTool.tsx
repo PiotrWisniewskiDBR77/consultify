@@ -227,7 +227,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // Hooki tabeli przyjmują wąską sygnaturę (key, fallback?) => string — TFunction
   // z i18next nie jest do niej przypisywalny wprost, stąd stabilny wrapper.
   const t = useCallback(
-    (key: string, fallback?: string): string => tRaw(key, { defaultValue: fallback ?? key }),
+    (key: string, fallback?: string, options?: Record<string, unknown>): string =>
+      tRaw(key, { defaultValue: fallback ?? key, ...(options ?? {}) }),
     [tRaw]
   );
   const isPl = i18n.language?.startsWith('pl');
