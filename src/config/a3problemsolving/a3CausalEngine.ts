@@ -212,11 +212,13 @@ export function buildCausalChain(links: A3CausalLink[]): A3CausalChain {
       break;
     }
     seen.add(cursor.id);
-    const children = childrenOf.get(cursor.id) || [];
+    const children: A3CausalLink[] = childrenOf.get(cursor.id) || [];
     ordered.push(classifyCauseRole(cursor, children.length > 0, depth));
     // Deterministic: follow the deepest single child; if the chain branches,
     // follow the first child by id order and record the branch as a candidate.
-    cursor = children.slice().sort((a, b) => a.id.localeCompare(b.id))[0];
+    cursor = children
+      .slice()
+      .sort((a: A3CausalLink, b: A3CausalLink) => a.id.localeCompare(b.id))[0];
     depth += 1;
   }
 

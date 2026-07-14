@@ -67,7 +67,7 @@ export const ToolConclusionSummary: React.FC<{ model: ToolConclusionModel }> = (
   const L = LABELS[model.language];
 
   return (
-    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
       {/* Verdict headline — answer-first thesis */}
       <div className="mb-4">
         <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-accent">
