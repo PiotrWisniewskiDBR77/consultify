@@ -22,6 +22,10 @@ import type { DocumentBlock, DocumentSchema, DocumentSection, DocumentSourceRef 
 import { DOC_SECTION_NODE_NAME } from './nodeNames';
 import type { PMDoc, PMNode } from './schemaToTipTap';
 
+// Re-export dla konsumentów odwrotnej konwersji (DocumentTipTapEditor importuje
+// PMDoc razem z proseMirrorToSchema z tego modułu).
+export type { PMDoc, PMNode } from './schemaToTipTap';
+
 function parseSourceRef(raw: unknown): DocumentSourceRef | undefined {
   if (typeof raw !== 'string' || raw.length === 0) return undefined;
   try {
@@ -169,7 +173,9 @@ function regroupSections(nodes: PMNode[], priorSections: DocumentSection[]): Doc
   let current: DocumentSection | null = null;
   let orderIndex = 0;
 
-  const startSection = (node: PMNode | null) => {
+  // Zwraca nową sekcję, a przypisanie `current` robimy w miejscu wywołania —
+  // TS nie śledzi przypisań wewnątrz domknięcia i zawężał `current` do `never`.
+  const startSection = (node: PMNode | null): DocumentSection => {
     const attrs = (node?.attrs ?? {}) as Record<string, unknown>;
     const sectionId =
       typeof attrs.sectionId === 'string' && attrs.sectionId
@@ -185,7 +191,7 @@ function regroupSections(nodes: PMNode[], priorSections: DocumentSection[]): Doc
         /* keep prior */
       }
     }
-    current = {
+    const section: DocumentSection = {
       sectionId,
       orderIndex: orderIndex++,
       level: (typeof attrs.level === 'number' ? attrs.level : (prior?.level ?? 1)) as 1 | 2 | 3,
@@ -197,17 +203,18 @@ function regroupSections(nodes: PMNode[], priorSections: DocumentSection[]): Doc
       blocks: [],
       sourceRefs,
     };
-    sections.push(current);
+    sections.push(section);
+    return section;
   };
 
   for (const node of nodes) {
     if (node.type === DOC_SECTION_NODE_NAME) {
-      startSection(node);
+      current = startSection(node);
       continue;
     }
-    if (!current) startSection(null);
+    if (!current) current = startSection(null);
     const block = pmNodeToBlock(node);
-    if (block && current) current.blocks.push(block);
+    if (block) current.blocks.push(block);
   }
 
   return sections;

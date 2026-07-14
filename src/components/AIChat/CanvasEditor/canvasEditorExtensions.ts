@@ -14,6 +14,11 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
+// Typ z '@tiptap/react' (re-eksport @tiptap/core), by wskazywać TĘ SAMĄ kopię
+// @tiptap/core, której używa useEditor. Instalacje z dwiema fizycznymi kopiami
+// tej samej wersji pakietu (hoisted + .pnpm) dają nominalnie różne typy
+// Node/Extension — rzut jest typowo poprawny (identyczna wersja, ten sam kod).
+import type { AnyExtension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
 import {
@@ -25,7 +30,7 @@ import {
 
 import { AIAddedMark, AIRemovedMark } from './canvasAIDiffExtensions';
 
-export function getCanvasEditorExtensions(placeholder?: string) {
+export function getCanvasEditorExtensions(placeholder?: string): AnyExtension[] {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
@@ -54,5 +59,5 @@ export function getCanvasEditorExtensions(placeholder?: string) {
     DetailsContentNode,
     AIAddedMark,
     AIRemovedMark,
-  ];
+  ] as AnyExtension[];
 }

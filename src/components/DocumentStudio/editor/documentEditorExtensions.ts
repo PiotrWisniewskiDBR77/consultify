@@ -16,6 +16,9 @@ import { Table } from '@tiptap/extension-table';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { TableRow } from '@tiptap/extension-table-row';
+// Typ z '@tiptap/react' (re-eksport @tiptap/core) — patrz uzasadnienie
+// w canvasEditorExtensions.ts (dwie fizyczne kopie tej samej wersji core).
+import type { AnyExtension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
 import { CalloutNode } from '@/components/MyWork/notebook/extensions';
@@ -26,7 +29,7 @@ import { DocSectionNode } from './nodes/DocSectionNode';
 import { KpiStripNode } from './nodes/KpiStripNode';
 import { QuoteNode } from './nodes/QuoteNode';
 
-export function getDocumentEditorExtensions(placeholder?: string) {
+export function getDocumentEditorExtensions(placeholder?: string): AnyExtension[] {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
@@ -48,5 +51,5 @@ export function getDocumentEditorExtensions(placeholder?: string) {
     KpiStripNode,
     QuoteNode,
     DocImageNode,
-  ];
+  ] as AnyExtension[];
 }
