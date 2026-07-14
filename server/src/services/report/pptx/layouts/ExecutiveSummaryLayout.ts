@@ -37,6 +37,34 @@ function panelVariantFromCtx(ctx?: LayoutContext): ExecutiveSummaryPanelVariant 
   }
 }
 
+/** Normalise for headline↔title comparison: lowercase, drop punctuation, collapse ws. */
+function normalizeForCompare(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * The header bar already renders `key_message` as the action title. If the panel
+ * `headline` says essentially the same thing, showing both stacks two large titles
+ * (proof 07-14: „podwójny tytuł", ~25% wysokości slajdu zmarnowane). Detect the
+ * duplication (containment OR ≥60% token overlap) so the layout can drop the panel
+ * headline and let findings reclaim the space.
+ */
+function headlineDuplicatesTitle(title: string, headline: string): boolean {
+  const a = normalizeForCompare(title);
+  const b = normalizeForCompare(headline);
+  if (!a || !b) return false;
+  if (a.includes(b) || b.includes(a)) return true;
+  const ta = new Set(a.split(' '));
+  const tb = new Set(b.split(' '));
+  const inter = [...ta].filter((w) => tb.has(w)).length;
+  const union = new Set([...ta, ...tb]).size;
+  return union > 0 && inter / union >= 0.6;
+}
+
 export function ExecutiveSummaryLayout(
   slide: UnifiedSlide,
   meta: UnifiedReportMeta,
@@ -69,19 +97,18 @@ export function ExecutiveSummaryLayout(
   elements.push(HeaderBar({}, tokens));
   // Action-title (beat-Gamma): the slide's thesis (key_message) becomes the title,
   // consistent with every other layout. The generic label is only a fallback.
-  // The board-level headline is rendered separately inside ExecutiveSummaryPanel,
-  // so there is no duplication.
-  elements.push(
-    SlideTitle(
-      {
-        text:
-          slide.key_message ||
-          (meta.language === 'pl' ? 'Podsumowanie Wykonawcze' : 'Executive Summary'),
-      },
-      tokens
-    )
-  );
+  const titleText =
+    slide.key_message || (meta.language === 'pl' ? 'Podsumowanie Wykonawcze' : 'Executive Summary');
+  elements.push(SlideTitle({ text: titleText }, tokens));
   elements.push(PageNumber({}, tokens));
+
+  // The board-level headline is normally rendered inside the panel, but when it
+  // just restates the action-title we drop it to avoid a stacked double-title —
+  // the panel then reclaims the vertical space for findings.
+  const panelHeadline =
+    c.headline && slide.key_message && headlineDuplicatesTitle(slide.key_message, c.headline)
+      ? ''
+      : c.headline;
 
   // Main panel
   const panelW = hasSide ? tokens.grid.contentW - 2.3 : tokens.grid.contentW;
@@ -93,7 +120,7 @@ export function ExecutiveSummaryLayout(
     hasSide && requestedVariant === 'split' ? 'stacked' : requestedVariant;
   const panelElements = ExecutiveSummaryPanel(
     {
-      headline: c.headline,
+      headline: panelHeadline,
       kpis: c.kpis,
       keyFindings: c.key_findings,
       recommendation: c.recommendation,

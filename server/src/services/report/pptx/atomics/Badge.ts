@@ -35,6 +35,11 @@ export function Badge(props: BadgeProps, tokens: DesignTokens): RenderedElement 
         bold: true,
         align: 'center',
         valign: 'middle',
+        // A badge label is a single token ("CRITICAL", "HIGH") — never wrap it
+        // onto two lines ("CRITICA/L"). Keep it on one line and shrink to fit if
+        // the pill is narrow.
+        wrap: false,
+        fit: 'shrink',
       });
     },
   };

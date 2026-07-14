@@ -20,7 +20,21 @@ const ARROWS: Record<string, string> = {
 export function TrendIndicator(props: TrendIndicatorProps, tokens: DesignTokens): RenderedElement {
   const color = trendColor(props.trend, tokens);
   const symbol = ARROWS[props.trend];
-  const label = props.delta != null ? `${symbol} ${props.delta}` : symbol;
+
+  // A delta of zero ("0", "0.0", "+0 pp") carries no information — showing
+  // "◆ 0" reads as broken. Treat it as "no change": render an em dash instead of
+  // the arrow+zero. A real, non-zero delta renders "▲ +38%" as before.
+  const deltaStr = props.delta != null ? String(props.delta).trim() : '';
+  const isZeroDelta =
+    deltaStr !== '' && /^[+-]?0(?:[.,]0+)?\s*(?:p\.?\s*p\.?|%|pts?)?$/i.test(deltaStr);
+  let label: string;
+  if (deltaStr !== '' && !isZeroDelta) {
+    label = `${symbol} ${deltaStr}`;
+  } else if (props.trend === 'flat') {
+    label = '—'; // em dash — no change
+  } else {
+    label = symbol;
+  }
 
   return {
     kind: 'text',

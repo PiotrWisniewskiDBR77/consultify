@@ -46,43 +46,50 @@ export function ExecutiveSummaryPanel(
   // wypełniały środek — zero pustego dołu.
   const hasKpis = !!(props.kpis && props.kpis.length > 0);
   const hasReco = !!props.recommendation;
+  // Empty headline = layout deduped it against the slide title → skip the block
+  // entirely so findings reclaim the reclaimed vertical space (no phantom gap).
+  const hasHeadline = !!props.headline && props.headline.trim() !== '';
 
-  const headlineH = 0.72;
+  const headlineH = hasHeadline ? 0.72 : 0;
   const kpiH = 0.92;
   const dividerH = 0.02; // cienka linia (gap w distributeY robi odstęp)
   const recoH = 0.55;
 
-  // Findings biorą cały „luz" regionu: liczymy ile zostaje po stałych blokach
-  // i minimalnych odstępach, by stos sięgał dołu zamiast się zbijać u góry.
-  const fixed = headlineH + (hasKpis ? kpiH : 0) + dividerH + (hasReco ? recoH : 0);
-  const blockCount = 2 + (hasKpis ? 1 : 0) + (hasReco ? 1 : 0); // headline, divider, findings + opcje
-  const minGap = 0.18;
-  const findingsH = Math.max(1.2, p.h - fixed - minGap * (blockCount - 1));
-
   // Kolejność bloków = kolejność wysokości; distributeY zwraca y dla każdego.
-  const rowHeights: number[] = [headlineH];
+  const rowHeights: number[] = [];
+  if (hasHeadline) rowHeights.push(headlineH);
   if (hasKpis) rowHeights.push(kpiH);
   rowHeights.push(dividerH);
-  rowHeights.push(findingsH);
+  const findingsIdx = rowHeights.length;
+  rowHeights.push(0); // findings — wysokość policzona niżej
   if (hasReco) rowHeights.push(recoH);
+
+  // Findings biorą cały „luz" regionu: liczymy ile zostaje po stałych blokach
+  // i minimalnych odstępach, by stos sięgał dołu zamiast się zbijać u góry.
+  const minGap = 0.18;
+  const fixed = headlineH + (hasKpis ? kpiH : 0) + dividerH + (hasReco ? recoH : 0);
+  const findingsH = Math.max(1.2, p.h - fixed - minGap * (rowHeights.length - 1));
+  rowHeights[findingsIdx] = findingsH;
 
   const ys = distributeY({ y: p.y, h: p.h }, rowHeights, 'fill', minGap);
   let idx = 0;
 
-  // Headline — do 2 linii.
-  const headlineY = ys[idx++];
-  elements.push(
-    BodyText(
-      {
-        text: props.headline,
-        position: { x: p.x, y: headlineY, w: p.w, h: headlineH },
-        bold: true,
-        fontSize: tokens.fontSizes.heading,
-        color: tokens.colors.primary,
-      },
-      tokens
-    )
-  );
+  // Headline — do 2 linii (pominięty gdy zdeduplikowany z tytułem slajdu).
+  if (hasHeadline) {
+    const headlineY = ys[idx++];
+    elements.push(
+      BodyText(
+        {
+          text: props.headline,
+          position: { x: p.x, y: headlineY, w: p.w, h: headlineH },
+          bold: true,
+          fontSize: tokens.fontSizes.heading,
+          color: tokens.colors.primary,
+        },
+        tokens
+      )
+    );
+  }
 
   // KPI strip (if present, max 4 for exec summary)
   if (hasKpis) {
@@ -215,15 +222,18 @@ function execSummaryTopKpi(
   const elements: RenderedElement[] = [];
   const hasKpis = !!(props.kpis && props.kpis.length > 0);
   const hasReco = !!props.recommendation;
+  const hasHeadline = !!props.headline && props.headline.trim() !== '';
 
-  const headlineH = 0.7;
+  const headlineH = hasHeadline ? 0.7 : 0;
   const kpiH = hasKpis ? 1.0 : 0;
   const recoH = hasReco ? 0.55 : 0;
   const gap = 0.18;
 
   let y = p.y;
-  elements.push(headlineElement(props.headline, { x: p.x, y, w: p.w, h: headlineH }, tokens));
-  y += headlineH + gap;
+  if (hasHeadline) {
+    elements.push(headlineElement(props.headline, { x: p.x, y, w: p.w, h: headlineH }, tokens));
+    y += headlineH + gap;
+  }
 
   if (hasKpis) {
     elements.push(
@@ -269,17 +279,22 @@ function execSummarySplit(
   const elements: RenderedElement[] = [];
   const hasKpis = !!(props.kpis && props.kpis.length > 0);
   const hasReco = !!props.recommendation;
+  const hasHeadline = !!props.headline && props.headline.trim() !== '';
 
-  const headlineH = 0.7;
+  const headlineH = hasHeadline ? 0.7 : 0;
   const gap = 0.18;
   const colGap = 0.35;
   const leftW = p.w * 0.56;
   const rightX = p.x + leftW + colGap;
   const rightW = p.w - leftW - colGap;
 
-  // Headline spans full width.
-  elements.push(headlineElement(props.headline, { x: p.x, y: p.y, w: p.w, h: headlineH }, tokens));
-  const bodyY = p.y + headlineH + gap;
+  // Headline spans full width (pominięty gdy zdeduplikowany z tytułem slajdu).
+  if (hasHeadline) {
+    elements.push(
+      headlineElement(props.headline, { x: p.x, y: p.y, w: p.w, h: headlineH }, tokens)
+    );
+  }
+  const bodyY = p.y + (hasHeadline ? headlineH + gap : 0);
   const bodyH = p.y + p.h - bodyY;
 
   // LEFT: key findings fill the column.
