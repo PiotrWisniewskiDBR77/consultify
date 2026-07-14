@@ -1,5 +1,6 @@
 import { Shuffle } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ColorPickerPopoverProps {
   isPl: boolean;
@@ -46,13 +47,13 @@ const LINE_STYLES: Array<{ id: 'solid' | 'dashed' | 'dotted'; label: string; das
 ];
 
 export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
-  isPl,
   currentColor,
   currentFillOpacity = 100,
   currentLineStyle = 'solid',
   onUpdate,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [opacity, setOpacity] = useState(currentFillOpacity);
 
   const handleColorClick = useCallback(
@@ -81,7 +82,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
       {/* Line style */}
       <div className="mb-2">
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
-          {isPl ? 'Styl linii' : 'Line style'}
+          {t('ideas.mindmap.lineStyle', 'Line style')}
         </div>
         <div className="flex gap-1">
           {LINE_STYLES.map((ls) => (
@@ -103,7 +104,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
       {/* Opacity */}
       <div className="mb-2">
         <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
-          <span>{isPl ? 'Krycie' : 'Opacity'}</span>
+          <span>{t('ideas.mindmap.opacity', 'Opacity')}</span>
           <span className="text-c-text-secondary">{opacity}%</span>
         </div>
         <input
@@ -121,13 +122,13 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
       <div className="mb-2">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-            {isPl ? 'Zalecane' : 'Recommended'}
+            {t('ideas.mindmap.recommended', 'Recommended')}
           </span>
           <button
             onClick={handleRandomize}
             className="flex items-center gap-1 text-[9px] text-c-text-secondary hover:text-c-text dark:hover:text-c-text transition-colors"
           >
-            <Shuffle size={10} /> {isPl ? 'Losuj' : 'Random'}
+            <Shuffle size={10} /> {t('ideas.mindmap.random', 'Random')}
           </button>
         </div>
         <div className="flex gap-1">
@@ -149,7 +150,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
       {/* Full palette */}
       <div>
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
-          {isPl ? 'Paleta' : 'Palette'}
+          {t('ideas.mindmap.palette', 'Palette')}
         </div>
         <div className="grid grid-cols-10 gap-0.5">
           {PALETTE.map((c) => (

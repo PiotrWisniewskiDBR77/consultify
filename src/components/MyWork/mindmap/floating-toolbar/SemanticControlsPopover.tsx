@@ -1,5 +1,6 @@
 import { CircleDot, Plus, Tags } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SEMANTIC_TYPE_OPTIONS } from './SemanticTypeDropdown';
 
@@ -24,6 +25,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
   onUpdate,
   onOpenNodeDetail,
 }) => {
+  const { t } = useTranslation();
   const [noteDraft, setNoteDraft] = useState('');
   const [tagInput, setTagInput] = useState('');
 
@@ -57,7 +59,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
       <div>
         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-2">
           <CircleDot size={11} />
-          {isPl ? 'Semantyka' : 'Semantics'}
+          {t('ideas.mindmap.semantics', 'Semantics')}
         </div>
         <select
           value={nodeData?.semanticType || ''}
@@ -65,7 +67,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
           disabled={disabled}
           className="w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border disabled:opacity-50"
         >
-          <option value="">{isPl ? 'Wybierz typ semantyczny' : 'Select semantic type'}</option>
+          <option value="">{t('ideas.mindmap.selectSemanticType', 'Select semantic type')}</option>
           {SEMANTIC_TYPE_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>
               {isPl ? option.labelPl : option.labelEn}
@@ -77,7 +79,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
       <div>
         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-2">
           <Tags size={11} />
-          {isPl ? 'Tagi i kolor' : 'Tags and color'}
+          {t('ideas.mindmap.tagsColor', 'Tags and color')}
         </div>
         <div className="flex flex-wrap gap-1.5 mb-2 min-h-[1.75rem]">
           {currentTags.map((tag) => (
@@ -104,9 +106,10 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
               }
             }}
             disabled={disabled}
-            placeholder={
-              isPl ? 'Dodaj tag lub kilka po przecinku' : 'Add tag or comma-separated tags'
-            }
+            placeholder={t(
+              'ideas.mindmap.addTagCommaSeparatedTags',
+              'Add tag or comma-separated tags'
+            )}
             className="flex-1 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border disabled:opacity-50"
           />
           <button
@@ -116,19 +119,20 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
             className="inline-flex items-center gap-1 rounded-xl bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text disabled:opacity-40"
           >
             <Plus size={11} />
-            {isPl ? 'Dodaj' : 'Add'}
+            {t('ideas.mindmap.add', 'Add')}
           </button>
         </div>
         <div className="mt-1.5 text-[10px] text-c-text-secondary dark:text-c-text-muted">
-          {isPl
-            ? 'Tagi i typ semantyczny nadają akcent kolorystyczny węzła i kontekst dla AI.'
-            : 'Tags and semantic type drive node accent color and AI context.'}
+          {t(
+            'ideas.mindmap.tagsSemanticTypeDriveNodeAccent',
+            'Tags and semantic type drive node accent color and AI context.'
+          )}
         </div>
       </div>
 
       <div>
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-2">
-          {isPl ? 'Szybka notatka' : 'Quick note'}
+          {t('ideas.mindmap.quickNote', 'Quick note')}
         </div>
         <textarea
           rows={3}
@@ -136,9 +140,10 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
           onChange={(e) => setNoteDraft(e.target.value)}
           onBlur={() => onUpdate({ notes: noteDraft })}
           disabled={disabled}
-          placeholder={
-            isPl ? 'Krótki kontekst, znaczenie, decyzja...' : 'Short context, meaning, decision...'
-          }
+          placeholder={t(
+            'ideas.mindmap.shortContextMeaningDecision',
+            'Short context, meaning, decision...'
+          )}
           className="w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border resize-none disabled:opacity-50"
         />
       </div>
@@ -148,7 +153,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
         onClick={onOpenNodeDetail}
         className="w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
       >
-        {isPl ? 'Otwórz pełne właściwości' : 'Open full properties'}
+        {t('ideas.mindmap.openFullProperties', 'Open full properties')}
       </button>
     </div>
   );
