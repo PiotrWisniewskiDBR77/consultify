@@ -5666,7 +5666,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             render: () => (
               <a
                 href={sourcePath}
-                title={isPolish ? `Otwórz źródło: ${sourceTitle}` : `Open source: ${sourceTitle}`}
+                title={t('initiatives.initiativeDocumentView.openSourceTitle', {
+                  title: sourceTitle,
+                })}
                 className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised border border-c-border-subtle text-c-info hover:bg-c-surface transition-colors truncate"
               >
                 <Sparkles size={12} className="shrink-0" />
@@ -10050,7 +10052,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 data-testid="initiative-nav-pill-chip"
                                 label={isPolish ? activePill.label.pl : activePill.label.en}
                                 active={activeNSection === activePill.id}
-                                ariaLabel={isPolish ? 'Przełącz widok' : 'Switch view'}
+                                ariaLabel={t('initiatives.initiativeDocumentView.switchView')}
                                 items={visiblePills.map((pill) => ({
                                   id: pill.id,
                                   label: isPolish ? pill.label.pl : pill.label.en,

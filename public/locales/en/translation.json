@@ -7896,7 +7896,9 @@
       "ideaWorkspace": "Idea Workspace",
       "assessment": "Assessment",
       "auditReadout": "Audit readout",
-      "source": "Source"
+      "source": "Source",
+      "interviewInsight": "Interview Insight",
+      "insight": "Insight"
     },
     "financialNarrativeBlocks": {
       "financialAnalysisSizingRoi": "Financial analysis (sizing + ROI)",
@@ -7909,7 +7911,64 @@
       "fillIn": "Fill-in",
       "reconsider": "Reconsider",
       "lowEffort": "Low effort",
-      "highEffort": "High effort"
+      "highEffort": "High effort",
+      "band": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "veryHighConfidence": "Very high",
+        "veryHigh": "Very high"
+      },
+      "effort": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large"
+      },
+      "source": "Source:",
+      "initiativeTitle": "Initiative title",
+      "titlePlaceholder": "e.g. Standardize handoff process",
+      "similarWarning": "Similar initiatives already exist — check you are not duplicating:",
+      "thesisLabel": "Thesis / hypothesis",
+      "thesisPlaceholder": "If we do X, we expect Y, because Z.",
+      "thesisHint": "A falsifiable thesis — what we do, the expected effect, and why.",
+      "leverLabel": "Lever / type",
+      "lever": {
+        "cost": "Cost reduction",
+        "growth": "Growth",
+        "risk": "Risk mitigation",
+        "capability": "Capability",
+        "compliance": "Compliance"
+      },
+      "aiCardsLabel": "Initiative cards (AI proposal)",
+      "owner": "Owner",
+      "ownerPlaceholder": "Select owner…",
+      "sponsor": "Sponsor",
+      "sponsorPlaceholder": "Optional…",
+      "impactLabel": "Impact",
+      "effortLabel": "Effort",
+      "suggestion": "Suggestion:",
+      "priorityLabel": "priority",
+      "confidenceLabel": "Confidence",
+      "kpiLabel": "KPI #1 — success metric",
+      "kpiNamePlaceholder": "e.g. Cross-team handoff time",
+      "kpiBaselinePlaceholder": "Baseline (e.g. 45 min)",
+      "kpiTargetPlaceholder": "Target (e.g. 15 min)",
+      "kpiHint": "Without a measurable target it is a wish, not an initiative.",
+      "draftBadgeTitle": "You are creating a DRAFT",
+      "submitForReview": "Submit for review",
+      "governanceHint": "Promotion to Initiatives (REVIEW) is done by PM / Lead / PMO — not the consultant.",
+      "plannedStart": "Planned start",
+      "plannedEnd": "Planned end",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "comma-separated",
+      "advanced": "Advanced",
+      "scopeInLabel": "Scope — in",
+      "scopeOutLabel": "Scope — out",
+      "oneItemPerLine": "one item per line",
+      "killCriteriaLabel": "Kill criteria",
+      "keyRisksLabel": "Key risks (RAID)",
+      "draftCreated": "Initiative draft created",
+      "createFailed": "Create failed"
     },
     "gateReadinessSection": {
       "aiAnalysisFailed": "AI analysis failed",
@@ -8633,7 +8692,50 @@
       "more": "More",
       "creatingMaterial": "Creating material…",
       "materialReady": "Material ready",
-      "failedToCreateMaterial": "Failed to create material"
+      "failedToCreateMaterial": "Failed to create material",
+      "openSourceTitle": "Open source: {{title}}",
+      "switchView": "Switch view"
+    },
+    "suggestedChangesPanel": {
+      "title": "Suggested changes",
+      "toReview": "{{count}} to review",
+      "empty": "No suggested changes",
+      "accept": "Accept",
+      "reject": "Reject"
+    },
+    "initiativeProposalBoard": {
+      "title": "Proposal board",
+      "counts": "{{newCount}} new · {{changeCount}} changes",
+      "zeroNewNotice": "0 new initiatives is not a failure — this run tidies the grid (reinforces, links, flags).",
+      "emptyProposals": "No proposals to review",
+      "createDraft": "Create draft",
+      "proposeChange": "Propose change",
+      "dismiss": "Dismiss",
+      "coverageGaps": "Coverage gaps (goals with no initiative):",
+      "overlapsMece": "Overlaps (MECE):",
+      "sourceEvidence": "Source evidence",
+      "noSourceContent": "No source content.",
+      "noSource": "No source."
+    },
+    "initiativeCoverageWaveView": {
+      "coverageMece": "Coverage (MECE)",
+      "overlapsCount": "{{count}} overlaps",
+      "cleanMece": "No coverage gaps and no overlaps — the grid is MECE.",
+      "goalsWithNoInitiative": "Goals with no initiative",
+      "overlappingScopesDetected": "Overlapping scopes detected (MECE violation):",
+      "waves": "Waves",
+      "acceptedCountLimit": "{{count}} accepted · limit {{wipLimit}}/wave",
+      "overCapacity": "over capacity: {{count}} > limit {{wipLimit}}",
+      "empty": "Empty"
+    },
+    "initiativeGeneratorModal": {
+      "proposeInitiative": "Propose initiative",
+      "proposals": "Proposals",
+      "coverageAndWaves": "Coverage & waves",
+      "close": "Close",
+      "loadingGrid": "Loading the initiative grid…",
+      "changeSaved": "Suggested change saved.",
+      "recordedLocally": "Recorded locally (backend pending)."
     },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Linked finance models",
@@ -8645,7 +8747,29 @@
       "open": "Open",
       "inModule": "In module",
       "chat": "Chat",
-      "copyLink": "Copy link"
+      "copyLink": "Copy link",
+      "linkageStatus": {
+        "linkedToModel": "Linked to model",
+        "linkedToScenario": "Linked to scenario",
+        "roiTracking": "ROI tracking",
+        "staleVsModel": "Stale vs model",
+        "localOnly": "Local only",
+        "notStarted": "Not started"
+      },
+      "linkageType": {
+        "budget": "Budget",
+        "forecast": "Forecast",
+        "actual": "Actual",
+        "variance": "Variance"
+      },
+      "aiHints": {
+        "nextStepsLabel": "Next steps",
+        "nextStepsPrompt": "Propose 3 next steps for this initiative.",
+        "risksLabel": "Risks",
+        "risksPrompt": "List 5 risks and mitigations for this initiative.",
+        "scopeLabel": "Scope",
+        "scopePrompt": "Draft a short scope and success criteria for this initiative."
+      }
     },
     "draftJourney": {
       "badge": "Draft",

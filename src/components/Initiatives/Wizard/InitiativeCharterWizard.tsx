@@ -220,9 +220,8 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
   source,
   isPolish: isPolishProp,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
-  const tr = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
 
   const [step, setStep] = useState(0);
   const [creating, setCreating] = useState(false);
@@ -385,13 +384,15 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
 
   const userOptions = useMemo(() => users.map((u) => ({ value: u.id, label: u.name })), [users]);
   const bandOptions = (kind: 'impact' | 'confidence') => [
-    { value: 'low' as Band, label: tr('Niski', 'Low') },
-    { value: 'medium' as Band, label: tr('Średni', 'Medium') },
-    { value: 'high' as Band, label: tr('Wysoki', 'High') },
+    { value: 'low' as Band, label: t('initiatives.initiativeCharterWizard.band.low') },
+    { value: 'medium' as Band, label: t('initiatives.initiativeCharterWizard.band.medium') },
+    { value: 'high' as Band, label: t('initiatives.initiativeCharterWizard.band.high') },
     {
       value: 'very_high' as Band,
       label:
-        kind === 'confidence' ? tr('Bardzo wysoka', 'Very high') : tr('Bardzo wysoki', 'Very high'),
+        kind === 'confidence'
+          ? t('initiatives.initiativeCharterWizard.band.veryHighConfidence')
+          : t('initiatives.initiativeCharterWizard.band.veryHigh'),
     },
   ];
 
@@ -435,13 +436,15 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
       };
 
       const result = await createInitiativeWriteTruth(payload);
-      toast.success(tr('Utworzono draft inicjatywy', 'Initiative draft created'));
+      toast.success(t('initiatives.initiativeCharterWizard.draftCreated'));
       onCreated?.({ createdId: result.createdId, created: result.created });
       onClose();
     } catch (err) {
       const e = err as { response?: { data?: { error?: unknown } }; message?: string };
       const msg =
-        e?.response?.data?.error || e?.message || tr('Nie udało się utworzyć', 'Create failed');
+        e?.response?.data?.error ||
+        e?.message ||
+        t('initiatives.initiativeCharterWizard.createFailed');
       toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg));
       setCreating(false);
     }
@@ -470,7 +473,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     effort,
     onCreated,
     onClose,
-    tr,
+    t,
   ]);
 
   // ── Step bodies ──────────────────────────────────────────────────────────
@@ -480,29 +483,25 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
       {source?.label && (
         <div className="flex items-center gap-2 rounded-xl border border-c-info/30 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-c-info/20 dark:bg-white/[0.05] dark:text-slate-300">
           <ShieldCheck size={14} className="shrink-0 text-[var(--c-info)]" />
-          <span className="font-medium">{tr('Źródło:', 'Source:')}</span>
+          <span className="font-medium">{t('initiatives.initiativeCharterWizard.source')}</span>
           <span className="truncate">{source.label}</span>
         </div>
       )}
       <div>
-        <label className={labelCls}>{tr('Tytuł inicjatywy', 'Initiative title')} *</label>
+        <label className={labelCls}>
+          {t('initiatives.initiativeCharterWizard.initiativeTitle')} *
+        </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={tr(
-            'np. Standaryzacja procesu przekazań',
-            'e.g. Standardize handoff process'
-          )}
+          placeholder={t('initiatives.initiativeCharterWizard.titlePlaceholder')}
           className={inputCls}
         />
         {similarInitiatives.length > 0 && (
           <div className="mt-2 rounded-lg border border-amber-300/60 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 px-3 py-2">
             <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 mb-1">
-              {tr(
-                'Podobne inicjatywy już istnieją — sprawdź, czy nie duplikujesz:',
-                'Similar initiatives already exist — check you are not duplicating:'
-              )}
+              {t('initiatives.initiativeCharterWizard.similarWarning')}
             </div>
             <ul className="space-y-0.5">
               {similarInitiatives.map((s) => (
@@ -523,15 +522,12 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
         )}
       </div>
       <div>
-        <label className={labelCls}>{tr('Teza / hipoteza', 'Thesis / hypothesis')}</label>
+        <label className={labelCls}>{t('initiatives.initiativeCharterWizard.thesisLabel')}</label>
         <textarea
           value={thesis}
           onChange={(e) => setThesis(e.target.value)}
           rows={3}
-          placeholder={tr(
-            'Jeśli zrobimy X, oczekujemy Y, ponieważ Z.',
-            'If we do X, we expect Y, because Z.'
-          )}
+          placeholder={t('initiatives.initiativeCharterWizard.thesisPlaceholder')}
           className={`${inputCls} resize-none`}
         />
         {cardIssues.length > 0 && (
@@ -548,30 +544,33 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           </ul>
         )}
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          {tr(
-            'Falsyfikowalna teza — co zrobimy, jaki efekt i dlaczego.',
-            'A falsifiable thesis — what we do, the expected effect, and why.'
-          )}
+          {t('initiatives.initiativeCharterWizard.thesisHint')}
         </p>
       </div>
       <div>
-        <label className={labelCls}>{tr('Dźwignia / typ', 'Lever / type')}</label>
+        <label className={labelCls}>{t('initiatives.initiativeCharterWizard.leverLabel')}</label>
         <SegmentedRow<Lever>
           value={lever}
           onChange={setLever}
           options={[
-            { value: 'cost', label: tr('Redukcja kosztów', 'Cost reduction') },
-            { value: 'growth', label: tr('Wzrost', 'Growth') },
-            { value: 'risk', label: tr('Mitygacja ryzyka', 'Risk mitigation') },
-            { value: 'capability', label: tr('Zdolność', 'Capability') },
-            { value: 'compliance', label: tr('Compliance', 'Compliance') },
+            { value: 'cost', label: t('initiatives.initiativeCharterWizard.lever.cost') },
+            { value: 'growth', label: t('initiatives.initiativeCharterWizard.lever.growth') },
+            { value: 'risk', label: t('initiatives.initiativeCharterWizard.lever.risk') },
+            {
+              value: 'capability',
+              label: t('initiatives.initiativeCharterWizard.lever.capability'),
+            },
+            {
+              value: 'compliance',
+              label: t('initiatives.initiativeCharterWizard.lever.compliance'),
+            },
           ]}
         />
       </div>
       {(proposedCore.length > 0 || proposedExtra.length > 0) && (
         <div>
           <label className={labelCls}>
-            {tr('Karty inicjatywy (propozycja AI)', 'Initiative cards (AI proposal)')}
+            {t('initiatives.initiativeCharterWizard.aiCardsLabel')}
           </label>
           <ProposedCardsPanel
             core={proposedCore}
@@ -589,23 +588,23 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>{tr('Owner', 'Owner')} *</label>
+          <label className={labelCls}>{t('initiatives.initiativeCharterWizard.owner')} *</label>
           <Select
             value={ownerId}
             onChange={setOwnerId}
             options={userOptions}
-            placeholder={tr('Wybierz odpowiedzialnego…', 'Select owner…')}
-            aria-label={tr('Owner', 'Owner')}
+            placeholder={t('initiatives.initiativeCharterWizard.ownerPlaceholder')}
+            aria-label={t('initiatives.initiativeCharterWizard.owner')}
           />
         </div>
         <div>
-          <label className={labelCls}>{tr('Sponsor', 'Sponsor')}</label>
+          <label className={labelCls}>{t('initiatives.initiativeCharterWizard.sponsor')}</label>
           <Select
             value={sponsorId}
             onChange={setSponsorId}
             options={userOptions}
-            placeholder={tr('Opcjonalnie…', 'Optional…')}
-            aria-label={tr('Sponsor', 'Sponsor')}
+            placeholder={t('initiatives.initiativeCharterWizard.sponsorPlaceholder')}
+            aria-label={t('initiatives.initiativeCharterWizard.sponsor')}
           />
         </div>
       </div>
@@ -613,7 +612,9 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-navy-700/60 dark:bg-navy-950/30">
         <div className="mb-3 grid grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>{tr('Wpływ (impact)', 'Impact')}</label>
+            <label className={labelCls}>
+              {t('initiatives.initiativeCharterWizard.impactLabel')}
+            </label>
             <SegmentedRow<Band>
               value={impact}
               onChange={setImpact}
@@ -621,14 +622,16 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
             />
           </div>
           <div>
-            <label className={labelCls}>{tr('Wysiłek (effort)', 'Effort')}</label>
+            <label className={labelCls}>
+              {t('initiatives.initiativeCharterWizard.effortLabel')}
+            </label>
             <SegmentedRow<Effort>
               value={effort}
               onChange={setEffort}
               options={[
-                { value: 'S', label: tr('Mały', 'Small') },
-                { value: 'M', label: tr('Średni', 'Medium') },
-                { value: 'L', label: tr('Duży', 'Large') },
+                { value: 'S', label: t('initiatives.initiativeCharterWizard.effort.small') },
+                { value: 'M', label: t('initiatives.initiativeCharterWizard.effort.medium') },
+                { value: 'L', label: t('initiatives.initiativeCharterWizard.effort.large') },
               ]}
             />
           </div>
@@ -636,20 +639,22 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
         <QuadrantMatrix impact={impact} effort={effort} isPolish={isPolish} />
         <div className="mt-3 flex items-center gap-2 text-sm">
           <span className="text-slate-500 dark:text-slate-400">
-            {tr('Sugestia:', 'Suggestion:')}
+            {t('initiatives.initiativeCharterWizard.suggestion')}
           </span>
           <span className="rounded-md bg-navy-900 px-2 py-0.5 text-xs font-semibold text-white">
             {isPolish ? quadrant.pl : quadrant.en}
           </span>
           <span className="text-slate-400">·</span>
           <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            {tr('priorytet', 'priority')}: {quadrant.priority}
+            {t('initiatives.initiativeCharterWizard.priorityLabel')}: {quadrant.priority}
           </span>
         </div>
       </div>
 
       <div>
-        <label className={labelCls}>{tr('Pewność (confidence)', 'Confidence')}</label>
+        <label className={labelCls}>
+          {t('initiatives.initiativeCharterWizard.confidenceLabel')}
+        </label>
         <SegmentedRow<Band>
           value={confidence}
           onChange={setConfidence}
@@ -658,14 +663,12 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
       </div>
 
       <div className="rounded-xl border border-c-info/30 bg-slate-50 p-3.5 dark:border-c-info/20 dark:bg-white/[0.05]">
-        <label className={labelCls}>
-          {tr('KPI #1 — miara sukcesu', 'KPI #1 — success metric')} *
-        </label>
+        <label className={labelCls}>{t('initiatives.initiativeCharterWizard.kpiLabel')} *</label>
         <input
           type="text"
           value={kpiName}
           onChange={(e) => setKpiName(e.target.value)}
-          placeholder={tr('np. Czas przekazania między działami', 'e.g. Cross-team handoff time')}
+          placeholder={t('initiatives.initiativeCharterWizard.kpiNamePlaceholder')}
           className={`${inputCls} mb-2 bg-white dark:bg-navy-900`}
         />
         <div className="grid grid-cols-2 gap-2">
@@ -673,22 +676,19 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
             type="text"
             value={kpiBaseline}
             onChange={(e) => setKpiBaseline(e.target.value)}
-            placeholder={tr('Baseline (np. 45 min)', 'Baseline (e.g. 45 min)')}
+            placeholder={t('initiatives.initiativeCharterWizard.kpiBaselinePlaceholder')}
             className={`${inputCls} bg-white dark:bg-navy-900`}
           />
           <input
             type="text"
             value={kpiTarget}
             onChange={(e) => setKpiTarget(e.target.value)}
-            placeholder={tr('Cel (np. 15 min)', 'Target (e.g. 15 min)')}
+            placeholder={t('initiatives.initiativeCharterWizard.kpiTargetPlaceholder')}
             className={`${inputCls} bg-white dark:bg-navy-900`}
           />
         </div>
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          {tr(
-            'Bez mierzalnego celu to życzenie, nie inicjatywa.',
-            'Without a measurable target it is a wish, not an initiative.'
-          )}
+          {t('initiatives.initiativeCharterWizard.kpiHint')}
         </p>
       </div>
     </div>
@@ -700,31 +700,30 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
         <Lock size={16} className="mt-0.5 shrink-0 text-amber-500" />
         <div className="text-sm">
           <p className="font-semibold text-slate-700 dark:text-slate-200">
-            {tr('Tworzysz DRAFT', 'You are creating a DRAFT')}
+            {t('initiatives.initiativeCharterWizard.draftBadgeTitle')}
           </p>
           <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
             <span className="rounded bg-slate-200/70 px-1.5 py-0.5 font-mono text-[11px] dark:bg-navy-800">
               DRAFT
             </span>
             <ArrowRight size={12} className="text-slate-400" />
-            <span>{tr('Wyślij do review', 'Submit for review')}</span>
+            <span>{t('initiatives.initiativeCharterWizard.submitForReview')}</span>
             <ArrowRight size={12} className="text-slate-400" />
             <span className="rounded bg-slate-200/70 px-1.5 py-0.5 font-mono text-[11px] dark:bg-navy-800">
               PENDING_REVIEW
             </span>
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {tr(
-              'Do modułu Inicjatyw (REVIEW) promuje PM / Lead / PMO — nie konsultant.',
-              'Promotion to Initiatives (REVIEW) is done by PM / Lead / PMO — not the consultant.'
-            )}
+            {t('initiatives.initiativeCharterWizard.governanceHint')}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>{tr('Start (planowany)', 'Planned start')}</label>
+          <label className={labelCls}>
+            {t('initiatives.initiativeCharterWizard.plannedStart')}
+          </label>
           <input
             type="date"
             value={startDate}
@@ -733,7 +732,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           />
         </div>
         <div>
-          <label className={labelCls}>{tr('Koniec (planowany)', 'Planned end')}</label>
+          <label className={labelCls}>{t('initiatives.initiativeCharterWizard.plannedEnd')}</label>
           <input
             type="date"
             value={endDate}
@@ -744,61 +743,67 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
       </div>
 
       <div>
-        <label className={labelCls}>{tr('Tagi', 'Tags')}</label>
+        <label className={labelCls}>{t('initiatives.initiativeCharterWizard.tagsLabel')}</label>
         <input
           type="text"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
-          placeholder={tr('rozdziel przecinkami', 'comma-separated')}
+          placeholder={t('initiatives.initiativeCharterWizard.tagsPlaceholder')}
           className={inputCls}
         />
       </div>
 
       <Disclosure
-        title={tr('Zaawansowane', 'Advanced')}
+        title={t('initiatives.initiativeCharterWizard.advanced')}
         count={advancedCount}
         open={advancedOpen}
         onToggle={() => setAdvancedOpen((v) => !v)}
       >
         <div>
-          <label className={labelCls}>{tr('Zakres — w (scope in)', 'Scope — in')}</label>
+          <label className={labelCls}>
+            {t('initiatives.initiativeCharterWizard.scopeInLabel')}
+          </label>
           <textarea
             value={scopeIn}
             onChange={(e) => setScopeIn(e.target.value)}
             rows={2}
-            placeholder={tr('jeden punkt na linię', 'one item per line')}
-            className={`${inputCls} resize-none`}
-          />
-        </div>
-        <div>
-          <label className={labelCls}>{tr('Zakres — poza (scope out)', 'Scope — out')}</label>
-          <textarea
-            value={scopeOut}
-            onChange={(e) => setScopeOut(e.target.value)}
-            rows={2}
-            placeholder={tr('jeden punkt na linię', 'one item per line')}
+            placeholder={t('initiatives.initiativeCharterWizard.oneItemPerLine')}
             className={`${inputCls} resize-none`}
           />
         </div>
         <div>
           <label className={labelCls}>
-            {tr('Kryteria zatrzymania (kill criteria)', 'Kill criteria')}
+            {t('initiatives.initiativeCharterWizard.scopeOutLabel')}
+          </label>
+          <textarea
+            value={scopeOut}
+            onChange={(e) => setScopeOut(e.target.value)}
+            rows={2}
+            placeholder={t('initiatives.initiativeCharterWizard.oneItemPerLine')}
+            className={`${inputCls} resize-none`}
+          />
+        </div>
+        <div>
+          <label className={labelCls}>
+            {t('initiatives.initiativeCharterWizard.killCriteriaLabel')}
           </label>
           <textarea
             value={killCriteria}
             onChange={(e) => setKillCriteria(e.target.value)}
             rows={2}
-            placeholder={tr('jeden punkt na linię', 'one item per line')}
+            placeholder={t('initiatives.initiativeCharterWizard.oneItemPerLine')}
             className={`${inputCls} resize-none`}
           />
         </div>
         <div>
-          <label className={labelCls}>{tr('Kluczowe ryzyka (RAID)', 'Key risks (RAID)')}</label>
+          <label className={labelCls}>
+            {t('initiatives.initiativeCharterWizard.keyRisksLabel')}
+          </label>
           <textarea
             value={keyRisks}
             onChange={(e) => setKeyRisks(e.target.value)}
             rows={2}
-            placeholder={tr('jeden punkt na linię', 'one item per line')}
+            placeholder={t('initiatives.initiativeCharterWizard.oneItemPerLine')}
             className={`${inputCls} resize-none`}
           />
         </div>

@@ -7131,7 +7131,9 @@
       "ideaWorkspace": "Workspace pomysłu",
       "assessment": "Ocena",
       "auditReadout": "Readout audytu",
-      "source": "Źródło"
+      "source": "Źródło",
+      "interviewInsight": "Insight z wywiadu",
+      "insight": "Insight"
     },
     "financialNarrativeBlocks": {
       "financialAnalysisSizingRoi": "Analiza finansowa (sizing + ROI)",
@@ -7144,7 +7146,64 @@
       "fillIn": "Uzupełnienie",
       "reconsider": "Do rozważenia",
       "lowEffort": "Mały wysiłek",
-      "highEffort": "Duży wysiłek"
+      "highEffort": "Duży wysiłek",
+      "band": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "veryHighConfidence": "Bardzo wysoka",
+        "veryHigh": "Bardzo wysoki"
+      },
+      "effort": {
+        "small": "Mały",
+        "medium": "Średni",
+        "large": "Duży"
+      },
+      "source": "Źródło:",
+      "initiativeTitle": "Tytuł inicjatywy",
+      "titlePlaceholder": "np. Standaryzacja procesu przekazań",
+      "similarWarning": "Podobne inicjatywy już istnieją — sprawdź, czy nie duplikujesz:",
+      "thesisLabel": "Teza / hipoteza",
+      "thesisPlaceholder": "Jeśli zrobimy X, oczekujemy Y, ponieważ Z.",
+      "thesisHint": "Falsyfikowalna teza — co zrobimy, jaki efekt i dlaczego.",
+      "leverLabel": "Dźwignia / typ",
+      "lever": {
+        "cost": "Redukcja kosztów",
+        "growth": "Wzrost",
+        "risk": "Mitygacja ryzyka",
+        "capability": "Zdolność",
+        "compliance": "Compliance"
+      },
+      "aiCardsLabel": "Karty inicjatywy (propozycja AI)",
+      "owner": "Owner",
+      "ownerPlaceholder": "Wybierz odpowiedzialnego…",
+      "sponsor": "Sponsor",
+      "sponsorPlaceholder": "Opcjonalnie…",
+      "impactLabel": "Wpływ (impact)",
+      "effortLabel": "Wysiłek (effort)",
+      "suggestion": "Sugestia:",
+      "priorityLabel": "priorytet",
+      "confidenceLabel": "Pewność (confidence)",
+      "kpiLabel": "KPI #1 — miara sukcesu",
+      "kpiNamePlaceholder": "np. Czas przekazania między działami",
+      "kpiBaselinePlaceholder": "Baseline (np. 45 min)",
+      "kpiTargetPlaceholder": "Cel (np. 15 min)",
+      "kpiHint": "Bez mierzalnego celu to życzenie, nie inicjatywa.",
+      "draftBadgeTitle": "Tworzysz DRAFT",
+      "submitForReview": "Wyślij do review",
+      "governanceHint": "Do modułu Inicjatyw (REVIEW) promuje PM / Lead / PMO — nie konsultant.",
+      "plannedStart": "Start (planowany)",
+      "plannedEnd": "Koniec (planowany)",
+      "tagsLabel": "Tagi",
+      "tagsPlaceholder": "rozdziel przecinkami",
+      "advanced": "Zaawansowane",
+      "scopeInLabel": "Zakres — w (scope in)",
+      "scopeOutLabel": "Zakres — poza (scope out)",
+      "oneItemPerLine": "jeden punkt na linię",
+      "killCriteriaLabel": "Kryteria zatrzymania (kill criteria)",
+      "keyRisksLabel": "Kluczowe ryzyka (RAID)",
+      "draftCreated": "Utworzono draft inicjatywy",
+      "createFailed": "Nie udało się utworzyć"
     },
     "gateReadinessSection": {
       "aiAnalysisFailed": "AI analiza nie powiodła się",
@@ -7868,7 +7927,50 @@
       "more": "Więcej",
       "creatingMaterial": "Tworzę materiał…",
       "materialReady": "Materiał gotowy",
-      "failedToCreateMaterial": "Nie udało się utworzyć materiału"
+      "failedToCreateMaterial": "Nie udało się utworzyć materiału",
+      "openSourceTitle": "Otwórz źródło: {{title}}",
+      "switchView": "Przełącz widok"
+    },
+    "suggestedChangesPanel": {
+      "title": "Sugerowane zmiany",
+      "toReview": "{{count}} do rozpatrzenia",
+      "empty": "Brak sugerowanych zmian",
+      "accept": "Akceptuj",
+      "reject": "Odrzuć"
+    },
+    "initiativeProposalBoard": {
+      "title": "Tablica propozycji",
+      "counts": "{{newCount}} nowych · {{changeCount}} zmian",
+      "zeroNewNotice": "0 nowych inicjatyw to nie porażka — ten przebieg porządkuje siatkę (wzmacnia, łączy, sygnalizuje).",
+      "emptyProposals": "Brak propozycji do rozpatrzenia",
+      "createDraft": "Utwórz draft",
+      "proposeChange": "Zaproponuj zmianę",
+      "dismiss": "Odrzuć",
+      "coverageGaps": "Luki pokrycia (cele bez inicjatyw):",
+      "overlapsMece": "Nakładania (MECE):",
+      "sourceEvidence": "Dowód źródłowy",
+      "noSourceContent": "Brak treści źródła.",
+      "noSource": "Brak źródła."
+    },
+    "initiativeCoverageWaveView": {
+      "coverageMece": "Pokrycie (MECE)",
+      "overlapsCount": "{{count}} nakładań",
+      "cleanMece": "Brak luk pokrycia i nakładań — siatka jest MECE.",
+      "goalsWithNoInitiative": "Cele bez inicjatywy",
+      "overlappingScopesDetected": "Wykryto nakładania zakresów (naruszenie MECE):",
+      "waves": "Fale",
+      "acceptedCountLimit": "{{count}} zaakceptowanych · limit {{wipLimit}}/fala",
+      "overCapacity": "przeciążenie: {{count}} > limit {{wipLimit}}",
+      "empty": "Pusto"
+    },
+    "initiativeGeneratorModal": {
+      "proposeInitiative": "Zaproponuj inicjatywę",
+      "proposals": "Propozycje",
+      "coverageAndWaves": "Pokrycie i fale",
+      "close": "Zamknij",
+      "loadingGrid": "Wczytuję siatkę inicjatyw…",
+      "changeSaved": "Zapisano propozycję zmiany.",
+      "recordedLocally": "Zarejestrowano lokalnie (backend wkrótce)."
     },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Powiązane modele finansowe",
@@ -7880,7 +7982,29 @@
       "open": "Otwórz",
       "inModule": "W module",
       "chat": "Czat",
-      "copyLink": "Kopiuj link"
+      "copyLink": "Kopiuj link",
+      "linkageStatus": {
+        "linkedToModel": "Powiązano z modelem",
+        "linkedToScenario": "Powiązano ze scenariuszem",
+        "roiTracking": "Śledzenie ROI",
+        "staleVsModel": "Nieaktualne vs model",
+        "localOnly": "Tylko lokalnie",
+        "notStarted": "Nie rozpoczęto"
+      },
+      "linkageType": {
+        "budget": "Budżet",
+        "forecast": "Prognoza",
+        "actual": "Wykonanie",
+        "variance": "Odchylenie"
+      },
+      "aiHints": {
+        "nextStepsLabel": "Kolejne kroki",
+        "nextStepsPrompt": "Zaproponuj 3 kolejne kroki dla tej inicjatywy.",
+        "risksLabel": "Ryzyka",
+        "risksPrompt": "Wypisz 5 ryzyk i propozycje mitigacji dla tej inicjatywy.",
+        "scopeLabel": "Zakres",
+        "scopePrompt": "Ułóż krótki zakres i kryteria sukcesu dla tej inicjatywy."
+      }
     },
     "draftJourney": {
       "badge": "Szkic",

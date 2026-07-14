@@ -60,9 +60,8 @@ export const SuggestedChangesPanel: React.FC<SuggestedChangesPanelProps> = ({
   onReject,
   isPolish: isPolishProp,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
-  const tr = (pl: string, en: string) => (isPolish ? pl : en);
 
   const pending = items.filter((c) => (c.status ?? 'pending') === 'pending');
 
@@ -71,10 +70,10 @@ export const SuggestedChangesPanel: React.FC<SuggestedChangesPanelProps> = ({
       <div className="mb-3 flex items-center gap-2">
         <GitBranch size={16} className="text-c-info" />
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-          {tr('Sugerowane zmiany', 'Suggested changes')}
+          {t('initiatives.suggestedChangesPanel.title')}
         </h3>
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          {tr(`${pending.length} do rozpatrzenia`, `${pending.length} to review`)}
+          {t('initiatives.suggestedChangesPanel.toReview', { count: pending.length })}
         </span>
       </div>
 
@@ -82,7 +81,7 @@ export const SuggestedChangesPanel: React.FC<SuggestedChangesPanelProps> = ({
         {pending.length === 0 ? (
           <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 text-slate-400 dark:border-navy-700">
             <Inbox size={28} className="mb-2 opacity-60" />
-            <p className="text-sm">{tr('Brak sugerowanych zmian', 'No suggested changes')}</p>
+            <p className="text-sm">{t('initiatives.suggestedChangesPanel.empty')}</p>
           </div>
         ) : (
           pending.map((change, i) => {
@@ -116,7 +115,7 @@ export const SuggestedChangesPanel: React.FC<SuggestedChangesPanelProps> = ({
                     className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-semibold text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
                   >
                     <Check size={13} />
-                    {tr('Akceptuj', 'Accept')}
+                    {t('initiatives.suggestedChangesPanel.accept')}
                   </button>
                   <button
                     type="button"
@@ -124,7 +123,7 @@ export const SuggestedChangesPanel: React.FC<SuggestedChangesPanelProps> = ({
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
                   >
                     <X size={13} />
-                    {tr('Odrzuć', 'Reject')}
+                    {t('initiatives.suggestedChangesPanel.reject')}
                   </button>
                 </div>
               </div>
