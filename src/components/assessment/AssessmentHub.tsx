@@ -1330,10 +1330,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Menu 2 (liczniki mieszkają w Menu 3)"). Reuses `getStatusesForModule`
   // (same source as StatusDropdown) instead of a bespoke status list.
   const menu3StatusChipsEnabled = isEnabled('assessmentMenu3StatusChips');
-  const statusChipOptions = useMemo(
-    () => getStatusesForModule(statusContext),
-    [statusContext]
-  );
+  const statusChipOptions = useMemo(() => getStatusesForModule(statusContext), [statusContext]);
   const statusFilterChips = useMemo(
     () =>
       statusChipOptions.map((opt) => ({
