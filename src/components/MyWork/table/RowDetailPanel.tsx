@@ -145,7 +145,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   fields,
   platformTableId,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const isPlatform = fields?.some((f) => 'fieldType' in f) ?? false;
@@ -251,7 +251,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       })
       .catch(() => {
         if (cancelled) return;
-        setCommentsError(isPl ? 'Nie udało się wczytać komentarzy' : 'Failed to load comments');
+        setCommentsError(t('ideas.table.failedToLoadComments', 'Failed to load comments'));
       })
       .finally(() => {
         if (!cancelled) setCommentsLoading(false);
@@ -287,7 +287,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       .catch(() => {
         if (cancelled) return;
         setAttachmentsError(
-          isPl ? 'Nie udało się wczytać załączników' : 'Failed to load attachments'
+          t('ideas.table.failedToLoadAttachments', 'Failed to load attachments')
         );
       })
       .finally(() => {
@@ -468,7 +468,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         const prevAct = node.data?.activity || [];
         onFieldChange(node.id, 'activity', [...prevAct, activity]);
       } catch {
-        toast.error(isPl ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+        toast.error(t('ideas.table.failedToAddComment', 'Failed to add comment'));
         return;
       }
     } else {
@@ -552,7 +552,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       setEditingCommentId(null);
       setEditingCommentText('');
     } catch {
-      toast.error(isPl ? 'Nie udało się zaktualizować komentarza' : 'Failed to update comment');
+      toast.error(t('ideas.table.failedToUpdateComment', 'Failed to update comment'));
     }
   }, [editingCommentId, editingCommentText, isPl, locked, node, onFieldChange]);
 
@@ -568,7 +568,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           prev.filter((c) => c.id !== commentId)
         );
       } catch {
-        toast.error(isPl ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+        toast.error(t('ideas.table.failedToDeleteComment', 'Failed to delete comment'));
       }
     },
     [isPl, node, onFieldChange]
@@ -584,7 +584,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       );
       setIsWatching(watching);
     } catch {
-      toast.error(isPl ? 'Nie udało się zmienić obserwacji' : 'Failed to update watch status');
+      toast.error(t('ideas.table.failedToUpdateWatchStatus', 'Failed to update watch status'));
     } finally {
       setWatchLoading(false);
     }
@@ -592,7 +592,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
   const handleAddAttachmentLink = useCallback(() => {
     if (!node || locked) return;
-    const url = prompt(isPl ? 'Wklej URL:' : 'Paste URL:');
+    const url = prompt(t('ideas.table.pasteUrl', 'Paste URL:'));
     if (!url?.trim()) return;
     const att: NodeAttachment = {
       id: `att-${Date.now()}`,
@@ -642,7 +642,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         onFieldChange(node.id, 'attachments', [att, ...prev]);
       } catch (e: any) {
         toast.error(
-          e?.message || (isPl ? 'Nie udało się przesłać pliku' : 'Failed to upload file')
+          e?.message || (t('ideas.table.failedToUploadFile', 'Failed to upload file'))
         );
       } finally {
         setAttachmentUploading(false);
@@ -673,7 +673,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           prev.filter((a) => a.id !== attId)
         );
       } catch {
-        toast.error(isPl ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment');
+        toast.error(t('ideas.table.failedToDeleteAttachment', 'Failed to delete attachment'));
       }
     },
     [isPl, locked, node, onFieldChange]
@@ -709,7 +709,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       setAiInsights((result?.suggestions || []).map((s: any) => s.text || s.detail || ''));
     } catch {
       setAiInsights([
-        isPl ? 'Nie udało się wygenerować sugestii' : 'Failed to generate suggestions',
+        t('ideas.table.failedToGenerateSuggestions', 'Failed to generate suggestions'),
       ]);
     } finally {
       setAiLoading(false);
@@ -751,23 +751,20 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
   const TABS: {
     id: TabId;
-    labelEn: string;
-    labelPl: string;
+    label: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
     count?: number;
   }[] = [
-    { id: 'properties', labelEn: 'Properties', labelPl: 'Właściwości', icon: FileText },
+    { id: 'properties', label: t('ideas.table.tabProperties', 'Properties'), icon: FileText },
     {
       id: 'comments',
-      labelEn: 'Comments',
-      labelPl: 'Komentarze',
+      label: t('ideas.table.tabComments', 'Comments'),
       icon: MessageSquare,
       count: comments.length,
     },
     {
       id: 'attachments',
-      labelEn: 'Attachments',
-      labelPl: 'Załączniki',
+      label: t('ideas.table.tabAttachments', 'Attachments'),
       icon: Paperclip,
       count:
         attachments.length +
@@ -775,13 +772,12 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     },
     {
       id: 'activity',
-      labelEn: 'Activity',
-      labelPl: 'Aktywność',
+      label: t('ideas.table.tabActivity', 'Activity'),
       icon: Clock,
       count: activities.length,
     },
-    { id: 'ai', labelEn: 'AI Insights', labelPl: 'AI Insights', icon: Sparkles },
-    { id: 'drawing', labelEn: 'Drawing', labelPl: 'Rysunek', icon: PenTool },
+    { id: 'ai', label: t('ideas.table.tabAiInsights', 'AI Insights'), icon: Sparkles },
+    { id: 'drawing', label: t('ideas.table.tabDrawing', 'Drawing'), icon: PenTool },
   ];
 
   return (
@@ -842,7 +838,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 onChange={(e) => onFieldChange(node.id, 'label', e.target.value)}
                 disabled={locked}
                 className="w-full text-base font-bold text-c-text bg-transparent border-0 outline-none focus:ring-0 p-0"
-                placeholder={isPl ? 'Tytuł...' : 'Title...'}
+                placeholder={t('ideas.table.title', 'Title...')}
               />
               {/* Icon / emoji */}
               {node.data?.icon && <span className="text-lg mr-1">{node.data.icon}</span>}
@@ -860,12 +856,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   }`}
                   title={
                     isWatching
-                      ? isPl
-                        ? 'Przestań obserwować'
-                        : 'Stop watching'
-                      : isPl
-                        ? 'Obserwuj zmiany'
-                        : 'Watch for changes'
+                      ? t('ideas.table.stopWatching', 'Stop watching')
+                      : t('ideas.table.watchForChanges', 'Watch for changes')
                   }
                 >
                   {isWatching ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -875,7 +867,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 <button
                   onClick={onExpand}
                   className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
-                  title={isPl ? 'Rozwiń' : 'Expand'}
+                  title={t('ideas.table.expand', 'Expand')}
                 >
                   <Maximize2 size={14} className="text-c-text-muted" />
                 </button>
@@ -926,12 +918,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 className="text-[10px] font-semibold px-2 py-1 rounded-md bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised transition-colors"
               >
                 {bodyEditMode === 'edit'
-                  ? isPl
-                    ? 'Podgląd'
-                    : 'Preview'
-                  : isPl
-                    ? 'Edycja'
-                    : 'Edit'}
+                  ? t('ideas.table.preview', 'Preview')
+                  : t('ideas.table.edit', 'Edit')}
               </button>
             </div>
             {bodyEditMode === 'edit' ? (
@@ -945,7 +933,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 disabled={locked}
                 rows={6}
                 placeholder={
-                  isPl ? 'Notatki, kontekst, szczegóły...' : 'Notes, context, details...'
+                  t('ideas.table.notesContextDetails', 'Notes, context, details...')
                 }
                 className="w-full bg-transparent border-0 outline-none text-xs text-c-text-secondary placeholder-c-text-muted resize-none leading-relaxed focus:ring-0"
               />
@@ -958,7 +946,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   children:
                     node.data?.bodyMarkdown ||
                     node.data?.description ||
-                    (isPl ? 'Brak treści' : 'No content'),
+                    (t('ideas.table.noContent', 'No content')),
                 })}
               </div>
             )}
@@ -1003,7 +991,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-1"
             >
               {subItemsExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-              {isPl ? 'Podelementy' : 'Sub-items'} ({childNodes.length})
+              {t('ideas.table.subItems', 'Sub-items')} ({childNodes.length})
             </button>
             {subItemsExpanded && (
               <div className="space-y-1 ml-3">
@@ -1031,7 +1019,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
                   >
                     <Plus size={10} />
-                    {isPl ? 'Dodaj podelement' : 'Add sub-item'}
+                    {t('ideas.table.addSubItem', 'Add sub-item')}
                   </button>
                 )}
               </div>
@@ -1073,39 +1061,33 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         {/* ── Tabs (full mode): platform = HIG pill strip ── */}
         {mode === 'full' && isPlatform && (
           <div className="flex items-center gap-1.5 px-5 py-2 border-b border-c-border-subtle flex-shrink-0 overflow-x-auto">
-            {(
-              [
-                { id: 'fields' as const, labelEn: 'Fields', labelPl: 'Pola', Icon: FileText },
-                {
-                  id: 'activity' as const,
-                  labelEn: 'Activity',
-                  labelPl: 'Aktywność',
-                  Icon: Clock,
-                  count: activities.length,
-                },
-                {
-                  id: 'audit' as const,
-                  labelEn: 'Audit',
-                  labelPl: 'Audyt',
-                  Icon: ClipboardList,
-                  count: auditActivities.length,
-                },
-                {
-                  id: 'comments' as const,
-                  labelEn: 'Comments',
-                  labelPl: 'Komentarze',
-                  Icon: MessageSquare,
-                  count: comments.length,
-                },
-                {
-                  id: 'attachments' as const,
-                  labelEn: 'Attachments',
-                  labelPl: 'Załączniki',
-                  Icon: Paperclip,
-                  count: attachments.length,
-                },
-              ] as const
-            ).map((tab) => {
+            {[
+              { id: 'fields' as const, label: t('ideas.table.tabFields', 'Fields'), Icon: FileText },
+              {
+                id: 'activity' as const,
+                label: t('ideas.table.tabActivity', 'Activity'),
+                Icon: Clock,
+                count: activities.length,
+              },
+              {
+                id: 'audit' as const,
+                label: t('ideas.table.tabAudit', 'Audit'),
+                Icon: ClipboardList,
+                count: auditActivities.length,
+              },
+              {
+                id: 'comments' as const,
+                label: t('ideas.table.tabComments', 'Comments'),
+                Icon: MessageSquare,
+                count: comments.length,
+              },
+              {
+                id: 'attachments' as const,
+                label: t('ideas.table.tabAttachments', 'Attachments'),
+                Icon: Paperclip,
+                count: attachments.length,
+              },
+            ].map((tab) => {
               const Icon = tab.Icon;
               const isActive = platformSheetTab === tab.id;
               return (
@@ -1120,7 +1102,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   }`}
                 >
                   <Icon size={12} className="opacity-90" />
-                  {isPl ? tab.labelPl : tab.labelEn}
+                  {tab.label}
                   {'count' in tab && tab.count != null && tab.count > 0 && (
                     <span
                       className={`min-w-[1.1rem] px-1 py-0 text-[9px] font-bold rounded-full tabular-nums ${
@@ -1153,7 +1135,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   }`}
                 >
                   <Icon size={11} />
-                  {isPl ? tab.labelPl : tab.labelEn}
+                  {tab.label}
                   {tab.count != null && tab.count > 0 && (
                     <span className="ml-0.5 text-[8px] bg-c-surface-raised text-c-text-muted px-1 py-0 rounded-full">
                       {tab.count}
@@ -1194,7 +1176,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 <div className="pt-3 border-t border-c-border-subtle">
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                     <GitBranch size={10} className="inline mr-1" />
-                    {isPl ? 'Powiązane elementy' : 'Related items'} ({relatedNodes.length})
+                    {t('ideas.table.relatedItems', 'Related items')} ({relatedNodes.length})
                   </label>
                   <div className="space-y-1">
                     {relatedNodes.map((rn) => (
@@ -1221,7 +1203,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
                       >
                         <Plus size={12} />
-                        {isPl ? 'Dodaj powiązanie' : 'Add relation'}
+                        {t('ideas.table.addRelation', 'Add relation')}
                       </button>
                       {relationDropdownOpen && (
                         <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl overflow-hidden">
@@ -1231,7 +1213,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               <input
                                 value={relationSearch}
                                 onChange={(e) => setRelationSearch(e.target.value)}
-                                placeholder={isPl ? 'Szukaj...' : 'Search...'}
+                                placeholder={t('ideas.table.search', 'Search...')}
                                 className="flex-1 bg-transparent text-xs text-c-text-secondary outline-none placeholder-c-text-muted"
                               />
                             </div>
@@ -1272,7 +1254,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                             ))}
                             {relationCandidates.length === 0 && (
                               <p className="px-3 py-4 text-[11px] text-c-text-muted text-center">
-                                {isPl ? 'Brak pasujących elementów' : 'No matching items'}
+                                {t('ideas.table.noMatchingItems', 'No matching items')}
                               </p>
                             )}
                           </div>
@@ -1290,7 +1272,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <div className="space-y-3" data-testid="comments-section">
                 {commentsLoading && comments.length === 0 && (
                   <p className="text-[11px] text-c-text-muted text-center py-6">
-                    {isPl ? 'Wczytywanie komentarzy...' : 'Loading comments...'}
+                    {t('ideas.table.loadingComments', 'Loading comments...')}
                   </p>
                 )}
                 {commentsError && (
@@ -1303,7 +1285,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 )}
                 {!commentsLoading && !commentsError && comments.length === 0 && (
                   <p className="text-[11px] text-c-text-muted text-center py-6">
-                    {isPl ? 'Brak komentarzy' : 'No comments yet'}
+                    {t('ideas.table.noCommentsYet', 'No comments yet')}
                   </p>
                 )}
                 {comments.map((cmt) => {
@@ -1324,7 +1306,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         </span>
                         <span className="text-[9px] text-c-text-muted ml-auto">
                           {formatTime(cmt.createdAt)}
-                          {cmt.editedAt ? ` · ${isPl ? 'edytowano' : 'edited'}` : ''}
+                          {cmt.editedAt ? ` · ${t('ideas.table.edited', 'edited')}` : ''}
                         </span>
                         {isOwnComment && !locked && !isEditingThis && (
                           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1332,7 +1314,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               type="button"
                               onClick={() => handleStartEditComment(cmt)}
                               className="p-1 rounded text-c-text-muted hover:text-c-text-secondary"
-                              title={isPl ? 'Edytuj' : 'Edit'}
+                              title={t('ideas.table.edit2', 'Edit')}
                               data-testid="comment-edit-btn"
                             >
                               <Pencil size={10} />
@@ -1341,7 +1323,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               type="button"
                               onClick={() => void handleDeleteComment(cmt.id)}
                               className="p-1 rounded text-c-text-muted hover:text-c-danger"
-                              title={isPl ? 'Usuń' : 'Delete'}
+                              title={t('ideas.table.delete', 'Delete')}
                               data-testid="comment-delete-btn"
                             >
                               <Trash2 size={10} />
@@ -1375,14 +1357,14 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               disabled={!editingCommentText.trim()}
                               className="text-[10px] font-semibold text-c-accent disabled:opacity-40"
                             >
-                              {isPl ? 'Zapisz' : 'Save'}
+                              {t('ideas.table.save', 'Save')}
                             </button>
                             <button
                               type="button"
                               onClick={handleCancelEditComment}
                               className="text-[10px] font-semibold text-c-text-muted"
                             >
-                              {isPl ? 'Anuluj' : 'Cancel'}
+                              {t('ideas.table.cancel', 'Cancel')}
                             </button>
                           </div>
                         </div>
@@ -1448,9 +1430,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       }}
                       rows={2}
                       placeholder={
-                        isPl
-                          ? 'Dodaj komentarz... (@ aby wspomnieć)'
-                          : 'Add a comment... (@ to mention)'
+                        t('ideas.table.addACommentToMention', 'Add a comment... (@ to mention)')
                       }
                       className="flex-1 min-h-[40px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-c-focus resize-y"
                     />
@@ -1474,7 +1454,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 <div className="mb-3">
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                     <Link2 size={10} className="inline mr-1" />
-                    {isPl ? 'Powiązane artefakty' : 'Linked artifacts'} (
+                    {t('ideas.table.linkedArtifacts', 'Linked artifacts')} (
                     {Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks.length : 0})
                   </label>
                   {Array.isArray(node.data?.artifactLinks) &&
@@ -1523,7 +1503,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
                       >
                         <Paperclip size={12} />
-                        {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
+                        {t('ideas.table.attachArtifact', 'Attach artifact')}
                       </button>
                       {artifactDropdownOpen && (
                         <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl overflow-hidden">
@@ -1533,7 +1513,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               <input
                                 value={artifactSearch}
                                 onChange={(e) => setArtifactSearch(e.target.value)}
-                                placeholder={isPl ? 'Szukaj artefaktów...' : 'Search artifacts...'}
+                                placeholder={t('ideas.table.searchArtifacts', 'Search artifacts...')}
                                 className="flex-1 bg-transparent text-xs text-c-text-secondary outline-none placeholder-c-text-muted"
                               />
                             </div>
@@ -1577,7 +1557,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               return (n.data?.label || n.id).toLowerCase().includes(q);
                             }).length === 0 && (
                               <p className="text-center text-[10px] text-c-text-muted py-3">
-                                {isPl ? 'Brak wyników' : 'No results'}
+                                {t('ideas.table.noResults', 'No results')}
                               </p>
                             )}
                           </div>
@@ -1592,7 +1572,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0
                   ) && (
                     <p className="text-[11px] text-c-text-muted text-center py-6">
-                      {isPl ? 'Brak załączników' : 'No attachments'}
+                      {t('ideas.table.noAttachments', 'No attachments')}
                     </p>
                   )}
                 {attachments.map((att) => (
@@ -1643,7 +1623,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
                     >
                       <Link2 size={12} />
-                      {isPl ? 'Dodaj link' : 'Add link'}
+                      {t('ideas.table.addLink', 'Add link')}
                     </button>
                   </div>
                 )}
@@ -1655,7 +1635,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <div className="space-y-2">
                 {attachmentsLoading && (
                   <p className="text-[11px] text-c-text-muted text-center py-6">
-                    {isPl ? 'Wczytywanie…' : 'Loading…'}
+                    {t('ideas.table.loading', 'Loading…')}
                   </p>
                 )}
                 {!attachmentsLoading && attachmentsError && (
@@ -1663,7 +1643,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 )}
                 {!attachmentsLoading && !attachmentsError && attachments.length === 0 && (
                   <p className="text-[11px] text-c-text-muted text-center py-6">
-                    {isPl ? 'Brak załączników' : 'No attachments'}
+                    {t('ideas.table.noAttachments', 'No attachments')}
                   </p>
                 )}
                 {!attachmentsLoading &&
@@ -1728,12 +1708,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         <Paperclip size={12} />
                       )}
                       {attachmentUploading
-                        ? isPl
-                          ? 'Przesyłanie…'
-                          : 'Uploading…'
-                        : isPl
-                          ? 'Prześlij plik'
-                          : 'Upload file'}
+                        ? t('ideas.table.uploading', 'Uploading…')
+                        : t('ideas.table.uploadFile', 'Upload file')}
                     </button>
                   </div>
                 )}
@@ -1746,7 +1722,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <div className="space-y-2">
                 {activities.length === 0 && (
                   <p className="text-[11px] text-c-text-muted text-center py-6">
-                    {isPl ? 'Brak aktywności' : 'No activity'}
+                    {t('ideas.table.noActivity', 'No activity')}
                   </p>
                 )}
                 {[...activities].reverse().map((act) => (
@@ -1756,28 +1732,19 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       <span className="text-[11px] text-c-text-secondary">
                         <strong>{act.author}</strong>{' '}
                         {act.action === 'comment'
-                          ? isPl
-                            ? 'skomentował'
-                            : 'commented'
+                          ? t('ideas.table.commented', 'commented')
                           : act.action === 'edited'
-                            ? isPl
-                              ? `zmienił ${act.field}`
-                              : `edited ${act.field}`
+                            ? t('ideas.table.editedField', 'edited {{field}}', { field: act.field })
                             : act.action === 'attachment'
-                              ? isPl
-                                ? 'dodał załącznik'
-                                : 'added attachment'
+                              ? t('ideas.table.addedAttachment', 'added attachment')
                               : act.action === 'status_change'
-                                ? isPl
-                                  ? `zmienił status: ${act.oldValue} → ${act.newValue}`
-                                  : `changed status: ${act.oldValue} → ${act.newValue}`
+                                ? t('ideas.table.changedStatus', 'changed status: {{oldValue}} → {{newValue}}', {
+                                    oldValue: act.oldValue,
+                                    newValue: act.newValue,
+                                  })
                                 : act.action === 'ai_suggestion'
-                                  ? isPl
-                                    ? 'AI zasugerowało'
-                                    : 'AI suggested'
-                                  : isPl
-                                    ? 'utworzył'
-                                    : 'created'}
+                                  ? t('ideas.table.aiSuggested', 'AI suggested')
+                                  : t('ideas.table.created', 'created')}
                       </span>
                       {act.newValue && act.action === 'comment' && (
                         <p className="text-[10px] text-c-text-muted mt-0.5 truncate">
@@ -1798,7 +1765,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <div className="space-y-2">
                 {auditActivities.length === 0 && (
                   <p className="text-[11px] text-c-text-muted text-center py-6">
-                    {isPl ? 'Brak wpisów audytu' : 'No audit entries'}
+                    {t('ideas.table.noAuditEntries', 'No audit entries')}
                   </p>
                 )}
                 {[...auditActivities].reverse().map((act) => (
@@ -1808,17 +1775,14 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       <span className="text-[11px] text-c-text-secondary">
                         <strong>{act.author}</strong>{' '}
                         {act.action === 'edited'
-                          ? isPl
-                            ? `zmienił ${act.field ?? ''}`
-                            : `edited ${act.field ?? ''}`
+                          ? t('ideas.table.editedField', 'edited {{field}}', { field: act.field ?? '' })
                           : act.action === 'status_change'
-                            ? isPl
-                              ? `zmienił status: ${act.oldValue} → ${act.newValue}`
-                              : `changed status: ${act.oldValue} → ${act.newValue}`
+                            ? t('ideas.table.changedStatus', 'changed status: {{oldValue}} → {{newValue}}', {
+                                oldValue: act.oldValue,
+                                newValue: act.newValue,
+                              })
                             : act.action === 'created'
-                              ? isPl
-                                ? 'utworzył rekord'
-                                : 'created record'
+                              ? t('ideas.table.createdRecord', 'created record')
                               : String(act.action)}
                       </span>
                       <span className="text-[9px] text-c-text-muted block mt-0.5">
@@ -1844,12 +1808,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <Sparkles size={14} />
                   )}
                   {aiLoading
-                    ? isPl
-                      ? 'Generuję...'
-                      : 'Generating...'
-                    : isPl
-                      ? 'Generuj insights AI'
-                      : 'Generate AI insights'}
+                    ? t('ideas.table.generating', 'Generating...')
+                    : t('ideas.table.generateAiInsights', 'Generate AI insights')}
                 </button>
                 {aiInsights.length > 0 && (
                   <div className="space-y-2">
@@ -1870,9 +1830,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 )}
                 {aiInsights.length === 0 && !aiLoading && (
                   <p className="text-[11px] text-c-text-muted text-center py-4">
-                    {isPl
-                      ? 'Kliknij aby wygenerować insights oparte na kontekście firmy'
-                      : 'Click to generate insights based on company context'}
+                    {t('ideas.table.clickToGenerateInsightsBasedOnCompanyContext', 'Click to generate insights based on company context')}
                   </p>
                 )}
               </div>
@@ -1889,9 +1847,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   height={300}
                 />
                 <p className="text-[9px] text-c-text-muted mt-2 text-center">
-                  {isPl
-                    ? 'Rysuj, dodawaj kształty i strzałki do tego pomysłu'
-                    : 'Draw, add shapes and arrows to this idea'}
+                  {t('ideas.table.drawAddShapesAndArrowsToThisIdea', 'Draw, add shapes and arrows to this idea')}
                 </p>
               </div>
             )}
@@ -1901,11 +1857,11 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <div className="mt-6 pt-4 border-t border-c-border-subtle">
                 <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                   <Link2 size={10} />
-                  {isPl ? 'Powiązane rekordy' : 'Related Records'}
+                  {t('ideas.table.relatedRecords', 'Related Records')}
                 </label>
                 {relatedRecordChips.length === 0 ? (
                   <p className="text-[11px] text-c-text-muted py-1">
-                    {isPl ? 'Brak powiązanych rekordów' : 'No linked records'}
+                    {t('ideas.table.noLinkedRecords', 'No linked records')}
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
@@ -1933,9 +1889,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               onClick={onExpand}
               className="text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
             >
-              {isPl
-                ? 'Kliknij dwukrotnie lub rozwiń, aby zobaczyć pełne szczegóły'
-                : 'Double-click or expand to see full details'}
+              {t('ideas.table.doubleClickOrExpandToSeeFullDetails', 'Double-click or expand to see full details')}
             </button>
           </div>
         )}
@@ -1947,24 +1901,24 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               {node.data?.aiGenerated && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-c-accent-soft text-c-accent">
                   <Sparkles size={8} />
-                  {isPl ? 'Wygenerowane AI' : 'AI Generated'}
+                  {t('ideas.table.aiGenerated', 'AI Generated')}
                 </span>
               )}
               {node.data?.sourceType && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-[color-mix(in_srgb,var(--c-info)_16%,transparent)] text-c-info">
                   <Link2 size={8} />
-                  {isPl ? 'Źródło' : 'Source'}: {node.data.sourceType}
+                  {t('ideas.table.source', 'Source')}: {node.data.sourceType}
                 </span>
               )}
               {node.data?.convertedTo && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-[color-mix(in_srgb,var(--c-success)_16%,transparent)] text-c-success">
                   <ArrowRight size={8} />
-                  {isPl ? 'Skonwertowano do' : 'Converted to'}: {node.data.convertedTo}
+                  {t('ideas.table.convertedTo', 'Converted to')}: {node.data.convertedTo}
                 </span>
               )}
               {node.data?.needsReview && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-[color-mix(in_srgb,var(--c-warning)_16%,transparent)] text-c-warning">
-                  {isPl ? 'Do przeglądu' : 'Pending review'}
+                  {t('ideas.table.pendingReview', 'Pending review')}
                 </span>
               )}
             </div>
@@ -1986,16 +1940,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   className="flex-1 px-2 py-1.5 rounded-xl text-[10px] font-semibold text-c-text-muted bg-c-surface-raised hover:bg-c-surface-raised transition-colors"
                 >
                   {target === 'initiative'
-                    ? isPl
-                      ? 'Inicjatywa'
-                      : 'Initiative'
+                    ? t('ideas.table.initiative', 'Initiative')
                     : target === 'task'
-                      ? isPl
-                        ? 'Zadanie'
-                        : 'Task'
-                      : isPl
-                        ? 'Decyzja'
-                        : 'Decision'}
+                      ? t('ideas.table.task', 'Task')
+                      : t('ideas.table.decision', 'Decision')}
                 </button>
               ))}
             </div>
