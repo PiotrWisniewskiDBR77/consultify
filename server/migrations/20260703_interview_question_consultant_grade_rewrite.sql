@@ -51,6 +51,15 @@
 -- interview_question_templates (default session seed, 25 questions)
 -- ==========================================
 
+-- FRESH-DB GUARD (2026-07-14): interview_question_templates is created by
+-- 900_prod_missing_tables_hotfix.sql (295_interview_context.sql is filtered
+-- out as a <500 legacy file), which sorts AFTER this file on a fresh replay.
+-- The table is empty at migration time on a fresh DB, so these UPDATEs are
+-- 0-row no-ops there either way. Skip when the table does not exist yet.
+DO $mig20260703$
+BEGIN
+IF to_regclass('public.interview_question_templates') IS NOT NULL THEN
+
 UPDATE interview_question_templates SET question_text = 'Walk me through your top 2-3 business objectives for the next 2-3 years — and for each, what specifically has to change operationally for you to get there?' WHERE id = 'tpl_strategy_1';
 UPDATE interview_question_templates SET question_text = 'Describe a recent decision where digital capability — or the lack of it — directly changed a business outcome. What does that tell you about where transformation needs to go next?' WHERE id = 'tpl_strategy_2';
 UPDATE interview_question_templates SET question_text = 'Which competitor or market shift worries you most right now, and what capability would you need to build to stay ahead of it?' WHERE id = 'tpl_strategy_3';
@@ -96,3 +105,7 @@ UPDATE interview_library_template_questions
 SET question_text = 'Think of the last two change initiatives here — one that stuck and one that didn''t. What was different about how people responded, and what does that tell you about readiness for this one?',
     answer_type = 'open'
 WHERE id = 'itq_cr_people_1';
+
+END IF;
+END
+$mig20260703$;

@@ -15,6 +15,15 @@
 --
 -- Bezpieczne: tylko UPDATE istniejących wierszy section-types; brak DDL.
 
+-- FRESH-DB GUARD (2026-07-14): initiative_section_types is created by
+-- 529_initiative_section_types.sql, which sorts AFTER this file on a fresh
+-- replay (and its rows are seeded at runtime, so these UPDATEs are 0-row
+-- no-ops on a fresh database either way). Skip when the table does not exist
+-- yet; unchanged behaviour on already-migrated DBs.
+DO $mig20260628$
+BEGIN
+IF to_regclass('public.initiative_section_types') IS NOT NULL THEN
+
 -- ── 1) problemDefinition (re-apply 542; symptom→problem_statement w R3) ──
 UPDATE initiative_section_types SET ai_prompt_template =
 'You are a strategic consultant. Analyze the initiative and generate a structured problem definition.
@@ -182,3 +191,7 @@ Generate a structured JSON response with at least 2 RISK items, each grounded in
 Language: {{language}}
 Return valid JSON only.'
 WHERE key = 'raid';
+
+END IF;
+END
+$mig20260628$;

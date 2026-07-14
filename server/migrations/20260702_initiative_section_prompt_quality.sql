@@ -27,6 +27,14 @@
 
 -- ── 1) overview (było: 530, ocena 2 — generyczne 2–3 akapity, brak answer-first,
 --        brak zakazu zmyślania liczb, brak limitu długości) ──
+-- FRESH-DB GUARD (2026-07-14): initiative_section_types is created by
+-- 529_initiative_section_types.sql, which sorts AFTER this file on a fresh
+-- replay (rows seeded at runtime, so these UPDATEs are 0-row no-ops on a
+-- fresh DB either way). Skip when the table does not exist yet.
+DO $mig20260702$
+BEGIN
+IF to_regclass('public.initiative_section_types') IS NOT NULL THEN
+
 UPDATE initiative_section_types SET ai_prompt_template =
 'You are a consulting partner writing an executive summary of a transformation initiative that you would sign with your own name in front of the client''s board.
 
@@ -357,3 +365,7 @@ QUALITY RULES:
 Language: {{language}}
 Respond in the requested language only. Return valid JSON only.'
 WHERE key = 'raci';
+
+END IF;
+END
+$mig20260702$;
