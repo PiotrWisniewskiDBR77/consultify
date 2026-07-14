@@ -21832,6 +21832,17 @@
         "aiSuggestion": "AI Suggestion",
         "apply": "Apply",
         "closeBar": "Close bar"
+      },
+      "snapshotManager": {
+        "records": "records",
+        "restore": "Restore",
+        "snapshotsTitle": "Snapshots",
+        "snapshotNamePlaceholder": "Snapshot name…",
+        "createSnapshot": "Create snapshot",
+        "noSnapshotsYet": "No snapshots yet",
+        "createSnapshotToPreserve": "Create a snapshot to preserve the current data state.",
+        "restoreSnapshotQuestion": "Restore snapshot?",
+        "restoreWarning": "Current data will be replaced with snapshot data. This action cannot be undone."
       }
     },
     "mindmap": {

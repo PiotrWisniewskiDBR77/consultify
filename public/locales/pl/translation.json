@@ -22908,6 +22908,17 @@
         "aiSuggestion": "Sugestia AI",
         "apply": "Zastosuj",
         "closeBar": "Zamknij pasek"
+      },
+      "snapshotManager": {
+        "records": "rekordów",
+        "restore": "Przywróć",
+        "snapshotsTitle": "Migawki",
+        "snapshotNamePlaceholder": "Nazwa migawki…",
+        "createSnapshot": "Utwórz migawkę",
+        "noSnapshotsYet": "Brak migawek",
+        "createSnapshotToPreserve": "Utwórz migawkę, aby zachować aktualny stan danych.",
+        "restoreSnapshotQuestion": "Przywrócić migawkę?",
+        "restoreWarning": "Obecne dane zostaną zastąpione danymi z migawki. Tej operacji nie można cofnąć."
       }
     },
     "mindmap": {
