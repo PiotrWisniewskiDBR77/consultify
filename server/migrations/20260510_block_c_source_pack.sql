@@ -24,6 +24,15 @@
 
 BEGIN;
 
+-- FRESH-DB GUARD (2026-07-14): tp_tables is created by
+-- 700_table_platform_foundation.sql, which sorts AFTER this file on a fresh
+-- replay. The whole body is guarded on table existence; 700 re-applies this DDL
+-- idempotently, so the final schema is identical. No behaviour change on DBs
+-- where tp_tables already existed (staging/prod).
+DO $mig20260510$
+BEGIN
+IF to_regclass('public.tp_tables') IS NOT NULL THEN
+
 CREATE TABLE IF NOT EXISTS tp_source_packs (
   id                   UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id      TEXT         NOT NULL,
@@ -53,5 +62,9 @@ CREATE INDEX IF NOT EXISTS idx_tp_source_packs_table
   ON tp_source_packs(table_id) WHERE table_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_tp_source_packs_active
   ON tp_source_packs(organization_id, created_at DESC) WHERE archived_at IS NULL;
+
+END IF;
+END
+$mig20260510$;
 
 COMMIT;

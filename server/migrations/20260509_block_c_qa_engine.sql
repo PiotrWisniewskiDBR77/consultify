@@ -19,6 +19,15 @@
 
 BEGIN;
 
+-- FRESH-DB GUARD (2026-07-14): tp_tables is created by
+-- 700_table_platform_foundation.sql, which sorts AFTER this file on a fresh
+-- replay. The whole body is guarded on table existence; 700 re-applies this DDL
+-- idempotently, so the final schema is identical. No behaviour change on DBs
+-- where tp_tables already existed (staging/prod).
+DO $mig20260509$
+BEGIN
+IF to_regclass('public.tp_tables') IS NOT NULL THEN
+
 -- ---------------------------------------------------------------------------
 -- 1) tp_qa_reports — append-only ledger of QA computations.
 --    The latest row per table_id is the canonical "current" report; older rows
@@ -75,5 +84,9 @@ CREATE INDEX IF NOT EXISTS idx_tp_qa_dismissals_table
   ON tp_qa_suggestion_dismissals(table_id);
 CREATE INDEX IF NOT EXISTS idx_tp_qa_dismissals_org
   ON tp_qa_suggestion_dismissals(organization_id);
+
+END IF;
+END
+$mig20260509$;
 
 COMMIT;

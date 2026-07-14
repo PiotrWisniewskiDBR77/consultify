@@ -35,6 +35,15 @@
 
 BEGIN;
 
+-- FRESH-DB GUARD (2026-07-14): tp_forms is created by 704_forms.sql and
+-- tp_tables by 700_table_platform_foundation.sql — both sort AFTER this file
+-- on a fresh replay. The whole body is guarded on table existence; 704
+-- re-applies this DDL idempotently, so the final schema is identical.
+DO $mig20260513$
+BEGIN
+IF to_regclass('public.tp_forms') IS NOT NULL
+   AND to_regclass('public.tp_tables') IS NOT NULL THEN
+
 ALTER TABLE tp_forms
   ADD COLUMN IF NOT EXISTS embed_target_table_id  UUID         NULL
     REFERENCES tp_tables(id) ON DELETE SET NULL;
@@ -72,5 +81,9 @@ CREATE INDEX IF NOT EXISTS idx_tp_form_submissions_table
   ON tp_form_submissions(table_id, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_tp_form_submissions_jwt_subject
   ON tp_form_submissions(jwt_subject) WHERE jwt_subject IS NOT NULL;
+
+END IF;
+END
+$mig20260513$;
 
 COMMIT;

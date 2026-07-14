@@ -33,6 +33,16 @@
 
 BEGIN;
 
+-- FRESH-DB GUARD (2026-07-14): tp_tables (and tp_source_packs, whose creation in
+-- 20260510_block_c_source_pack.sql is itself deferred on a fresh replay) come from
+-- 700_table_platform_foundation.sql and its parity section, which sort AFTER this
+-- file. The whole body is guarded; 700 re-applies this DDL idempotently after
+-- creating both referenced tables, so the final schema is identical.
+DO $mig20260512$
+BEGIN
+IF to_regclass('public.tp_tables') IS NOT NULL
+   AND to_regclass('public.tp_source_packs') IS NOT NULL THEN
+
 CREATE TABLE IF NOT EXISTS tp_table_conversions (
   id                  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id     TEXT         NOT NULL,
@@ -73,5 +83,9 @@ CREATE INDEX IF NOT EXISTS idx_tp_table_conversions_source_pack
   ON tp_table_conversions(source_pack_id) WHERE source_pack_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_tp_table_conversions_status
   ON tp_table_conversions(status, initiated_at DESC) WHERE status IN ('queued','running');
+
+END IF;
+END
+$mig20260512$;
 
 COMMIT;

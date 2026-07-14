@@ -26,29 +26,36 @@ BEGIN;
 --    so the AI Editor can co-exist with the chat-to-schema flow without forking
 --    the proposal table.
 -- ---------------------------------------------------------------------------
-ALTER TABLE tp_schema_proposals
-  ADD COLUMN IF NOT EXISTS level TEXT NULL;
-
+-- FRESH-DB GUARD (2026-07-14): tp_schema_proposals is created by
+-- 700_table_platform_foundation.sql, which sorts AFTER this file on a fresh
+-- replay. Section 1 is guarded on table existence; 700 re-applies it
+-- idempotently, so the final schema is identical. Sections 2-3 below are
+-- self-contained and unaffected.
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM   pg_constraint
-    WHERE  conname = 'tp_schema_proposals_level_check'
-  ) THEN
+  IF to_regclass('public.tp_schema_proposals') IS NOT NULL THEN
     ALTER TABLE tp_schema_proposals
-      ADD CONSTRAINT tp_schema_proposals_level_check
-      CHECK (level IS NULL OR level IN (
-        'cell','record','column','structure',
-        'view','relational','methodological','source'
-      ));
+      ADD COLUMN IF NOT EXISTS level TEXT NULL;
+
+    IF NOT EXISTS (
+      SELECT 1
+      FROM   pg_constraint
+      WHERE  conname = 'tp_schema_proposals_level_check'
+    ) THEN
+      ALTER TABLE tp_schema_proposals
+        ADD CONSTRAINT tp_schema_proposals_level_check
+        CHECK (level IS NULL OR level IN (
+          'cell','record','column','structure',
+          'view','relational','methodological','source'
+        ));
+    END IF;
+
+    CREATE INDEX IF NOT EXISTS idx_tp_schema_proposals_level
+      ON tp_schema_proposals(level)
+      WHERE level IS NOT NULL;
   END IF;
 END
 $$;
-
-CREATE INDEX IF NOT EXISTS idx_tp_schema_proposals_level
-  ON tp_schema_proposals(level)
-  WHERE level IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- 2) tp_workspace_settings — per-workspace AI cost-control envelope.
