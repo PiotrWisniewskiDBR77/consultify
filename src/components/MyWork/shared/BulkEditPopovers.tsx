@@ -46,7 +46,7 @@ export const BulkPriorityPicker: React.FC<BulkPriorityPickerProps> = ({
   onSelect,
   selectedCount,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const ref = useRef<HTMLDivElement>(null);
 
@@ -134,11 +134,11 @@ const getDatePresets = (isPolish: boolean) => {
   inOneWeek.setDate(inOneWeek.getDate() + 7);
 
   return [
-    { label: isPolish ? 'Dzisiaj' : 'Today', date: today },
-    { label: isPolish ? 'Jutro' : 'Tomorrow', date: tomorrow },
-    { label: isPolish ? 'Następny poniedziałek' : 'Next Monday', date: nextMonday },
-    { label: isPolish ? 'Następny piątek' : 'Next Friday', date: nextFriday },
-    { label: isPolish ? 'Za tydzień' : 'In 1 week', date: inOneWeek },
+    { label: t('myWork.bulkEdit.label', 'Today'), date: today },
+    { label: t('myWork.bulkEdit.label2', 'Tomorrow'), date: tomorrow },
+    { label: t('myWork.bulkEdit.label3', 'Next Monday'), date: nextMonday },
+    { label: t('myWork.bulkEdit.label4', 'Next Friday'), date: nextFriday },
+    { label: t('myWork.bulkEdit.label5', 'In 1 week'), date: inOneWeek },
   ];
 };
 
@@ -150,7 +150,7 @@ const formatISODate = (d: Date): string => {
 };
 
 const formatShortDate = (d: Date, isPolish: boolean): string =>
-  d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+  d.toLocaleDateString(t('myWork.bulkEdit.dToLocaleDateString', 'en-US'), {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -169,7 +169,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
   onSelect,
   selectedCount,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const ref = useRef<HTMLDivElement>(null);
   const [customDate, setCustomDate] = useState('');
@@ -271,7 +271,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-danger-500 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
               >
                 <X size={14} />
-                {isPolish ? 'Usuń termin' : 'Remove due date'}
+                {t('myWork.bulkEdit.removeDueDate', 'Remove due date')}
               </button>
             </div>
           </motion.div>

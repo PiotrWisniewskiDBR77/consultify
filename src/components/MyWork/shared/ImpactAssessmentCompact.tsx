@@ -117,7 +117,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
   onChange,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [expandedDimension, setExpandedDimension] = useState<string | null>(null);
   const [showEstimates, setShowEstimates] = useState(false);
@@ -152,9 +152,9 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
 
   // Get overall label
   const getOverallLabel = (score: number) => {
-    if (score <= 3.3) return isPolish ? 'Niski' : 'Low';
-    if (score <= 6.6) return isPolish ? 'Średni' : 'Medium';
-    return isPolish ? 'Wysoki' : 'High';
+    if (score <= 3.3) return t('myWork.impactAssessment.low', 'Low');
+    if (score <= 6.6) return t('myWork.impactAssessment.medium', 'Medium');
+    return t('myWork.impactAssessment.high', 'High');
   };
 
   const handleDimensionChange = (
@@ -194,7 +194,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
         <div className="flex items-center gap-3">
           <div className="text-right">
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Ogólny wpływ' : 'Overall Impact'}
+              {t('myWork.impactAssessment.overallImpact', 'Overall Impact')}
             </div>
             <div className={`text-lg font-bold ${getScoreColor(overallScore)}`}>
               {overallScore}/10
@@ -309,7 +309,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
           className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
         >
           <Info size={14} />
-          <span>{isPolish ? 'Szczegółowe szacunki' : 'Detailed estimates'}</span>
+          <span>{t('myWork.impactAssessment.detailedEstimates', 'Detailed estimates')}</span>
           {showEstimates ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 
@@ -327,7 +327,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign size={16} className="text-emerald-500" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? 'Wpływ finansowy' : 'Financial Impact'}
+                      {t('myWork.impactAssessment.financialImpact', 'Financial Impact')}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -394,12 +394,12 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       disabled={readOnly}
                       className="w-full px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 focus:outline-none"
                     >
-                      <option value="low">{isPolish ? 'Niska pewność' : 'Low confidence'}</option>
+                      <option value="low">{t('myWork.impactAssessment.lowConfidence', 'Low confidence')}</option>
                       <option value="medium">
-                        {isPolish ? 'Średnia pewność' : 'Medium confidence'}
+                        {t('myWork.impactAssessment.mediumConfidence', 'Medium confidence')}
                       </option>
                       <option value="high">
-                        {isPolish ? 'Wysoka pewność' : 'High confidence'}
+                        {t('myWork.impactAssessment.highConfidence', 'High confidence')}
                       </option>
                     </select>
                   </div>
@@ -410,7 +410,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                   <div className="flex items-center gap-2 mb-3">
                     <Clock size={16} className="text-primary-500" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? 'Wpływ na czas' : 'Timeline Impact'}
+                      {t('myWork.impactAssessment.timelineImpact', 'Timeline Impact')}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -448,9 +448,9 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       disabled={readOnly}
                       className="px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 focus:outline-none"
                     >
-                      <option value="days">{isPolish ? 'dni' : 'days'}</option>
-                      <option value="weeks">{isPolish ? 'tyg.' : 'weeks'}</option>
-                      <option value="months">{isPolish ? 'mies.' : 'months'}</option>
+                      <option value="days">{t('myWork.impactAssessment.days', 'days')}</option>
+                      <option value="weeks">{t('myWork.impactAssessment.weeks', 'weeks')}</option>
+                      <option value="months">{t('myWork.impactAssessment.months', 'months')}</option>
                     </select>
                   </div>
                   <div className="mt-2">
@@ -470,12 +470,12 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       disabled={readOnly}
                       className="w-full px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 focus:outline-none"
                     >
-                      <option value="low">{isPolish ? 'Niska pewność' : 'Low confidence'}</option>
+                      <option value="low">{t('myWork.impactAssessment.lowConfidence2', 'Low confidence')}</option>
                       <option value="medium">
-                        {isPolish ? 'Średnia pewność' : 'Medium confidence'}
+                        {t('myWork.impactAssessment.mediumConfidence2', 'Medium confidence')}
                       </option>
                       <option value="high">
-                        {isPolish ? 'Wysoka pewność' : 'High confidence'}
+                        {t('myWork.impactAssessment.highConfidence2', 'High confidence')}
                       </option>
                     </select>
                   </div>
@@ -486,7 +486,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                   <div className="flex items-center gap-2 mb-3">
                     <Layers size={16} className="text-blue-500" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? 'Zasoby' : 'Resources'}
+                      {t('myWork.impactAssessment.resources', 'Resources')}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -514,7 +514,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                     </div>
                     <div>
                       <label className="text-xs text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Okres' : 'Duration'}
+                        {t('myWork.impactAssessment.duration', 'Duration')}
                       </label>
                       <input
                         type="text"
@@ -553,12 +553,12 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       disabled={readOnly}
                       className="w-full px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 focus:outline-none"
                     >
-                      <option value="low">{isPolish ? 'Niska pewność' : 'Low confidence'}</option>
+                      <option value="low">{t('myWork.impactAssessment.lowConfidence3', 'Low confidence')}</option>
                       <option value="medium">
-                        {isPolish ? 'Średnia pewność' : 'Medium confidence'}
+                        {t('myWork.impactAssessment.mediumConfidence3', 'Medium confidence')}
                       </option>
                       <option value="high">
-                        {isPolish ? 'Wysoka pewność' : 'High confidence'}
+                        {t('myWork.impactAssessment.highConfidence3', 'High confidence')}
                       </option>
                     </select>
                   </div>
@@ -568,7 +568,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
               {/* Description */}
               <div className="mt-4">
                 <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                  {isPolish ? 'Dodatkowy opis wpływu' : 'Additional impact description'}
+                  {t('myWork.impactAssessment.additionalImpactDescription', 'Additional impact description')}
                 </label>
                 <textarea
                   value={impact.description || ''}
@@ -576,7 +576,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                   rows={2}
                   disabled={readOnly}
                   placeholder={
-                    isPolish ? 'Opisz szczegóły wpływu decyzji...' : 'Describe impact details...'
+                    t('myWork.impactAssessment.describeImpactDetails', 'Describe impact details...')
                   }
                   className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                 />

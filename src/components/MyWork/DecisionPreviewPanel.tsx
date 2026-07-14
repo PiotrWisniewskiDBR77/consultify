@@ -124,19 +124,13 @@ async function runDecisionAi({
   isPolish: boolean;
   decision: DecisionPreviewData;
 }): Promise<string> {
-  const language = isPolish ? 'pl' : 'en';
+  const language = t('myWork.decisionPreview.en', 'en');
   const intentLabel =
     intent === 'summarize_context'
-      ? isPolish
-        ? 'Podsumuj kontekst'
-        : 'Summarize context'
+      ? t('myWork.decisionPreview.summarizeContext', 'Summarize context')
       : intent === 'propose_options'
-        ? isPolish
-          ? 'Zaproponuj opcje'
-          : 'Propose options'
-        : isPolish
-          ? 'Oceń ryzyko'
-          : 'Assess risk';
+        ? t('myWork.decisionPreview.proposeOptions', 'Propose options')
+        : t('myWork.decisionPreview.assessRisk', 'Assess risk');
 
   const systemInstruction = [
     `You are a senior PMO decision advisor.`,
@@ -228,12 +222,8 @@ export const DecisionPreviewBody: React.FC<{
           {
             label:
               brief.urgency === 'urgent'
-                ? isPolish
-                  ? 'Pilne'
-                  : 'Urgent'
-                : isPolish
-                  ? 'Normalne'
-                  : 'Normal',
+                ? t('myWork.decisionPreview.urgent', 'Urgent')
+                : t('myWork.decisionPreview.normal', 'Normal'),
             tone: brief.urgency === 'urgent' ? 'danger' : 'neutral',
           } as MetaPill,
         ]
@@ -255,7 +245,7 @@ export const DecisionPreviewBody: React.FC<{
     </span>
   ) : (
     <span className="text-[11px] font-semibold text-c-text-muted italic">
-      {isPolish ? 'Bez terminu' : 'No due date'}
+      {t('myWork.decisionPreview.noDueDate', 'No due date')}
     </span>
   );
 
@@ -284,27 +274,27 @@ export const DecisionPreviewBody: React.FC<{
           [
             {
               id: 'expand',
-              label: isPolish ? 'Rozwiń' : 'Expand',
+              label: t('myWork.decisionPreview.label', 'Expand'),
               icon: ChevronDown,
               onClick: () => onDetailsAction('expand'),
               disabled: detailsLoading,
             },
             {
               id: 'summarize',
-              label: isPolish ? 'Podsumuj' : 'Summarize',
+              label: t('myWork.decisionPreview.label2', 'Summarize'),
               icon: Sparkles,
               onClick: () => onDetailsAction('summarize'),
               disabled: detailsLoading,
             },
             {
               id: 'copy',
-              label: isPolish ? 'Kopiuj' : 'Copy',
+              label: t('myWork.decisionPreview.label3', 'Copy'),
               icon: Copy,
               onClick: () => onDetailsAction('copy'),
             },
             {
               id: 'copy-md',
-              label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+              label: t('myWork.decisionPreview.label4', 'Copy as Markdown'),
               onClick: () =>
                 void copyAsMarkdown(
                   {
@@ -312,14 +302,14 @@ export const DecisionPreviewBody: React.FC<{
                     status: decision?.status ?? undefined,
                     description: detailsText,
                   },
-                  isPolish ? 'pl' : 'en'
+                  t('myWork.decisionPreview.en2', 'en')
                 ),
             },
             ...(isSlackConnected
               ? [
                   {
                     id: 'copy-slack',
-                    label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+                    label: t('myWork.decisionPreview.label5', 'Copy for Slack'),
                     onClick: () =>
                       void copyForSlack(
                         {
@@ -327,7 +317,7 @@ export const DecisionPreviewBody: React.FC<{
                           status: decision?.status ?? undefined,
                           description: detailsText,
                         },
-                        isPolish ? 'pl' : 'en'
+                        t('myWork.decisionPreview.en3', 'en')
                       ),
                   },
                 ]
@@ -390,9 +380,9 @@ export const DecisionPreviewFooter: React.FC<{
   onCloseSnooze,
   onSnooze,
 }) => {
-  const hintSummarize = isPolish ? 'Podsumuj kontekst' : 'Summarize context';
-  const hintPropose = isPolish ? 'Zaproponuj opcje' : 'Propose options';
-  const hintAssess = isPolish ? 'Oceń ryzyko' : 'Assess risk';
+  const hintSummarize = t('myWork.decisionPreview.summarizeContext2', 'Summarize context');
+  const hintPropose = t('myWork.decisionPreview.proposeOptions2', 'Propose options');
+  const hintAssess = t('myWork.decisionPreview.assessRisk2', 'Assess risk');
   const hints = [hintSummarize, hintPropose, hintAssess];
 
   const hintToIntent = (hint: string): DecisionAiIntent => {
@@ -413,7 +403,7 @@ export const DecisionPreviewFooter: React.FC<{
           {
             buttons: [
               {
-                label: isPolish ? 'Przyjęta' : 'Approve',
+                label: t('myWork.decisionPreview.label6', 'Approve'),
                 icon: Check,
                 onClick: onApprove,
                 colorScheme: 'emerald' as const,
@@ -421,7 +411,7 @@ export const DecisionPreviewFooter: React.FC<{
                 shortcut: 'A',
               },
               {
-                label: isPolish ? 'Odrzucona' : 'Reject',
+                label: t('myWork.decisionPreview.label7', 'Reject'),
                 icon: X,
                 onClick: onReject,
                 colorScheme: 'red' as const,
@@ -435,7 +425,7 @@ export const DecisionPreviewFooter: React.FC<{
     {
       buttons: [
         {
-          label: isPolish ? 'Więcej info' : 'More info',
+          label: t('myWork.decisionPreview.label8', 'More info'),
           icon: MessageSquare,
           onClick: onMoreInfo,
           colorScheme: 'neutral' as const,
@@ -445,7 +435,7 @@ export const DecisionPreviewFooter: React.FC<{
         ...(canAct
           ? [
               {
-                label: isPolish ? 'Deleguj' : 'Delegate',
+                label: t('myWork.decisionPreview.label9', 'Delegate'),
                 icon: UserPlus,
                 onClick: onDelegate,
                 colorScheme: 'neutral' as const,
@@ -455,7 +445,7 @@ export const DecisionPreviewFooter: React.FC<{
             ]
           : [
               {
-                label: isPolish ? 'Przypomnij' : 'Remind',
+                label: t('myWork.decisionPreview.label10', 'Remind'),
                 icon: Bell,
                 onClick: onRemind,
                 colorScheme: 'blue' as const,
@@ -486,7 +476,7 @@ export const DecisionPreviewFooter: React.FC<{
 
       <PreviewRelations
         items={relationItems}
-        emptyLabel={isPolish ? 'Brak powiązań' : 'No relations'}
+        emptyLabel={t('myWork.decisionPreview.emptyLabel', 'No relations')}
       />
 
       <div className="space-y-2.5 py-1">
@@ -495,11 +485,11 @@ export const DecisionPreviewFooter: React.FC<{
         <div className="flex gap-2">
           <button onClick={onRemind} className={actionPillClass('neutral', 'flex-1')}>
             <Bell size={14} />
-            {isPolish ? 'Przypomnij' : 'Remind'}
+            {t('myWork.decisionPreview.remind', 'Remind')}
           </button>
           <button onClick={onEscalate} className={actionPillClass('amber', '')}>
             <TrendingUp size={14} />
-            {isPolish ? 'Eskaluj' : 'Escalate'}
+            {t('myWork.decisionPreview.escalate', 'Escalate')}
           </button>
           <div className="relative flex-1">
             <button
@@ -507,7 +497,7 @@ export const DecisionPreviewFooter: React.FC<{
               className={actionPillClass('neutral', 'w-full flex-1')}
             >
               <AlarmClockOff size={14} />
-              {isPolish ? 'Odłóż' : 'Snooze'}
+              {t('myWork.decisionPreview.snooze', 'Snooze')}
               <ChevronDown
                 size={12}
                 className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
@@ -646,9 +636,9 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
       if (action === 'copy') {
         try {
           await navigator.clipboard.writeText(base || decision.title || '');
-          toast.success(isPolish ? 'Skopiowano' : 'Copied');
+          toast.success(t('myWork.decisionPreview.toastSuccess', 'Copied'));
         } catch {
-          toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+          toast.error(t('myWork.decisionPreview.toastError', 'Copy failed'));
         }
         setDetailsMenuOpen(false);
         return;
@@ -657,7 +647,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
       try {
         setDetailsLoading(true);
         setDetailsMenuOpen(false);
-        const language = isPolish ? 'pl' : 'en';
+        const language = t('myWork.decisionPreview.en4', 'en');
         const systemInstruction = [
           `You are a senior PMO decision advisor.`,
           `Output language MUST be ${language === 'pl' ? 'Polish' : 'English'}.`,
@@ -683,7 +673,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
         const text = String((resp as any)?.text || '').trim();
         if (text) setDetailsOverride(text);
       } catch {
-        toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        toast.error(t('myWork.decisionPreview.toastError2', 'AI unavailable'));
       } finally {
         setDetailsLoading(false);
       }
@@ -702,7 +692,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
         if (!text) throw new Error('empty');
         setAiText(text);
       } catch {
-        setAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        setAiError(t('myWork.decisionPreview.setAiError', 'AI unavailable'));
       } finally {
         setAiLoading(false);
       }
@@ -714,9 +704,9 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     if (!aiText) return;
     try {
       await navigator.clipboard.writeText(aiText);
-      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      toast.success(t('myWork.decisionPreview.toastSuccess2', 'Copied'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('myWork.decisionPreview.toastError3', 'Copy failed'));
     } finally {
       setAiMenuOpen(false);
     }
@@ -739,29 +729,25 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
       await Api.decideDecision(decisionId, next, defaultRationaleFor(next));
       toast.success(
         next === 'approved'
-          ? isPolish
-            ? 'Zatwierdzono'
-            : 'Approved'
-          : isPolish
-            ? 'Odrzucono'
-            : 'Rejected'
+          ? t('myWork.decisionPreview.approved', 'Approved')
+          : t('myWork.decisionPreview.rejected', 'Rejected')
       );
       onDidMutate?.();
       await fetchDetails();
     } catch (e) {
-      toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Action failed');
+      toast.error(t('myWork.decisionPreview.toastError4', 'Action failed'));
     }
   };
 
   const handleDefer = async () => {
     if (!decisionId) return;
     try {
-      await Api.decideDecision(decisionId, 'deferred', isPolish ? 'Odroczone' : 'Deferred');
-      toast.success(isPolish ? 'Odroczono' : 'Deferred');
+      await Api.decideDecision(decisionId, 'deferred', t('myWork.decisionPreview.deferred', 'Deferred'));
+      toast.success(t('myWork.decisionPreview.toastSuccess3', 'Deferred'));
       onDidMutate?.();
       await fetchDetails();
     } catch {
-      toast.error(isPolish ? 'Nie udało się odroczyć' : 'Failed to defer');
+      toast.error(t('myWork.decisionPreview.toastError5', 'Failed to defer'));
     }
   };
 
@@ -769,17 +755,13 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     if (!decisionId) return;
     try {
       await Api.remindDecision(decisionId);
-      toast.success(isPolish ? 'Wysłano przypomnienie' : 'Reminder sent');
+      toast.success(t('myWork.decisionPreview.toastSuccess4', 'Reminder sent'));
     } catch (e: any) {
       const msg = String(e?.message || '');
       toast.error(
         msg.includes('recent')
-          ? isPolish
-            ? 'Przypomnienie było niedawno wysłane'
-            : 'Reminder recently sent'
-          : isPolish
-            ? 'Nie udało się wysłać przypomnienia'
-            : 'Failed to send reminder'
+          ? t('myWork.decisionPreview.reminderRecentlySent', 'Reminder recently sent')
+          : t('myWork.decisionPreview.failedToSendReminder', 'Failed to send reminder')
       );
     }
   };
@@ -789,15 +771,13 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     try {
       await Api.escalateDecision(
         decisionId,
-        isPolish
-          ? 'Eskalacja z preview — wymaga reakcji'
-          : 'Escalated from preview — needs attention'
+        t('myWork.decisionPreview.escalatedFromPreviewNeeds', 'Escalated from preview — needs attention')
       );
-      toast.success(isPolish ? 'Eskaluowano' : 'Escalated');
+      toast.success(t('myWork.decisionPreview.toastSuccess5', 'Escalated'));
       onDidMutate?.();
       await fetchDetails();
     } catch {
-      toast.error(isPolish ? 'Nie udało się eskalować' : 'Failed to escalate');
+      toast.error(t('myWork.decisionPreview.toastError6', 'Failed to escalate'));
     }
   };
 
@@ -805,11 +785,11 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     if (!decisionId) return;
     try {
       await Api.snoozeDecision(decisionId, { preset });
-      toast.success(isPolish ? 'Odłożono' : 'Snoozed');
+      toast.success(t('myWork.decisionPreview.toastSuccess6', 'Snoozed'));
       onDidMutate?.();
       onClose();
     } catch (e) {
-      toast.error(isPolish ? 'Nie udało się odłożyć' : 'Failed to snooze');
+      toast.error(t('myWork.decisionPreview.toastError7', 'Failed to snooze'));
     }
   };
 
@@ -817,15 +797,13 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     return (
       <aside className="w-[420px] flex-shrink-0 bg-c-bg h-full p-3">
         <PreviewPaneShell
-          kicker={isPolish ? 'Podgląd' : 'Preview'}
-          title={isPolish ? 'Decyzja' : 'Decision'}
+          kicker={t('myWork.decisionPreview.kicker', 'Preview')}
+          title={t('myWork.decisionPreview.title', 'Decision')}
           onClose={onClose}
         >
           <div className="h-full flex items-center justify-center p-6 text-center">
             <div className="text-sm text-c-text-muted">
-              {isPolish
-                ? 'Wybierz decyzję z listy, aby zobaczyć podgląd.'
-                : 'Select a decision to preview.'}
+              {t('myWork.decisionPreview.selectADecisionTo', 'Select a decision to preview.')}
             </div>
           </div>
         </PreviewPaneShell>
@@ -838,23 +816,19 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
       <PreviewPaneShell
         kicker={
           mode === 'requests_pending'
-            ? isPolish
-              ? 'Moja prośba'
-              : 'My request'
-            : isPolish
-              ? 'Podgląd'
-              : 'Preview'
+            ? t('myWork.decisionPreview.myRequest', 'My request')
+            : t('myWork.decisionPreview.preview', 'Preview')
         }
-        title={decision?.title || (isPolish ? 'Decyzja' : 'Decision')}
+        title={decision?.title || (t('myWork.decisionPreview.decision', 'Decision'))}
         onClose={onClose}
         actions={
           <button
             onClick={() => onOpenFullDetail(decisionId, decision)}
             className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            title={isPolish ? 'Otwórz pełny widok' : 'Open full detail'}
+            title={t('myWork.decisionPreview.title2', 'Open full detail')}
           >
             <ExternalLink size={13} />
-            {isPolish ? 'Otwórz' : 'Open'}
+            {t('myWork.decisionPreview.open', 'Open')}
           </button>
         }
         footer={
@@ -895,7 +869,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-c-text-muted">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
+            <span>{t('myWork.decisionPreview.loading', 'Loading…')}</span>
           </div>
         ) : (
           <DecisionPreviewBody

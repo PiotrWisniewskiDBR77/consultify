@@ -104,9 +104,9 @@ interface NotificationsContentProps {
 
 // Format relative time
 const formatRelativeTime = (dateString: string, isPolish: boolean = false): string => {
-  if (!dateString) return isPolish ? 'Niedawno' : 'Recently';
+  if (!dateString) return t('myWork.notificationsContent.recently', 'Recently');
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return isPolish ? 'Niedawno' : 'Recently';
+  if (isNaN(date.getTime())) return t('myWork.notificationsContent.recently2', 'Recently');
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -114,11 +114,11 @@ const formatRelativeTime = (dateString: string, isPolish: boolean = false): stri
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return isPolish ? 'Przed chwilą' : 'Just now';
+  if (diffMins < 1) return t('myWork.notificationsContent.justNow', 'Just now');
   if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
   if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
-  return date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US');
+  return date.toLocaleDateString(t('myWork.notificationsContent.dateToLocaleDateString', 'en-US'));
 };
 
 // Time group types
@@ -475,7 +475,7 @@ const NotificationTableRow: React.FC<{
           {isSnoozed && (
             <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded">
               <Clock size={10} />
-              {snoozedUntilLabel || (isPolish ? 'Odłożone' : 'Snoozed')}
+              {snoozedUntilLabel || (t('myWork.notificationsContent.snoozed', 'Snoozed'))}
             </span>
           )}
 
@@ -489,7 +489,7 @@ const NotificationTableRow: React.FC<{
                   onOpenChat(notification);
                 }}
                 className="p-1.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-c-text-muted hover:text-c-text transition-colors"
-                title={isPolish ? 'Czat' : 'Chat'}
+                title={t('myWork.notificationsContent.title', 'Chat')}
               >
                 <MessageSquare size={14} />
               </button>
@@ -504,7 +504,7 @@ const NotificationTableRow: React.FC<{
                     setShowSnoozeMenu(!showSnoozeMenu);
                   }}
                   className="p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-c-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                  title={isPolish ? 'Odłóż' : 'Snooze'}
+                  title={t('myWork.notificationsContent.title2', 'Snooze')}
                 >
                   <Clock size={14} />
                 </button>
@@ -513,15 +513,15 @@ const NotificationTableRow: React.FC<{
                     <div className="fixed inset-0 z-40" onClick={() => setShowSnoozeMenu(false)} />
                     <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-c-surface-raised rounded-lg shadow-lg border border-c-border min-w-[100px]">
                       {[
-                        { preset: '1h' as SnoozePreset, label: isPolish ? '1 godz.' : '1 hour' },
-                        { preset: '4h' as SnoozePreset, label: isPolish ? '4 godz.' : '4 hours' },
+                        { preset: '1h' as SnoozePreset, label: t('myWork.notificationsContent.label', '1 hour') },
+                        { preset: '4h' as SnoozePreset, label: t('myWork.notificationsContent.label2', '4 hours') },
                         {
                           preset: '1d' as SnoozePreset,
-                          label: isPolish ? '1 dzień' : '1 day',
+                          label: t('myWork.notificationsContent.label3', '1 day'),
                         },
                         {
                           preset: '3d' as SnoozePreset,
-                          label: isPolish ? '3 dni' : '3 days',
+                          label: t('myWork.notificationsContent.label4', '3 days'),
                         },
                       ].map(({ preset, label }) => (
                         <button
@@ -550,7 +550,7 @@ const NotificationTableRow: React.FC<{
                   onMarkRead(notification.id);
                 }}
                 className="p-1.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-c-text-muted hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
+                title={t('myWork.notificationsContent.title3', 'Mark as read')}
               >
                 <Check size={14} />
               </button>
@@ -564,7 +564,7 @@ const NotificationTableRow: React.FC<{
               onClick(notification);
             }}
             className="p-1.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-c-text-muted hover:text-c-text transition-colors"
-            title={isPolish ? 'Zobacz' : 'View'}
+            title={t('myWork.notificationsContent.title4', 'View')}
           >
             <Eye size={14} />
           </button>
@@ -579,7 +579,7 @@ const NotificationTableRow: React.FC<{
                   actions: [
                     {
                       id: 'view',
-                      label: isPolish ? 'Zobacz szczegóły' : 'View Details',
+                      label: t('myWork.notificationsContent.label5', 'View Details'),
                       icon: Eye,
                       variant: 'primary',
                       onClick: () => onClick(notification),
@@ -588,7 +588,7 @@ const NotificationTableRow: React.FC<{
                       ? [
                           {
                             id: 'chat',
-                            label: isPolish ? 'Otwórz czat' : 'Open Chat',
+                            label: t('myWork.notificationsContent.label6', 'Open Chat'),
                             icon: MessageSquare,
                             onClick: () => onOpenChat(notification),
                           },
@@ -598,7 +598,7 @@ const NotificationTableRow: React.FC<{
                       ? [
                           {
                             id: 'mark-read',
-                            label: isPolish ? 'Oznacz jako przeczytane' : 'Mark as Read',
+                            label: t('myWork.notificationsContent.label7', 'Mark as Read'),
                             icon: Check,
                             onClick: () => onMarkRead(notification.id),
                           },
@@ -608,7 +608,7 @@ const NotificationTableRow: React.FC<{
                       ? [
                           {
                             id: 'go-source',
-                            label: isPolish ? 'Idź do źródła' : 'Go to Source',
+                            label: t('myWork.notificationsContent.label8', 'Go to Source'),
                             icon: ArrowRight,
                             onClick: () => onClick(notification),
                           },
@@ -624,24 +624,24 @@ const NotificationTableRow: React.FC<{
                   actions: [
                     {
                       id: 'open-preview',
-                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                      label: t('myWork.notificationsContent.label9', 'Open preview'),
                       icon: ChevronRight,
                       onClick: () => onClick(notification),
                     },
                     {
                       id: 'edit',
-                      label: isPolish ? 'Edytuj' : 'Edit',
+                      label: t('myWork.notificationsContent.label10', 'Edit'),
                       icon: Eye,
                       disabled: true,
-                      description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                      description: t('myWork.notificationsContent.description', 'Coming soon (backend)'),
                       onClick: () => {},
                     },
                     {
                       id: 'archive',
-                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                      label: t('myWork.notificationsContent.label11', 'Archive'),
                       icon: Archive,
                       disabled: true,
-                      description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                      description: t('myWork.notificationsContent.description2', 'Coming soon (backend)'),
                       onClick: () => {},
                     },
                   ],
@@ -652,7 +652,7 @@ const NotificationTableRow: React.FC<{
                   actions: [
                     {
                       id: 'delete',
-                      label: isPolish ? 'Usuń' : 'Delete',
+                      label: t('myWork.notificationsContent.label12', 'Delete'),
                       icon: Trash2,
                       variant: 'danger',
                       onClick: () => onDelete(notification.id),
@@ -878,7 +878,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
       projectName: notification.projectName || null,
     });
 
-    toast.success(isPolish ? 'Otwarto czat' : 'Chat opened');
+    toast.success(t('myWork.notificationsContent.toastSuccess', 'Chat opened'));
   };
 
   // Handle snoozing a notification
@@ -1069,10 +1069,10 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                 <button
                   onClick={() => setMutedTypesOpen((v) => !v)}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
-                  title={isPolish ? 'Wyciszone typy (sesja)' : 'Muted types (session)'}
+                  title={t('myWork.notificationsContent.title5', 'Muted types (session)')}
                 >
                   <BellOff size={13} className="text-c-text-muted" />
-                  {isPolish ? 'Wyciszone' : 'Muted'} ({mutedTypes.length})
+                  {t('myWork.notificationsContent.muted', 'Muted')} ({mutedTypes.length})
                 </button>
 
                 {mutedTypesOpen && (
@@ -1081,7 +1081,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                     <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-c-surface-raised border border-c-border shadow-xl overflow-hidden">
                       <div className="px-3 py-2 border-b border-slate-200/60 dark:border-white/[0.03] flex items-center justify-between">
                         <span className="text-xs font-semibold text-c-text-secondary">
-                          {isPolish ? 'Wyciszone typy (sesja)' : 'Muted types (session)'}
+                          {t('myWork.notificationsContent.mutedTypesSession', 'Muted types (session)')}
                         </span>
                         <button
                           onClick={() => setMutedTypesOpen(false)}
@@ -1104,7 +1104,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                               onClick={() => unmuteNotificationTypeForSession(t)}
                               className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-c-border text-c-text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                             >
-                              {isPolish ? 'Odblokuj' : 'Unmute'}
+                              {t('myWork.notificationsContent.unmute', 'Unmute')}
                             </button>
                           </div>
                         ))}
@@ -1115,7 +1115,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                           onClick={() => clearMutedNotificationTypesForSession()}
                           className="text-[11px] font-medium text-c-text-muted hover:text-c-text"
                         >
-                          {isPolish ? 'Wyczyść wszystko' : 'Clear all'}
+                          {t('myWork.notificationsContent.clearAll', 'Clear all')}
                         </button>
                       </div>
                     </div>

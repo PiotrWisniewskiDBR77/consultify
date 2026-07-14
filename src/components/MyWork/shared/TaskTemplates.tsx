@@ -123,7 +123,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
   onClose,
   initialTask,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // View mode: 'list' | 'create' | 'edit'
@@ -201,11 +201,11 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
 
   const handleSave = async () => {
     if (!formData.name?.trim()) {
-      toast.error(isPolish ? 'Nazwa szablonu jest wymagana' : 'Template name is required');
+      toast.error(t('myWork.taskTemplates.toastError', 'Template name is required'));
       return;
     }
     if (!formData.title?.trim()) {
-      toast.error(isPolish ? 'Tytuł zadania jest wymagany' : 'Task title is required');
+      toast.error(t('myWork.taskTemplates.toastError2', 'Task title is required'));
       return;
     }
 
@@ -214,7 +214,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
 
       if (viewMode === 'edit' && editingTemplate) {
         await onUpdateTemplate(editingTemplate.id, formData);
-        toast.success(isPolish ? 'Szablon zaktualizowany' : 'Template updated');
+        toast.success(t('myWork.taskTemplates.toastSuccess', 'Template updated'));
       } else {
         await onSaveTemplate({
           name: formData.name!,
@@ -230,13 +230,13 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
           recurringPattern: formData.recurringPattern,
           isFavorite: formData.isFavorite || false,
         });
-        toast.success(isPolish ? 'Szablon zapisany' : 'Template saved');
+        toast.success(t('myWork.taskTemplates.toastSuccess2', 'Template saved'));
       }
 
       resetForm();
       setViewMode('list');
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się zapisać szablonu' : 'Failed to save template');
+      toast.error(t('myWork.taskTemplates.toastError3', 'Failed to save template'));
     } finally {
       setSaving(false);
     }
@@ -264,18 +264,16 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
   const handleDelete = async (id: string) => {
     if (
       !confirm(
-        isPolish
-          ? 'Czy na pewno chcesz usunąć ten szablon?'
-          : 'Are you sure you want to delete this template?'
+        t('myWork.taskTemplates.areYouSureYou', 'Are you sure you want to delete this template?')
       )
     ) {
       return;
     }
     try {
       await onDeleteTemplate(id);
-      toast.success(isPolish ? 'Szablon usunięty' : 'Template deleted');
+      toast.success(t('myWork.taskTemplates.toastSuccess3', 'Template deleted'));
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
+      toast.error(t('myWork.taskTemplates.toastError4', 'Failed to delete template'));
     }
   };
 
@@ -324,25 +322,15 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                   {viewMode === 'list'
-                    ? isPolish
-                      ? 'Szablony zadań'
-                      : 'Task Templates'
+                    ? t('myWork.taskTemplates.taskTemplates', 'Task Templates')
                     : viewMode === 'create'
-                      ? isPolish
-                        ? 'Nowy szablon'
-                        : 'New Template'
-                      : isPolish
-                        ? 'Edytuj szablon'
-                        : 'Edit Template'}
+                      ? t('myWork.taskTemplates.newTemplate', 'New Template')
+                      : t('myWork.taskTemplates.editTemplate', 'Edit Template')}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {viewMode === 'list'
-                    ? isPolish
-                      ? 'Szybkie tworzenie zadań z szablonów'
-                      : 'Quickly create tasks from templates'
-                    : isPolish
-                      ? 'Zdefiniuj szczegóły szablonu'
-                      : 'Define template details'}
+                    ? t('myWork.taskTemplates.quicklyCreateTasksFrom', 'Quickly create tasks from templates')
+                    : t('myWork.taskTemplates.defineTemplateDetails', 'Define template details')}
                 </p>
               </div>
             </div>
@@ -355,7 +343,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                   }}
                   className="px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('myWork.taskTemplates.cancel', 'Cancel')}
                 </button>
               )}
               <button
@@ -382,7 +370,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={isPolish ? 'Szukaj szablonów...' : 'Search templates...'}
+                      placeholder={t('myWork.taskTemplates.placeholder', 'Search templates...')}
                       className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500"
                     />
                   </div>
@@ -394,7 +382,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text text-c-bg text-sm font-medium hover:bg-c-text-secondary transition-colors"
                   >
                     <Plus size={16} />
-                    <span>{isPolish ? 'Nowy' : 'New'}</span>
+                    <span>{t('myWork.taskTemplates.new', 'New')}</span>
                   </button>
                 </div>
 
@@ -404,12 +392,8 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     <Layers size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
                     <p className="text-slate-500 dark:text-slate-400">
                       {searchQuery
-                        ? isPolish
-                          ? 'Nie znaleziono szablonów'
-                          : 'No templates found'
-                        : isPolish
-                          ? 'Brak szablonów'
-                          : 'No templates yet'}
+                        ? t('myWork.taskTemplates.noTemplatesFound', 'No templates found')
+                        : t('myWork.taskTemplates.noTemplatesYet', 'No templates yet')}
                     </p>
                   </div>
                 ) : (
@@ -442,7 +426,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                             {template.isRecurring && (
                               <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500">
                                 <RefreshCw size={10} />
-                                {isPolish ? 'Powtarzalne' : 'Recurring'}
+                                {t('myWork.taskTemplates.recurring', 'Recurring')}
                               </span>
                             )}
                           </div>
@@ -459,7 +443,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                             )}
                             <span>•</span>
                             <span>
-                              {template.usageCount}x {isPolish ? 'użyto' : 'used'}
+                              {template.usageCount}x {t('myWork.taskTemplates.used', 'used')}
                             </span>
                           </div>
                         </div>
@@ -469,21 +453,21 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                           <button
                             onClick={() => onCreateFromTemplate(template)}
                             className="p-2 rounded-lg bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition-colors"
-                            title={isPolish ? 'Użyj szablonu' : 'Use template'}
+                            title={t('myWork.taskTemplates.title', 'Use template')}
                           >
                             <Plus size={16} />
                           </button>
                           <button
                             onClick={() => handleEdit(template)}
                             className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 transition-colors"
-                            title={isPolish ? 'Edytuj' : 'Edit'}
+                            title={t('myWork.taskTemplates.title2', 'Edit')}
                           >
                             <Edit size={16} />
                           </button>
                           <button
                             onClick={() => handleDelete(template.id)}
                             className="p-2 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/10 text-slate-600 hover:text-danger-500 transition-colors"
-                            title={isPolish ? 'Usuń' : 'Delete'}
+                            title={t('myWork.taskTemplates.title3', 'Delete')}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -499,40 +483,40 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                 {/* Template Name */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    {isPolish ? 'Nazwa szablonu' : 'Template Name'} *
+                    {t('myWork.taskTemplates.templateName', 'Template Name')} *
                   </label>
                   <input
                     type="text"
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
-                    placeholder={isPolish ? 'np. Tygodniowy raport' : 'e.g., Weekly report'}
+                    placeholder={t('myWork.taskTemplates.placeholder2', 'e.g., Weekly report')}
                   />
                 </div>
 
                 {/* Category */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    {isPolish ? 'Kategoria' : 'Category'}
+                    {t('myWork.taskTemplates.category', 'Category')}
                   </label>
                   <input
                     type="text"
                     value={formData.category || ''}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
-                    placeholder={isPolish ? 'np. Raporty' : 'e.g., Reports'}
+                    placeholder={t('myWork.taskTemplates.placeholder3', 'e.g., Reports')}
                   />
                 </div>
 
                 <div className="border-t border-slate-200 dark:border-navy-700 pt-4">
                   <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                    {isPolish ? 'Szczegóły zadania' : 'Task Details'}
+                    {t('myWork.taskTemplates.taskDetails', 'Task Details')}
                   </h3>
 
                   {/* Task Title */}
                   <div className="mb-3">
                     <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish ? 'Tytuł zadania' : 'Task Title'} *
+                      {t('myWork.taskTemplates.taskTitle', 'Task Title')} *
                     </label>
                     <input
                       type="text"
@@ -546,7 +530,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                        {isPolish ? 'Priorytet' : 'Priority'}
+                        {t('myWork.taskTemplates.priority', 'Priority')}
                       </label>
                       <select
                         value={formData.priority || 'medium'}
@@ -562,7 +546,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     </div>
                     <div>
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                        {isPolish ? 'Szacowany czas (h)' : 'Estimated Hours'}
+                        {t('myWork.taskTemplates.estimatedHours', 'Estimated Hours')}
                       </label>
                       <input
                         type="number"
@@ -592,7 +576,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                       <RefreshCw size={14} />
-                      {isPolish ? 'Zadanie powtarzalne' : 'Recurring Task'}
+                      {t('myWork.taskTemplates.recurringTask', 'Recurring Task')}
                     </span>
                   </label>
 
@@ -606,7 +590,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                            {isPolish ? 'Częstotliwość' : 'Frequency'}
+                            {t('myWork.taskTemplates.frequency', 'Frequency')}
                           </label>
                           <select
                             value={formData.recurringPattern?.frequency || 'weekly'}
@@ -630,7 +614,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                         </div>
                         <div>
                           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                            {isPolish ? 'Co ile' : 'Every'}
+                            {t('myWork.taskTemplates.every', 'Every')}
                           </label>
                           <input
                             type="number"
@@ -655,7 +639,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       {formData.recurringPattern?.frequency === 'weekly' && (
                         <div>
                           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2">
-                            {isPolish ? 'Dni tygodnia' : 'Days of week'}
+                            {t('myWork.taskTemplates.daysOfWeek', 'Days of week')}
                           </label>
                           <div className="flex gap-1">
                             {DAYS_OF_WEEK.map((day) => (
@@ -707,7 +691,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                   }}
                   className="px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('myWork.taskTemplates.cancel2', 'Cancel')}
                 </button>
                 <button
                   onClick={handleSave}
@@ -717,12 +701,8 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   <span>
                     {viewMode === 'edit'
-                      ? isPolish
-                        ? 'Aktualizuj'
-                        : 'Update'
-                      : isPolish
-                        ? 'Zapisz szablon'
-                        : 'Save Template'}
+                      ? t('myWork.taskTemplates.update', 'Update')
+                      : t('myWork.taskTemplates.saveTemplate', 'Save Template')}
                   </span>
                 </button>
               </div>

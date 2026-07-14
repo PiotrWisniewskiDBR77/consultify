@@ -26,7 +26,7 @@ const URGENCY_COLORS = {
 };
 
 export const AICoachPanel: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [result, setResult] = useState<AdvisorResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,7 +58,7 @@ export const AICoachPanel: React.FC = () => {
         <div className="flex items-center gap-2">
           <Brain size={16} className="text-c-info" />
           <span className="text-sm font-semibold text-c-info dark:text-c-info">
-            {isPolish ? 'AI Coach' : 'AI Coach'}
+            {t('myWork.aiCoachPanel.aICoach', 'AI Coach')}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -86,7 +86,7 @@ export const AICoachPanel: React.FC = () => {
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-c-info">
               <Loader2 size={12} className="animate-spin" />{' '}
-              {isPolish ? 'Analizuję...' : 'Analyzing...'}
+              {t('myWork.aiCoachPanel.analyzing', 'Analyzing...')}
             </div>
           ) : result ? (
             <>

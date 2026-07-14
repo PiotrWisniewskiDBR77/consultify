@@ -237,7 +237,7 @@ export const MyProjects: React.FC = () => {
           err?.message ||
             t(
               'myWork.projects.loadError',
-              isPolish ? 'Nie udało się wczytać projektów' : 'Failed to load projects'
+              t('myWork.projects.failedToLoadProjects', 'Failed to load projects')
             )
         )
       );
@@ -262,7 +262,7 @@ export const MyProjects: React.FC = () => {
       console.error('[MyProjects] programs error:', err);
       setProgramsError(
         String(
-          err?.message || (isPolish ? 'Nie udało się wczytać programów' : 'Failed to load programs')
+          err?.message || (t('myWork.projects.failedToLoadPrograms', 'Failed to load programs'))
         )
       );
     } finally {
@@ -293,9 +293,7 @@ export const MyProjects: React.FC = () => {
           setProgramRollupError(
             String(
               err?.message ||
-                (isPolish
-                  ? 'Nie udało się wczytać rollupu programu'
-                  : 'Failed to load program rollup')
+                (t('myWork.projects.failedToLoadProgram', 'Failed to load program rollup'))
             )
           );
       })
@@ -332,7 +330,7 @@ export const MyProjects: React.FC = () => {
           setStakeholdersError(
             String(
               err?.message ||
-                (isPolish ? 'Nie udało się wczytać stakeholderów' : 'Failed to load stakeholders')
+                (t('myWork.projects.failedToLoadStakeholders', 'Failed to load stakeholders'))
             )
           );
       })
@@ -352,7 +350,7 @@ export const MyProjects: React.FC = () => {
           setFinanceError(
             String(
               err?.message ||
-                (isPolish ? 'Nie udało się wczytać finansów' : 'Failed to load finance')
+                (t('myWork.projects.failedToLoadFinance', 'Failed to load finance'))
             )
           );
       })
@@ -372,7 +370,7 @@ export const MyProjects: React.FC = () => {
         if (!cancelled)
           setTeamError(
             String(
-              err?.message || (isPolish ? 'Nie udało się wczytać zespołu' : 'Failed to load team')
+              err?.message || (t('myWork.projects.failedToLoadTeam', 'Failed to load team'))
             )
           );
       })
@@ -392,7 +390,7 @@ export const MyProjects: React.FC = () => {
         if (!cancelled)
           setTasksError(
             String(
-              err?.message || (isPolish ? 'Nie udało się wczytać zadań' : 'Failed to load tasks')
+              err?.message || (t('myWork.projects.failedToLoadTasks', 'Failed to load tasks'))
             )
           );
       })
@@ -459,7 +457,7 @@ export const MyProjects: React.FC = () => {
     () => [
       {
         id: 'name',
-        label: t('myWork.projects.table.name', isPolish ? 'Projekt' : 'Project'),
+        label: t('myWork.projects.table.name', t('myWork.projects.project', 'Project')),
         width: '280px',
         sortable: true,
       },
@@ -470,14 +468,14 @@ export const MyProjects: React.FC = () => {
         sortable: true,
         filterable: true,
         filterOptions: [
-          { value: 'active', label: isPolish ? 'Aktywny' : 'Active' },
-          { value: 'completed', label: isPolish ? 'Zakończony' : 'Completed' },
-          { value: 'archived', label: isPolish ? 'Zarchiwizowany' : 'Archived' },
+          { value: 'active', label: t('myWork.projects.label', 'Active') },
+          { value: 'completed', label: t('myWork.projects.label2', 'Completed') },
+          { value: 'archived', label: t('myWork.projects.label3', 'Archived') },
         ],
       },
       {
         id: 'program',
-        label: t('myWork.projects.table.program', isPolish ? 'Program' : 'Program'),
+        label: t('myWork.projects.table.program', t('myWork.projects.program', 'Program')),
         width: '160px',
         sortable: true,
         sortAccessor: (row: TableRow) => {
@@ -501,21 +499,21 @@ export const MyProjects: React.FC = () => {
       },
       {
         id: 'memberCount',
-        label: t('myWork.projects.table.members', isPolish ? 'Zespół' : 'Members'),
+        label: t('myWork.projects.table.members', t('myWork.projects.members', 'Members')),
         width: '110px',
         sortable: true,
         sortAccessor: (row: TableRow) => Number(row.memberCount) || 0,
       },
       {
         id: 'initiativeCount',
-        label: t('myWork.projects.table.initiatives', isPolish ? 'Inicjatywy' : 'Initiatives'),
+        label: t('myWork.projects.table.initiatives', t('myWork.projects.initiatives', 'Initiatives')),
         width: '110px',
         sortable: true,
         sortAccessor: (row: TableRow) => Number(row.initiativeCount) || 0,
       },
       {
         id: 'created_at',
-        label: t('myWork.projects.table.created', isPolish ? 'Utworzono' : 'Created'),
+        label: t('myWork.projects.table.created', t('myWork.projects.created', 'Created')),
         width: '140px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.created_at || row.createdAt || ''),
@@ -531,20 +529,14 @@ export const MyProjects: React.FC = () => {
         await Api.assignProjectProgram(projectId, programId);
         toast.success(
           programId
-            ? isPolish
-              ? 'Projekt przypisany do programu'
-              : 'Project assigned to program'
-            : isPolish
-              ? 'Projekt odłączony od programu'
-              : 'Project unassigned from program'
+            ? t('myWork.projects.projectAssignedToProgram', 'Project assigned to program')
+            : t('myWork.projects.projectUnassignedFromProgram', 'Project unassigned from program')
         );
         await fetchProjects();
       } catch (err: any) {
         toast.error(
           err?.message ||
-            (isPolish
-              ? 'Nie udało się przypisać projektu do programu'
-              : 'Failed to assign project to program')
+            (t('myWork.projects.failedToAssignProject', 'Failed to assign project to program'))
         );
       }
     },
@@ -559,19 +551,17 @@ export const MyProjects: React.FC = () => {
         primary: [
           {
             id: 'assign-program',
-            label: isPolish ? 'Przypisz do programu' : 'Assign to program',
+            label: t('myWork.projects.label4', 'Assign to program'),
             icon: Layers,
             disabled: programs.length === 0,
             note:
               programs.length === 0
-                ? isPolish
-                  ? 'Utwórz najpierw program (zakładka Programy)'
-                  : 'Create a program first (Programs tab)'
+                ? t('myWork.projects.createAProgramFirst', 'Create a program first (Programs tab)')
                 : undefined,
             submenu: [
               {
                 id: 'assign-program-none',
-                label: isPolish ? '— Brak programu —' : '— No program —',
+                label: t('myWork.projects.label5', '— No program —'),
                 disabled: !currentProgramId,
                 onClick: () => handleAssignProgram(project.id, null),
               },
@@ -599,7 +589,7 @@ export const MyProjects: React.FC = () => {
           {
             id: 'refresh',
             variant: 'neutral',
-            label: t('common.refresh', isPolish ? 'Odśwież' : 'Refresh'),
+            label: t('common.refresh', t('myWork.projects.refresh', 'Refresh')),
             icon: RefreshCw,
             onClick: () => {
               void fetchProjects();
@@ -660,7 +650,7 @@ export const MyProjects: React.FC = () => {
 
   const programColumns = useMemo<TableColumn[]>(
     () => [
-      { id: 'name', label: isPolish ? 'Program' : 'Program', width: '280px', sortable: true },
+      { id: 'name', label: t('myWork.projects.label6', 'Program'), width: '280px', sortable: true },
       {
         id: 'status',
         label: 'Status',
@@ -669,21 +659,21 @@ export const MyProjects: React.FC = () => {
       },
       {
         id: 'initiativeCount',
-        label: isPolish ? 'Inicjatywy (bezpośrednio)' : 'Initiatives (direct)',
+        label: t('myWork.projects.label7', 'Initiatives (direct)'),
         width: '170px',
         sortable: true,
         sortAccessor: (row: TableRow) => Number(row.initiativeCount) || 0,
       },
       {
         id: 'childProgramCount',
-        label: isPolish ? 'Podprogramy' : 'Sub-programs',
+        label: t('myWork.projects.label8', 'Sub-programs'),
         width: '130px',
         sortable: true,
         sortAccessor: (row: TableRow) => Number(row.childProgramCount) || 0,
       },
       {
         id: 'createdAt',
-        label: isPolish ? 'Utworzono' : 'Created',
+        label: t('myWork.projects.label9', 'Created'),
         width: '140px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.createdAt || ''),
@@ -696,12 +686,12 @@ export const MyProjects: React.FC = () => {
     async (programId: string) => {
       try {
         await Api.deleteProgram(programId);
-        toast.success(isPolish ? 'Program usunięty' : 'Program deleted');
+        toast.success(t('myWork.projects.toastSuccess', 'Program deleted'));
         setProgramPreviewId(null);
         await fetchPrograms();
       } catch (err: any) {
         toast.error(
-          err?.message || (isPolish ? 'Nie udało się usunąć programu' : 'Failed to delete program')
+          err?.message || (t('myWork.projects.failedToDeleteProgram', 'Failed to delete program'))
         );
       }
     },
@@ -723,9 +713,7 @@ export const MyProjects: React.FC = () => {
           onClick: () => handleDeleteProgram(program.id),
           note:
             program.initiativeCount > 0 || program.childProgramCount > 0
-              ? isPolish
-                ? 'Program z inicjatywami/podprogramami — najpierw je odłącz'
-                : 'Program has linked initiatives/sub-programs — unlink them first'
+              ? t('myWork.projects.programHasLinkedInitiatives', 'Program has linked initiatives/sub-programs — unlink them first')
               : undefined,
         },
       };
@@ -775,11 +763,11 @@ export const MyProjects: React.FC = () => {
       <StandardModuleBar
         breadcrumbs={[
           { label: t('sidebar.myWork', 'My Work') },
-          { label: t('myWork.projects', isPolish ? 'Projekty' : 'Projects') },
+          { label: t('myWork.projects', t('myWork.projects.projects', 'Projects')) },
         ]}
         tabs={[
-          { id: 'projects', label: isPolish ? 'Projekty' : 'Projects' },
-          { id: 'programs', label: isPolish ? 'Programy' : 'Programs' },
+          { id: 'projects', label: t('myWork.projects.label10', 'Projects') },
+          { id: 'programs', label: t('myWork.projects.label11', 'Programs') },
         ]}
         activeTab={activeMainTab}
         onTabChange={handleTabChange}
@@ -788,7 +776,7 @@ export const MyProjects: React.FC = () => {
         primaryCta={
           activeMainTab === 'programs'
             ? {
-                label: isPolish ? 'Nowy program' : 'New program',
+                label: t('myWork.projects.label12', 'New program'),
                 icon: Plus,
                 onClick: () => {
                   setEditingProgram(null);
@@ -801,15 +789,15 @@ export const MyProjects: React.FC = () => {
           activeMainTab === 'projects'
             ? [
                 { id: 'all', label: t('common.all', 'All'), count: stats.total },
-                { id: 'active', label: isPolish ? 'Aktywne' : 'Active', count: stats.active },
+                { id: 'active', label: t('myWork.projects.label13', 'Active'), count: stats.active },
                 {
                   id: 'completed',
-                  label: isPolish ? 'Zakończone' : 'Completed',
+                  label: t('myWork.projects.label14', 'Completed'),
                   count: stats.completed,
                 },
                 {
                   id: 'archived',
-                  label: isPolish ? 'Zarchiwizowane' : 'Archived',
+                  label: t('myWork.projects.label15', 'Archived'),
                   count: stats.archived,
                 },
               ]
@@ -817,17 +805,17 @@ export const MyProjects: React.FC = () => {
                 { id: 'all', label: t('common.all', 'All'), count: programStats.total },
                 {
                   id: 'active',
-                  label: isPolish ? 'Aktywne' : 'Active',
+                  label: t('myWork.projects.label16', 'Active'),
                   count: programStats.active,
                 },
                 {
                   id: 'on_hold',
-                  label: isPolish ? 'Wstrzymane' : 'On hold',
+                  label: t('myWork.projects.label17', 'On hold'),
                   count: programStats.onHold,
                 },
                 {
                   id: 'completed',
-                  label: isPolish ? 'Zakończone' : 'Completed',
+                  label: t('myWork.projects.label18', 'Completed'),
                   count: programStats.completed,
                 },
               ]
@@ -850,11 +838,9 @@ export const MyProjects: React.FC = () => {
               onRetry={fetchPrograms}
               empty={{
                 icon: Layers,
-                title: isPolish ? 'Brak programów' : 'No programs yet',
-                description: isPolish
-                  ? 'Program grupuje wiele projektów pod wspólnym rollupem finansowym.'
-                  : 'A program groups multiple projects under a shared finance rollup.',
-                actionLabel: isPolish ? 'Nowy program' : 'New program',
+                title: t('myWork.projects.title', 'No programs yet'),
+                description: t('myWork.projects.description', 'A program groups multiple projects under a shared finance rollup.'),
+                actionLabel: t('myWork.projects.actionLabel', 'New program'),
                 onAction: () => {
                   setEditingProgram(null);
                   setIsProgramModalOpen(true);
@@ -877,11 +863,11 @@ export const MyProjects: React.FC = () => {
                   pills: [
                     { label: String(previewProgramListRow.status || 'active'), tone: 'neutral' },
                     {
-                      label: `${programRollup?.projectCount ?? 0} ${isPolish ? 'projektów' : 'projects'}`,
+                      label: `${programRollup?.projectCount ?? 0} ${t('myWork.projects.projects2', 'projects')}`,
                       tone: 'neutral',
                     },
                     {
-                      label: `${programRollup?.initiativeCount ?? previewProgramListRow.initiativeCount} ${isPolish ? 'inicjatyw' : 'initiatives'}`,
+                      label: `${programRollup?.initiativeCount ?? previewProgramListRow.initiativeCount} ${t('myWork.projects.initiatives2', 'initiatives')}`,
                       tone: 'neutral',
                     },
                   ],
@@ -890,16 +876,14 @@ export const MyProjects: React.FC = () => {
                   text:
                     programRollup?.program.description ||
                     previewProgramListRow.description ||
-                    (isPolish
-                      ? 'Rollup: budżet/wartość/ROI zsumowane po projektach programu.'
-                      : 'Rollup: budget/value/ROI summed across the program’s projects.'),
+                    (t('myWork.projects.rollupBudgetValueROI', 'Rollup: budget/value/ROI summed across the program’s projects.')),
                 }}
                 actions={{
                   informational: [
                     {
                       id: 'refresh',
                       variant: 'neutral',
-                      label: t('common.refresh', isPolish ? 'Odśwież' : 'Refresh'),
+                      label: t('common.refresh', t('myWork.projects.refresh2', 'Refresh')),
                       icon: RefreshCw,
                       onClick: () => {
                         void fetchPrograms();
@@ -912,7 +896,7 @@ export const MyProjects: React.FC = () => {
                     {
                       id: 'edit-program',
                       variant: 'neutral',
-                      label: isPolish ? 'Edytuj' : 'Edit',
+                      label: t('myWork.projects.label19', 'Edit'),
                       icon: Pencil,
                       onClick: () => {
                         setEditingProgram(previewProgramListRow);
@@ -922,7 +906,7 @@ export const MyProjects: React.FC = () => {
                     {
                       id: 'delete-program',
                       variant: 'neutral',
-                      label: isPolish ? 'Usuń' : 'Delete',
+                      label: t('myWork.projects.label20', 'Delete'),
                       icon: Trash2,
                       onClick: () => handleDeleteProgram(previewProgramListRow.id),
                     },
@@ -932,11 +916,11 @@ export const MyProjects: React.FC = () => {
                 {/* ── Rollup finansowy programu (programRollupService) ─────── */}
                 <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3">
                   <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary mb-2">
-                    {isPolish ? 'Rollup programu' : 'Program rollup'}
+                    {t('myWork.projects.programRollup', 'Program rollup')}
                   </h4>
                   {programRollupLoading ? (
                     <p className="text-xs text-c-text-muted animate-pulse">
-                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                      {t('myWork.projects.loading', 'Loading…')}
                     </p>
                   ) : programRollupError ? (
                     <p className="text-xs text-danger-500 flex items-center gap-1.5">
@@ -944,13 +928,13 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : !programRollup ? (
                     <p className="text-xs text-c-text-muted">
-                      {isPolish ? 'Brak danych.' : 'No data.'}
+                      {t('myWork.projects.noData', 'No data.')}
                     </p>
                   ) : (
                     <div className="space-y-1.5 text-xs">
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {isPolish ? 'Budżet (kontenery)' : 'Budget (containers)'}
+                          {t('myWork.projects.budgetContainers', 'Budget (containers)')}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(programRollup.budget.containerTotal, programRollup.currency)}
@@ -958,7 +942,7 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {isPolish ? 'Σ budżety inicjatyw' : 'Σ initiative budgets'}
+                          {t('myWork.projects.initiativeBudgets', 'Σ initiative budgets')}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(
@@ -969,7 +953,7 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {isPolish ? 'Wartość (KPI)' : 'Value (KPI)'}
+                          {t('myWork.projects.valueKPI', 'Value (KPI)')}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(programRollup.value.total, programRollup.currency)}
@@ -983,7 +967,7 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-c-text-muted">
-                          {isPolish ? 'Zdrowie inicjatyw' : 'Initiative health'}
+                          {t('myWork.projects.initiativeHealth', 'Initiative health')}
                         </span>
                         <span className="flex items-center gap-2 text-[11px] font-semibold">
                           <span className="text-emerald-600 dark:text-emerald-400">
@@ -1004,14 +988,12 @@ export const MyProjects: React.FC = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <FolderKanban size={14} className="text-c-text-secondary" />
                     <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
-                      {isPolish ? 'Projekty w programie' : 'Projects in this program'}
+                      {t('myWork.projects.projectsInThisProgram', 'Projects in this program')}
                     </h4>
                   </div>
                   {!programRollup || programRollup.projects.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {isPolish
-                        ? 'Brak projektów przypisanych do tego programu.'
-                        : 'No projects assigned to this program yet.'}
+                      {t('myWork.projects.noProjectsAssignedTo', 'No projects assigned to this program yet.')}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">
@@ -1022,7 +1004,7 @@ export const MyProjects: React.FC = () => {
                         >
                           <span className="truncate text-c-text">{p.projectName}</span>
                           <span className="shrink-0 text-c-text-muted">
-                            {p.initiativeCount} {isPolish ? 'inicjatyw' : 'initiatives'} ·{' '}
+                            {p.initiativeCount} {t('myWork.projects.initiatives3', 'initiatives')} ·{' '}
                             {formatMoney(p.valueTotal, p.currency)}
                           </span>
                         </li>
@@ -1035,14 +1017,14 @@ export const MyProjects: React.FC = () => {
                 {programRollup && programRollup.childPrograms.length > 0 ? (
                   <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
                     <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary mb-2">
-                      {isPolish ? 'Podprogramy' : 'Sub-programs'}
+                      {t('myWork.projects.subPrograms', 'Sub-programs')}
                     </h4>
                     <ul className="space-y-1.5">
                       {programRollup.childPrograms.map((cp) => (
                         <li key={cp.id} className="flex items-center justify-between gap-2 text-xs">
                           <span className="truncate text-c-text">{cp.name}</span>
                           <span className="shrink-0 text-c-text-muted">
-                            {cp.initiativeCount} {isPolish ? 'inicjatyw' : 'initiatives'}
+                            {cp.initiativeCount} {t('myWork.projects.initiatives4', 'initiatives')}
                           </span>
                         </li>
                       ))}
@@ -1066,13 +1048,11 @@ export const MyProjects: React.FC = () => {
                 icon: FolderKanban,
                 title: t(
                   'myWork.projects.emptyState.title',
-                  isPolish ? 'Brak projektów' : 'No projects yet'
+                  t('myWork.projects.noProjectsYet', 'No projects yet')
                 ),
                 description: t(
                   'myWork.projects.emptyState.description',
-                  isPolish
-                    ? 'Projekty utworzone w module Initiatives pojawią się tutaj.'
-                    : 'Projects created in the Initiatives module will appear here.'
+                  t('myWork.projects.projectsCreatedInThe', 'Projects created in the Initiatives module will appear here.')
                 ),
               }}
               selectedRowId={previewId}
@@ -1088,7 +1068,7 @@ export const MyProjects: React.FC = () => {
           {previewProject ? (
             <aside className="w-[420px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
               <StandardPreview
-                title={previewProject.name || (isPolish ? 'Projekt' : 'Project')}
+                title={previewProject.name || (t('myWork.projects.project2', 'Project'))}
                 onClose={() => {
                   setPreviewId(null);
                   setPreviewPinned(false);
@@ -1099,11 +1079,11 @@ export const MyProjects: React.FC = () => {
                   pills: [
                     { label: String(previewProject.status || 'active'), tone: 'neutral' },
                     {
-                      label: `${previewProject.memberCount ?? 0} ${isPolish ? 'osób' : 'members'}`,
+                      label: `${previewProject.memberCount ?? 0} ${t('myWork.projects.members2', 'members')}`,
                       tone: 'neutral',
                     },
                     {
-                      label: `${previewProject.initiativeCount ?? 0} ${isPolish ? 'inicjatyw' : 'initiatives'}`,
+                      label: `${previewProject.initiativeCount ?? 0} ${t('myWork.projects.initiatives5', 'initiatives')}`,
                       tone: 'neutral',
                     },
                   ],
@@ -1114,9 +1094,7 @@ export const MyProjects: React.FC = () => {
                   ),
                 }}
                 details={{
-                  text: isPolish
-                    ? 'Zwornik: rejestr stakeholderów i rollup finansowy projektu (tylko odczyt).'
-                    : 'Zwornik: project stakeholder registry and finance rollup (read-only).',
+                  text: t('myWork.projects.text', 'Zwornik: project stakeholder registry and finance rollup (read-only).'),
                 }}
                 actions={previewActions}
               >
@@ -1125,12 +1103,12 @@ export const MyProjects: React.FC = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Users size={14} className="text-c-text-secondary" />
                     <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
-                      {isPolish ? 'Stakeholderzy (efektywni)' : 'Stakeholders (effective)'}
+                      {t('myWork.projects.stakeholdersEffective', 'Stakeholders (effective)')}
                     </h4>
                   </div>
                   {stakeholdersLoading ? (
                     <p className="text-xs text-c-text-muted animate-pulse">
-                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                      {t('myWork.projects.loading2', 'Loading…')}
                     </p>
                   ) : stakeholdersError ? (
                     <p className="text-xs text-danger-500 flex items-center gap-1.5">
@@ -1138,9 +1116,7 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : stakeholders.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {isPolish
-                        ? 'Brak stakeholderów dla tego projektu.'
-                        : 'No stakeholders for this project yet.'}
+                      {t('myWork.projects.noStakeholdersForThis', 'No stakeholders for this project yet.')}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">
@@ -1163,19 +1139,17 @@ export const MyProjects: React.FC = () => {
                               <span
                                 className="px-1.5 py-0.5 rounded-full bg-c-info/15 text-[10px] font-semibold text-[var(--c-info)]"
                                 title={
-                                  isPolish ? 'Odziedziczone z organizacji' : 'Inherited from org'
+                                  t('myWork.projects.inheritedFromOrg', 'Inherited from org')
                                 }
                               >
-                                {isPolish ? 'dziedz.' : 'inherited'}
+                                {t('myWork.projects.inherited', 'inherited')}
                               </span>
                             ) : null}
                             {s.assessmentRedacted ? (
                               <span
                                 className="text-[10px] text-c-text-muted"
                                 title={
-                                  isPolish
-                                    ? 'Wpływ/interes ukryte — brak uprawnienia stakeholder.assessment.view'
-                                    : 'Influence/interest hidden — missing stakeholder.assessment.view'
+                                  t('myWork.projects.influenceInterestHiddenMissing', 'Influence/interest hidden — missing stakeholder.assessment.view')
                                 }
                               >
                                 🔒
@@ -1191,11 +1165,11 @@ export const MyProjects: React.FC = () => {
                 {/* ── Zwornik Delta B: finance rollup (§4.2) ───────────────── */}
                 <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
                   <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary mb-2">
-                    {isPolish ? 'Finanse (rollup)' : 'Finance rollup'}
+                    {t('myWork.projects.financeRollup', 'Finance rollup')}
                   </h4>
                   {financeLoading ? (
                     <p className="text-xs text-c-text-muted animate-pulse">
-                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                      {t('myWork.projects.loading3', 'Loading…')}
                     </p>
                   ) : financeError ? (
                     <p className="text-xs text-danger-500 flex items-center gap-1.5">
@@ -1203,13 +1177,13 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : !finance ? (
                     <p className="text-xs text-c-text-muted">
-                      {isPolish ? 'Brak danych finansowych.' : 'No finance data.'}
+                      {t('myWork.projects.noFinanceData', 'No finance data.')}
                     </p>
                   ) : (
                     <div className="space-y-1.5 text-xs">
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {isPolish ? 'Budżet projektu' : 'Project budget'}
+                          {t('myWork.projects.projectBudget', 'Project budget')}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(finance.budget?.containerTotal, finance.currency)}
@@ -1217,9 +1191,7 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {isPolish
-                            ? 'Σ budżety inicjatyw (plan)'
-                            : 'Σ initiative budgets (planned)'}
+                          {t('myWork.projects.initiativeBudgetsPlanned', 'Σ initiative budgets (planned)')}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(finance.initiativesBudget?.totalPlanned, finance.currency)}
@@ -1227,9 +1199,7 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {isPolish
-                            ? 'Σ budżety inicjatyw (rzecz.)'
-                            : 'Σ initiative budgets (actual)'}
+                          {t('myWork.projects.initiativeBudgetsActual', 'Σ initiative budgets (actual)')}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(finance.initiativesBudget?.totalActual, finance.currency)}
@@ -1237,7 +1207,7 @@ export const MyProjects: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-c-text-muted">
-                          {isPolish ? 'Wartość (KPI)' : 'Value (KPI)'}
+                          {t('myWork.projects.valueKPI2', 'Value (KPI)')}
                         </span>
                         <span className="font-semibold text-c-text">
                           {formatMoney(finance.value?.total, finance.currency)}
@@ -1246,7 +1216,7 @@ export const MyProjects: React.FC = () => {
                       {finance.roi?.avgExpectedRoiPercent != null ? (
                         <div className="flex justify-between">
                           <span className="text-c-text-muted">
-                            {isPolish ? 'Śr. ROI oczekiwane' : 'Avg expected ROI'}
+                            {t('myWork.projects.avgExpectedROI', 'Avg expected ROI')}
                           </span>
                           <span className="font-semibold text-c-text">
                             {finance.roi.avgExpectedRoiPercent.toFixed(1)}%
@@ -1256,9 +1226,7 @@ export const MyProjects: React.FC = () => {
                       {finance.variance?.overCommitted ? (
                         <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
                           <AlertTriangle size={12} />
-                          {isPolish
-                            ? 'Σ budżety inicjatyw przekraczają budżet projektu (soft warning).'
-                            : 'Σ initiative budgets exceed the project budget (soft warning).'}
+                          {t('myWork.projects.initiativeBudgetsExceedThe', 'Σ initiative budgets exceed the project budget (soft warning).')}
                         </p>
                       ) : null}
                     </div>
@@ -1270,7 +1238,7 @@ export const MyProjects: React.FC = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Users size={14} className="text-c-text-secondary" />
                     <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
-                      {isPolish ? 'Zespół' : 'Team'}
+                      {t('myWork.projects.team', 'Team')}
                     </h4>
                     {team.length > 0 ? (
                       <span className="ml-auto text-[10px] font-semibold text-c-text-muted">
@@ -1280,7 +1248,7 @@ export const MyProjects: React.FC = () => {
                   </div>
                   {teamLoading ? (
                     <p className="text-xs text-c-text-muted animate-pulse">
-                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                      {t('myWork.projects.loading4', 'Loading…')}
                     </p>
                   ) : teamError ? (
                     <p className="text-xs text-danger-500 flex items-center gap-1.5">
@@ -1288,9 +1256,7 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : team.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {isPolish
-                        ? 'Brak członków zespołu dla tego projektu.'
-                        : 'No team members for this project yet.'}
+                      {t('myWork.projects.noTeamMembersFor', 'No team members for this project yet.')}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">
@@ -1316,12 +1282,12 @@ export const MyProjects: React.FC = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Shield size={14} className="text-c-text-secondary" />
                     <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
-                      {isPolish ? 'Role (przypisania)' : 'Roles (assignments)'}
+                      {t('myWork.projects.rolesAssignments', 'Roles (assignments)')}
                     </h4>
                   </div>
                   {teamLoading ? (
                     <p className="text-xs text-c-text-muted animate-pulse">
-                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                      {t('myWork.projects.loading5', 'Loading…')}
                     </p>
                   ) : teamError ? (
                     <p className="text-xs text-danger-500 flex items-center gap-1.5">
@@ -1329,7 +1295,7 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : roleGroups.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {isPolish ? 'Brak przypisanych ról.' : 'No roles assigned yet.'}
+                      {t('myWork.projects.noRolesAssignedYet', 'No roles assigned yet.')}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">
@@ -1360,7 +1326,7 @@ export const MyProjects: React.FC = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <ClipboardList size={14} className="text-c-text-secondary" />
                     <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
-                      {isPolish ? 'Zadania' : 'Tasks'}
+                      {t('myWork.projects.tasks', 'Tasks')}
                     </h4>
                     {tasks.length > 0 ? (
                       <span className="ml-auto text-[10px] font-semibold text-c-text-muted">
@@ -1370,7 +1336,7 @@ export const MyProjects: React.FC = () => {
                   </div>
                   {tasksLoading ? (
                     <p className="text-xs text-c-text-muted animate-pulse">
-                      {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                      {t('myWork.projects.loading6', 'Loading…')}
                     </p>
                   ) : tasksError ? (
                     <p className="text-xs text-danger-500 flex items-center gap-1.5">
@@ -1378,9 +1344,7 @@ export const MyProjects: React.FC = () => {
                     </p>
                   ) : tasks.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
-                      {isPolish
-                        ? 'Brak zadań dla tego projektu.'
-                        : 'No tasks for this project yet.'}
+                      {t('myWork.projects.noTasksForThis', 'No tasks for this project yet.')}
                     </p>
                   ) : (
                     <ul className="space-y-1.5">

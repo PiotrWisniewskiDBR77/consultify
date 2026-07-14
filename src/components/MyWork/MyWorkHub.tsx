@@ -480,7 +480,7 @@ function parseMyWorkPathIntent(
       doc: {
         id: ideaId,
         type: 'idea',
-        name: isPolish ? 'Pomysł' : 'Idea',
+        name: t('myWork.hub.name', 'Idea'),
         status: 'idea',
         data: { openMap, initialTool },
       },
@@ -493,7 +493,7 @@ function parseMyWorkPathIntent(
       doc: {
         id: decodeURIComponent(segments[2]),
         type: 'task',
-        name: isPolish ? 'Zadanie' : 'Task',
+        name: t('myWork.hub.name2', 'Task'),
         status: 'todo',
       },
     };
@@ -505,7 +505,7 @@ function parseMyWorkPathIntent(
       doc: {
         id: decodeURIComponent(segments[2]),
         type: 'decision',
-        name: isPolish ? 'Decyzja' : 'Decision',
+        name: t('myWork.hub.name3', 'Decision'),
         status: 'pending',
       },
     };
@@ -616,7 +616,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const lazyFallback = (
     <div className="p-6">
-      <LoadingState template="panel" label={isPolish ? 'Ładowanie…' : 'Loading…'} />
+      <LoadingState template="panel" label={t('myWork.hub.label', 'Loading…')} />
     </div>
   );
 
@@ -1142,20 +1142,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   useEffect(() => {
     const TAB_LABELS: Record<ModuleTab, string> = {
       home: 'Radar',
-      ideas: isPolish ? 'Pomysły' : 'Ideas',
-      notebook: isPolish ? 'Notatnik' : 'Notebook',
-      inbox: isPolish ? 'Skrzynka' : 'Inbox',
-      calendar: isPolish ? 'Kalendarz' : 'Calendar',
-      tasks: isPolish ? 'Zadania' : 'Tasks',
-      decisions: isPolish ? 'Decyzje' : 'Decisions',
-      manager: isPolish ? 'Menedżer' : 'Manager',
+      ideas: t('myWork.hub.ideas', 'Ideas'),
+      notebook: t('myWork.hub.notebook', 'Notebook'),
+      inbox: t('myWork.hub.inbox', 'Inbox'),
+      calendar: t('myWork.hub.calendar', 'Calendar'),
+      tasks: t('myWork.hub.tasks', 'Tasks'),
+      decisions: t('myWork.hub.decisions', 'Decisions'),
+      manager: t('myWork.hub.manager', 'Manager'),
     };
-    const base = isPolish ? 'Moja Praca' : 'My Work';
+    const base = t('myWork.hub.myWork', 'My Work');
     const tabLabel = TAB_LABELS[activeTab] || activeTab;
     const crumbs = [base, tabLabel];
 
     if (activeIdeaDoc && activeTab === 'ideas') {
-      crumbs.push(activeIdeaDoc.name || (isPolish ? 'Pomysł' : 'Idea'));
+      crumbs.push(activeIdeaDoc.name || (t('myWork.hub.idea', 'Idea')));
       if (activeIdeaToolLabel) crumbs.push(activeIdeaToolLabel);
     }
     setMyWorkBreadcrumbs(crumbs);
@@ -1240,10 +1240,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           }
           const ok = await downloadSheetArtifactXlsx(tableId);
           if (ok) {
-            toast.success(isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)');
+            toast.success(t('myWork.hub.toastSuccess', 'Downloaded spreadsheet (.xlsx)'));
           } else {
             toast.error(
-              isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet'
+              t('myWork.hub.couldNotDownloadSpreadsheet', 'Could not download spreadsheet')
             );
           }
         })();
@@ -1310,7 +1310,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const nextDoc: OpenDocument = {
         id: taskId,
         type: 'task',
-        name: isPolish ? 'Zadanie' : 'Task',
+        name: t('myWork.hub.name4', 'Task'),
         status: 'todo',
       };
       setActiveTab('tasks');
@@ -1323,7 +1323,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const nextDoc: OpenDocument = {
         id: decisionId,
         type: 'decision',
-        name: isPolish ? 'Decyzja' : 'Decision',
+        name: t('myWork.hub.name5', 'Decision'),
         status: 'pending',
       };
       setActiveTab('decisions');
@@ -1336,7 +1336,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const nextDoc: OpenDocument = {
         id: ideaId,
         type: 'idea',
-        name: isPolish ? 'Pomysł' : 'Idea',
+        name: t('myWork.hub.name6', 'Idea'),
         status: 'idea',
       };
       setActiveTab('ideas');
@@ -1438,7 +1438,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'ideas' as ModuleTab,
-        label: isPolish ? 'Pomysły' : 'Ideas',
+        label: t('myWork.hub.label2', 'Ideas'),
         icon: <Lightbulb size={16} />,
         count: tabCounts.ideas,
         color: 'bg-amber-500',
@@ -1448,7 +1448,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'notebook' as ModuleTab,
-        label: isPolish ? 'Notatnik' : 'Notebook',
+        label: t('myWork.hub.label3', 'Notebook'),
         icon: <FileText size={16} />,
         count: tabCounts.notebook,
         color: 'bg-slate-500',
@@ -1464,7 +1464,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'calendar' as ModuleTab,
-        label: isPolish ? 'Kalendarz' : 'Calendar',
+        label: t('myWork.hub.label4', 'Calendar'),
         icon: <Calendar size={16} />,
         count: tabCounts.calendar,
         color: 'bg-indigo-500',
@@ -1472,7 +1472,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'tasks' as ModuleTab,
-        label: isPolish ? 'Zadania' : 'Tasks',
+        label: t('myWork.hub.label5', 'Tasks'),
         icon: <CheckSquare size={16} />,
         count: tabCounts.tasks,
         color: 'bg-blue-500',
@@ -1480,7 +1480,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'decisions' as ModuleTab,
-        label: isPolish ? 'Decyzje' : 'Decisions',
+        label: t('myWork.hub.label6', 'Decisions'),
         icon: <Scale size={16} />,
         count: tabCounts.decisions,
         color: 'bg-blue-500',
@@ -1508,41 +1508,41 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     () => [
       {
         id: 'all' as TaskFilter,
-        label: isPolish ? 'Wszystkie' : 'All',
+        label: t('myWork.hub.label7', 'All'),
         icon: <LayoutGrid size={14} />,
         color: 'bg-slate-400',
       },
       {
         id: 'overdue' as TaskFilter,
-        label: isPolish ? 'Zaległe' : 'Overdue',
+        label: t('myWork.hub.label8', 'Overdue'),
         icon: <AlertCircle size={14} />,
         color: 'bg-danger-500',
         count: taskFilterCounts.overdue,
       },
       {
         id: 'today' as TaskFilter,
-        label: isPolish ? 'Dzisiaj' : 'Today',
+        label: t('myWork.hub.label9', 'Today'),
         icon: <Calendar size={14} />,
         color: 'bg-blue-500',
         count: taskFilterCounts.today,
       },
       {
         id: 'week' as TaskFilter,
-        label: isPolish ? 'Ten tydzień' : 'This Week',
+        label: t('myWork.hub.label10', 'This Week'),
         icon: <CalendarDays size={14} />,
         color: 'bg-slate-500',
         count: taskFilterCounts.week,
       },
       {
         id: 'urgent' as TaskFilter,
-        label: isPolish ? 'Pilne' : 'Urgent',
+        label: t('myWork.hub.label11', 'Urgent'),
         icon: <Flame size={14} />,
         color: 'bg-amber-500',
         count: taskFilterCounts.urgent,
       },
       {
         id: 'new' as TaskFilter,
-        label: isPolish ? 'Nowe' : 'New',
+        label: t('myWork.hub.label12', 'New'),
         icon: <Inbox size={14} />,
         color: 'bg-emerald-500',
         count: taskFilterCounts.newUntriaged,
@@ -1556,21 +1556,21 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     () => [
       {
         id: 'all' as DecisionFilter,
-        label: isPolish ? 'Wszystkie' : 'All',
+        label: t('myWork.hub.label13', 'All'),
         icon: <LayoutGrid size={12} />,
         color: 'bg-slate-400',
         count: tabCounts.decisions,
       },
       {
         id: 'my' as DecisionFilter,
-        label: isPolish ? 'Moje do decyzji' : 'My decisions to make',
+        label: t('myWork.hub.label14', 'My decisions to make'),
         icon: <User size={12} />,
         color: 'bg-blue-500',
         count: decisionFilterCounts.my,
       },
       {
         id: 'awaiting' as DecisionFilter,
-        label: isPolish ? 'Moje prośby (pending)' : 'My requests pending',
+        label: t('myWork.hub.label15', 'My requests pending'),
         icon: <Hourglass size={12} />,
         color: 'bg-amber-500',
         count: decisionFilterCounts.awaiting,
@@ -1611,7 +1611,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     handleOpenDocument({
       id: newId,
       type: 'task',
-      name: isPolish ? 'Nowe zadanie' : 'New Task',
+      name: t('myWork.hub.name7', 'New Task'),
       status: 'todo',
       data: { isNew: true },
     });
@@ -1642,7 +1642,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const body = composeIdeaBodyFromSeedIntent(seedIntent);
       const title = deriveIdeaTitleFromSeedIntent(
         seedIntent,
-        isPolish ? 'Nowy pomysł' : 'New Idea'
+        t('myWork.hub.newIdea', 'New Idea')
       );
       handleOpenDocument({
         id: newId,
@@ -1685,7 +1685,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleOpenDocument({
         id: ideaId,
         type: 'idea',
-        name: ideaData?.title || (isPolish ? 'Pomysł' : 'Idea'),
+        name: ideaData?.title || (t('myWork.hub.idea2', 'Idea')),
         status: 'idea',
         data: {
           ...ideaData,
@@ -1712,7 +1712,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     handleOpenDocument({
       id: newId,
       type: 'decision',
-      name: isPolish ? 'Nowa decyzja' : 'New Decision',
+      name: t('myWork.hub.name8', 'New Decision'),
       status: 'pending',
       data: { isNew: true },
     });
@@ -2004,16 +2004,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           ? 'my-work-decisions'
           : 'my-work-tasks';
       const entityName = isInbox
-        ? isPolish
-          ? 'Skrzynka'
-          : 'Inbox'
+        ? t('myWork.hub.inbox2', 'Inbox')
         : isDecisions
-          ? isPolish
-            ? 'Decyzje'
-            : 'Decisions'
-          : isPolish
-            ? 'Zadania'
-            : 'Tasks';
+          ? t('myWork.hub.decisions2', 'Decisions')
+          : t('myWork.hub.tasks2', 'Tasks');
       await openChatWithContext({
         entityType,
         entityId,
@@ -2031,16 +2025,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       });
       setChatKickoffMessage(
         isInbox
-          ? isPolish
-            ? 'Przeanalizuj moją skrzynkę i zaproponuj kolejną najlepszą akcję.'
-            : 'Analyze my inbox and propose the next best action.'
+          ? t('myWork.hub.analyzeMyInboxAnd', 'Analyze my inbox and propose the next best action.')
           : isDecisions
-            ? isPolish
-              ? 'Przeanalizuj moje decyzje i zaproponuj, które podjąć w pierwszej kolejności.'
-              : 'Analyze my decisions and propose which to make first.'
-            : isPolish
-              ? 'Przeanalizuj moje zadania i zaproponuj priorytety na dziś.'
-              : 'Analyze my tasks and propose priorities for today.'
+            ? t('myWork.hub.analyzeMyDecisionsAnd', 'Analyze my decisions and propose which to make first.')
+            : t('myWork.hub.analyzeMyTasksAnd', 'Analyze my tasks and propose priorities for today.')
       );
       if (isChatCollapsed) {
         toggleChatCollapse();
@@ -2170,11 +2158,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               const ok = await downloadSheetArtifactXlsx(tableId);
               if (ok) {
                 toast.success(
-                  isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)'
+                  t('myWork.hub.downloadedSpreadsheetXlsx', 'Downloaded spreadsheet (.xlsx)')
                 );
               } else {
                 toast.error(
-                  isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet'
+                  t('myWork.hub.couldNotDownloadSpreadsheet2', 'Could not download spreadsheet')
                 );
               }
             })();
@@ -2268,28 +2256,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return null;
       case 'calendar':
         return {
-          label: isPolish ? 'Dodaj wydarzenie' : 'Add event',
+          label: t('myWork.hub.label16', 'Add event'),
           onClick: () => setCalendarCreateReqId((v) => v + 1),
           tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'tasks':
         return {
-          label: isPolish ? 'Nowe zadanie' : 'New Task',
+          label: t('myWork.hub.label17', 'New Task'),
           onClick: handleCreateTask,
           tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'ideas':
         return {
-          label: isPolish ? 'Nowy pomysł' : 'New Idea',
+          label: t('myWork.hub.label18', 'New Idea'),
           onClick: handleCreateIdea,
           tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'decisions':
         return {
-          label: isPolish ? 'Nowa decyzja' : 'New Decision',
+          label: t('myWork.hub.label19', 'New Decision'),
           onClick: handleCreateDecision,
           tone: 'violet' as const,
           variant: 'primary' as const,
@@ -2298,13 +2286,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         // Inside a notebook (L2) → create a note. On the library list (L1) → create a notebook.
         return notebookOpenId
           ? {
-              label: isPolish ? 'Nowa notatka' : 'New note',
+              label: t('myWork.hub.label20', 'New note'),
               onClick: () => setNotebookCreateReqId((v) => v + 1),
               tone: 'violet' as const,
               variant: 'primary' as const,
             }
           : {
-              label: isPolish ? 'Nowy notatnik' : 'New notebook',
+              label: t('myWork.hub.label21', 'New notebook'),
               onClick: () => setNotebookCreateNotebookReqId((v) => v + 1),
               tone: 'violet' as const,
               variant: 'primary' as const,
@@ -2394,7 +2382,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               style={{ flexShrink: 0 }}
             >
               <List size={14} />
-              <span>{isPolish ? 'Lista' : 'List'}</span>
+              <span>{t('myWork.hub.list', 'List')}</span>
             </button>
 
             {/* Separator */}
@@ -2476,24 +2464,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onChange={handleSearchChange}
               placeholder={
                 activeTab === 'tasks'
-                  ? isPolish
-                    ? 'Szukaj zadań...'
-                    : 'Search tasks...'
+                  ? t('myWork.hub.searchTasks', 'Search tasks...')
                   : activeTab === 'ideas'
-                    ? isPolish
-                      ? 'Szukaj pomysłów...'
-                      : 'Search ideas...'
+                    ? t('myWork.hub.searchIdeas', 'Search ideas...')
                     : activeTab === 'decisions'
-                      ? isPolish
-                        ? 'Szukaj decyzji...'
-                        : 'Search decisions...'
+                      ? t('myWork.hub.searchDecisions', 'Search decisions...')
                       : activeTab === 'notebook'
-                        ? isPolish
-                          ? 'Szukaj notatek...'
-                          : 'Search notes...'
-                        : isPolish
-                          ? 'Szukaj w Inbox...'
-                          : 'Search inbox...'
+                        ? t('myWork.hub.searchNotes', 'Search notes...')
+                        : t('myWork.hub.searchInbox', 'Search inbox...')
               }
               autoFocus
               className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
@@ -2522,17 +2500,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // Notebook library (L1): scope presets in the single Command Row.
     if (activeTab === 'notebook' && !notebookOpenId) {
       const presets: Array<{ id: 'all' | 'personal' | 'team'; label: string; count: number }> = [
-        { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: notebookScopeCounts.all },
+        { id: 'all', label: t('myWork.hub.label22', 'All'), count: notebookScopeCounts.all },
         {
           id: 'personal',
-          label: isPolish ? 'Osobiste' : 'Personal',
+          label: t('myWork.hub.label23', 'Personal'),
           count: notebookScopeCounts.personal,
         },
         {
           // #11-extend: mirrors NotebookLibraryContent "Team"→"Organization" fix (#11) —
           // Consultify has no sub-team concept below the org, scope value stays 'team'.
           id: 'team',
-          label: isPolish ? 'Cała organizacja' : 'Organization',
+          label: t('myWork.hub.label24', 'Organization'),
           count: notebookScopeCounts.team,
         },
       ];
@@ -2583,17 +2561,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
+          label: t('myWork.hub.label25', 'All'),
           icon: <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />,
         },
         {
           id: 'inbox',
-          label: isPolish ? 'Inbox' : 'Inbox',
+          label: t('myWork.hub.label26', 'Inbox'),
           icon: <Inbox size={14} className="text-c-text-muted" />,
         },
         {
           id: 'active',
-          label: isPolish ? 'Aktywne' : 'Active',
+          label: t('myWork.hub.label27', 'Active'),
           icon: <Sparkles size={14} className="text-c-text-muted" />,
         },
       ];
@@ -2607,16 +2585,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 data-testid="notebook-breadcrumb-back"
                 onClick={handleNotebookBackToLibrary}
                 className={MENU_3_CHIP_INACTIVE}
-                title={isPolish ? 'Wróć do listy notatników' : 'Back to notebooks'}
+                title={t('myWork.hub.title', 'Back to notebooks')}
               >
                 <ChevronDown size={14} className="rotate-90 text-c-text-muted" />
-                {isPolish ? 'Notatniki' : 'Notebooks'}
+                {t('myWork.hub.notebooks', 'Notebooks')}
               </button>
               <span className="px-0.5 text-[11px] text-c-text-muted" aria-hidden="true">
                 /
               </span>
               <span className="max-w-[180px] truncate text-[12px] font-semibold text-c-text">
-                {notebookOpenTitle || (isPolish ? 'Notatnik' : 'Notebook')}
+                {notebookOpenTitle || (t('myWork.hub.notebook2', 'Notebook'))}
               </span>
               <span className="mx-1.5 h-4 w-px shrink-0 bg-c-border-subtle" aria-hidden="true" />
               {statusPresets.map((p) => {
@@ -2659,32 +2637,32 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <div className={MENU_3_INNER_CLASS}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {tasksBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {tasksBulkUi.selectedCount} {t('myWork.hub.selected', 'selected')}
                 </span>
                 <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
-                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                  {t('myWork.hub.selectAll', 'Select all')}
                 </button>
                 <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('myWork.hub.clear', 'Clear')}
                 </button>
               </div>
 
               <div className={MENU_3_RIGHT_CLASS}>
                 <button onClick={() => bulk?.changePriority()} className={MENU_3_ACTION_NEUTRAL}>
                   <Flag size={14} />
-                  {isPolish ? 'Priorytet' : 'Priority'}
+                  {t('myWork.hub.priority', 'Priority')}
                 </button>
                 <button onClick={() => bulk?.changeDueDate()} className={MENU_3_ACTION_NEUTRAL}>
                   <Calendar size={14} />
-                  {isPolish ? 'Termin' : 'Due date'}
+                  {t('myWork.hub.dueDate', 'Due date')}
                 </button>
                 <button onClick={() => bulk?.complete()} className={MENU_3_ACTION_NEUTRAL}>
                   <CheckSquare size={14} />
-                  {isPolish ? 'Gotowe' : 'Done'}
+                  {t('myWork.hub.done', 'Done')}
                 </button>
                 <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
-                  {isPolish ? 'Usuń' : 'Delete'}
+                  {t('myWork.hub.delete', 'Delete')}
                 </button>
               </div>
             </div>
@@ -2727,7 +2705,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 type="button"
               >
                 <Sparkles size={14} />
-                {isPolish ? 'AI Priorytety' : 'AI Priorities'}
+                {t('myWork.hub.aIPriorities', 'AI Priorities')}
               </button>
             </div>
           </div>
@@ -2745,22 +2723,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'ALL',
+          label: t('myWork.hub.label28', 'ALL'),
           count: c?.counts.open ?? tabCounts.inbox,
         },
-        { id: 'overdue', label: isPolish ? 'Zaległe' : 'Overdue', count: c?.overdue ?? 0 },
-        { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: c?.counts.saved ?? 0 },
-        { id: 'ai', label: isPolish ? 'AI' : 'AI', count: c?.ai ?? 0 },
-        { id: 'critical', label: isPolish ? 'Krytyczne' : 'Critical', count: c?.critical ?? 0 },
+        { id: 'overdue', label: t('myWork.hub.label29', 'Overdue'), count: c?.overdue ?? 0 },
+        { id: 'saved', label: t('myWork.hub.label30', 'Saved'), count: c?.counts.saved ?? 0 },
+        { id: 'ai', label: t('myWork.hub.label31', 'AI'), count: c?.ai ?? 0 },
+        { id: 'critical', label: t('myWork.hub.label32', 'Critical'), count: c?.critical ?? 0 },
         {
           id: 'action_required',
-          label: isPolish ? 'Wymaga akcji' : 'Action required',
+          label: t('myWork.hub.label33', 'Action required'),
           count: c?.actionRequired ?? 0,
         },
-        { id: 'today', label: isPolish ? 'Dziś' : 'Today', count: c?.newToday ?? 0 },
+        { id: 'today', label: t('myWork.hub.label34', 'Today'), count: c?.newToday ?? 0 },
         {
           id: 'this_week',
-          label: isPolish ? 'Ten tydz.' : 'This week',
+          label: t('myWork.hub.label35', 'This week'),
           count: c?.newThisWeek ?? 0,
         },
       ];
@@ -2785,13 +2763,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <div className={MENU_3_INNER_CLASS}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {inboxBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {inboxBulkUi.selectedCount} {t('myWork.hub.selected2', 'selected')}
                 </span>
                 <button onClick={() => bulkActions?.selectAllVisible()} className={bulkGhostPill}>
-                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                  {t('myWork.hub.selectAll2', 'Select all')}
                 </button>
                 <button onClick={() => bulkActions?.clearSelection()} className={bulkGhostPill}>
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('myWork.hub.clear2', 'Clear')}
                 </button>
               </div>
 
@@ -2801,35 +2779,35 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Zap size={14} />
-                  {isPolish ? 'Focus: Dziś' : 'Focus: Today'}
+                  {t('myWork.hub.focusToday', 'Focus: Today')}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('accept_week')}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <CalendarClock size={14} />
-                  {isPolish ? 'Ten tydz.' : 'This week'}
+                  {t('myWork.hub.thisWeek', 'This week')}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('done')}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <CheckSquare size={14} />
-                  {isPolish ? 'Gotowe' : 'Done'}
+                  {t('myWork.hub.done2', 'Done')}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('save')}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <FileText size={14} />
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('myWork.hub.save', 'Save')}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('dismiss')}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
-                  {isPolish ? 'Odłóż' : 'Dismiss'}
+                  {t('myWork.hub.dismiss', 'Dismiss')}
                 </button>
               </div>
             </div>
@@ -2869,17 +2847,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   [
                     {
                       id: 'open',
-                      label: isPolish ? 'Otwarte' : 'Open',
+                      label: t('myWork.hub.label36', 'Open'),
                       count: c?.counts.open ?? 0,
                     },
                     {
                       id: 'done',
-                      label: isPolish ? 'Gotowe' : 'Done',
+                      label: t('myWork.hub.label37', 'Done'),
                       count: c?.counts.done ?? 0,
                     },
                     {
                       id: 'saved',
-                      label: isPolish ? 'Zapisane' : 'Saved',
+                      label: t('myWork.hub.label38', 'Saved'),
                       count: c?.counts.saved ?? 0,
                     },
                   ] as const
@@ -2906,7 +2884,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 type="button"
               >
                 <Sparkles size={14} />
-                {isPolish ? 'AI Triage' : 'AI Triage'}
+                {t('myWork.hub.aITriage', 'AI Triage')}
               </button>
             </div>
           </div>
@@ -2962,7 +2940,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 type="button"
               >
                 <Sparkles size={14} />
-                {isPolish ? 'AI Decyzje' : 'AI Decisions'}
+                {t('myWork.hub.aIDecisions', 'AI Decisions')}
               </button>
             </div>
           </div>
@@ -2981,13 +2959,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <div className={MENU_3_INNER_CLASS}>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                {decisionsBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                {decisionsBulkUi.selectedCount} {t('myWork.hub.selected3', 'selected')}
               </span>
               <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
-                {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                {t('myWork.hub.selectAll3', 'Select all')}
               </button>
               <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
-                {isPolish ? 'Odznacz' : 'Clear'}
+                {t('myWork.hub.clear3', 'Clear')}
               </button>
             </div>
 
@@ -2995,43 +2973,43 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {bulk?.approve ? (
                 <button onClick={() => bulk?.approve?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Check size={14} />
-                  {isPolish ? 'Przyjęta' : 'Approve'}
+                  {t('myWork.hub.approve', 'Approve')}
                 </button>
               ) : null}
               {bulk?.reject ? (
                 <button onClick={() => bulk?.reject?.()} className={MENU_3_ACTION_DANGER}>
                   <X size={14} />
-                  {isPolish ? 'Odrzuć' : 'Reject'}
+                  {t('myWork.hub.reject', 'Reject')}
                 </button>
               ) : null}
               {bulk?.remind ? (
                 <button onClick={() => bulk?.remind?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Bell size={14} />
-                  {isPolish ? 'Przypomnij' : 'Remind'}
+                  {t('myWork.hub.remind', 'Remind')}
                 </button>
               ) : null}
               {bulk?.escalate ? (
                 <button onClick={() => bulk?.escalate?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <TrendingUp size={14} />
-                  {isPolish ? 'Eskaluj' : 'Escalate'}
+                  {t('myWork.hub.escalate', 'Escalate')}
                 </button>
               ) : null}
               {bulk?.snoozeTomorrow ? (
                 <button onClick={() => bulk?.snoozeTomorrow?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Clock size={14} />
-                  {isPolish ? 'Odłóż (jutro)' : 'Snooze (tomorrow)'}
+                  {t('myWork.hub.snoozeTomorrow', 'Snooze (tomorrow)')}
                 </button>
               ) : null}
               {bulk?.changePriority ? (
                 <button onClick={() => bulk?.changePriority?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Flag size={14} />
-                  {isPolish ? 'Priorytet' : 'Priority'}
+                  {t('myWork.hub.priority2', 'Priority')}
                 </button>
               ) : null}
               {bulk?.deleteSelected ? (
                 <button onClick={() => bulk?.deleteSelected?.()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
-                  {isPolish ? 'Usuń' : 'Delete'}
+                  {t('myWork.hub.delete2', 'Delete')}
                 </button>
               ) : null}
             </div>
@@ -3066,27 +3044,27 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <div className={menu3InnerClass}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {ideasBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {ideasBulkUi.selectedCount} {t('myWork.hub.selected4', 'selected')}
                 </span>
                 <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
-                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                  {t('myWork.hub.selectAll4', 'Select all')}
                 </button>
                 <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('myWork.hub.clear4', 'Clear')}
                 </button>
               </div>
               <div className={MENU_3_RIGHT_CLASS}>
                 <button onClick={() => bulk?.convert()} className={MENU_3_ACTION_NEUTRAL}>
                   <Sparkles size={14} />
-                  {isPolish ? 'Konwertuj' : 'Convert'}
+                  {t('myWork.hub.convert', 'Convert')}
                 </button>
                 <button onClick={() => bulk?.tag()} className={MENU_3_ACTION_NEUTRAL}>
                   <Tag size={14} />
-                  {isPolish ? 'Taguj' : 'Tag'}
+                  {t('myWork.hub.tag', 'Tag')}
                 </button>
                 <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
-                  {isPolish ? 'Usuń' : 'Delete'}
+                  {t('myWork.hub.delete3', 'Delete')}
                 </button>
               </div>
             </div>
@@ -3102,37 +3080,37 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'ALL',
+          label: t('myWork.hub.label39', 'ALL'),
           icon: null,
           count: ideasStageCounts.total,
         },
         {
           id: 'spark',
-          label: isPolish ? 'Iskra' : 'Spark',
+          label: t('myWork.hub.label40', 'Spark'),
           icon: <Lightbulb size={14} className="text-amber-600 dark:text-amber-300" />,
           count: ideasStageCounts.spark,
         },
         {
           id: 'incubating',
-          label: isPolish ? 'Rośnie' : 'Growing',
+          label: t('myWork.hub.label41', 'Growing'),
           icon: <Sprout size={14} className="text-emerald-600 dark:text-emerald-300" />,
           count: ideasStageCounts.incubating,
         },
         {
           id: 'shaping',
-          label: isPolish ? 'Kształtuje' : 'Shaping',
+          label: t('myWork.hub.label42', 'Shaping'),
           icon: <TreePine size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.shaping,
         },
         {
           id: 'ready',
-          label: isPolish ? 'Gotowy' : 'Ready',
+          label: t('myWork.hub.label43', 'Ready'),
           icon: <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.ready,
         },
         {
           id: 'promoted',
-          label: isPolish ? 'Promowany' : 'Promoted',
+          label: t('myWork.hub.label44', 'Promoted'),
           icon: <Rocket size={14} className="text-primary-600 dark:text-primary-300" />,
           count: ideasStageCounts.promoted,
         },
@@ -3170,14 +3148,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <Menu3DropdownChip
                   data-testid="ideas-folder-chip"
                   icon={<Folder size={14} className="text-c-text-muted" />}
-                  label={activeFolder ? activeFolder.name : isPolish ? 'Folder' : 'Folder'}
+                  label={activeFolder ? activeFolder.name : t('myWork.hub.name9', 'Folder')}
                   active={Boolean(activeFolder)}
-                  ariaLabel={isPolish ? 'Filtruj wg folderu' : 'Filter by folder'}
+                  ariaLabel={t('myWork.hub.ariaLabel', 'Filter by folder')}
                   align="right"
                   items={[
                     {
                       id: 'all',
-                      label: isPolish ? 'Wszystkie pomysły' : 'All ideas',
+                      label: t('myWork.hub.label45', 'All ideas'),
                       icon: <Layers size={14} />,
                       active: !activeFolder,
                       onSelect: () => shell.selectFolder(null),
@@ -3192,7 +3170,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     })),
                     {
                       id: 'new-folder',
-                      label: isPolish ? 'Nowy folder…' : 'New folder…',
+                      label: t('myWork.hub.label46', 'New folder…'),
                       icon: <FolderPlus size={14} />,
                       dividerBefore: true,
                       onSelect: () => shell.createFolder(),
@@ -3201,7 +3179,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       ? [
                           {
                             id: 'delete-folder',
-                            label: isPolish ? 'Usuń ten folder' : 'Delete this folder',
+                            label: t('myWork.hub.label47', 'Delete this folder'),
                             icon: <Trash2 size={14} />,
                             danger: true,
                             onSelect: () => shell.deleteFolder(activeFolder.id),
@@ -3217,7 +3195,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   data-testid="ideas-starred-chip"
                   onClick={() => shell.toggleStarredOnly()}
                   aria-pressed={shell.showStarredOnly}
-                  title={isPolish ? 'Tylko oznaczone gwiazdką' : 'Starred only'}
+                  title={t('myWork.hub.title2', 'Starred only')}
                   className={shell.showStarredOnly ? chipActive : chipInactive}
                 >
                   <Star
@@ -3226,7 +3204,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       shell.showStarredOnly ? 'fill-amber-400 text-amber-400' : 'text-c-text-muted'
                     }
                   />
-                  <span>{isPolish ? 'Oznaczone' : 'Starred'}</span>
+                  <span>{t('myWork.hub.starred', 'Starred')}</span>
                   <span
                     className={`${badgeBase} ${shell.showStarredOnly ? badgeActive : badgeInactive}`}
                   >
@@ -3238,8 +3216,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <Menu3DropdownChip
                   data-testid="ideas-recent-chip"
                   icon={<History size={14} className="text-c-text-muted" />}
-                  label={isPolish ? 'Ostatnie' : 'Recent'}
-                  ariaLabel={isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
+                  label={t('myWork.hub.label48', 'Recent')}
+                  ariaLabel={t('myWork.hub.ariaLabel2', 'Recently opened')}
                   align="right"
                   items={shell.recents.map((r) => ({
                     id: r.id,
@@ -3259,7 +3237,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
       {
         key: 'tasks-overdue',
-        label: isPolish ? 'Zaległe' : 'Overdue',
+        label: t('myWork.hub.label49', 'Overdue'),
         count: taskFilterCounts.overdue,
         onClick: () => {
           setActiveTab('tasks');
@@ -3269,7 +3247,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         key: 'tasks-urgent',
-        label: isPolish ? 'Pilne' : 'Urgent',
+        label: t('myWork.hub.label50', 'Urgent'),
         count: taskFilterCounts.urgent,
         onClick: () => {
           setActiveTab('tasks');
@@ -3279,7 +3257,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         key: 'decisions-pending',
-        label: isPolish ? 'Decyzje (pending)' : 'Decisions (pending)',
+        label: t('myWork.hub.label51', 'Decisions (pending)'),
         count: decisionFilterCounts.my + decisionFilterCounts.awaiting,
         onClick: () => {
           setActiveTab('decisions');
@@ -3289,7 +3267,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         key: 'inbox',
-        label: isPolish ? 'Inbox' : 'Inbox',
+        label: t('myWork.hub.label52', 'Inbox'),
         count: tabCounts.inbox,
         onClick: () => {
           setActiveTab('inbox');
@@ -3312,7 +3290,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               ))
             ) : (
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Brak alertów' : 'No alerts'}
+                {t('myWork.hub.noAlerts', 'No alerts')}
               </div>
             )}
           </div>
@@ -3426,9 +3404,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <div className="flex h-64 items-center justify-center">
               <div className="text-center">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak dostępu. Wymagana rola Admin lub Manager.'
-                    : 'Access restricted. Admin or Manager role required.'}
+                  {t('myWork.hub.accessRestrictedAdminOr', 'Access restricted. Admin or Manager role required.')}
                 </p>
               </div>
             </div>
@@ -3686,7 +3662,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
                   : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
               }`}
-              title={isPolish ? 'Szukaj' : 'Search'}
+              title={t('myWork.hub.title3', 'Search')}
             >
               <Search size={18} />
             </button>
@@ -3779,7 +3755,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <div
                   className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
                   role="radiogroup"
-                  aria-label={isPolish ? 'Tryb widoku zadań' : 'Tasks view mode'}
+                  aria-label={t('myWork.hub.ariaLabel3', 'Tasks view mode')}
                 >
                   {(
                     [
@@ -3836,11 +3812,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     id: DecisionPriorityFilter;
                     label: string;
                   }> = [
-                    { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
-                    { id: 'CRITICAL', label: isPolish ? 'Krytyczne' : 'Critical' },
-                    { id: 'HIGH', label: isPolish ? 'Wysoki' : 'High' },
-                    { id: 'MEDIUM', label: isPolish ? 'Średni' : 'Medium' },
-                    { id: 'LOW', label: isPolish ? 'Niski' : 'Low' },
+                    { id: 'all', label: t('myWork.hub.label53', 'All') },
+                    { id: 'CRITICAL', label: t('myWork.hub.label54', 'Critical') },
+                    { id: 'HIGH', label: t('myWork.hub.label55', 'High') },
+                    { id: 'MEDIUM', label: t('myWork.hub.label56', 'Medium') },
+                    { id: 'LOW', label: t('myWork.hub.label57', 'Low') },
                   ];
                   const activeDecisionsPriority = decisionsPriorityOptions.find(
                     (p) => p.id === decisionPriorityFilter
@@ -3852,13 +3828,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       icon={<Flag size={14} className="text-c-text-muted" />}
                       label={
                         decisionsPriorityActive && activeDecisionsPriority
-                          ? `${isPolish ? 'Priorytet' : 'Priority'}: ${activeDecisionsPriority.label}`
-                          : isPolish
-                            ? 'Priorytet'
-                            : 'Priority'
+                          ? `${t('myWork.hub.priority3', 'Priority')}: ${activeDecisionsPriority.label}`
+                          : t('myWork.hub.priority4', 'Priority')
                       }
                       active={decisionsPriorityActive}
-                      ariaLabel={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
+                      ariaLabel={t('myWork.hub.ariaLabel4', 'Priority filter')}
                       align="left"
                       items={decisionsPriorityOptions.map((p) => ({
                         id: p.id,
@@ -3876,7 +3850,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <div
                   className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
                   role="radiogroup"
-                  aria-label={isPolish ? 'Tryb widoku decyzji' : 'Decisions view mode'}
+                  aria-label={t('myWork.hub.ariaLabel5', 'Decisions view mode')}
                 >
                   {(
                     [
@@ -3923,7 +3897,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <div
                   className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
                   role="radiogroup"
-                  aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+                  aria-label={t('myWork.hub.ariaLabel6', 'View mode')}
                 >
                   <button
                     onClick={() => setInboxViewMode('flat')}
@@ -3932,7 +3906,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                     }`}
-                    title={isPolish ? 'Lista' : 'List'}
+                    title={t('myWork.hub.title4', 'List')}
                     role="radio"
                     aria-checked={inboxViewMode === 'flat'}
                   >
@@ -3945,7 +3919,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                     }`}
-                    title={isPolish ? 'Karty' : 'Cards'}
+                    title={t('myWork.hub.title5', 'Cards')}
                     role="radio"
                     aria-checked={inboxViewMode === 'sections'}
                   >
@@ -3969,7 +3943,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <div
                   className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
                   role="radiogroup"
-                  aria-label={isPolish ? 'Tryb widoku pomyslow' : 'Ideas view mode'}
+                  aria-label={t('myWork.hub.ariaLabel7', 'Ideas view mode')}
                 >
                   {(
                     [

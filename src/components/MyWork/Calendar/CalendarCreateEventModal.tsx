@@ -45,7 +45,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   onClose,
   onCreated,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [title, setTitle] = useState('');
@@ -82,12 +82,8 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           setConflicts(null);
           setConflictsError(
             error?.status === 503
-              ? isPolish
-                ? 'Podglad obciazenia dnia jest chwilowo niedostepny, ale nadal mozesz zapisac zadanie.'
-                : 'Day-load preview is temporarily unavailable, but you can still create the task.'
-              : isPolish
-                ? 'Nie udalo sie sprawdzic obciazenia dnia.'
-                : 'Failed to check day load.'
+              ? t('myWork.calendarCreateEvent.dayLoadPreviewIs', 'Day-load preview is temporarily unavailable, but you can still create the task.')
+              : t('myWork.calendarCreateEvent.failedToCheckDay', 'Failed to check day load.')
           );
         }
       } finally {
@@ -107,14 +103,14 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
 
   const helperText = useMemo(() => {
     if (conflictsLoading) {
-      return isPolish ? 'Sprawdzanie obciążenia dnia...' : 'Checking day load...';
+      return t('myWork.calendarCreateEvent.checkingDayLoad', 'Checking day load...');
     }
     if (conflictsError) {
       return conflictsError;
     }
     if (!conflicts) return null;
     if (totalExistingItems === 0) {
-      return isPolish ? 'Ten dzień wygląda na wolny.' : 'This day looks clear.';
+      return t('myWork.calendarCreateEvent.thisDayLooksClear', 'This day looks clear.');
     }
     return isPolish
       ? `Na ten dzień masz już ${totalExistingItems} pozycji.`
@@ -125,7 +121,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     event?.preventDefault();
 
     if (!title.trim()) {
-      toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
+      toast.error(t('myWork.calendarCreateEvent.toastError', 'Title is required'));
       return;
     }
 
@@ -139,12 +135,12 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         source: 'task',
         recurrence: recurrencePreset === 'none' ? undefined : { preset: recurrencePreset },
       });
-      toast.success(isPolish ? 'Zadanie dodane do kalendarza' : 'Task added to calendar');
+      toast.success(t('myWork.calendarCreateEvent.toastSuccess', 'Task added to calendar'));
       onCreated?.();
       onClose();
     } catch (error) {
       console.error('Failed to create calendar event', error);
-      toast.error(isPolish ? 'Nie udało się dodać do kalendarza' : 'Failed to add to calendar');
+      toast.error(t('myWork.calendarCreateEvent.toastError2', 'Failed to add to calendar'));
     } finally {
       setSaving(false);
     }
@@ -155,16 +151,14 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
       open={open}
       onClose={onClose}
       size="lg"
-      title={isPolish ? 'Dodaj do kalendarza' : 'Add to calendar'}
+      title={t('myWork.calendarCreateEvent.title', 'Add to calendar')}
       description={
-        isPolish
-          ? 'W V1 kalendarz tworzy zadanie osobiste z datą wykonania, zgodnie z logiką My Work.'
-          : 'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
+        t('myWork.calendarCreateEvent.inV1CalendarCreation', 'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.')
       }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={saving}>
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('myWork.calendarCreateEvent.cancel', 'Cancel')}
           </Button>
           <Button
             variant="primary"
@@ -172,7 +166,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             form="calendar-create-event-form"
             loading={saving}
           >
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('myWork.calendarCreateEvent.add', 'Add')}
           </Button>
         </>
       }
@@ -181,56 +175,52 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
           <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
             <CheckSquare size={16} className="text-primary-500" />
-            {isPolish ? 'Typ artefaktu: Zadanie' : 'Artifact type: Task'}
+            {t('myWork.calendarCreateEvent.artifactTypeTask', 'Artifact type: Task')}
           </div>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Decyzje i inicjatywy z poziomu kalendarza są przygotowane jako kolejny etap.'
-              : 'Decisions and initiatives from calendar are prepared for a later phase.'}
+            {t('myWork.calendarCreateEvent.decisionsAndInitiativesFrom', 'Decisions and initiatives from calendar are prepared for a later phase.')}
           </p>
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Tytuł' : 'Title'}
+            {t('myWork.calendarCreateEvent.title2', 'Title')}
           </label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
-            placeholder={isPolish ? 'Np. Przygotować deck na review' : 'e.g. Prepare review deck'}
+            placeholder={t('myWork.calendarCreateEvent.placeholder', 'e.g. Prepare review deck')}
             className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Powtarzalność' : 'Recurrence'}
+            {t('myWork.calendarCreateEvent.recurrence', 'Recurrence')}
           </label>
           <select
             value={recurrencePreset}
             onChange={(event) => setRecurrencePreset(event.target.value as RecurrencePreset)}
             className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           >
-            <option value="none">{isPolish ? 'Brak' : 'None'}</option>
-            <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-            <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-            <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
+            <option value="none">{t('myWork.calendarCreateEvent.none', 'None')}</option>
+            <option value="daily">{t('myWork.calendarCreateEvent.daily', 'Daily')}</option>
+            <option value="weekly">{t('myWork.calendarCreateEvent.weekly', 'Weekly')}</option>
+            <option value="monthly">{t('myWork.calendarCreateEvent.monthly', 'Monthly')}</option>
           </select>
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Opis' : 'Description'}
+            {t('myWork.calendarCreateEvent.description', 'Description')}
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
             placeholder={
-              isPolish
-                ? 'Krótki kontekst lub definicja done...'
-                : 'Short context or definition of done...'
+              t('myWork.calendarCreateEvent.shortContextOrDefinition', 'Short context or definition of done...')
             }
             className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
@@ -238,7 +228,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Data' : 'Date'}
+            {t('myWork.calendarCreateEvent.date', 'Date')}
           </label>
           <div className="relative">
             <CalendarDays
@@ -277,28 +267,24 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
                     : conflictsError
                       ? 'Day preview is limited'
                       : 'This day is already fairly busy'
-                  : isPolish
-                    ? 'Podgląd obciążenia dnia'
-                    : 'Day load preview'}
+                  : t('myWork.calendarCreateEvent.dayLoadPreview', 'Day load preview')}
               </div>
               <div className="mt-1 text-xs opacity-80">
                 {conflictsError ||
                   conflicts?.suggestion ||
-                  (isPolish
-                    ? 'Formularz sprawdza istniejące zadania i decyzje dla wybranego dnia.'
-                    : 'The form checks existing tasks and decisions for the selected day.')}
+                  (t('myWork.calendarCreateEvent.theFormChecksExisting', 'The form checks existing tasks and decisions for the selected day.'))}
               </div>
 
               {totalExistingItems > 0 && (
                 <div className="mt-3 space-y-2">
                   {conflicts?.tasks?.slice(0, 3).map((item) => (
                     <div key={`task-${item.id}`} className="text-xs">
-                      {isPolish ? 'Zadanie' : 'Task'}: {item.title}
+                      {t('myWork.calendarCreateEvent.task', 'Task')}: {item.title}
                     </div>
                   ))}
                   {conflicts?.decisions?.slice(0, 3).map((item) => (
                     <div key={`decision-${item.id}`} className="text-xs">
-                      {isPolish ? 'Decyzja' : 'Decision'}: {item.title}
+                      {t('myWork.calendarCreateEvent.decision', 'Decision')}: {item.title}
                     </div>
                   ))}
                 </div>
@@ -307,7 +293,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               {conflictsLoading && (
                 <div className="mt-3 inline-flex items-center gap-2 text-xs opacity-80">
                   <Loader2 size={14} className="animate-spin" />
-                  {isPolish ? 'Ładowanie konfliktów...' : 'Loading conflicts...'}
+                  {t('myWork.calendarCreateEvent.loadingConflicts', 'Loading conflicts...')}
                 </div>
               )}
             </div>

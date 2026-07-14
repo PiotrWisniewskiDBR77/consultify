@@ -38,7 +38,7 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
 };
 
 export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entityId }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [items, setItems] = useState<Relationship[]>([]);
   const [expanded, setExpanded] = useState(false);
@@ -92,7 +92,7 @@ export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entity
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         <Sparkles size={12} className="text-primary-500" />
         <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-          {isPolish ? 'Wykryte powiązania AI' : 'AI-Discovered Connections'}
+          {t('myWork.aiConnections.aIDiscoveredConnections', 'AI-Discovered Connections')}
         </span>
         {items.length > 0 && (
           <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600">
@@ -104,11 +104,11 @@ export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entity
         <div className="px-4 pb-3 space-y-1">
           {loading ? (
             <span className="text-xs text-slate-600">
-              {isPolish ? 'Analizuję...' : 'Analyzing...'}
+              {t('myWork.aiConnections.analyzing', 'Analyzing...')}
             </span>
           ) : items.length === 0 ? (
             <span className="text-xs text-slate-600">
-              {isPolish ? 'Brak powiązań' : 'No connections found'}
+              {t('myWork.aiConnections.noConnectionsFound', 'No connections found')}
             </span>
           ) : (
             items.map((item) => (

@@ -10,7 +10,7 @@ interface GentleNudgeProps {
 }
 
 export const GentleNudge: React.FC<GentleNudgeProps> = ({ data, onViewDetails }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const hasContent = data.pendingDecisions > 0 || data.overdueTasks > 0 || data.message;
@@ -42,7 +42,7 @@ export const GentleNudge: React.FC<GentleNudgeProps> = ({ data, onViewDetails })
       <AlertCircle size={15} className="text-amber-500" />
       <span>{text}</span>
       <span className="text-primary-400 font-semibold ml-1">
-        {isPolish ? 'Zobacz' : 'View'} &rarr;
+        {t('myWork.gentleNudge.view', 'View')} &rarr;
       </span>
     </button>
   );

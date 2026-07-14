@@ -60,7 +60,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
   expanded = false,
   onToggleExpand,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -114,7 +114,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         );
       } catch (error) {
         console.error('Upload failed', error);
-        toast.error(isPolish ? 'Nie udało się przesłać plików' : 'Failed to upload files');
+        toast.error(t('myWork.attachments.toastError', 'Failed to upload files'));
       } finally {
         setUploading(false);
         if (fileInputRef.current) {
@@ -147,9 +147,9 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 
     try {
       await onDelete(attachment.id);
-      toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment deleted');
+      toast.success(t('myWork.attachments.toastSuccess', 'Attachment deleted'));
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment');
+      toast.error(t('myWork.attachments.toastError2', 'Failed to delete attachment'));
     }
   };
 
@@ -174,7 +174,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
           <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20">
             <Paperclip size={18} className="text-blue-500 dark:text-blue-400" />
           </div>
-          <span className="text-sm font-semibold">{isPolish ? 'Załączniki' : 'Attachments'}</span>
+          <span className="text-sm font-semibold">{t('myWork.attachments.attachments', 'Attachments')}</span>
         </div>
         <div className="flex items-center gap-2">
           {attachments.length > 0 && (
@@ -239,12 +239,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                       <Upload size={40} className="text-blue-500 dark:text-blue-400" />
                     </motion.div>
                     <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-                      {isPolish
-                        ? 'Przeciągnij pliki lub kliknij aby dodać'
-                        : 'Drag files here or click to upload'}
+                      {t('myWork.attachments.dragFilesHereOr', 'Drag files here or click to upload')}
                     </p>
                     <p className="text-xs text-slate-600 dark:text-slate-500">
-                      Max {maxSizeMB}MB / {isPolish ? 'plik' : 'file'}
+                      Max {maxSizeMB}MB / {t('myWork.attachments.file', 'file')}
                     </p>
                   </motion.div>
                 ) : (
@@ -295,7 +293,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                                 setPreviewAttachment(attachment);
                               }}
                               className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-slate-100 dark:hover:bg-navy-600"
-                              title={isPolish ? 'Podgląd' : 'Preview'}
+                              title={t('myWork.attachments.title', 'Preview')}
                             >
                               <Eye size={12} className="text-slate-600 dark:text-slate-300" />
                             </button>
@@ -310,7 +308,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                               }
                             }}
                             className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-slate-100 dark:hover:bg-navy-600"
-                            title={isPolish ? 'Pobierz' : 'Download'}
+                            title={t('myWork.attachments.title2', 'Download')}
                           >
                             <Download size={12} className="text-slate-600 dark:text-slate-300" />
                           </button>
@@ -321,7 +319,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                                 handleDeleteClick(attachment);
                               }}
                               className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-danger-50 dark:hover:bg-danger-500/20"
-                              title={isPolish ? 'Usuń' : 'Delete'}
+                              title={t('myWork.attachments.title3', 'Delete')}
                             >
                               <Trash2 size={12} className="text-danger-500" />
                             </button>
@@ -374,7 +372,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                       window.open(previewAttachment.url, '_blank')
                     }
                     className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                    title={isPolish ? 'Pobierz' : 'Download'}
+                    title={t('myWork.attachments.title4', 'Download')}
                   >
                     <Download size={18} className="text-slate-600 dark:text-slate-300" />
                   </button>
@@ -382,10 +380,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                     onClick={() =>
                       navigator.clipboard
                         .writeText(previewAttachment.url)
-                        .then(() => toast.success(isPolish ? 'Link skopiowany' : 'Link copied'))
+                        .then(() => toast.success(t('myWork.attachments.toastSuccess2', 'Link copied')))
                     }
                     className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                    title={isPolish ? 'Kopiuj link' : 'Copy link'}
+                    title={t('myWork.attachments.title5', 'Copy link')}
                   >
                     <LinkIcon size={18} className="text-slate-600 dark:text-slate-300" />
                   </button>
@@ -396,7 +394,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         setPreviewAttachment(null);
                       }}
                       className="p-2 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/20 transition-colors"
-                      title={isPolish ? 'Usuń' : 'Delete'}
+                      title={t('myWork.attachments.title6', 'Delete')}
                     >
                       <Trash2 size={18} className="text-danger-500" />
                     </button>
@@ -428,13 +426,13 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                   <div className="text-center py-12">
                     {getFileIcon(previewAttachment.type, 64)}
                     <p className="mt-4 text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Podgląd niedostępny' : 'Preview not available'}
+                      {t('myWork.attachments.previewNotAvailable', 'Preview not available')}
                     </p>
                     <button
                       onClick={() => window.open(previewAttachment.url, '_blank')}
                       className="mt-4 px-4 py-2 rounded-lg bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors"
                     >
-                      {isPolish ? 'Pobierz plik' : 'Download file'}
+                      {t('myWork.attachments.downloadFile', 'Download file')}
                     </button>
                   </div>
                 )}

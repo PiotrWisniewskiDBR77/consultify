@@ -27,7 +27,7 @@ export const RelatedContext: React.FC<RelatedContextProps> = ({
   entityId,
   entityTitle,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [items, setItems] = useState<RelatedItem[]>([]);
   const [expanded, setExpanded] = useState(false);
@@ -71,7 +71,7 @@ export const RelatedContext: React.FC<RelatedContextProps> = ({
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-          {isPolish ? 'Powiązany kontekst' : 'Related Context'}
+          {t('myWork.relatedContext.relatedContext', 'Related Context')}
         </span>
         {items.length > 0 && (
           <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-slate-200 dark:bg-navy-700 text-slate-500">
@@ -83,11 +83,11 @@ export const RelatedContext: React.FC<RelatedContextProps> = ({
         <div className="px-4 pb-3 space-y-1">
           {loading ? (
             <span className="text-xs text-slate-600">
-              {isPolish ? 'Szukam...' : 'Searching...'}
+              {t('myWork.relatedContext.searching', 'Searching...')}
             </span>
           ) : items.length === 0 ? (
             <span className="text-xs text-slate-600">
-              {isPolish ? 'Brak powiązań' : 'No related items found'}
+              {t('myWork.relatedContext.noRelatedItemsFound', 'No related items found')}
             </span>
           ) : (
             items.map((item) => (

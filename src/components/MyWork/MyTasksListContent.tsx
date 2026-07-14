@@ -610,9 +610,7 @@ const TaskTableRow: React.FC<{
     task.assignee?.firstName || task.assignee?.lastName
       ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
       : task.assigneeId
-        ? isPolish
-          ? 'Ty'
-          : 'You'
+        ? t('myWork.tasksList.you', 'You')
         : 'Unassigned';
   const assigneeInitial = assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
 
@@ -649,7 +647,7 @@ const TaskTableRow: React.FC<{
                 : 'border-c-border-strong bg-white/80 text-transparent opacity-0 hover:border-c-border-strong group-hover:opacity-100 group-hover:border-c-border dark:group-hover:border-white/[0.22] group-hover:bg-white/90 dark:group-hover:bg-white/[0.08] group-focus-within:opacity-100 group-focus-within:border-c-focus-solid group-focus-within:bg-white/90 dark:group-focus-within:bg-white/[0.08] focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
             }
           `}
-          aria-label={isPolish ? 'Zaznacz zadanie' : 'Select task'}
+          aria-label={t('myWork.tasksList.ariaLabel', 'Select task')}
         >
           {isSelected && <CheckSquare size={12} />}
         </button>
@@ -863,7 +861,7 @@ const TaskTableRow: React.FC<{
                   actions: [
                     {
                       id: 'open-preview',
-                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                      label: t('myWork.tasksList.label', 'Open preview'),
                       icon: ChevronRight,
                       onClick: () => onPreview(task.id, task),
                     },
@@ -939,13 +937,13 @@ const TaskTableRow: React.FC<{
                   actions: [
                     {
                       id: 'copy-link',
-                      label: isPolish ? 'Kopiuj link' : 'Copy link',
+                      label: t('myWork.tasksList.label2', 'Copy link'),
                       icon: Link2,
                       onClick: () => {
                         try {
                           const url = `${window.location.origin}${getArtifactPath('task', task.id)}`;
                           void navigator.clipboard?.writeText(url);
-                          toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
+                          toast.success(t('myWork.tasksList.toastSuccess', 'Link copied'));
                         } catch {
                           /* clipboard unavailable */
                         }
@@ -956,7 +954,7 @@ const TaskTableRow: React.FC<{
                       ? [
                           {
                             id: 'delay',
-                            label: isPolish ? 'Odłóż termin' : 'Delay',
+                            label: t('myWork.tasksList.label3', 'Delay'),
                             icon: Clock,
                             onClick: () => {},
                             submenu: [1, 3, 7].map((d) => ({
@@ -984,7 +982,7 @@ const TaskTableRow: React.FC<{
                   actions: [
                     {
                       id: 'ai-open',
-                      label: isPolish ? '✨ AI: otwórz i uzupełnij' : '✨ AI: open & fill',
+                      label: t('myWork.tasksList.label4', '✨ AI: open & fill'),
                       icon: Sparkles,
                       onClick: () => onOpenFull(task.id, task),
                     },
@@ -1002,9 +1000,7 @@ const TaskTableRow: React.FC<{
                       disabled: !onTriageArchive,
                       description: onTriageArchive
                         ? undefined
-                        : isPolish
-                          ? 'Wkrótce (backend)'
-                          : 'Coming soon (backend)',
+                        : t('myWork.tasksList.comingSoonBackend', 'Coming soon (backend)'),
                       onClick: () => onTriageArchive?.(task.id),
                     },
                     {
@@ -1894,7 +1890,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       try {
         setAiLoading(true);
         setAiError(null);
-        const language = isPolish ? 'pl' : 'en';
+        const language = t('myWork.tasksList.en', 'en');
         const resp = await Api.post('/my-work/tasks/ai-text', {
           language,
           intent,
@@ -1913,7 +1909,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         setAiText(text);
         return text;
       } catch (e: any) {
-        setAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        setAiError(t('myWork.tasksList.setAiError', 'AI unavailable'));
         return null;
       } finally {
         setAiLoading(false);
@@ -1928,9 +1924,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       if (action === 'copy') {
         try {
           await navigator.clipboard.writeText(base || task.title);
-          toast.success(isPolish ? 'Skopiowano' : 'Copied');
+          toast.success(t('myWork.tasksList.toastSuccess2', 'Copied'));
         } catch {
-          toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+          toast.error(t('myWork.tasksList.toastError', 'Copy failed'));
         }
         return;
       }
@@ -2036,19 +2032,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
             const taskCopyFormats: ExtraCopyFormat[] = [
               {
-                label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+                label: t('myWork.tasksList.label5', 'Copy as Markdown'),
                 onClick: () =>
                   void copyAsMarkdown(
                     { title: task.title, status: statusCfg.label, description: desc },
-                    isPolish ? 'pl' : 'en'
+                    t('myWork.tasksList.en2', 'en')
                   ),
               },
               {
-                label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+                label: t('myWork.tasksList.label6', 'Copy for Slack'),
                 onClick: () =>
                   void copyForSlack(
                     { title: task.title, status: statusCfg.label, description: desc },
-                    isPolish ? 'pl' : 'en'
+                    t('myWork.tasksList.en3', 'en')
                   ),
               },
             ];
@@ -2083,14 +2079,14 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             );
 
             const hints = [
-              isPolish ? 'Dlaczego pilne?' : 'Why urgent?',
-              isPolish ? 'Plan działania' : 'Action plan',
-              isPolish ? 'Kto może pomóc?' : 'Who can help?',
+              t('myWork.tasksList.whyUrgent', 'Why urgent?'),
+              t('myWork.tasksList.actionPlan', 'Action plan'),
+              t('myWork.tasksList.whoCanHelp', 'Who can help?'),
             ];
             const hintToIntent: Record<string, 'why_urgent' | 'plan' | 'who_can_help'> = {
-              [isPolish ? 'Dlaczego pilne?' : 'Why urgent?']: 'why_urgent',
-              [isPolish ? 'Plan działania' : 'Action plan']: 'plan',
-              [isPolish ? 'Kto może pomóc?' : 'Who can help?']: 'who_can_help',
+              [t('myWork.tasksList.whyUrgent2', 'Why urgent?')]: 'why_urgent',
+              [t('myWork.tasksList.actionPlan2', 'Action plan')]: 'plan',
+              [t('myWork.tasksList.whoCanHelp2', 'Who can help?')]: 'who_can_help',
             };
 
             const relationItems: RelationItem[] = [];
@@ -2118,7 +2114,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               {
                 buttons: [
                   {
-                    label: isPolish ? 'Dziś' : 'Today',
+                    label: t('myWork.tasksList.label7', 'Today'),
                     icon: Zap,
                     onClick: () => handleTriageAcceptToday(task.id),
                     colorScheme: 'emerald',
@@ -2126,7 +2122,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     shortcut: 'T',
                   },
                   {
-                    label: isPolish ? 'Odłóż' : 'Snooze',
+                    label: t('myWork.tasksList.label8', 'Snooze'),
                     icon: Pause,
                     onClick: () => handleTriageSnooze(task.id),
                     colorScheme: 'amber',
@@ -2139,12 +2135,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 buttons: [
                   {
                     label: isCompleted
-                      ? isPolish
-                        ? 'Wznów'
-                        : 'Reopen'
-                      : isPolish
-                        ? 'Gotowe'
-                        : 'Done',
+                      ? t('myWork.tasksList.reopen', 'Reopen')
+                      : t('myWork.tasksList.done', 'Done'),
                     icon: CheckCircle2,
                     onClick: () => handleToggleComplete(task.id, !isCompleted),
                     colorScheme: 'green',
@@ -2172,9 +2164,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       if (!aiText) return;
                       try {
                         await navigator.clipboard.writeText(aiText);
-                        toast.success(isPolish ? 'Skopiowano' : 'Copied');
+                        toast.success(t('myWork.tasksList.toastSuccess3', 'Copied'));
                       } catch {
-                        toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+                        toast.error(t('myWork.tasksList.toastError2', 'Copy failed'));
                       }
                     }}
                     onClear={() => {
@@ -2186,7 +2178,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                 <PreviewRelations
                   items={relationItems}
-                  emptyLabel={isPolish ? 'Brak powiązań' : 'No relations'}
+                  emptyLabel={t('myWork.tasksList.emptyLabel', 'No relations')}
                 />
 
                 <PreviewActionBar rows={actionRows} />
@@ -2256,7 +2248,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           onClick={() => handleSort('title')}
                           className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
                         >
-                          {isPolish ? 'Zadanie' : 'Task'}
+                          {t('myWork.tasksList.task', 'Task')}
                           <TaskSortIcon field="title" sortConfig={sortConfig} />
                         </button>
                         <ColumnResizer
@@ -2354,7 +2346,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                             onClick={() => handleSort('date')}
                             className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
                           >
-                            {isPolish ? 'Termin' : 'Due Date'}
+                            {t('myWork.tasksList.dueDate', 'Due Date')}
                             <TaskSortIcon field="date" sortConfig={sortConfig} />
                           </button>
                           <ColumnResizer
@@ -2376,7 +2368,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                             onClick={() => handleSort('assignee')}
                             className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
                           >
-                            {isPolish ? 'Właściciel' : 'Assignee'}
+                            {t('myWork.tasksList.assignee', 'Assignee')}
                             <TaskSortIcon field="assignee" sortConfig={sortConfig} />
                           </button>
                           <ColumnResizer
@@ -2403,25 +2395,15 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                                   col.id === 'status'
                                     ? 'Status'
                                     : col.id === 'priority'
-                                      ? isPolish
-                                        ? 'Pilność'
-                                        : 'Priority'
+                                      ? t('myWork.tasksList.priority', 'Priority')
                                       : col.id === 'date'
-                                        ? isPolish
-                                          ? 'Termin'
-                                          : 'Due date'
+                                        ? t('myWork.tasksList.dueDate2', 'Due date')
                                         : col.id === 'assignee'
-                                          ? isPolish
-                                            ? 'Właściciel'
-                                            : 'Assignee'
+                                          ? t('myWork.tasksList.assignee2', 'Assignee')
                                           : col.id === 'title'
-                                            ? isPolish
-                                              ? 'Zadanie'
-                                              : 'Task'
+                                            ? t('myWork.tasksList.task2', 'Task')
                                             : col.id === 'actions'
-                                              ? isPolish
-                                                ? 'Akcje'
-                                                : 'Actions'
+                                              ? t('myWork.tasksList.actions', 'Actions')
                                               : col.label;
                                 return {
                                   id: col.id,
@@ -2445,10 +2427,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                               }
                               showDescription={showRowDescription}
                               onToggleDescription={updateRowDescriptionSetting}
-                              label={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                              columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                              label={t('myWork.tasksList.label9', 'View settings')}
+                              columnsHeading={t('myWork.tasksList.columnsHeading', 'Visible columns')}
                               descriptionLabel={
-                                isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'
+                                t('myWork.tasksList.showRowDescription', 'Show row description')
                               }
                             />
                           </div>

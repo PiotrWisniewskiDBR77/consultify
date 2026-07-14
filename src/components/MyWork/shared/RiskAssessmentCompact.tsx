@@ -93,7 +93,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
   readOnly = false,
   isGenerating = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -161,7 +161,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-xl ${riskConfig.bgColor}`}>{getRiskIcon(overallRisk)}</div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Analiza ryzyka' : 'Risk Analysis'}
+            {t('myWork.riskAssessment.riskAnalysis', 'Risk Analysis')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                 }}
                 disabled={isGenerating}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
-                title={isPolish ? 'Generuj AI' : 'Generate AI'}
+                title={t('myWork.riskAssessment.title', 'Generate AI')}
               >
                 {isGenerating ? (
                   <Sparkles size={14} className="animate-pulse" />
@@ -217,7 +217,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                 <div className="text-center py-6 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   <Shield size={32} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">
-                    {isPolish ? 'Brak zidentyfikowanych ryzyk' : 'No risks identified'}
+                    {t('myWork.riskAssessment.noRisksIdentified', 'No risks identified')}
                   </p>
                 </div>
               ) : (
@@ -256,7 +256,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                               }}
                               onClick={(e) => e.stopPropagation()}
                               className="flex-1 text-sm font-medium bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none truncate"
-                              placeholder={isPolish ? 'Nazwa ryzyka...' : 'Risk name...'}
+                              placeholder={t('myWork.riskAssessment.placeholder', 'Risk name...')}
                               readOnly={readOnly}
                             />
                           </div>
@@ -298,7 +298,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                 <div className="grid grid-cols-3 gap-3">
                                   <div>
                                     <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                      {isPolish ? 'Kategoria' : 'Category'}
+                                      {t('myWork.riskAssessment.category', 'Category')}
                                     </label>
                                     <select
                                       value={risk.category}
@@ -320,7 +320,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                   <div>
                                     <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
                                       <TrendingUp size={10} />
-                                      {isPolish ? 'Prawdop.' : 'Probability'}
+                                      {t('myWork.riskAssessment.probability', 'Probability')}
                                     </label>
                                     <select
                                       value={risk.probability}
@@ -342,7 +342,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                   <div>
                                     <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
                                       <TrendingDown size={10} />
-                                      {isPolish ? 'Wpływ' : 'Impact'}
+                                      {t('myWork.riskAssessment.impact', 'Impact')}
                                     </label>
                                     <select
                                       value={risk.impact}
@@ -366,7 +366,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                 {/* Mitigation */}
                                 <div>
                                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                    {isPolish ? 'Plan mitygacji' : 'Mitigation Plan'}
+                                    {t('myWork.riskAssessment.mitigationPlan', 'Mitigation Plan')}
                                   </label>
                                   <textarea
                                     value={risk.mitigation}
@@ -377,9 +377,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                                     placeholder={
-                                      isPolish
-                                        ? 'Działania minimalizujące ryzyko...'
-                                        : 'Actions to minimize risk...'
+                                      t('myWork.riskAssessment.actionsToMinimizeRisk', 'Actions to minimize risk...')
                                     }
                                   />
                                 </div>
@@ -387,7 +385,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                 {/* Contingency */}
                                 <div>
                                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                    {isPolish ? 'Plan awaryjny' : 'Contingency Plan'}
+                                    {t('myWork.riskAssessment.contingencyPlan', 'Contingency Plan')}
                                   </label>
                                   <textarea
                                     value={risk.contingency}
@@ -398,9 +396,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                                     placeholder={
-                                      isPolish
-                                        ? 'Plan na wypadek materializacji...'
-                                        : 'Plan if risk materializes...'
+                                      t('myWork.riskAssessment.planIfRiskMaterializes', 'Plan if risk materializes...')
                                     }
                                   />
                                 </div>
@@ -425,7 +421,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                   >
                     <Plus size={18} />
                     <span className="text-sm font-medium">
-                      {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
+                      {t('myWork.riskAssessment.addRisk', 'Add risk')}
                     </span>
                   </motion.button>
                 </div>

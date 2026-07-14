@@ -75,7 +75,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
   isGenerating = false,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -120,7 +120,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
             <Lightbulb size={18} className="text-amber-500 dark:text-amber-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Alternatywy' : 'Alternatives'}
+            {t('myWork.alternatives.alternatives', 'Alternatives')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                     ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
                     : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
-                title={isPolish ? 'Widok listy' : 'List view'}
+                title={t('myWork.alternatives.title', 'List view')}
               >
                 <List size={16} />
               </button>
@@ -154,7 +154,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                     ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
                     : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
-                title={isPolish ? 'Porównanie' : 'Comparison view'}
+                title={t('myWork.alternatives.title2', 'Comparison view')}
               >
                 <LayoutGrid size={16} />
               </button>
@@ -180,7 +180,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 }}
                 disabled={isGenerating}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
-                title={isPolish ? 'Generuj AI' : 'Generate AI'}
+                title={t('myWork.alternatives.title3', 'Generate AI')}
               >
                 {isGenerating ? (
                   <Sparkles size={14} className="animate-pulse" />
@@ -246,24 +246,24 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                 type="text"
                                 value={alt.title}
                                 onChange={(e) => onUpdate(alt.id, { title: e.target.value })}
-                                placeholder={isPolish ? 'Nazwa opcji...' : 'Option name...'}
+                                placeholder={t('myWork.alternatives.placeholder', 'Option name...')}
                                 className="w-full font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-500/20 rounded px-1 -mx-1"
                               />
                               <div className="flex items-center gap-2 mt-1">
                                 {alt.isRecommended && (
                                   <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400">
                                     <Star size={10} className="fill-current" />
-                                    {isPolish ? 'Rekomendowana' : 'Recommended'}
+                                    {t('myWork.alternatives.recommended', 'Recommended')}
                                   </span>
                                 )}
                                 {selectedAlternativeId === alt.id && (
                                   <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                                     <Check size={10} />
-                                    {isPolish ? 'Wybrana' : 'Selected'}
+                                    {t('myWork.alternatives.selected', 'Selected')}
                                   </span>
                                 )}
                                 <span className={`text-xs font-medium ${getScoreColor(score)}`}>
-                                  {isPolish ? 'Ocena' : 'Score'}: {score.toFixed(1)}/10
+                                  {t('myWork.alternatives.score', 'Score')}: {score.toFixed(1)}/10
                                 </span>
                               </div>
                             </div>
@@ -275,7 +275,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                               className={`p-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors ${
                                 alt.isRecommended ? 'text-amber-500' : 'text-slate-600'
                               }`}
-                              title={isPolish ? 'Ustaw jako rekomendowaną' : 'Set as recommended'}
+                              title={t('myWork.alternatives.title4', 'Set as recommended')}
                             >
                               <Star size={16} className={alt.isRecommended ? 'fill-current' : ''} />
                             </button>
@@ -292,7 +292,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                         <textarea
                           value={alt.description}
                           onChange={(e) => onUpdate(alt.id, { description: e.target.value })}
-                          placeholder={isPolish ? 'Opis opcji...' : 'Option description...'}
+                          placeholder={t('myWork.alternatives.placeholder2', 'Option description...')}
                           rows={2}
                           className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                         />
@@ -303,7 +303,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                           <div>
                             <div className="flex items-center gap-1 mb-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                               <ThumbsUp size={12} />
-                              <span>{isPolish ? 'Zalety' : 'Pros'}</span>
+                              <span>{t('myWork.alternatives.pros', 'Pros')}</span>
                               <span className="text-slate-500 dark:text-slate-400">
                                 ({alt.pros.filter((p) => p.trim()).length})
                               </span>
@@ -321,7 +321,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                       onUpdate(alt.id, { pros: newPros });
                                     }}
                                     className="flex-1 text-xs bg-transparent text-slate-600 dark:text-slate-400 focus:outline-none"
-                                    placeholder={isPolish ? 'Dodaj zaletę...' : 'Add pro...'}
+                                    placeholder={t('myWork.alternatives.placeholder3', 'Add pro...')}
                                   />
                                   <button
                                     onClick={() => {
@@ -340,7 +340,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                 className="text-xs text-emerald-500 hover:text-emerald-600 flex items-center gap-1"
                               >
                                 <Plus size={10} />
-                                {isPolish ? 'Dodaj' : 'Add'}
+                                {t('myWork.alternatives.add', 'Add')}
                               </button>
                             </div>
                           </div>
@@ -349,7 +349,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                           <div>
                             <div className="flex items-center gap-1 mb-2 text-xs font-medium text-danger-600 dark:text-danger-400">
                               <ThumbsDown size={12} />
-                              <span>{isPolish ? 'Wady' : 'Cons'}</span>
+                              <span>{t('myWork.alternatives.cons', 'Cons')}</span>
                               <span className="text-slate-500 dark:text-slate-400">
                                 ({alt.cons.filter((c) => c.trim()).length})
                               </span>
@@ -367,7 +367,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                       onUpdate(alt.id, { cons: newCons });
                                     }}
                                     className="flex-1 text-xs bg-transparent text-slate-600 dark:text-slate-400 focus:outline-none"
-                                    placeholder={isPolish ? 'Dodaj wadę...' : 'Add con...'}
+                                    placeholder={t('myWork.alternatives.placeholder4', 'Add con...')}
                                   />
                                   <button
                                     onClick={() => {
@@ -386,7 +386,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                 className="text-xs text-danger-500 hover:text-danger-600 flex items-center gap-1"
                               >
                                 <Plus size={10} />
-                                {isPolish ? 'Dodaj' : 'Add'}
+                                {t('myWork.alternatives.add2', 'Add')}
                               </button>
                             </div>
                           </div>
@@ -405,12 +405,8 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             >
                               <Check size={14} />
                               {selectedAlternativeId === alt.id
-                                ? isPolish
-                                  ? 'Wybrana opcja'
-                                  : 'Selected option'
-                                : isPolish
-                                  ? 'Wybierz tę opcję'
-                                  : 'Select this option'}
+                                ? t('myWork.alternatives.selectedOption', 'Selected option')
+                                : t('myWork.alternatives.selectThisOption', 'Select this option')}
                             </button>
                           </div>
                         )}
@@ -425,7 +421,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-navy-700">
                         <th className="text-left py-3 px-2 text-slate-500 dark:text-slate-400 font-medium">
-                          {isPolish ? 'Kryterium' : 'Criteria'}
+                          {t('myWork.alternatives.criteria', 'Criteria')}
                         </th>
                         {sortedAlternatives.map((alt, index) => (
                           <th
@@ -463,7 +459,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                       {/* Score row */}
                       <tr className="border-b border-slate-200 dark:border-navy-800">
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400">
-                          {isPolish ? 'Ocena' : 'Score'}
+                          {t('myWork.alternatives.score2', 'Score')}
                         </td>
                         {sortedAlternatives.map((alt) => {
                           const score = calculateScore(alt);
@@ -482,7 +478,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                       <tr className="border-b border-slate-200 dark:border-navy-800">
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400 flex items-center gap-1">
                           <ThumbsUp size={14} className="text-emerald-500" />
-                          {isPolish ? 'Zalety' : 'Pros'}
+                          {t('myWork.alternatives.pros2', 'Pros')}
                         </td>
                         {sortedAlternatives.map((alt) => (
                           <td key={alt.id} className="text-center py-3 px-4">
@@ -497,7 +493,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                       <tr>
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400 flex items-center gap-1">
                           <ThumbsDown size={14} className="text-danger-500" />
-                          {isPolish ? 'Wady' : 'Cons'}
+                          {t('myWork.alternatives.cons2', 'Cons')}
                         </td>
                         {sortedAlternatives.map((alt) => (
                           <td key={alt.id} className="text-center py-3 px-4">
@@ -521,7 +517,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                   className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-primary-400 dark:hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-500/10 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
                 >
                   <Plus size={18} />
-                  <span>{isPolish ? 'Dodaj alternatywę' : 'Add alternative'}</span>
+                  <span>{t('myWork.alternatives.addAlternative', 'Add alternative')}</span>
                 </motion.button>
               </div>
 
@@ -531,9 +527,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                   <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
                     <Star size={14} />
                     <span>
-                      {isPolish
-                        ? 'Wskazówka: Oznacz jedną alternatywę jako rekomendowaną'
-                        : 'Tip: Mark one alternative as recommended'}
+                      {t('myWork.alternatives.tipMarkOneAlternative', 'Tip: Mark one alternative as recommended')}
                     </span>
                   </div>
                 </div>

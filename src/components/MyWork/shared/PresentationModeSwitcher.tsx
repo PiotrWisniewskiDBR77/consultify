@@ -60,7 +60,7 @@ export const PresentationModeSwitcher: React.FC<PresentationModeSwitcherProps> =
   onChange,
   disabled = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const handleKeyDown = useCallback(
@@ -77,7 +77,7 @@ export const PresentationModeSwitcher: React.FC<PresentationModeSwitcherProps> =
     <div
       className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100/80 dark:bg-navy-800/80 border border-slate-200/60 dark:border-navy-700/60"
       role="radiogroup"
-      aria-label={isPolish ? 'Tryb prezentacji' : 'Presentation mode'}
+      aria-label={t('myWork.presentationModeSwitcher.ariaLabel', 'Presentation mode')}
     >
       {MODES.map((mode) => {
         const config = MODE_CONFIG[mode];

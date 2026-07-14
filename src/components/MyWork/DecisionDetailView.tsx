@@ -2500,7 +2500,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     try {
       const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
         sectionKey: 'alternatives',
-        language: isPolish ? 'pl' : 'en',
+        language: t('myWork.decisionDetail.language', 'en'),
       });
       const parsed = extractDecisionSectionJson(res);
       const rawAlternatives = Array.isArray(parsed?.alternatives) ? parsed.alternatives : [];
@@ -2540,7 +2540,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     try {
       const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
         sectionKey: 'description',
-        language: isPolish ? 'pl' : 'en',
+        language: t('myWork.decisionDetail.language2', 'en'),
       });
       const content = extractDecisionSectionContent(res);
 
@@ -3276,7 +3276,7 @@ Use userId only from this list:
     try {
       const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
         sectionKey: 'consequencesOfInaction',
-        language: isPolish ? 'pl' : 'en',
+        language: t('myWork.decisionDetail.language3', 'en'),
       });
       const content = extractDecisionSectionContent(res);
 
@@ -3308,7 +3308,7 @@ Use userId only from this list:
     try {
       const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
         sectionKey: 'risk',
-        language: isPolish ? 'pl' : 'en',
+        language: t('myWork.decisionDetail.language4', 'en'),
       });
       const parsed = extractDecisionSectionJson(res);
       const rawRisks = Array.isArray(parsed?.risks) ? parsed.risks : [];
@@ -4609,7 +4609,7 @@ Use userId only from this list:
     const d = new Date(v);
     return Number.isNaN(d.getTime())
       ? v
-      : d.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+      : d.toLocaleString(t('myWork.decisionDetail.dToLocaleString', 'en-US'), {
           day: '2-digit',
           month: 'short',
           hour: '2-digit',
@@ -4637,7 +4637,7 @@ Use userId only from this list:
       // przycisk AI w tej sekcji był zbędnym duplikatem (Z29/Z30 go tu
       // zostawiły tylko z braku slotu M3 dla klasy S; teraz jest taniej).
       // Save+Delegate dzielą teraz jeden rząd (był z AI pomiędzy nimi).
-      label: isPolish ? 'Akcje' : 'Actions',
+      label: t('myWork.decisionDetail.label', 'Actions'),
       icon: Save,
       defaultOpen: true,
       children: (
@@ -4649,16 +4649,16 @@ Use userId only from this list:
             className={rpBtn}
           >
             <Save size={14} className="text-c-text-muted" />
-            {isPolish ? 'Zapisz' : 'Save'}
+            {t('myWork.decisionDetail.save', 'Save')}
           </button>
           <button type="button" onClick={() => setShowDelegationModal(true)} className={rpBtn}>
             <Share2 size={14} className="text-c-text-muted" />
-            {isPolish ? 'Deleguj' : 'Delegate'}
+            {t('myWork.decisionDetail.delegate', 'Delegate')}
           </button>
           {decisionId && (
             <div className="col-span-2 flex items-center justify-between h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
               <span className="text-xs text-c-text-muted">
-                {isPolish ? 'Udostępnij' : 'Share'}
+                {t('myWork.decisionDetail.share', 'Share')}
               </span>
               <ArtifactPermalinkButton artifactType="decision" artifactId={decisionId} isPolish={isPolish} />
             </div>
@@ -4668,7 +4668,7 @@ Use userId only from this list:
     },
     {
       id: 'properties',
-      label: isPolish ? 'Właściwości' : 'Properties',
+      label: t('myWork.decisionDetail.label2', 'Properties'),
       icon: Flag,
       defaultOpen: true,
       children: (
@@ -4677,32 +4677,32 @@ Use userId only from this list:
             <thead>
               <tr className="bg-c-surface-raised">
                 <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {isPolish ? 'Właściwość' : 'Property'}
+                  {t('myWork.decisionDetail.property', 'Property')}
                 </th>
                 <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
-                  {isPolish ? 'Wartość' : 'Value'}
+                  {t('myWork.decisionDetail.value', 'Value')}
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className={rpTdKey}>{isPolish ? 'Status' : 'Status'}</td>
+                <td className={rpTdKey}>{t('myWork.decisionDetail.status', 'Status')}</td>
                 <td className={rpTdVal}>
-                  <span className={rpPill}>{statusConfig.label[isPolish ? 'pl' : 'en']}</span>
+                  <span className={rpPill}>{statusConfig.label[t('myWork.decisionDetail.en', 'en')]}</span>
                 </td>
               </tr>
               <tr>
-                <td className={rpTdKey}>{isPolish ? 'Waga' : 'Priority'}</td>
+                <td className={rpTdKey}>{t('myWork.decisionDetail.priority', 'Priority')}</td>
                 <td className={rpTdVal}>
-                  <span className={rpPill}>{priorityConfig.label[isPolish ? 'pl' : 'en']}</span>
+                  <span className={rpPill}>{priorityConfig.label[t('myWork.decisionDetail.en2', 'en')]}</span>
                 </td>
               </tr>
               <tr>
-                <td className={rpTdKey}>{isPolish ? 'Termin' : 'Due date'}</td>
+                <td className={rpTdKey}>{t('myWork.decisionDetail.dueDate', 'Due date')}</td>
                 <td className={`${rpTdVal} tabular-nums`}>{dueDate || dash}</td>
               </tr>
               <tr>
-                <td className="px-3 py-2 text-c-text-muted">{isPolish ? 'Decydent' : 'Decider'}</td>
+                <td className="px-3 py-2 text-c-text-muted">{t('myWork.decisionDetail.decider', 'Decider')}</td>
                 <td className={rpTdValLast}>{deciderDisplayName}</td>
               </tr>
             </tbody>
@@ -4712,7 +4712,7 @@ Use userId only from this list:
     },
     {
       id: 'relations',
-      label: isPolish ? 'Powiązania' : 'Relations',
+      label: t('myWork.decisionDetail.label3', 'Relations'),
       icon: Link2,
       defaultOpen: true,
       isEmpty:
@@ -4721,12 +4721,12 @@ Use userId only from this list:
         risks.length === 0 &&
         linkedItems.length === 0 &&
         attachments.length === 0,
-      emptyLabel: isPolish ? 'Brak powiązań' : 'No relations',
+      emptyLabel: t('myWork.decisionDetail.emptyLabel', 'No relations'),
       children: (
         <div className="flex flex-col gap-2">
           {initiativeName ? (
             <div className="flex items-center gap-2">
-              <span className={rpKeyClass}>{isPolish ? 'Inicjatywa' : 'Initiative'}</span>
+              <span className={rpKeyClass}>{t('myWork.decisionDetail.initiative', 'Initiative')}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -4747,7 +4747,7 @@ Use userId only from this list:
           ) : null}
           {sourceType && sourceId ? (
             <div className="flex items-center gap-2">
-              <span className={rpKeyClass}>{isPolish ? 'Źródło' : 'Source'}</span>
+              <span className={rpKeyClass}>{t('myWork.decisionDetail.source', 'Source')}</span>
               <button
                 type="button"
                 onClick={() =>
@@ -4775,7 +4775,7 @@ Use userId only from this list:
               onClick={() => setActiveNotionSection('risk-impact')}
               className="flex items-center justify-between gap-3 hover:bg-c-surface-raised rounded-md px-1 -mx-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
             >
-              <span className={rpKeyClass}>{isPolish ? 'Ryzyka' : 'Risks'}</span>
+              <span className={rpKeyClass}>{t('myWork.decisionDetail.risks', 'Risks')}</span>
               <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
                 {risks.length}
               </span>
@@ -4794,7 +4794,7 @@ Use userId only from this list:
           ))}
           {attachments.length > 0 ? (
             <div className="flex items-center justify-between gap-3">
-              <span className={rpKeyClass}>{isPolish ? 'Załączniki' : 'Attachments'}</span>
+              <span className={rpKeyClass}>{t('myWork.decisionDetail.attachments', 'Attachments')}</span>
               <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
                 {attachments.length}
               </span>
@@ -4805,19 +4805,19 @@ Use userId only from this list:
     },
     {
       id: 'comments',
-      label: isPolish ? 'Komentarze' : 'Comments',
+      label: t('myWork.decisionDetail.label4', 'Comments'),
       icon: MessageSquare,
       defaultOpen: false,
       badge: comments.length,
       isEmpty: comments.length === 0,
-      emptyLabel: isPolish ? 'Brak komentarzy' : 'No comments',
+      emptyLabel: t('myWork.decisionDetail.emptyLabel2', 'No comments'),
       children: (
         <ul className="flex flex-col gap-3">
           {comments.slice(0, 6).map((c) => (
             <li key={c.id} className="flex flex-col gap-0.5">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-xs font-semibold text-c-text truncate">
-                  {c.authorName || (isPolish ? 'Użytkownik' : 'User')}
+                  {c.authorName || (t('myWork.decisionDetail.user', 'User'))}
                 </span>
                 <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
                   {fmtDateTime(c.createdAt)}
@@ -4831,12 +4831,12 @@ Use userId only from this list:
     },
     {
       id: 'history',
-      label: isPolish ? 'Historia / AI' : 'History / AI',
+      label: t('myWork.decisionDetail.label5', 'History / AI'),
       icon: History,
       defaultOpen: false,
       badge: activityLogSorted.length,
       isEmpty: activityLogSorted.length === 0,
-      emptyLabel: isPolish ? 'Brak historii' : 'No history',
+      emptyLabel: t('myWork.decisionDetail.emptyLabel3', 'No history'),
       children: (
         <ul className="flex flex-col gap-2.5">
           {activityLogSorted.slice(0, 8).map((entry) => (
@@ -8168,7 +8168,7 @@ Use userId only from this list:
             <ArtifactRightPanel
               sections={rightPanelSections}
               className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
-              ariaLabel={isPolish ? 'Szczegóły decyzji' : 'Decision details'}
+              ariaLabel={t('myWork.decisionDetail.ariaLabel', 'Decision details')}
             />
           </div>
         </div>

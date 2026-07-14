@@ -12,7 +12,7 @@ interface Nudge {
 }
 
 export const NudgeStrip: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [nudges, setNudges] = useState<Nudge[]>([]);
 

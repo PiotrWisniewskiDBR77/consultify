@@ -100,7 +100,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
   isGenerating = false,
   lastGeneratedAt,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const warningsCount = insights.filter((i) => i.type === 'warning').length;
@@ -123,7 +123,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
             <Brain size={18} className="text-primary-500 dark:text-primary-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Wskazówki AI' : 'AI Insights'}
+            {t('myWork.aiInsight.aIInsights', 'AI Insights')}
           </span>
           {warningsCount > 0 && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
@@ -171,12 +171,8 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                     )}
                     <span>
                       {isGenerating
-                        ? isPolish
-                          ? 'Analizowanie...'
-                          : 'Analyzing...'
-                        : isPolish
-                          ? 'Generuj wskazówki'
-                          : 'Generate Insights'}
+                        ? t('myWork.aiInsight.analyzing', 'Analyzing...')
+                        : t('myWork.aiInsight.generateInsights', 'Generate Insights')}
                     </span>
                   </motion.button>
                   {lastGeneratedAt && (
@@ -196,12 +192,10 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                     className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'Brak wskazówek AI' : 'No AI insights yet'}
+                    {t('myWork.aiInsight.noAIInsightsYet', 'No AI insights yet')}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-                    {isPolish
-                      ? 'Kliknij "Generuj wskazówki" aby uzyskać rekomendacje'
-                      : 'Click "Generate Insights" to get recommendations'}
+                    {t('myWork.aiInsight.clickGenerateInsightsTo', 'Click "Generate Insights" to get recommendations')}
                   </p>
                 </div>
               ) : (
@@ -267,7 +261,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                                   className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium ${typeConfig.bgColor} ${typeConfig.color} hover:brightness-95 transition-colors`}
                                 >
                                   <Target size={12} />
-                                  {insight.actionText || (isPolish ? 'Zastosuj' : 'Apply')}
+                                  {insight.actionText || (t('myWork.aiInsight.apply', 'Apply'))}
                                 </button>
                               )}
                               {onDismissInsight && (
@@ -275,7 +269,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                                   onClick={() => onDismissInsight(insight.id)}
                                   className="px-3 py-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                                 >
-                                  {isPolish ? 'Odrzuć' : 'Dismiss'}
+                                  {t('myWork.aiInsight.dismiss', 'Dismiss')}
                                 </button>
                               )}
                             </div>
@@ -290,9 +284,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
               {/* AI Disclaimer */}
               <div className="text-center pt-2">
                 <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                  {isPolish
-                    ? 'Wskazówki generowane przez AI. Zweryfikuj przed zastosowaniem.'
-                    : 'AI-generated insights. Verify before applying.'}
+                  {t('myWork.aiInsight.aIGeneratedInsightsVerify', 'AI-generated insights. Verify before applying.')}
                 </p>
               </div>
             </div>

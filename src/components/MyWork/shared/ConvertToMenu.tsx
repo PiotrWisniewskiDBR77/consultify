@@ -69,7 +69,7 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
   onConverted,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { emitMyWorkEvent } = useAppStore();
   const [converting, setConverting] = useState<string | null>(null);
@@ -129,7 +129,7 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
       toast.success(isPolish ? `Przekonwertowano na ${target}` : `Converted to ${target}`);
       onConverted?.(target, createdId);
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Konwersja nieudana' : 'Conversion failed'));
+      toast.error(err?.message || (t('myWork.convertToMenu.conversionFailed', 'Conversion failed')));
     } finally {
       setConverting(null);
     }
@@ -156,12 +156,12 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
         entityId: sourceId,
         meta: { target: 'initiative' },
       });
-      toast.success(isPolish ? 'Utworzono inicjatywę' : 'Initiative created');
+      toast.success(t('myWork.convertToMenu.toastSuccess', 'Initiative created'));
       onConverted?.('initiative', createdId);
     } catch (err: any) {
       toast.error(
         err?.message ||
-          (isPolish ? 'Nie udało się utworzyć inicjatywy' : 'Failed to create initiative')
+          (t('myWork.convertToMenu.failedToCreateInitiative', 'Failed to create initiative'))
       );
     } finally {
       setConverting(null);

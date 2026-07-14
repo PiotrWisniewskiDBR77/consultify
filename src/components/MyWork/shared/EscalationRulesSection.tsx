@@ -81,7 +81,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
   readOnly = false,
   dueDate,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -149,7 +149,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
             <BellRing size={18} className="text-amber-500 dark:text-amber-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Przypomnienia i eskalacja' : 'Reminders & Escalation'}
+            {t('myWork.escalationRules.remindersEscalation', 'Reminders & Escalation')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                   <div className="flex items-center gap-2">
                     <Bell size={16} className="text-blue-500" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? 'Przypomnienia' : 'Reminders'}
+                      {t('myWork.escalationRules.reminders', 'Reminders')}
                     </span>
                   </div>
                   {!readOnly && (
@@ -189,7 +189,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 transition-colors"
                     >
                       <Plus size={14} />
-                      {isPolish ? 'Dodaj' : 'Add'}
+                      {t('myWork.escalationRules.add', 'Add')}
                     </button>
                   )}
                 </div>
@@ -201,7 +201,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                       className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                     />
                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Brak przypomnień' : 'No reminders'}
+                      {t('myWork.escalationRules.noReminders', 'No reminders')}
                     </p>
                     {!readOnly && (
                       <button
@@ -209,7 +209,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                         className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 transition-colors"
                       >
                         <Plus size={14} />
-                        {isPolish ? 'Dodaj przypomnienie' : 'Add reminder'}
+                        {t('myWork.escalationRules.addReminder', 'Add reminder')}
                       </button>
                     )}
                   </div>
@@ -261,7 +261,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                         <div className="grid grid-cols-2 gap-3">
                           {/* When - Type */}
                           <div>
-                            <label className={LABEL_CLASS}>{isPolish ? 'Kiedy' : 'When'}</label>
+                            <label className={LABEL_CLASS}>{t('myWork.escalationRules.when', 'When')}</label>
                             <select
                               value={reminder.type}
                               onChange={(e) =>
@@ -273,17 +273,17 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                               className={SELECT_CLASS}
                             >
                               <option value="before_due">
-                                {isPolish ? 'Przed terminem' : 'Before due'}
+                                {t('myWork.escalationRules.beforeDue', 'Before due')}
                               </option>
                               <option value="after_due">
-                                {isPolish ? 'Po terminie' : 'After due'}
+                                {t('myWork.escalationRules.afterDue', 'After due')}
                               </option>
                             </select>
                           </div>
 
                           {/* Days */}
                           <div>
-                            <label className={LABEL_CLASS}>{isPolish ? 'Dni' : 'Days'}</label>
+                            <label className={LABEL_CLASS}>{t('myWork.escalationRules.days', 'Days')}</label>
                             <input
                               type="number"
                               min="1"
@@ -300,7 +300,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           {/* To whom */}
                           <div className="col-span-2">
                             <label className={LABEL_CLASS}>
-                              {isPolish ? 'Do kogo' : 'To whom'}
+                              {t('myWork.escalationRules.toWhom', 'To whom')}
                             </label>
                             <select
                               value={reminder.recipients}
@@ -323,7 +323,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           {/* Notification toggles */}
                           <div>
                             <label className={LABEL_CLASS}>
-                              {isPolish ? 'Powiadomienie' : 'Notification'}
+                              {t('myWork.escalationRules.notification', 'Notification')}
                             </label>
                             <button
                               onClick={() =>
@@ -343,7 +343,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                                       : 'text-slate-500 dark:text-slate-400'
                                   }
                                 />
-                                <span>{isPolish ? 'W aplikacji' : 'In-app'}</span>
+                                <span>{t('myWork.escalationRules.inApp', 'In-app')}</span>
                               </div>
                               <div
                                 className={`w-8 h-5 rounded-full transition-colors relative ${
@@ -383,7 +383,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                                       : 'text-slate-500 dark:text-slate-400'
                                   }
                                 />
-                                <span>{isPolish ? 'Wyślij email' : 'Send email'}</span>
+                                <span>{t('myWork.escalationRules.sendEmail', 'Send email')}</span>
                               </div>
                               <div
                                 className={`w-8 h-5 rounded-full transition-colors relative ${
@@ -408,7 +408,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                             <label className={LABEL_CLASS}>
                               <div className="flex items-center gap-1.5">
                                 <MessageSquare size={12} />
-                                {isPolish ? 'Treść (opcjonalnie)' : 'Message (optional)'}
+                                {t('myWork.escalationRules.messageOptional', 'Message (optional)')}
                               </div>
                             </label>
                             <input
@@ -418,9 +418,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                                 updateReminder(reminder.id, { message: e.target.value })
                               }
                               placeholder={
-                                isPolish
-                                  ? 'Opcjonalna treść przypomnienia...'
-                                  : 'Optional reminder message...'
+                                t('myWork.escalationRules.optionalReminderMessage', 'Optional reminder message...')
                               }
                               disabled={readOnly || !reminder.enabled}
                               className={INPUT_CLASS}
@@ -439,7 +437,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                   <div className="flex items-center gap-2">
                     <ArrowUpCircle size={16} className="text-amber-500" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? 'Auto-eskalacja' : 'Auto-Escalation'}
+                      {t('myWork.escalationRules.autoEscalation', 'Auto-Escalation')}
                     </span>
                   </div>
                   {!readOnly && (
@@ -452,12 +450,8 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                       }`}
                     >
                       {escalation
-                        ? isPolish
-                          ? 'Wyłącz'
-                          : 'Disable'
-                        : isPolish
-                          ? 'Włącz'
-                          : 'Enable'}
+                        ? t('myWork.escalationRules.disable', 'Disable')
+                        : t('myWork.escalationRules.enable', 'Enable')}
                     </button>
                   )}
                 </div>
@@ -472,7 +466,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                       {/* After days */}
                       <div>
                         <label className={LABEL_CLASS}>
-                          {isPolish ? 'Po dniach spóźnienia' : 'After days overdue'}
+                          {t('myWork.escalationRules.afterDaysOverdue', 'After days overdue')}
                         </label>
                         <input
                           type="number"
@@ -493,7 +487,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                       {/* Escalate to */}
                       <div>
                         <label className={LABEL_CLASS}>
-                          {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                          {t('myWork.escalationRules.escalateTo', 'Escalate to')}
                         </label>
                         <select
                           value={escalation.escalateTo}
@@ -509,7 +503,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           className={SELECT_CLASS}
                         >
                           <option value="">
-                            {isPolish ? 'Wybierz osobę...' : 'Select person...'}
+                            {t('myWork.escalationRules.selectPerson', 'Select person...')}
                           </option>
                           {availableUsers.map((user) => (
                             <option key={user.id} value={user.id}>
@@ -522,7 +516,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                       {/* Message */}
                       <div className="col-span-2">
                         <label className={LABEL_CLASS}>
-                          {isPolish ? 'Wiadomość (opcjonalnie)' : 'Message (optional)'}
+                          {t('myWork.escalationRules.messageOptional2', 'Message (optional)')}
                         </label>
                         <input
                           type="text"
@@ -530,7 +524,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           onChange={(e) =>
                             onEscalationChange({ ...escalation, message: e.target.value })
                           }
-                          placeholder={isPolish ? 'Powód eskalacji...' : 'Escalation reason...'}
+                          placeholder={t('myWork.escalationRules.placeholder', 'Escalation reason...')}
                           disabled={readOnly}
                           className={INPUT_CLASS}
                         />
@@ -546,7 +540,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           : `If decision is not made ${escalation.afterDays} days after due, it will be escalated to: `}
                         <span className="font-medium">
                           {escalation.escalateToName ||
-                            (isPolish ? '(wybierz osobę)' : '(select person)')}
+                            (t('myWork.escalationRules.selectPerson2', '(select person)'))}
                         </span>
                       </p>
                     </div>
@@ -558,7 +552,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                       className="mx-auto mb-2 text-slate-700 dark:text-slate-400"
                     />
                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Eskalacja wyłączona' : 'Escalation disabled'}
+                      {t('myWork.escalationRules.escalationDisabled', 'Escalation disabled')}
                     </p>
                   </div>
                 )}

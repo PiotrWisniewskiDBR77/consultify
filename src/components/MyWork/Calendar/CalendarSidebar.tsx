@@ -54,7 +54,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   externalSourceStatus,
   workloadSummary,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const activeOwnership: OwnershipFilter = (filter.ownership as OwnershipFilter) || 'any';
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const daysInMonth = lastDay.getDate();
   const today = new Date();
 
-  const monthLabel = currentDate.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+  const monthLabel = currentDate.toLocaleDateString(t('myWork.calendarSidebar.currentDateToLocaleDateString', 'en-US'), {
     month: 'long',
     year: 'numeric',
   });
@@ -154,7 +154,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
       {/* Source filters */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-3">
-          {isPolish ? 'Źródła' : 'Sources'}
+          {t('myWork.calendarSidebar.sources', 'Sources')}
         </h4>
         <div className="space-y-1.5">
           {ALL_SOURCES.map((source) => {
@@ -189,7 +189,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                   </span>
                   {!isAvailable && isExternalSource && (
                     <span className="block text-[10px] font-normal normal-case text-primary-500 dark:text-primary-400">
-                      {isPolish ? 'Podłącz w Integracjach →' : 'Connect in Integrations →'}
+                      {t('myWork.calendarSidebar.connectInIntegrations', 'Connect in Integrations →')}
                     </span>
                   )}
                 </span>
@@ -236,21 +236,21 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
 
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-3">
-          {isPolish ? 'Własność' : 'Ownership'}
+          {t('myWork.calendarSidebar.ownership', 'Ownership')}
         </h4>
         <div className="space-y-1.5">
           {[
             {
               id: 'any' as const,
-              label: isPolish ? 'Dowolna' : 'Any',
+              label: t('myWork.calendarSidebar.label', 'Any'),
             },
             {
               id: 'assignee' as const,
-              label: isPolish ? 'Przypisane do mnie' : 'Assigned to me',
+              label: t('myWork.calendarSidebar.label2', 'Assigned to me'),
             },
             {
               id: 'owner' as const,
-              label: isPolish ? 'Jestem właścicielem' : 'Owned by me',
+              label: t('myWork.calendarSidebar.label3', 'Owned by me'),
             },
           ].map((entry) => {
             const active = activeOwnership === entry.id;
@@ -282,7 +282,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         onClick={() => onDateChange(new Date())}
         className="w-full py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
       >
-        {isPolish ? 'Dzisiaj' : 'Today'}
+        {t('myWork.calendarSidebar.today', 'Today')}
       </button>
     </div>
   );

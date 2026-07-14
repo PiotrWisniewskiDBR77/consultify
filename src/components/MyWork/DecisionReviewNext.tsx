@@ -22,7 +22,7 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
   onOpenFullDetail,
   onExit,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
         setCursor(data?.nextCursor ?? null);
         setSelectedIdx(0);
       } catch (e) {
-        toast.error(isPolish ? 'Nie udało się załadować kolejki' : 'Failed to load queue');
+        toast.error(t('myWork.decisionReviewNext.toastError', 'Failed to load queue'));
         setItems([]);
         setCursor(null);
       } finally {
@@ -81,10 +81,10 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
     if (!selectedId) return;
     try {
       await Api.decideDecision(selectedId, 'approved', 'Approved');
-      toast.success(isPolish ? 'Zatwierdzono' : 'Approved');
+      toast.success(t('myWork.decisionReviewNext.toastSuccess', 'Approved'));
       removeSelectedFromList();
     } catch {
-      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Approve failed');
+      toast.error(t('myWork.decisionReviewNext.toastError2', 'Approve failed'));
     }
   }, [selectedId, removeSelectedFromList, isPolish]);
 
@@ -92,10 +92,10 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
     if (!selectedId) return;
     try {
       await Api.decideDecision(selectedId, 'rejected', 'Rejected');
-      toast.success(isPolish ? 'Odrzucono' : 'Rejected');
+      toast.success(t('myWork.decisionReviewNext.toastSuccess2', 'Rejected'));
       removeSelectedFromList();
     } catch {
-      toast.error(isPolish ? 'Nie udało się odrzucić' : 'Reject failed');
+      toast.error(t('myWork.decisionReviewNext.toastError3', 'Reject failed'));
     }
   }, [selectedId, removeSelectedFromList, isPolish]);
 
@@ -103,10 +103,10 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
     if (!selectedId) return;
     try {
       await Api.snoozeDecision(selectedId, { preset: 'tomorrow' });
-      toast.success(isPolish ? 'Odłożono' : 'Snoozed');
+      toast.success(t('myWork.decisionReviewNext.toastSuccess3', 'Snoozed'));
       removeSelectedFromList();
     } catch {
-      toast.error(isPolish ? 'Nie udało się odłożyć' : 'Snooze failed');
+      toast.error(t('myWork.decisionReviewNext.toastError4', 'Snooze failed'));
     }
   }, [selectedId, removeSelectedFromList, isPolish]);
 
@@ -149,8 +149,8 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
 
   const title = useMemo(() => {
     if (mode === 'requests_pending')
-      return isPolish ? 'Review next: moje prośby' : 'Review next: my requests';
-    return isPolish ? 'Review next: moje do decyzji' : 'Review next: my decisions';
+      return t('myWork.decisionReviewNext.reviewNextMyRequests', 'Review next: my requests');
+    return t('myWork.decisionReviewNext.reviewNextMyDecisions', 'Review next: my decisions');
   }, [mode, isPolish]);
 
   return (
@@ -164,9 +164,7 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
             <div>
               <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? 'J/K nawigacja, A zatwierdź, R odrzuć, S odłóż, ? pomoc'
-                  : 'J/K navigate, A approve, R reject, S snooze, ? help'}
+                {t('myWork.decisionReviewNext.jKNavigateA', 'J/K navigate, A approve, R reject, S snooze, ? help')}
               </div>
             </div>
           </div>
@@ -174,24 +172,24 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
             onClick={onExit}
             className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-900 text-slate-700 dark:text-slate-200"
           >
-            {isPolish ? 'Wyjdź' : 'Exit'}
+            {t('myWork.decisionReviewNext.exit', 'Exit')}
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
+            <span>{t('myWork.decisionReviewNext.loading', 'Loading…')}</span>
           </div>
         ) : items.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak pozycji w kolejce.' : 'Queue is empty.'}
+            {t('myWork.decisionReviewNext.queueIsEmpty', 'Queue is empty.')}
           </div>
         ) : (
           <div className="flex gap-3">
             <div className="w-[360px] flex-shrink-0 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700 text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Kolejka' : 'Queue'} ({items.length})
+                {t('myWork.decisionReviewNext.queue', 'Queue')} ({items.length})
               </div>
               <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
                 {items.map((it, idx) => (

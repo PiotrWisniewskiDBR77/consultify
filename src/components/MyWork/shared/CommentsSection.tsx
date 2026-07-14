@@ -62,7 +62,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   expanded = false,
   onToggleExpand,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -79,12 +79,12 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return isPolish ? 'Przed chwilą' : 'Just now';
+    if (diffMins < 1) return t('myWork.comments.justNow', 'Just now');
     if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
     if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
     if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
 
-    return date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+    return date.toLocaleDateString(t('myWork.comments.dateToLocaleDateString', 'en-US'), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -99,9 +99,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       setSubmitting(true);
       await onAddComment(newComment.trim());
       setNewComment('');
-      toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
+      toast.success(t('myWork.comments.toastSuccess', 'Comment added'));
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      toast.error(t('myWork.comments.toastError', 'Failed to add comment'));
     } finally {
       setSubmitting(false);
     }
@@ -118,9 +118,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         setReplyingTo(null);
         // Auto-expand replies
         setExpandedReplies((prev) => new Set([...prev, parentId]));
-        toast.success(isPolish ? 'Odpowiedź dodana' : 'Reply added');
+        toast.success(t('myWork.comments.toastSuccess2', 'Reply added'));
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się dodać odpowiedzi' : 'Failed to add reply');
+        toast.error(t('myWork.comments.toastError2', 'Failed to add reply'));
       } finally {
         setSubmitting(false);
       }
@@ -132,9 +132,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     async (commentId: string) => {
       if (
         !confirm(
-          isPolish
-            ? 'Czy na pewno chcesz usunąć ten komentarz?'
-            : 'Are you sure you want to delete this comment?'
+          t('myWork.comments.areYouSureYou', 'Are you sure you want to delete this comment?')
         )
       ) {
         return;
@@ -142,9 +140,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
       try {
         await onDeleteComment(commentId);
-        toast.success(isPolish ? 'Komentarz usunięty' : 'Comment deleted');
+        toast.success(t('myWork.comments.toastSuccess3', 'Comment deleted'));
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+        toast.error(t('myWork.comments.toastError3', 'Failed to delete comment'));
       }
     },
     [onDeleteComment, isPolish]
@@ -210,7 +208,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   </span>
                   {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
                     <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">
-                      ({isPolish ? 'edytowano' : 'edited'})
+                      ({t('myWork.comments.edited', 'edited')})
                     </span>
                   )}
                 </div>
@@ -220,7 +218,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   <button
                     onClick={() => handleDelete(comment.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-all"
-                    title={isPolish ? 'Usuń' : 'Delete'}
+                    title={t('myWork.comments.title', 'Delete')}
                   >
                     <Trash2
                       size={14}
@@ -258,7 +256,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:text-slate-500 transition-colors"
                 >
                   <CornerDownRight size={14} />
-                  <span>{isPolish ? 'Odpowiedz' : 'Reply'}</span>
+                  <span>{t('myWork.comments.reply', 'Reply')}</span>
                 </button>
               )}
 
@@ -297,7 +295,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       type="text"
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder={isPolish ? 'Napisz odpowiedź...' : 'Write a reply...'}
+                      placeholder={t('myWork.comments.placeholder', 'Write a reply...')}
                       className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
@@ -329,7 +327,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       }}
                       className="px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                     >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
+                      {t('myWork.comments.cancel', 'Cancel')}
                     </button>
                   </div>
                 </motion.div>
@@ -372,7 +370,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
           <div className="p-2 rounded-xl bg-primary-500/10 dark:bg-primary-500/20">
             <MessageCircle size={18} className="text-primary-500 dark:text-primary-400" />
           </div>
-          <span className="text-sm font-semibold">{isPolish ? 'Komentarze' : 'Comments'}</span>
+          <span className="text-sm font-semibold">{t('myWork.comments.comments', 'Comments')}</span>
         </div>
         <div className="flex items-center gap-2">
           {comments.length > 0 && (
@@ -395,7 +393,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 }}
                 disabled={isGeneratingAI}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
-                title={isPolish ? 'Wygeneruj komentarz AI' : 'Generate AI comment'}
+                title={t('myWork.comments.title2', 'Generate AI comment')}
               >
                 {isGeneratingAI ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -440,10 +438,10 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                     />
                   </motion.div>
                   <p className="text-sm font-medium">
-                    {isPolish ? 'Brak komentarzy' : 'No comments yet'}
+                    {t('myWork.comments.noCommentsYet', 'No comments yet')}
                   </p>
                   <p className="text-xs mt-1 text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'Rozpocznij dyskusję...' : 'Start the conversation...'}
+                    {t('myWork.comments.startTheConversation', 'Start the conversation...')}
                   </p>
                 </motion.div>
               ) : (
@@ -467,7 +465,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       ref={textareaRef}
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-                      placeholder={isPolish ? 'Napisz komentarz...' : 'Write a comment...'}
+                      placeholder={t('myWork.comments.placeholder2', 'Write a comment...')}
                       rows={1}
                       className="flex-1 px-4 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all resize-none"
                       onKeyDown={(e) => {
@@ -490,7 +488,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       ) : (
                         <>
                           <Send size={18} />
-                          <span className="hidden sm:inline">{isPolish ? 'Wyślij' : 'Send'}</span>
+                          <span className="hidden sm:inline">{t('myWork.comments.send', 'Send')}</span>
                         </>
                       )}
                     </motion.button>

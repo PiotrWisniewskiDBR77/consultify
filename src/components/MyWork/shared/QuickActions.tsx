@@ -108,7 +108,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   showComplete = true,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -281,7 +281,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               <User size={14} />
             )
           }
-          label={currentAssignee?.name || (isPolish ? 'Nieprzypisane' : 'Unassigned')}
+          label={currentAssignee?.name || (t('myWork.quickActions.unassigned', 'Unassigned'))}
         >
           <button
             onClick={() => {
@@ -295,7 +295,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           >
             <User size={14} className="text-slate-600" />
             <span className="text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Nieprzypisane' : 'Unassigned'}
+              {t('myWork.quickActions.unassigned2', 'Unassigned')}
             </span>
           </button>
           <div className="border-t border-slate-200 dark:border-navy-600 my-1" />
@@ -343,12 +343,12 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               transition-all hover:bg-slate-100 dark:hover:bg-navy-700
               ${dueDate ? 'text-slate-700 dark:text-slate-300' : 'text-slate-600 dark:text-slate-500'}
             `}
-            title={isPolish ? 'Ustaw termin' : 'Set due date'}
+            title={t('myWork.quickActions.title', 'Set due date')}
           >
             <Calendar size={14} />
             {!compact && dueDate && (
               <span className="hidden sm:inline">
-                {new Date(dueDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                {new Date(dueDate).toLocaleDateString(t('myWork.quickActions.toLocaleDateString', 'en-US'), {
                   month: 'short',
                   day: 'numeric',
                 })}
@@ -363,7 +363,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
         <button
           onClick={onStartTimer}
           className="p-1.5 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
-          title={isPolish ? 'Uruchom timer' : 'Start timer'}
+          title={t('myWork.quickActions.title2', 'Start timer')}
         >
           <Play size={14} />
         </button>
@@ -374,7 +374,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
         <button
           onClick={() => setShowMoreMenu(!showMoreMenu)}
           className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all"
-          title={isPolish ? 'Więcej akcji' : 'More actions'}
+          title={t('myWork.quickActions.title3', 'More actions')}
         >
           <MoreHorizontal size={16} />
         </button>
@@ -398,7 +398,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                 >
                   <Pencil size={14} />
-                  <span>{isPolish ? 'Edytuj' : 'Edit'}</span>
+                  <span>{t('myWork.quickActions.edit', 'Edit')}</span>
                 </button>
               )}
               {onDuplicate && (
@@ -410,7 +410,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                 >
                   <Copy size={14} />
-                  <span>{isPolish ? 'Duplikuj' : 'Duplicate'}</span>
+                  <span>{t('myWork.quickActions.duplicate', 'Duplicate')}</span>
                 </button>
               )}
               {onDelete && (
@@ -424,7 +424,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10"
                   >
                     <Trash2 size={14} />
-                    <span>{isPolish ? 'Usuń' : 'Delete'}</span>
+                    <span>{t('myWork.quickActions.delete', 'Delete')}</span>
                   </button>
                 </>
               )}

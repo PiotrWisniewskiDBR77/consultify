@@ -669,12 +669,12 @@ const formatRelativeTime = (
   const diffDays = Math.floor(diffHours / 24);
 
   let text: string;
-  if (diffMins < 1) text = isPolish ? 'Przed chwilą' : 'Just now';
+  if (diffMins < 1) text = t('myWork.inboxContent.justNow', 'Just now');
   else if (diffMins < 60) text = isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
   else if (diffHours < 24) text = isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   else if (diffDays < 7) text = isPolish ? `${diffDays} d temu` : `${diffDays}d ago`;
   else
-    text = d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
+    text = d.toLocaleDateString(t('myWork.inboxContent.dToLocaleDateString', 'en-US'), { month: 'short', day: 'numeric' });
 
   let agingLevel: 'fresh' | 'warm' | 'hot' | 'critical';
   if (diffHours < 4) agingLevel = 'fresh';
@@ -1077,7 +1077,7 @@ const PreviewPane: React.FC<{
     setAiError(null);
     try {
       const r = await requestInboxAiAssist({
-        language: isPolish ? 'pl' : 'en',
+        language: t('myWork.inboxContent.language', 'en'),
         item: {
           title: item.title,
           description: item.description,
@@ -1105,7 +1105,7 @@ const PreviewPane: React.FC<{
         recommendedReason: String(r.recommendedReason || ''),
       });
     } catch (e: any) {
-      setAiError(e?.message || (isPolish ? 'AI niedostępne' : 'AI unavailable'));
+      setAiError(e?.message || (t('myWork.inboxContent.aIUnavailable', 'AI unavailable')));
     } finally {
       setAiLoading(false);
     }
@@ -1142,9 +1142,9 @@ const PreviewPane: React.FC<{
             : descriptionTrimmed;
         try {
           await navigator.clipboard.writeText(textToCopy || '');
-          toast.success(isPolish ? 'Skopiowano' : 'Copied');
+          toast.success(t('myWork.inboxContent.toastSuccess', 'Copied'));
         } catch {
-          toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+          toast.error(t('myWork.inboxContent.toastError', 'Copy failed'));
         }
         return;
       }
@@ -1160,7 +1160,7 @@ const PreviewPane: React.FC<{
               : `Summarize the following item in 1-2 sentences. What is it and what to do?\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`;
 
         const r = await requestInboxAiAssist({
-          language: isPolish ? 'pl' : 'en',
+          language: t('myWork.inboxContent.language2', 'en'),
           item: {
             title: item.title,
             description: prompt,
@@ -1188,7 +1188,7 @@ const PreviewPane: React.FC<{
           setDetailsOverride(full);
         }
       } catch {
-        toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        toast.error(t('myWork.inboxContent.toastError2', 'AI unavailable'));
       } finally {
         setDetailsLoading(false);
       }
@@ -1235,7 +1235,7 @@ const PreviewPane: React.FC<{
     ...(item.linkedDecisionId
       ? [
           {
-            label: `${isPolish ? 'Decyzja' : 'Decision'} ${item.linkedDecisionId.slice(0, 8)}…`,
+            label: `${t('myWork.inboxContent.decision', 'Decision')} ${item.linkedDecisionId.slice(0, 8)}…`,
             icon: Scale,
             tone: 'text-amber-600 dark:text-amber-400',
           } as RelationItem,
@@ -1250,7 +1250,7 @@ const PreviewPane: React.FC<{
     {
       buttons: [
         {
-          label: isPolish ? 'Dziś' : 'Today',
+          label: t('myWork.inboxContent.label', 'Today'),
           icon: Zap,
           onClick: () => onTriage('accept_today'),
           colorScheme: 'primary',
@@ -1258,7 +1258,7 @@ const PreviewPane: React.FC<{
           shortcut: 'T',
         },
         {
-          label: isPolish ? 'Tydzień' : 'Week',
+          label: t('myWork.inboxContent.label2', 'Week'),
           icon: CalendarClock,
           onClick: () => onTriage('accept_week'),
           colorScheme: 'neutral',
@@ -1266,7 +1266,7 @@ const PreviewPane: React.FC<{
           shortcut: 'W',
         },
         {
-          label: isPolish ? 'Później' : 'Later',
+          label: t('myWork.inboxContent.label3', 'Later'),
           icon: Calendar,
           onClick: () => onTriage('accept_later'),
           colorScheme: 'neutral',
@@ -1279,14 +1279,14 @@ const PreviewPane: React.FC<{
       columns: onSaveAsNote ? 4 : 3,
       buttons: [
         {
-          label: isPolish ? 'Gotowe' : 'Done',
+          label: t('myWork.inboxContent.label4', 'Done'),
           icon: CheckCircle2,
           onClick: () => onTriage('done'),
           colorScheme: 'neutral',
           shortcut: 'D',
         },
         {
-          label: isPolish ? 'Zapisz' : 'Save',
+          label: t('myWork.inboxContent.label5', 'Save'),
           icon: Bookmark,
           onClick: () => onTriage('save'),
           colorScheme: 'neutral',
@@ -1295,7 +1295,7 @@ const PreviewPane: React.FC<{
         ...(onSaveAsNote
           ? [
               {
-                label: isPolish ? 'Notatka' : 'Note',
+                label: t('myWork.inboxContent.label6', 'Note'),
                 icon: FileText,
                 onClick: () => onSaveAsNote(item),
                 colorScheme: 'neutral' as const,
@@ -1304,7 +1304,7 @@ const PreviewPane: React.FC<{
             ]
           : []),
         {
-          label: isPolish ? 'Odłóż' : 'Dismiss',
+          label: t('myWork.inboxContent.label7', 'Dismiss'),
           icon: Archive,
           onClick: () => onTriage('dismiss'),
           colorScheme: 'neutral',
@@ -1316,7 +1316,7 @@ const PreviewPane: React.FC<{
 
   const extraCopyFormats: ExtraCopyFormat[] = [
     {
-      label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+      label: t('myWork.inboxContent.label8', 'Copy as Markdown'),
       onClick: () =>
         void copyAsMarkdown(
           {
@@ -1324,11 +1324,11 @@ const PreviewPane: React.FC<{
             description: descriptionTrimmed,
             aiSummary: aiResult?.brief,
           },
-          isPolish ? 'pl' : 'en'
+          t('myWork.inboxContent.en', 'en')
         ),
     },
     {
-      label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+      label: t('myWork.inboxContent.label9', 'Copy for Slack'),
       onClick: () =>
         void copyForSlack(
           {
@@ -1336,7 +1336,7 @@ const PreviewPane: React.FC<{
             description: descriptionTrimmed,
             aiSummary: aiResult?.brief,
           },
-          isPolish ? 'pl' : 'en'
+          t('myWork.inboxContent.en2', 'en')
         ),
     },
   ];
@@ -1344,7 +1344,7 @@ const PreviewPane: React.FC<{
   return (
     <PreviewPaneShell
       kicker={undefined}
-      title={item.title || (isPolish ? 'Inbox item' : 'Inbox item')}
+      title={item.title || (t('myWork.inboxContent.inboxItem', 'Inbox item'))}
       onClose={onClose}
       actions={
         <button
@@ -1352,7 +1352,7 @@ const PreviewPane: React.FC<{
           className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
         >
           <Eye size={12} />
-          {isPolish ? 'Otwórz' : 'Open'}
+          {t('myWork.inboxContent.open', 'Open')}
         </button>
       }
       footer={
@@ -1384,7 +1384,7 @@ const PreviewPane: React.FC<{
               className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
             >
               <Clock size={14} />
-              {isPolish ? 'Odłóż na…' : 'Snooze…'}
+              {t('myWork.inboxContent.snooze', 'Snooze…')}
               <ChevronDown
                 size={12}
                 className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
@@ -1412,7 +1412,7 @@ const PreviewPane: React.FC<{
                 className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
               >
                 <Minus size={12} />
-                {isPolish ? 'Cofnij ostatnią sugestię AI' : 'Undo last AI suggestion'}
+                {t('myWork.inboxContent.undoLastAISuggestion', 'Undo last AI suggestion')}
               </button>
             </div>
           ) : null}
@@ -1530,13 +1530,13 @@ const AIHintStrip: React.FC<{
                 actions: [
                   {
                     id: 'regenerate',
-                    label: isPolish ? 'Regeneruj' : 'Regenerate',
+                    label: t('myWork.inboxContent.label10', 'Regenerate'),
                     icon: Sparkles,
                     onClick: () => onRun(),
                   },
                   {
                     id: 'copy',
-                    label: isPolish ? 'Kopiuj' : 'Copy',
+                    label: t('myWork.inboxContent.label11', 'Copy'),
                     icon: Copy,
                     disabled: !result,
                     onClick: () => {
@@ -1547,13 +1547,13 @@ const AIHintStrip: React.FC<{
                               '\n'
                             )
                           )
-                          .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'));
+                          .then(() => toast.success(t('myWork.inboxContent.toastSuccess2', 'Copied')));
                       }
                     },
                   },
                   {
                     id: 'clear',
-                    label: isPolish ? 'Wyczyść' : 'Clear',
+                    label: t('myWork.inboxContent.label12', 'Clear'),
                     icon: X,
                     disabled: !result,
                     onClick: () => onClear(),
@@ -1603,7 +1603,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   onAiOnlyChange,
   onBulkBarChange,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const { emitMyWorkEvent } = useAppStore();
 
@@ -1855,8 +1855,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       });
     } catch (e) {
       console.error('Failed to load inbox', e);
-      setLoadError(isPolish ? 'Nie udało się załadować Inbox' : 'Failed to load Inbox');
-      toast.error(isPolish ? 'Nie udało się załadować Inbox' : 'Failed to load Inbox');
+      setLoadError(t('myWork.inboxContent.setLoadError', 'Failed to load Inbox'));
+      toast.error(t('myWork.inboxContent.toastError3', 'Failed to load Inbox'));
     } finally {
       setLoading(false);
     }
@@ -2009,16 +2009,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         });
         if (previewItem?._key === item._key) setPreviewItem(null);
         const labels: Record<string, string> = {
-          accept_today: isPolish ? 'Focus → Dziś' : 'Focus → Today',
-          accept_week: isPolish ? 'Focus → Ten tydzień' : 'Focus → This week',
-          accept_later: isPolish ? 'Focus → Później' : 'Focus → Later',
-          done: isPolish ? 'Oznaczono jako gotowe' : 'Marked as done',
-          save: isPolish ? 'Zapisano' : 'Saved for later',
-          dismiss: isPolish ? 'Odłożono' : 'Dismissed',
-          archive: isPolish ? 'Zarchiwizowano' : 'Archived',
-          delegate: isPolish ? 'Delegowano' : 'Delegated',
-          schedule: isPolish ? 'Zaplanowano' : 'Scheduled',
-          reject: isPolish ? 'Odrzucono' : 'Rejected',
+          accept_today: t('myWork.inboxContent.acceptToday', 'Focus → Today'),
+          accept_week: t('myWork.inboxContent.acceptWeek', 'Focus → This week'),
+          accept_later: t('myWork.inboxContent.acceptLater', 'Focus → Later'),
+          done: t('myWork.inboxContent.done', 'Marked as done'),
+          save: t('myWork.inboxContent.save', 'Saved for later'),
+          dismiss: t('myWork.inboxContent.dismiss', 'Dismissed'),
+          archive: t('myWork.inboxContent.archive', 'Archived'),
+          delegate: t('myWork.inboxContent.delegate', 'Delegated'),
+          schedule: t('myWork.inboxContent.schedule', 'Scheduled'),
+          reject: t('myWork.inboxContent.reject', 'Rejected'),
         };
         toast.success(labels[action] || 'Done');
         emitMyWorkEvent({
@@ -2029,7 +2029,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         });
       } catch (e) {
         console.error('Failed to triage inbox item', e);
-        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Failed to triage item');
+        toast.error(t('myWork.inboxContent.toastError4', 'Failed to triage item'));
       }
     },
     [isPolish, previewItem, emitMyWorkEvent]
@@ -2045,10 +2045,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           tags: ['from-inbox'],
           status: 'inbox',
         });
-        toast.success(isPolish ? 'Zapisano jako notatkę' : 'Saved as note');
+        toast.success(t('myWork.inboxContent.toastSuccess3', 'Saved as note'));
       } catch (e) {
         console.error('Failed to save inbox item as note', e);
-        toast.error(isPolish ? 'Nie udało się zapisać jako notatkę' : 'Failed to save as note');
+        toast.error(t('myWork.inboxContent.toastError5', 'Failed to save as note'));
       }
     },
     [isPolish]
@@ -2059,13 +2059,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     try {
       const res = await Api.undoLastAITriage();
       if (res.success) {
-        toast.success(isPolish ? 'Cofnięto ostatnią sugestię AI' : 'Undo last AI suggestion');
+        toast.success(t('myWork.inboxContent.toastSuccess4', 'Undo last AI suggestion'));
         fetchInbox();
       } else {
-        toast.error(res.message || (isPolish ? 'Brak AI do cofnięcia' : 'No AI triage to undo'));
+        toast.error(res.message || (t('myWork.inboxContent.noAITriageTo', 'No AI triage to undo')));
       }
     } catch (e) {
-      toast.error(isPolish ? 'Nie udało się cofnąć' : 'Undo failed');
+      toast.error(t('myWork.inboxContent.toastError6', 'Undo failed'));
     }
   }, [isPolish, fetchInbox]);
 
@@ -2099,7 +2099,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           return next;
         });
       }
-      toast.success(isPolish ? 'Odłożono' : 'Snoozed');
+      toast.success(t('myWork.inboxContent.toastSuccess5', 'Snoozed'));
     },
     [isPolish, previewItem]
   );
@@ -2137,7 +2137,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         );
       } catch (e) {
         console.error('Bulk triage failed', e);
-        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Failed to process items');
+        toast.error(t('myWork.inboxContent.toastError7', 'Failed to process items'));
       }
     },
     [filteredItems, selectedIds, isPolish]
@@ -2168,24 +2168,24 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     (item: InboxItem): RowAction[] => [
       {
         id: 'open-preview',
-        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+        label: t('myWork.inboxContent.label13', 'Open preview'),
         icon: ChevronRight,
         divider: true,
         onClick: () => setPreviewItem(item),
       },
       {
         id: 'edit',
-        label: isPolish ? 'Edytuj' : 'Edit',
+        label: t('myWork.inboxContent.label14', 'Edit'),
         icon: Edit2,
         disabled: true,
-        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+        description: t('myWork.inboxContent.description', 'Coming soon (backend)'),
         onClick: () => {},
       },
       {
         // Archive = soft-delete (reversible). For Inbox this maps to the
         // existing "dismiss" triage (item leaves the active queue, not destroyed).
         id: 'archive',
-        label: isPolish ? 'Archiwizuj' : 'Archive',
+        label: t('myWork.inboxContent.label15', 'Archive'),
         icon: Archive,
         onClick: () => triage(item, 'dismiss'),
       },
@@ -2398,9 +2398,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           break;
         case '?':
           toast(
-            isPolish
-              ? 'Skróty: J/K nawigacja, T dziś, W ten tydz., E gotowe, B zapisz, A odłóż, X odrzuć, Enter otwórz, Space zaznacz'
-              : 'Shortcuts: J/K nav, T today, W week, E done, B save, A dismiss, X reject, Enter open, Space select',
+            t('myWork.inboxContent.shortcutsJKNav', 'Shortcuts: J/K nav, T today, W week, E done, B save, A dismiss, X reject, Enter open, Space select'),
             { duration: 5000, icon: '⌨️' }
           );
           break;
@@ -2464,7 +2462,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             {item.suggestedAction && (
               <span
                 className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
-                title={item.suggestedReason || (isPolish ? 'Sugestia AI' : 'AI suggestion')}
+                title={item.suggestedReason || (t('myWork.inboxContent.aISuggestion', 'AI suggestion'))}
               >
                 AI:{' '}
                 {item.suggestedAction === 'accept_today'
@@ -2509,11 +2507,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             {(() => {
               const st = item.itemStatus || (item.triaged ? 'done' : 'open');
               const labels: Record<string, string> = {
-                open: isPolish ? 'Otwarte' : 'Open',
-                done: isPolish ? 'Gotowe' : 'Done',
-                saved: isPolish ? 'Zapisane' : 'Saved',
-                snoozed: isPolish ? 'Odłożone' : 'Snoozed',
-                dismissed: isPolish ? 'Odłożone' : 'Dismissed',
+                open: t('myWork.inboxContent.open2', 'Open'),
+                done: t('myWork.inboxContent.done2', 'Done'),
+                saved: t('myWork.inboxContent.saved', 'Saved'),
+                snoozed: t('myWork.inboxContent.snoozed', 'Snoozed'),
+                dismissed: t('myWork.inboxContent.dismissed', 'Dismissed'),
               };
               return (
                 <span className="inline-flex items-center gap-1.5">
@@ -2555,7 +2553,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.section }}>
             <span className="text-xs text-c-text-secondary">
               {SMART_SECTIONS.find((s) => s.id === item.section)?.[
-                isPolish ? 'labelPl' : 'labelEn'
+                t('myWork.inboxContent.labelEn', 'labelEn')
               ] || item.section}
             </span>
           </td>
@@ -2570,13 +2568,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 system: {
                   icon: Bell,
                   color: 'text-c-text-muted',
-                  label: isPolish ? 'System' : 'System',
+                  label: t('myWork.inboxContent.label16', 'System'),
                 },
                 ai: { icon: Star, color: 'text-primary-500', label: 'AI' },
                 user: {
                   icon: MessageSquare,
                   color: 'text-blue-500',
-                  label: item.source?.userName || (isPolish ? 'Zespół' : 'Team'),
+                  label: item.source?.userName || (t('myWork.inboxContent.team', 'Team')),
                 },
               };
               const c = cfg[src] || cfg.system;
@@ -2631,7 +2629,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             const contextActions: RowAction[] = [
               {
                 id: 'open',
-                label: isPolish ? 'Otwórz' : 'Open',
+                label: t('myWork.inboxContent.label17', 'Open'),
                 icon: Eye,
                 variant: 'primary',
                 onClick: () => open(item),
@@ -2654,44 +2652,44 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 : []),
               {
                 id: 'focus-today',
-                label: isPolish ? 'Focus → Dziś' : 'Focus → Today',
+                label: t('myWork.inboxContent.label18', 'Focus → Today'),
                 icon: Zap,
                 onClick: () => triage(item, 'accept_today'),
               },
               {
                 id: 'focus-week',
-                label: isPolish ? 'Focus → Ten tydz.' : 'Focus → This week',
+                label: t('myWork.inboxContent.label19', 'Focus → This week'),
                 icon: CalendarClock,
                 onClick: () => triage(item, 'accept_week'),
               },
               {
                 id: 'focus-later',
-                label: isPolish ? 'Focus → Później' : 'Focus → Later',
+                label: t('myWork.inboxContent.label20', 'Focus → Later'),
                 icon: Calendar,
                 onClick: () => triage(item, 'accept_later'),
               },
               {
                 id: 'done',
-                label: isPolish ? 'Gotowe' : 'Done',
+                label: t('myWork.inboxContent.label21', 'Done'),
                 icon: CheckCircle2,
                 divider: true,
                 onClick: () => triage(item, 'done'),
               },
               {
                 id: 'save',
-                label: isPolish ? 'Zapisz' : 'Save',
+                label: t('myWork.inboxContent.label22', 'Save'),
                 icon: Bookmark,
                 onClick: () => triage(item, 'save'),
               },
               {
                 id: 'save-note',
-                label: isPolish ? 'Zapisz jako notatkę' : 'Save as note',
+                label: t('myWork.inboxContent.label23', 'Save as note'),
                 icon: FileText,
                 onClick: () => handleSaveAsNote(item),
               },
               ...SNOOZE_PRESETS.map((p, idx) => ({
                 id: `snooze-${p.id}`,
-                label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`,
+                label: `${t('myWork.inboxContent.snooze2', 'Snooze')}: ${isPolish ? p.labelPl : p.labelEn}`,
                 icon: Clock,
                 divider: idx === 0,
                 onClick: () => handleSnooze(item, p.id),
@@ -2706,7 +2704,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 actions: [
                   {
                     id: 'reject',
-                    label: isPolish ? 'Odrzuć' : 'Reject',
+                    label: t('myWork.inboxContent.label24', 'Reject'),
                     icon: X,
                     variant: 'danger',
                     onClick: () => triage(item, 'reject'),
@@ -2762,7 +2760,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             onClick={() => handleSort('title')}
             className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
           >
-            {isPolish ? 'Tytuł' : 'Title'}
+            {t('myWork.inboxContent.title', 'Title')}
             <InboxSortIcon field="title" sortConfig={sortConfig} />
           </button>
           <ColumnResizer
@@ -2870,9 +2868,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               }
               showDescription={showRowDescription}
               onToggleDescription={updateRowDescriptionSetting}
-              label={isPolish ? 'Ustawienia widoku' : 'View settings'}
-              columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
-              descriptionLabel={isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+              label={t('myWork.inboxContent.label25', 'View settings')}
+              columnsHeading={t('myWork.inboxContent.columnsHeading', 'Visible columns')}
+              descriptionLabel={t('myWork.inboxContent.descriptionLabel', 'Show row description')}
             />
           </div>
         </th>
@@ -2886,11 +2884,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     const renderStatusPill = (item: InboxItem) => {
       const st = item.itemStatus || (item.triaged ? 'done' : 'open');
       const labels: Record<string, string> = {
-        open: isPolish ? 'Otwarte' : 'Open',
-        done: isPolish ? 'Gotowe' : 'Done',
-        saved: isPolish ? 'Zapisane' : 'Saved',
-        snoozed: isPolish ? 'Odłożone' : 'Snoozed',
-        dismissed: isPolish ? 'Odłożone' : 'Dismissed',
+        open: t('myWork.inboxContent.open3', 'Open'),
+        done: t('myWork.inboxContent.done3', 'Done'),
+        saved: t('myWork.inboxContent.saved2', 'Saved'),
+        snoozed: t('myWork.inboxContent.snoozed2', 'Snoozed'),
+        dismissed: t('myWork.inboxContent.dismissed2', 'Dismissed'),
       };
       return (
         <span className="inline-flex items-center gap-1.5">
@@ -2949,7 +2947,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     : 'border-c-border-subtle hover:border-c-border-strong'
                 }`}
                 aria-label={
-                  isSelected ? (isPolish ? 'Odznacz' : 'Deselect') : isPolish ? 'Zaznacz' : 'Select'
+                  isSelected ? (t('myWork.inboxContent.deselect', 'Deselect')) : t('myWork.inboxContent.select', 'Select')
                 }
               >
                 {isSelected && <CheckSquare size={10} />}
@@ -2968,39 +2966,39 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                       const contextActions: RowAction[] = [
                         {
                           id: 'open',
-                          label: isPolish ? 'Otwórz' : 'Open',
+                          label: t('myWork.inboxContent.label26', 'Open'),
                           icon: Eye,
                           variant: 'primary',
                           onClick: () => open(item),
                         },
                         {
                           id: 'focus-today',
-                          label: isPolish ? 'Focus → Dziś' : 'Focus → Today',
+                          label: t('myWork.inboxContent.label27', 'Focus → Today'),
                           icon: Zap,
                           onClick: () => triage(item, 'accept_today'),
                         },
                         {
                           id: 'focus-week',
-                          label: isPolish ? 'Focus → Ten tydz.' : 'Focus → This week',
+                          label: t('myWork.inboxContent.label28', 'Focus → This week'),
                           icon: CalendarClock,
                           onClick: () => triage(item, 'accept_week'),
                         },
                         {
                           id: 'focus-later',
-                          label: isPolish ? 'Focus → Później' : 'Focus → Later',
+                          label: t('myWork.inboxContent.label29', 'Focus → Later'),
                           icon: Calendar,
                           onClick: () => triage(item, 'accept_later'),
                         },
                         {
                           id: 'done',
-                          label: isPolish ? 'Gotowe' : 'Done',
+                          label: t('myWork.inboxContent.label30', 'Done'),
                           icon: CheckCircle2,
                           divider: true,
                           onClick: () => triage(item, 'done'),
                         },
                         {
                           id: 'save',
-                          label: isPolish ? 'Zapisz' : 'Save',
+                          label: t('myWork.inboxContent.label31', 'Save'),
                           icon: Bookmark,
                           onClick: () => triage(item, 'save'),
                         },
@@ -3008,7 +3006,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           ? [
                               {
                                 id: 'save-as-note',
-                                label: isPolish ? 'Zapisz jako notatkę' : 'Save as note',
+                                label: t('myWork.inboxContent.label32', 'Save as note'),
                                 icon: FileText,
                                 onClick: () => handleSaveAsNote(item),
                                 divider: true,
@@ -3017,7 +3015,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           : []),
                         ...SNOOZE_PRESETS.map((p, idx) => ({
                           id: `snooze-${p.id}`,
-                          label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`,
+                          label: `${t('myWork.inboxContent.snooze3', 'Snooze')}: ${isPolish ? p.labelPl : p.labelEn}`,
                           icon: Clock,
                           divider: idx === 0 && !handleSaveAsNote,
                           onClick: () => handleSnooze(item, p.id),
@@ -3033,7 +3031,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           actions: [
                             {
                               id: 'reject',
-                              label: isPolish ? 'Odrzuć' : 'Reject',
+                              label: t('myWork.inboxContent.label33', 'Reject'),
                               icon: X,
                               variant: 'danger',
                               onClick: () => triage(item, 'reject'),
@@ -3116,7 +3114,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 {item.linkedDecisionId ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                     <Scale size={10} />
-                    {isPolish ? 'Decyzja' : 'Decision'} {item.linkedDecisionId.slice(0, 8)}…
+                    {t('myWork.inboxContent.decision2', 'Decision')} {item.linkedDecisionId.slice(0, 8)}…
                   </span>
                 ) : null}
               </div>
@@ -3164,7 +3162,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   onClick={() => handleSelectSection(section.id)}
                   className="text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
                 >
-                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                  {t('myWork.inboxContent.selectAll', 'Select all')}
                 </button>
               </div>
 
@@ -3223,7 +3221,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                         >
                           <ChevronUp size={12} />
-                          {isPolish ? 'Pokaż mniej' : 'Show less'}
+                          {t('myWork.inboxContent.showLess', 'Show less')}
                         </button>
                       ) : null}
                     </>
@@ -3278,11 +3276,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             ((searchQuery || '').trim().length > 0 || actionRequiredOnly) ? (
             <SharedEmptyState
               variant="filter"
-              title={isPolish ? 'Nic nie pasuje do filtra' : 'Nothing matches this filter'}
+              title={t('myWork.inboxContent.title2', 'Nothing matches this filter')}
               description={
-                isPolish
-                  ? 'Zmień wyszukiwanie lub wyłącz filtr „wymaga działania”, aby zobaczyć więcej.'
-                  : 'Change your search or turn off the “action required” filter to see more.'
+                t('myWork.inboxContent.changeYourSearchOr', 'Change your search or turn off the “action required” filter to see more.')
               }
             />
           ) : filteredItems.length === 0 ? (
@@ -3291,38 +3287,30 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 <>
                   <CheckCircle2 size={40} className="mx-auto mb-4 text-emerald-400" />
                   <p className="text-base font-semibold mb-1">
-                    {isPolish ? 'Brak zakończonych elementów' : 'No completed items'}
+                    {t('myWork.inboxContent.noCompletedItems', 'No completed items')}
                   </p>
                   <p className="text-sm text-c-text-muted">
-                    {isPolish
-                      ? 'Oznaczaj elementy jako gotowe (E), żeby tu trafiały.'
-                      : "Mark items as Done (E) and they'll appear here."}
+                    {t('myWork.inboxContent.markItemsAsDone', 'Mark items as Done (E) and they\'ll appear here.')}
                   </p>
                 </>
               ) : statusTab === 'saved' ? (
                 <>
                   <BookmarkCheck size={40} className="mx-auto mb-4 text-amber-400" />
                   <p className="text-base font-semibold mb-1">
-                    {isPolish ? 'Brak zapisanych elementów' : 'No saved items'}
+                    {t('myWork.inboxContent.noSavedItems', 'No saved items')}
                   </p>
                   <p className="text-sm text-c-text-muted">
-                    {isPolish
-                      ? 'Użyj Zapisz (B) aby odłożyć elementy na później.'
-                      : 'Use Save (B) to bookmark items for later.'}
+                    {t('myWork.inboxContent.useSaveBTo', 'Use Save (B) to bookmark items for later.')}
                   </p>
                 </>
               ) : (
                 <>
                   <Inbox size={40} className="mx-auto mb-4 text-c-text-muted" />
                   <p className="text-base font-semibold mb-1">
-                    {isPolish
-                      ? 'Inbox jest pusty — zero zaległości!'
-                      : 'Inbox is empty — zero backlog!'}
+                    {t('myWork.inboxContent.inboxIsEmptyZero', 'Inbox is empty — zero backlog!')}
                   </p>
                   <p className="text-sm text-c-text-muted">
-                    {isPolish
-                      ? 'Wszystko przetworzone. Świetna robota!'
-                      : 'Everything processed. Great job!'}
+                    {t('myWork.inboxContent.everythingProcessedGreatJob', 'Everything processed. Great job!')}
                   </p>
                 </>
               )}
