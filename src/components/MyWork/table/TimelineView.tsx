@@ -67,7 +67,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   onFieldChange,
   onNodeClick,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [zoom, setZoom] = useState<ZoomLevel>('week');
@@ -198,12 +198,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-c-text-secondary mb-1">
-            {isPl ? 'Brak dat do wyświetlenia' : 'No dates to display'}
+            {t('ideas.table.timelineView.noDatesToDisplay', 'No dates to display')}
           </p>
           <p className="text-[10px] text-c-text-muted">
-            {isPl
-              ? 'Dodaj kolumny typu "date" aby zobaczyć timeline'
-              : 'Add "date" type columns to see the timeline'}
+            {t(
+              'ideas.table.timelineView.addDateColumns',
+              'Add "date" type columns to see the timeline'
+            )}
           </p>
         </div>
       </div>
@@ -220,7 +221,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
         <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-          Timeline
+          {t('ideas.table.timelineView.timeline', 'Timeline')}
         </span>
         <div className="flex-1" />
         <div className="flex items-center gap-1 rounded-lg border border-c-border-subtle overflow-hidden">
@@ -231,16 +232,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-c-info/10 text-c-info' : 'text-c-text-secondary hover:text-c-text'}`}
             >
               {z === 'day'
-                ? isPl
-                  ? 'Dzień'
-                  : 'Day'
+                ? t('ideas.table.timelineView.day', 'Day')
                 : z === 'week'
-                  ? isPl
-                    ? 'Tydzień'
-                    : 'Week'
-                  : isPl
-                    ? 'Miesiąc'
-                    : 'Month'}
+                  ? t('ideas.table.timelineView.week', 'Week')
+                  : t('ideas.table.timelineView.month', 'Month')}
             </button>
           ))}
         </div>

@@ -21886,6 +21886,14 @@
         "usesCount": "{{count}} uses",
         "newBadge": "New",
         "use": "Use"
+      },
+      "timelineView": {
+        "noDatesToDisplay": "No dates to display",
+        "addDateColumns": "Add \"date\" type columns to see the timeline",
+        "timeline": "Timeline",
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
       }
     },
     "mindmap": {
