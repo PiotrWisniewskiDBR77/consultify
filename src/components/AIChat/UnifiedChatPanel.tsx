@@ -3139,7 +3139,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         window.dispatchEvent(
           new CustomEvent('idea-workspace-quick-action', {
-            detail: { action: mmAction },
+            // N-13: pass the raw prompt text through so mm_create / mm_apply_framework
+            // handlers can seed the map topic / pick the right framework — the action
+            // name alone isn't enough context to act on (see useMindMapQuickActions).
+            detail: { action: mmAction, text },
           })
         );
 
