@@ -63,6 +63,7 @@ import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
   ASSESSMENT_STATUSES,
   FilterChip,
+  getStatusesForModule,
   GridItem,
   GridView,
   ModuleContext,
@@ -1319,7 +1320,37 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     }
   }, [ensureHubChatOpen, tabs, activeTab, addChatMessage, isPolish, currentData.length]);
 
-  const hubMenu3Chips = useMemo(
+  // #71: Tools-parity — behind ff assessmentMenu3StatusChips (default OFF).
+  // DiscoveryToolsHub's CommandRowContent renders Menu 3 LEFT as a clickable
+  // status-filter chip row (dot + count, active=filled) for every non-Library
+  // tab, driven by the same per-tab status list that already backs the
+  // StatusDropdown (Menu 2, `statusContext`). AssessmentHub's `statusFilter`
+  // is currently only settable via that Menu 2 dropdown — Menu 3 shows three
+  // static, non-interactive info badges instead (kanon §A2 "Bez liczników w
+  // Menu 2 (liczniki mieszkają w Menu 3)"). Reuses `getStatusesForModule`
+  // (same source as StatusDropdown) instead of a bespoke status list.
+  const menu3StatusChipsEnabled = isEnabled('assessmentMenu3StatusChips');
+  const statusChipOptions = useMemo(
+    () => getStatusesForModule(statusContext),
+    [statusContext]
+  );
+  const statusFilterChips = useMemo(
+    () =>
+      statusChipOptions.map((opt) => ({
+        id: `status-${opt.id}`,
+        label: isPolish ? opt.labelPL : opt.label,
+        badge: statusCounts[opt.id] ?? 0,
+        active: statusFilter === opt.id,
+        icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
+        onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
+        title: isPolish
+          ? `Filtruj listę po statusie „${opt.labelPL}".`
+          : `Filter the list by status "${opt.label}".`,
+      })),
+    [isPolish, statusChipOptions, statusCounts, statusFilter]
+  );
+
+  const hubMenu3InfoChips = useMemo(
     () => [
       {
         // #70: was "Reports lane"/"Initiatives lane"/"Assessment lane" — "lane" is
@@ -1357,6 +1388,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     ],
     [activeTab, currentData.length, isPolish, openDocuments.length, statusFilter]
   );
+
+  const hubMenu3Chips = menu3StatusChipsEnabled ? statusFilterChips : hubMenu3InfoChips;
 
   const thirdHubAction = useMemo(() => {
     if (activeTab === 'reports') {

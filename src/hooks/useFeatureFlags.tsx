@@ -161,6 +161,19 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: false,
   },
   {
+    id: 'assessmentMenu3StatusChips',
+    name: 'Assessment: Menu 3 status filter chips',
+    description:
+      '#71 Tools-parity: replaces the 3 static informational Menu 3 chips (active-tab/' +
+      'status-filter-label/documents) on AssessmentHub with a real clickable status-filter ' +
+      'chip row (dot + count, toggle on click) — same TRIADA_KANON.md §A2/§A3 pattern already ' +
+      'live on DiscoveryToolsHub (Tools) non-Library tabs. Counters currently live in Menu 2 ' +
+      '(StatusDropdown, canon violation: "Bez liczników w Menu 2"); this moves them to Menu 3.',
+    defaultValue: false,
+    category: 'ui',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:
