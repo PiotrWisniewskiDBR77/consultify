@@ -13,8 +13,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   type BenchmarkIndustry,
+  benchmarkFinancial,
   buildIndicatorBenchmarkRange,
   describeRatioAgainstBenchmark,
+  financeIndustryClassToBenchmarkIndustry,
+  FINANCIAL_BENCHMARK_CALIBRATION_THRESHOLD_N,
+  FINANCIAL_BENCHMARK_DISCLAIMER,
+  FINANCIAL_BENCHMARK_REFRESH_OWNER,
   getAvailableBenchmarkIndustries,
   getBenchmarkIndustryLabel,
   getIndustryBenchmarkBands,
@@ -22,6 +27,7 @@ import {
   INDUSTRY_BENCHMARK_PROFILES,
   resolveBenchmarkIndustry,
 } from '../../../server/src/services/financeIndustryBenchmarks.ts';
+import type { FinanceIndustryClass } from '../../../server/src/services/financeParameterGuidance.ts';
 
 describe('resolveBenchmarkIndustry', () => {
   it('resolves PL free text to the correct canonical industry', () => {
@@ -309,5 +315,166 @@ describe('describeRatioAgainstBenchmark — replaces the universal ±15% narrati
     expect(result.benchmark).toBeNull();
     expect(result.sentence.pl).toContain('Brak zakresu branżowego');
     expect(result.sentence.en).toContain('No industry band available');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// O6.3 — source metadata (skąd dane, kto odświeża, disclaimer)
+// ---------------------------------------------------------------------------
+
+describe('O6.3 source metadata — {source, date, refresh-owner, confidence-level}', () => {
+  it('module-level disclaimer + refresh owner are non-empty bilingual and name the n≥10 calibration trigger', () => {
+    expect(FINANCIAL_BENCHMARK_CALIBRATION_THRESHOLD_N).toBe(10);
+    for (const text of [
+      FINANCIAL_BENCHMARK_DISCLAIMER.pl,
+      FINANCIAL_BENCHMARK_DISCLAIMER.en,
+      FINANCIAL_BENCHMARK_REFRESH_OWNER.pl,
+      FINANCIAL_BENCHMARK_REFRESH_OWNER.en,
+    ]) {
+      expect(text.length).toBeGreaterThan(20);
+    }
+    expect(FINANCIAL_BENCHMARK_DISCLAIMER.pl).toContain('n ≥ 10');
+    expect(FINANCIAL_BENCHMARK_DISCLAIMER.en).toContain('n ≥ 10');
+    expect(FINANCIAL_BENCHMARK_DISCLAIMER.pl).toContain('expert-hypothesis-v1');
+    // Refresh owner must actually say WHO — not a vague "someone will".
+    expect(FINANCIAL_BENCHMARK_REFRESH_OWNER.pl.toLowerCase()).toContain('finance advisory');
+  });
+
+  it('every getRatioBenchmark result carries complete sourceMetadata (no missing field)', () => {
+    const industries = getAvailableBenchmarkIndustries();
+    for (const industry of industries) {
+      const result = getRatioBenchmark(industry, 'EBITDA_MARGIN');
+      expect(result, `${industry} EBITDA_MARGIN lookup failed`).not.toBeNull();
+      const meta = result!.sourceMetadata;
+      expect(meta.source.length, `${industry} missing source`).toBeGreaterThan(0);
+      expect(meta.asOf.length, `${industry} missing asOf`).toBeGreaterThan(0);
+      expect(['sourced', 'expert-estimate']).toContain(meta.confidenceLevel);
+      expect(meta.refreshOwner.pl.length).toBeGreaterThan(0);
+      expect(meta.refreshOwner.en.length).toBeGreaterThan(0);
+      expect(meta.calibrationThresholdN).toBe(10);
+      expect(meta.disclaimer.pl.length).toBeGreaterThan(0);
+      expect(meta.disclaimer.en.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('sourceMetadata.confidenceLevel always matches the underlying band.confidence', () => {
+    const result = getRatioBenchmark('SaaS company', 'REVENUE_PER_EMPLOYEE');
+    expect(result).not.toBeNull();
+    expect(result!.sourceMetadata.confidenceLevel).toBe(result!.band.confidence);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// benchmarkFinancial(industry, ratio, value) — position + interpretation
+// ---------------------------------------------------------------------------
+
+describe('benchmarkFinancial', () => {
+  // industrial-manufacturing EBITDA_MARGIN band: p25=8, median=11, p75=16.
+  it('returns below-p25 for a weak value on a higher-is-better ratio', () => {
+    const result = benchmarkFinancial({
+      industrySegment: 'produkcja przemysłowa',
+      ratioCode: 'EBITDA_MARGIN',
+      value: 5,
+    });
+    expect(result.verdict).toBe('below-p25');
+    expect(result.interpretation.pl).toContain('poniżej dolnego kwartyla');
+    expect(result.interpretation.en).toContain('below the industry lower quartile');
+    expect(result.sourceMetadata).not.toBeNull();
+  });
+
+  it('returns in-range for a value between p25 and p75', () => {
+    const result = benchmarkFinancial({
+      industrySegment: 'produkcja przemysłowa',
+      ratioCode: 'EBITDA_MARGIN',
+      value: 12,
+    });
+    expect(result.verdict).toBe('in-range');
+    expect(result.interpretation.pl).toContain('w typowym zakresie branży');
+  });
+
+  it('returns above-p75 for a strong value on a higher-is-better ratio', () => {
+    const result = benchmarkFinancial({
+      industrySegment: 'produkcja przemysłowa',
+      ratioCode: 'EBITDA_MARGIN',
+      value: 20,
+    });
+    expect(result.verdict).toBe('above-p75');
+    expect(result.interpretation.pl).toContain('powyżej górnego kwartyla');
+  });
+
+  it('keeps the verdict purely numeric for a lower-is-better ratio (DSO), but flips the interpretation', () => {
+    // industrial DSO band is stored worse-to-better: p25=70, median=50, p75=35.
+    // Numeric bounds for position purposes are [35, 70] regardless of storage order.
+    const good = benchmarkFinancial({
+      industrySegment: 'produkcja przemysłowa',
+      ratioCode: 'DSO',
+      value: 30, // numerically below the 35..70 bound → 'below-p25' position
+      higherIsBetter: false,
+    });
+    expect(good.verdict).toBe('below-p25'); // pure numeric position, not a quality label
+    expect(good.interpretation.en).toContain('strength signal'); // but GOOD news for DSO
+
+    const bad = benchmarkFinancial({
+      industrySegment: 'produkcja przemysłowa',
+      ratioCode: 'DSO',
+      value: 90, // numerically above the 35..70 bound → 'above-p75' position
+      higherIsBetter: false,
+    });
+    expect(bad.verdict).toBe('above-p75');
+    expect(bad.interpretation.en).toContain('weakness signal'); // BAD news for DSO
+  });
+
+  it('returns not-available (never throws) for an unbenchmarked ratio code', () => {
+    const result = benchmarkFinancial({
+      industrySegment: 'produkcja',
+      // @ts-expect-error — deliberately probing the "no band" branch
+      ratioCode: 'MADE_UP_CODE',
+      value: 1,
+    });
+    expect(result.verdict).toBe('not-available');
+    expect(result.band).toBeNull();
+    expect(result.sourceMetadata).toBeNull();
+  });
+
+  it('carries the disclaimer + refresh owner through to the result', () => {
+    const result = benchmarkFinancial({
+      industrySegment: 'usługi konsultingowe',
+      ratioCode: 'NET_MARGIN',
+      value: 10,
+    });
+    expect(result.sourceMetadata?.disclaimer.pl).toBe(FINANCIAL_BENCHMARK_DISCLAIMER.pl);
+    expect(result.sourceMetadata?.refreshOwner.pl).toBe(FINANCIAL_BENCHMARK_REFRESH_OWNER.pl);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// O4 ↔ O6 taxonomy bridge
+// ---------------------------------------------------------------------------
+
+describe('financeIndustryClassToBenchmarkIndustry', () => {
+  it('maps every O4 FinanceIndustryClass to a valid O6 BenchmarkIndustry', () => {
+    const o4Classes: FinanceIndustryClass[] = [
+      'discrete-manufacturing',
+      'process-manufacturing',
+      'professional-services',
+      'retail-trade',
+      'software-saas',
+      'infrastructure-utilities',
+      'generic',
+    ];
+    const validO6 = new Set(getAvailableBenchmarkIndustries());
+    for (const cls of o4Classes) {
+      const mapped = financeIndustryClassToBenchmarkIndustry(cls);
+      expect(validO6.has(mapped), `${cls} -> ${mapped} is not a valid BenchmarkIndustry`).toBe(
+        true
+      );
+    }
+  });
+
+  it('keeps professional-services and software-saas as direct 1:1 matches', () => {
+    expect(financeIndustryClassToBenchmarkIndustry('professional-services')).toBe(
+      'professional-services'
+    );
+    expect(financeIndustryClassToBenchmarkIndustry('software-saas')).toBe('software-saas');
   });
 });

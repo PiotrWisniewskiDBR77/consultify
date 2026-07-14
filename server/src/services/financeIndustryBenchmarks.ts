@@ -41,6 +41,8 @@
  * Pure data + pure lookup functions only. No I/O, no LLM.
  */
 
+import type { FinanceIndustryClass } from './financeParameterGuidance.js';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -106,6 +108,61 @@ export interface IndustryBenchmarkProfile {
   industry: BenchmarkIndustry;
   label: { pl: string; en: string };
   ratios: Partial<Record<BenchmarkRatioCode, RatioBenchmarkBand>>;
+}
+
+// ---------------------------------------------------------------------------
+// O6.3 — Źródła i aktualizacja (skąd dane, kto odświeża, disclaimer)
+// ---------------------------------------------------------------------------
+// Per-band `source` + `asOf` + `confidence` (above) already answer "skąd
+// dane" and "jak pewne". What was missing (closing the O6.3 gap): an
+// explicit, consumer-facing "kto odświeża" ownership statement and a single
+// disclaimer sentence every rendering of a band MUST carry — mirroring
+// `drdIndustryProfiles.DRD_INDUSTRY_PROFILE_DISCLAIMER` / `financeParameter
+// Guidance.PARAMETER_GUIDANCE_DISCLAIMER` (both "expert-hypothesis-v1,
+// kalibracja od n≥10" pattern). This module's bands are a MIX of
+// publicly-sourced ('sourced') and expert-estimated ('expert-estimate')
+// figures — the disclaimer says so honestly rather than pretending
+// uniform provenance.
+
+/** How many closed, anonymised org analyses in a segment trigger recalibration. */
+export const FINANCIAL_BENCHMARK_CALIBRATION_THRESHOLD_N = 10;
+
+/** O6.3 "kto odświeża" — who owns keeping the named sources current. */
+export const FINANCIAL_BENCHMARK_REFRESH_OWNER = {
+  pl: 'Zespół Finance Advisory DBR77 (właściciel: Piotr Wiśniewski) — przegląd nazwanych źródeł (Damodaran NYU, GUS/Eurostat, Intrum European Payment Report) co najmniej raz na kwartał kalendarzowy oraz przy każdej aktualizacji publikacji źródłowej.',
+  en: 'DBR77 Finance Advisory team (owner: Piotr Wiśniewski) — reviews the named sources (Damodaran NYU, GUS/Eurostat, Intrum European Payment Report) at least every calendar quarter and whenever a source publication updates.',
+} as const;
+
+/** O6.3 disclaimer — must accompany every consumer-facing rendering of a benchmark band. */
+export const FINANCIAL_BENCHMARK_DISCLAIMER = {
+  pl: `Zakresy branżowe DBR77: pasma oznaczone „sourced" pochodzą z nazwanych publicznych źródeł (Damodaran NYU, GUS/Eurostat, Intrum) — pasma oznaczone „expert-estimate" to hipoteza ekspercka (wzorzec expert-hypothesis-v1), NIE benchmark statystyczny z transakcji klientów DBR77. Oba typy pasm podlegają kalibracji danymi platformy od n ≥ ${FINANCIAL_BENCHMARK_CALIBRATION_THRESHOLD_N} zamkniętych analiz finansowych w segmencie (mediana + kwartyle, dane zanonimizowane). Traktuj jako punkt odniesienia do dyskusji z zarządem, nie jako gotowy dowód bez weryfikacji.`,
+  en: `DBR77 industry bands: bands marked "sourced" come from named public sources (Damodaran NYU, GUS/Eurostat, Intrum) — bands marked "expert-estimate" are an expert hypothesis (expert-hypothesis-v1 pattern), NOT a statistical benchmark drawn from DBR77 client transactions. Both band types are subject to calibration with platform data once a segment reaches n ≥ ${FINANCIAL_BENCHMARK_CALIBRATION_THRESHOLD_N} closed financial analyses (median + quartiles, anonymised). Treat as a reference point for a board discussion, not ready-made proof without verification.`,
+} as const;
+
+/** Consolidated O6.3 metadata: {źródło, data, właściciel-odświeżania, poziom-pewności}. */
+export interface FinancialBenchmarkSourceMetadata {
+  /** "skąd dane" — named source string, copied from the band. */
+  source: string;
+  /** "data" — ISO date the band figures were last checked/updated. */
+  asOf: string;
+  /** "poziom pewności" — 'sourced' (named public data) vs 'expert-estimate'. */
+  confidenceLevel: BenchmarkConfidence;
+  /** "kto odświeża" — ownership + refresh cadence. */
+  refreshOwner: { pl: string; en: string };
+  /** n≥ this many closed analyses in-segment triggers platform-data recalibration. */
+  calibrationThresholdN: number;
+  disclaimer: { pl: string; en: string };
+}
+
+function buildSourceMetadata(band: RatioBenchmarkBand): FinancialBenchmarkSourceMetadata {
+  return {
+    source: band.source,
+    asOf: band.asOf,
+    confidenceLevel: band.confidence,
+    refreshOwner: FINANCIAL_BENCHMARK_REFRESH_OWNER,
+    calibrationThresholdN: FINANCIAL_BENCHMARK_CALIBRATION_THRESHOLD_N,
+    disclaimer: FINANCIAL_BENCHMARK_DISCLAIMER,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -1448,6 +1505,8 @@ export interface RatioBenchmarkResult {
   /** true when the resolved industry had no band for this ratio and the
    *  'generic' cross-industry band was used instead. */
   usedGenericFallback: boolean;
+  /** O6.3 — {źródło, data, właściciel-odświeżania, poziom-pewności} for this dataset. */
+  sourceMetadata: FinancialBenchmarkSourceMetadata;
 }
 
 /**
@@ -1470,6 +1529,7 @@ export function getRatioBenchmark(
       ratioCode,
       band: direct,
       usedGenericFallback: false,
+      sourceMetadata: buildSourceMetadata(direct),
     };
   }
 
@@ -1482,6 +1542,7 @@ export function getRatioBenchmark(
         ratioCode,
         band: genericBand,
         usedGenericFallback: true,
+        sourceMetadata: buildSourceMetadata(genericBand),
       };
     }
   }
@@ -1585,4 +1646,167 @@ export function buildIndicatorBenchmarkRange(
   if (!result) return null;
   const { p25, p75 } = result.band;
   return p25 <= p75 ? [p25, p75] : [p75, p25];
+}
+
+// ---------------------------------------------------------------------------
+// benchmarkFinancial(industry, ratio, value) — O6.2/O6.3 primary entry point
+// ---------------------------------------------------------------------------
+
+/** Where a value sits vs the industry band. 'not-available' when no band is found. */
+export type FinancialBenchmarkVerdict = 'below-p25' | 'in-range' | 'above-p75' | 'not-available';
+
+export interface FinancialBenchmarkPositionResult {
+  industry: BenchmarkIndustry;
+  industryLabel: { pl: string; en: string };
+  ratioCode: BenchmarkRatioCode;
+  value: number;
+  band: RatioBenchmarkBand | null;
+  verdict: FinancialBenchmarkVerdict;
+  usedGenericFallback: boolean;
+  interpretation: { pl: string; en: string };
+  sourceMetadata: FinancialBenchmarkSourceMetadata | null;
+}
+
+/**
+ * benchmarkFinancial(branża, wskaźnik, wartość) → pozycja + interpretacja.
+ *
+ * Thin, explicitly-named wrapper around `getRatioBenchmark` — does NOT
+ * duplicate the benchmark data (single source of truth stays
+ * `INDUSTRY_BENCHMARK_PROFILES`). Adds exactly the 3-way verdict vocabulary
+ * (below-p25 / in-range / above-p75) plus a ready interpretation sentence
+ * and the consolidated O6.3 source metadata, so callers do not need to
+ * re-derive position logic themselves.
+ */
+export function benchmarkFinancial(params: {
+  industrySegment?: string | null;
+  ratioCode: BenchmarkRatioCode;
+  value: number;
+  /** Ratio direction. Most ratios are higher-is-better; DSO/DIO/leverage are not. Defaults true. */
+  higherIsBetter?: boolean;
+}): FinancialBenchmarkPositionResult {
+  const { industrySegment, ratioCode, value, higherIsBetter = true } = params;
+  const result = getRatioBenchmark(industrySegment, ratioCode);
+
+  if (!result) {
+    const industry = resolveBenchmarkIndustry(industrySegment);
+    return {
+      industry,
+      industryLabel: getBenchmarkIndustryLabel(industry),
+      ratioCode,
+      value,
+      band: null,
+      verdict: 'not-available',
+      usedGenericFallback: false,
+      interpretation: {
+        pl: 'Brak zakresu branżowego dla tego wskaźnika w katalogu benchmarków — brak dopasowanej branży lub wskaźnika.',
+        en: 'No industry band available for this ratio in the benchmark catalog — no matching industry or ratio.',
+      },
+      sourceMetadata: null,
+    };
+  }
+
+  const { band, industry, industryLabel, usedGenericFallback, sourceMetadata } = result;
+  const lowBound = Math.min(band.p25, band.p75);
+  const highBound = Math.max(band.p25, band.p75);
+
+  // Pure NUMERIC position first — "below-p25" always means the value sits
+  // under the numeric lower bound, "above-p75" always means it sits over the
+  // numeric upper bound, regardless of ratio direction. Whether that numeric
+  // position is good or bad news is a SEPARATE question, answered only in
+  // the interpretation text below via `higherIsBetter`. (An earlier draft
+  // flipped the verdict itself for lower-is-better ratios, which produced a
+  // mislabelled "below-p25" for a numerically-above-bound value — fixed.)
+  let verdict: FinancialBenchmarkVerdict;
+  if (value < lowBound) verdict = 'below-p25';
+  else if (value > highBound) verdict = 'above-p75';
+  else verdict = 'in-range';
+
+  const unitPl = band.unit === 'x' ? 'x' : band.unit === 'days' ? ' dni' : '%';
+  const unitEn = band.unit === 'x' ? 'x' : band.unit === 'days' ? ' days' : '%';
+  const v = round1(value);
+  const rangeLow = round1(lowBound);
+  const rangeHigh = round1(highBound);
+  const median = round1(band.median);
+
+  // isGood: below-p25 is good news only for a lower-is-better ratio;
+  // above-p75 is good news only for a higher-is-better ratio; in-range is
+  // always neutral/fine.
+  const isGood =
+    verdict === 'in-range' ? null : verdict === 'below-p25' ? !higherIsBetter : higherIsBetter;
+
+  const verdictNotePl =
+    verdict === 'in-range'
+      ? 'w typowym zakresie branży (między dolnym a górnym kwartylem).'
+      : verdict === 'below-p25'
+        ? isGood
+          ? 'poniżej dolnego kwartyla branży (dla tego wskaźnika niżej = lepiej) — sygnał mocnej pozycji.'
+          : 'poniżej dolnego kwartyla branży — sygnał słabości względem porównywalnych firm.'
+        : isGood
+          ? 'powyżej górnego kwartyla branży — sygnał mocnej pozycji względem porównywalnych firm.'
+          : 'powyżej górnego kwartyla branży (dla tego wskaźnika niżej = lepiej) — sygnał słabości, warto wyjaśnić przyczynę.';
+
+  const verdictNoteEn =
+    verdict === 'in-range'
+      ? 'within the typical industry range (between the lower and upper quartile).'
+      : verdict === 'below-p25'
+        ? isGood
+          ? 'below the industry lower quartile (lower is better for this ratio) — a strength signal.'
+          : 'below the industry lower quartile — a weakness signal vs comparable companies.'
+        : isGood
+          ? 'above the industry upper quartile — a strength signal vs comparable companies.'
+          : 'above the industry upper quartile (lower is better for this ratio) — a weakness signal worth explaining.';
+
+  const fallbackNotePl = usedGenericFallback
+    ? ' (branża niedopasowana — użyto zakresu ogólnego międzybranżowego)'
+    : '';
+  const fallbackNoteEn = usedGenericFallback
+    ? ' (industry not matched — used the generic cross-industry range)'
+    : '';
+
+  return {
+    industry,
+    industryLabel,
+    ratioCode,
+    value,
+    band,
+    verdict,
+    usedGenericFallback,
+    interpretation: {
+      pl: `${v}${unitPl} vs branża ${industryLabel.pl.toLowerCase()} ${rangeLow}–${rangeHigh}${unitPl} (mediana ${median}${unitPl})${fallbackNotePl}: ${verdictNotePl}`,
+      en: `${v}${unitEn} vs ${industryLabel.en.toLowerCase()} industry ${rangeLow}–${rangeHigh}${unitEn} (median ${median}${unitEn})${fallbackNoteEn}: ${verdictNoteEn}`,
+    },
+    sourceMetadata,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// O4 ↔ O6 taxonomy bridge
+// ---------------------------------------------------------------------------
+
+/**
+ * Bridges O4's 7-class WACC/cost-of-capital taxonomy
+ * (`financeParameterGuidance.FinanceIndustryClass`) onto this module's
+ * 9-class ratio-benchmark taxonomy (`BenchmarkIndustry`), for a caller that
+ * already resolved a `FinanceIndustryClass` (e.g. via `waccGuidance`) and
+ * wants a matching ratio benchmark without re-resolving free text through a
+ * second resolver. Static lookup table — does not re-implement either
+ * resolver, and the two taxonomies deliberately stay separate (see module
+ * doc): cost-of-capital bands and operating-ratio bands do not split
+ * industries the same way (e.g. `infrastructure-utilities` has no direct
+ * counterpart here — regulated utilities were not modelled separately in
+ * the O6.2 ratio catalog, so it maps to `generic` rather than a false match).
+ */
+export function financeIndustryClassToBenchmarkIndustry(
+  cls: FinanceIndustryClass
+): BenchmarkIndustry {
+  const map: Record<FinanceIndustryClass, BenchmarkIndustry> = {
+    'discrete-manufacturing': 'industrial-manufacturing',
+    'process-manufacturing': 'industrial-manufacturing',
+    'professional-services': 'professional-services',
+    'retail-trade': 'retail-ecommerce',
+    'software-saas': 'software-saas',
+    'infrastructure-utilities': 'generic',
+    generic: 'generic',
+  };
+  return map[cls];
 }

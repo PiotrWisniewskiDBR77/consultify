@@ -73,6 +73,11 @@ export interface ComputedRatio {
     /** Bilingual "your X vs industry median Y–Z" citation sentence (O6.2/O6.3). */
     narrativePl?: string;
     narrativeEn?: string;
+    /** O6.3 — "kto odświeża" + calibration-trigger disclaimer. Only set when origin === 'industry'. */
+    refreshOwnerPl?: string;
+    refreshOwnerEn?: string;
+    disclaimerPl?: string;
+    disclaimerEn?: string;
   };
 }
 
@@ -823,7 +828,7 @@ export function buildRatioBenchmark(
   const result = getRatioBenchmark(orgIndustry, benchmarkCode);
   if (!result) return undefined;
 
-  const { band, industry, industryLabel } = result;
+  const { band, industry, industryLabel, sourceMetadata } = result;
   const lowBound = Math.min(band.p25, band.p75);
   const highBound = Math.max(band.p25, band.p75);
 
@@ -854,6 +859,10 @@ export function buildRatioBenchmark(
     confidence: band.confidence,
     narrativePl,
     narrativeEn,
+    refreshOwnerPl: sourceMetadata.refreshOwner.pl,
+    refreshOwnerEn: sourceMetadata.refreshOwner.en,
+    disclaimerPl: sourceMetadata.disclaimer.pl,
+    disclaimerEn: sourceMetadata.disclaimer.en,
   };
 }
 
