@@ -1,3 +1,4 @@
+import { buildAmbitionStaircasePromptRules } from '@/config/ambitiondecomposer/ambitionInsightStaircase';
 import type {
   AmbitionDecomposerData,
   InitiativeDraft,
@@ -60,6 +61,7 @@ organization context above. Explicitly flag any benchmark or assumption you cann
 context (label it as a hypothesis) — do NOT invent specific numbers or external benchmarks you
 cannot support.
 
+${buildAmbitionStaircasePromptRules('en')}
 
 ${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
