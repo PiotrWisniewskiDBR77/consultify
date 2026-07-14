@@ -95,7 +95,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   isLoading = false,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [showAddType, setShowAddType] = useState<'file' | 'link' | 'comment' | null>(null);
@@ -171,7 +171,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
-            {isPolish ? 'Dowody' : 'Evidence'}
+            {t('interview.evidencePanel.evidence')}
           </h3>
           <span className="px-2 py-0.5 text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded-full">
             {filteredEvidence.length}
@@ -189,7 +189,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {isPolish ? 'Wszystkie' : 'All'}
+              {t('interview.evidencePanel.all')}
             </button>
             <button
               onClick={() => setFilter('category')}
@@ -199,7 +199,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {isPolish ? 'Kategoria' : 'Category'}
+              {t('interview.evidencePanel.category')}
             </button>
           </div>
 
@@ -209,21 +209,21 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               <button
                 onClick={() => setShowAddType('file')}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-                title={isPolish ? 'Dodaj plik' : 'Add file'}
+                title={t('interview.evidencePanel.addFile')}
               >
                 <Upload size={14} />
               </button>
               <button
                 onClick={() => setShowAddType('link')}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-                title={isPolish ? 'Dodaj link' : 'Add link'}
+                title={t('interview.evidencePanel.addLink')}
               >
                 <Link size={14} />
               </button>
               <button
                 onClick={() => setShowAddType('comment')}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-                title={isPolish ? 'Dodaj komentarz' : 'Add comment'}
+                title={t('interview.evidencePanel.addComment')}
               >
                 <MessageSquare size={14} />
               </button>
@@ -246,10 +246,10 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         >
           <Upload className="w-10 h-10 text-slate-600 mx-auto mb-3" />
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-            {isPolish ? 'Przeciągnij pliki tutaj lub' : 'Drag files here or'}
+            {t('interview.evidencePanel.dragFilesHereOr')}
           </p>
           <label className="inline-flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg cursor-pointer">
-            <span>{isPolish ? 'Wybierz pliki' : 'Browse files'}</span>
+            <span>{t('interview.evidencePanel.browseFiles')}</span>
             <input
               type="file"
               multiple
@@ -261,7 +261,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             onClick={() => setShowAddType(null)}
             className="block mx-auto mt-3 text-xs text-slate-600 hover:text-slate-600"
           >
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('interview.evidencePanel.cancel')}
           </button>
         </div>
       )}
@@ -274,7 +274,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             value={linkName}
             onChange={(e) => setLinkName(e.target.value)}
             className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={isPolish ? 'Nazwa linku...' : 'Link name...'}
+            placeholder={t('interview.evidencePanel.linkName')}
             autoFocus
           />
           <input
@@ -289,7 +289,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             value={linkDescription}
             onChange={(e) => setLinkDescription(e.target.value)}
             className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={isPolish ? 'Opis (opcjonalny)...' : 'Description (optional)...'}
+            placeholder={t('interview.evidencePanel.descriptionOptional')}
           />
           <div className="flex justify-end gap-2">
             <button
@@ -301,14 +301,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               }}
               className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400"
             >
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('interview.evidencePanel.cancel')}
             </button>
             <button
               onClick={handleAddLink}
               disabled={!linkName.trim() || !linkUrl.trim()}
               className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white rounded-lg"
             >
-              {isPolish ? 'Dodaj' : 'Add'}
+              {t('interview.evidencePanel.add')}
             </button>
           </div>
         </div>
@@ -322,7 +322,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             rows={4}
             className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder={
-              isPolish ? 'Dodaj komentarz kontekstowy...' : 'Add a contextual comment...'
+              t('interview.evidencePanel.addAContextualComment')
             }
             autoFocus
           />
@@ -334,14 +334,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               }}
               className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400"
             >
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('interview.evidencePanel.cancel')}
             </button>
             <button
               onClick={handleAddComment}
               disabled={!commentText.trim()}
               className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white rounded-lg"
             >
-              {isPolish ? 'Dodaj' : 'Add'}
+              {t('interview.evidencePanel.add')}
             </button>
           </div>
         </div>
@@ -350,7 +350,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       {/* Evidence List */}
       <div className="space-y-2">
         {filteredEvidence.map((item) => {
-          const displayName = item.name || item.title || (isPolish ? 'Bez tytułu' : 'Untitled');
+          const displayName = item.name || item.title || (t('interview.evidencePanel.untitled'));
           const uploadedAt = item.uploadedAt || item.createdAt || '';
           const mimeType = item.mimeType || item.fileType;
           const FileIcon =
@@ -410,7 +410,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     <span
                       className={`px-1.5 py-0.5 text-xs rounded shrink-0 ${categoryConfig.bgColor} ${categoryConfig.color}`}
                     >
-                      {isPolish ? categoryConfig.labelPl : categoryConfig.labelEn}
+                      {t(`interview.workspace.categoryLabel.${item.category}`, categoryConfig.labelEn)}
                     </span>
                   )}
                 </div>
@@ -437,7 +437,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                       );
                     }}
                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-                    title={isPolish ? 'Dołącz do pomysłu' : 'Attach to Idea'}
+                    title={t('interview.evidencePanel.attachToIdea')}
                   >
                     <Lightbulb size={16} className="text-slate-600" />
                   </button>
@@ -458,7 +458,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                       >
                         <Trash2 size={14} />
-                        {isPolish ? 'Usuń' : 'Delete'}
+                        {t('interview.evidencePanel.delete')}
                       </button>
                     </div>
                   )}
@@ -473,7 +473,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Paperclip className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-              {isPolish ? 'Brak załączników' : 'No evidence yet'}
+              {t('interview.evidencePanel.noEvidenceYet')}
             </p>
             {!readOnly && (
               <div className="flex items-center gap-2">
@@ -482,21 +482,21 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
                 >
                   <Upload size={16} />
-                  {isPolish ? 'Dodaj plik' : 'Add file'}
+                  {t('interview.evidencePanel.addFile')}
                 </button>
                 <button
                   onClick={() => setShowAddType('link')}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
                 >
                   <Link size={16} />
-                  {isPolish ? 'Dodaj link' : 'Add link'}
+                  {t('interview.evidencePanel.addLink')}
                 </button>
                 <button
                   onClick={() => setShowAddType('comment')}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
                 >
                   <MessageSquare size={16} />
-                  {isPolish ? 'Dodaj komentarz' : 'Add comment'}
+                  {t('interview.evidencePanel.addComment')}
                 </button>
               </div>
             )}

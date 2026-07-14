@@ -3741,6 +3741,25 @@
       "used": "Użycia",
       "assign": "Przypisz",
       "open": "Otwórz"
+    },
+    "evidencePanel": {
+      "evidence": "Dowody",
+      "all": "Wszystkie",
+      "category": "Kategoria",
+      "addFile": "Dodaj plik",
+      "addLink": "Dodaj link",
+      "addComment": "Dodaj komentarz",
+      "dragFilesHereOr": "Przeciągnij pliki tutaj lub",
+      "browseFiles": "Wybierz pliki",
+      "cancel": "Anuluj",
+      "linkName": "Nazwa linku...",
+      "descriptionOptional": "Opis (opcjonalny)...",
+      "add": "Dodaj",
+      "addAContextualComment": "Dodaj komentarz kontekstowy...",
+      "untitled": "Bez tytułu",
+      "attachToIdea": "Dołącz do pomysłu",
+      "delete": "Usuń",
+      "noEvidenceYet": "Brak załączników"
     }
   },
   "assessment": {

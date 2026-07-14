@@ -4507,6 +4507,25 @@
       "used": "Used",
       "assign": "Assign",
       "open": "Open"
+    },
+    "evidencePanel": {
+      "evidence": "Evidence",
+      "all": "All",
+      "category": "Category",
+      "addFile": "Add file",
+      "addLink": "Add link",
+      "addComment": "Add comment",
+      "dragFilesHereOr": "Drag files here or",
+      "browseFiles": "Browse files",
+      "cancel": "Cancel",
+      "linkName": "Link name...",
+      "descriptionOptional": "Description (optional)...",
+      "add": "Add",
+      "addAContextualComment": "Add a contextual comment...",
+      "untitled": "Untitled",
+      "attachToIdea": "Attach to Idea",
+      "delete": "Delete",
+      "noEvidenceYet": "No evidence yet"
     }
   },
   "assessment": {
