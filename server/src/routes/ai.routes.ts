@@ -25,6 +25,11 @@ import {
 } from '../services/ai/chatStabilizationPolicy.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
 import {
+  verifyRuntimeCitations,
+  numericConfidenceFromVerification,
+} from '../services/ai/runtimeCitationVerification.js';
+import type { VerificationReport } from '../services/ai/citationVerifier.js';
+import {
   isDbr77ProductTruthQuery,
   type WorkerWebAccessPolicy,
 } from '../services/ai/virtualWorkerWebAccessService.js';
@@ -1576,6 +1581,8 @@ router.post(
     const policyNotices: any[] = [];
     let collectedCitations: any[] = [];
     let sourceLedgerSnapshot: any = null;
+    // HP-15: runtime citation verification result (set right before the main-answer trust bundle).
+    let runtimeCitationVerification: VerificationReport | null = null;
 
     const mergeCitations = (prev: any[], next: any[]) => {
       const out: any[] = [];
@@ -2650,10 +2657,29 @@ router.post(
             generatedAt: new Date().toISOString(),
             degraded,
             outputLength: String(outputText || '').length,
+            // HP-15: pewność wyprowadzona z REALNEJ weryfikacji cytowań (jeśli runtime ją odpalił),
+            // a nie ze stałej 0.86/0.52. Fallback do heurystyki źródeł, gdy weryfikacja nie biegła
+            // (ścieżki bez odpowiedzi merytorycznej, np. refusal/degraded).
             confidence:
-              citations.length > 0 || sourceClasses.some((sourceClass) => sourceClass !== 'general')
-                ? 0.86
-                : 0.52,
+              runtimeCitationVerification !== null
+                ? numericConfidenceFromVerification(
+                    runtimeCitationVerification,
+                    sourceClasses.some((sourceClass) => sourceClass !== 'general')
+                  )
+                : citations.length > 0 ||
+                    sourceClasses.some((sourceClass) => sourceClass !== 'general')
+                  ? 0.86
+                  : 0.52,
+            // HP-15: jawny ślad weryfikacji w trust bundle (liczniki, nie zgadywanie).
+            citationVerification: runtimeCitationVerification
+              ? {
+                  total: runtimeCitationVerification.totalCitations,
+                  verified: runtimeCitationVerification.verified,
+                  unverified: runtimeCitationVerification.unverified,
+                  broken: runtimeCitationVerification.broken,
+                  score: runtimeCitationVerification.overallScore,
+                }
+              : null,
             cost: pipelineMeta?.cost || pipelineMeta?.estimatedCost || null,
             tokens,
             routingTrace: pipelineMeta?.routingTrace || pipelineMeta?.routing_trace || null,
@@ -5242,6 +5268,12 @@ router.post(
           }
 
           await maybeEmitTeresaProposal(accumulatedContent);
+          // HP-15: citationVerifier w RUNTIME (nie tylko offline eval) — oznacz, nie blokuj.
+          runtimeCitationVerification = await verifyRuntimeCitations(collectedCitations, {
+            conversationId,
+            messageId: chatRunId,
+            surface: 'chat_stream',
+          });
           emitTrustBundle(accumulatedContent);
 
           streamCompleted = true;
@@ -5429,6 +5461,12 @@ router.post(
             }
 
             await maybeEmitTeresaProposal(nonStreamContent);
+            // HP-15: citationVerifier w RUNTIME (nie tylko offline eval) — oznacz, nie blokuj.
+            runtimeCitationVerification = await verifyRuntimeCitations(collectedCitations, {
+              conversationId,
+              messageId: chatRunId,
+              surface: 'chat_nonstream',
+            });
             emitTrustBundle(nonStreamContent);
           }
 
