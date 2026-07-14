@@ -52,7 +52,7 @@ export function WorkflowDashboard({
   fields = [],
   locked,
 }: WorkflowDashboardProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
@@ -123,7 +123,7 @@ export function WorkflowDashboard({
     return (
       <div className="h-full flex flex-col">
         <BackBar
-          label={isPl ? 'Automatyzacje' : 'Automations'}
+          label={t('ideas.table.automations', 'Automations')}
           onBack={() => {
             setActivePanel(null);
             loadStats();
@@ -148,7 +148,7 @@ export function WorkflowDashboard({
     return (
       <div className="h-full flex flex-col">
         <BackBar
-          label={isPl ? 'Synchronizacja' : 'Table Sync'}
+          label={t('ideas.table.workflowDashboard.tableSync', 'Table Sync')}
           onBack={() => {
             setActivePanel(null);
             loadStats();
@@ -172,7 +172,7 @@ export function WorkflowDashboard({
   if (activePanel === 'sharing') {
     return (
       <div className="h-full flex flex-col">
-        <BackBar label={isPl ? 'Udostępnianie' : 'Sharing'} onBack={() => setActivePanel(null)} />
+        <BackBar label={t('ideas.table.sharing', 'Sharing')} onBack={() => setActivePanel(null)} />
         <div className="flex-1 overflow-y-auto p-4">
           <SharingManager baseId={baseId} views={views} onClose={() => setActivePanel(null)} />
         </div>
@@ -184,7 +184,7 @@ export function WorkflowDashboard({
     return (
       <div className="h-full flex flex-col">
         <BackBar
-          label={isPl ? 'Webhook Relay' : 'Webhook Relays'}
+          label={t('ideas.table.webhookRelays', 'Webhook Relays')}
           onBack={() => {
             setActivePanel(null);
             loadStats();
@@ -239,7 +239,7 @@ export function WorkflowDashboard({
       titlePl: 'Automatyzacje',
       descEn: 'Triggers, actions, and scheduled workflows',
       descPl: 'Wyzwalacze, akcje i zaplanowane procesy',
-      stat: `${stats.automationsActive}/${stats.automationsCount} ${isPl ? 'aktywnych' : 'active'}`,
+      stat: `${stats.automationsActive}/${stats.automationsCount} ${t('ideas.table.workflowDashboard.active', 'active')}`,
     },
     {
       id: 'sync',
@@ -250,7 +250,7 @@ export function WorkflowDashboard({
       titlePl: 'Synchronizacja',
       descEn: 'Keep tables in sync automatically',
       descPl: 'Automatyczna synchronizacja tabel',
-      stat: `${stats.syncsCount} ${isPl ? 'konfiguracji' : 'configured'}`,
+      stat: `${stats.syncsCount} ${t('ideas.table.workflowDashboard.configured', 'configured')}`,
     },
     {
       id: 'webhooks',
@@ -261,7 +261,7 @@ export function WorkflowDashboard({
       titlePl: 'Webhooki',
       descEn: 'Forward events to Zapier, Make, or any URL',
       descPl: 'Przekazuj zdarzenia do Zapier, Make lub dowolnego URL',
-      stat: `${stats.webhooksCount} ${isPl ? 'konfiguracji' : 'configured'}`,
+      stat: `${stats.webhooksCount} ${t('ideas.table.workflowDashboard.configured', 'configured')}`,
     },
     {
       id: 'sharing',
@@ -272,7 +272,7 @@ export function WorkflowDashboard({
       titlePl: 'Udostępnianie',
       descEn: 'Share views, manage collaborators and API access',
       descPl: 'Udostępniaj widoki, zarządzaj współpracownikami i API',
-      stat: `${views.filter((v) => v.shareToken).length} ${isPl ? 'udostępnionych' : 'shared'}`,
+      stat: `${views.filter((v) => v.shareToken).length} ${t('ideas.table.workflowDashboard.shared', 'shared')}`,
     },
     {
       id: 'distributions',
@@ -283,7 +283,7 @@ export function WorkflowDashboard({
       titlePl: 'Dystrybucja',
       descEn: 'Send data via email, Slack, Teams, or webhook',
       descPl: 'Wysyłaj dane przez email, Slack, Teams lub webhook',
-      stat: `${stats.distributionsCount} ${isPl ? 'konfiguracji' : 'configured'}`,
+      stat: `${stats.distributionsCount} ${t('ideas.table.workflowDashboard.configured', 'configured')}`,
     },
   ];
 
@@ -292,7 +292,9 @@ export function WorkflowDashboard({
       {/* Header */}
       <div className="flex items-center gap-2 mb-5">
         <Bell size={16} className="text-indigo-500" />
-        <h2 className="text-sm font-semibold text-c-text">{isPl ? 'Workflow' : 'Workflow'}</h2>
+        <h2 className="text-sm font-semibold text-c-text">
+          {t('ideas.table.workflow', 'Workflow')}
+        </h2>
         {loading && <Loader2 size={12} className="animate-spin text-c-text-secondary" />}
       </div>
 
@@ -342,8 +344,7 @@ export function WorkflowDashboard({
 // ── BackBar ──────────────────────────────────────────────────────────────────
 
 function BackBar({ label, onBack }: { label: string; onBack: () => void }) {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface-raised">
@@ -351,7 +352,7 @@ function BackBar({ label, onBack }: { label: string; onBack: () => void }) {
         onClick={onBack}
         className="text-[11px] font-medium text-c-text-muted hover:text-c-text transition-colors"
       >
-        ← {isPl ? 'Workflow' : 'Workflow'}
+        ← {t('ideas.table.workflow', 'Workflow')}
       </button>
       <span className="text-c-text-secondary">/</span>
       <span className="text-[11px] font-semibold text-c-text">{label}</span>

@@ -21930,6 +21930,12 @@
         "recordOrUploadThenParse": "Record voice or upload image, then click \"Parse\"",
         "selected": "selected",
         "addNIdeas": "Add {{count}} ideas"
+      },
+      "workflowDashboard": {
+        "tableSync": "Table Sync",
+        "active": "active",
+        "configured": "configured",
+        "shared": "shared"
       }
     },
     "mindmap": {

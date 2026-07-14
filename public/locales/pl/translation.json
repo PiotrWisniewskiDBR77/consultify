@@ -23006,6 +23006,12 @@
         "recordOrUploadThenParse": "Nagraj głos lub wgraj obraz, potem kliknij \"Rozpoznaj\"",
         "selected": "wybranych",
         "addNIdeas": "Dodaj {{count}} pomysłów"
+      },
+      "workflowDashboard": {
+        "tableSync": "Synchronizacja",
+        "active": "aktywnych",
+        "configured": "konfiguracji",
+        "shared": "udostępnionych"
       }
     },
     "mindmap": {
