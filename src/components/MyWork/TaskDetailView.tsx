@@ -74,6 +74,7 @@ import { buildArtifactCode } from '@/utils/artifactLinks';
 // ── AI Field Enhancer (shared) ───────────────────────────────────────────────
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { CapabilityGate } from '../shared/CapabilityGate';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 // #52 — card-management primitive (show/hide + reorder), same wiring as
 // InsightViewer.tsx (nakładka, see comment at `taskCardLayout` below).
@@ -4339,21 +4340,23 @@ Return ONLY the final comment text.`;
                         </button>
                       )}
 
-                      {/* Reassign — always shown */}
-                      <button
-                        onClick={() => {
-                          // scroll to assignee field or open a quick picker
-                          toast(
-                            t(
-                              'myWork.taskDetail.changeAssigneeInThe',
-                              'Change assignee in the Assignee field above'
-                            )
-                          );
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                      >
-                        <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
-                      </button>
+                      {/* Reassign — FAZA C: bramka task.reassign (fail-open, shadow = bez zmian) */}
+                      <CapabilityGate capability="task.reassign" projectId={projectId || undefined}>
+                        <button
+                          onClick={() => {
+                            // scroll to assignee field or open a quick picker
+                            toast(
+                              t(
+                                'myWork.taskDetail.changeAssigneeInThe',
+                                'Change assignee in the Assignee field above'
+                              )
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                        >
+                          <Share2 size={13} /> {t('myWork.taskDetail.reassign', 'Reassign')}
+                        </button>
+                      </CapabilityGate>
 
                       {/* ── Section-specific AI actions (right-aligned) ── */}
                       {activeNSection === 'implementation' && (
@@ -6869,18 +6872,25 @@ Return ONLY the final comment text.`;
                           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                             {t('myWork.taskDetail.assignee', 'Assignee')}
                           </label>
-                          <select
-                            value={assigneeId}
-                            onChange={(e) => setAssigneeId(e.target.value)}
-                            className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+                          {/* FAZA C: bramka task.assign — enforce wyłącza pole (disable), shadow bez zmian */}
+                          <CapabilityGate
+                            capability="task.assign"
+                            projectId={projectId || undefined}
+                            gateMode="disable"
                           >
-                            <option value="">{t('myWork.taskDetail.select3', 'Select')}</option>
-                            {users.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                {user.firstName} {user.lastName}
-                              </option>
-                            ))}
-                          </select>
+                            <select
+                              value={assigneeId}
+                              onChange={(e) => setAssigneeId(e.target.value)}
+                              className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+                            >
+                              <option value="">{t('myWork.taskDetail.select3', 'Select')}</option>
+                              {users.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                  {user.firstName} {user.lastName}
+                                </option>
+                              ))}
+                            </select>
+                          </CapabilityGate>
                         </div>
                       </div>
 
