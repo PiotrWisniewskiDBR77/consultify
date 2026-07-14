@@ -2159,42 +2159,42 @@ Return ONLY the final comment text.`;
     const MAP: Record<string, { icon: React.ReactNode; label: string; style: string }> = {
       created: {
         icon: <Plus size={10} />,
-        label: 'Created',
+        label: t('myWork.taskDetail.activityType.created', 'Created'),
         style: 'border-emerald-300/50 bg-emerald-500/10 text-emerald-600',
       },
       status_change: {
         icon: <CheckCircle2 size={10} />,
-        label: 'Status',
+        label: t('myWork.taskDetail.activityType.status', 'Status'),
         style: 'border-blue-300/50 bg-blue-500/10 text-blue-600',
       },
       assignment: {
         icon: <User size={10} />,
-        label: 'Assigned',
+        label: t('myWork.taskDetail.activityType.assigned', 'Assigned'),
         style: 'border-primary-300/50 bg-primary-500/10 text-primary-600',
       },
       comment: {
         icon: <MessageSquare size={10} />,
-        label: 'Comment',
+        label: t('myWork.taskDetail.activityType.comment', 'Comment'),
         style: 'border-amber-300/50 bg-amber-500/10 text-amber-600',
       },
       edit: {
         icon: <Edit3 size={10} />,
-        label: 'Edit',
+        label: t('myWork.taskDetail.activityType.edit', 'Edit'),
         style: 'border-slate-300/50 bg-slate-500/10 text-slate-600',
       },
       attachment: {
         icon: <FileText size={10} />,
-        label: 'Attachment',
+        label: t('myWork.taskDetail.activityType.attachment', 'Attachment'),
         style: 'border-blue-300/50 bg-blue-500/10 text-blue-600',
       },
       deadline: {
         icon: <Calendar size={10} />,
-        label: 'Deadline',
+        label: t('myWork.taskDetail.activityType.deadline', 'Deadline'),
         style: 'border-danger-300/50 bg-danger-500/10 text-danger-600',
       },
       priority: {
         icon: <Flag size={10} />,
-        label: 'Priority',
+        label: t('myWork.taskDetail.activityType.priority', 'Priority'),
         style: 'border-amber-300/50 bg-amber-500/10 text-amber-600',
       },
     };
@@ -3228,7 +3228,9 @@ Return ONLY the final comment text.`;
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.role', 'Role')}
                           </th>
-                          <th className="text-left py-2 pr-2">Email</th>
+                          <th className="text-left py-2 pr-2">
+                            {t('myWork.taskDetail.email', 'Email')}
+                          </th>
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.notifications', 'Notifications')}
                           </th>
@@ -3473,7 +3475,9 @@ Return ONLY the final comment text.`;
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                          <th className="text-left py-2 pr-2">Status</th>
+                          <th className="text-left py-2 pr-2">
+                            {t('myWork.taskDetail.status', 'Status')}
+                          </th>
                           <th className="text-left py-2 pr-2">
                             {t('myWork.taskDetail.wCThresholds', 'W/C thresholds')}
                           </th>
@@ -4701,7 +4705,7 @@ Return ONLY the final comment text.`;
                         },
                         {
                           key: 'in_app',
-                          label: 'In-app',
+                          label: t('decisions.detail.notify.inApp', 'In-app'),
                           active: stakeholderDraft.notificationSettings.inAppEnabled,
                           toggle: () =>
                             setStakeholderDraft({
@@ -4714,7 +4718,7 @@ Return ONLY the final comment text.`;
                         },
                         {
                           key: 'email',
-                          label: 'Email',
+                          label: t('decisions.detail.notify.email', 'Email'),
                           active: stakeholderDraft.notificationSettings.emailEnabled,
                           toggle: () =>
                             setStakeholderDraft({
@@ -4791,7 +4795,10 @@ Return ONLY the final comment text.`;
                       })
                     }
                     className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                    placeholder="slack:#ops, jira:DRD"
+                    placeholder={t(
+                      'decisions.detail.integrations.placeholderOps',
+                      'slack:#ops, jira:DRD'
+                    )}
                   />
                 </label>
               </div>
@@ -4923,7 +4930,7 @@ Return ONLY the final comment text.`;
                   <option value="stakeholders">
                     {t('myWork.taskDetail.stakeholders', 'Stakeholders')}
                   </option>
-                  <option value="owner">Owner</option>
+                  <option value="owner">{t('myWork.taskDetail.owner', 'Owner')}</option>
                 </select>
               </label>
               <div className="space-y-3">
@@ -4945,8 +4952,8 @@ Return ONLY the final comment text.`;
                     <div className="flex flex-wrap gap-2">
                       {(
                         [
-                          { key: 'in_app', label: 'In-app' },
-                          { key: 'email', label: 'Email' },
+                          { key: 'in_app', label: t('decisions.detail.notify.inApp', 'In-app') },
+                          { key: 'email', label: t('decisions.detail.notify.email', 'Email') },
                         ] as Array<{ key: CoreDeliveryChannel; label: string }>
                       ).map((channel) => {
                         const delivery = ensureDeliveryConfig(
@@ -5047,7 +5054,10 @@ Return ONLY the final comment text.`;
                       })
                     }
                     className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                    placeholder="slack:#delivery, jira:PROJ, webhook:ops"
+                    placeholder={t(
+                      'decisions.detail.integrations.placeholderDelivery',
+                      'slack:#delivery, jira:PROJ, webhook:ops'
+                    )}
                   />
                 </label>
               </div>
@@ -5248,8 +5258,8 @@ Return ONLY the final comment text.`;
                   <div className="flex flex-wrap gap-2">
                     {(
                       [
-                        { key: 'in_app', label: 'In-app' },
-                        { key: 'email', label: 'Email' },
+                        { key: 'in_app', label: t('decisions.detail.notify.inApp', 'In-app') },
+                        { key: 'email', label: t('decisions.detail.notify.email', 'Email') },
                       ] as Array<{ key: CoreDeliveryChannel; label: string }>
                     ).map((channel) => {
                       const delivery = ensureDeliveryConfig(escalationDraft.delivery);
@@ -5333,7 +5343,10 @@ Return ONLY the final comment text.`;
                     })
                   }
                   className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                  placeholder="slack:#incident, jira:OPS, webhook:oncall"
+                  placeholder={t(
+                    'decisions.detail.integrations.placeholderIncident',
+                    'slack:#incident, jira:OPS, webhook:oncall'
+                  )}
                 />
               </label>
               <label className="text-xs text-slate-500 dark:text-slate-400 block">

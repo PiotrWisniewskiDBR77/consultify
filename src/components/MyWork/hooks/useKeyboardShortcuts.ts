@@ -6,6 +6,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import i18n from '@/i18n';
+
 export interface KeyboardShortcutsConfig {
   // Navigation
   onNavigateUp?: () => void;
@@ -57,46 +59,161 @@ export interface ShortcutHelp {
 
 export const SHORTCUTS_HELP: ShortcutHelp[] = [
   // Navigation
-  { key: '↑ / k', description: 'Move selection up', category: 'navigation' },
-  { key: '↓ / j', description: 'Move selection down', category: 'navigation' },
-  { key: 'Home', description: 'Go to first item', category: 'navigation' },
-  { key: 'End', description: 'Go to last item', category: 'navigation' },
-  { key: 'Enter', description: 'Open selected item', category: 'navigation' },
-  { key: 'Escape', description: 'Close / Cancel', category: 'navigation' },
+  {
+    key: '↑ / k',
+    description: i18n.t('myWork.shortcuts.moveUp', 'Move selection up'),
+    category: 'navigation',
+  },
+  {
+    key: '↓ / j',
+    description: i18n.t('myWork.shortcuts.moveDown', 'Move selection down'),
+    category: 'navigation',
+  },
+  {
+    key: 'Home',
+    description: i18n.t('myWork.shortcuts.goFirst', 'Go to first item'),
+    category: 'navigation',
+  },
+  {
+    key: 'End',
+    description: i18n.t('myWork.shortcuts.goLast', 'Go to last item'),
+    category: 'navigation',
+  },
+  {
+    key: 'Enter',
+    description: i18n.t('myWork.shortcuts.openSelected', 'Open selected item'),
+    category: 'navigation',
+  },
+  {
+    key: 'Escape',
+    description: i18n.t('myWork.shortcuts.closeCancel', 'Close / Cancel'),
+    category: 'navigation',
+  },
 
   // Actions
-  { key: 'n', description: 'New task/decision', category: 'actions' },
-  { key: 'e', description: 'Edit selected', category: 'actions' },
-  { key: 'd', description: 'Duplicate selected', category: 'actions' },
-  { key: 'Delete', description: 'Delete selected', category: 'actions' },
-  { key: 'Ctrl+S', description: 'Save changes', category: 'actions' },
-  { key: '/', description: 'Focus search', category: 'actions' },
+  {
+    key: 'n',
+    description: i18n.t('myWork.shortcuts.newTaskDecision', 'New task/decision'),
+    category: 'actions',
+  },
+  {
+    key: 'e',
+    description: i18n.t('myWork.shortcuts.editSelected', 'Edit selected'),
+    category: 'actions',
+  },
+  {
+    key: 'd',
+    description: i18n.t('myWork.shortcuts.duplicateSelected', 'Duplicate selected'),
+    category: 'actions',
+  },
+  {
+    key: 'Delete',
+    description: i18n.t('myWork.shortcuts.deleteSelected', 'Delete selected'),
+    category: 'actions',
+  },
+  {
+    key: 'Ctrl+S',
+    description: i18n.t('myWork.shortcuts.saveChanges', 'Save changes'),
+    category: 'actions',
+  },
+  {
+    key: '/',
+    description: i18n.t('myWork.shortcuts.focusSearch', 'Focus search'),
+    category: 'actions',
+  },
 
   // Status
-  { key: '1', description: 'Set priority: Low', category: 'status' },
-  { key: '2', description: 'Set priority: Medium', category: 'status' },
-  { key: '3', description: 'Set priority: High', category: 'status' },
-  { key: '4', description: 'Set priority: Critical', category: 'status' },
-  { key: 'x', description: 'Toggle complete', category: 'status' },
+  {
+    key: '1',
+    description: i18n.t('myWork.shortcuts.priorityLow', 'Set priority: Low'),
+    category: 'status',
+  },
+  {
+    key: '2',
+    description: i18n.t('myWork.shortcuts.priorityMedium', 'Set priority: Medium'),
+    category: 'status',
+  },
+  {
+    key: '3',
+    description: i18n.t('myWork.shortcuts.priorityHigh', 'Set priority: High'),
+    category: 'status',
+  },
+  {
+    key: '4',
+    description: i18n.t('myWork.shortcuts.priorityCritical', 'Set priority: Critical'),
+    category: 'status',
+  },
+  {
+    key: 'x',
+    description: i18n.t('myWork.shortcuts.toggleComplete', 'Toggle complete'),
+    category: 'status',
+  },
 
   // Canvas
-  { key: 'Ctrl+G', description: 'Group selected nodes', category: 'actions' },
-  { key: 'Ctrl+Shift+A', description: 'AI expand selected', category: 'actions' },
-  { key: 'Tab', description: 'Add child node', category: 'actions' },
-  { key: 'Shift+Enter', description: 'Add sibling node', category: 'actions' },
-  { key: 'Space', description: 'Toggle collapse/expand (mindmap)', category: 'actions' },
-  { key: 'f', description: 'Focus selected node', category: 'actions' },
-  { key: 'Alt+Shift+←', description: 'Promote node one level', category: 'actions' },
-  { key: 'Alt+Shift+→', description: 'Demote node under previous sibling', category: 'actions' },
+  {
+    key: 'Ctrl+G',
+    description: i18n.t('myWork.shortcuts.groupNodes', 'Group selected nodes'),
+    category: 'actions',
+  },
+  {
+    key: 'Ctrl+Shift+A',
+    description: i18n.t('myWork.shortcuts.aiExpandSelected', 'AI expand selected'),
+    category: 'actions',
+  },
+  {
+    key: 'Tab',
+    description: i18n.t('myWork.shortcuts.addChildNode', 'Add child node'),
+    category: 'actions',
+  },
+  {
+    key: 'Shift+Enter',
+    description: i18n.t('myWork.shortcuts.addSiblingNode', 'Add sibling node'),
+    category: 'actions',
+  },
+  {
+    key: 'Space',
+    description: i18n.t(
+      'myWork.shortcuts.toggleCollapseExpand',
+      'Toggle collapse/expand (mindmap)'
+    ),
+    category: 'actions',
+  },
+  {
+    key: 'f',
+    description: i18n.t('myWork.shortcuts.focusSelectedNode', 'Focus selected node'),
+    category: 'actions',
+  },
+  {
+    key: 'Alt+Shift+←',
+    description: i18n.t('myWork.shortcuts.promoteNode', 'Promote node one level'),
+    category: 'actions',
+  },
+  {
+    key: 'Alt+Shift+→',
+    description: i18n.t('myWork.shortcuts.demoteNode', 'Demote node under previous sibling'),
+    category: 'actions',
+  },
 
   // Selection
-  { key: 'Ctrl+A', description: 'Select all', category: 'selection' },
-  { key: 'Ctrl+D', description: 'Clear selection', category: 'selection' },
+  {
+    key: 'Ctrl+A',
+    description: i18n.t('myWork.shortcuts.selectAll', 'Select all'),
+    category: 'selection',
+  },
+  {
+    key: 'Ctrl+D',
+    description: i18n.t('myWork.shortcuts.clearSelection', 'Clear selection'),
+    category: 'selection',
+  },
 ];
 
 export function buildShortcutHelp(config: KeyboardShortcutsConfig): ShortcutHelp[] {
   const shortcuts: ShortcutHelp[] = [
-    { key: '?', description: 'Show / hide keyboard help', category: 'navigation' },
+    {
+      key: '?',
+      description: i18n.t('myWork.shortcuts.showHideHelp', 'Show / hide keyboard help'),
+      category: 'navigation',
+    },
   ];
 
   if (config.onNavigateUp) shortcuts.push(SHORTCUTS_HELP[0]);

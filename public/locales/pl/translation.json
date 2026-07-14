@@ -2077,7 +2077,56 @@
       "noSavedItems": "Brak zapisanych elementów",
       "useSaveBTo": "Użyj Zapisz (B) aby odłożyć elementy na później.",
       "inboxIsEmptyZero": "Inbox jest pusty — zero zaległości!",
-      "everythingProcessedGreatJob": "Wszystko przetworzone. Świetna robota!"
+      "everythingProcessedGreatJob": "Wszystko przetworzone. Świetna robota!",
+      "urgency": {
+        "critical": "Krytyczna",
+        "high": "Wysoka",
+        "normal": "Normalna",
+        "low": "Niska"
+      },
+      "statusFilter": {
+        "open": "Otwarte",
+        "done": "Zrobione",
+        "saved": "Zapisane",
+        "dismissed": "Odrzucone"
+      },
+      "typeFilter": {
+        "assignment": "Przypisanie",
+        "mention": "Wzmianka",
+        "escalation": "Eskalacja",
+        "review": "Przegląd",
+        "decision": "Decyzja",
+        "aiInsight": "Wgląd AI",
+        "system": "System",
+        "billing": "Rozliczenia",
+        "project": "Projekt"
+      },
+      "sectionFilter": {
+        "decisionsRequired": "Wymagane decyzje",
+        "approvalsGates": "Akceptacje i bramki",
+        "assignedTasks": "Przypisane zadania",
+        "blockedEscalations": "Zablokowane / eskalacje",
+        "overdueSlaBreach": "Po terminie / naruszenie SLA",
+        "systemNotifications": "Powiadomienia systemowe",
+        "mentionsFyi": "Wzmianki i FYI",
+        "aiInsights": "Wglądy AI",
+        "other": "Inne"
+      },
+      "sourceFilter": {
+        "system": "System",
+        "ai": "AI",
+        "userTeam": "Użytkownik / Zespół"
+      },
+      "columns": {
+        "title": "Tytuł",
+        "status": "Status",
+        "urgency": "Pilność",
+        "type": "Typ",
+        "section": "Sekcja",
+        "source": "Źródło",
+        "received": "Otrzymano",
+        "sla": "SLA"
+      }
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
@@ -2390,7 +2439,43 @@
       "dueDate2": "Termin",
       "actions": "Akcje",
       "required": "Wymagane",
-      "showRowDescription": "Pokaż opis / uzasadnienie"
+      "showRowDescription": "Pokaż opis / uzasadnienie",
+      "columns": {
+        "decision": "Decyzja",
+        "type": "Typ",
+        "status": "Status",
+        "priority": "Priorytet",
+        "dueDate": "Termin",
+        "project": "Projekt"
+      },
+      "toast": {
+        "loadFailed": "Nie udało się wczytać decyzji",
+        "approved": "Decyzja zaakceptowana",
+        "approveFailed": "Nie udało się zaakceptować decyzji",
+        "rejected": "Decyzja odrzucona",
+        "rejectFailed": "Nie udało się odrzucić decyzji",
+        "reminderSent": "Przypomnienie wysłane do {{owner}}",
+        "decisionOwner": "właściciela decyzji",
+        "reminderFailed": "Nie udało się wysłać przypomnienia",
+        "escalated": "Decyzja eskalowana - {{owner}} został powiadomiony",
+        "owner": "właściciel",
+        "escalateFailed": "Nie udało się eskalować decyzji",
+        "bulkApproved": "Zaakceptowano {{count}} decyzji",
+        "bulkApproveFailed": "Nie udało się zaakceptować decyzji",
+        "bulkRejected": "Odrzucono {{count}} decyzji",
+        "bulkRejectFailed": "Nie udało się odrzucić decyzji",
+        "bulkDeleted": "Usunięto {{count}} decyzji",
+        "bulkDeleteFailed": "Nie udało się usunąć decyzji",
+        "bulkRemindersSent": "Wysłano {{count}} przypomnień",
+        "bulkRemindersFailed": "Nie udało się wysłać przypomnień",
+        "bulkEscalated": "Eskalowano {{count}} decyzji",
+        "bulkEscalateFailed": "Nie udało się eskalować decyzji",
+        "bulkSnoozed": "Odłożono {{count}} decyzji",
+        "bulkSnoozeFailed": "Nie udało się odłożyć decyzji",
+        "bulkPriorityPrompt": "Ustaw priorytet dla zaznaczonych decyzji (LOW / MEDIUM / HIGH / CRITICAL):",
+        "bulkPrioritySet": "Ustawiono priorytet {{priority}} dla {{count}} decyzji",
+        "bulkPriorityFailed": "Nie udało się zaktualizować priorytetu"
+      }
     },
     "decisionPreview": {
       "en": "pl",
@@ -2490,7 +2575,47 @@
       "actions": "Akcje",
       "label9": "Ustawienia widoku",
       "columnsHeading": "Widoczne kolumny",
-      "showRowDescription": "Pokaż opis / uzasadnienie"
+      "showRowDescription": "Pokaż opis / uzasadnienie",
+      "columns": {
+        "actions": "Akcje",
+        "assignee": "Osoba przypisana",
+        "dueDate": "Termin",
+        "priority": "Priorytet",
+        "status": "Status",
+        "task": "Zadanie"
+      },
+      "priorityBadge": {
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "low": "Niski",
+        "medium": "Średni",
+        "normal": "Normalny"
+      },
+      "status": {
+        "blocked": "Zablokowane",
+        "cancelled": "Anulowane",
+        "done": "Zrobione",
+        "inProgress": "W trakcie",
+        "inProgressShort": "W trakcie",
+        "inReview": "W przeglądzie",
+        "pendingApproval": "Oczekuje na akceptację",
+        "review": "Przegląd",
+        "todo": "Do zrobienia"
+      },
+      "toast": {
+        "completeTasksFailed": "Nie udało się ukończyć zadań",
+        "deleteTaskFailed": "Nie udało się usunąć zadania",
+        "deleteTasksFailed": "Nie udało się usunąć zadań",
+        "priorityBulkUpdated": "Priorytet → {{priority}} ({{count}})",
+        "prioritySetTo": "Priorytet ustawiony na {{priority}}",
+        "taskCompleted": "Zadanie ukończone",
+        "taskDeleted": "Zadanie usunięte",
+        "taskReopened": "Zadanie wznowione",
+        "tasksCompletedCount": "Ukończono {{count}} zadań",
+        "tasksDeletedCount": "Usunięto {{count}} zadań",
+        "updatePriorityFailed": "Nie udało się zaktualizować priorytetu",
+        "updateTaskFailed": "Nie udało się zaktualizować zadania"
+      }
     },
     "notificationsContent": {
       "recently": "Niedawno",
@@ -2521,7 +2646,52 @@
       "muted": "Wyciszone",
       "mutedTypesSession": "Wyciszone typy (sesja)",
       "unmute": "Odblokuj",
-      "clearAll": "Wyczyść wszystko"
+      "clearAll": "Wyczyść wszystko",
+      "type": {
+        "task": "Zadanie",
+        "decision": "Decyzja",
+        "aiInsight": "Wgląd AI",
+        "approval": "Akceptacja",
+        "system": "System",
+        "billing": "Rozliczenia",
+        "dbr77": "DBR77",
+        "alert": "Alert"
+      },
+      "severity": {
+        "critical": "Krytyczny",
+        "warning": "Ostrzeżenie",
+        "info": "Informacja"
+      },
+      "source": {
+        "task": "Zadanie",
+        "decision": "Decyzja",
+        "project": "Projekt",
+        "user": "Użytkownik"
+      },
+      "columns": {
+        "severity": "Waga",
+        "type": "Typ",
+        "notification": "Powiadomienie",
+        "source": "Źródło",
+        "time": "Czas",
+        "actions": "Akcje"
+      },
+      "toast": {
+        "loadFailed": "Nie udało się wczytać powiadomień",
+        "markReadFailed": "Nie udało się oznaczyć powiadomienia jako przeczytane",
+        "deleted": "Powiadomienie usunięte",
+        "deleteFailed": "Nie udało się usunąć powiadomienia",
+        "bulkMarkedRead": "Oznaczono {{count}} powiadomień jako przeczytane",
+        "bulkMarkReadFailed": "Nie udało się oznaczyć powiadomień jako przeczytane",
+        "bulkDeleted": "Usunięto {{count}} powiadomień",
+        "bulkDeleteFailed": "Nie udało się usunąć powiadomień",
+        "bulkArchived": "Zarchiwizowano {{count}} powiadomień",
+        "bulkArchiveFailed": "Nie udało się zarchiwizować powiadomień"
+      },
+      "emptyState": {
+        "title": "Brak powiadomień",
+        "description": "Wszystko na bieżąco!"
+      }
     },
     "decisionDetail": {
       "language": "pl",
@@ -2861,7 +3031,18 @@
       "label14": "Ziarno",
       "label15": "Rośnie",
       "label16": "Dojrzała",
-      "label17": "Do działania"
+      "label17": "Do działania",
+      "activityType": {
+        "created": "Utworzono",
+        "status": "Status",
+        "assigned": "Przypisano",
+        "comment": "Komentarz",
+        "edit": "Edycja",
+        "attachment": "Załącznik",
+        "deadline": "Termin",
+        "priority": "Priorytet"
+      },
+      "email": "E-mail"
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
@@ -3526,6 +3707,165 @@
       "chat": "Czat",
       "snoozed": "Odłożone",
       "title": "Odłóż"
+    },
+    "homeView": {
+      "quadrant": {
+        "myDevelopment": {
+          "title": "Mój rozwój",
+          "subtitle": "czego powinienem się nauczyć"
+        },
+        "myProjects": {
+          "title": "Moje projekty",
+          "subtitle": "co pomaga w bieżącej pracy"
+        },
+        "myIndustry": {
+          "title": "Moja branża",
+          "subtitle": "co dzieje się wokół firmy"
+        },
+        "myRole": {
+          "title": "Moja rola",
+          "subtitle": "co wpływa na moją odpowiedzialność"
+        }
+      },
+      "ring": {
+        "observe": {
+          "label": "OBSERWUJ",
+          "helper": "trzymaj na radarze"
+        },
+        "learn": {
+          "label": "UCZ SIĘ",
+          "helper": "buduj zrozumienie"
+        },
+        "prepare": {
+          "label": "PRZYGOTUJ",
+          "helper": "przygotuj się"
+        },
+        "now": {
+          "label": "TERAZ",
+          "helper": "działaj lub omów teraz"
+        }
+      },
+      "signalType": {
+        "technology": "Technologia",
+        "skill": "Umiejętność",
+        "business": "Biznes",
+        "risk": "Ryzyko",
+        "process": "Proces",
+        "tool": "Narzędzie",
+        "trend": "Trend",
+        "idea": "Pomysł"
+      },
+      "signalStatus": {
+        "new": "Nowe",
+        "updated": "Zaktualizowane",
+        "saved": "Zapisane",
+        "watching": "Obserwowane",
+        "ignored": "Zignorowane"
+      },
+      "radarCanvasAriaLabel": "Płótno radaru",
+      "howToReadLabel": "Jak czytać:",
+      "howToReadBody": "bliżej środka = pilniejsze · pierścień = horyzont czasowy · ćwiartka = obszar życia · rozmiar = wpływ na biznes",
+      "horizonLabel": "Horyzont:",
+      "horizonBody": "Teraz · Przygotuj · Ucz się · Obserwuj",
+      "briefing": {
+        "whatItReallyIs": "Czym to naprawdę jest",
+        "whyItMattersForYou": "Dlaczego to ma dla Ciebie znaczenie",
+        "goodFirstQuestion": "Dobre pierwsze pytanie",
+        "suggestedNextStep": "Sugerowany kolejny krok",
+        "whatItIs": "Czym to jest",
+        "whyItMatters": "Dlaczego to ma znaczenie",
+        "howToThinkAboutIt": "Jak o tym myśleć"
+      }
+    },
+    "shortcuts": {
+      "moveUp": "Przesuń zaznaczenie w górę",
+      "moveDown": "Przesuń zaznaczenie w dół",
+      "goFirst": "Przejdź do pierwszego elementu",
+      "goLast": "Przejdź do ostatniego elementu",
+      "openSelected": "Otwórz zaznaczony element",
+      "closeCancel": "Zamknij / Anuluj",
+      "newTaskDecision": "Nowe zadanie/decyzja",
+      "editSelected": "Edytuj zaznaczone",
+      "duplicateSelected": "Duplikuj zaznaczone",
+      "deleteSelected": "Usuń zaznaczone",
+      "saveChanges": "Zapisz zmiany",
+      "focusSearch": "Ustaw fokus na wyszukiwanie",
+      "priorityLow": "Ustaw priorytet: Niski",
+      "priorityMedium": "Ustaw priorytet: Średni",
+      "priorityHigh": "Ustaw priorytet: Wysoki",
+      "priorityCritical": "Ustaw priorytet: Krytyczny",
+      "toggleComplete": "Przełącz ukończenie",
+      "groupNodes": "Grupuj zaznaczone węzły",
+      "aiExpandSelected": "AI: rozwiń zaznaczone",
+      "addChildNode": "Dodaj węzeł podrzędny",
+      "addSiblingNode": "Dodaj węzeł równorzędny",
+      "toggleCollapseExpand": "Przełącz zwiń/rozwiń (mapa myśli)",
+      "focusSelectedNode": "Ustaw fokus na zaznaczony węzeł",
+      "promoteNode": "Podnieś węzeł o poziom",
+      "demoteNode": "Obniż węzeł pod poprzedni element równorzędny",
+      "selectAll": "Zaznacz wszystko",
+      "clearSelection": "Wyczyść zaznaczenie",
+      "showHideHelp": "Pokaż / ukryj pomoc klawiaturową"
+    },
+    "taskInbox": {
+      "loadFailed": "Nie udało się wczytać zadań",
+      "confirmDelete": "Czy na pewno chcesz usunąć to zadanie?",
+      "delete": "Usuń",
+      "unpin": "Odepnij",
+      "pinToTop": "Przypnij na górze",
+      "newTask": "Nowe zadanie",
+      "showing": "Pokazuję:",
+      "quickFilters": "Szybkie filtry",
+      "view": "Widok:",
+      "syncing": "Synchronizacja zadań...",
+      "noTasksFound": "Nie znaleziono zadań",
+      "noDueDate": "Brak terminu",
+      "noDescription": "Brak opisu",
+      "priorityNormal": "Normalny",
+      "unassigned": "Nieprzypisane",
+      "filter": {
+        "allTasks": "Wszystkie zadania",
+        "overdue": "Po terminie",
+        "urgent": "Pilne",
+        "dueToday": "Termin dziś"
+      },
+      "section": {
+        "pinned": "Przypięte"
+      },
+      "columns": {
+        "task": "Zadanie",
+        "status": "Status",
+        "priority": "Priorytet",
+        "assignee": "Osoba przypisana",
+        "due": "Termin"
+      },
+      "header": {
+        "title": "Moje zadania",
+        "subtitle": "Zarządzaj swoim planem działań"
+      },
+      "viewMode": {
+        "pmoPriority": "Priorytet PMO",
+        "list": "Lista",
+        "listView": "Widok listy"
+      },
+      "toast": {
+        "taskUpdated": "Zadanie zaktualizowane",
+        "updateFailed": "Nie udało się zaktualizować zadania",
+        "taskDeleted": "Zadanie usunięte",
+        "deleteFailed": "Nie udało się usunąć zadania"
+      }
+    },
+    "ideaMap": {
+      "toast": {
+        "styleChanged": "Styl: {{style}}",
+        "shapeChanged": "Kształt: {{shape}}"
+      }
+    },
+    "notebookContent": {
+      "toast": {
+        "pinFailed": "Nie udało się przypiąć",
+        "statusUpdateFailed": "Nie udało się zaktualizować statusu"
+      }
     }
   },
   "step1": {
@@ -20711,7 +21051,9 @@
         "addProPlaceholder": "+ Dodaj argument za",
         "conArgumentPlaceholder": "Argument przeciw...",
         "addConPlaceholder": "+ Dodaj argument przeciw",
-        "riskLabel": "ryzyko"
+        "riskLabel": "ryzyko",
+        "recommended": "Rekomendowana",
+        "setRecommended": "Ustaw jako rekomendowaną"
       },
       "consequencesSection": {
         "title": "Konsekwencje braku decyzji",
@@ -20810,7 +21152,9 @@
         "syncTargets": "Cele synchronizacji",
         "message": "Wiadomość",
         "cancel": "Anuluj",
-        "save": "Zapisz"
+        "save": "Zapisz",
+        "requester": "Wnioskujący",
+        "decider": "Decydent"
       },
       "escalationModal": {
         "addTitle": "Dodaj regułę eskalacji",
@@ -20910,7 +21254,16 @@
         "high": "Wysoki",
         "critical": "Krytyczny"
       },
-      "decisionContextTemplate": "## Kontekst decyzji\n\nDecyzja dotyczy wyboru optymalnego rozwiązania dla {{title}}.\n\n### Tło\nW ramach analizy zidentyfikowano następujące kluczowe czynniki:\n- Wymagania biznesowe i techniczne\n- Ograniczenia budżetowe i czasowe\n- Wpływ na obecne procesy\n\n### Zakres\nDecyzja obejmuje:\n1. Wybór dostawcy/technologii\n2. Określenie harmonogramu wdrożenia\n3. Alokację zasobów\n\n### Oczekiwane rezultaty\n- Poprawa efektywności procesów\n- Redukcja kosztów operacyjnych\n- Zwiększenie konkurencyjności"
+      "decisionContextTemplate": "## Kontekst decyzji\n\nDecyzja dotyczy wyboru optymalnego rozwiązania dla {{title}}.\n\n### Tło\nW ramach analizy zidentyfikowano następujące kluczowe czynniki:\n- Wymagania biznesowe i techniczne\n- Ograniczenia budżetowe i czasowe\n- Wpływ na obecne procesy\n\n### Zakres\nDecyzja obejmuje:\n1. Wybór dostawcy/technologii\n2. Określenie harmonogramu wdrożenia\n3. Alokację zasobów\n\n### Oczekiwane rezultaty\n- Poprawa efektywności procesów\n- Redukcja kosztów operacyjnych\n- Zwiększenie konkurencyjności",
+      "notify": {
+        "inApp": "W aplikacji",
+        "email": "E-mail"
+      },
+      "integrations": {
+        "placeholderOps": "slack:#ops, jira:DRD",
+        "placeholderDelivery": "slack:#delivery, jira:PROJ, webhook:ops",
+        "placeholderIncident": "slack:#incident, jira:OPS, webhook:oncall"
+      }
     }
   },
   "discovery": {
@@ -23101,7 +23454,12 @@
         "active": "aktywnych",
         "configured": "konfiguracji",
         "shared": "udostępnionych"
-      }
+      },
+      "kanban": "Kanban",
+      "timelineGantt": "Oś czasu / Gantt",
+      "matrix": "Macierz",
+      "undoShortcut": "Cofnij (Ctrl+Z)",
+      "redoShortcut": "Ponów (Ctrl+Y)"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",

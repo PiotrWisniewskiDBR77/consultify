@@ -1761,14 +1761,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {(
                   [
                     { id: 'table', icon: Table2, label: t('ideas.table.table', 'Table') },
-                    { id: 'kanban', icon: KanbanSquare, label: 'Kanban' },
-                    { id: 'timeline', icon: GanttChart, label: 'Timeline / Gantt' },
+                    { id: 'kanban', icon: KanbanSquare, label: t('ideas.table.kanban', 'Kanban') },
+                    {
+                      id: 'timeline',
+                      icon: GanttChart,
+                      label: t('ideas.table.timelineGantt', 'Timeline / Gantt'),
+                    },
                     {
                       id: 'calendar',
                       icon: Calendar,
                       label: t('ideas.table.calendar', 'Calendar'),
                     },
-                    { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
+                    { id: 'matrix', icon: LayoutGrid, label: t('ideas.table.matrix', 'Matrix') },
                     { id: 'grid', icon: Grid3X3, label: t('ideas.table.gallery', 'Gallery') },
                   ] as const
                 ).map((v) => (
@@ -2406,7 +2410,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={handlePlatformUndo}
                   disabled={!usePlatform && !nodesUndo.canUndo}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary disabled:opacity-30 transition-colors"
-                  title="Undo (Ctrl+Z)"
+                  title={t('ideas.table.undoShortcut', 'Undo (Ctrl+Z)')}
                 >
                   <Undo2 size={13} />
                 </button>
@@ -2414,7 +2418,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={nodesUndo.redo}
                   disabled={!nodesUndo.canRedo}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary disabled:opacity-30 transition-colors"
-                  title="Redo (Ctrl+Y)"
+                  title={t('ideas.table.redoShortcut', 'Redo (Ctrl+Y)')}
                 >
                   <Redo2 size={13} />
                 </button>

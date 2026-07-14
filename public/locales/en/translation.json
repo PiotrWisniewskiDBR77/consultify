@@ -2842,7 +2842,56 @@
       "noSavedItems": "No saved items",
       "useSaveBTo": "Use Save (B) to bookmark items for later.",
       "inboxIsEmptyZero": "Inbox is empty — zero backlog!",
-      "everythingProcessedGreatJob": "Everything processed. Great job!"
+      "everythingProcessedGreatJob": "Everything processed. Great job!",
+      "urgency": {
+        "critical": "Critical",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      },
+      "statusFilter": {
+        "open": "Open",
+        "done": "Done",
+        "saved": "Saved",
+        "dismissed": "Dismissed"
+      },
+      "typeFilter": {
+        "assignment": "Assignment",
+        "mention": "Mention",
+        "escalation": "Escalation",
+        "review": "Review",
+        "decision": "Decision",
+        "aiInsight": "AI Insight",
+        "system": "System",
+        "billing": "Billing",
+        "project": "Project"
+      },
+      "sectionFilter": {
+        "decisionsRequired": "Decisions required",
+        "approvalsGates": "Approvals & gates",
+        "assignedTasks": "Assigned tasks",
+        "blockedEscalations": "Blocked / escalations",
+        "overdueSlaBreach": "Overdue / SLA breach",
+        "systemNotifications": "System notifications",
+        "mentionsFyi": "Mentions & FYI",
+        "aiInsights": "AI Insights",
+        "other": "Other"
+      },
+      "sourceFilter": {
+        "system": "System",
+        "ai": "AI",
+        "userTeam": "User / Team"
+      },
+      "columns": {
+        "title": "Title",
+        "status": "Status",
+        "urgency": "Urgency",
+        "type": "Type",
+        "section": "Section",
+        "source": "Source",
+        "received": "Received",
+        "sla": "SLA"
+      }
     },
     "notificationDetail": {
       "toastError": "Notification not found",
@@ -3155,7 +3204,43 @@
       "dueDate2": "Due date",
       "actions": "Actions",
       "required": "Required",
-      "showRowDescription": "Show row description"
+      "showRowDescription": "Show row description",
+      "columns": {
+        "decision": "Decision",
+        "type": "Type",
+        "status": "Status",
+        "priority": "Priority",
+        "dueDate": "Due Date",
+        "project": "Project"
+      },
+      "toast": {
+        "loadFailed": "Failed to load decisions",
+        "approved": "Decision approved",
+        "approveFailed": "Failed to approve decision",
+        "rejected": "Decision rejected",
+        "rejectFailed": "Failed to reject decision",
+        "reminderSent": "Reminder sent to {{owner}}",
+        "decisionOwner": "decision owner",
+        "reminderFailed": "Failed to send reminder",
+        "escalated": "Decision escalated - {{owner}} has been notified",
+        "owner": "owner",
+        "escalateFailed": "Failed to escalate decision",
+        "bulkApproved": "{{count}} decisions approved",
+        "bulkApproveFailed": "Failed to approve decisions",
+        "bulkRejected": "{{count}} decisions rejected",
+        "bulkRejectFailed": "Failed to reject decisions",
+        "bulkDeleted": "{{count}} decisions deleted",
+        "bulkDeleteFailed": "Failed to delete decisions",
+        "bulkRemindersSent": "{{count}} reminders sent",
+        "bulkRemindersFailed": "Failed to send reminders",
+        "bulkEscalated": "{{count}} decisions escalated",
+        "bulkEscalateFailed": "Failed to escalate decisions",
+        "bulkSnoozed": "{{count}} decisions snoozed",
+        "bulkSnoozeFailed": "Failed to snooze decisions",
+        "bulkPriorityPrompt": "Set priority for selected decisions (LOW / MEDIUM / HIGH / CRITICAL):",
+        "bulkPrioritySet": "Priority set to {{priority}} for {{count}} decisions",
+        "bulkPriorityFailed": "Failed to update priority"
+      }
     },
     "decisionPreview": {
       "en": "en",
@@ -3255,7 +3340,47 @@
       "actions": "Actions",
       "label9": "View settings",
       "columnsHeading": "Visible columns",
-      "showRowDescription": "Show row description"
+      "showRowDescription": "Show row description",
+      "columns": {
+        "actions": "Actions",
+        "assignee": "Assignee",
+        "dueDate": "Due Date",
+        "priority": "Priority",
+        "status": "Status",
+        "task": "Task"
+      },
+      "priorityBadge": {
+        "critical": "Critical",
+        "high": "High",
+        "low": "Low",
+        "medium": "Medium",
+        "normal": "Normal"
+      },
+      "status": {
+        "blocked": "Blocked",
+        "cancelled": "Cancelled",
+        "done": "Done",
+        "inProgress": "In progress",
+        "inProgressShort": "In Progress",
+        "inReview": "In review",
+        "pendingApproval": "Pending approval",
+        "review": "Review",
+        "todo": "To Do"
+      },
+      "toast": {
+        "completeTasksFailed": "Failed to complete tasks",
+        "deleteTaskFailed": "Failed to delete task",
+        "deleteTasksFailed": "Failed to delete tasks",
+        "priorityBulkUpdated": "Priority → {{priority}} ({{count}})",
+        "prioritySetTo": "Priority set to {{priority}}",
+        "taskCompleted": "Task completed",
+        "taskDeleted": "Task deleted",
+        "taskReopened": "Task reopened",
+        "tasksCompletedCount": "{{count}} tasks completed",
+        "tasksDeletedCount": "{{count}} tasks deleted",
+        "updatePriorityFailed": "Failed to update priority",
+        "updateTaskFailed": "Failed to update task"
+      }
     },
     "notificationsContent": {
       "recently": "Recently",
@@ -3286,7 +3411,52 @@
       "muted": "Muted",
       "mutedTypesSession": "Muted types (session)",
       "unmute": "Unmute",
-      "clearAll": "Clear all"
+      "clearAll": "Clear all",
+      "type": {
+        "task": "Task",
+        "decision": "Decision",
+        "aiInsight": "AI Insight",
+        "approval": "Approval",
+        "system": "System",
+        "billing": "Billing",
+        "dbr77": "DBR77",
+        "alert": "Alert"
+      },
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning",
+        "info": "Info"
+      },
+      "source": {
+        "task": "Task",
+        "decision": "Decision",
+        "project": "Project",
+        "user": "User"
+      },
+      "columns": {
+        "severity": "Severity",
+        "type": "Type",
+        "notification": "Notification",
+        "source": "Source",
+        "time": "Time",
+        "actions": "Actions"
+      },
+      "toast": {
+        "loadFailed": "Failed to load notifications",
+        "markReadFailed": "Failed to mark notification as read",
+        "deleted": "Notification deleted",
+        "deleteFailed": "Failed to delete notification",
+        "bulkMarkedRead": "{{count}} notifications marked as read",
+        "bulkMarkReadFailed": "Failed to mark notifications as read",
+        "bulkDeleted": "{{count}} notifications deleted",
+        "bulkDeleteFailed": "Failed to delete notifications",
+        "bulkArchived": "{{count}} notifications archived",
+        "bulkArchiveFailed": "Failed to archive notifications"
+      },
+      "emptyState": {
+        "title": "No notifications",
+        "description": "You're all caught up!"
+      }
     },
     "decisionDetail": {
       "language": "en",
@@ -3626,7 +3796,18 @@
       "label14": "Seed",
       "label15": "Growing",
       "label16": "Mature",
-      "label17": "Actionable"
+      "label17": "Actionable",
+      "activityType": {
+        "created": "Created",
+        "status": "Status",
+        "assigned": "Assigned",
+        "comment": "Comment",
+        "edit": "Edit",
+        "attachment": "Attachment",
+        "deadline": "Deadline",
+        "priority": "Priority"
+      },
+      "email": "Email"
     },
     "dependencies": {
       "toastError": "Select a source task first",
@@ -4291,6 +4472,165 @@
       "chat": "Chat",
       "snoozed": "Snoozed",
       "title": "Snooze"
+    },
+    "homeView": {
+      "quadrant": {
+        "myDevelopment": {
+          "title": "My Development",
+          "subtitle": "what I should learn"
+        },
+        "myProjects": {
+          "title": "My Projects",
+          "subtitle": "what helps current work"
+        },
+        "myIndustry": {
+          "title": "My Industry",
+          "subtitle": "what matters around company"
+        },
+        "myRole": {
+          "title": "My Role",
+          "subtitle": "what affects responsibility"
+        }
+      },
+      "ring": {
+        "observe": {
+          "label": "OBSERVE",
+          "helper": "keep on radar"
+        },
+        "learn": {
+          "label": "LEARN",
+          "helper": "build understanding"
+        },
+        "prepare": {
+          "label": "PREPARE",
+          "helper": "get ready"
+        },
+        "now": {
+          "label": "NOW",
+          "helper": "act or discuss now"
+        }
+      },
+      "signalType": {
+        "technology": "Technology",
+        "skill": "Skill",
+        "business": "Business",
+        "risk": "Risk",
+        "process": "Process",
+        "tool": "Tool",
+        "trend": "Trend",
+        "idea": "Idea"
+      },
+      "signalStatus": {
+        "new": "New",
+        "updated": "Updated",
+        "saved": "Saved",
+        "watching": "Watching",
+        "ignored": "Ignored"
+      },
+      "radarCanvasAriaLabel": "Radar canvas",
+      "howToReadLabel": "How to read:",
+      "howToReadBody": "closer to centre = more urgent · ring = time horizon · quadrant = life area · size = business impact",
+      "horizonLabel": "Horizon:",
+      "horizonBody": "Now · Prepare · Learn · Observe",
+      "briefing": {
+        "whatItReallyIs": "What it really is",
+        "whyItMattersForYou": "Why it matters for you",
+        "goodFirstQuestion": "Good first question",
+        "suggestedNextStep": "Suggested next step",
+        "whatItIs": "What it is",
+        "whyItMatters": "Why it matters",
+        "howToThinkAboutIt": "How to think about it"
+      }
+    },
+    "shortcuts": {
+      "moveUp": "Move selection up",
+      "moveDown": "Move selection down",
+      "goFirst": "Go to first item",
+      "goLast": "Go to last item",
+      "openSelected": "Open selected item",
+      "closeCancel": "Close / Cancel",
+      "newTaskDecision": "New task/decision",
+      "editSelected": "Edit selected",
+      "duplicateSelected": "Duplicate selected",
+      "deleteSelected": "Delete selected",
+      "saveChanges": "Save changes",
+      "focusSearch": "Focus search",
+      "priorityLow": "Set priority: Low",
+      "priorityMedium": "Set priority: Medium",
+      "priorityHigh": "Set priority: High",
+      "priorityCritical": "Set priority: Critical",
+      "toggleComplete": "Toggle complete",
+      "groupNodes": "Group selected nodes",
+      "aiExpandSelected": "AI expand selected",
+      "addChildNode": "Add child node",
+      "addSiblingNode": "Add sibling node",
+      "toggleCollapseExpand": "Toggle collapse/expand (mindmap)",
+      "focusSelectedNode": "Focus selected node",
+      "promoteNode": "Promote node one level",
+      "demoteNode": "Demote node under previous sibling",
+      "selectAll": "Select all",
+      "clearSelection": "Clear selection",
+      "showHideHelp": "Show / hide keyboard help"
+    },
+    "taskInbox": {
+      "loadFailed": "Failed to load tasks",
+      "confirmDelete": "Are you sure you want to delete this task?",
+      "delete": "Delete",
+      "unpin": "Unpin",
+      "pinToTop": "Pin to top",
+      "newTask": "New Task",
+      "showing": "Showing:",
+      "quickFilters": "Quick Filters",
+      "view": "View:",
+      "syncing": "Syncing tasks...",
+      "noTasksFound": "No tasks found",
+      "noDueDate": "No due date",
+      "noDescription": "No description",
+      "priorityNormal": "Normal",
+      "unassigned": "Unassigned",
+      "filter": {
+        "allTasks": "All Tasks",
+        "overdue": "Overdue",
+        "urgent": "Urgent",
+        "dueToday": "Due Today"
+      },
+      "section": {
+        "pinned": "Pinned"
+      },
+      "columns": {
+        "task": "Task",
+        "status": "Status",
+        "priority": "Priority",
+        "assignee": "Assignee",
+        "due": "Due"
+      },
+      "header": {
+        "title": "My Tasks",
+        "subtitle": "Manage your action plan"
+      },
+      "viewMode": {
+        "pmoPriority": "PMO Priority",
+        "list": "List",
+        "listView": "List View"
+      },
+      "toast": {
+        "taskUpdated": "Task updated",
+        "updateFailed": "Failed to update task",
+        "taskDeleted": "Task deleted",
+        "deleteFailed": "Failed to delete task"
+      }
+    },
+    "ideaMap": {
+      "toast": {
+        "styleChanged": "Style: {{style}}",
+        "shapeChanged": "Shape: {{shape}}"
+      }
+    },
+    "notebookContent": {
+      "toast": {
+        "pinFailed": "Failed to pin",
+        "statusUpdateFailed": "Failed to update status"
+      }
     }
   },
   "step1": {
@@ -19655,7 +19995,9 @@
         "addProPlaceholder": "+ Add pro",
         "conArgumentPlaceholder": "Con argument...",
         "addConPlaceholder": "+ Add con",
-        "riskLabel": "risk"
+        "riskLabel": "risk",
+        "recommended": "Recommended",
+        "setRecommended": "Set recommended"
       },
       "consequencesSection": {
         "title": "Consequences of Inaction",
@@ -19754,7 +20096,9 @@
         "syncTargets": "Sync targets",
         "message": "Message",
         "cancel": "Cancel",
-        "save": "Save"
+        "save": "Save",
+        "requester": "Requester",
+        "decider": "Decider"
       },
       "escalationModal": {
         "addTitle": "Add escalation rule",
@@ -19854,7 +20198,16 @@
         "high": "High",
         "critical": "Critical"
       },
-      "decisionContextTemplate": "## Decision Context\n\nThis decision concerns selecting the optimal solution for {{title}}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness"
+      "decisionContextTemplate": "## Decision Context\n\nThis decision concerns selecting the optimal solution for {{title}}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness",
+      "notify": {
+        "inApp": "In-app",
+        "email": "Email"
+      },
+      "integrations": {
+        "placeholderOps": "slack:#ops, jira:DRD",
+        "placeholderDelivery": "slack:#delivery, jira:PROJ, webhook:ops",
+        "placeholderIncident": "slack:#incident, jira:OPS, webhook:oncall"
+      }
     }
   },
   "discovery": {
@@ -22025,7 +22378,12 @@
         "active": "active",
         "configured": "configured",
         "shared": "shared"
-      }
+      },
+      "kanban": "Kanban",
+      "timelineGantt": "Timeline / Gantt",
+      "matrix": "Matrix",
+      "undoShortcut": "Undo (Ctrl+Z)",
+      "redoShortcut": "Redo (Ctrl+Y)"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",

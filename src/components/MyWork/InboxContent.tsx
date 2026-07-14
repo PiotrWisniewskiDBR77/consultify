@@ -536,25 +536,25 @@ const urgencyConfig: Record<
   critical: {
     icon: AlertTriangle,
     pill: 'border border-danger-200 bg-danger-100 text-danger-800 [&>svg]:text-danger-700 dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent dark:[&>svg]:text-danger-300',
-    label: 'Critical',
+    label: i18n.t('myWork.inboxContent.urgency.critical', 'Critical'),
     heatColor: 'border-l-danger-500',
   },
   high: {
     icon: AlertCircle,
     pill: 'border border-amber-200 bg-amber-100 text-amber-800 [&>svg]:text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent dark:[&>svg]:text-amber-300',
-    label: 'High',
+    label: i18n.t('myWork.inboxContent.urgency.high', 'High'),
     heatColor: 'border-l-amber-500',
   },
   normal: {
     icon: Clock,
     pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
-    label: 'Normal',
+    label: i18n.t('myWork.inboxContent.urgency.normal', 'Normal'),
     heatColor: 'border-l-c-border',
   },
   low: {
     icon: Calendar,
     pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
-    label: 'Low',
+    label: i18n.t('myWork.inboxContent.urgency.low', 'Low'),
     heatColor: 'border-l-c-border-subtle',
   },
 };
@@ -732,48 +732,97 @@ const SNOOZE_PRESETS: { id: SnoozePreset; labelEn: string; labelPl: string }[] =
 
 // ── Filter options ──
 const INBOX_STATUS_FILTER_OPTIONS = [
-  { value: 'open', label: 'Open' },
-  { value: 'done', label: 'Done' },
-  { value: 'saved', label: 'Saved' },
-  { value: 'dismissed', label: 'Dismissed' },
+  { value: 'open', label: i18n.t('myWork.inboxContent.statusFilter.open', 'Open') },
+  { value: 'done', label: i18n.t('myWork.inboxContent.statusFilter.done', 'Done') },
+  { value: 'saved', label: i18n.t('myWork.inboxContent.statusFilter.saved', 'Saved') },
+  { value: 'dismissed', label: i18n.t('myWork.inboxContent.statusFilter.dismissed', 'Dismissed') },
 ];
 
 const INBOX_URGENCY_FILTER_OPTIONS = [
-  { value: 'critical', label: 'Critical', color: 'text-danger-500' },
-  { value: 'high', label: 'High', color: 'text-amber-500' },
-  { value: 'normal', label: 'Normal', color: 'text-c-text-muted' },
-  { value: 'low', label: 'Low', color: 'text-c-text-secondary' },
+  {
+    value: 'critical',
+    label: i18n.t('myWork.inboxContent.urgency.critical', 'Critical'),
+    color: 'text-danger-500',
+  },
+  {
+    value: 'high',
+    label: i18n.t('myWork.inboxContent.urgency.high', 'High'),
+    color: 'text-amber-500',
+  },
+  {
+    value: 'normal',
+    label: i18n.t('myWork.inboxContent.urgency.normal', 'Normal'),
+    color: 'text-c-text-muted',
+  },
+  {
+    value: 'low',
+    label: i18n.t('myWork.inboxContent.urgency.low', 'Low'),
+    color: 'text-c-text-secondary',
+  },
 ];
 
 const INBOX_TYPE_FILTER_OPTIONS = [
-  { value: 'new_assignment', label: 'Assignment' },
-  { value: 'mention', label: 'Mention' },
-  { value: 'escalation', label: 'Escalation' },
-  { value: 'review_request', label: 'Review' },
-  { value: 'decision_request', label: 'Decision' },
-  { value: 'ai_suggestion', label: 'AI Insight' },
-  { value: 'system_alert', label: 'System' },
-  { value: 'billing_alert', label: 'Billing' },
-  { value: 'project_update', label: 'Project' },
+  {
+    value: 'new_assignment',
+    label: i18n.t('myWork.inboxContent.typeFilter.assignment', 'Assignment'),
+  },
+  { value: 'mention', label: i18n.t('myWork.inboxContent.typeFilter.mention', 'Mention') },
+  { value: 'escalation', label: i18n.t('myWork.inboxContent.typeFilter.escalation', 'Escalation') },
+  { value: 'review_request', label: i18n.t('myWork.inboxContent.typeFilter.review', 'Review') },
+  {
+    value: 'decision_request',
+    label: i18n.t('myWork.inboxContent.typeFilter.decision', 'Decision'),
+  },
+  {
+    value: 'ai_suggestion',
+    label: i18n.t('myWork.inboxContent.typeFilter.aiInsight', 'AI Insight'),
+  },
+  { value: 'system_alert', label: i18n.t('myWork.inboxContent.typeFilter.system', 'System') },
+  { value: 'billing_alert', label: i18n.t('myWork.inboxContent.typeFilter.billing', 'Billing') },
+  { value: 'project_update', label: i18n.t('myWork.inboxContent.typeFilter.project', 'Project') },
 ];
 
 const INBOX_SECTION_FILTER_OPTIONS = [
-  { value: 'decisions_required', label: 'Decisions required' },
-  { value: 'approvals_gates', label: 'Approvals & gates' },
-  { value: 'assigned_tasks', label: 'Assigned tasks' },
-  { value: 'blocked_escalations', label: 'Blocked / escalations' },
-  { value: 'overdue_sla_breach', label: 'Overdue / SLA breach' },
-  { value: 'fyi_system', label: 'System notifications' },
-  { value: 'fyi_mentions', label: 'Mentions & FYI' },
-  { value: 'ai_insights', label: 'AI Insights' },
-  { value: 'other', label: 'Other' },
+  {
+    value: 'decisions_required',
+    label: i18n.t('myWork.inboxContent.sectionFilter.decisionsRequired', 'Decisions required'),
+  },
+  {
+    value: 'approvals_gates',
+    label: i18n.t('myWork.inboxContent.sectionFilter.approvalsGates', 'Approvals & gates'),
+  },
+  {
+    value: 'assigned_tasks',
+    label: i18n.t('myWork.inboxContent.sectionFilter.assignedTasks', 'Assigned tasks'),
+  },
+  {
+    value: 'blocked_escalations',
+    label: i18n.t('myWork.inboxContent.sectionFilter.blockedEscalations', 'Blocked / escalations'),
+  },
+  {
+    value: 'overdue_sla_breach',
+    label: i18n.t('myWork.inboxContent.sectionFilter.overdueSlaBreach', 'Overdue / SLA breach'),
+  },
+  {
+    value: 'fyi_system',
+    label: i18n.t('myWork.inboxContent.sectionFilter.systemNotifications', 'System notifications'),
+  },
+  {
+    value: 'fyi_mentions',
+    label: i18n.t('myWork.inboxContent.sectionFilter.mentionsFyi', 'Mentions & FYI'),
+  },
+  {
+    value: 'ai_insights',
+    label: i18n.t('myWork.inboxContent.sectionFilter.aiInsights', 'AI Insights'),
+  },
+  { value: 'other', label: i18n.t('myWork.inboxContent.sectionFilter.other', 'Other') },
 ];
 
 // N13: Source / Creator filter
 const INBOX_SOURCE_FILTER_OPTIONS = [
-  { value: 'system', label: 'System' },
-  { value: 'ai', label: 'AI' },
-  { value: 'user', label: 'User / Team' },
+  { value: 'system', label: i18n.t('myWork.inboxContent.sourceFilter.system', 'System') },
+  { value: 'ai', label: i18n.t('myWork.inboxContent.sourceFilter.ai', 'AI') },
+  { value: 'user', label: i18n.t('myWork.inboxContent.sourceFilter.userTeam', 'User / Team') },
 ];
 
 // ── Column definitions ──
@@ -789,7 +838,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'title',
-    label: 'Title',
+    label: i18n.t('myWork.inboxContent.columns.title', 'Title'),
     width: 560,
     minWidth: 360,
     maxWidth: 900,
@@ -798,7 +847,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'status',
-    label: 'Status',
+    label: i18n.t('myWork.inboxContent.columns.status', 'Status'),
     width: 100,
     minWidth: 80,
     maxWidth: 140,
@@ -809,7 +858,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'urgency',
-    label: 'Urgency',
+    label: i18n.t('myWork.inboxContent.columns.urgency', 'Urgency'),
     width: 110,
     minWidth: 80,
     maxWidth: 150,
@@ -820,7 +869,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'type',
-    label: 'Type',
+    label: i18n.t('myWork.inboxContent.columns.type', 'Type'),
     width: 120,
     minWidth: 90,
     maxWidth: 160,
@@ -831,7 +880,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'section',
-    label: 'Section',
+    label: i18n.t('myWork.inboxContent.columns.section', 'Section'),
     width: 150,
     minWidth: 110,
     maxWidth: 220,
@@ -842,7 +891,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'source',
-    label: 'Source',
+    label: i18n.t('myWork.inboxContent.columns.source', 'Source'),
     width: 110,
     minWidth: 90,
     maxWidth: 170,
@@ -853,7 +902,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'received',
-    label: 'Received',
+    label: i18n.t('myWork.inboxContent.columns.received', 'Received'),
     width: 120,
     minWidth: 90,
     maxWidth: 160,
@@ -862,7 +911,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'sla',
-    label: 'SLA',
+    label: i18n.t('myWork.inboxContent.columns.sla', 'SLA'),
     width: 100,
     minWidth: 70,
     maxWidth: 140,

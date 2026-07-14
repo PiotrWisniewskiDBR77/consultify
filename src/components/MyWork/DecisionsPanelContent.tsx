@@ -271,7 +271,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'title',
-    label: 'Decision',
+    label: i18n.t('myWork.decisionsPanel.columns.decision', 'Decision'),
     width: 560,
     minWidth: 360,
     maxWidth: 900,
@@ -282,7 +282,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
     // VISUAL_STANDARD.md §5.3 / VIS-008 — badges are never truncated:
     // column wide enough for full type labels (APPROVAL, STRATEGIC, …).
     id: 'type',
-    label: 'Type',
+    label: i18n.t('myWork.decisionsPanel.columns.type', 'Type'),
     width: 130,
     minWidth: 110,
     maxWidth: 180,
@@ -291,7 +291,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'status',
-    label: 'Status',
+    label: i18n.t('myWork.decisionsPanel.columns.status', 'Status'),
     width: 130,
     minWidth: 100,
     maxWidth: 170,
@@ -302,7 +302,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'priority',
-    label: 'Priority',
+    label: i18n.t('myWork.decisionsPanel.columns.priority', 'Priority'),
     width: 120,
     minWidth: 90,
     maxWidth: 160,
@@ -313,7 +313,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'date',
-    label: 'Due Date',
+    label: i18n.t('myWork.decisionsPanel.columns.dueDate', 'Due Date'),
     width: 130,
     minWidth: 100,
     maxWidth: 170,
@@ -322,7 +322,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'project',
-    label: 'Project',
+    label: i18n.t('myWork.decisionsPanel.columns.project', 'Project'),
     width: 160,
     minWidth: 120,
     maxWidth: 220,
@@ -1163,7 +1163,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       setDecisions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
-      toast.error('Failed to load decisions');
+      toast.error(t('myWork.decisionsPanel.toast.loadFailed', 'Failed to load decisions'));
     } finally {
       setLoading(false);
     }
@@ -1320,9 +1320,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     try {
       await Api.decideDecision(id, 'approved');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'APPROVED' } : d)));
-      toast.success('Decision approved');
+      toast.success(t('myWork.decisionsPanel.toast.approved', 'Decision approved'));
     } catch (error) {
-      toast.error('Failed to approve decision');
+      toast.error(t('myWork.decisionsPanel.toast.approveFailed', 'Failed to approve decision'));
     }
   };
 
@@ -1346,9 +1346,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     try {
       await Api.decideDecision(id, 'rejected');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d)));
-      toast.success('Decision rejected');
+      toast.success(t('myWork.decisionsPanel.toast.rejected', 'Decision rejected'));
     } catch (error) {
-      toast.error('Failed to reject decision');
+      toast.error(t('myWork.decisionsPanel.toast.rejectFailed', 'Failed to reject decision'));
     }
   };
 
@@ -1373,10 +1373,15 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
         )
       );
 
-      toast.success(`Reminder sent to ${decision.ownerName || 'decision owner'}`);
+      toast.success(
+        t('myWork.decisionsPanel.toast.reminderSent', 'Reminder sent to {{owner}}', {
+          owner:
+            decision.ownerName || t('myWork.decisionsPanel.toast.decisionOwner', 'decision owner'),
+        })
+      );
     } catch (error) {
       console.error('Failed to send reminder:', error);
-      toast.error('Failed to send reminder');
+      toast.error(t('myWork.decisionsPanel.toast.reminderFailed', 'Failed to send reminder'));
     }
   };
 
@@ -1413,10 +1418,16 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
         )
       );
 
-      toast.success(`Decision escalated - ${decision.ownerName || 'owner'} has been notified`);
+      toast.success(
+        t(
+          'myWork.decisionsPanel.toast.escalated',
+          'Decision escalated - {{owner}} has been notified',
+          { owner: decision.ownerName || t('myWork.decisionsPanel.toast.owner', 'owner') }
+        )
+      );
     } catch (error) {
       console.error('Failed to escalate decision:', error);
-      toast.error('Failed to escalate decision');
+      toast.error(t('myWork.decisionsPanel.toast.escalateFailed', 'Failed to escalate decision'));
     }
   };
 
@@ -1652,10 +1663,16 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       setDecisions((prev) =>
         prev.map((d) => (selectedIds.has(d.id) ? { ...d, status: 'APPROVED' } : d))
       );
-      toast.success(`${selectedIds.size} decisions approved`);
+      toast.success(
+        t('myWork.decisionsPanel.toast.bulkApproved', '{{count}} decisions approved', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch (error) {
-      toast.error('Failed to approve decisions');
+      toast.error(
+        t('myWork.decisionsPanel.toast.bulkApproveFailed', 'Failed to approve decisions')
+      );
     }
   };
 
@@ -1665,10 +1682,14 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       setDecisions((prev) =>
         prev.map((d) => (selectedIds.has(d.id) ? { ...d, status: 'REJECTED' } : d))
       );
-      toast.success(`${selectedIds.size} decisions rejected`);
+      toast.success(
+        t('myWork.decisionsPanel.toast.bulkRejected', '{{count}} decisions rejected', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch {
-      toast.error('Failed to reject decisions');
+      toast.error(t('myWork.decisionsPanel.toast.bulkRejectFailed', 'Failed to reject decisions'));
     }
   };
 
@@ -1676,20 +1697,28 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     try {
       await Promise.all(Array.from(selectedIds).map((id) => Api.delete(`/decisions/${id}`)));
       setDecisions((prev) => prev.filter((d) => !selectedIds.has(d.id)));
-      toast.success(`${selectedIds.size} decisions deleted`);
+      toast.success(
+        t('myWork.decisionsPanel.toast.bulkDeleted', '{{count}} decisions deleted', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch (error) {
-      toast.error('Failed to delete decisions');
+      toast.error(t('myWork.decisionsPanel.toast.bulkDeleteFailed', 'Failed to delete decisions'));
     }
   };
 
   const handleBulkRemind = async () => {
     try {
       await Promise.all(Array.from(selectedIds).map((id) => Api.remindDecision(id)));
-      toast.success(`${selectedIds.size} reminders sent`);
+      toast.success(
+        t('myWork.decisionsPanel.toast.bulkRemindersSent', '{{count}} reminders sent', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch {
-      toast.error('Failed to send reminders');
+      toast.error(t('myWork.decisionsPanel.toast.bulkRemindersFailed', 'Failed to send reminders'));
     }
   };
 
@@ -1700,11 +1729,17 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
           Api.escalateDecision(id, 'Bulk escalation from decisions list')
         )
       );
-      toast.success(`${selectedIds.size} decisions escalated`);
+      toast.success(
+        t('myWork.decisionsPanel.toast.bulkEscalated', '{{count}} decisions escalated', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
       fetchDecisions();
     } catch {
-      toast.error('Failed to escalate decisions');
+      toast.error(
+        t('myWork.decisionsPanel.toast.bulkEscalateFailed', 'Failed to escalate decisions')
+      );
     }
   };
 
@@ -1713,18 +1748,25 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       await Promise.all(
         Array.from(selectedIds).map((id) => Api.snoozeDecision(id, { preset: 'tomorrow' }))
       );
-      toast.success(`${selectedIds.size} decisions snoozed`);
+      toast.success(
+        t('myWork.decisionsPanel.toast.bulkSnoozed', '{{count}} decisions snoozed', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
       fetchDecisions();
     } catch {
-      toast.error('Failed to snooze decisions');
+      toast.error(t('myWork.decisionsPanel.toast.bulkSnoozeFailed', 'Failed to snooze decisions'));
     }
   };
 
   // Create bulk action configuration
   const handleBulkChangePriority = async () => {
     const newPriority = prompt(
-      'Set priority for selected decisions (LOW / MEDIUM / HIGH / CRITICAL):'
+      t(
+        'myWork.decisionsPanel.toast.bulkPriorityPrompt',
+        'Set priority for selected decisions (LOW / MEDIUM / HIGH / CRITICAL):'
+      )
     );
     if (!newPriority || !['low', 'medium', 'high', 'critical'].includes(newPriority.toLowerCase()))
       return;
@@ -1738,11 +1780,18 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
         prev.map((d) => (selectedIds.has(d.id) ? { ...d, priority: newPriority.toUpperCase() } : d))
       );
       toast.success(
-        `Priority set to ${newPriority.toUpperCase()} for ${selectedIds.size} decisions`
+        t(
+          'myWork.decisionsPanel.toast.bulkPrioritySet',
+          'Priority set to {{priority}} for {{count}} decisions',
+          {
+            priority: newPriority.toUpperCase(),
+            count: selectedIds.size,
+          }
+        )
       );
       setSelectedIds(new Set());
     } catch {
-      toast.error('Failed to update priority');
+      toast.error(t('myWork.decisionsPanel.toast.bulkPriorityFailed', 'Failed to update priority'));
     }
   };
 

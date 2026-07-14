@@ -81,6 +81,7 @@ import {
   TASK_STATUS_FILTER_OPTIONS,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import i18n from '@/i18n';
 import { Api, type DataContextSummary } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';
@@ -174,7 +175,7 @@ const getPriorityConfig = (priority?: string) => {
         badgeClass: '',
         bg: 'bg-danger-50',
         dot: 'bg-danger-500',
-        label: 'Critical',
+        label: i18n.t('myWork.tasksList.priorityBadge.critical', 'Critical'),
       };
     case 'high':
       return {
@@ -182,7 +183,7 @@ const getPriorityConfig = (priority?: string) => {
         badgeClass: '',
         bg: 'bg-amber-500',
         dot: 'bg-amber-500',
-        label: 'High',
+        label: i18n.t('myWork.tasksList.priorityBadge.high', 'High'),
       };
     case 'medium':
       return {
@@ -190,7 +191,7 @@ const getPriorityConfig = (priority?: string) => {
         badgeClass: '',
         bg: 'bg-blue-500',
         dot: 'bg-blue-500',
-        label: 'Medium',
+        label: i18n.t('myWork.tasksList.priorityBadge.medium', 'Medium'),
       };
     case 'low':
       return {
@@ -198,7 +199,7 @@ const getPriorityConfig = (priority?: string) => {
         badgeClass: '',
         bg: 'bg-slate-400',
         dot: 'bg-slate-400',
-        label: 'Low',
+        label: i18n.t('myWork.tasksList.priorityBadge.low', 'Low'),
       };
     default:
       return {
@@ -206,7 +207,7 @@ const getPriorityConfig = (priority?: string) => {
         badgeClass: '',
         bg: 'bg-slate-400',
         dot: 'bg-slate-400',
-        label: 'Normal',
+        label: i18n.t('myWork.tasksList.priorityBadge.normal', 'Normal'),
       };
   }
 };
@@ -221,7 +222,7 @@ const getStatusConfig = (status?: string) => {
         color: 'text-emerald-700 dark:text-emerald-400',
         bg: 'bg-emerald-100 dark:bg-emerald-500/10',
         dot: 'bg-emerald-500',
-        label: 'Done',
+        label: i18n.t('myWork.tasksList.status.done', 'Done'),
       };
     case 'in_progress':
     case 'in progress':
@@ -229,7 +230,7 @@ const getStatusConfig = (status?: string) => {
         color: 'text-blue-700 dark:text-blue-400',
         bg: 'bg-blue-100 dark:bg-blue-500/10',
         dot: 'bg-blue-500',
-        label: 'In progress',
+        label: i18n.t('myWork.tasksList.status.inProgress', 'In progress'),
       };
     case 'pending_approval':
     case 'pending approval':
@@ -237,21 +238,21 @@ const getStatusConfig = (status?: string) => {
         color: 'text-amber-700 dark:text-amber-400',
         bg: 'bg-amber-100 dark:bg-amber-500/10',
         dot: 'bg-amber-500',
-        label: 'Pending approval',
+        label: i18n.t('myWork.tasksList.status.pendingApproval', 'Pending approval'),
       };
     case 'review':
       return {
         color: 'text-amber-700 dark:text-amber-400',
         bg: 'bg-amber-100 dark:bg-amber-500/10',
         dot: 'bg-amber-500',
-        label: 'In review',
+        label: i18n.t('myWork.tasksList.status.inReview', 'In review'),
       };
     case 'blocked':
       return {
         color: 'text-danger-700 dark:text-danger-300',
         bg: 'bg-danger-100 dark:bg-danger-500/20',
         dot: 'bg-danger-500',
-        label: 'Blocked',
+        label: i18n.t('myWork.tasksList.status.blocked', 'Blocked'),
       };
     case 'cancelled':
     case 'canceled':
@@ -259,14 +260,14 @@ const getStatusConfig = (status?: string) => {
         color: 'text-c-text-secondary',
         bg: 'bg-c-surface-raised',
         dot: 'bg-slate-400 dark:bg-slate-500',
-        label: 'Cancelled',
+        label: i18n.t('myWork.tasksList.status.cancelled', 'Cancelled'),
       };
     default:
       return {
         color: 'text-c-text-secondary',
         bg: 'bg-c-surface-raised',
         dot: 'bg-slate-500 dark:bg-slate-500',
-        label: 'To Do',
+        label: i18n.t('myWork.tasksList.status.todo', 'To Do'),
       };
   }
 };
@@ -342,7 +343,7 @@ const TASK_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'title',
-    label: 'Task',
+    label: i18n.t('myWork.tasksList.columns.task', 'Task'),
     width: 560,
     minWidth: 360,
     maxWidth: 900,
@@ -351,7 +352,7 @@ const TASK_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'status',
-    label: 'Status',
+    label: i18n.t('myWork.tasksList.columns.status', 'Status'),
     width: 140,
     minWidth: 110,
     maxWidth: 200,
@@ -362,7 +363,7 @@ const TASK_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'priority',
-    label: 'Priority',
+    label: i18n.t('myWork.tasksList.columns.priority', 'Priority'),
     width: 120,
     minWidth: 90,
     maxWidth: 160,
@@ -373,7 +374,7 @@ const TASK_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'date',
-    label: 'Due Date',
+    label: i18n.t('myWork.tasksList.columns.dueDate', 'Due Date'),
     width: 130,
     minWidth: 100,
     maxWidth: 170,
@@ -382,7 +383,7 @@ const TASK_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'assignee',
-    label: 'Assignee',
+    label: i18n.t('myWork.tasksList.columns.assignee', 'Assignee'),
     width: 160,
     minWidth: 120,
     maxWidth: 220,
@@ -391,7 +392,7 @@ const TASK_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'actions',
-    label: 'Actions',
+    label: i18n.t('myWork.tasksList.columns.actions', 'Actions'),
     width: 56,
     minWidth: 56,
     maxWidth: 72,
@@ -495,18 +496,46 @@ const rowVariants = {
 
 // Inline cell dropdown for status/priority editing
 const INLINE_STATUS_OPTIONS = [
-  { value: 'todo', label: 'To Do', dot: 'bg-slate-400' },
-  { value: 'in_progress', label: 'In Progress', dot: 'bg-blue-500' },
-  { value: 'review', label: 'Review', dot: 'bg-amber-500' },
-  { value: 'blocked', label: 'Blocked', dot: 'bg-danger-500' },
-  { value: 'completed', label: 'Done', dot: 'bg-emerald-500' },
+  { value: 'todo', label: i18n.t('myWork.tasksList.status.todo', 'To Do'), dot: 'bg-slate-400' },
+  {
+    value: 'in_progress',
+    label: i18n.t('myWork.tasksList.status.inProgressShort', 'In Progress'),
+    dot: 'bg-blue-500',
+  },
+  {
+    value: 'review',
+    label: i18n.t('myWork.tasksList.status.review', 'Review'),
+    dot: 'bg-amber-500',
+  },
+  {
+    value: 'blocked',
+    label: i18n.t('myWork.tasksList.status.blocked', 'Blocked'),
+    dot: 'bg-danger-500',
+  },
+  {
+    value: 'completed',
+    label: i18n.t('myWork.tasksList.status.done', 'Done'),
+    dot: 'bg-emerald-500',
+  },
 ];
 
 const INLINE_PRIORITY_OPTIONS = [
-  { value: 'critical', label: 'Critical', dot: 'bg-danger-500' },
-  { value: 'high', label: 'High', dot: 'bg-amber-500' },
-  { value: 'medium', label: 'Medium', dot: 'bg-blue-500' },
-  { value: 'low', label: 'Low', dot: 'bg-slate-400' },
+  {
+    value: 'critical',
+    label: i18n.t('myWork.tasksList.priorityBadge.critical', 'Critical'),
+    dot: 'bg-danger-500',
+  },
+  {
+    value: 'high',
+    label: i18n.t('myWork.tasksList.priorityBadge.high', 'High'),
+    dot: 'bg-amber-500',
+  },
+  {
+    value: 'medium',
+    label: i18n.t('myWork.tasksList.priorityBadge.medium', 'Medium'),
+    dot: 'bg-blue-500',
+  },
+  { value: 'low', label: i18n.t('myWork.tasksList.priorityBadge.low', 'Low'), dot: 'bg-slate-400' },
 ];
 
 const InlineCellDropdown: React.FC<{
@@ -1091,13 +1120,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   const configurableColumns: ColumnConfig[] = useMemo(
     () => [
-      { id: 'status', label: 'Status' },
-      { id: 'priority', label: 'Priority' },
-      { id: 'date', label: 'Due Date' },
-      { id: 'assignee', label: 'Assignee' },
-      { id: 'actions', label: 'Actions' },
+      { id: 'status', label: t('myWork.tasksList.columns.status', 'Status') },
+      { id: 'priority', label: t('myWork.tasksList.columns.priority', 'Priority') },
+      { id: 'date', label: t('myWork.tasksList.columns.dueDate', 'Due Date') },
+      { id: 'assignee', label: t('myWork.tasksList.columns.assignee', 'Assignee') },
+      { id: 'actions', label: t('myWork.tasksList.columns.actions', 'Actions') },
     ],
-    []
+    [t]
   );
 
   const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
@@ -1334,9 +1363,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       if (completed) {
         trackFunnelEvent('personal_task_completed', { source: 'table', taskId });
       }
-      toast.success(completed ? 'Task completed' : 'Task reopened');
+      toast.success(
+        completed
+          ? t('myWork.tasksList.toast.taskCompleted', 'Task completed')
+          : t('myWork.tasksList.toast.taskReopened', 'Task reopened')
+      );
     } catch (error) {
-      toast.error('Failed to update task');
+      toast.error(t('myWork.tasksList.toast.updateTaskFailed', 'Failed to update task'));
     }
   };
 
@@ -1469,9 +1502,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         return next;
       });
       trackFunnelEvent('task_deleted', { taskId, source: 'single' });
-      toast.success('Task deleted');
+      toast.success(t('myWork.tasksList.toast.taskDeleted', 'Task deleted'));
     } catch (error) {
-      toast.error('Failed to delete task');
+      toast.error(t('myWork.tasksList.toast.deleteTaskFailed', 'Failed to delete task'));
     }
   };
 
@@ -1566,10 +1599,14 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       setTasks((prev) =>
         prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, status: 'completed' } as Task) : t))
       );
-      toast.success(`${selectedIds.size} tasks completed`);
+      toast.success(
+        t('myWork.tasksList.toast.tasksCompletedCount', '{{count}} tasks completed', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch (error) {
-      toast.error('Failed to complete tasks');
+      toast.error(t('myWork.tasksList.toast.completeTasksFailed', 'Failed to complete tasks'));
     }
   };
 
@@ -1579,10 +1616,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       await Promise.all(Array.from(selectedIds).map((id) => Api.deletePersonalTask(id)));
       setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
       trackFunnelEvent('task_bulk_deleted', { count });
-      toast.success(`${count} tasks deleted`);
+      toast.success(
+        t('myWork.tasksList.toast.tasksDeletedCount', '{{count}} tasks deleted', { count })
+      );
       setSelectedIds(new Set());
     } catch (error) {
-      toast.error('Failed to delete tasks');
+      toast.error(t('myWork.tasksList.toast.deleteTasksFailed', 'Failed to delete tasks'));
     }
   };
 
@@ -1604,10 +1643,16 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       setSelectedIds(new Set());
       await Promise.all(ids.map((id) => Api.updatePersonalTask(id, { priority: newPriority })));
       trackFunnelEvent('bulk_edit_applied', { field: 'priority', value: newPriority, count });
-      toast.success(`Priority → ${newPriority} (${count})`, {
-        duration: 5000,
-        icon: '🎯',
-      });
+      toast.success(
+        t('myWork.tasksList.toast.priorityBulkUpdated', 'Priority → {{priority}} ({{count}})', {
+          priority: newPriority,
+          count,
+        }),
+        {
+          duration: 5000,
+          icon: '🎯',
+        }
+      );
     } catch {
       setTasks(prevTasks);
       toast.error(t('myWork.errors.updateFailed', 'Failed to update priority'));
@@ -1646,7 +1691,11 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         Array.from(selectedIds).map((id) => Api.updatePersonalTask(id, { status: 'completed' }))
       );
       setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
-      toast.success(`${selectedIds.size} tasks completed`);
+      toast.success(
+        t('myWork.tasksList.toast.tasksCompletedCount', '{{count}} tasks completed', {
+          count: selectedIds.size,
+        })
+      );
       setSelectedIds(new Set());
     } catch {
       toast.error(t('myWork.errors.updateFailed', 'Failed to complete tasks'));
@@ -1783,9 +1832,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           setTasks((prev) =>
             prev.map((t) => (t.id === focusedTask.id ? ({ ...t, priority } as Task) : t))
           );
-          toast.success(`Priority set to ${priority}`);
+          toast.success(
+            t('myWork.tasksList.toast.prioritySetTo', 'Priority set to {{priority}}', { priority })
+          );
         } catch {
-          toast.error('Failed to update priority');
+          toast.error(
+            t('myWork.tasksList.toast.updatePriorityFailed', 'Failed to update priority')
+          );
         }
       }
     },

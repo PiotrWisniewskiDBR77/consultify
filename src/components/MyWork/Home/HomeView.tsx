@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import i18n from '@/i18n';
 import { cn } from '@/lib/utils';
 
 import type {
@@ -62,8 +63,8 @@ type QuadrantSpec = {
 const QUADRANTS: QuadrantSpec[] = [
   {
     key: 'MY_DEVELOPMENT',
-    title: 'My Development',
-    subtitle: 'what I should learn',
+    title: i18n.t('myWork.homeView.quadrant.myDevelopment.title', 'My Development'),
+    subtitle: i18n.t('myWork.homeView.quadrant.myDevelopment.subtitle', 'what I should learn'),
     fill: 'rgba(56,189,248,0.12)',
     chip: 'text-cyan-700 dark:text-cyan-200',
     accent: '#38BDF8',
@@ -74,8 +75,8 @@ const QUADRANTS: QuadrantSpec[] = [
   },
   {
     key: 'MY_PROJECTS',
-    title: 'My Projects',
-    subtitle: 'what helps current work',
+    title: i18n.t('myWork.homeView.quadrant.myProjects.title', 'My Projects'),
+    subtitle: i18n.t('myWork.homeView.quadrant.myProjects.subtitle', 'what helps current work'),
     fill: 'rgba(45,212,191,0.11)',
     chip: 'text-teal-700 dark:text-teal-200',
     accent: '#2DD4BF',
@@ -86,8 +87,8 @@ const QUADRANTS: QuadrantSpec[] = [
   },
   {
     key: 'MY_INDUSTRY',
-    title: 'My Industry',
-    subtitle: 'what matters around company',
+    title: i18n.t('myWork.homeView.quadrant.myIndustry.title', 'My Industry'),
+    subtitle: i18n.t('myWork.homeView.quadrant.myIndustry.subtitle', 'what matters around company'),
     fill: 'rgba(217,70,239,0.11)',
     chip: 'text-fuchsia-700 dark:text-fuchsia-200',
     accent: '#D946EF',
@@ -98,8 +99,8 @@ const QUADRANTS: QuadrantSpec[] = [
   },
   {
     key: 'MY_ROLE',
-    title: 'My Role',
-    subtitle: 'what affects responsibility',
+    title: i18n.t('myWork.homeView.quadrant.myRole.title', 'My Role'),
+    subtitle: i18n.t('myWork.homeView.quadrant.myRole.subtitle', 'what affects responsibility'),
     fill: 'rgba(251,191,36,0.10)',
     chip: 'text-amber-700 dark:text-amber-200',
     accent: '#FBBF24',
@@ -112,10 +113,30 @@ const QUADRANTS: QuadrantSpec[] = [
 
 const RING_INFO: Array<{ ring: RadarMapSignal['ring']; label: string; helper: string; y: number }> =
   [
-    { ring: 'OBSERVE', label: 'OBSERVE', helper: 'keep on radar', y: 10 },
-    { ring: 'LEARN', label: 'LEARN', helper: 'build understanding', y: 21.5 },
-    { ring: 'PREPARE', label: 'PREPARE', helper: 'get ready', y: 33 },
-    { ring: 'NOW', label: 'NOW', helper: 'act or discuss now', y: 44.5 },
+    {
+      ring: 'OBSERVE',
+      label: i18n.t('myWork.homeView.ring.observe.label', 'OBSERVE'),
+      helper: i18n.t('myWork.homeView.ring.observe.helper', 'keep on radar'),
+      y: 10,
+    },
+    {
+      ring: 'LEARN',
+      label: i18n.t('myWork.homeView.ring.learn.label', 'LEARN'),
+      helper: i18n.t('myWork.homeView.ring.learn.helper', 'build understanding'),
+      y: 21.5,
+    },
+    {
+      ring: 'PREPARE',
+      label: i18n.t('myWork.homeView.ring.prepare.label', 'PREPARE'),
+      helper: i18n.t('myWork.homeView.ring.prepare.helper', 'get ready'),
+      y: 33,
+    },
+    {
+      ring: 'NOW',
+      label: i18n.t('myWork.homeView.ring.now.label', 'NOW'),
+      helper: i18n.t('myWork.homeView.ring.now.helper', 'act or discuss now'),
+      y: 44.5,
+    },
   ];
 
 const TYPE_META: Record<
@@ -129,49 +150,49 @@ const TYPE_META: Record<
 > = {
   TECHNOLOGY: {
     Icon: Cpu,
-    label: 'Technology',
+    label: i18n.t('myWork.homeView.signalType.technology', 'Technology'),
     tone: 'border-cyan-300/45 bg-cyan-50 text-cyan-700 hover:bg-cyan-100',
     dot: 'bg-cyan-400',
   },
   SKILL: {
     Icon: Sparkles,
-    label: 'Skill',
+    label: i18n.t('myWork.homeView.signalType.skill', 'Skill'),
     tone: 'border-sky-300/45 bg-sky-50 text-sky-700 hover:bg-sky-100',
     dot: 'bg-sky-400',
   },
   BUSINESS: {
     Icon: Briefcase,
-    label: 'Business',
+    label: i18n.t('myWork.homeView.signalType.business', 'Business'),
     tone: 'border-teal-300/45 bg-teal-50 text-teal-700 hover:bg-teal-100',
     dot: 'bg-teal-400',
   },
   RISK: {
     Icon: AlertTriangle,
-    label: 'Risk',
+    label: i18n.t('myWork.homeView.signalType.risk', 'Risk'),
     tone: 'border-fuchsia-300/45 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100',
     dot: 'bg-fuchsia-400',
   },
   PROCESS: {
     Icon: Workflow,
-    label: 'Process',
+    label: i18n.t('myWork.homeView.signalType.process', 'Process'),
     tone: 'border-amber-300/45 bg-amber-50 text-amber-700 hover:bg-amber-100',
     dot: 'bg-amber-400',
   },
   TOOL: {
     Icon: Wrench,
-    label: 'Tool',
+    label: i18n.t('myWork.homeView.signalType.tool', 'Tool'),
     tone: 'border-indigo-300/45 bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
     dot: 'bg-indigo-400',
   },
   TREND: {
     Icon: TrendingUp,
-    label: 'Trend',
+    label: i18n.t('myWork.homeView.signalType.trend', 'Trend'),
     tone: 'border-violet-300/45 bg-violet-50 text-violet-700 hover:bg-violet-100',
     dot: 'bg-violet-400',
   },
   IDEA: {
     Icon: Lightbulb,
-    label: 'Idea',
+    label: i18n.t('myWork.homeView.signalType.idea', 'Idea'),
     tone: 'border-emerald-300/45 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
     dot: 'bg-emerald-400',
   },
@@ -190,23 +211,23 @@ const TYPE_ACCENT: Record<RadarSignalType, string> = {
 
 const STATUS_META: Record<RadarSignalStatus, { label: string; tone: string }> = {
   new: {
-    label: 'New',
+    label: i18n.t('myWork.homeView.signalStatus.new', 'New'),
     tone: 'border-emerald-400/40 bg-emerald-500/15 text-emerald-700 dark:border-emerald-400/35 dark:bg-emerald-500/14 dark:text-emerald-200',
   },
   updated: {
-    label: 'Updated',
+    label: i18n.t('myWork.homeView.signalStatus.updated', 'Updated'),
     tone: 'border-sky-400/40 bg-sky-500/15 text-sky-700 dark:border-sky-400/35 dark:bg-sky-500/14 dark:text-sky-200',
   },
   saved: {
-    label: 'Saved',
+    label: i18n.t('myWork.homeView.signalStatus.saved', 'Saved'),
     tone: 'border-indigo-400/40 bg-indigo-500/15 text-indigo-700 dark:border-indigo-400/35 dark:bg-indigo-500/14 dark:text-indigo-200',
   },
   watching: {
-    label: 'Watching',
+    label: i18n.t('myWork.homeView.signalStatus.watching', 'Watching'),
     tone: 'border-amber-400/40 bg-amber-500/15 text-amber-700 dark:border-amber-400/35 dark:bg-amber-500/14 dark:text-amber-200',
   },
   ignored: {
-    label: 'Ignored',
+    label: i18n.t('myWork.homeView.signalStatus.ignored', 'Ignored'),
     tone: 'border-slate-400/40 bg-slate-500/15 text-slate-600 dark:border-slate-400/30 dark:bg-slate-500/12 dark:text-slate-600',
   },
 };
@@ -653,7 +674,7 @@ function RadarCanvas({
         className="relative flex-1 overflow-hidden rounded-2xl border border-slate-200/70 bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.10),transparent_62%)] dark:border-white/[0.06] dark:bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.14),transparent_62%)]"
         tabIndex={0}
         onKeyDown={handleCanvasKeyDown}
-        aria-label="Radar canvas"
+        aria-label={i18n.t('myWork.homeView.radarCanvasAriaLabel', 'Radar canvas')}
       >
         {/* Ambient depth: vignette + soft core bloom */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,transparent_45%,rgba(148,163,184,0.18))] dark:bg-[radial-gradient(circle_at_50%_46%,transparent_40%,rgba(3,5,12,0.75))]" />
@@ -978,12 +999,19 @@ function RadarCanvas({
 
       <div className="rounded-xl border border-slate-200/70 bg-white/70 px-2.5 py-2 text-[10px] text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-400">
         <div className="truncate">
-          <span className="text-slate-500 dark:text-slate-500">How to read:</span> closer to centre
-          = more urgent · ring = time horizon · quadrant = life area · size = business impact
+          <span className="text-slate-500 dark:text-slate-500">
+            {i18n.t('myWork.homeView.howToReadLabel', 'How to read:')}
+          </span>{' '}
+          {i18n.t(
+            'myWork.homeView.howToReadBody',
+            'closer to centre = more urgent · ring = time horizon · quadrant = life area · size = business impact'
+          )}
         </div>
         <div className="mt-0.5 truncate">
-          <span className="text-slate-500 dark:text-slate-500">Horizon:</span> Now · Prepare · Learn
-          · Observe
+          <span className="text-slate-500 dark:text-slate-500">
+            {i18n.t('myWork.homeView.horizonLabel', 'Horizon:')}
+          </span>{' '}
+          {i18n.t('myWork.homeView.horizonBody', 'Now · Prepare · Learn · Observe')}
         </div>
       </div>
     </div>
@@ -1204,18 +1232,48 @@ function TeresaBriefing({
   // AI briefing when available; otherwise the sharp deterministic baseline.
   const items = briefing
     ? [
-        { title: 'What it really is', body: briefing.whatItIs },
-        { title: 'Why it matters for you', body: briefing.whyItMattersForYou },
-        { title: 'Good first question', body: briefing.goodFirstQuestion },
-        { title: 'Suggested next step', body: briefing.suggestedNextStep },
+        {
+          title: i18n.t('myWork.homeView.briefing.whatItReallyIs', 'What it really is'),
+          body: briefing.whatItIs,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.whyItMattersForYou', 'Why it matters for you'),
+          body: briefing.whyItMattersForYou,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.goodFirstQuestion', 'Good first question'),
+          body: briefing.goodFirstQuestion,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.suggestedNextStep', 'Suggested next step'),
+          body: briefing.suggestedNextStep,
+        },
       ]
     : [
-        { title: 'What it is', body: shortDescription },
-        { title: 'Why it matters', body: preview.whyItMatters },
-        { title: 'Why it matters for you', body: preview.whyItMattersForYou },
-        { title: 'How to think about it', body: preview.howToThinkAboutIt },
-        { title: 'Good first question', body: preview.goodFirstQuestion },
-        { title: 'Suggested next step', body: preview.suggestedNextStep },
+        {
+          title: i18n.t('myWork.homeView.briefing.whatItIs', 'What it is'),
+          body: shortDescription,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.whyItMatters', 'Why it matters'),
+          body: preview.whyItMatters,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.whyItMattersForYou', 'Why it matters for you'),
+          body: preview.whyItMattersForYou,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.howToThinkAboutIt', 'How to think about it'),
+          body: preview.howToThinkAboutIt,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.goodFirstQuestion', 'Good first question'),
+          body: preview.goodFirstQuestion,
+        },
+        {
+          title: i18n.t('myWork.homeView.briefing.suggestedNextStep', 'Suggested next step'),
+          body: preview.suggestedNextStep,
+        },
       ];
 
   return (
