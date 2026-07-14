@@ -124,6 +124,32 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       // and sees confidential influence/interest scores.
       'stakeholder.engagement.manage.project',
       'stakeholder.assessment.view',
+      // 2026-07-14 Faza B (spec model ról PM #25/#28/#30/#35): capability
+      // families for the previously-uncovered initiatives/projects endpoint
+      // groups. Shadow-only rollout — telemetry decides before enforce.
+      'initiative.program.manage',
+      'initiative.template.manage',
+      'initiative.template.apply',
+      'initiative.section_type.manage',
+      'initiative.wizard.use',
+      'initiative.dependency.manage',
+      'initiative.milestone.manage',
+      'initiative.resource.manage',
+      'initiative.staffing.manage',
+      'initiative.budget.manage',
+      'initiative.tool.manage',
+      'initiative.intangible.manage',
+      // Dedicated INITIATIVE-level stakeholder list (NOT the org-level
+      // `stakeholder.registry.manage` — different scope, do not mix).
+      'initiative.stakeholder.manage',
+      'initiative.watcher.manage',
+      'initiative.raid.manage',
+      'initiative.link.manage',
+      'initiative.gate_role.manage',
+      'initiative.pir.manage',
+      'change.champion.manage',
+      'project.archive',
+      'project.delete',
     ],
   },
   {
@@ -219,6 +245,29 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'stakeholder.registry.manage',
       'stakeholder.engagement.manage.project',
       'stakeholder.assessment.view',
+      // 2026-07-14 Faza B: PMO mirrors PROJECT_LEADER on the new endpoint
+      // families (governance/standards side of the same delivery surface).
+      'initiative.program.manage',
+      'initiative.template.manage',
+      'initiative.template.apply',
+      'initiative.section_type.manage',
+      'initiative.wizard.use',
+      'initiative.dependency.manage',
+      'initiative.milestone.manage',
+      'initiative.resource.manage',
+      'initiative.staffing.manage',
+      'initiative.budget.manage',
+      'initiative.tool.manage',
+      'initiative.intangible.manage',
+      'initiative.stakeholder.manage',
+      'initiative.watcher.manage',
+      'initiative.raid.manage',
+      'initiative.link.manage',
+      'initiative.gate_role.manage',
+      'initiative.pir.manage',
+      'change.champion.manage',
+      'project.archive',
+      'project.delete',
     ],
   },
   {
@@ -254,6 +303,20 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'change.request.submit.scoped',
       'risk.escalate.scoped',
       'audit.project.view.scoped',
+      // 2026-07-14 Faza B: owner manages the building blocks OF HIS initiative
+      // (scoped) — never org-level assets (programs/templates/section-types).
+      'initiative.template.apply.scoped',
+      'initiative.wizard.use.scoped',
+      'initiative.milestone.manage.scoped',
+      'initiative.resource.manage.scoped',
+      'initiative.staffing.manage.scoped',
+      'initiative.budget.manage.scoped',
+      'initiative.tool.manage.scoped',
+      'initiative.intangible.manage.scoped',
+      'initiative.stakeholder.manage.scoped',
+      'initiative.watcher.manage.scoped',
+      'initiative.raid.manage.scoped',
+      'initiative.link.manage.scoped',
     ],
   },
   {
@@ -288,6 +351,21 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'change.request.submit.scoped',
       'risk.escalate.scoped',
       'audit.project.view.scoped',
+      // 2026-07-14 Faza B: same scoped building-block set as INITIATIVE_OWNER
+      // (conservative-wide per spec; shadow telemetry will verify — flagged
+      // as a doubtful assignment for Piotr's review).
+      'initiative.template.apply.scoped',
+      'initiative.wizard.use.scoped',
+      'initiative.milestone.manage.scoped',
+      'initiative.resource.manage.scoped',
+      'initiative.staffing.manage.scoped',
+      'initiative.budget.manage.scoped',
+      'initiative.tool.manage.scoped',
+      'initiative.intangible.manage.scoped',
+      'initiative.stakeholder.manage.scoped',
+      'initiative.watcher.manage.scoped',
+      'initiative.raid.manage.scoped',
+      'initiative.link.manage.scoped',
     ],
   },
   {
