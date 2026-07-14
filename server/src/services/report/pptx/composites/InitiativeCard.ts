@@ -75,7 +75,9 @@ export function InitiativeCard(
       Badge(
         {
           text: item.priority,
-          position: { x: p.x + p.w - 0.75, y: p.y + 0.12, w: 0.65, h: 0.2 },
+          // Wide enough to hold "CRITICAL" on one line; right edge stays 0.10"
+          // inside the card. (Badge also shrinks-to-fit as a safety net.)
+          position: { x: p.x + p.w - 1.02, y: p.y + 0.12, w: 0.9, h: 0.2 },
           bgColor: prioColor,
         },
         tokens
@@ -189,11 +191,13 @@ export function InitiativeCard(
 
   // ── Metadata row: timeline + owner ──
   const metaY = Math.max(currentY, p.y + p.h - 0.3);
+  // No emoji icons — a dot-separated meta line reads cleaner and matches the
+  // BCG-grade typographic style of the rest of the deck.
   const metaParts: string[] = [];
-  if (item.timeline) metaParts.push(`⏱ ${item.timeline}`);
-  if (item.owner) metaParts.push(`👤 ${item.owner}`);
-  if (item.budget) metaParts.push(`💰 ${item.budget}`);
-  if (item.roi) metaParts.push(`↗ ROI ${item.roi}`);
+  if (item.timeline) metaParts.push(item.timeline);
+  if (item.owner) metaParts.push(item.owner);
+  if (item.budget) metaParts.push(item.budget);
+  if (item.roi) metaParts.push(`ROI ${item.roi}`);
 
   if (metaParts.length > 0) {
     elements.push(

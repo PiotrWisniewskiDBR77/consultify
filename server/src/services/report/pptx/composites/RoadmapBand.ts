@@ -68,9 +68,9 @@ export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): Rend
     // evenly by phase index. One column → just primary.
     const t = count > 1 ? i / (count - 1) : 0;
     const bandColor = lerpHex(tokens.colors.primary, tokens.colors.secondary, t);
-    // A lighter tint of the same hue for the watermark number — keeps the card
-    // monochromatic and premium.
-    const watermarkColor = lerpHex(bandColor, tokens.colors.surface, 0.78);
+    // A very light tint of the same hue for the watermark number — a true faint
+    // watermark, not a solid figure that muddies any text near it.
+    const watermarkColor = lerpHex(bandColor, tokens.colors.surface, 0.88);
 
     // Full-height column card.
     elements.push({
@@ -88,22 +88,25 @@ export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): Rend
       },
     });
 
-    // Large phase number watermark in the card body (top-right), same hue tint.
+    // Large phase-number watermark, anchored to the BOTTOM-right of the card body
+    // (just above the timeframe pill) where the card is otherwise empty — so it
+    // never collides with the top-aligned bullet text. Previously it sat top-right
+    // and the bullets ran straight through the digit (~72% overlap).
     elements.push(
       BodyText(
         {
           text: String(i + 1),
           position: {
-            x: colX + colW - 1.0,
-            y: p.y + headerH + 0.05,
-            w: 0.9,
+            x: colX + colW - 0.92,
+            y: p.y + p.h - pillH - pillGap - 1.05,
+            w: 0.72,
             h: 0.9,
           },
-          fontSize: 54,
+          fontSize: 46,
           bold: true,
           color: watermarkColor,
           align: 'right',
-          valign: 'top',
+          valign: 'bottom',
           fontFace: tokens.fonts.title,
         },
         tokens

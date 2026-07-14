@@ -12,7 +12,17 @@ export interface KpiValueProps {
 }
 
 export function KpiValue(props: KpiValueProps, tokens: DesignTokens): RenderedElement {
-  const displayText = props.unit ? `${props.value}${props.unit}` : String(props.value);
+  // Word units ("days", "months") need a space after the number ("21 days"), but
+  // symbol units ("%", "pp") stay glued ("38%"). Without this a word unit rendered
+  // as "21days".
+  const needsSpace = !!props.unit && /^[A-Za-z]/.test(props.unit);
+  const rawText = props.unit
+    ? `${props.value}${needsSpace ? ' ' : ''}${props.unit}`
+    : String(props.value);
+  // Multi-token values ("PLN 41M", "21 days") must stay on ONE line inside the
+  // tile — convert every space to a non-breaking space so LibreOffice/PowerPoint
+  // can't wrap at it; `fit: 'shrink'` below then scales the single line to width.
+  const displayText = rawText.replace(/ /g, ' ');
 
   return {
     kind: 'text',

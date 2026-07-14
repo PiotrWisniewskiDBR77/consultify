@@ -17,7 +17,6 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
 
 import { PptxPipelineService } from '../src/services/report/pptx/PptxPipelineService.js';
 import type { UnifiedReportJSON } from '../src/services/report/pptx/types.js';
@@ -35,7 +34,7 @@ fs.mkdirSync(outDir, { recursive: true });
 //   key messages, KPI, wykres, dwukolumnowy, heatmapa, roadmapa, ryzyka,
 //   portfel inicjatyw, next steps.
 // ─────────────────────────────────────────────────────────────────────────────
-export const report: UnifiedReportJSON = {
+const report: UnifiedReportJSON = {
   meta: {
     client: 'DBR77 Robotics Marketplace',
     project: 'Operational Scale-Up Assessment',
@@ -434,11 +433,7 @@ async function main() {
   for (const line of staleIntents) console.log(`    ${line}`);
 }
 
-// Run only when executed directly (the deck data is also imported by
-// proof-stale-regen-fix.ts — dowód PRZED/PO fixa stale-regen 2026-07-14).
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch((err) => {
-    console.error('PROOF FAILED:', err);
-    process.exit(1);
-  });
-}
+main().catch((err) => {
+  console.error('PROOF FAILED:', err);
+  process.exit(1);
+});
