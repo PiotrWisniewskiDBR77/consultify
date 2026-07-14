@@ -613,14 +613,23 @@ Return JSON:
   if (toolType === 'narrative-engine') {
     const narData = inputData as any;
     if (stepId === 'mission') {
-      return `Act as an AI communications strategist. Sharpen the brief for this Narrative Engine session.
+      return `Act as an AI communications strategist. Sharpen the brief for this Narrative Engine session using the SCQA opening (Situation-Complication-Question-Answer) — the governing thought (coreMessage) must answer EXACTLY the question the complication forces.
 
 Current context:
 - Audience: ${narData?.context?.audience || 'missing'}
-- Core message: ${narData?.context?.coreMessage || 'missing'}
+- Core message (Answer): ${narData?.context?.coreMessage || 'missing'}
+- Situation: ${narData?.context?.situation || 'missing'}
+- Complication: ${narData?.context?.complication || 'missing'}
+- Question: ${narData?.context?.question || 'missing'}
+
+Rules:
+- situation = the stable fact both sides already agree on (not a claim).
+- complication = what breaks that stable picture — must NOT restate the situation.
+- question = the ONE question the complication forces.
+- coreMessage = the Answer, and it must resolve exactly that question, not an easier one.
 
 Return JSON:
-{"mission": {"audience": "...", "coreMessage": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+{"mission": {"audience": "...", "coreMessage": "...", "situation": "...", "complication": "...", "question": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
     }
     if (stepId === 'input') {
       return `Act as an AI communications strategist. Based on the audience, core message, and organization context, propose 4-6 signals: proof points, audience insights, objections to preempt.

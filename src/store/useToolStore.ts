@@ -913,6 +913,15 @@ export interface NarrativeEngineData {
     constraints?: string;
     assumptions?: string;
     kpiTarget?: string;
+    /**
+     * OXFORD O3 — SCQA (Situation-Complication-Question-Answer). `coreMessage`
+     * IS the Answer; these three carry the rest of the McKinsey opening so the
+     * pyramid engine (src/config/narrativeengine/pyramidValidator.ts) can check
+     * the chain is consistent instead of four disconnected fields.
+     */
+    situation?: string;
+    complication?: string;
+    question?: string;
   };
   signals: NarrativeSignal[];
   pillars: NarrativePillar[];

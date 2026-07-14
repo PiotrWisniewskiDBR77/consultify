@@ -185,6 +185,10 @@ export function applyNarrativeEnginePendingAction({
         constraints: mission.constraints || narrativeData.context.constraints,
         assumptions: mission.assumptions || narrativeData.context.assumptions,
         kpiTarget: mission.kpiTarget || narrativeData.context.kpiTarget,
+        // OXFORD O3 — SCQA opening (coreMessage above plays the role of Answer).
+        situation: mission.situation || narrativeData.context.situation,
+        complication: mission.complication || narrativeData.context.complication,
+        question: mission.question || narrativeData.context.question,
       },
     });
     return {};
