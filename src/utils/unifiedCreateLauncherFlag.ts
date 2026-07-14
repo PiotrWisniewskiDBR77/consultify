@@ -1,5 +1,5 @@
 /**
- * I1-I3 Faza 0 — unified "+ Nowy" launcher feature flag (default OFF, live-safe).
+ * I1-I3 Faza 0 — unified "+ Nowy" launcher feature flag (default ON od 2026-07-14, akcept Piotra).
  *
  * Gates `UnifiedCreateLauncher` (src/components/shared/UnifiedCreateLauncher.tsx),
  * a single entry point that lets the user pick Insight / Initiative / Decision and
@@ -8,9 +8,8 @@
  * Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0.
  *
  * Resolution order (first wins): URL query → localStorage → Vite build env →
- * default false. Mirrors src/components/Results/resultsFeatureFlags.ts (one
- * system), MINUS the "default ON outside prod" override — this flag stays
- * default OFF everywhere until Piotr accepts the screenshots (reguła #7).
+ * default true. Mirrors src/components/Results/resultsFeatureFlags.ts (one system).
+ * Opt-out: `?ff_unifiedCreateLauncher=0` / localStorage `ff.unified_create_launcher=0`.
  */
 
 const QUERY_KEY = 'ff_unifiedCreateLauncher';
@@ -43,22 +42,28 @@ function readLocalStorage(): boolean | null {
   }
 }
 
-function readEnv(): boolean {
+function readEnv(): boolean | null {
   try {
     const env = (import.meta as unknown as { env?: Record<string, string> }).env;
-    return parseFlag(env?.[ENV_KEY]) === true;
+    return parseFlag(env?.[ENV_KEY]);
   } catch {
-    return false;
+    return null;
   }
 }
 
-/** True when the unified "+ Nowy" create launcher is enabled (default OFF). */
+/**
+ * True when the unified "+ Nowy" create launcher is enabled.
+ * Default ON od 2026-07-14 (akcept Piotra, galeria v2 poz. 2); opt-out:
+ * `?ff_unifiedCreateLauncher=0` lub localStorage `ff.unified_create_launcher=0`.
+ */
 export function isUnifiedCreateLauncherEnabled(): boolean {
   const fromQuery = readQuery();
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();
   if (fromLs !== null) return fromLs;
-  return readEnv();
+  const fromEnv = readEnv();
+  if (fromEnv !== null) return fromEnv;
+  return true;
 }
 
 export const UNIFIED_CREATE_LAUNCHER_FLAG_KEYS = {

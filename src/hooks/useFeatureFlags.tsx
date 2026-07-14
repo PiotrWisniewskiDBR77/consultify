@@ -169,7 +169,7 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
       'chip row (dot + count, toggle on click) — same TRIADA_KANON.md §A2/§A3 pattern already ' +
       'live on DiscoveryToolsHub (Tools) non-Library tabs. Counters currently live in Menu 2 ' +
       '(StatusDropdown, canon violation: "Bez liczników w Menu 2"); this moves them to Menu 3.',
-    defaultValue: false,
+    defaultValue: true,
     category: 'ui',
     allowLocalOverride: true,
   },
