@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { toast } from 'react-hot-toast';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -79,29 +79,31 @@ describe('DashboardPreferencesSettings honest UI', () => {
     expect(screen.getByRole('button', { name: /Reset to Defaults/i })).toBeDisabled();
   });
 
-  // SKIP: this case drove autosave through the "Default Landing Page" selector
-  // (a "My Work" option button), but that section was removed from
-  // DashboardPreferencesSettings in a UI refactor — the component now exposes
-  // only Widget Visibility + Display Options. The autosave-honesty assertion is
-  // still valuable but needs a rewrite against a current control (widget/compact
-  // toggle, which render as unnamed buttons). Tracked as pre-existing test debt,
-  // distinct from the M25 L-10 i18n/Router mock-drift (fixed in this batch).
-  it.skip('does not claim autosave success when read-back returns stale preferences', async () => {
-    vi.useFakeTimers();
+  // Autosave-honesty: component PUTs the change, then GETs a read-back; when the
+  // server returns stale preferences (save not actually applied), the component
+  // must surface an error instead of claiming success. Originally exercised via
+  // the removed "Default Landing Page" selector; rewritten against the current
+  // "Compact Mode" toggle in Display Options.
+  it('does not claim autosave success when read-back returns stale preferences', async () => {
     vi.mocked(Api.get)
-      .mockResolvedValueOnce({ preferences })
-      .mockResolvedValueOnce({ preferences });
+      .mockResolvedValueOnce({ preferences }) // initial load
+      .mockResolvedValueOnce({ preferences }); // stale read-back after PUT
     vi.mocked(Api.put).mockResolvedValue({ success: true });
 
     render(<DashboardPreferencesSettings currentUser={user as any} onUpdateUser={vi.fn()} />);
 
-    await screen.findByText('Default Landing Page');
+    const compactLabel = await screen.findByText('Compact Mode');
 
-    fireEvent.click(screen.getByRole('button', { name: /My Work/i }));
+    // The debounce timer (600ms) is created on click — fake timers from here on.
+    vi.useFakeTimers();
+
+    const compactRow = compactLabel.closest('div')!.parentElement as HTMLElement;
+    fireEvent.click(within(compactRow).getByRole('button'));
 
     await act(async () => {
       vi.advanceTimersByTime(650);
     });
+    vi.useRealTimers();
 
     await waitFor(() => {
       expect(
@@ -109,6 +111,7 @@ describe('DashboardPreferencesSettings honest UI', () => {
       ).toBeInTheDocument();
     });
 
+    expect(Api.put).toHaveBeenCalledTimes(1);
     expect(toast.success).not.toHaveBeenCalled();
     expect(invalidateDashboardPreferencesCache).not.toHaveBeenCalled();
   });
