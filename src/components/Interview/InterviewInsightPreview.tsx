@@ -7,6 +7,7 @@
 
 import { ChevronDown, Copy, Download, Send, Sparkles } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import {
@@ -60,9 +61,10 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
   onToggleDetailsExpanded,
   onDetailsAction,
 }) => {
+  const { t } = useTranslation();
   const pills: MetaPill[] = [
     {
-      label: isPolish ? 'Wniosek' : 'Insight',
+      label: t('interview.insightPreview.insight'),
       className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
     },
     {
@@ -70,13 +72,13 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
       className: `${typeConfig.bgColor} ${typeConfig.textColor}`,
     },
     {
-      label: isPolish ? statusConfig.label.pl : statusConfig.label.en,
+      label: t(`interview.insightPreview.statusLabel.${insight.status}`, statusConfig.label.en),
       className: `${statusConfig.bg} ${statusConfig.text}`,
     },
     ...(insight.confidence
       ? [
           {
-            label: `${isPolish ? 'Pewność' : 'Confidence'}: ${insight.confidence}`,
+            label: `${t('interview.insightPreview.confidence')}: ${insight.confidence}`,
             className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]',
           },
         ]
@@ -98,48 +100,40 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
         text={detailsText}
         expanded={detailsExpanded}
         onToggleExpanded={onToggleDetailsExpanded}
-        label={isPolish ? 'Szczegóły' : 'Details'}
+        label={t('interview.insightPreview.details')}
         customActions={[
           {
             id: 'toggle-expand',
             label: detailsExpanded
-              ? isPolish
-                ? 'Zwiń'
-                : 'Collapse'
-              : isPolish
-                ? 'Rozwiń'
-                : 'Expand',
+              ? t('interview.insightPreview.collapse')
+              : t('interview.insightPreview.expand'),
             icon: ChevronDown,
             onClick: onToggleDetailsExpanded,
           },
           {
             id: 'copy',
-            label: isPolish ? 'Kopiuj' : 'Copy',
+            label: t('interview.insightPreview.copy'),
             icon: Copy,
             onClick: () => onDetailsAction('copy'),
           },
           {
             id: 'copy-summarize-prompt',
-            label: isPolish ? 'Kopiuj prompt: podsumuj' : 'Copy prompt: summarize',
+            label: t('interview.insightPreview.copyPromptSummarize'),
             icon: Sparkles,
             onClick: () => onDetailsAction('copy-summarize-prompt'),
           },
           {
             id: 'export-tools',
             label: insight.exportedToTools
-              ? isPolish
-                ? 'W Tools'
-                : 'In Tools'
-              : isPolish
-                ? 'Eksport do Tools'
-                : 'Export to Tools',
+              ? t('interview.insightPreview.inTools')
+              : t('interview.insightPreview.exportToTools'),
             icon: Send,
             onClick: () => onDetailsAction('export-tools'),
             disabled: !!insight.exportedToTools,
           },
           {
             id: 'download',
-            label: isPolish ? 'Pobierz (.md)' : 'Download (.md)',
+            label: t('interview.insightPreview.downloadMd'),
             icon: Download,
             onClick: () => onDetailsAction('download'),
           },
@@ -173,9 +167,11 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
   isPolish,
   showActionPanel = true,
 }) => {
-  const aiHints = isPolish
-    ? ['Podsumuj wniosek', 'Zasugeruj działania']
-    : ['Summarize insight', 'Suggest actions'];
+  const { t } = useTranslation();
+  const aiHints = [
+    t('interview.insightPreview.summarizeInsight'),
+    t('interview.insightPreview.suggestActions'),
+  ];
 
   // Canon §7.3: footer = AI → (Relations) → "What next" (create). The primary "Open" lives in the
   // header and Export/Download in the Details ⋮ — no redundant bottom action bar. Consistent
@@ -192,7 +188,7 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
           source={{
             type: 'interview_insight',
             id: insight.id || '',
-            title: insight.title || (isPolish ? 'Insight' : 'Insight'),
+            title: insight.title || t('interview.insightPreview.insight'),
             status: insight.status,
             content: insight.content || insight.description || insight.sourceQuote || '',
             confidence: insight.confidence || null,

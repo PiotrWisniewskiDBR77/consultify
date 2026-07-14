@@ -4564,6 +4564,25 @@
       "noNotesYet": "No notes yet",
       "addYourFirstNoteTo": "Add your first note to capture observations from the interview.",
       "addNote": "Add note"
+    },
+    "insightPreview": {
+      "insight": "Insight",
+      "confidence": "Confidence",
+      "details": "Details",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "copy": "Copy",
+      "copyPromptSummarize": "Copy prompt: summarize",
+      "inTools": "In Tools",
+      "exportToTools": "Export to Tools",
+      "downloadMd": "Download (.md)",
+      "summarizeInsight": "Summarize insight",
+      "suggestActions": "Suggest actions",
+      "statusLabel": {
+        "generating": "Generating",
+        "completed": "Completed",
+        "failed": "Failed"
+      }
     }
   },
   "assessment": {

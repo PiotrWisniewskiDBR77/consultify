@@ -3798,6 +3798,25 @@
       "noNotesYet": "Brak notatek",
       "addYourFirstNoteTo": "Dodaj pierwszą notatkę, aby zapisać obserwacje z wywiadu.",
       "addNote": "Dodaj notatkę"
+    },
+    "insightPreview": {
+      "insight": "Wniosek",
+      "confidence": "Pewność",
+      "details": "Szczegóły",
+      "collapse": "Zwiń",
+      "expand": "Rozwiń",
+      "copy": "Kopiuj",
+      "copyPromptSummarize": "Kopiuj prompt: podsumuj",
+      "inTools": "W Tools",
+      "exportToTools": "Eksport do Tools",
+      "downloadMd": "Pobierz (.md)",
+      "summarizeInsight": "Podsumuj wniosek",
+      "suggestActions": "Zasugeruj działania",
+      "statusLabel": {
+        "generating": "Generowanie",
+        "completed": "Gotowe",
+        "failed": "Błąd"
+      }
     }
   },
   "assessment": {
