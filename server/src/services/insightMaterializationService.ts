@@ -62,6 +62,12 @@ import {
   type InsightCardData,
   validateInsightCard,
 } from './cardContentFormulaValidator.js';
+import {
+  deriveConfidence,
+  emptyEvidenceContract,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from './evidence/evidenceContract.js';
 
 const LOG = '[insightMaterializationService]';
 
@@ -180,6 +186,12 @@ export interface MaterializationOutcome {
   /** True when no usable candidate could be produced (fail-soft path). */
   degraded: boolean;
   degradedReason?: string;
+  /**
+   * HP-14 Evidence Contract — warstwa dowodowa candidate'a (źródła/założenia/ryzyka/pewność/
+   * do-weryfikacji). Wyprowadzana DETERMINISTYCZNIE z evidence_map + material_quality (zero LLM).
+   * Zawsze obecna: degraded → pusty kontrakt (confidence 'low').
+   */
+  evidence: EvidenceContract;
 }
 
 export interface GenerateResponseLike {
@@ -488,6 +500,61 @@ function normalizeCandidate(
   };
 }
 
+/**
+ * HP-14: buduje `EvidenceContract` z candidate'a — DETERMINISTYCZNIE, zero LLM.
+ * Sygnały pewności są REALNE:
+ *   - sourceCount = liczba UNIKALNYCH źródłowych item_id faktycznie zacytowanych
+ *     (evidence_map + evidence_refs tematów/issue/opportunity),
+ *   - qualityScore = material_quality.score (deterministyczny wynik walidatora karty),
+ *   - unresolvedGaps = missing_data + missing_voices (nierozwiązane luki).
+ * `toVerify` i `risks` cytują realne braki materiału, nie zgadywanie modelu.
+ */
+export function buildEvidenceContractFromCandidate(
+  candidate: InsightCandidate,
+  sourceType: MaterializationSourceType
+): EvidenceContract {
+  const refIds = new Set<string>();
+  candidate.evidence_map.forEach((e) => {
+    if (e?.item_id) refIds.add(String(e.item_id));
+  });
+  const collectRefs = (arr: Array<{ evidence_refs?: string[] }>) =>
+    arr.forEach((x) => (x.evidence_refs || []).forEach((r) => r && refIds.add(String(r))));
+  collectRefs(candidate.themes);
+  collectRefs(candidate.issues);
+  collectRefs(candidate.opportunities);
+
+  const snippetByItem = new Map<string, string>();
+  candidate.evidence_map.forEach((e) => {
+    if (e?.item_id) snippetByItem.set(String(e.item_id), String(e.answer_snippet || ''));
+  });
+
+  const sources: EvidenceContractSource[] = Array.from(refIds).map((ref) => ({
+    type: sourceType,
+    ref,
+    snippet: snippetByItem.get(ref) || undefined,
+  }));
+
+  const mq = candidate.material_quality;
+  const risks: string[] = [...(mq?.limitations || [])];
+  if (mq?.coverage_posture === 'single_source') {
+    risks.push('Pokrycie jednoźródłowe — wnioski mogą nie generalizować na całą organizację.');
+  }
+  (mq?.missing_voices || []).forEach((v) => risks.push(`Brak głosu: ${v}`));
+
+  const toVerify: string[] = [
+    ...(candidate.missing_data || []),
+    ...(mq?.recommended_followups || []),
+  ];
+
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    qualityScore: typeof mq?.score === 'number' ? mq.score : undefined,
+    unresolvedGaps: (candidate.missing_data?.length || 0) + (mq?.missing_voices?.length || 0),
+  });
+
+  return { sources, assumptions: [], risks, confidence, toVerify };
+}
+
 function tokensFromUsage(usage: unknown): number {
   if (!usage || typeof usage !== 'object') return 0;
   const u = usage as Record<string, unknown>;
@@ -525,6 +592,7 @@ export async function materializeInsightCandidates(
     generationTimeMs: Date.now() - startTime,
     degraded: true,
     degradedReason: reason,
+    evidence: emptyEvidenceContract(),
   });
 
   if (!input || !Array.isArray(input.items) || input.items.length === 0) {
@@ -608,13 +676,21 @@ export async function materializeInsightCandidates(
       }
     }
 
+    const normalized = normalizeCandidate(candidate, input.items);
+    const evidence = buildEvidenceContractFromCandidate(normalized, input.sourceType);
+    logger.info(
+      `${LOG} evidence contract (source=${input.sourceType}/${input.sourceId}): ` +
+        `sources=${evidence.sources.length} risks=${evidence.risks.length} ` +
+        `toVerify=${evidence.toVerify.length} confidence=${evidence.confidence}`
+    );
     return {
-      candidates: [normalizeCandidate(candidate, input.items)],
+      candidates: [normalized],
       verdict,
       repaired,
       tokensUsed,
       generationTimeMs: Date.now() - startTime,
       degraded: false,
+      evidence,
     };
   } catch (err) {
     logger.warn(
