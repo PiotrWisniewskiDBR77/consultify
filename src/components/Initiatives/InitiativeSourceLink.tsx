@@ -19,9 +19,9 @@ export function getSourceDisplayLabel(sourceType: string, _isPolish = false): st
   }
   if (t === 'assessment') return i18n.t('initiatives.initiativeSourceLink.assessment');
   if (t === 'interview' || t === 'interview_insight' || t === 'insight') {
-    return 'Interview Insight';
+    return i18n.t('initiatives.initiativeSourceLink.interviewInsight');
   }
-  if (t === 'conclusion') return 'Insight';
+  if (t === 'conclusion') return i18n.t('initiatives.initiativeSourceLink.insight');
   if (t === 'conclusion_readout') return i18n.t('initiatives.initiativeSourceLink.auditReadout');
   return sourceType || '';
 }

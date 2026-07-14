@@ -317,54 +317,50 @@ export const InitiativePreviewV3Body: React.FC<{
 /** Human label + chip tone for a linkage status (M16 Finance vocabulary). */
 function getLinkageStatusMeta(
   status: InitiativeEconomicsLink['status'],
-  isPolish: boolean
+  t: TFunction
 ): { label: string; tone: string } {
   switch (status) {
     case 'linked_to_finance_model':
       return {
-        label: isPolish ? 'Powiązano z modelem' : 'Linked to model',
+        label: t('initiatives.initiativePreviewV3.linkageStatus.linkedToModel'),
         tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       };
     case 'linked_to_finance_scenario':
       return {
-        label: isPolish ? 'Powiązano ze scenariuszem' : 'Linked to scenario',
+        label: t('initiatives.initiativePreviewV3.linkageStatus.linkedToScenario'),
         tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       };
     case 'linked_to_roi_tracking':
       return {
-        label: isPolish ? 'Śledzenie ROI' : 'ROI tracking',
+        label: t('initiatives.initiativePreviewV3.linkageStatus.roiTracking'),
         tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       };
     case 'stale_vs_finance_model':
       return {
-        label: isPolish ? 'Nieaktualne vs model' : 'Stale vs model',
+        label: t('initiatives.initiativePreviewV3.linkageStatus.staleVsModel'),
         tone: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
       };
     case 'local_only':
       return {
-        label: isPolish ? 'Tylko lokalnie' : 'Local only',
+        label: t('initiatives.initiativePreviewV3.linkageStatus.localOnly'),
         tone: 'bg-c-surface-raised text-c-text-muted',
       };
     default:
       return {
-        label: isPolish ? 'Nie rozpoczęto' : 'Not started',
+        label: t('initiatives.initiativePreviewV3.linkageStatus.notStarted'),
         tone: 'bg-c-surface-raised text-c-text-muted',
       };
   }
 }
 
-function getLinkageTypeLabel(
-  type: InitiativeEconomicsLink['linkageType'],
-  isPolish: boolean
-): string {
-  const map: Record<InitiativeEconomicsLink['linkageType'], [string, string]> = {
-    budget: ['Budżet', 'Budget'],
-    forecast: ['Prognoza', 'Forecast'],
-    actual: ['Wykonanie', 'Actual'],
-    variance: ['Odchylenie', 'Variance'],
+function getLinkageTypeLabel(type: InitiativeEconomicsLink['linkageType'], t: TFunction): string {
+  const map: Record<InitiativeEconomicsLink['linkageType'], string> = {
+    budget: t('initiatives.initiativePreviewV3.linkageType.budget'),
+    forecast: t('initiatives.initiativePreviewV3.linkageType.forecast'),
+    actual: t('initiatives.initiativePreviewV3.linkageType.actual'),
+    variance: t('initiatives.initiativePreviewV3.linkageType.variance'),
   };
-  const pair = map[type];
-  return pair ? (isPolish ? pair[0] : pair[1]) : type;
+  return map[type] ?? type;
 }
 
 /**
@@ -376,9 +372,7 @@ function getLinkageTypeLabel(
  */
 const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
   const { t } = useTranslation();
-  const { i18n } = useTranslation();
   const navigate = useNavigate();
-  const isPolish = i18n.language === 'pl';
   const [links, setLinks] = useState<InitiativeEconomicsLink[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -411,7 +405,7 @@ const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId 
       </div>
       <div className="space-y-1.5">
         {links.map((link) => {
-          const statusMeta = getLinkageStatusMeta(link.status, isPolish);
+          const statusMeta = getLinkageStatusMeta(link.status, t);
           return (
             <button
               key={link.linkageId}
@@ -431,7 +425,7 @@ const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId 
                   {link.financeModelRef}
                 </span>
                 <span className="block text-[10px] text-c-text-muted">
-                  {getLinkageTypeLabel(link.linkageType, isPolish)}
+                  {getLinkageTypeLabel(link.linkageType, t)}
                 </span>
               </span>
               <span
@@ -448,9 +442,8 @@ const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId 
 };
 
 const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const isPolish = i18n.language === 'pl';
 
   return (
     <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-white/[0.04] p-3">
@@ -531,17 +524,20 @@ export const InitiativePreviewV3Footer: React.FC<{
       : sourceDisplayType
     : '—';
 
-  const aiHintsWithPrompts = isPolish
-    ? [
-        { label: 'Kolejne kroki', prompt: 'Zaproponuj 3 kolejne kroki dla tej inicjatywy.' },
-        { label: 'Ryzyka', prompt: 'Wypisz 5 ryzyk i propozycje mitigacji dla tej inicjatywy.' },
-        { label: 'Zakres', prompt: 'Ułóż krótki zakres i kryteria sukcesu dla tej inicjatywy.' },
-      ]
-    : [
-        { label: 'Next steps', prompt: 'Propose 3 next steps for this initiative.' },
-        { label: 'Risks', prompt: 'List 5 risks and mitigations for this initiative.' },
-        { label: 'Scope', prompt: 'Draft a short scope and success criteria for this initiative.' },
-      ];
+  const aiHintsWithPrompts = [
+    {
+      label: t('initiatives.initiativePreviewV3.aiHints.nextStepsLabel'),
+      prompt: t('initiatives.initiativePreviewV3.aiHints.nextStepsPrompt'),
+    },
+    {
+      label: t('initiatives.initiativePreviewV3.aiHints.risksLabel'),
+      prompt: t('initiatives.initiativePreviewV3.aiHints.risksPrompt'),
+    },
+    {
+      label: t('initiatives.initiativePreviewV3.aiHints.scopeLabel'),
+      prompt: t('initiatives.initiativePreviewV3.aiHints.scopePrompt'),
+    },
+  ];
 
   const aiHintLabels = aiHintsWithPrompts.map((h) => h.label);
   const handleRunHint = useCallback(

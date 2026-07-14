@@ -7131,7 +7131,9 @@
       "ideaWorkspace": "Workspace pomysłu",
       "assessment": "Ocena",
       "auditReadout": "Readout audytu",
-      "source": "Źródło"
+      "source": "Źródło",
+      "interviewInsight": "Insight z wywiadu",
+      "insight": "Insight"
     },
     "financialNarrativeBlocks": {
       "financialAnalysisSizingRoi": "Analiza finansowa (sizing + ROI)",
@@ -7868,7 +7870,16 @@
       "more": "Więcej",
       "creatingMaterial": "Tworzę materiał…",
       "materialReady": "Materiał gotowy",
-      "failedToCreateMaterial": "Nie udało się utworzyć materiału"
+      "failedToCreateMaterial": "Nie udało się utworzyć materiału",
+      "openSourceTitle": "Otwórz źródło: {{title}}",
+      "switchView": "Przełącz widok"
+    },
+    "suggestedChangesPanel": {
+      "title": "Sugerowane zmiany",
+      "toReview": "{{count}} do rozpatrzenia",
+      "empty": "Brak sugerowanych zmian",
+      "accept": "Akceptuj",
+      "reject": "Odrzuć"
     },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Powiązane modele finansowe",
@@ -7880,7 +7891,29 @@
       "open": "Otwórz",
       "inModule": "W module",
       "chat": "Czat",
-      "copyLink": "Kopiuj link"
+      "copyLink": "Kopiuj link",
+      "linkageStatus": {
+        "linkedToModel": "Powiązano z modelem",
+        "linkedToScenario": "Powiązano ze scenariuszem",
+        "roiTracking": "Śledzenie ROI",
+        "staleVsModel": "Nieaktualne vs model",
+        "localOnly": "Tylko lokalnie",
+        "notStarted": "Nie rozpoczęto"
+      },
+      "linkageType": {
+        "budget": "Budżet",
+        "forecast": "Prognoza",
+        "actual": "Wykonanie",
+        "variance": "Odchylenie"
+      },
+      "aiHints": {
+        "nextStepsLabel": "Kolejne kroki",
+        "nextStepsPrompt": "Zaproponuj 3 kolejne kroki dla tej inicjatywy.",
+        "risksLabel": "Ryzyka",
+        "risksPrompt": "Wypisz 5 ryzyk i propozycje mitigacji dla tej inicjatywy.",
+        "scopeLabel": "Zakres",
+        "scopePrompt": "Ułóż krótki zakres i kryteria sukcesu dla tej inicjatywy."
+      }
     },
     "draftJourney": {
       "badge": "Szkic",

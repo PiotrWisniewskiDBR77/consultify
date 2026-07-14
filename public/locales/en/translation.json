@@ -7896,7 +7896,9 @@
       "ideaWorkspace": "Idea Workspace",
       "assessment": "Assessment",
       "auditReadout": "Audit readout",
-      "source": "Source"
+      "source": "Source",
+      "interviewInsight": "Interview Insight",
+      "insight": "Insight"
     },
     "financialNarrativeBlocks": {
       "financialAnalysisSizingRoi": "Financial analysis (sizing + ROI)",
@@ -8633,7 +8635,16 @@
       "more": "More",
       "creatingMaterial": "Creating material…",
       "materialReady": "Material ready",
-      "failedToCreateMaterial": "Failed to create material"
+      "failedToCreateMaterial": "Failed to create material",
+      "openSourceTitle": "Open source: {{title}}",
+      "switchView": "Switch view"
+    },
+    "suggestedChangesPanel": {
+      "title": "Suggested changes",
+      "toReview": "{{count}} to review",
+      "empty": "No suggested changes",
+      "accept": "Accept",
+      "reject": "Reject"
     },
     "initiativePreviewV3": {
       "linkedFinanceModels": "Linked finance models",
@@ -8645,7 +8656,29 @@
       "open": "Open",
       "inModule": "In module",
       "chat": "Chat",
-      "copyLink": "Copy link"
+      "copyLink": "Copy link",
+      "linkageStatus": {
+        "linkedToModel": "Linked to model",
+        "linkedToScenario": "Linked to scenario",
+        "roiTracking": "ROI tracking",
+        "staleVsModel": "Stale vs model",
+        "localOnly": "Local only",
+        "notStarted": "Not started"
+      },
+      "linkageType": {
+        "budget": "Budget",
+        "forecast": "Forecast",
+        "actual": "Actual",
+        "variance": "Variance"
+      },
+      "aiHints": {
+        "nextStepsLabel": "Next steps",
+        "nextStepsPrompt": "Propose 3 next steps for this initiative.",
+        "risksLabel": "Risks",
+        "risksPrompt": "List 5 risks and mitigations for this initiative.",
+        "scopeLabel": "Scope",
+        "scopePrompt": "Draft a short scope and success criteria for this initiative."
+      }
     },
     "draftJourney": {
       "badge": "Draft",
