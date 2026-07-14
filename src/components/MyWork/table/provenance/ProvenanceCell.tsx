@@ -201,11 +201,16 @@ export const ProvenanceCell: React.FC<ProvenanceCellProps> = ({
         <FileText size={11} aria-hidden />
         <span>
           {activeCount}{' '}
-          {t('ideas.table.sourcesCount', {
-            count: activeCount,
-            defaultValue_one: 'source',
-            defaultValue_other: 'sources',
-          } as any)}
+          {String(
+            // Opcje pluralne (defaultValue_one/_other) wykraczają poza wąski
+            // typ TOptions — rzut na any tylko dla opcji; wynik w runtime
+            // jest stringiem (String(...) przypina typ dla ReactNode).
+            t('ideas.table.sourcesCount', {
+              count: activeCount,
+              defaultValue_one: 'source',
+              defaultValue_other: 'sources',
+            } as any)
+          )}
         </span>
         <ChevronDown size={10} aria-hidden />
       </button>

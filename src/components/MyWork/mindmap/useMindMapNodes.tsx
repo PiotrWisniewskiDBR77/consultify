@@ -470,11 +470,14 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           // Fallback: inline toast confirm when dialog is unavailable
           toast(
             (t) => {
-              const msg = i18n.t('mindmap.nodes.subtreeDeleteConfirm', {
-                count: subtreeExtra,
-                defaultValue_one: 'This will also delete {{count}} child node. Continue?',
-                defaultValue_other: 'This will also delete {{count}} child nodes. Continue?',
-              } as any);
+              // wynik i18n.t z pluralami jest w runtime stringiem — String() przypina typ
+              const msg = String(
+                i18n.t('mindmap.nodes.subtreeDeleteConfirm', {
+                  count: subtreeExtra,
+                  defaultValue_one: 'This will also delete {{count}} child node. Continue?',
+                  defaultValue_other: 'This will also delete {{count}} child nodes. Continue?',
+                } as any)
+              );
               return createElement(
                 'span',
                 { className: 'flex items-center gap-2 text-sm' },
@@ -544,11 +547,14 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       const deletedCount = removedIds.size;
       toast.success(
-        i18n.t('mindmap.nodes.deletedCount', {
-          count: deletedCount,
-          defaultValue_one: 'Deleted {{count}} node',
-          defaultValue_other: 'Deleted {{count}} nodes',
-        } as any),
+        // wynik i18n.t z pluralami jest w runtime stringiem — String() przypina typ
+        String(
+          i18n.t('mindmap.nodes.deletedCount', {
+            count: deletedCount,
+            defaultValue_one: 'Deleted {{count}} node',
+            defaultValue_other: 'Deleted {{count}} nodes',
+          } as any)
+        ),
         { id: 'mm-op-cue', duration: 2000 }
       );
 
@@ -983,11 +989,14 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     }
 
     toast.success(
-      i18n.t('mindmap.nodes.copiedCount', {
-        count: selected.length,
-        defaultValue_one: 'Copied {{count}} node',
-        defaultValue_other: 'Copied {{count}} nodes',
-      } as any),
+      // wynik i18n.t z pluralami jest w runtime stringiem — String() przypina typ
+      String(
+        i18n.t('mindmap.nodes.copiedCount', {
+          count: selected.length,
+          defaultValue_one: 'Copied {{count}} node',
+          defaultValue_other: 'Copied {{count}} nodes',
+        } as any)
+      ),
       { duration: 1200 }
     );
   }, [edges, isPolish, nodes]);
@@ -1022,11 +1031,14 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     ]);
 
     toast.success(
-      i18n.t('mindmap.nodes.cutCount', {
-        count: removedIds.size,
-        defaultValue_one: 'Cut {{count}} node',
-        defaultValue_other: 'Cut {{count}} nodes',
-      } as any),
+      // wynik i18n.t z pluralami jest w runtime stringiem — String() przypina typ
+      String(
+        i18n.t('mindmap.nodes.cutCount', {
+          count: removedIds.size,
+          defaultValue_one: 'Cut {{count}} node',
+          defaultValue_other: 'Cut {{count}} nodes',
+        } as any)
+      ),
       { duration: 1200 }
     );
   }, [
@@ -1139,11 +1151,14 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       ]);
 
       toast.success(
-        i18n.t('mindmap.nodes.pastedCount', {
-          count: newNodes.length,
-          defaultValue_one: 'Pasted {{count}} node',
-          defaultValue_other: 'Pasted {{count}} nodes',
-        } as any),
+        // wynik i18n.t z pluralami jest w runtime stringiem — String() przypina typ
+        String(
+          i18n.t('mindmap.nodes.pastedCount', {
+            count: newNodes.length,
+            defaultValue_one: 'Pasted {{count}} node',
+            defaultValue_other: 'Pasted {{count}} nodes',
+          } as any)
+        ),
         { duration: 1200 }
       );
 

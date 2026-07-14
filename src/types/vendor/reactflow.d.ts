@@ -26,6 +26,10 @@ declare module 'reactflow' {
   export const useReactFlow: any;
   export const useNodesState: any;
   export const useEdgesState: any;
+  export const useUpdateNodeInternals: any;
+  export const useNodesInitialized: any;
+  /** Store selector hook — selektor dostaje wewnętrzny stan ReactFlow (any w shimie). */
+  export const useStore: (selector: (state: any) => any) => any;
 
   // Utils
   export const addEdge: any;

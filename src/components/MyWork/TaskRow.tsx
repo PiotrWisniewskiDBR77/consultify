@@ -188,37 +188,39 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                 id: 'legacy',
                 // #40 — pure-wiring bridge onto the sectional kebab contract; filter
                 // matches the previous flat-menu semantics exactly (zero visible change).
-                actions: [
-                  ...(onTogglePin
-                    ? [
-                        {
-                          id: 'pin',
-                          label: isPinned ? 'Unpin' : 'Pin to top',
-                          icon: Pin,
-                          onClick: () => onTogglePin(task.id),
-                          variant: isPinned ? ('primary' as const) : ('default' as const),
-                        },
-                      ]
-                    : []),
-                  {
-                    id: 'complete',
-                    label: isCompleted ? 'Reopen' : 'Complete',
-                    icon: CheckCircle2,
-                    onClick: () => onToggleComplete(task.id, !isCompleted),
-                  },
-                  {
-                    id: 'delete',
-                    label: 'Delete',
-                    icon: Trash2,
-                    onClick: () => {
-                      if (confirm('Delete this task?')) {
-                        onDelete(task.id);
-                      }
+                actions: (
+                  [
+                    ...(onTogglePin
+                      ? [
+                          {
+                            id: 'pin',
+                            label: isPinned ? 'Unpin' : 'Pin to top',
+                            icon: Pin,
+                            onClick: () => onTogglePin(task.id),
+                            variant: isPinned ? ('primary' as const) : ('default' as const),
+                          },
+                        ]
+                      : []),
+                    {
+                      id: 'complete',
+                      label: isCompleted ? 'Reopen' : 'Complete',
+                      icon: CheckCircle2,
+                      onClick: () => onToggleComplete(task.id, !isCompleted),
                     },
-                    variant: 'danger' as const,
-                    divider: true,
-                  },
-                ].filter((a) => !a.disabled),
+                    {
+                      id: 'delete',
+                      label: 'Delete',
+                      icon: Trash2,
+                      onClick: () => {
+                        if (confirm('Delete this task?')) {
+                          onDelete(task.id);
+                        }
+                      },
+                      variant: 'danger' as const,
+                      divider: true,
+                    },
+                  ] as RowAction[]
+                ).filter((a) => !a.disabled),
               },
             ]}
           />

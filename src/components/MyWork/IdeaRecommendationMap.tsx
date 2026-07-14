@@ -142,7 +142,7 @@ import { resolveTagColor } from './mindmap/tagColorMapping';
 import { TimeHeatmap } from './mindmap/TimeHeatmap';
 import { TimelineView } from './mindmap/TimelineView';
 import { StructurePickerPopover } from './mindmap/toolbar-popovers/StructurePickerPopover';
-import { UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
+import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
 import { useMapExportPdf } from './mindmap/useMapExportPdf';
@@ -2422,6 +2422,31 @@ function MindMapInner({
       }
     },
     [broadcastNodeUpdate, setNodes]
+  );
+
+  // NodeDetailData ↔ UnifiedNodeData: pola wspólne mapują się 1:1, ale
+  // `attachments`/`comments` mają w obu typach INNE kształty (name/author vs
+  // title/userName). Ten wariant (mindmap) nie buduje attachments/comments
+  // (drawerNodeData ich nie ustawia), a handleUpdateNode persystuje tylko
+  // notes/status/pola głębi — więc rozbieżne pola jawnie pomijamy zamiast
+  // rzutować całość na ślepo.
+  const drawerUnifiedNodeData = useMemo((): UnifiedNodeData | null => {
+    if (!drawerNodeData) return null;
+    const { attachments: _attachments, comments: _comments, ...compatible } = drawerNodeData;
+    return compatible;
+  }, [drawerNodeData]);
+
+  const handleUnifiedUpdateNode = useCallback(
+    (nodeId: string, patch: Partial<UnifiedNodeData>) => {
+      const { attachments: _attachments, comments: _comments, status, ...rest } = patch;
+      handleUpdateNode(nodeId, {
+        ...rest,
+        // Statusy 'ready'/'rejected' istnieją tylko w unified; magazyn danych
+        // węzła jest schemaless (n.data), więc przekazujemy wartość 1:1.
+        ...(status !== undefined ? { status: status as NodeDetailData['status'] } : {}),
+      });
+    },
+    [handleUpdateNode]
   );
 
   const handleConvertNode = useCallback(
@@ -5885,13 +5910,13 @@ function MindMapInner({
             variant="mindmap"
             open={!!drawerNodeId}
             onClose={() => setDrawerNodeId(null)}
-            nodeData={drawerNodeData}
+            nodeData={drawerUnifiedNodeData}
             ideaId={ideaId}
             ideaTitle={ideaTitle}
             locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
             allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
             allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-            onUpdateNode={handleUpdateNode}
+            onUpdateNode={handleUnifiedUpdateNode}
             onConvertNode={handleConvertNode}
             onNavigateToNode={handleNavigateToNode}
             onDrillDown={handleDrillDown}
