@@ -2,9 +2,9 @@ name: IRIS 6.0 Automated Test Suite
 
 on:
   push:
-    branches: [main, develop, Londyn]
+    branches: [main, develop, Londyn, demo]
   pull_request:
-    branches: [main, develop, Londyn]
+    branches: [main, develop, Londyn, demo]
   workflow_dispatch:
     inputs:
       test_type:

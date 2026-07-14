@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - Londyn
+      - demo
     paths:
       - 'public/locales/en/**'
 
