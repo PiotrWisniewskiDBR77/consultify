@@ -14975,6 +14975,64 @@
           "save": "Save Persona",
           "selectToEdit": "Select a persona to edit"
         }
+      },
+      "modelsProviders": {
+        "errors": {
+          "load": "Failed to load providers",
+          "healthCheckFailed": "Health check failed",
+          "refreshHealth": "Failed to refresh health",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Connection failed",
+          "testFailedFor": "Test failed for {{provider}}",
+          "updateProvider": "Failed to update provider"
+        },
+        "toasts": {
+          "healthCheckComplete": "Health check complete: {{count}} healthy providers",
+          "providerHealthy": "{{provider}} is healthy ({{latency}}ms)",
+          "providerEnabled": "Provider enabled",
+          "providerDisabled": "Provider disabled"
+        },
+        "health": {
+          "healthy": "healthy",
+          "degraded": "degraded",
+          "unhealthy": "unhealthy",
+          "unknown": "unknown"
+        },
+        "summary": {
+          "healthy": "Healthy",
+          "degraded": "Degraded",
+          "unhealthy": "Unhealthy",
+          "total": "Total"
+        },
+        "default": "Default:",
+        "lastCheck": "Last check: {{time}}",
+        "hideInactive": "Hide Inactive",
+        "showInactive": "Show Inactive",
+        "refreshing": "Refreshing...",
+        "refreshAll": "Refresh All",
+        "defaultBadge": "Default",
+        "vision": "Vision",
+        "tools": "Tools",
+        "noApiKey": "No API Key",
+        "priorityCost": "Priority: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Circuit: {{state}}",
+        "failuresCount": "({{count}} failures)",
+        "tableTitle": "AI Providers Management",
+        "tableDescription": "Configure providers for your organization. Enable/disable to control which models are available.",
+        "columns": {
+          "provider": "Provider",
+          "model": "Model",
+          "tiers": "Tiers",
+          "health": "Health",
+          "orgAccess": "Org Access",
+          "status": "Status"
+        },
+        "active": "Active",
+        "inactive": "Inactive",
+        "modelsPerTier": "Models Available per Tier",
+        "modelsInTiers": "{{modelCount}} models in {{tierCount}} tiers",
+        "noModelsAvailable": "No models available"
       }
     }
   },

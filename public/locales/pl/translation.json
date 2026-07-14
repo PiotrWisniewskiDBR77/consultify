@@ -15626,6 +15626,64 @@
           "save": "Zapisz personę",
           "selectToEdit": "Wybierz personę do edycji"
         }
+      },
+      "modelsProviders": {
+        "errors": {
+          "load": "Nie udało się załadować dostawców",
+          "healthCheckFailed": "Sprawdzanie stanu nie powiodło się",
+          "refreshHealth": "Nie udało się odświeżyć stanu",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Połączenie nie powiodło się",
+          "testFailedFor": "Test nie powiódł się dla {{provider}}",
+          "updateProvider": "Nie udało się zaktualizować dostawcy"
+        },
+        "toasts": {
+          "healthCheckComplete": "Sprawdzanie stanu zakończone: {{count}} zdrowych dostawców",
+          "providerHealthy": "{{provider}} działa poprawnie ({{latency}}ms)",
+          "providerEnabled": "Dostawca włączony",
+          "providerDisabled": "Dostawca wyłączony"
+        },
+        "health": {
+          "healthy": "zdrowy",
+          "degraded": "obniżony",
+          "unhealthy": "niesprawny",
+          "unknown": "nieznany"
+        },
+        "summary": {
+          "healthy": "Zdrowe",
+          "degraded": "Obniżone",
+          "unhealthy": "Niesprawne",
+          "total": "Łącznie"
+        },
+        "default": "Domyślny:",
+        "lastCheck": "Ostatnie sprawdzenie: {{time}}",
+        "hideInactive": "Ukryj nieaktywne",
+        "showInactive": "Pokaż nieaktywne",
+        "refreshing": "Odświeżanie...",
+        "refreshAll": "Odśwież wszystko",
+        "defaultBadge": "Domyślny",
+        "vision": "Wizja",
+        "tools": "Narzędzia",
+        "noApiKey": "Brak klucza API",
+        "priorityCost": "Priorytet: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Obwód: {{state}}",
+        "failuresCount": "({{count}} błędów)",
+        "tableTitle": "Zarządzanie dostawcami AI",
+        "tableDescription": "Skonfiguruj dostawców dla organizacji. Włącz/wyłącz, aby kontrolować, które modele są dostępne.",
+        "columns": {
+          "provider": "Dostawca",
+          "model": "Model",
+          "tiers": "Poziomy",
+          "health": "Stan",
+          "orgAccess": "Dostęp organizacji",
+          "status": "Status"
+        },
+        "active": "Aktywny",
+        "inactive": "Nieaktywny",
+        "modelsPerTier": "Dostępne modele wg poziomu",
+        "modelsInTiers": "{{modelCount}} modeli w {{tierCount}} poziomach",
+        "noModelsAvailable": "Brak dostępnych modeli"
       }
     }
   },
