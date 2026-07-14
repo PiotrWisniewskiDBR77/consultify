@@ -20825,7 +20825,9 @@
         "addProPlaceholder": "+ Dodaj argument za",
         "conArgumentPlaceholder": "Argument przeciw...",
         "addConPlaceholder": "+ Dodaj argument przeciw",
-        "riskLabel": "ryzyko"
+        "riskLabel": "ryzyko",
+        "recommended": "Rekomendowana",
+        "setRecommended": "Ustaw jako rekomendowaną"
       },
       "consequencesSection": {
         "title": "Konsekwencje braku decyzji",
@@ -20924,7 +20926,9 @@
         "syncTargets": "Cele synchronizacji",
         "message": "Wiadomość",
         "cancel": "Anuluj",
-        "save": "Zapisz"
+        "save": "Zapisz",
+        "requester": "Wnioskujący",
+        "decider": "Decydent"
       },
       "escalationModal": {
         "addTitle": "Dodaj regułę eskalacji",
@@ -21024,7 +21028,16 @@
         "high": "Wysoki",
         "critical": "Krytyczny"
       },
-      "decisionContextTemplate": "## Kontekst decyzji\n\nDecyzja dotyczy wyboru optymalnego rozwiązania dla {{title}}.\n\n### Tło\nW ramach analizy zidentyfikowano następujące kluczowe czynniki:\n- Wymagania biznesowe i techniczne\n- Ograniczenia budżetowe i czasowe\n- Wpływ na obecne procesy\n\n### Zakres\nDecyzja obejmuje:\n1. Wybór dostawcy/technologii\n2. Określenie harmonogramu wdrożenia\n3. Alokację zasobów\n\n### Oczekiwane rezultaty\n- Poprawa efektywności procesów\n- Redukcja kosztów operacyjnych\n- Zwiększenie konkurencyjności"
+      "decisionContextTemplate": "## Kontekst decyzji\n\nDecyzja dotyczy wyboru optymalnego rozwiązania dla {{title}}.\n\n### Tło\nW ramach analizy zidentyfikowano następujące kluczowe czynniki:\n- Wymagania biznesowe i techniczne\n- Ograniczenia budżetowe i czasowe\n- Wpływ na obecne procesy\n\n### Zakres\nDecyzja obejmuje:\n1. Wybór dostawcy/technologii\n2. Określenie harmonogramu wdrożenia\n3. Alokację zasobów\n\n### Oczekiwane rezultaty\n- Poprawa efektywności procesów\n- Redukcja kosztów operacyjnych\n- Zwiększenie konkurencyjności",
+      "notify": {
+        "inApp": "W aplikacji",
+        "email": "E-mail"
+      },
+      "integrations": {
+        "placeholderOps": "slack:#ops, jira:DRD",
+        "placeholderDelivery": "slack:#delivery, jira:PROJ, webhook:ops",
+        "placeholderIncident": "slack:#incident, jira:OPS, webhook:oncall"
+      }
     }
   },
   "discovery": {

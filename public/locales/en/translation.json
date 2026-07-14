@@ -19769,7 +19769,9 @@
         "addProPlaceholder": "+ Add pro",
         "conArgumentPlaceholder": "Con argument...",
         "addConPlaceholder": "+ Add con",
-        "riskLabel": "risk"
+        "riskLabel": "risk",
+        "recommended": "Recommended",
+        "setRecommended": "Set recommended"
       },
       "consequencesSection": {
         "title": "Consequences of Inaction",
@@ -19868,7 +19870,9 @@
         "syncTargets": "Sync targets",
         "message": "Message",
         "cancel": "Cancel",
-        "save": "Save"
+        "save": "Save",
+        "requester": "Requester",
+        "decider": "Decider"
       },
       "escalationModal": {
         "addTitle": "Add escalation rule",
@@ -19968,7 +19972,16 @@
         "high": "High",
         "critical": "Critical"
       },
-      "decisionContextTemplate": "## Decision Context\n\nThis decision concerns selecting the optimal solution for {{title}}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness"
+      "decisionContextTemplate": "## Decision Context\n\nThis decision concerns selecting the optimal solution for {{title}}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness",
+      "notify": {
+        "inApp": "In-app",
+        "email": "Email"
+      },
+      "integrations": {
+        "placeholderOps": "slack:#ops, jira:DRD",
+        "placeholderDelivery": "slack:#delivery, jira:PROJ, webhook:ops",
+        "placeholderIncident": "slack:#incident, jira:OPS, webhook:oncall"
+      }
     }
   },
   "discovery": {

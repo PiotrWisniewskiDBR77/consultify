@@ -5553,7 +5553,10 @@ Use userId only from this list:
                                       {alt.isRecommended && (
                                         <span
                                           className="absolute -left-4 top-5 w-1.5 h-1.5 rounded-full bg-emerald-500"
-                                          title="Recommended"
+                                          title={t(
+                                            'decisions.detail.options.recommended',
+                                            'Recommended'
+                                          )}
                                         />
                                       )}
                                       <div className="flex items-start justify-between gap-3 mb-2">
@@ -5575,7 +5578,10 @@ Use userId only from this list:
                                             <button
                                               onClick={() => setRecommendedAlternative(alt.id)}
                                               className="p-1 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition-colors"
-                                              title="Set recommended"
+                                              title={t(
+                                                'decisions.detail.options.setRecommended',
+                                                'Set recommended'
+                                              )}
                                             >
                                               <Star size={13} />
                                             </button>
@@ -6644,7 +6650,7 @@ Use userId only from this list:
                                             },
                                             {
                                               key: 'in_app',
-                                              label: 'In-app',
+                                              label: t('decisions.detail.notify.inApp', 'In-app'),
                                               active:
                                                 stakeholderDraft.notificationSettings.inAppEnabled,
                                               toggle: () =>
@@ -6660,7 +6666,7 @@ Use userId only from this list:
                                             },
                                             {
                                               key: 'email',
-                                              label: 'Email',
+                                              label: t('decisions.detail.notify.email', 'Email'),
                                               active:
                                                 stakeholderDraft.notificationSettings.emailEnabled,
                                               toggle: () =>
@@ -6758,7 +6764,10 @@ Use userId only from this list:
                                           })
                                         }
                                         className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                        placeholder="slack:#ops, jira:DRD"
+                                        placeholder={t(
+                                          'decisions.detail.integrations.placeholderOps',
+                                          'slack:#ops, jira:DRD'
+                                        )}
                                       />
                                     </label>
                                   </div>
@@ -6910,8 +6919,12 @@ Use userId only from this list:
                                       }
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                                     >
-                                      <option value="requester">Requester</option>
-                                      <option value="decider">Decider</option>
+                                      <option value="requester">
+                                        {t('decisions.detail.reminderModal.requester', 'Requester')}
+                                      </option>
+                                      <option value="decider">
+                                        {t('decisions.detail.reminderModal.decider', 'Decider')}
+                                      </option>
                                       <option value="both">
                                         {t('decisions.detail.reminderModal.both', 'Both')}
                                       </option>
@@ -6951,8 +6964,14 @@ Use userId only from this list:
                                         <div className="flex flex-wrap gap-2">
                                           {(
                                             [
-                                              { key: 'in_app', label: 'In-app' },
-                                              { key: 'email', label: 'Email' },
+                                              {
+                                                key: 'in_app',
+                                                label: t('decisions.detail.notify.inApp', 'In-app'),
+                                              },
+                                              {
+                                                key: 'email',
+                                                label: t('decisions.detail.notify.email', 'Email'),
+                                              },
                                             ] as Array<{ key: CoreDeliveryChannel; label: string }>
                                           ).map((channel) => {
                                             const delivery = ensureDeliveryConfig(
@@ -7072,7 +7091,10 @@ Use userId only from this list:
                                           })
                                         }
                                         className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                        placeholder="slack:#delivery, jira:PROJ, webhook:ops"
+                                        placeholder={t(
+                                          'decisions.detail.integrations.placeholderDelivery',
+                                          'slack:#delivery, jira:PROJ, webhook:ops'
+                                        )}
                                       />
                                     </label>
                                   </div>
@@ -7322,8 +7344,14 @@ Use userId only from this list:
                                       <div className="flex flex-wrap gap-2">
                                         {(
                                           [
-                                            { key: 'in_app', label: 'In-app' },
-                                            { key: 'email', label: 'Email' },
+                                            {
+                                              key: 'in_app',
+                                              label: t('decisions.detail.notify.inApp', 'In-app'),
+                                            },
+                                            {
+                                              key: 'email',
+                                              label: t('decisions.detail.notify.email', 'Email'),
+                                            },
                                           ] as Array<{ key: CoreDeliveryChannel; label: string }>
                                         ).map((channel) => {
                                           const delivery = ensureDeliveryConfig(
@@ -7429,7 +7457,10 @@ Use userId only from this list:
                                         })
                                       }
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                                      placeholder="slack:#incident, jira:OPS, webhook:oncall"
+                                      placeholder={t(
+                                        'decisions.detail.integrations.placeholderIncident',
+                                        'slack:#incident, jira:OPS, webhook:oncall'
+                                      )}
                                     />
                                   </label>
                                   <label className="text-xs text-slate-500 dark:text-slate-400 block">
