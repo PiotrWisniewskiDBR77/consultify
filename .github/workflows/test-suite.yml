@@ -1252,6 +1252,26 @@ jobs:
     timeout-minutes: 45
     needs: [unit-tests, component-tests, integration-tests]
     if: ${{ github.event_name != 'pull_request' }}
+    # Coverage odpala PEŁNY test:coverage (w tym tests/integration wymagające
+    # realnego Postgresa) — bez serwisu DB 228 plików testowych padało na
+    # ECONNREFUSED (2026-07-14). Serwis + migracje skopiowane 1:1 z joba
+    # integration-tests (którego krok testowy jest gate'owany do main/develop,
+    # więc na innych gałęziach to coverage jest jedynym realnym wykonaniem
+    # testów integracyjnych).
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: iris
+          POSTGRES_PASSWORD: iris_test
+          POSTGRES_DB: iris_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -1267,8 +1287,14 @@ jobs:
       - name: Install bc + jq (for numeric comparison + JSON)
         run: sudo apt-get update && sudo apt-get install -y bc jq
 
+      - name: Migrate DB (strict)
+        run: DB_TYPE=postgres DATABASE_URL=postgres://iris:iris_test@localhost:5432/iris_test npm run db:migrate:strict
+
       - name: Run tests with coverage
         run: npm run test:coverage
+        env:
+          DB_TYPE: postgres
+          DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
