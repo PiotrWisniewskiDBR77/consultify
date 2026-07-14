@@ -61,13 +61,12 @@ interface DistributionManagerProps {
 const CHANNELS: {
   id: Channel;
   en: string;
-  pl: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }[] = [
-  { id: 'email', en: 'Email', pl: 'Email', icon: Mail },
-  { id: 'slack', en: 'Slack', pl: 'Slack', icon: MessageSquare },
-  { id: 'teams', en: 'Teams', pl: 'Teams', icon: MessageSquare },
-  { id: 'webhook', en: 'Webhook', pl: 'Webhook', icon: Globe },
+  { id: 'email', en: 'Email', icon: Mail },
+  { id: 'slack', en: 'Slack', icon: MessageSquare },
+  { id: 'teams', en: 'Teams', icon: MessageSquare },
+  { id: 'webhook', en: 'Webhook', icon: Globe },
 ];
 
 const FORMATS: { id: Format; label: string }[] = [
@@ -79,18 +78,18 @@ const FORMATS: { id: Format; label: string }[] = [
 ];
 
 const SCHEDULES = [
-  { value: '', en: 'On demand', pl: 'Na żądanie' },
-  { value: '0 9 * * *', en: 'Daily at 9:00', pl: 'Codziennie o 9:00' },
-  { value: '0 9 * * 1', en: 'Weekly (Mon 9:00)', pl: 'Co tydzień (Pon 9:00)' },
-  { value: '0 9 1 * *', en: 'Monthly (1st, 9:00)', pl: 'Co miesiąc (1., 9:00)' },
+  { value: '', key: 'onDemand', en: 'On demand' },
+  { value: '0 9 * * *', key: 'daily', en: 'Daily at 9:00' },
+  { value: '0 9 * * 1', key: 'weekly', en: 'Weekly (Mon 9:00)' },
+  { value: '0 9 1 * *', key: 'monthly', en: 'Monthly (1st, 9:00)' },
 ];
 
-const WIZARD_STEPS: { key: WizardStep; en: string; pl: string }[] = [
-  { key: 'what', en: 'What to distribute', pl: 'Co dystrybuować' },
-  { key: 'format', en: 'Format', pl: 'Format' },
-  { key: 'channel', en: 'Channel', pl: 'Kanał' },
-  { key: 'schedule', en: 'Schedule', pl: 'Harmonogram' },
-  { key: 'review', en: 'Review', pl: 'Przegląd' },
+const WIZARD_STEPS: { key: WizardStep; en: string }[] = [
+  { key: 'what', en: 'What to distribute' },
+  { key: 'format', en: 'Format' },
+  { key: 'channel', en: 'Channel' },
+  { key: 'schedule', en: 'Schedule' },
+  { key: 'review', en: 'Review' },
 ];
 
 // ─── Component ───────────────────────────────────────────────────
@@ -101,7 +100,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
   views = [],
   onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
@@ -130,7 +129,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
       const data = await TablePlatformApi.listDistributions(baseId);
       setDistributions(Array.isArray(data) ? data : []);
     } catch {
-      toast.error(isPl ? 'Nie udało się pobrać dystrybucji' : 'Failed to load distributions');
+      toast.error(t('ideas.table.failedToLoadDistributions', 'Failed to load distributions'));
     } finally {
       setLoading(false);
     }
@@ -144,9 +143,9 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
     try {
       await TablePlatformApi.deleteDistribution(id);
       setDistributions((prev) => prev.filter((d) => d.id !== id));
-      toast.success(isPl ? 'Usunięto' : 'Deleted');
+      toast.success(t('ideas.table.deleted', 'Deleted'));
     } catch {
-      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+      toast.error(t('ideas.table.failedToDelete', 'Failed to delete'));
     }
   };
 
@@ -155,7 +154,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
       const updated = await TablePlatformApi.toggleDistribution(id);
       setDistributions((prev) => prev.map((d) => (d.id === id ? updated : d)));
     } catch {
-      toast.error(isPl ? 'Nie udało się przełączyć' : 'Failed to toggle');
+      toast.error(t('ideas.table.failedToToggle', 'Failed to toggle'));
     }
   };
 
@@ -164,13 +163,14 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
     try {
       const result = await TablePlatformApi.executeDistribution(id);
       toast.success(
-        isPl
-          ? `Wysłano ${result.recordCount} rekordów przez ${result.channel}`
-          : `Sent ${result.recordCount} records via ${result.channel}`
+        t('ideas.table.sentRecordsVia', 'Sent {{count}} records via {{channel}}', {
+          count: result.recordCount,
+          channel: result.channel,
+        })
       );
       await fetchDistributions();
     } catch {
-      toast.error(isPl ? 'Wysyłka nie powiodła się' : 'Send failed');
+      toast.error(t('ideas.table.sendFailed', 'Send failed'));
     } finally {
       setExecutingId(null);
     }
@@ -178,7 +178,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      toast.error(isPl ? 'Nazwa jest wymagana' : 'Name is required');
+      toast.error(t('ideas.table.nameIsRequired', 'Name is required'));
       return;
     }
     setCreating(true);
@@ -192,11 +192,11 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
         format,
         schedule: schedule || undefined,
       });
-      toast.success(isPl ? 'Dystrybucja utworzona' : 'Distribution created');
+      toast.success(t('ideas.table.distributionCreated', 'Distribution created'));
       resetWizard();
       await fetchDistributions();
     } catch {
-      toast.error(isPl ? 'Nie udało się utworzyć' : 'Failed to create');
+      toast.error(t('ideas.table.failedToCreate', 'Failed to create'));
     } finally {
       setCreating(false);
     }
@@ -248,7 +248,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           </button>
           <Send size={16} className="text-c-tag-4" />
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Nowa dystrybucja' : 'New Distribution'}
+            {t('ideas.table.newDistribution', 'New Distribution')}
           </h3>
         </div>
 
@@ -267,7 +267,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       : 'text-c-text-secondary'
                 }`}
               >
-                {isPl ? s.pl : s.en}
+                {t(`ideas.table.wizardStep.${s.key}`, s.en)}
               </button>
             </React.Fragment>
           ))}
@@ -279,19 +279,19 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-medium text-c-text-muted">
-                  {isPl ? 'Nazwa dystrybucji' : 'Distribution name'}
+                  {t('ideas.table.distributionName', 'Distribution name')}
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
+                  placeholder={t('ideas.table.eGWeeklyReport', 'e.g. Weekly Report')}
                   className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                 />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-c-text-muted">
-                  {isPl ? 'Co dystrybuować' : 'What to distribute'}
+                  {t('ideas.table.whatToDistribute', 'What to distribute')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -306,7 +306,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     }`}
                   >
                     <FileText size={16} className="mx-auto mb-1" />
-                    {isPl ? 'Tabela' : 'Table'}
+                    {t('ideas.table.table', 'Table')}
                   </button>
                   <button
                     onClick={() => setSourceType('view')}
@@ -317,7 +317,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     }`}
                   >
                     <Eye size={16} className="mx-auto mb-1" />
-                    {isPl ? 'Widok' : 'View'}
+                    {t('ideas.table.view', 'View')}
                   </button>
                 </div>
               </div>
@@ -327,7 +327,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   onChange={(e) => setSourceId(e.target.value)}
                   className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                 >
-                  <option value="">{isPl ? 'Wybierz widok...' : 'Select view...'}</option>
+                  <option value="">{t('ideas.table.selectView', 'Select view...')}</option>
                   {views.map((v) => (
                     <option key={v.id} value={v.id}>
                       {v.name}
@@ -341,7 +341,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           {step === 'format' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Format eksportu' : 'Export Format'}
+                {t('ideas.table.exportFormat', 'Export Format')}
               </h4>
               <div className="grid grid-cols-3 gap-2">
                 {FORMATS.map((f) => (
@@ -364,7 +364,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           {step === 'channel' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Kanał dostarczenia' : 'Delivery Channel'}
+                {t('ideas.table.deliveryChannel', 'Delivery Channel')}
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 {CHANNELS.map((ch) => {
@@ -383,7 +383,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       }`}
                     >
                       <Icon size={16} />
-                      {isPl ? ch.pl : ch.en}
+                      {t(`ideas.table.channel.${ch.id}`, ch.en)}
                     </button>
                   );
                 })}
@@ -393,7 +393,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 {channel === 'email' && (
                   <div>
                     <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
-                      {isPl ? 'Adresy email' : 'Email addresses'}
+                      {t('ideas.table.emailAddresses', 'Email addresses')}
                     </label>
                     <input
                       type="text"
@@ -439,7 +439,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           {step === 'schedule' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Harmonogram' : 'Schedule'}
+                {t('ideas.table.scheduleLabel', 'Schedule')}
               </h4>
               <div className="space-y-1.5">
                 {SCHEDULES.map((s) => (
@@ -457,7 +457,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       size={14}
                       className={schedule === s.value ? 'text-c-tag-4' : 'text-c-text-secondary'}
                     />
-                    {isPl ? s.pl : s.en}
+                    {t(`ideas.table.schedule.${s.key}`, s.en)}
                     {s.value && (
                       <span className="ml-auto text-[10px] text-c-text-secondary">{s.value}</span>
                     )}
@@ -466,7 +466,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               </div>
               <div>
                 <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
-                  {isPl ? 'Własny cron (opcjonalnie)' : 'Custom cron (optional)'}
+                  {t('ideas.table.customCronOptional', 'Custom cron (optional)')}
                 </label>
                 <input
                   type="text"
@@ -482,24 +482,24 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           {step === 'review' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Podsumowanie' : 'Summary'}
+                {t('ideas.table.summary', 'Summary')}
               </h4>
               <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border-subtle bg-c-surface">
-                <SummaryRow label={isPl ? 'Nazwa' : 'Name'} value={name || '—'} />
+                <SummaryRow label={t('ideas.table.name', 'Name')} value={name || '—'} />
                 <SummaryRow
-                  label={isPl ? 'Źródło' : 'Source'}
+                  label={t('ideas.table.source', 'Source')}
                   value={
-                    sourceType === 'table' ? (isPl ? 'Tabela' : 'Table') : isPl ? 'Widok' : 'View'
+                    sourceType === 'table' ? (t('ideas.table.table', 'Table')) : t('ideas.table.view', 'View')
                   }
                 />
-                <SummaryRow label={isPl ? 'Format' : 'Format'} value={format.toUpperCase()} />
+                <SummaryRow label={t('ideas.table.format', 'Format')} value={format.toUpperCase()} />
                 <SummaryRow
-                  label={isPl ? 'Kanał' : 'Channel'}
-                  value={isPl ? getChannelDef(channel).pl : getChannelDef(channel).en}
+                  label={t('ideas.table.channelLabel', 'Channel')}
+                  value={t(`ideas.table.channel.${getChannelDef(channel).id}`, getChannelDef(channel).en)}
                 />
                 <SummaryRow
-                  label={isPl ? 'Harmonogram' : 'Schedule'}
-                  value={schedule || (isPl ? 'Na żądanie' : 'On demand')}
+                  label={t('ideas.table.scheduleLabel', 'Schedule')}
+                  value={schedule || (t('ideas.table.onDemand', 'On demand'))}
                 />
               </div>
 
@@ -507,32 +507,32 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               <div className="rounded-xl border border-dashed border-c-border-subtle bg-c-surface p-4 border-c-border-subtle bg-c-surface">
                 <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-c-text-muted">
                   <Eye size={14} />
-                  {isPl ? 'Podgląd' : 'Preview'}
+                  {t('ideas.table.preview', 'Preview')}
                 </div>
                 <div className="text-[11px] text-c-text-muted">
                   {channel === 'email' && (
                     <p>
-                      {isPl ? 'Email z załącznikiem' : 'Email with attachment'}{' '}
+                      {t('ideas.table.emailWithAttachment', 'Email with attachment')}{' '}
                       <strong>
                         {name}.{format}
                       </strong>{' '}
-                      {isPl ? 'do' : 'to'}: {(channelConfig.to as string) || '(no recipients)'}
+                      {t('ideas.table.to', 'to')}: {(channelConfig.to as string) || '(no recipients)'}
                     </p>
                   )}
                   {channel === 'slack' && (
                     <p>
-                      {isPl ? 'Wiadomość Slack z danymi w formacie' : 'Slack message with data in'}{' '}
+                      {t('ideas.table.slackMessageWithDataIn', 'Slack message with data in')}{' '}
                       <strong>{format.toUpperCase()}</strong>
                     </p>
                   )}
                   {channel === 'teams' && (
                     <p>
-                      {isPl ? 'Karta Teams z podsumowaniem danych' : 'Teams card with data summary'}
+                      {t('ideas.table.teamsCardWithDataSummary', 'Teams card with data summary')}
                     </p>
                   )}
                   {channel === 'webhook' && (
                     <p>
-                      {isPl ? 'POST do' : 'POST to'}: {(channelConfig.url as string) || '(no URL)'}{' '}
+                      {t('ideas.table.postTo', 'POST to')}: {(channelConfig.url as string) || '(no URL)'}{' '}
                       ({format.toUpperCase()})
                     </p>
                   )}
@@ -551,7 +551,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             }}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors hover:text-c-text-secondary"
           >
-            {stepIndex === 0 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
+            {stepIndex === 0 ? (t('ideas.table.cancel', 'Cancel')) : t('ideas.table.back', 'Back')}
           </button>
           {step === 'review' ? (
             <button
@@ -560,7 +560,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-tag-4 px-4 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-tag-4 disabled:opacity-50"
             >
               {creating && <Loader2 size={12} className="animate-spin" />}
-              {isPl ? 'Utwórz dystrybucję' : 'Create Distribution'}
+              {t('ideas.table.createDistribution', 'Create Distribution')}
             </button>
           ) : (
             <button
@@ -568,7 +568,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               disabled={step === 'what' && !name.trim()}
               className="inline-flex items-center gap-1 rounded-lg bg-c-tag-4 px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-tag-4 disabled:opacity-50"
             >
-              {isPl ? 'Dalej' : 'Next'}
+              {t('ideas.table.next', 'Next')}
               <ArrowRight size={12} />
             </button>
           )}
@@ -591,7 +591,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           </button>
           <Send size={18} className="text-c-tag-4" />
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Dystrybucja' : 'Distributions'}
+            {t('ideas.table.distributions', 'Distributions')}
             {distributions.length > 0 && (
               <span className="ml-1 font-normal text-c-text-secondary">({distributions.length})</span>
             )}
@@ -602,7 +602,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           className="inline-flex items-center gap-1 rounded-lg bg-c-tag-4 px-2.5 py-1.5 text-xs font-medium text-c-tag-4 transition-colors hover:bg-c-tag-4 text-c-tag-4 hover:bg-c-tag-4"
         >
           <Plus size={12} />
-          {isPl ? 'Nowa' : 'New'}
+          {t('ideas.table.new', 'New')}
         </button>
       </div>
 
@@ -618,19 +618,17 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               <Send size={28} className="text-c-text-muted" />
             </div>
             <p className="mb-1 text-sm font-medium text-c-text-muted">
-              {isPl ? 'Brak dystrybucji' : 'No distributions yet'}
+              {t('ideas.table.noDistributionsYet', 'No distributions yet')}
             </p>
             <p className="mb-4 max-w-xs text-xs text-c-text-muted">
-              {isPl
-                ? 'Automatycznie wysyłaj dane z tabeli przez email, Slack, Teams lub webhook.'
-                : 'Automatically send table data via email, Slack, Teams, or webhook.'}
+              {t('ideas.table.automaticallySendTableDataViaEmailSlackTeamsOrWebhook', 'Automatically send table data via email, Slack, Teams, or webhook.')}
             </p>
             <button
               onClick={() => setShowWizard(true)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-tag-4 px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-tag-4"
             >
               <Plus size={14} />
-              {isPl ? 'Utwórz dystrybucję' : 'Create distribution'}
+              {t('ideas.table.createDistribution2', 'Create distribution')}
             </button>
           </div>
         ) : (
@@ -657,12 +655,12 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       </span>
                       {!dist.is_active && (
                         <span className="rounded bg-c-warning px-1.5 py-0.5 text-[10px] text-c-warning bg-c-warning text-c-warning">
-                          {isPl ? 'Wstrzymane' : 'Paused'}
+                          {t('ideas.table.paused', 'Paused')}
                         </span>
                       )}
                     </div>
                     <div className="mt-0.5 text-[10px] text-c-text-muted">
-                      {dist.format?.toUpperCase()} · {isPl ? chDef.pl : chDef.en}
+                      {dist.format?.toUpperCase()} · {t(`ideas.table.channel.${chDef.id}`, chDef.en)}
                       {dist.schedule && (
                         <>
                           {' '}
@@ -672,7 +670,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       {dist.send_count > 0 && (
                         <>
                           {' '}
-                          · {dist.send_count}× {isPl ? 'wysłano' : 'sent'}
+                          · {dist.send_count}× {t('ideas.table.sent', 'sent')}
                         </>
                       )}
                       {dist.last_sent_at && <> · {formatTime(dist.last_sent_at)}</>}
@@ -684,7 +682,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       onClick={() => handleExecute(dist.id)}
                       disabled={isExecuting}
                       className="rounded-lg p-1.5 text-c-tag-4 transition-colors hover:bg-c-tag-4 disabled:opacity-50 text-c-tag-4 hover:bg-c-tag-4"
-                      title={isPl ? 'Wyślij teraz' : 'Send now'}
+                      title={t('ideas.table.sendNow', 'Send now')}
                     >
                       {isExecuting ? (
                         <Loader2 size={12} className="animate-spin" />
@@ -700,7 +698,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                           : 'text-c-warning hover:bg-c-warning text-c-warning hover:bg-c-warning'
                       }`}
                       title={
-                        dist.is_active ? (isPl ? 'Wstrzymaj' : 'Pause') : isPl ? 'Wznów' : 'Resume'
+                        dist.is_active ? (t('ideas.table.pause', 'Pause')) : t('ideas.table.resume', 'Resume')
                       }
                     >
                       {dist.is_active ? <Pause size={12} /> : <Power size={12} />}
@@ -708,7 +706,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     <button
                       onClick={() => handleDelete(dist.id)}
                       className="rounded-lg p-1.5 text-c-danger transition-colors hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]"
-                      title={isPl ? 'Usuń' : 'Delete'}
+                      title={t('ideas.table.delete', 'Delete')}
                     >
                       <Trash2 size={12} />
                     </button>

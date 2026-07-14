@@ -47,12 +47,12 @@ interface SyncManagerProps {
   onClose: () => void;
 }
 
-const WIZARD_STEPS: { key: WizardStep; en: string; pl: string }[] = [
-  { key: 'source', en: 'Source', pl: 'Źródło' },
-  { key: 'target', en: 'Target', pl: 'Cel' },
-  { key: 'mapping', en: 'Field Mapping', pl: 'Mapowanie pól' },
-  { key: 'schedule', en: 'Schedule & Mode', pl: 'Harmonogram i tryb' },
-  { key: 'review', en: 'Review', pl: 'Przegląd' },
+const WIZARD_STEPS: { key: WizardStep; en: string }[] = [
+  { key: 'source', en: 'Source' },
+  { key: 'target', en: 'Target' },
+  { key: 'mapping', en: 'Field Mapping' },
+  { key: 'schedule', en: 'Schedule & Mode' },
+  { key: 'review', en: 'Review' },
 ];
 
 // ─── Component ───────────────────────────────────────────────────
@@ -64,7 +64,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
   fields = [],
   onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [syncs, setSyncs] = useState<TableSync[]>([]);
@@ -88,7 +88,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
       const data = await TablePlatformApi.listTableSyncs(tableId);
       setSyncs(Array.isArray(data) ? data : []);
     } catch {
-      toast.error(isPl ? 'Nie udało się pobrać synchronizacji' : 'Failed to load syncs');
+      toast.error(t('ideas.table.failedToLoadSyncs', 'Failed to load syncs'));
     } finally {
       setLoading(false);
     }
@@ -102,9 +102,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
     try {
       await TablePlatformApi.deleteTableSync(syncId);
       setSyncs((prev) => prev.filter((s) => s.id !== syncId));
-      toast.success(isPl ? 'Synchronizacja usunięta' : 'Sync deleted');
+      toast.success(t('ideas.table.syncDeleted', 'Sync deleted'));
     } catch {
-      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+      toast.error(t('ideas.table.failedToDelete', 'Failed to delete'));
     }
   };
 
@@ -119,7 +119,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
       );
       await fetchSyncs();
     } catch {
-      toast.error(isPl ? 'Synchronizacja nie powiodła się' : 'Sync failed');
+      toast.error(t('ideas.table.syncFailed', 'Sync failed'));
     } finally {
       setSyncingId(null);
     }
@@ -127,7 +127,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
 
   const handleCreateSync = async () => {
     if (!sourceTableId || !targetTableId) {
-      toast.error(isPl ? 'Wybierz źródło i cel' : 'Select source and target');
+      toast.error(t('ideas.table.selectSourceAndTarget', 'Select source and target'));
       return;
     }
     setCreating(true);
@@ -138,11 +138,11 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
         Object.keys(fieldMapping).length > 0 ? fieldMapping : { '*': '*' },
         syncMode
       );
-      toast.success(isPl ? 'Synchronizacja utworzona' : 'Sync created');
+      toast.success(t('ideas.table.syncCreated', 'Sync created'));
       resetWizard();
       await fetchSyncs();
     } catch {
-      toast.error(isPl ? 'Nie udało się utworzyć' : 'Failed to create');
+      toast.error(t('ideas.table.failedToCreate', 'Failed to create'));
     } finally {
       setCreating(false);
     }
@@ -193,7 +193,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           </button>
           <RefreshCw size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Nowa synchronizacja' : 'New Sync'}
+            {t('ideas.table.newSync', 'New Sync')}
           </h3>
         </div>
 
@@ -212,7 +212,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                       : 'text-c-text-secondary'
                 }`}
               >
-                {isPl ? step.pl : step.en}
+                {t(`ideas.table.syncWizardStep.${step.key}`, step.en)}
               </button>
             </React.Fragment>
           ))}
@@ -223,7 +223,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           {wizardStep === 'source' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Typ źródła' : 'Source Type'}
+                {t('ideas.table.sourceType', 'Source Type')}
               </h4>
               <div className="grid grid-cols-3 gap-2">
                 {(['table', 'csv_url', 'google_sheets'] as const).map((type) => (
@@ -237,9 +237,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     }`}
                   >
                     {type === 'table'
-                      ? isPl
-                        ? 'Tabela'
-                        : 'Table'
+                      ? t('ideas.table.table', 'Table')
                       : type === 'csv_url'
                         ? 'CSV URL'
                         : 'Google Sheets'}
@@ -250,14 +248,14 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               {sourceType === 'table' && (
                 <div className="space-y-2">
                   <label className="block text-xs font-medium text-c-text-muted">
-                    {isPl ? 'Tabela źródłowa' : 'Source Table'}
+                    {t('ideas.table.sourceTable', 'Source Table')}
                   </label>
                   <select
                     value={sourceTableId}
                     onChange={(e) => setSourceTableId(e.target.value)}
                     className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                   >
-                    <option value="">{isPl ? 'Wybierz tabelę...' : 'Select table...'}</option>
+                    <option value="">{t('ideas.table.selectTable', 'Select table...')}</option>
                     {tables
                       .filter((t) => t.id !== tableId)
                       .map((t) => (
@@ -304,7 +302,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           {wizardStep === 'target' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Tabela docelowa' : 'Target Table'}
+                {t('ideas.table.targetTable', 'Target Table')}
               </h4>
               <select
                 value={targetTableId}
@@ -318,9 +316,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 ))}
               </select>
               <p className="text-[11px] text-c-text-secondary">
-                {isPl
-                  ? 'Dane ze źródła zostaną zsynchronizowane do tej tabeli.'
-                  : 'Data from the source will be synced to this table.'}
+                {t('ideas.table.dataFromTheSourceWillBeSyncedToThisTable', 'Data from the source will be synced to this table.')}
               </p>
             </div>
           )}
@@ -328,12 +324,10 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           {wizardStep === 'mapping' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Mapowanie pól' : 'Field Mapping'}
+                {t('ideas.table.fieldMapping', 'Field Mapping')}
               </h4>
               <p className="text-[11px] text-c-text-secondary">
-                {isPl
-                  ? 'Mapuj pola źródłowe na docelowe. Puste = automatyczne dopasowanie.'
-                  : 'Map source fields to target fields. Leave empty for auto-matching.'}
+                {t('ideas.table.mapSourceFieldsToTargetFieldsLeaveEmptyForAutoMatching', 'Map source fields to target fields. Leave empty for auto-matching.')}
               </p>
               {fields.length > 0 ? (
                 <div className="space-y-2">
@@ -360,9 +354,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-c-border-subtle p-4 text-center text-xs text-c-text-secondary border-c-border-subtle">
-                  {isPl
-                    ? 'Pola zostaną automatycznie dopasowane po nazwie.'
-                    : 'Fields will be auto-matched by name.'}
+                  {t('ideas.table.fieldsWillBeAutoMatchedByName', 'Fields will be auto-matched by name.')}
                 </div>
               )}
             </div>
@@ -371,7 +363,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           {wizardStep === 'schedule' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Tryb synchronizacji' : 'Sync Mode'}
+                {t('ideas.table.syncMode', 'Sync Mode')}
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -383,7 +375,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   }`}
                 >
                   <ArrowRight size={14} />
-                  {isPl ? 'Jednokierunkowa' : 'One-way'}
+                  {t('ideas.table.oneWay', 'One-way')}
                 </button>
                 <button
                   onClick={() => setSyncMode('two_way')}
@@ -394,7 +386,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   }`}
                 >
                   <ArrowLeftRight size={14} />
-                  {isPl ? 'Dwukierunkowa' : 'Two-way'}
+                  {t('ideas.table.twoWay', 'Two-way')}
                 </button>
               </div>
             </div>
@@ -403,31 +395,25 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           {wizardStep === 'review' && (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPl ? 'Podsumowanie' : 'Summary'}
+                {t('ideas.table.summary', 'Summary')}
               </h4>
               <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border-subtle bg-c-surface">
-                <Row label={isPl ? 'Źródło' : 'Source'} value={getTableName(sourceTableId)} />
-                <Row label={isPl ? 'Cel' : 'Target'} value={getTableName(targetTableId)} />
+                <Row label={t('ideas.table.source', 'Source')} value={getTableName(sourceTableId)} />
+                <Row label={t('ideas.table.target', 'Target')} value={getTableName(targetTableId)} />
                 <Row
-                  label={isPl ? 'Tryb' : 'Mode'}
+                  label={t('ideas.table.mode', 'Mode')}
                   value={
                     syncMode === 'one_way'
-                      ? isPl
-                        ? 'Jednokierunkowa'
-                        : 'One-way'
-                      : isPl
-                        ? 'Dwukierunkowa'
-                        : 'Two-way'
+                      ? t('ideas.table.oneWay', 'One-way')
+                      : t('ideas.table.twoWay', 'Two-way')
                   }
                 />
                 <Row
-                  label={isPl ? 'Pola' : 'Fields'}
+                  label={t('ideas.table.fields', 'Fields')}
                   value={
                     Object.keys(fieldMapping).filter((k) => fieldMapping[k]).length > 0
-                      ? `${Object.keys(fieldMapping).filter((k) => fieldMapping[k]).length} ${isPl ? 'zmapowanych' : 'mapped'}`
-                      : isPl
-                        ? 'Automatyczne'
-                        : 'Auto-match'
+                      ? `${Object.keys(fieldMapping).filter((k) => fieldMapping[k]).length} ${t('ideas.table.mapped', 'mapped')}`
+                      : t('ideas.table.autoMatch', 'Auto-match')
                   }
                 />
               </div>
@@ -444,7 +430,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             }}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors hover:text-c-text-secondary"
           >
-            {stepIndex === 0 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
+            {stepIndex === 0 ? (t('ideas.table.cancel', 'Cancel')) : t('ideas.table.back', 'Back')}
           </button>
           {wizardStep === 'review' ? (
             <button
@@ -453,7 +439,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-info px-4 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-info disabled:opacity-50"
             >
               {creating && <Loader2 size={12} className="animate-spin" />}
-              {isPl ? 'Utwórz synchronizację' : 'Create Sync'}
+              {t('ideas.table.createSync', 'Create Sync')}
             </button>
           ) : (
             <button
@@ -461,7 +447,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               disabled={wizardStep === 'source' && !sourceTableId}
               className="inline-flex items-center gap-1 rounded-lg bg-c-info px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-info disabled:opacity-50"
             >
-              {isPl ? 'Dalej' : 'Next'}
+              {t('ideas.table.next', 'Next')}
               <ArrowRight size={12} />
             </button>
           )}
@@ -484,7 +470,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           </button>
           <RefreshCw size={18} className="text-c-info" />
           <h3 className="text-sm font-semibold text-c-text">
-            {isPl ? 'Synchronizacja' : 'Data Sync'}
+            {t('ideas.table.dataSync', 'Data Sync')}
             {syncs.length > 0 && (
               <span className="ml-1 font-normal text-c-text-secondary">({syncs.length})</span>
             )}
@@ -495,7 +481,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           className="inline-flex items-center gap-1 rounded-lg bg-c-info px-2.5 py-1.5 text-xs font-medium text-c-info transition-colors hover:bg-c-info text-c-info hover:bg-c-info"
         >
           <Plus size={12} />
-          {isPl ? 'Nowa' : 'New'}
+          {t('ideas.table.new', 'New')}
         </button>
       </div>
 
@@ -511,19 +497,17 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               <RefreshCw size={28} className="text-c-text-muted" />
             </div>
             <p className="mb-1 text-sm font-medium text-c-text-muted">
-              {isPl ? 'Brak synchronizacji' : 'No syncs configured'}
+              {t('ideas.table.noSyncsConfigured', 'No syncs configured')}
             </p>
             <p className="mb-4 max-w-xs text-xs text-c-text-muted">
-              {isPl
-                ? 'Synchronizuj dane między tabelami, z CSV lub Google Sheets.'
-                : 'Sync data between tables, from CSV, or Google Sheets.'}
+              {t('ideas.table.syncDataBetweenTablesFromCsvOrGoogleSheets', 'Sync data between tables, from CSV, or Google Sheets.')}
             </p>
             <button
               onClick={() => setShowWizard(true)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-info px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-info"
             >
               <Plus size={14} />
-              {isPl ? 'Utwórz synchronizację' : 'Create sync'}
+              {t('ideas.table.createSync2', 'Create sync')}
             </button>
           </div>
         ) : (
@@ -552,15 +536,11 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     <div className="mt-0.5 flex items-center gap-3 text-[11px] text-c-text-muted">
                       <span>
                         {sync.sync_mode === 'two_way'
-                          ? isPl
-                            ? 'Dwukierunkowa'
-                            : 'Two-way'
-                          : isPl
-                            ? 'Jednokierunkowa'
-                            : 'One-way'}
+                          ? t('ideas.table.twoWay', 'Two-way')
+                          : t('ideas.table.oneWay', 'One-way')}
                       </span>
                       <span>
-                        {isPl ? 'Ostatnia:' : 'Last:'} {formatTime(sync.last_synced_at)}
+                        {t('ideas.table.last', 'Last:')} {formatTime(sync.last_synced_at)}
                       </span>
                     </div>
                   </div>
@@ -570,7 +550,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                       onClick={() => handleSyncNow(sync.id)}
                       disabled={isSyncing}
                       className="rounded-lg p-1.5 text-c-info transition-colors hover:bg-c-info disabled:opacity-50 text-c-info hover:bg-c-info"
-                      title={isPl ? 'Synchronizuj teraz' : 'Sync now'}
+                      title={t('ideas.table.syncNow', 'Sync now')}
                     >
                       {isSyncing ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -581,7 +561,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     <button
                       onClick={() => handleDelete(sync.id)}
                       className="rounded-lg p-1.5 text-c-danger transition-colors hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]"
-                      title={isPl ? 'Usuń' : 'Delete'}
+                      title={t('ideas.table.delete', 'Delete')}
                     >
                       <Trash2 size={14} />
                     </button>

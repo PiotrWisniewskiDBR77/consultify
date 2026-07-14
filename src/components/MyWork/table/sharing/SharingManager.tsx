@@ -79,7 +79,7 @@ function formatDate(iso: string | null | undefined, isPl: boolean): string {
 // ─── Component ───────────────────────────────────────────────────
 
 export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = [], onClose }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [tab, setTab] = useState<SharingTab>('views');
@@ -123,21 +123,21 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
     navigator.clipboard.writeText(url);
     setCopiedId(viewId);
     setTimeout(() => setCopiedId(null), 2000);
-    toast.success(isPl ? 'Link skopiowany' : 'Link copied');
+    toast.success(t('ideas.table.linkCopied', 'Link copied'));
   };
 
   const handleRevokeShare = async (viewId: string) => {
     try {
       await TablePlatformApi.unshareView(viewId);
-      toast.success(isPl ? 'Udostępnianie cofnięte' : 'Share revoked');
+      toast.success(t('ideas.table.shareRevoked', 'Share revoked'));
     } catch {
-      toast.error(isPl ? 'Nie udało się cofnąć' : 'Failed to revoke');
+      toast.error(t('ideas.table.failedToRevoke', 'Failed to revoke'));
     }
   };
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
-      toast.error(isPl ? 'Podaj adres email' : 'Enter email address');
+      toast.error(t('ideas.table.enterEmailAddress', 'Enter email address'));
       return;
     }
     setInviting(true);
@@ -148,11 +148,11 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
         inviteRole
       );
       setCollaborators((prev) => [...prev, result]);
-      toast.success(isPl ? 'Zaproszenie wysłane' : 'Invitation sent');
+      toast.success(t('ideas.table.invitationSent', 'Invitation sent'));
       setInviteEmail('');
       setShowInvite(false);
     } catch {
-      toast.error(isPl ? 'Nie udało się zaprosić' : 'Failed to invite');
+      toast.error(t('ideas.table.failedToInvite', 'Failed to invite'));
     } finally {
       setInviting(false);
     }
@@ -164,9 +164,9 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
       setCollaborators((prev) =>
         prev.map((c) => (c.userId === userId ? { ...c, role: newRole } : c))
       );
-      toast.success(isPl ? 'Rola zmieniona' : 'Role updated');
+      toast.success(t('ideas.table.roleUpdated', 'Role updated'));
     } catch {
-      toast.error(isPl ? 'Nie udało się zmienić roli' : 'Failed to update role');
+      toast.error(t('ideas.table.failedToUpdateRole', 'Failed to update role'));
     }
     setRoleMenuOpen(null);
   };
@@ -175,9 +175,9 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
     try {
       await TablePlatformApi.removeCollaborator(baseId, userId);
       setCollaborators((prev) => prev.filter((c) => c.userId !== userId));
-      toast.success(isPl ? 'Dostęp usunięty' : 'Access removed');
+      toast.success(t('ideas.table.accessRemoved', 'Access removed'));
     } catch {
-      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to remove');
+      toast.error(t('ideas.table.failedToRemove', 'Failed to remove'));
     }
   };
 
@@ -194,7 +194,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
         </button>
         <Shield size={18} className="text-c-accent" />
         <h3 className="text-sm font-semibold text-c-text">
-          {isPl ? 'Udostępnianie' : 'Sharing'}
+          {t('ideas.table.sharing', 'Sharing')}
         </h3>
       </div>
 
@@ -229,12 +229,10 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 <Globe size={28} className="text-c-text-muted" />
               </div>
               <p className="text-sm font-medium text-c-text-muted mb-1">
-                {isPl ? 'Brak udostępnionych widoków' : 'No shared views'}
+                {t('ideas.table.noSharedViews', 'No shared views')}
               </p>
               <p className="text-xs text-c-text-muted max-w-xs">
-                {isPl
-                  ? 'Udostępnij widok z poziomu menu widoku, aby wygenerować publiczny link.'
-                  : 'Share a view from the view menu to generate a public link.'}
+                {t('ideas.table.shareAViewFromTheViewMenuToGenerateAPublicLink', 'Share a view from the view menu to generate a public link.')}
               </p>
             </div>
           ) : (
@@ -250,20 +248,20 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                       {view.name}
                     </span>
                     <span className="text-[10px] text-c-text-secondary truncate block">
-                      {isPl ? 'Publiczny link' : 'Public link'}
+                      {t('ideas.table.publicLink', 'Public link')}
                     </span>
                   </div>
                   <button
                     onClick={() => handleCopyLink(view.id, view.shareToken!)}
                     className="p-1.5 rounded-lg text-c-accent hover:bg-c-accent-soft transition-colors"
-                    title={isPl ? 'Kopiuj link' : 'Copy link'}
+                    title={t('ideas.table.copyLink', 'Copy link')}
                   >
                     {copiedId === view.id ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                   <button
                     onClick={() => handleRevokeShare(view.id)}
                     className="p-1.5 rounded-lg text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)] transition-colors"
-                    title={isPl ? 'Cofnij udostępnianie' : 'Revoke'}
+                    title={t('ideas.table.revoke', 'Revoke')}
                   >
                     <X size={14} />
                   </button>
@@ -284,7 +282,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
               className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent-soft px-3 py-2 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors mb-4"
             >
               <UserPlus size={12} />
-              {isPl ? 'Zaproś osobę' : 'Invite person'}
+              {t('ideas.table.invitePerson', 'Invite person')}
             </button>
           )}
 
@@ -305,7 +303,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
               </div>
               <div>
                 <label className="block text-xs font-medium text-c-text-muted mb-1">
-                  {isPl ? 'Rola' : 'Role'}
+                  {t('ideas.table.role', 'Role')}
                 </label>
                 <select
                   value={inviteRole}
@@ -326,7 +324,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-2 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 transition-colors"
                 >
                   {inviting && <Loader2 size={12} className="animate-spin" />}
-                  {isPl ? 'Zaproś' : 'Invite'}
+                  {t('ideas.table.invite', 'Invite')}
                 </button>
                 <button
                   onClick={() => {
@@ -335,7 +333,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   }}
                   className="px-3 py-2 text-xs font-medium text-c-text-muted hover:text-c-text-muted transition-colors"
                 >
-                  {isPl ? 'Anuluj' : 'Cancel'}
+                  {t('ideas.table.cancel', 'Cancel')}
                 </button>
               </div>
             </div>
@@ -351,7 +349,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {/* Collaborators list */}
           {!loading && collaborators.length === 0 && (
             <div className="text-center py-8 text-xs text-c-text-secondary">
-              {isPl ? 'Brak współpracowników' : 'No collaborators yet'}
+              {t('ideas.table.noCollaboratorsYet', 'No collaborators yet')}
             </div>
           )}
 
@@ -432,7 +430,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                       <button
                         onClick={() => handleRemoveCollaborator(collab.userId)}
                         className="p-1.5 rounded-lg text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)] transition-colors"
-                        title={isPl ? 'Usuń dostęp' : 'Remove access'}
+                        title={t('ideas.table.removeAccess', 'Remove access')}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -452,7 +450,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
             <div className="flex items-center gap-2">
               <Key size={16} className="text-c-warning" />
               <h4 className="text-sm font-semibold text-c-text">
-                {isPl ? 'Dostęp API' : 'API Access'}
+                {t('ideas.table.apiAccess', 'API Access')}
               </h4>
             </div>
 
@@ -467,7 +465,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(baseId);
-                    toast.success(isPl ? 'Skopiowano' : 'Copied');
+                    toast.success(t('ideas.table.copied', 'Copied'));
                   }}
                   className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
                 >
@@ -478,7 +476,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
 
             <div>
               <label className="block text-xs font-medium text-c-text-muted mb-1">
-                {isPl ? 'Endpoint API' : 'API Endpoint'}
+                {t('ideas.table.apiEndpoint', 'API Endpoint')}
               </label>
               <code className="block rounded-lg border border-c-border-subtle bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono break-all">
                 {window.location.origin}/api/table-platform/bases/{baseId}
@@ -487,9 +485,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
 
             <div className="rounded-lg bg-c-warning px-3 py-2">
               <p className="text-[11px] text-c-warning">
-                {isPl
-                  ? 'Użyj tokena autoryzacyjnego w nagłówku Authorization: Bearer <token> do uwierzytelniania żądań API.'
-                  : 'Use your authorization token in the Authorization: Bearer <token> header to authenticate API requests.'}
+                {t('ideas.table.useYourAuthorizationTokenInTheAuthorizationBearerTokenHeader', 'Use your authorization token in the Authorization: Bearer <token> header to authenticate API requests.')}
               </p>
             </div>
           </div>
