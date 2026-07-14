@@ -250,7 +250,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
+        <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.notifications.digest.error', 'Failed to save digest preferences')}
         </div>

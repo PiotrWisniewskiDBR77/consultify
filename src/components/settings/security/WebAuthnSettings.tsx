@@ -281,12 +281,12 @@ const WebAuthnSettings: React.FC = () => {
 
       {/* Error */}
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="text-rose-400 flex-shrink-0" size={20} />
-          <p className="text-rose-300 text-sm">{error}</p>
+        <div className="bg-danger-500/10 border border-danger-500/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="text-danger-400 flex-shrink-0" size={20} />
+          <p className="text-danger-300 text-sm">{error}</p>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-rose-400 hover:text-rose-300"
+            className="ml-auto text-danger-400 hover:text-danger-300"
           >
             <X size={18} />
           </button>
@@ -391,7 +391,7 @@ const WebAuthnSettings: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleRevoke(credential.id)}
-                        className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                        className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>

@@ -159,7 +159,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
       case 'degraded':
         return 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30';
       case 'down':
-        return 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30';
+        return 'text-danger-600 dark:text-danger-400 bg-danger-100 dark:bg-danger-900/30';
       default:
         return 'text-c-text-secondary bg-c-surface-raised';
     }
@@ -172,7 +172,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
       case 'degraded':
         return <AlertTriangle size={16} className="text-amber-500" />;
       case 'down':
-        return <XCircle size={16} className="text-rose-500" />;
+        return <XCircle size={16} className="text-danger-500" />;
       default:
         return <Clock size={16} className="text-c-text-muted" />;
     }
@@ -232,7 +232,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                       ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
                       : status.status === 'degraded'
                         ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
-                        : 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-900/30'
+                        : 'bg-danger-50/50 dark:bg-danger-900/10 border-danger-200 dark:border-danger-900/30'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -262,7 +262,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                   )}
 
                   {status.error_message && (
-                    <p className="text-xs text-rose-600 dark:text-rose-400 mb-2 truncate">
+                    <p className="text-xs text-danger-600 dark:text-danger-400 mb-2 truncate">
                       {status.error_message}
                     </p>
                   )}
@@ -330,7 +330,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                               {new Date(check.checked_at).toLocaleString()}
                             </p>
                             {check.error_message && (
-                              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 truncate max-w-xs">
+                              <p className="text-xs text-danger-600 dark:text-danger-400 mt-1 truncate max-w-xs">
                                 {check.error_message}
                               </p>
                             )}
