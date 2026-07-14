@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { UsageAnalyticsDashboard } from '../../../../components/Admin/AI/UsageAnalyticsDashboard';
+import { UsageAnalyticsDashboard } from '../../components/AI/UsageAnalyticsDashboard';
 
 export const UsageAnalyticsTab: React.FC = () => {
   return <UsageAnalyticsDashboard />;

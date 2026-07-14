@@ -31,11 +31,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
-import { StatusBadge } from '../../components/Admin/shared/AdminTable';
-import { Button, IconButton } from '../../components/Admin/shared/Button';
-import { Card } from '../../components/Admin/shared/Card';
-import { MetricCard } from '../../components/Admin/shared/MetricCard';
-import { SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { StatusBadge } from './components/shared/AdminTable';
+import { Button, IconButton } from './components/shared/Button';
+import { Card } from './components/shared/Card';
+import { MetricCard } from './components/shared/MetricCard';
+import { SectionHeader } from './components/shared/PageHeader';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { LLMProviderConfig } from '../../types/domain/ai';

@@ -11,9 +11,9 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Button } from '../../components/Admin/shared/Button';
-import { Card, Section } from '../../components/Admin/shared/Card';
-import { SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { Button } from './components/shared/Button';
+import { Card, Section } from './components/shared/Card';
+import { SectionHeader } from './components/shared/PageHeader';
 import { Api } from '../../services/api';
 
 export const SuperAdminMetricsView: React.FC = () => {

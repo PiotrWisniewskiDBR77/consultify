@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { AIPerformanceDashboard } from '../../../../components/Admin/AIPerformanceDashboard';
+import { AIPerformanceDashboard } from '../../components/AIPerformanceDashboard';
 
 export const PerformanceDashboardTab: React.FC = () => {
   return <AIPerformanceDashboard />;

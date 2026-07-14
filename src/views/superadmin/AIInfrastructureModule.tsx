@@ -14,7 +14,7 @@
 import { Cpu, HeartPulse, Layers, Settings } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { LLMHealthPanel } from '../../components/Admin/LLMHealthPanel';
+import { LLMHealthPanel } from './components/LLMHealthPanel';
 import { ModelTierAssignments } from '../../components/SuperAdmin/ModelTierAssignments';
 import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';

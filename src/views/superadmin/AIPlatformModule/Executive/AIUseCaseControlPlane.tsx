@@ -10,9 +10,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '@/components/Admin/AdminState';
-import { Button } from '@/components/Admin/shared/Button';
-import { Card } from '@/components/Admin/shared/Card';
-import { MetricCard } from '@/components/Admin/shared/MetricCard';
+import { Button } from '@/views/superadmin/components/shared/Button';
+import { Card } from '@/views/superadmin/components/shared/Card';
+import { MetricCard } from '@/views/superadmin/components/shared/MetricCard';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 

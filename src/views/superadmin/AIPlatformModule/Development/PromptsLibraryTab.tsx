@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { PromptManagementUI } from '../../../../components/Admin/PromptManagementUI';
+import { PromptManagementUI } from '../../components/PromptManagementUI';
 
 export const PromptsLibraryTab: React.FC = () => {
   return (

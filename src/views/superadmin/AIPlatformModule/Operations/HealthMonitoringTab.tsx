@@ -5,8 +5,8 @@
 
 import React from 'react';
 
-import { LLMHealthPanel } from '../../../../components/Admin/LLMHealthPanel';
-import { V8AdminDiagnosticsPanel } from '../../../../components/Admin/V8AdminDiagnosticsPanel';
+import { LLMHealthPanel } from '../../components/LLMHealthPanel';
+import { V8AdminDiagnosticsPanel } from '../../components/V8AdminDiagnosticsPanel';
 
 export const HealthMonitoringTab: React.FC = () => {
   return (

@@ -274,7 +274,10 @@ describe('P33 Superadmin — root control plane + guardrails', () => {
   it('prompt assistant flows use the shared prompt assistant api client', async () => {
     const fs = await import('fs');
     const client = fs.readFileSync('src/services/api/promptAssistant.api.ts', 'utf-8');
-    const management = fs.readFileSync('src/components/Admin/PromptManagementUI.tsx', 'utf-8');
+    const management = fs.readFileSync(
+      'src/views/superadmin/components/PromptManagementUI.tsx',
+      'utf-8'
+    );
     expect(client).toContain('PromptAssistantApi');
     expect(management).toContain('handleBlockPreview');
     expect(management).toContain('handlePromptBenchResults');

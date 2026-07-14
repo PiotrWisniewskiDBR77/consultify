@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { ABTestingDashboard } from '../../../../components/Admin/ABTestingDashboard';
+import { ABTestingDashboard } from '../../components/ABTestingDashboard';
 
 export const ExperimentsTab: React.FC = () => {
   return (

@@ -2,9 +2,9 @@ import { RefreshCw, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Button } from '../../components/Admin/shared/Button';
-import { Card } from '../../components/Admin/shared/Card';
-import { SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { Button } from './components/shared/Button';
+import { Card } from './components/shared/Card';
+import { SectionHeader } from './components/shared/PageHeader';
 import { Api } from '../../services/api';
 
 type SignalType = 'SYSTEM_ALERT' | 'CLIENT_TICKET' | 'USER_FEEDBACK';

@@ -38,8 +38,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { AICoreRuntimePanel } from '../../../components/Admin/AI/AICoreRuntimePanel';
-import { PromptOsRuntimeSummaryPanel } from '../../../components/Admin/AI/PromptOsRuntimeSummaryPanel';
+import { AICoreRuntimePanel } from '../components/AI/AICoreRuntimePanel';
+import { PromptOsRuntimeSummaryPanel } from '../components/AI/PromptOsRuntimeSummaryPanel';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';

@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { SLADashboard } from '../../../../components/Admin/SLADashboard';
+import { SLADashboard } from '../../components/SLADashboard';
 
 export const SLAManagementTab: React.FC = () => {
   return (

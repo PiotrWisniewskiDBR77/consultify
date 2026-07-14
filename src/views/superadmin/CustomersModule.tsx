@@ -31,7 +31,7 @@ import { useLocation } from 'react-router-dom';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { Api } from '../../services/api';
-import { BulkOperationsView } from '../admin/BulkOperationsView';
+import { BulkOperationsView } from './components/BulkOperationsView';
 import {
   ContractManagementView,
   CustomerAnalyticsView,

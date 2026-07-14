@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Api } from '@/services/api';
 import { UserManagementCore } from '@/components/shared/UserManagementCore';
 
-vi.mock('@/components/Admin/UserAssignmentsPanel', () => ({
+vi.mock('@/views/superadmin/components/UserAssignmentsPanel', () => ({
   UserAssignmentsPanel: () => <div>User assignments</div>,
 }));
 

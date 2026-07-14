@@ -28,11 +28,11 @@ vi.mock('../../../src/components/SuperAdmin/ModelRegistry', () => ({
   ModelRegistryHub: () => <div>Model Registry Hub</div>,
 }));
 
-vi.mock('../../../src/components/Admin/AI/AICoreRuntimePanel', () => ({
+vi.mock('../../../src/views/superadmin/components/AI/AICoreRuntimePanel', () => ({
   AICoreRuntimePanel: () => <div>AI core runtime panel</div>,
 }));
 
-vi.mock('../../../src/components/Admin/AI/PromptOsRuntimeSummaryPanel', () => ({
+vi.mock('../../../src/views/superadmin/components/AI/PromptOsRuntimeSummaryPanel', () => ({
   PromptOsRuntimeSummaryPanel: () => <div>Prompt OS runtime panel</div>,
 }));
 

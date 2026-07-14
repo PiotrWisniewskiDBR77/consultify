@@ -7,7 +7,7 @@ import { CheckCircle2, Clock, Loader2, Pause, Play, Plus, Settings, Zap } from '
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
-import { Card } from '../../../components/Admin/shared/Card';
+import { Card } from '../components/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';

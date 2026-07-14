@@ -56,7 +56,7 @@ vi.mock('../../../src/views/superadmin/SuperAdminFeedbackBacklogView', () => ({
   SuperAdminFeedbackBacklogView: () => <div>Feedback Backlog View</div>,
 }));
 
-vi.mock('../../../src/views/admin/BulkOperationsView', () => ({
+vi.mock('../../../src/views/superadmin/components/BulkOperationsView', () => ({
   BulkOperationsView: () => <div>Bulk Operations View</div>,
 }));
 

@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { AdminKnowledgeView } from '../../../admin/AdminKnowledgeView';
+import { AdminKnowledgeView } from '../../components/AdminKnowledgeView';
 
 export const KnowledgeBaseTab: React.FC = () => {
   // Render the AdminKnowledgeView - it will default to 'candidates' tab

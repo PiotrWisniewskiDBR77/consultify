@@ -16,12 +16,12 @@ import { Activity, BarChart2, Braces, DollarSign, List, Radar, Shield } from 'lu
 import React, { useState } from 'react';
 
 import { ChatTracesViewer } from '../../components/Admin/AI/ChatTracesViewer';
-import { PromptOsRuntimeSummaryPanel } from '../../components/Admin/AI/PromptOsRuntimeSummaryPanel';
-import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
-import { AICostDashboard } from '../../components/Admin/AICostDashboard';
+import { PromptOsRuntimeSummaryPanel } from './components/AI/PromptOsRuntimeSummaryPanel';
+import { UsageAnalyticsDashboard } from './components/AI/UsageAnalyticsDashboard';
+import { AICostDashboard } from './components/AICostDashboard';
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
-import { AIPerformanceDashboard } from '../../components/Admin/AIPerformanceDashboard';
-import { SLADashboard } from '../../components/Admin/SLADashboard';
+import { AIPerformanceDashboard } from './components/AIPerformanceDashboard';
+import { SLADashboard } from './components/SLADashboard';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 

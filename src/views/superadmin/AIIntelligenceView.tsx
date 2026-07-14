@@ -36,9 +36,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
-import { PromptAssistantPanel } from '../../components/Admin/PromptAssistantPanel';
-import { PromptBlockBuilder } from '../../components/Admin/PromptBlockBuilder';
-import { PromptTestBench } from '../../components/Admin/PromptTestBench';
+import { PromptAssistantPanel } from './components/PromptAssistantPanel';
+import { PromptBlockBuilder } from './components/PromptBlockBuilder';
+import { PromptTestBench } from './components/PromptTestBench';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
