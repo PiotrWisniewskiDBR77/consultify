@@ -15,9 +15,8 @@
  * zahardkodowanego 0.86/0.52 — patrz emitTrustBundle) oraz `EvidenceContract.confidence`
  * przez `deriveConfidence({ verifiedCitations, totalCitations, ... })`.
  */
-import type { EvidenceConfidence } from '../evidence/evidenceContract.js';
 import logger from '../../utils/Logger.js';
-
+import type { EvidenceConfidence } from '../evidence/evidenceContract.js';
 import type { Citation } from './citationExtractor.js';
 import { citationVerifier, type VerificationReport } from './citationVerifier.js';
 

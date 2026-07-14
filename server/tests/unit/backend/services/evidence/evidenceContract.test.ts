@@ -8,22 +8,22 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import {
-  deriveConfidence,
-  emptyEvidenceContract,
-  isEvidenceConfidence,
-  validateEvidenceContract,
-  type EvidenceContract,
-} from '../../../../../src/services/evidence/evidenceContract.js';
+import type { VerificationReport } from '../../../../../src/services/ai/citationVerifier.js';
 import {
   adaptRuntimeCitation,
   adaptRuntimeCitations,
   confidenceFromVerification,
   numericConfidenceFromVerification,
 } from '../../../../../src/services/ai/runtimeCitationVerification.js';
-import type { VerificationReport } from '../../../../../src/services/ai/citationVerifier.js';
-import { buildEvidenceContractFromCandidate } from '../../../../../src/services/insightMaterializationService.js';
+import {
+  deriveConfidence,
+  emptyEvidenceContract,
+  type EvidenceContract,
+  isEvidenceConfidence,
+  validateEvidenceContract,
+} from '../../../../../src/services/evidence/evidenceContract.js';
 import { buildFinanceEvidenceContract } from '../../../../../src/services/financeReportSectionService.js';
+import { buildEvidenceContractFromCandidate } from '../../../../../src/services/insightMaterializationService.js';
 
 describe('HP-14 EvidenceContract — walidator kształtu', () => {
   it('akceptuje pełny, poprawny kontrakt', () => {
@@ -80,17 +80,19 @@ describe('HP-14 deriveConfidence — deterministyczna bramka dowodowa (zero LLM)
 
   it('cytowania w większości niezweryfikowane obniżają pewność', () => {
     // 4 źródła, ale 1/4 cytowań zweryfikowana (ratio 0.25 < 0.5) → low
-    expect(
-      deriveConfidence({ sourceCount: 4, totalCitations: 4, verifiedCitations: 1 })
-    ).toBe('low');
+    expect(deriveConfidence({ sourceCount: 4, totalCitations: 4, verifiedCitations: 1 })).toBe(
+      'low'
+    );
     // ta sama liczba źródeł, 3/4 zweryfikowane (0.75 ≥ 0.5, <0.8) → medium
-    expect(
-      deriveConfidence({ sourceCount: 4, totalCitations: 4, verifiedCitations: 3 })
-    ).toBe('medium');
+    expect(deriveConfidence({ sourceCount: 4, totalCitations: 4, verifiedCitations: 3 })).toBe(
+      'medium'
+    );
   });
 
   it('nierozwiązane luki blokują high (spada do medium)', () => {
-    expect(deriveConfidence({ sourceCount: 5, unresolvedGaps: 2, qualityScore: 90 })).toBe('medium');
+    expect(deriveConfidence({ sourceCount: 5, unresolvedGaps: 2, qualityScore: 90 })).toBe(
+      'medium'
+    );
   });
 });
 
@@ -107,7 +109,13 @@ describe('HP-15 runtime citation adapter + oznaczanie niezweryfikowanych', () =>
 
   it('deep_research citation → external, z URL i flagą retrievedBySystem', () => {
     const c = adaptRuntimeCitation(
-      { id: 'deep_research_1', type: 'external', title: 'Src', link: 'https://example.com', excerpt: 'e' },
+      {
+        id: 'deep_research_1',
+        type: 'external',
+        title: 'Src',
+        link: 'https://example.com',
+        excerpt: 'e',
+      },
       0
     );
     expect(c!.sourceType).toBe('external');

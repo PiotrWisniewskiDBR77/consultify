@@ -23,12 +23,12 @@ import {
   buildProductAssistantFallback,
   isExplicitResearchAsk,
 } from '../services/ai/chatStabilizationPolicy.js';
+import type { VerificationReport } from '../services/ai/citationVerifier.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
 import {
-  verifyRuntimeCitations,
   numericConfidenceFromVerification,
+  verifyRuntimeCitations,
 } from '../services/ai/runtimeCitationVerification.js';
-import type { VerificationReport } from '../services/ai/citationVerifier.js';
 import {
   isDbr77ProductTruthQuery,
   type WorkerWebAccessPolicy,

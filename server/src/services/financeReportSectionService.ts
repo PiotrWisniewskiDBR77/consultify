@@ -40,6 +40,11 @@
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import {
+  deriveConfidence,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from './evidence/evidenceContract.js';
+import {
   attachSource as attachEvidenceSource,
   type EvidenceAssumption,
   type EvidenceAssumptionSourceType,
@@ -48,11 +53,6 @@ import {
   type EvidenceSourceType,
   upsertEnvelope as upsertEvidenceEnvelope,
 } from './evidence/evidenceEnvelopeService.js';
-import {
-  deriveConfidence,
-  type EvidenceContract,
-  type EvidenceContractSource,
-} from './evidence/evidenceContract.js';
 import {
   type ComputedFamilyRatio,
   computeDupontFromLines,
@@ -576,17 +576,15 @@ export function buildFinanceEvidenceContract(
     url: s.url,
   }));
 
-  const assumptions: string[] = envAssumptions.map((a) =>
-    `${a.key}: ${String(a.value ?? '—')}${a.rationale ? ` — ${a.rationale}` : ''}`
+  const assumptions: string[] = envAssumptions.map(
+    (a) => `${a.key}: ${String(a.value ?? '—')}${a.rationale ? ` — ${a.rationale}` : ''}`
   );
 
   const risks: string[] = [];
   const failedChecks = reconcile.available
     ? reconcile.checks.filter((c) => c.status === 'fail' || c.status === 'warning')
     : [];
-  failedChecks.forEach((c) =>
-    risks.push(`Reconcile ${c.checkCode} (${c.status}): ${c.checkName}`)
-  );
+  failedChecks.forEach((c) => risks.push(`Reconcile ${c.checkCode} (${c.status}): ${c.checkName}`));
   if (valuation.basket?.consistencyFlag?.triggered) {
     risks.push('Wycena EV: rozbieżność metod >20% (football field niespójny).');
   }
