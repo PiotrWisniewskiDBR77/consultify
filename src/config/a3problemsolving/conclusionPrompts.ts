@@ -15,6 +15,8 @@
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { OperationalToolData } from '@/store/useToolStore';
 
+import { buildCountermeasureConclusionPromptRules } from './a3CausalEngine';
+import { buildA3StaircasePromptRules } from './a3InsightStaircase';
 import { localizeLadder } from './index';
 import { assessA3, buildW2MoveSequence } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
@@ -86,6 +88,10 @@ ${seqLines}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
+
+${buildCountermeasureConclusionPromptRules(isPolish ? 'pl' : 'en')}
+
+${buildA3StaircasePromptRules(isPolish ? 'pl' : 'en')}
 
 QUALITY BARS:
 - Answer-first: "verdict" is a thesis about the decision, not a recap of the inputs.

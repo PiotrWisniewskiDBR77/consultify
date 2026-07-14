@@ -30,6 +30,13 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../../utils/Logger.js';
 import { AIPipeline } from '../ai/AIPipeline.js';
 import {
+  gradeWacc,
+  type RateGrade,
+  type SizeBand,
+  type WaccGuidance,
+  waccGuidance,
+} from '../financeParameterGuidance.js';
+import {
   BusinessCaseModelResult,
   BusinessCasePlan,
   runBusinessCaseModel,
@@ -62,6 +69,67 @@ export interface BusinessCaseGenerationParams {
   waccPct?: number;
   currency?: string;
   language?: 'pl' | 'en';
+  /**
+   * Industry segment (free-text, any language) used to derive the discount rate
+   * from `financeParameterGuidance` (O4.5) when the client supplies no waccPct.
+   * The LLM NEVER supplies the discount rate — see resolveBusinessCaseWacc.
+   */
+  industrySegment?: string | null;
+  /** Company size band — shifts the WACC guidance band (smaller = higher). */
+  sizeBand?: SizeBand;
+}
+
+// ---------------------------------------------------------------------------
+// WACC resolution — the discount rate NEVER comes from the LLM (O5 anti-fabri-
+// cation rule for parameters). It is either a client-supplied number or the
+// deterministic industry-guidance band midpoint (financeParameterGuidance).
+// ---------------------------------------------------------------------------
+
+export type WaccSource = 'client' | 'industry-guidance';
+
+export interface BusinessCaseWaccResolution {
+  /** The discount rate actually fed to the deterministic model, in %. */
+  waccPct: number;
+  /** Where the rate came from — a client input or the industry guidance band. */
+  source: WaccSource;
+  /** The full industry guidance band + provenance the rate was graded against. */
+  guidance: WaccGuidance;
+  /** How the chosen rate sits vs. the band (in/below/above) — surfaced to reviewers. */
+  grade: RateGrade;
+}
+
+/**
+ * Resolve the business-case discount rate deterministically. Precedence:
+ *   1. A finite, positive client-supplied waccPct (the client knows its own
+ *      capital structure better than any hypothesis band).
+ *   2. Otherwise the industry-guidance band midpoint (never a flat 10%, never
+ *      an LLM guess).
+ * Either way the chosen rate is graded against the band so a partner can see
+ * "12% assumed for a boutique — below the 14–20% band, NPV likely overstated".
+ *
+ * Pure function — no I/O, no LLM. Independently testable.
+ */
+export function resolveBusinessCaseWacc(params: {
+  explicitWaccPct?: number;
+  industrySegment?: string | null;
+  sizeBand?: SizeBand;
+}): BusinessCaseWaccResolution {
+  const guidance = waccGuidance({
+    industrySegment: params.industrySegment,
+    sizeBand: params.sizeBand,
+  });
+  const hasExplicit =
+    typeof params.explicitWaccPct === 'number' &&
+    Number.isFinite(params.explicitWaccPct) &&
+    params.explicitWaccPct > 0;
+  const waccPct = hasExplicit ? (params.explicitWaccPct as number) : guidance.recommendedWaccPct;
+  const grade = gradeWacc(waccPct, guidance.waccBand);
+  return {
+    waccPct,
+    source: hasExplicit ? 'client' : 'industry-guidance',
+    guidance,
+    grade,
+  };
 }
 
 export interface NarrativeNumberCheck {
@@ -78,6 +146,8 @@ export interface BusinessCaseGenerationResult {
   narrativeCheck: NarrativeNumberCheck;
   llmReviewIssues: Array<{ severity: 'critical' | 'minor'; description: string }>;
   pipelineLog: PipelinePhaseLog[];
+  /** How the discount rate was chosen + graded (O4.5). Never an LLM guess. */
+  waccResolution: BusinessCaseWaccResolution;
   generatedAt: string;
 }
 
@@ -145,11 +215,24 @@ function fmtYears(n: number | null): string {
   return `${n.toFixed(2)} lat`;
 }
 
-export function buildFactsBlock(model: BusinessCaseModelResult): string {
+export function buildFactsBlock(
+  model: BusinessCaseModelResult,
+  waccResolution?: BusinessCaseWaccResolution
+): string {
   const lines: string[] = [];
   lines.push(
     `Model bazowy (WACC ${model.waccPct}%, horyzont ${model.horizonYears} lat, waluta ${model.currency}):`
   );
+  if (waccResolution) {
+    const provenance =
+      waccResolution.source === 'client'
+        ? 'stopa podana przez klienta'
+        : `stopa z guidance branżowego (${waccResolution.guidance.label.pl}, hipoteza ekspercka — nie benchmark)`;
+    lines.push(
+      `  Pochodzenie WACC: ${provenance}. Zakres branżowy: ${waccResolution.guidance.waccBand.low}–${waccResolution.guidance.waccBand.high}% ` +
+        `(ocena przyjętej stopy: ${waccResolution.grade.note.pl})`
+    );
+  }
   lines.push(
     `  NPV: ${fmtCurrency(model.base.npv, model.currency)} | IRR: ${fmtPct(model.base.irrPct)} | ` +
       `Payback: ${fmtYears(model.base.paybackYears)} | ROI: ${fmtPct(model.base.roiPct)} | ` +
@@ -239,6 +322,12 @@ class BusinessCaseService {
     const id = uuidv4();
     const llmParams = { userId, organizationId, projectId };
     const pipelineLog: PipelinePhaseLog[] = [];
+    // Resolved deterministically; the discount rate never comes from the LLM.
+    const waccResolution: BusinessCaseWaccResolution = resolveBusinessCaseWacc({
+      explicitWaccPct: params.waccPct,
+      industrySegment: params.industrySegment,
+      sizeBand: params.sizeBand,
+    });
 
     logger.info(`[BusinessCase] Starting 5-phase pipeline: ${id}`);
 
@@ -262,8 +351,10 @@ class BusinessCaseService {
       plan = parsed;
       // Apply explicit client overrides (they know their own numbers better than the LLM guess).
       if (params.horizonYears) plan.horizonYears = params.horizonYears;
-      if (params.waccPct) plan.waccPct = params.waccPct;
       if (params.currency) plan.currency = params.currency;
+      // WACC is NEVER left as the LLM's guess (O5 anti-fabrication for parameters):
+      // override it with the rate resolved deterministically above.
+      plan.waccPct = waccResolution.waccPct;
 
       pipelineLog.push({
         phase: 'plan',
@@ -290,6 +381,9 @@ class BusinessCaseService {
         const revised = confirmResult.revised_plan;
         if (!approved && isValidPlan(revised)) {
           plan = revised;
+          // A revised plan may carry the LLM's own waccPct — re-assert the
+          // deterministic rate so the discount never silently reverts to a guess.
+          plan.waccPct = waccResolution.waccPct;
           pipelineLog.push({
             phase: 'confirm',
             status: 'warning',
@@ -345,7 +439,7 @@ class BusinessCaseService {
       throw err; // MODEL is load-bearing — no narrative without numbers.
     }
 
-    const factsBlock = buildFactsBlock(model);
+    const factsBlock = buildFactsBlock(model, waccResolution);
 
     // =====================================================================
     // PHASE 4+5 combined call structure: NARRATIVE first (facts-grounded),
@@ -438,6 +532,7 @@ class BusinessCaseService {
             narrativeCheck: retryCheck,
             llmReviewIssues,
             pipelineLog,
+            waccResolution,
             generatedAt: new Date().toISOString(),
           };
         }
@@ -460,6 +555,7 @@ class BusinessCaseService {
       narrativeCheck,
       llmReviewIssues,
       pipelineLog,
+      waccResolution,
       generatedAt: new Date().toISOString(),
     };
   }

@@ -76,9 +76,9 @@ Wzorzec: drabinka poziomów z rozgałęzieniami + dyscyplina dowodów + „insig
 | # | Element | Stan |
 |---|---|---|
 | 1 | Profile referencyjne DRD (min. 3 branże: automotive/produkcja/usługi) | 🟡 ZBUDOWANE (Sonnet, worktree a322b4, 7/7 testów): 3 branże × 8 wymiarów {typical, leader} + narrative PL/EN + disclaimer „expert-hypothesis-v1, kalibracja od n≥10"; smaczki: D7-usługi typical II („tajemnica zawodowa chroniona antywirusem i dobrymi chęciami"), D6-procesowa sufit III („nie dotykaj działającej instalacji"). NIE wpięte w raport — czeka decyzja P3 Piotra |
-| 2 | Benchmark finansowy per branża (zakresy wskaźników zamiast uniwersalnych ±15%) | ⬜ |
-| 3 | Źródła i aktualizacja (skąd dane, kto odświeża) | ⬜ |
-**Licznik O6: 0/3 ✅**
+| 2 | Benchmark finansowy per branża (zakresy wskaźników zamiast uniwersalnych ±15%) | ✅ JUŻ ZBUDOWANE wcześniej (audyt 07-14, worktree oxford-o6-benchmark odkrył — commit `917aaef042` z 07-03, ZANIM ta lista mówiła „⬜"): `server/src/services/financeIndustryBenchmarks.ts` — 9 branż (industrial-manufacturing/retail-ecommerce/professional-services/software-saas/logistics-transport/construction/hospitality-food-service/healthcare/generic) × 13 rodzin wskaźników (marże, ROE/ROA, płynność, dźwignia, rotacje, przychód/FTE), {p25,mediana,p75} + `source`+`asOf`+`confidence`. Realnie wpięte w 3 callerów: `ratioAnalysisService.computeRatios` (org-benchmark wygrywa, branżowy fallback zamiast uniwersalnego ±15%), `financeConclusionService`, `financeReportSectionService`. 35+9=44/44 testów (`tests/unit/finance/financeIndustryBenchmarks.test.ts` + `ratioAnalysisServiceBenchmarkFallback.test.ts`) |
+| 3 | Źródła i aktualizacja (skąd dane, kto odświeża) | ✅ DOMKNIĘTE (07-14, oxford-o6-benchmark): per-band `source`+`asOf`+`confidence` już istniały; dodano brakujące „kto odświeża" (`FINANCIAL_BENCHMARK_REFRESH_OWNER`) + jawny disclaimer wzorem O6.1 (`FINANCIAL_BENCHMARK_DISCLAIMER`, „n ≥ 10", `expert-hypothesis-v1`) + skonsolidowane `sourceMetadata` na każdym `getRatioBenchmark()`/`benchmarkFinancial()` wyniku + wpięte do `ComputedRatio.benchmark` (disclaimerPl/En, refreshOwnerPl/En) w `ratioAnalysisService`. Dodano `benchmarkFinancial()` (pozycja below-p25/in-range/above-p75 + interpretacja) i most O4↔O6 (`financeIndustryClassToBenchmarkIndustry`) |
+**Licznik O6: 2/3 ✅ (poz.1 czeka na decyzję P3 Piotra — wpięcie w raport, nie brak roboty)**
 
 ## O7 — STANDARDY TREŚCI
 | # | Element | Stan |

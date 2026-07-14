@@ -14,6 +14,12 @@
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 import type { FocusTradeoffData } from '@/store/useToolStore';
 
+import { buildFocusStaircasePromptRules } from './focusInsightStaircase';
+import {
+  buildAntiFocusPromptRules,
+  buildOpportunityCostPromptBlock,
+  detectAntiFocus,
+} from './focusOpportunityCostMatrix';
 import { localizeLadder } from './index';
 import { buildW2MoveSequence, rankPriorities } from './moveValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
@@ -53,6 +59,9 @@ export function buildFocusConclusionPrompt(
     )
     .join('\n');
 
+  const opportunityCostBlock = buildOpportunityCostPromptBlock(data, isPolish);
+  const antiFocus = detectAntiFocus(data);
+
   const header = isPolish
     ? 'Działaj jako partner ds. strategii. Poniżej masz ugruntowany na faktach ranking konkurujących priorytetów i sekwencję ruchów W2 (zatwierdź / odłóż / utnij). Dopracuj sformułowania i uzupełnij luki, ale NIE wymyślaj priorytetów niepopartych danymi.'
     : 'Act as a strategy partner. Below is a fact-grounded ranking of competing priorities and a W2 move sequence (commit / defer / cut). Refine the wording and fill gaps, but do NOT invent priorities the data does not support.';
@@ -62,11 +71,13 @@ export function buildFocusConclusionPrompt(
         'Każdy ruch MUSI mieć: rationale, trade-off (co to kosztuje), wariant odrzucony (czego świadomie NIE robicie i dlaczego).',
         'Rekomenduj sekwencję fokusu (zatwierdź jeden, odłóż z warunkiem powrotu, utnij i przesuń zasób), nie listę życzeń.',
         'Jeśli dowód priorytetu jest słaby, zostaw ruch experiment przed pełnym zaangażowaniem.',
+        'Każdy wybór "tak" musi nazwać, wobec KTÓREGO konkretnego priorytetu z macierzy koszt-alternatywny poniżej jest to "nie" — bramka silniejsza niż standardowy W2.',
       ]
     : [
         'Every move MUST carry: rationale, trade-off (what it costs), rejected variant (what you deliberately do NOT do and why).',
         'Recommend a focus sequence (commit one, defer with a re-entry trigger, cut and shift resource), not a wishlist.',
         'If a priority is weakly evidenced, keep an experiment move before full commitment.',
+        'Every "yes" must name WHICH specific priority from the opportunity-cost matrix below it says "no" to — a gate stronger than the standard W2.',
       ];
 
   return `${header}
@@ -74,11 +85,21 @@ export function buildFocusConclusionPrompt(
 === SCORED PRIORITIES ===
 ${scoreLines}
 
+=== OPPORTUNITY-COST MATRIX (choice x what it costs) ===
+${opportunityCostBlock}
+
+=== ANTI-FOCUS CHECK (${antiFocus.flagged ? 'FLAGGED' : 'clear'}) ===
+${localize(antiFocus.message.pl, antiFocus.message.en, isPolish)}
+
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
+
+${buildAntiFocusPromptRules(isPolish ? 'pl' : 'en')}
+
+${buildFocusStaircasePromptRules(isPolish ? 'pl' : 'en')}
 
 W2 STRUCTURE (mandatory):
 1. "summary.verdict" — answer-first, 1-2 sentences: what to commit to FIRST, what to sequence, what to cut — a decision, not a scoring recap.

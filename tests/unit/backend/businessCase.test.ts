@@ -19,6 +19,7 @@ import {
 import {
   buildFactsBlock,
   checkNarrativeNumbers,
+  resolveBusinessCaseWacc,
 } from '../../../server/src/services/advisory/BusinessCaseService.js';
 
 describe('computeNPV', () => {
@@ -215,5 +216,54 @@ describe('buildFactsBlock + checkNarrativeNumbers (anti-fabrication net)', () =>
     const honestNarrative = `Rekomendujemy wdrożenie. NPV bazowy wynosi ${npvRounded} PLN przy WACC ${model.waccPct}%.`;
     const check = checkNarrativeNumbers(honestNarrative, facts);
     expect(check.consistent).toBe(true);
+  });
+});
+
+describe('resolveBusinessCaseWacc (discount rate is engine-owned, never an LLM guess)', () => {
+  it('uses the industry guidance band midpoint when no client rate is supplied', () => {
+    const r = resolveBusinessCaseWacc({ industrySegment: 'SaaS startup', sizeBand: 'medium' });
+    expect(r.source).toBe('industry-guidance');
+    expect(r.guidance.industry).toBe('software-saas');
+    expect(r.waccPct).toBe(r.guidance.recommendedWaccPct);
+    // SaaS band is the highest in the set — definitely not a flat 10% default.
+    expect(r.waccPct).toBeGreaterThan(10);
+    expect(r.grade.verdict).toBe('in-band');
+  });
+
+  it('prefers an explicit, finite, positive client rate over the guidance band', () => {
+    const r = resolveBusinessCaseWacc({
+      explicitWaccPct: 9,
+      industrySegment: 'SaaS startup',
+      sizeBand: 'medium',
+    });
+    expect(r.source).toBe('client');
+    expect(r.waccPct).toBe(9);
+    // 9% is below the SaaS band → graded as NPV-overstating, surfaced not hidden.
+    expect(r.grade.verdict).toBe('below-band');
+  });
+
+  it('ignores a non-positive / non-finite client rate and falls back to guidance', () => {
+    for (const bad of [0, -5, Number.NaN, Infinity]) {
+      const r = resolveBusinessCaseWacc({ explicitWaccPct: bad, industrySegment: 'utilities' });
+      expect(r.source).toBe('industry-guidance');
+      expect(r.waccPct).toBe(r.guidance.recommendedWaccPct);
+    }
+  });
+
+  it('differentiates the rate by industry (utilities < generic < SaaS)', () => {
+    const util = resolveBusinessCaseWacc({ industrySegment: 'utilities' }).waccPct;
+    const generic = resolveBusinessCaseWacc({ industrySegment: 'coś nieznanego' }).waccPct;
+    const saas = resolveBusinessCaseWacc({ industrySegment: 'software' }).waccPct;
+    expect(util).toBeLessThan(generic);
+    expect(generic).toBeLessThan(saas);
+  });
+
+  it('surfaces WACC provenance + band grading in the facts block', () => {
+    const model = runBusinessCaseModel(samplePlan());
+    const resolution = resolveBusinessCaseWacc({ industrySegment: 'usługi profesjonalne' });
+    const facts = buildFactsBlock(model, resolution);
+    expect(facts).toContain('Pochodzenie WACC');
+    expect(facts).toContain('guidance branżowego');
+    expect(facts).toContain('Zakres branżowy');
   });
 });

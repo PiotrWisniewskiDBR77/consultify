@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import { validateInitiativeCard } from './cardContentFormulaValidator.js';
+import { emptyEvidenceContract } from './evidence/evidenceContract.js';
 import {
   type MaterializationOutcome,
   type MaterializationSourceItem,
@@ -651,6 +652,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
           generationTimeMs: 0,
           degraded: true,
           degradedReason: 'assessment_not_found',
+          evidence: emptyEvidenceContract(),
         };
       }
 
@@ -663,6 +665,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
           generationTimeMs: 0,
           degraded: true,
           degradedReason: 'no_answers',
+          evidence: emptyEvidenceContract(),
         };
       }
 
@@ -686,6 +689,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
         generationTimeMs: 0,
         degraded: true,
         degradedReason: 'unexpected_error',
+        evidence: emptyEvidenceContract(),
       };
     }
   }

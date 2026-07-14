@@ -6,6 +6,12 @@
  *   - deepeningLadder.ts  : per-section depth staircase + partner-grade proposal bank (PL/EN)
  *   - moveValidator.ts    : readiness scoring + W2 countermeasure sequencing (rationale/trade-off/rejected variant)
  *   - conclusionPrompts.ts: AI prompt builders grounded in the engine output
+ *
+ * OXFORD O3 upgrade (SWOT/Porter parity — src/config/swot, src/config/porter):
+ *   - a3QuestionBank.ts   : branching 7-step laddered question bank (single source of truth
+ *                           for wizard + AI mentor), with an evidence gate
+ *   - a3CausalEngine.ts   : deterministic 5-Why causal chain — symptom vs root — + W2 gate
+ *   - a3InsightStaircase.ts: fact->interpretation->implication discipline + umbrella decomposition
  */
 
 import {
@@ -15,6 +21,9 @@ import {
   type LadderRung,
 } from './deepeningLadder';
 
+export * from './a3CausalEngine';
+export * from './a3InsightStaircase';
+export * from './a3QuestionBank';
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';

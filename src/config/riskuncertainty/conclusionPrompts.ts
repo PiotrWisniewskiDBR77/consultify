@@ -18,6 +18,8 @@ import type { RiskUncertaintyData } from '@/store/useToolStore';
 
 import { localizeLadder } from './index';
 import { buildW2MoveSequence, rankRisks } from './moveValidator';
+import { assessRiskEvidence, buildRiskStaircasePromptRules } from './riskInsightStaircase';
+import { buildRiskMatrix, buildRiskMatrixPromptRules } from './riskMatrixEngine';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -33,6 +35,26 @@ export function buildRiskConclusionPrompt(
   if (ranking.risks.length === 0 && ranking.assumptions.length === 0) return null;
 
   const sequence = buildW2MoveSequence(data);
+  const matrix = buildRiskMatrix(data);
+  const evidence = assessRiskEvidence(data);
+
+  const matrixLines = matrix.responseMap
+    .map(
+      (m) =>
+        `- [${m.riskId}] ${m.title}: zone=${m.zone} (P${m.probability}×I${m.impact}=${m.exposure}/25, ${m.band}) → default response: ${m.recommendedStrategy}${
+          m.responseGap ? ' [RESPONSE GAP]' : ''
+        }`
+    )
+    .join('\n');
+
+  const evidenceLines = evidence.issues
+    .map(
+      (i) =>
+        `- [${i.itemId}] ${i.itemType}/${i.code}: ${localize(i.messagePl, i.messageEn, isPolish)}`
+    )
+    .join('\n');
+
+  const epistemicLine = `known-unknowns: ${evidence.knownUnknowns}, unknown-unknowns: ${evidence.unknownUnknowns}, unbacked scores: ${evidence.unbackedScores}, false-precision: ${evidence.falsePrecision}`;
 
   const riskLines = ranking.risks
     .map(
@@ -96,8 +118,19 @@ ${assumptionLines || '- (no accepted assumptions)'}
 === W2 RESILIENCE MOVE SEQUENCE (grounded draft) ===
 ${seqLines || '- (no moves synthesized)'}
 
+=== RISK MATRIX 2x2 (probability x impact) + RESPONSE MAP ===
+${matrixLines || '- (no risks to classify)'}
+
+=== EVIDENCE DISCIPLINE (risk vs uncertainty · invented-number guard) ===
+${epistemicLine}
+${evidenceLines || '- (no evidence issues detected)'}
+
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
+
+${buildRiskMatrixPromptRules(isPolish ? 'pl' : 'en')}
+
+${buildRiskStaircasePromptRules(isPolish ? 'pl' : 'en')}
 
 W2 STRUCTURE (mandatory):
 1. "summary.verdict" — answer-first, 1-2 sentences: what the risk landscape means for the decision — which assumption or exposure gates the plan.
