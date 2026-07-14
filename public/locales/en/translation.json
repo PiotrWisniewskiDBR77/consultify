@@ -15289,6 +15289,26 @@
           "title": "Settings Change History",
           "description": "View all changes made to AI settings"
         }
+      },
+      "panel": {
+        "tabs": {
+          "settings": "Governance settings",
+          "operations": "AI operations"
+        },
+        "errors": {
+          "loadSummary": "Failed to load AI summary"
+        },
+        "governanceLevel": "Governance level",
+        "unknown": "Unknown",
+        "reviewState": "Review state: {{state}}",
+        "notAvailable": "n/a",
+        "modelPosture": "Model posture",
+        "budget": "Budget: {{status}}",
+        "contextControls": "Context controls",
+        "externalContextAllowed": "External context allowed",
+        "externalContextRestricted": "External context restricted",
+        "title": "AI Governance & AI Operations",
+        "description": "Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside the primary Admin shell."
       }
     }
   },

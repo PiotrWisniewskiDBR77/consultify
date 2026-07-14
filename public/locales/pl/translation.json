@@ -15940,6 +15940,26 @@
           "title": "Historia zmian ustawień",
           "description": "Zobacz wszystkie zmiany wprowadzone w ustawieniach AI"
         }
+      },
+      "panel": {
+        "tabs": {
+          "settings": "Ustawienia zarządzania",
+          "operations": "Operacje AI"
+        },
+        "errors": {
+          "loadSummary": "Nie udało się załadować podsumowania AI"
+        },
+        "governanceLevel": "Poziom zarządzania",
+        "unknown": "Nieznany",
+        "reviewState": "Stan przeglądu: {{state}}",
+        "notAvailable": "n/d",
+        "modelPosture": "Postawa modelu",
+        "budget": "Budżet: {{status}}",
+        "contextControls": "Kontrole kontekstu",
+        "externalContextAllowed": "Kontekst zewnętrzny dozwolony",
+        "externalContextRestricted": "Kontekst zewnętrzny ograniczony",
+        "title": "Zarządzanie AI i operacje AI",
+        "description": "Polityka AI organizacji, kontrola ryzyka, postawa modelu i narzędzia operacyjne AI działają teraz w głównej powłoce administracyjnej."
       }
     }
   },
