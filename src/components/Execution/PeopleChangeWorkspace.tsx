@@ -488,7 +488,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
                   )}
                 </div>
                 <div
-                  className={`text-sm font-semibold ${c.matchScore >= 80 ? 'text-green-600' : c.matchScore >= 50 ? 'text-amber-600' : 'text-rose-500'}`}
+                  className={`text-sm font-semibold ${c.matchScore >= 80 ? 'text-green-600' : c.matchScore >= 50 ? 'text-amber-600' : 'text-danger-500'}`}
                 >
                   {c.matchScore}%
                 </div>
@@ -514,17 +514,17 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
             .map((alert) => (
               <div
                 key={alert.id}
-                className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-3 flex items-start gap-3"
+                className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl p-3 flex items-start gap-3"
               >
-                <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={16} />
+                <AlertTriangle className="text-danger-500 shrink-0 mt-0.5" size={16} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-rose-800 dark:text-rose-300">
+                  <div className="text-sm font-medium text-danger-800 dark:text-danger-300">
                     {alert.message}
                   </div>
                   {alert.recommendations.length > 0 && (
                     <ul className="mt-1 space-y-0.5">
                       {alert.recommendations.map((r, i) => (
-                        <li key={i} className="text-xs text-rose-600 dark:text-rose-400">
+                        <li key={i} className="text-xs text-danger-600 dark:text-danger-400">
                           • {r}
                         </li>
                       ))}
@@ -534,7 +534,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAcknowledgeAlert(alert.id)}
-                  className="text-xs text-rose-600 hover:text-rose-800 font-medium shrink-0"
+                  className="text-xs text-danger-600 hover:text-danger-800 font-medium shrink-0"
                 >
                   {t('change.acknowledge', 'Acknowledge')}
                 </button>
@@ -563,7 +563,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               <TrendingUp className="text-green-500" size={18} />
             )}
             {pulseSummary?.trend === 'declining' && (
-              <TrendingDown className="text-rose-500" size={18} />
+              <TrendingDown className="text-danger-500" size={18} />
             )}
             <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               {pulseSummary?.trend

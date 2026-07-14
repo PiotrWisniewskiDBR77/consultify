@@ -360,12 +360,12 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.errors', 'Errors')}
                 </span>
-                <AlertCircle size={16} className="text-rose-500" />
+                <AlertCircle size={16} className="text-danger-500" />
               </div>
               <p className="text-2xl font-bold text-c-text">
                 {formatNumber(stats.failed_requests)}
               </p>
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              <p className="text-xs text-danger-600 dark:text-danger-400 mt-1">
                 {stats.total_requests > 0
                   ? ((stats.failed_requests / stats.total_requests) * 100).toFixed(1)
                   : 0}
@@ -562,13 +562,13 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                             {log.status_code >= 200 && log.status_code < 300 ? (
                               <CheckCircle size={14} className="text-green-500" />
                             ) : (
-                              <XCircle size={14} className="text-rose-500" />
+                              <XCircle size={14} className="text-danger-500" />
                             )}
                             <span
                               className={`font-medium ${
                                 log.status_code >= 200 && log.status_code < 300
                                   ? 'text-green-600 dark:text-green-400'
-                                  : 'text-rose-600 dark:text-rose-400'
+                                  : 'text-danger-600 dark:text-danger-400'
                               }`}
                             >
                               {log.status_code}
@@ -578,7 +578,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                         <td className="px-4 py-3 text-xs text-c-text-secondary">
                           {log.response_time_ms}ms
                         </td>
-                        <td className="px-4 py-3 text-xs text-rose-600 dark:text-rose-400 max-w-xs truncate">
+                        <td className="px-4 py-3 text-xs text-danger-600 dark:text-danger-400 max-w-xs truncate">
                           {log.error_message || '-'}
                         </td>
                       </tr>

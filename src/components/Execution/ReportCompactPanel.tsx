@@ -40,13 +40,13 @@ const PANEL_TABS: { id: PanelTab; labelKey: string }[] = [
 const RAG_BAR: Record<string, string> = {
   green: 'from-emerald-500 to-emerald-400',
   amber: 'from-amber-500 to-amber-400',
-  red: 'from-rose-500 to-rose-400',
+  red: 'from-danger-500 to-danger-400',
 };
 
 const RAG_DOT: Record<string, string> = {
   green: 'bg-emerald-500 shadow-emerald-500/40',
   amber: 'bg-amber-500 shadow-amber-500/40',
-  red: 'bg-rose-500 shadow-rose-500/40',
+  red: 'bg-danger-500 shadow-danger-500/40',
 };
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -197,7 +197,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                     className={[
                       'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium',
                       h.variant === 'critical'
-                        ? 'bg-rose-500/10 text-rose-400'
+                        ? 'bg-danger-500/10 text-danger-400'
                         : h.variant === 'warn'
                           ? 'bg-amber-500/10 text-amber-400'
                           : 'bg-slate-100/80 text-slate-500 dark:bg-white/[0.04] dark:text-slate-400',
@@ -299,7 +299,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                           className={[
                             'rounded-lg border p-3',
                             'border-slate-200/60 bg-white/40 dark:border-white/[0.05] dark:bg-white/[0.02]',
-                            action.severity === 'critical' ? 'ring-1 ring-rose-500/20' : '',
+                            action.severity === 'critical' ? 'ring-1 ring-danger-500/20' : '',
                             action.severity === 'warn' ? 'ring-1 ring-amber-500/20' : '',
                           ]
                             .filter(Boolean)

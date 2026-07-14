@@ -359,7 +359,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         <div
                           className={`h-2.5 rounded-full transition-all ${
                             remaining < lowThreshold
-                              ? 'bg-rose-500'
+                              ? 'bg-danger-500'
                               : remaining < medThreshold
                                 ? 'bg-amber-500'
                                 : 'bg-green-500'
@@ -368,7 +368,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         />
                       </div>
                       {remaining < lowThreshold && (
-                        <p className="text-xs text-rose-600 dark:text-rose-400 mt-2 text-center">
+                        <p className="text-xs text-danger-600 dark:text-danger-400 mt-2 text-center">
                           ⚠️ Low balance! Upgrade to continue using AI features.
                         </p>
                       )}
@@ -428,7 +428,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                           entry.type === 'CREDIT'
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
+                            : 'bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400'
                         }`}
                       >
                         {entry.type}

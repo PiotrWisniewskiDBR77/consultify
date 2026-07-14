@@ -190,7 +190,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
   const getEventIcon = (type: string, severity: string) => {
     const iconClass =
       severity === 'critical'
-        ? 'text-rose-500'
+        ? 'text-danger-500'
         : severity === 'warning'
           ? 'text-amber-500'
           : 'text-c-text-muted';
@@ -454,7 +454,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                 key={event.id}
                 className={`p-4 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors ${
                   event.severity === 'critical'
-                    ? 'bg-rose-50/50 dark:bg-rose-500/5'
+                    ? 'bg-danger-50/50 dark:bg-danger-500/5'
                     : event.severity === 'warning'
                       ? 'bg-amber-50/50 dark:bg-amber-500/5'
                       : ''
@@ -464,7 +464,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                   <div
                     className={`p-2 rounded-lg ${
                       event.severity === 'critical'
-                        ? 'bg-rose-100 dark:bg-rose-500/20'
+                        ? 'bg-danger-100 dark:bg-danger-500/20'
                         : event.severity === 'warning'
                           ? 'bg-amber-100 dark:bg-amber-500/20'
                           : 'bg-c-surface-raised'

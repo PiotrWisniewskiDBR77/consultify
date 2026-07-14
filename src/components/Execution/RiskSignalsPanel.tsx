@@ -49,10 +49,10 @@ interface RiskSignalsPanelProps {
 
 const SEVERITY_CONFIG = {
   CRITICAL: {
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/30',
-    text: 'text-rose-400',
-    badge: 'bg-rose-500/20 text-rose-400',
+    bg: 'bg-danger-500/10',
+    border: 'border-danger-500/30',
+    text: 'text-danger-400',
+    badge: 'bg-danger-500/20 text-danger-400',
     icon: ShieldAlert,
   },
   HIGH: {
@@ -199,13 +199,13 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3 px-4 py-2">
-        <Shield size={16} className="text-rose-400" />
+        <Shield size={16} className="text-danger-400" />
         <span className="text-sm font-semibold text-slate-900 dark:text-white">
           {t('execution.riskSignals.title')}
         </span>
         <span className="text-xs text-slate-500">({visibleSignals.length})</span>
         {critical > 0 && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-medium">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-danger-500/20 text-danger-400 font-medium">
             {critical} {t('execution.riskSignals.critical')}
           </span>
         )}
@@ -279,7 +279,7 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
                         e.stopPropagation();
                         handleDismiss(signal.id);
                       }}
-                      className="text-xs px-2.5 py-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-1"
+                      className="text-xs px-2.5 py-1 rounded text-slate-500 hover:text-danger-400 hover:bg-danger-500/10 transition-colors flex items-center gap-1"
                     >
                       <XCircle size={12} />
                       {t('execution.riskSignals.dismiss')}

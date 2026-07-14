@@ -67,7 +67,7 @@ const SecurityScoreRing: React.FC<{ score: number; max: number }> = ({ score, ma
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
 
-  const color = pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-rose-400';
+  const color = pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-danger-400';
   const bgRing = 'text-white/[0.06]';
   const label =
     pct >= 80
@@ -619,7 +619,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             <button
               type="button"
               onClick={() => setDisableConfirm(true)}
-              className="text-xs text-c-text-muted hover:text-rose-400 transition-colors"
+              className="text-xs text-c-text-muted hover:text-danger-400 transition-colors"
             >
               {t('security.mfa.disable', 'Disable 2FA')}
             </button>
@@ -629,14 +629,14 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
         {/* MFA Disable confirmation */}
         {disableConfirm && (
           <div className="space-y-4 max-w-md">
-            <div className="p-4 rounded-xl bg-rose-500/[0.08] border border-rose-500/20">
+            <div className="p-4 rounded-xl bg-danger-500/[0.08] border border-danger-500/20">
               <div className="flex items-start gap-3">
-                <AlertTriangle size={18} className="text-rose-400 mt-0.5 flex-shrink-0" />
+                <AlertTriangle size={18} className="text-danger-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-rose-300">
+                  <p className="text-sm font-medium text-danger-300">
                     {t('security.mfa.disableTitle', 'Disable Two-Factor Authentication?')}
                   </p>
-                  <p className="text-xs text-rose-400/70 mt-1">
+                  <p className="text-xs text-danger-400/70 mt-1">
                     {t(
                       'security.mfa.disableConfirmText',
                       'This will remove the extra security layer from your account.'
@@ -652,12 +652,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-danger-500 focus:border-transparent"
               />
               <button
                 onClick={disableMfa}
                 disabled={mfaLoading || verificationCode.length !== 6}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
               >
                 {mfaLoading && <Loader2 size={14} className="animate-spin" />}
                 {t('security.mfa.confirmDisable', 'Disable')}
@@ -673,7 +673,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 {t('common.cancel', 'Cancel')}
               </button>
             </div>
-            {mfaError && <p className="text-xs text-rose-400">{mfaError}</p>}
+            {mfaError && <p className="text-xs text-danger-400">{mfaError}</p>}
           </div>
         )}
 
@@ -725,7 +725,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               )}
               {t('security.mfa.enable', 'Enable Two-Factor Authentication')}
             </button>
-            {mfaError && <p className="text-xs text-rose-400 text-center mt-2">{mfaError}</p>}
+            {mfaError && <p className="text-xs text-danger-400 text-center mt-2">{mfaError}</p>}
           </div>
         )}
 
@@ -797,7 +797,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       {t('security.mfa.verify', 'Verify')}
                     </button>
                   </div>
-                  {mfaError && <p className="text-xs text-rose-400 mt-2">{mfaError}</p>}
+                  {mfaError && <p className="text-xs text-danger-400 mt-2">{mfaError}</p>}
                 </div>
               </div>
             </div>

@@ -445,8 +445,8 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
           </div>
 
           {/* Delete Account */}
-          <div className={`${cardClass} border-rose-200 dark:border-rose-500/20`}>
-            <h4 className="text-sm font-bold text-rose-600 dark:text-rose-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+          <div className={`${cardClass} border-danger-200 dark:border-danger-500/20`}>
+            <h4 className="text-sm font-bold text-danger-600 dark:text-danger-400 mb-4 uppercase tracking-wider flex items-center gap-2">
               <Trash2 size={16} />
               {t('settings.dataPrivacy.dangerZone', 'Danger Zone')}
             </h4>
@@ -461,20 +461,20 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
             {!showDeleteConfirm ? (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-danger-50 dark:bg-danger-500/10 hover:bg-danger-100 dark:hover:bg-danger-500/20 text-danger-600 dark:text-danger-400 rounded-lg transition-colors"
               >
                 <Trash2 size={16} />
                 {t('settings.dataPrivacy.requestDeletion', 'Request Account Deletion')}
               </button>
             ) : (
-              <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-lg space-y-4">
+              <div className="p-4 bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/20 rounded-lg space-y-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle size={18} className="text-rose-500 mt-0.5" />
+                  <AlertTriangle size={18} className="text-danger-500 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
+                    <p className="text-sm font-medium text-danger-600 dark:text-danger-400">
                       {t('settings.dataPrivacy.confirmDelete', 'Are you sure?')}
                     </p>
-                    <p className="text-xs text-rose-500 mt-1">
+                    <p className="text-xs text-danger-500 mt-1">
                       {t(
                         'settings.dataPrivacy.confirmDeleteDesc',
                         'Type your email address to confirm account deletion.'
@@ -488,14 +488,14 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                   value={deleteConfirmEmail}
                   onChange={(e) => setDeleteConfirmEmail(e.target.value)}
                   placeholder={currentUser.email}
-                  className="w-full px-3 py-2 bg-c-surface border border-rose-200 dark:border-rose-500/30 rounded-md text-navy-900 focus:ring-2 focus:ring-rose-500/50 outline-none"
+                  className="w-full px-3 py-2 bg-c-surface border border-danger-200 dark:border-danger-500/30 rounded-md text-navy-900 focus:ring-2 focus:ring-danger-500/50 outline-none"
                 />
 
                 <div className="flex gap-2">
                   <button
                     onClick={handleDeleteAccount}
                     disabled={deleteConfirmEmail !== currentUser.email}
-                    className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Trash2 size={16} />
                     {t('settings.dataPrivacy.confirmDeleteButton', 'Delete My Account')}
