@@ -28,7 +28,6 @@ function renderStepper(activeTab = 'my_assignments', onStepChange = vi.fn()) {
       steps={STEPS}
       activeTab={activeTab as any}
       onStepChange={onStepChange}
-      isPolish
     />
   );
   return onStepChange;
@@ -79,7 +78,7 @@ describe('InterviewPipelineStepper (D-03)', () => {
 
   it('renders nothing for an empty step list', () => {
     const { container } = render(
-      <InterviewPipelineStepper steps={[]} activeTab={'my_assignments' as any} onStepChange={vi.fn()} isPolish />
+      <InterviewPipelineStepper steps={[]} activeTab={'my_assignments' as any} onStepChange={vi.fn()} />
     );
     expect(container).toBeEmptyDOMElement();
   });

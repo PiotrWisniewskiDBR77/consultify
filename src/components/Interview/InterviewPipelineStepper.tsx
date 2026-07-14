@@ -20,6 +20,7 @@
 
 import { Check } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ModuleTab } from '../shared/ModuleHub';
 
@@ -37,15 +38,14 @@ interface InterviewPipelineStepperProps {
   steps: InterviewPipelineStep[];
   activeTab: ModuleTab;
   onStepChange: (id: ModuleTab) => void;
-  isPolish: boolean;
 }
 
 export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> = ({
   steps,
   activeTab,
   onStepChange,
-  isPolish,
 }) => {
+  const { t } = useTranslation();
   const total = steps.length;
   if (total === 0) return null;
 
@@ -58,7 +58,7 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
   return (
     <div
       className="border-b border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] px-3 py-2.5"
-      aria-label={isPolish ? 'Proces wywiadu' : 'Interview process'}
+      aria-label={t('interview.pipelineStepper.ariaLabel')}
     >
       {/* Progress bar */}
       <div
