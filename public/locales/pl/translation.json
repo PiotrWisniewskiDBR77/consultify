@@ -3760,6 +3760,28 @@
       "attachToIdea": "Dołącz do pomysłu",
       "delete": "Usuń",
       "noEvidenceYet": "Brak załączników"
+    },
+    "companyFactsPanel": {
+      "companyFacts": "Fakty o firmie",
+      "companyProfile": "Profil firmy",
+      "name": "Nazwa",
+      "industry": "Branża",
+      "size": "Wielkość",
+      "select": "Wybierz...",
+      "employees": "pracowników",
+      "location": "Lokalizacja",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "industry2": "Branża:",
+      "editProfile": "Edytuj profil",
+      "noCompanyDataClickEdit": "Brak danych o firmie. Kliknij Edytuj, aby dodać.",
+      "keyMetrics": "Kluczowe metryki",
+      "metricsWillBeExtractedFrom": "Metryki będą wyodrębnione z wywiadów",
+      "stakeholders": "Interesariusze",
+      "stakeholdersWillBeIdentifiedFrom": "Interesariusze zostaną zidentyfikowani z wywiadów",
+      "openGaps": "Otwarte luki",
+      "noInformationGapsIdentified": "Brak zidentyfikowanych luk informacyjnych",
+      "dataUpdatedAutomatically": "Dane aktualizowane automatycznie"
     }
   },
   "assessment": {

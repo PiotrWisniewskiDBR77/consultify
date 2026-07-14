@@ -4526,6 +4526,28 @@
       "attachToIdea": "Attach to Idea",
       "delete": "Delete",
       "noEvidenceYet": "No evidence yet"
+    },
+    "companyFactsPanel": {
+      "companyFacts": "Company Facts",
+      "companyProfile": "Company Profile",
+      "name": "Name",
+      "industry": "Industry",
+      "size": "Size",
+      "select": "Select...",
+      "employees": "employees",
+      "location": "Location",
+      "cancel": "Cancel",
+      "save": "Save",
+      "industry2": "Industry:",
+      "editProfile": "Edit profile",
+      "noCompanyDataClickEdit": "No company data. Click Edit to add.",
+      "keyMetrics": "Key Metrics",
+      "metricsWillBeExtractedFrom": "Metrics will be extracted from interviews",
+      "stakeholders": "Stakeholders",
+      "stakeholdersWillBeIdentifiedFrom": "Stakeholders will be identified from interviews",
+      "openGaps": "Open Gaps",
+      "noInformationGapsIdentified": "No information gaps identified",
+      "dataUpdatedAutomatically": "Data updated automatically"
     }
   },
   "assessment": {
