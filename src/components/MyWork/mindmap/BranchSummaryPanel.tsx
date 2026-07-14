@@ -103,7 +103,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
   nodes,
   edges,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,9 +132,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
           : res?.summary || res?.text || res?.narrative || JSON.stringify(res);
       setSummary(parseSummary(raw));
     } catch (err: any) {
-      setError(
-        err?.message || (isPl ? 'Nie udało się pobrać podsumowania' : 'Failed to fetch summary')
-      );
+      setError(err?.message || t('ideas.mindmap.failedFetchSummary', 'Failed to fetch summary'));
     } finally {
       setLoading(false);
     }
@@ -153,21 +151,21 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
       '',
       ...(summary.keyPoints.length
         ? [
-            `### ${isPl ? 'Kluczowe punkty' : 'Key Points'}`,
+            `### ${t('ideas.mindmap.keyPoints', 'Key Points')}`,
             ...summary.keyPoints.map((p) => `- ${p}`),
             '',
           ]
         : []),
       ...(summary.recommendations.length
         ? [
-            `### ${isPl ? 'Rekomendacje' : 'Recommendations'}`,
+            `### ${t('ideas.mindmap.recommendations', 'Recommendations')}`,
             ...summary.recommendations.map((r) => `- ${r}`),
           ]
         : []),
     ].join('\n');
     navigator.clipboard
       .writeText(md)
-      .then(() => toast.success(isPl ? 'Skopiowano do schowka' : 'Copied to clipboard'));
+      .then(() => toast.success(t('ideas.mindmap.copiedClipboard', 'Copied to clipboard')));
   }, [summary, branchLabel, isPl]);
 
   if (!open) return null;
@@ -178,7 +176,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <FileText size={16} className="text-c-text-secondary shrink-0" />
           <h3 className="text-sm font-semibold text-c-text dark:text-c-text truncate flex-1">
-            {branchLabel || (isPl ? 'Podsumowanie gałęzi' : 'Branch Summary')}
+            {branchLabel || t('ideas.mindmap.branchSummary', 'Branch Summary')}
           </h3>
           <button
             type="button"
@@ -194,7 +192,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Loader2 size={24} className="animate-spin text-c-text-secondary" />
               <span className="text-xs text-c-text-secondary dark:text-c-text-muted">
-                {isPl ? 'Generowanie podsumowania…' : 'Generating summary…'}
+                {t('ideas.mindmap.generatingSummary', 'Generating summary…')}
               </span>
             </div>
           )}
@@ -207,7 +205,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
             <>
               <section>
                 <h4 className="text-xs font-semibold text-c-text-secondary dark:text-c-text-muted uppercase tracking-wider mb-1.5">
-                  {isPl ? 'Podsumowanie' : 'Summary'}
+                  {t('ideas.mindmap.summary', 'Summary')}
                 </h4>
                 <p className="text-sm text-c-text-secondary dark:text-c-text leading-relaxed">
                   {summary.narrative}
@@ -216,12 +214,12 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
               <BulletList
                 items={summary.keyPoints}
                 color="bg-c-surface"
-                label={isPl ? 'Kluczowe punkty' : 'Key Points'}
+                label={t('ideas.mindmap.keyPoints', 'Key Points')}
               />
               <BulletList
                 items={summary.recommendations}
                 color="bg-c-success"
-                label={isPl ? 'Rekomendacje' : 'Recommendations'}
+                label={t('ideas.mindmap.recommendations', 'Recommendations')}
               />
             </>
           )}
@@ -235,7 +233,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-c-surface hover:bg-c-surface text-c-text dark:bg-c-surface-raised dark:text-c-text dark:hover:bg-c-surface-raised text-xs font-medium transition-colors"
             >
               <Clipboard size={14} />
-              {isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
+              {t('ideas.mindmap.copyClipboard', 'Copy to clipboard')}
             </button>
           </div>
         )}

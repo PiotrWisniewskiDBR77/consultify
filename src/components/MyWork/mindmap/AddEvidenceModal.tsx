@@ -13,8 +13,7 @@ interface AddEvidenceModalProps {
 }
 
 export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClose, onAdd }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
 
@@ -41,7 +40,7 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text">
             <FileText size={16} />
-            {isPl ? 'Dodaj dowód / źródło' : 'Add evidence / source'}
+            {t('ideas.mindmap.addEvidenceSource', 'Add evidence / source')}
           </div>
           <button
             onClick={onClose}
@@ -53,27 +52,27 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
 
         <div className="mb-2">
           <label className="mb-1 block text-[11px] text-c-text-secondary dark:text-c-text-muted">
-            {isPl ? 'Tytuł' : 'Title'}
+            {t('ideas.mindmap.title', 'Title')}
           </label>
           <input
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder={isPl ? 'Nazwa dowodu...' : 'Evidence title...'}
+            placeholder={t('ideas.mindmap.evidenceTitle', 'Evidence title...')}
             className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
 
         <div className="mb-3">
           <label className="mb-1 block text-[11px] text-c-text-secondary dark:text-c-text-muted">
-            {isPl ? 'URL lub notatka źródła' : 'Source URL or note'}
+            {t('ideas.mindmap.sourceUrlNote', 'Source URL or note')}
           </label>
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder={isPl ? 'https://... lub opis' : 'https://... or description'}
+            placeholder={t('ideas.mindmap.httpsDescription', 'https://... or description')}
             className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
@@ -83,14 +82,14 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
             onClick={onClose}
             className="rounded px-3 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.mindmap.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!title.trim()}
             className="rounded bg-c-info px-3 py-1 text-xs text-c-text hover:bg-c-info disabled:opacity-40"
           >
-            {isPl ? 'Dodaj' : 'Add'}
+            {t('ideas.mindmap.add', 'Add')}
           </button>
         </div>
       </div>

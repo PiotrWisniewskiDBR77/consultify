@@ -29,8 +29,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
   nodes,
   edges,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const branches = useMemo(() => nodes.filter((n) => n.id.startsWith('branch-')), [nodes]);
   const [leftBranch, setLeftBranch] = useState<string>(branches[0]?.data?.branchKey || '');
@@ -103,7 +102,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
     if (!stats)
       return (
         <div className="flex-1 flex items-center justify-center text-[11px] text-c-text-secondary">
-          {isPl ? 'Wybierz gałąź' : 'Select a branch'}
+          {t('ideas.mindmap.selectBranch', 'Select a branch')}
         </div>
       );
     return (
@@ -117,24 +116,28 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
               <div className="text-[18px] font-bold text-c-text-secondary dark:text-c-text">
                 {stats.nodeCount}
               </div>
-              <div className="text-[9px] text-c-text-secondary">{isPl ? 'Pomysłów' : 'Ideas'}</div>
+              <div className="text-[9px] text-c-text-secondary">
+                {t('ideas.mindmap.ideas2', 'Ideas')}
+              </div>
             </div>
             <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface text-center">
               <div className="text-[18px] font-bold text-c-warning">{stats.avgPriority}</div>
               <div className="text-[9px] text-c-text-secondary">
-                {isPl ? 'Śr. priorytet' : 'Avg priority'}
+                {t('ideas.mindmap.avgPriority', 'Avg priority')}
               </div>
             </div>
             <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface text-center">
               <div className="text-[18px] font-bold text-c-info">{stats.maxDepth}</div>
-              <div className="text-[9px] text-c-text-secondary">{isPl ? 'Głębokość' : 'Depth'}</div>
+              <div className="text-[9px] text-c-text-secondary">
+                {t('ideas.mindmap.depth', 'Depth')}
+              </div>
             </div>
             <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface text-center">
               <div className="text-[18px] font-bold text-c-success">
                 {stats.statusCounts.converted || 0}
               </div>
               <div className="text-[9px] text-c-text-secondary">
-                {isPl ? 'Skonwertowane' : 'Converted'}
+                {t('ideas.mindmap.converted', 'Converted')}
               </div>
             </div>
           </div>
@@ -155,7 +158,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
           </div>
           <div>
             <div className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-              {isPl ? 'Pomysły' : 'Ideas'}
+              {t('ideas.mindmap.ideas2', 'Ideas')}
             </div>
             <div className="space-y-1 max-h-[200px] overflow-y-auto">
               {stats.nodeLabels.map((label, idx) => (
@@ -184,7 +187,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
         </button>
         <ArrowLeftRight size={16} className="text-c-info" />
         <h2 className="text-sm font-bold text-c-text dark:text-c-text">
-          {isPl ? 'Porównanie gałęzi' : 'Branch Comparison'}
+          {t('ideas.mindmap.branchComparison', 'Branch Comparison')}
         </h2>
       </div>
 
@@ -196,7 +199,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
               onChange={(e) => setLeftBranch(e.target.value)}
               className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
             >
-              <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
+              <option value="">{t('ideas.mindmap.select', '-- Select --')}</option>
               {branches.map((b) => (
                 <option key={b.data?.branchKey} value={b.data?.branchKey}>
                   {b.data?.label}
@@ -209,7 +212,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
               onChange={(e) => setRightBranch(e.target.value)}
               className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
             >
-              <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
+              <option value="">{t('ideas.mindmap.select', '-- Select --')}</option>
               {branches.map((b) => (
                 <option key={b.data?.branchKey} value={b.data?.branchKey}>
                   {b.data?.label}

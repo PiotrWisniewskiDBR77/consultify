@@ -127,8 +127,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   ideaId,
   onNavigateToNode,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
   const [filter, setFilter] = useState<string | null>(null);
@@ -173,16 +172,13 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return sorted.filter((e) => e.type === filter);
   }, [entries, filter]);
 
-  const formatTime = useCallback(
-    (ts: number) => {
-      const diff = Date.now() - ts;
-      if (diff < 60_000) return isPl ? 'teraz' : 'now';
-      if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m`;
-      if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h`;
-      return new Date(ts).toLocaleDateString();
-    },
-    [isPl]
-  );
+  const formatTime = useCallback((ts: number) => {
+    const diff = Date.now() - ts;
+    if (diff < 60_000) return t('ideas.mindmap.now', 'now');
+    if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m`;
+    if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h`;
+    return new Date(ts).toLocaleDateString();
+  }, []);
 
   if (!open) return null;
 
@@ -191,7 +187,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
         <Clock size={14} className="text-c-warning shrink-0" />
         <span className="text-[11px] font-bold text-c-text dark:text-c-text flex-1">
-          {isPl ? 'Aktywność' : 'Activity Feed'}
+          {t('ideas.mindmap.activityFeed', 'Activity Feed')}
         </span>
         <span className="text-[10px] text-c-text-secondary">{entries.length}</span>
         <button
@@ -207,7 +203,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           onClick={() => setFilter(null)}
           className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${!filter ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
         >
-          {isPl ? 'Wszystko' : 'All'}
+          {t('ideas.mindmap.all', 'All')}
         </button>
         {['node_added', 'node_edited', 'ai_expand', 'comment'].map((t) => (
           <button
@@ -223,7 +219,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-2">
         {filtered.length === 0 ? (
           <div className="text-center py-8 text-[11px] text-c-text-secondary">
-            {isPl ? 'Brak aktywności' : 'No activity yet'}
+            {t('ideas.mindmap.noActivityYet', 'No activity yet')}
           </div>
         ) : (
           <div className="space-y-1">
@@ -239,15 +235,15 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted leading-relaxed">
                       <span className="font-bold">{entry.actor}</span>{' '}
-                      {entry.type === 'node_added' && (isPl ? 'dodał' : 'added')}{' '}
-                      {entry.type === 'node_deleted' && (isPl ? 'usunął' : 'deleted')}{' '}
-                      {entry.type === 'node_edited' && (isPl ? 'edytował' : 'edited')}{' '}
+                      {entry.type === 'node_added' && t('ideas.mindmap.added', 'added')}{' '}
+                      {entry.type === 'node_deleted' && t('ideas.mindmap.deleted', 'deleted')}{' '}
+                      {entry.type === 'node_edited' && t('ideas.mindmap.edited', 'edited')}{' '}
                       {entry.type === 'node_status' &&
-                        (isPl ? 'zmienił status' : 'changed status of')}{' '}
-                      {entry.type === 'ai_expand' && (isPl ? 'użył AI na' : 'used AI on')}{' '}
-                      {entry.type === 'comment' && (isPl ? 'skomentował' : 'commented on')}{' '}
-                      {entry.type === 'vote' && (isPl ? 'zagłosował na' : 'voted on')}{' '}
-                      {entry.type === 'convert' && (isPl ? 'skonwertował' : 'converted')}{' '}
+                        t('ideas.mindmap.changedStatus', 'changed status of')}{' '}
+                      {entry.type === 'ai_expand' && t('ideas.mindmap.usedAi', 'used AI on')}{' '}
+                      {entry.type === 'comment' && t('ideas.mindmap.commentedOn', 'commented on')}{' '}
+                      {entry.type === 'vote' && t('ideas.mindmap.votedOn', 'voted on')}{' '}
+                      {entry.type === 'convert' && t('ideas.mindmap.converted2', 'converted')}{' '}
                       {entry.nodeLabel && (
                         <button
                           onClick={() => entry.nodeId && onNavigateToNode?.(entry.nodeId)}

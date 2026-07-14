@@ -89,8 +89,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
   nodes,
   edges,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [format, setFormat] = useState<DiagramFormat>('mermaid');
   const [copied, setCopied] = useState(false);
 
@@ -105,11 +104,11 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
       .writeText(code)
       .then(() => {
         setCopied(true);
-        toast.success(isPl ? 'Skopiowano!' : 'Copied!', { duration: 1000 });
+        toast.success(t('ideas.mindmap.copied', 'Copied!'), { duration: 1000 });
         setTimeout(() => setCopied(false), 2000);
       })
       .catch(() => toast.error('Failed to copy'));
-  }, [code, isPl]);
+  }, [code]);
 
   if (!open) return null;
 
@@ -120,7 +119,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
           <div className="flex items-center gap-2">
             <Code size={16} className="text-c-warning" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Eksport diagramu' : 'Export Diagram Code'}
+              {t('ideas.mindmap.exportDiagramCode', 'Export Diagram Code')}
             </h3>
           </div>
           <button
@@ -165,12 +164,11 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
 
           <p className="text-[9px] text-c-text-secondary mt-3 text-center">
             {format === 'mermaid'
-              ? isPl
-                ? 'Wklej do edytora Mermaid lub dokumentacji Markdown.'
-                : 'Paste into Mermaid editor or Markdown docs.'
-              : isPl
-                ? 'Wklej do PlantUML renderera.'
-                : 'Paste into PlantUML renderer.'}
+              ? t(
+                  'ideas.mindmap.pasteIntoMermaidEditorMarkdownDocs',
+                  'Paste into Mermaid editor or Markdown docs.'
+                )
+              : t('ideas.mindmap.pasteIntoPlantumlRenderer', 'Paste into PlantUML renderer.')}
           </p>
         </div>
       </div>
