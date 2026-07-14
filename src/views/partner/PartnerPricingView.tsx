@@ -140,7 +140,7 @@ export const PartnerPricingView: React.FC = () => {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button
                     onClick={startApplication}
-                    className="inline-flex items-center gap-2 rounded-full bg-c-accent px-6 py-3 text-sm font-bold text-white shadow-lg shadow-c-accent/30 transition hover:opacity-90"
+                    className="inline-flex items-center gap-2 rounded-full bg-c-text px-6 py-3 text-sm font-bold text-c-surface shadow-lg shadow-c-text/15 transition hover:opacity-90"
                   >
                     Apply
                     <ArrowRight size={18} />
@@ -238,7 +238,7 @@ export const PartnerPricingView: React.FC = () => {
                 </button>
                 <button
                   onClick={openCaseStudy}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-c-accent px-5 py-4 text-sm font-bold text-white transition hover:opacity-90"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-c-text px-5 py-4 text-sm font-bold text-c-surface transition hover:opacity-90"
                 >
                   Zobacz case study
                   <ArrowRight size={16} />
@@ -445,7 +445,7 @@ export const PartnerPricingView: React.FC = () => {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <button
                 onClick={startApplication}
-                className="inline-flex items-center gap-2 rounded-full bg-c-accent px-8 py-4 font-bold text-white shadow-lg shadow-c-accent/30 transition hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-full bg-c-text px-8 py-4 font-bold text-c-surface shadow-lg shadow-c-text/15 transition hover:opacity-90"
               >
                 Start application
                 <ArrowRight size={18} />

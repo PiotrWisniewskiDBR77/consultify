@@ -558,7 +558,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full px-4 py-3 bg-c-accent text-white rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-c-accent/25"
+              className="w-full px-4 py-3 bg-c-text text-c-surface rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-c-text/15"
             >
               {isPl ? 'Wyświetl raport' : 'View Report'}
             </button>

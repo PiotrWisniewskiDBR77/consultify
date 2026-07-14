@@ -1691,7 +1691,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                       ? 'bg-danger-500 shadow-[0_0_28px_rgba(244,63,94,0.45)] hover:bg-danger-400'
                       : actionMode === 'mic'
                         ? 'bg-blue-500 shadow-[0_0_28px_rgba(6,182,212,0.45)] hover:bg-blue-400'
-                        : 'bg-c-accent hover:opacity-90'
+                        : 'bg-c-text hover:opacity-90'
                   }`}
                   aria-label={
                     actionMode === 'send'
