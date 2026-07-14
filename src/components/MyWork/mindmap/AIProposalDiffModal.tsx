@@ -1,5 +1,6 @@
 import { AlertTriangle, Check, GitBranch, Plus, Trash2, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Edge, Node } from 'reactflow';
 
 type AIMapProposal = {
@@ -27,11 +28,11 @@ interface DiffOp {
 
 export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
   proposal,
-  isPl,
   existingNodes,
   onApply,
   onReject,
 }) => {
+  const { t } = useTranslation();
   const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>(() =>
     Object.fromEntries(proposal.add.nodes.map((_, idx) => [idx, true]))
   );
@@ -50,7 +51,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
       result.push({
         type: 'add',
         label: String((n as any).data?.label || (n as any).id || 'Node'),
-        detail: isPl ? `Pod: ${parentLabel}` : `Under: ${parentLabel}`,
+        detail: t('ideas.mindmap.underLabel', 'Under: {{label}}', { label: parentLabel }),
         idx,
       });
     });
@@ -59,11 +60,11 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
       result.push({
         type: 'remove',
         label: node ? String(node.data?.label || nodeId) : nodeId,
-        detail: isPl ? 'Zostanie usunięty' : 'Will be removed',
+        detail: t('ideas.mindmap.willBeRemoved', 'Will be removed'),
       });
     });
     return result;
-  }, [existingNodes, isPl, proposal]);
+  }, [existingNodes, proposal, t]);
 
   const addCount = proposal.add.nodes.length;
   const removeCount = proposal.remove.nodeIds.length;
@@ -83,7 +84,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
           <div>
             <h3 className="text-sm font-semibold text-c-text dark:text-c-text flex items-center gap-2">
               <GitBranch size={15} className="text-c-text-secondary" />
-              {isPl ? 'Propozycja AI — podgląd zmian' : 'AI Proposal — Change Preview'}
+              {t('ideas.mindmap.aiProposalChangePreview', 'AI Proposal — Change Preview')}
             </h3>
             {proposal.rationale && (
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1 max-w-lg">
@@ -103,18 +104,18 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         <div className="px-5 py-2.5 flex items-center gap-3 bg-c-surface-raised dark:bg-c-surface border-b border-c-border-subtle dark:border-c-border-subtle">
           {addCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-c-success dark:text-c-success bg-c-surface-raised dark:bg-c-surface px-2 py-0.5 rounded-full">
-              <Plus size={10} /> {addCount} {isPl ? 'dodano' : 'added'}
+              <Plus size={10} /> {addCount} {t('ideas.mindmap.added', 'added')}
             </span>
           )}
           {removeCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-c-danger dark:text-c-danger bg-c-surface-raised dark:bg-c-surface px-2 py-0.5 rounded-full">
-              <Trash2 size={10} /> {removeCount} {isPl ? 'usunięto' : 'removed'}
+              <Trash2 size={10} /> {removeCount} {t('ideas.mindmap.removed', 'removed')}
             </span>
           )}
           {hasDestructive && (
             <span className="inline-flex items-center gap-1 text-[11px] text-c-warning dark:text-c-warning">
               <AlertTriangle size={11} />{' '}
-              {isPl ? 'Zawiera zmiany destrukcyjne' : 'Contains destructive changes'}
+              {t('ideas.mindmap.containsDestructiveChanges', 'Contains destructive changes')}
             </span>
           )}
           <div className="ml-auto flex gap-2">
@@ -122,13 +123,13 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
               onClick={selectAll}
               className="text-[10px] text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised px-1.5 py-0.5 rounded-hig-sm transition-colors"
             >
-              {isPl ? 'Zaznacz wszystko' : 'Select all'}
+              {t('ideas.mindmap.selectAll', 'Select all')}
             </button>
             <button
               onClick={deselectAll}
               className="text-[10px] text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised px-1.5 py-0.5 rounded-hig-sm transition-colors"
             >
-              {isPl ? 'Odznacz' : 'Deselect'}
+              {t('ideas.mindmap.deselect', 'Deselect')}
             </button>
           </div>
         </div>
@@ -137,7 +138,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         <div className="px-5 py-4 max-h-[55vh] overflow-y-auto">
           {ops.length === 0 ? (
             <div className="text-center py-8 text-sm text-c-text-secondary dark:text-c-text-secondary">
-              {isPl ? 'Brak proponowanych zmian.' : 'No changes proposed.'}
+              {t('ideas.mindmap.noChangesProposed', 'No changes proposed.')}
             </div>
           ) : (
             <table
@@ -146,9 +147,9 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
               <thead>
                 <tr className="text-left text-[10px] font-semibold text-c-text-secondary dark:text-c-text-secondary uppercase tracking-wider border-b border-c-border-subtle dark:border-c-border-subtle">
                   <th className="py-1.5 w-8" />
-                  <th className="py-1.5 w-16">{isPl ? 'Typ' : 'Type'}</th>
-                  <th className="py-1.5">{isPl ? 'Węzeł' : 'Node'}</th>
-                  <th className="py-1.5">{isPl ? 'Szczegóły' : 'Details'}</th>
+                  <th className="py-1.5 w-16">{t('ideas.mindmap.type', 'Type')}</th>
+                  <th className="py-1.5">{t('ideas.mindmap.node', 'Node')}</th>
+                  <th className="py-1.5">{t('ideas.mindmap.details', 'Details')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -188,7 +189,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                           }`}
                         >
                           {isAdd ? <Plus size={9} /> : <Trash2 size={9} />}
-                          {isAdd ? (isPl ? 'Dodaj' : 'Add') : isPl ? 'Usuń' : 'Del'}
+                          {isAdd ? t('ideas.mindmap.add', 'Add') : t('ideas.mindmap.del', 'Del')}
                         </span>
                       </td>
                       <td className="py-2 font-medium text-c-text-secondary dark:text-c-text">
@@ -208,35 +209,38 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         {/* Plan summary */}
         {proposal.rationale && (
           <div className="mx-5 mb-3 px-3 py-2 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-[11px] text-c-text-secondary dark:text-c-text">
-            <strong>{isPl ? 'Plan:' : 'Plan:'}</strong>{' '}
-            {isPl
-              ? `Dodaj ${selectedCount} wybranych węzłów.`
-              : `Add ${selectedCount} selected nodes.`}
+            <strong>{t('ideas.mindmap.plan', 'Plan:')}</strong>{' '}
+            {t('ideas.mindmap.addNSelectedNodes', 'Add {{count}} selected nodes.', {
+              count: selectedCount,
+            })}
             {removeCount > 0 &&
-              ` ${isPl ? `Usuń ${removeCount} węzłów.` : `Remove ${removeCount} nodes.`}`}
+              ` ${t('ideas.mindmap.removeNNodes', 'Remove {{count}} nodes.', { count: removeCount })}`}
           </div>
         )}
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center justify-between">
           <span className="text-[11px] text-c-text-secondary dark:text-c-text-secondary">
-            {isPl
-              ? `${selectedCount} z ${addCount} zaznaczonych`
-              : `${selectedCount} of ${addCount} selected`}
+            {t('ideas.mindmap.nOfMSelected', '{{selected}} of {{total}} selected', {
+              selected: selectedCount,
+              total: addCount,
+            })}
           </span>
           <div className="flex gap-2">
             <button
               onClick={onReject}
               className="px-4 py-1.5 rounded-hig-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
-              {isPl ? 'Odrzuć' : 'Reject'}
+              {t('ideas.mindmap.reject', 'Reject')}
             </button>
             <button
               onClick={() => onApply(selectedAddIdx)}
               disabled={selectedCount === 0 && removeCount === 0}
               className="px-4 py-1.5 rounded-hig-lg text-xs font-semibold bg-c-surface text-c-text dark:bg-c-surface-raised dark:text-c-text dark:hover:bg-c-surface-raised hover:bg-c-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {isPl ? `Zastosuj wybrane (${selectedCount})` : `Apply selected (${selectedCount})`}
+              {t('ideas.mindmap.applySelectedN', 'Apply selected ({{count}})', {
+                count: selectedCount,
+              })}
             </button>
           </div>
         </div>

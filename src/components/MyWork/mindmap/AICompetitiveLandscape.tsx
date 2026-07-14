@@ -37,8 +37,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
   locked,
   onAddToMap,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
 
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,9 +88,9 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
         ...comp.strengths.map((s) => ({ text: `${comp.name} — ${s}`, type: 'findings' })),
       ]);
       setAdded((prev) => new Set([...prev, comp.id]));
-      toast.success(isPl ? 'Dodano do mapy' : 'Added to map', { duration: 800 });
+      toast.success(t('ideas.mindmap.addedMap', 'Added to map'), { duration: 800 });
     },
-    [isPl, onAddToMap]
+    [onAddToMap]
   );
 
   if (!open) return null;
@@ -104,13 +103,14 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
             <div className="flex items-center gap-2">
               <Globe size={16} className="text-c-info" />
               <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-                {isPl ? 'AI: Krajobraz konkurencyjny' : 'AI: Competitive Landscape'}
+                {t('ideas.mindmap.aiCompetitiveLandscape', 'AI: Competitive Landscape')}
               </h3>
             </div>
             <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
-              {isPl
-                ? 'AI identyfikuje konkurentów i pozycjonowanie rynkowe.'
-                : 'AI identifies competitors and market positioning.'}
+              {t(
+                'ideas.mindmap.aiIdentifiesCompetitorsMarketPositioning',
+                'AI identifies competitors and market positioning.'
+              )}
             </p>
           </div>
           <button
@@ -129,9 +129,10 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
-                {isPl
-                  ? 'AI przeanalizuje krajobraz konkurencyjny dla Twojego pomysłu.'
-                  : 'AI will analyze the competitive landscape for your idea.'}
+                {t(
+                  'ideas.mindmap.aiWillAnalyzeCompetitiveLandscapeYour',
+                  'AI will analyze the competitive landscape for your idea.'
+                )}
               </p>
               <button
                 onClick={analyze}
@@ -139,7 +140,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
-                {isPl ? 'Analizuj konkurencję' : 'Analyze competition'}
+                {t('ideas.mindmap.analyzeCompetition', 'Analyze competition')}
               </button>
             </div>
           )}
@@ -148,7 +149,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-info" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Analizuję rynek...' : 'Analyzing market...'}
+                {t('ideas.mindmap.analyzingMarket', 'Analyzing market...')}
               </span>
             </div>
           )}
@@ -178,7 +179,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-info dark:text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                         >
                           <Plus size={9} />
-                          {isPl ? 'Dodaj' : 'Add'}
+                          {t('ideas.mindmap.add', 'Add')}
                         </button>
                       )}
                     </div>
@@ -191,7 +192,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       {comp.strengths.length > 0 && (
                         <div className="flex-1">
                           <div className="text-[8px] font-bold text-c-success uppercase tracking-wider mb-1">
-                            {isPl ? 'Mocne' : 'Strengths'}
+                            {t('ideas.mindmap.strengths', 'Strengths')}
                           </div>
                           {comp.strengths.map((s, i) => (
                             <div
@@ -206,7 +207,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       {comp.weaknesses.length > 0 && (
                         <div className="flex-1">
                           <div className="text-[8px] font-bold text-c-danger uppercase tracking-wider mb-1">
-                            {isPl ? 'Slabe' : 'Weaknesses'}
+                            {t('ideas.mindmap.weaknesses', 'Weaknesses')}
                           </div>
                           {comp.weaknesses.map((w, i) => (
                             <div
@@ -222,7 +223,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                     {comp.differentiator && (
                       <div className="mt-2 pt-2 border-t border-c-border-subtle dark:border-c-border-subtle">
                         <span className="text-[8px] font-bold text-c-text-secondary dark:text-c-text-muted uppercase tracking-wider">
-                          {isPl ? 'Nasz wyróżnik' : 'Our edge'}:{' '}
+                          {t('ideas.mindmap.ourEdge', 'Our edge')}:{' '}
                         </span>
                         <span className="text-[9px] text-c-text-secondary dark:text-c-text-muted">
                           {comp.differentiator}
@@ -239,7 +240,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                   disabled={loading}
                   className="text-[10px] text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
-                  {isPl ? 'Ponowna analiza' : 'Re-analyze'}
+                  {t('ideas.mindmap.reAnalyze', 'Re-analyze')}
                 </button>
               </div>
             </div>
