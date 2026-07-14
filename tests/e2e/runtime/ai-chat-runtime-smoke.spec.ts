@@ -75,7 +75,11 @@ async function seedAuth(page: any): Promise<string> {
       },
       version: 0,
     };
-    localStorage.setItem('consultinity-storage', JSON.stringify(persisted));
+    // Persist key is 'consultify-storage' (APP_STORE_KEY in src/store/useAppStore.ts) —
+    // NOT 'consultinity-storage' (leftover pre-rename product name). This seed alone was
+    // a silent no-op either way (ProtectedRoute actually gates on the plain 'user' key
+    // below), but fix it so it matches what the real store persists/reads.
+    localStorage.setItem('consultify-storage', JSON.stringify(persisted));
     // App boot sequence restores auth from localStorage('user') synchronously in verifyAuth()
     localStorage.setItem('user', JSON.stringify(e2eUser));
   }, token);
@@ -88,43 +92,6 @@ test.describe('Runtime Smoke: AI Chat (E2E_MODE)', () => {
   test('should stream response and persist to history sidebar', async ({ page }) => {
     const token = await seedAuth(page);
 
-    // Ensure we have an active conversation id so the UI uses the conversation store path
-    // (otherwise it attempts to create one at send-time and can fail on schema drift).
-    const createConvRes = await page.request.post(`${API_BASE_URL}/api/conversations`, {
-      headers: { Authorization: `Bearer ${token}` },
-      data: { title: 'E2E Runtime Smoke', language: 'en' },
-    });
-    if (!createConvRes.ok()) {
-      const body = await createConvRes.text().catch(() => '');
-      console.log(
-        '[runtime-smoke] createConversation failed',
-        createConvRes.status(),
-        body.slice(0, 500)
-      );
-    }
-    expect(createConvRes.ok()).toBeTruthy();
-    const createdConv = await createConvRes.json();
-    const conversationId = String(createdConv?.id || '');
-    expect(conversationId).toBeTruthy();
-
-    await page.addInitScript(
-      ({ conversationId: cid }) => {
-        // useConversationStore persist key
-        const persisted = {
-          state: {
-            showArchived: false,
-            displayMode: 'full',
-            activeConversationId: cid,
-            draftChatLanguage: 'en',
-            chatLanguageByConversationId: { [cid]: 'en' },
-          },
-          version: 2,
-        };
-        localStorage.setItem('consultinity-conversations', JSON.stringify(persisted));
-      },
-      { conversationId }
-    );
-
     page.on('response', (r) => {
       const url = r.url();
       if (url.includes('/api/') && (r.status() === 401 || r.status() === 403)) {
@@ -132,6 +99,24 @@ test.describe('Runtime Smoke: AI Chat (E2E_MODE)', () => {
       }
     });
 
+    // Land on bare /chat and let the app create its own conversation at send-time
+    // (its normal first-message flow), instead of pre-creating one via REST and trying
+    // to make the SPA "adopt" it. That adoption path was tried before (seeding the
+    // conversation store's persisted localStorage + navigating to the /chat/:id deep
+    // link) and turned out to be fragile in two independent ways (found 2026-07-14
+    // diagnosing the ai-chat runtime smoke canary):
+    //  1. The persist key used was 'consultinity-conversations', a leftover pre-rename
+    //     typo — the real key is 'consultify-conversations' (useConversationStore.ts),
+    //     so the seed was a silent no-op and the app always created a fresh conversation
+    //     anyway, just without our knowing its id.
+    //  2. Even after fixing the key, landing directly on the /chat/:id deep link for a
+    //     brand-new empty conversation triggers a client-side React "duplicate key"
+    //     warning (children omitted) that swallows the freshly streamed AI message from
+    //     the DOM — a separate, real app bug, not a CI/test environment issue.
+    // The app's own auto-create-on-send flow does not hit either problem, and
+    // ConversationRouteSync's Store→URL sync (src/components/AIChat/ConversationRouteSync.tsx)
+    // navigates to /chat/:id once the conversation exists, so we can read the real id
+    // back from the URL after sending instead of guessing it up front.
     await page.goto('/chat');
     // App keeps long-lived connections (SSE/metrics), so avoid networkidle.
 
@@ -158,6 +143,12 @@ test.describe('Runtime Smoke: AI Chat (E2E_MODE)', () => {
     await expect(page.locator('p:visible', { hasText: 'E2E_OK:' }).first()).toBeVisible({
       timeout: 15000,
     });
+
+    // The app navigates to /chat/:id once it creates the conversation for the first
+    // message (ConversationRouteSync Store→URL sync). Read the real id back from there.
+    await page.waitForURL(/\/chat\/[0-9a-fA-F-]{8,}/, { timeout: 15000 });
+    const conversationId = new URL(page.url()).pathname.replace(/^\/chat\//, '').split('/')[0];
+    expect(conversationId).toBeTruthy();
 
     // Persistence check (backend): conversation should be discoverable and contain both messages.
     const listRes = await page.request.get(`${API_BASE_URL}/api/conversations?limit=50&offset=0`, {
