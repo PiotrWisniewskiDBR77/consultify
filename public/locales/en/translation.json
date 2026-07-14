@@ -18586,7 +18586,96 @@
     "viewUnavailable": "View Unavailable",
     "sharedViewReadOnly": "Shared view — read only",
     "search": "Search",
-    "empty": "No presentations yet."
+    "empty": "No presentations yet.",
+    "aiCopilot": {
+      "title": "AI Copilot"
+    },
+    "addColumn": {
+      "optionsPlaceholder": "Option 1, Option 2, Option 3",
+      "rollup": {
+        "count": "Count",
+        "sum": "Sum",
+        "average": "Average",
+        "min": "Min",
+        "max": "Max"
+      }
+    },
+    "cellRenderer": {
+      "aiPending": "AI pending...",
+      "regenerate": "Regenerate"
+    },
+    "fieldManager": {
+      "max": "Max",
+      "primary": "Primary"
+    },
+    "formBuilder": {
+      "selectPlaceholder": "Select..."
+    },
+    "ideaScoring": {
+      "reset": "Reset"
+    },
+    "ideaStartupTemplates": {
+      "startWithAi": "Start with AI",
+      "blankCanvas": "Blank canvas"
+    },
+    "interfaceDesigner": {
+      "defaults": {
+        "textContent": "Enter text here...",
+        "buttonLabel": "Click me",
+        "searchPlaceholder": "Search...",
+        "summaryLabel": "Total"
+      },
+      "preview": {
+        "tableName": "Table: {{name}}",
+        "selectATable": "Select a table",
+        "chart": "Chart: {{type}}",
+        "button": "Button",
+        "summary": "Summary",
+        "recordDetail": "Record Detail",
+        "filterControl": "Filter Control"
+      },
+      "config": {
+        "heading": "{{type}} Config",
+        "table": "Table",
+        "selectTable": "Select table...",
+        "content": "Content",
+        "fontSize": "Font Size",
+        "chartType": "Chart Type",
+        "bar": "Bar",
+        "line": "Line",
+        "pie": "Pie",
+        "donut": "Donut",
+        "label": "Label",
+        "aggregation": "Aggregation",
+        "count": "Count",
+        "sum": "Sum",
+        "average": "Average",
+        "min": "Min",
+        "max": "Max",
+        "placeholder": "Placeholder"
+      },
+      "addBlock": "Add Block",
+      "saveLayout": "Save Layout",
+      "dragToReorder": "Drag to reorder",
+      "emptyTitle": "Empty interface",
+      "emptyBody": "Add blocks from the left panel to build your interface",
+      "blockTypes": {
+        "tableGrid": "Table Grid",
+        "recordDetail": "Record Detail",
+        "chart": "Chart",
+        "textBlock": "Text Block",
+        "actionButton": "Action Button",
+        "filterControl": "Filter Control",
+        "searchBar": "Search Bar",
+        "summaryCard": "Summary Card"
+      }
+    },
+    "cellEditor": {
+      "clear": "Clear"
+    },
+    "distributionBuilder": {
+      "webhookUrl": "Webhook URL"
+    }
   },
   "documents": {
     "upload": "Upload",

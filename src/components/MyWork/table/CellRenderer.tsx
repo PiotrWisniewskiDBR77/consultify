@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   ColorCell,
@@ -66,6 +67,7 @@ const NumberCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
 // ── Select Cell ──────────────────────────────────────────────────────────────
 
 const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const options = column.options || [];
@@ -125,7 +127,7 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
               }}
               className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
-              Clear
+              {t('table.cellEditor.clear', 'Clear')}
             </button>
           )}
         </div>
@@ -336,22 +338,29 @@ const FormulaCell: React.FC<CellProps> = ({ column, rowData }) => {
 
 // ── AI Generated Cell ────────────────────────────────────────────────────────
 
-const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) => (
-  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-    <span className="flex-1 text-xs text-c-text truncate">
-      {value || <span className="text-c-text-secondary italic">AI pending...</span>}
-    </span>
-    {!locked && onAIRefresh && (
-      <button
-        onClick={onAIRefresh}
-        className="p-0.5 rounded text-c-accent hover:bg-c-accent-soft transition-colors"
-        title="Regenerate"
-      >
-        <RefreshCw size={10} />
-      </button>
-    )}
-  </div>
-);
+const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      <span className="flex-1 text-xs text-c-text truncate">
+        {value || (
+          <span className="text-c-text-secondary italic">
+            {t('table.cellRenderer.aiPending', 'AI pending...')}
+          </span>
+        )}
+      </span>
+      {!locked && onAIRefresh && (
+        <button
+          onClick={onAIRefresh}
+          className="p-0.5 rounded text-c-accent hover:bg-c-accent-soft transition-colors"
+          title={t('table.cellRenderer.regenerate', 'Regenerate')}
+        >
+          <RefreshCw size={10} />
+        </button>
+      )}
+    </div>
+  );
+};
 
 // ── Main CellRenderer ────────────────────────────────────────────────────────
 

@@ -94,7 +94,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
   onAddRows,
   onUpdateNode,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [mode, setMode] = useState<CopilotMode>('brainstorm');
@@ -257,7 +257,9 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
           <Brain size={16} className="text-c-accent" />
-          <span className="text-sm font-bold text-c-text">AI Copilot</span>
+          <span className="text-sm font-bold text-c-text">
+            {t('table.aiCopilot.title', 'AI Copilot')}
+          </span>
 
           {/* Mode selector */}
           <div className="relative ml-2">

@@ -19636,7 +19636,96 @@
     "viewUnavailable": "Widok niedostępny",
     "sharedViewReadOnly": "Widok udostępniony — tylko do odczytu",
     "search": "Wyszukiwanie",
-    "empty": "Brak prezentacji."
+    "empty": "Brak prezentacji.",
+    "aiCopilot": {
+      "title": "Kopilot AI"
+    },
+    "addColumn": {
+      "optionsPlaceholder": "Opcja 1, Opcja 2, Opcja 3",
+      "rollup": {
+        "count": "Liczba",
+        "sum": "Suma",
+        "average": "Średnia",
+        "min": "Min",
+        "max": "Maks"
+      }
+    },
+    "cellRenderer": {
+      "aiPending": "AI w toku...",
+      "regenerate": "Wygeneruj ponownie"
+    },
+    "fieldManager": {
+      "max": "Maks",
+      "primary": "Podstawowe"
+    },
+    "formBuilder": {
+      "selectPlaceholder": "Wybierz..."
+    },
+    "ideaScoring": {
+      "reset": "Resetuj"
+    },
+    "ideaStartupTemplates": {
+      "startWithAi": "Zacznij z AI",
+      "blankCanvas": "Pusty canvas"
+    },
+    "interfaceDesigner": {
+      "defaults": {
+        "textContent": "Wpisz tekst tutaj...",
+        "buttonLabel": "Kliknij mnie",
+        "searchPlaceholder": "Szukaj...",
+        "summaryLabel": "Suma"
+      },
+      "preview": {
+        "tableName": "Tabela: {{name}}",
+        "selectATable": "Wybierz tabelę",
+        "chart": "Wykres: {{type}}",
+        "button": "Przycisk",
+        "summary": "Podsumowanie",
+        "recordDetail": "Szczegóły rekordu",
+        "filterControl": "Filtr"
+      },
+      "config": {
+        "heading": "Konfiguracja: {{type}}",
+        "table": "Tabela",
+        "selectTable": "Wybierz tabelę...",
+        "content": "Treść",
+        "fontSize": "Rozmiar czcionki",
+        "chartType": "Typ wykresu",
+        "bar": "Słupkowy",
+        "line": "Liniowy",
+        "pie": "Kołowy",
+        "donut": "Pierścieniowy",
+        "label": "Etykieta",
+        "aggregation": "Agregacja",
+        "count": "Liczba",
+        "sum": "Suma",
+        "average": "Średnia",
+        "min": "Min",
+        "max": "Maks",
+        "placeholder": "Placeholder"
+      },
+      "addBlock": "Dodaj blok",
+      "saveLayout": "Zapisz układ",
+      "dragToReorder": "Przeciągnij, aby zmienić kolejność",
+      "emptyTitle": "Pusty interfejs",
+      "emptyBody": "Dodaj bloki z lewego panelu, aby zbudować interfejs",
+      "blockTypes": {
+        "tableGrid": "Siatka tabeli",
+        "recordDetail": "Szczegóły rekordu",
+        "chart": "Wykres",
+        "textBlock": "Blok tekstowy",
+        "actionButton": "Przycisk akcji",
+        "filterControl": "Filtr",
+        "searchBar": "Pasek wyszukiwania",
+        "summaryCard": "Karta podsumowania"
+      }
+    },
+    "cellEditor": {
+      "clear": "Wyczyść"
+    },
+    "distributionBuilder": {
+      "webhookUrl": "URL webhooka"
+    }
   },
   "documents": {
     "upload": "Przesłane",
