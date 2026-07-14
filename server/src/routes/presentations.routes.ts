@@ -54,7 +54,7 @@ import {
 } from '../services/presentationDeckBulkRevertService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import {
-  deckDocumentToUnifiedJson,
+  deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
 } from '../services/presentationDeckDocumentService.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
@@ -427,14 +427,42 @@ async function regeneratePptxIfStale(deck: any): Promise<any> {
       return deck;
     }
 
-    const unifiedJson = deckDocumentToUnifiedJson(deckDocument);
+    // Fix 2026-07-14 (dowód _DOWOD_DECK_PPTX_2026-07-14.md): re-rendering from the
+    // flattened deck_json projection alone produced 8/12 "Render Error" slides,
+    // because the flatten kept the slide intent but reduced content to
+    // key_messages while PPTX layouts are intent-bound. Re-render instead from a
+    // MERGE of `unified_json` (rich per-intent render model, written at
+    // generation / regenerateSlide) with the edited cards from `deck_json`
+    // (autosave / agent-edit write only deck_json) — fresh AND renderable.
+    let baseUnified: any = null;
+    try {
+      baseUnified = deck.unified_json ? JSON.parse(String(deck.unified_json)) : null;
+    } catch {
+      baseUnified = null; // legacy/corrupt unified_json → coerced-flatten fallback
+    }
+    const unifiedJson = deckDocumentToRenderableUnifiedJson(deckDocument, baseUnified);
     const pipeline = new PptxPipelineService();
+    // Validation is intentionally ON (skipValidation removed): the only
+    // error-severity rules (missing intent/key_message/content, nameless
+    // initiatives, empty deck) are integrity failures that would render broken
+    // anyway. A validation throw lands in the catch below → the download keeps
+    // serving the last-known-good file instead of a broken re-render.
     const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
       template: (deckDocument.meta?.theme as any) || undefined,
       language: (deckDocument.meta?.language as any) || undefined,
       confidentiality: (deckDocument.meta?.confidentiality as any) || undefined,
-      skipValidation: true,
     });
+
+    // Render-integrity gate: never overwrite a good export with a deck that
+    // contains fallback "Render Error" slides — serve the previous file instead.
+    const renderFailures = result.warnings.filter((warning) => warning.includes('render failed'));
+    if (renderFailures.length > 0) {
+      logger.error('[Presentations] Stale-regen produced error slides; keeping previous export', {
+        deckId: deck.id,
+        renderFailures,
+      });
+      return deck;
+    }
 
     fs.writeFileSync(exportPath, result.buffer);
     const exportedAtIso = new Date().toISOString();

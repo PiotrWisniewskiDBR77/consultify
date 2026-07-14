@@ -635,6 +635,59 @@ function textFromBlock(block: DeckCardBlock): string {
   return '';
 }
 
+function flattenedContentTypeForIntent(intent: unknown): 'cover' | 'appendix' | 'key_messages' {
+  return intent === 'cover' ? 'cover' : intent === 'appendix' ? 'appendix' : 'key_messages';
+}
+
+function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMeta): UnifiedSlide {
+  const bodyBlocks = (card.blocks || []).filter((block) => block.type !== 'heading');
+  const firstText = bodyBlocks.map(textFromBlock).find(Boolean) || card.key_message || card.title;
+  const sourceRefs = uniqueSourceRefs([
+    ...sourceRefsFromUnknown(card.source_refs),
+    ...sourceRefsFromUnknown(bodyBlocks.map((block) => block.source_ref).filter(Boolean)),
+  ]);
+
+  const contentType = flattenedContentTypeForIntent(card.intent);
+  const slide: UnifiedSlide = {
+    // Contract fix (2026-07-14, dowód _DOWOD_DECK_PPTX_2026-07-14.md): PPTX layouts
+    // are intent-bound (see report/pptx/layouts/index.ts) — this projection flattens
+    // block content to cover/appendix/key_messages shapes only, so the projected
+    // intent MUST match the emitted content shape. Emitting the card's original
+    // intent (kpi/chart/roadmap/...) with key_messages content made every
+    // intent-bound layout crash into a red "Render Error" slide on the stale-regen
+    // download path (8/12 slides in the proof deck). The original card intent is
+    // preserved as `source_intent` for traceability.
+    intent: contentType as SlideIntent,
+    key_message: String(card.key_message || card.title || card.intent || 'Slide'),
+    content: {
+      type: contentType,
+      ...(contentType === 'cover'
+        ? {
+            title: card.title,
+            subtitle: firstText,
+            organization: meta.client,
+            date: meta.date,
+            confidentiality: meta.confidentiality,
+          }
+        : contentType === 'appendix'
+          ? { title: card.title, body: firstText }
+          : {
+              messages: bodyBlocks.length
+                ? bodyBlocks.map((block) => ({
+                    title: block.type.replace(/_/g, ' '),
+                    description: textFromBlock(block),
+                  }))
+                : [{ title: card.title, description: firstText }],
+            }),
+    } as any,
+  };
+  (slide as any).slide_id = card.card_id;
+  (slide as any).source_intent = card.intent;
+  (slide as any).source_refs = sourceRefs;
+  if (card.speaker_notes) (slide as any).speaker_notes = card.speaker_notes;
+  return slide;
+}
+
 export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON {
   const meta: UnifiedReportMeta = {
     client: String(deck.meta?.audience || deck.organization_id || 'Organization'),
@@ -649,50 +702,232 @@ export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON
 
   const slides: UnifiedSlide[] = [...deck.cards]
     .sort((a, b) => a.order_index - b.order_index)
-    .map((card) => {
-      const bodyBlocks = (card.blocks || []).filter((block) => block.type !== 'heading');
-      const firstText =
-        bodyBlocks.map(textFromBlock).find(Boolean) || card.key_message || card.title;
-      const sourceRefs = uniqueSourceRefs([
-        ...sourceRefsFromUnknown(card.source_refs),
-        ...sourceRefsFromUnknown(bodyBlocks.map((block) => block.source_ref).filter(Boolean)),
-      ]);
-
-      const slide: UnifiedSlide = {
-        intent: (card.intent || 'key_messages') as SlideIntent,
-        key_message: card.key_message || card.title,
-        content: {
-          type:
-            card.intent === 'cover'
-              ? 'cover'
-              : card.intent === 'appendix'
-                ? 'appendix'
-                : 'key_messages',
-          ...(card.intent === 'cover'
-            ? {
-                title: card.title,
-                subtitle: firstText,
-                organization: meta.client,
-                date: meta.date,
-                confidentiality: meta.confidentiality,
-              }
-            : card.intent === 'appendix'
-              ? { title: card.title, body: firstText }
-              : {
-                  messages: bodyBlocks.length
-                    ? bodyBlocks.map((block) => ({
-                        title: block.type.replace(/_/g, ' '),
-                        description: textFromBlock(block),
-                      }))
-                    : [{ title: card.title, description: firstText }],
-                }),
-        } as any,
-      };
-      (slide as any).slide_id = card.card_id;
-      (slide as any).source_refs = sourceRefs;
-      if (card.speaker_notes) (slide as any).speaker_notes = card.speaker_notes;
-      return slide;
-    });
+    .map((card) => flattenCardToUnifiedSlide(card, meta));
 
   return { meta, slides };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Renderable projection for the stale-regen download path (fix 2026-07-14,
+// dowód: Harvard/wdrozenie-100/_DOWOD_DECK_PPTX_2026-07-14.md).
+//
+// Data model reality (verified in runtime code, not docs):
+//   - `unified_json` = the rich, per-intent render model — the ONLY shape the 17
+//     intent-bound PPTX layouts can render. Written at generation time
+//     (presentationGeneratorService.ts UPDATE ... deck_json = ?, unified_json = ?)
+//     and by regenerateSlide. NOT touched by editing endpoints.
+//   - `deck_json` = the FE editing model (cards/blocks) — a LOSSY projection of
+//     unified for many intents (chart/comparison/assessment/section_intro carry
+//     only a paragraph). Updated by autosave / agent-edit accept / revert /
+//     refresh-data (5 UPDATE sites in presentations.routes.ts) WITHOUT unified_json.
+//
+// So neither column alone is both fresh and renderable. This function merges:
+// base = unified_json slide (rich content), overlay = the edited card from
+// deck_json (title, key message, speaker notes, and block-level content edits
+// for the block types whose projection is invertible). Cards without a matching
+// base slide (added cards, legacy decks without unified_json, intent changed)
+// fall back to the flattened projection, whose intent is coerced to the emitted
+// content shape — so every slide is renderable by contract; nothing can produce
+// a "Render Error" slide from shape mismatch anymore.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function firstBlockOfType(card: DeckDocumentCard, type: string): DeckCardBlock | undefined {
+  return (card.blocks || []).find((block) => block.type === type);
+}
+
+function stringCell(row: unknown, index: number): string {
+  if (!Array.isArray(row)) return '';
+  return String(row[index] ?? '').trim();
+}
+
+/**
+ * Merge table-block rows (arrays of strings) onto an array of base objects,
+ * by index. Row cells win when non-empty; base fields fill the gaps (the block
+ * projection is lossy — e.g. initiative budget/ROI never reach the blocks).
+ * Extra rows become new objects; fewer rows truncate (a deleted row is an edit).
+ */
+function mergeRowsOntoObjects(
+  baseItems: any[],
+  rows: unknown[],
+  fields: string[]
+): any[] {
+  return rows.map((row, index) => {
+    const base = baseItems[index] ? { ...baseItems[index] } : {};
+    fields.forEach((field, cellIndex) => {
+      const cell = stringCell(row, cellIndex);
+      if (cell) base[field] = cell;
+    });
+    return base;
+  });
+}
+
+/** Overlay block-level edits from the card onto a clone of the base slide content. */
+function overlayCardBlocksOntoContent(card: DeckDocumentCard, content: any): void {
+  const bulletList = firstBlockOfType(card, 'bullet_list');
+  const metricStrip = firstBlockOfType(card, 'metric_strip');
+  const callout = firstBlockOfType(card, 'callout');
+  const paragraph = firstBlockOfType(card, 'paragraph');
+  const table = firstBlockOfType(card, 'table');
+  const timeline = firstBlockOfType(card, 'timeline_block');
+  const metrics = Array.isArray((metricStrip?.content as any)?.metrics)
+    ? (metricStrip!.content as any).metrics
+    : null;
+  const items = Array.isArray((bulletList?.content as any)?.items)
+    ? ((bulletList!.content as any).items as unknown[]).map(String)
+    : null;
+  const calloutText =
+    typeof (callout?.content as any)?.text === 'string'
+      ? String((callout!.content as any).text)
+      : null;
+  const paragraphText =
+    typeof (paragraph?.content as any)?.text === 'string'
+      ? String((paragraph!.content as any).text)
+      : null;
+  const rows = Array.isArray((table?.content as any)?.rows)
+    ? ((table!.content as any).rows as unknown[])
+    : null;
+
+  switch (content?.type) {
+    case 'executive_summary': {
+      if (items) content.key_findings = items;
+      if (metrics) content.kpis = metrics;
+      if (calloutText) content.recommendation = calloutText;
+      break;
+    }
+    case 'key_messages': {
+      if (items) {
+        content.messages = items.map((item) => {
+          const separator = item.indexOf(': ');
+          return separator > 0
+            ? { title: item.slice(0, separator), description: item.slice(separator + 2) }
+            : { title: item };
+        });
+      }
+      break;
+    }
+    case 'performance_overview': {
+      if (metrics) content.kpis = metrics;
+      if (paragraphText) content.context = paragraphText;
+      break;
+    }
+    case 'roadmap': {
+      const timelineItems = Array.isArray((timeline?.content as any)?.items)
+        ? (timeline!.content as any).items
+        : null;
+      if (timelineItems) content.phases = timelineItems;
+      break;
+    }
+    case 'initiative_portfolio': {
+      if (rows) {
+        content.initiatives = mergeRowsOntoObjects(
+          Array.isArray(content.initiatives) ? content.initiatives : [],
+          rows,
+          ['name', 'priority', 'timeline', 'owner']
+        ).filter((initiative) => String(initiative.name || '').trim());
+      }
+      break;
+    }
+    case 'risk_management': {
+      if (rows) {
+        content.risks = mergeRowsOntoObjects(
+          Array.isArray(content.risks) ? content.risks : [],
+          rows,
+          ['risk', 'likelihood', 'impact', 'mitigation']
+        );
+      }
+      break;
+    }
+    case 'next_steps': {
+      if (rows) {
+        content.actions = mergeRowsOntoObjects(
+          Array.isArray(content.actions) ? content.actions : [],
+          rows,
+          ['action', 'owner', 'deadline']
+        );
+      }
+      if (calloutText) content.closing_message = calloutText;
+      break;
+    }
+    case 'appendix': {
+      if (paragraphText) content.body = paragraphText;
+      break;
+    }
+    default:
+      // cover / section_intro / single_insight / comparison / assessment:
+      // their block projection is not invertible (single paragraph / JSON dump),
+      // so only the title / key-message overlay below applies. The rich base
+      // content (chart data, maturity axes, comparison columns) is preserved.
+      break;
+  }
+}
+
+function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): UnifiedSlide {
+  const content: any = JSON.parse(JSON.stringify(base.content || {}));
+
+  // Title edits: the FE edits the heading block; card.title is the fallback.
+  const headingText = String(
+    (firstBlockOfType(card, 'heading')?.content as any)?.text || ''
+  ).trim();
+  const editedTitle = headingText || String(card.title || '').trim();
+  if (editedTitle) {
+    // Write back into whichever field produced the card title (same priority
+    // order as titleFromUnifiedSlide reads it).
+    for (const field of ['title', 'headline', 'section_title', 'section_name']) {
+      if (typeof content[field] === 'string' && content[field].trim()) {
+        content[field] = editedTitle;
+        break;
+      }
+    }
+  }
+
+  overlayCardBlocksOntoContent(card, content);
+
+  const slide: UnifiedSlide = {
+    ...base,
+    intent: base.intent,
+    key_message: String(card.key_message || card.title || base.key_message || card.intent || 'Slide'),
+    content,
+  };
+  (slide as any).slide_id = card.card_id;
+  if (card.speaker_notes) (slide as any).speaker_notes = card.speaker_notes;
+  return slide;
+}
+
+/**
+ * Project a deck document to a renderable UnifiedReportJSON, using the deck's
+ * last-known rich render model (`unified_json`) as the content base and the
+ * edited cards (`deck_json`) as the overlay. See the block comment above for
+ * the data-model rationale. Card order / additions / deletions follow the
+ * cards; unmatched cards fall back to the (intent-coerced) flattened shape.
+ */
+export function deckDocumentToRenderableUnifiedJson(
+  deck: DeckDocument,
+  baseUnified: UnifiedReportJSON | null | undefined
+): UnifiedReportJSON {
+  const flattened = deckDocumentToUnifiedJson(deck);
+  const baseSlides = Array.isArray(baseUnified?.slides) ? (baseUnified!.slides as UnifiedSlide[]) : [];
+  if (baseSlides.length === 0) return flattened;
+
+  const deckId = String(deck.deckId || deck.deck_id || '');
+  const baseById = new Map<string, UnifiedSlide>();
+  baseSlides.forEach((slide, index) => {
+    const slideId = (slide as any).slide_id || (slide as any).card_id;
+    if (slideId) baseById.set(String(slideId), slide);
+    // Generator-written unified_json slides carry no slide_id; the deck cards
+    // built from them got deterministic `card-<deckId>-<index>` ids
+    // (deckDocumentFromUnifiedJson), so that id maps back to the base slide by
+    // its generation index — stable across reorders because card ids persist.
+    if (deckId) baseById.set(`card-${deckId}-${index}`, slide);
+  });
+
+  const orderedCards = [...deck.cards].sort((a, b) => a.order_index - b.order_index);
+  const slides = orderedCards.map((card, index) => {
+    const base = baseById.get(String(card.card_id));
+    if (!base || String(base.intent) !== String(card.intent)) {
+      return flattened.slides[index];
+    }
+    return mergeCardOntoBaseSlide(card, base);
+  });
+
+  return { meta: flattened.meta, slides };
 }
