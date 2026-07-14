@@ -197,3 +197,50 @@ Każdy plik w `Harvard/wdrozenie-100/` = pełna teczka 8 warstw (00 nagłówek �
 | 3 — Reszta | OTWARTA | — | — |
 | 4 — Sweepy | OTWARTA | — | — |
 | 5 — Cutover | OTWARTA | — | — |
+
+---
+
+## AKTUALIZACJA 2026-07-14 — audyt 27 modułów vs żywy demo
+
+> **Ten plik jest rekordem historycznym** (plan z 2026-06-13, branch `Londyn`). Sekcje 1-2 powyżej ("GDZIE JESTEŚMY", "ŻYWE BLOKERY") opisują stan sprzed miesiąca i **nie są aktualizowane wstecznie** — zostają jako zapis decyzji z tamtego okresu. Ta sekcja dopisuje **dzisiejszy** (2026-07-14) realny stan, zmierzony na żywym `demo`, nie na dokumentacji/flagach (zgodnie z regułą „Weryfikuj REALNY runtime, nie docy/flagi" z `CLAUDE.md`).
+
+### Tabela 27 modułów — realne % (audyt 07-14)
+
+| Moduł | % gotowości | Uwaga |
+|---|---|---|
+| M01 Czat | 72 | — |
+| M02 Canvas | 70 | — |
+| M03 My Work — organizer | 62 | — |
+| M04 Notatnik | 55 | — |
+| M05 Ideas — Zarządzanie | 75 | — |
+| M06 Ideas — Mind Map | 70 | — |
+| M07 Ideas — Process Flow | 70 | — |
+| M08 Ideas — Table | 65 | — |
+| M09 Ideas — Whiteboard | 75 | — |
+| M10 Wywiad | 65 | bloker głosu z §2 **NIEAKTUALNY** — patrz korekta niżej (Gemini fallback) |
+| M12 Audyty | 85 | — |
+| M13 Inicjatywy | 68 | — |
+| M14 Wdrożenie | 70 | — |
+| M15 Rezultaty | 65 | — |
+| M16 Finanse | 65 | — |
+| M17 Outputs | 68 | — |
+| M18 Dokumenty | 86 | — |
+| M19 Prezentacje | 55 | — |
+| M20 Tabele Studio | 72 | — |
+| M21 Meeting | 78 | — |
+| M22 AI OS | 70 | — |
+| M23 Organizacja | 75 | — |
+| M24 Admin | 65 | — |
+| M26 Portal Partnerski | 78 | — |
+| M27 SuperAdmin | ~55 | zablokowany — bez konta superadmin, weryfikacja niepełna |
+| A1 Affiliate (stub) | — | **ZAMKNIĘTE** (bez zmian vs 06-19: descoped, orphan view do `rm`) |
+| M11 Narzędzia | — | **descoped** (bez zmian vs plan: pusty szablon karty, brak realnego kodu — nie planujemy) |
+
+### Kluczowe korekty vs plan 2026-06-13 (§2 powyżej)
+
+1. **Bloker M10 głosu — NIEAKTUALNY.** §2a opisywał "PROD P0: głos w wywiadzie nie zapisuje", blokowane na `OPENAI_API_KEY` na Railway centerbeam. Stan 07-14: obejście działa przez **Gemini fallback** — bloker z §2a już nie odpowiada rzeczywistości, M10 mierzy się dziś na 65% z innych przyczyn (nie głos).
+2. **DP-3 multiplayer — ZAIMPLEMENTOWANE.** Wątek multiplayer (M09 Whiteboard/Ideas, opisany w §2a jako "ZAMKNIĘTE 2026-06-19: org-read fallback, realtime=v1, shared-WRITE→v1.1") ma dziś pełną implementację DP-3, nie tylko fallback odczytu.
+3. **Plan celował w `Londyn`, ale praca poszła na `demo`.** Ten plik zakłada branch `Londyn` jako cel (nagłówek pliku). Od 07-08 cała mechanika ląduje na `origin/demo`, które jest dziś **658 commitów przed `Londyn`** (nie ~130, jak szacowano jeszcze 07-09 — patrz `_STATUS_3_FILARY.html`). Forward-port demo→Londyn per-SHA (blok B7 skilla `consultify-petla`) pozostaje otwarty.
+4. **CI od dziś bramkuje demo.** Nowy gate CI (Postgres service + migracje w coverage job, commit `61c7c571ac`) chroni `demo` przed regresją na poziomie testów — czego plan z 06-13 (Faza 4 „E2E w PR-gate") jeszcze nie zakładał jako działającego mechanizmu.
+
+**Metoda:** liczby % w tabeli wyżej pochodzą z dzisiejszego przelotu audytowego 27 modułów na żywym `demo` (nie z kart audytu Harvard z czerwca, które §1/§2 tego pliku cytują jako punkt wyjścia — te karty są dziś przestarzałe o ~1 miesiąc pracy).
