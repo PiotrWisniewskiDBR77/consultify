@@ -26,15 +26,7 @@ import PDFParserService from './pdfParserService.js';
 
 const LOG = '[DocExtract]';
 
-export type ExtractableFormat =
-  | 'pdf'
-  | 'txt'
-  | 'md'
-  | 'docx'
-  | 'xlsx'
-  | 'csv'
-  | 'pptx'
-  | 'unknown';
+export type ExtractableFormat = 'pdf' | 'txt' | 'md' | 'docx' | 'xlsx' | 'csv' | 'pptx' | 'unknown';
 
 /** Mimetypy akceptowane przez ingest RAG (multer fileFilter woła to samo). */
 export const SUPPORTED_INGEST_MIMETYPES: readonly string[] = [
@@ -123,9 +115,7 @@ async function docxToText(buffer: Buffer): Promise<string> {
     const docXml = zip.file('word/document.xml');
     if (!docXml) return '';
     const xml = await docXml.async('string');
-    return decodeXmlEntities(
-      xml.replace(/<\/w:p>/g, '\n').replace(/<[^>]+>/g, '')
-    );
+    return decodeXmlEntities(xml.replace(/<\/w:p>/g, '\n').replace(/<[^>]+>/g, ''));
   } catch (err) {
     logger.warn(`${LOG} DOCX OOXML strip failed: ${errMsg(err)}`);
     return '';
