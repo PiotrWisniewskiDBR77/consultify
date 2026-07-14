@@ -13,12 +13,19 @@
  * owns the "which type" step and renders the picked generator with the props it
  * already accepts standalone (isOpen/onClose + its own success callback).
  *
- * See Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0.
- * Gated by unifiedCreateLauncherFlag.ts (default OFF) — wire the caller behind
- * `isUnifiedCreateLauncherEnabled()` before rendering this component.
+ * See Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0/Faza 1.
+ * Gated by unifiedCreateLauncherFlag.ts (default ON, akcept Piotra 2026-07-14) —
+ * wire the caller behind `isUnifiedCreateLauncherEnabled()` before rendering
+ * this component.
+ *
+ * I1-I3 Faza 1 — `defaultType` (optional): when a host module already knows
+ * which entity it wants (e.g. Initiatives Hub → 'initiative'), pass it to skip
+ * Krok 0 and open the picked generator directly — matches plan §5 "Krok 0 ...
+ * pomijalny — jeśli launcher wie z góry jaki typ, od razu Krok 1". Leave it
+ * unset (My Work / Interview global "+ Nowy") to keep the full 3-way chooser.
  */
 import { Lightbulb, Scale, Target, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -40,6 +47,12 @@ export interface UnifiedCreateLauncherProps {
   /** Passed through to InitiativeCharterWizard / decision POST. */
   projectId?: string;
   isPolish?: boolean;
+  /**
+   * When set, skips Krok 0 (type chooser) and opens that generator directly —
+   * for host modules with an obvious default (Initiatives Hub → 'initiative').
+   * Re-applied whenever the launcher re-opens (see effect below).
+   */
+  defaultType?: CreatorType;
 }
 
 const CHOICES: Array<{
@@ -77,13 +90,22 @@ export const UnifiedCreateLauncher: React.FC<UnifiedCreateLauncherProps> = ({
   onCreated,
   projectId,
   isPolish: isPolishProp,
+  defaultType,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
-  const [selected, setSelected] = useState<CreatorType | null>(null);
+  const [selected, setSelected] = useState<CreatorType | null>(defaultType ?? null);
+
+  // Re-sync to defaultType every time the launcher opens fresh, so a host with
+  // a fixed context (e.g. Initiatives Hub) always skips straight to Krok 1
+  // instead of showing a stale selection from a previous open/close cycle.
+  useEffect(() => {
+    if (isOpen) setSelected(defaultType ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const handleFullClose = () => {
-    setSelected(null);
+    setSelected(defaultType ?? null);
     onClose();
   };
 

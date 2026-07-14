@@ -87,6 +87,7 @@ import {
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TeresaMark } from '@/components/shared/TeresaMark';
+import { UnifiedCreateLauncher } from '@/components/shared/UnifiedCreateLauncher';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -114,6 +115,7 @@ import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
+import { isUnifiedCreateLauncherEnabled } from '@/utils/unifiedCreateLauncherFlag';
 
 import {
   type FilterChip,
@@ -724,6 +726,11 @@ export const InterviewHub: React.FC = () => {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showSendBackModal, setShowSendBackModal] = useState(false);
   const [showInsightModal, setShowInsightModal] = useState(false);
+  // I1-I3 Faza 1 — unified "+ Nowy" launcher (Insight/Initiative/Decision),
+  // additive next to the existing per-tab CTA. Gated by
+  // isUnifiedCreateLauncherEnabled() — see
+  // Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0/1.
+  const [showUnifiedLauncher, setShowUnifiedLauncher] = useState(false);
   // #11b — Manager approve flow with AI snapshot panel.
   const [showApproveModal, setShowApproveModal] = useState(false);
   // #7b — Manager "Change due date" inline modal.
@@ -9200,7 +9207,7 @@ Return ONLY the answer text (no markdown fences).`;
   ]);
 
   // Tab-specific primary CTA
-  const primaryCta = useMemo(() => {
+  const tabPrimaryCta = useMemo(() => {
     if (activeDocumentId) return null;
     if (activeTab === 'sessions') {
       return (
@@ -9281,6 +9288,30 @@ Return ONLY the answer text (no markdown fences).`;
     handleNewSession,
     handleNewTemplate,
   ]);
+
+  // I1-I3 Faza 1 — unified "+ Nowy" launcher trigger, additive next to the
+  // existing per-tab CTA (tabPrimaryCta above). Read directly (not memoized)
+  // so a runtime flag flip (URL/localStorage override) is picked up on the
+  // next render, matching the MyWorkHub Faza 0 pattern.
+  const unifiedLauncherTrigger =
+    !activeDocumentId && isUnifiedCreateLauncherEnabled() ? (
+      <button
+        type="button"
+        onClick={() => setShowUnifiedLauncher(true)}
+        data-testid="interview-unified-create-launcher-trigger"
+        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+      >
+        <span>{isPolish ? '+ Nowy' : '+ New'}</span>
+      </button>
+    ) : null;
+
+  const primaryCta =
+    tabPrimaryCta || unifiedLauncherTrigger ? (
+      <div className="flex items-center gap-2">
+        {tabPrimaryCta}
+        {unifiedLauncherTrigger}
+      </div>
+    ) : null;
 
   // Command row content (from renderCommandRow, minus search/dynamic tabs which ModuleHub handles)
   const commandRowContent = useMemo(() => {
@@ -9945,6 +9976,30 @@ Return ONLY the answer text (no markdown fences).`;
           setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         }}
       />
+
+      {/* I1-I3 Faza 1 — unified "+ Nowy" launcher (Insight/Initiative charter/
+          Decision). No defaultType here — Interview mixes Insight generation
+          (this hub) and Initiative (portfolio wizard above, out of scope per
+          ADR #68b), so the full Krok 0 chooser stays. */}
+      {isUnifiedCreateLauncherEnabled() && (
+        <UnifiedCreateLauncher
+          isOpen={showUnifiedLauncher}
+          onClose={() => setShowUnifiedLauncher(false)}
+          projectId={currentProjectId || undefined}
+          isPolish={isPolish}
+          onCreated={async (type) => {
+            setShowUnifiedLauncher(false);
+            if (type === 'insight') {
+              const insightsRes = await V8InterviewApi.listInsights()
+                .then((r) => r.insights)
+                .catch(() => Api.get('/interview/insights').catch(() => []));
+              setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+            } else if (type === 'initiative') {
+              void loadInterviewInitiatives();
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
