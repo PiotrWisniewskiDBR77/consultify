@@ -1,11 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import logger from '../../../utils/Logger.js';
+import { runAgentRuntime } from '../agentRuntime/agentRuntimeService.js';
+import type { AgentRuntimeDefinition } from '../agentRuntime/types.js';
 import { retrieveAgentAuditKnowledge } from './agentAuditKnowledgeService.js';
 import { logAgentAuditEvent } from './agentAuditMetricsService.js';
 import { retrieveAgentAuditWebSources } from './agentAuditWebResearchService.js';
 import { getAgentDefinition } from './agentRegistry.js';
 import {
+  type AgentDefinition,
   AgentReviewSchema,
   type DecisionContext,
   type GateExplanation,
@@ -14,6 +16,10 @@ import {
   type SourceUsed,
   type SuggestedAgentsSet,
 } from './types.js';
+
+/** Per-role audit review, parsed+post-processed. Kept as a type alias so the generic
+ *  `AgentRuntimeDefinition<ReviewArgs, AuditReview, OrchestratorVerdict>` below reads clearly. */
+type AuditReview = ReturnType<typeof AgentReviewSchema.parse>;
 
 type SuggestArgs = {
   decisionContext: DecisionContext;
@@ -494,301 +500,312 @@ function buildDirectedDeepeningPrompt(args: {
   return lines.join('\n');
 }
 
-export async function runAgentAudit(args: ReviewArgs): Promise<{
+// ─────────────────────────────────────────────────────────────────────────────
+// HP-2 (Harvey-Parity Blok A): audit-specific adapter for the generic agent
+// runtime (`agentRuntime/agentRuntimeService.ts`). This block wires the SAME
+// logic that used to live inline in `runAgentAudit` into an
+// `AgentRuntimeDefinition`. Event type strings, log prefix, prompt text, gate
+// logic and validators are byte-identical to the pre-HP-2 implementation —
+// only the plan/adapt/interact/aggregate loop moved to the generic runtime.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AUDIT_EVENT_TYPES = {
+  state: 'agent_audit_state',
+  reviewProgress: 'agent_review_progress',
+  sources: 'agent_sources',
+} as const;
+
+function resolveAuditAgent(agentId: string): AgentDefinition | null {
+  return getAgentDefinition(agentId);
+}
+
+async function gatherAuditSources(ctx: {
+  runArgs: ReviewArgs;
+  agentId: string;
+  agentMeta: unknown;
   orchestratorRunId: string;
-  reviews: Array<ReturnType<typeof AgentReviewSchema.parse>>;
-  verdict: OrchestratorVerdict;
-}> {
-  const orchestratorRunId = uuidv4();
-  const dt = normalizeText(args.deepThinkingReport);
-  if (!dt) throw new Error('deepThinkingReport is required');
+  emit: (payload: Record<string, unknown>) => void;
+}): Promise<{ kb: SourceUsed[]; web: SourceUsed[]; allowedWebUrls: Set<string> }> {
+  const def = ctx.agentMeta as AgentDefinition;
+  const args = ctx.runArgs;
 
-  const langCode = (args.language || 'pl').split('-')[0];
-  const isPl = langCode === 'pl';
-  const iteration = args.loopIteration || 1;
-
-  // Lazy import heavy AI modules (keeps unit tests + cold starts fast)
-  const { modelRouter } = await import('../modelRouter.js');
-  const { llmService } = await import('../llmService.js');
-
-  const tier = (args.selectedTier || 'STANDARD') as any;
-  const modelCfg = args.selectedModelId
-    ? await modelRouter.getProviderConfig(args.selectedModelId, tier)
-    : await modelRouter.select({
-        capability: 'chat_simple',
-        tier,
-        organizationId: 'system',
-        options: { tier },
-      } as any);
-
-  const reviews: Array<ReturnType<typeof AgentReviewSchema.parse>> = [];
-
-  if (args.organizationId && args.userId) {
-    void logAgentAuditEvent({
-      organizationId: args.organizationId,
-      userId: args.userId,
-      runId: orchestratorRunId,
-      conversationId: args.conversationId || null,
-      eventType: 'run_started',
-      payload: {
-        agentsCount: Array.isArray(args.agentIds) ? args.agentIds.length : 0,
-        userIntent: args.userIntent || 'validate',
-        loopIteration: args.loopIteration || 1,
-        webSearchEnabled: Boolean(args.webSearchEnabled),
-      },
+  const kbQueryParts: string[] = [];
+  kbQueryParts.push(String(args.decisionContext?.topic || ''));
+  if (args.decisionContext?.industry)
+    kbQueryParts.push(`industry: ${String(args.decisionContext.industry)}`);
+  if (args.decisionContext?.horizon)
+    kbQueryParts.push(`horizon: ${String(args.decisionContext.horizon)}`);
+  kbQueryParts.push(`agent: ${def.displayName?.en || def.id}`);
+  if (Array.isArray(def.defaultRiskAreas) && def.defaultRiskAreas.length) {
+    kbQueryParts.push(`riskAreas: ${def.defaultRiskAreas.join(', ')}`);
+  }
+  const kbQuery = kbQueryParts.filter(Boolean).join('\n');
+  ctx.emit({
+    type: AUDIT_EVENT_TYPES.reviewProgress,
+    orchestratorRunId: ctx.orchestratorRunId,
+    agentId: ctx.agentId,
+    stage: 'kb_retrieval',
+  });
+  const kbSources = await retrieveAgentAuditKnowledge({
+    organizationId: args.organizationId || null,
+    agentId: ctx.agentId,
+    query: kbQuery,
+    limit: 4,
+  });
+  if (kbSources.length) {
+    ctx.emit({
+      type: AUDIT_EVENT_TYPES.sources,
+      orchestratorRunId: ctx.orchestratorRunId,
+      agentId: ctx.agentId,
+      kind: 'kb',
+      sources: kbSources,
     });
-    if ((args.loopIteration || 1) > 1) {
-      void logAgentAuditEvent({
-        organizationId: args.organizationId,
-        userId: args.userId,
-        runId: orchestratorRunId,
-        conversationId: args.conversationId || null,
-        eventType: 'loop_iteration',
-        payload: { loopIteration: args.loopIteration || 1 },
-      });
-    }
   }
 
-  args.emit?.({
-    type: 'agent_audit_state',
-    state: 'reviewing',
-    orchestratorRunId,
-    agentsTotal: Array.isArray(args.agentIds) ? args.agentIds.length : 0,
+  const webQuery = [
+    String(args.decisionContext?.topic || ''),
+    args.decisionContext?.industry ? `industry: ${String(args.decisionContext.industry)}` : '',
+    `agent: ${def.displayName?.en || def.id}`,
+    Array.isArray(def.defaultRiskAreas) && def.defaultRiskAreas.length
+      ? `riskAreas: ${def.defaultRiskAreas.join(', ')}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const webSources = await retrieveAgentAuditWebSources({
+    enabled: args.webSearchEnabled === true,
+    agentId: ctx.agentId,
+    query: webQuery,
+    language: args.language,
+    maxResults: 4,
   });
+  if (webSources.length) {
+    ctx.emit({
+      type: AUDIT_EVENT_TYPES.sources,
+      orchestratorRunId: ctx.orchestratorRunId,
+      agentId: ctx.agentId,
+      kind: 'web',
+      sources: webSources,
+    });
+  }
 
-  await Promise.all(
-    (args.agentIds || []).map(async (agentId) => {
-      const def = getAgentDefinition(agentId);
-      if (!def) {
-        logger.warn('[AgentAudit] Unknown agentId, skipping:', agentId);
-        return;
-      }
-
-      args.emit?.({ type: 'agent_review_progress', orchestratorRunId, agentId, stage: 'start' });
-
-      const kbQueryParts: string[] = [];
-      kbQueryParts.push(String(args.decisionContext?.topic || ''));
-      if (args.decisionContext?.industry)
-        kbQueryParts.push(`industry: ${String(args.decisionContext.industry)}`);
-      if (args.decisionContext?.horizon)
-        kbQueryParts.push(`horizon: ${String(args.decisionContext.horizon)}`);
-      kbQueryParts.push(`agent: ${def.displayName?.en || def.id}`);
-      if (Array.isArray(def.defaultRiskAreas) && def.defaultRiskAreas.length) {
-        kbQueryParts.push(`riskAreas: ${def.defaultRiskAreas.join(', ')}`);
-      }
-      const kbQuery = kbQueryParts.filter(Boolean).join('\n');
-      args.emit?.({
-        type: 'agent_review_progress',
-        orchestratorRunId,
-        agentId,
-        stage: 'kb_retrieval',
-      });
-      const kbSources = await retrieveAgentAuditKnowledge({
-        organizationId: args.organizationId || null,
-        agentId,
-        query: kbQuery,
-        limit: 4,
-      });
-      if (kbSources.length) {
-        args.emit?.({
-          type: 'agent_sources',
-          orchestratorRunId,
-          agentId,
-          kind: 'kb',
-          sources: kbSources,
-        });
-      }
-
-      const webQuery = [
-        String(args.decisionContext?.topic || ''),
-        args.decisionContext?.industry ? `industry: ${String(args.decisionContext.industry)}` : '',
-        `agent: ${def.displayName?.en || def.id}`,
-        Array.isArray(def.defaultRiskAreas) && def.defaultRiskAreas.length
-          ? `riskAreas: ${def.defaultRiskAreas.join(', ')}`
-          : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
-
-      const webSources = await retrieveAgentAuditWebSources({
-        enabled: args.webSearchEnabled === true,
-        agentId,
-        query: webQuery,
-        language: args.language,
-        maxResults: 4,
-      });
-      if (webSources.length) {
-        args.emit?.({
-          type: 'agent_sources',
-          orchestratorRunId,
-          agentId,
-          kind: 'web',
-          sources: webSources,
-        });
-      }
-
-      const allowedWebUrls = new Set(
-        webSources
-          .filter((s) => s.type === 'web_source')
-          .map((s: any) => String(s.url || '').trim())
-          .filter(Boolean)
-      );
-
-      const sys = [
-        def.systemIdentityPrompt,
-        '',
-        'KB_SOURCES_JSON:',
-        JSON.stringify(kbSources, null, 2),
-        '',
-        'WEB_SOURCES_JSON:',
-        JSON.stringify(webSources, null, 2),
-        '',
-        isPl
-          ? 'Jesteś agentem-audytorem. Twoim zadaniem jest audyt JAKOŚCI i RYZYK raportu Deep Thinking, nie tworzenie rozwiązań.'
-          : 'You are an audit agent. Your job is to audit QUALITY and RISKS of the Deep Thinking report, not to create solutions.',
-        isPl
-          ? 'Zasady: nie dodawaj faktów spoza raportu. Każde ryzyko poprzyj cytatem/fragmentem z DT w evidenceFromDT.'
-          : 'Rules: do not add facts outside the report. For each risk, include evidenceFromDT from the DT report.',
-        isPl
-          ? 'KONTRAKT ODPOWIEDZI (MUST): observations[], challengedAssumptions[], impactIfIgnored, whenItFails, topQuestions[] (<=5), findings[].'
-          : 'RESPONSE CONTRACT (MUST): observations[], challengedAssumptions[], impactIfIgnored, whenItFails, topQuestions[] (<=5), findings[].',
-        isPl
-          ? 'ZAKAZ: nie dawaj rekomendacji wdrożeniowych ani "zrób X". Jesteś audytorem jakości/ryzyk, nie konsultantem od wdrożeń.'
-          : 'FORBIDDEN: do not give implementation recommendations or "do X". You are a risk/quality auditor, not an implementation consultant.',
-        isPl
-          ? 'Transparentność: w sourcesUsed dla każdego finding podaj listę źródeł użytych do wniosku: dt_section / kb_snippet / web_source. Jeśli nie masz KB/web, użyj dt_section.'
-          : 'Transparency: for each finding, fill sourcesUsed with the sources used for the claim: dt_section / kb_snippet / web_source. If no KB/web available, use dt_section.',
-        isPl
-          ? 'Jeśli używasz KB: w sourcesUsed dodaj kb_snippet i skopiuj docId/title/version/score ze "KB_SOURCES_JSON" (zero halucynacji identyfikatorów).'
-          : 'If you use KB: in sourcesUsed add kb_snippet and copy docId/title/version/score from KB_SOURCES_JSON (no hallucinated identifiers).',
-        isPl
-          ? 'Jeśli używasz WWW: wolno cytować WYŁĄCZNIE źródła z "WEB_SOURCES_JSON". Jeśli cytujesz URL, MUSI być w sourcesUsed jako web_source. Nie wolno wklejać żadnych innych linków.'
-          : 'If you use the web: you may cite ONLY sources from WEB_SOURCES_JSON. If you cite a URL, it MUST appear in sourcesUsed as web_source. Do not include any other links.',
-        isPl
-          ? 'Jeśli brakuje danych, dodaj pytania w missingDataQuestions. Pytania must-have oznacz prefiksem "MUST:".'
-          : 'If data is missing, add questions to missingDataQuestions. Mark must-have questions with the "MUST:" prefix.',
-        isPl
-          ? 'W suggestedDeepening podaj JEDNĄ ukierunkowaną instrukcję uzupełnienia raportu (nie "myśl dalej").'
-          : 'In suggestedDeepening provide ONE directed instruction to fill the gap (not "think more").',
-        isPl
-          ? 'Zwróć WYŁĄCZNIE poprawny JSON zgodny ze schematem.'
-          : 'Return ONLY valid JSON matching the schema.',
-      ].join('\n');
-
-      const user = [
-        isPl ? 'Kontekst decyzji:' : 'Decision context:',
-        JSON.stringify(args.decisionContext || {}, null, 2),
-        '',
-        isPl ? 'Raport Deep Thinking (zamknięty):' : 'Deep Thinking report (closed):',
-        dt,
-      ].join('\n');
-
-      try {
-        args.emit?.({
-          type: 'agent_review_progress',
-          orchestratorRunId,
-          agentId,
-          stage: 'llm_review',
-        });
-        const out = (await llmService.callStructured({
-          type: 'chat',
-          modelConfig: {
-            provider: modelCfg.provider,
-            id: modelCfg.id,
-            endpoint: (modelCfg as any).endpoint,
-            apiKey: (modelCfg as any).apiKey,
-          },
-          systemPrompt: sys,
-          messages: [{ role: 'user', content: user }],
-          schema: AgentReviewSchema,
-          temperature: 0.2,
-        } as any)) as any;
-
-        const parsed = AgentReviewSchema.parse({
-          ...out.object,
-          agentId,
-          agentVersion: def.version || '1',
-        });
-        // Ensure sourcesUsed is never empty for transparency (fallback to DT evidence)
-        const withSources = {
-          ...parsed,
-          findings: (parsed.findings || []).map((f: any) => ({
-            ...f,
-            sourcesUsed:
-              Array.isArray(f.sourcesUsed) && f.sourcesUsed.length > 0
-                ? f.sourcesUsed
-                : fallbackSourcesUsedFromDT(f.evidenceFromDT || []),
-          })),
-        };
-        const webValidation = validateReviewWebSources({
-          review: withSources,
-          allowedWebUrls,
-          webSearchEnabled: args.webSearchEnabled === true,
-        });
-        const contractValidation = validateAgentContractCompleteness({
-          review: withSources,
-          language: args.language || 'pl',
-        });
-        const recValidation = validateNoSolutionRecommendations({
-          review: withSources,
-          language: args.language || 'pl',
-        });
-
-        const hard =
-          webValidation.ok === false ||
-          contractValidation.ok === false ||
-          recValidation.ok === false;
-        reviews.push({
-          ...withSources,
-          overreach: hard ? 'hard' : parsed.overreach || 'none',
-          overreachReason:
-            webValidation.ok === false
-              ? webValidation.reason
-              : contractValidation.ok === false
-                ? contractValidation.reason
-                : recValidation.ok === false
-                  ? recValidation.reason
-                  : parsed.overreachReason,
-        });
-        args.emit?.({
-          type: 'agent_review_progress',
-          orchestratorRunId,
-          agentId,
-          stage: hard ? 'rejected' : 'done',
-        });
-      } catch (err: any) {
-        logger.warn('[AgentAudit] Agent review failed:', agentId, err?.message || err);
-        // Best-effort: mark as overreach/hard? No. We simply skip failed agent.
-        args.emit?.({
-          type: 'agent_review_progress',
-          orchestratorRunId,
-          agentId,
-          stage: 'error',
-          error: String(err?.message || err || ''),
-        });
-      }
-    })
+  const allowedWebUrls = new Set(
+    webSources
+      .filter((s) => s.type === 'web_source')
+      .map((s: any) => String(s.url || '').trim())
+      .filter(Boolean)
   );
 
-  args.emit?.({ type: 'agent_audit_state', state: 'aggregating', orchestratorRunId });
-  const verdict = aggregateVerdict({
-    decisionContext: args.decisionContext,
-    reviews,
-    userIntent: args.userIntent || 'validate',
-    iteration,
-    language: args.language,
-    forceDepthDiff: args.forceDepthDiff || null,
-  });
+  return { kb: kbSources, web: webSources, allowedWebUrls };
+}
 
-  args.emit?.({
-    type: 'agent_audit_state',
-    state: 'done',
-    orchestratorRunId,
+function buildAuditPrompt(args: {
+  runArgs: ReviewArgs;
+  agentId: string;
+  agentMeta: unknown;
+  kbSources: unknown[];
+  webSources: unknown[];
+}): { system: string; user: string } {
+  const def = args.agentMeta as AgentDefinition;
+  const runArgs = args.runArgs;
+  const langCode = (runArgs.language || 'pl').split('-')[0];
+  const isPl = langCode === 'pl';
+  const dt = normalizeText(runArgs.deepThinkingReport);
+
+  const sys = [
+    def.systemIdentityPrompt,
+    '',
+    'KB_SOURCES_JSON:',
+    JSON.stringify(args.kbSources, null, 2),
+    '',
+    'WEB_SOURCES_JSON:',
+    JSON.stringify(args.webSources, null, 2),
+    '',
+    isPl
+      ? 'Jesteś agentem-audytorem. Twoim zadaniem jest audyt JAKOŚCI i RYZYK raportu Deep Thinking, nie tworzenie rozwiązań.'
+      : 'You are an audit agent. Your job is to audit QUALITY and RISKS of the Deep Thinking report, not to create solutions.',
+    isPl
+      ? 'Zasady: nie dodawaj faktów spoza raportu. Każde ryzyko poprzyj cytatem/fragmentem z DT w evidenceFromDT.'
+      : 'Rules: do not add facts outside the report. For each risk, include evidenceFromDT from the DT report.',
+    isPl
+      ? 'KONTRAKT ODPOWIEDZI (MUST): observations[], challengedAssumptions[], impactIfIgnored, whenItFails, topQuestions[] (<=5), findings[].'
+      : 'RESPONSE CONTRACT (MUST): observations[], challengedAssumptions[], impactIfIgnored, whenItFails, topQuestions[] (<=5), findings[].',
+    isPl
+      ? 'ZAKAZ: nie dawaj rekomendacji wdrożeniowych ani "zrób X". Jesteś audytorem jakości/ryzyk, nie konsultantem od wdrożeń.'
+      : 'FORBIDDEN: do not give implementation recommendations or "do X". You are a risk/quality auditor, not an implementation consultant.',
+    isPl
+      ? 'Transparentność: w sourcesUsed dla każdego finding podaj listę źródeł użytych do wniosku: dt_section / kb_snippet / web_source. Jeśli nie masz KB/web, użyj dt_section.'
+      : 'Transparency: for each finding, fill sourcesUsed with the sources used for the claim: dt_section / kb_snippet / web_source. If no KB/web available, use dt_section.',
+    isPl
+      ? 'Jeśli używasz KB: w sourcesUsed dodaj kb_snippet i skopiuj docId/title/version/score ze "KB_SOURCES_JSON" (zero halucynacji identyfikatorów).'
+      : 'If you use KB: in sourcesUsed add kb_snippet and copy docId/title/version/score from KB_SOURCES_JSON (no hallucinated identifiers).',
+    isPl
+      ? 'Jeśli używasz WWW: wolno cytować WYŁĄCZNIE źródła z "WEB_SOURCES_JSON". Jeśli cytujesz URL, MUSI być w sourcesUsed jako web_source. Nie wolno wklejać żadnych innych linków.'
+      : 'If you use the web: you may cite ONLY sources from WEB_SOURCES_JSON. If you cite a URL, it MUST appear in sourcesUsed as web_source. Do not include any other links.',
+    isPl
+      ? 'Jeśli brakuje danych, dodaj pytania w missingDataQuestions. Pytania must-have oznacz prefiksem "MUST:".'
+      : 'If data is missing, add questions to missingDataQuestions. Mark must-have questions with the "MUST:" prefix.',
+    isPl
+      ? 'W suggestedDeepening podaj JEDNĄ ukierunkowaną instrukcję uzupełnienia raportu (nie "myśl dalej").'
+      : 'In suggestedDeepening provide ONE directed instruction to fill the gap (not "think more").',
+    isPl
+      ? 'Zwróć WYŁĄCZNIE poprawny JSON zgodny ze schematem.'
+      : 'Return ONLY valid JSON matching the schema.',
+  ].join('\n');
+
+  const user = [
+    isPl ? 'Kontekst decyzji:' : 'Decision context:',
+    JSON.stringify(runArgs.decisionContext || {}, null, 2),
+    '',
+    isPl ? 'Raport Deep Thinking (zamknięty):' : 'Deep Thinking report (closed):',
+    dt,
+  ].join('\n');
+
+  return { system: sys, user };
+}
+
+function postProcessAuditReview(args: {
+  raw: unknown;
+  agentId: string;
+  agentMeta: unknown;
+  runArgs: ReviewArgs;
+}): AuditReview {
+  const def = args.agentMeta as AgentDefinition;
+  const parsed = AgentReviewSchema.parse({
+    ...(args.raw as any),
+    agentId: args.agentId,
+    agentVersion: def.version || '1',
+  });
+  // Ensure sourcesUsed is never empty for transparency (fallback to DT evidence)
+  const withSources = {
+    ...parsed,
+    findings: (parsed.findings || []).map((f: any) => ({
+      ...f,
+      sourcesUsed:
+        Array.isArray(f.sourcesUsed) && f.sourcesUsed.length > 0
+          ? f.sourcesUsed
+          : fallbackSourcesUsedFromDT(f.evidenceFromDT || []),
+    })),
+  };
+  return withSources;
+}
+
+function applyAuditValidation(args: {
+  review: AuditReview;
+  results: Array<{ ok: boolean; reason?: string }>;
+}): { review: AuditReview; hard: boolean } {
+  const [webValidation, contractValidation, recValidation] = args.results;
+  const hard = args.results.some((r) => r.ok === false);
+  return {
+    review: {
+      ...args.review,
+      overreach: hard ? 'hard' : (args.review as any).overreach || 'none',
+      overreachReason:
+        webValidation?.ok === false
+          ? webValidation.reason
+          : contractValidation?.ok === false
+            ? contractValidation.reason
+            : recValidation?.ok === false
+              ? recValidation.reason
+              : (args.review as any).overreachReason,
+    } as AuditReview,
+    hard,
+  };
+}
+
+function aggregateAuditVerdict(args: {
+  runArgs: ReviewArgs;
+  reviews: AuditReview[];
+  orchestratorRunId: string;
+}): OrchestratorVerdict {
+  return aggregateVerdict({
+    decisionContext: args.runArgs.decisionContext,
+    reviews: args.reviews,
+    userIntent: args.runArgs.userIntent || 'validate',
+    iteration: args.runArgs.loopIteration || 1,
+    language: args.runArgs.language,
+    forceDepthDiff: args.runArgs.forceDepthDiff || null,
+  });
+}
+
+const AUDIT_AGENT_RUNTIME_DEFINITION: AgentRuntimeDefinition<
+  ReviewArgs,
+  AuditReview,
+  OrchestratorVerdict
+> = {
+  type: 'audit',
+  intents: ['validate', 'stress_test', 'approve'],
+  steps: ['plan', 'gather_sources', 'build_prompt', 'interact_llm', 'validate', 'aggregate'],
+  capability: 'chat_simple',
+  logPrefix: '[AgentAudit]',
+  eventTypes: AUDIT_EVENT_TYPES,
+  resolveAgent: resolveAuditAgent,
+  gatherSources: gatherAuditSources,
+  buildPrompt: buildAuditPrompt,
+  schema: AgentReviewSchema,
+  postProcess: postProcessAuditReview,
+  validators: [
+    ({ review, allowedWebUrls, runArgs }) =>
+      validateReviewWebSources({
+        review,
+        allowedWebUrls,
+        webSearchEnabled: runArgs.webSearchEnabled === true,
+      }),
+    ({ review, runArgs }) =>
+      validateAgentContractCompleteness({ review, language: runArgs.language || 'pl' }),
+    ({ review, runArgs }) =>
+      validateNoSolutionRecommendations({ review, language: runArgs.language || 'pl' }),
+  ],
+  applyValidation: applyAuditValidation,
+  aggregate: aggregateAuditVerdict,
+  describeVerdictForEmit: (verdict) => ({
     qualityStatus: verdict.qualityStatus,
     gatesTriggered: verdict.gatesTriggered,
-  });
+  }),
+  onRunStart: ({ runArgs, orchestratorRunId }) => {
+    if (runArgs.organizationId && runArgs.userId) {
+      void logAgentAuditEvent({
+        organizationId: runArgs.organizationId,
+        userId: runArgs.userId,
+        runId: orchestratorRunId,
+        conversationId: runArgs.conversationId || null,
+        eventType: 'run_started',
+        payload: {
+          agentsCount: Array.isArray(runArgs.agentIds) ? runArgs.agentIds.length : 0,
+          userIntent: runArgs.userIntent || 'validate',
+          loopIteration: runArgs.loopIteration || 1,
+          webSearchEnabled: Boolean(runArgs.webSearchEnabled),
+        },
+      });
+      if ((runArgs.loopIteration || 1) > 1) {
+        void logAgentAuditEvent({
+          organizationId: runArgs.organizationId,
+          userId: runArgs.userId,
+          runId: orchestratorRunId,
+          conversationId: runArgs.conversationId || null,
+          eventType: 'loop_iteration',
+          payload: { loopIteration: runArgs.loopIteration || 1 },
+        });
+      }
+    }
+  },
+};
 
-  return { orchestratorRunId, reviews, verdict };
+/**
+ * Runs the audit agent. As of HP-2 this is a thin adapter over the generic
+ * `runAgentRuntime` — the audit agent is ONE INSTANCE of `AgentRuntimeDefinition`,
+ * not a bespoke pipeline. External behaviour (exports, emitted event shapes,
+ * gates, validators) is unchanged from the pre-HP-2 implementation.
+ */
+export async function runAgentAudit(args: ReviewArgs): Promise<{
+  orchestratorRunId: string;
+  reviews: AuditReview[];
+  verdict: OrchestratorVerdict;
+}> {
+  const dt = normalizeText(args.deepThinkingReport);
+  if (!dt) throw new Error('deepThinkingReport is required');
+  return runAgentRuntime(AUDIT_AGENT_RUNTIME_DEFINITION, args);
 }
 
 export function aggregateVerdict(args: {
