@@ -84,20 +84,17 @@ export function CapabilityGate({
     const body = allowed ? children : gateMode === 'disable' ? renderDisabled(children) : null;
     return (
       <span
-        className="relative inline-flex rounded-md"
-        style={{
-          outline: `1.5px dashed ${verdict ? 'var(--c-success)' : 'var(--c-warning)'}`,
-          outlineOffset: 2,
-        }}
+        className={`relative inline-flex rounded-md outline-dashed outline-1 outline-offset-2 ${
+          verdict ? 'outline-[color:var(--c-success)]' : 'outline-[color:var(--c-warning)]'
+        }`}
         data-capability={label}
         data-would-allow={verdict}
       >
         {body ?? <span className="px-2 py-1 text-[10px] italic opacity-60">({label}: hidden)</span>}
         <span
-          className="absolute -top-2 -right-1 z-10 px-1 rounded text-[9px] font-mono leading-4 text-white"
-          style={{
-            background: verdict ? 'var(--c-success)' : 'var(--c-warning)',
-          }}
+          className={`absolute -top-2 -right-1 z-10 px-1 rounded text-[9px] font-mono leading-4 text-white ${
+            verdict ? 'bg-[color:var(--c-success)]' : 'bg-[color:var(--c-warning)]'
+          }`}
         >
           {label} · {verdict ? 'ALLOW' : `DENY(${mode})`}
         </span>
