@@ -950,13 +950,13 @@ function renderPreviewInput(
     case 'singleSelect':
       return (
         <select disabled className={base}>
-          <option>{t('table.formBuilder.selectPlaceholder', 'Select...')}</option>
+          <option>{t('ideas.table.formBuilder.selectPlaceholder', 'Select...')}</option>
         </select>
       );
     case 'multiSelect':
       return (
         <select disabled multiple className={base}>
-          <option>{t('table.formBuilder.selectPlaceholder', 'Select...')}</option>
+          <option>{t('ideas.table.formBuilder.selectPlaceholder', 'Select...')}</option>
         </select>
       );
     default:

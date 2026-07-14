@@ -320,7 +320,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                       </span>
                       {isPrimary && (
                         <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                          {t('table.fieldManager.primary', 'Primary')}
+                          {t('ideas.table.fieldManager.primary', 'Primary')}
                         </span>
                       )}
                     </div>
@@ -751,7 +751,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 value={selectOptions}
                 onChange={(e) => setSelectOptions(e.target.value)}
                 placeholder={t(
-                  'table.addColumn.optionsPlaceholder',
+                  'ideas.table.addColumn.optionsPlaceholder',
                   'Option 1, Option 2, Option 3'
                 )}
                 className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
@@ -790,7 +790,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {fieldType === 'rating' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                {t('table.fieldManager.max', 'Max')}
+                {t('ideas.table.fieldManager.max', 'Max')}
               </label>
               <input
                 type="number"

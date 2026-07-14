@@ -264,7 +264,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 value={options}
                 onChange={(e) => setOptions(e.target.value)}
                 placeholder={t(
-                  'table.addColumn.optionsPlaceholder',
+                  'ideas.table.addColumn.optionsPlaceholder',
                   'Option 1, Option 2, Option 3'
                 )}
                 className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
@@ -414,11 +414,11 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   onChange={(e) => setRollupFunction(e.target.value)}
                   className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
-                  <option value="count">{t('table.addColumn.rollup.count', 'Count')}</option>
-                  <option value="sum">{t('table.addColumn.rollup.sum', 'Sum')}</option>
-                  <option value="avg">{t('table.addColumn.rollup.average', 'Average')}</option>
-                  <option value="min">{t('table.addColumn.rollup.min', 'Min')}</option>
-                  <option value="max">{t('table.addColumn.rollup.max', 'Max')}</option>
+                  <option value="count">{t('ideas.table.addColumn.rollup.count', 'Count')}</option>
+                  <option value="sum">{t('ideas.table.addColumn.rollup.sum', 'Sum')}</option>
+                  <option value="avg">{t('ideas.table.addColumn.rollup.average', 'Average')}</option>
+                  <option value="min">{t('ideas.table.addColumn.rollup.min', 'Min')}</option>
+                  <option value="max">{t('ideas.table.addColumn.rollup.max', 'Max')}</option>
                   <option value="percent_checked">{isPl ? '% zaznaczonych' : '% checked'}</option>
                 </select>
               </div>

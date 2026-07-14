@@ -299,7 +299,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 {(form.channel === 'slack' || form.channel === 'teams') && (
                   <div>
                     <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                      {t('table.distributionBuilder.webhookUrl', 'Webhook URL')}
+                      {t('ideas.table.distributionBuilder.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"
@@ -313,7 +313,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 {form.channel === 'webhook' && (
                   <div>
                     <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                      {t('table.distributionBuilder.webhookUrl', 'Webhook URL')}
+                      {t('ideas.table.distributionBuilder.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"

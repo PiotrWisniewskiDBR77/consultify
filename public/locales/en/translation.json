@@ -2126,8 +2126,14 @@
       "emptyHint": "As your projects and context grow, signals worth your attention will appear here.",
       "filter": {
         "all": "All",
-        "saved": "Saved"
-      }
+        "saved": "Saved",
+        "new": "New",
+        "updated": "Updated",
+        "watching": "Watching"
+      },
+      "loadErrorToast": "Radar could not load. Showing recovery state.",
+      "title": "Your Radar",
+      "description": "A personal map of signals worth your attention — across your development, projects, industry and role."
     },
     "calendar": "Calendar",
     "tasks": "Tasks",
@@ -20102,96 +20108,7 @@
     "viewUnavailable": "View Unavailable",
     "sharedViewReadOnly": "Shared view — read only",
     "search": "Search",
-    "empty": "No presentations yet.",
-    "aiCopilot": {
-      "title": "AI Copilot"
-    },
-    "addColumn": {
-      "optionsPlaceholder": "Option 1, Option 2, Option 3",
-      "rollup": {
-        "count": "Count",
-        "sum": "Sum",
-        "average": "Average",
-        "min": "Min",
-        "max": "Max"
-      }
-    },
-    "cellRenderer": {
-      "aiPending": "AI pending...",
-      "regenerate": "Regenerate"
-    },
-    "fieldManager": {
-      "max": "Max",
-      "primary": "Primary"
-    },
-    "formBuilder": {
-      "selectPlaceholder": "Select..."
-    },
-    "ideaScoring": {
-      "reset": "Reset"
-    },
-    "ideaStartupTemplates": {
-      "startWithAi": "Start with AI",
-      "blankCanvas": "Blank canvas"
-    },
-    "interfaceDesigner": {
-      "defaults": {
-        "textContent": "Enter text here...",
-        "buttonLabel": "Click me",
-        "searchPlaceholder": "Search...",
-        "summaryLabel": "Total"
-      },
-      "preview": {
-        "tableName": "Table: {{name}}",
-        "selectATable": "Select a table",
-        "chart": "Chart: {{type}}",
-        "button": "Button",
-        "summary": "Summary",
-        "recordDetail": "Record Detail",
-        "filterControl": "Filter Control"
-      },
-      "config": {
-        "heading": "{{type}} Config",
-        "table": "Table",
-        "selectTable": "Select table...",
-        "content": "Content",
-        "fontSize": "Font Size",
-        "chartType": "Chart Type",
-        "bar": "Bar",
-        "line": "Line",
-        "pie": "Pie",
-        "donut": "Donut",
-        "label": "Label",
-        "aggregation": "Aggregation",
-        "count": "Count",
-        "sum": "Sum",
-        "average": "Average",
-        "min": "Min",
-        "max": "Max",
-        "placeholder": "Placeholder"
-      },
-      "addBlock": "Add Block",
-      "saveLayout": "Save Layout",
-      "dragToReorder": "Drag to reorder",
-      "emptyTitle": "Empty interface",
-      "emptyBody": "Add blocks from the left panel to build your interface",
-      "blockTypes": {
-        "tableGrid": "Table Grid",
-        "recordDetail": "Record Detail",
-        "chart": "Chart",
-        "textBlock": "Text Block",
-        "actionButton": "Action Button",
-        "filterControl": "Filter Control",
-        "searchBar": "Search Bar",
-        "summaryCard": "Summary Card"
-      }
-    },
-    "cellEditor": {
-      "clear": "Clear"
-    },
-    "distributionBuilder": {
-      "webhookUrl": "Webhook URL"
-    }
+    "empty": "No presentations yet."
   },
   "documents": {
     "upload": "Upload",
@@ -22753,7 +22670,10 @@
       "scoringModel": "Scoring Model",
       "exportToPresentation": "Export to Presentation",
       "ideaPipeline": "Idea Pipeline",
-      "aiCopilot": "AI Copilot",
+      "aiCopilot": {
+        "label": "AI Copilot",
+        "title": "AI Copilot"
+      },
       "voiceImage": "Voice / Image",
       "crossTableRelations": "Cross-table Relations",
       "heatmap": "Heatmap",
@@ -22771,8 +22691,63 @@
       "interfaces": "Interfaces",
       "models": "Models",
       "workflow": "Workflow",
-      "interfaceDesigner": "Interface Designer",
-      "formBuilder": "Form Builder",
+      "interfaceDesigner": {
+        "label": "Interface Designer",
+        "addBlock": "Add Block",
+        "blockTypes": {
+          "actionButton": "Action Button",
+          "chart": "Chart",
+          "filterControl": "Filter Control",
+          "recordDetail": "Record Detail",
+          "searchBar": "Search Bar",
+          "summaryCard": "Summary Card",
+          "tableGrid": "Table Grid",
+          "textBlock": "Text Block"
+        },
+        "config": {
+          "aggregation": "Aggregation",
+          "average": "Average",
+          "bar": "Bar",
+          "chartType": "Chart Type",
+          "content": "Content",
+          "count": "Count",
+          "donut": "Donut",
+          "fontSize": "Font Size",
+          "heading": "{{type}} Config",
+          "label": "Label",
+          "line": "Line",
+          "max": "Max",
+          "min": "Min",
+          "pie": "Pie",
+          "placeholder": "Placeholder",
+          "selectTable": "Select table...",
+          "sum": "Sum",
+          "table": "Table"
+        },
+        "defaults": {
+          "buttonLabel": "Click me",
+          "searchPlaceholder": "Search...",
+          "summaryLabel": "Total",
+          "textContent": "Enter text here..."
+        },
+        "dragToReorder": "Drag to reorder",
+        "emptyBody": "Add blocks from the left panel to build your interface",
+        "emptyTitle": "Empty interface",
+        "preview": {
+          "button": "Button",
+          "chart": "Chart: {{type}}",
+          "filterControl": "Filter Control",
+          "recordDetail": "Record Detail",
+          "selectATable": "Select a table",
+          "summary": "Summary",
+          "tableName": "Table: {{name}}"
+        },
+        "saveLayout": "Save Layout"
+      },
+      "formBuilder": {
+        "label": "Form Builder",
+        "selectPlaceholder": "Select..."
+      },
       "tools": "Tools",
       "automations": "Automations",
       "dataSync": "Data Sync",
@@ -23559,7 +23534,38 @@
       "timelineGantt": "Timeline / Gantt",
       "matrix": "Matrix",
       "undoShortcut": "Undo (Ctrl+Z)",
-      "redoShortcut": "Redo (Ctrl+Y)"
+      "redoShortcut": "Redo (Ctrl+Y)",
+      "addColumn": {
+        "optionsPlaceholder": "Option 1, Option 2, Option 3",
+        "rollup": {
+          "average": "Average",
+          "count": "Count",
+          "max": "Max",
+          "min": "Min",
+          "sum": "Sum"
+        }
+      },
+      "cellEditor": {
+        "clear": "Clear"
+      },
+      "cellRenderer": {
+        "aiPending": "AI pending...",
+        "regenerate": "Regenerate"
+      },
+      "distributionBuilder": {
+        "webhookUrl": "Webhook URL"
+      },
+      "fieldManager": {
+        "max": "Max",
+        "primary": "Primary"
+      },
+      "ideaScoring": {
+        "reset": "Reset"
+      },
+      "ideaStartupTemplates": {
+        "blankCanvas": "Blank canvas",
+        "startWithAi": "Start with AI"
+      }
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
@@ -24100,7 +24106,10 @@
       "classifyPrompt": "This note looks like {{typeLabel}}. Convert?",
       "convertedToast": "Created {{target}}: {{title}}",
       "convertedToast2": "Created {{target}}: {{title}}",
-      "pendingProposalsCount": "{{count}} proposals waiting for review"
+      "pendingProposalsCount": "{{count}} proposals waiting for review",
+      "outlinePresentation": "- Context and goal\n- Key observations\n- Business implications\n- Next steps",
+      "outlineAssessment": "- Assessment scope\n- Core questions\n- Evidence to collect\n- Risk areas",
+      "outlineDefault": "- Executive summary\n- Problem analysis\n- Options\n- Recommendations"
     },
     "mentionMenu": {
       "ariaLabel": "Mention an entity",

@@ -1361,8 +1361,14 @@
       "emptyHint": "W miarę rozwoju Twoich projektów i kontekstu pojawią się tu sygnały warte uwagi.",
       "filter": {
         "all": "Wszystkie",
-        "saved": "Zapisane"
-      }
+        "saved": "Zapisane",
+        "new": "Nowe",
+        "updated": "Zaktualizowane",
+        "watching": "Obserwowane"
+      },
+      "loadErrorToast": "Nie udało się wczytać Radaru. Pokazuję stan awaryjny.",
+      "title": "Twój Radar",
+      "description": "Osobista mapa sygnałów wartych Twojej uwagi — w rozwoju, projektach, branży i roli."
     },
     "calendar": "Kalendarz",
     "tasks": "Zadania",
@@ -21152,96 +21158,7 @@
     "viewUnavailable": "Widok niedostępny",
     "sharedViewReadOnly": "Widok udostępniony — tylko do odczytu",
     "search": "Wyszukiwanie",
-    "empty": "Brak prezentacji.",
-    "aiCopilot": {
-      "title": "Kopilot AI"
-    },
-    "addColumn": {
-      "optionsPlaceholder": "Opcja 1, Opcja 2, Opcja 3",
-      "rollup": {
-        "count": "Liczba",
-        "sum": "Suma",
-        "average": "Średnia",
-        "min": "Min",
-        "max": "Maks"
-      }
-    },
-    "cellRenderer": {
-      "aiPending": "AI w toku...",
-      "regenerate": "Wygeneruj ponownie"
-    },
-    "fieldManager": {
-      "max": "Maks",
-      "primary": "Podstawowe"
-    },
-    "formBuilder": {
-      "selectPlaceholder": "Wybierz..."
-    },
-    "ideaScoring": {
-      "reset": "Resetuj"
-    },
-    "ideaStartupTemplates": {
-      "startWithAi": "Zacznij z AI",
-      "blankCanvas": "Pusty canvas"
-    },
-    "interfaceDesigner": {
-      "defaults": {
-        "textContent": "Wpisz tekst tutaj...",
-        "buttonLabel": "Kliknij mnie",
-        "searchPlaceholder": "Szukaj...",
-        "summaryLabel": "Suma"
-      },
-      "preview": {
-        "tableName": "Tabela: {{name}}",
-        "selectATable": "Wybierz tabelę",
-        "chart": "Wykres: {{type}}",
-        "button": "Przycisk",
-        "summary": "Podsumowanie",
-        "recordDetail": "Szczegóły rekordu",
-        "filterControl": "Filtr"
-      },
-      "config": {
-        "heading": "Konfiguracja: {{type}}",
-        "table": "Tabela",
-        "selectTable": "Wybierz tabelę...",
-        "content": "Treść",
-        "fontSize": "Rozmiar czcionki",
-        "chartType": "Typ wykresu",
-        "bar": "Słupkowy",
-        "line": "Liniowy",
-        "pie": "Kołowy",
-        "donut": "Pierścieniowy",
-        "label": "Etykieta",
-        "aggregation": "Agregacja",
-        "count": "Liczba",
-        "sum": "Suma",
-        "average": "Średnia",
-        "min": "Min",
-        "max": "Maks",
-        "placeholder": "Placeholder"
-      },
-      "addBlock": "Dodaj blok",
-      "saveLayout": "Zapisz układ",
-      "dragToReorder": "Przeciągnij, aby zmienić kolejność",
-      "emptyTitle": "Pusty interfejs",
-      "emptyBody": "Dodaj bloki z lewego panelu, aby zbudować interfejs",
-      "blockTypes": {
-        "tableGrid": "Siatka tabeli",
-        "recordDetail": "Szczegóły rekordu",
-        "chart": "Wykres",
-        "textBlock": "Blok tekstowy",
-        "actionButton": "Przycisk akcji",
-        "filterControl": "Filtr",
-        "searchBar": "Pasek wyszukiwania",
-        "summaryCard": "Karta podsumowania"
-      }
-    },
-    "cellEditor": {
-      "clear": "Wyczyść"
-    },
-    "distributionBuilder": {
-      "webhookUrl": "URL webhooka"
-    }
+    "empty": "Brak prezentacji."
   },
   "documents": {
     "upload": "Przesłane",
@@ -23829,7 +23746,10 @@
       "scoringModel": "Model scoringowy",
       "exportToPresentation": "Eksport do prezentacji",
       "ideaPipeline": "Pipeline pomysłów",
-      "aiCopilot": "AI Copilot",
+      "aiCopilot": {
+        "label": "AI Copilot",
+        "title": "Kopilot AI"
+      },
       "voiceImage": "Głos / Obraz",
       "crossTableRelations": "Relacje między tabelami",
       "heatmap": "Heatmapa",
@@ -23847,8 +23767,63 @@
       "interfaces": "Interfejsy",
       "models": "Modele",
       "workflow": "Workflow",
-      "interfaceDesigner": "Projektant interfejsu",
-      "formBuilder": "Kreator formularzy",
+      "interfaceDesigner": {
+        "label": "Projektant interfejsu",
+        "addBlock": "Dodaj blok",
+        "blockTypes": {
+          "actionButton": "Przycisk akcji",
+          "chart": "Wykres",
+          "filterControl": "Filtr",
+          "recordDetail": "Szczegóły rekordu",
+          "searchBar": "Pasek wyszukiwania",
+          "summaryCard": "Karta podsumowania",
+          "tableGrid": "Siatka tabeli",
+          "textBlock": "Blok tekstowy"
+        },
+        "config": {
+          "aggregation": "Agregacja",
+          "average": "Średnia",
+          "bar": "Słupkowy",
+          "chartType": "Typ wykresu",
+          "content": "Treść",
+          "count": "Liczba",
+          "donut": "Pierścieniowy",
+          "fontSize": "Rozmiar czcionki",
+          "heading": "Konfiguracja: {{type}}",
+          "label": "Etykieta",
+          "line": "Liniowy",
+          "max": "Maks",
+          "min": "Min",
+          "pie": "Kołowy",
+          "placeholder": "Placeholder",
+          "selectTable": "Wybierz tabelę...",
+          "sum": "Suma",
+          "table": "Tabela"
+        },
+        "defaults": {
+          "buttonLabel": "Kliknij mnie",
+          "searchPlaceholder": "Szukaj...",
+          "summaryLabel": "Suma",
+          "textContent": "Wpisz tekst tutaj..."
+        },
+        "dragToReorder": "Przeciągnij, aby zmienić kolejność",
+        "emptyBody": "Dodaj bloki z lewego panelu, aby zbudować interfejs",
+        "emptyTitle": "Pusty interfejs",
+        "preview": {
+          "button": "Przycisk",
+          "chart": "Wykres: {{type}}",
+          "filterControl": "Filtr",
+          "recordDetail": "Szczegóły rekordu",
+          "selectATable": "Wybierz tabelę",
+          "summary": "Podsumowanie",
+          "tableName": "Tabela: {{name}}"
+        },
+        "saveLayout": "Zapisz układ"
+      },
+      "formBuilder": {
+        "label": "Kreator formularzy",
+        "selectPlaceholder": "Wybierz..."
+      },
       "tools": "Narzędzia",
       "automations": "Automatyzacje",
       "dataSync": "Synchronizacja danych",
@@ -24635,7 +24610,38 @@
       "timelineGantt": "Oś czasu / Gantt",
       "matrix": "Macierz",
       "undoShortcut": "Cofnij (Ctrl+Z)",
-      "redoShortcut": "Ponów (Ctrl+Y)"
+      "redoShortcut": "Ponów (Ctrl+Y)",
+      "addColumn": {
+        "optionsPlaceholder": "Opcja 1, Opcja 2, Opcja 3",
+        "rollup": {
+          "average": "Średnia",
+          "count": "Liczba",
+          "max": "Maks",
+          "min": "Min",
+          "sum": "Suma"
+        }
+      },
+      "cellEditor": {
+        "clear": "Wyczyść"
+      },
+      "cellRenderer": {
+        "aiPending": "AI w toku...",
+        "regenerate": "Wygeneruj ponownie"
+      },
+      "distributionBuilder": {
+        "webhookUrl": "URL webhooka"
+      },
+      "fieldManager": {
+        "max": "Maks",
+        "primary": "Podstawowe"
+      },
+      "ideaScoring": {
+        "reset": "Resetuj"
+      },
+      "ideaStartupTemplates": {
+        "blankCanvas": "Pusty canvas",
+        "startWithAi": "Zacznij z AI"
+      }
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",
@@ -25176,7 +25182,10 @@
       "classifyPrompt": "Ta notatka wygląda jak {{typeLabel}}. Konwertować?",
       "convertedToast": "Utworzono {{target}}: {{title}}",
       "convertedToast2": "Utworzono {{target}}: {{title}}",
-      "pendingProposalsCount": "{{count}} propozycje czekają na review"
+      "pendingProposalsCount": "{{count}} propozycje czekają na review",
+      "outlinePresentation": "- Kontekst i cel\n- Kluczowe obserwacje\n- Implikacje biznesowe\n- Kolejne kroki",
+      "outlineAssessment": "- Zakres oceny\n- Kluczowe pytania\n- Dowody do zebrania\n- Obszary ryzyka",
+      "outlineDefault": "- Podsumowanie zarządcze\n- Analiza problemu\n- Opcje\n- Rekomendacje"
     },
     "mentionMenu": {
       "ariaLabel": "Wzmiankuj encję",

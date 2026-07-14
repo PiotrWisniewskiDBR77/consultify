@@ -333,7 +333,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 </div>
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold text-c-accent">
-                    {t('table.ideaStartupTemplates.startWithAi', 'Start with AI')}
+                    {t('ideas.table.ideaStartupTemplates.startWithAi', 'Start with AI')}
                   </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
                     {isPl
@@ -359,7 +359,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 </div>
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold text-c-text">
-                    {t('table.ideaStartupTemplates.blankCanvas', 'Blank canvas')}
+                    {t('ideas.table.ideaStartupTemplates.blankCanvas', 'Blank canvas')}
                   </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
                     {isPl

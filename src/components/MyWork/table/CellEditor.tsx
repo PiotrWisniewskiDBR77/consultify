@@ -290,7 +290,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
             }}
             className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
-            {t('table.cellEditor.clear', 'Clear')}
+            {t('ideas.table.cellEditor.clear', 'Clear')}
           </button>
         )}
       </div>

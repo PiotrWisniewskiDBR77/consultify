@@ -127,7 +127,7 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
               }}
               className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
-              {t('table.cellEditor.clear', 'Clear')}
+              {t('ideas.table.cellEditor.clear', 'Clear')}
             </button>
           )}
         </div>
@@ -345,7 +345,7 @@ const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) =>
       <span className="flex-1 text-xs text-c-text truncate">
         {value || (
           <span className="text-c-text-secondary italic">
-            {t('table.cellRenderer.aiPending', 'AI pending...')}
+            {t('ideas.table.cellRenderer.aiPending', 'AI pending...')}
           </span>
         )}
       </span>
@@ -353,7 +353,7 @@ const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) =>
         <button
           onClick={onAIRefresh}
           className="p-0.5 rounded text-c-accent hover:bg-c-accent-soft transition-colors"
-          title={t('table.cellRenderer.regenerate', 'Regenerate')}
+          title={t('ideas.table.cellRenderer.regenerate', 'Regenerate')}
         >
           <RefreshCw size={10} />
         </button>

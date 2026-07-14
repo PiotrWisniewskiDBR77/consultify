@@ -737,7 +737,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 },
                 {
                   icon: Brain,
-                  label: t('ideas.table.aiCopilot', 'AI Copilot'),
+                  label: t('ideas.table.aiCopilot.label', 'AI Copilot'),
                   onClick: props.onShowCopilot,
                 },
                 {
@@ -865,7 +865,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               uiDispatch({ type: 'SET_PANEL', panel: 'showInterfaceDesigner', value: true })
             }
             active={ui.showInterfaceDesigner}
-            title={t('ideas.table.interfaceDesigner', 'Interface Designer')}
+            title={t('ideas.table.interfaceDesigner.label', 'Interface Designer')}
           >
             <Layout size={12} />
           </ToolbarIconButton>
@@ -873,7 +873,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {usePlatform && !locked && (
           <ToolbarIconButton
             onClick={() => uiDispatch({ type: 'SET_PANEL', panel: 'showFormBuilder', value: true })}
-            title={t('ideas.table.formBuilder', 'Form Builder')}
+            title={t('ideas.table.formBuilder.label', 'Form Builder')}
           >
             <FileText size={12} />
           </ToolbarIconButton>

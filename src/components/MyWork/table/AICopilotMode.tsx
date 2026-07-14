@@ -258,7 +258,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
           <Brain size={16} className="text-c-accent" />
           <span className="text-sm font-bold text-c-text">
-            {t('table.aiCopilot.title', 'AI Copilot')}
+            {t('ideas.table.aiCopilot.title', 'AI Copilot')}
           </span>
 
           {/* Mode selector */}

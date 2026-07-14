@@ -207,7 +207,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             <button
               onClick={handleReset}
               className="p-1 rounded text-c-text-secondary hover:text-c-text-secondary transition-colors"
-              title={t('table.ideaScoring.reset', 'Reset')}
+              title={t('ideas.table.ideaScoring.reset', 'Reset')}
             >
               <RotateCcw size={11} />
             </button>

@@ -1854,7 +1854,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={() => setShowCopilot(true)}
                   className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.aiCopilot', 'AI Copilot')}
+                  title={t('ideas.table.aiCopilot.label', 'AI Copilot')}
                 >
                   <Brain size={12} />
                 </button>
@@ -2051,7 +2051,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowInterfaceDesigner(true)}
                     className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                    title={t('ideas.table.interfaceDesigner', 'Interface Designer')}
+                    title={t('ideas.table.interfaceDesigner.label', 'Interface Designer')}
                   >
                     <Layout size={12} />
                   </button>
@@ -2062,7 +2062,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     onClick={() => setShowFormBuilder(true)}
                     className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:text-c-text-secondary"
-                    title={t('ideas.table.formBuilder', 'Form Builder')}
+                    title={t('ideas.table.formBuilder.label', 'Form Builder')}
                   >
                     <FileText size={12} />
                   </button>
@@ -3499,7 +3499,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
               <h3 className="text-sm font-semibold text-c-text">
-                {t('ideas.table.interfaceDesigner', 'Interface Designer')}
+                {t('ideas.table.interfaceDesigner.label', 'Interface Designer')}
               </h3>
               <button
                 onClick={() => setShowInterfaceDesigner(false)}
