@@ -22672,7 +22672,8 @@
       "errorBoundary": {
         "title": "Coś poszło nie tak w tym widoku",
         "retry": "Ponów",
-        "switchToGrid": "Przełącz na siatkę"
+        "switchToGrid": "Przełącz na siatkę",
+        "body": "Układ {{viewName}} napotkał nieoczekiwany błąd. Szczegóły techniczne są ukryte dla bezpieczeństwa."
       },
       "cronPreset": {
         "every15min": "Co 15 minut",
@@ -22970,6 +22971,17 @@
         "day": "Dzień",
         "week": "Tydzień",
         "month": "Miesiąc"
+      },
+      "viewRouter": {
+        "unknown": "Nieznane",
+        "missingField": "[Brak: {{name}}]",
+        "removeFromView": "Usuń z widoku",
+        "noGroupingColumn": "Brak kolumny grupującej",
+        "noColumns": "Brak kolumn",
+        "notes": "Notatki",
+        "viewLayout": "Układ widoku",
+        "record": "Rekord",
+        "filter": "Filtr"
       }
     },
     "mindmap": {

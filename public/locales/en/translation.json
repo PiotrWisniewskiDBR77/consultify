@@ -21596,7 +21596,8 @@
       "errorBoundary": {
         "title": "Something went wrong in this view",
         "retry": "Retry",
-        "switchToGrid": "Switch to Grid"
+        "switchToGrid": "Switch to Grid",
+        "body": "The {{viewName}} layout hit an unexpected error. Runtime details are hidden for safety."
       },
       "cronPreset": {
         "every15min": "Every 15 minutes",
@@ -21894,6 +21895,17 @@
         "day": "Day",
         "week": "Week",
         "month": "Month"
+      },
+      "viewRouter": {
+        "unknown": "Unknown",
+        "missingField": "[Missing: {{name}}]",
+        "removeFromView": "Remove from view",
+        "noGroupingColumn": "No grouping column",
+        "noColumns": "No columns",
+        "notes": "Notes",
+        "viewLayout": "View layout",
+        "record": "Record",
+        "filter": "Filter"
       }
     },
     "mindmap": {
