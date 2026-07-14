@@ -74,8 +74,10 @@ function makeCodedError(message: string, code: string): Error & { code: string }
 // eslint-disable-next-line no-control-regex
 // Two forms: test (stateless, no /g) and strip (replaces all occurrences)
 const DISALLOWED_FILENAME_RE =
+  // eslint-disable-next-line no-control-regex -- sanityzacja: celowe znaki kontrolne w walidacji nazw plików
   /[\x00-\x1f\x7f\x80-\x9f\u200b-\u200f\u2028\u2029\u202a-\u202e\ufeff]/;
 const DISALLOWED_FILENAME_STRIP_RE =
+  // eslint-disable-next-line no-control-regex -- sanityzacja: celowe znaki kontrolne w walidacji nazw plików
   /[\x00-\x1f\x7f\x80-\x9f\u200b-\u200f\u2028\u2029\u202a-\u202e\ufeff]/g;
 
 /**

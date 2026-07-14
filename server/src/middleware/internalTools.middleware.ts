@@ -12,6 +12,7 @@ const MAX_ROLE_LENGTH = 64;
 const MAX_ORG_ID_LENGTH = 128;
 
 function hasControlChar(s: string): boolean {
+  // eslint-disable-next-line no-control-regex -- sanityzacja: celowa detekcja znaków kontrolnych w nagłówkach
   return /[\x00-\x1F\x7F]/.test(s);
 }
 
@@ -29,6 +30,7 @@ function isValidEmailString(v: unknown): v is string {
   if (local.includes('..')) return false;
   // domain: length 1-253, no non-ASCII, no whitespace, no consecutive dots
   if (domain.length < 1 || domain.length > MAX_EMAIL_DOMAIN) return false;
+  // eslint-disable-next-line no-control-regex -- sanityzacja: celowa detekcja znaków kontrolnych
   if (/[^\x00-\x7F]/.test(domain)) return false;
   if (/\s/.test(domain)) return false;
   if (domain.includes('..')) return false;
@@ -47,6 +49,7 @@ function isValidDomainToken(t: string): boolean {
   if (t.length < 1 || t.length > MAX_EMAIL_DOMAIN) return false;
   if (t.startsWith('.')) return false;
   if (t.includes('..')) return false;
+  // eslint-disable-next-line no-control-regex -- sanityzacja: celowa detekcja znaków kontrolnych
   if (/[^\x00-\x7F]/.test(t)) return false;
   return true;
 }

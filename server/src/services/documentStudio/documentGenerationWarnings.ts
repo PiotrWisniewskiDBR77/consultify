@@ -47,7 +47,6 @@ export type DocumentGenerationWarningCode =
   | 'citation_fallback'
   | 'chart_raster_failed'
   | 'logo_unavailable'
-  // eslint-disable-next-line @typescript-eslint/ban-types
   | (string & {});
 
 /**

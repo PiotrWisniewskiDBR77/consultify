@@ -37,7 +37,7 @@ function toNum(v: unknown): number {
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
   if (typeof v === 'string') {
     // Tolerate "1 234,5", "12%", "1,234.5", "$1,200" etc.
-    const cleaned = v.replace(/[^0-9,.\-]/g, '').replace(/\s/g, '');
+    const cleaned = v.replace(/[^0-9,.-]/g, '').replace(/\s/g, '');
     if (cleaned === '' || cleaned === '-' || cleaned === '.') return 0;
     // If comma looks like a decimal separator (single comma, no dot), swap it.
     let normalized = cleaned;

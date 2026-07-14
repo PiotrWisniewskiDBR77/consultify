@@ -32,7 +32,6 @@ const DocImageNodeComponent: React.FC<{
     >
       {url ? (
         <figure className="m-0">
-          {/* eslint-disable-next-line jsx-a11y/img-redundant-alt */}
           <img
             src={url}
             alt={payload?.alt ?? ''}

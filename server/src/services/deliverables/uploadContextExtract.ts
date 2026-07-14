@@ -29,6 +29,7 @@ export interface UploadExtractResult {
 export interface UploadExtractDeps {
   /** Ekstraktor PDF (domyślnie PDFParserService.extractTextFromBuffer). */
   extractPdf?: (buffer: Buffer) => Promise<string>;
+  // eslint-disable-next-line no-control-regex -- sanityzacja: celowe czyszczenie znaków kontrolnych z tekstu wyekstrahowanego
 }
 
 function kindFromName(filename: string, mimetype?: string): UploadKind {
@@ -47,10 +48,11 @@ function kindFromName(filename: string, mimetype?: string): UploadKind {
   if (lower.endsWith('.txt') || lower.endsWith('.md') || mt.startsWith('text/')) return 'text';
   return 'unknown';
 }
+// eslint-disable-next-line no-control-regex -- sanityzacja: celowe czyszczenie znaków kontrolnych z tekstu wyekstrahowanego
 
 function clamp(text: string): { text: string; truncated: boolean } {
   const collapsed = String(text || '')
-    .replace(/[ \t ]+/g, ' ')
+    .replace(/[ \t ]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   if (collapsed.length <= UPLOAD_CONTEXT_MAX_CHARS) return { text: collapsed, truncated: false };

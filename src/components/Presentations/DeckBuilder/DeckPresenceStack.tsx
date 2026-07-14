@@ -83,7 +83,6 @@ export const DeckPresenceStack: React.FC<DeckPresenceStackProps> = ({
             data-testid={`deck-presence-avatar-${u.userId}`}
           >
             {u.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
             ) : (
               initials(u.name)

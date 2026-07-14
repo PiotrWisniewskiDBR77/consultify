@@ -489,7 +489,7 @@ export async function checkDeckQualityGates(
     if (!REQUIRED_DECISION_CONTENT_INTENTS.has(String(card.intent || ''))) return;
     hasAnyDecisionSection = true;
     const text = cardAggregateText(card)
-      .replace(/[{}\[\]"',:]/g, ' ')
+      .replace(/[{}[\]"',:]/g, ' ')
       .trim();
     // Strip the title/key_message so we measure BODY substance, not just a heading.
     const body = text

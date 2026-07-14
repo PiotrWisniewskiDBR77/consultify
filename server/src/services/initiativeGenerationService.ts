@@ -587,8 +587,8 @@ Provide P&L impact estimates as JSON. Put a NUMBER + unit for ROI and budget so 
   "revenueImpact": "Numeric revenue impact estimate with an explicit assumption (currency + horizon)",
   "costSavings": "Numeric cost-savings estimate with an explicit assumption (currency + horizon)",
   "benefitsRealization": "How and when benefits will be realized (include payback horizon if known)",
-  "expectedRoi": "ROI COMPUTED from your own revenue/savings and budget above, as a single number + unit + payback (e.g. \"25% (net gain 100k / investment 400k), payback ~10 months\"). MANDATORY when you gave revenue and cost — never leave empty.",
-  "estimatedBudget": "Total investment as ONE explicit amount with unit and scale (e.g. \"400k PLN\"), not a fuzzy \"~400k\" in prose."
+  "expectedRoi": "ROI COMPUTED from your own revenue/savings and budget above, as a single number + unit + payback (e.g. "25% (net gain 100k / investment 400k), payback ~10 months"). MANDATORY when you gave revenue and cost — never leave empty.",
+  "estimatedBudget": "Total investment as ONE explicit amount with unit and scale (e.g. "400k PLN"), not a fuzzy "~400k" in prose."
 }
 Every amount MUST be a number with an assumption (e.g. "~120k PLN/yr (estimate; assuming 2% of operating cost)"). If org financials are available, anchor to them. NEVER write "to be determined"/"TBD"/"do ustalenia" as an amount.
 COMPUTE expectedRoi from revenueImpact/costSavings and estimatedBudget — do not leave it blank when both are present. Use EXACTLY ONE value per metric (revenue, cost, ROI) across the whole card — no conflicting numbers for the same quantity.
