@@ -16,6 +16,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Area,
   AreaChart,
@@ -113,11 +114,9 @@ function toPieData(
   return [...head, { name: otherLabel, value: otherValue }];
 }
 
-export const DocChartBlock: React.FC<DocChartBlockProps> = ({
-  content,
-  height,
-  otherLabel = 'Inne',
-}) => {
+export const DocChartBlock: React.FC<DocChartBlockProps> = ({ content, height, otherLabel }) => {
+  const { t } = useTranslation();
+  const resolvedOtherLabel = otherLabel ?? t('documentStudio.blocks.chartOther', 'Other');
   const h = clampHeight(height);
   // §P-CHART hard cap: never render more than MAX_SERIES series.
   const series = useMemo(() => content.series.slice(0, MAX_SERIES), [content.series]);
@@ -133,8 +132,8 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
     [isPie, content, series]
   );
   const pieData = useMemo(
-    () => (isPie ? toPieData(content, otherLabel) : []),
-    [isPie, content, otherLabel]
+    () => (isPie ? toPieData(content, resolvedOtherLabel) : []),
+    [isPie, content, resolvedOtherLabel]
   );
 
   const empty = isPie ? pieData.length === 0 : rows.length === 0 || keys.length === 0;
@@ -161,7 +160,7 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({
           className="doc-chart-block__empty"
           style={{ padding: '24px 0', textAlign: 'center', color: '#64748b', fontSize: 13 }}
         >
-          No chart data available
+          {t('documentStudio.blocks.noChartData', 'No chart data available')}
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={h}>

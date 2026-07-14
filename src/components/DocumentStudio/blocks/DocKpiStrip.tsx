@@ -11,6 +11,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { type NarrowedKpiContent, type NarrowedKpiItem, narrowKpiContent } from './docBlockContent';
 
@@ -30,6 +31,7 @@ function trendColor(trend?: NarrowedKpiItem['trend']): string {
 }
 
 export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {
+  const { t } = useTranslation();
   const narrowed = isNarrowed(content) ? content : narrowKpiContent(content);
 
   if (!narrowed || narrowed.items.length === 0) {
@@ -38,7 +40,7 @@ export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {
         className="doc-kpi-strip__empty"
         style={{ padding: '16px 0', color: '#64748b', fontSize: 13 }}
       >
-        No KPIs available
+        {t('documentStudio.blocks.noKpiData', 'No KPIs available')}
       </div>
     );
   }

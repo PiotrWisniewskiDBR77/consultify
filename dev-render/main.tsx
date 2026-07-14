@@ -31,6 +31,7 @@ import CanvasToolbarMdHistoryScreen from './screens/canvas-toolbar-md-history';
 import CapabilityGateDemoScreen from './screens/capability-gate-demo';
 import ChatSplitTeresaRightScreen from './screens/chat-split-teresa-right';
 import CrimsonMyWorkWave2Screen from './screens/crimson-mywork-wave2';
+import DocumentStudioBlocksI18nScreen from './screens/document-studio-blocks-i18n';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
@@ -65,6 +66,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'public-booking-widget': {
     label: '#24c Publiczny widget booking (Calendly-like, niezalogowany) — CTA neutralny',
     render: () => <PublicBookingWidgetScreen />,
+  },
+  'document-studio-blocks-i18n': {
+    label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
+    render: () => <DocumentStudioBlocksI18nScreen />,
   },
   'wave3-creators-crimson': {
     label: 'Fala 3 — ReportBuilder+AIChat+Meeting: crimson-fill CTA sweep (swatch, PO naprawie)',

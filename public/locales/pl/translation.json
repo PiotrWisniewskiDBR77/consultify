@@ -21454,6 +21454,20 @@
       "title": "Generuję Twój dokument…",
       "planning": "Planuję strukturę…",
       "progress": "Piszę sekcje… gotowe {{done}} z {{total}}"
+    },
+    "blocks": {
+      "noTableData": "Brak danych tabeli",
+      "noKpiData": "Brak wskaźników KPI",
+      "noChartData": "Brak danych wykresu",
+      "chartOther": "Inne"
+    },
+    "inlineAi": {
+      "working": "Teresa pracuje…",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "error": "Błąd AI. Spróbuj ponownie.",
+      "close": "Zamknij",
+      "trigger": "Popraw z Teresa"
     }
   },
   "priority": {
