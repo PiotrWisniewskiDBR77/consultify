@@ -71,7 +71,7 @@ const INITIAL_FORM: DistributionFormState = {
 };
 
 export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [distributions, setDistributions] = useState<any[]>([]);
@@ -299,7 +299,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 {(form.channel === 'slack' || form.channel === 'teams') && (
                   <div>
                     <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                      Webhook URL
+                      {t('table.distributionBuilder.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"
@@ -313,7 +313,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 {form.channel === 'webhook' && (
                   <div>
                     <label className="block text-[11px] font-medium text-c-text-muted mb-1">
-                      Webhook URL
+                      {t('table.distributionBuilder.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"
