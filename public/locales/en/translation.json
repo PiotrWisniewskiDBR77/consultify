@@ -15120,6 +15120,37 @@
         "circuit": "Circuit: {{state}}",
         "failuresCount": "({{count}} failures)",
         "fallbackChains": "Fallback Chains"
+      },
+      "helpAnalytics": {
+        "errors": {
+          "fetch": "Failed to fetch analytics data"
+        },
+        "loading": "Loading analytics...",
+        "refresh": "Refresh",
+        "noData": "No analytics data available",
+        "title": "Help Analytics",
+        "subtitle": "Monitor help system performance and user engagement",
+        "days": "days",
+        "activeUsers": "Active Users",
+        "totalEvents": "Total Events",
+        "helpfulnessRate": "Helpfulness Rate",
+        "avgRating": "Avg Rating",
+        "topContent": "Top Viewed Content",
+        "viewers": "viewers",
+        "topSearches": "Top Searches",
+        "searches": "searches",
+        "conversionRate": "conversion rate",
+        "zeroResults": "Zero-Result Searches",
+        "zeroResultsDescription": "Searches that returned no results - opportunities to add content",
+        "noZeroResults": "No zero-result searches",
+        "needsImprovement": "Needs Improvement",
+        "needsImprovementDescription": "Content with low helpfulness rate (<70%)",
+        "feedbackCount": "{{count}} feedback",
+        "allContentHighlyRated": "All content is highly rated",
+        "videoCompletion": "Video Completion",
+        "completionRate": "completion rate",
+        "recentFeedback": "Recent Feedback",
+        "lastUpdated": "Last updated"
       }
     }
   },

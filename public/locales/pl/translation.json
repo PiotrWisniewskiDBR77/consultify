@@ -15771,6 +15771,37 @@
         "circuit": "Obwód: {{state}}",
         "failuresCount": "({{count}} błędów)",
         "fallbackChains": "Łańcuchy zapasowe"
+      },
+      "helpAnalytics": {
+        "errors": {
+          "fetch": "Nie udało się pobrać danych"
+        },
+        "loading": "Ładowanie analityki...",
+        "refresh": "Odśwież",
+        "noData": "Brak dostępnych danych analitycznych",
+        "title": "Analityka Pomocy",
+        "subtitle": "Monitoruj wydajność systemu pomocy i zaangażowanie użytkowników",
+        "days": "dni",
+        "activeUsers": "Aktywni Użytkownicy",
+        "totalEvents": "Wszystkie Zdarzenia",
+        "helpfulnessRate": "Wskaźnik Pomocności",
+        "avgRating": "Średnia Ocena",
+        "topContent": "Najczęściej Oglądana Treść",
+        "viewers": "widzów",
+        "topSearches": "Popularne Wyszukiwania",
+        "searches": "wyszukiwań",
+        "conversionRate": "wskaźnik konwersji",
+        "zeroResults": "Wyszukiwania Bez Wyników",
+        "zeroResultsDescription": "Wyszukiwania, które nie zwróciły wyników - okazje do dodania treści",
+        "noZeroResults": "Brak wyszukiwań bez wyników",
+        "needsImprovement": "Wymaga Poprawy",
+        "needsImprovementDescription": "Treści z niskim wskaźnikiem pomocności (<70%)",
+        "feedbackCount": "{{count}} opinii",
+        "allContentHighlyRated": "Wszystkie treści mają dobrą ocenę",
+        "videoCompletion": "Ukończenie Wideo",
+        "completionRate": "wskaźnik ukończenia",
+        "recentFeedback": "Ostatnie Opinie",
+        "lastUpdated": "Ostatnia aktualizacja"
       }
     }
   },

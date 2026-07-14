@@ -100,7 +100,7 @@ interface DashboardData {
 }
 
 export const HelpAnalyticsDashboard: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
   const [data, setData] = useState<DashboardData | null>(null);
@@ -117,58 +117,17 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       setData(response.data);
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
-      setError(lang === 'pl' ? 'Nie udało się pobrać danych' : 'Failed to fetch analytics data');
+      setError(
+        t('admin.aiControlCenter.helpAnalytics.errors.fetch', 'Failed to fetch analytics data')
+      );
     } finally {
       setLoading(false);
     }
-  }, [selectedPeriod, lang]);
+  }, [selectedPeriod, t]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  // Text
-  const t = {
-    title: { en: 'Help Analytics', pl: 'Analityka Pomocy' },
-    subtitle: {
-      en: 'Monitor help system performance and user engagement',
-      pl: 'Monitoruj wydajność systemu pomocy i zaangażowanie użytkowników',
-    },
-    refresh: { en: 'Refresh', pl: 'Odśwież' },
-    days: { en: 'days', pl: 'dni' },
-    lastUpdated: { en: 'Last updated', pl: 'Ostatnia aktualizacja' },
-
-    // Metrics
-    activeUsers: { en: 'Active Users', pl: 'Aktywni Użytkownicy' },
-    totalEvents: { en: 'Total Events', pl: 'Wszystkie Zdarzenia' },
-    helpfulnessRate: { en: 'Helpfulness Rate', pl: 'Wskaźnik Pomocności' },
-    avgRating: { en: 'Avg Rating', pl: 'Średnia Ocena' },
-
-    // Sections
-    contentPerformance: { en: 'Content Performance', pl: 'Wydajność Treści' },
-    searchAnalytics: { en: 'Search Analytics', pl: 'Analityka Wyszukiwania' },
-    feedbackOverview: { en: 'Feedback Overview', pl: 'Przegląd Opinii' },
-    userActivity: { en: 'User Activity', pl: 'Aktywność Użytkowników' },
-
-    // Content
-    topContent: { en: 'Top Viewed Content', pl: 'Najczęściej Oglądana Treść' },
-    videoCompletion: { en: 'Video Completion', pl: 'Ukończenie Wideo' },
-    topSearches: { en: 'Top Searches', pl: 'Popularne Wyszukiwania' },
-    zeroResults: { en: 'Zero-Result Searches', pl: 'Wyszukiwania Bez Wyników' },
-    needsImprovement: { en: 'Needs Improvement', pl: 'Wymaga Poprawy' },
-    recentFeedback: { en: 'Recent Feedback', pl: 'Ostatnie Opinie' },
-
-    // Labels
-    views: { en: 'views', pl: 'wyświetleń' },
-    viewers: { en: 'viewers', pl: 'widzów' },
-    searches: { en: 'searches', pl: 'wyszukiwań' },
-    avgResults: { en: 'avg results', pl: 'śr. wyników' },
-    completionRate: { en: 'completion rate', pl: 'wskaźnik ukończenia' },
-    conversionRate: { en: 'conversion rate', pl: 'wskaźnik konwersji' },
-
-    loading: { en: 'Loading analytics...', pl: 'Ładowanie analityki...' },
-    noData: { en: 'No analytics data available', pl: 'Brak dostępnych danych analitycznych' },
-  };
 
   // Stat Card Component
   const StatCard: React.FC<{
@@ -198,7 +157,13 @@ export const HelpAnalyticsDashboard: React.FC = () => {
   );
 
   if (loading) {
-    return <LoadingState variant="spinner" className="h-96" label={t.loading[lang]} />;
+    return (
+      <LoadingState
+        variant="spinner"
+        className="h-96"
+        label={t('admin.aiControlCenter.helpAnalytics.loading', 'Loading analytics...')}
+      />
+    );
   }
 
   if (error) {
@@ -211,7 +176,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             onClick={fetchData}
             className="mt-4 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
-            {t.refresh[lang]}
+            {t('admin.aiControlCenter.helpAnalytics.refresh', 'Refresh')}
           </button>
         </div>
       </div>
@@ -221,7 +186,9 @@ export const HelpAnalyticsDashboard: React.FC = () => {
   if (!data) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-c-text-muted">{t.noData[lang]}</p>
+        <p className="text-c-text-muted">
+          {t('admin.aiControlCenter.helpAnalytics.noData', 'No analytics data available')}
+        </p>
       </div>
     );
   }
@@ -233,9 +200,14 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <BarChart2 className="text-primary-500" />
-            {t.title[lang]}
+            {t('admin.aiControlCenter.helpAnalytics.title', 'Help Analytics')}
           </h1>
-          <p className="text-c-text-muted mt-1">{t.subtitle[lang]}</p>
+          <p className="text-c-text-muted mt-1">
+            {t(
+              'admin.aiControlCenter.helpAnalytics.subtitle',
+              'Monitor help system performance and user engagement'
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-4">
           {/* Period selector */}
@@ -244,16 +216,16 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             onChange={(e) => setSelectedPeriod(Number(e.target.value))}
             className="px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm"
           >
-            <option value={7}>7 {t.days[lang]}</option>
-            <option value={30}>30 {t.days[lang]}</option>
-            <option value={90}>90 {t.days[lang]}</option>
+            <option value={7}>7 {t('admin.aiControlCenter.helpAnalytics.days', 'days')}</option>
+            <option value={30}>30 {t('admin.aiControlCenter.helpAnalytics.days', 'days')}</option>
+            <option value={90}>90 {t('admin.aiControlCenter.helpAnalytics.days', 'days')}</option>
           </select>
           <button
             onClick={fetchData}
             className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
             <RefreshCw size={16} />
-            {t.refresh[lang]}
+            {t('admin.aiControlCenter.helpAnalytics.refresh', 'Refresh')}
           </button>
         </div>
       </div>
@@ -261,25 +233,25 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title={t.activeUsers[lang]}
+          title={t('admin.aiControlCenter.helpAnalytics.activeUsers', 'Active Users')}
           value={data.userEngagement?.activeUsers?.active_users || 0}
           icon={<Users className="text-c-text" size={24} />}
           color="bg-blue-500"
         />
         <StatCard
-          title={t.totalEvents[lang]}
+          title={t('admin.aiControlCenter.helpAnalytics.totalEvents', 'Total Events')}
           value={(data.userEngagement?.activeUsers?.total_events || 0).toLocaleString()}
           icon={<MousePointer className="text-c-text" size={24} />}
           color="bg-green-500"
         />
         <StatCard
-          title={t.helpfulnessRate[lang]}
+          title={t('admin.aiControlCenter.helpAnalytics.helpfulnessRate', 'Helpfulness Rate')}
           value={`${data.feedbackSummary?.overall?.helpfulness_rate || 0}%`}
           icon={<ThumbsUp className="text-c-text" size={24} />}
           color="bg-c-surface"
         />
         <StatCard
-          title={t.avgRating[lang]}
+          title={t('admin.aiControlCenter.helpAnalytics.avgRating', 'Avg Rating')}
           value={(data.feedbackSummary?.overall?.avg_rating || 0).toFixed(1)}
           icon={<TrendingUp className="text-c-text" size={24} />}
           color="bg-amber-500"
@@ -292,7 +264,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         <div className="bg-c-surface rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Eye size={20} className="text-blue-500" />
-            {t.topContent[lang]}
+            {t('admin.aiControlCenter.helpAnalytics.topContent', 'Top Viewed Content')}
           </h3>
           <div className="space-y-3">
             {data.contentPerformance?.viewsByContent?.slice(0, 10).map((item, i) => (
@@ -312,14 +284,17 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                 <div className="text-right">
                   <p className="text-sm font-medium text-c-text">{item.views}</p>
                   <p className="text-xs text-c-text-muted">
-                    {item.unique_viewers} {t.viewers[lang]}
+                    {item.unique_viewers}{' '}
+                    {t('admin.aiControlCenter.helpAnalytics.viewers', 'viewers')}
                   </p>
                 </div>
               </div>
             ))}
             {(!data.contentPerformance?.viewsByContent ||
               data.contentPerformance.viewsByContent.length === 0) && (
-              <p className="text-center text-c-text-secondary py-4">{t.noData[lang]}</p>
+              <p className="text-center text-c-text-secondary py-4">
+                {t('admin.aiControlCenter.helpAnalytics.noData', 'No analytics data available')}
+              </p>
             )}
           </div>
         </div>
@@ -328,7 +303,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         <div className="bg-c-surface rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Search size={20} className="text-green-500" />
-            {t.topSearches[lang]}
+            {t('admin.aiControlCenter.helpAnalytics.topSearches', 'Top Searches')}
           </h3>
           <div className="space-y-3">
             {data.searchAnalytics?.topQueries?.slice(0, 10).map((item, i) => (
@@ -339,13 +314,17 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                 <span className="text-sm text-c-text truncate mr-4">{item.query}</span>
                 <div className="text-right flex-shrink-0">
                   <span className="text-sm font-medium">{item.count}</span>
-                  <span className="text-xs text-c-text-muted ml-1">{t.searches[lang]}</span>
+                  <span className="text-xs text-c-text-muted ml-1">
+                    {t('admin.aiControlCenter.helpAnalytics.searches', 'searches')}
+                  </span>
                 </div>
               </div>
             ))}
             {(!data.searchAnalytics?.topQueries ||
               data.searchAnalytics.topQueries.length === 0) && (
-              <p className="text-center text-c-text-secondary py-4">{t.noData[lang]}</p>
+              <p className="text-center text-c-text-secondary py-4">
+                {t('admin.aiControlCenter.helpAnalytics.noData', 'No analytics data available')}
+              </p>
             )}
           </div>
 
@@ -353,7 +332,9 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           {data.searchAnalytics?.searchConversion && (
             <div className="mt-4 pt-4 border-t border-c-border-subtle">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-c-text-muted">{t.conversionRate[lang]}</span>
+                <span className="text-sm text-c-text-muted">
+                  {t('admin.aiControlCenter.helpAnalytics.conversionRate', 'conversion rate')}
+                </span>
                 <span className="text-lg font-bold text-green-500">
                   {data.searchAnalytics.searchConversion.conversion_rate || 0}%
                 </span>
@@ -366,12 +347,13 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         <div className="bg-c-surface rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <AlertCircle size={20} className="text-yellow-500" />
-            {t.zeroResults[lang]}
+            {t('admin.aiControlCenter.helpAnalytics.zeroResults', 'Zero-Result Searches')}
           </h3>
           <p className="text-sm text-c-text-muted mb-4">
-            {lang === 'pl'
-              ? 'Wyszukiwania, które nie zwróciły wyników - okazje do dodania treści'
-              : 'Searches that returned no results - opportunities to add content'}
+            {t(
+              'admin.aiControlCenter.helpAnalytics.zeroResultsDescription',
+              'Searches that returned no results - opportunities to add content'
+            )}
           </p>
           <div className="space-y-2">
             {data.searchAnalytics?.zeroResults?.slice(0, 8).map((item, i) => (
@@ -387,7 +369,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               data.searchAnalytics.zeroResults.length === 0) && (
               <p className="text-center text-green-500 py-4 flex items-center justify-center gap-2">
                 <CheckCircle size={18} />
-                {lang === 'pl' ? 'Brak wyszukiwań bez wyników' : 'No zero-result searches'}
+                {t('admin.aiControlCenter.helpAnalytics.noZeroResults', 'No zero-result searches')}
               </p>
             )}
           </div>
@@ -397,12 +379,13 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         <div className="bg-c-surface rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <ThumbsDown size={20} className="text-danger-500" />
-            {t.needsImprovement[lang]}
+            {t('admin.aiControlCenter.helpAnalytics.needsImprovement', 'Needs Improvement')}
           </h3>
           <p className="text-sm text-c-text-muted mb-4">
-            {lang === 'pl'
-              ? 'Treści z niskim wskaźnikiem pomocności (<70%)'
-              : 'Content with low helpfulness rate (<70%)'}
+            {t(
+              'admin.aiControlCenter.helpAnalytics.needsImprovementDescription',
+              'Content with low helpfulness rate (<70%)'
+            )}
           </p>
           <div className="space-y-2">
             {data.feedbackSummary?.needsImprovement?.map((item, i) => (
@@ -416,7 +399,11 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-danger-600">{item.helpfulness_rate}%</p>
-                  <p className="text-xs text-c-text-muted">{item.feedback_count} feedback</p>
+                  <p className="text-xs text-c-text-muted">
+                    {t('admin.aiControlCenter.helpAnalytics.feedbackCount', '{{count}} feedback', {
+                      count: item.feedback_count,
+                    })}
+                  </p>
                 </div>
               </div>
             ))}
@@ -424,9 +411,10 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               data.feedbackSummary.needsImprovement.length === 0) && (
               <p className="text-center text-green-500 py-4 flex items-center justify-center gap-2">
                 <CheckCircle size={18} />
-                {lang === 'pl'
-                  ? 'Wszystkie treści mają dobrą ocenę'
-                  : 'All content is highly rated'}
+                {t(
+                  'admin.aiControlCenter.helpAnalytics.allContentHighlyRated',
+                  'All content is highly rated'
+                )}
               </p>
             )}
           </div>
@@ -437,7 +425,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       <div className="bg-c-surface rounded-xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Video size={20} className="text-primary-500" />
-          {t.videoCompletion[lang]}
+          {t('admin.aiControlCenter.helpAnalytics.videoCompletion', 'Video Completion')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {data.contentPerformance?.videoCompletion?.slice(0, 8).map((video, i) => (
@@ -446,7 +434,9 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-2xl font-bold text-primary-500">{video.completion_rate}%</p>
-                  <p className="text-xs text-c-text-muted">{t.completionRate[lang]}</p>
+                  <p className="text-xs text-c-text-muted">
+                    {t('admin.aiControlCenter.helpAnalytics.completionRate', 'completion rate')}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-c-text-secondary">
@@ -465,7 +455,9 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           ))}
           {(!data.contentPerformance?.videoCompletion ||
             data.contentPerformance.videoCompletion.length === 0) && (
-            <p className="col-span-full text-center text-c-text-secondary py-4">{t.noData[lang]}</p>
+            <p className="col-span-full text-center text-c-text-secondary py-4">
+              {t('admin.aiControlCenter.helpAnalytics.noData', 'No analytics data available')}
+            </p>
           )}
         </div>
       </div>
@@ -474,7 +466,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       <div className="bg-c-surface rounded-xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <MessageSquare size={20} className="text-blue-500" />
-          {t.recentFeedback[lang]}
+          {t('admin.aiControlCenter.helpAnalytics.recentFeedback', 'Recent Feedback')}
         </h3>
         <div className="space-y-4">
           {data.feedbackSummary?.recentComments?.slice(0, 5).map((comment) => (
@@ -510,7 +502,9 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           ))}
           {(!data.feedbackSummary?.recentComments ||
             data.feedbackSummary.recentComments.length === 0) && (
-            <p className="text-center text-c-text-secondary py-4">{t.noData[lang]}</p>
+            <p className="text-center text-c-text-secondary py-4">
+              {t('admin.aiControlCenter.helpAnalytics.noData', 'No analytics data available')}
+            </p>
           )}
         </div>
       </div>
@@ -518,7 +512,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       {/* Footer */}
       <div className="text-center text-sm text-c-text-muted">
         <p>
-          {t.lastUpdated[lang]}:{' '}
+          {t('admin.aiControlCenter.helpAnalytics.lastUpdated', 'Last updated')}:{' '}
           {new Date(data.generatedAt).toLocaleString(lang === 'pl' ? 'pl-PL' : 'en-US')}
         </p>
       </div>
