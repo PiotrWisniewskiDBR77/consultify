@@ -1,5 +1,6 @@
 import { ImagePlus, Smile, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * M04 Living Notebook — cover image + page-icon picker (Agent 4 / Editor PRO).
@@ -62,6 +63,7 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
   onChange,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -79,7 +81,7 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={isPolish ? 'Zmień ikonę strony' : 'Change page icon'}
+        title={t('notebook.noteCoverPicker.title', 'Change page icon')}
         className="rounded-lg p-0.5 text-3xl leading-none transition-colors hover:bg-c-surface-raised"
       >
         {value && /\p{Emoji}/u.test(value) ? value : fallback}
@@ -90,7 +92,7 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
           <div className="mb-1.5 flex items-center justify-between px-1">
             <span className="flex items-center gap-1.5 text-[11px] font-medium text-c-text-muted">
               <Smile size={12} />
-              {isPolish ? 'Ikona' : 'Icon'}
+              {t('notebook.noteCoverPicker.label', 'Icon')}
             </span>
             {value ? (
               <button
@@ -101,7 +103,7 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
                 }}
                 className="text-[11px] text-c-text-muted transition-colors hover:text-c-danger dark:text-c-text-muted"
               >
-                {isPolish ? 'Usuń' : 'Remove'}
+                {t('notebook.noteCoverPicker.label2', 'Remove')}
               </button>
             ) : null}
           </div>
@@ -142,6 +144,7 @@ export const CoverImageBar: React.FC<CoverImageBarProps> = ({
   onRemove,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   if (!coverUrl) {
     return (
       <button
@@ -150,7 +153,7 @@ export const CoverImageBar: React.FC<CoverImageBarProps> = ({
         className="mb-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text dark:text-c-text-muted dark:hover:bg-white/[0.06] dark:hover:text-c-text"
       >
         <ImagePlus size={13} />
-        {isPolish ? 'Dodaj okładkę' : 'Add cover'}
+        {t('notebook.noteCoverPicker.label3', 'Add cover')}
       </button>
     );
   }
@@ -164,12 +167,12 @@ export const CoverImageBar: React.FC<CoverImageBarProps> = ({
           className="inline-flex items-center gap-1 rounded-md bg-black/45 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/60"
         >
           <ImagePlus size={12} />
-          {isPolish ? 'Zmień' : 'Change'}
+          {t('notebook.noteCoverPicker.label4', 'Change')}
         </button>
         <button
           type="button"
           onClick={onRemove}
-          title={isPolish ? 'Usuń okładkę' : 'Remove cover'}
+          title={t('notebook.noteCoverPicker.title2', 'Remove cover')}
           className="inline-flex items-center rounded-md bg-black/45 p-1 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
         >
           <Trash2 size={12} />
@@ -194,6 +197,7 @@ export const CoverUrlModal: React.FC<{
   onSubmit: (url: string) => void;
   isPolish: boolean;
 }> = ({ open, onClose, onSubmit, isPolish }) => {
+  const { t } = useTranslation();
   const [value, setValue] = useState('');
   const submit = useCallback(() => {
     const trimmed = value.trim();
@@ -214,7 +218,7 @@ export const CoverUrlModal: React.FC<{
       >
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-c-text">
-            {isPolish ? 'Okładka z adresu URL' : 'Cover from URL'}
+            {t('notebook.noteCoverPicker.label5', 'Cover from URL')}
           </h3>
           <button type="button" onClick={onClose} className="text-c-text-muted hover:text-c-text">
             <X size={16} />
@@ -234,14 +238,14 @@ export const CoverUrlModal: React.FC<{
             onClick={onClose}
             className="rounded-lg px-3 py-1.5 text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-white/[0.06]"
           >
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('notebook.noteCoverPicker.label6', 'Cancel')}
           </button>
           <button
             type="button"
             onClick={submit}
             className="rounded-lg bg-c-text px-3 py-1.5 text-sm font-medium text-c-surface transition-colors hover:brightness-110"
           >
-            {isPolish ? 'Ustaw' : 'Set'}
+            {t('notebook.noteCoverPicker.label7', 'Set')}
           </button>
         </div>
       </div>

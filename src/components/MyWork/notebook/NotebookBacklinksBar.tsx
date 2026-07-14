@@ -1,5 +1,6 @@
 import { Link2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -48,6 +49,7 @@ export const NotebookBacklinksBar: React.FC<NotebookBacklinksBarProps> = ({
   isPolish,
   refreshKey = 0,
 }) => {
+  const { t } = useTranslation();
   const [chips, setChips] = useState<BacklinkChip[]>([]);
 
   useEffect(() => {
@@ -121,7 +123,7 @@ export const NotebookBacklinksBar: React.FC<NotebookBacklinksBarProps> = ({
     <div className="mt-3 flex flex-wrap items-center gap-1.5">
       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-c-text-muted">
         <Link2 size={12} />
-        {isPolish ? 'Wzmiankowane w' : 'Mentioned in'}
+        {t('notebook.backlinksBar.label', 'Mentioned in')}
       </span>
       {chips.map((chip) => (
         <button

@@ -1,9 +1,12 @@
 import type { Editor } from '@tiptap/react';
 import { CheckSquare, FileText, Lightbulb, Loader2, Scale, Target } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import type { NotebookPage } from '@/types/myWork';
+
+import i18n from '../../../i18n';
 
 /**
  * NotebookMentionMenu — N7/K1 "@mention" entity picker for the Living Notebook.
@@ -129,7 +132,7 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const t = (en: string, pl: string) => (isPolish ? pl : en);
+  const { t } = useTranslation();
 
   // Debounced server entity search + client-side note search.
   useEffect(() => {
@@ -176,7 +179,7 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
           collected.push({
             type: 'notebook_page',
             id: n.id,
-            title: n.title || (isPolish ? 'Bez tytułu' : 'Untitled'),
+            title: n.title || t('notebook.mentionMenu.untitled', 'Untitled'),
             status: n.status,
             snippet: n.summary || undefined,
           })
@@ -235,7 +238,7 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
     <div
       ref={menuRef}
       role="listbox"
-      aria-label={t('Mention an entity', 'Wzmiankuj encję')}
+      aria-label={t('notebook.mentionMenu.ariaLabel', 'Mention an entity')}
       className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg py-1"
       style={{ top: position.y, left: position.x }}
       onMouseDown={(e) => e.preventDefault()}
@@ -243,11 +246,11 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
       {loading && results.length === 0 ? (
         <div className="flex items-center gap-2 px-3 py-4 text-[12px] text-c-text-muted">
           <Loader2 size={14} className="animate-spin" />
-          {t('Searching…', 'Szukam…')}
+          {t('notebook.mentionMenu.searching', 'Searching…')}
         </div>
       ) : results.length === 0 ? (
         <div className="px-3 py-4 text-center text-[12px] text-c-text-muted">
-          {t('No matches', 'Brak dopasowań')}
+          {t('notebook.mentionMenu.noMatches', 'No matches')}
         </div>
       ) : (
         grouped.map(({ cfg, items }) => {
@@ -256,7 +259,7 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
             <div key={cfg.type} className="px-1">
               <div className="flex items-center gap-1.5 px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                 <Icon size={11} />
-                {t(cfg.labelEn, cfg.labelPl)}
+                {t(`notebook.mentionMenu.group.${cfg.type}`, cfg.labelEn)}
               </div>
               {items.map((entity) => {
                 const flatIdx = results.indexOf(entity);
@@ -306,7 +309,7 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
 /** Build the embeddedRef attrs + emoji label for a chosen mention entity. */
 export function mentionEntityToEmbedRef(entity: MentionEntity, isPolish: boolean) {
   const cfg = GROUP_OF[entity.type];
-  const title = entity.title || (isPolish ? 'Bez tytułu' : 'Untitled');
+  const title = entity.title || i18n.t('notebook.mentionMenu.untitled', 'Untitled');
   return {
     artifactType: entity.type,
     artifactId: entity.id,

@@ -10,6 +10,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PresenceUserLite {
   userId: string;
@@ -40,6 +41,7 @@ export const NotebookPresenceStack: React.FC<NotebookPresenceStackProps> = ({
   isPolish,
   max = 4,
 }) => {
+  const { t } = useTranslation();
   const seen = new Set<string>();
   const roster = users.filter((u) => {
     if (seen.has(u.userId)) return false;
@@ -53,9 +55,10 @@ export const NotebookPresenceStack: React.FC<NotebookPresenceStackProps> = ({
 
   const visible = others.slice(0, max);
   const overflow = others.length - visible.length;
-  const label = isPolish
-    ? `${others.length} ${others.length === 1 ? 'osoba' : 'osoby'} tu teraz`
-    : `${others.length} viewing now`;
+  const label = t('notebook.presenceStack.viewingNow', '{{count}} viewing now', {
+    count: others.length,
+    unit: others.length === 1 ? 'osoba' : 'osoby',
+  });
 
   return (
     <div className="flex items-center gap-2" data-testid="notebook-presence-stack" title={label}>
