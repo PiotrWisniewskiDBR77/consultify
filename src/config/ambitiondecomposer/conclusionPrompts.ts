@@ -15,6 +15,9 @@
 
 import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 
+import { buildAmbitionStaircasePromptRules } from './ambitionInsightStaircase';
+import { buildAmbitionQuestionBankPromptRules } from './ambitionQuestionBank';
+import { buildAmbitionTreePromptRules, detectAmbitionGaps } from './ambitionTreeEngine';
 import { localizeLadder } from './index';
 import { type AmbitionDecomposerData, buildW2ThemeSequence, rankThemes } from './moveValidator';
 const loc = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
@@ -63,6 +66,13 @@ export function buildAmbitionDecomposerConclusionPrompt(
 
   const ambition = data.context?.ambitionStatement || (isPolish ? 'nie podano' : 'not stated');
 
+  const gaps = detectAmbitionGaps(data);
+  const gapLines = gaps.length
+    ? gaps.map((g) => `- [${g.code}] ${loc(g.messagePl, g.messageEn, isPolish)}`).join('\n')
+    : isPolish
+      ? '(brak wykrytych luk „ambicja bez ścieżki")'
+      : '(no "ambition without a path" gaps detected)';
+
   const header = isPolish
     ? 'Działaj jako partner ds. strategii. Poniżej masz ambicję rozłożoną na wątki i ich SEKWENCJĘ policzoną przez silnik (fundamenty przed tym, co warunkują). Napisz blok domykający wg CONCLUSION_LAYER_STANDARD wariant W2. NIE zmieniaj kolejności ani archetypów — narrację dokładasz na wierzchu. Liczby wyłącznie z bloku faktów.'
     : 'Act as a strategy partner. Below is the ambition decomposed into themes and their SEQUENCE computed by the engine (foundations before what they gate). Write the finishing block per CONCLUSION_LAYER_STANDARD variant W2. Do NOT reorder the themes or change the archetypes — you narrate on top. Numbers exclusively from the facts block.';
@@ -76,6 +86,15 @@ ${scoreLines}
 
 === W2 MOVE SEQUENCE (engine — grounded draft) ===
 ${seqLines}
+
+=== "AMBITION WITHOUT A PATH" GAPS (engine — surface these, do not paper over them) ===
+${gapLines}
+
+${buildAmbitionQuestionBankPromptRules(isPolish ? 'pl' : 'en')}
+
+${buildAmbitionStaircasePromptRules(isPolish ? 'pl' : 'en')}
+
+${buildAmbitionTreePromptRules(isPolish ? 'pl' : 'en')}
 
 W2 STRUCTURE (mandatory):
 1. "summary.verdict" — answer-first, 1-2 sentences: which theme to start FIRST and why the prerequisite gates the rest.
