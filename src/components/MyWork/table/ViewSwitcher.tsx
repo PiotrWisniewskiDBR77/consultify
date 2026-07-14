@@ -59,7 +59,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   onViewChange,
   onCreateView,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [open, setOpen] = useState(false);
@@ -124,7 +124,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
       >
         <ActiveIcon size={12} />
         <span className="truncate max-w-[100px]">
-          {activeView?.name ?? (isPl ? 'Widoki' : 'Views')}
+          {activeView?.name ?? t('ideas.table.viewSwitcher.views', 'Views')}
         </span>
         <ChevronDown size={10} className="text-c-text-muted" />
       </button>
@@ -135,7 +135,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           {/* Header */}
           <div className="px-3 py-2 border-b border-c-border-subtle">
             <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
-              {isPl ? 'Zapisane widoki' : 'Saved views'}
+              {t('ideas.table.viewSwitcher.savedViews', 'Saved views')}
             </span>
           </div>
 
@@ -143,7 +143,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           <div className="py-1 max-h-[240px] overflow-auto">
             {views.length === 0 && (
               <p className="text-[11px] text-c-text-muted text-center py-3">
-                {isPl ? 'Brak widoków' : 'No views'}
+                {t('ideas.table.viewSwitcher.noViews', 'No views')}
               </p>
             )}
             {views.map((view) => {
@@ -180,7 +180,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                       setSharingViewId(view.id);
                     }}
                     className="p-0.5 rounded hover:bg-c-surface text-c-text-muted hover:text-c-text-secondary flex-shrink-0 opacity-0 group-hover/view:opacity-100 transition-opacity"
-                    title={isPl ? 'Udostępnij' : 'Share'}
+                    title={t('ideas.table.viewSwitcher.share', 'Share')}
                   >
                     <Share2 size={10} />
                   </button>
@@ -202,7 +202,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                 className="w-full inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-1 py-1.5 rounded-lg transition-colors"
               >
                 <Plus size={12} />
-                {isPl ? 'Utwórz widok' : 'Create view'}
+                {t('ideas.table.viewSwitcher.createView', 'Create view')}
               </button>
             ) : (
               <div className="space-y-2">
@@ -211,7 +211,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={handleCreateKeyDown}
-                  placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
+                  placeholder={t('ideas.table.viewName', 'View name…')}
                   className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 <div className="flex items-center gap-1">
@@ -244,7 +244,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                   />
                   <Lock size={10} className="text-c-text-muted" />
                   <span className="text-[10px] text-c-text-muted">
-                    {isPl ? 'Widok prywatny' : 'Personal view'}
+                    {t('ideas.table.viewSwitcher.personalView', 'Personal view')}
                   </span>
                 </label>
                 <div className="flex items-center gap-1.5">
@@ -254,7 +254,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     disabled={!newName.trim()}
                     className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-c-text text-c-surface hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
-                    {isPl ? 'Utwórz' : 'Create'}
+                    {t('ideas.table.recordTemplates.create', 'Create')}
                   </button>
                   <button
                     type="button"

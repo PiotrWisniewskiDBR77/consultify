@@ -22982,6 +22982,14 @@
         "viewLayout": "Układ widoku",
         "record": "Rekord",
         "filter": "Filtr"
+      },
+      "viewSwitcher": {
+        "views": "Widoki",
+        "savedViews": "Zapisane widoki",
+        "noViews": "Brak widoków",
+        "share": "Udostępnij",
+        "createView": "Utwórz widok",
+        "personalView": "Widok prywatny"
       }
     },
     "mindmap": {

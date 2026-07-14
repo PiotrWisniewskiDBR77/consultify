@@ -21906,6 +21906,14 @@
         "viewLayout": "View layout",
         "record": "Record",
         "filter": "Filter"
+      },
+      "viewSwitcher": {
+        "views": "Views",
+        "savedViews": "Saved views",
+        "noViews": "No views",
+        "share": "Share",
+        "createView": "Create view",
+        "personalView": "Personal view"
       }
     },
     "mindmap": {
