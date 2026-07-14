@@ -3839,6 +3839,17 @@
       "continue": "Kontynuuj",
       "fixResubmit": "Popraw",
       "noLinkedDocuments": "Brak powiązań"
+    },
+    "initiativePreview": {
+      "sendToReview": "Wyślij do przeglądu",
+      "approveAndMoveForward": "Zatwierdź i przekaż dalej",
+      "backToDraft": "Wróć do szkicu",
+      "openInitiativeDocument": "Otwórz dokument inicjatywy",
+      "copyId": "Kopiuj ID",
+      "aiForInitiativesComingSoon": "AI dla inicjatyw — wkrótce",
+      "summarize": "Podsumuj",
+      "risks": "Ryzyka",
+      "nextSteps": "Następne kroki"
     }
   },
   "assessment": {
