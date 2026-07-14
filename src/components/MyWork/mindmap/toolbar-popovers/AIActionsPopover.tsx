@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { IdeaWorkspaceSelection } from '../../ideaSelectionTypes';
 import type { SidekickContext } from '../aiSidekickContext';
@@ -92,6 +93,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
   sidekickHint: sidekickHintProp,
   heuristicAiEnabled = false,
 }) => {
+  const { t } = useTranslation();
   const [eventCtx, setEventCtx] = useState<SidekickContext | null>(null);
 
   useEffect(() => {
@@ -133,19 +135,15 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
         >
           <MessageCircle size={14} className="shrink-0" />
           {hasNodeSelected
-            ? isPl
-              ? 'Zapytaj AI o ten węzeł'
-              : 'Ask AI about this node'
-            : isPl
-              ? 'Nowa rozmowa AI'
-              : 'New AI conversation'}
+            ? t('ideas.mindmap.askAiAboutThisNode', 'Ask AI about this node')
+            : t('ideas.mindmap.newAiConversation', 'New AI conversation')}
         </button>
       </div>
 
       {hasNodeSelected && (
         <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
           <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-            {isPl ? 'Dla wybranego węzła' : 'For selected node'}
+            {t('ideas.mindmap.selectedNode', 'For selected node')}
           </div>
           {NODE_SPECIFIC_GENERATORS.map((a) => {
             const Icon = a.iconEl;
@@ -166,7 +164,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
       <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           <Sparkles size={10} className="inline mr-1" />
-          {isPl ? 'Generatory AI' : 'AI generators'}
+          {t('ideas.mindmap.aiGenerators', 'AI generators')}
         </div>
         {GENERAL_GENERATORS.map((a) => {
           const Icon = a.iconEl;
@@ -186,7 +184,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
               <span className="flex-1 text-left">{isPl ? a.labelPl : a.labelEn}</span>
               {comingSoon && (
                 <span className="text-[9px] italic text-c-text-secondary dark:text-c-text-secondary shrink-0">
-                  {isPl ? 'Wkrótce' : 'Coming soon'}
+                  {t('ideas.mindmap.comingSoon', 'Coming soon')}
                 </span>
               )}
             </button>

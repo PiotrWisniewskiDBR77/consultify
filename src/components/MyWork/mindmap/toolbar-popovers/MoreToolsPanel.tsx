@@ -13,6 +13,7 @@ import {
   Share2,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface MoreToolsPanelProps {
   isPl: boolean;
@@ -152,6 +153,7 @@ const CATEGORY_LABELS: Record<string, { pl: string; en: string }> = {
 };
 
 export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, onClose }) => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -187,7 +189,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={isPl ? 'Szukaj narzędzi…' : 'Search tools…'}
+            placeholder={t('ideas.mindmap.searchTools', 'Search tools…')}
             className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-border"
             autoFocus
           />
@@ -216,7 +218,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
         ))}
         {filtered.length === 0 && (
           <div className="px-2 py-4 text-[10px] text-c-text-secondary text-center">
-            {isPl ? 'Brak wyników' : 'No results'}
+            {t('ideas.mindmap.noResults', 'No results')}
           </div>
         )}
       </div>

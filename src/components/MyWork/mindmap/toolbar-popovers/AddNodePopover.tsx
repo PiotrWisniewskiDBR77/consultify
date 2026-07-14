@@ -9,6 +9,7 @@ import {
   Star,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface AddNodePopoverProps {
   isPl: boolean;
@@ -58,6 +59,7 @@ export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
   onAction,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const dispatch = (action: string) => {
     onAction(action);
     onClose();
@@ -67,7 +69,7 @@ export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
     <div className="w-56 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl">
       <div className="px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-          {isPl ? 'Dodaj' : 'Add'}
+          {t('ideas.mindmap.add', 'Add')}
         </div>
         {STRUCTURE_ACTIONS.map((a) => {
           const Icon = a.iconEl;
@@ -88,7 +90,7 @@ export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
       </div>
       <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-          {isPl ? 'Wstaw specjalny' : 'Insert special'}
+          {t('ideas.mindmap.insertSpecial', 'Insert special')}
         </div>
         {SEMANTIC_TYPES.map((a) => {
           const Icon = a.iconEl;
