@@ -1,6 +1,7 @@
 import { AlertTriangle, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -33,6 +34,7 @@ const emptyPolicy: AdminIamPolicy = {
 };
 
 export const AdminIamPolicyPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [policy, setPolicy] = useState<AdminIamPolicy>(emptyPolicy);
@@ -40,7 +42,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
   const [assignmentForm, setAssignmentForm] = useState({
     userId: '',
     roleId: 'billing_admin',
-    roleName: 'Billing Admin',
+    roleName: t('admin.security.iamPolicy.defaults.billingAdmin', 'Billing Admin'),
     capabilities: 'billing:read, billing:write',
     expiresAt: '',
   });
@@ -56,14 +58,16 @@ export const AdminIamPolicyPanel: React.FC = () => {
         setPolicy(result?.policy || emptyPolicy);
         setAssignments(assignmentResult?.assignments || []);
       } catch (error: any) {
-        toast.error(error?.message || 'Failed to load IAM policy');
+        toast.error(
+          error?.message || t('admin.security.iamPolicy.errors.load', 'Failed to load IAM policy')
+        );
       } finally {
         setLoading(false);
       }
     };
 
     void load();
-  }, []);
+  }, [t]);
 
   const updateRole = (index: number, changes: Partial<DelegatedRole>) => {
     setPolicy((current) => ({
@@ -79,7 +83,11 @@ export const AdminIamPolicyPanel: React.FC = () => {
       ...current,
       delegatedRoles: [
         ...current.delegatedRoles,
-        { id: `custom_${Date.now()}`, name: 'Custom Admin', capabilities: ['read:admin'] },
+        {
+          id: `custom_${Date.now()}`,
+          name: t('admin.security.iamPolicy.defaults.customAdmin', 'Custom Admin'),
+          capabilities: ['read:admin'],
+        },
       ],
     }));
   };
@@ -96,9 +104,11 @@ export const AdminIamPolicyPanel: React.FC = () => {
       setSaving(true);
       const result = await Api.updateAdminIAMPolicy(policy);
       setPolicy(result?.policy || policy);
-      toast.success('IAM policy updated');
+      toast.success(t('admin.security.iamPolicy.toasts.updated', 'IAM policy updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update IAM policy');
+      toast.error(
+        error?.message || t('admin.security.iamPolicy.errors.update', 'Failed to update IAM policy')
+      );
     } finally {
       setSaving(false);
     }
@@ -118,9 +128,17 @@ export const AdminIamPolicyPanel: React.FC = () => {
         expiresAt: assignmentForm.expiresAt || null,
       });
       setAssignments((current) => [result?.assignment, ...current].filter(Boolean));
-      toast.success('Delegated assignment created');
+      toast.success(
+        t('admin.security.iamPolicy.toasts.assignmentCreated', 'Delegated assignment created')
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to create delegated assignment');
+      toast.error(
+        error?.message ||
+          t(
+            'admin.security.iamPolicy.errors.createAssignment',
+            'Failed to create delegated assignment'
+          )
+      );
     }
   };
 
@@ -128,16 +146,24 @@ export const AdminIamPolicyPanel: React.FC = () => {
     try {
       await Api.deleteAdminIAMAssignment(assignmentId);
       setAssignments((current) => current.filter((assignment) => assignment.id !== assignmentId));
-      toast.success('Delegated assignment removed');
+      toast.success(
+        t('admin.security.iamPolicy.toasts.assignmentRemoved', 'Delegated assignment removed')
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to delete delegated assignment');
+      toast.error(
+        error?.message ||
+          t(
+            'admin.security.iamPolicy.errors.deleteAssignment',
+            'Failed to delete delegated assignment'
+          )
+      );
     }
   };
 
   if (loading) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
-        Loading IAM policy...
+        {t('admin.security.iamPolicy.loading', 'Loading IAM policy...')}
       </div>
     );
   }
@@ -148,11 +174,13 @@ export const AdminIamPolicyPanel: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
             <ShieldCheck className="h-5 w-5 text-primary-500" />
-            Enterprise IAM Governance
+            {t('admin.security.iamPolicy.title', 'Enterprise IAM Governance')}
           </div>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Define delegated admin roles, access review cadence, break-glass posture, and
-            context-aware admin safeguards for this tenant.
+            {t(
+              'admin.security.iamPolicy.description',
+              'Define delegated admin roles, access review cadence, break-glass posture, and context-aware admin safeguards for this tenant.'
+            )}
           </p>
         </div>
         <button
@@ -161,15 +189,22 @@ export const AdminIamPolicyPanel: React.FC = () => {
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save IAM policy'}
+          {saving
+            ? t('admin.security.iamPolicy.actions.saving', 'Saving...')
+            : t('admin.security.iamPolicy.actions.save', 'Save IAM policy')}
         </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10">
-          <div className="font-medium text-slate-900 dark:text-white">Access reviews</div>
+          <div className="font-medium text-slate-900 dark:text-white">
+            {t('admin.security.iamPolicy.toggles.accessReviews.title', 'Access reviews')}
+          </div>
           <div className="mt-1 text-slate-500 dark:text-slate-400">
-            Require recurring recertification of privileged admin access.
+            {t(
+              'admin.security.iamPolicy.toggles.accessReviews.description',
+              'Require recurring recertification of privileged admin access.'
+            )}
           </div>
           <input
             type="checkbox"
@@ -182,9 +217,14 @@ export const AdminIamPolicyPanel: React.FC = () => {
         </label>
 
         <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10">
-          <div className="font-medium text-slate-900 dark:text-white">Context-aware access</div>
+          <div className="font-medium text-slate-900 dark:text-white">
+            {t('admin.security.iamPolicy.toggles.contextAware.title', 'Context-aware access')}
+          </div>
           <div className="mt-1 text-slate-500 dark:text-slate-400">
-            Require stronger checks for privileged sessions and sensitive changes.
+            {t(
+              'admin.security.iamPolicy.toggles.contextAware.description',
+              'Require stronger checks for privileged sessions and sensitive changes.'
+            )}
           </div>
           <input
             type="checkbox"
@@ -200,9 +240,14 @@ export const AdminIamPolicyPanel: React.FC = () => {
         </label>
 
         <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10">
-          <div className="font-medium text-slate-900 dark:text-white">Break-glass</div>
+          <div className="font-medium text-slate-900 dark:text-white">
+            {t('admin.security.iamPolicy.toggles.breakGlass.title', 'Break-glass')}
+          </div>
           <div className="mt-1 text-slate-500 dark:text-slate-400">
-            Allow emergency elevation with explicit approvers and audit requirements.
+            {t(
+              'admin.security.iamPolicy.toggles.breakGlass.description',
+              'Allow emergency elevation with explicit approvers and audit requirements.'
+            )}
           </div>
           <input
             type="checkbox"
@@ -217,7 +262,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
 
       <div className="grid gap-4 md:grid-cols-3">
         <label className="text-sm text-slate-600 dark:text-slate-300">
-          Access review cadence (days)
+          {t('admin.security.iamPolicy.fields.reviewCadence', 'Access review cadence (days)')}
           <input
             type="number"
             min={30}
@@ -232,7 +277,10 @@ export const AdminIamPolicyPanel: React.FC = () => {
           />
         </label>
         <label className="text-sm text-slate-600 dark:text-slate-300">
-          Privileged session reauth (minutes)
+          {t(
+            'admin.security.iamPolicy.fields.reauthMinutes',
+            'Privileged session reauth (minutes)'
+          )}
           <input
             type="number"
             min={5}
@@ -247,7 +295,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
           />
         </label>
         <label className="text-sm text-slate-600 dark:text-slate-300">
-          Break-glass approvers
+          {t('admin.security.iamPolicy.fields.breakGlassApprovers', 'Break-glass approvers')}
           <input
             type="text"
             value={policy.breakGlassApprovers.join(', ')}
@@ -270,8 +318,10 @@ export const AdminIamPolicyPanel: React.FC = () => {
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4" />
           <div>
-            Privileged admin changes should be combined with tenant audit monitoring and high-risk
-            alerting. This policy is stored as the tenant-admin IAM truth surface for P32.
+            {t(
+              'admin.security.iamPolicy.warning',
+              'Privileged admin changes should be combined with tenant audit monitoring and high-risk alerting. This policy is stored as the tenant-admin IAM truth surface for P32.'
+            )}
           </div>
         </div>
       </div>
@@ -279,14 +329,14 @@ export const AdminIamPolicyPanel: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Delegated admin roles
+            {t('admin.security.iamPolicy.rolesSection.title', 'Delegated admin roles')}
           </h3>
           <button
             onClick={addRole}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:text-slate-200"
           >
             <Plus className="h-4 w-4" />
-            Add delegated role
+            {t('admin.security.iamPolicy.rolesSection.addRole', 'Add delegated role')}
           </button>
         </div>
 
@@ -326,7 +376,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
 
       <div className="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-white/10">
         <div className="text-sm font-semibold text-slate-900 dark:text-white">
-          Delegated admin assignments
+          {t('admin.security.iamPolicy.assignmentsSection.title', 'Delegated admin assignments')}
         </div>
         <div className="grid gap-3 lg:grid-cols-4">
           <input
@@ -335,7 +385,10 @@ export const AdminIamPolicyPanel: React.FC = () => {
             onChange={(event) =>
               setAssignmentForm((current) => ({ ...current, userId: event.target.value }))
             }
-            placeholder="user-id"
+            placeholder={t(
+              'admin.security.iamPolicy.assignmentsSection.userIdPlaceholder',
+              'user-id'
+            )}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
           />
           <input
@@ -344,7 +397,10 @@ export const AdminIamPolicyPanel: React.FC = () => {
             onChange={(event) =>
               setAssignmentForm((current) => ({ ...current, roleName: event.target.value }))
             }
-            placeholder="Role name"
+            placeholder={t(
+              'admin.security.iamPolicy.assignmentsSection.roleNamePlaceholder',
+              'Role name'
+            )}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
           />
           <input
@@ -360,7 +416,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
             onClick={() => void createAssignment()}
             className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
           >
-            Assign delegated role
+            {t('admin.security.iamPolicy.assignmentsSection.assign', 'Assign delegated role')}
           </button>
         </div>
 
@@ -375,11 +431,17 @@ export const AdminIamPolicyPanel: React.FC = () => {
                   {assignment.roleName || assignment.roleId}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  User: {assignment.userId}
+                  {t('admin.security.iamPolicy.assignmentsSection.user', 'User: {{userId}}', {
+                    userId: assignment.userId,
+                  })}
                 </div>
               </div>
               <div className="text-sm text-slate-600 dark:text-slate-300">
-                {(assignment.capabilities || []).join(', ') || 'No capabilities'}
+                {(assignment.capabilities || []).join(', ') ||
+                  t(
+                    'admin.security.iamPolicy.assignmentsSection.noCapabilities',
+                    'No capabilities'
+                  )}
               </div>
               <button
                 onClick={() => void deleteAssignment(assignment.id)}

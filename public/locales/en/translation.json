@@ -14030,7 +14030,268 @@
     },
     "security": {
       "saved": "Saved",
-      "loading": "Loading…"
+      "loading": "Loading…",
+      "identityPanel": {
+        "tabs": {
+          "policy": "Security policy",
+          "collaboration": "Collaboration policy",
+          "apiAccess": "API access",
+          "iam": "Delegated IAM",
+          "scim": "SCIM & lifecycle",
+          "risk": "Risk summary"
+        },
+        "title": "Security & Identity",
+        "description": "One tenant-admin surface for authentication policy, collaboration controls, API access, delegated admin governance, SCIM identity lifecycle, and risk follow-up."
+      },
+      "auditLog": {
+        "errors": {
+          "load": "Failed to load audit logs",
+          "export": "Failed to export audit logs",
+          "retention": "Failed to update retention"
+        },
+        "toasts": {
+          "exportReady": "Audit export ready",
+          "retentionUpdated": "Audit retention updated"
+        },
+        "columns": {
+          "action": "Action",
+          "actor": "Actor",
+          "risk": "Risk",
+          "status": "Status",
+          "created": "Created"
+        },
+        "risk": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        },
+        "status": {
+          "resolved": "Resolved",
+          "open": "Open",
+          "pending": "Pending"
+        },
+        "stats": {
+          "totalLogs": "Total logs",
+          "unresolved": "Unresolved",
+          "highRisk": "High risk"
+        },
+        "riskIncidents": {
+          "title": "Risk & incidents",
+          "tracked": "LLM incidents tracked: {{count}}",
+          "highRiskChanges": "High-risk admin changes: {{count}}"
+        },
+        "compliance": {
+          "title": "Compliance evidence",
+          "gdprEnabled": "GDPR enabled: {{value}}",
+          "yes": "yes",
+          "no": "no",
+          "retentionDays": "Audit retention days: {{count}}"
+        },
+        "actions": {
+          "saveRetention": "Save retention",
+          "refresh": "Refresh",
+          "exportCsv": "Export CSV"
+        },
+        "title": "Admin Audit Log",
+        "description": "Membership, security, collaboration, and integration changes emitted by P32 surfaces.",
+        "searchPlaceholder": "Search action, actor, metadata...",
+        "loading": "Loading audit logs...",
+        "emptyMessage": "No audit events found for this workspace."
+      },
+      "collaborationControls": {
+        "errors": {
+          "load": "Failed to load collaboration controls",
+          "save": "Failed to save collaboration controls"
+        },
+        "toasts": {
+          "saved": "Collaboration controls saved"
+        },
+        "cards": {
+          "guestAccess": {
+            "title": "Guest access",
+            "description": "Allows restricted guest collaborators in the workspace.",
+            "denial": "When disabled, guest role assignment is blocked."
+          },
+          "externalLinkSharing": {
+            "title": "External link sharing",
+            "description": "Controls whether members can share workspace artifacts externally.",
+            "denial": "When disabled, outbound share flows must stop at policy check."
+          },
+          "toolApproval": {
+            "title": "Tool approval required",
+            "description": "Requires admin approval before tool usage is enabled.",
+            "denial": "When enabled, users cannot self-activate new tools."
+          }
+        },
+        "title": "Collaboration Controls",
+        "description": "Canonical P32 controls for guest access, sharing, and tool approval.",
+        "actions": {
+          "save": "Save controls"
+        }
+      },
+      "iamPolicy": {
+        "defaults": {
+          "billingAdmin": "Billing Admin",
+          "customAdmin": "Custom Admin"
+        },
+        "errors": {
+          "load": "Failed to load IAM policy",
+          "update": "Failed to update IAM policy",
+          "createAssignment": "Failed to create delegated assignment",
+          "deleteAssignment": "Failed to delete delegated assignment"
+        },
+        "toasts": {
+          "updated": "IAM policy updated",
+          "assignmentCreated": "Delegated assignment created",
+          "assignmentRemoved": "Delegated assignment removed"
+        },
+        "loading": "Loading IAM policy...",
+        "title": "Enterprise IAM Governance",
+        "description": "Define delegated admin roles, access review cadence, break-glass posture, and context-aware admin safeguards for this tenant.",
+        "actions": {
+          "saving": "Saving...",
+          "save": "Save IAM policy"
+        },
+        "toggles": {
+          "accessReviews": {
+            "title": "Access reviews",
+            "description": "Require recurring recertification of privileged admin access."
+          },
+          "contextAware": {
+            "title": "Context-aware access",
+            "description": "Require stronger checks for privileged sessions and sensitive changes."
+          },
+          "breakGlass": {
+            "title": "Break-glass",
+            "description": "Allow emergency elevation with explicit approvers and audit requirements."
+          }
+        },
+        "fields": {
+          "reviewCadence": "Access review cadence (days)",
+          "reauthMinutes": "Privileged session reauth (minutes)",
+          "breakGlassApprovers": "Break-glass approvers"
+        },
+        "warning": "Privileged admin changes should be combined with tenant audit monitoring and high-risk alerting. This policy is stored as the tenant-admin IAM truth surface for P32.",
+        "rolesSection": {
+          "title": "Delegated admin roles",
+          "addRole": "Add delegated role"
+        },
+        "assignmentsSection": {
+          "title": "Delegated admin assignments",
+          "userIdPlaceholder": "user-id",
+          "roleNamePlaceholder": "Role name",
+          "assign": "Assign delegated role",
+          "user": "User: {{userId}}",
+          "noCapabilities": "No capabilities"
+        }
+      },
+      "riskSummary": {
+        "unknown": "unknown",
+        "unknownTime": "Unknown time",
+        "errors": {
+          "load": "Failed to load risk summary"
+        },
+        "loading": "Loading risk summary...",
+        "unavailableTitle": "Risk summary unavailable",
+        "retry": "Retry risk summary",
+        "metrics": {
+          "highRisk": {
+            "title": "High-risk audit events",
+            "description": "Audit events with risk score at or above the tenant threshold."
+          },
+          "unresolved": {
+            "title": "Unresolved audit items",
+            "description": "Open audit items that still need administrative review."
+          },
+          "incidents": {
+            "title": "LLM incidents",
+            "description": "Recent LLM/provider incidents visible to tenant admins."
+          }
+        },
+        "queue": {
+          "title": "Risk follow-up queue",
+          "description": "Prioritize unresolved audit items and recent incidents before changing tenant security posture.",
+          "empty": "No recent incidents returned by the risk service.",
+          "unknownProvider": "Unknown provider",
+          "status": "Status: {{status}}",
+          "started": "Started: {{time}}"
+        }
+      },
+      "scimLifecycle": {
+        "defaults": {
+          "tokenName": "Tenant SCIM Token",
+          "newToken": "new token"
+        },
+        "errors": {
+          "load": "Failed to load SCIM summary",
+          "createToken": "Failed to create SCIM token",
+          "createMapping": "Failed to create SCIM group mapping"
+        },
+        "toasts": {
+          "tokenCreated": "SCIM token created: {{prefix}}",
+          "mappingCreated": "SCIM group mapping created"
+        },
+        "stats": {
+          "activeTokens": "Active SCIM tokens",
+          "groupMappings": "Group mappings",
+          "openConflicts": "Open conflicts"
+        },
+        "title": "SCIM self-service lifecycle",
+        "description": "Tenant admins can now generate SCIM tokens and maintain group mappings from P32.",
+        "actions": {
+          "refresh": "Refresh"
+        },
+        "createToken": {
+          "title": "Create SCIM token",
+          "generate": "Generate token"
+        },
+        "createMapping": {
+          "title": "Create group mapping",
+          "save": "Save mapping"
+        },
+        "lists": {
+          "tokens": "Tokens",
+          "tokenRow": "{{name}} | {{prefix}} | used {{count}} times",
+          "groupMappings": "Group mappings"
+        }
+      },
+      "policyPanel": {
+        "errors": {
+          "load": "Failed to load security policy",
+          "save": "Failed to save security policy"
+        },
+        "toasts": {
+          "saved": "Security policy saved"
+        },
+        "mfa": {
+          "title": "MFA enforcement",
+          "description": "Require multi-factor authentication across the workspace.",
+          "enabled": "Enabled",
+          "gracePeriod": "Grace period (days)"
+        },
+        "sso": {
+          "title": "SSO posture",
+          "description": "Configure provider state and password fallback for identity flows.",
+          "enabled": "SSO enabled",
+          "enforce": "Enforce SSO login",
+          "allowPasswordFallback": "Allow password fallback",
+          "providerCustom": "Custom"
+        },
+        "sessionPassword": {
+          "title": "Session and password",
+          "description": "Canonical tenant policy surfaced through Admin instead of personal settings.",
+          "sessionTimeout": "Session timeout (minutes)",
+          "minutes": "{{count}} minutes",
+          "passwordPolicy": "Password policy",
+          "standard": "Standard",
+          "strong": "Strong",
+          "strict": "Strict"
+        },
+        "actions": {
+          "save": "Save security policy"
+        }
+      }
     },
     "tabs": {
       "templates": "Templates"

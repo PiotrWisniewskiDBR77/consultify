@@ -1,6 +1,7 @@
 import { Brain, Cpu, Shield, Sparkles } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';
@@ -21,12 +22,15 @@ type AiSummaryResponse = {
 
 type TabId = 'settings' | 'operations';
 
-const tabs: Array<{ id: TabId; label: string }> = [
-  { id: 'settings', label: 'Governance settings' },
-  { id: 'operations', label: 'AI operations' },
-];
-
 export const AdminAIControlCenterPanel: React.FC = () => {
+  const { t } = useTranslation();
+  const tabs: Array<{ id: TabId; label: string }> = [
+    {
+      id: 'settings',
+      label: t('admin.aiControlCenter.panel.tabs.settings', 'Governance settings'),
+    },
+    { id: 'operations', label: t('admin.aiControlCenter.panel.tabs.operations', 'AI operations') },
+  ];
   const [activeTab, setActiveTab] = useState<TabId>('settings');
   const [summary, setSummary] = useState<AiSummaryResponse | null>(null);
 
@@ -36,12 +40,15 @@ export const AdminAIControlCenterPanel: React.FC = () => {
         const result = await Api.getAdminAISummary();
         setSummary(result);
       } catch (error: any) {
-        toast.error(error?.message || 'Failed to load AI summary');
+        toast.error(
+          error?.message ||
+            t('admin.aiControlCenter.panel.errors.loadSummary', 'Failed to load AI summary')
+        );
       }
     };
 
     void load();
-  }, []);
+  }, [t]);
 
   return (
     <div className="space-y-6">
@@ -49,40 +56,54 @@ export const AdminAIControlCenterPanel: React.FC = () => {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Shield className="h-4 w-4" />
-            Governance level
+            {t('admin.aiControlCenter.panel.governanceLevel', 'Governance level')}
           </div>
           <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-            {summary?.summary?.governanceSummary?.policyLevel || 'Unknown'}
+            {summary?.summary?.governanceSummary?.policyLevel ||
+              t('admin.aiControlCenter.panel.unknown', 'Unknown')}
           </div>
           <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Review state: {summary?.summary?.llmPolicy?.review_state || 'n/a'}
+            {t('admin.aiControlCenter.panel.reviewState', 'Review state: {{state}}', {
+              state:
+                summary?.summary?.llmPolicy?.review_state ||
+                t('admin.aiControlCenter.panel.notAvailable', 'n/a'),
+            })}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Cpu className="h-4 w-4" />
-            Model posture
+            {t('admin.aiControlCenter.panel.modelPosture', 'Model posture')}
           </div>
           <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
             {summary?.summary?.governanceSummary?.modelCount || 0}
           </div>
           <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Budget: {summary?.summary?.governanceSummary?.budgetStatus || 'n/a'}
+            {t('admin.aiControlCenter.panel.budget', 'Budget: {{status}}', {
+              status:
+                summary?.summary?.governanceSummary?.budgetStatus ||
+                t('admin.aiControlCenter.panel.notAvailable', 'n/a'),
+            })}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Brain className="h-4 w-4" />
-            Context controls
+            {t('admin.aiControlCenter.panel.contextControls', 'Context controls')}
           </div>
           <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-            {summary?.summary?.contextPolicy?.defaultSensitivity || 'n/a'}
+            {summary?.summary?.contextPolicy?.defaultSensitivity ||
+              t('admin.aiControlCenter.panel.notAvailable', 'n/a')}
           </div>
           <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            External context{' '}
-            {summary?.summary?.contextPolicy?.allowExternalContext ? 'allowed' : 'restricted'}
+            {summary?.summary?.contextPolicy?.allowExternalContext
+              ? t('admin.aiControlCenter.panel.externalContextAllowed', 'External context allowed')
+              : t(
+                  'admin.aiControlCenter.panel.externalContextRestricted',
+                  'External context restricted'
+                )}
           </div>
         </div>
       </div>
@@ -109,11 +130,13 @@ export const AdminAIControlCenterPanel: React.FC = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
           <Sparkles className="h-5 w-5 text-primary-500" />
-          AI Governance & AI Operations
+          {t('admin.aiControlCenter.panel.title', 'AI Governance & AI Operations')}
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside
-          the primary Admin shell.
+          {t(
+            'admin.aiControlCenter.panel.description',
+            'Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside the primary Admin shell.'
+          )}
         </p>
       </div>
 

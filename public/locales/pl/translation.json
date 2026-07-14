@@ -14681,7 +14681,268 @@
     },
     "security": {
       "saved": "Zapisane",
-      "loading": "Ładowanie…"
+      "loading": "Ładowanie…",
+      "identityPanel": {
+        "tabs": {
+          "policy": "Polityka bezpieczeństwa",
+          "collaboration": "Polityka współpracy",
+          "apiAccess": "Dostęp API",
+          "iam": "Delegowane IAM",
+          "scim": "SCIM i cykl życia",
+          "risk": "Podsumowanie ryzyka"
+        },
+        "title": "Bezpieczeństwo i tożsamość",
+        "description": "Jedna powierzchnia administracyjna dla polityki uwierzytelniania, kontroli współpracy, dostępu API, delegowanego zarządzania administracyjnego, cyklu życia tożsamości SCIM i działań następczych związanych z ryzykiem."
+      },
+      "auditLog": {
+        "errors": {
+          "load": "Nie udało się załadować dzienników audytu",
+          "export": "Nie udało się wyeksportować dzienników audytu",
+          "retention": "Nie udało się zaktualizować okresu przechowywania"
+        },
+        "toasts": {
+          "exportReady": "Eksport audytu gotowy",
+          "retentionUpdated": "Zaktualizowano okres przechowywania audytu"
+        },
+        "columns": {
+          "action": "Akcja",
+          "actor": "Wykonawca",
+          "risk": "Ryzyko",
+          "status": "Status",
+          "created": "Utworzono"
+        },
+        "risk": {
+          "low": "Niskie",
+          "medium": "Średnie",
+          "high": "Wysokie",
+          "critical": "Krytyczne"
+        },
+        "status": {
+          "resolved": "Rozwiązane",
+          "open": "Otwarte",
+          "pending": "Oczekujące"
+        },
+        "stats": {
+          "totalLogs": "Wszystkie dzienniki",
+          "unresolved": "Nierozwiązane",
+          "highRisk": "Wysokie ryzyko"
+        },
+        "riskIncidents": {
+          "title": "Ryzyko i incydenty",
+          "tracked": "Śledzone incydenty LLM: {{count}}",
+          "highRiskChanges": "Zmiany administracyjne wysokiego ryzyka: {{count}}"
+        },
+        "compliance": {
+          "title": "Dowody zgodności",
+          "gdprEnabled": "RODO włączone: {{value}}",
+          "yes": "tak",
+          "no": "nie",
+          "retentionDays": "Dni przechowywania audytu: {{count}}"
+        },
+        "actions": {
+          "saveRetention": "Zapisz okres przechowywania",
+          "refresh": "Odśwież",
+          "exportCsv": "Eksportuj CSV"
+        },
+        "title": "Dziennik audytu administratora",
+        "description": "Zmiany dotyczące członkostwa, bezpieczeństwa, współpracy i integracji emitowane przez powierzchnie P32.",
+        "searchPlaceholder": "Szukaj akcji, wykonawcy, metadanych...",
+        "loading": "Ładowanie dzienników audytu...",
+        "emptyMessage": "Nie znaleziono zdarzeń audytu dla tej przestrzeni roboczej."
+      },
+      "collaborationControls": {
+        "errors": {
+          "load": "Nie udało się załadować kontroli współpracy",
+          "save": "Nie udało się zapisać kontroli współpracy"
+        },
+        "toasts": {
+          "saved": "Zapisano kontrole współpracy"
+        },
+        "cards": {
+          "guestAccess": {
+            "title": "Dostęp gościa",
+            "description": "Zezwala na ograniczonych współpracowników-gości w przestrzeni roboczej.",
+            "denial": "Gdy wyłączone, przypisywanie roli gościa jest zablokowane."
+          },
+          "externalLinkSharing": {
+            "title": "Udostępnianie linków zewnętrznych",
+            "description": "Kontroluje, czy członkowie mogą udostępniać artefakty przestrzeni roboczej na zewnątrz.",
+            "denial": "Gdy wyłączone, wychodzące przepływy udostępniania muszą zatrzymać się na sprawdzeniu polityki."
+          },
+          "toolApproval": {
+            "title": "Wymagane zatwierdzenie narzędzia",
+            "description": "Wymaga zatwierdzenia administratora przed włączeniem korzystania z narzędzia.",
+            "denial": "Gdy włączone, użytkownicy nie mogą samodzielnie aktywować nowych narzędzi."
+          }
+        },
+        "title": "Kontrole współpracy",
+        "description": "Kanoniczne kontrole P32 dla dostępu gości, udostępniania i zatwierdzania narzędzi.",
+        "actions": {
+          "save": "Zapisz kontrole"
+        }
+      },
+      "iamPolicy": {
+        "defaults": {
+          "billingAdmin": "Administrator rozliczeń",
+          "customAdmin": "Administrator niestandardowy"
+        },
+        "errors": {
+          "load": "Nie udało się załadować polityki IAM",
+          "update": "Nie udało się zaktualizować polityki IAM",
+          "createAssignment": "Nie udało się utworzyć delegowanego przypisania",
+          "deleteAssignment": "Nie udało się usunąć delegowanego przypisania"
+        },
+        "toasts": {
+          "updated": "Zaktualizowano politykę IAM",
+          "assignmentCreated": "Utworzono delegowane przypisanie",
+          "assignmentRemoved": "Usunięto delegowane przypisanie"
+        },
+        "loading": "Ładowanie polityki IAM...",
+        "title": "Zarządzanie IAM na poziomie przedsiębiorstwa",
+        "description": "Zdefiniuj delegowane role administracyjne, częstotliwość przeglądów dostępu, procedurę awaryjną (break-glass) oraz kontekstowe zabezpieczenia administracyjne dla tej organizacji.",
+        "actions": {
+          "saving": "Zapisywanie...",
+          "save": "Zapisz politykę IAM"
+        },
+        "toggles": {
+          "accessReviews": {
+            "title": "Przeglądy dostępu",
+            "description": "Wymagaj cyklicznej rekertyfikacji uprzywilejowanego dostępu administracyjnego."
+          },
+          "contextAware": {
+            "title": "Dostęp kontekstowy",
+            "description": "Wymagaj silniejszych kontroli dla sesji uprzywilejowanych i zmian wrażliwych."
+          },
+          "breakGlass": {
+            "title": "Procedura awaryjna",
+            "description": "Zezwól na awaryjne podniesienie uprawnień z jawnymi zatwierdzającymi i wymogami audytu."
+          }
+        },
+        "fields": {
+          "reviewCadence": "Częstotliwość przeglądu dostępu (dni)",
+          "reauthMinutes": "Ponowne uwierzytelnienie sesji uprzywilejowanej (minuty)",
+          "breakGlassApprovers": "Zatwierdzający procedury awaryjnej"
+        },
+        "warning": "Zmiany uprzywilejowanych administratorów powinny być połączone z monitorowaniem audytu organizacji i alertowaniem wysokiego ryzyka. Ta polityka jest przechowywana jako źródło prawdy IAM administratora organizacji dla P32.",
+        "rolesSection": {
+          "title": "Delegowane role administracyjne",
+          "addRole": "Dodaj delegowaną rolę"
+        },
+        "assignmentsSection": {
+          "title": "Delegowane przypisania administracyjne",
+          "userIdPlaceholder": "id-użytkownika",
+          "roleNamePlaceholder": "Nazwa roli",
+          "assign": "Przypisz delegowaną rolę",
+          "user": "Użytkownik: {{userId}}",
+          "noCapabilities": "Brak uprawnień"
+        }
+      },
+      "riskSummary": {
+        "unknown": "nieznane",
+        "unknownTime": "Nieznany czas",
+        "errors": {
+          "load": "Nie udało się załadować podsumowania ryzyka"
+        },
+        "loading": "Ładowanie podsumowania ryzyka...",
+        "unavailableTitle": "Podsumowanie ryzyka niedostępne",
+        "retry": "Ponów podsumowanie ryzyka",
+        "metrics": {
+          "highRisk": {
+            "title": "Zdarzenia audytu wysokiego ryzyka",
+            "description": "Zdarzenia audytu z wynikiem ryzyka na poziomie progu organizacji lub wyższym."
+          },
+          "unresolved": {
+            "title": "Nierozwiązane pozycje audytu",
+            "description": "Otwarte pozycje audytu, które nadal wymagają przeglądu administracyjnego."
+          },
+          "incidents": {
+            "title": "Incydenty LLM",
+            "description": "Ostatnie incydenty LLM/dostawcy widoczne dla administratorów organizacji."
+          }
+        },
+        "queue": {
+          "title": "Kolejka działań następczych ryzyka",
+          "description": "Priorytetyzuj nierozwiązane pozycje audytu i ostatnie incydenty przed zmianą postawy bezpieczeństwa organizacji.",
+          "empty": "Usługa ryzyka nie zwróciła żadnych ostatnich incydentów.",
+          "unknownProvider": "Nieznany dostawca",
+          "status": "Status: {{status}}",
+          "started": "Rozpoczęto: {{time}}"
+        }
+      },
+      "scimLifecycle": {
+        "defaults": {
+          "tokenName": "Token SCIM organizacji",
+          "newToken": "nowy token"
+        },
+        "errors": {
+          "load": "Nie udało się załadować podsumowania SCIM",
+          "createToken": "Nie udało się utworzyć tokenu SCIM",
+          "createMapping": "Nie udało się utworzyć mapowania grupy SCIM"
+        },
+        "toasts": {
+          "tokenCreated": "Utworzono token SCIM: {{prefix}}",
+          "mappingCreated": "Utworzono mapowanie grupy SCIM"
+        },
+        "stats": {
+          "activeTokens": "Aktywne tokeny SCIM",
+          "groupMappings": "Mapowania grup",
+          "openConflicts": "Otwarte konflikty"
+        },
+        "title": "Samoobsługowy cykl życia SCIM",
+        "description": "Administratorzy organizacji mogą teraz generować tokeny SCIM i zarządzać mapowaniami grup z poziomu P32.",
+        "actions": {
+          "refresh": "Odśwież"
+        },
+        "createToken": {
+          "title": "Utwórz token SCIM",
+          "generate": "Wygeneruj token"
+        },
+        "createMapping": {
+          "title": "Utwórz mapowanie grupy",
+          "save": "Zapisz mapowanie"
+        },
+        "lists": {
+          "tokens": "Tokeny",
+          "tokenRow": "{{name}} | {{prefix}} | użyto {{count}} razy",
+          "groupMappings": "Mapowania grup"
+        }
+      },
+      "policyPanel": {
+        "errors": {
+          "load": "Nie udało się załadować polityki bezpieczeństwa",
+          "save": "Nie udało się zapisać polityki bezpieczeństwa"
+        },
+        "toasts": {
+          "saved": "Zapisano politykę bezpieczeństwa"
+        },
+        "mfa": {
+          "title": "Wymuszanie MFA",
+          "description": "Wymagaj uwierzytelniania wieloskładnikowego w całej przestrzeni roboczej.",
+          "enabled": "Włączone",
+          "gracePeriod": "Okres karencji (dni)"
+        },
+        "sso": {
+          "title": "Postawa SSO",
+          "description": "Skonfiguruj stan dostawcy i awaryjne logowanie hasłem dla przepływów tożsamości.",
+          "enabled": "SSO włączone",
+          "enforce": "Wymuś logowanie SSO",
+          "allowPasswordFallback": "Zezwól na logowanie hasłem awaryjnie",
+          "providerCustom": "Niestandardowy"
+        },
+        "sessionPassword": {
+          "title": "Sesja i hasło",
+          "description": "Kanoniczna polityka organizacji udostępniona przez panel administracyjny zamiast ustawień osobistych.",
+          "sessionTimeout": "Limit czasu sesji (minuty)",
+          "minutes": "{{count}} minut",
+          "passwordPolicy": "Polityka haseł",
+          "standard": "Standardowa",
+          "strong": "Silna",
+          "strict": "Rygorystyczna"
+        },
+        "actions": {
+          "save": "Zapisz politykę bezpieczeństwa"
+        }
+      }
     },
     "tabs": {
       "templates": "Wzorce"

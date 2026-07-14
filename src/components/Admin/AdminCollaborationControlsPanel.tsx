@@ -1,6 +1,7 @@
 import { Loader2, Save, Share2, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
@@ -19,6 +20,7 @@ const DEFAULT_CONTROLS: CollaborationControls = {
 };
 
 export const AdminCollaborationControlsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [controls, setControls] = useState<CollaborationControls>(DEFAULT_CONTROLS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,22 +32,36 @@ export const AdminCollaborationControlsPanel: React.FC = () => {
         const response = await Api.getAdminCollaborationControls();
         setControls({ ...DEFAULT_CONTROLS, ...(response?.controls || {}) });
       } catch (error: any) {
-        toast.error(error?.message || 'Failed to load collaboration controls');
+        toast.error(
+          error?.message ||
+            t(
+              'admin.security.collaborationControls.errors.load',
+              'Failed to load collaboration controls'
+            )
+        );
       } finally {
         setLoading(false);
       }
     };
 
     void load();
-  }, []);
+  }, [t]);
 
   const handleSave = async () => {
     try {
       setSaving(true);
       await Api.updateAdminCollaborationControls(controls);
-      toast.success('Collaboration controls saved');
+      toast.success(
+        t('admin.security.collaborationControls.toasts.saved', 'Collaboration controls saved')
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to save collaboration controls');
+      toast.error(
+        error?.message ||
+          t(
+            'admin.security.collaborationControls.errors.save',
+            'Failed to save collaboration controls'
+          )
+      );
     } finally {
       setSaving(false);
     }
@@ -54,23 +70,47 @@ export const AdminCollaborationControlsPanel: React.FC = () => {
   const cards = [
     {
       key: 'guestAccessEnabled' as const,
-      title: 'Guest access',
-      description: 'Allows restricted guest collaborators in the workspace.',
-      denial: 'When disabled, guest role assignment is blocked.',
+      title: t('admin.security.collaborationControls.cards.guestAccess.title', 'Guest access'),
+      description: t(
+        'admin.security.collaborationControls.cards.guestAccess.description',
+        'Allows restricted guest collaborators in the workspace.'
+      ),
+      denial: t(
+        'admin.security.collaborationControls.cards.guestAccess.denial',
+        'When disabled, guest role assignment is blocked.'
+      ),
       icon: Users,
     },
     {
       key: 'externalLinkSharing' as const,
-      title: 'External link sharing',
-      description: 'Controls whether members can share workspace artifacts externally.',
-      denial: 'When disabled, outbound share flows must stop at policy check.',
+      title: t(
+        'admin.security.collaborationControls.cards.externalLinkSharing.title',
+        'External link sharing'
+      ),
+      description: t(
+        'admin.security.collaborationControls.cards.externalLinkSharing.description',
+        'Controls whether members can share workspace artifacts externally.'
+      ),
+      denial: t(
+        'admin.security.collaborationControls.cards.externalLinkSharing.denial',
+        'When disabled, outbound share flows must stop at policy check.'
+      ),
       icon: Share2,
     },
     {
       key: 'toolApprovalRequired' as const,
-      title: 'Tool approval required',
-      description: 'Requires admin approval before tool usage is enabled.',
-      denial: 'When enabled, users cannot self-activate new tools.',
+      title: t(
+        'admin.security.collaborationControls.cards.toolApproval.title',
+        'Tool approval required'
+      ),
+      description: t(
+        'admin.security.collaborationControls.cards.toolApproval.description',
+        'Requires admin approval before tool usage is enabled.'
+      ),
+      denial: t(
+        'admin.security.collaborationControls.cards.toolApproval.denial',
+        'When enabled, users cannot self-activate new tools.'
+      ),
       icon: Save,
     },
   ];
@@ -83,10 +123,13 @@ export const AdminCollaborationControlsPanel: React.FC = () => {
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Collaboration Controls
+          {t('admin.security.collaborationControls.title', 'Collaboration Controls')}
         </h3>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Canonical P32 controls for guest access, sharing, and tool approval.
+          {t(
+            'admin.security.collaborationControls.description',
+            'Canonical P32 controls for guest access, sharing, and tool approval.'
+          )}
         </p>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
@@ -132,7 +175,7 @@ export const AdminCollaborationControlsPanel: React.FC = () => {
             className="inline-flex items-center gap-2 rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save controls
+            {t('admin.security.collaborationControls.actions.save', 'Save controls')}
           </button>
         </div>
       </div>

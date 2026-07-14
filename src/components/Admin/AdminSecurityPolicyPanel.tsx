@@ -1,6 +1,7 @@
 import { KeyRound, Loader2, Lock, Save, Shield } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
@@ -33,6 +34,7 @@ const DEFAULT_POLICY: SecurityPolicyState = {
 };
 
 export const AdminSecurityPolicyPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [policy, setPolicy] = useState<SecurityPolicyState>(DEFAULT_POLICY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,22 +46,28 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
         const response = await Api.getAdminSecurityPolicy();
         setPolicy({ ...DEFAULT_POLICY, ...(response?.policy || {}) });
       } catch (error: any) {
-        toast.error(error?.message || 'Failed to load security policy');
+        toast.error(
+          error?.message ||
+            t('admin.security.policyPanel.errors.load', 'Failed to load security policy')
+        );
       } finally {
         setLoading(false);
       }
     };
 
     void load();
-  }, []);
+  }, [t]);
 
   const handleSave = async () => {
     try {
       setSaving(true);
       await Api.updateAdminSecurityPolicy(policy);
-      toast.success('Security policy saved');
+      toast.success(t('admin.security.policyPanel.toasts.saved', 'Security policy saved'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to save security policy');
+      toast.error(
+        error?.message ||
+          t('admin.security.policyPanel.errors.save', 'Failed to save security policy')
+      );
     } finally {
       setSaving(false);
     }
@@ -75,13 +83,18 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <KeyRound className="h-4 w-4 text-primary-500" />
-            MFA enforcement
+            {t('admin.security.policyPanel.mfa.title', 'MFA enforcement')}
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Require multi-factor authentication across the workspace.
+            {t(
+              'admin.security.policyPanel.mfa.description',
+              'Require multi-factor authentication across the workspace.'
+            )}
           </p>
           <label className="mt-4 flex items-center justify-between">
-            <span className="text-sm text-slate-600 dark:text-slate-300">Enabled</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">
+              {t('admin.security.policyPanel.mfa.enabled', 'Enabled')}
+            </span>
             <input
               type="checkbox"
               checked={policy.mfaRequired}
@@ -91,7 +104,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
             />
           </label>
           <label className="mt-4 block text-sm text-slate-600 dark:text-slate-300">
-            Grace period (days)
+            {t('admin.security.policyPanel.mfa.gracePeriod', 'Grace period (days)')}
             <input
               type="number"
               min={0}
@@ -110,14 +123,17 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <Shield className="h-4 w-4 text-primary-500" />
-            SSO posture
+            {t('admin.security.policyPanel.sso.title', 'SSO posture')}
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Configure provider state and password fallback for identity flows.
+            {t(
+              'admin.security.policyPanel.sso.description',
+              'Configure provider state and password fallback for identity flows.'
+            )}
           </p>
           <div className="mt-4 space-y-3">
             <label className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
-              <span>SSO enabled</span>
+              <span>{t('admin.security.policyPanel.sso.enabled', 'SSO enabled')}</span>
               <input
                 type="checkbox"
                 checked={policy.ssoEnabled}
@@ -127,7 +143,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
               />
             </label>
             <label className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
-              <span>Enforce SSO login</span>
+              <span>{t('admin.security.policyPanel.sso.enforce', 'Enforce SSO login')}</span>
               <input
                 type="checkbox"
                 checked={policy.ssoEnforced}
@@ -137,7 +153,12 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
               />
             </label>
             <label className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
-              <span>Allow password fallback</span>
+              <span>
+                {t(
+                  'admin.security.policyPanel.sso.allowPasswordFallback',
+                  'Allow password fallback'
+                )}
+              </span>
               <input
                 type="checkbox"
                 checked={policy.allowPasswordLogin}
@@ -163,7 +184,9 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                 }
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
               >
-                <option value="custom">Custom</option>
+                <option value="custom">
+                  {t('admin.security.policyPanel.sso.providerCustom', 'Custom')}
+                </option>
                 <option value="okta">Okta</option>
                 <option value="azure_ad">Azure AD</option>
                 <option value="google">Google</option>
@@ -188,14 +211,20 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <Lock className="h-4 w-4 text-primary-500" />
-            Session and password
+            {t('admin.security.policyPanel.sessionPassword.title', 'Session and password')}
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Canonical tenant policy surfaced through Admin instead of personal settings.
+            {t(
+              'admin.security.policyPanel.sessionPassword.description',
+              'Canonical tenant policy surfaced through Admin instead of personal settings.'
+            )}
           </p>
           <div className="mt-4 space-y-3">
             <label className="block text-sm text-slate-600 dark:text-slate-300">
-              Session timeout (minutes)
+              {t(
+                'admin.security.policyPanel.sessionPassword.sessionTimeout',
+                'Session timeout (minutes)'
+              )}
               <select
                 value={policy.sessionTimeoutMinutes}
                 onChange={(event) =>
@@ -206,15 +235,35 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                 }
                 className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
               >
-                <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
-                <option value={60}>60 minutes</option>
-                <option value={120}>120 minutes</option>
-                <option value={240}>240 minutes</option>
+                <option value={15}>
+                  {t('admin.security.policyPanel.sessionPassword.minutes', '{{count}} minutes', {
+                    count: 15,
+                  })}
+                </option>
+                <option value={30}>
+                  {t('admin.security.policyPanel.sessionPassword.minutes', '{{count}} minutes', {
+                    count: 30,
+                  })}
+                </option>
+                <option value={60}>
+                  {t('admin.security.policyPanel.sessionPassword.minutes', '{{count}} minutes', {
+                    count: 60,
+                  })}
+                </option>
+                <option value={120}>
+                  {t('admin.security.policyPanel.sessionPassword.minutes', '{{count}} minutes', {
+                    count: 120,
+                  })}
+                </option>
+                <option value={240}>
+                  {t('admin.security.policyPanel.sessionPassword.minutes', '{{count}} minutes', {
+                    count: 240,
+                  })}
+                </option>
               </select>
             </label>
             <label className="block text-sm text-slate-600 dark:text-slate-300">
-              Password policy
+              {t('admin.security.policyPanel.sessionPassword.passwordPolicy', 'Password policy')}
               <select
                 value={policy.passwordPolicy}
                 onChange={(event) =>
@@ -222,9 +271,15 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                 }
                 className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
               >
-                <option value="standard">Standard</option>
-                <option value="strong">Strong</option>
-                <option value="strict">Strict</option>
+                <option value="standard">
+                  {t('admin.security.policyPanel.sessionPassword.standard', 'Standard')}
+                </option>
+                <option value="strong">
+                  {t('admin.security.policyPanel.sessionPassword.strong', 'Strong')}
+                </option>
+                <option value="strict">
+                  {t('admin.security.policyPanel.sessionPassword.strict', 'Strict')}
+                </option>
               </select>
             </label>
           </div>
@@ -238,7 +293,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
           className="inline-flex items-center gap-2 rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save security policy
+          {t('admin.security.policyPanel.actions.save', 'Save security policy')}
         </button>
       </div>
     </div>

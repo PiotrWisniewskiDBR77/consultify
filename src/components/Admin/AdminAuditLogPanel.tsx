@@ -1,6 +1,7 @@
 import { Download, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -8,6 +9,7 @@ import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 
 export const AdminAuditLogPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<any[]>([]);
   const [stats, setStats] = useState<{
     totalLogs: number;
@@ -47,11 +49,13 @@ export const AdminAuditLogPanel: React.FC = () => {
         Number(complianceResult?.summary?.dataRetention?.auditLogRetentionDays || 730)
       );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to load audit logs');
+      toast.error(
+        error?.message || t('admin.security.auditLog.errors.load', 'Failed to load audit logs')
+      );
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, t]);
 
   useEffect(() => {
     void load();
@@ -69,9 +73,11 @@ export const AdminAuditLogPanel: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success('Audit export ready');
+      toast.success(t('admin.security.auditLog.toasts.exportReady', 'Audit export ready'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to export audit logs');
+      toast.error(
+        error?.message || t('admin.security.auditLog.errors.export', 'Failed to export audit logs')
+      );
     } finally {
       setExporting(false);
     }
@@ -90,16 +96,21 @@ export const AdminAuditLogPanel: React.FC = () => {
           auditLogRetentionDays: retentionDays,
         },
       }));
-      toast.success('Audit retention updated');
+      toast.success(
+        t('admin.security.auditLog.toasts.retentionUpdated', 'Audit retention updated')
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update retention');
+      toast.error(
+        error?.message ||
+          t('admin.security.auditLog.errors.retention', 'Failed to update retention')
+      );
     }
   };
 
   const auditColumns: TableColumn[] = [
     {
       id: 'action',
-      label: 'Action',
+      label: t('admin.security.auditLog.columns.action', 'Action'),
       width: '260px',
       render: (row) => (
         <div>
@@ -112,20 +123,20 @@ export const AdminAuditLogPanel: React.FC = () => {
     },
     {
       id: 'actor',
-      label: 'Actor',
+      label: t('admin.security.auditLog.columns.actor', 'Actor'),
       width: '180px',
       render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.actor}</span>,
     },
     {
       id: 'risk',
-      label: 'Risk',
+      label: t('admin.security.auditLog.columns.risk', 'Risk'),
       width: '160px',
       filterable: true,
       filterOptions: [
-        { value: 'low', label: 'Low' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'high', label: 'High' },
-        { value: 'critical', label: 'Critical' },
+        { value: 'low', label: t('admin.security.auditLog.risk.low', 'Low') },
+        { value: 'medium', label: t('admin.security.auditLog.risk.medium', 'Medium') },
+        { value: 'high', label: t('admin.security.auditLog.risk.high', 'High') },
+        { value: 'critical', label: t('admin.security.auditLog.risk.critical', 'Critical') },
       ],
       render: (row) => (
         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
@@ -136,19 +147,19 @@ export const AdminAuditLogPanel: React.FC = () => {
     },
     {
       id: 'logStatus',
-      label: 'Status',
+      label: t('admin.security.auditLog.columns.status', 'Status'),
       width: '120px',
       filterable: true,
       filterOptions: [
-        { value: 'RESOLVED', label: 'Resolved' },
-        { value: 'OPEN', label: 'Open' },
-        { value: 'PENDING', label: 'Pending' },
+        { value: 'RESOLVED', label: t('admin.security.auditLog.status.resolved', 'Resolved') },
+        { value: 'OPEN', label: t('admin.security.auditLog.status.open', 'Open') },
+        { value: 'PENDING', label: t('admin.security.auditLog.status.pending', 'Pending') },
       ],
       render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.logStatus}</span>,
     },
     {
       id: 'createdAt',
-      label: 'Created',
+      label: t('admin.security.auditLog.columns.created', 'Created'),
       width: '180px',
       render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.createdAt}</span>,
     },
@@ -159,7 +170,7 @@ export const AdminAuditLogPanel: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Total logs
+            {t('admin.security.auditLog.stats.totalLogs', 'Total logs')}
           </p>
           <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {stats.totalLogs}
@@ -167,7 +178,7 @@ export const AdminAuditLogPanel: React.FC = () => {
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Unresolved
+            {t('admin.security.auditLog.stats.unresolved', 'Unresolved')}
           </p>
           <p className="mt-2 text-2xl font-semibold text-amber-600 dark:text-amber-400">
             {stats.unresolvedCount}
@@ -175,7 +186,7 @@ export const AdminAuditLogPanel: React.FC = () => {
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            High risk
+            {t('admin.security.auditLog.stats.highRisk', 'High risk')}
           </p>
           <p className="mt-2 text-2xl font-semibold text-danger-600 dark:text-danger-400">
             {stats.highRiskCount}
@@ -186,24 +197,46 @@ export const AdminAuditLogPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Risk & incidents
+            {t('admin.security.auditLog.riskIncidents.title', 'Risk & incidents')}
           </p>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            LLM incidents tracked: {riskSummary?.incidents?.length || 0}
+            {t(
+              'admin.security.auditLog.riskIncidents.tracked',
+              'LLM incidents tracked: {{count}}',
+              {
+                count: riskSummary?.incidents?.length || 0,
+              }
+            )}
           </p>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            High-risk admin changes: {riskSummary?.audit?.highRiskCount || 0}
+            {t(
+              'admin.security.auditLog.riskIncidents.highRiskChanges',
+              'High-risk admin changes: {{count}}',
+              {
+                count: riskSummary?.audit?.highRiskCount || 0,
+              }
+            )}
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Compliance evidence
+            {t('admin.security.auditLog.compliance.title', 'Compliance evidence')}
           </p>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            GDPR enabled: {complianceSummary?.gdpr?.enabled ? 'yes' : 'no'}
+            {t('admin.security.auditLog.compliance.gdprEnabled', 'GDPR enabled: {{value}}', {
+              value: complianceSummary?.gdpr?.enabled
+                ? t('admin.security.auditLog.compliance.yes', 'yes')
+                : t('admin.security.auditLog.compliance.no', 'no'),
+            })}
           </p>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Audit retention days: {complianceSummary?.dataRetention?.auditLogRetentionDays || 0}
+            {t(
+              'admin.security.auditLog.compliance.retentionDays',
+              'Audit retention days: {{count}}',
+              {
+                count: complianceSummary?.dataRetention?.auditLogRetentionDays || 0,
+              }
+            )}
           </p>
           <div className="mt-3 flex gap-2">
             <input
@@ -217,7 +250,7 @@ export const AdminAuditLogPanel: React.FC = () => {
               onClick={() => void saveRetention()}
               className="rounded-lg bg-c-text text-c-bg px-3 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
-              Save retention
+              {t('admin.security.auditLog.actions.saveRetention', 'Save retention')}
             </button>
           </div>
         </div>
@@ -227,10 +260,13 @@ export const AdminAuditLogPanel: React.FC = () => {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Admin Audit Log
+              {t('admin.security.auditLog.title', 'Admin Audit Log')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Membership, security, collaboration, and integration changes emitted by P32 surfaces.
+              {t(
+                'admin.security.auditLog.description',
+                'Membership, security, collaboration, and integration changes emitted by P32 surfaces.'
+              )}
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -238,7 +274,10 @@ export const AdminAuditLogPanel: React.FC = () => {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search action, actor, metadata..."
+              placeholder={t(
+                'admin.security.auditLog.searchPlaceholder',
+                'Search action, actor, metadata...'
+              )}
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
             />
             <button
@@ -246,7 +285,7 @@ export const AdminAuditLogPanel: React.FC = () => {
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300"
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              {t('admin.security.auditLog.actions.refresh', 'Refresh')}
             </button>
             <button
               onClick={handleExport}
@@ -258,14 +297,14 @@ export const AdminAuditLogPanel: React.FC = () => {
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              Export CSV
+              {t('admin.security.auditLog.actions.exportCsv', 'Export CSV')}
             </button>
           </div>
         </div>
 
         {loading ? (
           <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-            Loading audit logs...
+            {t('admin.security.auditLog.loading', 'Loading audit logs...')}
           </div>
         ) : (
           <div className="mt-5">
@@ -283,7 +322,10 @@ export const AdminAuditLogPanel: React.FC = () => {
               hideRowActions
               activeFilters={auditFilters}
               onFilterChange={setAuditFilters}
-              emptyMessage="No audit events found for this workspace."
+              emptyMessage={t(
+                'admin.security.auditLog.emptyMessage',
+                'No audit events found for this workspace.'
+              )}
               persistKey="admin-audit-table"
               canvasClassName=""
             />
