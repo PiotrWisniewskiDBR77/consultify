@@ -67,8 +67,7 @@ export function triggerWebhooks(ideaId: string, eventType: string, payload: any)
 }
 
 export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose, ideaId }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
 
@@ -111,11 +110,11 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
 
   const handleSave = useCallback(() => {
     saveWebhooks(ideaId, webhooks);
-    toast.success(isPl ? 'Zapisano konfigurację webhooków' : 'Webhook configuration saved', {
+    toast.success(t('ideas.mindmap.webhookConfigurationSaved', 'Webhook configuration saved'), {
       duration: 1200,
     });
     onClose();
-  }, [ideaId, isPl, onClose, webhooks]);
+  }, [ideaId, onClose, webhooks]);
 
   if (!open) return null;
 
@@ -126,7 +125,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
           <div className="flex items-center gap-2">
             <Webhook size={16} className="text-c-warning" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Konfiguracja webhooków' : 'Webhook Settings'}
+              {t('ideas.mindmap.webhookSettings', 'Webhook Settings')}
             </h3>
           </div>
           <button
@@ -145,7 +144,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                 className="text-c-text-muted dark:text-c-text-secondary mx-auto mb-2"
               />
               <p className="text-[10px] text-c-text-muted mb-3">
-                {isPl ? 'Brak skonfigurowanych webhooków.' : 'No webhooks configured.'}
+                {t('ideas.mindmap.noWebhooksConfigured', 'No webhooks configured.')}
               </p>
             </div>
           )}
@@ -159,7 +158,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                 <input
                   value={wh.name}
                   onChange={(e) => updateWebhook(wh.id, { name: e.target.value })}
-                  placeholder={isPl ? 'Nazwa (np. Slack)' : 'Name (e.g. Slack)'}
+                  placeholder={t('ideas.mindmap.nameEGSlack', 'Name (e.g. Slack)')}
                   className="flex-1 px-2 py-1 rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted"
                 />
                 <label className="flex items-center gap-1 cursor-pointer">
@@ -170,7 +169,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                     className="w-3 h-3 rounded"
                   />
                   <span className="text-[9px] text-c-text-muted">
-                    {isPl ? 'Aktywny' : 'Active'}
+                    {t('ideas.mindmap.active', 'Active')}
                   </span>
                 </label>
                 <button
@@ -207,7 +206,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle transition-colors"
           >
             <Plus size={12} />
-            {isPl ? 'Dodaj webhook' : 'Add webhook'}
+            {t('ideas.mindmap.addWebhook', 'Add webhook')}
           </button>
           <div className="flex-1" />
           <button
@@ -215,7 +214,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
             className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all"
           >
             <Save size={12} />
-            {isPl ? 'Zapisz' : 'Save'}
+            {t('ideas.mindmap.save', 'Save')}
           </button>
         </div>
       </div>

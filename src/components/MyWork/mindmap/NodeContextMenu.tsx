@@ -32,6 +32,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { usePointFixedMenuPosition } from '@/hooks/useFixedMenuPosition';
 
@@ -77,6 +78,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   onClose,
   onAction,
 }) => {
+  const { t } = useTranslation();
   const { ref, style: posStyle } = usePointFixedMenuPosition(x, y, true);
   const [submenu, setSubmenu] = useState<string | null>(null);
   const submenuTimerRef = useRef<number | null>(null);
@@ -502,7 +504,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         <span className="flex-1 truncate">{isPl ? item.labelPl : item.labelEn}</span>
         {comingSoon && (
           <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary ml-2 shrink-0 italic">
-            {isPl ? 'Wkrótce' : 'Coming soon'}
+            {t('ideas.mindmap.comingSoon', 'Coming soon')}
           </span>
         )}
         {item.shortcut && !comingSoon && (

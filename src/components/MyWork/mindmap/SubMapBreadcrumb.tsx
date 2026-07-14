@@ -4,6 +4,7 @@
  */
 import { ChevronRight, Home } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface BreadcrumbItem {
   nodeId: string;
@@ -16,7 +17,8 @@ interface SubMapBreadcrumbProps {
   isPl: boolean;
 }
 
-export const SubMapBreadcrumb: React.FC<SubMapBreadcrumbProps> = ({ path, onNavigate, isPl }) => {
+export const SubMapBreadcrumb: React.FC<SubMapBreadcrumbProps> = ({ path, onNavigate }) => {
+  const { t } = useTranslation();
   if (path.length === 0) return null;
 
   return (
@@ -24,10 +26,10 @@ export const SubMapBreadcrumb: React.FC<SubMapBreadcrumbProps> = ({ path, onNavi
       <button
         onClick={() => onNavigate(null)}
         className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
-        title={isPl ? 'Wróć do głównej mapy' : 'Back to main map'}
+        title={t('ideas.mindmap.backMainMap', 'Back to main map')}
       >
         <Home size={12} />
-        <span>{isPl ? 'Mapa główna' : 'Main map'}</span>
+        <span>{t('ideas.mindmap.mainMap', 'Main map')}</span>
       </button>
 
       {path.map((item, idx) => (

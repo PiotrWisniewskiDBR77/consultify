@@ -43,7 +43,7 @@ const INTENSITY_COLORS = [
 ];
 
 export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const { days, maxCount, totalActivity, typeCounts } = useMemo(() => {
@@ -96,10 +96,10 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
         </button>
         <Calendar size={16} className="text-c-success" />
         <h2 className="text-sm font-bold text-c-text dark:text-c-text">
-          {isPl ? 'Mapa ciepła aktywności' : 'Activity Heatmap'}
+          {t('ideas.mindmap.activityHeatmap', 'Activity Heatmap')}
         </h2>
         <span className="text-[10px] text-c-text-secondary ml-auto">
-          {totalActivity} {isPl ? 'akcji w 30 dni' : 'actions in 30 days'}
+          {totalActivity} {t('ideas.mindmap.actions30Days', 'actions in 30 days')}
         </span>
       </div>
 
@@ -119,7 +119,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
                 <div
                   key={day.date}
                   className={`w-8 h-8 rounded-md ${INTENSITY_COLORS[day.intensity]} flex items-center justify-center text-[8px] font-medium transition-colors cursor-default ${day.count > 0 ? 'text-c-text-secondary dark:text-c-text' : 'text-c-text-secondary dark:text-c-text-muted'}`}
-                  title={`${day.date}: ${day.count} ${isPl ? 'akcji' : 'actions'}`}
+                  title={`${day.date}: ${day.count} ${t('ideas.mindmap.actions', 'actions')}`}
                 >
                   {day.dayLabel}
                 </div>
@@ -129,18 +129,22 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
 
           {/* Legend */}
           <div className="flex items-center gap-2 mb-6">
-            <span className="text-[9px] text-c-text-secondary">{isPl ? 'Mniej' : 'Less'}</span>
+            <span className="text-[9px] text-c-text-secondary">
+              {t('ideas.mindmap.less', 'Less')}
+            </span>
             {INTENSITY_COLORS.map((c, i) => (
               <div key={i} className={`w-4 h-4 rounded-sm ${c}`} />
             ))}
-            <span className="text-[9px] text-c-text-secondary">{isPl ? 'Więcej' : 'More'}</span>
+            <span className="text-[9px] text-c-text-secondary">
+              {t('ideas.mindmap.more', 'More')}
+            </span>
           </div>
 
           {/* Activity type breakdown */}
           {Object.keys(typeCounts).length > 0 && (
             <div className="pt-4 border-t border-c-border-subtle dark:border-c-border-subtle">
               <h3 className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted mb-3">
-                {isPl ? 'Podział wg typu' : 'Breakdown by type'}
+                {t('ideas.mindmap.breakdownByType', 'Breakdown by type')}
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries(typeCounts)

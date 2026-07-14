@@ -15,7 +15,7 @@ interface VoiceToNodeProps {
 }
 
 export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked, onAddNodes }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [listening, setListening] = useState(false);
@@ -28,9 +28,10 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error(
-        isPl
-          ? 'Przeglądarka nie obsługuje rozpoznawania mowy'
-          : 'Browser does not support speech recognition'
+        t(
+          'ideas.mindmap.browserDoesNotSupportSpeechRecognition',
+          'Browser does not support speech recognition'
+        )
       );
       return;
     }
@@ -111,13 +112,13 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
     if (parsedNodes.length === 0) return;
     onAddNodes(parsedNodes);
     toast.success(
-      isPl ? `Dodano ${parsedNodes.length} pomysłów` : `Added ${parsedNodes.length} ideas`,
+      t('ideas.mindmap.addedNIdeas', 'Added {{count}} ideas', { count: parsedNodes.length }),
       { duration: 1200 }
     );
     setTranscript('');
     setParsedNodes([]);
     onClose();
-  }, [isPl, onAddNodes, onClose, parsedNodes]);
+  }, [onAddNodes, onClose, parsedNodes, t]);
 
   if (!open) return null;
 
@@ -128,13 +129,14 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           <div className="flex items-center gap-2">
             <Mic size={16} className="text-c-danger" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Mów pomysły' : 'Voice to Node'}
+              {t('ideas.mindmap.voiceNode', 'Voice to Node')}
             </h3>
           </div>
           <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
-            {isPl
-              ? 'Mów swoje pomysły — AI rozdzieli je na osobne węzły.'
-              : 'Speak your ideas — AI will split them into separate nodes.'}
+            {t(
+              'ideas.mindmap.speakYourIdeasAiWillSplit',
+              'Speak your ideas — AI will split them into separate nodes.'
+            )}
           </p>
         </div>
 
@@ -161,19 +163,15 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
 
           <div className="text-center text-[10px] text-c-text-secondary mb-4">
             {listening
-              ? isPl
-                ? '🔴 Nagrywam... Mów swoje pomysły'
-                : '🔴 Recording... Speak your ideas'
-              : isPl
-                ? 'Kliknij mikrofon, aby rozpocząć'
-                : 'Click microphone to start'}
+              ? t('ideas.mindmap.recordingSpeakYourIdeas', '🔴 Recording... Speak your ideas')
+              : t('ideas.mindmap.clickMicrophoneStart', 'Click microphone to start')}
           </div>
 
           {/* Transcript */}
           {transcript && (
             <div className="mb-4">
               <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
-                {isPl ? 'Transkrypcja' : 'Transcript'}
+                {t('ideas.mindmap.transcript', 'Transcript')}
               </div>
               <div className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-[11px] text-c-text-secondary dark:text-c-text leading-relaxed">
                 {transcript}
@@ -185,7 +183,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           {parsedNodes.length > 0 && (
             <div>
               <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
-                {isPl ? 'Rozpoznane pomysły' : 'Detected ideas'} ({parsedNodes.length})
+                {t('ideas.mindmap.detectedIdeas', 'Detected ideas')} ({parsedNodes.length})
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">
                 {parsedNodes.map((label, idx) => (
@@ -209,7 +207,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.mindmap.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleApply}
@@ -217,7 +215,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-success dark:text-c-success border border-c-success transition-all disabled:opacity-40"
           >
             <Sparkles size={12} />
-            {isPl ? `Dodaj ${parsedNodes.length} pomysłów` : `Add ${parsedNodes.length} ideas`}
+            {t('ideas.mindmap.addNIdeas', 'Add {{count}} ideas', { count: parsedNodes.length })}
           </button>
         </div>
       </div>

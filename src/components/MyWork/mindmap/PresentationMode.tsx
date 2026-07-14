@@ -83,7 +83,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   branches,
   onFocusBranch,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -163,16 +163,17 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface flex flex-col items-center justify-center gap-4 px-8 text-center">
         <Lightbulb size={40} className="text-c-warning" />
         <p className="max-w-sm text-sm text-c-text-secondary dark:text-c-text-muted">
-          {isPl
-            ? 'Ta mapa jest pusta — dodaj węzły, aby uruchomić prezentację.'
-            : 'This map is empty — add nodes to start a presentation.'}
+          {t(
+            'ideas.mindmap.thisMapEmptyAddNodesStart',
+            'This map is empty — add nodes to start a presentation.'
+          )}
         </p>
         <button
           onClick={onClose}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
         >
           <X size={14} />
-          {isPl ? 'Zamknij' : 'Close'}
+          {t('ideas.mindmap.close', 'Close')}
         </button>
       </div>
     );
@@ -196,7 +197,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
         <div className="flex items-center gap-2">
           <Play size={14} className="text-c-warning" />
           <span className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted">
-            {isPl ? 'Tryb prezentacji' : 'Presentation Mode'}
+            {t('ideas.mindmap.presentationMode', 'Presentation Mode')}
           </span>
           <span className="text-[10px] text-c-text-secondary">
             {currentSlide + 1} / {slides.length}
@@ -209,7 +210,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={() => setShowNotes((p) => !p)}
-            title={isPl ? 'Notatki prezentera (N)' : 'Presenter notes (N)'}
+            title={t('ideas.mindmap.presenterNotesN', 'Presenter notes (N)')}
             className={`p-2 rounded-lg transition-colors ${
               showNotes
                 ? 'text-c-warning bg-c-surface-raised'
@@ -220,8 +221,8 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           </button>
           <button
             onClick={onClose}
-            title={isPl ? 'Zakończ prezentację (Esc)' : 'Exit presentation (Esc)'}
-            aria-label={isPl ? 'Zakończ prezentację (Esc)' : 'Exit presentation (Esc)'}
+            title={t('ideas.mindmap.exitPresentationEsc', 'Exit presentation (Esc)')}
+            aria-label={t('ideas.mindmap.exitPresentationEsc', 'Exit presentation (Esc)')}
             className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
@@ -299,7 +300,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                   className={`mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold ${colors.text} bg-c-surface-raised ${colors.bg} hover:opacity-80 transition-opacity`}
                 >
                   <ChevronRight size={14} />
-                  {isPl ? 'Przejdź do gałęzi na mapie' : 'Go to branch on map'}
+                  {t('ideas.mindmap.goBranchMap', 'Go to branch on map')}
                 </button>
 
                 {/* Presenter Notes */}
@@ -310,7 +311,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
                     >
                       <StickyNote size={12} />
-                      {isPl ? 'Notatki prezentera' : 'Presenter Notes'}
+                      {t('ideas.mindmap.presenterNotes', 'Presenter Notes')}
                       <ChevronUp size={12} className="ml-auto" />
                     </button>
                     <div className="px-4 pb-3 space-y-2">
@@ -343,7 +344,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-30"
         >
           <ArrowLeft size={14} />
-          {isPl ? 'Wstecz' : 'Previous'}
+          {t('ideas.mindmap.previous', 'Previous')}
         </button>
 
         {/* Slide dots */}
@@ -366,7 +367,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           disabled={currentSlide === slides.length - 1}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-warning dark:text-c-warning bg-c-surface-raised hover:bg-c-surface-raised transition-colors disabled:opacity-30"
         >
-          {isPl ? 'Dalej' : 'Next'}
+          {t('ideas.mindmap.next', 'Next')}
           <ArrowRight size={14} />
         </button>
       </div>

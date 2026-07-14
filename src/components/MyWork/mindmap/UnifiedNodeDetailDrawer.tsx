@@ -313,7 +313,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
   onMapConflictRefresh,
   onGenerateProposal,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const isIdea = variant === 'idea';
   const nodeId = nodeData?.nodeId || '';
@@ -557,7 +557,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
           proposed.map((n: any) => String(n?.data?.label || n?.title || '')).filter(Boolean)
         );
       } else {
-        toast(isPl ? 'Brak nowych propozycji' : 'No new suggestions');
+        toast(t('ideas.mindmap.noNewSuggestions', 'No new suggestions'));
       }
     } catch (err: any) {
       toast.error(err?.message || 'AI failed');
@@ -579,7 +579,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
           },
         })
       );
-      toast.success(isPl ? 'Dodano do mapy' : 'Added to map', { duration: 800 });
+      toast.success(t('ideas.mindmap.addedMap', 'Added to map'), { duration: 800 });
     },
     [ideaId, isPl, nodeData]
   );
@@ -698,7 +698,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
       id: `cmt-${Date.now()}`,
       text: newComment.trim(),
       createdAt: new Date().toISOString(),
-      userName: isPl ? 'Ja' : 'Me',
+      userName: t('ideas.mindmap.me', 'Me'),
     };
     onUpdateNode(nodeData.nodeId, { comments: [...(nodeData.comments || []), comment] });
     setNewComment('');
@@ -779,7 +779,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                 className={`text-sm font-bold text-c-text dark:text-c-text truncate ${isIdea && !locked ? 'cursor-pointer hover:text-c-text-secondary' : ''}`}
                 onClick={() => isIdea && !locked && setEditingTitle(true)}
               >
-                {nodeData.label || (isIdea ? (isPl ? 'Bez tytułu' : 'Untitled') : '...')}
+                {nodeData.label || (isIdea ? t('ideas.mindmap.untitled', 'Untitled') : '...')}
               </h3>
             )}
           </div>
@@ -814,7 +814,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-c-text-secondary bg-c-surface-raised dark:bg-c-surface hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
             >
               <GitBranch size={12} />
-              {isPl ? 'Rozwiń sub-mapę' : 'Drill down'}
+              {t('ideas.mindmap.drillDown', 'Drill down')}
             </button>
           )}
           {onGenerateProposal && (
@@ -824,7 +824,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-c-text-secondary bg-c-surface-raised dark:bg-c-surface hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors disabled:opacity-40"
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-              {isPl ? 'AI Rozbuduj' : 'AI Expand'}
+              {t('ideas.mindmap.aiExpand', 'AI Expand')}
             </button>
           )}
         </div>
@@ -835,7 +835,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {/* ── Basic Info: Status + Semantic Type ── */}
         <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
-            title={isPl ? 'Informacje podstawowe' : 'Basic Info'}
+            title={t('ideas.mindmap.basicInfo', 'Basic Info')}
             icon={<Info size={14} />}
             defaultOpen
           >
@@ -882,7 +882,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                 <>
                   <div>
                     <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
-                      {isPl ? 'Priorytet' : 'Priority'}: {priority}
+                      {t('ideas.mindmap.priority', 'Priority')}: {priority}
                     </div>
                     <input
                       type="range"
@@ -897,7 +897,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   <div>
                     <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5 flex items-center gap-1">
                       <User size={10} />
-                      {isPl ? 'Właściciel' : 'Owner'}
+                      {t('ideas.mindmap.owner', 'Owner')}
                     </div>
                     <input
                       value={ownerValue}
@@ -908,7 +908,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                         }
                       }}
                       disabled={locked}
-                      placeholder={isPl ? 'Przypisz właściciela...' : 'Assign owner...'}
+                      placeholder={t('ideas.mindmap.assignOwner', 'Assign owner...')}
                       className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-all disabled:opacity-50"
                     />
                   </div>
@@ -918,7 +918,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               {/* Semantic type */}
               <div>
                 <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
-                  {isPl ? 'Typ semantyczny' : 'Semantic Type'}
+                  {t('ideas.mindmap.semanticType', 'Semantic Type')}
                 </div>
                 <select
                   value={nodeData.semanticType || ''}
@@ -941,7 +941,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {isIdea && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
-              title={isPl ? 'Opis' : 'Description'}
+              title={t('ideas.mindmap.description', 'Description')}
               icon={<FileText size={14} />}
               defaultOpen
             >
@@ -951,11 +951,10 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   value={descValue}
                   onChange={(e) => setDescValue(e.target.value)}
                   onBlur={commitDescription}
-                  placeholder={
-                    isPl
-                      ? 'Dodaj opis (obsługuje **markdown**)...'
-                      : 'Add description (supports **markdown**)...'
-                  }
+                  placeholder={t(
+                    'ideas.mindmap.addDescriptionSupportsMarkdown',
+                    'Add description (supports **markdown**)...'
+                  )}
                   className="w-full min-h-[100px] text-xs text-c-text bg-c-surface-raised dark:bg-c-surface rounded-xl p-3 border border-c-border-subtle dark:border-c-border-subtle outline-none resize-y placeholder:text-c-text-muted font-mono mt-2"
                   rows={4}
                 />
@@ -971,7 +970,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     />
                   ) : (
                     <span className="text-c-text-muted italic">
-                      {isPl ? 'Kliknij, aby dodać opis...' : 'Click to add description...'}
+                      {t('ideas.mindmap.clickAddDescription', 'Click to add description...')}
                     </span>
                   )}
                 </div>
@@ -983,14 +982,14 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {/* ── Notes & Context depth fields ── */}
         <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
-            title={isPl ? 'Notatki i kontekst' : 'Notes & Context'}
+            title={t('ideas.mindmap.notesContext', 'Notes & Context')}
             icon={<StickyNote size={14} />}
             defaultOpen
           >
             <div className="space-y-2 mt-2">
               <div>
                 <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
-                  {isPl ? 'Notatki' : 'Notes'}
+                  {t('ideas.mindmap.notes', 'Notes')}
                 </div>
                 <textarea
                   value={notes}
@@ -998,35 +997,35 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   onBlur={handleNotesBlur}
                   disabled={locked || (!isIdea && isProtected)}
                   rows={3}
-                  placeholder={isPl ? 'Dodaj notatki, szczegóły...' : 'Add notes, details...'}
+                  placeholder={t('ideas.mindmap.addNotesDetails', 'Add notes, details...')}
                   className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none transition-all disabled:opacity-50"
                 />
               </div>
               <DepthField
-                label={isPl ? 'Kontekst' : 'Context'}
+                label={t('ideas.mindmap.context', 'Context')}
                 value={nodeData.context || ''}
-                placeholder={isPl ? 'Jaki jest kontekst?' : 'What is the context?'}
+                placeholder={t('ideas.mindmap.whatContext', 'What is the context?')}
                 disabled={locked || (!isIdea && isProtected)}
                 onChange={(val) => onUpdateNode(nodeData.nodeId, { context: val })}
               />
               <DepthField
-                label={isPl ? 'Cel' : 'Goal'}
+                label={t('ideas.mindmap.goal', 'Goal')}
                 value={nodeData.goal || ''}
-                placeholder={isPl ? 'Jaki jest cel?' : 'What is the goal?'}
+                placeholder={t('ideas.mindmap.whatGoal', 'What is the goal?')}
                 disabled={locked || (!isIdea && isProtected)}
                 onChange={(val) => onUpdateNode(nodeData.nodeId, { goal: val })}
               />
               <DepthField
-                label={isPl ? 'Uzasadnienie' : 'Rationale'}
+                label={t('ideas.mindmap.rationale', 'Rationale')}
                 value={nodeData.rationale || ''}
-                placeholder={isPl ? 'Dlaczego to ważne?' : 'Why is this important?'}
+                placeholder={t('ideas.mindmap.whyThisImportant', 'Why is this important?')}
                 disabled={locked || (!isIdea && isProtected)}
                 onChange={(val) => onUpdateNode(nodeData.nodeId, { rationale: val })}
               />
               <DepthField
-                label={isPl ? 'Ryzyko' : 'Risk'}
+                label={t('ideas.mindmap.risk', 'Risk')}
                 value={nodeData.riskNote || ''}
-                placeholder={isPl ? 'Jakie są ryzyka?' : 'What are the risks?'}
+                placeholder={t('ideas.mindmap.whatRisks', 'What are the risks?')}
                 disabled={locked || (!isIdea && isProtected)}
                 onChange={(val) => onUpdateNode(nodeData.nodeId, { riskNote: val })}
               />
@@ -1037,7 +1036,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {/* ── Tags ── */}
         <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
-            title={isPl ? 'Tagi i klasyfikacja' : 'Tags & Classification'}
+            title={t('ideas.mindmap.tagsClassification', 'Tags & Classification')}
             icon={<Tag size={14} />}
             badge={(nodeData.tags?.length || 0) > 0 ? String(nodeData.tags!.length) : undefined}
             defaultOpen={(nodeData.tags?.length || 0) > 0}
@@ -1077,7 +1076,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     }
                   }}
                   disabled={locked || (!isIdea && isProtected)}
-                  placeholder={isPl ? 'Dodaj tag...' : 'Add tag...'}
+                  placeholder={t('ideas.mindmap.addTag', 'Add tag...')}
                   className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 <button
@@ -1097,7 +1096,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {isIdea && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
-              title={isPl ? 'Kontekst AI' : 'AI Context'}
+              title={t('ideas.mindmap.aiContext', 'AI Context')}
               icon={<Sparkles size={14} />}
               defaultOpen
             >
@@ -1106,7 +1105,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   <div className="flex items-center gap-2 py-4 justify-center text-c-text-secondary">
                     <Loader2 size={14} className="animate-spin" />
                     <span className="text-[11px]">
-                      {isPl ? 'Analizuję kontekst...' : 'Analyzing context...'}
+                      {t('ideas.mindmap.analyzingContext', 'Analyzing context...')}
                     </span>
                   </div>
                 ) : aiContext ? (
@@ -1119,7 +1118,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     {aiContext.relatedInitiatives.length > 0 && (
                       <div>
                         <div className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-                          {isPl ? 'Powiązane inicjatywy' : 'Related Initiatives'}
+                          {t('ideas.mindmap.relatedInitiatives', 'Related Initiatives')}
                         </div>
                         {aiContext.relatedInitiatives.map((ini, i) => (
                           <div key={i} className="flex items-start gap-1.5 py-1">
@@ -1141,7 +1140,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     {aiContext.relatedRisks.length > 0 && (
                       <div>
                         <div className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-                          {isPl ? 'Ryzyka' : 'Risks'}
+                          {t('ideas.mindmap.risks', 'Risks')}
                         </div>
                         {aiContext.relatedRisks.map((risk, i) => (
                           <div key={i} className="flex items-start gap-1.5 py-1">
@@ -1159,7 +1158,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     {aiContext.suggestions.length > 0 && (
                       <div>
                         <div className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-                          {isPl ? 'Sugestie AI' : 'AI Suggestions'}
+                          {t('ideas.mindmap.aiSuggestions', 'AI Suggestions')}
                         </div>
                         {aiContext.suggestions.map((sug, i) => (
                           <div key={i} className="flex items-start gap-1.5 py-1">
@@ -1175,13 +1174,13 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       onClick={fetchAIContext}
                       className="text-[10px] text-c-text-secondary hover:text-c-text font-medium"
                     >
-                      {isPl ? '↻ Odśwież kontekst' : '↻ Refresh context'}
+                      {t('ideas.mindmap.refreshContext', '↻ Refresh context')}
                     </button>
                   </div>
                 ) : (
                   <EmptyStateInline
                     icon={Sparkles}
-                    message={isPl ? 'Brak danych kontekstowych' : 'No context data available'}
+                    message={t('ideas.mindmap.noContextDataAvailable', 'No context data available')}
                     dashed={false}
                     className="py-4"
                   />
@@ -1194,7 +1193,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {/* ── Evidence & Sources ── */}
         <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
-            title={isPl ? 'Dowody i źródła' : 'Evidence & Sources'}
+            title={t('ideas.mindmap.evidenceSources', 'Evidence & Sources')}
             badge={String(nodeData.evidenceLinks?.length || 0)}
             defaultOpen={(nodeData.evidenceLinks?.length || 0) > 0}
             icon={<Link2 size={14} />}
@@ -1235,7 +1234,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text disabled:opacity-40 hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
                 >
                   <Plus size={12} />
-                  {isPl ? 'Dodaj dowód' : 'Add evidence'}
+                  {t('ideas.mindmap.addEvidence', 'Add evidence')}
                 </button>
               ) : !showEvidenceForm ? (
                 <button
@@ -1245,7 +1244,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-c-text-secondary bg-c-surface-raised dark:bg-c-surface hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                 >
                   <Plus size={12} />
-                  {isPl ? 'Dodaj dowód / źródło' : 'Add evidence / source'}
+                  {t('ideas.mindmap.addEvidenceSource', 'Add evidence / source')}
                 </button>
               ) : (
                 <div className="p-2.5 rounded-lg bg-c-surface-raised dark:bg-c-surface space-y-2">
@@ -1257,7 +1256,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       if (e.key === 'Enter') handleAddEvidenceForm();
                       if (e.key === 'Escape') setShowEvidenceForm(false);
                     }}
-                    placeholder={isPl ? 'Tytuł dowodu...' : 'Evidence title...'}
+                    placeholder={t('ideas.mindmap.evidenceTitle', 'Evidence title...')}
                     className="w-full text-[10px] bg-c-surface dark:bg-c-surface-raised rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted"
                   />
                   <input
@@ -1267,7 +1266,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       if (e.key === 'Enter') handleAddEvidenceForm();
                       if (e.key === 'Escape') setShowEvidenceForm(false);
                     }}
-                    placeholder={isPl ? 'URL (opcjonalnie)' : 'URL (optional)'}
+                    placeholder={t('ideas.mindmap.urlOptional', 'URL (optional)')}
                     className="w-full text-[10px] bg-c-surface dark:bg-c-surface-raised rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted"
                   />
                   <div className="flex gap-1.5">
@@ -1276,7 +1275,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       disabled={!newEvidenceTitle.trim()}
                       className="flex-1 h-7 rounded-lg text-[10px] font-semibold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40"
                     >
-                      {isPl ? 'Dodaj' : 'Add'}
+                      {t('ideas.mindmap.add', 'Add')}
                     </button>
                     <button
                       onClick={() => {
@@ -1286,7 +1285,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       }}
                       className="h-7 px-3 rounded-lg text-[10px] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
                     >
-                      {isPl ? 'Anuluj' : 'Cancel'}
+                      {t('ideas.mindmap.cancel', 'Cancel')}
                     </button>
                   </div>
                 </div>
@@ -1298,7 +1297,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {/* ── Linked artifacts ── */}
         <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
-            title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+            title={t('ideas.mindmap.linkedArtifacts', 'Linked artifacts')}
             badge={String(isIdea ? artifactLinksState.length : nodeData.artifactLinks?.length || 0)}
             defaultOpen={
               (isIdea ? artifactLinksState.length : nodeData.artifactLinks?.length || 0) > 0
@@ -1309,12 +1308,12 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               <div className="space-y-1.5 mt-1">
                 {artifactLoading && (
                   <div className="text-[10px] text-c-text-secondary">
-                    {isPl ? 'Ładowanie powiązań...' : 'Loading links...'}
+                    {t('ideas.mindmap.loadingLinks', 'Loading links...')}
                   </div>
                 )}
                 {!artifactLoading && artifactLinksState.length === 0 && (
                   <div className="text-[10px] text-c-text-secondary">
-                    {isPl ? 'Brak podpiętych artefaktów' : 'No linked artifacts'}
+                    {t('ideas.mindmap.noLinkedArtifacts', 'No linked artifacts')}
                   </div>
                 )}
                 {!locked && (
@@ -1330,7 +1329,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-c-text-secondary bg-c-surface-raised dark:bg-c-surface hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors mb-1.5"
                   >
                     <Plus size={12} />
-                    {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
+                    {t('ideas.mindmap.attachArtifact', 'Attach artifact')}
                   </button>
                 )}
                 {artifactLinksState.map((link) => {
@@ -1416,7 +1415,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
             ) : (
               <EmptyStateInline
                 icon={Paperclip}
-                message={isPl ? 'Brak powiazanych artefaktow' : 'No linked artifacts yet'}
+                message={t('ideas.mindmap.noLinkedArtifactsYet', 'No linked artifacts yet')}
                 dashed={false}
                 className="py-4"
               />
@@ -1428,7 +1427,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {isIdea && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
-              title={isPl ? 'Załączniki' : 'Attachments'}
+              title={t('ideas.mindmap.attachments', 'Attachments')}
               icon={<Paperclip size={14} />}
               badge={
                 (nodeData.attachments?.length || 0) > 0
@@ -1484,7 +1483,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleAddAttachment();
                       }}
-                      placeholder={isPl ? 'Wklej URL...' : 'Paste URL...'}
+                      placeholder={t('ideas.mindmap.pasteUrl', 'Paste URL...')}
                       className="flex-1 text-[10px] bg-c-surface-raised dark:bg-c-surface rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted"
                     />
                     <button
@@ -1504,7 +1503,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {isIdea && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
-              title={isPl ? 'Komentarze' : 'Comments'}
+              title={t('ideas.mindmap.comments', 'Comments')}
               icon={<MessageSquare size={14} />}
               badge={
                 (nodeData.comments?.length || 0) > 0 ? String(nodeData.comments!.length) : undefined
@@ -1545,7 +1544,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                         handleAddComment();
                       }
                     }}
-                    placeholder={isPl ? 'Dodaj komentarz...' : 'Add comment...'}
+                    placeholder={t('ideas.mindmap.addComment', 'Add comment...')}
                     className="flex-1 text-[11px] bg-c-surface-raised dark:bg-c-surface rounded-lg px-2.5 py-2 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted resize-none"
                     rows={2}
                   />
@@ -1566,7 +1565,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {!isIdea && !isProtected && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-2">
-              {isPl ? 'AI: Rozwiń temat' : 'AI: Expand Topic'}
+              {t('ideas.mindmap.aiExpandTopic', 'AI: Expand Topic')}
             </div>
             <button
               onClick={handleAIExpandMindmap}
@@ -1580,12 +1579,11 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               )}
               <span className="text-[11px] font-bold text-c-text-secondary dark:text-c-text">
                 {aiExpanding
-                  ? isPl
-                    ? 'Generuję pomysły...'
-                    : 'Generating ideas...'
-                  : isPl
-                    ? 'Wygeneruj podpomysły dla tego tematu'
-                    : 'Generate sub-ideas for this topic'}
+                  ? t('ideas.mindmap.generatingIdeas', 'Generating ideas...')
+                  : t(
+                      'ideas.mindmap.generateSubIdeasThisTopic',
+                      'Generate sub-ideas for this topic'
+                    )}
               </span>
             </button>
             {aiSuggestions.length > 0 && (
@@ -1603,7 +1601,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       onClick={() => handleApplyAISuggestion(s)}
                       className="text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted hover:underline shrink-0"
                     >
-                      {isPl ? 'Dodaj' : 'Add'}
+                      {t('ideas.mindmap.add', 'Add')}
                     </button>
                   </div>
                 ))}
@@ -1616,7 +1614,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {!isIdea && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
-              title={isPl ? 'Kontekst firmy' : 'Company Context'}
+              title={t('ideas.mindmap.companyContext', 'Company Context')}
               badge={loadingContext ? '...' : String(companyContext.length)}
               defaultOpen={companyContext.length > 0}
               icon={<FileText size={14} />}
@@ -1624,14 +1622,15 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               {loadingContext ? (
                 <div className="flex items-center gap-2 py-4 justify-center text-[11px] text-c-text-secondary">
                   <Loader2 size={12} className="animate-spin" />
-                  {isPl ? 'Szukam powiązań...' : 'Finding connections...'}
+                  {t('ideas.mindmap.findingConnections', 'Finding connections...')}
                 </div>
               ) : companyContext.length === 0 ? (
                 <EmptyStateInline
                   icon={FileText}
-                  message={
-                    isPl ? 'Brak powiązań z danymi firmy' : 'No company data connections found'
-                  }
+                  message={t(
+                    'ideas.mindmap.noCompanyDataConnectionsFound',
+                    'No company data connections found'
+                  )}
                   dashed={false}
                   className="py-4"
                 />
@@ -1694,7 +1693,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {!isIdea && relatedNodes.length > 0 && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
-              title={isPl ? 'Powiązane węzły' : 'Related Nodes'}
+              title={t('ideas.mindmap.relatedNodes', 'Related Nodes')}
               badge={String(relatedNodes.length)}
               defaultOpen
               icon={<Link2 size={14} />}
@@ -1721,7 +1720,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {isIdea && linkedNodeLabels.length > 0 && (
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
-              title={isPl ? 'Powiązania' : 'Links'}
+              title={t('ideas.mindmap.links', 'Links')}
               badge={String(linkedNodeLabels.length)}
               defaultOpen
               icon={<Link2 size={14} />}
@@ -1750,7 +1749,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
             >
               <ChevronRight size={14} className="text-c-warning" />
               <span className="text-[11px] font-bold text-c-warning dark:text-c-warning">
-                {isPl ? 'Drill down — otwórz sub-mapę' : 'Drill down — open sub-map'}
+                {t('ideas.mindmap.drillDownOpenSubMap', 'Drill down — open sub-map')}
               </span>
             </button>
           </div>
@@ -1769,29 +1768,34 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
               }
               compact
               className="rounded-xl"
-              title={isPl ? 'Dojrzałość pomysłu' : 'Idea Maturity'}
+              title={t('ideas.mindmap.ideaMaturity', 'Idea Maturity')}
             >
               <div className="text-[10px] leading-relaxed">
                 {status === 'idea' &&
-                  (isPl
-                    ? 'Ten pomysł jest na etapie iskry. Dodaj notatki i rozwiń go z AI.'
-                    : 'This idea is at spark stage. Add notes and expand with AI.')}
+                  t(
+                    'ideas.mindmap.thisIdeaAtSparkStageAdd',
+                    'This idea is at spark stage. Add notes and expand with AI.'
+                  )}
                 {status === 'exploring' &&
-                  (isPl
-                    ? 'Eksploracja w toku. Szukaj dowodów i powiązań z danymi firmy.'
-                    : 'Exploration in progress. Look for evidence and company data connections.')}
+                  t(
+                    'ideas.mindmap.explorationProgressLookEvidenceCompanyData',
+                    'Exploration in progress. Look for evidence and company data connections.'
+                  )}
                 {status === 'validated' &&
-                  (isPl
-                    ? 'Pomysł zwalidowany. Rozważ konwersję na inicjatywę.'
-                    : 'Idea validated. Consider converting to an initiative.')}
+                  t(
+                    'ideas.mindmap.ideaValidatedConsiderConvertingInitiative',
+                    'Idea validated. Consider converting to an initiative.'
+                  )}
                 {status === 'ready_to_convert' &&
-                  (isPl
-                    ? 'Gotowy do konwersji! Kliknij przycisk poniżej.'
-                    : 'Ready to convert! Click the button below.')}
+                  t(
+                    'ideas.mindmap.readyConvertClickButtonBelow',
+                    'Ready to convert! Click the button below.'
+                  )}
                 {status === 'converted' &&
-                  (isPl
-                    ? 'Ten pomysł został już skonwertowany.'
-                    : 'This idea has already been converted.')}
+                  t(
+                    'ideas.mindmap.thisIdeaHasAlreadyBeenConverted',
+                    'This idea has already been converted.'
+                  )}
               </div>
             </Callout>
           </div>
@@ -1800,7 +1804,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         {/* ── AI history ── */}
         <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
-            title={isPl ? 'Historia AI' : 'AI history'}
+            title={t('ideas.mindmap.aiHistory', 'AI history')}
             badge={String(nodeData.aiExpansionHistory?.length || 0)}
             defaultOpen={(nodeData.aiExpansionHistory?.length || 0) > 0}
             icon={<TeresaMark size={14} />}
@@ -1827,7 +1831,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
             ) : (
               <EmptyStateInline
                 icon={Bot}
-                message={isPl ? 'Brak zastosowanych zmian AI' : 'No applied AI changes yet'}
+                message={t('ideas.mindmap.noAppliedAiChangesYet', 'No applied AI changes yet')}
                 dashed={false}
                 className="py-4"
               />
@@ -1845,7 +1849,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all disabled:opacity-40"
           >
             <Rocket size={12} />
-            {isPl ? 'Konwertuj → Inicjatywa' : 'Convert → Initiative'}
+            {t('ideas.mindmap.convertInitiative', 'Convert → Initiative')}
           </button>
           <button
             onClick={() => onConvertNode?.(nodeData.nodeId, 'decision')}
@@ -1853,7 +1857,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
             className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-c-surface-raised text-c-info dark:text-c-info border border-c-info transition-all disabled:opacity-40"
           >
             <Star size={12} />
-            {isPl ? 'Decyzja' : 'Decision'}
+            {t('ideas.mindmap.decision', 'Decision')}
           </button>
         </div>
       )}
