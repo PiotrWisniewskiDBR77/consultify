@@ -17773,6 +17773,13 @@
         "fillIns": "Fill-ins",
         "thanklessTasks": "Thankless Tasks"
       }
+    },
+    "mindmap": {
+      "addNodeTab": "Add node (Tab)",
+      "aiExpand": "AI Expand",
+      "moreAi": "More AI",
+      "summarizeBranch": "Summarize branch",
+      "summarize": "Summarize"
     }
   }
 }

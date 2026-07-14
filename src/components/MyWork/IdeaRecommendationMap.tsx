@@ -819,6 +819,7 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
 const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
+  const { t } = useTranslation();
   const { getNodes, getEdges } = useReactFlow();
   const colors = useMemo(
     () => branchColor(data.branchKey, data._depth),
@@ -874,7 +875,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
       {selected && (
         <button
           type="button"
-          title={data._isPl ? 'Dodaj węzeł (Tab)' : 'Add node (Tab)'}
+          title={t('ideas.mindmap.addNodeTab', 'Add node (Tab)')}
           className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-slate-600 text-white shadow-lg hover:bg-slate-700 active:scale-[0.98] transition-all"
           onClick={(e) => {
             e.stopPropagation();
@@ -916,17 +917,13 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
             <Sparkles size={10} />
             <span>
               {childCount === 0
-                ? data._isPl
-                  ? 'Rozwiń AI'
-                  : 'AI Expand'
-                : data._isPl
-                  ? 'Więcej AI'
-                  : 'More AI'}
+                ? t('ideas.mindmap.aiExpand', 'AI Expand')
+                : t('ideas.mindmap.moreAi', 'More AI')}
             </span>
           </button>
           <button
             type="button"
-            title={data._isPl ? 'Podsumuj gałąź' : 'Summarize branch'}
+            title={t('ideas.mindmap.summarizeBranch', 'Summarize branch')}
             className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-medium shadow-lg hover:bg-emerald-700 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
@@ -938,7 +935,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
             }}
           >
             <FileText size={10} />
-            <span>{data._isPl ? 'Podsumuj' : 'Summarize'}</span>
+            <span>{t('ideas.mindmap.summarize', 'Summarize')}</span>
           </button>
         </div>
       )}

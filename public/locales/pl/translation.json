@@ -18849,6 +18849,13 @@
         "fillIns": "Uzupełnienia",
         "thanklessTasks": "Niewdzięczne zadania"
       }
+    },
+    "mindmap": {
+      "addNodeTab": "Dodaj węzeł (Tab)",
+      "aiExpand": "Rozwiń AI",
+      "moreAi": "Więcej AI",
+      "summarizeBranch": "Podsumuj gałąź",
+      "summarize": "Podsumuj"
     }
   }
 }
