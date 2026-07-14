@@ -43,7 +43,9 @@ describe('hasEffectiveCapability', () => {
   });
 
   it('returns true for exact capability match', () => {
-    expect(hasEffectiveCapability({ ...base, capabilities: ['project.view'] }, 'project.view')).toBe(true);
+    expect(
+      hasEffectiveCapability({ ...base, capabilities: ['project.view'] }, 'project.view')
+    ).toBe(true);
   });
 
   it('returns true when wildcard * is present', () => {
@@ -58,7 +60,10 @@ describe('hasEffectiveCapability', () => {
 
   it('returns true when .own suffix is present', () => {
     expect(
-      hasEffectiveCapability({ ...base, capabilities: ['initiative.update.own'] }, 'initiative.update')
+      hasEffectiveCapability(
+        { ...base, capabilities: ['initiative.update.own'] },
+        'initiative.update'
+      )
     ).toBe(true);
   });
 
@@ -81,9 +86,9 @@ describe('hasEffectiveCapability', () => {
   });
 
   it('returns false for unrelated capability', () => {
-    expect(
-      hasEffectiveCapability({ ...base, capabilities: ['task.view'] }, 'project.view')
-    ).toBe(false);
+    expect(hasEffectiveCapability({ ...base, capabilities: ['task.view'] }, 'project.view')).toBe(
+      false
+    );
   });
 
   it('does not match partial string (no substring matching)', () => {
@@ -210,7 +215,8 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
     // Third call: template capabilities → []  (fall back to FACTORY_ROLE_TEMPLATES)
     mockQueryOne
       .mockResolvedValueOnce(null) // org membership
-      .mockResolvedValueOnce({    // project membership
+      .mockResolvedValueOnce({
+        // project membership
         project_role: 'PROJECT_LEADER',
         normalized_project_role: 'PROJECT_LEADER',
         role_template_id: null,
@@ -402,5 +408,118 @@ describe('FACTORY_ROLE_TEMPLATES — completeness', () => {
       const template = FACTORY_ROLE_TEMPLATES.find((t) => t.roleKey === roleKey);
       expect(template?.isRequired).toBe(true);
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Faza B (2026-07-14) — new capability families completeness
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('FACTORY_ROLE_TEMPLATES — Faza B capability families', () => {
+  const byRole = (roleKey: string) =>
+    FACTORY_ROLE_TEMPLATES.find((t) => t.roleKey === roleKey)?.capabilities ?? [];
+
+  // Every capability wired into a Faza B shadow guard must exist in the
+  // catalog for at least LEADER+PMO — otherwise shadow telemetry would report
+  // wouldAllow=false for every non-admin and the data would be useless.
+  const FAZA_B_FULL_CAPS = [
+    'initiative.program.manage',
+    'initiative.template.manage',
+    'initiative.template.apply',
+    'initiative.section_type.manage',
+    'initiative.wizard.use',
+    'initiative.dependency.manage',
+    'initiative.milestone.manage',
+    'initiative.resource.manage',
+    'initiative.staffing.manage',
+    'initiative.budget.manage',
+    'initiative.tool.manage',
+    'initiative.intangible.manage',
+    'initiative.stakeholder.manage',
+    'initiative.watcher.manage',
+    'initiative.raid.manage',
+    'initiative.link.manage',
+    'initiative.gate_role.manage',
+    'initiative.pir.manage',
+    'change.champion.manage',
+    'project.archive',
+    'project.delete',
+  ];
+
+  const FAZA_B_OWNER_SCOPED_CAPS = [
+    'initiative.template.apply.scoped',
+    'initiative.wizard.use.scoped',
+    'initiative.milestone.manage.scoped',
+    'initiative.resource.manage.scoped',
+    'initiative.staffing.manage.scoped',
+    'initiative.budget.manage.scoped',
+    'initiative.tool.manage.scoped',
+    'initiative.intangible.manage.scoped',
+    'initiative.stakeholder.manage.scoped',
+    'initiative.watcher.manage.scoped',
+    'initiative.raid.manage.scoped',
+    'initiative.link.manage.scoped',
+  ];
+
+  it('PROJECT_LEADER has every Faza B capability (unscoped)', () => {
+    const caps = byRole('PROJECT_LEADER');
+    for (const cap of FAZA_B_FULL_CAPS) {
+      expect(caps, `PROJECT_LEADER missing ${cap}`).toContain(cap);
+    }
+  });
+
+  it('PMO has every Faza B capability (unscoped)', () => {
+    const caps = byRole('PMO');
+    for (const cap of FAZA_B_FULL_CAPS) {
+      expect(caps, `PMO missing ${cap}`).toContain(cap);
+    }
+  });
+
+  it('INITIATIVE_OWNER and WORKSTREAM_OWNER get the scoped building-block set', () => {
+    for (const roleKey of ['INITIATIVE_OWNER', 'WORKSTREAM_OWNER']) {
+      const caps = byRole(roleKey);
+      for (const cap of FAZA_B_OWNER_SCOPED_CAPS) {
+        expect(caps, `${roleKey} missing ${cap}`).toContain(cap);
+      }
+    }
+  });
+
+  it('owners do NOT get org-level asset management (programs/templates/section-types)', () => {
+    for (const roleKey of ['INITIATIVE_OWNER', 'WORKSTREAM_OWNER']) {
+      const caps = byRole(roleKey);
+      expect(caps).not.toContain('initiative.program.manage');
+      expect(caps).not.toContain('initiative.template.manage');
+      expect(caps).not.toContain('initiative.section_type.manage');
+      expect(caps).not.toContain('project.delete');
+    }
+  });
+
+  it('read-only / support roles get NONE of the Faza B mutating capabilities', () => {
+    for (const roleKey of ['OBSERVER', 'REVIEWER', 'SME', 'CONSULTANT', 'TASK_ASSIGNEE']) {
+      const caps = byRole(roleKey);
+      for (const cap of [...FAZA_B_FULL_CAPS, ...FAZA_B_OWNER_SCOPED_CAPS]) {
+        expect(caps, `${roleKey} unexpectedly has ${cap}`).not.toContain(cap);
+      }
+    }
+  });
+
+  it('initiative.stakeholder.manage is distinct from org-level stakeholder.registry.manage', () => {
+    // Dedicated initiative-level capability (audyt Fazy A): granting the
+    // initiative list must NOT implicitly grant the org registry and vice versa.
+    const leader = byRole('PROJECT_LEADER');
+    expect(leader).toContain('initiative.stakeholder.manage');
+    expect(leader).not.toContain('stakeholder.registry.manage');
+    const pmo = byRole('PMO');
+    expect(pmo).toContain('initiative.stakeholder.manage');
+    expect(pmo).toContain('stakeholder.registry.manage');
+  });
+
+  it('scoped Faza B caps satisfy the base capability via suffix matching', () => {
+    expect(
+      hasEffectiveCapability(
+        { capabilities: ['initiative.milestone.manage.scoped'], platformRole: null },
+        'initiative.milestone.manage'
+      )
+    ).toBe(true);
   });
 });
