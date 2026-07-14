@@ -695,7 +695,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (areaTags.length === 0) {
       return t('interview.templateBuilder.selectAreas');
     }
-    return areaTags.map((tag) => getTemplateAreaTagLabel(tag, isPolish)).join(', ');
+    return areaTags.map((tag) => getTemplateAreaTagLabel(tag, t)).join(', ');
   }, [areaTags, isPolish]);
 
   const toggleAllowedAnswerType = useCallback((type: AnswerType) => {
@@ -2010,7 +2010,7 @@ ${sourceText || '(none)'}`;
                             disabled={isApplicationTemplate}
                             className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                           />
-                          <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                          <span>{getTemplateAreaTagLabel(tag, t)}</span>
                         </label>
                       );
                     })}

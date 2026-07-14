@@ -5843,10 +5843,10 @@ export const InterviewHub: React.FC = () => {
           return (
             template.description ||
             [
-              template.scope ? getTemplateSourceLabel(template.scope, isPolish) : null,
+              template.scope ? getTemplateSourceLabel(template.scope, t) : null,
               areaTags
                 .slice(0, 2)
-                .map((tag) => getTemplateAreaTagLabel(tag, isPolish))
+                .map((tag) => getTemplateAreaTagLabel(tag, t))
                 .join(' · '),
             ]
               .filter(Boolean)
@@ -5989,7 +5989,7 @@ export const InterviewHub: React.FC = () => {
                         key={tag}
                         className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-c-text-muted"
                       >
-                        {getTemplateAreaTagLabel(tag, isPolish)}
+                        {getTemplateAreaTagLabel(tag, t)}
                       </span>
                     ))}
                     {areaTags.length > 4 && (
@@ -8106,7 +8106,7 @@ Return ONLY the answer text (no markdown fences).`;
           '',
           `Name: ${tpl?.name || '—'}`,
           `Category: ${tpl?.category || '—'}`,
-          `Source: ${getTemplateSourceLabel(tpl?.scope, isPolish)}`,
+          `Source: ${getTemplateSourceLabel(tpl?.scope, t)}`,
           `Area tags: ${(tpl?.areaTags || []).join(', ') || '—'}`,
           `Status: ${tpl?.isDefault ? 'Default' : 'Active'}`,
           `Questions count: ${tpl?.questionCount ?? '—'}`,
@@ -9083,7 +9083,7 @@ Return ONLY the answer text (no markdown fences).`;
                         }
                         className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                       />
-                      <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                      <span>{getTemplateAreaTagLabel(tag, t)}</span>
                     </label>
                   );
                 })}

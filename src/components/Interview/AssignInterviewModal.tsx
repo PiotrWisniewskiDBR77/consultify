@@ -220,8 +220,8 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     () =>
       templates.map((template) => {
         const tags = [
-          getTemplateSourceLabel(template.scope, isPolish),
-          ...(template.areaTags || []).map((tag) => getTemplateAreaTagLabel(tag, isPolish)),
+          getTemplateSourceLabel(template.scope, t),
+          ...(template.areaTags || []).map((tag) => getTemplateAreaTagLabel(tag, t)),
         ].filter(Boolean);
         const label = tags.length ? `${template.name} · ${tags.join(' · ')}` : template.name;
         return {

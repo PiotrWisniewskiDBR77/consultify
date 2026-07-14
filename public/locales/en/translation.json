@@ -4463,6 +4463,50 @@
         "high": "High",
         "urgent": "Urgent"
       }
+    },
+    "templateLibraryMeta": {
+      "application": "Application",
+      "organization": "Organization",
+      "user": "User",
+      "all": "All",
+      "areaTag": {
+        "strategy": "Strategy",
+        "operations": "Operations",
+        "digital": "Digital",
+        "finance": "Finance",
+        "people": "People",
+        "sales": "Sales",
+        "marketing": "Marketing",
+        "procurement": "Procurement",
+        "customer-service": "Customer service",
+        "delivery": "Delivery",
+        "it": "IT",
+        "data": "Data",
+        "risk": "Risk",
+        "compliance": "Compliance",
+        "hr": "HR",
+        "pmo": "PMO"
+      }
+    },
+    "templatePreview": {
+      "template": "Template",
+      "default": "Default",
+      "active": "Active",
+      "questions": "questions",
+      "noDescription": "No description.",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "created": "Created",
+      "audience": "Audience",
+      "details": "Details",
+      "questions2": "Questions",
+      "loading": "Loading…",
+      "noQuestionsToPreview": "No questions to preview.",
+      "category": "Category",
+      "used": "Used",
+      "assign": "Assign",
+      "open": "Open"
     }
   },
   "assessment": {

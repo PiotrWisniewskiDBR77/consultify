@@ -3697,6 +3697,50 @@
         "high": "Wysoki",
         "urgent": "Pilny"
       }
+    },
+    "templateLibraryMeta": {
+      "application": "Aplikacja",
+      "organization": "Organizacja",
+      "user": "Użytkownik",
+      "all": "Wszystkie",
+      "areaTag": {
+        "strategy": "Strategia",
+        "operations": "Operacje",
+        "digital": "Digital",
+        "finance": "Finanse",
+        "people": "Ludzie",
+        "sales": "Sprzedaż",
+        "marketing": "Marketing",
+        "procurement": "Zakupy",
+        "customer-service": "Obsługa klienta",
+        "delivery": "Dostarczenie",
+        "it": "IT",
+        "data": "Dane",
+        "risk": "Ryzyko",
+        "compliance": "Compliance",
+        "hr": "HR",
+        "pmo": "PMO"
+      }
+    },
+    "templatePreview": {
+      "template": "Szablon",
+      "default": "Domyślny",
+      "active": "Aktywny",
+      "questions": "pytań",
+      "noDescription": "Brak opisu.",
+      "edit": "Edytuj",
+      "duplicate": "Duplikuj",
+      "delete": "Usuń",
+      "created": "Utworzono",
+      "audience": "Odbiorcy",
+      "details": "Szczegóły",
+      "questions2": "Pytania",
+      "loading": "Ładowanie…",
+      "noQuestionsToPreview": "Brak pytań do podglądu.",
+      "category": "Kategoria",
+      "used": "Użycia",
+      "assign": "Przypisz",
+      "open": "Otwórz"
     }
   },
   "assessment": {
