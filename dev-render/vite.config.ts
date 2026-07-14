@@ -20,6 +20,10 @@ const repoRoot = path.resolve(__dirname, '..');
 
 export default defineConfig({
   root: __dirname,
+  // Dedykowany cache — node_modules jest symlinkiem do głównego repo, więc
+  // domyślny node_modules/.vite koliduje z równoległymi harnessami innych
+  // worktree (dwie kopie React → "Invalid hook call"). Trzymaj cache lokalnie.
+  cacheDir: path.resolve(__dirname, '.vite-cache'),
   // Serve the app's real /locales/** so i18n HttpBackend loads cleanly.
   publicDir: path.resolve(repoRoot, 'public'),
   plugins: [react()],

@@ -411,6 +411,10 @@ const PublicJwtFormPage = lazyWithRetry(() =>
 
 // Public Shared View (Table Platform)
 const PublicViewPage = lazyWithRetry(() => import('@/components/MyWork/table/PublicViewPage'));
+// Public Booking Widget (#24c) — Calendly-like, niezalogowane.
+const PublicBookingView = lazyWithRetry(() =>
+  import('@/views/PublicBookingView').then((m) => ({ default: m.PublicBookingView }))
+);
 // Audit Orchestrator hub (audit #19 family) — authenticated module route.
 const AuditProgramsHub = lazyWithRetry(() => import('@/components/Audit/AuditsHub'));
 
@@ -889,6 +893,16 @@ export const AppRoutes: React.FC = () => {
           element={
             <Suspense fallback={<LoadingScreen message="Loading shared view..." />}>
               <PublicViewPage />
+            </Suspense>
+          }
+        />
+
+        {/* Public Booking Widget (#24c) — Calendly-like, no auth required */}
+        <Route
+          path="/book/:consultantSlug"
+          element={
+            <Suspense fallback={<LoadingScreen message="Ładowanie terminów..." />}>
+              <PublicBookingView />
             </Suspense>
           }
         />
