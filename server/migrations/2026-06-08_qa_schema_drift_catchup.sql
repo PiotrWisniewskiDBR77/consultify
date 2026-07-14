@@ -27,7 +27,16 @@ BEGIN;
 
 -- ---- Column adds --------------------------------------------------------
 ALTER TABLE users           ADD COLUMN IF NOT EXISTS user_status   TEXT DEFAULT 'ACTIVE';
-ALTER TABLE initiative_kpis ADD COLUMN IF NOT EXISTS is_on_target  INTEGER DEFAULT 0;
+-- FRESH-DB GUARD (2026-07-14): on a fresh replay this file sorts BEFORE
+-- 565_kpi_time_series_roi_attribution_finance.sql, which creates
+-- initiative_kpis. Skip the column add when the table does not exist yet;
+-- 565 re-adds `is_on_target` idempotently, so the final schema is identical.
+-- On DBs where the table already existed (staging/prod) behaviour is unchanged.
+DO $$ BEGIN
+  IF to_regclass('public.initiative_kpis') IS NOT NULL THEN
+    ALTER TABLE initiative_kpis ADD COLUMN IF NOT EXISTS is_on_target INTEGER DEFAULT 0;
+  END IF;
+END $$;
 ALTER TABLE ai_usage_logs   ADD COLUMN IF NOT EXISTS error_message TEXT;
 
 -- ---- ai_policies: create if absent, then ensure all expected columns ----

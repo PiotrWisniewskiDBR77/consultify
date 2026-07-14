@@ -21,6 +21,16 @@ CREATE TABLE IF NOT EXISTS initiative_kpis (
   FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
 );
 
+-- FRESH-DB PARITY (2026-07-14): 2026-06-08_qa_schema_drift_catchup.sql adds
+-- `is_on_target` only when initiative_kpis already exists (it sorts before this
+-- file). Re-add it here idempotently so a fresh replay ends with the same
+-- schema as staging/prod. No-op wherever the column already exists.
+ALTER TABLE initiative_kpis ADD COLUMN IF NOT EXISTS is_on_target INTEGER DEFAULT 0;
+-- Also re-add the KPI lineage columns from 20260624_kpi_kind_lineage.sql (same
+-- fresh-replay ordering issue; no-op wherever they already exist).
+ALTER TABLE initiative_kpis ADD COLUMN IF NOT EXISTS kpi_kind TEXT;
+ALTER TABLE initiative_kpis ADD COLUMN IF NOT EXISTS leads_kpi_id TEXT;
+
 -- ============================================
 -- T047: KPI TIME SERIES VALUES
 -- ============================================
