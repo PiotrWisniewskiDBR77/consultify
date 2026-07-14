@@ -53,7 +53,8 @@ interface FormulaEditorProps {
 interface FunctionDef {
   name: string;
   signature: string;
-  description: { en: string; pl: string };
+  /** English default text; translated at render time via t('ideas.table.fn.<name>', description) */
+  description: string;
   category: string;
 }
 
@@ -61,167 +62,167 @@ const FORMULA_FUNCTIONS: FunctionDef[] = [
   {
     name: 'SUM',
     signature: 'SUM(field1, field2, ...)',
-    description: { en: 'Sum of values', pl: 'Suma wartości' },
+    description: 'Sum of values',
     category: 'math',
   },
   {
     name: 'AVG',
     signature: 'AVG(field1, field2, ...)',
-    description: { en: 'Average of values', pl: 'Średnia wartości' },
+    description: 'Average of values',
     category: 'math',
   },
   {
     name: 'MIN',
     signature: 'MIN(field1, field2, ...)',
-    description: { en: 'Minimum value', pl: 'Wartość minimalna' },
+    description: 'Minimum value',
     category: 'math',
   },
   {
     name: 'MAX',
     signature: 'MAX(field1, field2, ...)',
-    description: { en: 'Maximum value', pl: 'Wartość maksymalna' },
+    description: 'Maximum value',
     category: 'math',
   },
   {
     name: 'ABS',
     signature: 'ABS(value)',
-    description: { en: 'Absolute value', pl: 'Wartość bezwzględna' },
+    description: 'Absolute value',
     category: 'math',
   },
   {
     name: 'ROUND',
     signature: 'ROUND(value, decimals)',
-    description: { en: 'Round to N decimals', pl: 'Zaokrąglij do N miejsc' },
+    description: 'Round to N decimals',
     category: 'math',
   },
   {
     name: 'CEIL',
     signature: 'CEIL(value)',
-    description: { en: 'Round up to integer', pl: 'Zaokrąglij w górę' },
+    description: 'Round up to integer',
     category: 'math',
   },
   {
     name: 'FLOOR',
     signature: 'FLOOR(value)',
-    description: { en: 'Round down to integer', pl: 'Zaokrąglij w dół' },
+    description: 'Round down to integer',
     category: 'math',
   },
   {
     name: 'IF',
     signature: 'IF(condition, true_val, false_val)',
-    description: { en: 'Conditional expression', pl: 'Wyrażenie warunkowe' },
+    description: 'Conditional expression',
     category: 'logic',
   },
   {
     name: 'AND',
     signature: 'AND(cond1, cond2, ...)',
-    description: { en: 'All conditions true', pl: 'Wszystkie warunki prawdziwe' },
+    description: 'All conditions true',
     category: 'logic',
   },
   {
     name: 'OR',
     signature: 'OR(cond1, cond2, ...)',
-    description: { en: 'Any condition true', pl: 'Dowolny warunek prawdziwy' },
+    description: 'Any condition true',
     category: 'logic',
   },
   {
     name: 'NOT',
     signature: 'NOT(condition)',
-    description: { en: 'Negate condition', pl: 'Negacja warunku' },
+    description: 'Negate condition',
     category: 'logic',
   },
   {
     name: 'SWITCH',
     signature: 'SWITCH(expr, case1, val1, ...)',
-    description: { en: 'Multi-case conditional', pl: 'Wielokrotny warunek' },
+    description: 'Multi-case conditional',
     category: 'logic',
   },
   {
     name: 'CONCAT',
     signature: 'CONCAT(a, " ", b)',
-    description: { en: 'Join text values', pl: 'Łączenie tekstów' },
+    description: 'Join text values',
     category: 'text',
   },
   {
     name: 'LEFT',
     signature: 'LEFT(text, count)',
-    description: { en: 'First N characters', pl: 'Pierwsze N znaków' },
+    description: 'First N characters',
     category: 'text',
   },
   {
     name: 'RIGHT',
     signature: 'RIGHT(text, count)',
-    description: { en: 'Last N characters', pl: 'Ostatnie N znaków' },
+    description: 'Last N characters',
     category: 'text',
   },
   {
     name: 'LEN',
     signature: 'LEN(text)',
-    description: { en: 'Text length', pl: 'Długość tekstu' },
+    description: 'Text length',
     category: 'text',
   },
   {
     name: 'UPPER',
     signature: 'UPPER(text)',
-    description: { en: 'Convert to uppercase', pl: 'Zamień na wielkie litery' },
+    description: 'Convert to uppercase',
     category: 'text',
   },
   {
     name: 'LOWER',
     signature: 'LOWER(text)',
-    description: { en: 'Convert to lowercase', pl: 'Zamień na małe litery' },
+    description: 'Convert to lowercase',
     category: 'text',
   },
   {
     name: 'TRIM',
     signature: 'TRIM(text)',
-    description: { en: 'Remove whitespace', pl: 'Usuń białe znaki' },
+    description: 'Remove whitespace',
     category: 'text',
   },
   {
     name: 'NOW',
     signature: 'NOW()',
-    description: { en: 'Current date/time', pl: 'Aktualna data/czas' },
+    description: 'Current date/time',
     category: 'date',
   },
   {
     name: 'TODAY',
     signature: 'TODAY()',
-    description: { en: 'Current date', pl: 'Aktualna data' },
+    description: 'Current date',
     category: 'date',
   },
   {
     name: 'DATEADD',
     signature: 'DATEADD(date, count, unit)',
-    description: { en: 'Add time to date', pl: 'Dodaj czas do daty' },
+    description: 'Add time to date',
     category: 'date',
   },
   {
     name: 'DATEDIFF',
     signature: 'DATEDIFF(date1, date2, unit)',
-    description: { en: 'Difference between dates', pl: 'Różnica między datami' },
+    description: 'Difference between dates',
     category: 'date',
   },
   {
     name: 'COUNTA',
     signature: 'COUNTA(field)',
-    description: { en: 'Count non-empty values', pl: 'Policz niepuste wartości' },
+    description: 'Count non-empty values',
     category: 'aggregate',
   },
   {
     name: 'COUNTALL',
     signature: 'COUNTALL(field)',
-    description: { en: 'Count all values', pl: 'Policz wszystkie wartości' },
+    description: 'Count all values',
     category: 'aggregate',
   },
 ];
 
 const FUNCTION_CATEGORIES = [
-  { key: 'math', en: 'Math', pl: 'Matematyczne' },
-  { key: 'logic', en: 'Logic', pl: 'Logiczne' },
-  { key: 'text', en: 'Text', pl: 'Tekstowe' },
-  { key: 'date', en: 'Date', pl: 'Datowe' },
-  { key: 'aggregate', en: 'Aggregate', pl: 'Agregujące' },
+  { key: 'math', en: 'Math' },
+  { key: 'logic', en: 'Logic' },
+  { key: 'text', en: 'Text' },
+  { key: 'date', en: 'Date' },
+  { key: 'aggregate', en: 'Aggregate' },
 ];
 
 // ── Debounce hook ─────────────────────────────────────────────────────────────
@@ -331,7 +332,7 @@ function highlightFormula(
 
 export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
   ({ tableId, value, onChange, fields, onValidationChange, locked = false }) => {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const isPl = i18n.language?.startsWith('pl');
 
     const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -390,7 +391,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           if (!cancelled) {
             const fallback: ValidationResult = {
               valid: false,
-              error: isPl ? 'Błąd walidacji' : 'Validation error',
+              error: t('ideas.table.validationError', 'Validation error'),
             };
             setValidation(fallback);
             onValidationChange?.(fallback);
@@ -569,7 +570,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         {/* Code input with syntax highlighting */}
         <div className="relative">
           <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-            {isPl ? 'Wyrażenie formuły' : 'Formula expression'}
+            {t('ideas.table.formulaExpression', 'Formula expression')}
           </label>
           <div className="relative rounded-xl border border-c-border-subtle bg-c-surface-raised">
             {/* Highlight overlay */}
@@ -590,7 +591,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
               disabled={locked}
               rows={4}
               placeholder={
-                isPl ? 'np. IF({status} = "Done", 1, 0)' : 'e.g. IF({status} = "Done", 1, 0)'
+                t('ideas.table.eGIfStatusDone10', 'e.g. IF({status} = "Done", 1, 0)')
               }
               className="relative w-full resize-y rounded-xl bg-transparent p-3 font-mono text-xs leading-relaxed text-transparent caret-slate-800 outline-none placeholder:text-c-text-muted dark:caret-zinc-200 dark:placeholder:text-c-text-secondary"
               spellCheck={false}
@@ -643,13 +644,13 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           {validating ? (
             <div className="flex items-center gap-1.5 text-[10px] text-c-text-secondary">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              {isPl ? 'Walidacja...' : 'Validating...'}
+              {t('ideas.table.validating', 'Validating...')}
             </div>
           ) : validation ? (
             validation.valid ? (
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                 <Check className="h-3.5 w-3.5" />
-                {isPl ? 'Formuła poprawna' : 'Formula valid'}
+                {t('ideas.table.formulaValid', 'Formula valid')}
                 {validation.resultType && (
                   <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] dark:bg-emerald-900/30">
                     → {validation.resultType}
@@ -659,7 +660,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
             ) : (
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-danger-600 dark:text-danger-400">
                 <X className="h-3.5 w-3.5" />
-                {validation.error ?? (isPl ? 'Niepoprawna formuła' : 'Invalid formula')}
+                {validation.error ?? (t('ideas.table.invalidFormula', 'Invalid formula'))}
               </div>
             )
           ) : null}
@@ -667,7 +668,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           {/* Dependencies */}
           {validation?.valid && validation.dependencies && validation.dependencies.length > 0 && (
             <div className="flex items-center gap-1 text-[10px] text-c-text-secondary">
-              <span>{isPl ? 'Zależy od:' : 'Depends on:'}</span>
+              <span>{t('ideas.table.dependsOn', 'Depends on:')}</span>
               {validation.dependencies.map((dep) => (
                 <span
                   key={dep}
@@ -685,7 +686,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-2.5">
             <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary">
               <Sparkles className="h-3 w-3" />
-              {isPl ? 'Podgląd wyniku' : 'Result preview'}
+              {t('ideas.table.resultPreview', 'Result preview')}
             </div>
             {previewLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-c-text-secondary" />
@@ -695,7 +696,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
               </span>
             ) : (
               <span className="text-[10px] italic text-c-text-secondary">
-                {isPl ? 'Brak danych do podglądu' : 'No preview data available'}
+                {t('ideas.table.noPreviewDataAvailable', 'No preview data available')}
               </span>
             )}
           </div>
@@ -709,7 +710,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
           >
             <BookOpen className="h-3.5 w-3.5 text-c-text-secondary" />
             <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-              {isPl ? 'Dostępne funkcje' : 'Available functions'}
+              {t('ideas.table.availableFunctions', 'Available functions')}
             </span>
             {showFuncRef ? (
               <ChevronDown className="h-3.5 w-3.5 text-c-text-secondary" />
@@ -733,7 +734,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                       ) : (
                         <ChevronRight className="h-3 w-3" />
                       )}
-                      {isPl ? cat.pl : cat.en} ({funcs.length})
+                      {t(`ideas.table.cat.${cat.key}`, cat.en)} ({funcs.length})
                     </button>
                     {isExpanded && (
                       <div className="ml-4 space-y-0.5">
@@ -762,7 +763,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                                 {fn.signature}
                               </div>
                               <div className="text-[9px] text-c-text-secondary">
-                                {isPl ? fn.description.pl : fn.description.en}
+                                {t(`ideas.table.fn.${fn.name.toLowerCase()}`, fn.description)}
                               </div>
                             </div>
                           </button>
@@ -782,12 +783,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
             <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
             <div>
               <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-                {isPl ? 'Wykryto cykl zależności' : 'Dependency cycle detected'}
+                {t('ideas.table.dependencyCycleDetected', 'Dependency cycle detected')}
               </div>
               <div className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-                {isPl
-                  ? 'Ta formuła tworzy cykliczną zależność. Zmień wyrażenie, aby uniknąć pętli.'
-                  : 'This formula creates a circular dependency. Modify the expression to avoid loops.'}
+                {t('ideas.table.thisFormulaCreatesACircularDependencyModifyTheExpressionToAv', 'This formula creates a circular dependency. Modify the expression to avoid loops.')}
               </div>
             </div>
           </div>
