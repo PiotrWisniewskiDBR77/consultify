@@ -10,9 +10,10 @@
  * catch the mechanical failure modes (missing K-step, no owner, no horizon,
  * filler prose, an invented number) BEFORE a human/adversarial pass.
  *
- * Backend twin of `src/services/report/conclusionValidators.ts` (frontend).
- * Kept duplicated on purpose — server/ and src/ are separate TS projects
- * (HIGIENA WYKONANIA: esbuild per file, no cross-package bundling assumed).
+ * Frontend twin of `server/src/services/conclusionValidators.ts` (backend,
+ * used by O2.4 finance conclusions). Kept duplicated on purpose — server/ and
+ * src/ are separate TS projects (HIGIENA WYKONANIA: esbuild per file, no
+ * cross-package bundling assumed). Used by O2.3 (`toolConclusion.ts`).
  */
 
 export type ValidatorResult = 'pass' | 'fail' | 'skip';
