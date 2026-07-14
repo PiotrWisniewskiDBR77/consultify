@@ -488,9 +488,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[priority].color}`}
                     >
-                      {isPolish
-                        ? PRIORITY_CONFIG[priority].labelPl
-                        : PRIORITY_CONFIG[priority].label}
+                      {t(`interview.newSessionModal.priorityLabel.${priority}`, PRIORITY_CONFIG[priority].label)}
                     </span>
                     <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                   </button>
