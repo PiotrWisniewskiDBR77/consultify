@@ -13,9 +13,81 @@ import i18n from '@/i18n';
 import { Api } from '@/services/api';
 
 import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
+import { findIdeaTemplate } from '../IdeaTemplateGallery';
 import { applyForceLayout } from './ForceDirectedLayout';
 import { applyRadialLayout } from './RadialTreeLayout';
 import { applyStructureLayout } from './StructureLayouts';
+
+// ── #DEAD-ACTIONS fix: mm_create / mm_expand_branch / mm_apply_framework ──────
+// mindmapIntentDetector.ts (AIChat) recognizes these 3 action names from free-text
+// chat prompts ("create a mind map about X", "apply SWOT"…) but this handler used
+// to have no case for them at all — the chat showed "Working on mind map…" and
+// nothing happened. Wired below to real, existing pipelines (no new backend):
+//  - mm_expand_branch  → alias of mm_ai_expand_branch (same handler, same endpoint)
+//  - mm_apply_framework→ reuses the static framework templates from
+//                        IdeaTemplateGallery.ts (findIdeaTemplate) — same data the
+//                        Templates popover already applies
+//  - mm_create         → seeds the idea's `body` (read by POST .../map/expand as
+//                        the LLM context) via Api.updateMyIdea, renames the root
+//                        node, then reuses handlers.handleAIExpand() — the exact
+//                        same AI call mm_ai_expand_branch already makes.
+
+/** Strip the leading "create a mind map about / stwórz mapę myśli o…" intent
+ * phrase (mirrors the regexes in mindmapIntentDetector.ts) to recover the bare
+ * topic the user actually asked for. Falls back to the raw text. */
+function extractMindMapTopic(rawText: string): string {
+  const stripped = rawText
+    .replace(
+      /\b(create|start|build|make|open)\s+(a\s+)?(mind\s*map|idea\s*map|recommendation\s*map|concept\s*map)\b/gi,
+      ''
+    )
+    .replace(
+      /\b(map|visualize|diagram)\s+(the\s+)?(structure|hierarchy|breakdown|dependencies)\b/gi,
+      ''
+    )
+    .replace(
+      /\b(stwórz|utwórz|zacznij|zbuduj|otwórz)\s+(mapę\s+(myśli|rekomendacji|pomysłów|koncepcji|idei))\b/gi,
+      ''
+    )
+    .replace(/\b(zmapuj|zwizualizuj)\s+(strukturę|hierarchię|zależności)\b/gi, '')
+    .replace(/^\s*(of|for|about|on|dla|o|na temat)\s+/i, '')
+    .replace(/^[\s:,\-–—]+|[\s:,\-–—]+$/g, '')
+    .trim();
+  return stripped || rawText.trim();
+}
+
+/** Known static mind-map framework templates (IdeaTemplateGallery) keyed by the
+ * keyword mindmapIntentDetector.ts fires mm_apply_framework on. Extend this list
+ * as more `/^\b(...)\b/` patterns are added to the detector.
+ *
+ * NOTE (found while wiring this up): the #10-AB curated catalog (cx-*) retired
+ * `mm-swot` and `mm-porter5` and replaced them with `cx-swot`/`cx-porter5` —
+ * but those replacements are WHITEBOARD-tool templates (frameNode/stickyNote),
+ * not mindmap-tool. There is currently no live mindmap-tool SWOT/Porter5
+ * template, so those two intentionally resolve to the honest fallback below
+ * (findIdeaTemplate returns null for the retired id) rather than a fake match.
+ * `cx-pestel` IS a live mindmap-tool template and covers the detector's
+ * "pest/pestle" keyword for real. */
+const FRAMEWORK_TEMPLATE_MATCHERS: Array<{ pattern: RegExp; templateId: string; label: string }> = [
+  { pattern: /\bswot\b/i, templateId: 'mm-swot', label: 'SWOT' },
+  {
+    pattern: /\b(porter'?s?\s*5|five\s*forces|5\s*forces)\b/i,
+    templateId: 'mm-porter5',
+    label: "Porter's 5 Forces",
+  },
+  { pattern: /\b(pest|pestle|pestel)\b/i, templateId: 'cx-pestel', label: 'PESTEL' },
+  { pattern: /\bvalue\s*chain\b/i, templateId: 'mm-value-chain', label: 'Value Chain' },
+  {
+    pattern: /\b(mckinsey\s*7-?s|7-?s\s*model)\b/i,
+    templateId: 'mm-mckinsey7s',
+    label: 'McKinsey 7S',
+  },
+  { pattern: /\bkotter'?s?\s*8\b/i, templateId: 'mm-kotter8', label: "Kotter's 8-Step" },
+  { pattern: /\bokr\b/i, templateId: 'mm-okr', label: 'OKR' },
+  { pattern: /\b(fishbone|ishikawa)\b/i, templateId: 'mm-fishbone', label: 'Fishbone' },
+  { pattern: /\b5\s*whys?\b/i, templateId: 'mm-5whys', label: '5 Whys' },
+  { pattern: /\bstakeholder\b/i, templateId: 'mm-stakeholder', label: 'Stakeholder Map' },
+];
 
 export interface MindMapQuickActionHandlers {
   addChildNode: (nodeId?: string) => void;
@@ -127,6 +199,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
   quickActionRef.current = (action: string, detail?: Record<string, unknown>) => {
     const targetNodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
+    // Raw chat prompt text (N-13, UnifiedChatPanel) — only present for the
+    // mindmapIntentDetector-sourced actions (mm_create/mm_expand_branch/mm_apply_framework).
+    const promptText = typeof detail?.text === 'string' ? detail.text.trim() : '';
     if (action === 'mm_add_child') handlers.addChildNode(targetNodeId);
     if (action === 'mm_add_sibling') handlers.addSiblingNode(targetNodeId);
     if (action === 'mm_add_root') {
@@ -225,7 +300,156 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }, 50);
     }
 
-    if (action === 'mm_ai_expand_branch') handlers.handleAIExpand();
+    // mm_expand_branch is the name mindmapIntentDetector.ts (AIChat) fires from
+    // free-text prompts like "expand this idea" / "rozwiń ten pomysł" — it is the
+    // same operation as the toolbar's mm_ai_expand_branch, just a different name
+    // coming from a different caller. Previously unhandled here → dead "Working on
+    // mind map…" with no follow-up. Anchors on the selected node if the user had
+    // one selected, otherwise on root (handleAIExpand's own default).
+    if (action === 'mm_ai_expand_branch' || action === 'mm_expand_branch')
+      handlers.handleAIExpand(targetNodeId);
+
+    // ── #DEAD-ACTIONS: mm_create — "create a mind map about X" from chat ────
+    // No dedicated "generate full map" backend exists. Reuses the two real,
+    // existing endpoints already wired elsewhere in this file/module:
+    //   1) Api.updateMyIdea(ideaId, { body }) — persists the topic as the idea's
+    //      `body`, which POST /my-ideas/:id/map/expand reads server-side as the
+    //      LLM seed (`idea.seedText || idea.body || idea.title`).
+    //   2) handlers.handleAIExpand() — the exact same call mm_ai_expand_branch
+    //      makes (Api.expandMyIdeaMap → that same /map/expand endpoint), anchored
+    //      on root, so the map actually gets populated with real AI nodes.
+    // The root node label is also renamed locally so the canvas reflects the
+    // topic immediately instead of waiting for the AI round trip.
+    if (action === 'mm_create') {
+      if (locked) return;
+      if (!promptText) {
+        // No prompt text reached us (e.g. detail.text missing) — still run the
+        // real AI expand off root rather than doing nothing.
+        handlers.handleAIExpand();
+        return;
+      }
+      const topic = extractMindMapTopic(promptText);
+      const rootNode = nodes.find((n) => n.id === 'root');
+      if (rootNode) {
+        handlers.pushUndo();
+        setters.setNodes((prev) =>
+          prev.map((n) => (n.id === 'root' ? { ...n, data: { ...n.data, label: topic } } : n))
+        );
+      }
+      (async () => {
+        try {
+          await Api.updateMyIdea(ideaId, { body: promptText });
+        } catch {
+          // best-effort — the AI expand below still runs off whatever seed
+          // the idea already had if this persist call fails.
+        }
+        handlers.handleAIExpand();
+      })();
+      toast.success(
+        i18n.t('mindmap.quickActions.creatingMapFor', {
+          defaultValue: isPolish ? `Tworzę mapę: "${topic}"…` : `Creating map: "${topic}"…`,
+          topic,
+        }),
+        { duration: 1500 }
+      );
+      return;
+    }
+
+    // ── #DEAD-ACTIONS: mm_apply_framework — "apply SWOT" from chat ──────────
+    // Reuses the static framework templates already shipped in
+    // IdeaTemplateGallery.ts (the exact same data the Templates popover applies
+    // via onApplyTemplate) — matched from the chat prompt text against the same
+    // keywords mindmapIntentDetector.ts fires this action on. Nodes/edges are
+    // merged onto the existing canvas (ids remapped) instead of replacing the
+    // whole graph, since this handler only owns local canvas state here.
+    if (action === 'mm_apply_framework') {
+      if (locked) return;
+      const match = promptText
+        ? FRAMEWORK_TEMPLATE_MATCHERS.find((m) => m.pattern.test(promptText))
+        : undefined;
+      const matchedTemplate = match ? findIdeaTemplate(match.templateId) : null;
+      // Defensive: only ever splice mindmap-tool node/edge shapes (idea/branch)
+      // onto this canvas. Some catalog entries (e.g. cx-swot, cx-porter5) are
+      // whiteboard-tool (frameNode/stickyNote) — wrong shape for this canvas —
+      // so treat those as "no template" and fall through to the honest fallback.
+      const template = matchedTemplate?.tool === 'mindmap' ? matchedTemplate : null;
+      const rootNode = nodes.find((n) => n.id === 'root');
+
+      if (template) {
+        handlers.pushUndo();
+        const suffix = Date.now();
+        const idMap = new Map<string, string>();
+        template.nodes.forEach((n: any) => {
+          idMap.set(n.id, n.id === 'root' ? (rootNode?.id ?? 'root') : `${n.id}-${suffix}`);
+        });
+        const originX = template.nodes.find((n: any) => n.id === 'root')?.position?.x ?? 400;
+        const originY = template.nodes.find((n: any) => n.id === 'root')?.position?.y ?? 300;
+        const offsetX = (rootNode?.position.x ?? 400) - originX;
+        const offsetY = (rootNode?.position.y ?? 300) - originY;
+        const newNodes: Node[] = template.nodes
+          .filter((n: any) => n.id !== 'root')
+          .map((n: any) => ({
+            ...n,
+            id: idMap.get(n.id)!,
+            position: { x: n.position.x + offsetX, y: n.position.y + offsetY },
+          }));
+        const newEdges: Edge[] = template.edges.map((e: any) => ({
+          ...e,
+          id: `e-${idMap.get(e.source) || e.source}-${idMap.get(e.target) || e.target}-${suffix}`,
+          source: idMap.get(e.source) || e.source,
+          target: idMap.get(e.target) || e.target,
+        }));
+        setters.setNodes((prev) => [...prev, ...newNodes]);
+        setters.setEdges((prev) => [...prev, ...newEdges]);
+        const templateLabel = isPolish ? template.namePl : template.nameEn;
+        toast.success(
+          isPolish ? `Zastosowano szablon: ${templateLabel}` : `Applied template: ${templateLabel}`,
+          { duration: 1500 }
+        );
+        setTimeout(() => {
+          try {
+            handlers.fitView({ padding: 0.3, duration: 400 });
+          } catch {
+            /* ignore */
+          }
+        }, 50);
+        return;
+      }
+
+      // No live mindmap-tool template resolved for this framework (either the
+      // keyword isn't in FRAMEWORK_TEMPLATE_MATCHERS, or it matched an id that's
+      // retired/wrong-tool, e.g. SWOT/Porter5 today — see the NOTE above).
+      // TEMPORARY FALLBACK, not the full feature: add a single labeled branch
+      // node off root so the user gets a real, visible starting point instead
+      // of a silent dead-end, and say so.
+      handlers.pushUndo();
+      const fallbackLabel =
+        match?.label || (promptText ? extractMindMapTopic(promptText) : 'Framework');
+      const newId = `framework-${Date.now()}`;
+      setters.setNodes((prev) => [
+        ...prev,
+        {
+          id: newId,
+          type: 'branch',
+          position: {
+            x: (rootNode?.position.x ?? 400) + 240,
+            y: rootNode?.position.y ?? 300,
+          },
+          data: { label: fallbackLabel, branchKey: 'framework' },
+        } as Node,
+      ]);
+      setters.setEdges((prev) => [
+        ...prev,
+        { id: `e-root-${newId}`, source: rootNode?.id ?? 'root', target: newId } as Edge,
+      ]);
+      toast(
+        isPolish
+          ? `Brak gotowego szablonu dla "${fallbackLabel}" — dodano pusty węzeł startowy (funkcja tymczasowa).`
+          : `No ready-made template for "${fallbackLabel}" yet — added an empty starter node (temporary fallback).`,
+        { icon: '⚠️', duration: 3000 }
+      );
+      return;
+    }
     if (action === 'mm_toggle_bubbles') setters.setShowClusterBubbles((p) => !p);
     if (action === 'mm_toggle_heatmap') setters.setHeatmapMode((p) => !p);
     if (action === 'mm_toggle_particles') setters.setParticleFlow((p) => !p);
@@ -742,7 +966,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         const prompt = i18n.t('mindmap.quickActions.promptChatAboutNode', {
           nodeLabel: label,
           ideaTitle,
-          ctxSuffix: ctx ? i18n.t('mindmap.quickActions.promptChatAboutNodeCtxSuffix', { ctx }) : '',
+          ctxSuffix: ctx
+            ? i18n.t('mindmap.quickActions.promptChatAboutNodeCtxSuffix', { ctx })
+            : '',
         });
         handlers.onOpenChat(prompt);
       }
@@ -897,7 +1123,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           /* */
         }
       }, 50);
-      toast.success(i18n.t('mindmap.quickActions.layoutChanged', { mode: nextMode }), { duration: 1200 });
+      toast.success(i18n.t('mindmap.quickActions.layoutChanged', { mode: nextMode }), {
+        duration: 1200,
+      });
     }
     if (action === 'mm_structure_picker') {
       if (setters.setShowStructurePicker) setters.setShowStructurePicker(true);
@@ -925,7 +1153,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           semantic: { pl: 'Semantyczny', en: 'Semantic' },
         };
         const label = isPolish ? LABELS[newType]?.pl : LABELS[newType]?.en;
-        toast.success(i18n.t('mindmap.quickActions.structureChanged', { label }), { duration: 1200 });
+        toast.success(i18n.t('mindmap.quickActions.structureChanged', { label }), {
+          duration: 1200,
+        });
       }
     }
     if (action === 'mm_toggle_minimap') {
