@@ -20252,6 +20252,20 @@
       "title": "Generating your document…",
       "planning": "Planning the outline…",
       "progress": "Writing sections… {{done}} of {{total}} ready"
+    },
+    "blocks": {
+      "noTableData": "No table data available",
+      "noKpiData": "No KPIs available",
+      "noChartData": "No chart data available",
+      "chartOther": "Other"
+    },
+    "inlineAi": {
+      "working": "Teresa is working…",
+      "approve": "Approve",
+      "reject": "Reject",
+      "error": "AI error. Please try again.",
+      "close": "Close",
+      "trigger": "Improve with Teresa"
     }
   },
   "priority": {

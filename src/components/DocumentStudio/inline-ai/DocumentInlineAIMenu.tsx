@@ -13,6 +13,7 @@
 import type { Editor } from '@tiptap/react';
 import { Check, ChevronDown, Loader2, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { DocumentSchema } from '../types';
 import { INLINE_ACTIONS } from './inlineActionPrompts';
@@ -38,6 +39,8 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
   artifactId,
   onSchemaUpdated,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || 'pl').startsWith('pl');
   const [position, setPosition] = useState<MenuPosition | null>(null);
   const [showActions, setShowActions] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -155,7 +158,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
       {status === 'loading' && (
         <div className="flex items-center gap-2 px-1 py-0.5 text-sm text-c-text-secondary">
           <Loader2 size={14} className="animate-spin text-c-accent" />
-          <span>Teresa pracuje…</span>
+          <span>{t('documentStudio.inlineAi.working', 'Teresa pracuje…')}</span>
         </div>
       )}
 
@@ -167,14 +170,14 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
             className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text bg-emerald-500 hover:bg-emerald-600 transition-colors"
           >
             <Check size={12} />
-            Zatwierdź
+            {t('documentStudio.inlineAi.approve', 'Zatwierdź')}
           </button>
           <button
             onClick={handleReject}
             className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors"
           >
             <X size={12} />
-            Odrzuć
+            {t('documentStudio.inlineAi.reject', 'Odrzuć')}
           </button>
         </div>
       )}
@@ -183,13 +186,13 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
       {status === 'error' && (
         <div className="space-y-1">
           <p className="text-xs text-red-600 dark:text-red-400">
-            {errorMsg ?? 'Błąd AI. Spróbuj ponownie.'}
+            {errorMsg ?? t('documentStudio.inlineAi.error', 'Błąd AI. Spróbuj ponownie.')}
           </p>
           <button
             onClick={() => rejectProposal()}
             className="text-xs text-c-text-secondary underline hover:text-c-text"
           >
-            Zamknij
+            {t('documentStudio.inlineAi.close', 'Zamknij')}
           </button>
         </div>
       )}
@@ -202,7 +205,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
               onClick={() => setShowActions(true)}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors w-full"
             >
-              <span>Popraw z Teresa</span>
+              <span>{t('documentStudio.inlineAi.trigger', 'Popraw z Teresa')}</span>
               <ChevronDown size={12} />
             </button>
           ) : (
@@ -214,7 +217,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
                   onClick={() => handleAction(action.id)}
                   className="w-full rounded px-2 py-1 text-left text-xs text-c-text hover:bg-c-surface-raised/[0.06] transition-colors"
                 >
-                  {action.labelPl}
+                  {isPolish ? action.labelPl : action.labelEn}
                 </button>
               ))}
             </div>

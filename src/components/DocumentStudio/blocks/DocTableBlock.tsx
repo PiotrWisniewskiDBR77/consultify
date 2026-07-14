@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { NarrowedTableContent } from './docBlockContent';
 
@@ -42,6 +43,7 @@ function riskCellStyle(value: string): React.CSSProperties | undefined {
 }
 
 export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
+  const { t } = useTranslation();
   const { columns, rows, riskSemantics, caption } = content;
 
   // Which columns get risk-colouring (Likelihood / Impact / Risk / Severity).
@@ -62,7 +64,7 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
         className="doc-table-block__empty"
         style={{ padding: '16px 0', color: '#64748b', fontSize: 13 }}
       >
-        No table data available
+        {t('documentStudio.blocks.noTableData', 'No table data available')}
       </div>
     );
   }
