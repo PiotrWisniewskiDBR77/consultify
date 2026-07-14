@@ -16,6 +16,10 @@
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  LAYOUT_INTENT_CATALOG,
+  PALETTE_CATALOG,
+} from '../../../server/src/services/presentationLayoutDirectorService.js';
 import { DECK_SCENARIOS } from './catalog/decks.js';
 import { DOC_SCENARIOS } from './catalog/reports.js';
 import { TABLE_SCENARIOS } from './catalog/tables.js';
@@ -89,6 +93,42 @@ describe('Full catalog — M20 tables (30 scenarios mock-pass)', () => {
   it('count = 30, ids unique', () => {
     expect(TABLE_SCENARIOS).toHaveLength(30);
     expect(new Set(TABLE_SCENARIOS.map((e) => e.meta.id)).size).toBe(30);
+  });
+});
+
+describe('Catalog ↔ production contract — deck scenarios anchored to REAL server catalogs', () => {
+  it('every deck mockPass plan references layoutIntent + paletteId from the real LAYOUT_INTENT_CATALOG / PALETTE_CATALOG', () => {
+    const violations: string[] = [];
+    for (const entry of DECK_SCENARIOS) {
+      for (const plan of entry.mockPass.plans) {
+        if (!LAYOUT_INTENT_CATALOG.includes(plan.layoutIntent as any)) {
+          violations.push(
+            `${entry.meta.id} slide ${plan.slideIndex}: layoutIntent=${plan.layoutIntent}`
+          );
+        }
+        if (!PALETTE_CATALOG.includes(plan.paletteId as any)) {
+          violations.push(`${entry.meta.id} slide ${plan.slideIndex}: paletteId=${plan.paletteId}`);
+        }
+      }
+    }
+    expect(violations, `\n${violations.join('\n')}`).toEqual([]);
+  });
+
+  it('every deck criteria layout requirement targets an intent that exists in the real catalog', () => {
+    const violations: string[] = [];
+    for (const entry of DECK_SCENARIOS) {
+      const referenced = [
+        ...(entry.criteria.requireLayoutAtLeast ?? []).map((r) => r.intent),
+        ...(entry.criteria.forbidLayouts ?? []),
+        ...Object.values(entry.criteria.sequence ?? {}),
+      ];
+      for (const intent of referenced) {
+        if (!LAYOUT_INTENT_CATALOG.includes(intent as any)) {
+          violations.push(`${entry.meta.id}: criteria references unknown intent "${intent}"`);
+        }
+      }
+    }
+    expect(violations, `\n${violations.join('\n')}`).toEqual([]);
   });
 });
 

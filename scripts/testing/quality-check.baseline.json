@@ -182,7 +182,9 @@
     ],
     "FAKE_INTEGRATION": [
       "tests/integration/ai/ai-endpoints.test.ts",
-      "tests/unit/backend/controllers/authController.test.js"
+      "tests/integration/organizations/member-role-id-resolution.test.ts",
+      "tests/unit/backend/controllers/authController.test.js",
+      "tests/unit/backend/middleware/v8Auth.postMutation.supertest.test.ts"
     ]
   }
 }
