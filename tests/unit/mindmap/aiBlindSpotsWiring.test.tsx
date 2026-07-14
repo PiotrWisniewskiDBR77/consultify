@@ -121,7 +121,7 @@ describe('AIBlindSpotsDetector — backend contract mapping', () => {
 
     await renderAndAutoDetect({ ...baseProps, onAddBlindSpot });
 
-    const addButtons = screen.getAllByText('Add');
+    const addButtons = screen.getAllByText('ideas.mindmap.add');
     fireEvent.click(addButtons[0]);
 
     expect(onAddBlindSpot).toHaveBeenCalledTimes(1);
@@ -164,7 +164,7 @@ describe('AIBlindSpotsDetector — empty / malformed responses', () => {
     await renderAndAutoDetect();
 
     expect(getGapAnalysis).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('No blind spots found')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.noBlindSpotsFound')).toBeTruthy();
   });
 
   it('does not crash on a malformed response (missing proposal)', async () => {
@@ -173,7 +173,7 @@ describe('AIBlindSpotsDetector — empty / malformed responses', () => {
     await renderAndAutoDetect();
 
     expect(getGapAnalysis).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('No blind spots found')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.noBlindSpotsFound')).toBeTruthy();
   });
 
   it('empty state is dismissible and does not re-trigger detection', async () => {
@@ -183,7 +183,7 @@ describe('AIBlindSpotsDetector — empty / malformed responses', () => {
 
     const { container } = await renderAndAutoDetect();
 
-    fireEvent.click(screen.getByLabelText('Close'));
+    fireEvent.click(screen.getByLabelText('ideas.mindmap.close'));
     expect(container.firstChild).toBeNull();
     expect(getGapAnalysis).toHaveBeenCalledTimes(1);
   });

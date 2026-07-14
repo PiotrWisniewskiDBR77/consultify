@@ -6,7 +6,7 @@ import { CanvasLeftToolbar } from '../../../src/components/MyWork/mindmap/Canvas
 import { EMPTY_SELECTION } from '../../../src/components/MyWork/ideaSelectionTypes';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  useTranslation: () => ({ i18n: { language: 'en' }, t: (key: string) => key }),
 }));
 
 // The popovers are irrelevant to the floating-geometry contract; stub them out so the

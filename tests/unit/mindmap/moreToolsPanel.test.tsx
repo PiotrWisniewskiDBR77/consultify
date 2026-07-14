@@ -30,7 +30,7 @@ describe('MoreToolsPanel', () => {
 
   it('filters tools by search query', () => {
     render(<MoreToolsPanel {...baseProps} />);
-    const input = screen.getByPlaceholderText('Search tools…');
+    const input = screen.getByPlaceholderText('ideas.mindmap.searchTools');
     fireEvent.change(input, { target: { value: 'minimap' } });
     expect(screen.getByText('Minimap')).toBeTruthy();
     expect(screen.queryByText('Webhooks/Integrations')).toBeNull();
@@ -38,9 +38,9 @@ describe('MoreToolsPanel', () => {
 
   it('shows no results for unmatched search', () => {
     render(<MoreToolsPanel {...baseProps} />);
-    const input = screen.getByPlaceholderText('Search tools…');
+    const input = screen.getByPlaceholderText('ideas.mindmap.searchTools');
     fireEvent.change(input, { target: { value: 'xyznonexistent' } });
-    expect(screen.getByText('No results')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.noResults')).toBeTruthy();
   });
 
   it('dispatches action and closes on tool click', () => {

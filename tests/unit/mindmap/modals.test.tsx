@@ -31,7 +31,7 @@ describe('AssignPersonModal', () => {
       />
     );
 
-    expect(screen.getByPlaceholderText('Name...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('ideas.mindmap.name')).toBeInTheDocument();
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
 
@@ -55,12 +55,12 @@ describe('AttachArtifactModal', () => {
 
     render(<AttachArtifactModal open={true} onClose={onClose} onAttach={onAttach} />);
 
-    expect(screen.getByText('Attach artifact')).toBeInTheDocument();
+    expect(screen.getByText('ideas.mindmap.attachArtifact')).toBeInTheDocument();
 
-    const idInput = screen.getByPlaceholderText('Artifact ID...');
+    const idInput = screen.getByPlaceholderText('ideas.mindmap.artifactId');
     fireEvent.change(idInput, { target: { value: '42' } });
 
-    fireEvent.click(screen.getByText('Attach'));
+    fireEvent.click(screen.getByText('ideas.mindmap.attach'));
     expect(onAttach).toHaveBeenCalledWith('initiative', '42', undefined);
     expect(onClose).toHaveBeenCalled();
   });
@@ -73,15 +73,15 @@ describe('AddEvidenceModal', () => {
 
     render(<AddEvidenceModal open={true} onClose={onClose} onAdd={onAdd} />);
 
-    expect(screen.getByText('Add evidence / source')).toBeInTheDocument();
+    expect(screen.getByText('ideas.mindmap.addEvidenceSource')).toBeInTheDocument();
 
-    const titleInput = screen.getByPlaceholderText('Evidence title...');
-    const urlInput = screen.getByPlaceholderText('https://... or description');
+    const titleInput = screen.getByPlaceholderText('ideas.mindmap.evidenceTitle');
+    const urlInput = screen.getByPlaceholderText('ideas.mindmap.httpsDescription');
 
     fireEvent.change(titleInput, { target: { value: 'Research paper' } });
     fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
 
-    fireEvent.click(screen.getByText('Add'));
+    fireEvent.click(screen.getByText('ideas.mindmap.add'));
     expect(onAdd).toHaveBeenCalledWith('Research paper', 'https://example.com');
     expect(onClose).toHaveBeenCalled();
   });
@@ -94,12 +94,12 @@ describe('ImageUrlModal', () => {
 
     render(<ImageUrlModal open={true} onClose={onClose} onSubmit={onSubmit} />);
 
-    expect(screen.getByText('Add image')).toBeInTheDocument();
+    expect(screen.getByText('ideas.mindmap.addImage')).toBeInTheDocument();
 
-    const input = screen.getByPlaceholderText('Image URL...');
+    const input = screen.getByPlaceholderText('ideas.mindmap.imageUrl');
     fireEvent.change(input, { target: { value: 'https://img.example.com/photo.png' } });
 
-    fireEvent.click(screen.getByText('Add'));
+    fireEvent.click(screen.getByText('ideas.mindmap.add'));
     expect(onSubmit).toHaveBeenCalledWith('https://img.example.com/photo.png');
     expect(onClose).toHaveBeenCalled();
   });
