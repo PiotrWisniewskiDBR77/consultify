@@ -95,3 +95,20 @@ CREATE TABLE IF NOT EXISTS risk_signal_alerts (
 CREATE INDEX IF NOT EXISTS idx_risk_alerts_org ON risk_signal_alerts(organization_id, is_dismissed);
 CREATE INDEX IF NOT EXISTS idx_risk_alerts_initiative ON risk_signal_alerts(initiative_id);
 CREATE INDEX IF NOT EXISTS idx_risk_alerts_created ON risk_signal_alerts(created_at DESC);
+
+-- FRESH-DB PARITY (2026-07-14): 20260623_raid_assumption_issue.sql sorts BEFORE
+-- this file on a fresh replay, so its raid_items governance columns are skipped
+-- (guarded on table existence). Re-apply them here idempotently so the final
+-- schema matches staging/prod. No-op wherever they already exist.
+ALTER TABLE raid_items ADD COLUMN IF NOT EXISTS validation_status TEXT;
+ALTER TABLE raid_items ADD COLUMN IF NOT EXISTS validation_due_date TEXT;
+ALTER TABLE raid_items ADD COLUMN IF NOT EXISTS resolution_due_date TEXT;
+ALTER TABLE raid_items ADD COLUMN IF NOT EXISTS materialized_at TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_raid_items_validation
+  ON raid_items (organization_id, type, validation_status)
+  WHERE validation_status IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_raid_items_resolution_due
+  ON raid_items (organization_id, type, resolution_due_date)
+  WHERE resolution_due_date IS NOT NULL;

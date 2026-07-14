@@ -15,3 +15,34 @@ CREATE TABLE IF NOT EXISTS budget_scenarios (id TEXT PRIMARY KEY DEFAULT gen_ran
 CREATE INDEX IF NOT EXISTS idx_budget_scenarios_budget ON budget_scenarios(budget_id);
 CREATE TABLE IF NOT EXISTS budget_snapshots (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT, budget_id TEXT NOT NULL REFERENCES budgets(id) ON DELETE CASCADE, version INTEGER NOT NULL, snapshot_data JSONB NOT NULL, approved_by TEXT, created_at TIMESTAMP DEFAULT NOW());
 CREATE INDEX IF NOT EXISTS idx_budget_snapshots_budget ON budget_snapshots(budget_id);
+
+-- FRESH-DB PARITY (2026-07-14): 20260624_finance_analysis_investment_category.sql
+-- sorts BEFORE this file on a fresh replay, so its CHECK-widening is skipped
+-- (guarded on table existence). Re-apply it here: drop whatever CHECK governs
+-- `category` and re-add it with 'investment' included. Same end state as
+-- staging/prod; this file is never re-run on already-migrated DBs.
+DO $$
+DECLARE
+  v_constraint_name TEXT;
+BEGIN
+  SELECT con.conname
+    INTO v_constraint_name
+    FROM pg_constraint con
+    JOIN pg_class rel ON rel.oid = con.conrelid
+    JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+   WHERE rel.relname = 'financial_analysis_ratios'
+     AND con.contype = 'c'
+     AND pg_get_constraintdef(con.oid) ILIKE '%category%'
+   LIMIT 1;
+
+  IF v_constraint_name IS NOT NULL THEN
+    EXECUTE format(
+      'ALTER TABLE financial_analysis_ratios DROP CONSTRAINT %I',
+      v_constraint_name
+    );
+  END IF;
+
+  ALTER TABLE financial_analysis_ratios
+    ADD CONSTRAINT financial_analysis_ratios_category_check
+    CHECK (category IN ('liquidity','profitability','efficiency','leverage','growth','investment'));
+END $$;

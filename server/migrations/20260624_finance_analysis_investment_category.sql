@@ -5,10 +5,19 @@
 -- because the constraint rejected 'investment'. This widens the constraint.
 -- (Removing the service-side remap is a separate follow-up.)
 
+-- FRESH-DB GUARD (2026-07-14): financial_analysis_ratios is created by
+-- 570_finance_analysis_budgeting_t052_t053.sql, which sorts AFTER this file on
+-- a fresh replay. Skip when the table does not exist yet; 570 re-applies the
+-- widened CHECK as a parity step, so the final schema is identical. No
+-- behaviour change on already-migrated DBs.
 DO $$
 DECLARE
   v_constraint_name TEXT;
 BEGIN
+  IF to_regclass('public.financial_analysis_ratios') IS NULL THEN
+    RETURN;
+  END IF;
+
   -- Find whatever CHECK constraint currently governs `category` on this table,
   -- regardless of its auto-generated name.
   SELECT con.conname
