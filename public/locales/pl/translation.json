@@ -15046,6 +15046,114 @@
           "desc": "Katalog kompetencji używany w całej organizacji"
         }
       }
+    },
+    "aiControlCenter": {
+      "tokenBilling": {
+        "errors": {
+          "overview": "Nie udało się załadować statystyk przeglądu rozliczeń tokenów",
+          "stats": "Nie udało się załadować statystyk rozliczeń tokenów"
+        },
+        "title": "Zarządzanie rozliczeniami tokenów",
+        "description": "Skonfiguruj ceny, marże i pakiety dla ekonomii tokenów.",
+        "refresh": "Odśwież dane",
+        "overviewUnavailable": "Przegląd rozliczeń tokenów niedostępny",
+        "kpi": {
+          "activeModels": "Aktywne modele AI",
+          "activePackages": "Aktywne pakiety",
+          "platformMargin": "Marża platformy",
+          "platformMarginSubtext": "Narzut na koszty bazowe",
+          "systemBalance": "Saldo systemowe",
+          "systemBalanceSubtext": "Aktualne tokeny administracyjne"
+        }
+      },
+      "marginConfig": {
+        "errors": {
+          "invalidResponse": "Odpowiedź konfiguracji marży była nieprawidłowa.",
+          "load": "Nie udało się załadować konfiguracji marż. Sprawdź połączenie z backendem.",
+          "save": "Nie udało się zapisać ustawień"
+        },
+        "toasts": {
+          "updated": "Zaktualizowano {{name}}"
+        },
+        "title": "Marże globalne",
+        "description": "Bazowe marże zysku dla kosztów niezwiązanych z LLM.",
+        "refresh": "Odśwież dane",
+        "errorTitle": "Błąd wczytywania danych",
+        "tryAgain": "Spróbuj ponownie",
+        "emptyTitle": "Brak konfiguracji marż",
+        "emptyDescription": "Dodaj konfigurację marży, aby ustawić bazowe marże zysku dla kosztów niezwiązanych z LLM.",
+        "saveChanges": "Zapisz zmiany",
+        "baseCostPer1k": "Koszt bazowy / 1k",
+        "marginMarkup": "Narzut marży",
+        "footnote": "Te globalne marże dotyczą kosztów infrastruktury bazowej. Dla modeli AI użyj tabeli mnożników specyficznych."
+      },
+      "tokenPackages": {
+        "errors": {
+          "load": "Nie udało się załadować pakietów",
+          "save": "Nie udało się zapisać pakietu"
+        },
+        "toasts": {
+          "saved": "Pakiet zapisany pomyślnie"
+        },
+        "title": "Pakiety tokenów",
+        "description": "Zarządzaj pakietami tokenów do zakupu.",
+        "create": "Utwórz pakiet",
+        "unavailableTitle": "Pakiety tokenów niedostępne",
+        "editTitle": "Edytuj pakiet",
+        "createTitle": "Utwórz nowy pakiet",
+        "fields": {
+          "name": "Nazwa pakietu",
+          "namePlaceholder": "np. Starter, Pro",
+          "stripePriceId": "Identyfikator ceny Stripe",
+          "tokensAmount": "Liczba tokenów",
+          "priceUsd": "Cena (USD)",
+          "bonusTokens": "Tokeny bonusowe (%)",
+          "sortOrder": "Kolejność sortowania",
+          "markPopular": "Oznacz jako „Popularny\"",
+          "markPopularDescription": "Wyróżnia ten pakiet odznaką i obramowaniem."
+        },
+        "cancel": "Anuluj",
+        "savePackage": "Zapisz pakiet",
+        "mostPopular": "NAJPOPULARNIEJSZY",
+        "packageLabel": "Pakiet",
+        "bonusIncluded": "Bonus {{percent}}% w cenie",
+        "card": {
+          "tokens": "Tokeny",
+          "totalValue": "Wartość całkowita",
+          "sortOrder": "Kolejność sortowania",
+          "active": "Aktywny",
+          "inactive": "Nieaktywny"
+        }
+      },
+      "llmMultipliers": {
+        "errors": {
+          "load": "Nie udało się załadować dostawców",
+          "update": "Nie udało się zaktualizować"
+        },
+        "toasts": {
+          "updated": "Zaktualizowano pomyślnie"
+        },
+        "title": "Modele kosztów i cen AI",
+        "description": "Skonfiguruj koszty bazowe i marże zysku dla każdego modelu.",
+        "refresh": "Odśwież dane",
+        "columns": {
+          "providerModel": "Dostawca / Model",
+          "baseCost": "Koszt bazowy",
+          "baseCostSuffix": "(za 1k wejściowych)",
+          "markupMultiplier": "Mnożnik narzutu",
+          "userPrice": "Cena użytkownika",
+          "userPriceSuffix": "(tokeny odliczane za 1k)",
+          "actions": "Akcje"
+        },
+        "tokensValue": "{{count}} tokenów",
+        "per1000Tokens": "za 1000 tokenów wejściowych",
+        "editPricing": "Edytuj ceny",
+        "noProviders": "Nie znaleziono dostawców. Sprawdź konfigurację bazy danych.",
+        "pricingLogicLabel": "Logika cenowa:",
+        "pricingLogicIntro": "Tokeny użytkownika są odliczane na podstawie",
+        "markupMultiplierTerm": "Mnożnik narzutu",
+        "pricingLogicExample": "Jeśli model kosztuje 0,01 USD/1k, a ustawisz mnożnik 2,0x, użytkownik płaci 2000 tokenów platformy (wartość ok. 0,02 USD) za 1000 tokenów wejściowych."
+      }
     }
   },
   "access": {

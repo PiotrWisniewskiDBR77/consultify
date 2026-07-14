@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   EmptyState as SharedEmptyState,
@@ -18,6 +19,7 @@ import {
 import { Api } from '../../services/api';
 
 export const AdminMarginConfig = () => {
+  const { t } = useTranslation();
   const [margins, setMargins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,11 +35,21 @@ export const AdminMarginConfig = () => {
         setMargins(data);
       } else {
         setMargins([]);
-        setError('Margin configuration response was invalid.');
+        setError(
+          t(
+            'admin.aiControlCenter.marginConfig.errors.invalidResponse',
+            'Margin configuration response was invalid.'
+          )
+        );
       }
     } catch (err: any) {
       console.error('Failed to load margins:', err);
-      setError('Could not load margin configurations. Please check backend connection.');
+      setError(
+        t(
+          'admin.aiControlCenter.marginConfig.errors.load',
+          'Could not load margin configurations. Please check backend connection.'
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -71,10 +83,14 @@ export const AdminMarginConfig = () => {
         minCharge: parseFloat(margin.min_charge || 0),
         isActive: margin.is_active ? 1 : 0,
       });
-      toast.success(`Updated ${margin.display_name}`);
+      toast.success(
+        t('admin.aiControlCenter.marginConfig.toasts.updated', 'Updated {{name}}', {
+          name: margin.display_name,
+        })
+      );
     } catch (err: any) {
       setError(err.message);
-      toast.error('Failed to save settings');
+      toast.error(t('admin.aiControlCenter.marginConfig.errors.save', 'Failed to save settings'));
     } finally {
       setSaving(false);
     }
@@ -94,16 +110,19 @@ export const AdminMarginConfig = () => {
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-emerald-400" />
-            Global Margins
+            {t('admin.aiControlCenter.marginConfig.title', 'Global Margins')}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Base profit margins for non-LLM costs.
+            {t(
+              'admin.aiControlCenter.marginConfig.description',
+              'Base profit margins for non-LLM costs.'
+            )}
           </p>
         </div>
         <button
           onClick={loadMargins}
           className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/20 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-slate-200 dark:border-white/10"
-          title="Refresh Data"
+          title={t('admin.aiControlCenter.marginConfig.refresh', 'Refresh Data')}
         >
           <RefreshCw
             className={`w-4 h-4 text-slate-600 dark:text-white/70 ${loading ? 'animate-spin' : ''}`}
@@ -115,13 +134,15 @@ export const AdminMarginConfig = () => {
         <div className="bg-danger-500/10 border border-danger-500/20 text-danger-400 p-4 rounded-lg mb-4 flex items-start gap-3 text-sm">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold">Error Loading Data</p>
+            <p className="font-bold">
+              {t('admin.aiControlCenter.marginConfig.errorTitle', 'Error Loading Data')}
+            </p>
             <p>{error}</p>
             <button
               onClick={loadMargins}
               className="text-c-text underline mt-2 hover:text-white/80"
             >
-              Try Again
+              {t('admin.aiControlCenter.marginConfig.tryAgain', 'Try Again')}
             </button>
           </div>
         </div>
@@ -133,8 +154,14 @@ export const AdminMarginConfig = () => {
             variant="new"
             icon={TrendingUp}
             compact
-            title="No margin configurations yet"
-            description="Add a margin configuration to set base profit margins for non-LLM costs."
+            title={t(
+              'admin.aiControlCenter.marginConfig.emptyTitle',
+              'No margin configurations yet'
+            )}
+            description={t(
+              'admin.aiControlCenter.marginConfig.emptyDescription',
+              'Add a margin configuration to set base profit margins for non-LLM costs.'
+            )}
           />
         )}
 
@@ -175,7 +202,7 @@ export const AdminMarginConfig = () => {
                   onClick={() => handleSave(margin.source_type)}
                   disabled={saving}
                   className="p-1.5 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded transition-colors disabled:opacity-50"
-                  title="Save Changes"
+                  title={t('admin.aiControlCenter.marginConfig.saveChanges', 'Save Changes')}
                 >
                   <Save className="w-4 h-4" />
                 </button>
@@ -186,7 +213,9 @@ export const AdminMarginConfig = () => {
               {margin.source_type === 'platform' && (
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <label className="text-slate-600 dark:text-slate-500">Base Cost / 1k</label>
+                    <label className="text-slate-600 dark:text-slate-500">
+                      {t('admin.aiControlCenter.marginConfig.baseCostPer1k', 'Base Cost / 1k')}
+                    </label>
                     <span className="text-slate-500 dark:text-slate-400 font-mono">
                       ${parseFloat(margin.base_cost_per_1k).toFixed(4)}
                     </span>
@@ -210,7 +239,9 @@ export const AdminMarginConfig = () => {
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <label className="text-slate-600 dark:text-slate-500">Margin Markup</label>
+                  <label className="text-slate-600 dark:text-slate-500">
+                    {t('admin.aiControlCenter.marginConfig.marginMarkup', 'Margin Markup')}
+                  </label>
                   <span className="text-emerald-400 font-bold">{margin.margin_percent}%</span>
                 </div>
                 <div className="relative">
@@ -234,8 +265,10 @@ export const AdminMarginConfig = () => {
       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
         <HelpCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
         <p>
-          These global margins apply to base infrastructure costs. For AI Models, use the specific
-          multipliers table.
+          {t(
+            'admin.aiControlCenter.marginConfig.footnote',
+            'These global margins apply to base infrastructure costs. For AI Models, use the specific multipliers table.'
+          )}
         </p>
       </div>
     </div>

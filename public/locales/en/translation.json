@@ -14395,6 +14395,114 @@
           "desc": "Capability catalog used across the tenant"
         }
       }
+    },
+    "aiControlCenter": {
+      "tokenBilling": {
+        "errors": {
+          "overview": "Could not load token billing overview statistics",
+          "stats": "Could not load token billing stats"
+        },
+        "title": "Token Billing Management",
+        "description": "Configure pricing, margins, and packages for the token economy.",
+        "refresh": "Refresh Data",
+        "overviewUnavailable": "Token billing overview unavailable",
+        "kpi": {
+          "activeModels": "Active AI Models",
+          "activePackages": "Active Packages",
+          "platformMargin": "Platform Margin",
+          "platformMarginSubtext": "Markup on base costs",
+          "systemBalance": "System Balance",
+          "systemBalanceSubtext": "Current admin tokens"
+        }
+      },
+      "marginConfig": {
+        "errors": {
+          "invalidResponse": "Margin configuration response was invalid.",
+          "load": "Could not load margin configurations. Please check backend connection.",
+          "save": "Failed to save settings"
+        },
+        "toasts": {
+          "updated": "Updated {{name}}"
+        },
+        "title": "Global Margins",
+        "description": "Base profit margins for non-LLM costs.",
+        "refresh": "Refresh Data",
+        "errorTitle": "Error Loading Data",
+        "tryAgain": "Try Again",
+        "emptyTitle": "No margin configurations yet",
+        "emptyDescription": "Add a margin configuration to set base profit margins for non-LLM costs.",
+        "saveChanges": "Save Changes",
+        "baseCostPer1k": "Base Cost / 1k",
+        "marginMarkup": "Margin Markup",
+        "footnote": "These global margins apply to base infrastructure costs. For AI Models, use the specific multipliers table."
+      },
+      "tokenPackages": {
+        "errors": {
+          "load": "Failed to load packages",
+          "save": "Failed to save package"
+        },
+        "toasts": {
+          "saved": "Package saved successfully"
+        },
+        "title": "Token Packages",
+        "description": "Manage purchasable token bundles.",
+        "create": "Create Package",
+        "unavailableTitle": "Token packages unavailable",
+        "editTitle": "Edit Package",
+        "createTitle": "Create New Package",
+        "fields": {
+          "name": "Package Name",
+          "namePlaceholder": "e.g. Starter, Pro",
+          "stripePriceId": "Stripe Price ID",
+          "tokensAmount": "Tokens Amount",
+          "priceUsd": "Price (USD)",
+          "bonusTokens": "Bonus Tokens (%)",
+          "sortOrder": "Sort Order",
+          "markPopular": "Mark as \"Popular\"",
+          "markPopularDescription": "Highlights this package with a badge and border."
+        },
+        "cancel": "Cancel",
+        "savePackage": "Save Package",
+        "mostPopular": "MOST POPULAR",
+        "packageLabel": "Package",
+        "bonusIncluded": "{{percent}}% Bonus Included",
+        "card": {
+          "tokens": "Tokens",
+          "totalValue": "Total Value",
+          "sortOrder": "Sort Order",
+          "active": "Active",
+          "inactive": "Inactive"
+        }
+      },
+      "llmMultipliers": {
+        "errors": {
+          "load": "Failed to load providers",
+          "update": "Failed to update"
+        },
+        "toasts": {
+          "updated": "Updated successfully"
+        },
+        "title": "AI Cost & Pricing Models",
+        "description": "Configure base costs and profit margins for each model.",
+        "refresh": "Refresh Data",
+        "columns": {
+          "providerModel": "Provider / Model",
+          "baseCost": "Base Cost",
+          "baseCostSuffix": "(per 1k in)",
+          "markupMultiplier": "Markup Multiplier",
+          "userPrice": "User Price",
+          "userPriceSuffix": "(Tokens deducted per 1k)",
+          "actions": "Actions"
+        },
+        "tokensValue": "{{count}} Tokens",
+        "per1000Tokens": "per 1,000 input tokens",
+        "editPricing": "Edit Pricing",
+        "noProviders": "No providers found. Check database configuration.",
+        "pricingLogicLabel": "Pricing Logic:",
+        "pricingLogicIntro": "User Tokens are deducted based on the",
+        "markupMultiplierTerm": "Markup Multiplier",
+        "pricingLogicExample": "If a model costs $0.01/1k and you set a 2.0x multiplier, user pays 2000 platform tokens ($0.02 value approx) for 1000 input tokens."
+      }
     }
   },
   "access": {
