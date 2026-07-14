@@ -229,6 +229,7 @@ export interface TableDataContextValue {
 
   // Locked state
   locked: boolean;
+  isPl: boolean;
 }
 
 export const TableDataContext = createContext<TableDataContextValue | null>(null);
@@ -243,6 +244,7 @@ interface TableDataProviderProps {
   base: TablePlatformBase | null;
   table: TablePlatformTable | null;
   locked: boolean;
+  isPl: boolean;
 }
 
 export function TableDataProvider({
@@ -251,6 +253,7 @@ export function TableDataProvider({
   base,
   table,
   locked,
+  isPl,
 }: TableDataProviderProps) {
   const [ui, uiDispatch] = useReducer(uiReducer, initialUIState);
 
@@ -312,8 +315,9 @@ export function TableDataProvider({
       ui,
       uiDispatch,
       locked,
+      isPl,
     }),
-    [integration, base, table, tableId, ui, locked]
+    [integration, base, table, tableId, ui, locked, isPl]
   );
 
   return <TableDataContext.Provider value={value}>{children}</TableDataContext.Provider>;

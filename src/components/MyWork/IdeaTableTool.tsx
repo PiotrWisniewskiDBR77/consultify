@@ -1388,7 +1388,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       aria-label={t('ideas.table.ideasTableWithBulkOperations', 'Ideas table with bulk operations')}
     >
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TableDataProvider integration={platformIntegration} base={null} table={null} locked={locked}>
+        <TableDataProvider
+          integration={platformIntegration}
+          base={null}
+          table={null}
+          locked={locked}
+          isPl={!!isPl}
+        >
           {/* Toolbar */}
           {usePlatform ? (
             <P15TableToolbar
