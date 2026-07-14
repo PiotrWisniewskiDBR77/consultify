@@ -21470,7 +21470,39 @@
       },
       "cronExpressionLabel": "Cron expression (or pick a preset)",
       "timezoneLabel": "Timezone",
-      "syncResult": "Synced: {{created}} created, {{updated}} updated"
+      "syncResult": "Synced: {{created}} created, {{updated}} updated",
+      "duplicate": "Duplicate",
+      "addTable": "Add table",
+      "cancelEdit": "Cancel edit",
+      "editRecord": "Edit",
+      "computedField": "computed",
+      "auditTrail": "Audit trail",
+      "canvasTool": {
+        "pen": "Pen",
+        "rect": "Rectangle",
+        "circle": "Circle",
+        "arrow": "Arrow",
+        "eraser": "Eraser"
+      },
+      "rowColoring": {
+        "title": "Row coloring",
+        "addRule": "Add rule",
+        "noRules": "No coloring rules",
+        "valuePlaceholder": "Value...",
+        "operator": {
+          "equals": "equals",
+          "contains": "contains",
+          "is_empty": "is empty",
+          "is_not_empty": "is not empty"
+        }
+      },
+      "shareView": {
+        "title": "Share View",
+        "sharingEnabled": "Sharing enabled",
+        "password": "Password (optional)",
+        "passwordPlaceholder": "Leave empty = no password",
+        "expires": "Expires"
+      }
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",

@@ -85,8 +85,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
   fields,
   onChange,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const addRule = useCallback(() => {
     const firstField = fields[0]?.key || '';
@@ -120,7 +119,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
         <div className="flex items-center gap-1.5">
           <Palette size={12} className="text-c-text-secondary" />
           <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
-            {isPl ? 'Kolorowanie wierszy' : 'Row coloring'}
+            {t('ideas.table.rowColoring.title', 'Row coloring')}
           </span>
         </div>
         <button
@@ -128,13 +127,13 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
           className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
         >
           <Plus size={10} />
-          {isPl ? 'Dodaj regułę' : 'Add rule'}
+          {t('ideas.table.rowColoring.addRule', 'Add rule')}
         </button>
       </div>
 
       {rules.length === 0 && (
         <div className="text-[10px] text-c-text-secondary text-center py-3">
-          {isPl ? 'Brak reguł kolorowania' : 'No coloring rules'}
+          {t('ideas.table.rowColoring.noRules', 'No coloring rules')}
         </div>
       )}
 
@@ -170,7 +169,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
               >
                 {(Object.keys(OPERATOR_LABELS) as RowColorOperator[]).map((op) => (
                   <option key={op} value={op}>
-                    {isPl ? OPERATOR_LABELS[op].pl : OPERATOR_LABELS[op].en}
+                    {t(`ideas.table.rowColoring.operator.${op}`, OPERATOR_LABELS[op].en)}
                   </option>
                 ))}
               </select>
@@ -191,7 +190,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
                   type="text"
                   value={rule.value || ''}
                   onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                  placeholder={isPl ? 'Wartość...' : 'Value...'}
+                  placeholder={t('ideas.table.rowColoring.valuePlaceholder', 'Value...')}
                   className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
                 />
               )}

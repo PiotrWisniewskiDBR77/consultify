@@ -22546,7 +22546,39 @@
       },
       "cronExpressionLabel": "Wyrażenie cron (lub wybierz preset)",
       "timezoneLabel": "Strefa czasowa",
-      "syncResult": "Zsynchronizowano: {{created}} nowych, {{updated}} zaktualizowanych"
+      "syncResult": "Zsynchronizowano: {{created}} nowych, {{updated}} zaktualizowanych",
+      "duplicate": "Duplikuj",
+      "addTable": "Dodaj tabelę",
+      "cancelEdit": "Anuluj edycję",
+      "editRecord": "Edytuj",
+      "computedField": "obliczane",
+      "auditTrail": "Historia zmian",
+      "canvasTool": {
+        "pen": "Ołówek",
+        "rect": "Prostokąt",
+        "circle": "Okrąg",
+        "arrow": "Strzałka",
+        "eraser": "Gumka"
+      },
+      "rowColoring": {
+        "title": "Kolorowanie wierszy",
+        "addRule": "Dodaj regułę",
+        "noRules": "Brak reguł kolorowania",
+        "valuePlaceholder": "Wartość...",
+        "operator": {
+          "equals": "równa się",
+          "contains": "zawiera",
+          "is_empty": "jest puste",
+          "is_not_empty": "nie jest puste"
+        }
+      },
+      "shareView": {
+        "title": "Udostępnij widok",
+        "sharingEnabled": "Udostępnianie włączone",
+        "password": "Hasło (opcjonalne)",
+        "passwordPlaceholder": "Zostaw puste = bez hasła",
+        "expires": "Wygasa"
+      }
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",

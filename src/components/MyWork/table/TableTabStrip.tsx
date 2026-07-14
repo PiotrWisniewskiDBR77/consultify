@@ -29,8 +29,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
   onDeleteTable,
   onReorderTables,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t: translate } = useTranslation();
 
   const [contextMenu, setContextMenu] = useState<{
     tableId: string;
@@ -159,7 +158,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
       <button
         onClick={onCreateTable}
         className="flex items-center justify-center h-7 w-7 rounded text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface transition-colors flex-shrink-0"
-        title={isPl ? 'Dodaj tabelę' : 'Add table'}
+        title={translate('ideas.table.addTable', 'Add table')}
       >
         <Plus size={14} />
       </button>
@@ -181,7 +180,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
             }}
           >
             <Pencil size={12} />
-            {isPl ? 'Zmień nazwę' : 'Rename'}
+            {translate('ideas.table.rename', 'Rename')}
           </button>
           <button
             className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
@@ -191,7 +190,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
             }}
           >
             <Copy size={12} />
-            {isPl ? 'Duplikuj' : 'Duplicate'}
+            {translate('ideas.table.duplicate', 'Duplicate')}
           </button>
           {tables.length > 1 && (
             <>
@@ -204,7 +203,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
                 }}
               >
                 <Trash2 size={12} />
-                {isPl ? 'Usuń' : 'Delete'}
+                {translate('ideas.table.delete', 'Delete')}
               </button>
             </>
           )}

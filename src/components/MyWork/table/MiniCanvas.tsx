@@ -63,8 +63,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
   width = 400,
   height = 250,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [tool, setTool] = useState<ToolType>('pen');
@@ -315,11 +314,11 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
     icon: React.ComponentType<{ size?: number; className?: string }>;
     label: string;
   }[] = [
-    { id: 'pen', icon: Pencil, label: isPl ? 'Ołówek' : 'Pen' },
-    { id: 'rect', icon: Square, label: isPl ? 'Prostokąt' : 'Rectangle' },
-    { id: 'circle', icon: Circle, label: isPl ? 'Okrąg' : 'Circle' },
-    { id: 'arrow', icon: ArrowRight, label: isPl ? 'Strzałka' : 'Arrow' },
-    { id: 'eraser', icon: Eraser, label: isPl ? 'Gumka' : 'Eraser' },
+    { id: 'pen', icon: Pencil, label: t('ideas.table.canvasTool.pen', 'Pen') },
+    { id: 'rect', icon: Square, label: t('ideas.table.canvasTool.rect', 'Rectangle') },
+    { id: 'circle', icon: Circle, label: t('ideas.table.canvasTool.circle', 'Circle') },
+    { id: 'arrow', icon: ArrowRight, label: t('ideas.table.canvasTool.arrow', 'Arrow') },
+    { id: 'eraser', icon: Eraser, label: t('ideas.table.canvasTool.eraser', 'Eraser') },
   ];
 
   return (
