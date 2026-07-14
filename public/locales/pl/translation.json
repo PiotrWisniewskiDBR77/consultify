@@ -3505,6 +3505,14 @@
       "cancel": "Anuluj",
       "save": "Zapisz",
       "create": "Utwórz"
+    },
+    "notificationQuickActions": {
+      "openDocument": "Otwórz dokument",
+      "openDocument2": "Otwórz dokument",
+      "openDocument3": "Otwórz dokument",
+      "chat": "Czat",
+      "snoozed": "Odłożone",
+      "title": "Odłóż"
     }
   },
   "step1": {

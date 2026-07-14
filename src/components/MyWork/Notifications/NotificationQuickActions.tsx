@@ -135,7 +135,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
         >
           <CheckSquare size={12} />
-          {isPolish ? 'Otwórz dokument' : 'Open document'}
+          {t('myWork.notificationQuickActions.openDocument', 'Open document')}
         </button>
       );
     }
@@ -151,7 +151,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
           className="flex items-center gap-1.5 px-3 py-1.5 bg-c-text hover:bg-c-text-secondary text-c-bg text-xs font-medium rounded-lg transition-colors"
         >
           <Scale size={12} />
-          {isPolish ? 'Otwórz dokument' : 'Open document'}
+          {t('myWork.notificationQuickActions.openDocument2', 'Open document')}
         </button>
       );
     }
@@ -171,7 +171,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
           className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors"
         >
           <Target size={12} />
-          {isPolish ? 'Otwórz dokument' : 'Open document'}
+          {t('myWork.notificationQuickActions.openDocument3', 'Open document')}
         </button>
       );
     }
@@ -270,7 +270,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-xs font-medium rounded-lg transition-colors border border-primary-200 dark:border-primary-800"
           >
             <MessageSquare size={12} />
-            {isPolish ? 'Czat' : 'Chat'}
+            {t('myWork.notificationQuickActions.chat', 'Chat')}
           </button>
         )}
 
@@ -311,7 +311,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             {isSnoozed ? (
               <span className="flex items-center gap-1 px-2 py-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                 <Clock size={12} />
-                {snoozedUntilLabel || (isPolish ? 'Odłożone' : 'Snoozed')}
+                {snoozedUntilLabel || (t('myWork.notificationQuickActions.snoozed', 'Snoozed'))}
               </span>
             ) : (
               <>
@@ -321,7 +321,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                     setShowSnoozeMenu(!showSnoozeMenu);
                   }}
                   className="flex items-center gap-1 p-1.5 text-slate-600 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors"
-                  title={isPolish ? 'Odłóż' : 'Snooze'}
+                  title={t('myWork.notificationQuickActions.title', 'Snooze')}
                 >
                   <Clock size={14} />
                   <ChevronDown size={10} />

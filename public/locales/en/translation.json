@@ -4270,6 +4270,14 @@
       "cancel": "Cancel",
       "save": "Save",
       "create": "Create"
+    },
+    "notificationQuickActions": {
+      "openDocument": "Open document",
+      "openDocument2": "Open document",
+      "openDocument3": "Open document",
+      "chat": "Chat",
+      "snoozed": "Snoozed",
+      "title": "Snooze"
     }
   },
   "step1": {
