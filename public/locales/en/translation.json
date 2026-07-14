@@ -21768,6 +21768,27 @@
         "refinementHistory": "Refinement history",
         "processing": "Processing…",
         "refine": "Refine"
+      },
+      "schemaDiff": {
+        "required": "required",
+        "opts": "opts",
+        "modified": "modified",
+        "fields": "fields",
+        "newBadge": "new",
+        "schemaDiffTitle": "Schema Diff",
+        "noChangesToDisplay": "No changes to display",
+        "added": "Added",
+        "modifiedLegend": "Modified",
+        "deleted": "Deleted"
+      },
+      "schemaProposal": {
+        "operations": "Operations",
+        "selectAll": "All",
+        "selectNone": "None",
+        "diffPreview": "Diff preview",
+        "approve": "Approve",
+        "reject": "Reject",
+        "undo": "Undo"
       }
     },
     "mindmap": {

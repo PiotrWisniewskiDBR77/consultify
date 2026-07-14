@@ -152,8 +152,8 @@ function getChangeIcon(type: DiffChange['type']): React.ReactNode {
 const FieldRow: React.FC<{
   field: DiffField;
   change?: DiffChange;
-  isPl: boolean;
-}> = ({ field, change, isPl }) => {
+}> = ({ field, change }) => {
+  const { t } = useTranslation();
   const bgClass = change ? getChangeColor(change.type) : '';
   const icon = change ? getChangeIcon(change.type) : null;
 
@@ -168,12 +168,12 @@ const FieldRow: React.FC<{
       </span>
       {field.required && (
         <span className="text-[9px] text-danger-500 font-semibold">
-          {isPl ? 'wymagane' : 'required'}
+          {t('ideas.table.schemaDiff.required', 'required')}
         </span>
       )}
       {field.options && Object.keys(field.options).length > 0 && (
         <span className="text-[9px] text-c-text-secondary">
-          {Object.keys(field.options).length} {isPl ? 'opcji' : 'opts'}
+          {Object.keys(field.options).length} {t('ideas.table.schemaDiff.opts', 'opts')}
         </span>
       )}
       {change?.type === 'update_field' && change.oldField && (
@@ -181,9 +181,7 @@ const FieldRow: React.FC<{
           ←{' '}
           {change.oldField.type !== field.type
             ? `${change.oldField.type} → ${field.type}`
-            : isPl
-              ? 'zmienione'
-              : 'modified'}
+            : t('ideas.table.schemaDiff.modified', 'modified')}
         </span>
       )}
       {icon && <span className="ml-auto flex-shrink-0">{icon}</span>}
@@ -210,8 +208,8 @@ const TableSection: React.FC<{
   isDeleted: boolean;
   fieldChanges: Map<string, DiffChange>;
   deletedFields: DiffChange[];
-  isPl: boolean;
-}> = ({ table, isNew, isDeleted, fieldChanges, deletedFields, isPl }) => {
+}> = ({ table, isNew, isDeleted, fieldChanges, deletedFields }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
 
   const tableBg = isNew
@@ -247,11 +245,11 @@ const TableSection: React.FC<{
           {table.name}
         </span>
         <span className="text-[10px] text-c-text-secondary ml-auto">
-          {table.fields.length} {isPl ? 'pól' : 'fields'}
+          {table.fields.length} {t('ideas.table.schemaDiff.fields', 'fields')}
         </span>
         {isNew && (
           <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-            {isPl ? 'nowa' : 'new'}
+            {t('ideas.table.schemaDiff.newBadge', 'new')}
           </span>
         )}
       </button>
@@ -260,12 +258,7 @@ const TableSection: React.FC<{
       >
         <div className="px-3 pb-3 space-y-1">
           {table.fields.map((field) => (
-            <FieldRow
-              key={field.name}
-              field={field}
-              change={fieldChanges.get(field.name)}
-              isPl={isPl}
-            />
+            <FieldRow key={field.name} field={field} change={fieldChanges.get(field.name)} />
           ))}
           {deletedFields.map((dc) =>
             dc.field ? <DeletedFieldRow key={dc.field.name} field={dc.field} /> : null
@@ -285,8 +278,7 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
   proposedChanges,
   onClose,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const { tables: proposedTables, changeMap } = useMemo(
     () => buildProposedSchema(currentSchema, proposedChanges),
@@ -317,7 +309,7 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-c-border-subtle bg-gradient-to-r from-sky-50/50 to-transparent dark:from-sky-950/20">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-c-text-secondary">
-            {isPl ? 'Podgląd zmian' : 'Schema Diff'}
+            {t('ideas.table.schemaDiff.schemaDiffTitle', 'Schema Diff')}
           </span>
           <div className="flex items-center gap-1.5 ml-2">
             {addCount > 0 && (
@@ -358,7 +350,6 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
               isDeleted={true}
               fieldChanges={new Map()}
               deletedFields={[]}
-              isPl={isPl}
             />
           ))}
 
@@ -385,14 +376,13 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
               isDeleted={false}
               fieldChanges={fieldChanges}
               deletedFields={deletedFields}
-              isPl={isPl}
             />
           );
         })}
 
         {proposedTables.length === 0 && currentSchema.length === 0 && (
           <div className="text-center py-6 text-xs text-c-text-secondary">
-            {isPl ? 'Brak zmian do wyświetlenia' : 'No changes to display'}
+            {t('ideas.table.schemaDiff.noChangesToDisplay', 'No changes to display')}
           </div>
         )}
       </div>
@@ -402,15 +392,15 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
         <div className="flex items-center gap-4 text-[10px] text-c-text-secondary">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            {isPl ? 'Dodane' : 'Added'}
+            {t('ideas.table.schemaDiff.added', 'Added')}
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            {isPl ? 'Zmienione' : 'Modified'}
+            {t('ideas.table.schemaDiff.modifiedLegend', 'Modified')}
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-danger-500" />
-            {isPl ? 'Usunięte' : 'Deleted'}
+            {t('ideas.table.schemaDiff.deleted', 'Deleted')}
           </span>
         </div>
       </div>

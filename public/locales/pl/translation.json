@@ -22844,6 +22844,27 @@
         "refinementHistory": "Historia doprecyzowań",
         "processing": "Przetwarzanie…",
         "refine": "Doprecyzuj"
+      },
+      "schemaDiff": {
+        "required": "wymagane",
+        "opts": "opcji",
+        "modified": "zmienione",
+        "fields": "pól",
+        "newBadge": "nowa",
+        "schemaDiffTitle": "Podgląd zmian",
+        "noChangesToDisplay": "Brak zmian do wyświetlenia",
+        "added": "Dodane",
+        "modifiedLegend": "Zmienione",
+        "deleted": "Usunięte"
+      },
+      "schemaProposal": {
+        "operations": "Operacje",
+        "selectAll": "Wszystkie",
+        "selectNone": "Żadne",
+        "diffPreview": "Podgląd diff",
+        "approve": "Zatwierdź",
+        "reject": "Odrzuć",
+        "undo": "Cofnij"
       }
     },
     "mindmap": {
