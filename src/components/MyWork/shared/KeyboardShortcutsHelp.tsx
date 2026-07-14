@@ -22,24 +22,24 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
   onClose,
   shortcuts = SHORTCUTS_HELP,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const categories = {
     navigation: {
-      label: isPolish ? 'Nawigacja' : 'Navigation',
+      label: t('myWork.keyboardShortcuts.label', 'Navigation'),
       icon: '🧭',
     },
     actions: {
-      label: isPolish ? 'Akcje' : 'Actions',
+      label: t('myWork.keyboardShortcuts.label2', 'Actions'),
       icon: '⚡',
     },
     status: {
-      label: isPolish ? 'Status' : 'Status',
+      label: t('myWork.keyboardShortcuts.label3', 'Status'),
       icon: '🎯',
     },
     selection: {
-      label: isPolish ? 'Zaznaczanie' : 'Selection',
+      label: t('myWork.keyboardShortcuts.label4', 'Selection'),
       icon: '✓',
     },
   };
@@ -81,10 +81,10 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-                    {isPolish ? 'Skróty klawiszowe' : 'Keyboard Shortcuts'}
+                    {t('myWork.keyboardShortcuts.keyboardShortcuts', 'Keyboard Shortcuts')}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Naciśnij ? aby pokazać/ukryć' : 'Press ? to show/hide'}
+                    {t('myWork.keyboardShortcuts.pressToShowHide', 'Press ? to show/hide')}
                   </p>
                 </div>
               </div>
@@ -148,9 +148,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
               <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <Command size={14} />
                 <span>
-                  {isPolish
-                    ? 'Użyj Ctrl (Windows) lub ⌘ (Mac) dla skrótów z modyfikatorem'
-                    : 'Use Ctrl (Windows) or ⌘ (Mac) for modifier shortcuts'}
+                  {t('myWork.keyboardShortcuts.useCtrlWindowsOr', 'Use Ctrl (Windows) or ⌘ (Mac) for modifier shortcuts')}
                 </span>
               </div>
             </div>

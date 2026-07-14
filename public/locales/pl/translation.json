@@ -3242,7 +3242,42 @@
       "thisDecisionRequiresImmediate": "Ta decyzja wymaga natychmiastowej uwagi",
       "overdue": "po terminie",
       "today": "Dziś"
-    }
+    },
+    "keyboardShortcuts": {
+      "label": "Nawigacja",
+      "label2": "Akcje",
+      "label3": "Status",
+      "label4": "Zaznaczanie",
+      "keyboardShortcuts": "Skróty klawiszowe",
+      "pressToShowHide": "Naciśnij ? aby pokazać/ukryć",
+      "useCtrlWindowsOr": "Użyj Ctrl (Windows) lub ⌘ (Mac) dla skrótów z modyfikatorem"
+    },
+    "decisionReadiness": {
+      "decisionReadiness": "Gotowość decyzji",
+      "toReach": "Aby przejść do etapu"
+    },
+    "convertToMenu": {
+      "conversionFailed": "Konwersja nieudana",
+      "toastSuccess": "Utworzono inicjatywę",
+      "failedToCreateInitiative": "Nie udało się utworzyć inicjatywy"
+    },
+    "relatedContext": {
+      "relatedContext": "Powiązany kontekst",
+      "searching": "Szukam...",
+      "noRelatedItemsFound": "Brak powiązań"
+    },
+    "readEditToggle": {
+      "ariaLabel": "Tryb podglądu / edycji"
+    },
+    "presentationModeSwitcher": {
+      "ariaLabel": "Tryb prezentacji"
+    },
+    "aiConnections": {
+      "aIDiscoveredConnections": "Wykryte powiązania AI",
+      "analyzing": "Analizuję...",
+      "noConnectionsFound": "Brak powiązań"
+    },
+    "postDecisionFollowUp": {}
   },
   "step1": {
     "title": "Krok 1",

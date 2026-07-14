@@ -197,7 +197,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
   compact = false,
   showDetails = true,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // Calculate readiness score and missing requirements
@@ -303,7 +303,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Gotowość decyzji' : 'Decision Readiness'}
+              {t('myWork.decisionReadiness.decisionReadiness', 'Decision Readiness')}
             </span>
             <span
               className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorClasses.bg} text-white`}
@@ -396,7 +396,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
                 <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
                 <div>
                   <span className="font-medium">
-                    {isPolish ? 'Aby przejść do etapu' : 'To reach'} "
+                    {t('myWork.decisionReadiness.toReach', 'To reach')} "
                     {isPolish ? nextStage.name.pl : nextStage.name.en}":
                   </span>
                   <ul className="mt-1 space-y-0.5">

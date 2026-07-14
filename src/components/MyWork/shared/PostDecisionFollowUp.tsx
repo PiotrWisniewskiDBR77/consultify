@@ -50,7 +50,7 @@ export const PostDecisionFollowUp: React.FC<PostDecisionFollowUpProps> = ({
   onClose,
   onTasksCreated,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
   const { emitMyWorkEvent } = useAppStore();
 

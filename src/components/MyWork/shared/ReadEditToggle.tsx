@@ -62,7 +62,7 @@ export const ReadEditToggle: React.FC<ReadEditToggleProps> = ({
   onChange,
   disabled = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const value: Mode = readMode ? 'read' : 'edit';
 
@@ -80,7 +80,7 @@ export const ReadEditToggle: React.FC<ReadEditToggleProps> = ({
     <div
       className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100/80 dark:bg-navy-800/80 border border-slate-200/60 dark:border-navy-700/60"
       role="radiogroup"
-      aria-label={isPolish ? 'Tryb podglądu / edycji' : 'Read / edit mode'}
+      aria-label={t('myWork.readEditToggle.ariaLabel', 'Read / edit mode')}
     >
       {MODES.map((mode) => {
         const config = MODE_CONFIG[mode];

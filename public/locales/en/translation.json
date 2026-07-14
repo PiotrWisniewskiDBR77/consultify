@@ -4007,7 +4007,42 @@
       "thisDecisionRequiresImmediate": "This decision requires immediate attention",
       "overdue": "overdue",
       "today": "Today"
-    }
+    },
+    "keyboardShortcuts": {
+      "label": "Navigation",
+      "label2": "Actions",
+      "label3": "Status",
+      "label4": "Selection",
+      "keyboardShortcuts": "Keyboard Shortcuts",
+      "pressToShowHide": "Press ? to show/hide",
+      "useCtrlWindowsOr": "Use Ctrl (Windows) or ⌘ (Mac) for modifier shortcuts"
+    },
+    "decisionReadiness": {
+      "decisionReadiness": "Decision Readiness",
+      "toReach": "To reach"
+    },
+    "convertToMenu": {
+      "conversionFailed": "Conversion failed",
+      "toastSuccess": "Initiative created",
+      "failedToCreateInitiative": "Failed to create initiative"
+    },
+    "relatedContext": {
+      "relatedContext": "Related Context",
+      "searching": "Searching...",
+      "noRelatedItemsFound": "No related items found"
+    },
+    "readEditToggle": {
+      "ariaLabel": "Read / edit mode"
+    },
+    "presentationModeSwitcher": {
+      "ariaLabel": "Presentation mode"
+    },
+    "aiConnections": {
+      "aIDiscoveredConnections": "AI-Discovered Connections",
+      "analyzing": "Analyzing...",
+      "noConnectionsFound": "No connections found"
+    },
+    "postDecisionFollowUp": {}
   },
   "step1": {
     "title": "Step 1",
