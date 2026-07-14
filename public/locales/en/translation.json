@@ -5412,7 +5412,15 @@
       "groupEvidence": "Evidence",
       "groupDeliverables": "Deliverables",
       "groupAudit": "Audit",
-      "derivedFromPerspectives": "Derived from {{count}} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication."
+      "derivedFromPerspectives": "Derived from {{count}} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.",
+      "statusOptionLabel": {
+        "draft": "Draft",
+        "generating": "Generating",
+        "completed": "Completed",
+        "in_review": "In Review",
+        "published": "Published",
+        "failed": "Failed"
+      }
     },
     "templateBuilder": {
       "freeTextAnswer": "Free text answer…",

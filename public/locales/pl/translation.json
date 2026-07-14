@@ -4646,7 +4646,15 @@
       "groupEvidence": "Dowody",
       "groupDeliverables": "Dostarczane",
       "groupAudit": "Audyt",
-      "derivedFromPerspectives": "Zbudowane z {{count}} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora."
+      "derivedFromPerspectives": "Zbudowane z {{count}} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora.",
+      "statusOptionLabel": {
+        "draft": "Szkic",
+        "generating": "Generowanie",
+        "completed": "Ukończone",
+        "in_review": "W recenzji",
+        "published": "Opublikowano",
+        "failed": "Błąd"
+      }
     },
     "templateBuilder": {
       "freeTextAnswer": "Pole tekstowe na odpowiedź…",
