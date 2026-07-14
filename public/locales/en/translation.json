@@ -4548,6 +4548,22 @@
       "openGaps": "Open Gaps",
       "noInformationGapsIdentified": "No information gaps identified",
       "dataUpdatedAutomatically": "Data updated automatically"
+    },
+    "notesPanel": {
+      "notes": "Notes",
+      "all": "All",
+      "category": "Category",
+      "add": "Add",
+      "noteTitle": "Note title...",
+      "noteContent": "Note content...",
+      "category2": "Category:",
+      "cancel": "Cancel",
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "noNotesYet": "No notes yet",
+      "addYourFirstNoteTo": "Add your first note to capture observations from the interview.",
+      "addNote": "Add note"
     }
   },
   "assessment": {

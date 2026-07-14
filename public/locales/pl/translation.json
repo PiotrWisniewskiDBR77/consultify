@@ -3782,6 +3782,22 @@
       "openGaps": "Otwarte luki",
       "noInformationGapsIdentified": "Brak zidentyfikowanych luk informacyjnych",
       "dataUpdatedAutomatically": "Dane aktualizowane automatycznie"
+    },
+    "notesPanel": {
+      "notes": "Notatki",
+      "all": "Wszystkie",
+      "category": "Kategoria",
+      "add": "Dodaj",
+      "noteTitle": "Tytuł notatki...",
+      "noteContent": "Treść notatki...",
+      "category2": "Kategoria:",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "noNotesYet": "Brak notatek",
+      "addYourFirstNoteTo": "Dodaj pierwszą notatkę, aby zapisać obserwacje z wywiadu.",
+      "addNote": "Dodaj notatkę"
     }
   },
   "assessment": {
