@@ -107,7 +107,10 @@ function getDefaultConfig(type: string): Record<string, unknown> {
     case 'search':
       return {
         tableId: '',
-        placeholder: i18n.t('ideas.table.interfaceDesigner.defaults.searchPlaceholder', 'Search...'),
+        placeholder: i18n.t(
+          'ideas.table.interfaceDesigner.defaults.searchPlaceholder',
+          'Search...'
+        ),
       };
     case 'summary':
       return {
@@ -156,7 +159,9 @@ const BlockPreview: React.FC<{
     case 'button':
       return (
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {String(block.config.label || t('ideas.table.interfaceDesigner.preview.button', 'Button'))}
+          {String(
+            block.config.label || t('ideas.table.interfaceDesigner.preview.button', 'Button')
+          )}
         </button>
       );
     case 'summary':
@@ -165,7 +170,9 @@ const BlockPreview: React.FC<{
           <span className="text-2xl font-bold text-blue-700">—</span>
           <br />
           <span className="text-xs text-c-text-muted">
-            {String(block.config.label || t('ideas.table.interfaceDesigner.preview.summary', 'Summary'))}
+            {String(
+              block.config.label || t('ideas.table.interfaceDesigner.preview.summary', 'Summary')
+            )}
           </span>
         </div>
       );
@@ -293,7 +300,9 @@ const BlockConfigPanel: React.FC<{
             <option value="bar">{t('ideas.table.interfaceDesigner.config.bar', 'Bar')}</option>
             <option value="line">{t('ideas.table.interfaceDesigner.config.line', 'Line')}</option>
             <option value="pie">{t('ideas.table.interfaceDesigner.config.pie', 'Pie')}</option>
-            <option value="donut">{t('ideas.table.interfaceDesigner.config.donut', 'Donut')}</option>
+            <option value="donut">
+              {t('ideas.table.interfaceDesigner.config.donut', 'Donut')}
+            </option>
           </select>
         </div>
       )}
@@ -334,9 +343,13 @@ const BlockConfigPanel: React.FC<{
               onChange={(e) => updateConfig('aggregation', e.target.value)}
               className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
             >
-              <option value="count">{t('ideas.table.interfaceDesigner.config.count', 'Count')}</option>
+              <option value="count">
+                {t('ideas.table.interfaceDesigner.config.count', 'Count')}
+              </option>
               <option value="sum">{t('ideas.table.interfaceDesigner.config.sum', 'Sum')}</option>
-              <option value="avg">{t('ideas.table.interfaceDesigner.config.average', 'Average')}</option>
+              <option value="avg">
+                {t('ideas.table.interfaceDesigner.config.average', 'Average')}
+              </option>
               <option value="min">{t('ideas.table.interfaceDesigner.config.min', 'Min')}</option>
               <option value="max">{t('ideas.table.interfaceDesigner.config.max', 'Max')}</option>
             </select>

@@ -416,7 +416,9 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 >
                   <option value="count">{t('ideas.table.addColumn.rollup.count', 'Count')}</option>
                   <option value="sum">{t('ideas.table.addColumn.rollup.sum', 'Sum')}</option>
-                  <option value="avg">{t('ideas.table.addColumn.rollup.average', 'Average')}</option>
+                  <option value="avg">
+                    {t('ideas.table.addColumn.rollup.average', 'Average')}
+                  </option>
                   <option value="min">{t('ideas.table.addColumn.rollup.min', 'Min')}</option>
                   <option value="max">{t('ideas.table.addColumn.rollup.max', 'Max')}</option>
                   <option value="percent_checked">{isPl ? '% zaznaczonych' : '% checked'}</option>
