@@ -1109,6 +1109,31 @@ export const verifyToken = asyncHandler(
                 lastNameParts.join(' ') || 'User',
               ]
             );
+            // Also seed organization_members: chatPermissionService (team-conversation
+            // add_message/read/etc. gates) resolves the caller's role from this table,
+            // not from the JWT. Without this row the e2e identity has org+user rows but
+            // is NOT a member of its own org, so any team-scoped chat permission check
+            // resolves to role:'none' -> 403 "not a member of this organization"
+            // (found 2026-07-14 diagnosing the ai-chat runtime smoke canary).
+            // organization_members.role has a CHECK constraint (OWNER/ADMIN/MEMBER/
+            // CONSULTANT); clamp the token's role claim to that domain instead of
+            // trusting it verbatim.
+            const validOrgMemberRoles = new Set(['OWNER', 'ADMIN', 'MEMBER', 'CONSULTANT']);
+            const membershipRole = validOrgMemberRoles.has(userRole) ? userRole : 'ADMIN';
+            await run(
+              `
+                INSERT INTO organization_members (id, organization_id, user_id, role, status)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO NOTHING
+              `,
+              [
+                `e2e-member-${orgId}-${normalizedDecoded.id}`,
+                orgId,
+                normalizedDecoded.id,
+                membershipRole,
+                'ACTIVE',
+              ]
+            );
           } catch (seedErr) {
             logger.warn('[AuthMiddleware] E2E seed failed (continuing):', seedErr);
           }

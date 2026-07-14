@@ -1993,6 +1993,59 @@ router.post(
     if (process.env.E2E_MODE === 'true') {
       const assistantFull = `E2E_OK: Received "${message}".`;
 
+      // Actually persist, matching the comment above (previously this stub only
+      // streamed SSE chunks and never wrote to conversation_messages, so the
+      // runtime smoke's DB-persistence assertion always timed out — found
+      // 2026-07-14 diagnosing the ai-chat runtime smoke canary). Best-effort:
+      // a persistence failure here must not break the deterministic stream.
+      //
+      // Idempotency: use a deterministic id + `ON CONFLICT(id) DO NOTHING`
+      // instead of a SELECT-based existence check. The E2E_MODE/MOCK_DB in-memory
+      // query engine (server/src/database/Database.ts selectFromTable) only
+      // supports WHERE-clause filtering on a small column allowlist — it does NOT
+      // include conversation_id/role/content, so a `WHERE conversation_id = ? AND
+      // role = ? AND content = ?` existence check silently drops every predicate
+      // and matches the FIRST row in the entire (cross-conversation) table. That
+      // false-positive "already exists" made the second insert (the assistant
+      // reply) a permanent no-op whenever any earlier message existed anywhere —
+      // found 2026-07-14 while chasing why only the user message ever persisted.
+      // `id` IS a real single-column PK/conflict target on both the mock and
+      // Postgres, so this is dedupe-safe against retried stream calls too.
+      if (conversationId) {
+        try {
+          const persistE2EMessage = async (role: 'user' | 'ai', content: string) => {
+            await dbRun(
+              `INSERT INTO conversation_messages (
+                 id, conversation_id, role, content, message_type,
+                 metadata, token_count, model_used, author_user_id, seq, client_message_id, created_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO NOTHING`,
+              [
+                `e2e-stub-${conversationId}-${role}`,
+                conversationId,
+                role,
+                content,
+                'text',
+                '{}',
+                null,
+                null,
+                role === 'user' ? req.userId || null : null,
+                role === 'user' ? 1 : 2,
+                null,
+                new Date().toISOString(),
+              ]
+            );
+          };
+          await persistE2EMessage('user', message);
+          await persistE2EMessage('ai', assistantFull);
+        } catch (persistErr) {
+          logger.warn(
+            '[Stream][E2E_MODE] message persistence failed (continuing):',
+            persistErr as Error
+          );
+        }
+      }
+
       try {
         // Stream assistant response in chunks
         const chunks = ['E2E_OK: ', `Received "${message}"`, '.'];
