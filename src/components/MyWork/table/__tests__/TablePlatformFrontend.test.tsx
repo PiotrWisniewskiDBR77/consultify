@@ -265,6 +265,8 @@ function makeIntegration(
     toggleRowSelection: vi.fn(),
     handleFieldChange: vi.fn(),
     handleAddRow: vi.fn(),
+    handleDeleteRow: vi.fn(),
+    handleDuplicateRow: vi.fn(),
     handleBulkDelete: vi.fn(),
     viewLayout: 'table',
     setViewLayout: vi.fn(),
@@ -303,6 +305,13 @@ function makeIntegration(
     createPlatformView: vi.fn(async () => null),
     activeViewConfig: {},
     removeMissingFieldFromView: noopAsync,
+    realtimeTableId: null,
+    applyRealtimeCreated: vi.fn(),
+    applyRealtimeUpdated: vi.fn(),
+    applyRealtimeDeleted: vi.fn(),
+    applyRealtimeSchemaChanged: vi.fn(),
+    formatRules: [],
+    updateConditionalFormatting: vi.fn(async () => {}),
     ...overrides,
   };
   return base;
