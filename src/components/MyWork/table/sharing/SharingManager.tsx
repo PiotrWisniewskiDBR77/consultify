@@ -323,7 +323,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 <button
                   onClick={handleInvite}
                   disabled={inviting}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent px-3 py-2 text-xs font-medium text-c-text hover:bg-c-accent disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-2 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 transition-colors"
                 >
                   {inviting && <Loader2 size={12} className="animate-spin" />}
                   {isPl ? 'Zaproś' : 'Invite'}

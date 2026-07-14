@@ -494,7 +494,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
                 saving || locked
                   ? 'bg-c-surface-raised text-c-text-muted'
-                  : 'bg-c-accent text-white hover:brightness-110'
+                  : 'bg-c-text text-c-surface hover:brightness-110'
               }`}
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}

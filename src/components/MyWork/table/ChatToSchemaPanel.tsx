@@ -593,7 +593,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
                 msg.role === 'user'
-                  ? 'bg-c-accent text-white rounded-br-md'
+                  ? 'bg-c-text text-c-surface rounded-br-md'
                   : 'bg-c-surface-raised text-c-text rounded-bl-md'
               }`}
             >
@@ -702,7 +702,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
           <button
             onClick={() => handleSubmit()}
             disabled={!inputValue.trim() || loading}
-            className="p-2.5 rounded-xl bg-c-accent text-white hover:bg-c-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
+            className="p-2.5 rounded-xl bg-c-text text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>

@@ -239,7 +239,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-c-accent hover:opacity-90 text-white disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-c-text hover:opacity-90 text-c-surface disabled:opacity-60"
             data-testid={`${testId}-submit`}
           >
             {submitting && <Loader2 size={14} className="animate-spin" aria-hidden />}

@@ -170,7 +170,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
           <div className="flex items-center gap-2 px-4 py-2 border-t border-c-border-subtle">
             <button
               onClick={() => onInsert(response)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-accent hover:brightness-110 text-white text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-text hover:brightness-110 text-c-surface text-xs font-medium transition-colors"
             >
               <Check size={12} />
               {pl ? 'Zaproponuj do notatki' : 'Propose for note'}

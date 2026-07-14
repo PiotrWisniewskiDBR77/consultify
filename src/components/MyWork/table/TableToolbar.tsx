@@ -460,7 +460,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               <button
                 disabled={!saveViewName.trim()}
                 onClick={() => handleSaveView(saveViewName.trim())}
-                className="px-3 py-1.5 text-xs rounded-lg bg-c-accent text-white hover:bg-c-accent disabled:opacity-40"
+                className="px-3 py-1.5 text-xs rounded-lg bg-c-text text-c-surface hover:opacity-90 disabled:opacity-40"
               >
                 {isPl ? 'Zapisz' : 'Save'}
               </button>

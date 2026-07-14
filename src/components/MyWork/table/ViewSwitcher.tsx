@@ -247,7 +247,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     type="button"
                     onClick={handleCreate}
                     disabled={!newName.trim()}
-                    className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-c-accent text-white hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-c-text text-c-surface hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     {isPl ? 'Utwórz' : 'Create'}
                   </button>

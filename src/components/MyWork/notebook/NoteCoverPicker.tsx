@@ -212,7 +212,7 @@ export const CoverUrlModal: React.FC<{
           <button
             type="button"
             onClick={submit}
-            className="rounded-lg bg-c-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:brightness-110"
+            className="rounded-lg bg-c-text px-3 py-1.5 text-sm font-medium text-c-surface transition-colors hover:brightness-110"
           >
             {isPolish ? 'Ustaw' : 'Set'}
           </button>
