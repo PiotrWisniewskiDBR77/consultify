@@ -270,7 +270,7 @@ export const PublicLandingPage: React.FC = () => {
                             text-c-surface font-semibold text-xl
                             px-10 p-4 rounded-xl
                             shadow-[0_0_50px_-12px_rgba(15,23,42,0.4)]
-                            hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)]
+                            hover:shadow-[0_0_60px_-12px_rgba(15,23,42,0.6)]
                             active:scale-[0.98]
                             transition duration-300 overflow-hidden
                         "
