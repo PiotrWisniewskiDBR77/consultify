@@ -106,10 +106,20 @@ export function KpiDashboardLayout(
   const regionY = g.contentY + periodOffset;
   const regionH = g.contentH - periodOffset; // pasmo użytkowe pod tytułem/okresem
 
-  // Z kontekstem: kafelki biorą ~60% wysokości (większe niż dawne 1.3),
-  // tekst kontekstu wypełnia dół. Bez kontekstu: kafelki wypełniają cały region
-  // (były 2.5 → teraz ~3.7), więc oddychają i są czytelne.
-  const contextH = c.context ? Math.min(1.3, regionH * 0.32) : 0;
+  // Anti-sparseness L2 (proof 2026-07-14): the OLD fixed `regionH * 0.32` cap
+  // sized the context box for a long paragraph even when the actual caption
+  // was one short sentence — the tiles above stayed at their (smaller) share
+  // and the leftover space inside the oversized, top-anchored context box
+  // read as dead space in the bottom third of the slide. Estimate the real
+  // line count from the caption's length and give the KPI tiles whatever
+  // height that frees, so tiles grow to absorb it instead of the gap sitting
+  // unused below a one-line caption.
+  const estimateContextH = (text: string): number => {
+    const charsPerLine = Math.max(20, Math.floor((g.contentW * 72) / 6.4));
+    const lines = Math.max(1, Math.ceil(text.length / charsPerLine));
+    return Math.min(1.3, Math.max(0.42, lines * 0.32 + 0.12));
+  };
+  const contextH = c.context ? estimateContextH(c.context) : 0;
   const contextGap = c.context ? 0.25 : 0;
   const kpiH = regionH - contextH - contextGap;
   const kpiY = regionY;
