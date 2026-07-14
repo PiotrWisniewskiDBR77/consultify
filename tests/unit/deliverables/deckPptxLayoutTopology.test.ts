@@ -18,8 +18,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { Badge } from '../../../server/src/services/report/pptx/atomics/Badge.js';
+import { Bullet } from '../../../server/src/services/report/pptx/atomics/Bullet.js';
 import { KpiValue } from '../../../server/src/services/report/pptx/atomics/KpiValue.js';
 import { PageNumber } from '../../../server/src/services/report/pptx/atomics/PageNumber.js';
+import { SlideTitle } from '../../../server/src/services/report/pptx/atomics/SlideTitle.js';
 import { TrendIndicator } from '../../../server/src/services/report/pptx/atomics/TrendIndicator.js';
 import { corporateTokens as tokens } from '../../../server/src/services/report/pptx/designTokens.js';
 import { ExecutiveSummaryLayout } from '../../../server/src/services/report/pptx/layouts/ExecutiveSummaryLayout.js';
@@ -412,5 +414,103 @@ describe('ExecutiveSummaryLayout — no double title', () => {
     const distinct = 'Margin recovery is the real prize, not top-line growth';
     const texts = allTexts(ExecutiveSummaryLayout(execSlide(distinct), META, tokens).elements);
     expect(texts).toContain(distinct);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Polish fixes from DECK PPTX proof 2026-07-14 (part C: L — finishing zgrzyty)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('SlideTitle — no widow, deterministic fit (never trusts LibreOffice shrink)', () => {
+  const pos = { x: 0.5, y: 0.1, w: 9.0, h: 0.72 };
+
+  it('a short title renders unchanged at the base font, single line', () => {
+    const [{ text, opts }] = captureText(SlideTitle({ text: 'Growth is masking a margin problem' }, tokens));
+    expect(text).toBe('Growth is masking a margin problem');
+    expect(opts.fontSize).toBe(tokens.fontSizes.slideTitle);
+    expect(opts.wrap).toBe(true);
+  });
+
+  it('a title that overflows one line shrinks to fit ONE line instead of wrapping (the proof-doc "peaks" widow)', () => {
+    const title = 'Conversion collapses exactly where quoting effort peaks';
+    const [{ text, opts }] = captureText(SlideTitle({ text: title, position: pos }, tokens));
+    // No manual line break, no natural wrap risk — a single deterministic line.
+    expect(text).toBe(title);
+    expect(text).not.toContain('\n');
+    expect(opts.wrap).toBe(false);
+    expect(opts.fontSize).toBeLessThan(tokens.fontSizes.slideTitle);
+  });
+
+  it('a genuinely too-long title (18-word key_message) gets a manual 2-line break with NO 1-word orphan line', () => {
+    const title =
+      'DBR77 can double marketplace revenue within 12 months, but only if fulfilment and pricing operations are industrialised first';
+    const [{ text }] = captureText(SlideTitle({ text: title, position: pos }, tokens));
+    expect(String(text)).toContain('\n');
+    const lines = String(text).split('\n');
+    expect(lines).toHaveLength(2);
+    for (const line of lines) {
+      expect(line.trim().split(/\s+/).length).toBeGreaterThan(1);
+    }
+  });
+
+  it('a 2-word title splits 1/1 even though that is technically a single-word-per-line (unavoidable, not a widow)', () => {
+    const title = 'Supercalifragilisticexpialidocious Antidisestablishmentarianistically';
+    const result = captureText(SlideTitle({ text: title, position: { x: 0, y: 0, w: 2, h: 0.72 } }, tokens));
+    expect(result[0]).toBeDefined();
+  });
+});
+
+describe('Bullet — anti-sparseness: short lists breathe in a tall box, tight lists stay tight', () => {
+  it('a 4-item list in a TALL box gets a bigger inter-item gap than the 8pt base', () => {
+    const caps = captureText(
+      Bullet(
+        {
+          items: [
+            'Senior engineer builds every quote from scratch',
+            '21-day median quote-to-order cycle',
+            'Pricing decided deal-by-deal, no floor',
+            'Tribal knowledge, zero reuse between quotes',
+          ],
+          position: { x: 0, y: 0, w: 4.0, h: 3.5 },
+        },
+        tokens
+      )
+    );
+    const [{ text: rows }] = caps;
+    const gap = (rows as unknown as { options: { paraSpaceAfter: number } }[])[0].options
+      .paraSpaceAfter;
+    expect(gap).toBeGreaterThan(tokens.spacing.paragraphGap);
+  });
+
+  it('a list that already fills a SHORT box keeps the base 8pt gap (no overflow risk)', () => {
+    const caps = captureText(
+      Bullet(
+        {
+          items: [
+            'Every quote passes through senior engineers with deep domain expertise across the whole catalogue',
+            'Sixty-eight percent of engineering hours go to pre-sales activity instead of paid delivery work',
+          ],
+          position: { x: 0, y: 0, w: 4.0, h: 1.0 },
+        },
+        tokens
+      )
+    );
+    const [{ text: rows }] = caps;
+    const gap = (rows as unknown as { options: { paraSpaceAfter: number } }[])[0].options
+      .paraSpaceAfter;
+    expect(gap).toBe(tokens.spacing.paragraphGap);
+  });
+
+  it('a single-item list is never stretched (nothing to balance against)', () => {
+    const caps = captureText(
+      Bullet(
+        { items: ['Only one finding'], position: { x: 0, y: 0, w: 4.0, h: 3.0 } },
+        tokens
+      )
+    );
+    const [{ text: rows }] = caps;
+    const gap = (rows as unknown as { options: { paraSpaceAfter: number } }[])[0].options
+      .paraSpaceAfter;
+    expect(gap).toBe(tokens.spacing.paragraphGap);
   });
 });
