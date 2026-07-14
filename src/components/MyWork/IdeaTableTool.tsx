@@ -249,7 +249,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const platformIntegration = useTablePlatformIntegration({
     ideaId,
     locked,
-    isPl,
+    t,
     open,
     onSelectionChange: onSelectionChange as (sel: unknown) => void | undefined,
     preferredTableId: platformTableOverrideId ?? preferredPlatformTableId,
@@ -381,7 +381,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const rowOps = useTableRows({
     ideaId,
     locked,
-    isPl,
+    t,
     currentUserName,
     nodesUndo,
     sort,

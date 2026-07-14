@@ -22430,7 +22430,9 @@
         "majorProjects": "Duże projekty",
         "fillIns": "Uzupełnienia",
         "thanklessTasks": "Niewdzięczne zadania"
-      }
+      },
+      "copySuffix": "(kopia)",
+      "autoSaved": "Automatycznie zapisane"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",

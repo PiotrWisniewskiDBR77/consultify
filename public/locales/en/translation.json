@@ -21354,7 +21354,9 @@
         "majorProjects": "Major Projects",
         "fillIns": "Fill-ins",
         "thanklessTasks": "Thankless Tasks"
-      }
+      },
+      "copySuffix": "(copy)",
+      "autoSaved": "Auto-saved"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",

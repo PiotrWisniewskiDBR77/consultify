@@ -17,7 +17,7 @@ import type { UseUndoRedoReturn } from './useUndoRedo';
 export interface UseTableRowsOpts {
   ideaId: string;
   locked: boolean;
-  isPl: boolean;
+  t: (key: string, fallback?: string) => string;
   currentUserName?: string;
   nodesUndo: UseUndoRedoReturn<TableNode[]>;
   sort: SortConfig | null;
@@ -55,7 +55,7 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
   const {
     ideaId,
     locked,
-    isPl,
+    t,
     currentUserName = 'current-user',
     nodesUndo,
     sort,
@@ -262,7 +262,7 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
         id: newId,
         data: {
           ...(source.data || {}),
-          label: label ? `${label} ${isPl ? '(kopia)' : '(copy)'}` : '',
+          label: label ? `${label} ${t('ideas.table.copySuffix', '(copy)')}` : '',
           created_time: now,
           created_by: currentUserName,
           last_edited_time: now,
@@ -275,7 +275,7 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
       nodesUndo.push(next);
       trackFunnelEvent('ideas_table_row_added', { ideaId, duplicatedFrom: id });
     },
-    [currentUserName, ideaId, isPl, locked, nodes, nodesUndo]
+    [currentUserName, ideaId, t, locked, nodes, nodesUndo]
   );
 
   // ── Reorder ──
