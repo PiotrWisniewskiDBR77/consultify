@@ -2,10 +2,15 @@
  * Capability Mapper — config layer barrel.
  *
  * SSOT for the Capability Mapper methodology content and its deterministic
- * synthesis engine. Cloned from the Ansoff config pattern:
- *   - deepeningLadder.ts  : per-sourcing-archetype depth staircase + partner-grade proposal bank (PL/EN)
- *   - moveValidator.ts    : gap scoring, ranking, and W2 sourcing sequencing (rationale/trade-off/rejected variant)
- *   - conclusionPrompts.ts: AI prompt builders grounded in the engine output
+ * synthesis engine. Cloned from the Ansoff config pattern, then raised to full
+ * OXFORD O3 depth (SWOT/Porter/Portfolio pattern: q-bank + insight staircase +
+ * matrix engine, on top of the existing ladder/validator/prompt trio):
+ *   - deepeningLadder.ts            : per-sourcing-archetype depth staircase + partner-grade proposal bank (PL/EN)
+ *   - moveValidator.ts              : gap scoring, ranking, and W2 sourcing sequencing (rationale/trade-off/rejected variant)
+ *   - conclusionPrompts.ts          : AI prompt builders grounded in the engine output (existing JSON contract — unchanged)
+ *   - capabilityQuestionBank.ts     : O3 laddered q-bank — identification -> maturity evidence -> importance & gap -> move
+ *   - capabilityInsightStaircase.ts : O3 insight staircase (skad ocena zdolnosci) + invented-number guard
+ *   - capabilityMatrixEngine.ts     : O3 maturity x importance matrix (core-capability vs commodity) + importance x gap x feasibility ranking + sourcing-mismatch guard
  */
 
 import {
@@ -15,6 +20,9 @@ import {
   type SourcingArchetype,
 } from './deepeningLadder';
 
+export * from './capabilityInsightStaircase';
+export * from './capabilityMatrixEngine';
+export * from './capabilityQuestionBank';
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
