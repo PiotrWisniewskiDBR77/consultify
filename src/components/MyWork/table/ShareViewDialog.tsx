@@ -21,8 +21,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
   onClose,
   onUpdated,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [shared, setShared] = useState(isShared);
   const [token, setToken] = useState(shareToken || '');
@@ -73,7 +72,9 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Share2 size={16} className="text-c-accent" />
-            <h3 className="font-semibold text-sm">{isPl ? 'Udostępnij widok' : 'Share View'}</h3>
+            <h3 className="font-semibold text-sm">
+              {t('ideas.table.shareView.title', 'Share View')}
+            </h3>
           </div>
           <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
             <X size={14} />
@@ -84,7 +85,9 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
 
         {/* Toggle */}
         <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-c-surface-raised">
-          <span className="text-sm">{isPl ? 'Udostępnianie włączone' : 'Sharing enabled'}</span>
+          <span className="text-sm">
+            {t('ideas.table.shareView.sharingEnabled', 'Sharing enabled')}
+          </span>
           <button
             onClick={handleToggleShare}
             disabled={loading}
@@ -121,13 +124,16 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
             <div className="mb-3">
               <label className="flex items-center gap-1.5 text-xs text-c-text-muted mb-1">
                 <Lock size={12} />
-                {isPl ? 'Hasło (opcjonalne)' : 'Password (optional)'}
+                {t('ideas.table.shareView.password', 'Password (optional)')}
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={isPl ? 'Zostaw puste = bez hasła' : 'Leave empty = no password'}
+                placeholder={t(
+                  'ideas.table.shareView.passwordPlaceholder',
+                  'Leave empty = no password'
+                )}
                 className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface"
               />
             </div>
@@ -136,7 +142,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
             <div className="mb-3">
               <label className="flex items-center gap-1.5 text-xs text-c-text-muted mb-1">
                 <Calendar size={12} />
-                {isPl ? 'Wygasa' : 'Expires'}
+                {t('ideas.table.shareView.expires', 'Expires')}
               </label>
               <input
                 type="datetime-local"

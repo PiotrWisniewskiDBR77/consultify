@@ -32,8 +32,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onChange,
   columns,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const addRule = useCallback(() => {
     const firstCol = columns[0]?.key || 'label';
@@ -79,7 +78,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     <div className="absolute left-0 top-full mt-1 z-overlay w-[400px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-c-text">{isPl ? 'Filtry' : 'Filters'}</span>
+          <span className="text-xs font-bold text-c-text">
+            {t('ideas.table.filterPanel.title', 'Filters')}
+          </span>
           {filters.rules.length > 1 && (
             <button
               onClick={toggleLogic}
@@ -95,7 +96,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               onClick={clearAll}
               className="text-[10px] text-c-text-secondary hover:text-danger-500 transition-colors px-1"
             >
-              {isPl ? 'Wyczyść' : 'Clear'}
+              {t('ideas.table.clear', 'Clear')}
             </button>
           )}
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-c-surface-raised">
@@ -107,14 +108,16 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-auto">
         {filters.rules.length === 0 && (
           <p className="text-[11px] text-c-text-secondary text-center py-4">
-            {isPl ? 'Brak filtrów. Dodaj pierwszy.' : 'No filters. Add one.'}
+            {t('ideas.table.filterPanel.noFilters', 'No filters. Add one.')}
           </p>
         )}
         {filters.rules.map((rule, idx) => (
           <div key={rule.id} className="flex items-center gap-1.5">
             {idx > 0 && (
               <span className="text-[9px] font-bold text-c-text-secondary w-6 text-center flex-shrink-0">
-                {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : isPl ? 'LUB' : 'OR'}
+                {filters.logic === 'and'
+                  ? t('ideas.table.filterPanel.and', 'AND')
+                  : t('ideas.table.filterPanel.or', 'OR')}
               </span>
             )}
             {idx === 0 && <span className="w-6 flex-shrink-0" />}
@@ -136,7 +139,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             >
               {OPERATORS.map((op) => (
                 <option key={op.value} value={op.value}>
-                  {isPl ? op.labelPl : op.labelEn}
+                  {t(`ideas.table.filterOperator.${op.value}`, op.labelEn)}
                 </option>
               ))}
             </select>
@@ -164,7 +167,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
-          {isPl ? 'Dodaj filtr' : 'Add filter'}
+          {t('ideas.table.filterPanel.addFilter', 'Add filter')}
         </button>
       </div>
     </div>

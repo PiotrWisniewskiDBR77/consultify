@@ -67,8 +67,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   aggregateConfig,
   onAggregateChange,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
@@ -96,13 +95,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     <div className="flex items-center h-7 bg-c-surface-raised border-t border-c-border-subtle px-3 gap-4 text-xs text-c-text-muted flex-shrink-0 overflow-x-auto">
       {/* Record count */}
       <span>
-        {totalRecords} {isPl ? 'rekordów' : 'records'}
+        {totalRecords} {t('ideas.table.records', 'records')}
       </span>
 
       {/* Selection count */}
       {selectedCount > 0 && (
         <span className="text-c-info font-medium">
-          {selectedCount} {isPl ? 'zaznaczonych' : 'selected'}
+          {selectedCount} {t('ideas.table.selectedCount', 'selected')}
         </span>
       )}
 
@@ -143,7 +142,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                       setOpenDropdown(null);
                     }}
                   >
-                    {isPl ? opt.labelPl : opt.labelEn}
+                    {t(`ideas.table.agg.${opt.value}`, opt.labelEn)}
                   </button>
                 ))}
               </div>

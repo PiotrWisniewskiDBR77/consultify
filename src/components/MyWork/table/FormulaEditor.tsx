@@ -332,8 +332,7 @@ function highlightFormula(
 
 export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
   ({ tableId, value, onChange, fields, onValidationChange, locked = false }) => {
-    const { t, i18n } = useTranslation();
-    const isPl = i18n.language?.startsWith('pl');
+    const { t } = useTranslation();
 
     const [showAutocomplete, setShowAutocomplete] = useState(false);
     const [autocompleteItems, setAutocompleteItems] = useState<

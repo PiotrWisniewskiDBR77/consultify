@@ -113,9 +113,10 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
     try {
       const result = await TablePlatformApi.executeTableSync(syncId);
       toast.success(
-        isPl
-          ? `Zsynchronizowano: ${result?.created ?? 0} nowych, ${result?.updated ?? 0} zaktualizowanych`
-          : `Synced: ${result?.created ?? 0} created, ${result?.updated ?? 0} updated`
+        t('ideas.table.syncResult', 'Synced: {{created}} created, {{updated}} updated', {
+          created: result?.created ?? 0,
+          updated: result?.updated ?? 0,
+        })
       );
       await fetchSyncs();
     } catch {

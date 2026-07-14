@@ -17,6 +17,19 @@ interface ShortcutGroup {
   shortcuts: { keys: string[]; labelEn: string; labelPl: string }[];
 }
 
+/** Stable camelCase i18n-key fragment derived from an English label (e.g. "Views & Tools" -> "viewsTools"). */
+function shortcutSlug(s: string): string {
+  const words = s
+    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/);
+  return words
+    .map((w, i) =>
+      i === 0 ? w.charAt(0).toLowerCase() + w.slice(1) : w.charAt(0).toUpperCase() + w.slice(1)
+    )
+    .join('');
+}
+
 const GROUPS: ShortcutGroup[] = [
   {
     titleEn: 'Navigation',
@@ -70,8 +83,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
   open,
   onClose,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!open) return;
@@ -97,7 +109,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Keyboard size={16} className="text-c-accent" />
           <span className="text-sm font-bold text-c-text">
-            {isPl ? 'Skróty klawiszowe' : 'Keyboard Shortcuts'}
+            {t('ideas.table.shortcuts.title', 'Keyboard Shortcuts')}
           </span>
           <div className="flex-1" />
           <button
@@ -113,7 +125,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
           {GROUPS.map((group) => (
             <div key={group.titleEn}>
               <h3 className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2.5">
-                {isPl ? group.titlePl : group.titleEn}
+                {t(`ideas.table.shortcuts.group.${shortcutSlug(group.titleEn)}`, group.titleEn)}
               </h3>
               <div className="space-y-1.5">
                 {group.shortcuts.map((sc) => (
@@ -129,7 +141,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
                       ))}
                     </div>
                     <span className="text-[11px] text-c-text-secondary">
-                      {isPl ? sc.labelPl : sc.labelEn}
+                      {t(`ideas.table.shortcuts.item.${shortcutSlug(sc.labelEn)}`, sc.labelEn)}
                     </span>
                   </div>
                 ))}

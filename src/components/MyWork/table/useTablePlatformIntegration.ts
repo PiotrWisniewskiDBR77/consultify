@@ -78,7 +78,7 @@ function buildPlatformColumns(
 export interface UseTablePlatformIntegrationOpts {
   ideaId: string;
   locked: boolean;
-  isPl: boolean;
+  t: (key: string, fallback?: string) => string;
   open: boolean;
   onSelectionChange?: (sel: unknown) => void;
   /** Canonical `tp_tables.id` to load when deep-linking from governed sheet artifacts. */
@@ -227,7 +227,7 @@ function applyLocalFilterSortGroup(
 export function useTablePlatformIntegration(
   opts: UseTablePlatformIntegrationOpts
 ): UseTablePlatformIntegrationReturn {
-  const { ideaId, locked, isPl, open, onSelectionChange, preferredTableId } = opts;
+  const { ideaId, locked, t, open, onSelectionChange, preferredTableId } = opts;
 
   const bridge = useTablePlatformBridge({ ideaId, enabled: open, preferredTableId });
   const tableId = (bridge.table as { id?: string } | null)?.id ?? null;
@@ -460,7 +460,7 @@ export function useTablePlatformIntegration(
         type: source.type,
         data: {
           ...(source.data || {}),
-          label: label ? `${label} ${isPl ? '(kopia)' : '(copy)'}` : '',
+          label: label ? `${label} ${t('ideas.table.copySuffix', '(copy)')}` : '',
           created_time: new Date().toISOString(),
         },
         position: { x: 0, y: 0 },
@@ -476,7 +476,7 @@ export function useTablePlatformIntegration(
         }
       })();
     },
-    [isActive, locked, nodes, isPl, bridge]
+    [isActive, locked, nodes, t, bridge]
   );
 
   const handleSave = useCallback(async () => {
@@ -599,7 +599,7 @@ export function useTablePlatformIntegration(
   }
 
   const loading = bridge.loading || views.loading;
-  const saveStatusLabel = isPl ? 'Automatycznie zapisane' : 'Auto-saved';
+  const saveStatusLabel = t('ideas.table.autoSaved', 'Auto-saved');
 
   return {
     active: true,

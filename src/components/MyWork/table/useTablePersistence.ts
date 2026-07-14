@@ -31,7 +31,11 @@ type CanvasToolType = 'mindmap' | 'whiteboard' | 'process_flow' | 'table';
 export interface UseTablePersistenceOpts {
   open: boolean;
   ideaId: string;
+  /** Still needed as a boolean: threaded into the shared (canvas-module)
+   *  `formatIdeaMapSyncLabel` helper, which predates i18next `t()` adoption
+   *  and is out of this hook's scope to refactor. */
   isPl: boolean;
+  t: (key: string, fallback?: string) => string;
   locked: boolean;
   refreshToken?: number;
   language: string;
@@ -78,6 +82,7 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
     open,
     ideaId,
     isPl,
+    t,
     locked,
     refreshToken,
     language,
@@ -249,8 +254,7 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
         }
       }
     } catch (err: any) {
-      const nextError =
-        err?.message || (isPl ? 'Nie udało się wczytać mapy' : 'Failed to load map');
+      const nextError = err?.message || t('ideas.table.failedToLoadMap', 'Failed to load map');
       toast.error(nextError);
       setLoadError(nextError);
       setNodes([]);
@@ -261,7 +265,7 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, ideaId, isPl, open]);
+  }, [language, ideaId, t, open]);
 
   useEffect(() => {
     if (!open) {
@@ -278,14 +282,14 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
       await flushNow(buildPayload(), {
         reason: 'manual',
         createSnapshot: true,
-        snapshotLabel: isPl ? 'Tabela checkpoint' : 'Table checkpoint',
+        snapshotLabel: t('ideas.table.tableCheckpoint', 'Table checkpoint'),
       });
-      toast.success(isPl ? 'Zapisano' : 'Saved', { duration: 900 });
+      toast.success(t('ideas.table.savedToast', 'Saved'), { duration: 900 });
       onSaved?.();
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się zapisać' : 'Failed to save'));
+      toast.error(err?.message || t('ideas.table.failedToSave', 'Failed to save'));
     }
-  }, [buildPayload, flushNow, isPl, locked, onSaved]);
+  }, [buildPayload, flushNow, t, locked, onSaved]);
 
   useEffect(() => {
     if (!open || locked || loading || !hydratedOnceRef.current) return;

@@ -237,8 +237,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
     onOpenAuditTrail,
     locked = false,
   }) => {
-    const { i18n } = useTranslation();
-    const isPl = i18n.language?.startsWith('pl');
+    const { t } = useTranslation();
 
     const [loading, setLoading] = useState(true);
     const [recordData, setRecordData] = useState<Record<string, unknown>>({});
@@ -384,7 +383,9 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                       : 'text-c-text-muted hover:bg-c-surface-raised'
                   }`}
                   title={
-                    editMode ? (isPl ? 'Anuluj edycję' : 'Cancel edit') : isPl ? 'Edytuj' : 'Edit'
+                    editMode
+                      ? t('ideas.table.cancelEdit', 'Cancel edit')
+                      : t('ideas.table.editRecord', 'Edit')
                   }
                 >
                   {editMode ? <Eye className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
@@ -429,7 +430,9 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                         {isComputed && (
                           <span className="inline-flex items-center gap-0.5 rounded bg-[color-mix(in_srgb,var(--c-warning)_16%,transparent)] px-1 py-0.5 text-[8px] font-bold text-c-warning">
                             <Calculator className="h-2.5 w-2.5" />
-                            {field.fieldType === 'formula' ? 'fx' : isPl ? 'obliczane' : 'computed'}
+                            {field.fieldType === 'formula'
+                              ? 'fx'
+                              : t('ideas.table.computedField', 'computed')}
                           </span>
                         )}
                       </div>
@@ -467,7 +470,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                 className="flex items-center gap-1.5 text-[10px] font-semibold text-c-text-muted transition-colors hover:text-c-text-secondary"
               >
                 <Clock className="h-3.5 w-3.5" />
-                {isPl ? 'Historia zmian' : 'Audit trail'}
+                {t('ideas.table.auditTrail', 'Audit trail')}
               </button>
             )}
             {!onOpenAuditTrail && <div />}
@@ -477,7 +480,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                   onClick={handleCancelEdit}
                   className="rounded-xl border border-c-border-subtle px-4 py-2 text-xs font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                 >
-                  {isPl ? 'Anuluj' : 'Cancel'}
+                  {t('ideas.table.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={handleSave}
@@ -486,10 +489,8 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                 >
                   {saving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : isPl ? (
-                    'Zapisz'
                   ) : (
-                    'Save'
+                    t('ideas.table.save', 'Save')
                   )}
                 </button>
               </div>

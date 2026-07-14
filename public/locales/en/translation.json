@@ -21478,6 +21478,217 @@
         "majorProjects": "Major Projects",
         "fillIns": "Fill-ins",
         "thanklessTasks": "Thankless Tasks"
+      },
+      "copySuffix": "(copy)",
+      "autoSaved": "Auto-saved",
+      "records": "records",
+      "selectedCount": "selected",
+      "agg": {
+        "none": "None",
+        "sum": "Sum",
+        "avg": "Average",
+        "min": "Min",
+        "max": "Max",
+        "count": "Count"
+      },
+      "rowTemplatePicker": {
+        "title": "Row Template"
+      },
+      "rowTemplate": {
+        "blank": {
+          "label": "Blank row",
+          "desc": "Empty row to fill manually"
+        },
+        "idea": {
+          "label": "Idea",
+          "desc": "New idea with impact & effort"
+        },
+        "action_item": {
+          "label": "Action Item",
+          "desc": "Actionable task with owner & deadline"
+        },
+        "risk": {
+          "label": "Risk",
+          "desc": "Risk item with probability & impact"
+        },
+        "stakeholder": {
+          "label": "Stakeholder",
+          "desc": "Person or group with influence & interest"
+        },
+        "opportunity": {
+          "label": "Opportunity",
+          "desc": "Business opportunity to explore"
+        },
+        "decision": {
+          "label": "Decision",
+          "desc": "Decision to be made with options"
+        },
+        "requirement": {
+          "label": "Requirement",
+          "desc": "Business or technical requirement"
+        },
+        "kpi": {
+          "label": "KPI / Metric",
+          "desc": "Key performance indicator to track"
+        },
+        "constraint": {
+          "label": "Constraint",
+          "desc": "Limitation or boundary condition"
+        }
+      },
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "group": {
+          "navigation": "Navigation",
+          "editing": "Editing",
+          "viewsTools": "Views & Tools"
+        },
+        "item": {
+          "moveBetweenRows": "Move between rows",
+          "nextCell": "Next cell",
+          "previousCell": "Previous cell",
+          "moveToRowBelow": "Move to row below",
+          "deselectClosePanel": "Deselect / close panel",
+          "nextColumn": "Next column",
+          "previousColumn": "Previous column",
+          "undo": "Undo",
+          "redo": "Redo",
+          "deleteSelectedRows": "Delete selected rows",
+          "save": "Save",
+          "addNewRow": "Add new row",
+          "openAIAssistant": "Open AI Assistant",
+          "showKeyboardShortcuts": "Show keyboard shortcuts",
+          "switchToKanban": "Switch to Kanban",
+          "switchToStickyNotes": "Switch to Sticky Notes",
+          "switchToMatrix": "Switch to Matrix",
+          "switchToTable": "Switch to Table",
+          "toggleFilters": "Toggle filters",
+          "toggleSummaryDashboard": "Toggle summary dashboard"
+        }
+      },
+      "column": {
+        "type": "Type",
+        "label": "Label",
+        "status": "Status",
+        "priority": "Priority",
+        "owner": "Owner",
+        "impact": "Impact",
+        "effort": "Effort",
+        "created_time": "Created",
+        "created_by": "Created by",
+        "last_edited_time": "Last edited",
+        "last_edited_by": "Last edited by"
+      },
+      "errorBoundary": {
+        "title": "Something went wrong in this view",
+        "retry": "Retry",
+        "switchToGrid": "Switch to Grid"
+      },
+      "cronPreset": {
+        "every15min": "Every 15 minutes",
+        "everyHour": "Every hour",
+        "dailyAt9am": "Daily at 9am",
+        "weekdaysAt9am": "Weekdays at 9am",
+        "weeklyMonday": "Weekly on Monday",
+        "monthly1st": "Monthly on 1st"
+      },
+      "cronExpressionLabel": "Cron expression (or pick a preset)",
+      "timezoneLabel": "Timezone",
+      "syncResult": "Synced: {{created}} created, {{updated}} updated",
+      "duplicate": "Duplicate",
+      "addTable": "Add table",
+      "cancelEdit": "Cancel edit",
+      "editRecord": "Edit",
+      "computedField": "computed",
+      "auditTrail": "Audit trail",
+      "canvasTool": {
+        "pen": "Pen",
+        "rect": "Rectangle",
+        "circle": "Circle",
+        "arrow": "Arrow",
+        "eraser": "Eraser"
+      },
+      "rowColoring": {
+        "title": "Row coloring",
+        "addRule": "Add rule",
+        "noRules": "No coloring rules",
+        "valuePlaceholder": "Value...",
+        "operator": {
+          "equals": "equals",
+          "contains": "contains",
+          "is_empty": "is empty",
+          "is_not_empty": "is not empty"
+        }
+      },
+      "shareView": {
+        "title": "Share View",
+        "sharingEnabled": "Sharing enabled",
+        "password": "Password (optional)",
+        "passwordPlaceholder": "Leave empty = no password",
+        "expires": "Expires"
+      },
+      "viewPreset": {
+        "default": "Default",
+        "triage": "Triage",
+        "scoring": "Scoring",
+        "decisionLog": "Decision Log"
+      },
+      "failedToLoadMap": "Failed to load map",
+      "tableCheckpoint": "Table checkpoint",
+      "savedToast": "Saved",
+      "failedToSave": "Failed to save",
+      "emptyState": {
+        "table": {
+          "headline": "No records in this view",
+          "description": "Create your first row to start tracking work in this table."
+        },
+        "grid": {
+          "headline": "This grid is empty",
+          "description": "Add a record to populate cells and see your data at a glance."
+        },
+        "kanban": {
+          "headline": "No cards on the board",
+          "description": "Move work onto the board by adding a record or dragging from the table."
+        },
+        "calendar": {
+          "headline": "Nothing scheduled here",
+          "description": "Records with dates will appear on the calendar once you add them."
+        },
+        "timeline": {
+          "headline": "Timeline has no milestones yet",
+          "description": "Add dated records to build a clear sequence of work."
+        },
+        "gallery": {
+          "headline": "Gallery is waiting for items",
+          "description": "Add records with attachments or cover fields to fill the gallery."
+        },
+        "form": {
+          "headline": "No form submissions yet",
+          "description": "Share the form or add a record manually to see responses here."
+        }
+      },
+      "addFirstRecord": "Add first record",
+      "useAi": "Use AI",
+      "clear": "Clear",
+      "file": "File",
+      "relation": "Relation",
+      "fileNamePrompt": "File name:",
+      "fileUrlPrompt": "URL (optional):",
+      "itemIdPrompt": "Item ID:",
+      "filterOperator": {
+        "contains": "Contains",
+        "equals": "Equals",
+        "not_empty": "Not empty",
+        "is_empty": "Is empty",
+        "gt": "Greater than",
+        "lt": "Less than"
+      },
+      "filterPanel": {
+        "title": "Filters",
+        "noFilters": "No filters. Add one.",
+        "and": "AND",
+        "or": "OR",
+        "addFilter": "Add filter"
       }
     },
     "mindmap": {

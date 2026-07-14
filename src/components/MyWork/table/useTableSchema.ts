@@ -60,17 +60,12 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
 
 export { DEFAULT_COLUMNS };
 
-function localizeHeader(key: string, header: string, isPl: boolean): string {
-  if (!isPl) return header;
-  const map: Record<string, string> = {
-    type: 'Typ',
-    label: 'Etykieta',
-    priority: 'Priorytet',
-    owner: 'Właściciel',
-    impact: 'Wpływ',
-    effort: 'Wysiłek',
-  };
-  return map[key] ?? header;
+function localizeHeader(
+  key: string,
+  header: string,
+  t: (key: string, fallback?: string) => string
+): string {
+  return t(`ideas.table.column.${key}`, header);
 }
 
 export interface UseTableSchemaReturn {
@@ -91,9 +86,12 @@ export interface UseTableSchemaReturn {
   mergePersistedColumns: (saved: ColumnDef[]) => void;
 }
 
-export function useTableSchema(isPl: boolean, ideaId: string): UseTableSchemaReturn {
+export function useTableSchema(
+  t: (key: string, fallback?: string) => string,
+  ideaId: string
+): UseTableSchemaReturn {
   const [columns, setColumns] = useState<ColumnDef[]>(
-    DEFAULT_COLUMNS.map((c) => ({ ...c, header: localizeHeader(c.key, c.header, isPl) }))
+    DEFAULT_COLUMNS.map((c) => ({ ...c, header: localizeHeader(c.key, c.header, t) }))
   );
 
   const visibleColumns = useMemo(() => columns.filter((c) => c.visible), [columns]);

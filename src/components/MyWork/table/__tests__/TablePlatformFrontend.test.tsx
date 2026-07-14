@@ -407,7 +407,6 @@ describe('TableDataProvider', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <div data-testid="child">loaded</div>
       </TableDataProvider>
@@ -418,13 +417,7 @@ describe('TableDataProvider', () => {
   it('provides correct context values via useTableData', () => {
     const integration = makeIntegration();
     render(
-      <TableDataProvider
-        integration={integration}
-        base={FIXTURE_BASE}
-        table={FIXTURE_TABLE}
-        locked
-        isPl
-      >
+      <TableDataProvider integration={integration} base={FIXTURE_BASE} table={FIXTURE_TABLE} locked>
         <TableCtxConsumer />
       </TableDataProvider>
     );
@@ -451,7 +444,6 @@ describe('TableDataProvider', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <TableCtxConsumer />
       </TableDataProvider>
@@ -473,7 +465,6 @@ describe('TableDataProvider', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <TableCtxConsumer />
       </TableDataProvider>
@@ -491,7 +482,6 @@ describe('TableDataProvider', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <TableCtxConsumer />
       </TableDataProvider>
@@ -514,7 +504,6 @@ describe('ViewRouter', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <ViewRouter />
       </TableDataProvider>
@@ -544,7 +533,6 @@ describe('ViewRouter', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <ViewRouter />
       </TableDataProvider>
@@ -557,7 +545,6 @@ describe('ViewRouter', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <ViewRouter />
       </TableDataProvider>
@@ -580,7 +567,6 @@ describe('ViewRouter', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <ViewRouter />
       </TableDataProvider>
@@ -794,13 +780,7 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
       nodes: [],
     });
     render(
-      <TableDataProvider
-        integration={integration}
-        base={FIXTURE_BASE}
-        table={null}
-        locked={false}
-        isPl={false}
-      >
+      <TableDataProvider integration={integration} base={FIXTURE_BASE} table={null} locked={false}>
         <TableCtxConsumer />
       </TableDataProvider>
     );
@@ -874,7 +854,6 @@ describe('IdeaTableTool P15 integration', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <ViewRouter />
       </TableDataProvider>
@@ -891,7 +870,6 @@ describe('IdeaTableTool P15 integration', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <ViewRouter />
       </TableDataProvider>
@@ -924,7 +902,6 @@ describe('IdeaTableTool P15 integration', () => {
         base={FIXTURE_BASE}
         table={FIXTURE_TABLE}
         locked={false}
-        isPl={false}
       >
         <ViewRouter />
       </TableDataProvider>
@@ -1000,7 +977,6 @@ describe('P15 App Integration', () => {
           base={FIXTURE_BASE}
           table={FIXTURE_TABLE}
           locked={false}
-          isPl={false}
         >
           <OpenChatToSchemaOnMount />
           <ViewRouter />
@@ -1019,7 +995,6 @@ describe('P15 App Integration', () => {
           base={FIXTURE_BASE}
           table={FIXTURE_TABLE}
           locked={false}
-          isPl={false}
         >
           <ViewRouter />
         </TableDataProvider>
@@ -1040,7 +1015,6 @@ describe('P15 App Integration', () => {
           base={null}
           table={FIXTURE_TABLE}
           locked={false}
-          isPl={false}
         >
           <ViewRouter />
         </TableDataProvider>
@@ -1076,7 +1050,6 @@ describe('P15 App Integration', () => {
           base={FIXTURE_BASE}
           table={FIXTURE_TABLE}
           locked={false}
-          isPl={false}
         >
           <ViewRouter />
         </TableDataProvider>

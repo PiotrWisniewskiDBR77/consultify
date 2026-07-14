@@ -249,7 +249,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const platformIntegration = useTablePlatformIntegration({
     ideaId,
     locked,
-    isPl,
+    t,
     open,
     onSelectionChange: onSelectionChange as (sel: unknown) => void | undefined,
     preferredTableId: platformTableOverrideId ?? preferredPlatformTableId,
@@ -290,7 +290,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   });
 
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
-  const schema = useTableSchema(isPl, ideaId);
+  const schema = useTableSchema(t, ideaId);
   const {
     columns,
     setColumns,
@@ -329,7 +329,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   const views = useTableViews({
-    isPl,
+    t,
     ideaId,
     onApplyColumns: applyViewColumns,
   });
@@ -381,7 +381,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const rowOps = useTableRows({
     ideaId,
     locked,
-    isPl,
+    t,
     currentUserName,
     nodesUndo,
     sort,
@@ -549,6 +549,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     open,
     ideaId,
     isPl,
+    t,
     locked,
     refreshToken,
     language: i18n.language,
@@ -1387,13 +1388,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       aria-label={t('ideas.table.ideasTableWithBulkOperations', 'Ideas table with bulk operations')}
     >
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TableDataProvider
-          integration={platformIntegration}
-          base={null}
-          table={null}
-          locked={locked}
-          isPl={!!isPl}
-        >
+        <TableDataProvider integration={platformIntegration} base={null} table={null} locked={locked}>
           {/* Toolbar */}
           {usePlatform ? (
             <P15TableToolbar
