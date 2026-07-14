@@ -20,6 +20,7 @@ import adminBackupRoutes from './routes/admin/backup.routes.js';
 import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
+import adminPromptsRoutes from './routes/admin-prompts.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
 import adminIntegrationsRoutes from './routes/adminIntegrations.routes.js';
 import adminP32Routes from './routes/adminP32.routes.js';
@@ -722,7 +723,9 @@ export class ApiGateway {
       logger.info('[ApiGateway] Mounting /api/revenue');
       app.use('/api/superadmin/analytics', analyticsSuperadminRoutes);
       app.use('/api/superadmin/ai/core-docs', coreDocsRoutes);
+      app.use('/api/admin/prompts', adminPromptsRoutes);
       logger.info('[ApiGateway] Mounting /api/superadmin/analytics');
+      logger.info('[ApiGateway] Mounting /api/admin/prompts');
       app.use('/api/token-billing', tokenBillingRoutes);
       app.use('/api/budgets', budgetsRoutes);
       mountStub('/api/pricing', pricingRoutes, 'pricingRoutes');
