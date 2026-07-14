@@ -126,7 +126,10 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
         setCommand('');
         return;
       } catch (err: any) {
-        toast.error(err?.message || 'Schema proposal failed');
+        toast.error(
+          err?.message ||
+            (isPl ? 'Nie udało się wygenerować propozycji schematu' : 'Schema proposal failed')
+        );
       } finally {
         setLoading(false);
       }

@@ -231,6 +231,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const options = getSelectOptions(fieldOptions);
   const [open, setOpen] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
@@ -289,7 +290,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
             }}
             className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
-            Clear
+            {t('table.cellEditor.clear', 'Clear')}
           </button>
         )}
       </div>

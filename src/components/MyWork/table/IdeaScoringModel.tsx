@@ -53,7 +53,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
   ideaId,
   onApplyScores,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const scorableColumns = useMemo(
@@ -207,7 +207,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             <button
               onClick={handleReset}
               className="p-1 rounded text-c-text-secondary hover:text-c-text-secondary transition-colors"
-              title="Reset"
+              title={t('table.ideaScoring.reset', 'Reset')}
             >
               <RotateCcw size={11} />
             </button>

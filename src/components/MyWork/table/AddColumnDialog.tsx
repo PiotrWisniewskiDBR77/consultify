@@ -82,7 +82,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
   tableId,
   tableFields = [],
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [name, setName] = useState('');
@@ -263,7 +263,10 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               <input
                 value={options}
                 onChange={(e) => setOptions(e.target.value)}
-                placeholder="Option 1, Option 2, Option 3"
+                placeholder={t(
+                  'table.addColumn.optionsPlaceholder',
+                  'Option 1, Option 2, Option 3'
+                )}
                 className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
@@ -411,11 +414,11 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   onChange={(e) => setRollupFunction(e.target.value)}
                   className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
-                  <option value="count">Count</option>
-                  <option value="sum">Sum</option>
-                  <option value="avg">Average</option>
-                  <option value="min">Min</option>
-                  <option value="max">Max</option>
+                  <option value="count">{t('table.addColumn.rollup.count', 'Count')}</option>
+                  <option value="sum">{t('table.addColumn.rollup.sum', 'Sum')}</option>
+                  <option value="avg">{t('table.addColumn.rollup.average', 'Average')}</option>
+                  <option value="min">{t('table.addColumn.rollup.min', 'Min')}</option>
+                  <option value="max">{t('table.addColumn.rollup.max', 'Max')}</option>
                   <option value="percent_checked">{isPl ? '% zaznaczonych' : '% checked'}</option>
                 </select>
               </div>

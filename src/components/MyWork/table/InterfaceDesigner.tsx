@@ -1,4 +1,7 @@
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import i18n from '@/i18n';
 
 interface InterfaceBlock {
   id: string;
@@ -24,15 +27,61 @@ interface InterfaceDesignerProps {
 }
 
 const BLOCK_TYPES = [
-  { type: 'table_grid', label: 'Table Grid', icon: '📊' },
-  { type: 'record_detail', label: 'Record Detail', icon: '📋' },
-  { type: 'chart', label: 'Chart', icon: '📈' },
-  { type: 'text', label: 'Text Block', icon: '📝' },
-  { type: 'button', label: 'Action Button', icon: '🔘' },
-  { type: 'filter', label: 'Filter Control', icon: '🔍' },
-  { type: 'search', label: 'Search Bar', icon: '🔎' },
-  { type: 'summary', label: 'Summary Card', icon: '📊' },
+  {
+    type: 'table_grid',
+    labelKey: 'table.interfaceDesigner.blockTypes.tableGrid',
+    labelDefault: 'Table Grid',
+    icon: '📊',
+  },
+  {
+    type: 'record_detail',
+    labelKey: 'table.interfaceDesigner.blockTypes.recordDetail',
+    labelDefault: 'Record Detail',
+    icon: '📋',
+  },
+  {
+    type: 'chart',
+    labelKey: 'table.interfaceDesigner.blockTypes.chart',
+    labelDefault: 'Chart',
+    icon: '📈',
+  },
+  {
+    type: 'text',
+    labelKey: 'table.interfaceDesigner.blockTypes.textBlock',
+    labelDefault: 'Text Block',
+    icon: '📝',
+  },
+  {
+    type: 'button',
+    labelKey: 'table.interfaceDesigner.blockTypes.actionButton',
+    labelDefault: 'Action Button',
+    icon: '🔘',
+  },
+  {
+    type: 'filter',
+    labelKey: 'table.interfaceDesigner.blockTypes.filterControl',
+    labelDefault: 'Filter Control',
+    icon: '🔍',
+  },
+  {
+    type: 'search',
+    labelKey: 'table.interfaceDesigner.blockTypes.searchBar',
+    labelDefault: 'Search Bar',
+    icon: '🔎',
+  },
+  {
+    type: 'summary',
+    labelKey: 'table.interfaceDesigner.blockTypes.summaryCard',
+    labelDefault: 'Summary Card',
+    icon: '📊',
+  },
 ] as const;
+
+function getBlockTypeLabel(type: string): string {
+  const bt = BLOCK_TYPES.find((b) => b.type === type);
+  if (!bt) return type.replace(/_/g, ' ');
+  return i18n.t(bt.labelKey, bt.labelDefault);
+}
 
 function getDefaultConfig(type: string): Record<string, unknown> {
   switch (type) {
@@ -43,15 +92,30 @@ function getDefaultConfig(type: string): Record<string, unknown> {
     case 'chart':
       return { tableId: '', chartType: 'bar', xFieldId: '', yFieldId: '', aggregation: 'count' };
     case 'text':
-      return { content: 'Enter text here...', fontSize: 14 };
+      return {
+        content: i18n.t('table.interfaceDesigner.defaults.textContent', 'Enter text here...'),
+        fontSize: 14,
+      };
     case 'button':
-      return { label: 'Click me', action: 'none', url: '' };
+      return {
+        label: i18n.t('table.interfaceDesigner.defaults.buttonLabel', 'Click me'),
+        action: 'none',
+        url: '',
+      };
     case 'filter':
       return { tableId: '', fieldId: '' };
     case 'search':
-      return { tableId: '', placeholder: 'Search...' };
+      return {
+        tableId: '',
+        placeholder: i18n.t('table.interfaceDesigner.defaults.searchPlaceholder', 'Search...'),
+      };
     case 'summary':
-      return { tableId: '', fieldId: '', aggregation: 'count', label: 'Total' };
+      return {
+        tableId: '',
+        fieldId: '',
+        aggregation: 'count',
+        label: i18n.t('table.interfaceDesigner.defaults.summaryLabel', 'Total'),
+      };
     default:
       return {};
   }
@@ -61,6 +125,7 @@ const BlockPreview: React.FC<{
   block: InterfaceBlock;
   tables: InterfaceDesignerProps['tables'];
 }> = ({ block, tables }) => {
+  const { t } = useTranslation();
   switch (block.type) {
     case 'text':
       return (
@@ -69,23 +134,29 @@ const BlockPreview: React.FC<{
         </p>
       );
     case 'table_grid': {
-      const table = tables.find((t) => t.id === block.config.tableId);
+      const table = tables.find((t2) => t2.id === block.config.tableId);
       return (
         <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">
-          {table ? `Table: ${table.name}` : 'Select a table'}
+          {table
+            ? t('table.interfaceDesigner.preview.tableName', 'Table: {{name}}', {
+                name: table.name,
+              })
+            : t('table.interfaceDesigner.preview.selectATable', 'Select a table')}
         </div>
       );
     }
     case 'chart':
       return (
         <div className="bg-c-surface-raised rounded p-6 text-center text-sm text-c-text-muted">
-          Chart: {String(block.config.chartType || 'bar')}
+          {t('table.interfaceDesigner.preview.chart', 'Chart: {{type}}', {
+            type: String(block.config.chartType || 'bar'),
+          })}
         </div>
       );
     case 'button':
       return (
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {String(block.config.label || 'Button')}
+          {String(block.config.label || t('table.interfaceDesigner.preview.button', 'Button'))}
         </button>
       );
     case 'summary':
@@ -94,20 +165,20 @@ const BlockPreview: React.FC<{
           <span className="text-2xl font-bold text-blue-700">—</span>
           <br />
           <span className="text-xs text-c-text-muted">
-            {String(block.config.label || 'Summary')}
+            {String(block.config.label || t('table.interfaceDesigner.preview.summary', 'Summary'))}
           </span>
         </div>
       );
     case 'record_detail':
       return (
         <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">
-          Record Detail
+          {t('table.interfaceDesigner.preview.recordDetail', 'Record Detail')}
         </div>
       );
     case 'filter':
       return (
         <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">
-          Filter Control
+          {t('table.interfaceDesigner.preview.filterControl', 'Filter Control')}
         </div>
       );
     case 'search':
@@ -115,7 +186,10 @@ const BlockPreview: React.FC<{
         <div className="bg-c-surface-raised rounded p-2">
           <input
             type="text"
-            placeholder={String(block.config.placeholder || 'Search...')}
+            placeholder={String(
+              block.config.placeholder ||
+                t('table.interfaceDesigner.defaults.searchPlaceholder', 'Search...')
+            )}
             className="w-full px-3 py-1.5 border rounded text-sm bg-c-surface"
             readOnly
           />
@@ -135,6 +209,7 @@ const BlockConfigPanel: React.FC<{
   tables: InterfaceDesignerProps['tables'];
   onUpdate: (updates: Partial<InterfaceBlock>) => void;
 }> = ({ block, tables, onUpdate }) => {
+  const { t } = useTranslation();
   const updateConfig = (key: string, value: unknown) => {
     onUpdate({ config: { ...block.config, [key]: value } });
   };
@@ -150,20 +225,28 @@ const BlockConfigPanel: React.FC<{
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-c-text">{block.type.replace(/_/g, ' ')} Config</h3>
+      <h3 className="text-sm font-semibold text-c-text">
+        {t('table.interfaceDesigner.config.heading', '{{type}} Config', {
+          type: getBlockTypeLabel(block.type),
+        })}
+      </h3>
 
       {hasTableSelector && (
         <div>
-          <label className="text-xs text-c-text-muted">Table</label>
+          <label className="text-xs text-c-text-muted">
+            {t('table.interfaceDesigner.config.table', 'Table')}
+          </label>
           <select
             value={String(block.config.tableId || '')}
             onChange={(e) => updateConfig('tableId', e.target.value)}
             className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
           >
-            <option value="">Select table...</option>
-            {tables.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            <option value="">
+              {t('table.interfaceDesigner.config.selectTable', 'Select table...')}
+            </option>
+            {tables.map((tbl) => (
+              <option key={tbl.id} value={tbl.id}>
+                {tbl.name}
               </option>
             ))}
           </select>
@@ -173,7 +256,9 @@ const BlockConfigPanel: React.FC<{
       {block.type === 'text' && (
         <>
           <div>
-            <label className="text-xs text-c-text-muted">Content</label>
+            <label className="text-xs text-c-text-muted">
+              {t('table.interfaceDesigner.config.content', 'Content')}
+            </label>
             <textarea
               value={String(block.config.content || '')}
               onChange={(e) => updateConfig('content', e.target.value)}
@@ -182,7 +267,9 @@ const BlockConfigPanel: React.FC<{
             />
           </div>
           <div>
-            <label className="text-xs text-c-text-muted">Font Size</label>
+            <label className="text-xs text-c-text-muted">
+              {t('table.interfaceDesigner.config.fontSize', 'Font Size')}
+            </label>
             <input
               type="number"
               value={Number(block.config.fontSize || 14)}
@@ -195,23 +282,27 @@ const BlockConfigPanel: React.FC<{
 
       {block.type === 'chart' && (
         <div>
-          <label className="text-xs text-c-text-muted">Chart Type</label>
+          <label className="text-xs text-c-text-muted">
+            {t('table.interfaceDesigner.config.chartType', 'Chart Type')}
+          </label>
           <select
             value={String(block.config.chartType || 'bar')}
             onChange={(e) => updateConfig('chartType', e.target.value)}
             className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
           >
-            <option value="bar">Bar</option>
-            <option value="line">Line</option>
-            <option value="pie">Pie</option>
-            <option value="donut">Donut</option>
+            <option value="bar">{t('table.interfaceDesigner.config.bar', 'Bar')}</option>
+            <option value="line">{t('table.interfaceDesigner.config.line', 'Line')}</option>
+            <option value="pie">{t('table.interfaceDesigner.config.pie', 'Pie')}</option>
+            <option value="donut">{t('table.interfaceDesigner.config.donut', 'Donut')}</option>
           </select>
         </div>
       )}
 
       {block.type === 'button' && (
         <div>
-          <label className="text-xs text-c-text-muted">Label</label>
+          <label className="text-xs text-c-text-muted">
+            {t('table.interfaceDesigner.config.label', 'Label')}
+          </label>
           <input
             type="text"
             value={String(block.config.label || '')}
@@ -224,7 +315,9 @@ const BlockConfigPanel: React.FC<{
       {block.type === 'summary' && (
         <>
           <div>
-            <label className="text-xs text-c-text-muted">Label</label>
+            <label className="text-xs text-c-text-muted">
+              {t('table.interfaceDesigner.config.label', 'Label')}
+            </label>
             <input
               type="text"
               value={String(block.config.label || '')}
@@ -233,17 +326,19 @@ const BlockConfigPanel: React.FC<{
             />
           </div>
           <div>
-            <label className="text-xs text-c-text-muted">Aggregation</label>
+            <label className="text-xs text-c-text-muted">
+              {t('table.interfaceDesigner.config.aggregation', 'Aggregation')}
+            </label>
             <select
               value={String(block.config.aggregation || 'count')}
               onChange={(e) => updateConfig('aggregation', e.target.value)}
               className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
             >
-              <option value="count">Count</option>
-              <option value="sum">Sum</option>
-              <option value="avg">Average</option>
-              <option value="min">Min</option>
-              <option value="max">Max</option>
+              <option value="count">{t('table.interfaceDesigner.config.count', 'Count')}</option>
+              <option value="sum">{t('table.interfaceDesigner.config.sum', 'Sum')}</option>
+              <option value="avg">{t('table.interfaceDesigner.config.average', 'Average')}</option>
+              <option value="min">{t('table.interfaceDesigner.config.min', 'Min')}</option>
+              <option value="max">{t('table.interfaceDesigner.config.max', 'Max')}</option>
             </select>
           </div>
         </>
@@ -251,7 +346,9 @@ const BlockConfigPanel: React.FC<{
 
       {block.type === 'search' && (
         <div>
-          <label className="text-xs text-c-text-muted">Placeholder</label>
+          <label className="text-xs text-c-text-muted">
+            {t('table.interfaceDesigner.config.placeholder', 'Placeholder')}
+          </label>
           <input
             type="text"
             value={String(block.config.placeholder || '')}
@@ -265,6 +362,7 @@ const BlockConfigPanel: React.FC<{
 };
 
 export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, tables, onSave }) => {
+  const { t } = useTranslation();
   const [blocks, setBlocks] = useState<InterfaceBlock[]>(layout.blocks);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -319,7 +417,9 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
     <div className="flex h-full">
       {/* Left: Block palette */}
       <div className="w-60 border-r bg-c-surface-raised p-4 flex flex-col gap-2 shrink-0">
-        <h3 className="text-sm font-semibold text-c-text mb-2">Add Block</h3>
+        <h3 className="text-sm font-semibold text-c-text mb-2">
+          {t('table.interfaceDesigner.addBlock', 'Add Block')}
+        </h3>
         {BLOCK_TYPES.map((bt) => (
           <button
             key={bt.type}
@@ -327,7 +427,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
             className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-blue-50 text-left transition-colors"
           >
             <span>{bt.icon}</span>
-            <span>{bt.label}</span>
+            <span>{t(bt.labelKey, bt.labelDefault)}</span>
           </button>
         ))}
         <div className="mt-auto pt-4">
@@ -335,7 +435,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
             onClick={handleSave}
             className="w-full px-3 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors"
           >
-            Save Layout
+            {t('table.interfaceDesigner.saveLayout', 'Save Layout')}
           </button>
         </div>
       </div>
@@ -361,12 +461,12 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
                 <div className="flex items-center gap-2">
                   <span
                     className="cursor-grab text-c-text-secondary hover:text-c-text-secondary"
-                    title="Drag to reorder"
+                    title={t('table.interfaceDesigner.dragToReorder', 'Drag to reorder')}
                   >
                     ⋮⋮
                   </span>
                   <span className="text-xs font-medium text-c-text-muted uppercase">
-                    {block.type.replace(/_/g, ' ')}
+                    {getBlockTypeLabel(block.type)}
                   </span>
                 </div>
                 <button
@@ -384,8 +484,15 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
           ))}
           {blocks.length === 0 && (
             <div className="text-center py-20 text-c-text-secondary">
-              <p className="text-lg">Empty interface</p>
-              <p className="text-sm mt-1">Add blocks from the left panel to build your interface</p>
+              <p className="text-lg">
+                {t('table.interfaceDesigner.emptyTitle', 'Empty interface')}
+              </p>
+              <p className="text-sm mt-1">
+                {t(
+                  'table.interfaceDesigner.emptyBody',
+                  'Add blocks from the left panel to build your interface'
+                )}
+              </p>
             </div>
           )}
         </div>

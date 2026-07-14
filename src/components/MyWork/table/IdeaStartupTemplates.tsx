@@ -85,7 +85,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
   onClose,
   onSelect,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [heroText, setHeroText] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState<CanvasToolType>('mindmap');
@@ -332,7 +332,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   <Wand2 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[13px] font-semibold text-c-accent">Start with AI</div>
+                  <div className="text-[13px] font-semibold text-c-accent">
+                    {t('table.ideaStartupTemplates.startWithAi', 'Start with AI')}
+                  </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
                     {isPl
                       ? 'Przenieś seed do workspace i od razu uruchom builder flow.'
@@ -356,7 +358,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   <Brain size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[13px] font-semibold text-c-text">Blank canvas</div>
+                  <div className="text-[13px] font-semibold text-c-text">
+                    {t('table.ideaStartupTemplates.blankCanvas', 'Blank canvas')}
+                  </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
                     {isPl
                       ? 'Otwórz spokojny workspace z wybranym systemem startowym.'

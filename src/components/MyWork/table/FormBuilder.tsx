@@ -909,6 +909,7 @@ function FormPreview({
 }
 
 function PreviewField({ field, config }: { field: TablePlatformField; config: FormFieldConfig }) {
+  const { t } = useTranslation();
   const label = config.label || field.name;
 
   return (
@@ -918,12 +919,15 @@ function PreviewField({ field, config }: { field: TablePlatformField; config: Fo
         {config.required && <span className="ml-1 text-danger-500">*</span>}
       </label>
       {config.helpText && <p className="mb-1 text-xs text-c-text-secondary">{config.helpText}</p>}
-      {renderPreviewInput(field.fieldType)}
+      {renderPreviewInput(field.fieldType, t)}
     </div>
   );
 }
 
-function renderPreviewInput(fieldType: FieldType | string) {
+function renderPreviewInput(
+  fieldType: FieldType | string,
+  t: (key: string, fallback: string) => string
+) {
   const base = 'w-full rounded-lg border border-c-border-subtle px-3 py-2 text-sm';
 
   switch (fieldType) {
@@ -946,13 +950,13 @@ function renderPreviewInput(fieldType: FieldType | string) {
     case 'singleSelect':
       return (
         <select disabled className={base}>
-          <option>Select...</option>
+          <option>{t('table.formBuilder.selectPlaceholder', 'Select...')}</option>
         </select>
       );
     case 'multiSelect':
       return (
         <select disabled multiple className={base}>
-          <option>Select...</option>
+          <option>{t('table.formBuilder.selectPlaceholder', 'Select...')}</option>
         </select>
       );
     default:
