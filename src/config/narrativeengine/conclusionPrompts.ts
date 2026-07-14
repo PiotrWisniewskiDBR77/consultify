@@ -16,6 +16,11 @@ import type { NarrativeEngineData } from '@/store/useToolStore';
 
 import { localizeLadder } from './index';
 import { buildW2MoveSequence, rankPillars } from './moveValidator';
+import {
+  buildPyramidPromptRules,
+  buildPyramidValidationPromptBlock,
+  validateNarrativePyramid,
+} from './pyramidValidator';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -69,13 +74,29 @@ export function buildNarrativeConclusionPrompt(
         'If the strongest pillar lacks a proof point, keep a prove move before delivery.',
       ];
 
-  return `${header}
+  // OXFORD O3 — SCQA + MECE pyramid discipline (additive; does not change the JSON contract below).
+  const scqa = data.context || {};
+  const scqaBlock =
+    scqa.situation || scqa.complication || scqa.question
+      ? `\n=== SCQA (McKinsey opening) ===\nSituation: ${scqa.situation || '(missing)'}\nComplication: ${
+          scqa.complication || '(missing)'
+        }\nQuestion: ${scqa.question || '(missing)'}\nAnswer (governing thought): ${
+          scqa.coreMessage || '(missing)'
+        }\n`
+      : '';
 
+  const pyramidReport = validateNarrativePyramid(data);
+  const validationBlock = buildPyramidValidationPromptBlock(pyramidReport, isPolish);
+
+  return `${header}
+${scqaBlock}
 === SCORED PILLARS ===
 ${scoreLines}
 
 === W2 MOVE SEQUENCE (grounded draft) ===
 ${seqLines}
+${validationBlock ? `\n${validationBlock}\n` : ''}
+${buildPyramidPromptRules(isPolish ? 'pl' : 'en')}
 
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}

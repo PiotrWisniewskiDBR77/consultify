@@ -6,6 +6,11 @@
  *   - deepeningLadder.ts  : per-resonance-band depth staircase + partner-grade proposal bank (PL/EN)
  *   - moveValidator.ts    : scoring, ranking, and W2 move sequencing (rationale/trade-off/rejected variant)
  *   - conclusionPrompts.ts: AI prompt builders grounded in the engine output
+ *
+ * OXFORD O3 depth (SCQA / Minto pyramid discipline):
+ *   - pyramidQuestionBank.ts: laddered q-bank (governing thought -> SCQA -> MECE pyramid -> evidence)
+ *   - pyramidValidator.ts   : SCQA consistency, MECE (mutually-exclusive/collectively-exhaustive)
+ *                             pyramid check, per-argument insight staircase, evidence gate
  */
 
 import {
@@ -18,6 +23,8 @@ import {
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
 export * from './moveValidator';
+export * from './pyramidQuestionBank';
+export * from './pyramidValidator';
 
 /** A ladder rung with strings resolved to a single language. */
 export interface LocalizedRung {

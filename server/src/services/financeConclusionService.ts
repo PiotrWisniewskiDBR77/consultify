@@ -276,7 +276,9 @@ function targetLevel(ind: IndicatorFacts): number {
  * renderer; the live LLM narrator (future) elevates style behind the same
  * contract and is forbidden from touching numbers.
  */
-export const deterministicIndicatorNarrator: FinanceNarrator = (input) => {
+export const deterministicIndicatorNarrator = (
+  input: IndicatorConclusionInput
+): FinanceConclusion => {
   const { indicator: ind, language: lang } = input;
   const isPL = lang === 'pl';
   const trend = deriveTrend(ind);

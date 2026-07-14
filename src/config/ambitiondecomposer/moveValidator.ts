@@ -89,7 +89,7 @@ const asLevel = (value: unknown, fallback: Level = 'medium'): Level =>
 const asHorizon = (value: unknown, fallback: Horizon = 'medium'): Horizon =>
   value === 'short' || value === 'medium' || value === 'long' ? value : fallback;
 
-const isAccepted = (theme: ThemeItem) =>
+export const isAccepted = (theme: ThemeItem) =>
   theme.proposalStatus !== 'rejected' && theme.proposalStatus !== 'rethinking';
 
 // ---------------------------------------------------------------------------

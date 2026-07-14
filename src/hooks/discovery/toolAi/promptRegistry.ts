@@ -1,9 +1,13 @@
 import {
   A3_SECTIONS,
   type A3SectionId,
+  type A3StepId,
   assessA3,
   buildA3ConclusionPrompt,
   buildA3DeepenPrompt,
+  buildA3StaircasePromptRules,
+  buildA3StepLadderPromptBlock,
+  buildCountermeasureConclusionPromptRules,
 } from '@/config/a3problemsolving';
 import {
   AI_PHASES,
@@ -163,10 +167,33 @@ function getToolSuggestionPromptInner(
     );
     const deepen = buildA3DeepenPrompt(stepId as A3SectionId, rung, false);
     if (deepen) {
+      // OXFORD O3: layer the branching question ladder (a3QuestionBank) + the
+      // discipline block for the mapped step on top of the legacy deepen prompt,
+      // so the AI mentor asks EXACTLY the same laddered questions the wizard shows
+      // (single source of truth). Backward compatible: the legacy staircase framing
+      // and JSON contract are unchanged; the ladder is additive context.
+      const SECTION_TO_STEP: Record<A3SectionId, A3StepId> = {
+        problem: 'current-state',
+        'root-cause': 'root-cause',
+        countermeasures: 'countermeasures',
+      };
+      const mappedStep = SECTION_TO_STEP[stepId as A3SectionId];
+      const ladderBlock = buildA3StepLadderPromptBlock(mappedStep, 'en');
+      const disciplineBlock =
+        mappedStep === 'root-cause'
+          ? 'Symptom vs root: a link with a deeper "why" is a SYMPTOM; a root is terminal, evidenced and classified as process/tools/skills/incentives. Never label a symptom a root.'
+          : mappedStep === 'countermeasures'
+            ? buildCountermeasureConclusionPromptRules('en')
+            : buildA3StaircasePromptRules('en');
       return `Act as an operational-excellence partner running an A3. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
 
 Staircase framing for this section:
 ${deepen}
+
+Laddered questions for this step (ask these, in order; the answer to one drives the next):
+${ladderBlock}
+
+${disciplineBlock}
 
 Rules:
 - Every item traces down the staircase: a countermeasure names the root cause it removes; a root cause names the problem gap it explains.
@@ -586,14 +613,23 @@ Return JSON:
   if (toolType === 'narrative-engine') {
     const narData = inputData as any;
     if (stepId === 'mission') {
-      return `Act as an AI communications strategist. Sharpen the brief for this Narrative Engine session.
+      return `Act as an AI communications strategist. Sharpen the brief for this Narrative Engine session using the SCQA opening (Situation-Complication-Question-Answer) — the governing thought (coreMessage) must answer EXACTLY the question the complication forces.
 
 Current context:
 - Audience: ${narData?.context?.audience || 'missing'}
-- Core message: ${narData?.context?.coreMessage || 'missing'}
+- Core message (Answer): ${narData?.context?.coreMessage || 'missing'}
+- Situation: ${narData?.context?.situation || 'missing'}
+- Complication: ${narData?.context?.complication || 'missing'}
+- Question: ${narData?.context?.question || 'missing'}
+
+Rules:
+- situation = the stable fact both sides already agree on (not a claim).
+- complication = what breaks that stable picture — must NOT restate the situation.
+- question = the ONE question the complication forces.
+- coreMessage = the Answer, and it must resolve exactly that question, not an easier one.
 
 Return JSON:
-{"mission": {"audience": "...", "coreMessage": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+{"mission": {"audience": "...", "coreMessage": "...", "situation": "...", "complication": "...", "question": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
     }
     if (stepId === 'input') {
       return `Act as an AI communications strategist. Based on the audience, core message, and organization context, propose 4-6 signals: proof points, audience insights, objections to preempt.

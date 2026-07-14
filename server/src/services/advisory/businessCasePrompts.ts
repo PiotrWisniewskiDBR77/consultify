@@ -31,7 +31,7 @@ Zwróć WYŁĄCZNIE JSON w tym kształcie:
     }
   ],
   "horizonYears": <liczba całkowita, zwykle 3-5>,
-  "waccPct": <stopa dyskontowa w %, jawna, nie zgadnij bez podstawy — użyj rozsądnego WACC dla kontekstu klienta i NAZWIJ założenie w rationale drivera lub w problem>,
+  "waccPct": <MUSISZ podać liczbę dla poprawności JSON, ale to POLE JEST IGNOROWANE — stopę dyskontową (WACC) ustala deterministycznie silnik z guidance branżowego lub z inputu klienta. NIE opieraj rekomendacji na własnym WACC, NIE komentuj jego wysokości>,
   "currency": "PLN" | "EUR" | "USD" (dopasuj do kontekstu klienta)
 }
 
@@ -51,7 +51,7 @@ Sprawdź:
 - Czy plan faktycznie odpowiada na prośbę klienta (nie zboczył w inny temat)?
 - Czy drivers mają sensowne jednostki i rationale (nie są zmyślone bez logiki)?
 - Czy scenariusze są NAZWANE po dźwigni i celują w istniejące driverKey?
-- Czy horyzont i WACC są rozsądne dla kontekstu (np. WACC 8-15% dla typowej firmy, wyżej dla startupu/ryzyka)?
+- Czy horyzont jest rozsądny dla kontekstu? (WACC/stopę dyskontową pomiń — ustala ją deterministycznie silnik, nie oceniaj jej tutaj.)
 
 Zwróć WYŁĄCZNIE JSON:
 {
