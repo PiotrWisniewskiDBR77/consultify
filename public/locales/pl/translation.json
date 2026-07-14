@@ -22588,7 +22588,60 @@
       "failedToLoadMap": "Nie udało się wczytać mapy",
       "tableCheckpoint": "Tabela checkpoint",
       "savedToast": "Zapisano",
-      "failedToSave": "Nie udało się zapisać"
+      "failedToSave": "Nie udało się zapisać",
+      "emptyState": {
+        "table": {
+          "headline": "Brak rekordów w tym widoku",
+          "description": "Dodaj pierwszy wiersz, aby zacząć pracę w tej tabeli."
+        },
+        "grid": {
+          "headline": "Siatka jest pusta",
+          "description": "Dodaj rekord, aby wypełnić komórki i zobaczyć dane w skrócie."
+        },
+        "kanban": {
+          "headline": "Brak kart na tablicy",
+          "description": "Dodaj rekord lub przeciągnij z tabeli, aby zobaczyć karty."
+        },
+        "calendar": {
+          "headline": "Nic tu nie zaplanowano",
+          "description": "Rekordy z datami pojawią się po ich dodaniu."
+        },
+        "timeline": {
+          "headline": "Oś czasu nie ma jeszcze kamieni milowych",
+          "description": "Dodaj rekordy z datami, aby zbudować przebieg prac."
+        },
+        "gallery": {
+          "headline": "Galeria czeka na elementy",
+          "description": "Dodaj rekordy z załącznikami lub okładką, aby wypełnić galerię."
+        },
+        "form": {
+          "headline": "Brak zgłoszeń z formularza",
+          "description": "Udostępnij formularz lub dodaj rekord ręcznie."
+        }
+      },
+      "addFirstRecord": "Dodaj pierwszy rekord",
+      "useAi": "Użyj AI",
+      "clear": "Wyczyść",
+      "file": "Plik",
+      "relation": "Relacja",
+      "fileNamePrompt": "Nazwa pliku:",
+      "fileUrlPrompt": "URL (opcjonalnie):",
+      "itemIdPrompt": "ID elementu:",
+      "filterOperator": {
+        "contains": "Zawiera",
+        "equals": "Równa się",
+        "not_empty": "Niepuste",
+        "is_empty": "Puste",
+        "gt": "Większe niż",
+        "lt": "Mniejsze niż"
+      },
+      "filterPanel": {
+        "title": "Filtry",
+        "noFilters": "Brak filtrów. Dodaj pierwszy.",
+        "and": "I",
+        "or": "LUB",
+        "addFilter": "Dodaj filtr"
+      }
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",

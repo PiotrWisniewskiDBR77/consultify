@@ -50,8 +50,7 @@ export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
     : value
       ? [{ name: String(value) }]
       : [];
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   return (
     <div className="flex flex-wrap items-center gap-1">
@@ -78,14 +77,14 @@ export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
       {!locked && (
         <button
           onClick={() => {
-            const name = prompt(isPl ? 'Nazwa pliku:' : 'File name:');
+            const name = prompt(t('ideas.table.fileNamePrompt', 'File name:'));
             if (!name) return;
-            const url = prompt(isPl ? 'URL (opcjonalnie):' : 'URL (optional):');
+            const url = prompt(t('ideas.table.fileUrlPrompt', 'URL (optional):'));
             onChange([...files, { name, url: url || undefined }]);
           }}
           className="text-[9px] text-c-accent hover:text-c-accent font-semibold"
         >
-          + {isPl ? 'Plik' : 'File'}
+          + {t('ideas.table.file', 'File')}
         </button>
       )}
     </div>
@@ -99,8 +98,7 @@ export const RelationCell: React.FC<CellProps & { allNodes?: { id: string; label
   allNodes = [],
 }) => {
   const relations: string[] = Array.isArray(value) ? value : value ? [String(value)] : [];
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   return (
     <div className="flex flex-wrap items-center gap-1">
@@ -119,12 +117,12 @@ export const RelationCell: React.FC<CellProps & { allNodes?: { id: string; label
       {!locked && (
         <button
           onClick={() => {
-            const id = prompt(isPl ? 'ID elementu:' : 'Item ID:');
+            const id = prompt(t('ideas.table.itemIdPrompt', 'Item ID:'));
             if (id) onChange([...relations, id]);
           }}
           className="text-[9px] text-indigo-500 hover:text-indigo-600 font-semibold"
         >
-          + {isPl ? 'Relacja' : 'Relation'}
+          + {t('ideas.table.relation', 'Relation')}
         </button>
       )}
     </div>

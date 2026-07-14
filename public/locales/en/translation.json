@@ -21512,7 +21512,60 @@
       "failedToLoadMap": "Failed to load map",
       "tableCheckpoint": "Table checkpoint",
       "savedToast": "Saved",
-      "failedToSave": "Failed to save"
+      "failedToSave": "Failed to save",
+      "emptyState": {
+        "table": {
+          "headline": "No records in this view",
+          "description": "Create your first row to start tracking work in this table."
+        },
+        "grid": {
+          "headline": "This grid is empty",
+          "description": "Add a record to populate cells and see your data at a glance."
+        },
+        "kanban": {
+          "headline": "No cards on the board",
+          "description": "Move work onto the board by adding a record or dragging from the table."
+        },
+        "calendar": {
+          "headline": "Nothing scheduled here",
+          "description": "Records with dates will appear on the calendar once you add them."
+        },
+        "timeline": {
+          "headline": "Timeline has no milestones yet",
+          "description": "Add dated records to build a clear sequence of work."
+        },
+        "gallery": {
+          "headline": "Gallery is waiting for items",
+          "description": "Add records with attachments or cover fields to fill the gallery."
+        },
+        "form": {
+          "headline": "No form submissions yet",
+          "description": "Share the form or add a record manually to see responses here."
+        }
+      },
+      "addFirstRecord": "Add first record",
+      "useAi": "Use AI",
+      "clear": "Clear",
+      "file": "File",
+      "relation": "Relation",
+      "fileNamePrompt": "File name:",
+      "fileUrlPrompt": "URL (optional):",
+      "itemIdPrompt": "Item ID:",
+      "filterOperator": {
+        "contains": "Contains",
+        "equals": "Equals",
+        "not_empty": "Not empty",
+        "is_empty": "Is empty",
+        "gt": "Greater than",
+        "lt": "Less than"
+      },
+      "filterPanel": {
+        "title": "Filters",
+        "noFilters": "No filters. Add one.",
+        "and": "AND",
+        "or": "OR",
+        "addFilter": "Add filter"
+      }
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
