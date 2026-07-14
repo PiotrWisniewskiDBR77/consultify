@@ -14822,6 +14822,159 @@
           "emptyDescription": "Create a custom compliance framework tailored to your organization's needs",
           "createFirst": "Create Your First Template"
         }
+      },
+      "featuresPrivacy": {
+        "retention": {
+          "days7": {
+            "label": "7 days",
+            "description": "Minimal retention for compliance"
+          },
+          "days30": {
+            "label": "30 days",
+            "description": "Standard retention period"
+          },
+          "days90": {
+            "label": "90 days",
+            "description": "Extended retention for analytics"
+          },
+          "year1": {
+            "label": "1 year",
+            "description": "Long-term retention"
+          },
+          "forever": {
+            "label": "Forever",
+            "description": "Never delete (not recommended)"
+          }
+        },
+        "toasts": {
+          "saved": "Features & Privacy settings saved",
+          "promptUpdated": "System Prompt Updated"
+        },
+        "errors": {
+          "save": "Failed to save settings",
+          "updatePrompt": "Failed to update prompt"
+        },
+        "title": "Features & Privacy",
+        "description": "Configure AI features, data policies, and custom instructions",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "subTabs": {
+          "features": "AI Features",
+          "data": "Data Policy",
+          "instructions": "Custom Instructions",
+          "personas": "System Personas"
+        },
+        "features": {
+          "title": "AI Features",
+          "description": "Enable or disable specific AI capabilities for your organization",
+          "artifacts": {
+            "label": "Artifacts Panel",
+            "description": "Allow AI to generate structured content (code, documents, diagrams)"
+          },
+          "thinkingSteps": {
+            "label": "Thinking Steps (Chain of Thought)",
+            "description": "Show AI reasoning process with expandable thinking blocks"
+          },
+          "focusModes": {
+            "label": "Focus Modes",
+            "description": "Allow users to filter AI context (PMO Docs, Project Data, Research)"
+          },
+          "webSearch": {
+            "label": "Web Search",
+            "description": "Allow AI to search the internet for current information"
+          },
+          "voice": {
+            "label": "Voice Conversations",
+            "description": "Enable voice input and output for AI interactions"
+          },
+          "auditSettings": "Audit Settings",
+          "auditAll": {
+            "label": "Audit All AI Requests",
+            "description": "Log every AI interaction for compliance (increases storage)"
+          },
+          "auditPolicy": {
+            "label": "Audit Policy Changes",
+            "description": "Track all changes to AI settings"
+          }
+        },
+        "dataRetention": {
+          "title": "Data Retention",
+          "description": "How long AI conversation data is stored"
+        },
+        "aiLearning": {
+          "title": "AI Learning",
+          "description": "Control how AI learns from your organization's data",
+          "allowTitle": "Allow AI to Learn from Organization Data",
+          "allowDescription": "AI will improve responses based on your organization's patterns and decisions",
+          "privacyNoticeTitle": "Privacy Notice",
+          "privacyNoticeDescription": "When enabled, AI learning uses only aggregated, anonymized patterns. No personal or sensitive data is used for training."
+        },
+        "externalData": {
+          "title": "External Data Policy",
+          "description": "Control AI access to external data sources",
+          "allowTitle": "Allow External Data Access",
+          "allowDescription": "AI can fetch industry benchmarks, market data, and external references"
+        },
+        "instructions": {
+          "title": "Organization Instructions",
+          "description": "Custom instructions applied to all AI interactions in your organization",
+          "toneStyle": "Tone & Style",
+          "toneProfessional": "Professional - Formal and business-appropriate",
+          "toneFriendly": "Friendly - Approachable and conversational",
+          "toneTechnical": "Technical - Precise and detailed",
+          "toneConcise": "Concise - Brief and to the point",
+          "toneEducational": "Educational - Explanatory and teaching-focused",
+          "customLabel": "Custom System Instructions",
+          "customPlaceholder": "Add custom instructions that will be applied to all AI interactions...\n\nExample:\n- Always mention relevant ISO standards when discussing processes\n- Use metric units for all measurements\n- Reference company policies when applicable",
+          "customHint": "These instructions are prepended to every AI request in your organization."
+        },
+        "restrictedTopics": {
+          "title": "Restricted Topics",
+          "description": "Topics or content types the AI should avoid discussing",
+          "competitor": {
+            "label": "Competitor Analysis",
+            "desc": "Avoid discussing competitor products/services"
+          },
+          "legal": {
+            "label": "Legal Advice",
+            "desc": "Don't provide legal recommendations"
+          },
+          "financial": {
+            "label": "Financial Advice",
+            "desc": "Avoid specific financial recommendations"
+          },
+          "personnel": {
+            "label": "Personnel Decisions",
+            "desc": "Don't advise on hiring/firing"
+          },
+          "medical": {
+            "label": "Medical Topics",
+            "desc": "Avoid health-related advice"
+          },
+          "politics": {
+            "label": "Political Topics",
+            "desc": "Stay neutral on political matters"
+          },
+          "customKeywords": "Custom Restricted Keywords",
+          "customKeywordsPlaceholder": "Enter keywords or phrases the AI should avoid, one per line..."
+        },
+        "personas": {
+          "available": "Available Personas",
+          "editPrefix": "Edit: {{key}}",
+          "descriptionLabel": "Description",
+          "systemPromptLabel": "System Prompt",
+          "contextInjection": "Context Injection",
+          "context": {
+            "project": "Project Context",
+            "userProfile": "User Profile",
+            "assessmentData": "Assessment Data",
+            "knowledgeBase": "Knowledge Base",
+            "taskHistory": "Task History"
+          },
+          "cancel": "Cancel",
+          "save": "Save Persona",
+          "selectToEdit": "Select a persona to edit"
+        }
       }
     }
   },

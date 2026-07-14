@@ -15473,6 +15473,159 @@
           "emptyDescription": "Utwórz niestandardowe ramy zgodności dopasowane do potrzeb organizacji",
           "createFirst": "Utwórz swój pierwszy szablon"
         }
+      },
+      "featuresPrivacy": {
+        "retention": {
+          "days7": {
+            "label": "7 dni",
+            "description": "Minimalne przechowywanie zgodne z wymogami"
+          },
+          "days30": {
+            "label": "30 dni",
+            "description": "Standardowy okres przechowywania"
+          },
+          "days90": {
+            "label": "90 dni",
+            "description": "Rozszerzone przechowywanie do analiz"
+          },
+          "year1": {
+            "label": "1 rok",
+            "description": "Długoterminowe przechowywanie"
+          },
+          "forever": {
+            "label": "Zawsze",
+            "description": "Nigdy nie usuwaj (niezalecane)"
+          }
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia funkcji i prywatności",
+          "promptUpdated": "Zaktualizowano prompt systemowy"
+        },
+        "errors": {
+          "save": "Nie udało się zapisać ustawień",
+          "updatePrompt": "Nie udało się zaktualizować promptu"
+        },
+        "title": "Funkcje i prywatność",
+        "description": "Skonfiguruj funkcje AI, polityki danych i niestandardowe instrukcje",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "subTabs": {
+          "features": "Funkcje AI",
+          "data": "Polityka danych",
+          "instructions": "Niestandardowe instrukcje",
+          "personas": "Persony systemowe"
+        },
+        "features": {
+          "title": "Funkcje AI",
+          "description": "Włącz lub wyłącz określone możliwości AI dla organizacji",
+          "artifacts": {
+            "label": "Panel artefaktów",
+            "description": "Zezwól AI na generowanie ustrukturyzowanej treści (kod, dokumenty, diagramy)"
+          },
+          "thinkingSteps": {
+            "label": "Kroki rozumowania (Chain of Thought)",
+            "description": "Pokaż proces rozumowania AI z rozwijanymi blokami myślenia"
+          },
+          "focusModes": {
+            "label": "Tryby skupienia",
+            "description": "Zezwól użytkownikom na filtrowanie kontekstu AI (dokumenty PMO, dane projektu, badania)"
+          },
+          "webSearch": {
+            "label": "Wyszukiwanie w sieci",
+            "description": "Zezwól AI na wyszukiwanie aktualnych informacji w internecie"
+          },
+          "voice": {
+            "label": "Rozmowy głosowe",
+            "description": "Włącz wejście i wyjście głosowe dla interakcji z AI"
+          },
+          "auditSettings": "Ustawienia audytu",
+          "auditAll": {
+            "label": "Audytuj wszystkie żądania AI",
+            "description": "Rejestruj każdą interakcję z AI dla zgodności (zwiększa zużycie pamięci)"
+          },
+          "auditPolicy": {
+            "label": "Audytuj zmiany polityki",
+            "description": "Śledź wszystkie zmiany ustawień AI"
+          }
+        },
+        "dataRetention": {
+          "title": "Przechowywanie danych",
+          "description": "Jak długo przechowywane są dane rozmów AI"
+        },
+        "aiLearning": {
+          "title": "Uczenie się AI",
+          "description": "Kontroluj sposób, w jaki AI uczy się na podstawie danych organizacji",
+          "allowTitle": "Zezwól AI na naukę na danych organizacji",
+          "allowDescription": "AI będzie poprawiać odpowiedzi na podstawie wzorców i decyzji organizacji",
+          "privacyNoticeTitle": "Informacja o prywatności",
+          "privacyNoticeDescription": "Gdy włączone, uczenie AI wykorzystuje tylko zagregowane, zanonimizowane wzorce. Żadne dane osobowe ani wrażliwe nie są używane do treningu."
+        },
+        "externalData": {
+          "title": "Polityka danych zewnętrznych",
+          "description": "Kontroluj dostęp AI do zewnętrznych źródeł danych",
+          "allowTitle": "Zezwól na dostęp do danych zewnętrznych",
+          "allowDescription": "AI może pobierać branżowe benchmarki, dane rynkowe i zewnętrzne odniesienia"
+        },
+        "instructions": {
+          "title": "Instrukcje organizacji",
+          "description": "Niestandardowe instrukcje stosowane do wszystkich interakcji AI w organizacji",
+          "toneStyle": "Ton i styl",
+          "toneProfessional": "Profesjonalny - formalny i odpowiedni biznesowo",
+          "toneFriendly": "Przyjazny - przystępny i konwersacyjny",
+          "toneTechnical": "Techniczny - precyzyjny i szczegółowy",
+          "toneConcise": "Zwięzły - krótki i na temat",
+          "toneEducational": "Edukacyjny - wyjaśniający, nastawiony na nauczanie",
+          "customLabel": "Niestandardowe instrukcje systemowe",
+          "customPlaceholder": "Dodaj niestandardowe instrukcje, które zostaną zastosowane do wszystkich interakcji AI...\n\nPrzykład:\n- Zawsze wspominaj o odpowiednich standardach ISO przy omawianiu procesów\n- Używaj jednostek metrycznych do wszystkich pomiarów\n- Odwołuj się do polityk firmy tam, gdzie to właściwe",
+          "customHint": "Te instrukcje są dodawane na początku każdego żądania AI w organizacji."
+        },
+        "restrictedTopics": {
+          "title": "Ograniczone tematy",
+          "description": "Tematy lub typy treści, których AI powinno unikać",
+          "competitor": {
+            "label": "Analiza konkurencji",
+            "desc": "Unikaj omawiania produktów/usług konkurencji"
+          },
+          "legal": {
+            "label": "Porady prawne",
+            "desc": "Nie udzielaj rekomendacji prawnych"
+          },
+          "financial": {
+            "label": "Porady finansowe",
+            "desc": "Unikaj konkretnych rekomendacji finansowych"
+          },
+          "personnel": {
+            "label": "Decyzje personalne",
+            "desc": "Nie doradzaj w sprawach zatrudniania/zwalniania"
+          },
+          "medical": {
+            "label": "Tematy medyczne",
+            "desc": "Unikaj porad związanych ze zdrowiem"
+          },
+          "politics": {
+            "label": "Tematy polityczne",
+            "desc": "Zachowaj neutralność w kwestiach politycznych"
+          },
+          "customKeywords": "Niestandardowe zabronione słowa kluczowe",
+          "customKeywordsPlaceholder": "Wpisz słowa kluczowe lub frazy, których AI powinno unikać, po jednej w wierszu..."
+        },
+        "personas": {
+          "available": "Dostępne persony",
+          "editPrefix": "Edytuj: {{key}}",
+          "descriptionLabel": "Opis",
+          "systemPromptLabel": "Prompt systemowy",
+          "contextInjection": "Wstrzykiwanie kontekstu",
+          "context": {
+            "project": "Kontekst projektu",
+            "userProfile": "Profil użytkownika",
+            "assessmentData": "Dane oceny",
+            "knowledgeBase": "Baza wiedzy",
+            "taskHistory": "Historia zadań"
+          },
+          "cancel": "Anuluj",
+          "save": "Zapisz personę",
+          "selectToEdit": "Wybierz personę do edycji"
+        }
       }
     }
   },
