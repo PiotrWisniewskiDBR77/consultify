@@ -44,6 +44,7 @@ import aiGovernanceRoutes from './routes/ai-governance.routes.js';
 import aiOperatorRoutes from './routes/ai-operator.routes.js';
 import aiPromptsRoutes from './routes/ai-prompts.routes.js';
 import aiSuggestionsRoutes from './routes/ai-suggestions.routes.js';
+import adminPromptsRoutes from './routes/admin-prompts.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
@@ -722,7 +723,9 @@ export class ApiGateway {
       logger.info('[ApiGateway] Mounting /api/revenue');
       app.use('/api/superadmin/analytics', analyticsSuperadminRoutes);
       app.use('/api/superadmin/ai/core-docs', coreDocsRoutes);
+      app.use('/api/admin/prompts', adminPromptsRoutes);
       logger.info('[ApiGateway] Mounting /api/superadmin/analytics');
+      logger.info('[ApiGateway] Mounting /api/admin/prompts');
       app.use('/api/token-billing', tokenBillingRoutes);
       app.use('/api/budgets', budgetsRoutes);
       mountStub('/api/pricing', pricingRoutes, 'pricingRoutes');
