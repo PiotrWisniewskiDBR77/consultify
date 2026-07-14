@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { LLMProvider } from '../../../types';
@@ -125,6 +126,7 @@ interface LLMProviderConfig {
 }
 
 export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organizationId }) => {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
   const [llmStatus, setLLMStatus] = useState<LLMStatus | null>(null);
   const [availableModels, setAvailableModels] = useState<AvailableModels>({});
@@ -176,7 +178,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       setProviders(data as any);
       setLoading(false);
     } catch (err) {
-      toast.error('Failed to load providers');
+      toast.error(
+        t('admin.aiControlCenter.modelsProviders.errors.load', 'Failed to load providers')
+      );
       setLoading(false);
     }
   };
@@ -221,13 +225,29 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       });
       const data = await response.json();
       if (data.success) {
-        toast.success(`Health check complete: ${data.summary?.healthy || 0} healthy providers`);
+        toast.success(
+          t(
+            'admin.aiControlCenter.modelsProviders.toasts.healthCheckComplete',
+            'Health check complete: {{count}} healthy providers',
+            {
+              count: data.summary?.healthy || 0,
+            }
+          )
+        );
         await loadLLMStatus();
       } else {
-        toast.error(data.error || 'Health check failed');
+        toast.error(
+          data.error ||
+            t(
+              'admin.aiControlCenter.modelsProviders.errors.healthCheckFailed',
+              'Health check failed'
+            )
+        );
       }
     } catch (e) {
-      toast.error('Failed to refresh health');
+      toast.error(
+        t('admin.aiControlCenter.modelsProviders.errors.refreshHealth', 'Failed to refresh health')
+      );
     }
     setRefreshingHealth(false);
   };
@@ -241,13 +261,42 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       });
       const data = await response.json();
       if (data.success && data.reachable) {
-        toast.success(`${provider} is healthy (${data.latency}ms)`);
+        toast.success(
+          t(
+            'admin.aiControlCenter.modelsProviders.toasts.providerHealthy',
+            '{{provider}} is healthy ({{latency}}ms)',
+            {
+              provider,
+              latency: data.latency,
+            }
+          )
+        );
       } else {
-        toast.error(`${provider}: ${data.error || 'Connection failed'}`);
+        toast.error(
+          t(
+            'admin.aiControlCenter.modelsProviders.errors.providerError',
+            '{{provider}}: {{error}}',
+            {
+              provider,
+              error:
+                data.error ||
+                t(
+                  'admin.aiControlCenter.modelsProviders.errors.connectionFailed',
+                  'Connection failed'
+                ),
+            }
+          )
+        );
       }
       await loadLLMStatus();
     } catch (e) {
-      toast.error(`Test failed for ${provider}`);
+      toast.error(
+        t(
+          'admin.aiControlCenter.modelsProviders.errors.testFailedFor',
+          'Test failed for {{provider}}',
+          { provider }
+        )
+      );
     }
     setTestingProvider(null);
   };
@@ -274,14 +323,23 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
 
       if (!res.ok) throw new Error('Failed to update');
 
-      toast.success(!currentStatus ? 'Provider enabled' : 'Provider disabled');
+      toast.success(
+        !currentStatus
+          ? t('admin.aiControlCenter.modelsProviders.toasts.providerEnabled', 'Provider enabled')
+          : t('admin.aiControlCenter.modelsProviders.toasts.providerDisabled', 'Provider disabled')
+      );
       await loadAvailableModels();
     } catch (e) {
       // Revert on error
       setProviders((prev) =>
         prev.map((p) => (p.id === providerId ? { ...p, is_enabled_for_org: currentStatus } : p))
       );
-      toast.error('Failed to update provider');
+      toast.error(
+        t(
+          'admin.aiControlCenter.modelsProviders.errors.updateProvider',
+          'Failed to update provider'
+        )
+      );
     }
     setSavingProvider(null);
   };
@@ -330,28 +388,28 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
         return (
           <span className="admin-status admin-status-healthy">
             <span className="admin-status-dot" />
-            healthy
+            {t('admin.aiControlCenter.modelsProviders.health.healthy', 'healthy')}
           </span>
         );
       case 'degraded':
         return (
           <span className="admin-status admin-status-warning">
             <span className="admin-status-dot" />
-            degraded
+            {t('admin.aiControlCenter.modelsProviders.health.degraded', 'degraded')}
           </span>
         );
       case 'unhealthy':
         return (
           <span className="admin-status admin-status-error">
             <span className="admin-status-dot" />
-            unhealthy
+            {t('admin.aiControlCenter.modelsProviders.health.unhealthy', 'unhealthy')}
           </span>
         );
       default:
         return (
           <span className="admin-status">
             <span className="admin-status-dot" />
-            unknown
+            {t('admin.aiControlCenter.modelsProviders.health.unknown', 'unknown')}
           </span>
         );
     }
@@ -366,28 +424,36 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
         <div className="admin-metric">
           <div className="flex items-center gap-2">
             <CheckCircle size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="admin-metric-label">Healthy</span>
+            <span className="admin-metric-label">
+              {t('admin.aiControlCenter.modelsProviders.summary.healthy', 'Healthy')}
+            </span>
           </div>
           <p className="admin-metric-value">{llmStatus?.summary.healthy || 0}</p>
         </div>
         <div className="admin-metric">
           <div className="flex items-center gap-2">
             <AlertTriangle size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="admin-metric-label">Degraded</span>
+            <span className="admin-metric-label">
+              {t('admin.aiControlCenter.modelsProviders.summary.degraded', 'Degraded')}
+            </span>
           </div>
           <p className="admin-metric-value">{llmStatus?.summary.degraded || 0}</p>
         </div>
         <div className="admin-metric">
           <div className="flex items-center gap-2">
             <XCircle size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="admin-metric-label">Unhealthy</span>
+            <span className="admin-metric-label">
+              {t('admin.aiControlCenter.modelsProviders.summary.unhealthy', 'Unhealthy')}
+            </span>
           </div>
           <p className="admin-metric-value">{llmStatus?.summary.unhealthy || 0}</p>
         </div>
         <div className="admin-metric">
           <div className="flex items-center gap-2">
             <Server size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="admin-metric-label">Total</span>
+            <span className="admin-metric-label">
+              {t('admin.aiControlCenter.modelsProviders.summary.total', 'Total')}
+            </span>
           </div>
           <p className="admin-metric-value">
             {llmStatus?.summary.configured || 0}
@@ -404,7 +470,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
           {llmStatus?.defaultProvider && (
             <div className="flex items-center gap-2 text-sm">
               <Star size={14} className="text-amber-400" />
-              <span className="text-slate-600 dark:text-slate-500">Default:</span>
+              <span className="text-slate-600 dark:text-slate-500">
+                {t('admin.aiControlCenter.modelsProviders.default', 'Default:')}
+              </span>
               <span className="text-c-text font-medium">{llmStatus.defaultProvider.name}</span>
               <span className="text-slate-500 dark:text-slate-400">
                 ({llmStatus.defaultProvider.model})
@@ -414,7 +482,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
           {llmStatus?.startupValidation && (
             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
               <Clock size={12} />
-              Last check: {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}
+              {t('admin.aiControlCenter.modelsProviders.lastCheck', 'Last check: {{time}}', {
+                time: new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString(),
+              })}
             </div>
           )}
         </div>
@@ -428,7 +498,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             }`}
           >
             {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
-            {showInactive ? 'Hide Inactive' : 'Show Inactive'}
+            {showInactive
+              ? t('admin.aiControlCenter.modelsProviders.hideInactive', 'Hide Inactive')
+              : t('admin.aiControlCenter.modelsProviders.showInactive', 'Show Inactive')}
           </button>
           <button
             onClick={refreshAllHealth}
@@ -436,7 +508,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
-            {refreshingHealth ? 'Refreshing...' : 'Refresh All'}
+            {refreshingHealth
+              ? t('admin.aiControlCenter.modelsProviders.refreshing', 'Refreshing...')
+              : t('admin.aiControlCenter.modelsProviders.refreshAll', 'Refresh All')}
           </button>
         </div>
       </div>
@@ -460,7 +534,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
               <div className="flex flex-wrap gap-1 mb-3">
                 {p.isDefault && (
                   <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                    ★ Default
+                    ★ {t('admin.aiControlCenter.modelsProviders.defaultBadge', 'Default')}
                   </span>
                 )}
                 {p.tier && (
@@ -482,24 +556,31 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                 )}
                 {p.supportsVision && (
                   <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-600 dark:text-slate-500">
-                    Vision
+                    {t('admin.aiControlCenter.modelsProviders.vision', 'Vision')}
                   </span>
                 )}
                 {p.supportsTools && (
                   <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-600 dark:text-slate-500">
-                    Tools
+                    {t('admin.aiControlCenter.modelsProviders.tools', 'Tools')}
                   </span>
                 )}
                 {!p.isConfigured && (
                   <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400">
-                    No API Key
+                    {t('admin.aiControlCenter.modelsProviders.noApiKey', 'No API Key')}
                   </span>
                 )}
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-600 dark:text-slate-400">
-                  Priority: {p.priority} | ${p.costPer1k}/1k
+                  {t(
+                    'admin.aiControlCenter.modelsProviders.priorityCost',
+                    'Priority: {{priority}} | ${{cost}}/1k',
+                    {
+                      priority: p.priority,
+                      cost: p.costPer1k,
+                    }
+                  )}
                 </span>
                 <button
                   onClick={() => testSingleProvider(p.provider)}
@@ -511,7 +592,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                   ) : (
                     <Wifi size={12} />
                   )}
-                  Test
+                  {t('admin.aiControlCenter.modelsProviders.test', 'Test')}
                 </button>
               </div>
 
@@ -529,11 +610,19 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                       }`}
                     />
                     <span className="text-slate-500 dark:text-slate-400">
-                      Circuit: {llmStatus.circuitBreakers[p.provider].state}
+                      {t('admin.aiControlCenter.modelsProviders.circuit', 'Circuit: {{state}}', {
+                        state: llmStatus.circuitBreakers[p.provider].state,
+                      })}
                     </span>
                     {llmStatus.circuitBreakers[p.provider].failures > 0 && (
                       <span className="text-danger-400">
-                        ({llmStatus.circuitBreakers[p.provider].failures} failures)
+                        {t(
+                          'admin.aiControlCenter.modelsProviders.failuresCount',
+                          '({{count}} failures)',
+                          {
+                            count: llmStatus.circuitBreakers[p.provider].failures,
+                          }
+                        )}
                       </span>
                     )}
                   </div>
@@ -546,10 +635,14 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       {/* Unified Provider Table */}
       <div className="admin-card overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--admin-border)]">
-          <h3 className="text-sm font-medium text-c-text">AI Providers Management</h3>
+          <h3 className="text-sm font-medium text-c-text">
+            {t('admin.aiControlCenter.modelsProviders.tableTitle', 'AI Providers Management')}
+          </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Configure providers for your organization. Enable/disable to control which models are
-            available.
+            {t(
+              'admin.aiControlCenter.modelsProviders.tableDescription',
+              'Configure providers for your organization. Enable/disable to control which models are available.'
+            )}
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -558,12 +651,14 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
           >
             <thead>
               <tr>
-                <th>Provider</th>
-                <th>Model</th>
-                <th>Tiers</th>
-                <th>Health</th>
-                <th className="text-center">Org Access</th>
-                <th>Status</th>
+                <th>{t('admin.aiControlCenter.modelsProviders.columns.provider', 'Provider')}</th>
+                <th>{t('admin.aiControlCenter.modelsProviders.columns.model', 'Model')}</th>
+                <th>{t('admin.aiControlCenter.modelsProviders.columns.tiers', 'Tiers')}</th>
+                <th>{t('admin.aiControlCenter.modelsProviders.columns.health', 'Health')}</th>
+                <th className="text-center">
+                  {t('admin.aiControlCenter.modelsProviders.columns.orgAccess', 'Org Access')}
+                </th>
+                <th>{t('admin.aiControlCenter.modelsProviders.columns.status', 'Status')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -642,7 +737,8 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                     : 'text-slate-500 dark:text-slate-400'
                             }`}
                           >
-                            {statusInfo?.healthStatus || 'unknown'}
+                            {statusInfo?.healthStatus ||
+                              t('admin.aiControlCenter.modelsProviders.health.unknown', 'unknown')}
                           </span>
                         </div>
                       </td>
@@ -671,11 +767,12 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                       <td className="px-6 py-4">
                         {p.is_active ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-                            <Check size={10} /> Active
+                            <Check size={10} />{' '}
+                            {t('admin.aiControlCenter.modelsProviders.active', 'Active')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400">
-                            Inactive
+                            {t('admin.aiControlCenter.modelsProviders.inactive', 'Inactive')}
                           </span>
                         )}
                       </td>
@@ -690,7 +787,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                           ) : (
                             <Wifi size={12} />
                           )}
-                          Test
+                          {t('admin.aiControlCenter.modelsProviders.test', 'Test')}
                         </button>
                       </td>
                     </tr>
@@ -710,12 +807,26 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
         >
           <div className="flex items-center gap-2">
             <Info size={16} className="text-blue-400" />
-            <span className="text-sm font-medium text-c-text">Models Available per Tier</span>
+            <span className="text-sm font-medium text-c-text">
+              {t(
+                'admin.aiControlCenter.modelsProviders.modelsPerTier',
+                'Models Available per Tier'
+              )}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
             <span>
-              {Object.values(availableModels).reduce((sum, models) => sum + models.length, 0)}{' '}
-              models in {Object.keys(availableModels).length} tiers
+              {t(
+                'admin.aiControlCenter.modelsProviders.modelsInTiers',
+                '{{modelCount}} models in {{tierCount}} tiers',
+                {
+                  modelCount: Object.values(availableModels).reduce(
+                    (sum, models) => sum + models.length,
+                    0
+                  ),
+                  tierCount: Object.keys(availableModels).length,
+                }
+              )}
             </span>
             {showTierPreview ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
@@ -789,7 +900,10 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                       </div>
                     ) : (
                       <div className="text-xs text-slate-600 dark:text-slate-400 italic">
-                        No models available
+                        {t(
+                          'admin.aiControlCenter.modelsProviders.noModelsAvailable',
+                          'No models available'
+                        )}
                       </div>
                     )}
                   </div>

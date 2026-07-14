@@ -1,12 +1,16 @@
 import { KeyRound, RefreshCw, Shield, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
 export const AdminScimLifecyclePanel: React.FC = () => {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<any>(null);
-  const [tokenName, setTokenName] = useState('Tenant SCIM Token');
+  const [tokenName, setTokenName] = useState(
+    t('admin.security.scimLifecycle.defaults.tokenName', 'Tenant SCIM Token')
+  );
   const [groupName, setGroupName] = useState('');
   const [groupId, setGroupId] = useState('');
   const [internalRole, setInternalRole] = useState('member');
@@ -16,7 +20,10 @@ export const AdminScimLifecyclePanel: React.FC = () => {
       const result = await Api.getAdminScimSummary();
       setSummary(result?.summary || null);
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to load SCIM summary');
+      toast.error(
+        error?.message ||
+          t('admin.security.scimLifecycle.errors.load', 'Failed to load SCIM summary')
+      );
     }
   };
 
@@ -31,9 +38,18 @@ export const AdminScimLifecyclePanel: React.FC = () => {
         scopes: ['users:read', 'users:write', 'groups:read'],
       });
       await load();
-      toast.success(`SCIM token created: ${result?.token?.tokenPrefix || 'new token'}`);
+      toast.success(
+        t('admin.security.scimLifecycle.toasts.tokenCreated', 'SCIM token created: {{prefix}}', {
+          prefix:
+            result?.token?.tokenPrefix ||
+            t('admin.security.scimLifecycle.defaults.newToken', 'new token'),
+        })
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to create SCIM token');
+      toast.error(
+        error?.message ||
+          t('admin.security.scimLifecycle.errors.createToken', 'Failed to create SCIM token')
+      );
     }
   };
 
@@ -47,9 +63,17 @@ export const AdminScimLifecyclePanel: React.FC = () => {
       setGroupName('');
       setGroupId('');
       await load();
-      toast.success('SCIM group mapping created');
+      toast.success(
+        t('admin.security.scimLifecycle.toasts.mappingCreated', 'SCIM group mapping created')
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to create SCIM group mapping');
+      toast.error(
+        error?.message ||
+          t(
+            'admin.security.scimLifecycle.errors.createMapping',
+            'Failed to create SCIM group mapping'
+          )
+      );
     }
   };
 
@@ -59,7 +83,7 @@ export const AdminScimLifecyclePanel: React.FC = () => {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <KeyRound className="h-4 w-4" />
-            Active SCIM tokens
+            {t('admin.security.scimLifecycle.stats.activeTokens', 'Active SCIM tokens')}
           </div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {summary?.tokens?.length || 0}
@@ -68,7 +92,7 @@ export const AdminScimLifecyclePanel: React.FC = () => {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Users className="h-4 w-4" />
-            Group mappings
+            {t('admin.security.scimLifecycle.stats.groupMappings', 'Group mappings')}
           </div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {summary?.groupMappings?.length || 0}
@@ -77,7 +101,7 @@ export const AdminScimLifecyclePanel: React.FC = () => {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Shield className="h-4 w-4" />
-            Open conflicts
+            {t('admin.security.scimLifecycle.stats.openConflicts', 'Open conflicts')}
           </div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {(summary?.conflicts || []).filter((item: any) => !item.resolution).length}
@@ -89,10 +113,13 @@ export const AdminScimLifecyclePanel: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              SCIM self-service lifecycle
+              {t('admin.security.scimLifecycle.title', 'SCIM self-service lifecycle')}
             </h3>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Tenant admins can now generate SCIM tokens and maintain group mappings from P32.
+              {t(
+                'admin.security.scimLifecycle.description',
+                'Tenant admins can now generate SCIM tokens and maintain group mappings from P32.'
+              )}
             </p>
           </div>
           <button
@@ -100,14 +127,14 @@ export const AdminScimLifecyclePanel: React.FC = () => {
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10"
           >
             <RefreshCw className="h-4 w-4" />
-            Refresh
+            {t('admin.security.scimLifecycle.actions.refresh', 'Refresh')}
           </button>
         </div>
 
         <div className="mt-5 grid gap-6 lg:grid-cols-2">
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              Create SCIM token
+              {t('admin.security.scimLifecycle.createToken.title', 'Create SCIM token')}
             </div>
             <input
               type="text"
@@ -119,13 +146,13 @@ export const AdminScimLifecyclePanel: React.FC = () => {
               onClick={() => void createToken()}
               className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
-              Generate token
+              {t('admin.security.scimLifecycle.createToken.generate', 'Generate token')}
             </button>
           </div>
 
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              Create group mapping
+              {t('admin.security.scimLifecycle.createMapping.title', 'Create group mapping')}
             </div>
             <input
               type="text"
@@ -152,25 +179,35 @@ export const AdminScimLifecyclePanel: React.FC = () => {
               onClick={() => void createGroupMapping()}
               className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
-              Save mapping
+              {t('admin.security.scimLifecycle.createMapping.save', 'Save mapping')}
             </button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">Tokens</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              {t('admin.security.scimLifecycle.lists.tokens', 'Tokens')}
+            </div>
             <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
               {(summary?.tokens || []).map((token: any) => (
                 <div key={token.id}>
-                  {token.name} | {token.token_prefix} | used {token.usage_count || 0} times
+                  {t(
+                    'admin.security.scimLifecycle.lists.tokenRow',
+                    '{{name}} | {{prefix}} | used {{count}} times',
+                    {
+                      name: token.name,
+                      prefix: token.token_prefix,
+                      count: token.usage_count || 0,
+                    }
+                  )}
                 </div>
               ))}
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              Group mappings
+              {t('admin.security.scimLifecycle.lists.groupMappings', 'Group mappings')}
             </div>
             <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
               {(summary?.groupMappings || []).map((mapping: any) => (

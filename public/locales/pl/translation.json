@@ -15021,7 +15021,268 @@
     },
     "security": {
       "saved": "Zapisane",
-      "loading": "Ładowanie…"
+      "loading": "Ładowanie…",
+      "identityPanel": {
+        "tabs": {
+          "policy": "Polityka bezpieczeństwa",
+          "collaboration": "Polityka współpracy",
+          "apiAccess": "Dostęp API",
+          "iam": "Delegowane IAM",
+          "scim": "SCIM i cykl życia",
+          "risk": "Podsumowanie ryzyka"
+        },
+        "title": "Bezpieczeństwo i tożsamość",
+        "description": "Jedna powierzchnia administracyjna dla polityki uwierzytelniania, kontroli współpracy, dostępu API, delegowanego zarządzania administracyjnego, cyklu życia tożsamości SCIM i działań następczych związanych z ryzykiem."
+      },
+      "auditLog": {
+        "errors": {
+          "load": "Nie udało się załadować dzienników audytu",
+          "export": "Nie udało się wyeksportować dzienników audytu",
+          "retention": "Nie udało się zaktualizować okresu przechowywania"
+        },
+        "toasts": {
+          "exportReady": "Eksport audytu gotowy",
+          "retentionUpdated": "Zaktualizowano okres przechowywania audytu"
+        },
+        "columns": {
+          "action": "Akcja",
+          "actor": "Wykonawca",
+          "risk": "Ryzyko",
+          "status": "Status",
+          "created": "Utworzono"
+        },
+        "risk": {
+          "low": "Niskie",
+          "medium": "Średnie",
+          "high": "Wysokie",
+          "critical": "Krytyczne"
+        },
+        "status": {
+          "resolved": "Rozwiązane",
+          "open": "Otwarte",
+          "pending": "Oczekujące"
+        },
+        "stats": {
+          "totalLogs": "Wszystkie dzienniki",
+          "unresolved": "Nierozwiązane",
+          "highRisk": "Wysokie ryzyko"
+        },
+        "riskIncidents": {
+          "title": "Ryzyko i incydenty",
+          "tracked": "Śledzone incydenty LLM: {{count}}",
+          "highRiskChanges": "Zmiany administracyjne wysokiego ryzyka: {{count}}"
+        },
+        "compliance": {
+          "title": "Dowody zgodności",
+          "gdprEnabled": "RODO włączone: {{value}}",
+          "yes": "tak",
+          "no": "nie",
+          "retentionDays": "Dni przechowywania audytu: {{count}}"
+        },
+        "actions": {
+          "saveRetention": "Zapisz okres przechowywania",
+          "refresh": "Odśwież",
+          "exportCsv": "Eksportuj CSV"
+        },
+        "title": "Dziennik audytu administratora",
+        "description": "Zmiany dotyczące członkostwa, bezpieczeństwa, współpracy i integracji emitowane przez powierzchnie P32.",
+        "searchPlaceholder": "Szukaj akcji, wykonawcy, metadanych...",
+        "loading": "Ładowanie dzienników audytu...",
+        "emptyMessage": "Nie znaleziono zdarzeń audytu dla tej przestrzeni roboczej."
+      },
+      "collaborationControls": {
+        "errors": {
+          "load": "Nie udało się załadować kontroli współpracy",
+          "save": "Nie udało się zapisać kontroli współpracy"
+        },
+        "toasts": {
+          "saved": "Zapisano kontrole współpracy"
+        },
+        "cards": {
+          "guestAccess": {
+            "title": "Dostęp gościa",
+            "description": "Zezwala na ograniczonych współpracowników-gości w przestrzeni roboczej.",
+            "denial": "Gdy wyłączone, przypisywanie roli gościa jest zablokowane."
+          },
+          "externalLinkSharing": {
+            "title": "Udostępnianie linków zewnętrznych",
+            "description": "Kontroluje, czy członkowie mogą udostępniać artefakty przestrzeni roboczej na zewnątrz.",
+            "denial": "Gdy wyłączone, wychodzące przepływy udostępniania muszą zatrzymać się na sprawdzeniu polityki."
+          },
+          "toolApproval": {
+            "title": "Wymagane zatwierdzenie narzędzia",
+            "description": "Wymaga zatwierdzenia administratora przed włączeniem korzystania z narzędzia.",
+            "denial": "Gdy włączone, użytkownicy nie mogą samodzielnie aktywować nowych narzędzi."
+          }
+        },
+        "title": "Kontrole współpracy",
+        "description": "Kanoniczne kontrole P32 dla dostępu gości, udostępniania i zatwierdzania narzędzi.",
+        "actions": {
+          "save": "Zapisz kontrole"
+        }
+      },
+      "iamPolicy": {
+        "defaults": {
+          "billingAdmin": "Administrator rozliczeń",
+          "customAdmin": "Administrator niestandardowy"
+        },
+        "errors": {
+          "load": "Nie udało się załadować polityki IAM",
+          "update": "Nie udało się zaktualizować polityki IAM",
+          "createAssignment": "Nie udało się utworzyć delegowanego przypisania",
+          "deleteAssignment": "Nie udało się usunąć delegowanego przypisania"
+        },
+        "toasts": {
+          "updated": "Zaktualizowano politykę IAM",
+          "assignmentCreated": "Utworzono delegowane przypisanie",
+          "assignmentRemoved": "Usunięto delegowane przypisanie"
+        },
+        "loading": "Ładowanie polityki IAM...",
+        "title": "Zarządzanie IAM na poziomie przedsiębiorstwa",
+        "description": "Zdefiniuj delegowane role administracyjne, częstotliwość przeglądów dostępu, procedurę awaryjną (break-glass) oraz kontekstowe zabezpieczenia administracyjne dla tej organizacji.",
+        "actions": {
+          "saving": "Zapisywanie...",
+          "save": "Zapisz politykę IAM"
+        },
+        "toggles": {
+          "accessReviews": {
+            "title": "Przeglądy dostępu",
+            "description": "Wymagaj cyklicznej rekertyfikacji uprzywilejowanego dostępu administracyjnego."
+          },
+          "contextAware": {
+            "title": "Dostęp kontekstowy",
+            "description": "Wymagaj silniejszych kontroli dla sesji uprzywilejowanych i zmian wrażliwych."
+          },
+          "breakGlass": {
+            "title": "Procedura awaryjna",
+            "description": "Zezwól na awaryjne podniesienie uprawnień z jawnymi zatwierdzającymi i wymogami audytu."
+          }
+        },
+        "fields": {
+          "reviewCadence": "Częstotliwość przeglądu dostępu (dni)",
+          "reauthMinutes": "Ponowne uwierzytelnienie sesji uprzywilejowanej (minuty)",
+          "breakGlassApprovers": "Zatwierdzający procedury awaryjnej"
+        },
+        "warning": "Zmiany uprzywilejowanych administratorów powinny być połączone z monitorowaniem audytu organizacji i alertowaniem wysokiego ryzyka. Ta polityka jest przechowywana jako źródło prawdy IAM administratora organizacji dla P32.",
+        "rolesSection": {
+          "title": "Delegowane role administracyjne",
+          "addRole": "Dodaj delegowaną rolę"
+        },
+        "assignmentsSection": {
+          "title": "Delegowane przypisania administracyjne",
+          "userIdPlaceholder": "id-użytkownika",
+          "roleNamePlaceholder": "Nazwa roli",
+          "assign": "Przypisz delegowaną rolę",
+          "user": "Użytkownik: {{userId}}",
+          "noCapabilities": "Brak uprawnień"
+        }
+      },
+      "riskSummary": {
+        "unknown": "nieznane",
+        "unknownTime": "Nieznany czas",
+        "errors": {
+          "load": "Nie udało się załadować podsumowania ryzyka"
+        },
+        "loading": "Ładowanie podsumowania ryzyka...",
+        "unavailableTitle": "Podsumowanie ryzyka niedostępne",
+        "retry": "Ponów podsumowanie ryzyka",
+        "metrics": {
+          "highRisk": {
+            "title": "Zdarzenia audytu wysokiego ryzyka",
+            "description": "Zdarzenia audytu z wynikiem ryzyka na poziomie progu organizacji lub wyższym."
+          },
+          "unresolved": {
+            "title": "Nierozwiązane pozycje audytu",
+            "description": "Otwarte pozycje audytu, które nadal wymagają przeglądu administracyjnego."
+          },
+          "incidents": {
+            "title": "Incydenty LLM",
+            "description": "Ostatnie incydenty LLM/dostawcy widoczne dla administratorów organizacji."
+          }
+        },
+        "queue": {
+          "title": "Kolejka działań następczych ryzyka",
+          "description": "Priorytetyzuj nierozwiązane pozycje audytu i ostatnie incydenty przed zmianą postawy bezpieczeństwa organizacji.",
+          "empty": "Usługa ryzyka nie zwróciła żadnych ostatnich incydentów.",
+          "unknownProvider": "Nieznany dostawca",
+          "status": "Status: {{status}}",
+          "started": "Rozpoczęto: {{time}}"
+        }
+      },
+      "scimLifecycle": {
+        "defaults": {
+          "tokenName": "Token SCIM organizacji",
+          "newToken": "nowy token"
+        },
+        "errors": {
+          "load": "Nie udało się załadować podsumowania SCIM",
+          "createToken": "Nie udało się utworzyć tokenu SCIM",
+          "createMapping": "Nie udało się utworzyć mapowania grupy SCIM"
+        },
+        "toasts": {
+          "tokenCreated": "Utworzono token SCIM: {{prefix}}",
+          "mappingCreated": "Utworzono mapowanie grupy SCIM"
+        },
+        "stats": {
+          "activeTokens": "Aktywne tokeny SCIM",
+          "groupMappings": "Mapowania grup",
+          "openConflicts": "Otwarte konflikty"
+        },
+        "title": "Samoobsługowy cykl życia SCIM",
+        "description": "Administratorzy organizacji mogą teraz generować tokeny SCIM i zarządzać mapowaniami grup z poziomu P32.",
+        "actions": {
+          "refresh": "Odśwież"
+        },
+        "createToken": {
+          "title": "Utwórz token SCIM",
+          "generate": "Wygeneruj token"
+        },
+        "createMapping": {
+          "title": "Utwórz mapowanie grupy",
+          "save": "Zapisz mapowanie"
+        },
+        "lists": {
+          "tokens": "Tokeny",
+          "tokenRow": "{{name}} | {{prefix}} | użyto {{count}} razy",
+          "groupMappings": "Mapowania grup"
+        }
+      },
+      "policyPanel": {
+        "errors": {
+          "load": "Nie udało się załadować polityki bezpieczeństwa",
+          "save": "Nie udało się zapisać polityki bezpieczeństwa"
+        },
+        "toasts": {
+          "saved": "Zapisano politykę bezpieczeństwa"
+        },
+        "mfa": {
+          "title": "Wymuszanie MFA",
+          "description": "Wymagaj uwierzytelniania wieloskładnikowego w całej przestrzeni roboczej.",
+          "enabled": "Włączone",
+          "gracePeriod": "Okres karencji (dni)"
+        },
+        "sso": {
+          "title": "Postawa SSO",
+          "description": "Skonfiguruj stan dostawcy i awaryjne logowanie hasłem dla przepływów tożsamości.",
+          "enabled": "SSO włączone",
+          "enforce": "Wymuś logowanie SSO",
+          "allowPasswordFallback": "Zezwól na logowanie hasłem awaryjnie",
+          "providerCustom": "Niestandardowy"
+        },
+        "sessionPassword": {
+          "title": "Sesja i hasło",
+          "description": "Kanoniczna polityka organizacji udostępniona przez panel administracyjny zamiast ustawień osobistych.",
+          "sessionTimeout": "Limit czasu sesji (minuty)",
+          "minutes": "{{count}} minut",
+          "passwordPolicy": "Polityka haseł",
+          "standard": "Standardowa",
+          "strong": "Silna",
+          "strict": "Rygorystyczna"
+        },
+        "actions": {
+          "save": "Zapisz politykę bezpieczeństwa"
+        }
+      }
     },
     "tabs": {
       "templates": "Wzorce"
@@ -15124,6 +15385,921 @@
           "label": "Kompetencje",
           "desc": "Katalog kompetencji używany w całej organizacji"
         }
+      }
+    },
+    "aiControlCenter": {
+      "tokenBilling": {
+        "errors": {
+          "overview": "Nie udało się załadować statystyk przeglądu rozliczeń tokenów",
+          "stats": "Nie udało się załadować statystyk rozliczeń tokenów"
+        },
+        "title": "Zarządzanie rozliczeniami tokenów",
+        "description": "Skonfiguruj ceny, marże i pakiety dla ekonomii tokenów.",
+        "refresh": "Odśwież dane",
+        "overviewUnavailable": "Przegląd rozliczeń tokenów niedostępny",
+        "kpi": {
+          "activeModels": "Aktywne modele AI",
+          "activePackages": "Aktywne pakiety",
+          "platformMargin": "Marża platformy",
+          "platformMarginSubtext": "Narzut na koszty bazowe",
+          "systemBalance": "Saldo systemowe",
+          "systemBalanceSubtext": "Aktualne tokeny administracyjne"
+        }
+      },
+      "marginConfig": {
+        "errors": {
+          "invalidResponse": "Odpowiedź konfiguracji marży była nieprawidłowa.",
+          "load": "Nie udało się załadować konfiguracji marż. Sprawdź połączenie z backendem.",
+          "save": "Nie udało się zapisać ustawień"
+        },
+        "toasts": {
+          "updated": "Zaktualizowano {{name}}"
+        },
+        "title": "Marże globalne",
+        "description": "Bazowe marże zysku dla kosztów niezwiązanych z LLM.",
+        "refresh": "Odśwież dane",
+        "errorTitle": "Błąd wczytywania danych",
+        "tryAgain": "Spróbuj ponownie",
+        "emptyTitle": "Brak konfiguracji marż",
+        "emptyDescription": "Dodaj konfigurację marży, aby ustawić bazowe marże zysku dla kosztów niezwiązanych z LLM.",
+        "saveChanges": "Zapisz zmiany",
+        "baseCostPer1k": "Koszt bazowy / 1k",
+        "marginMarkup": "Narzut marży",
+        "footnote": "Te globalne marże dotyczą kosztów infrastruktury bazowej. Dla modeli AI użyj tabeli mnożników specyficznych."
+      },
+      "tokenPackages": {
+        "errors": {
+          "load": "Nie udało się załadować pakietów",
+          "save": "Nie udało się zapisać pakietu"
+        },
+        "toasts": {
+          "saved": "Pakiet zapisany pomyślnie"
+        },
+        "title": "Pakiety tokenów",
+        "description": "Zarządzaj pakietami tokenów do zakupu.",
+        "create": "Utwórz pakiet",
+        "unavailableTitle": "Pakiety tokenów niedostępne",
+        "editTitle": "Edytuj pakiet",
+        "createTitle": "Utwórz nowy pakiet",
+        "fields": {
+          "name": "Nazwa pakietu",
+          "namePlaceholder": "np. Starter, Pro",
+          "stripePriceId": "Identyfikator ceny Stripe",
+          "tokensAmount": "Liczba tokenów",
+          "priceUsd": "Cena (USD)",
+          "bonusTokens": "Tokeny bonusowe (%)",
+          "sortOrder": "Kolejność sortowania",
+          "markPopular": "Oznacz jako „Popularny\"",
+          "markPopularDescription": "Wyróżnia ten pakiet odznaką i obramowaniem."
+        },
+        "cancel": "Anuluj",
+        "savePackage": "Zapisz pakiet",
+        "mostPopular": "NAJPOPULARNIEJSZY",
+        "packageLabel": "Pakiet",
+        "bonusIncluded": "Bonus {{percent}}% w cenie",
+        "card": {
+          "tokens": "Tokeny",
+          "totalValue": "Wartość całkowita",
+          "sortOrder": "Kolejność sortowania",
+          "active": "Aktywny",
+          "inactive": "Nieaktywny"
+        }
+      },
+      "llmMultipliers": {
+        "errors": {
+          "load": "Nie udało się załadować dostawców",
+          "update": "Nie udało się zaktualizować"
+        },
+        "toasts": {
+          "updated": "Zaktualizowano pomyślnie"
+        },
+        "title": "Modele kosztów i cen AI",
+        "description": "Skonfiguruj koszty bazowe i marże zysku dla każdego modelu.",
+        "refresh": "Odśwież dane",
+        "columns": {
+          "providerModel": "Dostawca / Model",
+          "baseCost": "Koszt bazowy",
+          "baseCostSuffix": "(za 1k wejściowych)",
+          "markupMultiplier": "Mnożnik narzutu",
+          "userPrice": "Cena użytkownika",
+          "userPriceSuffix": "(tokeny odliczane za 1k)",
+          "actions": "Akcje"
+        },
+        "tokensValue": "{{count}} tokenów",
+        "per1000Tokens": "za 1000 tokenów wejściowych",
+        "editPricing": "Edytuj ceny",
+        "noProviders": "Nie znaleziono dostawców. Sprawdź konfigurację bazy danych.",
+        "pricingLogicLabel": "Logika cenowa:",
+        "pricingLogicIntro": "Tokeny użytkownika są odliczane na podstawie",
+        "markupMultiplierTerm": "Mnożnik narzutu",
+        "pricingLogicExample": "Jeśli model kosztuje 0,01 USD/1k, a ustawisz mnożnik 2,0x, użytkownik płaci 2000 tokenów platformy (wartość ok. 0,02 USD) za 1000 tokenów wejściowych."
+      },
+      "policyGovernance": {
+        "levels": {
+          "advisory": {
+            "title": "Doradczy",
+            "description": "AI może jedynie wyjaśniać i sugerować. Brak modyfikacji."
+          },
+          "assisted": {
+            "title": "Wspomagany",
+            "description": "AI może tworzyć wersje robocze wymagające zatwierdzenia."
+          },
+          "proactive": {
+            "title": "Proaktywny",
+            "description": "AI może automatycznie wykonywać działania niskiego ryzyka."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI działa autonomicznie w ramach zasad zarządzania."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Doradca",
+            "description": "Dostarcza wskazówek i rekomendacji"
+          },
+          "pmoManager": {
+            "title": "Kierownik PMO",
+            "description": "Zarządza metodyką projektu"
+          },
+          "executor": {
+            "title": "Wykonawca",
+            "description": "Wykonuje zatwierdzone działania"
+          },
+          "educator": {
+            "title": "Edukator",
+            "description": "Naucza i wyjaśnia koncepcje"
+          }
+        },
+        "errors": {
+          "load": "Nie udało się załadować ustawień AI organizacji",
+          "save": "Nie udało się zapisać ustawień"
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia polityki AI"
+        },
+        "title": "Polityka i zarządzanie AI",
+        "description": "Skonfiguruj zachowanie AI i zasady zarządzania dla organizacji",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "policyLevel": {
+          "title": "Poziom polityki AI",
+          "description": "Kontroluje, jakie działania może wykonywać AI w organizacji"
+        },
+        "maxAllowed": "Maksymalny dozwolony",
+        "activeRoles": {
+          "title": "Aktywne role AI",
+          "description": "Wybierz, które persony AI są dostępne dla użytkowników"
+        },
+        "defaultRole": "Rola domyślna",
+        "defaultProactivity": {
+          "title": "Domyślna proaktywność",
+          "description": "Domyślny poziom proaktywności AI dla nowych użytkowników"
+        },
+        "governanceRules": {
+          "title": "Zasady zarządzania",
+          "description": "Dodatkowe ustawienia zarządzania i zatwierdzania"
+        },
+        "regulatoryMode": {
+          "title": "Tryb regulacyjny",
+          "description": "Gdy włączony, AI działa w trybie ścisłej zgodności. Wszystkie działania wymagają wyraźnego zatwierdzenia.",
+          "note": "Uwaga: Tryb regulacyjny można skonfigurować per projekt w ustawieniach projektu."
+        },
+        "projectOverrides": {
+          "title": "Nadpisania projektowe",
+          "description": "Poszczególne projekty mogą nadpisywać ustawienia polityki AI organizacji.",
+          "viewLink": "Zobacz nadpisania projektowe →"
+        }
+      },
+      "missionControl": {
+        "errors": {
+          "incompleteStatus": "Odpowiedź statusu misji AI była niekompletna",
+          "incompleteTest": "Odpowiedź testu funkcji była niekompletna",
+          "notConfirmed": "Test funkcji nie potwierdził powodzenia",
+          "fetchStatus": "Nie udało się pobrać statusu AI",
+          "testFailed": "Test funkcji nie powiódł się"
+        },
+        "unknownProvider": "Nieznany dostawca",
+        "capabilities": {
+          "connection": "Połączenie AI (podstawowe)",
+          "eyes": "Oczy AI (kontekst wizualny)",
+          "memory": "Pamięć AI (RAG)",
+          "hands": "Ręce AI (narzędzia MCP)",
+          "reasoning": "Tryb MAX (rozumowanie)"
+        },
+        "title": "Centrum dowodzenia AI",
+        "refreshStatus": "Odśwież status",
+        "unavailableTitle": "Centrum dowodzenia AI niedostępne",
+        "loading": "Ładowanie statusu misji AI...",
+        "successRate": "Wskaźnik powodzenia (ostatnie 50)",
+        "excellent": "Doskonały",
+        "degraded": "Obniżony",
+        "avgLatency": "Średnie opóźnienie",
+        "perRequest": "na żądanie",
+        "activeProviders": "Aktywni dostawcy",
+        "noActiveProviders": "Brak aktywnych dostawców",
+        "diagnosticsTitle": "Diagnostyka funkcji AI",
+        "testDescription": "Sprawdź, czy {{capability}} działa poprawnie.",
+        "resultLatency": "{{status}} ({{latency}}ms)",
+        "statusUnavailable": "Status centrum dowodzenia AI jest niedostępny",
+        "runTest": "Uruchom test",
+        "latestLogs": "NAJNOWSZE LOGI DIAGNOSTYCZNE",
+        "clear": "Wyczyść",
+        "errorLabel": "Błąd: {{error}}"
+      },
+      "accessLimits": {
+        "tiers": {
+          "budget": {
+            "name": "Budżetowy",
+            "description": "Dostęp tylko do ekonomicznych modeli (GPT-4o-mini, DeepSeek)"
+          },
+          "standard": {
+            "name": "Standardowy",
+            "description": "Dostęp do modeli standardowych i budżetowych (GPT-4o, Claude 3.5 Sonnet)"
+          },
+          "premium": {
+            "name": "Premium",
+            "description": "Pełny dostęp do wszystkich modeli, w tym rozumujących (o1, Claude 3 Opus)"
+          },
+          "availableModels": "Dostępne modele:",
+          "more": "+{{count}} więcej"
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia dostępu i limitów"
+        },
+        "errors": {
+          "save": "Nie udało się zapisać ustawień"
+        },
+        "title": "Dostęp i limity",
+        "description": "Zarządzaj poziomami dostępu AI, limitami użycia i kontrolą budżetu",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "subTabs": {
+          "limits": "Limity użycia",
+          "tiers": "Poziomy użytkowników",
+          "costs": "Panel kosztów"
+        },
+        "usageLimits": {
+          "title": "Limity użycia",
+          "description": "Ustaw dzienne i miesięczne limity użycia AI",
+          "maxCallsPerDay": "Maks. wywołań AI dziennie",
+          "maxCallsPerDayDescription": "Dzienny limit na użytkownika",
+          "maxTokensPerMonth": "Maks. tokenów miesięcznie",
+          "maxTokensPerMonthDescription": "Miesięczny budżet tokenów dla organizacji"
+        },
+        "budgetControl": {
+          "title": "Kontrola budżetu",
+          "description": "Ustaw limity wydatków i działania automatyczne",
+          "monthlyBudget": "Budżet miesięczny (USD)",
+          "unlimitedPlaceholder": "0 = bez limitu",
+          "hardLimit": "Twardy limit (USD)",
+          "noHardLimitPlaceholder": "0 = brak twardego limitu",
+          "freezeOnLimit": "Zablokuj po przekroczeniu limitu",
+          "freezeOnLimitDescription": "Automatycznie wyłącz AI po przekroczeniu budżetu"
+        },
+        "budgetAlerts": {
+          "title": "Alerty budżetowe",
+          "description": "Skonfiguruj automatyczne alerty przy osiągnięciu określonych progów wydatków",
+          "warning": "Alert ostrzegawczy",
+          "critical": "Alert krytyczny",
+          "emergency": "Alert awaryjny",
+          "notifyAt": "Powiadom administratorów przy {{threshold}}% wykorzystania budżetu",
+          "emailPlaceholder": "Email alertu (opcjonalnie)",
+          "addEmail": "Dodaj email"
+        },
+        "summary": {
+          "thisMonth": "Ten miesiąc",
+          "ofBudget": "z budżetu ${{budget}}",
+          "tokenUsage": "Zużycie tokenów",
+          "ofLimit": "z limitu {{limit}}k",
+          "avgDailyCalls": "Śr. dziennych wywołań",
+          "perUserMax": "na użytkownika (maks. {{max}})"
+        },
+        "autoTier": {
+          "title": "Automatyczne przypisywanie poziomu",
+          "description": "Automatycznie awansuj lub degraduj użytkowników na podstawie ich miesięcznego zużycia tokenów",
+          "enable": "Włącz automatyczne przypisywanie",
+          "enableDescription": "Automatycznie dostosowuj poziomy użytkowników co miesiąc na podstawie zużycia",
+          "direction": "Kierunek przypisywania",
+          "promoteOnly": "Tylko awans",
+          "demoteOnly": "Tylko degradacja",
+          "both": "Oba (awans i degradacja)",
+          "maxTier": "Maksymalny poziom auto-przypisania",
+          "budgetOnly": "Tylko budżetowy",
+          "upToStandard": "Do standardowego",
+          "upToPremium": "Do premium",
+          "allTiers": "Wszystkie poziomy (wł. rozumowanie)",
+          "maxTierNote": "Użytkownicy nie zostaną automatycznie awansowani powyżej tego poziomu",
+          "thresholdsTitle": "Progi tokenów",
+          "thresholdBudget": "0 - 1000 tokenów/miesiąc",
+          "thresholdStandard": "1001 - 50 000 tokenów/miesiąc",
+          "thresholdPremium": "50 001 - 200 000 tokenów/miesiąc",
+          "reasoning": "Rozumowanie",
+          "thresholdReasoning": "200 001+ tokenów/miesiąc",
+          "previewChanges": "Podgląd zmian",
+          "notifyUsers": "Powiadom użytkowników o zmianie poziomu",
+          "notifyUsersDescription": "Wyślij powiadomienie email, gdy poziom zostanie automatycznie zmieniony"
+        },
+        "userTiers": {
+          "title": "Przypisania poziomów użytkowników",
+          "description": "Przypisz poziomy dostępu AI poszczególnym użytkownikom",
+          "columns": {
+            "user": "Użytkownik",
+            "currentTier": "Aktualny poziom",
+            "usage7d": "Użycie (7d)",
+            "cost7d": "Koszt (7d)",
+            "actions": "Akcje"
+          },
+          "requestsCount": "{{count}} żądań",
+          "viewDetails": "Zobacz szczegóły"
+        },
+        "costDashboard": {
+          "totalSpend7d": "Łączne wydatki (7d)",
+          "avgCostPerRequest": "Śr. koszt/żądanie",
+          "totalRequests": "Łączna liczba żądań",
+          "totalTokens": "Łączna liczba tokenów",
+          "attributionTitle": "Przypisanie kosztów",
+          "attributionDescription": "Zobacz, którzy użytkownicy i projekty generują najwięcej kosztów AI",
+          "columns": {
+            "entity": "Podmiot",
+            "type": "Typ",
+            "requests": "Żądania",
+            "tokens": "Tokeny",
+            "cost": "Koszt",
+            "percentOfTotal": "% całości"
+          }
+        }
+      },
+      "auditCompliance": {
+        "toasts": {
+          "exported": "Wyeksportowano dziennik audytu jako {{format}}"
+        },
+        "errors": {
+          "export": "Nie udało się wyeksportować dziennika audytu"
+        },
+        "status": {
+          "compliant": "Zgodny",
+          "partial": "Częściowy",
+          "nonCompliant": "Niezgodny"
+        },
+        "title": "Audyt i zgodność",
+        "description": "Przeglądaj dzienniki audytu, zdarzenia bezpieczeństwa i raporty zgodności",
+        "dateRange": {
+          "last24h": "Ostatnie 24 godziny",
+          "last7d": "Ostatnie 7 dni",
+          "last30d": "Ostatnie 30 dni",
+          "last90d": "Ostatnie 90 dni"
+        },
+        "exportCsv": "CSV",
+        "exportJson": "JSON",
+        "subTabs": {
+          "settings": "Zmiany ustawień",
+          "usage": "Audyt użycia",
+          "security": "Zdarzenia bezpieczeństwa",
+          "compliance": "Raporty zgodności",
+          "templates": "Szablony niestandardowe"
+        },
+        "searchPlaceholder": "Szukaj w dzienniku audytu...",
+        "usageAudit": {
+          "title": "Dziennik audytu użycia",
+          "description": "Szczegółowy dziennik wszystkich żądań i odpowiedzi AI",
+          "hint": "Włącz „Audytuj wszystkie żądania AI\" w zakładce Funkcje, aby rozpocząć rejestrowanie"
+        },
+        "security": {
+          "totalEvents": "Wszystkie zdarzenia",
+          "unresolved": "Nierozwiązane",
+          "highCritical": "Wysokie/Krytyczne",
+          "piiDetected": "Wykryto dane osobowe",
+          "columns": {
+            "event": "Zdarzenie",
+            "severity": "Waga",
+            "user": "Użytkownik",
+            "time": "Czas",
+            "status": "Status",
+            "actions": "Akcje"
+          },
+          "resolved": "Rozwiązane",
+          "open": "Otwarte",
+          "view": "Zobacz"
+        },
+        "compliance": {
+          "generateTitle": "Wygeneruj raport zgodności",
+          "generating": "Generowanie raportu {{standard}}...",
+          "exportFormat": "Format eksportu",
+          "exportingPdf": "Eksportowanie wszystkich raportów jako PDF...",
+          "exportAllPdf": "Eksportuj wszystko (PDF)",
+          "exportingCsv": "Eksportowanie danych audytu jako CSV...",
+          "rawDataCsv": "Dane surowe (CSV)",
+          "generatingSummary": "Generowanie podsumowania wykonawczego...",
+          "executiveSummary": "Podsumowanie wykonawcze",
+          "recentReports": "Ostatnie raporty",
+          "findingsCount": "{{count}} ustaleń",
+          "download": "Pobierz"
+        },
+        "templates": {
+          "title": "Niestandardowe szablony zgodności",
+          "description": "Twórz i zarządzaj niestandardowymi ramami zgodności dla organizacji",
+          "create": "Utwórz szablon",
+          "basedOn": "Na podstawie {{basedOn}}",
+          "sectionsCount": "{{count}} sekcji",
+          "checkpointsCount": "{{count}} punktów kontrolnych",
+          "updated": "Zaktualizowano {{date}}",
+          "edit": "Edytuj",
+          "duplicated": "Zduplikowano szablon",
+          "duplicate": "Duplikuj",
+          "deleted": "Usunięto szablon",
+          "delete": "Usuń",
+          "emptyTitle": "Brak niestandardowych szablonów",
+          "emptyDescription": "Utwórz niestandardowe ramy zgodności dopasowane do potrzeb organizacji",
+          "createFirst": "Utwórz swój pierwszy szablon"
+        }
+      },
+      "featuresPrivacy": {
+        "retention": {
+          "days7": {
+            "label": "7 dni",
+            "description": "Minimalne przechowywanie zgodne z wymogami"
+          },
+          "days30": {
+            "label": "30 dni",
+            "description": "Standardowy okres przechowywania"
+          },
+          "days90": {
+            "label": "90 dni",
+            "description": "Rozszerzone przechowywanie do analiz"
+          },
+          "year1": {
+            "label": "1 rok",
+            "description": "Długoterminowe przechowywanie"
+          },
+          "forever": {
+            "label": "Zawsze",
+            "description": "Nigdy nie usuwaj (niezalecane)"
+          }
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia funkcji i prywatności",
+          "promptUpdated": "Zaktualizowano prompt systemowy"
+        },
+        "errors": {
+          "save": "Nie udało się zapisać ustawień",
+          "updatePrompt": "Nie udało się zaktualizować promptu"
+        },
+        "title": "Funkcje i prywatność",
+        "description": "Skonfiguruj funkcje AI, polityki danych i niestandardowe instrukcje",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "subTabs": {
+          "features": "Funkcje AI",
+          "data": "Polityka danych",
+          "instructions": "Niestandardowe instrukcje",
+          "personas": "Persony systemowe"
+        },
+        "features": {
+          "title": "Funkcje AI",
+          "description": "Włącz lub wyłącz określone możliwości AI dla organizacji",
+          "artifacts": {
+            "label": "Panel artefaktów",
+            "description": "Zezwól AI na generowanie ustrukturyzowanej treści (kod, dokumenty, diagramy)"
+          },
+          "thinkingSteps": {
+            "label": "Kroki rozumowania (Chain of Thought)",
+            "description": "Pokaż proces rozumowania AI z rozwijanymi blokami myślenia"
+          },
+          "focusModes": {
+            "label": "Tryby skupienia",
+            "description": "Zezwól użytkownikom na filtrowanie kontekstu AI (dokumenty PMO, dane projektu, badania)"
+          },
+          "webSearch": {
+            "label": "Wyszukiwanie w sieci",
+            "description": "Zezwól AI na wyszukiwanie aktualnych informacji w internecie"
+          },
+          "voice": {
+            "label": "Rozmowy głosowe",
+            "description": "Włącz wejście i wyjście głosowe dla interakcji z AI"
+          },
+          "auditSettings": "Ustawienia audytu",
+          "auditAll": {
+            "label": "Audytuj wszystkie żądania AI",
+            "description": "Rejestruj każdą interakcję z AI dla zgodności (zwiększa zużycie pamięci)"
+          },
+          "auditPolicy": {
+            "label": "Audytuj zmiany polityki",
+            "description": "Śledź wszystkie zmiany ustawień AI"
+          }
+        },
+        "dataRetention": {
+          "title": "Przechowywanie danych",
+          "description": "Jak długo przechowywane są dane rozmów AI"
+        },
+        "aiLearning": {
+          "title": "Uczenie się AI",
+          "description": "Kontroluj sposób, w jaki AI uczy się na podstawie danych organizacji",
+          "allowTitle": "Zezwól AI na naukę na danych organizacji",
+          "allowDescription": "AI będzie poprawiać odpowiedzi na podstawie wzorców i decyzji organizacji",
+          "privacyNoticeTitle": "Informacja o prywatności",
+          "privacyNoticeDescription": "Gdy włączone, uczenie AI wykorzystuje tylko zagregowane, zanonimizowane wzorce. Żadne dane osobowe ani wrażliwe nie są używane do treningu."
+        },
+        "externalData": {
+          "title": "Polityka danych zewnętrznych",
+          "description": "Kontroluj dostęp AI do zewnętrznych źródeł danych",
+          "allowTitle": "Zezwól na dostęp do danych zewnętrznych",
+          "allowDescription": "AI może pobierać branżowe benchmarki, dane rynkowe i zewnętrzne odniesienia"
+        },
+        "instructions": {
+          "title": "Instrukcje organizacji",
+          "description": "Niestandardowe instrukcje stosowane do wszystkich interakcji AI w organizacji",
+          "toneStyle": "Ton i styl",
+          "toneProfessional": "Profesjonalny - formalny i odpowiedni biznesowo",
+          "toneFriendly": "Przyjazny - przystępny i konwersacyjny",
+          "toneTechnical": "Techniczny - precyzyjny i szczegółowy",
+          "toneConcise": "Zwięzły - krótki i na temat",
+          "toneEducational": "Edukacyjny - wyjaśniający, nastawiony na nauczanie",
+          "customLabel": "Niestandardowe instrukcje systemowe",
+          "customPlaceholder": "Dodaj niestandardowe instrukcje, które zostaną zastosowane do wszystkich interakcji AI...\n\nPrzykład:\n- Zawsze wspominaj o odpowiednich standardach ISO przy omawianiu procesów\n- Używaj jednostek metrycznych do wszystkich pomiarów\n- Odwołuj się do polityk firmy tam, gdzie to właściwe",
+          "customHint": "Te instrukcje są dodawane na początku każdego żądania AI w organizacji."
+        },
+        "restrictedTopics": {
+          "title": "Ograniczone tematy",
+          "description": "Tematy lub typy treści, których AI powinno unikać",
+          "competitor": {
+            "label": "Analiza konkurencji",
+            "desc": "Unikaj omawiania produktów/usług konkurencji"
+          },
+          "legal": {
+            "label": "Porady prawne",
+            "desc": "Nie udzielaj rekomendacji prawnych"
+          },
+          "financial": {
+            "label": "Porady finansowe",
+            "desc": "Unikaj konkretnych rekomendacji finansowych"
+          },
+          "personnel": {
+            "label": "Decyzje personalne",
+            "desc": "Nie doradzaj w sprawach zatrudniania/zwalniania"
+          },
+          "medical": {
+            "label": "Tematy medyczne",
+            "desc": "Unikaj porad związanych ze zdrowiem"
+          },
+          "politics": {
+            "label": "Tematy polityczne",
+            "desc": "Zachowaj neutralność w kwestiach politycznych"
+          },
+          "customKeywords": "Niestandardowe zabronione słowa kluczowe",
+          "customKeywordsPlaceholder": "Wpisz słowa kluczowe lub frazy, których AI powinno unikać, po jednej w wierszu..."
+        },
+        "personas": {
+          "available": "Dostępne persony",
+          "editPrefix": "Edytuj: {{key}}",
+          "descriptionLabel": "Opis",
+          "systemPromptLabel": "Prompt systemowy",
+          "contextInjection": "Wstrzykiwanie kontekstu",
+          "context": {
+            "project": "Kontekst projektu",
+            "userProfile": "Profil użytkownika",
+            "assessmentData": "Dane oceny",
+            "knowledgeBase": "Baza wiedzy",
+            "taskHistory": "Historia zadań"
+          },
+          "cancel": "Anuluj",
+          "save": "Zapisz personę",
+          "selectToEdit": "Wybierz personę do edycji"
+        }
+      },
+      "modelsProviders": {
+        "errors": {
+          "load": "Nie udało się załadować dostawców",
+          "healthCheckFailed": "Sprawdzanie stanu nie powiodło się",
+          "refreshHealth": "Nie udało się odświeżyć stanu",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Połączenie nie powiodło się",
+          "testFailedFor": "Test nie powiódł się dla {{provider}}",
+          "updateProvider": "Nie udało się zaktualizować dostawcy"
+        },
+        "toasts": {
+          "healthCheckComplete": "Sprawdzanie stanu zakończone: {{count}} zdrowych dostawców",
+          "providerHealthy": "{{provider}} działa poprawnie ({{latency}}ms)",
+          "providerEnabled": "Dostawca włączony",
+          "providerDisabled": "Dostawca wyłączony"
+        },
+        "health": {
+          "healthy": "zdrowy",
+          "degraded": "obniżony",
+          "unhealthy": "niesprawny",
+          "unknown": "nieznany"
+        },
+        "summary": {
+          "healthy": "Zdrowe",
+          "degraded": "Obniżone",
+          "unhealthy": "Niesprawne",
+          "total": "Łącznie"
+        },
+        "default": "Domyślny:",
+        "lastCheck": "Ostatnie sprawdzenie: {{time}}",
+        "hideInactive": "Ukryj nieaktywne",
+        "showInactive": "Pokaż nieaktywne",
+        "refreshing": "Odświeżanie...",
+        "refreshAll": "Odśwież wszystko",
+        "defaultBadge": "Domyślny",
+        "vision": "Wizja",
+        "tools": "Narzędzia",
+        "noApiKey": "Brak klucza API",
+        "priorityCost": "Priorytet: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Obwód: {{state}}",
+        "failuresCount": "({{count}} błędów)",
+        "tableTitle": "Zarządzanie dostawcami AI",
+        "tableDescription": "Skonfiguruj dostawców dla organizacji. Włącz/wyłącz, aby kontrolować, które modele są dostępne.",
+        "columns": {
+          "provider": "Dostawca",
+          "model": "Model",
+          "tiers": "Poziomy",
+          "health": "Stan",
+          "orgAccess": "Dostęp organizacji",
+          "status": "Status"
+        },
+        "active": "Aktywny",
+        "inactive": "Nieaktywny",
+        "modelsPerTier": "Dostępne modele wg poziomu",
+        "modelsInTiers": "{{modelCount}} modeli w {{tierCount}} poziomach",
+        "noModelsAvailable": "Brak dostępnych modeli"
+      },
+      "llmView": {
+        "errors": {
+          "statusUnavailable": "Status LLM niedostępny",
+          "loadStatus": "Nie udało się załadować statusu LLM",
+          "loadProviders": "Nie udało się załadować dostawców",
+          "loadPrompts": "Nie udało się załadować promptów",
+          "loadAnalyticsData": "Nie udało się załadować danych analitycznych",
+          "loadAnalytics": "Nie udało się załadować analiz",
+          "healthCheckFailed": "Sprawdzanie stanu nie powiodło się",
+          "refreshHealth": "Nie udało się odświeżyć stanu",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Połączenie nie powiodło się",
+          "testFailedFor": "Test nie powiódł się dla {{provider}}",
+          "connectionFailedWithMessage": "Połączenie nie powiodło się: {{message}}",
+          "testFailedExecute": "Nie udało się wykonać testu",
+          "operationFailed": "Operacja nie powiodła się",
+          "updatePrompt": "Nie udało się zaktualizować promptu",
+          "deleteFailed": "Usuwanie nie powiodło się"
+        },
+        "toasts": {
+          "healthCheckComplete": "Sprawdzanie stanu zakończone: {{count}} zdrowych dostawców",
+          "providerHealthy": "{{provider}} działa poprawnie ({{latency}}ms)",
+          "providerUpdated": "Zaktualizowano dostawcę",
+          "providerAdded": "Dodano dostawcę",
+          "promptUpdated": "Zaktualizowano prompt systemowy",
+          "providerDeleted": "Usunięto dostawcę"
+        },
+        "tabs": {
+          "providers": "Dostawcy LLM",
+          "health": "Panel stanu",
+          "prompts": "Persony systemowe (prompty)"
+        },
+        "providersUnavailable": "Dostawcy LLM niedostępni",
+        "readOnly": {
+          "providersTitle": "Konfiguracja dostawców LLM jest tylko do odczytu",
+          "providersDescription": "Akcje zarządzania dostawcami nie są pokazywane, dopóki przepływ przechowywania i audytu nie zostanie w pełni podłączony.",
+          "promptsTitle": "Prompty systemowe są tylko do odczytu",
+          "promptsDescription": "Edycja promptów jest ukryta, dopóki atrybucja użytkownika, przechowywanie i metadane audytu nie zostaną podłączone."
+        },
+        "loadedProviders": "Załadowani dostawcy:",
+        "promptsUnavailable": "Prompty systemowe niedostępne",
+        "loadedPrompts": "Załadowane prompty:",
+        "analyticsUnavailable": "Analityka LLM niedostępna",
+        "kpi": {
+          "last7days": "OSTATNIE 7 DNI",
+          "totalRequests": "Łączna liczba żądań",
+          "avgLatency": "ŚR. OPÓŹNIENIE",
+          "responseTime": "Czas odpowiedzi",
+          "estCost": "SZAC. KOSZT",
+          "totalSpend": "Łączne wydatki",
+          "errorRate": "WSKAŹNIK BŁĘDÓW",
+          "failedRequests": "{{count}} nieudanych żądań"
+        },
+        "recentInteractions": "Ostatnie interakcje",
+        "viewAllLogs": "Zobacz wszystkie logi",
+        "columns": {
+          "status": "Status",
+          "time": "Czas",
+          "providerModel": "Dostawca / Model",
+          "latency": "Opóźnienie",
+          "cost": "Koszt",
+          "details": "Szczegóły"
+        },
+        "success": "Sukces",
+        "noLogs": "Nie znaleziono logów z ostatnich 7 dni.",
+        "healthUnavailable": "Status stanu LLM niedostępny",
+        "summary": {
+          "healthy": "Zdrowe",
+          "degraded": "Obniżone",
+          "unhealthy": "Niesprawne",
+          "total": "Łącznie"
+        },
+        "default": "Domyślny:",
+        "lastCheckDuration": "Ostatnie sprawdzenie: {{time}}({{duration}}ms)",
+        "refreshing": "Odświeżanie...",
+        "refreshAll": "Odśwież wszystko",
+        "criticalErrors": "Błędy krytyczne",
+        "defaultBadge": "Domyślny",
+        "vision": "Wizja",
+        "tools": "Narzędzia",
+        "noApiKey": "Brak klucza API",
+        "priorityCost": "Priorytet: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Obwód: {{state}}",
+        "failuresCount": "({{count}} błędów)",
+        "fallbackChains": "Łańcuchy zapasowe"
+      },
+      "helpAnalytics": {
+        "errors": {
+          "fetch": "Nie udało się pobrać danych"
+        },
+        "loading": "Ładowanie analityki...",
+        "refresh": "Odśwież",
+        "noData": "Brak dostępnych danych analitycznych",
+        "title": "Analityka Pomocy",
+        "subtitle": "Monitoruj wydajność systemu pomocy i zaangażowanie użytkowników",
+        "days": "dni",
+        "activeUsers": "Aktywni Użytkownicy",
+        "totalEvents": "Wszystkie Zdarzenia",
+        "helpfulnessRate": "Wskaźnik Pomocności",
+        "avgRating": "Średnia Ocena",
+        "topContent": "Najczęściej Oglądana Treść",
+        "viewers": "widzów",
+        "topSearches": "Popularne Wyszukiwania",
+        "searches": "wyszukiwań",
+        "conversionRate": "wskaźnik konwersji",
+        "zeroResults": "Wyszukiwania Bez Wyników",
+        "zeroResultsDescription": "Wyszukiwania, które nie zwróciły wyników - okazje do dodania treści",
+        "noZeroResults": "Brak wyszukiwań bez wyników",
+        "needsImprovement": "Wymaga Poprawy",
+        "needsImprovementDescription": "Treści z niskim wskaźnikiem pomocności (<70%)",
+        "feedbackCount": "{{count}} opinii",
+        "allContentHighlyRated": "Wszystkie treści mają dobrą ocenę",
+        "videoCompletion": "Ukończenie Wideo",
+        "completionRate": "wskaźnik ukończenia",
+        "recentFeedback": "Ostatnie Opinie",
+        "lastUpdated": "Ostatnia aktualizacja"
+      },
+      "orgAISettings": {
+        "validation": {
+          "maxCallsPerDay": "Dzienny limit wywołań AI musi wynosić co najmniej 1.",
+          "maxTokensPerMonth": "Miesięczny limit tokenów musi wynosić co najmniej 1.",
+          "negativeBudget": "Limity budżetu nie mogą być ujemne.",
+          "budgetExceedsHardLimit": "Budżet miesięczny nie może być wyższy niż twardy limit.",
+          "atLeastOneRole": "Co najmniej jedna rola AI musi pozostać aktywna.",
+          "defaultRoleMustBeActive": "Domyślna rola AI musi być jedną z aktywnych ról."
+        },
+        "levels": {
+          "advisory": {
+            "title": "Doradczy",
+            "description": "AI może jedynie wyjaśniać i sugerować. Brak modyfikacji."
+          },
+          "assisted": {
+            "title": "Wspomagany",
+            "description": "AI może tworzyć wersje robocze wymagające zatwierdzenia."
+          },
+          "proactive": {
+            "title": "Proaktywny",
+            "description": "AI może automatycznie wykonywać działania niskiego ryzyka."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI działa autonomicznie w ramach zasad zarządzania."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Doradca",
+            "description": "Dostarcza wskazówek i rekomendacji"
+          },
+          "pmoManager": {
+            "title": "Kierownik PMO",
+            "description": "Zarządza metodyką projektu"
+          },
+          "executor": {
+            "title": "Wykonawca",
+            "description": "Wykonuje zatwierdzone działania"
+          },
+          "educator": {
+            "title": "Edukator",
+            "description": "Naucza i wyjaśnia koncepcje"
+          }
+        },
+        "errors": {
+          "load": "Nie udało się załadować ustawień AI organizacji",
+          "saveNotConfirmed": "Zapis ustawień AI organizacji nie został potwierdzony przez serwer",
+          "save": "Nie udało się zapisać ustawień AI organizacji"
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia AI organizacji"
+        },
+        "tabs": {
+          "policy": "Polityka i role",
+          "limits": "Limity i budżet",
+          "features": "Funkcje",
+          "audit": "Dziennik audytu"
+        },
+        "unavailableTitle": "Ustawienia AI organizacji niedostępne",
+        "noSettingsFound": "Nie znaleziono ustawień AI",
+        "noSettingsDescription": "Ta organizacja nie ma jeszcze skonfigurowanych ustawień AI. Skontaktuj się z pomocą techniczną lub sprawdź swoje uprawnienia.",
+        "retryLoading": "Spróbuj ponownie",
+        "title": "Ustawienia AI organizacji",
+        "configureFor": "Skonfiguruj zachowanie AI dla {{orgName}}",
+        "yourOrganization": "Twojej organizacji",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "policyLevel": {
+          "title": "Poziom polityki AI",
+          "description": "Kontroluje, jakie działania może wykonywać AI"
+        },
+        "maxAllowed": "Maksymalny dozwolony",
+        "activeRoles": {
+          "title": "Aktywne role AI",
+          "description": "Wybierz, które persony AI są dostępne dla użytkowników"
+        },
+        "defaultRole": "Rola domyślna",
+        "defaultProactivity": {
+          "title": "Domyślna proaktywność",
+          "description": "Domyślny poziom proaktywności AI dla nowych użytkowników"
+        },
+        "usageLimits": {
+          "title": "Limity użycia",
+          "description": "Ustaw dzienne i miesięczne limity użycia AI",
+          "maxCallsPerDay": "Maks. wywołań AI dziennie",
+          "maxCallsPerDayDescription": "Dzienny limit na użytkownika",
+          "maxTokensPerMonth": "Maks. tokenów miesięcznie",
+          "maxTokensPerMonthDescription": "Miesięczny budżet tokenów dla organizacji"
+        },
+        "budgetControl": {
+          "title": "Kontrola budżetu",
+          "description": "Ustaw limity wydatków i działania automatyczne",
+          "monthlyBudget": "Budżet miesięczny (USD)",
+          "unlimitedPlaceholder": "0 = bez limitu",
+          "hardLimit": "Twardy limit (USD)",
+          "noHardLimitPlaceholder": "0 = brak twardego limitu",
+          "freezeOnLimit": "Zablokuj po przekroczeniu limitu",
+          "freezeOnLimitDescription": "Automatycznie wyłącz AI po przekroczeniu budżetu"
+        },
+        "features": {
+          "title": "Funkcje AI",
+          "description": "Włącz lub wyłącz określone możliwości AI dla organizacji",
+          "artifacts": {
+            "label": "Panel artefaktów",
+            "description": "Zezwól AI na generowanie ustrukturyzowanej treści (kod, dokumenty, diagramy)"
+          },
+          "thinkingSteps": {
+            "label": "Kroki rozumowania (Chain of Thought)",
+            "description": "Pokaż proces rozumowania AI z rozwijanymi blokami myślenia"
+          },
+          "focusModes": {
+            "label": "Tryby skupienia",
+            "description": "Zezwól użytkownikom na filtrowanie kontekstu AI (dokumenty PMO, dane projektu, badania)"
+          },
+          "webSearch": {
+            "label": "Wyszukiwanie w sieci",
+            "description": "Zezwól AI na wyszukiwanie aktualnych informacji w internecie"
+          },
+          "voice": {
+            "label": "Rozmowy głosowe",
+            "description": "Włącz wejście i wyjście głosowe dla interakcji z AI"
+          },
+          "auditSettings": "Ustawienia audytu",
+          "auditAll": {
+            "label": "Audytuj wszystkie żądania AI",
+            "description": "Rejestruj każdą interakcję z AI dla zgodności (zwiększa zużycie pamięci)"
+          },
+          "auditPolicy": {
+            "label": "Audytuj zmiany polityki",
+            "description": "Śledź wszystkie zmiany ustawień AI"
+          }
+        },
+        "auditLog": {
+          "title": "Historia zmian ustawień",
+          "description": "Zobacz wszystkie zmiany wprowadzone w ustawieniach AI"
+        }
+      },
+      "panel": {
+        "tabs": {
+          "settings": "Ustawienia zarządzania",
+          "operations": "Operacje AI"
+        },
+        "errors": {
+          "loadSummary": "Nie udało się załadować podsumowania AI"
+        },
+        "governanceLevel": "Poziom zarządzania",
+        "unknown": "Nieznany",
+        "reviewState": "Stan przeglądu: {{state}}",
+        "notAvailable": "n/d",
+        "modelPosture": "Postawa modelu",
+        "budget": "Budżet: {{status}}",
+        "contextControls": "Kontrole kontekstu",
+        "externalContextAllowed": "Kontekst zewnętrzny dozwolony",
+        "externalContextRestricted": "Kontekst zewnętrzny ograniczony",
+        "title": "Zarządzanie AI i operacje AI",
+        "description": "Polityka AI organizacji, kontrola ryzyka, postawa modelu i narzędzia operacyjne AI działają teraz w głównej powłoce administracyjnej."
       }
     }
   },

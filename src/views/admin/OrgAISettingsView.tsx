@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import i18n from '@/i18n';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import {
@@ -39,50 +42,6 @@ import { AdminApi } from '../../services/api/admin.api';
 import { useAppStore } from '../../store/useAppStore';
 import { AIPolicyLevel, AIRole, OrgAISettings } from '../../types/domain/ai';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
-
-// Policy level configurations
-const POLICY_LEVELS = [
-  {
-    id: 'ADVISORY',
-    title: 'Advisory',
-    description: 'AI can only explain and suggest. No modifications.',
-    icon: MessageSquare,
-    color: 'text-slate-600 dark:text-slate-500',
-    bgColor: 'from-slate-700 to-slate-800',
-  },
-  {
-    id: 'ASSISTED',
-    title: 'Assisted',
-    description: 'AI can create drafts that require approval.',
-    icon: FileCode,
-    color: 'text-blue-400',
-    bgColor: 'from-blue-700 to-blue-800',
-  },
-  {
-    id: 'PROACTIVE',
-    title: 'Proactive',
-    description: 'AI can execute low-risk actions automatically.',
-    icon: Zap,
-    color: 'text-primary-400',
-    bgColor: 'from-primary-700 to-primary-800',
-  },
-  {
-    id: 'AUTOPILOT',
-    title: 'Autopilot',
-    description: 'AI operates autonomously within governance rules.',
-    icon: Brain,
-    color: 'text-emerald-400',
-    bgColor: 'from-emerald-700 to-emerald-800',
-  },
-];
-
-// AI Roles
-const AI_ROLES = [
-  { id: 'ADVISOR', title: 'Advisor', description: 'Provides guidance and recommendations' },
-  { id: 'PMO_MANAGER', title: 'PMO Manager', description: 'Manages project methodology' },
-  { id: 'EXECUTOR', title: 'Executor', description: 'Executes approved actions' },
-  { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' },
-] satisfies Array<{ id: AIRole; title: string; description: string }>;
 
 type SettingsTab = 'policy' | 'limits' | 'features' | 'audit';
 
@@ -154,22 +113,128 @@ const orgAISettingsMatch = (persisted: OrgAISettings, expected: OrgAISettings): 
 };
 
 const validateOrgAISettings = (settings: OrgAISettings): string | null => {
-  if (settings.maxAICallsPerDay < 1) return 'Daily AI call limit must be at least 1.';
-  if (settings.maxTokensPerMonth < 1) return 'Monthly token limit must be at least 1.';
+  if (settings.maxAICallsPerDay < 1)
+    return i18n.t(
+      'admin.aiControlCenter.orgAISettings.validation.maxCallsPerDay',
+      'Daily AI call limit must be at least 1.'
+    );
+  if (settings.maxTokensPerMonth < 1)
+    return i18n.t(
+      'admin.aiControlCenter.orgAISettings.validation.maxTokensPerMonth',
+      'Monthly token limit must be at least 1.'
+    );
   if (settings.monthlyBudgetUSD < 0 || settings.hardLimitUSD < 0) {
-    return 'Budget limits cannot be negative.';
+    return i18n.t(
+      'admin.aiControlCenter.orgAISettings.validation.negativeBudget',
+      'Budget limits cannot be negative.'
+    );
   }
   if (settings.hardLimitUSD > 0 && settings.monthlyBudgetUSD > settings.hardLimitUSD) {
-    return 'Monthly budget cannot be higher than the hard limit.';
+    return i18n.t(
+      'admin.aiControlCenter.orgAISettings.validation.budgetExceedsHardLimit',
+      'Monthly budget cannot be higher than the hard limit.'
+    );
   }
-  if (settings.activeRoles.length === 0) return 'At least one AI role must remain active.';
+  if (settings.activeRoles.length === 0)
+    return i18n.t(
+      'admin.aiControlCenter.orgAISettings.validation.atLeastOneRole',
+      'At least one AI role must remain active.'
+    );
   if (!settings.activeRoles.includes(settings.defaultRole)) {
-    return 'Default AI role must be one of the active roles.';
+    return i18n.t(
+      'admin.aiControlCenter.orgAISettings.validation.defaultRoleMustBeActive',
+      'Default AI role must be one of the active roles.'
+    );
   }
   return null;
 };
 
 export const OrgAISettingsView: React.FC = () => {
+  const { t } = useTranslation();
+  // Policy level configurations
+  const POLICY_LEVELS = [
+    {
+      id: 'ADVISORY',
+      title: t('admin.aiControlCenter.orgAISettings.levels.advisory.title', 'Advisory'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.levels.advisory.description',
+        'AI can only explain and suggest. No modifications.'
+      ),
+      icon: MessageSquare,
+      color: 'text-slate-600 dark:text-slate-500',
+      bgColor: 'from-slate-700 to-slate-800',
+    },
+    {
+      id: 'ASSISTED',
+      title: t('admin.aiControlCenter.orgAISettings.levels.assisted.title', 'Assisted'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.levels.assisted.description',
+        'AI can create drafts that require approval.'
+      ),
+      icon: FileCode,
+      color: 'text-blue-400',
+      bgColor: 'from-blue-700 to-blue-800',
+    },
+    {
+      id: 'PROACTIVE',
+      title: t('admin.aiControlCenter.orgAISettings.levels.proactive.title', 'Proactive'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.levels.proactive.description',
+        'AI can execute low-risk actions automatically.'
+      ),
+      icon: Zap,
+      color: 'text-primary-400',
+      bgColor: 'from-primary-700 to-primary-800',
+    },
+    {
+      id: 'AUTOPILOT',
+      title: t('admin.aiControlCenter.orgAISettings.levels.autopilot.title', 'Autopilot'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.levels.autopilot.description',
+        'AI operates autonomously within governance rules.'
+      ),
+      icon: Brain,
+      color: 'text-emerald-400',
+      bgColor: 'from-emerald-700 to-emerald-800',
+    },
+  ];
+
+  // AI Roles
+  const AI_ROLES = [
+    {
+      id: 'ADVISOR',
+      title: t('admin.aiControlCenter.orgAISettings.roles.advisor.title', 'Advisor'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.roles.advisor.description',
+        'Provides guidance and recommendations'
+      ),
+    },
+    {
+      id: 'PMO_MANAGER',
+      title: t('admin.aiControlCenter.orgAISettings.roles.pmoManager.title', 'PMO Manager'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.roles.pmoManager.description',
+        'Manages project methodology'
+      ),
+    },
+    {
+      id: 'EXECUTOR',
+      title: t('admin.aiControlCenter.orgAISettings.roles.executor.title', 'Executor'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.roles.executor.description',
+        'Executes approved actions'
+      ),
+    },
+    {
+      id: 'EDUCATOR',
+      title: t('admin.aiControlCenter.orgAISettings.roles.educator.title', 'Educator'),
+      description: t(
+        'admin.aiControlCenter.orgAISettings.roles.educator.description',
+        'Teaches and explains concepts'
+      ),
+    },
+  ] satisfies Array<{ id: AIRole; title: string; description: string }>;
+
   const { currentOrganization } = useAppStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>('policy');
   const [loading, setLoading] = useState(true);
@@ -193,14 +258,20 @@ export const OrgAISettingsView: React.FC = () => {
       setSettings(normalizeOrgAISettings(organizationId, (data as Partial<OrgAISettings>) || null));
       setHasChanges(false);
     } catch (error) {
-      const message = normalizeApiErrorMessage(error, 'Failed to load organization AI settings');
+      const message = normalizeApiErrorMessage(
+        error,
+        t(
+          'admin.aiControlCenter.orgAISettings.errors.load',
+          'Failed to load organization AI settings'
+        )
+      );
       setSettings(null);
       setLoadError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, t]);
 
   useEffect(() => {
     loadSettings();
@@ -228,14 +299,27 @@ export const OrgAISettingsView: React.FC = () => {
         (persisted as Partial<OrgAISettings>) || null
       );
       if (!orgAISettingsMatch(persistedSettings, expected)) {
-        throw new Error('Organization AI settings save was not confirmed by the server');
+        throw new Error(
+          t(
+            'admin.aiControlCenter.orgAISettings.errors.saveNotConfirmed',
+            'Organization AI settings save was not confirmed by the server'
+          )
+        );
       }
 
       setSettings(persistedSettings);
       setHasChanges(false);
-      toast.success('Organization AI settings saved');
+      toast.success(
+        t('admin.aiControlCenter.orgAISettings.toasts.saved', 'Organization AI settings saved')
+      );
     } catch (error) {
-      const message = normalizeApiErrorMessage(error, 'Failed to save organization AI settings');
+      const message = normalizeApiErrorMessage(
+        error,
+        t(
+          'admin.aiControlCenter.orgAISettings.errors.save',
+          'Failed to save organization AI settings'
+        )
+      );
       setSaveError(message);
       toast.error(message);
     } finally {
@@ -254,7 +338,12 @@ export const OrgAISettingsView: React.FC = () => {
     const currentRoles = settings.activeRoles;
     const nextRole = roleId as AIRole;
     if (currentRoles.includes(nextRole) && currentRoles.length === 1) {
-      toast.error('At least one AI role must remain active.');
+      toast.error(
+        t(
+          'admin.aiControlCenter.orgAISettings.validation.atLeastOneRole',
+          'At least one AI role must remain active.'
+        )
+      );
       return;
     }
     const newRoles = currentRoles.includes(nextRole)
@@ -270,10 +359,26 @@ export const OrgAISettingsView: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'policy' as SettingsTab, label: 'Policy & Roles', icon: Shield },
-    { id: 'limits' as SettingsTab, label: 'Limits & Budget', icon: DollarSign },
-    { id: 'features' as SettingsTab, label: 'Features', icon: Sparkles },
-    { id: 'audit' as SettingsTab, label: 'Audit Log', icon: History },
+    {
+      id: 'policy' as SettingsTab,
+      label: t('admin.aiControlCenter.orgAISettings.tabs.policy', 'Policy & Roles'),
+      icon: Shield,
+    },
+    {
+      id: 'limits' as SettingsTab,
+      label: t('admin.aiControlCenter.orgAISettings.tabs.limits', 'Limits & Budget'),
+      icon: DollarSign,
+    },
+    {
+      id: 'features' as SettingsTab,
+      label: t('admin.aiControlCenter.orgAISettings.tabs.features', 'Features'),
+      icon: Sparkles,
+    },
+    {
+      id: 'audit' as SettingsTab,
+      label: t('admin.aiControlCenter.orgAISettings.tabs.audit', 'Audit Log'),
+      icon: History,
+    },
   ];
 
   if (loading) {
@@ -288,7 +393,13 @@ export const OrgAISettingsView: React.FC = () => {
     if (loadError) {
       return (
         <div className="h-full bg-c-bg p-8">
-          <DegradedState title="Organization AI settings unavailable" description={loadError} />
+          <DegradedState
+            title={t(
+              'admin.aiControlCenter.orgAISettings.unavailableTitle',
+              'Organization AI settings unavailable'
+            )}
+            description={loadError}
+          />
         </div>
       );
     }
@@ -298,17 +409,21 @@ export const OrgAISettingsView: React.FC = () => {
         <div className="w-16 h-16 rounded-full bg-c-surface-raised flex items-center justify-center mb-4">
           <Brain className="text-slate-500 dark:text-slate-400" size={32} />
         </div>
-        <h2 className="text-xl font-semibold text-c-text mb-2">No AI Settings Found</h2>
+        <h2 className="text-xl font-semibold text-c-text mb-2">
+          {t('admin.aiControlCenter.orgAISettings.noSettingsFound', 'No AI Settings Found')}
+        </h2>
         <p className="text-slate-600 dark:text-slate-500 max-w-md mb-6">
-          This organization doesn't have AI settings configured yet. Please contact support or check
-          your permissions.
+          {t(
+            'admin.aiControlCenter.orgAISettings.noSettingsDescription',
+            "This organization doesn't have AI settings configured yet. Please contact support or check your permissions."
+          )}
         </p>
         <button
           onClick={loadSettings}
           className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
         >
           <RefreshCw size={16} />
-          Retry Loading
+          {t('admin.aiControlCenter.orgAISettings.retryLoading', 'Retry Loading')}
         </button>
       </div>
     );
@@ -326,9 +441,22 @@ export const OrgAISettingsView: React.FC = () => {
               <Brain className="text-c-text" size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-c-text">Organization AI Settings</h1>
+              <h1 className="text-2xl font-bold text-c-text">
+                {t('admin.aiControlCenter.orgAISettings.title', 'Organization AI Settings')}
+              </h1>
               <p className="text-sm text-slate-600 dark:text-slate-500">
-                Configure AI behavior for {currentOrganization?.name || 'your organization'}
+                {t(
+                  'admin.aiControlCenter.orgAISettings.configureFor',
+                  'Configure AI behavior for {{orgName}}',
+                  {
+                    orgName:
+                      currentOrganization?.name ||
+                      t(
+                        'admin.aiControlCenter.orgAISettings.yourOrganization',
+                        'your organization'
+                      ),
+                  }
+                )}
               </p>
             </div>
           </div>
@@ -340,7 +468,7 @@ export const OrgAISettingsView: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full"
               >
-                Unsaved changes
+                {t('admin.aiControlCenter.orgAISettings.unsavedChanges', 'Unsaved changes')}
               </motion.span>
             )}
             <button
@@ -360,7 +488,7 @@ export const OrgAISettingsView: React.FC = () => {
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              Save Changes
+              {t('admin.aiControlCenter.orgAISettings.saveChanges', 'Save Changes')}
             </button>
           </div>
         </div>
@@ -404,8 +532,14 @@ export const OrgAISettingsView: React.FC = () => {
             <>
               {/* Policy Level */}
               <SettingsCard
-                title="AI Policy Level"
-                description="Controls what actions AI can perform"
+                title={t(
+                  'admin.aiControlCenter.orgAISettings.policyLevel.title',
+                  'AI Policy Level'
+                )}
+                description={t(
+                  'admin.aiControlCenter.orgAISettings.policyLevel.description',
+                  'Controls what actions AI can perform'
+                )}
                 icon={Shield}
                 iconColor="text-primary-400"
               >
@@ -440,7 +574,7 @@ export const OrgAISettingsView: React.FC = () => {
                       >
                         {isMax && (
                           <span className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
-                            Max Allowed
+                            {t('admin.aiControlCenter.orgAISettings.maxAllowed', 'Max Allowed')}
                           </span>
                         )}
                         <div className="flex items-start gap-3">
@@ -471,8 +605,14 @@ export const OrgAISettingsView: React.FC = () => {
 
               {/* Active AI Roles */}
               <SettingsCard
-                title="Active AI Roles"
-                description="Select which AI personas are available to users"
+                title={t(
+                  'admin.aiControlCenter.orgAISettings.activeRoles.title',
+                  'Active AI Roles'
+                )}
+                description={t(
+                  'admin.aiControlCenter.orgAISettings.activeRoles.description',
+                  'Select which AI personas are available to users'
+                )}
                 icon={Users}
                 iconColor="text-blue-400"
               >
@@ -507,7 +647,7 @@ export const OrgAISettingsView: React.FC = () => {
 
                 <div className="mt-4 pt-4 border-t border-c-border/50">
                   <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
-                    Default Role
+                    {t('admin.aiControlCenter.orgAISettings.defaultRole', 'Default Role')}
                   </label>
                   <select
                     value={settings.defaultRole}
@@ -525,8 +665,14 @@ export const OrgAISettingsView: React.FC = () => {
 
               {/* Default Proactivity */}
               <SettingsCard
-                title="Default Proactivity"
-                description="Default AI proactivity level for new users"
+                title={t(
+                  'admin.aiControlCenter.orgAISettings.defaultProactivity.title',
+                  'Default Proactivity'
+                )}
+                description={t(
+                  'admin.aiControlCenter.orgAISettings.defaultProactivity.description',
+                  'Default AI proactivity level for new users'
+                )}
                 icon={Zap}
                 iconColor="text-emerald-400"
               >
@@ -545,15 +691,24 @@ export const OrgAISettingsView: React.FC = () => {
           {activeTab === 'limits' && settings && (
             <>
               <SettingsCard
-                title="Usage Limits"
-                description="Set daily and monthly limits for AI usage"
+                title={t('admin.aiControlCenter.orgAISettings.usageLimits.title', 'Usage Limits')}
+                description={t(
+                  'admin.aiControlCenter.orgAISettings.usageLimits.description',
+                  'Set daily and monthly limits for AI usage'
+                )}
                 icon={AlertTriangle}
                 iconColor="text-amber-400"
               >
                 <div className="space-y-6">
                   <SettingsSlider
-                    label="Max AI Calls per Day"
-                    description="Daily limit per user"
+                    label={t(
+                      'admin.aiControlCenter.orgAISettings.usageLimits.maxCallsPerDay',
+                      'Max AI Calls per Day'
+                    )}
+                    description={t(
+                      'admin.aiControlCenter.orgAISettings.usageLimits.maxCallsPerDayDescription',
+                      'Daily limit per user'
+                    )}
                     value={settings.maxAICallsPerDay}
                     onChange={(v) => updateSetting('maxAICallsPerDay', v)}
                     min={10}
@@ -563,8 +718,14 @@ export const OrgAISettingsView: React.FC = () => {
                   />
 
                   <SettingsSlider
-                    label="Max Tokens per Month"
-                    description="Monthly token budget for the organization"
+                    label={t(
+                      'admin.aiControlCenter.orgAISettings.usageLimits.maxTokensPerMonth',
+                      'Max Tokens per Month'
+                    )}
+                    description={t(
+                      'admin.aiControlCenter.orgAISettings.usageLimits.maxTokensPerMonthDescription',
+                      'Monthly token budget for the organization'
+                    )}
                     value={settings.maxTokensPerMonth}
                     onChange={(v) => updateSetting('maxTokensPerMonth', v)}
                     min={50000}
@@ -577,8 +738,14 @@ export const OrgAISettingsView: React.FC = () => {
               </SettingsCard>
 
               <SettingsCard
-                title="Budget Control"
-                description="Set spending limits and automatic actions"
+                title={t(
+                  'admin.aiControlCenter.orgAISettings.budgetControl.title',
+                  'Budget Control'
+                )}
+                description={t(
+                  'admin.aiControlCenter.orgAISettings.budgetControl.description',
+                  'Set spending limits and automatic actions'
+                )}
                 icon={DollarSign}
                 iconColor="text-emerald-400"
               >
@@ -586,7 +753,10 @@ export const OrgAISettingsView: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
-                        Monthly Budget (USD)
+                        {t(
+                          'admin.aiControlCenter.orgAISettings.budgetControl.monthlyBudget',
+                          'Monthly Budget (USD)'
+                        )}
                       </label>
                       <input
                         type="number"
@@ -595,12 +765,18 @@ export const OrgAISettingsView: React.FC = () => {
                           updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)
                         }
                         className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
-                        placeholder="0 = unlimited"
+                        placeholder={t(
+                          'admin.aiControlCenter.orgAISettings.budgetControl.unlimitedPlaceholder',
+                          '0 = unlimited'
+                        )}
                       />
                     </div>
                     <div>
                       <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
-                        Hard Limit (USD)
+                        {t(
+                          'admin.aiControlCenter.orgAISettings.budgetControl.hardLimit',
+                          'Hard Limit (USD)'
+                        )}
                       </label>
                       <input
                         type="number"
@@ -609,14 +785,23 @@ export const OrgAISettingsView: React.FC = () => {
                           updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)
                         }
                         className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
-                        placeholder="0 = no hard limit"
+                        placeholder={t(
+                          'admin.aiControlCenter.orgAISettings.budgetControl.noHardLimitPlaceholder',
+                          '0 = no hard limit'
+                        )}
                       />
                     </div>
                   </div>
 
                   <SettingsToggle
-                    label="Freeze on Limit"
-                    description="Automatically disable AI when budget is exceeded"
+                    label={t(
+                      'admin.aiControlCenter.orgAISettings.budgetControl.freezeOnLimit',
+                      'Freeze on Limit'
+                    )}
+                    description={t(
+                      'admin.aiControlCenter.orgAISettings.budgetControl.freezeOnLimitDescription',
+                      'Automatically disable AI when budget is exceeded'
+                    )}
                     checked={settings.freezeOnLimit}
                     onChange={(v) => updateSetting('freezeOnLimit', v)}
                     icon={AlertTriangle}
@@ -630,15 +815,24 @@ export const OrgAISettingsView: React.FC = () => {
           {/* Features Tab */}
           {activeTab === 'features' && settings && (
             <SettingsCard
-              title="AI Features"
-              description="Enable or disable specific AI capabilities for your organization"
+              title={t('admin.aiControlCenter.orgAISettings.features.title', 'AI Features')}
+              description={t(
+                'admin.aiControlCenter.orgAISettings.features.description',
+                'Enable or disable specific AI capabilities for your organization'
+              )}
               icon={Sparkles}
               iconColor="text-primary-400"
             >
               <div className="space-y-4">
                 <SettingsToggle
-                  label="Artifacts Panel"
-                  description="Allow AI to generate structured content (code, documents, diagrams)"
+                  label={t(
+                    'admin.aiControlCenter.orgAISettings.features.artifacts.label',
+                    'Artifacts Panel'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.orgAISettings.features.artifacts.description',
+                    'Allow AI to generate structured content (code, documents, diagrams)'
+                  )}
                   icon={FileCode}
                   iconColor="text-blue-400"
                   checked={settings.artifactsEnabled}
@@ -646,8 +840,14 @@ export const OrgAISettingsView: React.FC = () => {
                 />
 
                 <SettingsToggle
-                  label="Thinking Steps (Chain of Thought)"
-                  description="Show AI reasoning process with expandable thinking blocks"
+                  label={t(
+                    'admin.aiControlCenter.orgAISettings.features.thinkingSteps.label',
+                    'Thinking Steps (Chain of Thought)'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.orgAISettings.features.thinkingSteps.description',
+                    'Show AI reasoning process with expandable thinking blocks'
+                  )}
                   icon={Brain}
                   iconColor="text-primary-400"
                   checked={settings.thinkingStepsEnabled}
@@ -655,8 +855,14 @@ export const OrgAISettingsView: React.FC = () => {
                 />
 
                 <SettingsToggle
-                  label="Focus Modes"
-                  description="Allow users to filter AI context (PMO Docs, Project Data, Research)"
+                  label={t(
+                    'admin.aiControlCenter.orgAISettings.features.focusModes.label',
+                    'Focus Modes'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.orgAISettings.features.focusModes.description',
+                    'Allow users to filter AI context (PMO Docs, Project Data, Research)'
+                  )}
                   icon={Focus}
                   iconColor="text-blue-400"
                   checked={settings.focusModesEnabled}
@@ -664,8 +870,14 @@ export const OrgAISettingsView: React.FC = () => {
                 />
 
                 <SettingsToggle
-                  label="Web Search"
-                  description="Allow AI to search the internet for current information"
+                  label={t(
+                    'admin.aiControlCenter.orgAISettings.features.webSearch.label',
+                    'Web Search'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.orgAISettings.features.webSearch.description',
+                    'Allow AI to search the internet for current information'
+                  )}
                   icon={Eye}
                   iconColor="text-emerald-400"
                   checked={settings.webSearchEnabled}
@@ -673,8 +885,14 @@ export const OrgAISettingsView: React.FC = () => {
                 />
 
                 <SettingsToggle
-                  label="Voice Conversations"
-                  description="Enable voice input and output for AI interactions"
+                  label={t(
+                    'admin.aiControlCenter.orgAISettings.features.voice.label',
+                    'Voice Conversations'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.orgAISettings.features.voice.description',
+                    'Enable voice input and output for AI interactions'
+                  )}
                   icon={Mic}
                   iconColor="text-danger-400"
                   checked={settings.voiceEnabled}
@@ -682,12 +900,23 @@ export const OrgAISettingsView: React.FC = () => {
                 />
 
                 <div className="pt-4 border-t border-c-border/50">
-                  <h4 className="font-medium text-c-text mb-3">Audit Settings</h4>
+                  <h4 className="font-medium text-c-text mb-3">
+                    {t(
+                      'admin.aiControlCenter.orgAISettings.features.auditSettings',
+                      'Audit Settings'
+                    )}
+                  </h4>
 
                   <div className="space-y-3">
                     <SettingsToggle
-                      label="Audit All AI Requests"
-                      description="Log every AI interaction for compliance (increases storage)"
+                      label={t(
+                        'admin.aiControlCenter.orgAISettings.features.auditAll.label',
+                        'Audit All AI Requests'
+                      )}
+                      description={t(
+                        'admin.aiControlCenter.orgAISettings.features.auditAll.description',
+                        'Log every AI interaction for compliance (increases storage)'
+                      )}
                       icon={History}
                       iconColor="text-amber-400"
                       checked={settings.auditAllRequests}
@@ -695,8 +924,14 @@ export const OrgAISettingsView: React.FC = () => {
                     />
 
                     <SettingsToggle
-                      label="Audit Policy Changes"
-                      description="Track all changes to AI settings"
+                      label={t(
+                        'admin.aiControlCenter.orgAISettings.features.auditPolicy.label',
+                        'Audit Policy Changes'
+                      )}
+                      description={t(
+                        'admin.aiControlCenter.orgAISettings.features.auditPolicy.description',
+                        'Track all changes to AI settings'
+                      )}
                       icon={Shield}
                       iconColor="text-amber-400"
                       checked={settings.auditPolicyChanges}
@@ -711,8 +946,14 @@ export const OrgAISettingsView: React.FC = () => {
           {/* Audit Log Tab */}
           {activeTab === 'audit' && currentOrganization && (
             <SettingsCard
-              title="Settings Change History"
-              description="View all changes made to AI settings"
+              title={t(
+                'admin.aiControlCenter.orgAISettings.auditLog.title',
+                'Settings Change History'
+              )}
+              description={t(
+                'admin.aiControlCenter.orgAISettings.auditLog.description',
+                'View all changes made to AI settings'
+              )}
               icon={History}
               iconColor="text-amber-400"
             >

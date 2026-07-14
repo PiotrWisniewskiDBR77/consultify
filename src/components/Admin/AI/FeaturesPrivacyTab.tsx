@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
@@ -39,16 +40,52 @@ import { OrgAISettings } from '../../../types';
 import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
 import { SettingsCard, SettingsToggle } from '../../AISettings';
 
-// Data retention options
-const RETENTION_OPTIONS = [
-  { value: '7d', label: '7 days', description: 'Minimal retention for compliance' },
-  { value: '30d', label: '30 days', description: 'Standard retention period' },
-  { value: '90d', label: '90 days', description: 'Extended retention for analytics' },
-  { value: '365d', label: '1 year', description: 'Long-term retention' },
-  { value: 'forever', label: 'Forever', description: 'Never delete (not recommended)' },
-];
-
 export const FeaturesPrivacyTab: React.FC = () => {
+  const { t } = useTranslation();
+  // Data retention options
+  const RETENTION_OPTIONS = [
+    {
+      value: '7d',
+      label: t('admin.aiControlCenter.featuresPrivacy.retention.days7.label', '7 days'),
+      description: t(
+        'admin.aiControlCenter.featuresPrivacy.retention.days7.description',
+        'Minimal retention for compliance'
+      ),
+    },
+    {
+      value: '30d',
+      label: t('admin.aiControlCenter.featuresPrivacy.retention.days30.label', '30 days'),
+      description: t(
+        'admin.aiControlCenter.featuresPrivacy.retention.days30.description',
+        'Standard retention period'
+      ),
+    },
+    {
+      value: '90d',
+      label: t('admin.aiControlCenter.featuresPrivacy.retention.days90.label', '90 days'),
+      description: t(
+        'admin.aiControlCenter.featuresPrivacy.retention.days90.description',
+        'Extended retention for analytics'
+      ),
+    },
+    {
+      value: '365d',
+      label: t('admin.aiControlCenter.featuresPrivacy.retention.year1.label', '1 year'),
+      description: t(
+        'admin.aiControlCenter.featuresPrivacy.retention.year1.description',
+        'Long-term retention'
+      ),
+    },
+    {
+      value: 'forever',
+      label: t('admin.aiControlCenter.featuresPrivacy.retention.forever.label', 'Forever'),
+      description: t(
+        'admin.aiControlCenter.featuresPrivacy.retention.forever.description',
+        'Never delete (not recommended)'
+      ),
+    },
+  ];
+
   const { currentOrganization } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -125,12 +162,19 @@ export const FeaturesPrivacyTab: React.FC = () => {
         const updated = await res.json();
         setSettings(updated);
         setHasChanges(false);
-        toast.success('Features & Privacy settings saved');
+        toast.success(
+          t(
+            'admin.aiControlCenter.featuresPrivacy.toasts.saved',
+            'Features & Privacy settings saved'
+          )
+        );
       } else {
         throw new Error('Save failed');
       }
     } catch (error) {
-      toast.error('Failed to save settings');
+      toast.error(
+        t('admin.aiControlCenter.featuresPrivacy.errors.save', 'Failed to save settings')
+      );
     }
     setSaving(false);
   };
@@ -150,11 +194,15 @@ export const FeaturesPrivacyTab: React.FC = () => {
         context_config: editingPrompt.context_config,
         updatedBy: 'Admin',
       });
-      toast.success('System Prompt Updated');
+      toast.success(
+        t('admin.aiControlCenter.featuresPrivacy.toasts.promptUpdated', 'System Prompt Updated')
+      );
       setEditingPrompt(null);
       loadPrompts();
     } catch (e) {
-      toast.error('Failed to update prompt');
+      toast.error(
+        t('admin.aiControlCenter.featuresPrivacy.errors.updatePrompt', 'Failed to update prompt')
+      );
     }
   };
 
@@ -169,10 +217,13 @@ export const FeaturesPrivacyTab: React.FC = () => {
         <div>
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <Sparkles className="text-primary-600 dark:text-primary-400" size={20} />
-            Features & Privacy
+            {t('admin.aiControlCenter.featuresPrivacy.title', 'Features & Privacy')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Configure AI features, data policies, and custom instructions
+            {t(
+              'admin.aiControlCenter.featuresPrivacy.description',
+              'Configure AI features, data policies, and custom instructions'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -182,7 +233,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-xs text-warning-700 dark:text-amber-400 bg-warning-500/10 px-3 py-1.5 rounded-full border border-warning-500/30 dark:border-transparent"
             >
-              Unsaved changes
+              {t('admin.aiControlCenter.featuresPrivacy.unsavedChanges', 'Unsaved changes')}
             </motion.span>
           )}
           <button
@@ -195,7 +246,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
             }`}
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Changes
+            {t('admin.aiControlCenter.featuresPrivacy.saveChanges', 'Save Changes')}
           </button>
         </div>
       </div>
@@ -211,7 +262,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           }`}
         >
           <Sparkles size={14} className="inline mr-2" />
-          AI Features
+          {t('admin.aiControlCenter.featuresPrivacy.subTabs.features', 'AI Features')}
         </button>
         <button
           onClick={() => setActiveSubTab('data')}
@@ -222,7 +273,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           }`}
         >
           <Database size={14} className="inline mr-2" />
-          Data Policy
+          {t('admin.aiControlCenter.featuresPrivacy.subTabs.data', 'Data Policy')}
         </button>
         <button
           onClick={() => setActiveSubTab('instructions')}
@@ -233,7 +284,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           }`}
         >
           <MessageSquare size={14} className="inline mr-2" />
-          Custom Instructions
+          {t('admin.aiControlCenter.featuresPrivacy.subTabs.instructions', 'Custom Instructions')}
         </button>
         <button
           onClick={() => setActiveSubTab('personas')}
@@ -244,22 +295,31 @@ export const FeaturesPrivacyTab: React.FC = () => {
           }`}
         >
           <Brain size={14} className="inline mr-2" />
-          System Personas
+          {t('admin.aiControlCenter.featuresPrivacy.subTabs.personas', 'System Personas')}
         </button>
       </div>
 
       {/* AI Features */}
       {activeSubTab === 'features' && settings && (
         <SettingsCard
-          title="AI Features"
-          description="Enable or disable specific AI capabilities for your organization"
+          title={t('admin.aiControlCenter.featuresPrivacy.features.title', 'AI Features')}
+          description={t(
+            'admin.aiControlCenter.featuresPrivacy.features.description',
+            'Enable or disable specific AI capabilities for your organization'
+          )}
           icon={Sparkles}
           iconColor="text-primary-400"
         >
           <div className="space-y-4">
             <SettingsToggle
-              label="Artifacts Panel"
-              description="Allow AI to generate structured content (code, documents, diagrams)"
+              label={t(
+                'admin.aiControlCenter.featuresPrivacy.features.artifacts.label',
+                'Artifacts Panel'
+              )}
+              description={t(
+                'admin.aiControlCenter.featuresPrivacy.features.artifacts.description',
+                'Allow AI to generate structured content (code, documents, diagrams)'
+              )}
               icon={FileCode}
               iconColor="text-blue-400"
               checked={settings.artifactsEnabled}
@@ -267,8 +327,14 @@ export const FeaturesPrivacyTab: React.FC = () => {
             />
 
             <SettingsToggle
-              label="Thinking Steps (Chain of Thought)"
-              description="Show AI reasoning process with expandable thinking blocks"
+              label={t(
+                'admin.aiControlCenter.featuresPrivacy.features.thinkingSteps.label',
+                'Thinking Steps (Chain of Thought)'
+              )}
+              description={t(
+                'admin.aiControlCenter.featuresPrivacy.features.thinkingSteps.description',
+                'Show AI reasoning process with expandable thinking blocks'
+              )}
               icon={Brain}
               iconColor="text-primary-400"
               checked={settings.thinkingStepsEnabled}
@@ -276,8 +342,14 @@ export const FeaturesPrivacyTab: React.FC = () => {
             />
 
             <SettingsToggle
-              label="Focus Modes"
-              description="Allow users to filter AI context (PMO Docs, Project Data, Research)"
+              label={t(
+                'admin.aiControlCenter.featuresPrivacy.features.focusModes.label',
+                'Focus Modes'
+              )}
+              description={t(
+                'admin.aiControlCenter.featuresPrivacy.features.focusModes.description',
+                'Allow users to filter AI context (PMO Docs, Project Data, Research)'
+              )}
               icon={Focus}
               iconColor="text-blue-400"
               checked={settings.focusModesEnabled}
@@ -285,8 +357,14 @@ export const FeaturesPrivacyTab: React.FC = () => {
             />
 
             <SettingsToggle
-              label="Web Search"
-              description="Allow AI to search the internet for current information"
+              label={t(
+                'admin.aiControlCenter.featuresPrivacy.features.webSearch.label',
+                'Web Search'
+              )}
+              description={t(
+                'admin.aiControlCenter.featuresPrivacy.features.webSearch.description',
+                'Allow AI to search the internet for current information'
+              )}
               icon={Eye}
               iconColor="text-emerald-400"
               checked={settings.webSearchEnabled}
@@ -294,8 +372,14 @@ export const FeaturesPrivacyTab: React.FC = () => {
             />
 
             <SettingsToggle
-              label="Voice Conversations"
-              description="Enable voice input and output for AI interactions"
+              label={t(
+                'admin.aiControlCenter.featuresPrivacy.features.voice.label',
+                'Voice Conversations'
+              )}
+              description={t(
+                'admin.aiControlCenter.featuresPrivacy.features.voice.description',
+                'Enable voice input and output for AI interactions'
+              )}
               icon={Mic}
               iconColor="text-danger-400"
               checked={settings.voiceEnabled}
@@ -303,19 +387,36 @@ export const FeaturesPrivacyTab: React.FC = () => {
             />
 
             <div className="pt-4 border-t border-c-border-subtle/50">
-              <h4 className="font-medium text-c-text mb-3">Audit Settings</h4>
+              <h4 className="font-medium text-c-text mb-3">
+                {t(
+                  'admin.aiControlCenter.featuresPrivacy.features.auditSettings',
+                  'Audit Settings'
+                )}
+              </h4>
               <div className="space-y-3">
                 <SettingsToggle
-                  label="Audit All AI Requests"
-                  description="Log every AI interaction for compliance (increases storage)"
+                  label={t(
+                    'admin.aiControlCenter.featuresPrivacy.features.auditAll.label',
+                    'Audit All AI Requests'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.featuresPrivacy.features.auditAll.description',
+                    'Log every AI interaction for compliance (increases storage)'
+                  )}
                   icon={History}
                   iconColor="text-amber-400"
                   checked={settings.auditAllRequests}
                   onChange={(v) => updateSetting('auditAllRequests', v)}
                 />
                 <SettingsToggle
-                  label="Audit Policy Changes"
-                  description="Track all changes to AI settings"
+                  label={t(
+                    'admin.aiControlCenter.featuresPrivacy.features.auditPolicy.label',
+                    'Audit Policy Changes'
+                  )}
+                  description={t(
+                    'admin.aiControlCenter.featuresPrivacy.features.auditPolicy.description',
+                    'Track all changes to AI settings'
+                  )}
                   icon={Shield}
                   iconColor="text-amber-400"
                   checked={settings.auditPolicyChanges}
@@ -331,8 +432,11 @@ export const FeaturesPrivacyTab: React.FC = () => {
       {activeSubTab === 'data' && (
         <div className="space-y-6">
           <SettingsCard
-            title="Data Retention"
-            description="How long AI conversation data is stored"
+            title={t('admin.aiControlCenter.featuresPrivacy.dataRetention.title', 'Data Retention')}
+            description={t(
+              'admin.aiControlCenter.featuresPrivacy.dataRetention.description',
+              'How long AI conversation data is stored'
+            )}
             icon={Clock}
             iconColor="text-blue-400"
           >
@@ -360,8 +464,11 @@ export const FeaturesPrivacyTab: React.FC = () => {
           </SettingsCard>
 
           <SettingsCard
-            title="AI Learning"
-            description="Control how AI learns from your organization's data"
+            title={t('admin.aiControlCenter.featuresPrivacy.aiLearning.title', 'AI Learning')}
+            description={t(
+              'admin.aiControlCenter.featuresPrivacy.aiLearning.description',
+              "Control how AI learns from your organization's data"
+            )}
             icon={BookOpen}
             iconColor="text-emerald-400"
           >
@@ -390,11 +497,16 @@ export const FeaturesPrivacyTab: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-medium text-navy-900 dark:text-white">
-                        Allow AI to Learn from Organization Data
+                        {t(
+                          'admin.aiControlCenter.featuresPrivacy.aiLearning.allowTitle',
+                          'Allow AI to Learn from Organization Data'
+                        )}
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        AI will improve responses based on your organization's patterns and
-                        decisions
+                        {t(
+                          'admin.aiControlCenter.featuresPrivacy.aiLearning.allowDescription',
+                          "AI will improve responses based on your organization's patterns and decisions"
+                        )}
                       </p>
                     </div>
                   </div>
@@ -422,11 +534,16 @@ export const FeaturesPrivacyTab: React.FC = () => {
                   />
                   <div>
                     <h4 className="font-medium text-warning-700 dark:text-amber-300">
-                      Privacy Notice
+                      {t(
+                        'admin.aiControlCenter.featuresPrivacy.aiLearning.privacyNoticeTitle',
+                        'Privacy Notice'
+                      )}
                     </h4>
                     <p className="text-xs text-warning-700/70 dark:text-amber-200/70 mt-1">
-                      When enabled, AI learning uses only aggregated, anonymized patterns. No
-                      personal or sensitive data is used for training.
+                      {t(
+                        'admin.aiControlCenter.featuresPrivacy.aiLearning.privacyNoticeDescription',
+                        'When enabled, AI learning uses only aggregated, anonymized patterns. No personal or sensitive data is used for training.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -435,8 +552,14 @@ export const FeaturesPrivacyTab: React.FC = () => {
           </SettingsCard>
 
           <SettingsCard
-            title="External Data Policy"
-            description="Control AI access to external data sources"
+            title={t(
+              'admin.aiControlCenter.featuresPrivacy.externalData.title',
+              'External Data Policy'
+            )}
+            description={t(
+              'admin.aiControlCenter.featuresPrivacy.externalData.description',
+              'Control AI access to external data sources'
+            )}
             icon={Globe}
             iconColor="text-blue-400"
           >
@@ -464,10 +587,16 @@ export const FeaturesPrivacyTab: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="font-medium text-navy-900 dark:text-white">
-                      Allow External Data Access
+                      {t(
+                        'admin.aiControlCenter.featuresPrivacy.externalData.allowTitle',
+                        'Allow External Data Access'
+                      )}
                     </h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      AI can fetch industry benchmarks, market data, and external references
+                      {t(
+                        'admin.aiControlCenter.featuresPrivacy.externalData.allowDescription',
+                        'AI can fetch industry benchmarks, market data, and external references'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -494,15 +623,24 @@ export const FeaturesPrivacyTab: React.FC = () => {
       {activeSubTab === 'instructions' && (
         <div className="space-y-6">
           <SettingsCard
-            title="Organization Instructions"
-            description="Custom instructions applied to all AI interactions in your organization"
+            title={t(
+              'admin.aiControlCenter.featuresPrivacy.instructions.title',
+              'Organization Instructions'
+            )}
+            description={t(
+              'admin.aiControlCenter.featuresPrivacy.instructions.description',
+              'Custom instructions applied to all AI interactions in your organization'
+            )}
             icon={MessageSquare}
             iconColor="text-blue-400"
           >
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  Tone & Style
+                  {t(
+                    'admin.aiControlCenter.featuresPrivacy.instructions.toneStyle',
+                    'Tone & Style'
+                  )}
                 </label>
                 <select
                   value={toneGuidelines}
@@ -510,34 +648,59 @@ export const FeaturesPrivacyTab: React.FC = () => {
                   className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
                 >
                   <option value="professional">
-                    Professional - Formal and business-appropriate
+                    {t(
+                      'admin.aiControlCenter.featuresPrivacy.instructions.toneProfessional',
+                      'Professional - Formal and business-appropriate'
+                    )}
                   </option>
-                  <option value="friendly">Friendly - Approachable and conversational</option>
-                  <option value="technical">Technical - Precise and detailed</option>
-                  <option value="concise">Concise - Brief and to the point</option>
+                  <option value="friendly">
+                    {t(
+                      'admin.aiControlCenter.featuresPrivacy.instructions.toneFriendly',
+                      'Friendly - Approachable and conversational'
+                    )}
+                  </option>
+                  <option value="technical">
+                    {t(
+                      'admin.aiControlCenter.featuresPrivacy.instructions.toneTechnical',
+                      'Technical - Precise and detailed'
+                    )}
+                  </option>
+                  <option value="concise">
+                    {t(
+                      'admin.aiControlCenter.featuresPrivacy.instructions.toneConcise',
+                      'Concise - Brief and to the point'
+                    )}
+                  </option>
                   <option value="educational">
-                    Educational - Explanatory and teaching-focused
+                    {t(
+                      'admin.aiControlCenter.featuresPrivacy.instructions.toneEducational',
+                      'Educational - Explanatory and teaching-focused'
+                    )}
                   </option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  Custom System Instructions
+                  {t(
+                    'admin.aiControlCenter.featuresPrivacy.instructions.customLabel',
+                    'Custom System Instructions'
+                  )}
                 </label>
                 <textarea
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value)}
-                  placeholder="Add custom instructions that will be applied to all AI interactions...
-
-Example:
-- Always mention relevant ISO standards when discussing processes
-- Use metric units for all measurements
-- Reference company policies when applicable"
+                  placeholder={t(
+                    'admin.aiControlCenter.featuresPrivacy.instructions.customPlaceholder',
+                    'Add custom instructions that will be applied to all AI interactions...\n\nExample:\n- Always mention relevant ISO standards when discussing processes\n- Use metric units for all measurements\n- Reference company policies when applicable'
+                  )}
                   className="w-full h-48 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-navy-900 dark:text-white font-mono text-sm focus:border-primary-500 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  These instructions are prepended to every AI request in your organization.
+                  {t(
+                    'admin.aiControlCenter.featuresPrivacy.instructions.customHint',
+                    'These instructions are prepended to every AI request in your organization.'
+                  )}
                 </p>
               </div>
             </div>
@@ -545,8 +708,14 @@ Example:
 
           {/* Restricted Topics */}
           <SettingsCard
-            title="Restricted Topics"
-            description="Topics or content types the AI should avoid discussing"
+            title={t(
+              'admin.aiControlCenter.featuresPrivacy.restrictedTopics.title',
+              'Restricted Topics'
+            )}
+            description={t(
+              'admin.aiControlCenter.featuresPrivacy.restrictedTopics.description',
+              'Topics or content types the AI should avoid discussing'
+            )}
             icon={Lock}
             iconColor="text-danger-400"
           >
@@ -555,33 +724,69 @@ Example:
                 {[
                   {
                     id: 'no_competitor',
-                    label: 'Competitor Analysis',
-                    desc: 'Avoid discussing competitor products/services',
+                    label: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.competitor.label',
+                      'Competitor Analysis'
+                    ),
+                    desc: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.competitor.desc',
+                      'Avoid discussing competitor products/services'
+                    ),
                   },
                   {
                     id: 'no_legal',
-                    label: 'Legal Advice',
-                    desc: "Don't provide legal recommendations",
+                    label: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.legal.label',
+                      'Legal Advice'
+                    ),
+                    desc: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.legal.desc',
+                      "Don't provide legal recommendations"
+                    ),
                   },
                   {
                     id: 'no_financial',
-                    label: 'Financial Advice',
-                    desc: 'Avoid specific financial recommendations',
+                    label: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.financial.label',
+                      'Financial Advice'
+                    ),
+                    desc: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.financial.desc',
+                      'Avoid specific financial recommendations'
+                    ),
                   },
                   {
                     id: 'no_personnel',
-                    label: 'Personnel Decisions',
-                    desc: "Don't advise on hiring/firing",
+                    label: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.personnel.label',
+                      'Personnel Decisions'
+                    ),
+                    desc: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.personnel.desc',
+                      "Don't advise on hiring/firing"
+                    ),
                   },
                   {
                     id: 'no_medical',
-                    label: 'Medical Topics',
-                    desc: 'Avoid health-related advice',
+                    label: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.medical.label',
+                      'Medical Topics'
+                    ),
+                    desc: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.medical.desc',
+                      'Avoid health-related advice'
+                    ),
                   },
                   {
                     id: 'no_politics',
-                    label: 'Political Topics',
-                    desc: 'Stay neutral on political matters',
+                    label: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.politics.label',
+                      'Political Topics'
+                    ),
+                    desc: t(
+                      'admin.aiControlCenter.featuresPrivacy.restrictedTopics.politics.desc',
+                      'Stay neutral on political matters'
+                    ),
                   },
                 ].map((topic) => (
                   <label
@@ -606,10 +811,16 @@ Example:
 
               <div>
                 <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  Custom Restricted Keywords
+                  {t(
+                    'admin.aiControlCenter.featuresPrivacy.restrictedTopics.customKeywords',
+                    'Custom Restricted Keywords'
+                  )}
                 </label>
                 <textarea
-                  placeholder="Enter keywords or phrases the AI should avoid, one per line..."
+                  placeholder={t(
+                    'admin.aiControlCenter.featuresPrivacy.restrictedTopics.customKeywordsPlaceholder',
+                    'Enter keywords or phrases the AI should avoid, one per line...'
+                  )}
                   className="w-full h-24 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-navy-900 dark:text-white font-mono text-sm focus:border-primary-500 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
@@ -623,7 +834,7 @@ Example:
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
-              Available Personas
+              {t('admin.aiControlCenter.featuresPrivacy.personas.available', 'Available Personas')}
             </h3>
             {prompts.map((p) => (
               <div
@@ -651,11 +862,18 @@ Example:
           <div className="bg-c-surface border border-white/10 rounded-xl p-6 h-fit">
             {editingPrompt ? (
               <form onSubmit={handleUpdatePrompt}>
-                <h3 className="text-lg font-bold text-c-text mb-4">Edit: {editingPrompt.key}</h3>
+                <h3 className="text-lg font-bold text-c-text mb-4">
+                  {t('admin.aiControlCenter.featuresPrivacy.personas.editPrefix', 'Edit: {{key}}', {
+                    key: editingPrompt.key,
+                  })}
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
-                      Description
+                      {t(
+                        'admin.aiControlCenter.featuresPrivacy.personas.descriptionLabel',
+                        'Description'
+                      )}
                     </label>
                     <input
                       value={editingPrompt.description}
@@ -667,7 +885,10 @@ Example:
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
-                      System Prompt
+                      {t(
+                        'admin.aiControlCenter.featuresPrivacy.personas.systemPromptLabel',
+                        'System Prompt'
+                      )}
                     </label>
                     <textarea
                       value={editingPrompt.content}
@@ -682,15 +903,48 @@ Example:
                   <div className="bg-c-bg border border-white/5 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
                       <Shield size={14} className="text-primary-400" />
-                      Context Injection
+                      {t(
+                        'admin.aiControlCenter.featuresPrivacy.personas.contextInjection',
+                        'Context Injection'
+                      )}
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { id: 'include_project_context', label: 'Project Context' },
-                        { id: 'include_user_profile', label: 'User Profile' },
-                        { id: 'include_assessment_data', label: 'Assessment Data' },
-                        { id: 'include_kb_articles', label: 'Knowledge Base' },
-                        { id: 'include_task_history', label: 'Task History' },
+                        {
+                          id: 'include_project_context',
+                          label: t(
+                            'admin.aiControlCenter.featuresPrivacy.personas.context.project',
+                            'Project Context'
+                          ),
+                        },
+                        {
+                          id: 'include_user_profile',
+                          label: t(
+                            'admin.aiControlCenter.featuresPrivacy.personas.context.userProfile',
+                            'User Profile'
+                          ),
+                        },
+                        {
+                          id: 'include_assessment_data',
+                          label: t(
+                            'admin.aiControlCenter.featuresPrivacy.personas.context.assessmentData',
+                            'Assessment Data'
+                          ),
+                        },
+                        {
+                          id: 'include_kb_articles',
+                          label: t(
+                            'admin.aiControlCenter.featuresPrivacy.personas.context.knowledgeBase',
+                            'Knowledge Base'
+                          ),
+                        },
+                        {
+                          id: 'include_task_history',
+                          label: t(
+                            'admin.aiControlCenter.featuresPrivacy.personas.context.taskHistory',
+                            'Task History'
+                          ),
+                        },
                       ].map((opt) => {
                         const config: SystemPromptContextConfig =
                           typeof editingPrompt.context_config === 'string'
@@ -732,13 +986,14 @@ Example:
                       onClick={() => setEditingPrompt(null)}
                       className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
                     >
-                      Cancel
+                      {t('admin.aiControlCenter.featuresPrivacy.personas.cancel', 'Cancel')}
                     </button>
                     <button
                       type="submit"
                       className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
                     >
-                      <Save size={16} /> Save Persona
+                      <Save size={16} />{' '}
+                      {t('admin.aiControlCenter.featuresPrivacy.personas.save', 'Save Persona')}
                     </button>
                   </div>
                 </div>
@@ -747,7 +1002,12 @@ Example:
               <div className="h-64 flex items-center justify-center text-slate-500 dark:text-slate-400">
                 <div className="text-center">
                   <Brain size={40} className="mx-auto mb-3 opacity-50" />
-                  <p>Select a persona to edit</p>
+                  <p>
+                    {t(
+                      'admin.aiControlCenter.featuresPrivacy.personas.selectToEdit',
+                      'Select a persona to edit'
+                    )}
+                  </p>
                 </div>
               </div>
             )}

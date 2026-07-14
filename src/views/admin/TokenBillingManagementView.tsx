@@ -1,5 +1,6 @@
 import { AlertCircle, DollarSign, Package, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
@@ -8,6 +9,7 @@ import { AdminMarginConfig } from './AdminMarginConfig';
 import { AdminTokenPackages } from './AdminTokenPackages';
 
 export const TokenBillingManagementView = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     activeModels: 0,
     activePackages: 0,
@@ -36,7 +38,12 @@ export const TokenBillingManagementView = () => {
         marginsResult.status === 'rejected' ||
         balanceResult.status === 'rejected'
       ) {
-        throw new Error('Could not load token billing overview statistics');
+        throw new Error(
+          t(
+            'admin.aiControlCenter.tokenBilling.errors.overview',
+            'Could not load token billing overview statistics'
+          )
+        );
       }
 
       const providers = providersResult.value;
@@ -54,7 +61,12 @@ export const TokenBillingManagementView = () => {
     } catch (error) {
       console.error('Failed to load billing stats', error);
       setStatsLoadError(
-        error instanceof Error ? error.message : 'Could not load token billing stats'
+        error instanceof Error
+          ? error.message
+          : t(
+              'admin.aiControlCenter.tokenBilling.errors.stats',
+              'Could not load token billing stats'
+            )
       );
     } finally {
       setLoading(false);
@@ -70,9 +82,14 @@ export const TokenBillingManagementView = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-c-text mb-1">Token Billing Management</h1>
+          <h1 className="text-2xl font-bold text-c-text mb-1">
+            {t('admin.aiControlCenter.tokenBilling.title', 'Token Billing Management')}
+          </h1>
           <p className="text-slate-600 dark:text-slate-500 text-sm">
-            Configure pricing, margins, and packages for the token economy.
+            {t(
+              'admin.aiControlCenter.tokenBilling.description',
+              'Configure pricing, margins, and packages for the token economy.'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -82,7 +99,7 @@ export const TokenBillingManagementView = () => {
             className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-c-text rounded-lg transition-colors text-sm font-medium border border-white/10"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Refresh Data
+            {t('admin.aiControlCenter.tokenBilling.refresh', 'Refresh Data')}
           </button>
         </div>
       </div>
@@ -90,35 +107,47 @@ export const TokenBillingManagementView = () => {
       {/* KPI Grid */}
       {statsLoadError ? (
         <div className="mb-8">
-          <DegradedState title="Token billing overview unavailable" description={statsLoadError} />
+          <DegradedState
+            title={t(
+              'admin.aiControlCenter.tokenBilling.overviewUnavailable',
+              'Token billing overview unavailable'
+            )}
+            description={statsLoadError}
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <KPICard
-            title="Active AI Models"
+            title={t('admin.aiControlCenter.tokenBilling.kpi.activeModels', 'Active AI Models')}
             value={stats.activeModels.toString()}
             icon={<Zap size={20} className="text-yellow-400" />}
             loading={loading}
           />
           <KPICard
-            title="Active Packages"
+            title={t('admin.aiControlCenter.tokenBilling.kpi.activePackages', 'Active Packages')}
             value={stats.activePackages.toString()}
             icon={<Package size={20} className="text-blue-400" />}
             loading={loading}
           />
           <KPICard
-            title="Platform Margin"
+            title={t('admin.aiControlCenter.tokenBilling.kpi.platformMargin', 'Platform Margin')}
             value={`${stats.platformMargin}%`}
             icon={<TrendingUp size={20} className="text-emerald-400" />}
             loading={loading}
-            subtext="Markup on base costs"
+            subtext={t(
+              'admin.aiControlCenter.tokenBilling.kpi.platformMarginSubtext',
+              'Markup on base costs'
+            )}
           />
           <KPICard
-            title="System Balance"
+            title={t('admin.aiControlCenter.tokenBilling.kpi.systemBalance', 'System Balance')}
             value={(stats.balance / 1000).toFixed(1) + 'k'}
             icon={<DollarSign size={20} className="text-primary-400" />}
             loading={loading}
-            subtext="Current admin tokens"
+            subtext={t(
+              'admin.aiControlCenter.tokenBilling.kpi.systemBalanceSubtext',
+              'Current admin tokens'
+            )}
           />
         </div>
       )}

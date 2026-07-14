@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import i18n from '@/i18n';
 
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -50,12 +53,20 @@ const toNumber = (value: unknown, fallback = 0) =>
 const normalizeSystemStatus = (value: unknown): SystemStatus => {
   const payload = getObjectPayload(value);
   if (!isRecord(payload) || !Array.isArray(payload.providers) || !isRecord(payload.metrics)) {
-    throw new Error('AI mission status response was incomplete');
+    throw new Error(
+      i18n.t(
+        'admin.aiControlCenter.missionControl.errors.incompleteStatus',
+        'AI mission status response was incomplete'
+      )
+    );
   }
 
   return {
     providers: payload.providers.filter(isRecord).map((provider) => ({
-      name: asText(provider.name, 'Unknown provider'),
+      name: asText(
+        provider.name,
+        i18n.t('admin.aiControlCenter.missionControl.unknownProvider', 'Unknown provider')
+      ),
       type: asText(provider.type, ''),
       status: asText(provider.status, 'UNKNOWN'),
       visibility: asText(provider.visibility, ''),
@@ -81,7 +92,12 @@ const normalizeCapabilityResult = (
       status: 'FAILED',
       latency: 0,
       details: null,
-      error: fallbackError || 'Capability test response was incomplete',
+      error:
+        fallbackError ||
+        i18n.t(
+          'admin.aiControlCenter.missionControl.errors.incompleteTest',
+          'Capability test response was incomplete'
+        ),
     };
   }
 
@@ -97,12 +113,20 @@ const normalizeCapabilityResult = (
     details: payload.details ?? null,
     error:
       status === 'FAILED'
-        ? asText(payload.error, fallbackError || 'Capability test did not confirm success')
+        ? asText(
+            payload.error,
+            fallbackError ||
+              i18n.t(
+                'admin.aiControlCenter.missionControl.errors.notConfirmed',
+                'Capability test did not confirm success'
+              )
+          )
         : undefined,
   };
 };
 
 export const AIMissionControl: React.FC = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [results, setResults] = useState<Record<string, CapabilityResult>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -110,11 +134,37 @@ export const AIMissionControl: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const capabilities = [
-    { id: 'connection', name: 'AI Connection (Basic)', icon: '🔌' },
-    { id: 'eyes', name: 'AI Eyes (Visual Context)', icon: '👁️' },
-    { id: 'memory', name: 'AI Memory (RAG)', icon: '🧠' },
-    { id: 'hands', name: 'AI Hands (MCP Tools)', icon: '🤝' },
-    { id: 'reasoning', name: 'MAX Mode (Reasoning)', icon: '🚀' },
+    {
+      id: 'connection',
+      name: t(
+        'admin.aiControlCenter.missionControl.capabilities.connection',
+        'AI Connection (Basic)'
+      ),
+      icon: '🔌',
+    },
+    {
+      id: 'eyes',
+      name: t('admin.aiControlCenter.missionControl.capabilities.eyes', 'AI Eyes (Visual Context)'),
+      icon: '👁️',
+    },
+    {
+      id: 'memory',
+      name: t('admin.aiControlCenter.missionControl.capabilities.memory', 'AI Memory (RAG)'),
+      icon: '🧠',
+    },
+    {
+      id: 'hands',
+      name: t('admin.aiControlCenter.missionControl.capabilities.hands', 'AI Hands (MCP Tools)'),
+      icon: '🤝',
+    },
+    {
+      id: 'reasoning',
+      name: t(
+        'admin.aiControlCenter.missionControl.capabilities.reasoning',
+        'MAX Mode (Reasoning)'
+      ),
+      icon: '🚀',
+    },
   ];
 
   useEffect(() => {
@@ -129,7 +179,12 @@ export const AIMissionControl: React.FC = () => {
       setStatus(normalizeSystemStatus(response));
     } catch (err: unknown) {
       setStatus(null);
-      setLoadError(normalizeApiErrorMessage(err, 'Failed to fetch AI status'));
+      setLoadError(
+        normalizeApiErrorMessage(
+          err,
+          t('admin.aiControlCenter.missionControl.errors.fetchStatus', 'Failed to fetch AI status')
+        )
+      );
     } finally {
       setStatusLoading(false);
     }
@@ -146,7 +201,10 @@ export const AIMissionControl: React.FC = () => {
         [capId]: normalizeCapabilityResult(
           null,
           capId,
-          normalizeApiErrorMessage(err, 'Capability test failed')
+          normalizeApiErrorMessage(
+            err,
+            t('admin.aiControlCenter.missionControl.errors.testFailed', 'Capability test failed')
+          )
         ),
       }));
     } finally {
@@ -158,26 +216,34 @@ export const AIMissionControl: React.FC = () => {
   return (
     <div className="p-6 space-y-8 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white min-h-screen">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AI Mission Control</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          {t('admin.aiControlCenter.missionControl.title', 'AI Mission Control')}
+        </h1>
         <Button onClick={fetchStatus} variant="ghost" size="sm">
-          Refresh Status
+          {t('admin.aiControlCenter.missionControl.refreshStatus', 'Refresh Status')}
         </Button>
       </div>
 
       {/* System Status Overview */}
       {loadError ? (
         <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
-          <DegradedState title="AI mission control unavailable" description={loadError} />
+          <DegradedState
+            title={t(
+              'admin.aiControlCenter.missionControl.unavailableTitle',
+              'AI mission control unavailable'
+            )}
+            description={loadError}
+          />
         </div>
       ) : statusLoading && !status ? (
         <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10 text-sm text-slate-600 dark:text-slate-400">
-          Loading AI mission status...
+          {t('admin.aiControlCenter.missionControl.loading', 'Loading AI mission status...')}
         </div>
       ) : status ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
-              Success Rate (Last 50)
+              {t('admin.aiControlCenter.missionControl.successRate', 'Success Rate (Last 50)')}
             </h3>
             <div className="mt-2 flex items-baseline">
               <span className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -186,24 +252,28 @@ export const AIMissionControl: React.FC = () => {
               <span
                 className={`ml-2 text-sm font-medium ${status.metrics.uptime50 > 95 ? 'text-emerald-400' : 'text-amber-300'}`}
               >
-                {status.metrics.uptime50 > 95 ? 'Excellent' : 'Degraded'}
+                {status.metrics.uptime50 > 95
+                  ? t('admin.aiControlCenter.missionControl.excellent', 'Excellent')
+                  : t('admin.aiControlCenter.missionControl.degraded', 'Degraded')}
               </span>
             </div>
           </div>
           <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
-              Avg Latency
+              {t('admin.aiControlCenter.missionControl.avgLatency', 'Avg Latency')}
             </h3>
             <div className="mt-2 flex items-baseline">
               <span className="text-3xl font-bold text-slate-900 dark:text-white">
                 {status.metrics.avgLatencyMs}ms
               </span>
-              <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">per request</span>
+              <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">
+                {t('admin.aiControlCenter.missionControl.perRequest', 'per request')}
+              </span>
             </div>
           </div>
           <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
-              Active Providers
+              {t('admin.aiControlCenter.missionControl.activeProviders', 'Active Providers')}
             </h3>
             <div className="mt-2 flex flex-wrap gap-2">
               {(() => {
@@ -211,7 +281,10 @@ export const AIMissionControl: React.FC = () => {
                 if (activeProviders.length === 0) {
                   return (
                     <span className="text-slate-600 dark:text-slate-400 text-sm">
-                      No active providers
+                      {t(
+                        'admin.aiControlCenter.missionControl.noActiveProviders',
+                        'No active providers'
+                      )}
                     </span>
                   );
                 }
@@ -233,7 +306,10 @@ export const AIMissionControl: React.FC = () => {
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-sm border border-slate-200 dark:border-white/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-800/60">
           <h2 className="font-semibold text-slate-900 dark:text-white">
-            AI Capability Diagnostics
+            {t(
+              'admin.aiControlCenter.missionControl.diagnosticsTitle',
+              'AI Capability Diagnostics'
+            )}
           </h2>
         </div>
         <div className="divide-y divide-slate-200 dark:divide-white/5">
@@ -247,7 +323,13 @@ export const AIMissionControl: React.FC = () => {
                 <div>
                   <h3 className="font-medium text-slate-900 dark:text-white">{cap.name}</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Test if {cap.id} is functioning correctly.
+                    {t(
+                      'admin.aiControlCenter.missionControl.testDescription',
+                      'Test if {{capability}} is functioning correctly.',
+                      {
+                        capability: cap.id,
+                      }
+                    )}
                   </p>
                 </div>
               </div>
@@ -261,18 +343,32 @@ export const AIMissionControl: React.FC = () => {
                         : 'bg-danger-500/20 text-danger-200 border border-danger-500/40'
                     }`}
                   >
-                    {results[cap.id].status} ({results[cap.id].latency}ms)
+                    {t(
+                      'admin.aiControlCenter.missionControl.resultLatency',
+                      '{{status}} ({{latency}}ms)',
+                      {
+                        status: results[cap.id].status,
+                        latency: results[cap.id].latency,
+                      }
+                    )}
                   </div>
                 )}
                 <Button
                   onClick={() => testCapability(cap.id)}
                   loading={Boolean(loading[cap.id])}
                   disabled={Boolean(loadError)}
-                  title={loadError ? 'AI mission control status is unavailable' : undefined}
+                  title={
+                    loadError
+                      ? t(
+                          'admin.aiControlCenter.missionControl.statusUnavailable',
+                          'AI mission control status is unavailable'
+                        )
+                      : undefined
+                  }
                   variant={results[cap.id]?.status === 'FAILED' ? 'danger' : 'primary'}
                   size="sm"
                 >
-                  Run Test
+                  {t('admin.aiControlCenter.missionControl.runTest', 'Run Test')}
                 </Button>
               </div>
             </div>
@@ -284,12 +380,14 @@ export const AIMissionControl: React.FC = () => {
       {Object.keys(results).length > 0 && (
         <div className="bg-c-surface dark:bg-black/60 rounded-xl shadow-lg p-6 font-mono text-xs text-emerald-200 overflow-auto max-h-96 border border-white/10">
           <h3 className="text-c-text-secondary mb-4 border-b border-white/5 pb-2 flex justify-between">
-            <span>LATEST DIAGNOSTIC LOGS</span>
+            <span>
+              {t('admin.aiControlCenter.missionControl.latestLogs', 'LATEST DIAGNOSTIC LOGS')}
+            </span>
             <button
               onClick={() => setResults({})}
               className="text-slate-600 hover:bg-white/[0.05] rounded px-2 py-1 transition-colors"
             >
-              Clear
+              {t('admin.aiControlCenter.missionControl.clear', 'Clear')}
             </button>
           </h3>
           {Object.entries(results)
@@ -302,10 +400,23 @@ export const AIMissionControl: React.FC = () => {
                   <span
                     className={res.status === 'SUCCESS' ? 'text-emerald-200' : 'text-danger-200'}
                   >
-                    {res.status} ({res.latency}ms)
+                    {t(
+                      'admin.aiControlCenter.missionControl.resultLatency',
+                      '{{status}} ({{latency}}ms)',
+                      {
+                        status: res.status,
+                        latency: res.latency,
+                      }
+                    )}
                   </span>
                 </div>
-                {res.error && <div className="text-danger-200 ml-4">Error: {res.error}</div>}
+                {res.error && (
+                  <div className="text-danger-200 ml-4">
+                    {t('admin.aiControlCenter.missionControl.errorLabel', 'Error: {{error}}', {
+                      error: res.error,
+                    })}
+                  </div>
+                )}
                 {res.details !== null && res.details !== undefined && (
                   <pre className="ml-4 mt-1 text-c-text-secondary whitespace-pre-wrap break-words">
                     {JSON.stringify(res.details, null, 2)}

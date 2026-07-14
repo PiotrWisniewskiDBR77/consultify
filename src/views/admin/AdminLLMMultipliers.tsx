@@ -1,6 +1,7 @@
 import { Check, Edit2, HelpCircle, RefreshCw, Save, X, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -15,6 +16,7 @@ interface Provider {
 }
 
 export const AdminLLMMultipliers = () => {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,7 +32,9 @@ export const AdminLLMMultipliers = () => {
       setProviders(data as any);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to load providers');
+      toast.error(
+        t('admin.aiControlCenter.llmMultipliers.errors.load', 'Failed to load providers')
+      );
     } finally {
       setLoading(false);
     }
@@ -58,12 +62,14 @@ export const AdminLLMMultipliers = () => {
         markup_multiplier: editForm.markup_multiplier,
         cost_per_1k: editForm.cost_per_1k,
       });
-      toast.success('Updated successfully');
+      toast.success(
+        t('admin.aiControlCenter.llmMultipliers.toasts.updated', 'Updated successfully')
+      );
       setEditingId(null);
       fetchProviders();
     } catch (err) {
       console.error(err);
-      toast.error('Failed to update');
+      toast.error(t('admin.aiControlCenter.llmMultipliers.errors.update', 'Failed to update'));
     }
   };
 
@@ -88,16 +94,19 @@ export const AdminLLMMultipliers = () => {
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-            AI Cost & Pricing Models
+            {t('admin.aiControlCenter.llmMultipliers.title', 'AI Cost & Pricing Models')}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Configure base costs and profit margins for each model.
+            {t(
+              'admin.aiControlCenter.llmMultipliers.description',
+              'Configure base costs and profit margins for each model.'
+            )}
           </p>
         </div>
         <button
           onClick={fetchProviders}
           className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/20 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-slate-200 dark:border-white/10"
-          title="Refresh Data"
+          title={t('admin.aiControlCenter.llmMultipliers.refresh', 'Refresh Data')}
         >
           <RefreshCw
             className={`w-4 h-4 text-slate-600 dark:text-white/70 ${loading ? 'animate-spin' : ''}`}
@@ -111,16 +120,36 @@ export const AdminLLMMultipliers = () => {
         >
           <thead className="sticky top-0 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm z-10">
             <tr className="border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 uppercase tracking-wider text-xs">
-              <th className="py-4 px-6 font-medium">Provider / Model</th>
               <th className="py-4 px-6 font-medium">
-                Base Cost <span className="text-[10px] normal-case opacity-50">(per 1k in)</span>
+                {t(
+                  'admin.aiControlCenter.llmMultipliers.columns.providerModel',
+                  'Provider / Model'
+                )}
               </th>
-              <th className="py-4 px-6 font-medium">Markup Multiplier</th>
               <th className="py-4 px-6 font-medium">
-                User Price{' '}
-                <span className="text-[10px] normal-case opacity-50">(Tokens deducted per 1k)</span>
+                {t('admin.aiControlCenter.llmMultipliers.columns.baseCost', 'Base Cost')}{' '}
+                <span className="text-[10px] normal-case opacity-50">
+                  {t('admin.aiControlCenter.llmMultipliers.columns.baseCostSuffix', '(per 1k in)')}
+                </span>
               </th>
-              <th className="py-4 px-6 font-medium text-right">Actions</th>
+              <th className="py-4 px-6 font-medium">
+                {t(
+                  'admin.aiControlCenter.llmMultipliers.columns.markupMultiplier',
+                  'Markup Multiplier'
+                )}
+              </th>
+              <th className="py-4 px-6 font-medium">
+                {t('admin.aiControlCenter.llmMultipliers.columns.userPrice', 'User Price')}{' '}
+                <span className="text-[10px] normal-case opacity-50">
+                  {t(
+                    'admin.aiControlCenter.llmMultipliers.columns.userPriceSuffix',
+                    '(Tokens deducted per 1k)'
+                  )}
+                </span>
+              </th>
+              <th className="py-4 px-6 font-medium text-right">
+                {t('admin.aiControlCenter.llmMultipliers.columns.actions', 'Actions')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
@@ -210,10 +239,15 @@ export const AdminLLMMultipliers = () => {
                   <td className="py-4 px-6 text-slate-700 dark:text-slate-300">
                     <div className="flex flex-col">
                       <span className="text-emerald-400 font-bold font-mono text-base">
-                        {parseInt(userCostInTokens).toLocaleString()} Tokens
+                        {t('admin.aiControlCenter.llmMultipliers.tokensValue', '{{count}} Tokens', {
+                          count: parseInt(userCostInTokens).toLocaleString(),
+                        })}
                       </span>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                        per 1,000 input tokens
+                        {t(
+                          'admin.aiControlCenter.llmMultipliers.per1000Tokens',
+                          'per 1,000 input tokens'
+                        )}
                       </span>
                     </div>
                   </td>
@@ -238,7 +272,10 @@ export const AdminLLMMultipliers = () => {
                       <button
                         onClick={() => startEdit(p)}
                         className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        title="Edit Pricing"
+                        title={t(
+                          'admin.aiControlCenter.llmMultipliers.editPricing',
+                          'Edit Pricing'
+                        )}
                       >
                         <Edit2 size={16} />
                       </button>
@@ -251,7 +288,10 @@ export const AdminLLMMultipliers = () => {
             {providers.length === 0 && !loading && (
               <tr>
                 <td colSpan={5} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                  No providers found. Check database configuration.
+                  {t(
+                    'admin.aiControlCenter.llmMultipliers.noProviders',
+                    'No providers found. Check database configuration.'
+                  )}
                 </td>
               </tr>
             )}
@@ -262,9 +302,21 @@ export const AdminLLMMultipliers = () => {
       <div className="p-4 bg-slate-50 dark:bg-navy-950/20 border-t border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
         <HelpCircle className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
         <p>
-          <strong>Pricing Logic:</strong> User Tokens are deducted based on the{' '}
-          <code>Markup Multiplier</code>. If a model costs $0.01/1k and you set a 2.0x multiplier,
-          user pays 2000 platform tokens ($0.02 value approx) for 1000 input tokens.
+          <strong>
+            {t('admin.aiControlCenter.llmMultipliers.pricingLogicLabel', 'Pricing Logic:')}
+          </strong>{' '}
+          {t(
+            'admin.aiControlCenter.llmMultipliers.pricingLogicIntro',
+            'User Tokens are deducted based on the'
+          )}{' '}
+          <code>
+            {t('admin.aiControlCenter.llmMultipliers.markupMultiplierTerm', 'Markup Multiplier')}
+          </code>
+          .{' '}
+          {t(
+            'admin.aiControlCenter.llmMultipliers.pricingLogicExample',
+            'If a model costs $0.01/1k and you set a 2.0x multiplier, user pays 2000 platform tokens ($0.02 value approx) for 1000 input tokens.'
+          )}
         </p>
       </div>
     </div>

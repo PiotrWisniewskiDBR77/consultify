@@ -14370,7 +14370,268 @@
     },
     "security": {
       "saved": "Saved",
-      "loading": "Loading…"
+      "loading": "Loading…",
+      "identityPanel": {
+        "tabs": {
+          "policy": "Security policy",
+          "collaboration": "Collaboration policy",
+          "apiAccess": "API access",
+          "iam": "Delegated IAM",
+          "scim": "SCIM & lifecycle",
+          "risk": "Risk summary"
+        },
+        "title": "Security & Identity",
+        "description": "One tenant-admin surface for authentication policy, collaboration controls, API access, delegated admin governance, SCIM identity lifecycle, and risk follow-up."
+      },
+      "auditLog": {
+        "errors": {
+          "load": "Failed to load audit logs",
+          "export": "Failed to export audit logs",
+          "retention": "Failed to update retention"
+        },
+        "toasts": {
+          "exportReady": "Audit export ready",
+          "retentionUpdated": "Audit retention updated"
+        },
+        "columns": {
+          "action": "Action",
+          "actor": "Actor",
+          "risk": "Risk",
+          "status": "Status",
+          "created": "Created"
+        },
+        "risk": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        },
+        "status": {
+          "resolved": "Resolved",
+          "open": "Open",
+          "pending": "Pending"
+        },
+        "stats": {
+          "totalLogs": "Total logs",
+          "unresolved": "Unresolved",
+          "highRisk": "High risk"
+        },
+        "riskIncidents": {
+          "title": "Risk & incidents",
+          "tracked": "LLM incidents tracked: {{count}}",
+          "highRiskChanges": "High-risk admin changes: {{count}}"
+        },
+        "compliance": {
+          "title": "Compliance evidence",
+          "gdprEnabled": "GDPR enabled: {{value}}",
+          "yes": "yes",
+          "no": "no",
+          "retentionDays": "Audit retention days: {{count}}"
+        },
+        "actions": {
+          "saveRetention": "Save retention",
+          "refresh": "Refresh",
+          "exportCsv": "Export CSV"
+        },
+        "title": "Admin Audit Log",
+        "description": "Membership, security, collaboration, and integration changes emitted by P32 surfaces.",
+        "searchPlaceholder": "Search action, actor, metadata...",
+        "loading": "Loading audit logs...",
+        "emptyMessage": "No audit events found for this workspace."
+      },
+      "collaborationControls": {
+        "errors": {
+          "load": "Failed to load collaboration controls",
+          "save": "Failed to save collaboration controls"
+        },
+        "toasts": {
+          "saved": "Collaboration controls saved"
+        },
+        "cards": {
+          "guestAccess": {
+            "title": "Guest access",
+            "description": "Allows restricted guest collaborators in the workspace.",
+            "denial": "When disabled, guest role assignment is blocked."
+          },
+          "externalLinkSharing": {
+            "title": "External link sharing",
+            "description": "Controls whether members can share workspace artifacts externally.",
+            "denial": "When disabled, outbound share flows must stop at policy check."
+          },
+          "toolApproval": {
+            "title": "Tool approval required",
+            "description": "Requires admin approval before tool usage is enabled.",
+            "denial": "When enabled, users cannot self-activate new tools."
+          }
+        },
+        "title": "Collaboration Controls",
+        "description": "Canonical P32 controls for guest access, sharing, and tool approval.",
+        "actions": {
+          "save": "Save controls"
+        }
+      },
+      "iamPolicy": {
+        "defaults": {
+          "billingAdmin": "Billing Admin",
+          "customAdmin": "Custom Admin"
+        },
+        "errors": {
+          "load": "Failed to load IAM policy",
+          "update": "Failed to update IAM policy",
+          "createAssignment": "Failed to create delegated assignment",
+          "deleteAssignment": "Failed to delete delegated assignment"
+        },
+        "toasts": {
+          "updated": "IAM policy updated",
+          "assignmentCreated": "Delegated assignment created",
+          "assignmentRemoved": "Delegated assignment removed"
+        },
+        "loading": "Loading IAM policy...",
+        "title": "Enterprise IAM Governance",
+        "description": "Define delegated admin roles, access review cadence, break-glass posture, and context-aware admin safeguards for this tenant.",
+        "actions": {
+          "saving": "Saving...",
+          "save": "Save IAM policy"
+        },
+        "toggles": {
+          "accessReviews": {
+            "title": "Access reviews",
+            "description": "Require recurring recertification of privileged admin access."
+          },
+          "contextAware": {
+            "title": "Context-aware access",
+            "description": "Require stronger checks for privileged sessions and sensitive changes."
+          },
+          "breakGlass": {
+            "title": "Break-glass",
+            "description": "Allow emergency elevation with explicit approvers and audit requirements."
+          }
+        },
+        "fields": {
+          "reviewCadence": "Access review cadence (days)",
+          "reauthMinutes": "Privileged session reauth (minutes)",
+          "breakGlassApprovers": "Break-glass approvers"
+        },
+        "warning": "Privileged admin changes should be combined with tenant audit monitoring and high-risk alerting. This policy is stored as the tenant-admin IAM truth surface for P32.",
+        "rolesSection": {
+          "title": "Delegated admin roles",
+          "addRole": "Add delegated role"
+        },
+        "assignmentsSection": {
+          "title": "Delegated admin assignments",
+          "userIdPlaceholder": "user-id",
+          "roleNamePlaceholder": "Role name",
+          "assign": "Assign delegated role",
+          "user": "User: {{userId}}",
+          "noCapabilities": "No capabilities"
+        }
+      },
+      "riskSummary": {
+        "unknown": "unknown",
+        "unknownTime": "Unknown time",
+        "errors": {
+          "load": "Failed to load risk summary"
+        },
+        "loading": "Loading risk summary...",
+        "unavailableTitle": "Risk summary unavailable",
+        "retry": "Retry risk summary",
+        "metrics": {
+          "highRisk": {
+            "title": "High-risk audit events",
+            "description": "Audit events with risk score at or above the tenant threshold."
+          },
+          "unresolved": {
+            "title": "Unresolved audit items",
+            "description": "Open audit items that still need administrative review."
+          },
+          "incidents": {
+            "title": "LLM incidents",
+            "description": "Recent LLM/provider incidents visible to tenant admins."
+          }
+        },
+        "queue": {
+          "title": "Risk follow-up queue",
+          "description": "Prioritize unresolved audit items and recent incidents before changing tenant security posture.",
+          "empty": "No recent incidents returned by the risk service.",
+          "unknownProvider": "Unknown provider",
+          "status": "Status: {{status}}",
+          "started": "Started: {{time}}"
+        }
+      },
+      "scimLifecycle": {
+        "defaults": {
+          "tokenName": "Tenant SCIM Token",
+          "newToken": "new token"
+        },
+        "errors": {
+          "load": "Failed to load SCIM summary",
+          "createToken": "Failed to create SCIM token",
+          "createMapping": "Failed to create SCIM group mapping"
+        },
+        "toasts": {
+          "tokenCreated": "SCIM token created: {{prefix}}",
+          "mappingCreated": "SCIM group mapping created"
+        },
+        "stats": {
+          "activeTokens": "Active SCIM tokens",
+          "groupMappings": "Group mappings",
+          "openConflicts": "Open conflicts"
+        },
+        "title": "SCIM self-service lifecycle",
+        "description": "Tenant admins can now generate SCIM tokens and maintain group mappings from P32.",
+        "actions": {
+          "refresh": "Refresh"
+        },
+        "createToken": {
+          "title": "Create SCIM token",
+          "generate": "Generate token"
+        },
+        "createMapping": {
+          "title": "Create group mapping",
+          "save": "Save mapping"
+        },
+        "lists": {
+          "tokens": "Tokens",
+          "tokenRow": "{{name}} | {{prefix}} | used {{count}} times",
+          "groupMappings": "Group mappings"
+        }
+      },
+      "policyPanel": {
+        "errors": {
+          "load": "Failed to load security policy",
+          "save": "Failed to save security policy"
+        },
+        "toasts": {
+          "saved": "Security policy saved"
+        },
+        "mfa": {
+          "title": "MFA enforcement",
+          "description": "Require multi-factor authentication across the workspace.",
+          "enabled": "Enabled",
+          "gracePeriod": "Grace period (days)"
+        },
+        "sso": {
+          "title": "SSO posture",
+          "description": "Configure provider state and password fallback for identity flows.",
+          "enabled": "SSO enabled",
+          "enforce": "Enforce SSO login",
+          "allowPasswordFallback": "Allow password fallback",
+          "providerCustom": "Custom"
+        },
+        "sessionPassword": {
+          "title": "Session and password",
+          "description": "Canonical tenant policy surfaced through Admin instead of personal settings.",
+          "sessionTimeout": "Session timeout (minutes)",
+          "minutes": "{{count}} minutes",
+          "passwordPolicy": "Password policy",
+          "standard": "Standard",
+          "strong": "Strong",
+          "strict": "Strict"
+        },
+        "actions": {
+          "save": "Save security policy"
+        }
+      }
     },
     "tabs": {
       "templates": "Templates"
@@ -14473,6 +14734,921 @@
           "label": "Competencies",
           "desc": "Capability catalog used across the tenant"
         }
+      }
+    },
+    "aiControlCenter": {
+      "tokenBilling": {
+        "errors": {
+          "overview": "Could not load token billing overview statistics",
+          "stats": "Could not load token billing stats"
+        },
+        "title": "Token Billing Management",
+        "description": "Configure pricing, margins, and packages for the token economy.",
+        "refresh": "Refresh Data",
+        "overviewUnavailable": "Token billing overview unavailable",
+        "kpi": {
+          "activeModels": "Active AI Models",
+          "activePackages": "Active Packages",
+          "platformMargin": "Platform Margin",
+          "platformMarginSubtext": "Markup on base costs",
+          "systemBalance": "System Balance",
+          "systemBalanceSubtext": "Current admin tokens"
+        }
+      },
+      "marginConfig": {
+        "errors": {
+          "invalidResponse": "Margin configuration response was invalid.",
+          "load": "Could not load margin configurations. Please check backend connection.",
+          "save": "Failed to save settings"
+        },
+        "toasts": {
+          "updated": "Updated {{name}}"
+        },
+        "title": "Global Margins",
+        "description": "Base profit margins for non-LLM costs.",
+        "refresh": "Refresh Data",
+        "errorTitle": "Error Loading Data",
+        "tryAgain": "Try Again",
+        "emptyTitle": "No margin configurations yet",
+        "emptyDescription": "Add a margin configuration to set base profit margins for non-LLM costs.",
+        "saveChanges": "Save Changes",
+        "baseCostPer1k": "Base Cost / 1k",
+        "marginMarkup": "Margin Markup",
+        "footnote": "These global margins apply to base infrastructure costs. For AI Models, use the specific multipliers table."
+      },
+      "tokenPackages": {
+        "errors": {
+          "load": "Failed to load packages",
+          "save": "Failed to save package"
+        },
+        "toasts": {
+          "saved": "Package saved successfully"
+        },
+        "title": "Token Packages",
+        "description": "Manage purchasable token bundles.",
+        "create": "Create Package",
+        "unavailableTitle": "Token packages unavailable",
+        "editTitle": "Edit Package",
+        "createTitle": "Create New Package",
+        "fields": {
+          "name": "Package Name",
+          "namePlaceholder": "e.g. Starter, Pro",
+          "stripePriceId": "Stripe Price ID",
+          "tokensAmount": "Tokens Amount",
+          "priceUsd": "Price (USD)",
+          "bonusTokens": "Bonus Tokens (%)",
+          "sortOrder": "Sort Order",
+          "markPopular": "Mark as \"Popular\"",
+          "markPopularDescription": "Highlights this package with a badge and border."
+        },
+        "cancel": "Cancel",
+        "savePackage": "Save Package",
+        "mostPopular": "MOST POPULAR",
+        "packageLabel": "Package",
+        "bonusIncluded": "{{percent}}% Bonus Included",
+        "card": {
+          "tokens": "Tokens",
+          "totalValue": "Total Value",
+          "sortOrder": "Sort Order",
+          "active": "Active",
+          "inactive": "Inactive"
+        }
+      },
+      "llmMultipliers": {
+        "errors": {
+          "load": "Failed to load providers",
+          "update": "Failed to update"
+        },
+        "toasts": {
+          "updated": "Updated successfully"
+        },
+        "title": "AI Cost & Pricing Models",
+        "description": "Configure base costs and profit margins for each model.",
+        "refresh": "Refresh Data",
+        "columns": {
+          "providerModel": "Provider / Model",
+          "baseCost": "Base Cost",
+          "baseCostSuffix": "(per 1k in)",
+          "markupMultiplier": "Markup Multiplier",
+          "userPrice": "User Price",
+          "userPriceSuffix": "(Tokens deducted per 1k)",
+          "actions": "Actions"
+        },
+        "tokensValue": "{{count}} Tokens",
+        "per1000Tokens": "per 1,000 input tokens",
+        "editPricing": "Edit Pricing",
+        "noProviders": "No providers found. Check database configuration.",
+        "pricingLogicLabel": "Pricing Logic:",
+        "pricingLogicIntro": "User Tokens are deducted based on the",
+        "markupMultiplierTerm": "Markup Multiplier",
+        "pricingLogicExample": "If a model costs $0.01/1k and you set a 2.0x multiplier, user pays 2000 platform tokens ($0.02 value approx) for 1000 input tokens."
+      },
+      "policyGovernance": {
+        "levels": {
+          "advisory": {
+            "title": "Advisory",
+            "description": "AI can only explain and suggest. No modifications."
+          },
+          "assisted": {
+            "title": "Assisted",
+            "description": "AI can create drafts that require approval."
+          },
+          "proactive": {
+            "title": "Proactive",
+            "description": "AI can execute low-risk actions automatically."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI operates autonomously within governance rules."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Advisor",
+            "description": "Provides guidance and recommendations"
+          },
+          "pmoManager": {
+            "title": "PMO Manager",
+            "description": "Manages project methodology"
+          },
+          "executor": {
+            "title": "Executor",
+            "description": "Executes approved actions"
+          },
+          "educator": {
+            "title": "Educator",
+            "description": "Teaches and explains concepts"
+          }
+        },
+        "errors": {
+          "load": "Failed to load organization AI settings",
+          "save": "Failed to save settings"
+        },
+        "toasts": {
+          "saved": "AI Policy settings saved"
+        },
+        "title": "AI Policy & Governance",
+        "description": "Configure AI behavior and governance rules for your organization",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "policyLevel": {
+          "title": "AI Policy Level",
+          "description": "Controls what actions AI can perform in your organization"
+        },
+        "maxAllowed": "Max Allowed",
+        "activeRoles": {
+          "title": "Active AI Roles",
+          "description": "Select which AI personas are available to users"
+        },
+        "defaultRole": "Default Role",
+        "defaultProactivity": {
+          "title": "Default Proactivity",
+          "description": "Default AI proactivity level for new users"
+        },
+        "governanceRules": {
+          "title": "Governance Rules",
+          "description": "Additional governance and approval settings"
+        },
+        "regulatoryMode": {
+          "title": "Regulatory Mode",
+          "description": "When enabled, AI operates in strict compliance mode. All actions require explicit approval.",
+          "note": "Note: Regulatory Mode can be configured per-project in Project Settings."
+        },
+        "projectOverrides": {
+          "title": "Project Overrides",
+          "description": "Individual projects can override organization AI policy settings.",
+          "viewLink": "View Project Overrides →"
+        }
+      },
+      "missionControl": {
+        "errors": {
+          "incompleteStatus": "AI mission status response was incomplete",
+          "incompleteTest": "Capability test response was incomplete",
+          "notConfirmed": "Capability test did not confirm success",
+          "fetchStatus": "Failed to fetch AI status",
+          "testFailed": "Capability test failed"
+        },
+        "unknownProvider": "Unknown provider",
+        "capabilities": {
+          "connection": "AI Connection (Basic)",
+          "eyes": "AI Eyes (Visual Context)",
+          "memory": "AI Memory (RAG)",
+          "hands": "AI Hands (MCP Tools)",
+          "reasoning": "MAX Mode (Reasoning)"
+        },
+        "title": "AI Mission Control",
+        "refreshStatus": "Refresh Status",
+        "unavailableTitle": "AI mission control unavailable",
+        "loading": "Loading AI mission status...",
+        "successRate": "Success Rate (Last 50)",
+        "excellent": "Excellent",
+        "degraded": "Degraded",
+        "avgLatency": "Avg Latency",
+        "perRequest": "per request",
+        "activeProviders": "Active Providers",
+        "noActiveProviders": "No active providers",
+        "diagnosticsTitle": "AI Capability Diagnostics",
+        "testDescription": "Test if {{capability}} is functioning correctly.",
+        "resultLatency": "{{status}} ({{latency}}ms)",
+        "statusUnavailable": "AI mission control status is unavailable",
+        "runTest": "Run Test",
+        "latestLogs": "LATEST DIAGNOSTIC LOGS",
+        "clear": "Clear",
+        "errorLabel": "Error: {{error}}"
+      },
+      "accessLimits": {
+        "tiers": {
+          "budget": {
+            "name": "Budget",
+            "description": "Access to budget-friendly models only (GPT-4o-mini, DeepSeek)"
+          },
+          "standard": {
+            "name": "Standard",
+            "description": "Access to standard + budget models (GPT-4o, Claude 3.5 Sonnet)"
+          },
+          "premium": {
+            "name": "Premium",
+            "description": "Full access to all models including reasoning (o1, Claude 3 Opus)"
+          },
+          "availableModels": "Available models:",
+          "more": "+{{count}} more"
+        },
+        "toasts": {
+          "saved": "Access & Limits settings saved"
+        },
+        "errors": {
+          "save": "Failed to save settings"
+        },
+        "title": "Access & Limits",
+        "description": "Manage AI access tiers, usage limits, and budget controls",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "subTabs": {
+          "limits": "Usage Limits",
+          "tiers": "User Tiers",
+          "costs": "Cost Dashboard"
+        },
+        "usageLimits": {
+          "title": "Usage Limits",
+          "description": "Set daily and monthly limits for AI usage",
+          "maxCallsPerDay": "Max AI Calls per Day",
+          "maxCallsPerDayDescription": "Daily limit per user",
+          "maxTokensPerMonth": "Max Tokens per Month",
+          "maxTokensPerMonthDescription": "Monthly token budget for the organization"
+        },
+        "budgetControl": {
+          "title": "Budget Control",
+          "description": "Set spending limits and automatic actions",
+          "monthlyBudget": "Monthly Budget (USD)",
+          "unlimitedPlaceholder": "0 = unlimited",
+          "hardLimit": "Hard Limit (USD)",
+          "noHardLimitPlaceholder": "0 = no hard limit",
+          "freezeOnLimit": "Freeze on Limit",
+          "freezeOnLimitDescription": "Automatically disable AI when budget is exceeded"
+        },
+        "budgetAlerts": {
+          "title": "Budget Alerts",
+          "description": "Configure automatic alerts when spending reaches certain thresholds",
+          "warning": "Warning Alert",
+          "critical": "Critical Alert",
+          "emergency": "Emergency Alert",
+          "notifyAt": "Notify admins at {{threshold}}% budget usage",
+          "emailPlaceholder": "Alert email (optional)",
+          "addEmail": "Add Email"
+        },
+        "summary": {
+          "thisMonth": "This Month",
+          "ofBudget": "of ${{budget}} budget",
+          "tokenUsage": "Token Usage",
+          "ofLimit": "of {{limit}}k limit",
+          "avgDailyCalls": "Avg Daily Calls",
+          "perUserMax": "per user (max {{max}})"
+        },
+        "autoTier": {
+          "title": "Automatic Tier Assignment",
+          "description": "Automatically promote or demote users based on their monthly token usage",
+          "enable": "Enable Auto-Assignment",
+          "enableDescription": "Automatically adjust user tiers monthly based on usage",
+          "direction": "Assignment Direction",
+          "promoteOnly": "Promote Only",
+          "demoteOnly": "Demote Only",
+          "both": "Both (Promote & Demote)",
+          "maxTier": "Maximum Auto-Assign Tier",
+          "budgetOnly": "Budget Only",
+          "upToStandard": "Up to Standard",
+          "upToPremium": "Up to Premium",
+          "allTiers": "All Tiers (incl. Reasoning)",
+          "maxTierNote": "Users won't be auto-promoted beyond this tier",
+          "thresholdsTitle": "Token Thresholds",
+          "thresholdBudget": "0 - 1,000 tokens/month",
+          "thresholdStandard": "1,001 - 50,000 tokens/month",
+          "thresholdPremium": "50,001 - 200,000 tokens/month",
+          "reasoning": "Reasoning",
+          "thresholdReasoning": "200,001+ tokens/month",
+          "previewChanges": "Preview Changes",
+          "notifyUsers": "Notify Users on Tier Change",
+          "notifyUsersDescription": "Send email notification when tier is automatically changed"
+        },
+        "userTiers": {
+          "title": "User Tier Assignments",
+          "description": "Assign AI access tiers to individual users",
+          "columns": {
+            "user": "User",
+            "currentTier": "Current Tier",
+            "usage7d": "Usage (7d)",
+            "cost7d": "Cost (7d)",
+            "actions": "Actions"
+          },
+          "requestsCount": "{{count}} requests",
+          "viewDetails": "View Details"
+        },
+        "costDashboard": {
+          "totalSpend7d": "Total Spend (7d)",
+          "avgCostPerRequest": "Avg Cost/Request",
+          "totalRequests": "Total Requests",
+          "totalTokens": "Total Tokens",
+          "attributionTitle": "Cost Attribution",
+          "attributionDescription": "See which users and projects generate the most AI costs",
+          "columns": {
+            "entity": "Entity",
+            "type": "Type",
+            "requests": "Requests",
+            "tokens": "Tokens",
+            "cost": "Cost",
+            "percentOfTotal": "% of Total"
+          }
+        }
+      },
+      "auditCompliance": {
+        "toasts": {
+          "exported": "Audit log exported as {{format}}"
+        },
+        "errors": {
+          "export": "Failed to export audit log"
+        },
+        "status": {
+          "compliant": "Compliant",
+          "partial": "Partial",
+          "nonCompliant": "Non-Compliant"
+        },
+        "title": "Audit & Compliance",
+        "description": "View audit logs, security events, and compliance reports",
+        "dateRange": {
+          "last24h": "Last 24 hours",
+          "last7d": "Last 7 days",
+          "last30d": "Last 30 days",
+          "last90d": "Last 90 days"
+        },
+        "exportCsv": "CSV",
+        "exportJson": "JSON",
+        "subTabs": {
+          "settings": "Settings Changes",
+          "usage": "Usage Audit",
+          "security": "Security Events",
+          "compliance": "Compliance Reports",
+          "templates": "Custom Templates"
+        },
+        "searchPlaceholder": "Search audit log...",
+        "usageAudit": {
+          "title": "Usage Audit Log",
+          "description": "Detailed log of all AI requests and responses",
+          "hint": "Enable \"Audit All AI Requests\" in Features tab to start logging"
+        },
+        "security": {
+          "totalEvents": "Total Events",
+          "unresolved": "Unresolved",
+          "highCritical": "High/Critical",
+          "piiDetected": "PII Detected",
+          "columns": {
+            "event": "Event",
+            "severity": "Severity",
+            "user": "User",
+            "time": "Time",
+            "status": "Status",
+            "actions": "Actions"
+          },
+          "resolved": "Resolved",
+          "open": "Open",
+          "view": "View"
+        },
+        "compliance": {
+          "generateTitle": "Generate Compliance Report",
+          "generating": "Generating {{standard}} report...",
+          "exportFormat": "Export Format",
+          "exportingPdf": "Exporting all reports as PDF...",
+          "exportAllPdf": "Export All (PDF)",
+          "exportingCsv": "Exporting audit data as CSV...",
+          "rawDataCsv": "Raw Data (CSV)",
+          "generatingSummary": "Generating executive summary...",
+          "executiveSummary": "Executive Summary",
+          "recentReports": "Recent Reports",
+          "findingsCount": "{{count}} findings",
+          "download": "Download"
+        },
+        "templates": {
+          "title": "Custom Compliance Templates",
+          "description": "Create and manage custom compliance frameworks for your organization",
+          "create": "Create Template",
+          "basedOn": "Based on {{basedOn}}",
+          "sectionsCount": "{{count}} sections",
+          "checkpointsCount": "{{count}} checkpoints",
+          "updated": "Updated {{date}}",
+          "edit": "Edit",
+          "duplicated": "Template duplicated",
+          "duplicate": "Duplicate",
+          "deleted": "Template deleted",
+          "delete": "Delete",
+          "emptyTitle": "No Custom Templates",
+          "emptyDescription": "Create a custom compliance framework tailored to your organization's needs",
+          "createFirst": "Create Your First Template"
+        }
+      },
+      "featuresPrivacy": {
+        "retention": {
+          "days7": {
+            "label": "7 days",
+            "description": "Minimal retention for compliance"
+          },
+          "days30": {
+            "label": "30 days",
+            "description": "Standard retention period"
+          },
+          "days90": {
+            "label": "90 days",
+            "description": "Extended retention for analytics"
+          },
+          "year1": {
+            "label": "1 year",
+            "description": "Long-term retention"
+          },
+          "forever": {
+            "label": "Forever",
+            "description": "Never delete (not recommended)"
+          }
+        },
+        "toasts": {
+          "saved": "Features & Privacy settings saved",
+          "promptUpdated": "System Prompt Updated"
+        },
+        "errors": {
+          "save": "Failed to save settings",
+          "updatePrompt": "Failed to update prompt"
+        },
+        "title": "Features & Privacy",
+        "description": "Configure AI features, data policies, and custom instructions",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "subTabs": {
+          "features": "AI Features",
+          "data": "Data Policy",
+          "instructions": "Custom Instructions",
+          "personas": "System Personas"
+        },
+        "features": {
+          "title": "AI Features",
+          "description": "Enable or disable specific AI capabilities for your organization",
+          "artifacts": {
+            "label": "Artifacts Panel",
+            "description": "Allow AI to generate structured content (code, documents, diagrams)"
+          },
+          "thinkingSteps": {
+            "label": "Thinking Steps (Chain of Thought)",
+            "description": "Show AI reasoning process with expandable thinking blocks"
+          },
+          "focusModes": {
+            "label": "Focus Modes",
+            "description": "Allow users to filter AI context (PMO Docs, Project Data, Research)"
+          },
+          "webSearch": {
+            "label": "Web Search",
+            "description": "Allow AI to search the internet for current information"
+          },
+          "voice": {
+            "label": "Voice Conversations",
+            "description": "Enable voice input and output for AI interactions"
+          },
+          "auditSettings": "Audit Settings",
+          "auditAll": {
+            "label": "Audit All AI Requests",
+            "description": "Log every AI interaction for compliance (increases storage)"
+          },
+          "auditPolicy": {
+            "label": "Audit Policy Changes",
+            "description": "Track all changes to AI settings"
+          }
+        },
+        "dataRetention": {
+          "title": "Data Retention",
+          "description": "How long AI conversation data is stored"
+        },
+        "aiLearning": {
+          "title": "AI Learning",
+          "description": "Control how AI learns from your organization's data",
+          "allowTitle": "Allow AI to Learn from Organization Data",
+          "allowDescription": "AI will improve responses based on your organization's patterns and decisions",
+          "privacyNoticeTitle": "Privacy Notice",
+          "privacyNoticeDescription": "When enabled, AI learning uses only aggregated, anonymized patterns. No personal or sensitive data is used for training."
+        },
+        "externalData": {
+          "title": "External Data Policy",
+          "description": "Control AI access to external data sources",
+          "allowTitle": "Allow External Data Access",
+          "allowDescription": "AI can fetch industry benchmarks, market data, and external references"
+        },
+        "instructions": {
+          "title": "Organization Instructions",
+          "description": "Custom instructions applied to all AI interactions in your organization",
+          "toneStyle": "Tone & Style",
+          "toneProfessional": "Professional - Formal and business-appropriate",
+          "toneFriendly": "Friendly - Approachable and conversational",
+          "toneTechnical": "Technical - Precise and detailed",
+          "toneConcise": "Concise - Brief and to the point",
+          "toneEducational": "Educational - Explanatory and teaching-focused",
+          "customLabel": "Custom System Instructions",
+          "customPlaceholder": "Add custom instructions that will be applied to all AI interactions...\n\nExample:\n- Always mention relevant ISO standards when discussing processes\n- Use metric units for all measurements\n- Reference company policies when applicable",
+          "customHint": "These instructions are prepended to every AI request in your organization."
+        },
+        "restrictedTopics": {
+          "title": "Restricted Topics",
+          "description": "Topics or content types the AI should avoid discussing",
+          "competitor": {
+            "label": "Competitor Analysis",
+            "desc": "Avoid discussing competitor products/services"
+          },
+          "legal": {
+            "label": "Legal Advice",
+            "desc": "Don't provide legal recommendations"
+          },
+          "financial": {
+            "label": "Financial Advice",
+            "desc": "Avoid specific financial recommendations"
+          },
+          "personnel": {
+            "label": "Personnel Decisions",
+            "desc": "Don't advise on hiring/firing"
+          },
+          "medical": {
+            "label": "Medical Topics",
+            "desc": "Avoid health-related advice"
+          },
+          "politics": {
+            "label": "Political Topics",
+            "desc": "Stay neutral on political matters"
+          },
+          "customKeywords": "Custom Restricted Keywords",
+          "customKeywordsPlaceholder": "Enter keywords or phrases the AI should avoid, one per line..."
+        },
+        "personas": {
+          "available": "Available Personas",
+          "editPrefix": "Edit: {{key}}",
+          "descriptionLabel": "Description",
+          "systemPromptLabel": "System Prompt",
+          "contextInjection": "Context Injection",
+          "context": {
+            "project": "Project Context",
+            "userProfile": "User Profile",
+            "assessmentData": "Assessment Data",
+            "knowledgeBase": "Knowledge Base",
+            "taskHistory": "Task History"
+          },
+          "cancel": "Cancel",
+          "save": "Save Persona",
+          "selectToEdit": "Select a persona to edit"
+        }
+      },
+      "modelsProviders": {
+        "errors": {
+          "load": "Failed to load providers",
+          "healthCheckFailed": "Health check failed",
+          "refreshHealth": "Failed to refresh health",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Connection failed",
+          "testFailedFor": "Test failed for {{provider}}",
+          "updateProvider": "Failed to update provider"
+        },
+        "toasts": {
+          "healthCheckComplete": "Health check complete: {{count}} healthy providers",
+          "providerHealthy": "{{provider}} is healthy ({{latency}}ms)",
+          "providerEnabled": "Provider enabled",
+          "providerDisabled": "Provider disabled"
+        },
+        "health": {
+          "healthy": "healthy",
+          "degraded": "degraded",
+          "unhealthy": "unhealthy",
+          "unknown": "unknown"
+        },
+        "summary": {
+          "healthy": "Healthy",
+          "degraded": "Degraded",
+          "unhealthy": "Unhealthy",
+          "total": "Total"
+        },
+        "default": "Default:",
+        "lastCheck": "Last check: {{time}}",
+        "hideInactive": "Hide Inactive",
+        "showInactive": "Show Inactive",
+        "refreshing": "Refreshing...",
+        "refreshAll": "Refresh All",
+        "defaultBadge": "Default",
+        "vision": "Vision",
+        "tools": "Tools",
+        "noApiKey": "No API Key",
+        "priorityCost": "Priority: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Circuit: {{state}}",
+        "failuresCount": "({{count}} failures)",
+        "tableTitle": "AI Providers Management",
+        "tableDescription": "Configure providers for your organization. Enable/disable to control which models are available.",
+        "columns": {
+          "provider": "Provider",
+          "model": "Model",
+          "tiers": "Tiers",
+          "health": "Health",
+          "orgAccess": "Org Access",
+          "status": "Status"
+        },
+        "active": "Active",
+        "inactive": "Inactive",
+        "modelsPerTier": "Models Available per Tier",
+        "modelsInTiers": "{{modelCount}} models in {{tierCount}} tiers",
+        "noModelsAvailable": "No models available"
+      },
+      "llmView": {
+        "errors": {
+          "statusUnavailable": "LLM status unavailable",
+          "loadStatus": "Failed to load LLM status",
+          "loadProviders": "Failed to load providers",
+          "loadPrompts": "Failed to load prompts",
+          "loadAnalyticsData": "Failed to load analytics data",
+          "loadAnalytics": "Failed to load analytics",
+          "healthCheckFailed": "Health check failed",
+          "refreshHealth": "Failed to refresh health",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Connection failed",
+          "testFailedFor": "Test failed for {{provider}}",
+          "connectionFailedWithMessage": "Connection Failed: {{message}}",
+          "testFailedExecute": "Test failed to execute",
+          "operationFailed": "Operation failed",
+          "updatePrompt": "Failed to update prompt",
+          "deleteFailed": "Delete failed"
+        },
+        "toasts": {
+          "healthCheckComplete": "Health check complete: {{count}} healthy providers",
+          "providerHealthy": "{{provider}} is healthy ({{latency}}ms)",
+          "providerUpdated": "Provider updated",
+          "providerAdded": "Provider added",
+          "promptUpdated": "System Prompt Updated",
+          "providerDeleted": "Provider deleted"
+        },
+        "tabs": {
+          "providers": "LLM Providers",
+          "health": "Health Dashboard",
+          "prompts": "System Personas (Prompts)"
+        },
+        "providersUnavailable": "LLM providers unavailable",
+        "readOnly": {
+          "providersTitle": "LLM provider configuration is read-only",
+          "providersDescription": "Provider management actions are not shown until the persistence and audit workflow is fully connected.",
+          "promptsTitle": "System prompts are read-only",
+          "promptsDescription": "Prompt editing is hidden until user attribution, persistence, and audit metadata are wired."
+        },
+        "loadedProviders": "Loaded providers:",
+        "promptsUnavailable": "System prompts unavailable",
+        "loadedPrompts": "Loaded prompts:",
+        "analyticsUnavailable": "LLM analytics unavailable",
+        "kpi": {
+          "last7days": "LAST 7 DAYS",
+          "totalRequests": "Total Requests",
+          "avgLatency": "AVG LATENCY",
+          "responseTime": "Response Time",
+          "estCost": "EST. COST",
+          "totalSpend": "Total Spend",
+          "errorRate": "ERROR RATE",
+          "failedRequests": "{{count}} Failed Requests"
+        },
+        "recentInteractions": "Recent Interactions",
+        "viewAllLogs": "View All Logs",
+        "columns": {
+          "status": "Status",
+          "time": "Time",
+          "providerModel": "Provider / Model",
+          "latency": "Latency",
+          "cost": "Cost",
+          "details": "Details"
+        },
+        "success": "Success",
+        "noLogs": "No logs found in the last 7 days.",
+        "healthUnavailable": "LLM health status unavailable",
+        "summary": {
+          "healthy": "Healthy",
+          "degraded": "Degraded",
+          "unhealthy": "Unhealthy",
+          "total": "Total"
+        },
+        "default": "Default:",
+        "lastCheckDuration": "Last check: {{time}}({{duration}}ms)",
+        "refreshing": "Refreshing...",
+        "refreshAll": "Refresh All",
+        "criticalErrors": "Critical Errors",
+        "defaultBadge": "Default",
+        "vision": "Vision",
+        "tools": "Tools",
+        "noApiKey": "No API Key",
+        "priorityCost": "Priority: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Circuit: {{state}}",
+        "failuresCount": "({{count}} failures)",
+        "fallbackChains": "Fallback Chains"
+      },
+      "helpAnalytics": {
+        "errors": {
+          "fetch": "Failed to fetch analytics data"
+        },
+        "loading": "Loading analytics...",
+        "refresh": "Refresh",
+        "noData": "No analytics data available",
+        "title": "Help Analytics",
+        "subtitle": "Monitor help system performance and user engagement",
+        "days": "days",
+        "activeUsers": "Active Users",
+        "totalEvents": "Total Events",
+        "helpfulnessRate": "Helpfulness Rate",
+        "avgRating": "Avg Rating",
+        "topContent": "Top Viewed Content",
+        "viewers": "viewers",
+        "topSearches": "Top Searches",
+        "searches": "searches",
+        "conversionRate": "conversion rate",
+        "zeroResults": "Zero-Result Searches",
+        "zeroResultsDescription": "Searches that returned no results - opportunities to add content",
+        "noZeroResults": "No zero-result searches",
+        "needsImprovement": "Needs Improvement",
+        "needsImprovementDescription": "Content with low helpfulness rate (<70%)",
+        "feedbackCount": "{{count}} feedback",
+        "allContentHighlyRated": "All content is highly rated",
+        "videoCompletion": "Video Completion",
+        "completionRate": "completion rate",
+        "recentFeedback": "Recent Feedback",
+        "lastUpdated": "Last updated"
+      },
+      "orgAISettings": {
+        "validation": {
+          "maxCallsPerDay": "Daily AI call limit must be at least 1.",
+          "maxTokensPerMonth": "Monthly token limit must be at least 1.",
+          "negativeBudget": "Budget limits cannot be negative.",
+          "budgetExceedsHardLimit": "Monthly budget cannot be higher than the hard limit.",
+          "atLeastOneRole": "At least one AI role must remain active.",
+          "defaultRoleMustBeActive": "Default AI role must be one of the active roles."
+        },
+        "levels": {
+          "advisory": {
+            "title": "Advisory",
+            "description": "AI can only explain and suggest. No modifications."
+          },
+          "assisted": {
+            "title": "Assisted",
+            "description": "AI can create drafts that require approval."
+          },
+          "proactive": {
+            "title": "Proactive",
+            "description": "AI can execute low-risk actions automatically."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI operates autonomously within governance rules."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Advisor",
+            "description": "Provides guidance and recommendations"
+          },
+          "pmoManager": {
+            "title": "PMO Manager",
+            "description": "Manages project methodology"
+          },
+          "executor": {
+            "title": "Executor",
+            "description": "Executes approved actions"
+          },
+          "educator": {
+            "title": "Educator",
+            "description": "Teaches and explains concepts"
+          }
+        },
+        "errors": {
+          "load": "Failed to load organization AI settings",
+          "saveNotConfirmed": "Organization AI settings save was not confirmed by the server",
+          "save": "Failed to save organization AI settings"
+        },
+        "toasts": {
+          "saved": "Organization AI settings saved"
+        },
+        "tabs": {
+          "policy": "Policy & Roles",
+          "limits": "Limits & Budget",
+          "features": "Features",
+          "audit": "Audit Log"
+        },
+        "unavailableTitle": "Organization AI settings unavailable",
+        "noSettingsFound": "No AI Settings Found",
+        "noSettingsDescription": "This organization doesn't have AI settings configured yet. Please contact support or check your permissions.",
+        "retryLoading": "Retry Loading",
+        "title": "Organization AI Settings",
+        "configureFor": "Configure AI behavior for {{orgName}}",
+        "yourOrganization": "your organization",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "policyLevel": {
+          "title": "AI Policy Level",
+          "description": "Controls what actions AI can perform"
+        },
+        "maxAllowed": "Max Allowed",
+        "activeRoles": {
+          "title": "Active AI Roles",
+          "description": "Select which AI personas are available to users"
+        },
+        "defaultRole": "Default Role",
+        "defaultProactivity": {
+          "title": "Default Proactivity",
+          "description": "Default AI proactivity level for new users"
+        },
+        "usageLimits": {
+          "title": "Usage Limits",
+          "description": "Set daily and monthly limits for AI usage",
+          "maxCallsPerDay": "Max AI Calls per Day",
+          "maxCallsPerDayDescription": "Daily limit per user",
+          "maxTokensPerMonth": "Max Tokens per Month",
+          "maxTokensPerMonthDescription": "Monthly token budget for the organization"
+        },
+        "budgetControl": {
+          "title": "Budget Control",
+          "description": "Set spending limits and automatic actions",
+          "monthlyBudget": "Monthly Budget (USD)",
+          "unlimitedPlaceholder": "0 = unlimited",
+          "hardLimit": "Hard Limit (USD)",
+          "noHardLimitPlaceholder": "0 = no hard limit",
+          "freezeOnLimit": "Freeze on Limit",
+          "freezeOnLimitDescription": "Automatically disable AI when budget is exceeded"
+        },
+        "features": {
+          "title": "AI Features",
+          "description": "Enable or disable specific AI capabilities for your organization",
+          "artifacts": {
+            "label": "Artifacts Panel",
+            "description": "Allow AI to generate structured content (code, documents, diagrams)"
+          },
+          "thinkingSteps": {
+            "label": "Thinking Steps (Chain of Thought)",
+            "description": "Show AI reasoning process with expandable thinking blocks"
+          },
+          "focusModes": {
+            "label": "Focus Modes",
+            "description": "Allow users to filter AI context (PMO Docs, Project Data, Research)"
+          },
+          "webSearch": {
+            "label": "Web Search",
+            "description": "Allow AI to search the internet for current information"
+          },
+          "voice": {
+            "label": "Voice Conversations",
+            "description": "Enable voice input and output for AI interactions"
+          },
+          "auditSettings": "Audit Settings",
+          "auditAll": {
+            "label": "Audit All AI Requests",
+            "description": "Log every AI interaction for compliance (increases storage)"
+          },
+          "auditPolicy": {
+            "label": "Audit Policy Changes",
+            "description": "Track all changes to AI settings"
+          }
+        },
+        "auditLog": {
+          "title": "Settings Change History",
+          "description": "View all changes made to AI settings"
+        }
+      },
+      "panel": {
+        "tabs": {
+          "settings": "Governance settings",
+          "operations": "AI operations"
+        },
+        "errors": {
+          "loadSummary": "Failed to load AI summary"
+        },
+        "governanceLevel": "Governance level",
+        "unknown": "Unknown",
+        "reviewState": "Review state: {{state}}",
+        "notAvailable": "n/a",
+        "modelPosture": "Model posture",
+        "budget": "Budget: {{status}}",
+        "contextControls": "Context controls",
+        "externalContextAllowed": "External context allowed",
+        "externalContextRestricted": "External context restricted",
+        "title": "AI Governance & AI Operations",
+        "description": "Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside the primary Admin shell."
       }
     }
   },

@@ -1,6 +1,9 @@
 import { AlertTriangle, FileText, ShieldAlert, Siren } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import i18n from '@/i18n';
 
 import { Api } from '../../services/api';
 import { DegradedState } from './AdminState';
@@ -36,9 +39,11 @@ const safeNumber = (value: unknown, fallback = 0) => {
 };
 
 const formatIncidentStartedAt = (value?: string) => {
-  if (!value) return 'unknown';
+  if (!value) return i18n.t('admin.security.riskSummary.unknown', 'unknown');
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown time' : date.toLocaleString();
+  return Number.isNaN(date.getTime())
+    ? i18n.t('admin.security.riskSummary.unknownTime', 'Unknown time')
+    : date.toLocaleString();
 };
 
 const MetricCard: React.FC<{
@@ -62,6 +67,7 @@ const MetricCard: React.FC<{
 );
 
 export const AdminRiskSummaryPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<RiskSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -81,14 +87,17 @@ export const AdminRiskSummaryPanel: React.FC = () => {
         incidents: Array.isArray(next.incidents) ? next.incidents : [],
       });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to load risk summary';
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('admin.security.riskSummary.errors.load', 'Failed to load risk summary');
       setSummary(null);
       setLoadError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadSummary();
@@ -97,7 +106,7 @@ export const AdminRiskSummaryPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
-        Loading risk summary...
+        {t('admin.security.riskSummary.loading', 'Loading risk summary...')}
       </div>
     );
   }
@@ -105,14 +114,14 @@ export const AdminRiskSummaryPanel: React.FC = () => {
   if (loadError) {
     return (
       <DegradedState
-        title="Risk summary unavailable"
+        title={t('admin.security.riskSummary.unavailableTitle', 'Risk summary unavailable')}
         description={loadError}
         action={
           <button
             onClick={() => void loadSummary()}
             className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500"
           >
-            Retry risk summary
+            {t('admin.security.riskSummary.retry', 'Retry risk summary')}
           </button>
         }
       />
@@ -125,21 +134,30 @@ export const AdminRiskSummaryPanel: React.FC = () => {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
-          title="High-risk audit events"
+          title={t('admin.security.riskSummary.metrics.highRisk.title', 'High-risk audit events')}
           value={summary.audit.highRiskCount}
-          description="Audit events with risk score at or above the tenant threshold."
+          description={t(
+            'admin.security.riskSummary.metrics.highRisk.description',
+            'Audit events with risk score at or above the tenant threshold.'
+          )}
           icon={ShieldAlert}
         />
         <MetricCard
-          title="Unresolved audit items"
+          title={t('admin.security.riskSummary.metrics.unresolved.title', 'Unresolved audit items')}
           value={summary.audit.unresolvedCount}
-          description="Open audit items that still need administrative review."
+          description={t(
+            'admin.security.riskSummary.metrics.unresolved.description',
+            'Open audit items that still need administrative review.'
+          )}
           icon={AlertTriangle}
         />
         <MetricCard
-          title="LLM incidents"
+          title={t('admin.security.riskSummary.metrics.incidents.title', 'LLM incidents')}
           value={summary.incidents.length}
-          description="Recent LLM/provider incidents visible to tenant admins."
+          description={t(
+            'admin.security.riskSummary.metrics.incidents.description',
+            'Recent LLM/provider incidents visible to tenant admins.'
+          )}
           icon={Siren}
         />
       </div>
@@ -147,15 +165,20 @@ export const AdminRiskSummaryPanel: React.FC = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
           <FileText className="h-5 w-5 text-primary-500" />
-          Risk follow-up queue
+          {t('admin.security.riskSummary.queue.title', 'Risk follow-up queue')}
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Prioritize unresolved audit items and recent incidents before changing tenant security
-          posture.
+          {t(
+            'admin.security.riskSummary.queue.description',
+            'Prioritize unresolved audit items and recent incidents before changing tenant security posture.'
+          )}
         </p>
         {summary.incidents.length === 0 ? (
           <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-            No recent incidents returned by the risk service.
+            {t(
+              'admin.security.riskSummary.queue.empty',
+              'No recent incidents returned by the risk service.'
+            )}
           </div>
         ) : (
           <div className="mt-4 space-y-3">
@@ -165,11 +188,18 @@ export const AdminRiskSummaryPanel: React.FC = () => {
                 className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10"
               >
                 <div className="font-medium text-slate-900 dark:text-white">
-                  {incident.provider || 'Unknown provider'} | {incident.severity || 'unknown'}
+                  {incident.provider ||
+                    t('admin.security.riskSummary.queue.unknownProvider', 'Unknown provider')}{' '}
+                  | {incident.severity || t('admin.security.riskSummary.unknown', 'unknown')}
                 </div>
                 <div className="mt-1 text-slate-500 dark:text-slate-400">
-                  Status: {incident.status || 'unknown'} | Started:{' '}
-                  {formatIncidentStartedAt(incident.startedAt || incident.started_at)}
+                  {t('admin.security.riskSummary.queue.status', 'Status: {{status}}', {
+                    status: incident.status || t('admin.security.riskSummary.unknown', 'unknown'),
+                  })}{' '}
+                  |{' '}
+                  {t('admin.security.riskSummary.queue.started', 'Started: {{time}}', {
+                    time: formatIncidentStartedAt(incident.startedAt || incident.started_at),
+                  })}
                 </div>
               </div>
             ))}

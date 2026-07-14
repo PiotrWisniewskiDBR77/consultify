@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
@@ -83,6 +84,7 @@ interface CustomTemplate {
 }
 
 export const AuditComplianceTab: React.FC = () => {
+  const { t } = useTranslation();
   const { currentOrganization } = useAppStore();
   const [activeSubTab, setActiveSubTab] = useState<
     'settings' | 'usage' | 'security' | 'compliance' | 'templates'
@@ -175,9 +177,20 @@ export const AuditComplianceTab: React.FC = () => {
       anchor.remove();
       URL.revokeObjectURL(url);
 
-      toast.success(`Audit log exported as ${format.toUpperCase()}`);
+      toast.success(
+        t(
+          'admin.aiControlCenter.auditCompliance.toasts.exported',
+          'Audit log exported as {{format}}',
+          {
+            format: format.toUpperCase(),
+          }
+        )
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to export audit log');
+      toast.error(
+        error?.message ||
+          t('admin.aiControlCenter.auditCompliance.errors.export', 'Failed to export audit log')
+      );
     }
   };
 
@@ -218,19 +231,19 @@ export const AuditComplianceTab: React.FC = () => {
       case 'compliant':
         return (
           <span className="px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400">
-            Compliant
+            {t('admin.aiControlCenter.auditCompliance.status.compliant', 'Compliant')}
           </span>
         );
       case 'partial':
         return (
           <span className="px-2 py-0.5 rounded-full text-xs bg-amber-500/20 text-amber-400">
-            Partial
+            {t('admin.aiControlCenter.auditCompliance.status.partial', 'Partial')}
           </span>
         );
       case 'non_compliant':
         return (
           <span className="px-2 py-0.5 rounded-full text-xs bg-danger-500/20 text-danger-400">
-            Non-Compliant
+            {t('admin.aiControlCenter.auditCompliance.status.nonCompliant', 'Non-Compliant')}
           </span>
         );
       default:
@@ -245,10 +258,13 @@ export const AuditComplianceTab: React.FC = () => {
         <div>
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <History className="text-warning-600 dark:text-amber-400" size={20} />
-            Audit & Compliance
+            {t('admin.aiControlCenter.auditCompliance.title', 'Audit & Compliance')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            View audit logs, security events, and compliance reports
+            {t(
+              'admin.aiControlCenter.auditCompliance.description',
+              'View audit logs, security events, and compliance reports'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -257,10 +273,18 @@ export const AuditComplianceTab: React.FC = () => {
             onChange={(e) => setDateRange(e.target.value)}
             className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-navy-900 dark:text-white text-sm"
           >
-            <option value="24h">Last 24 hours</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
+            <option value="24h">
+              {t('admin.aiControlCenter.auditCompliance.dateRange.last24h', 'Last 24 hours')}
+            </option>
+            <option value="7d">
+              {t('admin.aiControlCenter.auditCompliance.dateRange.last7d', 'Last 7 days')}
+            </option>
+            <option value="30d">
+              {t('admin.aiControlCenter.auditCompliance.dateRange.last30d', 'Last 30 days')}
+            </option>
+            <option value="90d">
+              {t('admin.aiControlCenter.auditCompliance.dateRange.last90d', 'Last 90 days')}
+            </option>
           </select>
           <div className="flex gap-1">
             <button
@@ -268,14 +292,14 @@ export const AuditComplianceTab: React.FC = () => {
               className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm border border-slate-200 dark:border-transparent"
             >
               <FileSpreadsheet size={16} />
-              CSV
+              {t('admin.aiControlCenter.auditCompliance.exportCsv', 'CSV')}
             </button>
             <button
               onClick={() => exportAuditLog('json')}
               className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm border border-slate-200 dark:border-transparent"
             >
               <FileJson size={16} />
-              JSON
+              {t('admin.aiControlCenter.auditCompliance.exportJson', 'JSON')}
             </button>
           </div>
         </div>
@@ -292,7 +316,7 @@ export const AuditComplianceTab: React.FC = () => {
           }`}
         >
           <History size={14} className="inline mr-2" />
-          Settings Changes
+          {t('admin.aiControlCenter.auditCompliance.subTabs.settings', 'Settings Changes')}
         </button>
         <button
           onClick={() => setActiveSubTab('usage')}
@@ -303,7 +327,7 @@ export const AuditComplianceTab: React.FC = () => {
           }`}
         >
           <Activity size={14} className="inline mr-2" />
-          Usage Audit
+          {t('admin.aiControlCenter.auditCompliance.subTabs.usage', 'Usage Audit')}
         </button>
         <button
           onClick={() => setActiveSubTab('security')}
@@ -314,7 +338,7 @@ export const AuditComplianceTab: React.FC = () => {
           }`}
         >
           <Shield size={14} className="inline mr-2" />
-          Security Events
+          {t('admin.aiControlCenter.auditCompliance.subTabs.security', 'Security Events')}
           {securityEvents.filter((e) => !e.resolved).length > 0 && (
             <span className="ml-2 px-1.5 py-0.5 bg-danger-500/20 text-danger-600 dark:text-danger-400 text-xs rounded-full">
               {securityEvents.filter((e) => !e.resolved).length}
@@ -330,7 +354,7 @@ export const AuditComplianceTab: React.FC = () => {
           }`}
         >
           <FileText size={14} className="inline mr-2" />
-          Compliance Reports
+          {t('admin.aiControlCenter.auditCompliance.subTabs.compliance', 'Compliance Reports')}
         </button>
         <button
           onClick={() => setActiveSubTab('templates')}
@@ -341,7 +365,7 @@ export const AuditComplianceTab: React.FC = () => {
           }`}
         >
           <Edit3 size={14} className="inline mr-2" />
-          Custom Templates
+          {t('admin.aiControlCenter.auditCompliance.subTabs.templates', 'Custom Templates')}
         </button>
       </div>
 
@@ -357,7 +381,10 @@ export const AuditComplianceTab: React.FC = () => {
                 />
                 <input
                   type="text"
-                  placeholder="Search audit log..."
+                  placeholder={t(
+                    'admin.aiControlCenter.auditCompliance.searchPlaceholder',
+                    'Search audit log...'
+                  )}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2 text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
@@ -378,12 +405,20 @@ export const AuditComplianceTab: React.FC = () => {
       {activeSubTab === 'usage' && (
         <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center shadow-sm dark:shadow-none">
           <Activity className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-navy-900 dark:text-white">Usage Audit Log</h3>
+          <h3 className="text-lg font-medium text-navy-900 dark:text-white">
+            {t('admin.aiControlCenter.auditCompliance.usageAudit.title', 'Usage Audit Log')}
+          </h3>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Detailed log of all AI requests and responses
+            {t(
+              'admin.aiControlCenter.auditCompliance.usageAudit.description',
+              'Detailed log of all AI requests and responses'
+            )}
           </p>
           <p className="text-xs text-primary-600 dark:text-primary-400 mt-4">
-            Enable "Audit All AI Requests" in Features tab to start logging
+            {t(
+              'admin.aiControlCenter.auditCompliance.usageAudit.hint',
+              'Enable "Audit All AI Requests" in Features tab to start logging'
+            )}
           </p>
         </div>
       )}
@@ -395,7 +430,7 @@ export const AuditComplianceTab: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 shadow-sm dark:shadow-none">
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
-                Total Events
+                {t('admin.aiControlCenter.auditCompliance.security.totalEvents', 'Total Events')}
               </p>
               <p className="text-2xl font-bold text-navy-900 dark:text-white">
                 {securityEvents.length}
@@ -403,7 +438,7 @@ export const AuditComplianceTab: React.FC = () => {
             </div>
             <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 shadow-sm dark:shadow-none">
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
-                Unresolved
+                {t('admin.aiControlCenter.auditCompliance.security.unresolved', 'Unresolved')}
               </p>
               <p className="text-2xl font-bold text-danger-600 dark:text-danger-400">
                 {securityEvents.filter((e) => !e.resolved).length}
@@ -411,7 +446,7 @@ export const AuditComplianceTab: React.FC = () => {
             </div>
             <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 shadow-sm dark:shadow-none">
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
-                High/Critical
+                {t('admin.aiControlCenter.auditCompliance.security.highCritical', 'High/Critical')}
               </p>
               <p className="text-2xl font-bold text-warning-600 dark:text-amber-400">
                 {
@@ -422,7 +457,7 @@ export const AuditComplianceTab: React.FC = () => {
             </div>
             <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 shadow-sm dark:shadow-none">
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
-                PII Detected
+                {t('admin.aiControlCenter.auditCompliance.security.piiDetected', 'PII Detected')}
               </p>
               <p className="text-2xl font-bold text-warning-600 dark:text-amber-400">
                 {securityEvents.filter((e) => e.type === 'pii_detected').length}
@@ -438,12 +473,30 @@ export const AuditComplianceTab: React.FC = () => {
               >
                 <thead className="bg-slate-50 dark:bg-black/20 text-xs uppercase text-slate-600 dark:text-slate-500">
                   <tr>
-                    <th className="px-6 py-3">Event</th>
-                    <th className="px-6 py-3">Severity</th>
-                    <th className="px-6 py-3">User</th>
-                    <th className="px-6 py-3">Time</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.auditCompliance.security.columns.event', 'Event')}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.auditCompliance.security.columns.severity',
+                        'Severity'
+                      )}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.auditCompliance.security.columns.user', 'User')}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.auditCompliance.security.columns.time', 'Time')}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t('admin.aiControlCenter.auditCompliance.security.columns.status', 'Status')}
+                    </th>
+                    <th className="px-6 py-3">
+                      {t(
+                        'admin.aiControlCenter.auditCompliance.security.columns.actions',
+                        'Actions'
+                      )}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5">
@@ -482,17 +535,22 @@ export const AuditComplianceTab: React.FC = () => {
                       <td className="px-6 py-4">
                         {event.resolved ? (
                           <span className="flex items-center gap-1 text-success-600 dark:text-green-400 text-xs">
-                            <CheckCircle size={14} /> Resolved
+                            <CheckCircle size={14} />{' '}
+                            {t(
+                              'admin.aiControlCenter.auditCompliance.security.resolved',
+                              'Resolved'
+                            )}
                           </span>
                         ) : (
                           <span className="flex items-center gap-1 text-warning-600 dark:text-amber-400 text-xs">
-                            <AlertTriangle size={14} /> Open
+                            <AlertTriangle size={14} />{' '}
+                            {t('admin.aiControlCenter.auditCompliance.security.open', 'Open')}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         <button className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm">
-                          View
+                          {t('admin.aiControlCenter.auditCompliance.security.view', 'View')}
                         </button>
                       </td>
                     </tr>
@@ -510,13 +568,26 @@ export const AuditComplianceTab: React.FC = () => {
           {/* Generate New Report */}
           <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-6 shadow-sm dark:shadow-none">
             <h3 className="font-semibold text-navy-900 dark:text-white mb-4">
-              Generate Compliance Report
+              {t(
+                'admin.aiControlCenter.auditCompliance.compliance.generateTitle',
+                'Generate Compliance Report'
+              )}
             </h3>
             <div className="flex gap-3 flex-wrap mb-6">
               {['ISO21500', 'PMBOK7', 'PRINCE2', 'GDPR', 'SOC2'].map((standard) => (
                 <button
                   key={standard}
-                  onClick={() => toast.success(`Generating ${standard} report...`)}
+                  onClick={() =>
+                    toast.success(
+                      t(
+                        'admin.aiControlCenter.auditCompliance.compliance.generating',
+                        'Generating {{standard}} report...',
+                        {
+                          standard,
+                        }
+                      )
+                    )
+                  }
                   className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm font-medium transition-colors border border-slate-200 dark:border-transparent"
                 >
                   <FileText size={14} className="inline mr-2" />
@@ -528,29 +599,62 @@ export const AuditComplianceTab: React.FC = () => {
             {/* Export Options */}
             <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
               <h4 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">
-                Export Format
+                {t(
+                  'admin.aiControlCenter.auditCompliance.compliance.exportFormat',
+                  'Export Format'
+                )}
               </h4>
               <div className="flex gap-2">
                 <button
-                  onClick={() => toast.success('Exporting all reports as PDF...')}
+                  onClick={() =>
+                    toast.success(
+                      t(
+                        'admin.aiControlCenter.auditCompliance.compliance.exportingPdf',
+                        'Exporting all reports as PDF...'
+                      )
+                    )
+                  }
                   className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm"
                 >
                   <FileText size={16} />
-                  Export All (PDF)
+                  {t(
+                    'admin.aiControlCenter.auditCompliance.compliance.exportAllPdf',
+                    'Export All (PDF)'
+                  )}
                 </button>
                 <button
-                  onClick={() => toast.success('Exporting audit data as CSV...')}
+                  onClick={() =>
+                    toast.success(
+                      t(
+                        'admin.aiControlCenter.auditCompliance.compliance.exportingCsv',
+                        'Exporting audit data as CSV...'
+                      )
+                    )
+                  }
                   className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-navy-900 dark:text-white rounded-lg text-sm"
                 >
                   <FileSpreadsheet size={16} />
-                  Raw Data (CSV)
+                  {t(
+                    'admin.aiControlCenter.auditCompliance.compliance.rawDataCsv',
+                    'Raw Data (CSV)'
+                  )}
                 </button>
                 <button
-                  onClick={() => toast.success('Generating executive summary...')}
+                  onClick={() =>
+                    toast.success(
+                      t(
+                        'admin.aiControlCenter.auditCompliance.compliance.generatingSummary',
+                        'Generating executive summary...'
+                      )
+                    )
+                  }
                   className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-navy-900 dark:text-white rounded-lg text-sm"
                 >
                   <Download size={16} />
-                  Executive Summary
+                  {t(
+                    'admin.aiControlCenter.auditCompliance.compliance.executiveSummary',
+                    'Executive Summary'
+                  )}
                 </button>
               </div>
             </div>
@@ -559,7 +663,12 @@ export const AuditComplianceTab: React.FC = () => {
           {/* Reports List */}
           <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
-              <h3 className="font-semibold text-navy-900 dark:text-white">Recent Reports</h3>
+              <h3 className="font-semibold text-navy-900 dark:text-white">
+                {t(
+                  'admin.aiControlCenter.auditCompliance.compliance.recentReports',
+                  'Recent Reports'
+                )}
+              </h3>
             </div>
             <div className="divide-y divide-slate-200 dark:divide-white/5">
               {complianceReports.map((report) => (
@@ -585,7 +694,13 @@ export const AuditComplianceTab: React.FC = () => {
                           <>
                             <span className="text-xs text-slate-600 dark:text-slate-500">•</span>
                             <span className="text-xs text-warning-600 dark:text-amber-400">
-                              {report.findings} findings
+                              {t(
+                                'admin.aiControlCenter.auditCompliance.compliance.findingsCount',
+                                '{{count}} findings',
+                                {
+                                  count: report.findings,
+                                }
+                              )}
                             </span>
                           </>
                         )}
@@ -596,7 +711,7 @@ export const AuditComplianceTab: React.FC = () => {
                     {getStatusBadge(report.status)}
                     <button className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm flex items-center gap-2 border border-slate-200 dark:border-transparent">
                       <Download size={14} />
-                      Download
+                      {t('admin.aiControlCenter.auditCompliance.compliance.download', 'Download')}
                     </button>
                   </div>
                 </div>
@@ -613,10 +728,16 @@ export const AuditComplianceTab: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-navy-900 dark:text-white">
-                Custom Compliance Templates
+                {t(
+                  'admin.aiControlCenter.auditCompliance.templates.title',
+                  'Custom Compliance Templates'
+                )}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Create and manage custom compliance frameworks for your organization
+                {t(
+                  'admin.aiControlCenter.auditCompliance.templates.description',
+                  'Create and manage custom compliance frameworks for your organization'
+                )}
               </p>
             </div>
             <button
@@ -627,7 +748,7 @@ export const AuditComplianceTab: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
             >
               <Plus size={16} />
-              Create Template
+              {t('admin.aiControlCenter.auditCompliance.templates.create', 'Create Template')}
             </button>
           </div>
 
@@ -648,20 +769,46 @@ export const AuditComplianceTab: React.FC = () => {
                     </div>
                     {template.basedOn && (
                       <span className="px-2 py-1 bg-primary-500/20 text-primary-700 dark:text-primary-300 text-xs rounded">
-                        Based on {template.basedOn}
+                        {t(
+                          'admin.aiControlCenter.auditCompliance.templates.basedOn',
+                          'Based on {{basedOn}}',
+                          {
+                            basedOn: template.basedOn,
+                          }
+                        )}
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    <span>{template.sectionsCount} sections</span>
+                    <span>
+                      {t(
+                        'admin.aiControlCenter.auditCompliance.templates.sectionsCount',
+                        '{{count}} sections',
+                        {
+                          count: template.sectionsCount,
+                        }
+                      )}
+                    </span>
                     <span>•</span>
-                    <span>{template.checkpointsCount} checkpoints</span>
+                    <span>
+                      {t(
+                        'admin.aiControlCenter.auditCompliance.templates.checkpointsCount',
+                        '{{count}} checkpoints',
+                        { count: template.checkpointsCount }
+                      )}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Updated {new Date(template.updatedAt).toLocaleDateString()}
+                      {t(
+                        'admin.aiControlCenter.auditCompliance.templates.updated',
+                        'Updated {{date}}',
+                        {
+                          date: new Date(template.updatedAt).toLocaleDateString(),
+                        }
+                      )}
                     </span>
                     <div className="flex items-center gap-2">
                       <button
@@ -670,24 +817,42 @@ export const AuditComplianceTab: React.FC = () => {
                           setShowTemplateEditor(true);
                         }}
                         className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
-                        title="Edit"
+                        title={t('admin.aiControlCenter.auditCompliance.templates.edit', 'Edit')}
                       >
                         <Edit3 size={16} />
                       </button>
                       <button
-                        onClick={() => toast.success('Template duplicated')}
+                        onClick={() =>
+                          toast.success(
+                            t(
+                              'admin.aiControlCenter.auditCompliance.templates.duplicated',
+                              'Template duplicated'
+                            )
+                          )
+                        }
                         className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
-                        title="Duplicate"
+                        title={t(
+                          'admin.aiControlCenter.auditCompliance.templates.duplicate',
+                          'Duplicate'
+                        )}
                       >
                         <Copy size={16} />
                       </button>
                       <button
                         onClick={() => {
                           setCustomTemplates((prev) => prev.filter((t) => t.id !== template.id));
-                          toast.success('Template deleted');
+                          toast.success(
+                            t(
+                              'admin.aiControlCenter.auditCompliance.templates.deleted',
+                              'Template deleted'
+                            )
+                          );
                         }}
                         className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-500/10 rounded transition-colors"
-                        title="Delete"
+                        title={t(
+                          'admin.aiControlCenter.auditCompliance.templates.delete',
+                          'Delete'
+                        )}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -700,10 +865,16 @@ export const AuditComplianceTab: React.FC = () => {
             <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 border-dashed rounded-xl p-12 text-center shadow-sm dark:shadow-none">
               <FileText size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
               <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
-                No Custom Templates
+                {t(
+                  'admin.aiControlCenter.auditCompliance.templates.emptyTitle',
+                  'No Custom Templates'
+                )}
               </h3>
               <p className="text-slate-500 dark:text-slate-400 mb-4">
-                Create a custom compliance framework tailored to your organization's needs
+                {t(
+                  'admin.aiControlCenter.auditCompliance.templates.emptyDescription',
+                  "Create a custom compliance framework tailored to your organization's needs"
+                )}
               </p>
               <button
                 onClick={() => {
@@ -713,7 +884,10 @@ export const AuditComplianceTab: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
               >
                 <Plus size={16} />
-                Create Your First Template
+                {t(
+                  'admin.aiControlCenter.auditCompliance.templates.createFirst',
+                  'Create Your First Template'
+                )}
               </button>
             </div>
           )}

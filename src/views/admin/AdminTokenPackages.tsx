@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Coins, Edit2, Package, Plus, Star, Trash2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 
@@ -8,6 +9,7 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
 export const AdminTokenPackages = () => {
+  const { t } = useTranslation();
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPkg, setEditingPkg] = useState<any>(null); // null = list mode, {} = create mode, {id...} = edit mode
@@ -22,7 +24,7 @@ export const AdminTokenPackages = () => {
     } catch (err: any) {
       setError(err.message);
       setPackages([]);
-      toast.error('Failed to load packages');
+      toast.error(t('admin.aiControlCenter.tokenPackages.errors.load', 'Failed to load packages'));
     } finally {
       setLoading(false);
     }
@@ -43,12 +45,14 @@ export const AdminTokenPackages = () => {
         sortOrder: parseInt(editingPkg.sort_order || 0),
         isPopular: editingPkg.is_popular ? 1 : 0,
       });
-      toast.success('Package saved successfully');
+      toast.success(
+        t('admin.aiControlCenter.tokenPackages.toasts.saved', 'Package saved successfully')
+      );
       setEditingPkg(null);
       loadPackages();
     } catch (err: any) {
       setError(err.message);
-      toast.error('Failed to save package');
+      toast.error(t('admin.aiControlCenter.tokenPackages.errors.save', 'Failed to save package'));
     }
   };
 
@@ -67,9 +71,14 @@ export const AdminTokenPackages = () => {
         <div>
           <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-400" />
-            Token Packages
+            {t('admin.aiControlCenter.tokenPackages.title', 'Token Packages')}
           </h2>
-          <p className="text-sm text-c-text-secondary mt-1">Manage purchasable token bundles.</p>
+          <p className="text-sm text-c-text-secondary mt-1">
+            {t(
+              'admin.aiControlCenter.tokenPackages.description',
+              'Manage purchasable token bundles.'
+            )}
+          </p>
         </div>
         <button
           onClick={() =>
@@ -85,12 +94,18 @@ export const AdminTokenPackages = () => {
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-lg shadow-blue-500/20"
         >
           <Plus className="w-4 h-4" />
-          Create Package
+          {t('admin.aiControlCenter.tokenPackages.create', 'Create Package')}
         </button>
       </div>
 
       {error && !editingPkg ? (
-        <DegradedState title="Token packages unavailable" description={error} />
+        <DegradedState
+          title={t(
+            'admin.aiControlCenter.tokenPackages.unavailableTitle',
+            'Token packages unavailable'
+          )}
+          description={error}
+        />
       ) : editingPkg ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <form
@@ -99,7 +114,9 @@ export const AdminTokenPackages = () => {
           >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-c-text">
-                {editingPkg.id ? 'Edit Package' : 'Create New Package'}
+                {editingPkg.id
+                  ? t('admin.aiControlCenter.tokenPackages.editTitle', 'Edit Package')
+                  : t('admin.aiControlCenter.tokenPackages.createTitle', 'Create New Package')}
               </h3>
               <button
                 type="button"
@@ -113,7 +130,7 @@ export const AdminTokenPackages = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
-                  Package Name
+                  {t('admin.aiControlCenter.tokenPackages.fields.name', 'Package Name')}
                 </label>
                 <input
                   required
@@ -121,12 +138,15 @@ export const AdminTokenPackages = () => {
                   value={editingPkg.name}
                   onChange={(e) => setEditingPkg({ ...editingPkg, name: e.target.value })}
                   className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
-                  placeholder="e.g. Starter, Pro"
+                  placeholder={t(
+                    'admin.aiControlCenter.tokenPackages.fields.namePlaceholder',
+                    'e.g. Starter, Pro'
+                  )}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
-                  Stripe Price ID
+                  {t('admin.aiControlCenter.tokenPackages.fields.stripePriceId', 'Stripe Price ID')}
                 </label>
                 <input
                   type="text"
@@ -140,7 +160,7 @@ export const AdminTokenPackages = () => {
               </div>
               <div>
                 <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
-                  Tokens Amount
+                  {t('admin.aiControlCenter.tokenPackages.fields.tokensAmount', 'Tokens Amount')}
                 </label>
                 <div className="relative">
                   <input
@@ -155,7 +175,7 @@ export const AdminTokenPackages = () => {
               </div>
               <div>
                 <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
-                  Price (USD)
+                  {t('admin.aiControlCenter.tokenPackages.fields.priceUsd', 'Price (USD)')}
                 </label>
                 <div className="relative">
                   <input
@@ -171,7 +191,7 @@ export const AdminTokenPackages = () => {
               </div>
               <div>
                 <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
-                  Bonus Tokens (%)
+                  {t('admin.aiControlCenter.tokenPackages.fields.bonusTokens', 'Bonus Tokens (%)')}
                 </label>
                 <input
                   type="number"
@@ -182,7 +202,7 @@ export const AdminTokenPackages = () => {
               </div>
               <div>
                 <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
-                  Sort Order
+                  {t('admin.aiControlCenter.tokenPackages.fields.sortOrder', 'Sort Order')}
                 </label>
                 <input
                   type="number"
@@ -202,9 +222,17 @@ export const AdminTokenPackages = () => {
                   className="w-5 h-5 rounded border-c-border dark:border-white/20 bg-c-surface text-blue-500 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
                 />
                 <div>
-                  <span className="text-c-text font-medium block">Mark as "Popular"</span>
+                  <span className="text-c-text font-medium block">
+                    {t(
+                      'admin.aiControlCenter.tokenPackages.fields.markPopular',
+                      'Mark as "Popular"'
+                    )}
+                  </span>
                   <span className="text-c-text-secondary text-xs block">
-                    Highlights this package with a badge and border.
+                    {t(
+                      'admin.aiControlCenter.tokenPackages.fields.markPopularDescription',
+                      'Highlights this package with a badge and border.'
+                    )}
                   </span>
                 </div>
               </label>
@@ -216,13 +244,13 @@ export const AdminTokenPackages = () => {
                 onClick={() => setEditingPkg(null)}
                 className="px-6 py-2.5 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised dark:text-slate-300 dark:hover:text-white dark:hover:bg-navy-800/20 rounded-lg transition-colors font-medium"
               >
-                Cancel
+                {t('admin.aiControlCenter.tokenPackages.cancel', 'Cancel')}
               </button>
               <button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg shadow-lg shadow-blue-500/20 font-medium transition-all hover:scale-105"
               >
-                Save Package
+                {t('admin.aiControlCenter.tokenPackages.savePackage', 'Save Package')}
               </button>
             </div>
           </form>
@@ -240,7 +268,7 @@ export const AdminTokenPackages = () => {
             >
               {pkg.is_popular === 1 && (
                 <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg shadow-lg">
-                  MOST POPULAR
+                  {t('admin.aiControlCenter.tokenPackages.mostPopular', 'MOST POPULAR')}
                 </div>
               )}
 
@@ -248,7 +276,7 @@ export const AdminTokenPackages = () => {
                 <div>
                   <h3 className="text-lg font-bold text-c-text">{pkg.name}</h3>
                   <div className="text-xs text-c-text-muted mt-1 uppercase tracking-wider">
-                    Package
+                    {t('admin.aiControlCenter.tokenPackages.packageLabel', 'Package')}
                   </div>
                 </div>
                 <button
@@ -267,24 +295,36 @@ export const AdminTokenPackages = () => {
                 {pkg.bonus_percent > 0 && (
                   <div className="text-xs text-emerald-400 font-medium mt-1 flex items-center gap-1">
                     <Star size={10} fill="currentColor" />
-                    {pkg.bonus_percent}% Bonus Included
+                    {t(
+                      'admin.aiControlCenter.tokenPackages.bonusIncluded',
+                      '{{percent}}% Bonus Included',
+                      {
+                        percent: pkg.bonus_percent,
+                      }
+                    )}
                   </div>
                 )}
               </div>
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-c-text-secondary">Tokens</span>
+                  <span className="text-c-text-secondary">
+                    {t('admin.aiControlCenter.tokenPackages.card.tokens', 'Tokens')}
+                  </span>
                   <span className="text-c-text font-mono">{pkg.tokens.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-c-text-secondary">Total Value</span>
+                  <span className="text-c-text-secondary">
+                    {t('admin.aiControlCenter.tokenPackages.card.totalValue', 'Total Value')}
+                  </span>
                   <span className="text-emerald-400 font-mono font-medium">
                     {(pkg.tokens * (1 + pkg.bonus_percent / 100)).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-c-text-secondary">Sort Order</span>
+                  <span className="text-c-text-secondary">
+                    {t('admin.aiControlCenter.tokenPackages.card.sortOrder', 'Sort Order')}
+                  </span>
                   <span className="text-c-text-muted">#{pkg.sort_order}</span>
                 </div>
               </div>
@@ -292,7 +332,9 @@ export const AdminTokenPackages = () => {
               <div
                 className={`text-xs text-center py-1 rounded ${pkg.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-danger-500/10 text-danger-400'}`}
               >
-                {pkg.is_active ? 'Active' : 'Inactive'}
+                {pkg.is_active
+                  ? t('admin.aiControlCenter.tokenPackages.card.active', 'Active')
+                  : t('admin.aiControlCenter.tokenPackages.card.inactive', 'Inactive')}
               </div>
             </div>
           ))}
