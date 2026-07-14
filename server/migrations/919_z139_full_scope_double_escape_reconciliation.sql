@@ -253,15 +253,23 @@ END $$;
 
 -- ── notebook_pages (title, content_text: plain · content_json: JSON) ───
 DO $$
+DECLARE
+  pred TEXT := NULL;  -- FRESH-DB (2026-07-14): backup predicate built only from columns that exist
+  col  TEXT;
 BEGIN
   IF to_regclass('public.notebook_pages') IS NOT NULL THEN
     EXECUTE 'CREATE TABLE IF NOT EXISTS z139_backup_919_notebook_pages AS
              SELECT * FROM notebook_pages WHERE false';
-    EXECUTE 'INSERT INTO z139_backup_919_notebook_pages
-             SELECT * FROM notebook_pages
-              WHERE z139_is_double_escaped(title)
-                 OR z139_is_double_escaped(content_text)
-                 OR z139_is_double_escaped(content_json)';
+    FOREACH col IN ARRAY ARRAY['title','content_text','content_json'] LOOP
+      IF EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema='public' AND table_name='notebook_pages' AND column_name=col) THEN
+        pred := COALESCE(pred || ' OR ', '') || format('z139_is_double_escaped(%I)', col);
+      END IF;
+    END LOOP;
+    IF pred IS NOT NULL THEN
+      EXECUTE 'INSERT INTO z139_backup_919_notebook_pages
+               SELECT * FROM notebook_pages WHERE ' || pred;
+    END IF;
     IF EXISTS (SELECT 1 FROM information_schema.columns
                 WHERE table_schema='public' AND table_name='notebook_pages' AND column_name='title') THEN
       EXECUTE 'UPDATE notebook_pages SET title = z139_decode_html_entities(title)
@@ -286,17 +294,23 @@ END $$;
 -- ── work_canvas_drafts (title, content_md: plain · content_json,
 --    content_json_native, blocks_json: JSON) ────────────────────────────
 DO $$
+DECLARE
+  pred TEXT := NULL;  -- FRESH-DB (2026-07-14): backup predicate built only from columns that exist
+  col  TEXT;
 BEGIN
   IF to_regclass('public.work_canvas_drafts') IS NOT NULL THEN
     EXECUTE 'CREATE TABLE IF NOT EXISTS z139_backup_919_work_canvas_drafts AS
              SELECT * FROM work_canvas_drafts WHERE false';
-    EXECUTE 'INSERT INTO z139_backup_919_work_canvas_drafts
-             SELECT * FROM work_canvas_drafts
-              WHERE z139_is_double_escaped(title)
-                 OR z139_is_double_escaped(content_md)
-                 OR z139_is_double_escaped(content_json)
-                 OR z139_is_double_escaped(content_json_native)
-                 OR z139_is_double_escaped(blocks_json)';
+    FOREACH col IN ARRAY ARRAY['title','content_md','content_json','content_json_native','blocks_json'] LOOP
+      IF EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema='public' AND table_name='work_canvas_drafts' AND column_name=col) THEN
+        pred := COALESCE(pred || ' OR ', '') || format('z139_is_double_escaped(%I)', col);
+      END IF;
+    END LOOP;
+    IF pred IS NOT NULL THEN
+      EXECUTE 'INSERT INTO z139_backup_919_work_canvas_drafts
+               SELECT * FROM work_canvas_drafts WHERE ' || pred;
+    END IF;
     EXECUTE 'UPDATE work_canvas_drafts SET title = z139_decode_html_entities(title)
               WHERE z139_is_double_escaped(title)';
     EXECUTE 'UPDATE work_canvas_drafts SET content_md = z139_decode_html_entities(content_md)
@@ -322,15 +336,23 @@ END $$;
 
 -- ── work_canvas_versions (history snapshots; same fields as drafts) ────
 DO $$
+DECLARE
+  pred TEXT := NULL;  -- FRESH-DB (2026-07-14): backup predicate built only from columns that exist
+  col  TEXT;
 BEGIN
   IF to_regclass('public.work_canvas_versions') IS NOT NULL THEN
     EXECUTE 'CREATE TABLE IF NOT EXISTS z139_backup_919_work_canvas_versions AS
              SELECT * FROM work_canvas_versions WHERE false';
-    EXECUTE 'INSERT INTO z139_backup_919_work_canvas_versions
-             SELECT * FROM work_canvas_versions
-              WHERE z139_is_double_escaped(content_md)
-                 OR z139_is_double_escaped(content_json_native)
-                 OR z139_is_double_escaped(blocks_json)';
+    FOREACH col IN ARRAY ARRAY['content_md','content_json_native','blocks_json'] LOOP
+      IF EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema='public' AND table_name='work_canvas_versions' AND column_name=col) THEN
+        pred := COALESCE(pred || ' OR ', '') || format('z139_is_double_escaped(%I)', col);
+      END IF;
+    END LOOP;
+    IF pred IS NOT NULL THEN
+      EXECUTE 'INSERT INTO z139_backup_919_work_canvas_versions
+               SELECT * FROM work_canvas_versions WHERE ' || pred;
+    END IF;
     IF EXISTS (SELECT 1 FROM information_schema.columns
                 WHERE table_schema='public' AND table_name='work_canvas_versions' AND column_name='content_md') THEN
       EXECUTE 'UPDATE work_canvas_versions SET content_md = z139_decode_html_entities(content_md)

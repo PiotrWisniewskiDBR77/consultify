@@ -68,8 +68,10 @@ UPDATE presentation_templates
    SET lifecycle_state = 'approved',
        approved_at = COALESCE(approved_at, CURRENT_TIMESTAMP),
        approved_by = COALESCE(approved_by, 'system')
- -- presentation_templates.is_system is INTEGER (canonical); compare to 1 not TRUE.
- WHERE is_system = 1
+ -- is_system is INTEGER on the live schema but BOOLEAN when created fresh by
+ -- 568_presentations_brand_kits_templates.sql — cast makes the predicate work
+ -- on both (2026-07-14 fresh-replay fix; boolean::int → 1/0 in Postgres).
+ WHERE is_system::int = 1
    AND lifecycle_state = 'draft';
 
 -- Backfill lineage_root_id for every existing row so each template is

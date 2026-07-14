@@ -192,7 +192,11 @@ CREATE INDEX IF NOT EXISTS idx_segments_org ON stakeholder_segments(organization
 CREATE INDEX IF NOT EXISTS idx_segments_initiative ON stakeholder_segments(initiative_id);
 
 CREATE TABLE IF NOT EXISTS communication_plans (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- FRESH-DB PARITY (2026-07-14): id is TEXT, not UUID — on the live schema the
+  -- table predates this migration with a TEXT id, and communication_plan_items
+  -- below declares plan_id TEXT to match (a UUID PK here made the FK fail with
+  -- "cannot be implemented" on a fresh replay, where this CREATE actually runs).
+  id              TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
   initiative_id   TEXT,
   cadence         TEXT NOT NULL DEFAULT 'weekly' CHECK (cadence IN ('daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'ad_hoc')),

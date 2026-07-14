@@ -37,6 +37,40 @@ CREATE TABLE IF NOT EXISTS notifications (
     expires_at TIMESTAMP
 );
 
+-- FRESH-DB CONVERGENCE (2026-07-14): on a fresh replay the notifications table
+-- already exists in a minimal shape from 000_z_core_baseline.sql (the fuller
+-- 257_notification_system.sql is filtered out as <500 legacy), so the CREATE
+-- above is a no-op and the indexes below would fail on missing columns.
+-- Converge any pre-existing table to this file's declared shape first.
+-- Every ADD COLUMN IF NOT EXISTS is a no-op where the column already exists.
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS body TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS icon TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'normal';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS entity_type TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS entity_id TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_url TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS actor_id TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS actor_name TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS metadata TEXT DEFAULT '{}';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_read INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS read INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS read_at TIMESTAMP;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_dismissed INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS dismissed_at TIMESTAMP;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS channels_sent TEXT DEFAULT '[]';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS email_sent INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS email_sent_at TIMESTAMP;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS email_message_id TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS email_delivered INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS email_opened INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS email_opened_at TIMESTAMP;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS slack_sent INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS slack_sent_at TIMESTAMP;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS slack_message_ts TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS group_key TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
+
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_org ON notifications(organization_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
