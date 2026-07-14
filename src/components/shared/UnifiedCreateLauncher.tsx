@@ -6,7 +6,7 @@
  *   - Insight    → InsightCreatorModal   (src/components/Interview/InsightCreatorModal.tsx)
  *   - Initiative → InitiativeCharterWizard (src/components/Initiatives/Wizard/InitiativeCharterWizard.tsx)
  *                   — charter-lite, NOT the portfolio wizard (InitiativeWizardModal
- *                   stays untouched — ADR #68b / plan §5).
+ *                   stays untouched — ADR ADR 68b / plan §5).
  *   - Decision   → NewDecisionModal      (src/components/MyWork/DecisionsPanel.tsx)
  *
  * Zero changes to any of the three generators' own logic — this component only
@@ -111,7 +111,7 @@ export const UnifiedCreateLauncher: React.FC<UnifiedCreateLauncherProps> = ({
   if (!selected) {
     return (
       <div
-        className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
+        className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) handleFullClose();
         }}
@@ -120,20 +120,17 @@ export const UnifiedCreateLauncher: React.FC<UnifiedCreateLauncherProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="unified-create-launcher-title"
-          className="mx-4 w-[520px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900"
+          className="mx-4 w-[520px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-c-border bg-c-surface shadow-2xl"
         >
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
-            <h2
-              id="unified-create-launcher-title"
-              className="text-lg font-semibold text-slate-900 dark:text-slate-100"
-            >
+          <div className="flex items-center justify-between border-b border-c-border px-4 py-3">
+            <h2 id="unified-create-launcher-title" className="text-lg font-semibold text-c-text">
               {isPolish ? 'Nowy' : 'New'}
             </h2>
             <button
               type="button"
               onClick={handleFullClose}
               aria-label={isPolish ? 'Zamknij' : 'Close'}
-              className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
+              className="rounded p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <X size={18} />
             </button>
@@ -146,15 +143,15 @@ export const UnifiedCreateLauncher: React.FC<UnifiedCreateLauncherProps> = ({
                 type="button"
                 data-testid={`unified-create-launcher-${type}`}
                 onClick={() => setSelected(type)}
-                className="flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:border-white/[0.08] dark:bg-navy-950/30 dark:hover:bg-white/[0.06]"
+                className="flex flex-col items-start gap-2 rounded-xl border border-c-border bg-c-bg p-3.5 text-left transition-colors hover:border-c-border-strong hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-navy-900 text-white dark:bg-white/[0.08] dark:text-slate-100">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-c-text text-c-surface">
                   <Icon size={18} />
                 </span>
-                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <span className="text-sm font-semibold text-c-text">
                   {isPolish ? title.pl : title.en}
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-secondary">
                   {isPolish ? hint.pl : hint.en}
                 </span>
               </button>
