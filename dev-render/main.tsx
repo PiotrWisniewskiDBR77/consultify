@@ -38,6 +38,7 @@ import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
+import PartnerSettlementsViewScreen from './screens/partner-settlements-view';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
 import ReportBuilderBlockTypesScreen from './screens/report-builder-block-types';
 import ReportBuilderTemplatesScreen from './screens/report-builder-templates';
@@ -131,6 +132,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'model-catalog-table': {
     label: '§27-todo: ModelCatalogTable (SuperAdmin → Model Registry) → StandardTable',
     render: () => <ModelCatalogTableScreen />,
+  },
+  'partner-settlements-view': {
+    label: '§27-todo: PartnerSettlementsView (SuperAdmin → Revenue) → StandardTable ×4',
+    render: () => <PartnerSettlementsViewScreen />,
   },
   'assessment-reports-table': {
     label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
