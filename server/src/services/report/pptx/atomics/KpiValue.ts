@@ -24,6 +24,29 @@ export function KpiValue(props: KpiValueProps, tokens: DesignTokens): RenderedEl
   // can't wrap at it; `fit: 'shrink'` below then scales the single line to width.
   const displayText = rawText.replace(/ /g, ' ');
 
+  // Adaptive font size — `fit:'shrink'` (normAutofit) is NOT honoured by
+  // LibreOffice for a single over-wide token, so a long value ("PLN 41M") still
+  // wrapped character-level in a narrow dashboard tile. Compute an explicit size
+  // that fits the string on one line. Advance is estimated per character class
+  // (bold title face) so a capital-heavy "PLN 41M" shrinks while a lowercase
+  // "21 days"/"24%" keeps the full size (visual consistency across tiles).
+  // Shrink-only — never grows past the token.
+  const baseFont = tokens.fontSizes.kpiValue;
+  const widthPt = props.position.w * 72;
+  const advanceOf = (ch: string): number => {
+    if (ch === ' ' || ch === ' ') return 0.3;
+    if ('mwMW'.includes(ch)) return 0.85;
+    if ('iIlj.,:;\'|'.includes(ch)) return 0.3;
+    if (ch >= 'A' && ch <= 'Z') return 0.68;
+    if ('%$&@'.includes(ch)) return 0.8;
+    return 0.55; // digits + lowercase
+  };
+  const advanceUnits = [...displayText].reduce((sum, ch) => sum + advanceOf(ch), 0);
+  // 0.80 safety margin — calibrated against LibreOffice bold-title rendering
+  // (a value that fits at 28pt must not be sized to 34pt and wrap).
+  const fitFont = advanceUnits > 0 ? (widthPt / advanceUnits) * 0.8 : baseFont;
+  const fontSize = Math.max(16, Math.min(baseFont, Math.floor(fitFont)));
+
   return {
     kind: 'text',
     apply(slide) {
@@ -32,7 +55,7 @@ export function KpiValue(props: KpiValueProps, tokens: DesignTokens): RenderedEl
         y: props.position.y,
         w: props.position.w,
         h: props.position.h,
-        fontSize: tokens.fontSizes.kpiValue,
+        fontSize,
         fontFace: tokens.fonts.title,
         color: props.color ?? tokens.colors.primary,
         bold: true,
