@@ -40,6 +40,11 @@
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import {
+  deriveConfidence,
+  type EvidenceContract,
+  type EvidenceContractSource,
+} from './evidence/evidenceContract.js';
+import {
   attachSource as attachEvidenceSource,
   type EvidenceAssumption,
   type EvidenceAssumptionSourceType,
@@ -384,6 +389,12 @@ export interface FinanceReportSection {
   };
   /** #82g — jawny ślad źródeł per liczba (pakiet/okres · formuła/check/metoda · założenia). */
   lineage: FinanceReportLineage;
+  /**
+   * HP-14 Evidence Contract — warstwa dowodowa sekcji (źródła/założenia/ryzyka/pewność/
+   * do-weryfikacji). Wyprowadzana DETERMINISTYCZNIE z lineage + reconcile + dataQuality
+   * (zero LLM). Ten sam obiekt zasila render FE (HP-16) i log jakości.
+   */
+  evidence: EvidenceContract;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -544,8 +555,82 @@ export function mapPackValidationsToReconcileRows(
 }
 
 /** Emptied section — kontrakt "brak packa→pusty stan" (żadnych zgadywanych liczb). */
+/**
+ * HP-14: buduje `EvidenceContract` sekcji finansowej — DETERMINISTYCZNIE, zero LLM, zero I/O.
+ * REUŻYWA `lineageToEvidenceInputs` (nie buduje drugiego zbioru źródeł). Sygnały pewności są
+ * REALNE: liczba źródeł lineage, nierozwiązane luki (brakujące sprawozdania + failed reconcile),
+ * jakość = udział policzonych wskaźników. `risks`/`toVerify` cytują realne braki, nie zgadywanie.
+ */
+export function buildFinanceEvidenceContract(
+  lineage: FinanceReportLineage,
+  reconcile: FinanceReconcileSummary,
+  valuation: FinanceValuationSummary,
+  ratios: { total: number; computed: number; skipped: number },
+  missingStatementTypes: string[]
+): EvidenceContract {
+  const { sources: envSources, assumptions: envAssumptions } = lineageToEvidenceInputs(lineage);
+  const sources: EvidenceContractSource[] = envSources.map((s) => ({
+    type: s.type,
+    ref: s.ref,
+    snippet: s.snippet,
+    url: s.url,
+  }));
+
+  const assumptions: string[] = envAssumptions.map(
+    (a) => `${a.key}: ${String(a.value ?? '—')}${a.rationale ? ` — ${a.rationale}` : ''}`
+  );
+
+  const risks: string[] = [];
+  const failedChecks = reconcile.available
+    ? reconcile.checks.filter((c) => c.status === 'fail' || c.status === 'warning')
+    : [];
+  failedChecks.forEach((c) => risks.push(`Reconcile ${c.checkCode} (${c.status}): ${c.checkName}`));
+  if (valuation.basket?.consistencyFlag?.triggered) {
+    risks.push('Wycena EV: rozbieżność metod >20% (football field niespójny).');
+  }
+  missingStatementTypes.forEach((t) => risks.push(`Brak sprawozdania: ${t}`));
+
+  const toVerify: string[] = [];
+  if (!reconcile.available) {
+    toVerify.push('Reconcile R1-R8 nie policzony (pakiet nie przeszedł recompute).');
+  }
+  if (ratios.skipped > 0) {
+    toVerify.push(
+      `${ratios.skipped}/${ratios.total} wskaźników pominiętych (brak linii kanonicznych).`
+    );
+  }
+  missingStatementTypes.forEach((t) => toVerify.push(`Uzupełnij sprawozdanie: ${t}.`));
+
+  const qualityScore = ratios.total > 0 ? (ratios.computed / ratios.total) * 100 : undefined;
+  const confidence = deriveConfidence({
+    sourceCount: sources.length,
+    unresolvedGaps: missingStatementTypes.length + failedChecks.length,
+    qualityScore,
+  });
+
+  return { sources, assumptions, risks, confidence, toVerify };
+}
+
 function emptyFinanceReportSection(organizationId: string, asOf: string): FinanceReportSection {
   const byFamily = groupByFamily([]);
+  const reconcile: FinanceReconcileSummary = {
+    available: false,
+    enforceMode: RECONCILE_ENFORCE,
+    overallStatus: 'na',
+    summary: null,
+    checks: [],
+    computedAt: null,
+    blocksReady: false,
+  };
+  const valuation: FinanceValuationSummary = {
+    available: false,
+    valuationId: null,
+    valuationTitle: null,
+    basket: null,
+  };
+  const lineage = emptyFinanceReportLineage(asOf);
+  const missingStatementTypes = ['P&L', 'BS', 'CF'];
+  const ratios = { total: 0, computed: 0, skipped: 0 };
   return {
     organizationId,
     packId: null,
@@ -555,23 +640,22 @@ function emptyFinanceReportSection(organizationId: string, asOf: string): Financ
     asOf,
     verdict: 'NA',
     headline: 'Brak gotowego pakietu sprawozdań — sekcja finansowa raportu jest pusta.',
-    ratios: { total: 0, computed: 0, skipped: 0, byFamily, dupont: computeDupontFromLines({}) },
-    reconcile: {
-      available: false,
-      enforceMode: RECONCILE_ENFORCE,
-      overallStatus: 'na',
-      summary: null,
-      checks: [],
-      computedAt: null,
-      blocksReady: false,
-    },
-    valuation: { available: false, valuationId: null, valuationTitle: null, basket: null },
+    ratios: { ...ratios, byFamily, dupont: computeDupontFromLines({}) },
+    reconcile,
+    valuation,
     dataQuality: {
       statementTypesPresent: [],
-      missingStatementTypes: ['P&L', 'BS', 'CF'],
+      missingStatementTypes,
       resolvedLineCount: 0,
     },
-    lineage: emptyFinanceReportLineage(asOf),
+    lineage,
+    evidence: buildFinanceEvidenceContract(
+      lineage,
+      reconcile,
+      valuation,
+      ratios,
+      missingStatementTypes
+    ),
   };
 }
 
@@ -655,6 +739,13 @@ export function composeFinanceReportSection(input: RawFinanceReportInputs): Fina
       resolvedLineCount: Object.keys(input.lineValues).length,
     },
     lineage,
+    evidence: buildFinanceEvidenceContract(
+      lineage,
+      reconcile,
+      valuation,
+      { total: ratios.length, computed: computedCount, skipped: ratios.length - computedCount },
+      input.pack.missingStatementTypes
+    ),
   };
 }
 
