@@ -138,7 +138,19 @@ const getUploadedDocumentInfo = (value: unknown) => {
   };
 };
 
-export const DocumentsRAGTab: React.FC = () => {
+export interface DocumentsRAGTabProps {
+  /**
+   * 'superadmin' (default) — pełny panel z governance AI (visibility/sensitivity),
+   * wymaga uprawnień superadmina na endpointach AIGovernance.
+   * 'client' — Client Vault (HP-22): org-scoped widok WŁASNYCH dokumentów klienta.
+   * Backend `/knowledge/documents` jest już org-scoped (organization_id z tokenu),
+   * więc wariant klienta reużywa TE SAME wywołania Api bez governance-superadmina.
+   */
+  variant?: 'superadmin' | 'client';
+}
+
+export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({ variant = 'superadmin' }) => {
+  const isClient = variant === 'client';
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -229,16 +241,22 @@ export const DocumentsRAGTab: React.FC = () => {
           category: editDocCategory || undefined,
           tags: tagsArray.length > 0 ? tagsArray : undefined,
         }),
-        Api.updateAIGovernanceDocumentVisibility(docId, editDocVisibility),
-        Api.updateAIGovernanceDocumentSensitivity(docId, editDocSensitivity),
+        // Governance AI (visibility/sensitivity) jest superadmin-only — w Client
+        // Vault pomijamy te wywołania (klient nie ma i nie potrzebuje tych uprawnień).
+        ...(isClient
+          ? []
+          : [
+              Api.updateAIGovernanceDocumentVisibility(docId, editDocVisibility),
+              Api.updateAIGovernanceDocumentSensitivity(docId, editDocSensitivity),
+            ]),
       ]);
       const refreshed = await loadDocuments({ showLoading: false });
       const confirmed = refreshed?.some(
         (doc) =>
           doc.id === docId &&
           (editDocCategory ? doc.category === editDocCategory : true) &&
-          doc.ai_visibility === editDocVisibility &&
-          doc.sensitivity === editDocSensitivity
+          (isClient ||
+            (doc.ai_visibility === editDocVisibility && doc.sensitivity === editDocSensitivity))
       );
       if (!confirmed) {
         throw new Error('Knowledge document update was not confirmed by the server');
@@ -285,10 +303,12 @@ export const DocumentsRAGTab: React.FC = () => {
       <div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <FileText size={24} className="text-indigo-500" />
-          Documents (RAG)
+          {isClient ? 'Document Vault' : 'Documents (RAG)'}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Upload and manage knowledge documents for AI retrieval
+          {isClient
+            ? 'Upload and search your organization’s documents — AI retrieval is scoped to your workspace'
+            : 'Upload and manage knowledge documents for AI retrieval'}
         </p>
       </div>
 
@@ -540,44 +560,50 @@ export const DocumentsRAGTab: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    AI visibility
-                  </label>
-                  <select
-                    value={editDocVisibility}
-                    onChange={(e) =>
-                      setEditDocVisibility(e.target.value as NonNullable<Document['ai_visibility']>)
-                    }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
-                  >
-                    {AI_VISIBILITY_OPTIONS.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
+              {!isClient && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      AI visibility
+                    </label>
+                    <select
+                      value={editDocVisibility}
+                      onChange={(e) =>
+                        setEditDocVisibility(
+                          e.target.value as NonNullable<Document['ai_visibility']>
+                        )
+                      }
+                      className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                    >
+                      {AI_VISIBILITY_OPTIONS.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Sensitivity
+                    </label>
+                    <select
+                      value={editDocSensitivity}
+                      onChange={(e) =>
+                        setEditDocSensitivity(
+                          e.target.value as NonNullable<Document['sensitivity']>
+                        )
+                      }
+                      className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                    >
+                      {SENSITIVITY_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Sensitivity
-                  </label>
-                  <select
-                    value={editDocSensitivity}
-                    onChange={(e) =>
-                      setEditDocSensitivity(e.target.value as NonNullable<Document['sensitivity']>)
-                    }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
-                  >
-                    {SENSITIVITY_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              )}
               <div className="pt-4 flex gap-3">
                 <button
                   type="button"
