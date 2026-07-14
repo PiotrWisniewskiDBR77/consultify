@@ -3,9 +3,12 @@
  *
  * SSOT for the Focus & Trade-offs methodology content and its deterministic
  * synthesis engine. Cloned from the Ansoff/Porter/Portfolio config pattern:
- *   - deepeningLadder.ts  : per-lane depth staircase + partner-grade proposal bank (PL/EN)
- *   - moveValidator.ts    : scoring, ranking, and W2 move sequencing (rationale/trade-off/rejected variant)
- *   - conclusionPrompts.ts: AI prompt builders grounded in the engine output
+ *   - deepeningLadder.ts            : per-lane depth staircase + partner-grade proposal bank (PL/EN)
+ *   - focusQuestionBank.ts          : laddered Q-bank per option (surface->evidence->FORCED trade-off->rejection justification)
+ *   - moveValidator.ts              : scoring, ranking, and W2 move sequencing (rationale/trade-off/rejected variant)
+ *   - focusOpportunityCostMatrix.ts : choice x opportunity-cost matrix + anti-focus ("wszystko-priorytet") detector
+ *   - focusInsightStaircase.ts      : fact->interpretation->implication discipline + driver decomposition per priority
+ *   - conclusionPrompts.ts          : AI prompt builders grounded in the engine output
  */
 
 import {
@@ -17,6 +20,9 @@ import {
 
 export * from './conclusionPrompts';
 export * from './deepeningLadder';
+export * from './focusInsightStaircase';
+export * from './focusOpportunityCostMatrix';
+export * from './focusQuestionBank';
 export * from './moveValidator';
 
 /** A ladder rung with strings resolved to a single language. */
