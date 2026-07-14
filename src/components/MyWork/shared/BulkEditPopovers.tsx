@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 // ── Priority Picker ──
 
@@ -134,11 +135,11 @@ const getDatePresets = (isPolish: boolean) => {
   inOneWeek.setDate(inOneWeek.getDate() + 7);
 
   return [
-    { label: t('myWork.bulkEdit.label', 'Today'), date: today },
-    { label: t('myWork.bulkEdit.label2', 'Tomorrow'), date: tomorrow },
-    { label: t('myWork.bulkEdit.label3', 'Next Monday'), date: nextMonday },
-    { label: t('myWork.bulkEdit.label4', 'Next Friday'), date: nextFriday },
-    { label: t('myWork.bulkEdit.label5', 'In 1 week'), date: inOneWeek },
+    { label: i18n.t('myWork.bulkEdit.label', 'Today'), date: today },
+    { label: i18n.t('myWork.bulkEdit.label2', 'Tomorrow'), date: tomorrow },
+    { label: i18n.t('myWork.bulkEdit.label3', 'Next Monday'), date: nextMonday },
+    { label: i18n.t('myWork.bulkEdit.label4', 'Next Friday'), date: nextFriday },
+    { label: i18n.t('myWork.bulkEdit.label5', 'In 1 week'), date: inOneWeek },
   ];
 };
 
@@ -150,7 +151,7 @@ const formatISODate = (d: Date): string => {
 };
 
 const formatShortDate = (d: Date, isPolish: boolean): string =>
-  d.toLocaleDateString(t('myWork.bulkEdit.dToLocaleDateString', 'en-US'), {
+  d.toLocaleDateString(i18n.t('myWork.bulkEdit.dToLocaleDateString', 'en-US'), {
     weekday: 'short',
     month: 'short',
     day: 'numeric',

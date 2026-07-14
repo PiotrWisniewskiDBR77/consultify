@@ -37,6 +37,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { DelegationModal } from './shared/DelegationModal';
+import i18n from '@/i18n';
 
 export type DecisionPreviewMode = 'my' | 'requests_pending' | 'all';
 
@@ -124,13 +125,13 @@ async function runDecisionAi({
   isPolish: boolean;
   decision: DecisionPreviewData;
 }): Promise<string> {
-  const language = t('myWork.decisionPreview.en', 'en');
+  const language = i18n.t('myWork.decisionPreview.en', 'en');
   const intentLabel =
     intent === 'summarize_context'
-      ? t('myWork.decisionPreview.summarizeContext', 'Summarize context')
+      ? i18n.t('myWork.decisionPreview.summarizeContext', 'Summarize context')
       : intent === 'propose_options'
-        ? t('myWork.decisionPreview.proposeOptions', 'Propose options')
-        : t('myWork.decisionPreview.assessRisk', 'Assess risk');
+        ? i18n.t('myWork.decisionPreview.proposeOptions', 'Propose options')
+        : i18n.t('myWork.decisionPreview.assessRisk', 'Assess risk');
 
   const systemInstruction = [
     `You are a senior PMO decision advisor.`,
@@ -222,8 +223,8 @@ export const DecisionPreviewBody: React.FC<{
           {
             label:
               brief.urgency === 'urgent'
-                ? t('myWork.decisionPreview.urgent', 'Urgent')
-                : t('myWork.decisionPreview.normal', 'Normal'),
+                ? i18n.t('myWork.decisionPreview.urgent', 'Urgent')
+                : i18n.t('myWork.decisionPreview.normal', 'Normal'),
             tone: brief.urgency === 'urgent' ? 'danger' : 'neutral',
           } as MetaPill,
         ]
@@ -245,7 +246,7 @@ export const DecisionPreviewBody: React.FC<{
     </span>
   ) : (
     <span className="text-[11px] font-semibold text-c-text-muted italic">
-      {t('myWork.decisionPreview.noDueDate', 'No due date')}
+      {i18n.t('myWork.decisionPreview.noDueDate', 'No due date')}
     </span>
   );
 
@@ -274,27 +275,27 @@ export const DecisionPreviewBody: React.FC<{
           [
             {
               id: 'expand',
-              label: t('myWork.decisionPreview.label', 'Expand'),
+              label: i18n.t('myWork.decisionPreview.label', 'Expand'),
               icon: ChevronDown,
               onClick: () => onDetailsAction('expand'),
               disabled: detailsLoading,
             },
             {
               id: 'summarize',
-              label: t('myWork.decisionPreview.label2', 'Summarize'),
+              label: i18n.t('myWork.decisionPreview.label2', 'Summarize'),
               icon: Sparkles,
               onClick: () => onDetailsAction('summarize'),
               disabled: detailsLoading,
             },
             {
               id: 'copy',
-              label: t('myWork.decisionPreview.label3', 'Copy'),
+              label: i18n.t('myWork.decisionPreview.label3', 'Copy'),
               icon: Copy,
               onClick: () => onDetailsAction('copy'),
             },
             {
               id: 'copy-md',
-              label: t('myWork.decisionPreview.label4', 'Copy as Markdown'),
+              label: i18n.t('myWork.decisionPreview.label4', 'Copy as Markdown'),
               onClick: () =>
                 void copyAsMarkdown(
                   {
@@ -302,14 +303,14 @@ export const DecisionPreviewBody: React.FC<{
                     status: decision?.status ?? undefined,
                     description: detailsText,
                   },
-                  t('myWork.decisionPreview.en2', 'en')
+                  i18n.t('myWork.decisionPreview.en2', 'en')
                 ),
             },
             ...(isSlackConnected
               ? [
                   {
                     id: 'copy-slack',
-                    label: t('myWork.decisionPreview.label5', 'Copy for Slack'),
+                    label: i18n.t('myWork.decisionPreview.label5', 'Copy for Slack'),
                     onClick: () =>
                       void copyForSlack(
                         {
@@ -317,7 +318,7 @@ export const DecisionPreviewBody: React.FC<{
                           status: decision?.status ?? undefined,
                           description: detailsText,
                         },
-                        t('myWork.decisionPreview.en3', 'en')
+                        i18n.t('myWork.decisionPreview.en3', 'en')
                       ),
                   },
                 ]
@@ -380,9 +381,9 @@ export const DecisionPreviewFooter: React.FC<{
   onCloseSnooze,
   onSnooze,
 }) => {
-  const hintSummarize = t('myWork.decisionPreview.summarizeContext2', 'Summarize context');
-  const hintPropose = t('myWork.decisionPreview.proposeOptions2', 'Propose options');
-  const hintAssess = t('myWork.decisionPreview.assessRisk2', 'Assess risk');
+  const hintSummarize = i18n.t('myWork.decisionPreview.summarizeContext2', 'Summarize context');
+  const hintPropose = i18n.t('myWork.decisionPreview.proposeOptions2', 'Propose options');
+  const hintAssess = i18n.t('myWork.decisionPreview.assessRisk2', 'Assess risk');
   const hints = [hintSummarize, hintPropose, hintAssess];
 
   const hintToIntent = (hint: string): DecisionAiIntent => {
@@ -403,7 +404,7 @@ export const DecisionPreviewFooter: React.FC<{
           {
             buttons: [
               {
-                label: t('myWork.decisionPreview.label6', 'Approve'),
+                label: i18n.t('myWork.decisionPreview.label6', 'Approve'),
                 icon: Check,
                 onClick: onApprove,
                 colorScheme: 'emerald' as const,
@@ -411,7 +412,7 @@ export const DecisionPreviewFooter: React.FC<{
                 shortcut: 'A',
               },
               {
-                label: t('myWork.decisionPreview.label7', 'Reject'),
+                label: i18n.t('myWork.decisionPreview.label7', 'Reject'),
                 icon: X,
                 onClick: onReject,
                 colorScheme: 'red' as const,
@@ -425,7 +426,7 @@ export const DecisionPreviewFooter: React.FC<{
     {
       buttons: [
         {
-          label: t('myWork.decisionPreview.label8', 'More info'),
+          label: i18n.t('myWork.decisionPreview.label8', 'More info'),
           icon: MessageSquare,
           onClick: onMoreInfo,
           colorScheme: 'neutral' as const,
@@ -435,7 +436,7 @@ export const DecisionPreviewFooter: React.FC<{
         ...(canAct
           ? [
               {
-                label: t('myWork.decisionPreview.label9', 'Delegate'),
+                label: i18n.t('myWork.decisionPreview.label9', 'Delegate'),
                 icon: UserPlus,
                 onClick: onDelegate,
                 colorScheme: 'neutral' as const,
@@ -445,7 +446,7 @@ export const DecisionPreviewFooter: React.FC<{
             ]
           : [
               {
-                label: t('myWork.decisionPreview.label10', 'Remind'),
+                label: i18n.t('myWork.decisionPreview.label10', 'Remind'),
                 icon: Bell,
                 onClick: onRemind,
                 colorScheme: 'blue' as const,
@@ -476,7 +477,7 @@ export const DecisionPreviewFooter: React.FC<{
 
       <PreviewRelations
         items={relationItems}
-        emptyLabel={t('myWork.decisionPreview.emptyLabel', 'No relations')}
+        emptyLabel={i18n.t('myWork.decisionPreview.emptyLabel', 'No relations')}
       />
 
       <div className="space-y-2.5 py-1">
@@ -485,11 +486,11 @@ export const DecisionPreviewFooter: React.FC<{
         <div className="flex gap-2">
           <button onClick={onRemind} className={actionPillClass('neutral', 'flex-1')}>
             <Bell size={14} />
-            {t('myWork.decisionPreview.remind', 'Remind')}
+            {i18n.t('myWork.decisionPreview.remind', 'Remind')}
           </button>
           <button onClick={onEscalate} className={actionPillClass('amber', '')}>
             <TrendingUp size={14} />
-            {t('myWork.decisionPreview.escalate', 'Escalate')}
+            {i18n.t('myWork.decisionPreview.escalate', 'Escalate')}
           </button>
           <div className="relative flex-1">
             <button
@@ -497,7 +498,7 @@ export const DecisionPreviewFooter: React.FC<{
               className={actionPillClass('neutral', 'w-full flex-1')}
             >
               <AlarmClockOff size={14} />
-              {t('myWork.decisionPreview.snooze', 'Snooze')}
+              {i18n.t('myWork.decisionPreview.snooze', 'Snooze')}
               <ChevronDown
                 size={12}
                 className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}

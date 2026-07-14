@@ -7,7 +7,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'en' },
+    // Mirror i18next: t(key, fallbackString) OR t(key, { defaultValue }).
+    t: (key: string, opt?: unknown) => {
+      if (typeof opt === 'string') return opt;
+      if (opt && typeof opt === 'object' && 'defaultValue' in (opt as Record<string, unknown>)) {
+        return String((opt as { defaultValue: unknown }).defaultValue);
+      }
+      return key;
+    },
+    i18n: { language: 'en', changeLanguage: () => {} },
   }),
 }));
 

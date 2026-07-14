@@ -110,6 +110,7 @@ import {
 } from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import i18n from '@/i18n';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 type InboxItemType =
@@ -669,12 +670,12 @@ const formatRelativeTime = (
   const diffDays = Math.floor(diffHours / 24);
 
   let text: string;
-  if (diffMins < 1) text = t('myWork.inboxContent.justNow', 'Just now');
+  if (diffMins < 1) text = i18n.t('myWork.inboxContent.justNow', 'Just now');
   else if (diffMins < 60) text = isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
   else if (diffHours < 24) text = isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   else if (diffDays < 7) text = isPolish ? `${diffDays} d temu` : `${diffDays}d ago`;
   else
-    text = d.toLocaleDateString(t('myWork.inboxContent.dToLocaleDateString', 'en-US'), { month: 'short', day: 'numeric' });
+    text = d.toLocaleDateString(i18n.t('myWork.inboxContent.dToLocaleDateString', 'en-US'), { month: 'short', day: 'numeric' });
 
   let agingLevel: 'fresh' | 'warm' | 'hot' | 'critical';
   if (diffHours < 4) agingLevel = 'fresh';
@@ -1077,7 +1078,7 @@ const PreviewPane: React.FC<{
     setAiError(null);
     try {
       const r = await requestInboxAiAssist({
-        language: t('myWork.inboxContent.language', 'en'),
+        language: i18n.t('myWork.inboxContent.language', 'en'),
         item: {
           title: item.title,
           description: item.description,
@@ -1105,7 +1106,7 @@ const PreviewPane: React.FC<{
         recommendedReason: String(r.recommendedReason || ''),
       });
     } catch (e: any) {
-      setAiError(e?.message || (t('myWork.inboxContent.aIUnavailable', 'AI unavailable')));
+      setAiError(e?.message || (i18n.t('myWork.inboxContent.aIUnavailable', 'AI unavailable')));
     } finally {
       setAiLoading(false);
     }
@@ -1142,9 +1143,9 @@ const PreviewPane: React.FC<{
             : descriptionTrimmed;
         try {
           await navigator.clipboard.writeText(textToCopy || '');
-          toast.success(t('myWork.inboxContent.toastSuccess', 'Copied'));
+          toast.success(i18n.t('myWork.inboxContent.toastSuccess', 'Copied'));
         } catch {
-          toast.error(t('myWork.inboxContent.toastError', 'Copy failed'));
+          toast.error(i18n.t('myWork.inboxContent.toastError', 'Copy failed'));
         }
         return;
       }
@@ -1160,7 +1161,7 @@ const PreviewPane: React.FC<{
               : `Summarize the following item in 1-2 sentences. What is it and what to do?\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`;
 
         const r = await requestInboxAiAssist({
-          language: t('myWork.inboxContent.language2', 'en'),
+          language: i18n.t('myWork.inboxContent.language2', 'en'),
           item: {
             title: item.title,
             description: prompt,
@@ -1188,7 +1189,7 @@ const PreviewPane: React.FC<{
           setDetailsOverride(full);
         }
       } catch {
-        toast.error(t('myWork.inboxContent.toastError2', 'AI unavailable'));
+        toast.error(i18n.t('myWork.inboxContent.toastError2', 'AI unavailable'));
       } finally {
         setDetailsLoading(false);
       }
@@ -1235,7 +1236,7 @@ const PreviewPane: React.FC<{
     ...(item.linkedDecisionId
       ? [
           {
-            label: `${t('myWork.inboxContent.decision', 'Decision')} ${item.linkedDecisionId.slice(0, 8)}…`,
+            label: `${i18n.t('myWork.inboxContent.decision', 'Decision')} ${item.linkedDecisionId.slice(0, 8)}…`,
             icon: Scale,
             tone: 'text-amber-600 dark:text-amber-400',
           } as RelationItem,
@@ -1250,7 +1251,7 @@ const PreviewPane: React.FC<{
     {
       buttons: [
         {
-          label: t('myWork.inboxContent.label', 'Today'),
+          label: i18n.t('myWork.inboxContent.label', 'Today'),
           icon: Zap,
           onClick: () => onTriage('accept_today'),
           colorScheme: 'primary',
@@ -1258,7 +1259,7 @@ const PreviewPane: React.FC<{
           shortcut: 'T',
         },
         {
-          label: t('myWork.inboxContent.label2', 'Week'),
+          label: i18n.t('myWork.inboxContent.label2', 'Week'),
           icon: CalendarClock,
           onClick: () => onTriage('accept_week'),
           colorScheme: 'neutral',
@@ -1266,7 +1267,7 @@ const PreviewPane: React.FC<{
           shortcut: 'W',
         },
         {
-          label: t('myWork.inboxContent.label3', 'Later'),
+          label: i18n.t('myWork.inboxContent.label3', 'Later'),
           icon: Calendar,
           onClick: () => onTriage('accept_later'),
           colorScheme: 'neutral',
@@ -1279,14 +1280,14 @@ const PreviewPane: React.FC<{
       columns: onSaveAsNote ? 4 : 3,
       buttons: [
         {
-          label: t('myWork.inboxContent.label4', 'Done'),
+          label: i18n.t('myWork.inboxContent.label4', 'Done'),
           icon: CheckCircle2,
           onClick: () => onTriage('done'),
           colorScheme: 'neutral',
           shortcut: 'D',
         },
         {
-          label: t('myWork.inboxContent.label5', 'Save'),
+          label: i18n.t('myWork.inboxContent.label5', 'Save'),
           icon: Bookmark,
           onClick: () => onTriage('save'),
           colorScheme: 'neutral',
@@ -1295,7 +1296,7 @@ const PreviewPane: React.FC<{
         ...(onSaveAsNote
           ? [
               {
-                label: t('myWork.inboxContent.label6', 'Note'),
+                label: i18n.t('myWork.inboxContent.label6', 'Note'),
                 icon: FileText,
                 onClick: () => onSaveAsNote(item),
                 colorScheme: 'neutral' as const,
@@ -1304,7 +1305,7 @@ const PreviewPane: React.FC<{
             ]
           : []),
         {
-          label: t('myWork.inboxContent.label7', 'Dismiss'),
+          label: i18n.t('myWork.inboxContent.label7', 'Dismiss'),
           icon: Archive,
           onClick: () => onTriage('dismiss'),
           colorScheme: 'neutral',
@@ -1316,7 +1317,7 @@ const PreviewPane: React.FC<{
 
   const extraCopyFormats: ExtraCopyFormat[] = [
     {
-      label: t('myWork.inboxContent.label8', 'Copy as Markdown'),
+      label: i18n.t('myWork.inboxContent.label8', 'Copy as Markdown'),
       onClick: () =>
         void copyAsMarkdown(
           {
@@ -1324,11 +1325,11 @@ const PreviewPane: React.FC<{
             description: descriptionTrimmed,
             aiSummary: aiResult?.brief,
           },
-          t('myWork.inboxContent.en', 'en')
+          i18n.t('myWork.inboxContent.en', 'en')
         ),
     },
     {
-      label: t('myWork.inboxContent.label9', 'Copy for Slack'),
+      label: i18n.t('myWork.inboxContent.label9', 'Copy for Slack'),
       onClick: () =>
         void copyForSlack(
           {
@@ -1336,7 +1337,7 @@ const PreviewPane: React.FC<{
             description: descriptionTrimmed,
             aiSummary: aiResult?.brief,
           },
-          t('myWork.inboxContent.en2', 'en')
+          i18n.t('myWork.inboxContent.en2', 'en')
         ),
     },
   ];
@@ -1344,7 +1345,7 @@ const PreviewPane: React.FC<{
   return (
     <PreviewPaneShell
       kicker={undefined}
-      title={item.title || (t('myWork.inboxContent.inboxItem', 'Inbox item'))}
+      title={item.title || (i18n.t('myWork.inboxContent.inboxItem', 'Inbox item'))}
       onClose={onClose}
       actions={
         <button
@@ -1352,7 +1353,7 @@ const PreviewPane: React.FC<{
           className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
         >
           <Eye size={12} />
-          {t('myWork.inboxContent.open', 'Open')}
+          {i18n.t('myWork.inboxContent.open', 'Open')}
         </button>
       }
       footer={
@@ -1384,7 +1385,7 @@ const PreviewPane: React.FC<{
               className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
             >
               <Clock size={14} />
-              {t('myWork.inboxContent.snooze', 'Snooze…')}
+              {i18n.t('myWork.inboxContent.snooze', 'Snooze…')}
               <ChevronDown
                 size={12}
                 className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
@@ -1412,7 +1413,7 @@ const PreviewPane: React.FC<{
                 className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
               >
                 <Minus size={12} />
-                {t('myWork.inboxContent.undoLastAISuggestion', 'Undo last AI suggestion')}
+                {i18n.t('myWork.inboxContent.undoLastAISuggestion', 'Undo last AI suggestion')}
               </button>
             </div>
           ) : null}
@@ -1530,13 +1531,13 @@ const AIHintStrip: React.FC<{
                 actions: [
                   {
                     id: 'regenerate',
-                    label: t('myWork.inboxContent.label10', 'Regenerate'),
+                    label: i18n.t('myWork.inboxContent.label10', 'Regenerate'),
                     icon: Sparkles,
                     onClick: () => onRun(),
                   },
                   {
                     id: 'copy',
-                    label: t('myWork.inboxContent.label11', 'Copy'),
+                    label: i18n.t('myWork.inboxContent.label11', 'Copy'),
                     icon: Copy,
                     disabled: !result,
                     onClick: () => {
@@ -1547,13 +1548,13 @@ const AIHintStrip: React.FC<{
                               '\n'
                             )
                           )
-                          .then(() => toast.success(t('myWork.inboxContent.toastSuccess2', 'Copied')));
+                          .then(() => toast.success(i18n.t('myWork.inboxContent.toastSuccess2', 'Copied')));
                       }
                     },
                   },
                   {
                     id: 'clear',
-                    label: t('myWork.inboxContent.label12', 'Clear'),
+                    label: i18n.t('myWork.inboxContent.label12', 'Clear'),
                     icon: X,
                     disabled: !result,
                     onClick: () => onClear(),

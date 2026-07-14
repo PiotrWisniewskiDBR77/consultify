@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { SparkData, SparkItem } from './useHomeData';
+import i18n from '@/i18n';
 
 interface SparkZoneProps {
   data: SparkData;
@@ -136,14 +137,14 @@ const NoteCard: React.FC<{ item: SparkItem; onClick: () => void; isPolish: boole
   >
     <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-2 flex items-center gap-1.5">
       <FileText size={11} />
-      {t('myWork.sparkZone.recentNote', 'Recent note')}
+      {i18n.t('myWork.sparkZone.recentNote', 'Recent note')}
     </div>
     <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-1.5">{item.title}</h4>
     <p className="text-xs text-slate-500 dark:text-slate-500 leading-relaxed line-clamp-2">
       {item.snippet}
     </p>
     <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 block">
-      {t('myWork.sparkZone.updated', 'Updated')} {item.updatedAt}
+      {i18n.t('myWork.sparkZone.updated', 'Updated')} {item.updatedAt}
     </span>
   </button>
 );

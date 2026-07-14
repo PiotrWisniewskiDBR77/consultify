@@ -55,6 +55,7 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import i18n from '@/i18n';
 import {
   clearMutedNotificationTypesForSession,
   getMutedNotificationTypes,
@@ -104,9 +105,9 @@ interface NotificationsContentProps {
 
 // Format relative time
 const formatRelativeTime = (dateString: string, isPolish: boolean = false): string => {
-  if (!dateString) return t('myWork.notificationsContent.recently', 'Recently');
+  if (!dateString) return i18n.t('myWork.notificationsContent.recently', 'Recently');
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return t('myWork.notificationsContent.recently2', 'Recently');
+  if (isNaN(date.getTime())) return i18n.t('myWork.notificationsContent.recently2', 'Recently');
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -114,11 +115,11 @@ const formatRelativeTime = (dateString: string, isPolish: boolean = false): stri
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return t('myWork.notificationsContent.justNow', 'Just now');
+  if (diffMins < 1) return i18n.t('myWork.notificationsContent.justNow', 'Just now');
   if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
   if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
-  return date.toLocaleDateString(t('myWork.notificationsContent.dateToLocaleDateString', 'en-US'));
+  return date.toLocaleDateString(i18n.t('myWork.notificationsContent.dateToLocaleDateString', 'en-US'));
 };
 
 // Time group types
@@ -475,7 +476,7 @@ const NotificationTableRow: React.FC<{
           {isSnoozed && (
             <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded">
               <Clock size={10} />
-              {snoozedUntilLabel || (t('myWork.notificationsContent.snoozed', 'Snoozed'))}
+              {snoozedUntilLabel || (i18n.t('myWork.notificationsContent.snoozed', 'Snoozed'))}
             </span>
           )}
 
@@ -489,7 +490,7 @@ const NotificationTableRow: React.FC<{
                   onOpenChat(notification);
                 }}
                 className="p-1.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-c-text-muted hover:text-c-text transition-colors"
-                title={t('myWork.notificationsContent.title', 'Chat')}
+                title={i18n.t('myWork.notificationsContent.title', 'Chat')}
               >
                 <MessageSquare size={14} />
               </button>
@@ -504,7 +505,7 @@ const NotificationTableRow: React.FC<{
                     setShowSnoozeMenu(!showSnoozeMenu);
                   }}
                   className="p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-c-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                  title={t('myWork.notificationsContent.title2', 'Snooze')}
+                  title={i18n.t('myWork.notificationsContent.title2', 'Snooze')}
                 >
                   <Clock size={14} />
                 </button>
@@ -513,15 +514,15 @@ const NotificationTableRow: React.FC<{
                     <div className="fixed inset-0 z-40" onClick={() => setShowSnoozeMenu(false)} />
                     <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-c-surface-raised rounded-lg shadow-lg border border-c-border min-w-[100px]">
                       {[
-                        { preset: '1h' as SnoozePreset, label: t('myWork.notificationsContent.label', '1 hour') },
-                        { preset: '4h' as SnoozePreset, label: t('myWork.notificationsContent.label2', '4 hours') },
+                        { preset: '1h' as SnoozePreset, label: i18n.t('myWork.notificationsContent.label', '1 hour') },
+                        { preset: '4h' as SnoozePreset, label: i18n.t('myWork.notificationsContent.label2', '4 hours') },
                         {
                           preset: '1d' as SnoozePreset,
-                          label: t('myWork.notificationsContent.label3', '1 day'),
+                          label: i18n.t('myWork.notificationsContent.label3', '1 day'),
                         },
                         {
                           preset: '3d' as SnoozePreset,
-                          label: t('myWork.notificationsContent.label4', '3 days'),
+                          label: i18n.t('myWork.notificationsContent.label4', '3 days'),
                         },
                       ].map(({ preset, label }) => (
                         <button
@@ -550,7 +551,7 @@ const NotificationTableRow: React.FC<{
                   onMarkRead(notification.id);
                 }}
                 className="p-1.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-c-text-muted hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                title={t('myWork.notificationsContent.title3', 'Mark as read')}
+                title={i18n.t('myWork.notificationsContent.title3', 'Mark as read')}
               >
                 <Check size={14} />
               </button>
@@ -564,7 +565,7 @@ const NotificationTableRow: React.FC<{
               onClick(notification);
             }}
             className="p-1.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-c-text-muted hover:text-c-text transition-colors"
-            title={t('myWork.notificationsContent.title4', 'View')}
+            title={i18n.t('myWork.notificationsContent.title4', 'View')}
           >
             <Eye size={14} />
           </button>
@@ -579,7 +580,7 @@ const NotificationTableRow: React.FC<{
                   actions: [
                     {
                       id: 'view',
-                      label: t('myWork.notificationsContent.label5', 'View Details'),
+                      label: i18n.t('myWork.notificationsContent.label5', 'View Details'),
                       icon: Eye,
                       variant: 'primary',
                       onClick: () => onClick(notification),
@@ -588,7 +589,7 @@ const NotificationTableRow: React.FC<{
                       ? [
                           {
                             id: 'chat',
-                            label: t('myWork.notificationsContent.label6', 'Open Chat'),
+                            label: i18n.t('myWork.notificationsContent.label6', 'Open Chat'),
                             icon: MessageSquare,
                             onClick: () => onOpenChat(notification),
                           },
@@ -598,7 +599,7 @@ const NotificationTableRow: React.FC<{
                       ? [
                           {
                             id: 'mark-read',
-                            label: t('myWork.notificationsContent.label7', 'Mark as Read'),
+                            label: i18n.t('myWork.notificationsContent.label7', 'Mark as Read'),
                             icon: Check,
                             onClick: () => onMarkRead(notification.id),
                           },
@@ -608,7 +609,7 @@ const NotificationTableRow: React.FC<{
                       ? [
                           {
                             id: 'go-source',
-                            label: t('myWork.notificationsContent.label8', 'Go to Source'),
+                            label: i18n.t('myWork.notificationsContent.label8', 'Go to Source'),
                             icon: ArrowRight,
                             onClick: () => onClick(notification),
                           },
@@ -624,24 +625,24 @@ const NotificationTableRow: React.FC<{
                   actions: [
                     {
                       id: 'open-preview',
-                      label: t('myWork.notificationsContent.label9', 'Open preview'),
+                      label: i18n.t('myWork.notificationsContent.label9', 'Open preview'),
                       icon: ChevronRight,
                       onClick: () => onClick(notification),
                     },
                     {
                       id: 'edit',
-                      label: t('myWork.notificationsContent.label10', 'Edit'),
+                      label: i18n.t('myWork.notificationsContent.label10', 'Edit'),
                       icon: Eye,
                       disabled: true,
-                      description: t('myWork.notificationsContent.description', 'Coming soon (backend)'),
+                      description: i18n.t('myWork.notificationsContent.description', 'Coming soon (backend)'),
                       onClick: () => {},
                     },
                     {
                       id: 'archive',
-                      label: t('myWork.notificationsContent.label11', 'Archive'),
+                      label: i18n.t('myWork.notificationsContent.label11', 'Archive'),
                       icon: Archive,
                       disabled: true,
-                      description: t('myWork.notificationsContent.description2', 'Coming soon (backend)'),
+                      description: i18n.t('myWork.notificationsContent.description2', 'Coming soon (backend)'),
                       onClick: () => {},
                     },
                   ],
@@ -652,7 +653,7 @@ const NotificationTableRow: React.FC<{
                   actions: [
                     {
                       id: 'delete',
-                      label: t('myWork.notificationsContent.label12', 'Delete'),
+                      label: i18n.t('myWork.notificationsContent.label12', 'Delete'),
                       icon: Trash2,
                       variant: 'danger',
                       onClick: () => onDelete(notification.id),

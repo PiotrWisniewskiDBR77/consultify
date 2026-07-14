@@ -11,9 +11,33 @@ const listInsightsMock = vi.fn();
 const checkInsightSimilarityMock = vi.fn();
 const createInsightMock = vi.fn();
 
+import enTranslation from '../../../public/locales/en/translation.json';
+
+const resolveEnKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      enTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+
+const tEn = (key: string, opt?: unknown): string => {
+  const resolved = resolveEnKey(key);
+  if (resolved !== undefined) return resolved;
+  if (typeof opt === 'string') return opt;
+  if (opt && typeof opt === 'object' && 'defaultValue' in (opt as Record<string, unknown>)) {
+    return String((opt as { defaultValue: unknown }).defaultValue);
+  }
+  return key;
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'en' },
+    t: tEn,
+    i18n: { language: 'en', changeLanguage: () => {} },
   }),
 }));
 

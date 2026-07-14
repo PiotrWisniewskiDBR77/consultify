@@ -72,6 +72,7 @@ import {
   type DecisionSnoozePreset,
 } from './DecisionPreviewPanel';
 import { DelegationModal } from './shared/DelegationModal';
+import i18n from '@/i18n';
 
 type ViewMode = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -161,14 +162,14 @@ const priorityLevel = (priority?: string): PriorityLevel => {
 const priorityLabel = (priority: string | undefined, isPolish: boolean): string => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
-      return t('myWork.decisionsPanel.critical', 'Critical');
+      return i18n.t('myWork.decisionsPanel.critical', 'Critical');
     case 'HIGH':
-      return t('myWork.decisionsPanel.high', 'High');
+      return i18n.t('myWork.decisionsPanel.high', 'High');
     case 'LOW':
-      return t('myWork.decisionsPanel.low', 'Low');
+      return i18n.t('myWork.decisionsPanel.low', 'Low');
     case 'MEDIUM':
     default:
-      return t('myWork.decisionsPanel.medium', 'Medium');
+      return i18n.t('myWork.decisionsPanel.medium', 'Medium');
   }
 };
 
@@ -193,7 +194,10 @@ const getDecisionTypeIcon = (type?: string): LucideIcon => {
   }
 };
 
-const statusLabel = (status: string | undefined, isPolish: boolean): string => {
+const statusLabel = (
+  status: string | undefined,
+  t: (key: string, defaultValue: string) => string
+): string => {
   switch (status?.toUpperCase()) {
     case 'APPROVED':
       return t('myWork.decisionsPanel.approved', 'Approved');
@@ -620,7 +624,7 @@ const DecisionTableRow: React.FC<{
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.status }}>
           <EntityStatusChip
             status={decision.status}
-            label={statusLabel(decision.status, !!isPolish)}
+            label={statusLabel(decision.status, t)}
           />
         </td>
       )}
@@ -928,7 +932,7 @@ const AwaitingDecisionTableRow: React.FC<{
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.status }}>
           <EntityStatusChip
             status={decision.status}
-            label={statusLabel(decision.status, !!isPolish)}
+            label={statusLabel(decision.status, t)}
           />
         </td>
       )}
@@ -984,7 +988,7 @@ const AwaitingDecisionTableRow: React.FC<{
             {isDecided && showDecidedChip ? (
               <EntityStatusChip
                 status={decidedAnswer}
-                label={statusLabel(decidedAnswer, !!isPolish)}
+                label={statusLabel(decidedAnswer, t)}
               />
             ) : null}
             <RowActionsMenu

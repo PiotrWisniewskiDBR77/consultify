@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import { HomeBlockShell } from './HomeBlockShell';
 import type { HomeBlock, HomeScreenAction } from './homeV2Types';
+import i18n from '@/i18n';
 
 interface CommandDockProps {
   block: Extract<HomeBlock, { id: 'commandDock' }>;
@@ -151,14 +152,14 @@ function getPrimaryActionLabel(
 ) {
   switch (actionType) {
     case 'open':
-      return t('myWork.commandDock.open', 'Open');
+      return i18n.t('myWork.commandDock.open', 'Open');
     case 'create':
-      return t('myWork.commandDock.create', 'Create');
+      return i18n.t('myWork.commandDock.create', 'Create');
     case 'navigate':
-      return t('myWork.commandDock.goThere', 'Go there');
+      return i18n.t('myWork.commandDock.goThere', 'Go there');
     case 'chat':
-      return t('myWork.commandDock.askAI', 'Ask AI');
+      return i18n.t('myWork.commandDock.askAI', 'Ask AI');
     default:
-      return t('myWork.commandDock.open2', 'Open');
+      return i18n.t('myWork.commandDock.open2', 'Open');
   }
 }

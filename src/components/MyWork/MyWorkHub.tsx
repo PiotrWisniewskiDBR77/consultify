@@ -139,6 +139,7 @@ import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
 import { resolveOpenItemRoute } from './openItemRouting';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
+import i18n from '@/i18n';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -480,7 +481,7 @@ function parseMyWorkPathIntent(
       doc: {
         id: ideaId,
         type: 'idea',
-        name: t('myWork.hub.name', 'Idea'),
+        name: i18n.t('myWork.hub.name', 'Idea'),
         status: 'idea',
         data: { openMap, initialTool },
       },
@@ -493,7 +494,7 @@ function parseMyWorkPathIntent(
       doc: {
         id: decodeURIComponent(segments[2]),
         type: 'task',
-        name: t('myWork.hub.name2', 'Task'),
+        name: i18n.t('myWork.hub.name2', 'Task'),
         status: 'todo',
       },
     };
@@ -505,7 +506,7 @@ function parseMyWorkPathIntent(
       doc: {
         id: decodeURIComponent(segments[2]),
         type: 'decision',
-        name: t('myWork.hub.name3', 'Decision'),
+        name: i18n.t('myWork.hub.name3', 'Decision'),
         status: 'pending',
       },
     };

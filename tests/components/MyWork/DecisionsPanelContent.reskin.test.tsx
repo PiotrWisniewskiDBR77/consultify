@@ -32,6 +32,7 @@ vi.mock('react-i18next', () => ({
     },
     i18n: { language: 'en', changeLanguage: vi.fn() },
   }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 
 // ── App store: identify the current user so "my decisions" filter matches ───

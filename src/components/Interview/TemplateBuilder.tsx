@@ -429,7 +429,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   onSuccess,
   presentation = 'modal',
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const interviewDemoData = useMemo(() => createInterviewDemoDataset(), []);
 
@@ -2722,7 +2722,7 @@ const SortableQuestionCard: React.FC<QuestionCardProps> = (props) => {
                 ? 'opacity-40 cursor-not-allowed'
                 : 'cursor-grab active:cursor-grabbing'
             }`}
-            title={props.t('interview.templateBuilder.dragToReorder')}
+            title={t('interview.templateBuilder.dragToReorder')}
           >
             <GripVertical size={12} />
           </button>

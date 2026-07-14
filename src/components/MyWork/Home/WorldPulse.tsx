@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PulseArticle, PulseData } from './useHomeData';
+import i18n from '@/i18n';
 
 interface WorldPulseProps {
   data: PulseData;
@@ -184,7 +185,7 @@ const ArticleCard: React.FC<{
           className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Bookmark size={11} />
-          {t('myWork.worldPulse.saveToNotebook', 'Save to notebook')}
+          {i18n.t('myWork.worldPulse.saveToNotebook', 'Save to notebook')}
         </button>
         <button
           onClick={(e) => {
@@ -194,7 +195,7 @@ const ArticleCard: React.FC<{
           className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Share2 size={11} />
-          {t('myWork.worldPulse.share', 'Share')}
+          {i18n.t('myWork.worldPulse.share', 'Share')}
         </button>
       </div>
     </div>
