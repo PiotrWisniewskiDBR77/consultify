@@ -1,44 +1,40 @@
 import {
-  AlertTriangle,
-  CheckCircle,
-  ChevronDown,
   Database,
   Edit,
   Eye,
   EyeOff,
-  Filter,
   Globe,
   Image as ImageIcon,
   MessageSquare,
-  MoreVertical,
   Plus,
   RefreshCw,
-  Search,
   Server,
   Sparkles,
   Trash2,
   Wifi,
   Wrench,
-  XCircle,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import {
+  StandardModuleBar,
+  StandardPreview,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
 
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
-import { EmptyState, LoadingState } from '../../shared/states';
-import type {
-  DataClass,
-  ErrorCategory,
-  HealthStatus,
-  ModelKind,
-  ProviderType,
-  RegistryModel,
-} from './types';
+import { LoadingState } from '../../shared/states';
+import type { ErrorCategory, HealthStatus, ModelKind, ProviderType, RegistryModel } from './types';
 import { HEALTH_STYLES, KIND_BADGE_STYLES, PROVIDER_TYPE_STYLES } from './types';
 
 const authHeaders = () => ({
@@ -140,94 +136,11 @@ function CapabilityIcons({ caps }: { caps: RegistryModel['capabilities'] }) {
         </span>
       )}
       {caps.jsonMode && (
-        <span title="JSON mode" className="p-1 rounded bg-c-accent-soft text-c-accent">
+        // kanon TRIADA pułapka #1: c-accent = crimson; capability identity dot
+        // → purple (spójne z KIND_BADGE_STYLES.IMAGE_MODEL), nie primary/crimson.
+        <span title="JSON mode" className="p-1 rounded bg-purple-500/10 text-purple-400">
           <Server size={12} />
         </span>
-      )}
-    </div>
-  );
-}
-
-interface ActionsMenuProps {
-  model: RegistryModel;
-  disabled?: boolean;
-  onToggleActive: (model: RegistryModel) => void;
-  onEdit: (model: RegistryModel) => void;
-  onTestConnection: (model: RegistryModel) => void;
-  onDelete: (model: RegistryModel) => void;
-}
-
-function ActionsMenu({
-  model,
-  disabled = false,
-  onToggleActive,
-  onEdit,
-  onTestConnection,
-  onDelete,
-}: ActionsMenuProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        disabled={disabled}
-        aria-label={`Actions for ${model.name}`}
-        title={disabled ? 'Model catalog is unavailable' : undefined}
-        className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
-      >
-        <MoreVertical size={16} className="text-c-text-secondary" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-xl z-20 py-1">
-          <button
-            onClick={() => {
-              onEdit(model);
-              setOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
-          >
-            <Edit size={14} /> Edit
-          </button>
-          <button
-            onClick={() => {
-              onToggleActive(model);
-              setOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
-          >
-            {model.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
-            {model.isActive ? 'Deactivate' : 'Activate'}
-          </button>
-          <button
-            onClick={() => {
-              onTestConnection(model);
-              setOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
-          >
-            <Wifi size={14} /> Test Connection
-          </button>
-          <div className="border-t border-c-border-subtle my-1" />
-          <button
-            onClick={() => {
-              onDelete(model);
-              setOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-danger hover:bg-c-danger/10"
-          >
-            <Trash2 size={14} /> Delete
-          </button>
-        </div>
       )}
     </div>
   );
@@ -374,19 +287,56 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
   );
 }
 
+// ── Filter options (kolumny StandardTable) ─────────────────────────────────
+const KIND_FILTER_OPTIONS = [
+  { value: 'TEXT_LLM', label: 'TEXT_LLM' },
+  { value: 'IMAGE_MODEL', label: 'IMAGE_MODEL' },
+  { value: 'BUSINESS_MODEL', label: 'BUSINESS_MODEL' },
+];
+
+const PROVIDER_TYPE_FILTER_OPTIONS = [
+  { value: 'direct', label: 'Direct' },
+  { value: 'aggregator', label: 'Aggregator' },
+  { value: 'local', label: 'Local' },
+  { value: 'customer_managed', label: 'Customer Managed' },
+];
+
+const HEALTH_FILTER_OPTIONS = [
+  { value: 'healthy', label: 'Healthy' },
+  { value: 'degraded', label: 'Degraded' },
+  { value: 'unhealthy', label: 'Unhealthy' },
+  { value: 'unknown', label: 'Unknown' },
+];
+
+const STATUS_FILTER_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+];
+
+const formatContextWindow = (tokens: number) => {
+  if (!tokens) return '—';
+  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
+  return `${(tokens / 1_000).toFixed(0)}K`;
+};
+
+const formatLatency = (ms?: number) => {
+  if (!ms) return '—';
+  return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
+};
+
 export const ModelCatalogTable: React.FC = () => {
   const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [models, setModels] = useState<RegistryModel[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterKind, setFilterKind] = useState<ModelKind | ''>('');
-  const [filterProviderType, setFilterProviderType] = useState<ProviderType | ''>('');
-  const [filterHealth, setFilterHealth] = useState<HealthStatus | ''>('');
-  const [filterActive, setFilterActive] = useState<'' | 'active' | 'inactive'>('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [kindTab, setKindTab] = useState<'all' | ModelKind>('all');
   const [editingModel, setEditingModel] = useState<RegistryModel | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<
+    { id: string; column: string; value: string; label: string }[]
+  >([]);
 
   useEffect(() => {
     loadModels();
@@ -516,36 +466,261 @@ export const ModelCatalogTable: React.FC = () => {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'Delete failed');
       toast.success('Provider deleted');
+      setPreviewId((prev) => (prev === model.id ? null : prev));
       await loadModels();
     } catch (e: unknown) {
       toast.error(normalizeApiErrorMessage(e, 'Failed to delete provider'));
     }
   };
 
+  // ── Filtrowanie: chip Kind (Menu 3) + lupa (Menu 2) ───────────────────────
+  // Kolumnowe filtry (Kind/Provider Type/Health/Status) sa aplikowane przez
+  // StandardTable/FilterableTable automatycznie na polach wiersza.
   const filteredModels = useMemo(() => {
-    return models.filter((m) => {
-      const matchesSearch =
-        !searchTerm ||
-        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.modelId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.originVendor.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesKind = !filterKind || m.kind === filterKind;
-      const matchesProviderType = !filterProviderType || m.providerType === filterProviderType;
-      const matchesHealth = !filterHealth || m.healthStatus === filterHealth;
-      const matchesActive =
-        !filterActive ||
-        (filterActive === 'active' && m.isActive) ||
-        (filterActive === 'inactive' && !m.isActive);
-      return matchesSearch && matchesKind && matchesProviderType && matchesHealth && matchesActive;
-    });
-  }, [models, searchTerm, filterKind, filterProviderType, filterHealth, filterActive]);
+    let result = models;
+    if (kindTab !== 'all') result = result.filter((m) => m.kind === kindTab);
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      result = result.filter(
+        (m) =>
+          m.name.toLowerCase().includes(query) ||
+          m.modelId.toLowerCase().includes(query) ||
+          m.provider.toLowerCase().includes(query) ||
+          m.originVendor.toLowerCase().includes(query)
+      );
+    }
+    return result;
+  }, [models, kindTab, searchTerm]);
 
-  const formatContextWindow = (tokens: number) => {
-    if (!tokens) return '—';
-    if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
-    return `${(tokens / 1_000).toFixed(0)}K`;
-  };
+  const rows = useMemo<TableRow[]>(
+    () =>
+      filteredModels.map((m) => ({
+        ...m,
+        id: m.id,
+        status: m.isActive ? 'active' : 'inactive',
+      })),
+    [filteredModels]
+  );
+
+  const previewModel = previewId ? (models.find((m) => m.id === previewId) ?? null) : null;
+
+  const kindCounts = useMemo(
+    () => ({
+      TEXT_LLM: models.filter((m) => m.kind === 'TEXT_LLM').length,
+      IMAGE_MODEL: models.filter((m) => m.kind === 'IMAGE_MODEL').length,
+      BUSINESS_MODEL: models.filter((m) => m.kind === 'BUSINESS_MODEL').length,
+    }),
+    [models]
+  );
+
+  // ── Kolumny StandardTable ─────────────────────────────────────────────────
+  const columns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'name',
+        label: 'Name',
+        sortable: true,
+        render: (row: TableRow) => (
+          <div>
+            <div className="font-medium text-c-text text-sm">{row.name as string}</div>
+            <div className="text-xs text-c-text-muted font-mono">{row.modelId as string}</div>
+          </div>
+        ),
+      },
+      {
+        id: 'providerType',
+        label: 'Provider',
+        width: '150px',
+        sortable: true,
+        sortAccessor: (row: TableRow) => String(row.originVendor || ''),
+        filterable: true,
+        filterOptions: PROVIDER_TYPE_FILTER_OPTIONS,
+        render: (row: TableRow) => (
+          <div>
+            <div className="text-sm text-c-text-secondary">{row.originVendor as string}</div>
+            <ProviderTypeBadge type={row.providerType as ProviderType} />
+          </div>
+        ),
+      },
+      {
+        id: 'kind',
+        label: 'Kind',
+        width: '140px',
+        sortable: true,
+        filterable: true,
+        filterOptions: KIND_FILTER_OPTIONS,
+        render: (row: TableRow) => <KindBadge kind={row.kind as ModelKind} />,
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        width: '100px',
+        sortable: true,
+        filterable: true,
+        filterOptions: STATUS_FILTER_OPTIONS,
+        render: (row: TableRow) => (
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${
+              row.status === 'active'
+                ? 'bg-c-success/10 text-c-success'
+                : 'bg-c-text-muted/10 text-c-text-muted'
+            }`}
+          >
+            {row.status === 'active' ? 'Active' : 'Inactive'}
+          </span>
+        ),
+      },
+      {
+        id: 'healthStatus',
+        label: 'Health',
+        width: '150px',
+        sortable: true,
+        filterable: true,
+        filterOptions: HEALTH_FILTER_OPTIONS,
+        render: (row: TableRow) => (
+          <div className="flex flex-col gap-1">
+            <HealthBadge status={row.healthStatus as HealthStatus} />
+            <ErrorCategoryBadge
+              category={row.lastErrorCategory as ErrorCategory | undefined}
+              httpStatus={row.lastErrorHttpStatus as number | undefined}
+            />
+          </div>
+        ),
+      },
+      {
+        id: 'capabilities',
+        label: 'Capabilities',
+        width: '140px',
+        render: (row: TableRow) => {
+          const caps = row.capabilities as RegistryModel['capabilities'];
+          return (
+            <div>
+              <CapabilityIcons caps={caps} />
+              {caps.contextWindow > 0 && (
+                <div className="text-xs text-c-text-muted mt-0.5">
+                  {formatContextWindow(caps.contextWindow)} ctx
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'executionRegions',
+        label: 'Regions',
+        width: '160px',
+        render: (row: TableRow) => {
+          const regions = (row.executionRegions as string[]) || [];
+          return (
+            <div className="flex flex-wrap gap-1">
+              {regions.map((region) => (
+                <span
+                  key={region}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-c-surface-raised rounded text-xs text-c-text-secondary"
+                >
+                  <Globe size={10} />
+                  {region}
+                </span>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'costPer1k',
+        label: 'Cost/1k',
+        width: '100px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-c-text-secondary">
+            {row.costPer1k ? `$${(row.costPer1k as number).toFixed(4)}` : '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'avgLatencyMs',
+        label: 'Latency',
+        width: '100px',
+        align: 'right',
+        sortable: true,
+        render: (row: TableRow) => (
+          <span className="text-sm text-c-text-secondary">
+            {formatLatency(row.avgLatencyMs as number | undefined)}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  // ── Kebab — kontrakt 5 blokow (modul deklaruje TYLKO bloki 1-3) ──────────
+  const rowMenu = useMemo(
+    () =>
+      (row: TableRow): StandardRowMenu => {
+        const model = row as unknown as RegistryModel;
+        return {
+          primary: [
+            { id: 'edit', label: 'Edit', icon: Edit, onClick: () => handleEdit(model) },
+            {
+              id: 'toggle-active',
+              label: model.isActive ? 'Deactivate' : 'Activate',
+              icon: model.isActive ? EyeOff : Eye,
+              onClick: () => handleToggleActive(model),
+            },
+            {
+              id: 'test-connection',
+              label: 'Test Connection',
+              icon: Wifi,
+              onClick: () => handleTestConnection(model),
+            },
+          ],
+          universalHandlers: {
+            preview: () => setPreviewId(model.id),
+            edit: () => handleEdit(model),
+          },
+          destructive: { label: 'Delete', icon: Trash2, onClick: () => handleDelete(model) },
+        };
+      },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [loadError]
+  );
+
+  // ── Preview actions (StandardPreview) ────────────────────────────────────
+  const previewActions: StandardPreviewActions | undefined = previewModel
+    ? {
+        resolutions: [
+          {
+            id: 'edit',
+            variant: 'positive',
+            label: 'Edit',
+            icon: Edit,
+            onClick: () => handleEdit(previewModel),
+          },
+          {
+            id: 'toggle-active',
+            variant: previewModel.isActive ? 'warning' : 'positive',
+            label: previewModel.isActive ? 'Deactivate' : 'Activate',
+            icon: previewModel.isActive ? EyeOff : Eye,
+            onClick: () => handleToggleActive(previewModel),
+          },
+          {
+            id: 'test-connection',
+            variant: 'neutral',
+            label: 'Test Connection',
+            icon: Wifi,
+            onClick: () => handleTestConnection(previewModel),
+          },
+          {
+            id: 'delete',
+            variant: 'destructive',
+            label: 'Delete',
+            icon: Trash2,
+            onClick: () => handleDelete(previewModel),
+          },
+        ],
+      }
+    : undefined;
 
   if (loading) {
     return (
@@ -571,28 +746,14 @@ export const ModelCatalogTable: React.FC = () => {
             )}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={loadModels}
-            disabled={loading}
-            className="p-2 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
-          >
-            <RefreshCw size={18} />
-          </button>
-          <button
-            onClick={() => {
-              // Model catalog is backed by LLM providers. For full creation flow reuse the canonical LLM Management UI.
-              setCurrentView(AppView.SUPERADMIN_LLM_MANAGEMENT);
-              toast('Go to LLM Providers to add a model/provider');
-            }}
-            disabled={!!loadError}
-            title={loadError || undefined}
-            className="flex items-center gap-2 px-4 h-9 bg-c-text hover:brightness-95 text-c-surface rounded-full text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            <Plus size={16} />
-            {t('modelRegistry.catalog.addModel', 'Add Model')}
-          </button>
-        </div>
+        <button
+          onClick={loadModels}
+          disabled={loading}
+          className="p-2 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
+          title="Refresh"
+        >
+          <RefreshCw size={18} />
+        </button>
       </div>
 
       {loadError ? (
@@ -615,259 +776,110 @@ export const ModelCatalogTable: React.FC = () => {
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               <div className="text-sm text-c-info">TEXT_LLM</div>
-              <div className="text-2xl font-bold text-c-text">
-                {models.filter((m) => m.kind === 'TEXT_LLM').length}
-              </div>
+              <div className="text-2xl font-bold text-c-text">{kindCounts.TEXT_LLM}</div>
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
-              <div className="text-sm text-c-accent">IMAGE_MODEL</div>
-              <div className="text-2xl font-bold text-c-text">
-                {models.filter((m) => m.kind === 'IMAGE_MODEL').length}
-              </div>
+              {/* kanon TRIADA pułapka #1: c-accent = crimson; spójne z badge purple. */}
+              <div className="text-sm text-purple-400">IMAGE_MODEL</div>
+              <div className="text-2xl font-bold text-c-text">{kindCounts.IMAGE_MODEL}</div>
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               <div className="text-sm text-c-warning">BUSINESS_MODEL</div>
-              <div className="text-2xl font-bold text-c-text">
-                {models.filter((m) => m.kind === 'BUSINESS_MODEL').length}
-              </div>
+              <div className="text-2xl font-bold text-c-text">{kindCounts.BUSINESS_MODEL}</div>
             </div>
           </div>
 
-          {/* Search & Filters */}
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
-              />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={t(
-                  'modelRegistry.catalog.searchPlaceholder',
-                  'Search by name, model ID, provider...'
-                )}
-                disabled={!!loadError}
-                className="w-full pl-10 pr-4 h-9 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm placeholder-c-text-muted"
-              />
-            </div>
-            <select
-              value={filterKind}
-              onChange={(e) => setFilterKind(e.target.value as ModelKind | '')}
-              disabled={!!loadError}
-              className="h-9 px-3 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
-            >
-              <option value="">All Kinds</option>
-              <option value="TEXT_LLM">TEXT_LLM</option>
-              <option value="IMAGE_MODEL">IMAGE_MODEL</option>
-              <option value="BUSINESS_MODEL">BUSINESS_MODEL</option>
-            </select>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              disabled={!!loadError}
-              className={`flex items-center gap-2 px-3 h-9 border rounded-lg text-sm transition-colors ${
-                showFilters
-                  ? 'bg-c-text border-c-text text-c-surface'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'
-              }`}
-            >
-              <Filter size={14} />
-              Filters
-            </button>
-          </div>
+          {/* MENU 2/3 — wylacznie przez fasade */}
+          <StandardModuleBar
+            onSearch={setSearchTerm}
+            searchValue={searchTerm}
+            primaryCta={{
+              label: t('modelRegistry.catalog.addModel', 'Add Model'),
+              icon: Plus,
+              onClick: () => {
+                // Model catalog is backed by LLM providers. For full creation flow reuse the canonical LLM Management UI.
+                setCurrentView(AppView.SUPERADMIN_LLM_MANAGEMENT);
+                toast('Go to LLM Providers to add a model/provider');
+              },
+            }}
+            chips={[
+              { id: 'all', label: 'All', count: models.length },
+              { id: 'TEXT_LLM', label: 'TEXT_LLM', count: kindCounts.TEXT_LLM },
+              { id: 'IMAGE_MODEL', label: 'IMAGE_MODEL', count: kindCounts.IMAGE_MODEL },
+              { id: 'BUSINESS_MODEL', label: 'BUSINESS_MODEL', count: kindCounts.BUSINESS_MODEL },
+            ]}
+            activeChip={kindTab}
+            onChipChange={(id) => setKindTab(id as typeof kindTab)}
+            activeFilters={activeFilters}
+            onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((f) => f.id !== id))}
+            onClearFilters={() => setActiveFilters([])}
+          />
 
-          {showFilters && (
-            <div className="grid grid-cols-3 gap-4 p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
-              <div>
-                <label className="block text-xs text-c-text-muted mb-1">Provider Type</label>
-                <select
-                  value={filterProviderType}
-                  onChange={(e) => setFilterProviderType(e.target.value as ProviderType | '')}
-                  className="w-full h-9 px-3 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="direct">Direct</option>
-                  <option value="aggregator">Aggregator</option>
-                  <option value="local">Local</option>
-                  <option value="customer_managed">Customer Managed</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-c-text-muted mb-1">Health Status</label>
-                <select
-                  value={filterHealth}
-                  onChange={(e) => setFilterHealth(e.target.value as HealthStatus | '')}
-                  className="w-full h-9 px-3 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="healthy">Healthy</option>
-                  <option value="degraded">Degraded</option>
-                  <option value="unhealthy">Unhealthy</option>
-                  <option value="unknown">Unknown</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-c-text-muted mb-1">Status</label>
-                <select
-                  value={filterActive}
-                  onChange={(e) => setFilterActive(e.target.value as '' | 'active' | 'inactive')}
-                  className="w-full h-9 px-3 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
+          {/* TABELA + PREVIEW */}
+          <div className="flex min-h-0 overflow-hidden -mx-6 -mb-6">
+            <div className="flex-1 min-w-0 overflow-auto">
+              <StandardTable
+                columns={columns}
+                data={rows}
+                empty={{
+                  icon: Database,
+                  title: 'No models match your filters',
+                  description: 'Try a different search term or clear the active filters.',
+                }}
+                selectedRowId={previewId}
+                onRowClick={(row) => setPreviewId(String(row.id))}
+                onRowDoubleClick={(row) => handleEdit(row as unknown as RegistryModel)}
+                rowMenu={rowMenu}
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                persistKey="superadmin.modelCatalog"
+              />
             </div>
-          )}
 
-          {/* Table */}
-          <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table
-                /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full"
-              >
-                <thead>
-                  <tr className="border-b border-c-border-subtle">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Name
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Provider
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Kind
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Status
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Health
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Capabilities
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Regions
-                    </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Cost/1k
-                    </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Latency
-                    </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-c-border">
-                  {filteredModels.map((model) => (
-                    <tr
-                      key={model.id}
-                      className={`hover:bg-c-surface-raised transition-colors ${
-                        !model.isActive ? 'opacity-50' : ''
-                      }`}
-                    >
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="font-medium text-c-text text-sm">{model.name}</div>
-                          <div className="text-xs text-c-text-muted font-mono">{model.modelId}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="text-sm text-c-text-secondary">{model.originVendor}</div>
-                          <ProviderTypeBadge type={model.providerType} />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <KindBadge kind={model.kind} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            model.isActive
-                              ? 'bg-c-success/10 text-c-success'
-                              : 'bg-c-text-muted/10 text-c-text-muted'
-                          }`}
-                        >
-                          {model.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-1">
-                          <HealthBadge status={model.healthStatus} />
-                          <ErrorCategoryBadge
-                            category={model.lastErrorCategory}
-                            httpStatus={model.lastErrorHttpStatus}
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <CapabilityIcons caps={model.capabilities} />
-                        {model.capabilities.contextWindow > 0 && (
-                          <div className="text-xs text-c-text-muted mt-0.5">
-                            {formatContextWindow(model.capabilities.contextWindow)} ctx
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {model.executionRegions.map((region) => (
-                            <span
-                              key={region}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-c-surface-raised rounded text-xs text-c-text-secondary"
-                            >
-                              <Globe size={10} />
-                              {region}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="text-sm text-c-text-secondary">
-                          {model.costPer1k ? `$${model.costPer1k.toFixed(4)}` : '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="text-sm text-c-text-secondary">
-                          {model.avgLatencyMs
-                            ? model.avgLatencyMs < 1000
-                              ? `${model.avgLatencyMs}ms`
-                              : `${(model.avgLatencyMs / 1000).toFixed(1)}s`
-                            : '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <ActionsMenu
-                          model={model}
-                          disabled={!!loadError}
-                          onToggleActive={handleToggleActive}
-                          onEdit={handleEdit}
-                          onTestConnection={handleTestConnection}
-                          onDelete={handleDelete}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredModels.length === 0 && (
-                    <tr>
-                      <td colSpan={10} className="px-4 py-12">
-                        <EmptyState
-                          variant="filter"
-                          icon={Database}
-                          title="No models match your filters"
-                          description="Try a different search term or clear the active filters."
-                          compact
-                        />
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {previewModel ? (
+              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                <StandardPreview
+                  title={previewModel.name}
+                  onClose={() => setPreviewId(null)}
+                  onOpenFull={() => handleEdit(previewModel)}
+                  meta={{
+                    pills: [
+                      { label: previewModel.kind, tone: 'neutral' },
+                      { label: previewModel.providerType, tone: 'neutral' },
+                      {
+                        label: previewModel.isActive ? 'Active' : 'Inactive',
+                        tone: previewModel.isActive ? 'success' : 'neutral',
+                      },
+                    ],
+                    trailing: <HealthBadge status={previewModel.healthStatus} />,
+                  }}
+                  details={{
+                    text: [
+                      `Model ID: ${previewModel.modelId}`,
+                      `Provider: ${previewModel.originVendor}`,
+                      previewModel.costPer1k
+                        ? `Cost/1k: $${previewModel.costPer1k.toFixed(4)}`
+                        : '',
+                      previewModel.avgLatencyMs
+                        ? `Latency: ${formatLatency(previewModel.avgLatencyMs)}`
+                        : '',
+                      previewModel.capabilities.contextWindow
+                        ? `Context window: ${formatContextWindow(previewModel.capabilities.contextWindow)}`
+                        : '',
+                      previewModel.executionRegions.length
+                        ? `Regions: ${previewModel.executionRegions.join(', ')}`
+                        : '',
+                    ]
+                      .filter(Boolean)
+                      .join('\n\n'),
+                    onCopy: () => {
+                      void navigator.clipboard?.writeText(previewModel.modelId);
+                    },
+                  }}
+                  actions={previewActions}
+                />
+              </aside>
+            ) : null}
           </div>
 
           {editingModel && (

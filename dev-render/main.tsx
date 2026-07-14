@@ -35,6 +35,7 @@ import EvFootballFieldScreen from './screens/ev-football-field';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
+import ModelCatalogTableScreen from './screens/model-catalog-table';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
@@ -126,6 +127,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'report-builder-templates': {
     label: '§27-todo: TemplatesManager (Report Builder → Templates) → StandardTable',
     render: () => <ReportBuilderTemplatesScreen />,
+  },
+  'model-catalog-table': {
+    label: '§27-todo: ModelCatalogTable (SuperAdmin → Model Registry) → StandardTable',
+    render: () => <ModelCatalogTableScreen />,
   },
   'assessment-reports-table': {
     label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
