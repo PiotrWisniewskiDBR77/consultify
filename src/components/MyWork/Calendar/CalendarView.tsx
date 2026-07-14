@@ -57,7 +57,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onDecisionClick,
   onInitiativeClick,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
@@ -68,23 +68,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   >({
     google: {
       available: false,
-      statusLabel: isPolish ? 'Wkrótce' : 'Coming soon',
-      helper: isPolish
-        ? 'Integracja Google Calendar jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.'
-        : 'Google Calendar integration is in preparation — two-way connection is not available yet.',
-      nextStep: isPolish
-        ? 'Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.'
-        : 'In the meantime, subscribe to the Consultify ICS feed in your calendar.',
+      statusLabel: t('myWork.calendarView.statusLabel', 'Coming soon'),
+      helper: t('myWork.calendarView.helper', 'Google Calendar integration is in preparation — two-way connection is not available yet.'),
+      nextStep: t('myWork.calendarView.nextStep', 'In the meantime, subscribe to the Consultify ICS feed in your calendar.'),
     },
     outlook: {
       available: false,
-      statusLabel: isPolish ? 'Wkrótce' : 'Coming soon',
-      helper: isPolish
-        ? 'Integracja Outlook jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.'
-        : 'Outlook integration is in preparation — two-way connection is not available yet.',
-      nextStep: isPolish
-        ? 'Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.'
-        : 'In the meantime, subscribe to the Consultify ICS feed in your calendar.',
+      statusLabel: t('myWork.calendarView.statusLabel2', 'Coming soon'),
+      helper: t('myWork.calendarView.helper2', 'Outlook integration is in preparation — two-way connection is not available yet.'),
+      nextStep: t('myWork.calendarView.nextStep2', 'In the meantime, subscribe to the Consultify ICS feed in your calendar.'),
     },
   });
   const [dayLoad, setDayLoad] = useState<CalendarConflictResponse | null>(null);
@@ -109,7 +101,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         case 'connected':
           return {
             available: true,
-            statusLabel: isPolish ? 'Aktywne' : 'Active',
+            statusLabel: t('myWork.calendarView.statusLabel3', 'Active'),
             helper: isPolish
               ? `${providerLabel} jest gotowe do filtrowania w kalendarzu.`
               : `${providerLabel} is ready for calendar filtering.`,
@@ -118,46 +110,38 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         case 'pending':
           return {
             available: false,
-            statusLabel: isPolish ? 'Konfiguracja w toku' : 'Setup in progress',
+            statusLabel: t('myWork.calendarView.statusLabel4', 'Setup in progress'),
             helper: isPolish
               ? `${providerLabel} jest już na ścieżce governed, ale konfiguracja lub autoryzacja nie jest jeszcze domknięta.`
               : `${providerLabel} is on the governed path, but configuration or authorization is not complete yet.`,
-            nextStep: isPolish
-              ? 'Dokończ konfigurację lub autoryzację w Integracjach.'
-              : 'Finish configuration or authorization in Integrations.',
+            nextStep: t('myWork.calendarView.nextStep3', 'Finish configuration or authorization in Integrations.'),
           };
         case 'reauth':
           return {
             available: false,
-            statusLabel: isPolish ? 'Wymaga ponownej autoryzacji' : 'Reauth required',
+            statusLabel: t('myWork.calendarView.statusLabel5', 'Reauth required'),
             helper: isPolish
               ? `${providerLabel} wymaga ponownej autoryzacji zanim wróci do wiarygodnego syncu.`
               : `${providerLabel} needs reauthorization before it returns to a trustworthy sync state.`,
-            nextStep: isPolish
-              ? 'Uruchom ponowną autoryzację w Integracjach.'
-              : 'Start reauthorization in Integrations.',
+            nextStep: t('myWork.calendarView.nextStep4', 'Start reauthorization in Integrations.'),
           };
         case 'error':
           return {
             available: false,
-            statusLabel: isPolish ? 'Błąd syncu' : 'Sync error',
+            statusLabel: t('myWork.calendarView.statusLabel6', 'Sync error'),
             helper: isPolish
               ? `${providerLabel} ma aktywny błąd i nie powinno być traktowane jak gotowe źródło kalendarza.`
               : `${providerLabel} has an active error and should not be treated as a ready calendar source.`,
-            nextStep: isPolish
-              ? 'Sprawdź stan i logi w Integracjach.'
-              : 'Review the status and logs in Integrations.',
+            nextStep: t('myWork.calendarView.nextStep5', 'Review the status and logs in Integrations.'),
           };
         default:
           return {
             available: false,
-            statusLabel: isPolish ? 'Wkrótce' : 'Coming soon',
+            statusLabel: t('myWork.calendarView.statusLabel7', 'Coming soon'),
             helper: isPolish
               ? `Integracja ${providerLabel} jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.`
               : `${providerLabel} integration is in preparation — two-way connection is not available yet.`,
-            nextStep: isPolish
-              ? 'Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.'
-              : 'In the meantime, subscribe to the Consultify ICS feed in your calendar.',
+            nextStep: t('myWork.calendarView.nextStep6', 'In the meantime, subscribe to the Consultify ICS feed in your calendar.'),
           };
       }
     },
@@ -168,17 +152,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     if (dayLoadLoading) {
       return {
         variant: 'info' as const,
-        title: isPolish ? 'Obciążenie dnia' : 'Day load',
-        body: isPolish
-          ? 'Sprawdzanie obciążenia wybranego dnia...'
-          : 'Checking the selected day load...',
+        title: t('myWork.calendarView.title', 'Day load'),
+        body: t('myWork.calendarView.body', 'Checking the selected day load...'),
       };
     }
 
     if (dayLoadError) {
       return {
         variant: 'warning' as const,
-        title: isPolish ? 'Podgląd obciążenia ograniczony' : 'Day-load preview limited',
+        title: t('myWork.calendarView.title2', 'Day-load preview limited'),
         body: dayLoadError,
       };
     }
@@ -191,17 +173,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     if (totalItems === 0) {
       return {
         variant: 'success' as const,
-        title: isPolish ? 'Dzień wygląda na wolny' : 'Day looks clear',
-        body: isPolish
-          ? 'Wybrana data nie pokazuje jeszcze zadań ani decyzji wymagających uwagi.'
-          : 'The selected date does not yet show tasks or decisions demanding attention.',
+        title: t('myWork.calendarView.title3', 'Day looks clear'),
+        body: t('myWork.calendarView.body2', 'The selected date does not yet show tasks or decisions demanding attention.'),
       };
     }
 
     if (hasConflicts || totalItems >= 4) {
       return {
         variant: 'warning' as const,
-        title: isPolish ? 'Dzień jest już mocno obciążony' : 'Day is already heavily loaded',
+        title: t('myWork.calendarView.title4', 'Day is already heavily loaded'),
         body:
           dayLoad?.suggestion ||
           (isPolish
@@ -212,7 +192,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     return {
       variant: 'info' as const,
-      title: isPolish ? 'Dzień jest częściowo zajęty' : 'Day is partially loaded',
+      title: t('myWork.calendarView.title5', 'Day is partially loaded'),
       body:
         dayLoad?.suggestion ||
         (isPolish
@@ -310,12 +290,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           setDayLoad(null);
           setDayLoadError(
             err?.status === 503
-              ? isPolish
-                ? 'Podglad obciazenia dnia jest chwilowo niedostepny, ale kalendarz nadal pokazuje biezace pozycje.'
-                : 'Day-load preview is temporarily unavailable, but the calendar still shows current items.'
-              : isPolish
-                ? 'Nie udalo sie odczytac obciazenia wybranego dnia.'
-                : 'Failed to read the selected day load.'
+              ? t('myWork.calendarView.dayLoadPreviewIs', 'Day-load preview is temporarily unavailable, but the calendar still shows current items.')
+              : t('myWork.calendarView.failedToReadThe', 'Failed to read the selected day load.')
           );
         }
       } finally {
@@ -392,17 +368,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               icon={AlertTriangle}
               dashed={false}
               message={
-                isPolish
-                  ? 'Widok kalendarza jest chwilowo niedostępny.'
-                  : 'Calendar view is temporarily unavailable.'
+                t('myWork.calendarView.calendarViewIsTemporarily', 'Calendar view is temporarily unavailable.')
               }
               hint={
-                isPolish
-                  ? 'To nie oznacza, że dzień jest pusty. Spróbuj odświeżyć dane i sprawdź ponownie.'
-                  : 'This does not mean the day is empty. Refresh the data and try again.'
+                t('myWork.calendarView.thisDoesNotMean', 'This does not mean the day is empty. Refresh the data and try again.')
               }
               action={{
-                label: isPolish ? 'Ponów' : 'Retry',
+                label: t('myWork.calendarView.label', 'Retry'),
                 onClick: refetch,
               }}
               className="mb-4"

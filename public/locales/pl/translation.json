@@ -3277,7 +3277,129 @@
       "analyzing": "Analizuję...",
       "noConnectionsFound": "Brak powiązań"
     },
-    "postDecisionFollowUp": {}
+    "postDecisionFollowUp": {},
+    "calendarView": {
+      "statusLabel": "Wkrótce",
+      "helper": "Integracja Google Calendar jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.",
+      "nextStep": "Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.",
+      "statusLabel2": "Wkrótce",
+      "helper2": "Integracja Outlook jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.",
+      "nextStep2": "Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.",
+      "statusLabel3": "Aktywne",
+      "statusLabel4": "Konfiguracja w toku",
+      "nextStep3": "Dokończ konfigurację lub autoryzację w Integracjach.",
+      "statusLabel5": "Wymaga ponownej autoryzacji",
+      "nextStep4": "Uruchom ponowną autoryzację w Integracjach.",
+      "statusLabel6": "Błąd syncu",
+      "nextStep5": "Sprawdź stan i logi w Integracjach.",
+      "statusLabel7": "Wkrótce",
+      "nextStep6": "Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.",
+      "title": "Obciążenie dnia",
+      "body": "Sprawdzanie obciążenia wybranego dnia...",
+      "title2": "Podgląd obciążenia ograniczony",
+      "title3": "Dzień wygląda na wolny",
+      "body2": "Wybrana data nie pokazuje jeszcze zadań ani decyzji wymagających uwagi.",
+      "title4": "Dzień jest już mocno obciążony",
+      "title5": "Dzień jest częściowo zajęty",
+      "dayLoadPreviewIs": "Podglad obciazenia dnia jest chwilowo niedostepny, ale kalendarz nadal pokazuje biezace pozycje.",
+      "failedToReadThe": "Nie udalo sie odczytac obciazenia wybranego dnia.",
+      "calendarViewIsTemporarily": "Widok kalendarza jest chwilowo niedostępny.",
+      "thisDoesNotMean": "To nie oznacza, że dzień jest pusty. Spróbuj odświeżyć dane i sprawdź ponownie.",
+      "label": "Ponów"
+    },
+    "calendarCreateEvent": {
+      "dayLoadPreviewIs": "Podglad obciazenia dnia jest chwilowo niedostepny, ale nadal mozesz zapisac zadanie.",
+      "failedToCheckDay": "Nie udalo sie sprawdzic obciazenia dnia.",
+      "checkingDayLoad": "Sprawdzanie obciążenia dnia...",
+      "thisDayLooksClear": "Ten dzień wygląda na wolny.",
+      "toastError": "Tytuł jest wymagany",
+      "toastSuccess": "Zadanie dodane do kalendarza",
+      "toastError2": "Nie udało się dodać do kalendarza",
+      "title": "Dodaj do kalendarza",
+      "inV1CalendarCreation": "W V1 kalendarz tworzy zadanie osobiste z datą wykonania, zgodnie z logiką My Work.",
+      "cancel": "Anuluj",
+      "add": "Dodaj",
+      "artifactTypeTask": "Typ artefaktu: Zadanie",
+      "decisionsAndInitiativesFrom": "Decyzje i inicjatywy z poziomu kalendarza są przygotowane jako kolejny etap.",
+      "title2": "Tytuł",
+      "placeholder": "Np. Przygotować deck na review",
+      "recurrence": "Powtarzalność",
+      "none": "Brak",
+      "daily": "Codziennie",
+      "weekly": "Co tydzień",
+      "monthly": "Co miesiąc",
+      "description": "Opis",
+      "shortContextOrDefinition": "Krótki kontekst lub definicja done...",
+      "date": "Data",
+      "dayLoadPreview": "Podgląd obciążenia dnia",
+      "theFormChecksExisting": "Formularz sprawdza istniejące zadania i decyzje dla wybranego dnia.",
+      "task": "Zadanie",
+      "decision": "Decyzja",
+      "loadingConflicts": "Ładowanie konfliktów..."
+    },
+    "calendarSidebar": {
+      "currentDateToLocaleDateString": "pl-PL",
+      "sources": "Źródła",
+      "connectInIntegrations": "Podłącz w Integracjach →",
+      "ownership": "Własność",
+      "label": "Dowolna",
+      "label2": "Przypisane do mnie",
+      "label3": "Jestem właścicielem",
+      "today": "Dzisiaj"
+    },
+    "calendarGrid": {
+      "busy": "Zajęte",
+      "today": "Dziś",
+      "currentDateToLocaleDateString": "pl-PL",
+      "locale": "pl",
+      "allDayText": "cały dzień"
+    },
+    "commandDock": {
+      "doThisNow": "Zrób teraz",
+      "shortcutsAndQuickCreate": "Skróty i szybkie tworzenie",
+      "priorityFirstShortcutsSecond": "Najpierw priorytet, potem skróty",
+      "open": "Otwórz",
+      "create": "Utwórz",
+      "goThere": "Przejdź",
+      "askAI": "Zapytaj AI",
+      "open2": "Otwórz"
+    },
+    "worldPulse": {
+      "whatSHappeningIn": "Co się dzieje w Twoim świecie",
+      "noArticlesInThis": "Brak artykułów w tej kategorii",
+      "frameworkOfTheDay": "Framework dnia",
+      "learnMore": "Dowiedz się więcej",
+      "saveToNotebook": "Zapisz do notatnika",
+      "share": "Udostępnij"
+    },
+    "sparkZone": {
+      "yourIdeasAndCreative": "Twoje pomysły i przestrzeń twórcza",
+      "newIdea": "Nowy pomysł",
+      "startFromScratchOr": "Zacznij od zera lub użyj szablonu",
+      "recentNote": "Ostatnia notatka",
+      "updated": "Zaktualizowano"
+    },
+    "aiCompanionBrief": {
+      "nowToLocaleDateString": "pl-PL",
+      "week": "Tydzień",
+      "complete": "ukończony",
+      "letSTalkAbout": "Porozmawiajmy o tym"
+    },
+    "gentleNudge": {
+      "view": "Zobacz"
+    },
+    "aiPlanView": {
+      "aIDayPlan": "Plan dnia AI",
+      "ariaLabel": "Zamknij",
+      "generatingPlan": "Generowanie planu...",
+      "noItems": "Brak zadań",
+      "failedToGeneratePlan": "Nie udało się wygenerować planu"
+    },
+    "aiCoachPanel": {
+      "aICoach": "AI Coach",
+      "analyzing": "Analizuję..."
+    },
+    "nudgeStrip": {}
   },
   "step1": {
     "title": "Krok 1",

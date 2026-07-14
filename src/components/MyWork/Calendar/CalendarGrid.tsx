@@ -60,7 +60,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   onDateRangeChange,
   onEventMove,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const calendarRef = useRef<FullCalendar>(null);
 
@@ -77,7 +77,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
         return {
           id: e.id,
-          title: isFreeBusy ? (isPolish ? 'Zajęte' : 'Busy') : e.title,
+          title: isFreeBusy ? (t('myWork.calendarGrid.busy', 'Busy')) : e.title,
           start: e.start,
           end: e.end || undefined,
           allDay: e.allDay ?? false,
@@ -223,7 +223,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             onClick={goToday}
             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            {isPolish ? 'Dziś' : 'Today'}
+            {t('myWork.calendarGrid.today', 'Today')}
           </button>
           <button
             onClick={goPrev}
@@ -238,7 +238,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             &rsaquo;
           </button>
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white ml-2">
-            {currentDate.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+            {currentDate.toLocaleDateString(t('myWork.calendarGrid.currentDateToLocaleDateString', 'en-US'), {
               month: 'long',
               year: 'numeric',
             })}
@@ -282,7 +282,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           eventContent={renderEventContent}
           datesSet={handleDatesSet}
           headerToolbar={false}
-          locale={isPolish ? 'pl' : 'en'}
+          locale={t('myWork.calendarGrid.locale', 'en')}
           firstDay={1}
           height="100%"
           stickyHeaderDates
@@ -292,7 +292,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           slotMinTime="06:00:00"
           slotMaxTime="22:00:00"
           allDaySlot
-          allDayText={isPolish ? 'cały dzień' : 'all-day'}
+          allDayText={t('myWork.calendarGrid.allDayText', 'all-day')}
         />
       </div>
     </div>

@@ -49,7 +49,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
   onShareArticle,
   onLearnFramework,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [activeCategory, setActiveCategory] = useState<PulseCategory>('all');
 
@@ -68,7 +68,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">World Pulse</h3>
         </div>
         <span className="text-xs text-slate-500 dark:text-slate-500">
-          {isPolish ? 'Co się dzieje w Twoim świecie' : "What's happening in your world"}
+          {t('myWork.worldPulse.whatSHappeningIn', 'What\'s happening in your world')}
         </span>
       </div>
 
@@ -101,7 +101,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
           ))}
           {filteredArticles.length === 0 && (
             <div className="text-center py-12 text-sm text-slate-500 dark:text-slate-500">
-              {isPolish ? 'Brak artykułów w tej kategorii' : 'No articles in this category'}
+              {t('myWork.worldPulse.noArticlesInThis', 'No articles in this category')}
             </div>
           )}
         </div>
@@ -110,7 +110,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
           {data.frameworkOfDay && (
             <div className="p-6 bg-gradient-to-br from-primary-500/[0.08] to-crimson-500/[0.06] border border-primary-500/[0.12] rounded-2xl">
               <div className="text-[10px] font-bold uppercase tracking-widest text-primary-400 mb-3">
-                {isPolish ? 'Framework dnia' : 'Framework of the Day'}
+                {t('myWork.worldPulse.frameworkOfTheDay', 'Framework of the Day')}
               </div>
               <h4 className="text-xl font-serif text-slate-900 dark:text-white mb-2.5 leading-snug">
                 {data.frameworkOfDay.name}
@@ -122,7 +122,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
                 onClick={onLearnFramework}
                 className="text-xs font-semibold text-primary-400 hover:underline flex items-center gap-1"
               >
-                {isPolish ? 'Dowiedz się więcej' : 'Learn more'} &rarr;
+                {t('myWork.worldPulse.learnMore', 'Learn more')} &rarr;
               </button>
             </div>
           )}
@@ -184,7 +184,7 @@ const ArticleCard: React.FC<{
           className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Bookmark size={11} />
-          {isPolish ? 'Zapisz do notatnika' : 'Save to notebook'}
+          {t('myWork.worldPulse.saveToNotebook', 'Save to notebook')}
         </button>
         <button
           onClick={(e) => {
@@ -194,7 +194,7 @@ const ArticleCard: React.FC<{
           className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Share2 size={11} />
-          {isPolish ? 'Udostępnij' : 'Share'}
+          {t('myWork.worldPulse.share', 'Share')}
         </button>
       </div>
     </div>

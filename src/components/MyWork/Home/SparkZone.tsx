@@ -26,7 +26,7 @@ export const SparkZone: React.FC<SparkZoneProps> = ({
   onNewIdea,
   onExpandIdea,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   return (
@@ -39,7 +39,7 @@ export const SparkZone: React.FC<SparkZoneProps> = ({
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Spark Zone</h3>
         </div>
         <span className="text-xs text-slate-500 dark:text-slate-500">
-          {isPolish ? 'Twoje pomysły i przestrzeń twórcza' : 'Your ideas and creative space'}
+          {t('myWork.sparkZone.yourIdeasAndCreative', 'Your ideas and creative space')}
         </span>
       </div>
 
@@ -71,12 +71,10 @@ export const SparkZone: React.FC<SparkZoneProps> = ({
             <Plus size={20} className="text-amber-500" />
           </div>
           <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
-            {isPolish ? 'Nowy pomysł' : 'New Idea'}
+            {t('myWork.sparkZone.newIdea', 'New Idea')}
           </span>
           <span className="text-[11px] text-slate-500 dark:text-slate-500 mt-1">
-            {isPolish
-              ? 'Zacznij od zera lub użyj szablonu'
-              : 'Start from scratch or use a template'}
+            {t('myWork.sparkZone.startFromScratchOr', 'Start from scratch or use a template')}
           </span>
         </button>
       </div>
@@ -138,14 +136,14 @@ const NoteCard: React.FC<{ item: SparkItem; onClick: () => void; isPolish: boole
   >
     <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-2 flex items-center gap-1.5">
       <FileText size={11} />
-      {isPolish ? 'Ostatnia notatka' : 'Recent note'}
+      {t('myWork.sparkZone.recentNote', 'Recent note')}
     </div>
     <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-1.5">{item.title}</h4>
     <p className="text-xs text-slate-500 dark:text-slate-500 leading-relaxed line-clamp-2">
       {item.snippet}
     </p>
     <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 block">
-      {isPolish ? 'Zaktualizowano' : 'Updated'} {item.updatedAt}
+      {t('myWork.sparkZone.updated', 'Updated')} {item.updatedAt}
     </span>
   </button>
 );

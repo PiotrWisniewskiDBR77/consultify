@@ -31,7 +31,7 @@ const BLOCK_COLORS: Record<string, string> = {
 };
 
 export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = false }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [plan, setPlan] = useState<AIPlan | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,12 +60,12 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-c-info" />
             <span className="text-sm font-semibold">
-              {isPolish ? 'Plan dnia AI' : 'AI Day Plan'}
+              {t('myWork.aiPlanView.aIDayPlan', 'AI Day Plan')}
             </span>
           </div>
           <button
             onClick={onClose}
-            aria-label={isPolish ? 'Zamknij' : 'Close'}
+            aria-label={t('myWork.aiPlanView.ariaLabel', 'Close')}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <X size={16} />
@@ -77,7 +77,7 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <Loader2 size={14} className="animate-spin" />
-            {isPolish ? 'Generowanie planu...' : 'Generating plan...'}
+            {t('myWork.aiPlanView.generatingPlan', 'Generating plan...')}
           </div>
         ) : plan ? (
           <>
@@ -111,7 +111,7 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
                   ))}
                   {block.items.length === 0 && (
                     <span className="text-[10px] text-slate-600 italic">
-                      {isPolish ? 'Brak zadań' : 'No items'}
+                      {t('myWork.aiPlanView.noItems', 'No items')}
                     </span>
                   )}
                 </div>
@@ -120,7 +120,7 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
           </>
         ) : (
           <p className="text-xs text-slate-600">
-            {isPolish ? 'Nie udało się wygenerować planu' : 'Failed to generate plan'}
+            {t('myWork.aiPlanView.failedToGeneratePlan', 'Failed to generate plan')}
           </p>
         )}
       </div>

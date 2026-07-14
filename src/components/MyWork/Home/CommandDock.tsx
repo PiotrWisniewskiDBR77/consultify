@@ -28,7 +28,7 @@ const ICONS = {
 };
 
 export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const payload = block.payload;
   const runtimeSummary = payload.runtimeSummary;
@@ -42,7 +42,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-primary-100/75">
-                  {isPolish ? 'Zrób teraz' : 'Do this now'}
+                  {t('myWork.commandDock.doThisNow', 'Do this now')}
                 </div>
                 <div className="mt-1 text-base font-semibold text-white">{primaryAction.title}</div>
                 <div className="mt-1 text-sm text-slate-600/80">{primaryAction.helper}</div>
@@ -84,7 +84,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <div className="w-full text-[10px] uppercase tracking-[0.18em] text-slate-600">
-            {isPolish ? 'Skróty i szybkie tworzenie' : 'Shortcuts and quick create'}
+            {t('myWork.commandDock.shortcutsAndQuickCreate', 'Shortcuts and quick create')}
           </div>
           {payload.actions.map((action) => {
             const Icon =
@@ -137,7 +137,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
             );
           })}
           <div className="ml-auto text-xs text-slate-600/55">
-            {isPolish ? 'Najpierw priorytet, potem skróty' : 'Priority first, shortcuts second'}
+            {t('myWork.commandDock.priorityFirstShortcutsSecond', 'Priority first, shortcuts second')}
           </div>
         </div>
       </div>
@@ -151,14 +151,14 @@ function getPrimaryActionLabel(
 ) {
   switch (actionType) {
     case 'open':
-      return isPolish ? 'Otwórz' : 'Open';
+      return t('myWork.commandDock.open', 'Open');
     case 'create':
-      return isPolish ? 'Utwórz' : 'Create';
+      return t('myWork.commandDock.create', 'Create');
     case 'navigate':
-      return isPolish ? 'Przejdź' : 'Go there';
+      return t('myWork.commandDock.goThere', 'Go there');
     case 'chat':
-      return isPolish ? 'Zapytaj AI' : 'Ask AI';
+      return t('myWork.commandDock.askAI', 'Ask AI');
     default:
-      return isPolish ? 'Otwórz' : 'Open';
+      return t('myWork.commandDock.open2', 'Open');
   }
 }

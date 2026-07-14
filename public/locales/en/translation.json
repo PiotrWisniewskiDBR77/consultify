@@ -4042,7 +4042,129 @@
       "analyzing": "Analyzing...",
       "noConnectionsFound": "No connections found"
     },
-    "postDecisionFollowUp": {}
+    "postDecisionFollowUp": {},
+    "calendarView": {
+      "statusLabel": "Coming soon",
+      "helper": "Google Calendar integration is in preparation — two-way connection is not available yet.",
+      "nextStep": "In the meantime, subscribe to the Consultify ICS feed in your calendar.",
+      "statusLabel2": "Coming soon",
+      "helper2": "Outlook integration is in preparation — two-way connection is not available yet.",
+      "nextStep2": "In the meantime, subscribe to the Consultify ICS feed in your calendar.",
+      "statusLabel3": "Active",
+      "statusLabel4": "Setup in progress",
+      "nextStep3": "Finish configuration or authorization in Integrations.",
+      "statusLabel5": "Reauth required",
+      "nextStep4": "Start reauthorization in Integrations.",
+      "statusLabel6": "Sync error",
+      "nextStep5": "Review the status and logs in Integrations.",
+      "statusLabel7": "Coming soon",
+      "nextStep6": "In the meantime, subscribe to the Consultify ICS feed in your calendar.",
+      "title": "Day load",
+      "body": "Checking the selected day load...",
+      "title2": "Day-load preview limited",
+      "title3": "Day looks clear",
+      "body2": "The selected date does not yet show tasks or decisions demanding attention.",
+      "title4": "Day is already heavily loaded",
+      "title5": "Day is partially loaded",
+      "dayLoadPreviewIs": "Day-load preview is temporarily unavailable, but the calendar still shows current items.",
+      "failedToReadThe": "Failed to read the selected day load.",
+      "calendarViewIsTemporarily": "Calendar view is temporarily unavailable.",
+      "thisDoesNotMean": "This does not mean the day is empty. Refresh the data and try again.",
+      "label": "Retry"
+    },
+    "calendarCreateEvent": {
+      "dayLoadPreviewIs": "Day-load preview is temporarily unavailable, but you can still create the task.",
+      "failedToCheckDay": "Failed to check day load.",
+      "checkingDayLoad": "Checking day load...",
+      "thisDayLooksClear": "This day looks clear.",
+      "toastError": "Title is required",
+      "toastSuccess": "Task added to calendar",
+      "toastError2": "Failed to add to calendar",
+      "title": "Add to calendar",
+      "inV1CalendarCreation": "In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.",
+      "cancel": "Cancel",
+      "add": "Add",
+      "artifactTypeTask": "Artifact type: Task",
+      "decisionsAndInitiativesFrom": "Decisions and initiatives from calendar are prepared for a later phase.",
+      "title2": "Title",
+      "placeholder": "e.g. Prepare review deck",
+      "recurrence": "Recurrence",
+      "none": "None",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "description": "Description",
+      "shortContextOrDefinition": "Short context or definition of done...",
+      "date": "Date",
+      "dayLoadPreview": "Day load preview",
+      "theFormChecksExisting": "The form checks existing tasks and decisions for the selected day.",
+      "task": "Task",
+      "decision": "Decision",
+      "loadingConflicts": "Loading conflicts..."
+    },
+    "calendarSidebar": {
+      "currentDateToLocaleDateString": "en-US",
+      "sources": "Sources",
+      "connectInIntegrations": "Connect in Integrations →",
+      "ownership": "Ownership",
+      "label": "Any",
+      "label2": "Assigned to me",
+      "label3": "Owned by me",
+      "today": "Today"
+    },
+    "calendarGrid": {
+      "busy": "Busy",
+      "today": "Today",
+      "currentDateToLocaleDateString": "en-US",
+      "locale": "en",
+      "allDayText": "all-day"
+    },
+    "commandDock": {
+      "doThisNow": "Do this now",
+      "shortcutsAndQuickCreate": "Shortcuts and quick create",
+      "priorityFirstShortcutsSecond": "Priority first, shortcuts second",
+      "open": "Open",
+      "create": "Create",
+      "goThere": "Go there",
+      "askAI": "Ask AI",
+      "open2": "Open"
+    },
+    "worldPulse": {
+      "whatSHappeningIn": "What's happening in your world",
+      "noArticlesInThis": "No articles in this category",
+      "frameworkOfTheDay": "Framework of the Day",
+      "learnMore": "Learn more",
+      "saveToNotebook": "Save to notebook",
+      "share": "Share"
+    },
+    "sparkZone": {
+      "yourIdeasAndCreative": "Your ideas and creative space",
+      "newIdea": "New Idea",
+      "startFromScratchOr": "Start from scratch or use a template",
+      "recentNote": "Recent note",
+      "updated": "Updated"
+    },
+    "aiCompanionBrief": {
+      "nowToLocaleDateString": "en-US",
+      "week": "Week",
+      "complete": "complete",
+      "letSTalkAbout": "Let's talk about this"
+    },
+    "gentleNudge": {
+      "view": "View"
+    },
+    "aiPlanView": {
+      "aIDayPlan": "AI Day Plan",
+      "ariaLabel": "Close",
+      "generatingPlan": "Generating plan...",
+      "noItems": "No items",
+      "failedToGeneratePlan": "Failed to generate plan"
+    },
+    "aiCoachPanel": {
+      "aICoach": "AI Coach",
+      "analyzing": "Analyzing..."
+    },
+    "nudgeStrip": {}
   },
   "step1": {
     "title": "Step 1",

@@ -29,7 +29,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
   onTalkToAI,
   onFocusItemClick,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const now = new Date();
@@ -42,7 +42,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
   };
   const greeting = `${isPolish ? greetings[greetingKey].pl : greetings[greetingKey].en}${userName ? `, ${userName}` : ''}`;
 
-  const dateStr = now.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+  const dateStr = now.toLocaleDateString(t('myWork.aiCompanionBrief.nowToLocaleDateString', 'en-US'), {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -59,8 +59,8 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
 
       <p className="text-xs text-slate-500 dark:text-slate-500 mb-6 flex items-center gap-1.5">
         <Clock size={12} />
-        {dateStr} · {isPolish ? 'Tydzień' : 'Week'} {data.weekProgress}%{' '}
-        {isPolish ? 'ukończony' : 'complete'}
+        {dateStr} · {t('myWork.aiCompanionBrief.week', 'Week')} {data.weekProgress}%{' '}
+        {t('myWork.aiCompanionBrief.complete', 'complete')}
       </p>
 
       {data.insight && (
@@ -101,7 +101,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-150"
         >
           <MessageSquare size={16} />
-          {isPolish ? 'Porozmawiajmy o tym' : "Let's talk about this"}
+          {t('myWork.aiCompanionBrief.letSTalkAbout', 'Let\'s talk about this')}
         </button>
       )}
     </div>
