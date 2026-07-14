@@ -21843,6 +21843,24 @@
         "createSnapshotToPreserve": "Create a snapshot to preserve the current data state.",
         "restoreSnapshotQuestion": "Restore snapshot?",
         "restoreWarning": "Current data will be replaced with snapshot data. This action cannot be undone."
+      },
+      "summaryDashboard": {
+        "noResults": "No results",
+        "failedToGenerateSummary": "Failed to generate summary",
+        "tableSummary": "Table Summary",
+        "ideas": "Ideas",
+        "completeness": "Completeness",
+        "categories": "Categories",
+        "withComments": "With comments",
+        "dataCompleteness": "Data completeness",
+        "good": "Good",
+        "average": "Average",
+        "low": "Low",
+        "avg": "Avg",
+        "sum": "Sum",
+        "aiNarrative": "AI Narrative",
+        "generating": "Generating...",
+        "generateAiSummary": "Generate AI summary"
       }
     },
     "mindmap": {

@@ -22919,6 +22919,24 @@
         "createSnapshotToPreserve": "Utwórz migawkę, aby zachować aktualny stan danych.",
         "restoreSnapshotQuestion": "Przywrócić migawkę?",
         "restoreWarning": "Obecne dane zostaną zastąpione danymi z migawki. Tej operacji nie można cofnąć."
+      },
+      "summaryDashboard": {
+        "noResults": "Brak wyników",
+        "failedToGenerateSummary": "Nie udało się wygenerować podsumowania",
+        "tableSummary": "Podsumowanie tabeli",
+        "ideas": "Pomysły",
+        "completeness": "Kompletność",
+        "categories": "Kategorie",
+        "withComments": "Z komentarzami",
+        "dataCompleteness": "Kompletność danych",
+        "good": "Dobrze",
+        "average": "Średnio",
+        "low": "Nisko",
+        "avg": "Śr.",
+        "sum": "Suma",
+        "aiNarrative": "Narracja AI",
+        "generating": "Generuję...",
+        "generateAiSummary": "Generuj podsumowanie AI"
       }
     },
     "mindmap": {
