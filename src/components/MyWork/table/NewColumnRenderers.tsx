@@ -200,6 +200,7 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 };
 
 export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1">
       <DollarSign size={10} className="text-emerald-500 flex-shrink-0" />
@@ -209,13 +210,14 @@ export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) =
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         disabled={locked}
         className="w-full bg-transparent border-0 outline-none text-[11px] text-c-text font-mono text-right"
-        placeholder="0.00"
+        placeholder={t('ideas.table.currencyPlaceholder', '0.00')}
       />
     </div>
   );
 };
 
 export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1">
       <Phone size={10} className="text-c-text-secondary flex-shrink-0" />
@@ -225,13 +227,14 @@ export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         onChange={(e) => onChange(e.target.value)}
         disabled={locked}
         className="w-full bg-transparent border-0 outline-none text-[11px] text-c-text"
-        placeholder="+48..."
+        placeholder={t('ideas.table.phonePlaceholder', '+48...')}
       />
     </div>
   );
 };
 
 export const EmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1">
       <Mail size={10} className="text-c-text-secondary flex-shrink-0" />
@@ -241,7 +244,7 @@ export const EmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         onChange={(e) => onChange(e.target.value)}
         disabled={locked}
         className="w-full bg-transparent border-0 outline-none text-[11px] text-blue-600 dark:text-blue-400"
-        placeholder="email@..."
+        placeholder={t('ideas.table.emailPlaceholder', 'email@...')}
       />
     </div>
   );

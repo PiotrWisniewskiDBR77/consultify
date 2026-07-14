@@ -21703,6 +21703,31 @@
         "and": "AND",
         "or": "OR",
         "addFilter": "Add filter"
+      },
+      "currencyPlaceholder": "0.00",
+      "phonePlaceholder": "+48...",
+      "emailPlaceholder": "email@...",
+      "action": "Action",
+      "publicForm": {
+        "failedToLoadForm": "Failed to load form",
+        "fieldIsRequired": "{{label}} is required",
+        "submissionFailed": "Submission failed",
+        "formNotFound": "Form not found",
+        "thankYouForSubmission": "Thank you for your submission!",
+        "submitAnotherResponse": "Submit another response",
+        "submit": "Submit",
+        "poweredByTablePlatform": "Powered by Table Platform",
+        "yes": "Yes",
+        "no": "No",
+        "selectEllipsis": "Select...",
+        "emailPlaceholder": "email@example.com",
+        "urlPlaceholder": "https://...",
+        "phonePlaceholder": "+1 (555) 123-4567",
+        "mustBeValidNumber": "{{label}} must be a valid number",
+        "mustBeValidEmail": "{{label}} must be a valid email address",
+        "mustBeValidUrl": "{{label}} must be a valid URL",
+        "tooLongMax30": "{{label}} is too long (max 30 characters)",
+        "mustBeValidDate": "{{label}} must be a valid date"
       }
     },
     "mindmap": {

@@ -22779,6 +22779,31 @@
         "and": "I",
         "or": "LUB",
         "addFilter": "Dodaj filtr"
+      },
+      "currencyPlaceholder": "0,00",
+      "phonePlaceholder": "+48...",
+      "emailPlaceholder": "email@...",
+      "action": "Akcja",
+      "publicForm": {
+        "failedToLoadForm": "Nie udało się wczytać formularza",
+        "fieldIsRequired": "{{label}} jest wymagane",
+        "submissionFailed": "Wysyłka nie powiodła się",
+        "formNotFound": "Nie znaleziono formularza",
+        "thankYouForSubmission": "Dziękujemy za zgłoszenie!",
+        "submitAnotherResponse": "Wyślij kolejną odpowiedź",
+        "submit": "Wyślij",
+        "poweredByTablePlatform": "Obsługiwane przez Table Platform",
+        "yes": "Tak",
+        "no": "Nie",
+        "selectEllipsis": "Wybierz...",
+        "emailPlaceholder": "email@przyklad.pl",
+        "urlPlaceholder": "https://...",
+        "phonePlaceholder": "+48 123 456 789",
+        "mustBeValidNumber": "{{label}} musi być poprawną liczbą",
+        "mustBeValidEmail": "{{label}} musi być poprawnym adresem email",
+        "mustBeValidUrl": "{{label}} musi być poprawnym adresem URL",
+        "tooLongMax30": "{{label}} jest za długie (maks. 30 znaków)",
+        "mustBeValidDate": "{{label}} musi być poprawną datą"
       }
     },
     "mindmap": {
