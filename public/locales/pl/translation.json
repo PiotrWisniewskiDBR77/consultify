@@ -22804,6 +22804,32 @@
         "mustBeValidUrl": "{{label}} musi być poprawnym adresem URL",
         "tooLongMax30": "{{label}} jest za długie (maks. 30 znaków)",
         "mustBeValidDate": "{{label}} musi być poprawną datą"
+      },
+      "fileNumbered": "Plik {{n}}",
+      "recordTemplates": {
+        "failedToLoadTemplates": "Nie udało się załadować szablonów",
+        "templateDeleted": "Szablon usunięty",
+        "failedToDeleteTemplate": "Nie udało się usunąć szablonu",
+        "recordTemplatesTitle": "Szablony rekordów",
+        "noTemplatesYetLong": "Brak szablonów. Utwórz pierwszy szablon, aby szybko dodawać rekordy.",
+        "fieldsPreFilled": "pól wypełnionych",
+        "useTemplateTitle": "Użyj szablonu",
+        "editTemplateTitle": "Edytuj szablon",
+        "newTemplateTitle": "Nowy szablon",
+        "templateNameLabel": "Nazwa szablonu",
+        "templateNamePlaceholder": "np. Zadanie standardowe",
+        "defaultValuesLabel": "Wartości domyślne",
+        "noEditableFields": "Brak edytowalnych pól",
+        "create": "Utwórz",
+        "checkedLabel": "Zaznaczony",
+        "selectDash": "— wybierz —",
+        "valueEllipsis": "Wartość...",
+        "fromTemplate": "Z szablonu",
+        "noTemplatesShort": "Brak szablonów",
+        "manageTemplates": "Zarządzaj szablonami",
+        "templateUpdated": "Szablon zaktualizowany",
+        "templateCreated": "Szablon utworzony",
+        "failedToSaveTemplate": "Nie udało się zapisać szablonu"
       }
     },
     "mindmap": {

@@ -21728,6 +21728,32 @@
         "mustBeValidUrl": "{{label}} must be a valid URL",
         "tooLongMax30": "{{label}} is too long (max 30 characters)",
         "mustBeValidDate": "{{label}} must be a valid date"
+      },
+      "fileNumbered": "File {{n}}",
+      "recordTemplates": {
+        "failedToLoadTemplates": "Failed to load templates",
+        "templateDeleted": "Template deleted",
+        "failedToDeleteTemplate": "Failed to delete template",
+        "recordTemplatesTitle": "Record Templates",
+        "noTemplatesYetLong": "No templates yet. Create one to quickly add pre-filled records.",
+        "fieldsPreFilled": "fields pre-filled",
+        "useTemplateTitle": "Use template",
+        "editTemplateTitle": "Edit Template",
+        "newTemplateTitle": "New Template",
+        "templateNameLabel": "Template name",
+        "templateNamePlaceholder": "e.g. Standard Task",
+        "defaultValuesLabel": "Default values",
+        "noEditableFields": "No editable fields",
+        "create": "Create",
+        "checkedLabel": "Checked",
+        "selectDash": "— select —",
+        "valueEllipsis": "Value...",
+        "fromTemplate": "From Template",
+        "noTemplatesShort": "No templates",
+        "manageTemplates": "Manage templates",
+        "templateUpdated": "Template updated",
+        "templateCreated": "Template created",
+        "failedToSaveTemplate": "Failed to save template"
       }
     },
     "mindmap": {

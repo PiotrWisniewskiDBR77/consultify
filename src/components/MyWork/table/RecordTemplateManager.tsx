@@ -43,8 +43,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
   onUseTemplate,
   locked = false,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [templates, setTemplates] = useState<RecordTemplate[]>([]);
   const [loading, setLoading] = useState(false);
@@ -58,11 +57,13 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
       const result = await TablePlatformApi.listRecordTemplates(tableId);
       setTemplates(result.templates ?? []);
     } catch {
-      toast.error(isPl ? 'Nie udało się załadować szablonów' : 'Failed to load templates');
+      toast.error(
+        t('ideas.table.recordTemplates.failedToLoadTemplates', 'Failed to load templates')
+      );
     } finally {
       setLoading(false);
     }
-  }, [tableId, isPl]);
+  }, [tableId, t]);
 
   useEffect(() => {
     if (open) loadTemplates();
@@ -73,12 +74,14 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
       try {
         await TablePlatformApi.deleteRecordTemplate(templateId);
         setTemplates((prev) => prev.filter((t) => t.id !== templateId));
-        toast.success(isPl ? 'Szablon usunięty' : 'Template deleted');
+        toast.success(t('ideas.table.recordTemplates.templateDeleted', 'Template deleted'));
       } catch {
-        toast.error(isPl ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
+        toast.error(
+          t('ideas.table.recordTemplates.failedToDeleteTemplate', 'Failed to delete template')
+        );
       }
     },
-    [isPl]
+    [t]
   );
 
   const handleUse = useCallback(
@@ -106,7 +109,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <h3 className="text-sm font-bold text-c-text">
-            {isPl ? 'Szablony rekordów' : 'Record Templates'}
+            {t('ideas.table.recordTemplates.recordTemplatesTitle', 'Record Templates')}
           </h3>
           <div className="flex items-center gap-1">
             {!locked && (
@@ -118,7 +121,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
               >
                 <Plus size={12} />
-                {isPl ? 'Nowy' : 'New'}
+                {t('ideas.table.new', 'New')}
               </button>
             )}
             <button
@@ -140,9 +143,10 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
             <div className="text-center py-12">
               <FileText size={32} className="mx-auto text-c-text-muted mb-3" />
               <p className="text-[11px] text-c-text-muted">
-                {isPl
-                  ? 'Brak szablonów. Utwórz pierwszy szablon, aby szybko dodawać rekordy.'
-                  : 'No templates yet. Create one to quickly add pre-filled records.'}
+                {t(
+                  'ideas.table.recordTemplates.noTemplatesYetLong',
+                  'No templates yet. Create one to quickly add pre-filled records.'
+                )}
               </p>
             </div>
           ) : (
@@ -162,14 +166,14 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                       </div>
                       <div className="text-[9px] text-c-text-muted mt-0.5">
                         {Object.keys(tpl.data).filter((k) => !k.startsWith('_')).length}{' '}
-                        {isPl ? 'pól wypełnionych' : 'fields pre-filled'}
+                        {t('ideas.table.recordTemplates.fieldsPreFilled', 'fields pre-filled')}
                       </div>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleUse(tpl)}
                         className="p-1.5 rounded-lg text-c-text-muted hover:text-c-success hover:bg-[color-mix(in_srgb,var(--c-success)_12%,transparent)] transition-colors"
-                        title={isPl ? 'Użyj szablonu' : 'Use template'}
+                        title={t('ideas.table.recordTemplates.useTemplateTitle', 'Use template')}
                       >
                         <Copy size={12} />
                       </button>
@@ -181,14 +185,14 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                               setShowCreate(true);
                             }}
                             className="p-1.5 rounded-lg text-c-text-muted hover:text-c-info hover:bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] transition-colors"
-                            title={isPl ? 'Edytuj' : 'Edit'}
+                            title={t('ideas.table.edit', 'Edit')}
                           >
                             <Edit3 size={12} />
                           </button>
                           <button
                             onClick={() => handleDelete(tpl.id)}
                             className="p-1.5 rounded-lg text-c-text-muted hover:text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] transition-colors"
-                            title={isPl ? 'Usuń' : 'Delete'}
+                            title={t('ideas.table.delete', 'Delete')}
                           >
                             <Trash2 size={12} />
                           </button>
@@ -228,7 +232,6 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
       {/* Create/Edit Template Dialog */}
       {showCreate && (
         <TemplateEditor
-          isPl={!!isPl}
           fields={fields}
           template={editingTemplate}
           tableId={tableId}
@@ -252,7 +255,6 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
 // ---------------------------------------------------------------------------
 
 interface TemplateEditorProps {
-  isPl: boolean;
   fields: TablePlatformField[];
   template: RecordTemplate | null;
   tableId: string;
@@ -277,13 +279,13 @@ const EDITABLE_FIELD_TYPES = new Set([
 ]);
 
 const TemplateEditor: React.FC<TemplateEditorProps> = ({
-  isPl,
   fields,
   template,
   tableId,
   onClose,
   onSaved,
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(template?.name ?? '');
   const [data, setData] = useState<Record<string, unknown>>(() => {
     if (!template?.data) return {};
@@ -315,14 +317,14 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     try {
       if (template) {
         await TablePlatformApi.updateRecordTemplate(template.id, { name: name.trim(), data });
-        toast.success(isPl ? 'Szablon zaktualizowany' : 'Template updated');
+        toast.success(t('ideas.table.recordTemplates.templateUpdated', 'Template updated'));
       } else {
         await TablePlatformApi.createRecordTemplate(tableId, name.trim(), data);
-        toast.success(isPl ? 'Szablon utworzony' : 'Template created');
+        toast.success(t('ideas.table.recordTemplates.templateCreated', 'Template created'));
       }
       onSaved();
     } catch {
-      toast.error(isPl ? 'Nie udało się zapisać szablonu' : 'Failed to save template');
+      toast.error(t('ideas.table.recordTemplates.failedToSaveTemplate', 'Failed to save template'));
     } finally {
       setSaving(false);
     }
@@ -341,12 +343,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <h3 className="text-sm font-bold text-c-text">
             {template
-              ? isPl
-                ? 'Edytuj szablon'
-                : 'Edit Template'
-              : isPl
-                ? 'Nowy szablon'
-                : 'New Template'}
+              ? t('ideas.table.recordTemplates.editTemplateTitle', 'Edit Template')
+              : t('ideas.table.recordTemplates.newTemplateTitle', 'New Template')}
           </h3>
           <button
             onClick={onClose}
@@ -360,12 +358,15 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           {/* Template name */}
           <div>
             <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-              {isPl ? 'Nazwa szablonu' : 'Template name'}
+              {t('ideas.table.recordTemplates.templateNameLabel', 'Template name')}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={isPl ? 'np. Zadanie standardowe' : 'e.g. Standard Task'}
+              placeholder={t(
+                'ideas.table.recordTemplates.templateNamePlaceholder',
+                'e.g. Standard Task'
+              )}
               className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
               autoFocus
             />
@@ -374,7 +375,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           {/* Field values */}
           <div>
             <label className="block text-[11px] font-bold text-c-text-secondary mb-2">
-              {isPl ? 'Wartości domyślne' : 'Default values'}
+              {t('ideas.table.recordTemplates.defaultValuesLabel', 'Default values')}
             </label>
             <div className="space-y-2">
               {editableFields.map((field) => (
@@ -383,12 +384,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   field={field}
                   value={data[field.id] ?? data[field.name]}
                   onChange={(val) => handleFieldValue(field.id, val)}
-                  isPl={isPl}
                 />
               ))}
               {editableFields.length === 0 && (
                 <p className="text-[10px] text-c-text-muted italic">
-                  {isPl ? 'Brak edytowalnych pól' : 'No editable fields'}
+                  {t('ideas.table.recordTemplates.noEditableFields', 'No editable fields')}
                 </p>
               )}
             </div>
@@ -401,7 +401,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.table.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -411,15 +411,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             {saving ? (
               <Loader2 size={12} className="animate-spin" />
             ) : template ? (
-              isPl ? (
-                'Zapisz'
-              ) : (
-                'Save'
-              )
-            ) : isPl ? (
-              'Utwórz'
+              t('ideas.table.save', 'Save')
             ) : (
-              'Create'
+              t('ideas.table.recordTemplates.create', 'Create')
             )}
           </button>
         </div>
@@ -436,15 +430,10 @@ interface TemplateFieldInputProps {
   field: TablePlatformField;
   value: unknown;
   onChange: (value: unknown) => void;
-  isPl: boolean;
 }
 
-const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
-  field,
-  value,
-  onChange,
-  isPl,
-}) => {
+const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({ field, value, onChange }) => {
+  const { t } = useTranslation();
   const inputClass =
     'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text-secondary outline-none focus:ring-2 focus:ring-c-focus';
 
@@ -459,7 +448,9 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
               onChange={(e) => onChange(e.target.checked)}
               className="rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
             />
-            <span className="text-[11px] text-c-text-muted">{isPl ? 'Zaznaczony' : 'Checked'}</span>
+            <span className="text-[11px] text-c-text-muted">
+              {t('ideas.table.recordTemplates.checkedLabel', 'Checked')}
+            </span>
           </label>
         );
 
@@ -496,7 +487,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
             onChange={(e) => onChange(e.target.value || null)}
             className={inputClass}
           >
-            <option value="">{isPl ? '— wybierz —' : '— select —'}</option>
+            <option value="">{t('ideas.table.recordTemplates.selectDash', '— select —')}</option>
             {opts.map((o) => (
               <option key={o.id ?? o.name} value={o.name ?? o.id}>
                 {o.name ?? o.id}
@@ -522,7 +513,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
             type="text"
             value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
-            placeholder={isPl ? 'Wartość...' : 'Value...'}
+            placeholder={t('ideas.table.recordTemplates.valueEllipsis', 'Value...')}
             className={inputClass}
           />
         );
@@ -560,8 +551,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
   onManageTemplates,
   anchorRect,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [templates, setTemplates] = useState<RecordTemplate[]>([]);
   const [loading, setLoading] = useState(false);
@@ -600,7 +590,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
       >
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-            {isPl ? 'Z szablonu' : 'From Template'}
+            {t('ideas.table.recordTemplates.fromTemplate', 'From Template')}
           </span>
           <button onClick={onClose} className="p-0.5 rounded hover:bg-c-surface-raised">
             <X size={11} className="text-c-text-muted" />
@@ -614,7 +604,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
             </div>
           ) : templates.length === 0 ? (
             <p className="text-center py-4 text-[10px] text-c-text-muted">
-              {isPl ? 'Brak szablonów' : 'No templates'}
+              {t('ideas.table.recordTemplates.noTemplatesShort', 'No templates')}
             </p>
           ) : (
             templates.map((tpl) => (
@@ -647,7 +637,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[10px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
           >
             <Edit3 size={11} />
-            {isPl ? 'Zarządzaj szablonami' : 'Manage templates'}
+            {t('ideas.table.recordTemplates.manageTemplates', 'Manage templates')}
           </button>
         </div>
       </div>
