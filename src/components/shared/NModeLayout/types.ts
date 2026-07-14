@@ -238,8 +238,10 @@ export interface NModeHeaderConfig {
 export interface NModeShellProps {
   /** Header configuration */
   header: NModeHeaderConfig;
-  /** Property fields for the PropertiesStrip */
-  properties: NModePropertyField[];
+  /** Property fields for the PropertiesStrip. Opcjonalne od #54 (Insight):
+   *  metadane mogą żyć w prawym panelu (ArtifactRightPanel) — gdy pominięte,
+   *  powłoka NIE renderuje NModePropertiesStrip. */
+  properties?: NModePropertyField[];
   /** Navigation sections with their canvas content */
   sections: NModeSection[];
   /** Primary action buttons (Approve, Reject, etc.) — shown when visible=true */

@@ -106,7 +106,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
               showModeSwitcher={showModeSwitcher}
               buildArtifactCode={buildArtifactCode}
             />
-            {(presentationMode === 'n' || presentationMode === 'c') && (
+            {(presentationMode === 'n' || presentationMode === 'c') && properties && (
               <NModePropertiesStrip fields={properties} maxColumns={propertiesMaxColumns} />
             )}
           </div>
