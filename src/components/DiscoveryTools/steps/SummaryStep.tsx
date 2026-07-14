@@ -21,6 +21,10 @@ import {
 import React, { useMemo, useState } from 'react';
 
 import {
+  buildToolConclusionModel,
+  extractToolConclusionFacts,
+} from '@/services/report/toolConclusion';
+import {
   GrowthPathsData,
   InitiativeDraft,
   PorterData,
@@ -34,6 +38,7 @@ import {
 
 import { ProposalCard } from '../shared/ProposalCard';
 import { PorterRadar } from '../visualizations/PorterRadar';
+import { ToolConclusionSummary } from './ToolConclusionSummary';
 
 // ==================== TYPES ====================
 
@@ -907,6 +912,25 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
 
   const summaryData = getSummaryData();
 
+  // OXFORD O2.3 — CONCLUSION LAYER (W2): build a validated K1-K4 wniosek from
+  // this session's own moves/insights (numbers only from the engine/session,
+  // never invented — see toolConclusion.ts). Computed unconditionally (Rules
+  // of Hooks — must run before the dynamic-swot early return below) even
+  // though only the non-SWOT branch renders it; SWOT has its own dedicated
+  // W2 conclusion path (summary.verdict) inside DynamicSwotOutputs already.
+  const toolConclusionModel = useMemo(
+    () =>
+      buildToolConclusionModel(
+        extractToolConclusionFacts({
+          toolName: toolType,
+          language: isPolish ? 'pl' : 'en',
+          inputData,
+          fallbackInitiatives: initiatives,
+        })
+      ),
+    [toolType, isPolish, inputData, initiatives]
+  );
+
   if (toolType === 'dynamic-swot') {
     return (
       <DynamicSwotOutputs
@@ -969,6 +993,8 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
             )}
           </div>
         </ProposalCard>
+      ) : toolConclusionModel.isPublishable ? (
+        <ToolConclusionSummary model={toolConclusionModel} />
       ) : (
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-2">
@@ -1132,51 +1158,56 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         )}
       </div>
 
-      {/* Key Insights */}
-      {summaryData.insights.length > 0 && !hasPendingSummaryProposal && (
-        <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-          <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-primary-500" />
-            {isPolish ? 'Kluczowe wnioski' : 'Key Insights'}
-          </h3>
-          <ul className="space-y-2">
-            {summaryData.insights.map((insight: string, index: number) => (
-              <li
-                key={index}
-                className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
-              >
-                <span className="text-primary-500">•</span>
-                {insight}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {summaryData.appliedConclusions.length > 0 && !hasPendingSummaryProposal && (
-        <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-          <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <Target className="w-4 h-4 text-emerald-500" />
-            {isPolish ? 'Wnioski aplikowane' : 'Applied Conclusions'}
-          </h3>
-          <ul className="space-y-2">
-            {summaryData.appliedConclusions.map((conclusion: string, index: number) => (
-              <li
-                key={index}
-                className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
-              >
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span>{conclusion}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Jeśli coś tu jest nieprecyzyjne, wróć do rozmowy z AI i doprecyzuj wnioski przed generowaniem outputów.'
-              : 'If anything here feels too vague, go back to the AI conversation and refine the conclusions before generating outputs.'}
+      {/* Key Insights — subsumed by ToolConclusionSummary's rationale/K3 when
+          publishable (O2.3); shown standalone only in the legacy fallback. */}
+      {summaryData.insights.length > 0 &&
+        !hasPendingSummaryProposal &&
+        !toolConclusionModel.isPublishable && (
+          <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary-500" />
+              {isPolish ? 'Kluczowe wnioski' : 'Key Insights'}
+            </h3>
+            <ul className="space-y-2">
+              {summaryData.insights.map((insight: string, index: number) => (
+                <li
+                  key={index}
+                  className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <span className="text-primary-500">•</span>
+                  {insight}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      )}
+        )}
+
+      {summaryData.appliedConclusions.length > 0 &&
+        !hasPendingSummaryProposal &&
+        !toolConclusionModel.isPublishable && (
+          <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <Target className="w-4 h-4 text-emerald-500" />
+              {isPolish ? 'Wnioski aplikowane' : 'Applied Conclusions'}
+            </h3>
+            <ul className="space-y-2">
+              {summaryData.appliedConclusions.map((conclusion: string, index: number) => (
+                <li
+                  key={index}
+                  className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span>{conclusion}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              {isPolish
+                ? 'Jeśli coś tu jest nieprecyzyjne, wróć do rozmowy z AI i doprecyzuj wnioski przed generowaniem outputów.'
+                : 'If anything here feels too vague, go back to the AI conversation and refine the conclusions before generating outputs.'}
+            </div>
+          </div>
+        )}
 
       {/* Recommended Initiatives */}
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
