@@ -49,6 +49,11 @@ CREATE TABLE IF NOT EXISTS organization_ai_settings (
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
 
+-- FRESH-DB PARITY (2026-07-14): 20260227_01_ai_governance.sql sorts BEFORE this
+-- file on a fresh replay, so its guarded context_policy_json add is skipped.
+-- Re-add it here idempotently (no-op wherever it exists).
+ALTER TABLE organization_ai_settings ADD COLUMN IF NOT EXISTS context_policy_json TEXT;
+
 CREATE TABLE IF NOT EXISTS user_ai_settings (
     user_id TEXT PRIMARY KEY,
     response_style TEXT DEFAULT 'balanced' CHECK (response_style IN ('concise', 'balanced', 'detailed')),

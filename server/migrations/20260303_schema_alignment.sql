@@ -218,6 +218,13 @@ CREATE TABLE IF NOT EXISTS knowledge_documents (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- FRESH-DB PARITY (2026-07-14): 20260227_01_ai_governance.sql sorts BEFORE this
+-- file on a fresh replay, so its guarded knowledge_documents governance columns
+-- are skipped (the table did not exist yet). Re-add them here idempotently.
+ALTER TABLE knowledge_documents ADD COLUMN IF NOT EXISTS ai_visibility TEXT DEFAULT 'allowed';
+ALTER TABLE knowledge_documents ADD COLUMN IF NOT EXISTS sensitivity TEXT DEFAULT 'internal';
+ALTER TABLE knowledge_documents ADD COLUMN IF NOT EXISTS retention_class TEXT DEFAULT 'standard';
+
 CREATE INDEX IF NOT EXISTS idx_knowledge_docs_org ON knowledge_documents(organization_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_docs_project ON knowledge_documents(project_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_docs_scope ON knowledge_documents(scope);

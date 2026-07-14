@@ -66,6 +66,12 @@ CREATE TABLE IF NOT EXISTS ai_instruction_suggestions (
   updated_at TIMESTAMPTZ
 );
 
+-- FRESH-DB PARITY (2026-07-14): 20260303_schema_alignment.sql sorts BEFORE this
+-- file on a fresh replay, so its guarded ai_instruction_suggestions column adds
+-- are skipped. Re-add them here idempotently (no-op wherever they exist).
+ALTER TABLE ai_instruction_suggestions ADD COLUMN IF NOT EXISTS suggested_instruction TEXT;
+ALTER TABLE ai_instruction_suggestions ADD COLUMN IF NOT EXISTS confidence_score REAL DEFAULT 0.5;
+
 CREATE TABLE IF NOT EXISTS ai_drafts (
   id TEXT PRIMARY KEY,
   user_id TEXT, organization_id TEXT,
