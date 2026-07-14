@@ -21502,7 +21502,17 @@
         "password": "Password (optional)",
         "passwordPlaceholder": "Leave empty = no password",
         "expires": "Expires"
-      }
+      },
+      "viewPreset": {
+        "default": "Default",
+        "triage": "Triage",
+        "scoring": "Scoring",
+        "decisionLog": "Decision Log"
+      },
+      "failedToLoadMap": "Failed to load map",
+      "tableCheckpoint": "Table checkpoint",
+      "savedToast": "Saved",
+      "failedToSave": "Failed to save"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",

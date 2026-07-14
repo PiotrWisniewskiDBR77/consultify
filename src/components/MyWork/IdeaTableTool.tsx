@@ -329,7 +329,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   const views = useTableViews({
-    isPl,
+    t,
     ideaId,
     onApplyColumns: applyViewColumns,
   });
@@ -549,6 +549,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     open,
     ideaId,
     isPl,
+    t,
     locked,
     refreshToken,
     language: i18n.language,

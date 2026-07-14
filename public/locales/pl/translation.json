@@ -22578,7 +22578,17 @@
         "password": "Hasło (opcjonalne)",
         "passwordPlaceholder": "Zostaw puste = bez hasła",
         "expires": "Wygasa"
-      }
+      },
+      "viewPreset": {
+        "default": "Domyślny",
+        "triage": "Triażowanie",
+        "scoring": "Scoring",
+        "decisionLog": "Log decyzji"
+      },
+      "failedToLoadMap": "Nie udało się wczytać mapy",
+      "tableCheckpoint": "Tabela checkpoint",
+      "savedToast": "Zapisano",
+      "failedToSave": "Nie udało się zapisać"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",

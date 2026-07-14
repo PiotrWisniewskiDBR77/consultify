@@ -20,7 +20,7 @@ export type ViewLayout =
   | 'sticky';
 
 export interface UseTableViewsOpts {
-  isPl: boolean;
+  t: (key: string, fallback?: string) => string;
   ideaId: string;
   onApplyColumns?: (viewColumns: { key: string; visible: boolean; width: number }[]) => void;
 }
@@ -47,27 +47,24 @@ export interface UseTableViewsReturn {
   cycleSort: (key: string) => void;
 }
 
-export function useTableViews(isPl: boolean, ideaId: string): UseTableViewsReturn;
-export function useTableViews(opts: UseTableViewsOpts): UseTableViewsReturn;
-export function useTableViews(
-  isPlOrOpts: boolean | UseTableViewsOpts,
-  maybeIdeaId?: string
-): UseTableViewsReturn {
-  const isPl = typeof isPlOrOpts === 'boolean' ? isPlOrOpts : isPlOrOpts.isPl;
-  const ideaId = typeof isPlOrOpts === 'boolean' ? (maybeIdeaId ?? '') : isPlOrOpts.ideaId;
-  const onApplyColumns = typeof isPlOrOpts === 'object' ? isPlOrOpts.onApplyColumns : undefined;
+export function useTableViews(opts: UseTableViewsOpts): UseTableViewsReturn {
+  const { t, ideaId, onApplyColumns } = opts;
 
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
 
   const [savedViews, setSavedViews] = useState<SavedView[]>([
-    { id: 'default', name: isPl ? 'Domyślny' : 'Default' },
-    { id: 'triage', name: isPl ? 'Triażowanie' : 'Triage', groupBy: 'status' },
+    { id: 'default', name: t('ideas.table.viewPreset.default', 'Default') },
+    { id: 'triage', name: t('ideas.table.viewPreset.triage', 'Triage'), groupBy: 'status' },
     {
       id: 'scoring',
-      name: isPl ? 'Scoring' : 'Scoring',
+      name: t('ideas.table.viewPreset.scoring', 'Scoring'),
       sort: [{ key: 'score', direction: 'desc' as const }],
     },
-    { id: 'decision_log', name: isPl ? 'Log decyzji' : 'Decision Log', groupBy: 'decision' },
+    {
+      id: 'decision_log',
+      name: t('ideas.table.viewPreset.decisionLog', 'Decision Log'),
+      groupBy: 'decision',
+    },
     {
       id: 'timeline_view',
       name: 'Timeline',
