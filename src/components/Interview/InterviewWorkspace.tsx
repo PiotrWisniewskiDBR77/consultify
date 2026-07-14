@@ -160,7 +160,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   onSessionChange,
   onClose,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   // Standard-C parity: N⇄C presentation toggle for the non-immersive workspace
   // shell (matches Insight/Initiative). entityType 'tool' is reused because the
@@ -337,7 +337,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     if (items.length === 0) {
       items.push({
         key: 'quality_gaps',
-        label: isPolish ? 'Doprecyzuj kluczowe odpowiedzi' : 'Clarify key answers',
+        label: t('interview.workspace.clarifyKeyAnswers'),
         checked: false,
       });
     }
@@ -464,15 +464,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const aiVerdictLabel = useMemo(() => {
     switch (aiEvaluation?.overallVerdict) {
       case 'ready_for_approval':
-        return isPolish ? 'Gotowe do zatwierdzenia' : 'Ready for approval';
+        return t('interview.workspace.readyForApproval');
       case 'needs_improvement':
-        return isPolish ? 'Wymaga poprawy' : 'Needs improvement';
+        return t('interview.workspace.needsImprovement');
       case 'insufficient':
-        return isPolish ? 'Niewystarczające' : 'Insufficient';
+        return t('interview.workspace.insufficient');
       case 'empty':
-        return isPolish ? 'Brak danych' : 'Empty';
+        return t('interview.workspace.empty');
       default:
-        return isPolish ? 'Brak oceny' : 'No review';
+        return t('interview.workspace.noReview');
     }
   }, [aiEvaluation?.overallVerdict, isPolish]);
   const aiWeakAnswerMap = useMemo(() => aiEvaluation?.weakAnswerMap || [], [aiEvaluation]);
@@ -513,9 +513,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return Math.round((answered / total) * 100);
   }, [questions]);
   const canApprove = completionPercent >= APPROVE_MIN_COMPLETENESS;
-  const approveBlockedHint = isPolish
-    ? `Zatwierdzenie odblokowuje się przy ${APPROVE_MIN_COMPLETENESS}% kompletności — obecnie ${completionPercent}%.`
-    : `Approve unlocks at ${APPROVE_MIN_COMPLETENESS}% completeness — currently ${completionPercent}%.`;
+  const approveBlockedHint = t('interview.workspace.approveBlockedHint', {
+    min: APPROVE_MIN_COMPLETENESS,
+    current: completionPercent,
+  });
 
   // #11c — Live (non-blocking) per-answer guidance. Pure local heuristic, no
   // network: flags answers that are too short or required-but-empty so the
@@ -533,12 +534,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         index: i + 1,
         label: q.questionText.length > 80 ? `${q.questionText.slice(0, 77)}…` : q.questionText,
         reason: requiredEmpty
-          ? isPolish
-            ? 'wymagane — brak odpowiedzi'
-            : 'required — no answer'
-          : isPolish
-            ? 'odpowiedź wygląda na zbyt krótką'
-            : 'answer looks short',
+          ? t('interview.workspace.requiredNoAnswer')
+          : t('interview.workspace.answerLooksShort'),
       });
     });
     return out;
@@ -560,14 +557,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setAiEvaluation(result);
         setAiEvaluationUpdatedAt(new Date().toISOString());
         if (!opts?.silent) {
-          toast.success(isPolish ? 'Ocena jakości AI jest gotowa.' : 'AI quality review is ready.');
+          toast.success(t('interview.workspace.aiQualityReviewIsReady'));
         }
         return result;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to evaluate answers:', error);
-        const message = isPolish
-          ? 'Nie udało się uruchomić oceny AI'
-          : 'Failed to run AI quality review';
+        const message = t('interview.workspace.failedToRunAiQuality');
         setAiEvaluationError(message);
         if (!opts?.silent) toast.error(message);
         return null;
@@ -608,12 +603,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           category: q.category,
           severity: requiredEmpty ? 'hard' : 'soft',
           reason: requiredEmpty
-            ? isPolish
-              ? 'Pytanie wymagane — brak odpowiedzi'
-              : 'Required — no answer yet'
-            : isPolish
-              ? 'Odpowiedź wygląda na zbyt krótką'
-              : 'Answer looks too short',
+            ? t('interview.workspace.requiredNoAnswerYet')
+            : t('interview.workspace.answerLooksTooShort'),
         });
       }
 
@@ -640,7 +631,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           reason:
             weak.depthHint?.trim() ||
             weak.feedback?.trim() ||
-            (isPolish ? 'AI: wymaga doprecyzowania' : 'AI: needs improvement'),
+            (t('interview.workspace.aiNeedsImprovement')),
         });
       }
 
@@ -917,9 +908,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               : (demoFallback?.questions as InterviewQuestion[]) || [];
           if (!demoFallback && resolvedQuestions.length === 0) {
             setLoadError({
-              message: isPolish
-                ? 'Sesja wywiadu została załadowana, ale pytania nie zostały pobrane. Spróbuj ponownie lub sprawdź połączenie.'
-                : 'Interview session loaded, but questions were not fetched. Retry or check the connection.',
+              message: t('interview.workspace.interviewSessionLoadedButQuestions'),
               isTransportBlock: false,
             });
           }
@@ -933,10 +922,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setLoadError({
           message:
             error?.message ||
-            (isPolish ? 'Nie udało się załadować sesji' : 'Failed to load session'),
+            (t('interview.workspace.failedToLoadSession')),
           isTransportBlock,
         });
-        toast.error(isPolish ? 'Nie udało się załadować sesji' : 'Failed to load session');
+        toast.error(t('interview.workspace.failedToLoadSession'));
       } finally {
         setIsLoading(false);
       }
@@ -993,7 +982,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         });
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to update question:', error);
-        toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+        toast.error(t('interview.workspace.failedToSave'));
       } finally {
         setIsSaving(false);
       }
@@ -1015,7 +1004,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setQuestions((prev) => [...prev, created as InterviewQuestion]);
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to add question:', error);
-        toast.error(isPolish ? 'Nie udało się dodać pytania' : 'Failed to add question');
+        toast.error(t('interview.workspace.failedToAddQuestion'));
       } finally {
         setIsSaving(false);
       }
@@ -1038,7 +1027,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setNotes((prev) => [...prev, created as InterviewNote]);
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to create note:', error);
-        toast.error(isPolish ? 'Nie udało się utworzyć notatki' : 'Failed to create note');
+        toast.error(t('interview.workspace.failedToCreateNote'));
       } finally {
         setIsSaving(false);
       }
@@ -1057,7 +1046,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, ...updated } : n)));
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to update note:', error);
-        toast.error(isPolish ? 'Nie udało się zapisać notatki' : 'Failed to save note');
+        toast.error(t('interview.workspace.failedToSaveNote'));
       } finally {
         setIsSaving(false);
       }
@@ -1075,7 +1064,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setNotes((prev) => prev.filter((n) => n.id !== noteId));
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to delete note:', error);
-        toast.error(isPolish ? 'Nie udało się usunąć notatki' : 'Failed to delete note');
+        toast.error(t('interview.workspace.failedToDeleteNote'));
       }
     },
     [session, isPolish]
@@ -1099,11 +1088,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           category,
         });
         setEvidence((prev) => [...prev, created as InterviewEvidence]);
-        toast.success(isPolish ? 'Plik dodany' : 'File added');
+        toast.success(t('interview.workspace.fileAdded'));
         return created as InterviewEvidence;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to upload file:', error);
-        toast.error(isPolish ? 'Nie udało się dodać pliku' : 'Failed to upload file');
+        toast.error(t('interview.workspace.failedToUploadFile'));
         return undefined;
       } finally {
         setIsSaving(false);
@@ -1138,7 +1127,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         return created as InterviewEvidence;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to add link:', error);
-        toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
+        toast.error(t('interview.workspace.failedToAddLink'));
         return undefined;
       } finally {
         setIsSaving(false);
@@ -1156,16 +1145,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           evidenceType: 'comment',
           evidenceRole: 'context',
           questionId,
-          title: isPolish ? 'Komentarz kontekstowy' : 'Context comment',
+          title: t('interview.workspace.contextComment'),
           description: text,
           category,
         });
         setEvidence((prev) => [...prev, created as InterviewEvidence]);
-        toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
+        toast.success(t('interview.workspace.commentAdded'));
         return created as InterviewEvidence;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to add comment evidence:', error);
-        toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+        toast.error(t('interview.workspace.failedToAddComment'));
         return undefined;
       } finally {
         setIsSaving(false);
@@ -1200,7 +1189,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         return created as InterviewEvidence;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to add voice evidence:', error);
-        toast.error(isPolish ? 'Nie udało się zapisać nagrania' : 'Failed to save recording');
+        toast.error(t('interview.workspace.failedToSaveRecording'));
         return undefined;
       } finally {
         setIsSaving(false);
@@ -1219,7 +1208,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setEvidence((prev) => prev.filter((e) => e.id !== evidenceId));
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to delete evidence:', error);
-        toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete');
+        toast.error(t('interview.workspace.failedToDelete'));
       }
     },
     [session, isPolish]
@@ -1240,10 +1229,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       });
       setCompanyProfile(editedProfile);
       setIsEditingProfile(false);
-      toast.success(isPolish ? 'Profil zapisany' : 'Profile saved');
+      toast.success(t('interview.workspace.profileSaved'));
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to update profile:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać profilu' : 'Failed to save profile');
+      toast.error(t('interview.workspace.failedToSaveProfile'));
     } finally {
       setIsSaving(false);
     }
@@ -1256,12 +1245,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
     try {
       await Api.patch(`/interview/sessions/${session.id}`, { name: sessionName });
-      toast.success(isPolish ? 'Zapisano' : 'Saved');
+      toast.success(t('interview.workspace.saved'));
       // Keep local session state in sync (used for isDirty and title)
       setSession((prev) => (prev ? { ...prev, name: sessionName } : prev));
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to save:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+      toast.error(t('interview.workspace.failedToSave'));
     } finally {
       setIsSaving(false);
     }
@@ -1273,25 +1262,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     if (isSubmittingSession) return;
     if (!session) {
       toast.error(
-        isPolish
-          ? 'Nie udało się załadować sesji. Odśwież stronę i spróbuj ponownie.'
-          : 'Session not loaded. Refresh the page and try again.'
+        t('interview.workspace.sessionNotLoadedRefreshThe')
       );
       return;
     }
 
     if (isLocked) {
       toast(
-        isPolish
-          ? 'Ten wywiad został już zatwierdzony i jest tylko do odczytu.'
-          : 'This interview is already submitted and read-only.',
+        t('interview.workspace.thisInterviewIsAlreadySubmitted'),
         { icon: 'ℹ️' }
       );
       return;
     }
 
     setIsSubmittingSession(true);
-    const toastId = toast.loading(isPolish ? 'Wysyłam wywiad...' : 'Submitting interview...');
+    const toastId = toast.loading(t('interview.workspace.submittingInterview'));
 
     try {
       if (session.assignmentId) {
@@ -1316,9 +1301,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           }));
         } else setAssignmentStatus('submitted');
         toast.success(
-          isPolish
-            ? `Wywiad wysłany do review (${completeness ?? 0}%).`
-            : `Submitted for review (${completeness ?? 0}%).`,
+          t('interview.workspace.submittedForReviewPct', { pct: completeness ?? 0 }),
           { id: toastId }
         );
         void runAiQualityReview({ silent: true });
@@ -1330,9 +1313,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       await withTimeout(
         Api.patch(`/interview/sessions/${session.id}`, { status: 'completed' }),
         15000,
-        isPolish
-          ? 'Przekroczono limit czasu podczas finalizacji wywiadu.'
-          : 'Interview finalization timed out.'
+        t('interview.workspace.interviewFinalizationTimedOut')
       );
       setSession((prev) => {
         if (!prev) return prev;
@@ -1341,7 +1322,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         onSessionChange?.(nextSession);
         return nextSession;
       });
-      toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!', { id: toastId });
+      toast.success(t('interview.workspace.interviewCompleted'), { id: toastId });
       onComplete?.(session.id);
       onClose?.();
     } catch (error: any) {
@@ -1361,8 +1342,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         const items = blocked.map((b: any, i: number) => ({
           questionId: String(b.questionId || b.key || `blocked_${i}`),
           index: b.questionId ? indexById.get(String(b.questionId)) || 0 : 0,
-          label: String(b.label || (isPolish ? 'Wymagana odpowiedź' : 'Required answer')),
-          reason: isPolish ? 'Pytanie wymagane — brak odpowiedzi' : 'Required — no answer yet',
+          label: String(b.label || (t('interview.workspace.requiredAnswer'))),
+          reason: t('interview.workspace.requiredNoAnswerYet'),
           severity: 'hard' as const,
         }));
         setQualityGate({
@@ -1371,9 +1352,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           checking: false,
         });
         toast.error(
-          isPolish
-            ? 'Nie można wysłać: uzupełnij wymagane odpowiedzi.'
-            : 'Cannot submit: complete the required answers.',
+          t('interview.workspace.cannotSubmitCompleteTheRequired'),
           { id: toastId }
         );
         return;
@@ -1381,12 +1360,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
       toast.error(
         apiMsg
-          ? isPolish
-            ? `Nie udało się zatwierdzić: ${apiMsg}`
-            : `Failed to submit: ${apiMsg}`
-          : isPolish
-            ? 'Nie udało się zatwierdzić'
-            : 'Failed to submit',
+          ? t('interview.workspace.failedToSubmitWithReason', { reason: apiMsg })
+          : t('interview.workspace.failedToSubmit'),
         { id: toastId }
       );
     } finally {
@@ -1511,10 +1486,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       setAiEvaluationError(null);
       setShowSendBackForm(false);
       setSendBackReason('');
-      toast.success(isPolish ? 'Wywiad odesłany do poprawy.' : 'Interview sent back for revision.');
+      toast.success(t('interview.workspace.interviewSentBackForRevision'));
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to send back:', error);
-      toast.error(isPolish ? 'Nie udało się odesłać.' : 'Failed to send back.');
+      toast.error(t('interview.workspace.failedToSendBack'));
     } finally {
       setIsSendingBack(false);
     }
@@ -1544,10 +1519,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setSession(updatedSession);
         onSessionChange?.(updatedSession);
       }
-      toast.success(isPolish ? 'Wywiad zatwierdzony.' : 'Interview approved.');
+      toast.success(t('interview.workspace.interviewApproved'));
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to approve:', error);
-      toast.error(isPolish ? 'Nie udało się zatwierdzić.' : 'Failed to approve.');
+      toast.error(t('interview.workspace.failedToApprove'));
     } finally {
       setIsApproving(false);
     }
@@ -1657,13 +1632,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     a.download = `${sessionName.replace(/\s+/g, '_')}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(isPolish ? 'Pobrano' : 'Downloaded');
+    toast.success(t('interview.workspace.downloaded'));
   };
 
   const handleCopy = () => {
     const content = `${sessionName}\n\nProgress: ${overallPercent}%\n\nFacts:\n${summaryData.facts.map((f) => `- ${f}`).join('\n')}`;
     navigator.clipboard.writeText(content);
-    toast.success(isPolish ? 'Skopiowano' : 'Copied');
+    toast.success(t('interview.workspace.copied'));
   };
 
   // ==========================================
@@ -1732,13 +1707,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return renderCollapsibleSection(
       category,
       <Icon size={18} className={config.color} />,
-      isPolish ? config.labelPl : config.labelEn,
+      t(`interview.workspace.categoryLabel.${category}`, config.labelEn),
       config.bgColor,
       <div className="flex items-center gap-2">
         {progress?.isComplete && (
           <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <Check size={10} />
-            {isPolish ? 'Gotowe' : 'Done'}
+            {t('interview.workspace.done')}
           </span>
         )}
         <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
@@ -1751,7 +1726,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {hasQuestions && (
           <div className="mb-4">
             <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-              <span>{isPolish ? 'Postęp' : 'Progress'}</span>
+              <span>{t('interview.workspace.progress')}</span>
               <span>
                 {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
               </span>
@@ -1790,7 +1765,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         <div className="mx-auto max-w-3xl">
           <LoadingState
             template="panel"
-            label={isPolish ? 'Ładowanie wywiadu…' : 'Loading interview…'}
+            label={t('interview.workspace.loadingInterview')}
           />
         </div>
       </div>
@@ -1805,12 +1780,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           variant="error"
           title={
             loadError.isTransportBlock
-              ? isPolish
-                ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
-                : 'Requests blocked by global transport safeguard'
-              : isPolish
-                ? 'Błąd pobierania danych'
-                : 'Data Loading Error'
+              ? t('interview.workspace.requestsBlockedByGlobalTransport')
+              : t('interview.workspace.dataLoadingError')
           }
           description={loadError.message}
           onRetry={() => {
@@ -1896,7 +1867,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         id: 'locked',
         label: { en: 'Editable', pl: 'Edycja' },
         type: 'text',
-        value: isLocked ? (isPolish ? 'Zablokowane' : 'Locked') : isPolish ? 'Aktywne' : 'Active',
+        value: isLocked ? (t('interview.workspace.locked')) : t('interview.workspace.active'),
         onChange: () => {},
         readOnly: true,
       },
@@ -1905,7 +1876,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         label: { en: 'Last activity', pl: 'Aktywność' },
         type: 'text',
         value: session?.lastActivityAt
-          ? new Date(session.lastActivityAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+          ? new Date(session.lastActivityAt).toLocaleDateString(t('interview.workspace.enUs'))
           : '-',
         onChange: () => {},
         readOnly: true,
@@ -1983,23 +1954,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             sent_back / approved / completed) via the canonical EntityStatusChip. */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-c-text-muted">
-            {isPolish ? 'Status:' : 'Status:'}
+            {t('interview.workspace.status')}
           </span>
           <EntityStatusChip
             status={lifecycleStatus}
-            label={isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en}
+            label={t(`interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`, lifecycleConfig.label.en)}
           />
           <span className="text-xs text-c-text-muted tabular-nums">
-            {completionPercent}% {isPolish ? 'ukończone' : 'complete'}
+            {completionPercent}% {t('interview.workspace.complete')}
           </span>
         </div>
         {isReviewerMode && (
-          <Callout variant="warning" title={isPolish ? 'Tryb recenzenta' : 'Reviewer mode'} compact>
+          <Callout variant="warning" title={t('interview.workspace.reviewerMode')} compact>
             <div className="space-y-1">
               <p>
-                {isPolish
-                  ? 'Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków "Zatwierdź" lub "Odeślij" w pasku akcji.'
-                  : 'You are reviewing answers for approval. Use "Approve" or "Send back" in the action bar.'}
+                {t('interview.workspace.youAreReviewingAnswersFor')}
               </p>
               {!canApprove && <p className="font-medium">{approveBlockedHint}</p>}
             </div>
@@ -2008,7 +1977,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {!isReviewerMode && reviewFeedback && (
           <Callout
             variant="warning"
-            title={isPolish ? 'Feedback od managera' : 'Manager feedback'}
+            title={t('interview.workspace.managerFeedback')}
             compact
           >
             <div className="space-y-2">
@@ -2034,16 +2003,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     ? 'critical'
                     : 'info'
             }
-            title={isPolish ? 'AI quality review' : 'AI quality review'}
+            title={t('interview.workspace.aiQualityReview')}
             compact
             action={{
               label: isAiEvaluating
-                ? isPolish
-                  ? 'Analiza...'
-                  : 'Running...'
-                : isPolish
-                  ? 'Odśwież'
-                  : 'Refresh',
+                ? t('interview.workspace.running')
+                : t('interview.workspace.refresh'),
               onClick: () => {
                 void runAiQualityReview();
               },
@@ -2051,22 +2016,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           >
             {isAiEvaluating ? (
               <p>
-                {isPolish
-                  ? 'AI analizuje jakość odpowiedzi...'
-                  : 'AI is reviewing answer quality...'}
+                {t('interview.workspace.aiIsReviewingAnswerQuality')}
               </p>
             ) : aiEvaluation ? (
               <div className="space-y-2">
                 <p>
-                  {isPolish ? 'Werdykt:' : 'Verdict:'} <strong>{aiVerdictLabel}</strong>
+                  {t('interview.workspace.verdict')} <strong>{aiVerdictLabel}</strong>
                   {' · '}
-                  {isPolish ? 'Ocena:' : 'Score:'}{' '}
+                  {t('interview.workspace.score')}{' '}
                   <strong>{aiEvaluation.overallScore.toFixed(1)}/5</strong>
                 </p>
                 {aiWeakAnswerMap.length > 0 && (
                   <div>
                     <p className="font-medium">
-                      {isPolish ? 'Structured weak-answer map:' : 'Structured weak-answer map:'}
+                      {t('interview.workspace.structuredWeakAnswerMap')}
                     </p>
                     <ul className="list-disc pl-4 space-y-1">
                       {aiWeakAnswerMap.slice(0, 5).map((item) => (
@@ -2083,17 +2046,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 )}
                 {latestReviewDecision && (
                   <p className="text-xs opacity-80">
-                    {isPolish ? 'Ostatnia decyzja review:' : 'Latest review decision:'}{' '}
+                    {t('interview.workspace.latestReviewDecision')}{' '}
                     <strong>{String(latestReviewDecision.action || '-')}</strong>
                     {' · '}
-                    {isPolish ? 'AI alignment:' : 'AI alignment:'}{' '}
+                    {t('interview.workspace.aiAlignment')}{' '}
                     <strong>{String(latestReviewDecision.alignment || '-')}</strong>
                   </p>
                 )}
                 {aiEvaluation.recommendations.length > 0 && (
                   <div>
                     <p className="font-medium">
-                      {isPolish ? 'Sugestie AI:' : 'AI recommendations:'}
+                      {t('interview.workspace.aiRecommendations')}
                     </p>
                     <ul className="list-disc pl-4 space-y-1">
                       {aiEvaluation.recommendations.map((item, index) => (
@@ -2104,8 +2067,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 )}
                 {aiEvaluationUpdatedAt && (
                   <p className="text-xs opacity-80">
-                    {isPolish ? 'Ostatnia analiza:' : 'Last review:'}{' '}
-                    {new Date(aiEvaluationUpdatedAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+                    {t('interview.workspace.lastReview')}{' '}
+                    {new Date(aiEvaluationUpdatedAt).toLocaleString(t('interview.workspace.enUs'))}
                   </p>
                 )}
               </div>
@@ -2117,7 +2080,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {showSendBackForm && isReviewerMode && (
           <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-              {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}
+              {t('interview.workspace.reasonForSendingBack')}
             </p>
             <textarea
               value={sendBackReason}
@@ -2125,13 +2088,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               rows={3}
               className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
               placeholder={
-                isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
+                t('interview.workspace.describeWhatNeedsImprovement')
               }
             />
             {sendBackMissingItems.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                  {isPolish ? 'Brakujące elementy:' : 'Missing items:'}
+                  {t('interview.workspace.missingItems')}
                 </p>
                 {sendBackMissingItems.map((item, idx) => (
                   <label
@@ -2165,7 +2128,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 ) : (
                   <Send size={12} />
                 )}
-                {isPolish ? 'Odeślij' : 'Send back'}
+                {t('interview.workspace.sendBack')}
               </button>
               <button
                 type="button"
@@ -2175,7 +2138,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('interview.workspace.cancel')}
               </button>
             </div>
           </div>
@@ -2184,50 +2147,38 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           variant={isReviewerMode ? 'info' : isLocked ? 'info' : 'purple'}
           title={
             isReviewerMode
-              ? isPolish
-                ? 'Status przeglądu'
-                : 'Review status'
+              ? t('interview.workspace.reviewStatus')
               : isLocked
-                ? isPolish
-                  ? 'Tryb tylko do odczytu'
-                  : 'Read-only'
-                : isPolish
-                  ? 'Następny krok'
-                  : 'Next action'
+                ? t('interview.workspace.readOnly')
+                : t('interview.workspace.nextAction')
           }
           action={
             isLocked
               ? undefined
               : {
-                  label: isPolish ? 'Następne brakujące' : 'Next missing',
+                  label: t('interview.workspace.nextMissing'),
                   onClick: handleNextMissing,
                 }
           }
           compact
         >
           {isReviewerMode
-            ? isPolish
-              ? `Przeglądasz zgłoszoną wersję. Respondent nadal może ją edytować do czasu zatwierdzenia.`
-              : `You are reviewing a submitted version. The respondent can still edit until approval.`
+            ? t('interview.workspace.youAreReviewingASubmitted')
             : currentStatus === 'submitted'
-              ? isPolish
-                ? `Wysłane do review. Nadal możesz edytować odpowiedzi i wysłać je ponownie.`
-                : `Submitted for review. You can keep editing and submit again.`
-              : isPolish
-                ? `Postęp: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`
-                : `Progress: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`}
+              ? t('interview.workspace.submittedForReviewYouCan')
+              : t('interview.workspace.progressXofY', {
+                  answered: answeredQuestions,
+                  total: totalQuestions,
+                  pct: overallPercent,
+                })}
         </Callout>
         {!isReviewerMode && !isLocked && liveWeakAnswers.length > 0 && (
           <Callout
             variant="warning"
-            title={
-              isPolish
-                ? `${liveWeakAnswers.length} odpowiedzi do dopracowania`
-                : `${liveWeakAnswers.length} answer(s) need more detail`
-            }
+            title={t('interview.workspace.answersNeedMoreDetail', { count: liveWeakAnswers.length })}
             compact
             action={{
-              label: isPolish ? 'Przejdź do pierwszej' : 'Go to first',
+              label: t('interview.workspace.goToFirst'),
               onClick: () => {
                 const first = liveWeakAnswers[0];
                 const q = questions.find((item) => item.id === first?.id);
@@ -2245,9 +2196,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             }}
           >
             <p className="mb-1">
-              {isPolish
-                ? 'Te odpowiedzi wyglądają na krótkie — dodaj szczegóły lub przykłady (to tylko podpowiedź).'
-                : 'These answers look short — add detail or examples (this is just a hint).'}
+              {t('interview.workspace.theseAnswersLookShortAdd')}
             </p>
             <ul className="list-disc pl-4 space-y-0.5">
               {liveWeakAnswers.slice(0, 6).map((item) => (
@@ -2312,16 +2261,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           ) : (
             <Callout
               variant="info"
-              title={isPolish ? 'Gotowy do startu' : 'Ready to start'}
+              title={t('interview.workspace.readyToStart')}
               compact
               action={{
-                label: isPolish ? 'Rozpocznij' : 'Start',
+                label: t('interview.workspace.start'),
                 onClick: handleNextMissing,
               }}
             >
-              {isPolish
-                ? 'Kliknij \u201eRozpocznij\u201d, aby przej\u015b\u0107 do pierwszego pytania.'
-                : 'Click "Start" to jump to the first question.'}
+              {t('interview.workspace.clickStartToJumpTo')}
             </Callout>
           )
         ) : (
@@ -2332,7 +2279,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
                 <ArrowRight size={14} />
-                {isPolish ? 'Następne brakujące' : 'Next missing'}
+                {t('interview.workspace.nextMissing')}
               </button>
               <span className="text-xs text-c-text-muted">
                 {answeredQuestions}/{totalQuestions}
@@ -2357,7 +2304,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       size={14}
                       className={isActive ? 'text-c-text-secondary' : 'text-slate-600'}
                     />
-                    {isPolish ? cfg.labelPl : cfg.labelEn}
+                    {t(`interview.workspace.categoryLabel.${cat}`, cfg.labelEn)}
                   </button>
                 );
               })}
@@ -2375,16 +2322,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             ) : (
               <Callout
                 variant="info"
-                title={isPolish ? 'Wybierz sekcję' : 'Pick a section'}
+                title={t('interview.workspace.pickASection')}
                 compact
                 action={{
-                  label: isPolish ? 'Następne brakujące' : 'Next missing',
+                  label: t('interview.workspace.nextMissing'),
                   onClick: handleNextMissing,
                 }}
               >
-                {isPolish
-                  ? 'Zacznij od pierwszej brakującej odpowiedzi — poprowadzę Cię przez flow.'
-                  : 'Start with the next missing answer — we’ll guide you through the flow.'}
+                {t('interview.workspace.startWithTheNextMissing')}
               </Callout>
             )}
           </>
@@ -2427,7 +2372,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">
-                    {isPolish ? 'Nazwa' : 'Name'}
+                    {t('interview.workspace.name')}
                   </label>
                   <input
                     type="text"
@@ -2438,7 +2383,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">
-                    {isPolish ? 'Branża' : 'Industry'}
+                    {t('interview.workspace.industry')}
                   </label>
                   <input
                     type="text"
@@ -2451,7 +2396,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">
-                    {isPolish ? 'Wielkość' : 'Size'}
+                    {t('interview.workspace.size')}
                   </label>
                   <input
                     type="text"
@@ -2462,7 +2407,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">
-                    {isPolish ? 'Lokalizacja' : 'Location'}
+                    {t('interview.workspace.location')}
                   </label>
                   <input
                     type="text"
@@ -2481,7 +2426,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-blue-500/30 text-blue-700 dark:text-blue-300 bg-blue-500/10 hover:bg-blue-500/15 disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('interview.workspace.save')}
                 </button>
                 <button
                   onClick={() => {
@@ -2491,7 +2436,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
                 >
                   <X size={14} />
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('interview.workspace.cancel')}
                 </button>
               </div>
             </>
@@ -2512,7 +2457,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   </div>
                 ) : (
                   <span className="text-slate-600">
-                    {isPolish ? 'Brak danych firmy' : 'No company data yet'}
+                    {t('interview.workspace.noCompanyDataYet')}
                   </span>
                 )}
               </div>
@@ -2522,7 +2467,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
                 >
                   <Edit3 size={14} />
-                  {isPolish ? 'Edytuj' : 'Edit'}
+                  {t('interview.workspace.edit')}
                 </button>
               )}
             </>
@@ -2593,9 +2538,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     // Standard-C group labels (#22b) — bilingual headers for the C-board tabs
     // and the grouped N-mode nav. Three lanes: the live interview, supporting
     // context, and the read-only summary.
-    const groupInterview = isPolish ? 'Wywiad' : 'Interview';
-    const groupContext = isPolish ? 'Kontekst' : 'Context';
-    const groupSummary = isPolish ? 'Podsumowanie' : 'Summary';
+    const groupInterview = t('interview.workspace.interview');
+    const groupContext = t('interview.workspace.context');
+    const groupSummary = t('interview.workspace.summary');
 
     const base: NModeSection[] = [
       {
@@ -2674,10 +2619,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <NModeSectionWrapper
             heading={{ en: 'Summary (facts only)', pl: 'Podsumowanie (tylko fakty)' }}
           >
-            <Callout variant="warning" title={isPolish ? 'Tylko fakty' : 'Facts only'} compact>
-              {isPolish
-                ? 'Bez rekomendacji i planów działań.'
-                : 'No recommendations or action plans.'}
+            <Callout variant="warning" title={t('interview.workspace.factsOnly')} compact>
+              {t('interview.workspace.noRecommendationsOrActionPlans')}
             </Callout>
             <div className="mt-4 space-y-3">
               {summaryData.facts.length > 0 ? (
@@ -2694,7 +2637,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 </ul>
               ) : (
                 <div className="text-sm text-slate-600">
-                  {isPolish ? 'Brak faktów' : 'No facts yet'}
+                  {t('interview.workspace.noFactsYet')}
                 </div>
               )}
             </div>
@@ -2740,21 +2683,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-c-text">
                   {gateHasHardBlock
-                    ? isPolish
-                      ? 'Uzupełnij wymagane odpowiedzi, aby wysłać'
-                      : 'Complete the required answers before submitting'
-                    : isPolish
-                      ? 'Niektóre odpowiedzi wyglądają na zbyt krótkie'
-                      : 'Some answers look too short'}
+                    ? t('interview.workspace.completeTheRequiredAnswersBefore')
+                    : t('interview.workspace.someAnswersLookTooShort')}
                 </h3>
                 <p className="mt-1 text-sm text-c-text-muted">
                   {gateHasHardBlock
-                    ? isPolish
-                      ? 'Te pozycje są wymagane — wywiadu nie można wysłać, dopóki nie zostaną uzupełnione.'
-                      : 'These items are required — the interview cannot be submitted until they are completed.'
-                    : isPolish
-                      ? 'Możesz je poprawić teraz albo wysłać mimo to — to tylko podpowiedź, nie blokada.'
-                      : 'You can improve them now or submit anyway — this is a hint, not a hard block.'}
+                    ? t('interview.workspace.theseItemsAreRequiredThe')
+                    : t('interview.workspace.youCanImproveThemNow')}
                 </p>
               </div>
             </div>
@@ -2789,7 +2724,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                           }`}
                         >
                           {item.reason}
-                          {hard ? (isPolish ? ' · wymagane' : ' · required') : ''}
+                          {hard ? (t('interview.workspace.required')) : ''}
                         </p>
                       </div>
                     </li>
@@ -2806,12 +2741,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               >
                 <ChevronLeft size={16} />
                 {gateHasHardBlock
-                  ? isPolish
-                    ? 'Uzupełnij teraz'
-                    : 'Complete now'
-                  : isPolish
-                    ? 'Wróć i popraw'
-                    : 'Go back and improve'}
+                  ? t('interview.workspace.completeNow')
+                  : t('interview.workspace.goBackAndImprove')}
               </button>
               {!gateHasHardBlock && (
                 <button
@@ -2827,7 +2758,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   ) : (
                     <Send size={16} />
                   )}
-                  {isPolish ? 'Wyślij mimo to' : 'Submit anyway'}
+                  {t('interview.workspace.submitAnyway')}
                 </button>
               )}
             </div>
@@ -2862,15 +2793,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               className="inline-flex items-center gap-1.5 text-xs text-c-text-muted hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
               <ChevronLeft size={16} />
-              {isPolish ? 'Wróć' : 'Back'}
+              {t('interview.workspace.back')}
             </button>
             <div className="h-4 w-px bg-white/[0.08]" />
             <span className="text-sm font-medium text-c-text-secondary truncate max-w-[300px]">
-              {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
+              {sessionName || (t('interview.workspace.interviewSession'))}
             </span>
             <EntityStatusChip
               status={lifecycleStatus}
-              label={isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en}
+              label={t(`interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`, lifecycleConfig.label.en)}
             />
             <div className="flex-1" />
             <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
@@ -2890,7 +2821,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <>
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
                   <Shield size={10} />
-                  {isPolish ? 'Recenzja' : 'Review'}
+                  {t('interview.workspace.review')}
                 </span>
                 <button
                   type="button"
@@ -2904,7 +2835,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   ) : (
                     <ThumbsUp size={13} />
                   )}
-                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                  {t('interview.workspace.approve')}
                 </button>
                 <button
                   type="button"
@@ -2913,7 +2844,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors disabled:opacity-50"
                 >
                   <AlertTriangle size={13} />
-                  {isPolish ? 'Odeślij' : 'Send back'}
+                  {t('interview.workspace.sendBack')}
                 </button>
               </>
             ) : (
@@ -2924,17 +2855,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors disabled:opacity-50"
               >
                 {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                {isPolish ? 'Zapisz' : 'Save'}
+                {t('interview.workspace.save')}
               </button>
             )}
             <button
               type="button"
               onClick={() => handleRuntimeModeSelect('task_list')}
               className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPolish ? 'Przełącz na widok listy' : 'Switch to list view'}
+              title={t('interview.workspace.switchToListView')}
             >
               <ArrowRight size={13} />
-              {isPolish ? 'Lista' : 'List'}
+              {t('interview.workspace.list')}
             </button>
           </div>
 
@@ -2951,7 +2882,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <div className="shrink-0 px-6 py-3 border-b border-white/[0.06] bg-amber-500/[0.04]">
               <div className="max-w-2xl mx-auto space-y-3">
                 <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                  {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}
+                  {t('interview.workspace.reasonForSendingBack')}
                 </p>
                 <textarea
                   value={sendBackReason}
@@ -2959,7 +2890,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   rows={2}
                   className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
                   placeholder={
-                    isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
+                    t('interview.workspace.describeWhatNeedsImprovement')
                   }
                 />
                 {sendBackMissingItems.length > 0 && (
@@ -2998,7 +2929,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     ) : (
                       <Send size={12} />
                     )}
-                    {isPolish ? 'Odeślij' : 'Send back'}
+                    {t('interview.workspace.sendBack')}
                   </button>
                   <button
                     type="button"
@@ -3008,7 +2939,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     }}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors"
                   >
-                    {isPolish ? 'Anuluj' : 'Cancel'}
+                    {t('interview.workspace.cancel')}
                   </button>
                 </div>
               </div>
@@ -3042,7 +2973,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     <ClipboardList size={28} className="text-c-text-muted" />
                   </div>
                   <p className="text-sm text-c-text-muted">
-                    {isPolish ? 'Brak pytań w tej sesji.' : 'No questions in this session.'}
+                    {t('interview.workspace.noQuestionsInThisSession')}
                   </p>
                 </div>
               </div>
