@@ -483,7 +483,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                       )}
 
                       {!isUngrouped && (
-                        <span className="w-5 h-5 rounded bg-c-accent flex items-center justify-center text-c-text text-[10px] font-bold flex-shrink-0">
+                        <span className="w-5 h-5 rounded bg-c-surface-raised flex items-center justify-center text-c-text text-[10px] font-bold flex-shrink-0">
                           {namedChapters.indexOf(chapter) + 1}
                         </span>
                       )}

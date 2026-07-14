@@ -453,7 +453,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
             {/* Primary Action Button */}
             <button
               onClick={openCreate}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-accent text-c-text border border-c-border-subtle hover:brightness-110 shadow-lg transition duration-200"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-text text-c-surface border border-c-border-subtle hover:brightness-110 shadow-lg transition duration-200"
             >
               <Plus size={14} />
               <span>New Block</span>
@@ -872,7 +872,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               <button
                 onClick={save}
                 disabled={!name.trim()}
-                className="px-4 py-2 text-sm font-medium bg-c-accent text-c-text rounded-lg hover:brightness-110 shadow-lg disabled:opacity-50 transition"
+                className="px-4 py-2 text-sm font-medium bg-c-text text-c-surface rounded-lg hover:brightness-110 shadow-lg disabled:opacity-50 transition"
               >
                 {editing ? 'Save Changes' : 'Create Block'}
               </button>

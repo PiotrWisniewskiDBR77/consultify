@@ -44,6 +44,7 @@ import TemplateBuilderTableScreen from './screens/template-builder-table';
 import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
 import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
+import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
 import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 
@@ -56,6 +57,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'public-booking-widget': {
     label: '#24c Publiczny widget booking (Calendly-like, niezalogowany) — CTA neutralny',
     render: () => <PublicBookingWidgetScreen />,
+  },
+  'wave3-creators-crimson': {
+    label: 'Fala 3 — ReportBuilder+AIChat+Meeting: crimson-fill CTA sweep (swatch, PO naprawie)',
+    render: () => <Wave3CreatorsCrimsonScreen />,
   },
   'template-library-new-entry': {
     label: 'Wpięcie „Nowy szablon" (Biblioteka wzorców → TemplateBuilderFlow)',

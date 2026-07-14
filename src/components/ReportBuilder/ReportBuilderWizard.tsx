@@ -401,7 +401,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                   transition-all duration-300
                   ${
                     isActive
-                      ? 'bg-c-accent text-c-text ring-4 ring-c-focus shadow-lg'
+                      ? 'bg-c-surface-raised text-c-text ring-4 ring-c-focus shadow-lg'
                       : isCompleted
                         ? 'bg-green-500 text-c-text cursor-pointer hover:bg-green-600 shadow-sm'
                         : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
@@ -440,7 +440,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                       currentStep > index
                         ? 'bg-gradient-to-r from-green-400 to-green-500'
                         : currentStep === index
-                          ? 'bg-gradient-to-r bg-c-accent '
+                          ? 'bg-c-focus-solid'
                           : 'bg-c-border-subtle'
                     }
                   `}
@@ -657,7 +657,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               ${
                 canGoNext && !isLoading && !isGenerating
                   ? activeStepId === 3
-                    ? 'bg-c-accent text-c-text shadow-md hover:shadow-lg'
+                    ? 'bg-c-text text-c-bg shadow-md hover:shadow-lg'
                     : 'bg-c-text text-c-bg hover:opacity-90 shadow-sm'
                   : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
               }

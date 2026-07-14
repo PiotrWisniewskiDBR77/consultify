@@ -146,7 +146,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Highlighted quote or key statement',
     descriptionPl: 'Wyróżniony cytat lub kluczowe stwierdzenie',
     icon: <Quote className="w-6 h-6" />,
-    color: 'bg-c-accent',
+    color: 'from-violet-500 to-violet-600',
     category: 'content',
   },
   {
@@ -203,7 +203,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Visual matrix showing assessment scores',
     descriptionPl: 'Wizualna macierz pokazująca wyniki oceny',
     icon: <LayoutGrid className="w-6 h-6" />,
-    color: 'bg-c-accent',
+    color: 'from-indigo-500 to-indigo-600',
     category: 'data',
     sourceTypes: ['ASSESSMENT'],
   },
@@ -327,7 +327,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Risk register and mitigation',
     descriptionPl: 'Rejestr ryzyk i mitygacje',
     icon: <MessageSquare className="w-6 h-6" />,
-    color: 'bg-c-accent',
+    color: 'from-amber-500 to-amber-600',
     category: 'visual',
   },
   {
@@ -338,7 +338,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Impact vs effort, initiative prioritization',
     descriptionPl: 'Wpływ vs nakład, priorytety inicjatyw',
     icon: <LayoutGrid className="w-6 h-6" />,
-    color: 'bg-c-accent',
+    color: 'from-blue-500 to-blue-600',
     category: 'visual',
   },
   {
@@ -349,7 +349,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Rich initiative cards with strategy, effort, metrics',
     descriptionPl: 'Karty inicjatyw ze strategią, wysiłkiem, metrykami',
     icon: <Zap className="w-6 h-6" />,
-    color: 'bg-c-accent',
+    color: 'from-emerald-500 to-emerald-600',
     category: 'visual',
     renderKind: 'initiatives',
     defaultLength: 'long',
@@ -407,11 +407,11 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
             rk === 'chart'
               ? 'from-pink-500 to-pink-600'
               : rk === 'matrix'
-                ? 'bg-c-accent'
+                ? 'from-indigo-500 to-indigo-600'
                 : rk === 'table'
                   ? 'from-blue-500 to-blue-600'
                   : rk === 'callout'
-                    ? 'bg-c-accent'
+                    ? 'from-violet-500 to-violet-600'
                     : rk === 'json'
                       ? 'from-emerald-500 to-emerald-600'
                       : 'from-blue-500 to-blue-600';
