@@ -78,6 +78,18 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: true,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.cycle.create',
+      'okr.cycle.close',
+      'okr.objective.create',
+      'okr.objective.update',
+      'okr.objective.delete',
+      'okr.keyresult.create',
+      'okr.keyresult.update',
+      'okr.keyresult.delete',
+      'okr.checkin.create',
       'project.view',
       'project.settings.manage',
       'project.team.manage',
@@ -159,6 +171,10 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: true,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.checkin.create',
       'project.view.assigned',
       'task.view.assigned',
       'task.update.assigned',
@@ -198,6 +214,18 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: false,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.cycle.create',
+      'okr.cycle.close',
+      'okr.objective.create',
+      'okr.objective.update',
+      'okr.objective.delete',
+      'okr.keyresult.create',
+      'okr.keyresult.update',
+      'okr.keyresult.delete',
+      'okr.checkin.create',
       'project.view',
       'project.settings.update',
       'project.team.update',
@@ -277,6 +305,13 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: false,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.objective.update',
+      'okr.keyresult.create',
+      'okr.keyresult.update',
+      'okr.checkin.create',
       'project.view',
       'task.create.scoped',
       'task.assign.scoped',
@@ -326,6 +361,13 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: false,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.objective.update',
+      'okr.keyresult.create',
+      'okr.keyresult.update',
+      'okr.checkin.create',
       'project.view',
       'project.workstream.view.scoped',
       'project.workstream.update.scoped',
@@ -397,6 +439,10 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: false,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.checkin.create',
       'project.view.scoped',
       'task.view.scoped',
       'task.comment.scoped',
@@ -416,6 +462,10 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: false,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.checkin.create',
       'project.view.scoped',
       'task.view.assigned',
       'task.update.assigned',
@@ -438,6 +488,11 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
     isRequired: false,
     isEnabled: true,
     capabilities: [
+      // OKR (D7 CRUD, resultsStrategic.routes.ts): rodzina dodana 2026-07-14
+      // przed flipem CAPABILITY_ENFORCE — bez niej enforce = 403 dla nie-adminów
+      // (finding 07-12). Org-wide (bez projektu) zarządzanie zostaje przy OWNER/ADMIN ('*').
+      'okr.keyresult.update',
+      'okr.checkin.create',
       'project.view',
       'project.summary.view',
       'project.financials.view.scoped',
@@ -511,7 +566,7 @@ export const CANVAS_MEMBER_CAPABILITIES: string[] = [
  * already receive '*' in resolveEffectiveAccess; GUEST stays read-only.
  */
 const APPLICATION_ROLE_BASELINE_CAPABILITIES: Partial<Record<ApplicationRoleValue, string[]>> = {
-  USER: [...CANVAS_MEMBER_CAPABILITIES],
+  USER: [...CANVAS_MEMBER_CAPABILITIES, 'okr.checkin.create'],
 };
 
 let roleSchemaReady = false;
