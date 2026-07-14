@@ -25,7 +25,7 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
           'peer h-4 w-4 shrink-0 rounded-sm border border-c-border-subtle transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-c-surface',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          checked ? 'border-c-focus bg-c-focus text-white' : 'bg-c-surface-raised',
+          checked ? 'border-c-focus-solid bg-c-focus-solid text-white' : 'bg-c-surface-raised',
           className
         )}
         onClick={() => onCheckedChange?.(!checked)}

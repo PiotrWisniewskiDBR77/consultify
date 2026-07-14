@@ -33,7 +33,7 @@ export interface SwitchProps {
 }
 
 const TRACK_BASE =
-  'h-5 w-9 border-transparent data-[state=on]:bg-c-focus ' +
+  'h-5 w-9 border-transparent data-[state=on]:bg-c-focus-solid ' +
   'focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-offset-c-surface';
 
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
@@ -69,7 +69,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         aria-label={!label ? ariaLabel : undefined}
         aria-describedby={describedById}
         data-state={checked ? 'on' : 'off'}
-        className={cn(TRACK_BASE, checked ? 'bg-c-focus' : 'bg-c-border', switchClassName)}
+        className={cn(TRACK_BASE, checked ? 'bg-c-focus-solid' : 'bg-c-border', switchClassName)}
       />
     );
 
