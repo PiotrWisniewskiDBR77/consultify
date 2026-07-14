@@ -8,14 +8,19 @@
  */
 import React from 'react';
 
+import type { NarrowedTableContent } from '@/components/DocumentStudio/blocks/docBlockContent';
 import { DocChartBlock } from '@/components/DocumentStudio/blocks/DocChartBlock';
 import { DocKpiStrip } from '@/components/DocumentStudio/blocks/DocKpiStrip';
 import { DocTableBlock } from '@/components/DocumentStudio/blocks/DocTableBlock';
-import type { NarrowedTableContent } from '@/components/DocumentStudio/blocks/docBlockContent';
 import type { DocumentChartBlockContent } from '@/components/DocumentStudio/types';
 
 const emptyTable: NarrowedTableContent = { columns: [], rows: [] };
-const emptyChart: DocumentChartBlockContent = { kind: 'bar', title: '', series: [], categories: [] };
+const emptyChart: DocumentChartBlockContent = {
+  kind: 'bar',
+  title: '',
+  series: [],
+  categories: [],
+};
 
 export default function DocumentStudioBlocksI18nScreen(): React.ReactElement {
   return (

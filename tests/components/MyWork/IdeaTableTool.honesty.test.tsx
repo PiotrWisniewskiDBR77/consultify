@@ -13,6 +13,7 @@ vi.mock('react-i18next', () => ({
     i18n: { language: 'en' },
     t: (_key: string, fallback?: string) => fallback || _key,
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('@/hooks/useV8FeatureFlag', () => ({

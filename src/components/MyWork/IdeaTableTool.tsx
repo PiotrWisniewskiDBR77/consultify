@@ -228,7 +228,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // z i18next nie jest do niej przypisywalny wprost, stąd stabilny wrapper.
   const t = useCallback(
     (key: string, fallback?: string, options?: Record<string, unknown>): string =>
-      tRaw(key, { defaultValue: fallback ?? key, ...(options ?? {}) }),
+      options ? tRaw(key, fallback ?? key, options) : tRaw(key, fallback ?? key),
     [tRaw]
   );
   const isPl = i18n.language?.startsWith('pl');
