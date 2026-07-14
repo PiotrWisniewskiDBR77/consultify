@@ -1236,7 +1236,7 @@ jobs:
   coverage:
     name: 📊 Coverage Report
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     needs: [unit-tests, component-tests, integration-tests]
     if: ${{ github.event_name != 'pull_request' }}
     # Coverage odpala PEŁNY test:coverage (w tym tests/integration wymagające
