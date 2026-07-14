@@ -363,7 +363,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             <button
               onClick={handleSaveAlertSettings}
               disabled={savingAlerts}
-              className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {savingAlerts ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -546,7 +546,7 @@ const AlertToggle: React.FC<AlertToggleProps> = ({
       <button
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-c-accent' : 'bg-c-surface-raised'
+          checked ? 'bg-c-focus' : 'bg-c-surface-raised'
         }`}
       >
         <span

@@ -414,7 +414,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('shareAnalytics', !preferences.shareAnalytics)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.shareAnalytics ? 'bg-c-accent' : 'bg-c-surface-raised'
+                preferences.shareAnalytics ? 'bg-c-focus' : 'bg-c-surface-raised'
               }`}
             >
               <span
@@ -439,7 +439,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('improveAI', !preferences.improveAI)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.improveAI ? 'bg-c-accent' : 'bg-c-surface-raised'
+                preferences.improveAI ? 'bg-c-focus' : 'bg-c-surface-raised'
               }`}
             >
               <span
@@ -471,7 +471,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 preferences.allowThirdPartyIntegrations
-                  ? 'bg-c-accent'
+                  ? 'bg-c-focus'
                   : 'bg-c-surface-raised'
               }`}
             >
