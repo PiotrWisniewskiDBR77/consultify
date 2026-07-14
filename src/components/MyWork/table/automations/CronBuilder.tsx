@@ -14,18 +14,18 @@ export interface CronBuilderProps {
 }
 
 interface CronPreset {
+  id: string;
   label: string;
-  labelPl: string;
   cron: string;
 }
 
 const PRESETS: CronPreset[] = [
-  { label: 'Every 15 minutes', labelPl: 'Co 15 minut', cron: '*/15 * * * *' },
-  { label: 'Every hour', labelPl: 'Co godzinę', cron: '0 * * * *' },
-  { label: 'Daily at 9am', labelPl: 'Codziennie o 9:00', cron: '0 9 * * *' },
-  { label: 'Weekdays at 9am', labelPl: 'Dni robocze o 9:00', cron: '0 9 * * 1-5' },
-  { label: 'Weekly on Monday', labelPl: 'Co poniedziałek o 9:00', cron: '0 9 * * 1' },
-  { label: 'Monthly on 1st', labelPl: '1. dnia miesiąca o 9:00', cron: '0 9 1 * *' },
+  { id: 'every15min', label: 'Every 15 minutes', cron: '*/15 * * * *' },
+  { id: 'everyHour', label: 'Every hour', cron: '0 * * * *' },
+  { id: 'dailyAt9am', label: 'Daily at 9am', cron: '0 9 * * *' },
+  { id: 'weekdaysAt9am', label: 'Weekdays at 9am', cron: '0 9 * * 1-5' },
+  { id: 'weeklyMonday', label: 'Weekly on Monday', cron: '0 9 * * 1' },
+  { id: 'monthly1st', label: 'Monthly on 1st', cron: '0 9 1 * *' },
 ];
 
 const COMMON_TIMEZONES = [
@@ -113,8 +113,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
   timezone,
   onTimezoneChange,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [customMode, setCustomMode] = useState(() => !PRESETS.some((p) => p.cron === value));
   const [customInput, setCustomInput] = useState(value || '');
 
@@ -169,7 +168,9 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
             >
               {isActive && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
               <Clock className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? 'hidden' : ''}`} />
-              <span className="truncate">{isPl ? preset.labelPl : preset.label}</span>
+              <span className="truncate">
+                {t(`ideas.table.cronPreset.${preset.id}`, preset.label)}
+              </span>
             </button>
           );
         })}
@@ -178,7 +179,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
       {/* Custom input */}
       <div className="space-y-1.5">
         <label className="block text-xs font-medium text-c-text-muted">
-          {isPl ? 'Wyrażenie cron (lub wybierz preset)' : 'Cron expression (or pick a preset)'}
+          {t('ideas.table.cronExpressionLabel', 'Cron expression (or pick a preset)')}
         </label>
         <input
           type="text"
@@ -210,7 +211,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
       {onTimezoneChange && (
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-c-text-muted">
-            {isPl ? 'Strefa czasowa' : 'Timezone'}
+            {t('ideas.table.timezoneLabel', 'Timezone')}
           </label>
           <select
             value={timezone || 'UTC'}

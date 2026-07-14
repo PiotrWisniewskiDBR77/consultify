@@ -21459,7 +21459,18 @@
         "title": "Something went wrong in this view",
         "retry": "Retry",
         "switchToGrid": "Switch to Grid"
-      }
+      },
+      "cronPreset": {
+        "every15min": "Every 15 minutes",
+        "everyHour": "Every hour",
+        "dailyAt9am": "Daily at 9am",
+        "weekdaysAt9am": "Weekdays at 9am",
+        "weeklyMonday": "Weekly on Monday",
+        "monthly1st": "Monthly on 1st"
+      },
+      "cronExpressionLabel": "Cron expression (or pick a preset)",
+      "timezoneLabel": "Timezone",
+      "syncResult": "Synced: {{created}} created, {{updated}} updated"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",

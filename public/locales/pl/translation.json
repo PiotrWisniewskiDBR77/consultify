@@ -22535,7 +22535,18 @@
         "title": "Coś poszło nie tak w tym widoku",
         "retry": "Ponów",
         "switchToGrid": "Przełącz na siatkę"
-      }
+      },
+      "cronPreset": {
+        "every15min": "Co 15 minut",
+        "everyHour": "Co godzinę",
+        "dailyAt9am": "Codziennie o 9:00",
+        "weekdaysAt9am": "Dni robocze o 9:00",
+        "weeklyMonday": "Co poniedziałek o 9:00",
+        "monthly1st": "1. dnia miesiąca o 9:00"
+      },
+      "cronExpressionLabel": "Wyrażenie cron (lub wybierz preset)",
+      "timezoneLabel": "Strefa czasowa",
+      "syncResult": "Zsynchronizowano: {{created}} nowych, {{updated}} zaktualizowanych"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",

@@ -54,8 +54,7 @@ export const ConfidenceBar: React.FC<ConfidenceBarProps> = ({
   onClick,
   testId = 'provenance-confidence-bar',
 }) => {
-  const { i18n, t } = useTranslation('tabele-provenance');
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation('tabele-provenance');
   const hasScore = score !== null && score !== undefined && Number.isFinite(score);
   const value = hasScore ? clamp01(score) : 0;
   const percent = hasScore ? Math.round(value * 100) : null;
@@ -68,12 +67,11 @@ export const ConfidenceBar: React.FC<ConfidenceBarProps> = ({
     : t('confidence.notScoredAria', { defaultValue: 'AI confidence: not scored' });
 
   const tooltip = hasScore
-    ? isPl
-      ? `Pewność AI: ${percent}%. Wskaźnik nie ocenia jakości danych — odzwierciedla pochodzenie i historię walidacji.`
-      : `AI confidence: ${percent}%. Reflects record provenance and validation history — NOT data quality.`
-    : isPl
-      ? 'Pewność AI: brak oceny dla tego rekordu.'
-      : 'AI confidence: not yet scored.';
+    ? `${percent}% — ${t('confidence.tooltip', {
+        defaultValue:
+          'AI confidence reflects record provenance and validation history — NOT data quality.',
+      })}`
+    : t('confidence.tooltipNotScored', { defaultValue: 'AI confidence: not yet scored.' });
 
   const inner = (
     <span
