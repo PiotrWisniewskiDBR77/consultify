@@ -41,7 +41,7 @@ import {
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
-import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { EntityStatusChip, StatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';

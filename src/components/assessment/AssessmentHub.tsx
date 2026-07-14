@@ -1309,6 +1309,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       await addChatMessage({
         conversationId: convId,
         role: 'user',
+        messageType: 'text',
         content: isPolish
           ? `Zrób wstępną ocenę AI listy „${laneLabel}" (${currentData.length} pozycji): co wymaga uwagi najpierw i dlaczego?`
           : `Give me an AI pre-screen of the "${laneLabel}" list (${currentData.length} items): what needs attention first, and why?`,

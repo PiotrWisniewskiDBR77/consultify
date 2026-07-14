@@ -19,6 +19,7 @@
  * - docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md
  */
 
+import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
   AlertTriangle,
@@ -2344,6 +2345,12 @@ export const FinanceHub: React.FC = () => {
   // contract (positive/destructive/warning/neutral, canon A7.6/A8): the
   // resolution action (if any) + Delete go in "resolutions"; everything else
   // (Open, contextual creates, export, chat, duplicate) goes in "informational".
+  // RowAction.icon jest typowane szeroko (React.ElementType), ale wszystkie
+  // ikony akcji Finance pochodzą z lucide-react (useFinanceRowActions) —
+  // zawężenie do LucideIcon jest typowo poprawne w runtime.
+  const toLucideIcon = (icon: React.ElementType | undefined): LucideIcon | undefined =>
+    icon as LucideIcon | undefined;
+
   const financePreviewActions = useCallback(
     (row: FinanceRow): StandardPreviewActions => {
       const actions = getRowActions(row).filter((a) => a.id !== 'archive');
@@ -2356,7 +2363,7 @@ export const FinanceHub: React.FC = () => {
             id: 'delete',
             variant: 'destructive',
             label: action.label,
-            icon: action.icon,
+            icon: toLucideIcon(action.icon),
             onClick: action.onClick,
             disabled: action.disabled,
           });
@@ -2367,7 +2374,7 @@ export const FinanceHub: React.FC = () => {
             id: action.id,
             variant: 'positive',
             label: action.label,
-            icon: action.icon,
+            icon: toLucideIcon(action.icon),
             onClick: action.onClick,
             disabled: action.disabled,
           });
@@ -2377,7 +2384,7 @@ export const FinanceHub: React.FC = () => {
           id: action.id,
           variant: 'neutral',
           label: action.label,
-          icon: action.icon,
+          icon: toLucideIcon(action.icon),
           shortcut: action.id === 'edit' ? 'O' : undefined,
           onClick: action.onClick,
           disabled: action.disabled,
