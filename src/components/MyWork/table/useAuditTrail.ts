@@ -3,6 +3,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 
+import i18n from '@/i18n';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface AuditEvent {
@@ -75,7 +76,11 @@ export function useAuditTrail(opts: UseAuditTrailOpts): UseAuditTrailReturn {
         }
         setTotal(Number(result?.total ?? 0));
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load audit trail');
+        setError(
+          err instanceof Error
+            ? err.message
+            : i18n.t('ideas.table.failedToLoadAuditTrail', 'Failed to load audit trail')
+        );
       } finally {
         setLoading(false);
       }

@@ -3,6 +3,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 
+import i18n from '@/i18n';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface UseAttachmentsOpts {
@@ -41,7 +42,11 @@ export function useAttachments(opts: UseAttachmentsOpts): UseAttachmentsReturn {
         const list = await TablePlatformApi.getAttachments(recordId, fieldId);
         setAttachments(Array.isArray(list) ? list : []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load attachments');
+        setError(
+          err instanceof Error
+            ? err.message
+            : i18n.t('ideas.table.failedToLoadAttachments', 'Failed to load attachments')
+        );
       } finally {
         setLoading(false);
       }

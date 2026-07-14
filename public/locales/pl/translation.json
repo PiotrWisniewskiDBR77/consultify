@@ -22864,7 +22864,20 @@
         "diffPreview": "Podgląd diff",
         "approve": "Zatwierdź",
         "reject": "Odrzuć",
-        "undo": "Cofnij"
+        "undo": "Cofnij",
+        "failedToGenerateProposal": "Nie udało się wygenerować propozycji",
+        "noProposalLoaded": "Brak wczytanej propozycji",
+        "failedToExecuteProposal": "Nie udało się wykonać propozycji",
+        "failedToRejectProposal": "Nie udało się odrzucić propozycji",
+        "failedToRefineProposal": "Nie udało się doprecyzować propozycji",
+        "failedToUndoProposal": "Nie udało się cofnąć propozycji",
+        "failedToRedoProposal": "Nie udało się ponowić propozycji"
+      },
+      "failedToLoadAuditTrail": "Nie udało się załadować historii audytu",
+      "tablePlatformBridge": {
+        "failedToInitializeBaseOrTable": "Nie udało się zainicjować bazy lub tabeli",
+        "failedToLoadTableData": "Nie udało się załadować danych tabeli",
+        "failedToLoadMoreRecords": "Nie udało się załadować kolejnych rekordów"
       }
     },
     "mindmap": {

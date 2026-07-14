@@ -21788,7 +21788,20 @@
         "diffPreview": "Diff preview",
         "approve": "Approve",
         "reject": "Reject",
-        "undo": "Undo"
+        "undo": "Undo",
+        "failedToGenerateProposal": "Failed to generate proposal",
+        "noProposalLoaded": "No proposal loaded",
+        "failedToExecuteProposal": "Failed to execute proposal",
+        "failedToRejectProposal": "Failed to reject proposal",
+        "failedToRefineProposal": "Failed to refine proposal",
+        "failedToUndoProposal": "Failed to undo proposal",
+        "failedToRedoProposal": "Failed to redo proposal"
+      },
+      "failedToLoadAuditTrail": "Failed to load audit trail",
+      "tablePlatformBridge": {
+        "failedToInitializeBaseOrTable": "Failed to initialize base or table",
+        "failedToLoadTableData": "Failed to load table data",
+        "failedToLoadMoreRecords": "Failed to load more records"
       }
     },
     "mindmap": {
