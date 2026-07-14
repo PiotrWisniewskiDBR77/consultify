@@ -1,5 +1,5 @@
 /**
- * PublicBookingView (#24c)
+ * PublicBookingView (uwaga 24c)
  * Publiczny, NIEZALOGOWANY widget rezerwacji (Calendly-like). Osadzony pod
  * `/book/:consultantSlug`, poza layoutem apki. Pokazuje wolne sloty konsultanta
  * (z jego zsynchronizowanego kalendarza) i pozwala umówić spotkanie.
