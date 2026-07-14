@@ -38,6 +38,8 @@ import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
+import ReportBuilderBlockTypesScreen from './screens/report-builder-block-types';
+import ReportBuilderTemplatesScreen from './screens/report-builder-templates';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
 import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
@@ -116,6 +118,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-initiatives-table': {
     label: '§27-todo batch2: InitiativesTable (Assessment→Board→Initiatives) → StandardTable',
     render: () => <AssessmentInitiativesTableScreen />,
+  },
+  'report-builder-block-types': {
+    label: '§27-todo: BlockTypesManager (Report Builder → Block Types) → StandardTable',
+    render: () => <ReportBuilderBlockTypesScreen />,
+  },
+  'report-builder-templates': {
+    label: '§27-todo: TemplatesManager (Report Builder → Templates) → StandardTable',
+    render: () => <ReportBuilderTemplatesScreen />,
   },
   'assessment-reports-table': {
     label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
