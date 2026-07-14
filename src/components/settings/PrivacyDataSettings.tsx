@@ -616,23 +616,23 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* Delete Account */}
-          <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-500/20">
+          <div className="p-4 bg-danger-50 dark:bg-danger-900/10 rounded-xl border border-danger-200 dark:border-danger-500/20">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-rose-100 dark:bg-rose-500/20 rounded-lg">
-                <Trash2 size={20} className="text-rose-600 dark:text-rose-400" />
+              <div className="p-2 bg-danger-100 dark:bg-danger-500/20 rounded-lg">
+                <Trash2 size={20} className="text-danger-600 dark:text-danger-400" />
               </div>
               <div>
-                <h4 className="font-medium text-rose-900 dark:text-rose-300">
+                <h4 className="font-medium text-danger-900 dark:text-danger-300">
                   {t('settings.privacy.deleteAccount', 'Delete Account')}
                 </h4>
-                <p className="text-xs text-rose-700 dark:text-rose-400">
+                <p className="text-xs text-danger-700 dark:text-danger-400">
                   {t('settings.privacy.deleteAccountWarning', 'This action is irreversible')}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
             >
               <Trash2 size={16} />
               {t('settings.privacy.requestDeletion', 'Request Deletion')}
@@ -646,8 +646,8 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-rose-100 dark:bg-rose-500/20 rounded-full">
-                <AlertTriangle size={24} className="text-rose-600 dark:text-rose-400" />
+              <div className="p-3 bg-danger-100 dark:bg-danger-500/20 rounded-full">
+                <AlertTriangle size={24} className="text-danger-600 dark:text-danger-400" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-c-text">
@@ -662,8 +662,8 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               </div>
             </div>
 
-            <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4 mb-4">
-              <p className="text-sm text-rose-700 dark:text-rose-300">
+            <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg p-4 mb-4">
+              <p className="text-sm text-danger-700 dark:text-danger-300">
                 {t(
                   'settings.privacy.deletionConsequences',
                   'You will lose access to all your projects, tasks, and data. This action cannot be undone.'
@@ -697,7 +697,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               <button
                 onClick={handleDeleteAccount}
                 disabled={deletingAccount || deleteConfirmation !== currentUser.email}
-                className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 disabled:opacity-50 font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-500 disabled:opacity-50 font-medium flex items-center gap-2"
               >
                 {deletingAccount && <Loader2 size={16} className="animate-spin" />}
                 {deletingAccount

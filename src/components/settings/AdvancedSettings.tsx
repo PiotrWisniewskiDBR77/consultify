@@ -414,7 +414,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 </div>
                 <button
                   onClick={() => handleDeleteAPIKey(apiKey.id)}
-                  className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                  className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -864,7 +864,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             </span>
             <button
               onClick={() => handleDisconnectAccount(provider)}
-              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+              className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
             >
               <Trash2 size={16} />
             </button>

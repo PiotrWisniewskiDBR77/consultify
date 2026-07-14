@@ -275,7 +275,7 @@ export const CloudDataSettings: React.FC = () => {
                         source.status === 'active'
                           ? 'text-green-500'
                           : source.status === 'error'
-                            ? 'text-rose-500'
+                            ? 'text-danger-500'
                             : 'text-c-text-secondary'
                       }
                     >
@@ -302,7 +302,7 @@ export const CloudDataSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleDelete(source.id)}
-                  className="p-1.5 text-c-text-secondary hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  className="p-1.5 text-c-text-secondary hover:text-danger-500 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20"
                   title={t('cloud.disconnect', 'Disconnect')}
                 >
                   <Trash2 size={14} />

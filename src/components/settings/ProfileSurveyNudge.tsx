@@ -333,7 +333,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                             <button
                               type="button"
                               onClick={() => setExpertise(expertise.filter((e) => e !== tag))}
-                              className="ml-0.5 hover:text-rose-500 transition-colors"
+                              className="ml-0.5 hover:text-danger-500 transition-colors"
                             >
                               <X size={12} />
                             </button>

@@ -73,7 +73,7 @@ const statusConfig = {
     bg: 'bg-emerald-500/10',
     label: 'Success',
   },
-  failed: { icon: XCircle, color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Failed' },
+  failed: { icon: XCircle, color: 'text-danger-400', bg: 'bg-danger-500/10', label: 'Failed' },
   suspicious: {
     icon: AlertTriangle,
     color: 'text-amber-400',
@@ -301,7 +301,7 @@ export const SessionsActivitySettings: React.FC = () => {
                     {!session.current && (
                       <button
                         onClick={() => terminateSession(session.id)}
-                        className="p-1.5 text-c-text-secondary hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors flex-shrink-0"
+                        className="p-1.5 text-c-text-secondary hover:text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors flex-shrink-0"
                         title={t('settings.security.terminate', 'Terminate session')}
                       >
                         <Trash2 size={14} />
@@ -317,7 +317,7 @@ export const SessionsActivitySettings: React.FC = () => {
                   <div className="flex justify-end">
                     <button
                       onClick={revokeAll}
-                      className="text-xs font-medium text-rose-400/80 hover:text-rose-400 transition-colors"
+                      className="text-xs font-medium text-danger-400/80 hover:text-danger-400 transition-colors"
                     >
                       {t('settings.security.signOutAll', 'Sign Out All Other Devices')}
                     </button>
