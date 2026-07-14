@@ -14,8 +14,11 @@ import { fileURLToPath } from 'url';
 
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import {
+  extractTextFromFile as extractDocumentText,
+  isSupportedIngest,
+} from '../services/documentTextExtractor.js';
 import KnowledgeService from '../services/KnowledgeService.js';
-import PDFParserService from '../services/pdfParserService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -112,14 +115,12 @@ const upload = multer({
   dest: path.join(__dirname, '../../../uploads/temp'), // Staging area
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (_req, file, cb) => {
-    if (
-      file.mimetype === 'application/pdf' ||
-      file.mimetype === 'text/plain' ||
-      file.mimetype === 'text/markdown'
-    ) {
+    // HP-23: ingest RAG obsługuje PDF/TXT/MD oraz formaty biurowe
+    // DOCX/XLSX/PPTX/CSV — ten sam chunking+embedding (documentTextExtractor).
+    if (isSupportedIngest(file.originalname, file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF, TXT, and Markdown files are allowed'));
+      cb(new Error('Only PDF, TXT, MD, CSV, DOCX, XLSX, and PPTX files are allowed'));
     }
   },
 });
@@ -726,18 +727,14 @@ router.post(
         tags
       );
 
-      // Extract Text
+      // Extract Text (HP-23: PDF/TXT/MD/CSV/DOCX/XLSX/PPTX — wspólny ekstraktor,
+      // wynik trafia do TEGO SAMEGO chunking+embedding co dotąd PDF).
       let text = '';
       try {
-        if (mimetype === 'application/pdf') {
-          const dataBuffer = fs.readFileSync(finalPath);
-          text = await PDFParserService.extractTextFromBuffer(dataBuffer);
-        } else {
-          text = fs.readFileSync(finalPath, 'utf8');
-        }
-      } catch (pdfErr) {
-        logger.error('PDF Parsing error', pdfErr);
-        text = 'Error parsing PDF content';
+        text = await extractDocumentText(finalPath, mimetype);
+      } catch (extractErr) {
+        logger.error('Document text extraction error', extractErr);
+        text = '';
       }
 
       // Process & Index (Async)
