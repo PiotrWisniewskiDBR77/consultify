@@ -47,6 +47,12 @@ export interface CapabilityItem {
   sourcing?: SourcingArchetype;
   evidence?: unknown[];
   proposalStatus?: string;
+  /**
+   * How executable closing this gap is (talent available, time window, org
+   * readiness) — independent of importance. Feeds the O3 matrix engine's
+   * importance x gap x feasibility ranking. Optional, defaults to 'medium'.
+   */
+  feasibility?: Level;
 }
 
 export interface CapabilityMapperData {
