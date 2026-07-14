@@ -1,9 +1,8 @@
+import i18n from 'i18next';
 import { AlertTriangle, FileText, ShieldAlert, Siren } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-
-import i18n from '@/i18n';
 
 import { Api } from '../../services/api';
 import { DegradedState } from './AdminState';

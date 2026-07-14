@@ -1,7 +1,6 @@
+import i18n from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-import i18n from '@/i18n';
 
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';

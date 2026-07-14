@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import i18n from 'i18next';
 import {
   AlertTriangle,
   BookOpen,
@@ -22,7 +23,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
-import i18n from '@/i18n';
 import { cn } from '@/lib/utils';
 
 import type {

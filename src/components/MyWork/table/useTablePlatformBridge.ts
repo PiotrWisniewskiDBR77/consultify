@@ -4,10 +4,10 @@
  * Table Platform API, based on the tablePlatformMetadataFirst feature flag.
  */
 
+import i18n from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
-import i18n from '@/i18n';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type {
   FilterGroup as TPFilterGroup,

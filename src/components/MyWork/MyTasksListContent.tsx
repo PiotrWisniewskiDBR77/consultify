@@ -9,6 +9,7 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
+import i18n from 'i18next';
 import {
   AlertCircle,
   Archive,
@@ -81,7 +82,6 @@ import {
   TASK_STATUS_FILTER_OPTIONS,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
-import i18n from '@/i18n';
 import { Api, type DataContextSummary } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';

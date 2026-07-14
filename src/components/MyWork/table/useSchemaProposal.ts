@@ -3,9 +3,9 @@
  * Supports generate, execute, reject, refine, undo, redo + proposal history.
  */
 
+import i18n from 'i18next';
 import { useCallback, useState } from 'react';
 
-import i18n from '@/i18n';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface ProposalHistoryEntry {

@@ -6,6 +6,7 @@
  */
 
 import { motion } from 'framer-motion';
+import i18n from 'i18next';
 import {
   AlertTriangle,
   Brain,
@@ -26,8 +27,6 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-
-import i18n from '@/i18n';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import {

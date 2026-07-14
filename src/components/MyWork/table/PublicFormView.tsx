@@ -3,11 +3,11 @@
  * Fetches form config by slug, renders fields, validates, and submits.
  */
 
+import i18n from 'i18next';
 import { AlertCircle, Check, CheckSquare, Loader2, Square } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import i18n from '@/i18n';
 import * as tablePlatformApi from '@/services/api/tablePlatform.api';
 
 // ── Types ────────────────────────────────────────────────────────────────────

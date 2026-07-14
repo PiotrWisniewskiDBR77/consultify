@@ -1,9 +1,9 @@
 /**
  * useAttachments — manages attachments for a record in the Table Platform.
  */
+import i18n from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
 
-import i18n from '@/i18n';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface UseAttachmentsOpts {

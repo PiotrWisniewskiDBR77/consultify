@@ -4,9 +4,8 @@
  * Provides power-user keyboard navigation and actions
  */
 
+import i18n from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
-
-import i18n from '@/i18n';
 
 export interface KeyboardShortcutsConfig {
   // Navigation

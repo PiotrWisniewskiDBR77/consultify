@@ -4,10 +4,10 @@
  *
  * Extracted from IdeaTableTool to reduce orchestrator size.
  */
+import i18n from 'i18next';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
