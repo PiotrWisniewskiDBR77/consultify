@@ -15389,6 +15389,90 @@
             "percentOfTotal": "% całości"
           }
         }
+      },
+      "auditCompliance": {
+        "toasts": {
+          "exported": "Wyeksportowano dziennik audytu jako {{format}}"
+        },
+        "errors": {
+          "export": "Nie udało się wyeksportować dziennika audytu"
+        },
+        "status": {
+          "compliant": "Zgodny",
+          "partial": "Częściowy",
+          "nonCompliant": "Niezgodny"
+        },
+        "title": "Audyt i zgodność",
+        "description": "Przeglądaj dzienniki audytu, zdarzenia bezpieczeństwa i raporty zgodności",
+        "dateRange": {
+          "last24h": "Ostatnie 24 godziny",
+          "last7d": "Ostatnie 7 dni",
+          "last30d": "Ostatnie 30 dni",
+          "last90d": "Ostatnie 90 dni"
+        },
+        "exportCsv": "CSV",
+        "exportJson": "JSON",
+        "subTabs": {
+          "settings": "Zmiany ustawień",
+          "usage": "Audyt użycia",
+          "security": "Zdarzenia bezpieczeństwa",
+          "compliance": "Raporty zgodności",
+          "templates": "Szablony niestandardowe"
+        },
+        "searchPlaceholder": "Szukaj w dzienniku audytu...",
+        "usageAudit": {
+          "title": "Dziennik audytu użycia",
+          "description": "Szczegółowy dziennik wszystkich żądań i odpowiedzi AI",
+          "hint": "Włącz „Audytuj wszystkie żądania AI\" w zakładce Funkcje, aby rozpocząć rejestrowanie"
+        },
+        "security": {
+          "totalEvents": "Wszystkie zdarzenia",
+          "unresolved": "Nierozwiązane",
+          "highCritical": "Wysokie/Krytyczne",
+          "piiDetected": "Wykryto dane osobowe",
+          "columns": {
+            "event": "Zdarzenie",
+            "severity": "Waga",
+            "user": "Użytkownik",
+            "time": "Czas",
+            "status": "Status",
+            "actions": "Akcje"
+          },
+          "resolved": "Rozwiązane",
+          "open": "Otwarte",
+          "view": "Zobacz"
+        },
+        "compliance": {
+          "generateTitle": "Wygeneruj raport zgodności",
+          "generating": "Generowanie raportu {{standard}}...",
+          "exportFormat": "Format eksportu",
+          "exportingPdf": "Eksportowanie wszystkich raportów jako PDF...",
+          "exportAllPdf": "Eksportuj wszystko (PDF)",
+          "exportingCsv": "Eksportowanie danych audytu jako CSV...",
+          "rawDataCsv": "Dane surowe (CSV)",
+          "generatingSummary": "Generowanie podsumowania wykonawczego...",
+          "executiveSummary": "Podsumowanie wykonawcze",
+          "recentReports": "Ostatnie raporty",
+          "findingsCount": "{{count}} ustaleń",
+          "download": "Pobierz"
+        },
+        "templates": {
+          "title": "Niestandardowe szablony zgodności",
+          "description": "Twórz i zarządzaj niestandardowymi ramami zgodności dla organizacji",
+          "create": "Utwórz szablon",
+          "basedOn": "Na podstawie {{basedOn}}",
+          "sectionsCount": "{{count}} sekcji",
+          "checkpointsCount": "{{count}} punktów kontrolnych",
+          "updated": "Zaktualizowano {{date}}",
+          "edit": "Edytuj",
+          "duplicated": "Zduplikowano szablon",
+          "duplicate": "Duplikuj",
+          "deleted": "Usunięto szablon",
+          "delete": "Usuń",
+          "emptyTitle": "Brak niestandardowych szablonów",
+          "emptyDescription": "Utwórz niestandardowe ramy zgodności dopasowane do potrzeb organizacji",
+          "createFirst": "Utwórz swój pierwszy szablon"
+        }
       }
     }
   },
