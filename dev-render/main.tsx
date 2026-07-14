@@ -23,6 +23,7 @@ import i18n from '../src/i18n';
 import AssessmentInitiativesPanelScreen from './screens/assessment-initiatives-panel';
 import AssessmentInitiativesTableScreen from './screens/assessment-initiatives-table';
 import AssessmentListScreen from './screens/assessment-list';
+import AssessmentMenu3StatusChipsScreen from './screens/assessment-menu3-status-chips';
 import AssessmentReportsPanelScreen from './screens/assessment-reports-panel';
 import AssessmentReportsTableScreen from './screens/assessment-reports-table';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
@@ -98,6 +99,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
+  },
+  'assessment-menu3-status-chips': {
+    label: '#71 REALNY AssessmentHub — Menu 3 klikalne chipy statusu (ff assessmentMenu3StatusChips forced ON)',
+    render: () => <AssessmentMenu3StatusChipsScreen />,
   },
   'assessment-initiatives-panel': {
     label: '§27-todo: InitiativesManagementPanel (Assessment→Manage→Initiatives) → StandardTable',
