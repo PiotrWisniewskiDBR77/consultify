@@ -403,7 +403,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
       return () => {
         cancelled = true;
       };
-    }, [debouncedValue, tableId, isPl, onValidationChange]);
+    }, [debouncedValue, tableId, t, onValidationChange]);
 
     // Preview formula result
     useEffect(() => {

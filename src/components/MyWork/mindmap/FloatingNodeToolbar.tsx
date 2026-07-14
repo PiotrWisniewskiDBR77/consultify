@@ -187,7 +187,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         {isMulti && (
           <div className="flex h-9 items-center px-2 text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted whitespace-nowrap">
             {t('ideas.mindmap.nSelected', '{{count}} selected', {
-              count: selectionCount ?? '',
+              count: selectionCount ?? 0,
             }).trim()}
           </div>
         )}

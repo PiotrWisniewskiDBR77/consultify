@@ -38,10 +38,34 @@ import { ViewRouter } from '../ViewRouter';
 const toastError = vi.fn();
 const toastSuccess = vi.fn();
 
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, opts?: { lng?: string; defaultValue?: string }) => {
+      const pl: Record<string, string> = {
+        'ideas.table.errorBoundary.title': 'Coś poszło nie tak w tym widoku',
+        'ideas.table.errorBoundary.retry': 'Ponów',
+        'ideas.table.errorBoundary.switchToGrid': 'Przełącz na siatkę',
+      };
+      if (opts?.lng?.startsWith('pl') && pl[key]) return pl[key];
+      return opts?.defaultValue ?? key;
+    },
+  },
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, opts?: string | { defaultValue?: string }) =>
-      (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k,
+    t: (
+      k: string,
+      opts?: string | ({ defaultValue?: string } & Record<string, unknown>),
+      params?: Record<string, unknown>
+    ) => {
+      const def = (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k;
+      const vars = (typeof opts === 'object' && opts ? opts : params) ?? {};
+      return Object.entries(vars).reduce(
+        (acc, [key, val]) => acc.split(`{{${key}}}`).join(String(val)),
+        def
+      );
+    },
     i18n: { language: 'en' },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },

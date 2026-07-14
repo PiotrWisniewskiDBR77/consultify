@@ -48,7 +48,9 @@ const Col: React.FC<{ title: string; prefix: 'rose' | 'danger'; tone: 'before' |
       </div>
     </div>
     <div>
-      <p className="text-xs text-c-text-muted mb-2">bg-{prefix}-XXX/opacity (jak w alertach/badge)</p>
+      <p className="text-xs text-c-text-muted mb-2">
+        bg-{prefix}-XXX/opacity (jak w alertach/badge)
+      </p>
       <div className="flex flex-wrap gap-3">
         {OPACITY_VARIANTS.map(({ shade, op }) => (
           <Swatch
@@ -69,7 +71,9 @@ const Col: React.FC<{ title: string; prefix: 'rose' | 'danger'; tone: 'before' |
         ))}
       </div>
     </div>
-    <div className={`flex items-center gap-2 p-3 rounded-lg border bg-${prefix}-50 dark:bg-${prefix}-900/10 border-${prefix}-200 dark:border-${prefix}-500/20`}>
+    <div
+      className={`flex items-center gap-2 p-3 rounded-lg border bg-${prefix}-50 dark:bg-${prefix}-900/10 border-${prefix}-200 dark:border-${prefix}-500/20`}
+    >
       <span className={`text-sm font-medium text-${prefix}-700 dark:text-${prefix}-300`}>
         Przykład alertu (jak PrivacyDataSettings/CorrectiveActions)
       </span>
@@ -83,11 +87,11 @@ const RoseDangerTokenParityScreen: React.FC = () => (
       Dowód parytetu: rose-* → danger-* (fix/rose-regression)
     </h1>
     <p className="text-sm text-c-text-muted mb-6 max-w-2xl">
-      Execution (M14) + Settings (M25): 34 pliki, 321 wystąpień rose-* → danger-*. Ta strona
-      NIE jest zrzutem realnych ekranów (te wymagają zalogowanej sesji/API) — dowodzi, że
-      paleta docelowa jest bit-identyczna z paletą źródłową, więc sweep nie zmienia niczego
-      wizualnie w żadnym z tych 34 plików. Jeśli lewa i prawa kolumna wyglądają identycznie
-      (light i dark), zamiana jest bezpieczna.
+      Execution (M14) + Settings (M25): 34 pliki, 321 wystąpień rose-* → danger-*. Ta strona NIE
+      jest zrzutem realnych ekranów (te wymagają zalogowanej sesji/API) — dowodzi, że paleta
+      docelowa jest bit-identyczna z paletą źródłową, więc sweep nie zmienia niczego wizualnie w
+      żadnym z tych 34 plików. Jeśli lewa i prawa kolumna wyglądają identycznie (light i dark),
+      zamiana jest bezpieczna.
     </p>
     <div className="flex gap-10 flex-wrap">
       <Col title="PRZED — rose-* (skorumpowany token)" prefix="rose" tone="before" />
