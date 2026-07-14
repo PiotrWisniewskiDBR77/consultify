@@ -24,11 +24,21 @@ const MODULE_BASE: Record<InitiativeLinkModule, string> = {
 /** Zbuduj kanoniczny deep-link do inicjatywy (domyślnie moduł Initiatives). */
 export function buildInitiativeDeepLink(
   initiativeId: string,
-  opts?: { module?: InitiativeLinkModule; tab?: string }
+  opts?: {
+    module?: InitiativeLinkModule;
+    tab?: string;
+    /**
+     * Tryb otwarcia po stronie czytnika (InitiativesHub czyta `?mode=`,
+     * default 'doc'). Wcześniej builder nie wspierał `mode` i moduły
+     * hardkodowały `&mode=doc` ręcznie.
+     */
+    mode?: string;
+  }
 ): string {
   const base = MODULE_BASE[opts?.module ?? 'initiatives'];
   const params = new URLSearchParams();
   if (opts?.tab) params.set('tab', opts.tab);
+  if (opts?.mode) params.set('mode', opts.mode);
   params.set(INITIATIVE_DEEP_LINK_PARAM, String(initiativeId));
   return `${base}?${params.toString()}`;
 }

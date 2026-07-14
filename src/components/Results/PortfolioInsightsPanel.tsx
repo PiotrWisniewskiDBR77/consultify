@@ -369,14 +369,14 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       )}
 
       {/* Reallocation (3.3) */}
-      {realloc?.moves?.length > 0 && (
+      {realloc && (realloc.moves ?? []).length > 0 && (
         <section>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <MoveRight size={14} />
             {t('results.portfolio.reallocation', 'Recommended resource shifts')}
           </h3>
           <div className="space-y-2">
-            {realloc.moves.slice(0, 4).map((m, i) => (
+            {(realloc.moves ?? []).slice(0, 4).map((m, i) => (
               <div
                 key={i}
                 className="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-3 py-2.5 text-sm"

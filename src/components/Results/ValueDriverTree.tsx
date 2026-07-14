@@ -167,7 +167,12 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
   }, [projectId, t]);
 
   const { roots, allNodes, adjacency } = useMemo(() => {
-    if (!data) return { roots: [], allNodes: new Map(), adjacency: new Map() };
+    if (!data)
+      return {
+        roots: [] as DriverNode[],
+        allNodes: new Map<string, DriverNode>(),
+        adjacency: new Map<string, string[]>(),
+      };
 
     const nodeMap = new Map<string, DriverNode>();
     for (const n of data.nodes) nodeMap.set(n.id, n);

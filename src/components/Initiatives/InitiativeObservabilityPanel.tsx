@@ -149,6 +149,9 @@ export function InitiativeObservabilityPanel({
     () => (funnel ? Object.values(funnel.bySource).reduce((a, b) => a + b, 0) : 0),
     [funnel]
   );
+  // `cycleTime` jest opcjonalne w InitiativeFunnelStats — jedno zawężenie
+  // zamiast rozsianych `funnel.cycleTime!` w JSX.
+  const cycleTime = funnel?.cycleTime ?? [];
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-auto p-4">
@@ -242,15 +245,15 @@ export function InitiativeObservabilityPanel({
             <Loader2 className="h-4 w-4 animate-spin" />
             {t('common.loading', 'Loading…')}
           </div>
-        ) : funnel && (funnel.cycleTime || []).length > 0 ? (
+        ) : cycleTime.length > 0 ? (
           <>
             <div className="space-y-0.5">
-              {funnel.cycleTime.map((stage) => (
+              {cycleTime.map((stage) => (
                 <DwellBar
                   key={stage.status}
                   label={<EntityStatusChip status={stage.status} />}
                   days={stage.avgDays}
-                  maxDays={funnel.cycleTime[0].avgDays}
+                  maxDays={cycleTime[0].avgDays}
                 />
               ))}
             </div>
@@ -258,7 +261,7 @@ export function InitiativeObservabilityPanel({
               {t(
                 'initiatives.observability.cycleTimeHint',
                 'Days = average time initiatives spent in the stage before moving on ({{count}} completed transitions total).',
-                { count: funnel.cycleTime.reduce((a, s) => a + s.count, 0) }
+                { count: cycleTime.reduce((a: number, s) => a + s.count, 0) }
               )}
             </p>
           </>
