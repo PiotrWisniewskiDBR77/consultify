@@ -46,6 +46,7 @@ import TemplateBuilderDocScreen from './screens/template-builder-doc';
 import TemplateBuilderTableScreen from './screens/template-builder-table';
 import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
+import UnifiedCreateLauncherScreen from './screens/unified-create-launcher';
 import Wave3CreatorsCrimsonScreen from './screens/wave3-creators-crimson';
 import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
 import Wave5InternalCrimsonScreen from './screens/wave5-internal-crimson';
@@ -175,6 +176,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'wave5-internal-crimson: naprawa bg-c-accent w Studio (Export/Link modal) — CTA/toggle/selected-tab',
     render: () => <Wave5InternalCrimsonScreen />,
+  },
+  'unified-create-launcher': {
+    label: 'I1-I3 Faza 0 — UnifiedCreateLauncher "+ Nowy" (Insight/Initiative/Decision), Krok 0',
+    render: () => <UnifiedCreateLauncherScreen />,
   },
 };
 
