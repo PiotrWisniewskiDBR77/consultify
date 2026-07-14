@@ -115,17 +115,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load templates';
           if (err?.response?.status === 403) {
             toast.error(
-              isPolish
-                ? 'Brak uprawnień do przeglądania szablonów'
-                : 'No permission to view templates'
+              t('interview.assignModal.noPermissionToViewTemplates')
             );
           } else {
             const msg = typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
-            toast.error(
-              isPolish
-                ? `Nie udało się załadować szablonów: ${msg}`
-                : `Failed to load templates: ${msg}`
-            );
+            toast.error(t('interview.assignModal.failedToLoadTemplatesX', { msg }));
           }
           templatesRes = [];
         }
@@ -147,17 +141,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load users';
           if (err?.response?.status === 403) {
             toast.error(
-              isPolish
-                ? 'Brak uprawnień do przeglądania użytkowników'
-                : 'No permission to view users'
+              t('interview.assignModal.noPermissionToViewUsers')
             );
           } else {
             const msg = typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
-            toast.error(
-              isPolish
-                ? `Nie udało się załadować użytkowników: ${msg}`
-                : `Failed to load users: ${msg}`
-            );
+            toast.error(t('interview.assignModal.failedToLoadUsersX', { msg }));
           }
           usersRes = [];
         }
@@ -186,17 +174,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             '[AssignInterviewModal] ⚠️ No templates found - check permissions or backend'
           );
           toast.error(
-            isPolish
-              ? 'Brak dostępnych szablonów. Sprawdź uprawnienia.'
-              : 'No templates available. Check permissions.'
+            t('interview.assignModal.noTemplatesAvailableCheckPermissions')
           );
         }
         if (allUsers.length === 0) {
           console.warn('[AssignInterviewModal] ⚠️ No users found - check permissions or backend');
           toast.error(
-            isPolish
-              ? 'Brak dostępnych użytkowników. Sprawdź uprawnienia.'
-              : 'No users available. Check permissions.'
+            t('interview.assignModal.noUsersAvailableCheckPermissions')
           );
         }
       } catch (error: any) {
@@ -206,7 +190,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             ? error
             : error?.response?.data?.error ||
               error?.message ||
-              (isPolish ? 'Nie udało się załadować danych' : 'Failed to load data');
+              (t('interview.assignModal.failedToLoadData'));
         const msg = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
         toast.error(msg);
       } finally {
@@ -236,8 +220,8 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     () =>
       templates.map((template) => {
         const tags = [
-          getTemplateSourceLabel(template.scope, isPolish),
-          ...(template.areaTags || []).map((tag) => getTemplateAreaTagLabel(tag, isPolish)),
+          getTemplateSourceLabel(template.scope, t),
+          ...(template.areaTags || []).map((tag) => getTemplateAreaTagLabel(tag, t)),
         ].filter(Boolean);
         const label = tags.length ? `${template.name} · ${tags.join(' · ')}` : template.name;
         return {
@@ -290,21 +274,21 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   const handleSubmit = async () => {
     // Validation
     if (!selectedTemplateId) {
-      toast.error(isPolish ? 'Wybierz szablon wywiadu' : 'Select an interview template');
+      toast.error(t('interview.assignModal.selectAnInterviewTemplate'));
       return;
     }
     if (selectedUserIds.length === 0) {
       toast.error(
-        isPolish ? 'Wybierz co najmniej jednego użytkownika' : 'Select at least one user'
+        t('interview.assignModal.selectAtLeastOneUser')
       );
       return;
     }
     if (!dueDate) {
-      toast.error(isPolish ? 'Ustaw termin wykonania' : 'Set a due date');
+      toast.error(t('interview.assignModal.setADueDate'));
       return;
     }
     if (isTeamAssignment && !teamLeadId) {
-      toast.error(isPolish ? 'Wybierz lidera zespołu' : 'Select a team lead');
+      toast.error(t('interview.assignModal.selectATeamLead'));
       return;
     }
 
@@ -323,12 +307,10 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
       toast.success(
         (result as any)?.splitAssignments
-          ? isPolish
-            ? `Utworzono ${(result as any)?.createdCount || selectedUserIds.length} osobne przydziały`
-            : `Created ${(result as any)?.createdCount || selectedUserIds.length} separate assignments`
-          : isPolish
-            ? `Wywiad przydzielony do ${selectedUserIds.length} osób`
-            : `Interview assigned to ${selectedUserIds.length} user(s)`
+          ? t('interview.assignModal.createdSeparateAssignmentsCount', {
+              count: (result as any)?.createdCount || selectedUserIds.length,
+            })
+          : t('interview.assignModal.interviewAssignedToCount', { count: selectedUserIds.length })
       );
 
       onSuccess?.();
@@ -345,9 +327,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         errorMessage =
           typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
       } else {
-        errorMessage = isPolish
-          ? 'Nie udało się przydzielić wywiadu'
-          : 'Failed to assign interview';
+        errorMessage = t('interview.assignModal.failedToAssignInterview');
       }
       toast.error(errorMessage);
     } finally {
@@ -373,12 +353,10 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Przydziel wywiad' : 'Assign Interview'}
+                {t('interview.assignModal.assignInterview')}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? 'Wybierz szablon i przydziel do użytkowników'
-                  : 'Select a template and assign to users'}
+                {t('interview.assignModal.selectATemplateAndAssign')}
               </p>
             </div>
           </div>
@@ -399,28 +377,28 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               {/* Template Selection */}
               <Field>
                 <FieldLabel required>
-                  {isPolish ? 'Szablon wywiadu' : 'Interview Template'}
+                  {t('interview.assignModal.interviewTemplate')}
                 </FieldLabel>
                 <Select
                   value={selectedTemplateId}
                   onChange={setSelectedTemplateId}
                   options={templateOptions}
-                  placeholder={isPolish ? 'Wybierz szablon...' : 'Select template...'}
-                  aria-label={isPolish ? 'Szablon wywiadu' : 'Interview Template'}
+                  placeholder={t('interview.assignModal.selectTemplate')}
+                  aria-label={t('interview.assignModal.interviewTemplate')}
                 />
               </Field>
 
               {/* User Selection */}
               <Field>
-                <FieldLabel required>{isPolish ? 'Przydziel do' : 'Assign to'}</FieldLabel>
+                <FieldLabel required>{t('interview.assignModal.assignTo')}</FieldLabel>
                 <MultiSelect
                   values={selectedUserIds}
                   onChange={handleUsersChange}
                   options={userOptions}
-                  placeholder={isPolish ? 'Wybierz użytkowników...' : 'Select users...'}
-                  searchPlaceholder={isPolish ? 'Szukaj użytkownika...' : 'Search users...'}
-                  emptyLabel={isPolish ? 'Brak użytkowników' : 'No users found'}
-                  aria-label={isPolish ? 'Przydziel do' : 'Assign to'}
+                  placeholder={t('interview.assignModal.selectUsers')}
+                  searchPlaceholder={t('interview.assignModal.searchUsers')}
+                  emptyLabel={t('interview.assignModal.noUsersFound')}
+                  aria-label={t('interview.assignModal.assignTo')}
                   renderOptionLeading={(option) => (
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs text-slate-700 dark:bg-navy-700 dark:text-slate-300">
                       {option.label.charAt(0)}
@@ -434,11 +412,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                     <Switch
                       checked={isTeamAssignment}
                       onCheckedChange={setIsTeamAssignment}
-                      aria-label={isPolish ? 'Przydzielenie zespołowe' : 'Team assignment'}
+                      aria-label={t('interview.assignModal.teamAssignment')}
                       label={
                         <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                           <Users size={16} className="text-slate-500 dark:text-slate-400" />
-                          {isPolish ? 'Przydzielenie zespołowe' : 'Team assignment'}
+                          {t('interview.assignModal.teamAssignment')}
                         </span>
                       }
                     />
@@ -446,14 +424,14 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                     {isTeamAssignment && (
                       <div className="mt-3 pl-7">
                         <FieldLabel className="mb-1.5 text-xs text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Lider zespołu' : 'Team Lead'}
+                          {t('interview.assignModal.teamLead')}
                         </FieldLabel>
                         <Select
                           value={teamLeadId}
                           onChange={setTeamLeadId}
                           options={teamLeadOptions}
-                          placeholder={isPolish ? 'Wybierz lidera...' : 'Select lead...'}
-                          aria-label={isPolish ? 'Lider zespołu' : 'Team Lead'}
+                          placeholder={t('interview.assignModal.selectLead')}
+                          aria-label={t('interview.assignModal.teamLead')}
                         />
                       </div>
                     )}
@@ -464,29 +442,29 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               {/* Due Date & Priority */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <FieldLabel required>{isPolish ? 'Termin' : 'Due Date'}</FieldLabel>
+                  <FieldLabel required>{t('interview.assignModal.dueDate')}</FieldLabel>
                   <DatePicker
                     value={dueDate}
                     onChange={setDueDate}
                     min={new Date().toISOString().split('T')[0]}
-                    placeholder={isPolish ? 'Wybierz datę...' : 'Pick a date...'}
+                    placeholder={t('interview.assignModal.pickADate')}
                     isPolish={isPolish}
-                    aria-label={isPolish ? 'Termin' : 'Due Date'}
+                    aria-label={t('interview.assignModal.dueDate')}
                   />
                 </Field>
 
                 <Field>
-                  <FieldLabel>{isPolish ? 'Priorytet' : 'Priority'}</FieldLabel>
+                  <FieldLabel>{t('interview.assignModal.priority')}</FieldLabel>
                   <Select
                     value={priority}
                     onChange={(v) => setPriority(v as Priority)}
                     options={[
-                      { value: 'low', label: isPolish ? 'Niski' : 'Low' },
-                      { value: 'medium', label: isPolish ? 'Średni' : 'Medium' },
-                      { value: 'high', label: isPolish ? 'Wysoki' : 'High' },
-                      { value: 'urgent', label: isPolish ? 'Pilny' : 'Urgent' },
+                      { value: 'low', label: t('interview.assignModal.low') },
+                      { value: 'medium', label: t('interview.assignModal.medium') },
+                      { value: 'high', label: t('interview.assignModal.high') },
+                      { value: 'urgent', label: t('interview.assignModal.urgent') },
                     ]}
-                    aria-label={isPolish ? 'Priorytet' : 'Priority'}
+                    aria-label={t('interview.assignModal.priority')}
                   />
                 </Field>
               </div>
@@ -494,15 +472,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Notatki (opcjonalne)' : 'Notes (optional)'}
+                  {t('interview.assignModal.notesOptional')}
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={
-                    isPolish
-                      ? 'Dodatkowe instrukcje dla przydzielonych osób...'
-                      : 'Additional instructions for assignees...'
+                    t('interview.assignModal.additionalInstructionsForAssignees')
                   }
                   rows={3}
                   className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus focus:outline-none resize-none transition-colors"
@@ -514,18 +490,16 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                 <Switch
                   checked={isAnonymous}
                   onCheckedChange={setIsAnonymous}
-                  aria-label={isPolish ? 'Odpowiedzi anonimowe' : 'Anonymous responses'}
+                  aria-label={t('interview.assignModal.anonymousResponses')}
                   label={
                     <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                       <EyeOff size={16} className="text-slate-500 dark:text-slate-400" />
-                      {isPolish ? 'Odpowiedzi anonimowe' : 'Anonymous responses'}
+                      {t('interview.assignModal.anonymousResponses')}
                     </span>
                   }
                 />
                 <p className="mt-1.5 pl-7 text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Menedżer zobaczy wyłącznie ocenę AI (wynik/rubrykę) — nigdy treści odpowiedzi ani autora pojedynczej odpowiedzi.'
-                    : "The manager will only ever see the AI score/rubric — never the answer content or who gave a specific answer."}
+                  {t('interview.assignModal.theManagerWillOnlyEver')}
                 </p>
               </div>
 
@@ -534,9 +508,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                 <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
                   <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-300">
-                    {isPolish
-                      ? 'Możesz przydzielać wywiady tylko członkom projektów, w których masz rolę zarządzającą.'
-                      : 'You can only assign interviews to members of projects where you have a management role.'}
+                    {t('interview.assignModal.youCanOnlyAssignInterviews')}
                   </div>
                 </div>
               )}
@@ -547,7 +519,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
           <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('interview.assignModal.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -557,12 +529,8 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             icon={isSubmitting ? undefined : <UserPlus size={16} />}
           >
             {isSubmitting
-              ? isPolish
-                ? 'Przydzielanie...'
-                : 'Assigning...'
-              : isPolish
-                ? 'Przydziel'
-                : 'Assign'}
+              ? t('interview.assignModal.assigning')
+              : t('interview.assignModal.assign')}
           </Button>
         </div>
       </div>

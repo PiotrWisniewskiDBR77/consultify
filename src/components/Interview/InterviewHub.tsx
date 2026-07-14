@@ -538,29 +538,29 @@ const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-c-success transiti
 // both, so a draft never reads as "Active" again.
 function getTemplateStatusChip(
   status: string | undefined,
-  isPolish: boolean
+  t: (key: string) => string
 ): { label: string; className: string } {
   const s = String(status || 'draft').toLowerCase();
   if (s === 'approved' || s === 'published') {
     return {
-      label: isPolish ? 'Opublikowany' : 'Published',
+      label: t('interview.hub.published'),
       className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100`,
     };
   }
   if (s === 'in_review') {
     return {
-      label: isPolish ? 'W recenzji' : 'In review',
+      label: t('interview.hub.inReview'),
       className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100`,
     };
   }
   if (s === 'archived') {
     return {
-      label: isPolish ? 'Zarchiwizowany' : 'Archived',
+      label: t('interview.hub.archived'),
       className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-slate-300/80 bg-slate-100 text-slate-600 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-300`,
     };
   }
   return {
-    label: isPolish ? 'Wersja robocza' : 'Draft',
+    label: t('interview.hub.draft'),
     className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100`,
   };
 }
@@ -984,33 +984,27 @@ export const InterviewHub: React.FC = () => {
 
   // L2.3: Dynamic breadcrumbs for Interview module
   useEffect(() => {
-    const base = isPolish ? 'Wywiad' : 'Interview';
+    const base = t('interview.hub.interview');
     const doc = activeDocumentId ? openDocuments.find((d) => d.id === activeDocumentId) : null;
 
     if (doc) {
       const typeLabel =
         doc.type === 'interview_session'
-          ? isPolish
-            ? 'Sesja'
-            : 'Session'
+          ? t('interview.hub.session')
           : doc.type === 'interview_insight'
-            ? isPolish
-              ? 'Wniosek'
-              : 'Insight'
-            : isPolish
-              ? 'Szablon'
-              : 'Template';
+            ? t('interview.hub.insight')
+            : t('interview.hub.template');
       const docName = doc.name || typeLabel;
       setInterviewBreadcrumbs([base, `${typeLabel}: ${docName}`]);
     } else {
       const TAB_LABELS: Record<string, string> = {
         my_assignments: 'Inbox',
-        sessions: isPolish ? 'Sesje' : 'Sessions',
-        templates: isPolish ? 'Szablony' : 'Templates',
-        insights: isPolish ? 'Wnioski' : 'Insights',
-        initiatives: isPolish ? 'Inicjatywy' : 'Initiatives',
-        managed: isPolish ? 'Przydzielone' : 'Assigned',
-        pending_review: isPolish ? 'Do przeglądu' : 'Pending Review',
+        sessions: t('interview.hub.sessions'),
+        templates: t('interview.hub.templates'),
+        insights: t('interview.hub.insights'),
+        initiatives: t('interview.hub.initiatives'),
+        managed: t('interview.hub.assigned'),
+        pending_review: t('interview.hub.pendingReview'),
       };
       const tabLabel = TAB_LABELS[activeTab];
       setInterviewBreadcrumbs(tabLabel ? [base, tabLabel] : [base]);
@@ -1054,9 +1048,7 @@ export const InterviewHub: React.FC = () => {
         console.error('[InterviewHub] Failed to load sessions:', sessionsRes.reason);
         setSessions([]);
         setSessionsLoadError(
-          isPolish
-            ? 'Nie udalo sie pobrac sesji. Sprobuj odswiezyc.'
-            : 'Failed to load sessions. Try refreshing.'
+          t('interview.hub.failedToLoadSessionsTry')
         );
       }
 
@@ -1076,9 +1068,7 @@ export const InterviewHub: React.FC = () => {
         setInsightsLoadError(
           isForbidden
             ? null
-            : isPolish
-              ? 'Nie udalo sie pobrac wnioskow. Sprobuj odswiezyc.'
-              : 'Failed to load insights. Try refreshing.'
+            : t('interview.hub.failedToLoadInsightsTry')
         );
       }
 
@@ -1089,9 +1079,7 @@ export const InterviewHub: React.FC = () => {
         console.error('[InterviewHub] Failed to load initiatives:', initiativesRes.reason);
         setInterviewInitiatives([]);
         setInitiativesLoadError(
-          isPolish
-            ? 'Nie udalo sie pobrac inicjatyw z wywiadu. Sprobuj odswiezyc.'
-            : 'Failed to load interview initiatives. Try refreshing.'
+          t('interview.hub.failedToLoadInterviewInitiatives')
         );
       }
 
@@ -1175,9 +1163,7 @@ export const InterviewHub: React.FC = () => {
     } catch (error) {
       console.error('[InterviewHub] Failed to load insights:', error);
       setInsightsLoadError(
-        isPolish
-          ? 'Nie udalo sie pobrac wnioskow. Sprobuj odswiezyc.'
-          : 'Failed to load insights. Try refreshing.'
+        t('interview.hub.failedToLoadInsightsTry')
       );
     }
   }, [isPolish, unwrapApiList, insightScope]);
@@ -1202,9 +1188,7 @@ export const InterviewHub: React.FC = () => {
     } catch (error) {
       console.error('[InterviewHub] Failed to load interview initiatives:', error);
       setInitiativesLoadError(
-        isPolish
-          ? 'Nie udalo sie pobrac inicjatyw z wywiadu. Sprobuj odswiezyc.'
-          : 'Failed to load interview initiatives. Try refreshing.'
+        t('interview.hub.failedToLoadInterviewInitiatives')
       );
     }
   }, [isPolish, unwrapApiList]);
@@ -1258,9 +1242,9 @@ export const InterviewHub: React.FC = () => {
     setBulkActionBusy(false);
     setSelectedAssignmentIds(new Set());
     if (sent > 0) {
-      toast.success(isPolish ? `Wysłano ${sent} przypomnień` : `${sent} reminders sent`);
+      toast.success(t('interview.hub.remindersSentCount', { count: sent }));
     } else {
-      toast.error(isPolish ? 'Nie udało się wysłać przypomnień' : 'Could not send reminders');
+      toast.error(t('interview.hub.couldNotSendReminders'));
     }
   }, [selectedAssignmentIds, bulkActionBusy, isPolish]);
 
@@ -1275,9 +1259,7 @@ export const InterviewHub: React.FC = () => {
     );
     if (approvable.length === 0) {
       toast.error(
-        isPolish
-          ? 'Brak przesłanych przydziałów do zatwierdzenia'
-          : 'No submitted assignments to approve'
+        t('interview.hub.noSubmittedAssignmentsToApprove')
       );
       return;
     }
@@ -1306,9 +1288,9 @@ export const InterviewHub: React.FC = () => {
     setBulkActionBusy(false);
     setSelectedAssignmentIds(new Set());
     if (done > 0) {
-      toast.success(isPolish ? `Zatwierdzono ${done}` : `${done} approved`);
+      toast.success(t('interview.hub.approvedCount', { count: done }));
     } else {
-      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Could not approve');
+      toast.error(t('interview.hub.couldNotApprove'));
     }
   }, [
     selectedAssignmentIds,
@@ -1330,15 +1312,11 @@ export const InterviewHub: React.FC = () => {
     );
     if (eligible.length === 0) {
       toast.error(
-        isPolish
-          ? 'Brak przesłanych przydziałów do zwrotu'
-          : 'No submitted assignments to send back'
+        t('interview.hub.noSubmittedAssignmentsToSend')
       );
       return;
     }
-    const reason = isPolish
-      ? 'Zwrócono zbiorczo do poprawy.'
-      : 'Returned for revision (bulk action).';
+    const reason = t('interview.hub.returnedForRevisionBulkAction');
     setBulkActionBusy(true);
     let done = 0;
     for (const a of eligible) {
@@ -1364,9 +1342,9 @@ export const InterviewHub: React.FC = () => {
     setBulkActionBusy(false);
     setSelectedAssignmentIds(new Set());
     if (done > 0) {
-      toast.success(isPolish ? `Zwrócono ${done}` : `${done} sent back`);
+      toast.success(t('interview.hub.sentBackCount', { count: done }));
     } else {
-      toast.error(isPolish ? 'Nie udało się zwrócić' : 'Could not send back');
+      toast.error(t('interview.hub.couldNotSendBack'));
     }
   }, [
     selectedAssignmentIds,
@@ -1390,16 +1368,12 @@ export const InterviewHub: React.FC = () => {
         await Api.post(`/interview/assignments/${assignment.id}/${action}`, {});
         toast.success(
           action === 'archive'
-            ? isPolish
-              ? 'Przydział zarchiwizowany'
-              : 'Assignment archived'
-            : isPolish
-              ? 'Przydział przywrócony'
-              : 'Assignment restored'
+            ? t('interview.hub.assignmentArchived')
+            : t('interview.hub.assignmentRestored')
         );
         await refreshManagedAssignments();
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        toast.error(t('interview.hub.couldNotCompleteTheAction'));
         console.error(`[InterviewHub] Assignment ${action} failed:`, error);
       } finally {
         setManagedLifecycleBusy(false);
@@ -1429,16 +1403,13 @@ export const InterviewHub: React.FC = () => {
       setSelectedAssignmentIds(new Set());
       if (done > 0) {
         toast.success(
-          action === 'archive'
-            ? isPolish
-              ? `Zarchiwizowano ${done}`
-              : `${done} archived`
-            : isPolish
-              ? `Przywrócono ${done}`
-              : `${done} restored`
+          t(
+            action === 'archive' ? 'interview.hub.archivedCount' : 'interview.hub.restoredCount',
+            { count: done }
+          )
         );
       } else {
-        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        toast.error(t('interview.hub.couldNotCompleteTheAction'));
       }
     },
     [isPolish, managedLifecycleBusy, refreshManagedAssignments, selectedAssignmentIds]
@@ -1479,7 +1450,7 @@ export const InterviewHub: React.FC = () => {
     ];
     downloadCsv(rows, `interview-sessions-${new Date().toISOString().slice(0, 10)}.csv`);
     setSelectedSessionIds(new Set());
-    toast.success(isPolish ? 'Eksport pobrany' : 'Export downloaded');
+    toast.success(t('interview.hub.exportDownloaded'));
   }, [selectedSessionIds, sessions, downloadCsv, isPolish]);
 
   const handleBulkCloneTemplates = useCallback(async () => {
@@ -1499,9 +1470,9 @@ export const InterviewHub: React.FC = () => {
     setSelectedTemplateIds(new Set());
     if (cloned > 0) {
       await loadTemplates();
-      toast.success(isPolish ? `Sklonowano ${cloned} szablonów` : `${cloned} templates cloned`);
+      toast.success(t('interview.hub.clonedTemplatesCount', { count: cloned }));
     } else {
-      toast.error(isPolish ? 'Nie udało się sklonować szablonów' : 'Could not clone templates');
+      toast.error(t('interview.hub.couldNotCloneTemplates'));
     }
   }, [selectedTemplateIds, bulkActionBusy, isPolish, loadTemplates]);
 
@@ -1523,9 +1494,9 @@ export const InterviewHub: React.FC = () => {
     if (done > 0) {
       const templatesRes = await Api.get('/interview/templates').catch(() => []);
       setTemplates((Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord));
-      toast.success(isPolish ? `Zarchiwizowano ${done} szablonów` : `${done} templates archived`);
+      toast.success(t('interview.hub.archivedTemplatesCount', { count: done }));
     } else {
-      toast.error(isPolish ? 'Nie udało się zarchiwizować' : 'Failed to archive templates');
+      toast.error(t('interview.hub.failedToArchiveTemplates'));
     }
   }, [selectedTemplateIds, bulkActionBusy, isPolish]);
 
@@ -1547,9 +1518,9 @@ export const InterviewHub: React.FC = () => {
     if (done > 0) {
       const templatesRes = await Api.get('/interview/templates').catch(() => []);
       setTemplates((Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord));
-      toast.success(isPolish ? `Przywrócono ${done} szablonów` : `${done} templates restored`);
+      toast.success(t('interview.hub.restoredTemplatesCount', { count: done }));
     } else {
-      toast.error(isPolish ? 'Nie udało się przywrócić' : 'Failed to restore templates');
+      toast.error(t('interview.hub.failedToRestoreTemplates'));
     }
   }, [selectedTemplateIds, bulkActionBusy, isPolish]);
 
@@ -1570,7 +1541,7 @@ export const InterviewHub: React.FC = () => {
     ];
     downloadCsv(rows, `interview-insights-${new Date().toISOString().slice(0, 10)}.csv`);
     setSelectedInsightIds(new Set());
-    toast.success(isPolish ? 'Eksport pobrany' : 'Export downloaded');
+    toast.success(t('interview.hub.exportDownloaded'));
   }, [selectedInsightIds, insights, downloadCsv, isPolish]);
 
   // Load assignments data
@@ -1598,9 +1569,7 @@ export const InterviewHub: React.FC = () => {
         setManagedAssignments([]);
         setOverdueAssignments([]);
         setAssignmentsLoadError(
-          isPolish
-            ? 'Nie udalo sie pobrac przydzialow wywiadu. Sprobuj odswiezyc.'
-            : 'Failed to load interview assignments. Try refreshing.'
+          t('interview.hub.failedToLoadInterviewAssignments')
         );
       } finally {
         setAssignmentsLoading(false);
@@ -1840,18 +1809,11 @@ export const InterviewHub: React.FC = () => {
       assignees.add(s.assigneeName || s.respondentName || '—');
       templatesSet.add(s.templateName || s.templateCategory || '—');
     }
-    const statusLabels: Record<string, { pl: string; en: string }> = {
-      assigned: { pl: 'Przydzielony', en: 'Assigned' },
-      in_progress: { pl: 'W trakcie', en: 'In Progress' },
-      submitted: { pl: 'Wysłany', en: 'Submitted' },
-      approved: { pl: 'Zatwierdzony', en: 'Approved' },
-      completed: { pl: 'Zakończony', en: 'Completed' },
-    };
     const statusOrder = ['assigned', 'in_progress', 'submitted', 'approved', 'completed'];
     return {
       status: statusOrder
         .filter((v) => statusValues.has(v))
-        .map((v) => ({ value: v, label: statusLabels[v]?.[isPolish ? 'pl' : 'en'] || v })),
+        .map((v) => ({ value: v, label: t(`interview.hub.assignmentStatus.${v}`) || v })),
       assignee: Array.from(assignees)
         .sort()
         .map((v) => ({ value: v, label: v })),
@@ -1928,17 +1890,17 @@ export const InterviewHub: React.FC = () => {
   const INSIGHT_SOURCE_FILTER_OPTIONS = useMemo(() => {
     const present = new Set<string>(insights.map((i) => getInsightSourceKey(i)));
     return [
-      { value: 'sessions', label: isPolish ? 'Z sesji' : 'From sessions' },
-      { value: 'none', label: isPolish ? 'Bez źródła' : 'No source' },
+      { value: 'sessions', label: t('interview.hub.fromSessions') },
+      { value: 'none', label: t('interview.hub.noSource') },
     ].filter((o) => present.has(o.value));
   }, [insights, getInsightSourceKey, isPolish]);
   const INSIGHT_EXPORTS_FILTER_OPTIONS = useMemo(() => {
     const present = new Set<string>();
     insights.forEach((i) => getInsightExportKeys(i).forEach((k) => present.add(k)));
     return [
-      { value: 'tools', label: isPolish ? 'Narzędzia' : 'Tools' },
-      { value: 'assessment', label: isPolish ? 'Ocena' : 'Assessment' },
-      { value: 'none', label: isPolish ? 'Nigdzie' : 'Not exported' },
+      { value: 'tools', label: t('interview.hub.tools') },
+      { value: 'assessment', label: t('interview.hub.assessment') },
+      { value: 'none', label: t('interview.hub.notExported') },
     ].filter((o) => present.has(o.value));
   }, [insights, getInsightExportKeys, isPolish]);
 
@@ -2041,11 +2003,9 @@ export const InterviewHub: React.FC = () => {
       .map((insight, index) => `${index + 1}. ${insight.title}: ${insight.description || ''}`)
       .join('\n');
     return [
-      isPolish
-        ? 'Stwórz inicjatywy transformacyjne na podstawie materiału z modułu Wywiad. Zachowaj dowody, pewność, ograniczenia oraz governance: propozycja → akceptacja → realizacja → audyt.'
-        : 'Create transformation initiatives from Interview material. Preserve evidence, confidence, limits and proposal -> approval -> execution -> audit governance.',
+      t('interview.hub.createTransformationInitiativesFromInterview'),
       insightLines
-        ? `\n${isPolish ? 'Najważniejsze insighty' : 'Top insights'}:\n${insightLines}`
+        ? `\n${t('interview.hub.topInsights')}:\n${insightLines}`
         : '',
     ]
       .filter(Boolean)
@@ -2055,11 +2015,9 @@ export const InterviewHub: React.FC = () => {
   const interviewWizardManualNotes = useMemo(
     () =>
       [
-        isPolish
-          ? 'Start z modułu Wywiad: przekształć insighty i obserwacje w zarządzalną listę inicjatyw transformacyjnych.'
-          : 'Started from Interview module: transform insights and observations into a governed initiative shortlist.',
-        `${isPolish ? 'Insightów' : 'Insights'}: ${insights.length}`,
-        `${isPolish ? 'Istniejących inicjatyw interview' : 'Existing interview initiatives'}: ${interviewInitiatives.length}`,
+        t('interview.hub.startedFromInterviewModuleTransform'),
+        `${t('interview.hub.insights2')}: ${insights.length}`,
+        `${t('interview.hub.existingInterviewInitiatives')}: ${interviewInitiatives.length}`,
       ].join('\n'),
     [insights.length, interviewInitiatives.length, isPolish]
   );
@@ -2136,9 +2094,9 @@ export const InterviewHub: React.FC = () => {
     () =>
       (['draft', 'in_review', 'approved', 'archived'] as const).map((s) => ({
         value: s,
-        label: getTemplateStatusChip(s, isPolish).label,
+        label: getTemplateStatusChip(s, t).label,
       })),
-    [isPolish]
+    [t]
   );
 
   // Templates for the table — column-level filtering now lives inside
@@ -2253,14 +2211,14 @@ export const InterviewHub: React.FC = () => {
     if (canViewManaged) {
       baseTabs.push({
         id: 'sessions' as ModuleTab,
-        label: isPolish ? 'Sesje' : 'Sessions',
+        label: t('interview.hub.sessions'),
         icon: <MessageSquare size={16} />,
         count: sessions.length,
       });
 
       baseTabs.push({
         id: 'managed' as ModuleTab,
-        label: withStep('managed', isPolish ? 'Przydzielone' : 'Assigned'),
+        label: withStep('managed', t('interview.hub.assigned')),
         icon: <ClipboardList size={16} />,
         count: managedAssignments.length,
       });
@@ -2269,7 +2227,7 @@ export const InterviewHub: React.FC = () => {
     if (canViewTemplates) {
       baseTabs.push({
         id: 'templates' as ModuleTab,
-        label: withStep('templates', isPolish ? 'Szablony' : 'Templates'),
+        label: withStep('templates', t('interview.hub.templates')),
         icon: <FileText size={16} />,
         count: templates.length,
       });
@@ -2285,7 +2243,7 @@ export const InterviewHub: React.FC = () => {
       if (isInterviewPendingReviewTabEnabled()) {
         baseTabs.push({
           id: 'pending_review' as ModuleTab,
-          label: withStep('pending_review', isPolish ? 'Dopuszczenie' : 'Pending review'),
+          label: withStep('pending_review', t('interview.hub.pendingReview2')),
           icon: <CheckCircle2 size={16} />,
           count: pendingReviewInsights.length,
         });
@@ -2293,14 +2251,14 @@ export const InterviewHub: React.FC = () => {
 
       baseTabs.push({
         id: 'insights' as ModuleTab,
-        label: withStep('insights', isPolish ? 'Wnioski' : 'Insights'),
+        label: withStep('insights', t('interview.hub.insights')),
         icon: <Lightbulb size={16} />,
         count: insights.length,
       });
 
       baseTabs.push({
         id: 'initiatives' as ModuleTab,
-        label: withStep('initiatives', isPolish ? 'Inicjatywy' : 'Initiatives'),
+        label: withStep('initiatives', t('interview.hub.initiatives')),
         icon: <Rocket size={16} />,
         count: interviewInitiativeStats.total,
       });
@@ -2364,13 +2322,11 @@ export const InterviewHub: React.FC = () => {
       const projectId = await ensureProjectId();
       if (!projectId) {
         toast.error(
-          isPolish
-            ? 'Wybierz projekt przed utworzeniem sesji'
-            : 'Select a project before creating a session'
+          t('interview.hub.selectAProjectBeforeCreating')
         );
         return;
       }
-      toast.loading(isPolish ? 'Tworzenie sesji wywiadu...' : 'Creating interview session...', {
+      toast.loading(t('interview.hub.creatingInterviewSession'), {
         id: toastId,
       });
       const newSession = await Api.post('/interview/sessions', {
@@ -2395,7 +2351,7 @@ export const InterviewHub: React.FC = () => {
       setActiveDocumentId(doc.id);
 
       toast.success(
-        isPolish ? 'Nowa sesja wywiadu rozpoczęta!' : 'New interview session started!',
+        t('interview.hub.newInterviewSessionStarted'),
         {
           id: toastId,
         }
@@ -2405,9 +2361,7 @@ export const InterviewHub: React.FC = () => {
       toast.error(
         getSafeInterviewErrorMessage(
           error,
-          isPolish
-            ? 'Nie udało się utworzyć sesji. Spróbuj ponownie za chwilę.'
-            : 'Failed to create session. Please try again shortly.'
+          t('interview.hub.failedToCreateSessionPlease')
         ),
         { id: toastId, duration: 6000 }
       );
@@ -2416,7 +2370,7 @@ export const InterviewHub: React.FC = () => {
 
   const handleSessionComplete = useCallback(
     async (sessionId: string) => {
-      toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
+      toast.success(t('interview.hub.interviewCompleted'));
       const [sessionsRes, myRes, managedRes, overdueRes] = await Promise.all([
         loadManagedSessions(),
         loadMyAssignments(),
@@ -2481,7 +2435,7 @@ export const InterviewHub: React.FC = () => {
       id: `new-template:${Date.now()}`,
       type: 'interview_template',
       subType: 'interview',
-      name: isPolish ? 'Nowy template' : 'New template',
+      name: t('interview.hub.newTemplate'),
       status: 'DRAFT' as any,
     });
   }, [handleOpenDocument, isPolish]);
@@ -2493,7 +2447,7 @@ export const InterviewHub: React.FC = () => {
         id: templateId,
         type: 'interview_template',
         subType: 'interview',
-        name: template?.name || (isPolish ? 'Template' : 'Template'),
+        name: template?.name || (t('interview.hub.template')),
         status: (template?.status || 'draft').toUpperCase() as any,
       });
     },
@@ -2503,12 +2457,12 @@ export const InterviewHub: React.FC = () => {
   const handleCloneTemplate = useCallback(
     async (template: InterviewTemplate) => {
       try {
-        toast.loading(isPolish ? 'Klonowanie szablonu...' : 'Cloning template...');
+        toast.loading(t('interview.hub.cloningTemplate'));
         const cloned = await Api.post(`/interview/templates/${template.id}/clone`, {
-          name: `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
+          name: `${template.name} (${t('interview.hub.copy')})`,
         });
         toast.dismiss();
-        toast.success(isPolish ? 'Szablon sklonowany!' : 'Template cloned!');
+        toast.success(t('interview.hub.templateCloned'));
 
         // Refresh templates
         const templatesRes = await Api.get('/interview/templates').catch(() => []);
@@ -2521,12 +2475,12 @@ export const InterviewHub: React.FC = () => {
           id: (cloned as any).id,
           type: 'interview_template',
           subType: 'interview',
-          name: (cloned as any).name || `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
+          name: (cloned as any).name || `${template.name} (${t('interview.hub.copy')})`,
           status: ((cloned as any).status || 'draft').toUpperCase() as any,
         });
       } catch (error) {
         toast.dismiss();
-        toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
+        toast.error(t('interview.hub.failedToCloneTemplate'));
         console.error('[InterviewHub] Failed to clone template:', error);
       }
     },
@@ -2536,18 +2490,14 @@ export const InterviewHub: React.FC = () => {
   const handleDeleteTemplate = useCallback(
     async (template: InterviewTemplate) => {
       if (
-        !confirm(
-          isPolish
-            ? `Czy na pewno chcesz usunąć szablon "${template.name}"?`
-            : `Are you sure you want to delete template "${template.name}"?`
-        )
+        !confirm(t('interview.hub.confirmDeleteTemplate', { name: template.name }))
       ) {
         return;
       }
 
       try {
         await Api.delete(`/interview/templates/${template.id}`);
-        toast.success(isPolish ? 'Szablon usunięty!' : 'Template deleted!');
+        toast.success(t('interview.hub.templateDeleted'));
 
         // Refresh templates
         const templatesRes = await Api.get('/interview/templates').catch(() => []);
@@ -2555,7 +2505,7 @@ export const InterviewHub: React.FC = () => {
           (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
         );
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
+        toast.error(t('interview.hub.failedToDeleteTemplate'));
         console.error('[InterviewHub] Failed to delete template:', error);
       }
     },
@@ -2569,13 +2519,13 @@ export const InterviewHub: React.FC = () => {
     async (template: InterviewTemplate) => {
       try {
         await Api.post(`/interview/templates/${template.id}/archive`, {});
-        toast.success(isPolish ? 'Szablon zarchiwizowany' : 'Template archived');
+        toast.success(t('interview.hub.templateArchived'));
         const templatesRes = await Api.get('/interview/templates').catch(() => []);
         setTemplates(
           (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
         );
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się zarchiwizować' : 'Failed to archive template');
+        toast.error(t('interview.hub.failedToArchiveTemplate'));
         console.error('[InterviewHub] Failed to archive template:', error);
       }
     },
@@ -2586,13 +2536,13 @@ export const InterviewHub: React.FC = () => {
     async (template: InterviewTemplate) => {
       try {
         await Api.post(`/interview/templates/${template.id}/restore`, {});
-        toast.success(isPolish ? 'Szablon przywrócony' : 'Template restored');
+        toast.success(t('interview.hub.templateRestored'));
         const templatesRes = await Api.get('/interview/templates').catch(() => []);
         setTemplates(
           (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
         );
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się przywrócić' : 'Failed to restore template');
+        toast.error(t('interview.hub.failedToRestoreTemplate'));
         console.error('[InterviewHub] Failed to restore template:', error);
       }
     },
@@ -2633,19 +2583,13 @@ export const InterviewHub: React.FC = () => {
           })
         );
         toast.success(
-          isPolish
-            ? nextDefault
-              ? 'Ustawiono jako domyślny szablon'
-              : 'Usunięto status domyślnego szablonu'
-            : nextDefault
-              ? 'Set as default template'
-              : 'Default template unset'
+          nextDefault
+            ? t('interview.hub.setAsDefaultTemplate')
+            : t('interview.hub.defaultTemplateUnset')
         );
       } catch (error) {
         toast.error(
-          isPolish
-            ? 'Nie udało się zmienić domyślnego szablonu'
-            : 'Failed to change default template'
+          t('interview.hub.failedToChangeDefaultTemplate')
         );
         console.error('[InterviewHub] Failed to toggle template default:', error);
       }
@@ -2661,18 +2605,12 @@ export const InterviewHub: React.FC = () => {
     async (session: InterviewSession, action: 'archive' | 'restore' | 'trash' | 'untrash') => {
       if (sessionLifecycleBusy) return;
       setSessionLifecycleBusy(true);
-      const successMsg: Record<typeof action, { pl: string; en: string }> = {
-        archive: { pl: 'Sesja zarchiwizowana', en: 'Session archived' },
-        restore: { pl: 'Sesja przywrócona', en: 'Session restored' },
-        trash: { pl: 'Przeniesiono do kosza', en: 'Moved to trash' },
-        untrash: { pl: 'Sesja przywrócona', en: 'Session restored' },
-      };
       try {
         await Api.post(`/interview/sessions/${session.id}/${action}`, {});
-        toast.success(isPolish ? successMsg[action].pl : successMsg[action].en);
+        toast.success(t(`interview.hub.sessionActionMsg.${action}`));
         await refreshSessions();
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        toast.error(t('interview.hub.couldNotCompleteTheAction'));
         console.error(`[InterviewHub] Session ${action} failed:`, error);
       } finally {
         setSessionLifecycleBusy(false);
@@ -2688,12 +2626,12 @@ export const InterviewHub: React.FC = () => {
     setSessionLifecycleBusy(true);
     try {
       await Api.delete(`/interview/sessions/${sessionDeleteTarget.id}`);
-      toast.success(isPolish ? 'Sesja usunięta na stałe' : 'Session permanently deleted');
+      toast.success(t('interview.hub.sessionPermanentlyDeleted'));
       setSessionDeleteTarget(null);
       setSessionDeleteConfirmText('');
       await refreshSessions();
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się usunąć sesji' : 'Could not delete session');
+      toast.error(t('interview.hub.couldNotDeleteSession'));
       console.error('[InterviewHub] Permanent delete failed:', error);
     } finally {
       setSessionLifecycleBusy(false);
@@ -2708,17 +2646,11 @@ export const InterviewHub: React.FC = () => {
       setSessionLifecycleBusy(true);
       try {
         await Api.post('/interview/sessions/bulk', { ids, action });
-        const doneMsg: Record<typeof action, { pl: string; en: string }> = {
-          archive: { pl: 'Zarchiwizowano sesje', en: 'Sessions archived' },
-          restore: { pl: 'Przywrócono sesje', en: 'Sessions restored' },
-          trash: { pl: 'Przeniesiono do kosza', en: 'Sessions moved to trash' },
-          untrash: { pl: 'Przywrócono sesje', en: 'Sessions restored' },
-        };
-        toast.success(`${isPolish ? doneMsg[action].pl : doneMsg[action].en} (${ids.length})`);
+        toast.success(t(`interview.hub.sessionsActionDoneMsg.${action}`, { count: ids.length }));
         setSelectedSessionIds(new Set());
         await refreshSessions();
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        toast.error(t('interview.hub.couldNotCompleteTheAction'));
         console.error(`[InterviewHub] Bulk ${action} failed:`, error);
       } finally {
         setSessionLifecycleBusy(false);
@@ -2746,7 +2678,7 @@ export const InterviewHub: React.FC = () => {
         await V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason }).catch(() =>
           Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason })
         );
-        toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
+        toast.success(t('interview.hub.interviewSentBack'));
         setShowSendBackModal(false);
         setSelectedAssignment(null);
 
@@ -2765,7 +2697,7 @@ export const InterviewHub: React.FC = () => {
         console.error('[InterviewHub] Failed to send back:', error);
         safeToastError(
           error,
-          isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back',
+          t('interview.hub.failedToSendBack'),
           isPolish
         );
       }
@@ -2786,7 +2718,7 @@ export const InterviewHub: React.FC = () => {
         await V8InterviewApi.approveAssignment(assignment.id).catch(() =>
           Api.post(`/interview/assignments/${assignment.id}/approve`, {})
         );
-        toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
+        toast.success(t('interview.hub.interviewApproved'));
 
         // Refresh assignments + manager sessions cockpit (post-approval)
         const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
@@ -2803,7 +2735,7 @@ export const InterviewHub: React.FC = () => {
         console.error('[InterviewHub] Failed to approve assignment:', error);
         safeToastError(
           error,
-          isPolish ? 'Nie udało się zatwierdzić wywiadu' : 'Failed to approve interview',
+          t('interview.hub.failedToApproveInterview'),
           isPolish
         );
       }
@@ -2844,7 +2776,7 @@ export const InterviewHub: React.FC = () => {
         notes: selectedAssignment.notes ?? null,
         mode: 'update',
       });
-      toast.success(isPolish ? 'Termin zaktualizowany' : 'Due date updated');
+      toast.success(t('interview.hub.dueDateUpdated'));
       setShowDueDateModal(false);
       setSelectedAssignment(null);
       const [myRes, managedRes, overdueRes] = await Promise.all([
@@ -2859,7 +2791,7 @@ export const InterviewHub: React.FC = () => {
       console.error('[InterviewHub] Failed to change due date:', error);
       safeToastError(
         error,
-        isPolish ? 'Nie udało się zmienić terminu' : 'Failed to change due date',
+        t('interview.hub.failedToChangeDueDate'),
         isPolish
       );
     } finally {
@@ -2921,7 +2853,7 @@ export const InterviewHub: React.FC = () => {
       setSelectedAssignmentIds(new Set());
       setBulkActionBusy(false);
       toast.success(
-        isPolish ? `Odłożono o ${days} dni: ${done}` : `Delayed by ${days} days: ${done}`
+        t('interview.hub.delayedByDaysCount', { days, done })
       );
     },
     [
@@ -2950,7 +2882,7 @@ export const InterviewHub: React.FC = () => {
           notes: assignment.notes ?? null,
           mode: 'update',
         });
-        toast.success(isPolish ? `Odłożono o ${days} dni` : `Delayed by ${days} days`);
+        toast.success(t('interview.hub.delayedByDaysOnlyCount', { days }));
         const [myRes, managedRes, overdueRes] = await Promise.all([
           loadMyAssignments(),
           loadManagedAssignments(),
@@ -2962,7 +2894,7 @@ export const InterviewHub: React.FC = () => {
       } catch (error) {
         safeToastError(
           error,
-          isPolish ? 'Nie udało się odłożyć terminu' : 'Failed to delay',
+          t('interview.hub.failedToDelay'),
           isPolish
         );
       }
@@ -2993,13 +2925,9 @@ export const InterviewHub: React.FC = () => {
       if (escalateBusyId) return;
       if (assignment.escalatedAt || assignment.escalationTarget) {
         toast(
-          isPolish
-            ? `Już eskalowano${
-                assignment.escalationTarget?.name ? ` do: ${assignment.escalationTarget.name}` : ''
-              }`
-            : `Already escalated${
-                assignment.escalationTarget?.name ? ` to ${assignment.escalationTarget.name}` : ''
-              }`,
+          assignment.escalationTarget?.name
+            ? t('interview.hub.alreadyEscalatedTo', { name: assignment.escalationTarget.name })
+            : t('interview.hub.alreadyEscalated'),
           { icon: 'ℹ️' }
         );
         return;
@@ -3007,10 +2935,10 @@ export const InterviewHub: React.FC = () => {
       setEscalateBusyId(assignment.id);
       try {
         await Api.post(`/interview/assignments/${assignment.id}/escalate`, {});
-        toast.success(isPolish ? 'Eskalowano' : 'Escalated');
+        toast.success(t('interview.hub.escalated'));
         await refreshManagedAssignments();
       } catch (error) {
-        toast.error(isPolish ? 'Nie udało się eskalować' : 'Could not escalate');
+        toast.error(t('interview.hub.couldNotEscalate'));
         console.error('[InterviewHub] Escalate now failed:', error);
       } finally {
         setEscalateBusyId(null);
@@ -3042,7 +2970,7 @@ export const InterviewHub: React.FC = () => {
       .filter((a): a is InterviewAssignment => Boolean(a));
     if (targets.length === 0) {
       toast.error(
-        isPolish ? 'Brak wysłanych sesji do zatwierdzenia' : 'No submitted sessions to approve'
+        t('interview.hub.noSubmittedSessionsToApprove')
       );
       return;
     }
@@ -3072,9 +3000,9 @@ export const InterviewHub: React.FC = () => {
     setBulkActionBusy(false);
     setSelectedSessionIds(new Set());
     if (done > 0) {
-      toast.success(isPolish ? `Zatwierdzono ${done}` : `${done} approved`);
+      toast.success(t('interview.hub.approvedCount', { count: done }));
     } else {
-      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Could not approve');
+      toast.error(t('interview.hub.couldNotApprove'));
     }
   }, [
     selectedSessionIds,
@@ -3103,16 +3031,14 @@ export const InterviewHub: React.FC = () => {
       .filter((a): a is InterviewAssignment => Boolean(a));
     if (targets.length === 0) {
       toast.error(
-        isPolish ? 'Brak wysłanych sesji do zwrotu' : 'No submitted sessions to send back'
+        t('interview.hub.noSubmittedSessionsToSend')
       );
       return;
     }
     const reason = (
       window.prompt(
-        isPolish
-          ? 'Powód zwrotu do poprawy (wspólny dla zaznaczonych):'
-          : 'Reason for sending back (shared for the selection):',
-        isPolish ? 'Zwrócono zbiorczo do poprawy.' : 'Returned for revision (bulk action).'
+        t('interview.hub.reasonForSendingBackShared'),
+        t('interview.hub.returnedForRevisionBulkAction')
       ) || ''
     ).trim();
     if (!reason) return;
@@ -3142,9 +3068,9 @@ export const InterviewHub: React.FC = () => {
     setBulkActionBusy(false);
     setSelectedSessionIds(new Set());
     if (done > 0) {
-      toast.success(isPolish ? `Zwrócono ${done}` : `${done} sent back`);
+      toast.success(t('interview.hub.sentBackCount', { count: done }));
     } else {
-      toast.error(isPolish ? 'Nie udało się zwrócić' : 'Could not send back');
+      toast.error(t('interview.hub.couldNotSendBack'));
     }
   }, [
     selectedSessionIds,
@@ -3166,14 +3092,14 @@ export const InterviewHub: React.FC = () => {
     async (text: string) => {
       const value = String(text || '');
       if (!value.trim()) {
-        toast.error(isPolish ? 'Brak treści do skopiowania' : 'Nothing to copy');
+        toast.error(t('interview.hub.nothingToCopy'));
         return;
       }
       try {
         await navigator.clipboard.writeText(value);
-        toast.success(isPolish ? 'Skopiowano' : 'Copied');
+        toast.success(t('interview.hub.copied'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+        toast.error(t('interview.hub.copyFailed'));
       }
     },
     [isPolish]
@@ -3191,7 +3117,7 @@ export const InterviewHub: React.FC = () => {
         console.error('[InterviewHub] Failed to open session by id:', error);
         safeToastError(
           error,
-          isPolish ? 'Nie udało się otworzyć sesji' : 'Failed to open session',
+          t('interview.hub.failedToOpenSession'),
           isPolish
         );
       }
@@ -3217,12 +3143,12 @@ export const InterviewHub: React.FC = () => {
   const handleGenerateInsight = useCallback(
     async (session: InterviewSession, promptType: InsightPromptType = 'summary') => {
       try {
-        toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
+        toast.loading(t('interview.hub.generatingAiInsights'));
         await V8InterviewApi.createInsight({ sessionId: session.id, promptType }).catch(() =>
           Api.post('/interview/insights', { sessionId: session.id, promptType })
         );
         toast.dismiss();
-        toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
+        toast.success(t('interview.hub.insightsGenerated'));
 
         // Refresh insights
         const insightsRes = await V8InterviewApi.listInsights()
@@ -3235,7 +3161,7 @@ export const InterviewHub: React.FC = () => {
       } catch (error) {
         toast.dismiss();
         toast.error(
-          isPolish ? 'Nie udało się wygenerować wniosków' : 'Failed to generate insights'
+          t('interview.hub.failedToGenerateInsights')
         );
         console.error('[InterviewHub] Failed to generate insight:', error);
       }
@@ -3255,22 +3181,20 @@ export const InterviewHub: React.FC = () => {
         // Moving an initiative forward can spawn lineage work; refresh the strip.
         void loadInterviewLineage();
         if (status === 'PENDING_REVIEW') {
-          toast.success(isPolish ? 'Inicjatywa wysłana do przeglądu' : 'Initiative sent to review');
+          toast.success(t('interview.hub.initiativeSentToReview'));
         } else if (status === 'REVIEW') {
           toast.success(
-            isPolish
-              ? 'Inicjatywa zatwierdzona i przekazana do modułu Inicjatywy'
-              : 'Initiative approved and moved to Initiatives module'
+            t('interview.hub.initiativeApprovedAndMovedTo')
           );
           if (options?.openInInitiatives) {
             navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
           }
         } else {
-          toast.success(isPolish ? 'Inicjatywa wróciła do szkicu' : 'Initiative returned to draft');
+          toast.success(t('interview.hub.initiativeReturnedToDraft'));
         }
       } catch (error) {
         console.error('[InterviewHub] Failed to update interview initiative:', error);
-        toast.error(isPolish ? 'Nie udało się zmienić statusu' : 'Failed to update status');
+        toast.error(t('interview.hub.failedToUpdateStatus'));
       }
     },
     [isPolish, loadInterviewInitiatives, loadInterviewLineage, navigate]
@@ -3306,27 +3230,27 @@ export const InterviewHub: React.FC = () => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
+          label: t('interview.hub.all'),
           count: inboxStatusCounts.all,
           onClick: () => setInboxStatusFilter('all'),
         },
         {
           id: 'answered',
-          label: isPolish ? 'Odpowiedziane' : 'Answered',
+          label: t('interview.hub.answered'),
           count: inboxStatusCounts.answered,
           icon: Send,
           onClick: () => setInboxStatusFilter((prev) => (prev === 'answered' ? 'all' : 'answered')),
         },
         {
           id: 'approved',
-          label: isPolish ? 'Zatwierdzone' : 'Approved',
+          label: t('interview.hub.approved'),
           count: inboxStatusCounts.approved,
           icon: CheckCircle2,
           onClick: () => setInboxStatusFilter((prev) => (prev === 'approved' ? 'all' : 'approved')),
         },
         {
           id: 'sent_back',
-          label: isPolish ? 'Do poprawy' : 'Sent back',
+          label: t('interview.hub.sentBack'),
           count: inboxStatusCounts.sent_back,
           icon: RotateCcw,
           onClick: () =>
@@ -3340,7 +3264,7 @@ export const InterviewHub: React.FC = () => {
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {selectedCount} {t('interview.hub.selected')}
                 </span>
                 {/* Fixed/universal buttons — same look as the rest (MENU_3_ACTION_NEUTRAL) */}
                 <button
@@ -3349,7 +3273,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('interview.hub.clear')}
                 </button>
                 <button
                   type="button"
@@ -3362,7 +3286,7 @@ export const InterviewHub: React.FC = () => {
                   ) : (
                     <Archive size={14} />
                   )}
-                  {isPolish ? 'Archiwizuj' : 'Archive'}
+                  {t('interview.hub.archive')}
                 </button>
                 <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 {/* Context (Inbox): Delay +1 / +3 / +7 days — same look */}
@@ -3375,7 +3299,7 @@ export const InterviewHub: React.FC = () => {
                     className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <Clock size={14} />
-                    {isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`}
+                    {d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d })}
                   </button>
                 ))}
               </div>
@@ -3440,13 +3364,13 @@ export const InterviewHub: React.FC = () => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
+          label: t('interview.hub.all'),
           count: managedAssignmentStatusCounts.all,
           onClick: () => setAssignmentStatusFilter('all'),
         },
         {
           id: 'to-approve',
-          label: isPolish ? 'Do zatwierdzenia' : 'To approve',
+          label: t('interview.hub.toApprove'),
           count: managedAssignmentStatusCounts.submitted ?? 0,
           icon: Check,
           onClick: () =>
@@ -3454,7 +3378,7 @@ export const InterviewHub: React.FC = () => {
         },
         {
           id: 'overdue',
-          label: isPolish ? 'Zaległe' : 'Overdue',
+          label: t('interview.hub.overdue'),
           count: overdueAssignments.length,
           icon: AlertTriangle,
           onClick: () =>
@@ -3462,7 +3386,7 @@ export const InterviewHub: React.FC = () => {
         },
         {
           id: 'sent_back',
-          label: isPolish ? 'Do poprawy' : 'Sent back',
+          label: t('interview.hub.sentBack'),
           count: managedAssignmentStatusCounts.sent_back ?? 0,
           icon: RotateCcw,
           onClick: () =>
@@ -3485,7 +3409,7 @@ export const InterviewHub: React.FC = () => {
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {selectedCount} {t('interview.hub.selected')}
                 </span>
                 <button
                   type="button"
@@ -3493,7 +3417,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('interview.hub.clear')}
                 </button>
                 <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 <button
@@ -3507,7 +3431,7 @@ export const InterviewHub: React.FC = () => {
                   ) : (
                     <Check size={14} />
                   )}
-                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                  {t('interview.hub.approve')}
                 </button>
                 <button
                   type="button"
@@ -3516,7 +3440,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <RotateCcw size={14} />
-                  {isPolish ? 'Zwróć' : 'Send back'}
+                  {t('interview.hub.sendBack')}
                 </button>
                 <button
                   type="button"
@@ -3525,7 +3449,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <Bell size={14} />
-                  {isPolish ? 'Przypomnij' : 'Remind'}
+                  {t('interview.hub.remind')}
                 </button>
                 {/* #8 — Bulk Archive (active view) / Restore (archive view),
                     backed by POST /interview/assignments/:id/{archive,restore}. */}
@@ -3541,7 +3465,7 @@ export const InterviewHub: React.FC = () => {
                     ) : (
                       <RotateCcw size={14} />
                     )}
-                    {isPolish ? 'Przywróć' : 'Restore'}
+                    {t('interview.hub.restore')}
                   </button>
                 ) : (
                   <button
@@ -3555,7 +3479,7 @@ export const InterviewHub: React.FC = () => {
                     ) : (
                       <Archive size={14} />
                     )}
-                    {isPolish ? 'Archiwizuj' : 'Archive'}
+                    {t('interview.hub.archive')}
                   </button>
                 )}
               </div>
@@ -3598,8 +3522,8 @@ export const InterviewHub: React.FC = () => {
             <div className="flex shrink-0 items-center gap-1.5">
               {(
                 [
-                  { id: 'active', label: isPolish ? 'Aktywne' : 'Active', icon: List },
-                  { id: 'archived', label: isPolish ? 'Archiwum' : 'Archive', icon: Archive },
+                  { id: 'active', label: t('interview.hub.active'), icon: List },
+                  { id: 'archived', label: t('interview.hub.archive2'), icon: Archive },
                 ] as const
               ).map((lc) => {
                 const isActive = managedLifecycle === lc.id;
@@ -3658,13 +3582,13 @@ export const InterviewHub: React.FC = () => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
+          label: t('interview.hub.all'),
           count: allCount,
           onClick: () => setSessionStatusFilter('all'),
         },
         {
           id: 'in_progress',
-          label: isPolish ? 'W trakcie' : 'In progress',
+          label: t('interview.hub.inProgress'),
           count: inProgressCount,
           icon: Clock,
           onClick: () =>
@@ -3672,7 +3596,7 @@ export const InterviewHub: React.FC = () => {
         },
         {
           id: 'submitted',
-          label: isPolish ? 'Wysłane' : 'Submitted',
+          label: t('interview.hub.submitted'),
           count: submittedCount,
           icon: Send,
           onClick: () =>
@@ -3680,7 +3604,7 @@ export const InterviewHub: React.FC = () => {
         },
         {
           id: 'approved',
-          label: isPolish ? 'Zatwierdzone' : 'Approved',
+          label: t('interview.hub.approved'),
           count: approvedCount,
           icon: Check,
           onClick: () =>
@@ -3701,7 +3625,7 @@ export const InterviewHub: React.FC = () => {
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {selectedCount} {t('interview.hub.selected')}
                 </span>
                 <button
                   type="button"
@@ -3709,7 +3633,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('interview.hub.clear')}
                 </button>
                 <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 {/* #8 — Bulk Approve / Send back, mapping selected sessions to
@@ -3728,7 +3652,7 @@ export const InterviewHub: React.FC = () => {
                       ) : (
                         <Check size={14} />
                       )}
-                      {isPolish ? 'Zatwierdź' : 'Approve'}
+                      {t('interview.hub.approve')}
                     </button>
                     <button
                       type="button"
@@ -3737,7 +3661,7 @@ export const InterviewHub: React.FC = () => {
                       className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <RotateCcw size={14} />
-                      {isPolish ? 'Zwróć' : 'Send back'}
+                      {t('interview.hub.sendBack')}
                     </button>
                   </>
                 ) : null}
@@ -3751,7 +3675,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <Sparkles size={14} />
-                  {isPolish ? 'Wnioski AI' : 'AI insights'}
+                  {t('interview.hub.aiInsights')}
                 </button>
                 <button
                   type="button"
@@ -3759,7 +3683,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Download size={14} />
-                  {isPolish ? 'Eksport CSV' : 'Export CSV'}
+                  {t('interview.hub.exportCsv')}
                 </button>
                 {/* #8b — Bulk lifecycle actions (scoped to the active filter). */}
                 {sessionLifecycle === 'active' ? (
@@ -3771,7 +3695,7 @@ export const InterviewHub: React.FC = () => {
                       className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <Archive size={14} />
-                      {isPolish ? 'Archiwizuj' : 'Archive'}
+                      {t('interview.hub.archive')}
                     </button>
                     <button
                       type="button"
@@ -3780,7 +3704,7 @@ export const InterviewHub: React.FC = () => {
                       className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <Trash2 size={14} />
-                      {isPolish ? 'Do kosza' : 'Trash'}
+                      {t('interview.hub.trash')}
                     </button>
                   </>
                 ) : null}
@@ -3793,7 +3717,7 @@ export const InterviewHub: React.FC = () => {
                       className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <RotateCcw size={14} />
-                      {isPolish ? 'Przywróć' : 'Restore'}
+                      {t('interview.hub.restore')}
                     </button>
                     <button
                       type="button"
@@ -3802,7 +3726,7 @@ export const InterviewHub: React.FC = () => {
                       className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <Trash2 size={14} />
-                      {isPolish ? 'Do kosza' : 'Trash'}
+                      {t('interview.hub.trash')}
                     </button>
                   </>
                 ) : null}
@@ -3814,7 +3738,7 @@ export const InterviewHub: React.FC = () => {
                     className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <RotateCcw size={14} />
-                    {isPolish ? 'Przywróć' : 'Restore'}
+                    {t('interview.hub.restore')}
                   </button>
                 ) : null}
               </div>
@@ -3856,9 +3780,9 @@ export const InterviewHub: React.FC = () => {
             <div className="flex shrink-0 items-center gap-1.5">
               {(
                 [
-                  { id: 'active', label: isPolish ? 'Aktywne' : 'Active', icon: List },
-                  { id: 'archived', label: isPolish ? 'Archiwum' : 'Archive', icon: Archive },
-                  { id: 'trash', label: isPolish ? 'Kosz' : 'Trash', icon: Trash2 },
+                  { id: 'active', label: t('interview.hub.active'), icon: List },
+                  { id: 'archived', label: t('interview.hub.archive2'), icon: Archive },
+                  { id: 'trash', label: t('interview.hub.trash2'), icon: Trash2 },
                 ] as const
               ).map((lc) => {
                 const Icon = lc.icon;
@@ -3902,7 +3826,7 @@ export const InterviewHub: React.FC = () => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
+          label: t('interview.hub.all'),
           // "All" excludes archived (matches the filter behavior).
           count: templates.filter((t) => String(t.status || 'draft').toLowerCase() !== 'archived')
             .length,
@@ -3910,20 +3834,20 @@ export const InterviewHub: React.FC = () => {
         },
         {
           id: 'draft',
-          label: isPolish ? 'Robocze' : 'Draft',
+          label: t('interview.hub.draft2'),
           count: templates.filter((t) => !t.status || String(t.status).toLowerCase() === 'draft')
             .length,
           onClick: () => setTemplateStatusFilter('draft'),
         },
         {
           id: 'in_review',
-          label: isPolish ? 'W recenzji' : 'In review',
+          label: t('interview.hub.inReview'),
           count: templates.filter((t) => String(t.status).toLowerCase() === 'in_review').length,
           onClick: () => setTemplateStatusFilter('in_review'),
         },
         {
           id: 'approved',
-          label: isPolish ? 'Opublikowane' : 'Published',
+          label: t('interview.hub.published2'),
           count: templates.filter((t) => {
             const s = String(t.status).toLowerCase();
             return s === 'approved' || s === 'published';
@@ -3932,7 +3856,7 @@ export const InterviewHub: React.FC = () => {
         },
         {
           id: 'archived',
-          label: isPolish ? 'Zarchiwizowane' : 'Archived',
+          label: t('interview.hub.archived2'),
           count: templates.filter((t) => String(t.status).toLowerCase() === 'archived').length,
           onClick: () => setTemplateStatusFilter('archived'),
         },
@@ -3945,7 +3869,7 @@ export const InterviewHub: React.FC = () => {
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {selectedCount} {t('interview.hub.selected')}
                 </span>
                 <button
                   type="button"
@@ -3953,7 +3877,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('interview.hub.clear')}
                 </button>
                 <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 <button
@@ -3967,7 +3891,7 @@ export const InterviewHub: React.FC = () => {
                   ) : (
                     <Copy size={14} />
                   )}
-                  {isPolish ? 'Klonuj' : 'Clone'}
+                  {t('interview.hub.clone')}
                 </button>
                 {canAssign &&
                   (isArchived ? (
@@ -3982,7 +3906,7 @@ export const InterviewHub: React.FC = () => {
                       ) : (
                         <RotateCcw size={14} />
                       )}
-                      {isPolish ? 'Przywróć' : 'Restore'}
+                      {t('interview.hub.restore')}
                     </button>
                   ) : (
                     <button
@@ -3996,7 +3920,7 @@ export const InterviewHub: React.FC = () => {
                       ) : (
                         <Archive size={14} />
                       )}
-                      {isPolish ? 'Archiwizuj' : 'Archive'}
+                      {t('interview.hub.archive')}
                     </button>
                   ))}
               </div>
@@ -4052,13 +3976,13 @@ export const InterviewHub: React.FC = () => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
+          label: t('interview.hub.all'),
           count: insightStats.total,
           onClick: () => setInsightStatusFilter('all'),
         },
         {
           id: 'completed',
-          label: isPolish ? 'Gotowe' : 'Ready',
+          label: t('interview.hub.ready'),
           count: insightStats.completed,
           icon: Check,
           onClick: () =>
@@ -4066,14 +3990,14 @@ export const InterviewHub: React.FC = () => {
         },
         {
           id: 'failed',
-          label: isPolish ? 'Błędy' : 'Failed',
+          label: t('interview.hub.failed'),
           count: insightStats.failed,
           icon: AlertTriangle,
           onClick: () => setInsightStatusFilter((prev) => (prev === 'failed' ? 'all' : 'failed')),
         },
         {
           id: 'published',
-          label: isPolish ? 'Opublikowane' : 'Published',
+          label: t('interview.hub.published2'),
           count: insightStats.published,
           icon: Send,
           onClick: () =>
@@ -4093,7 +4017,7 @@ export const InterviewHub: React.FC = () => {
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {selectedCount} {t('interview.hub.selected')}
                 </span>
                 <button
                   type="button"
@@ -4101,7 +4025,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('interview.hub.clear')}
                 </button>
                 <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 <button
@@ -4110,7 +4034,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Download size={14} />
-                  {isPolish ? 'Eksport CSV' : 'Export CSV'}
+                  {t('interview.hub.exportCsv')}
                 </button>
                 {insightScope === 'archived' ? (
                   <button
@@ -4119,7 +4043,7 @@ export const InterviewHub: React.FC = () => {
                     className={MENU_3_ACTION_NEUTRAL}
                   >
                     <RotateCcw size={14} />
-                    {isPolish ? 'Przywróć' : 'Restore'}
+                    {t('interview.hub.restore')}
                   </button>
                 ) : (
                   <button
@@ -4128,7 +4052,7 @@ export const InterviewHub: React.FC = () => {
                     className={MENU_3_ACTION_NEUTRAL}
                   >
                     <Archive size={14} />
-                    {isPolish ? 'Archiwizuj' : 'Archive'}
+                    {t('interview.hub.archive')}
                   </button>
                 )}
               </div>
@@ -4172,10 +4096,10 @@ export const InterviewHub: React.FC = () => {
                   setInsightScope((prev) => (prev === 'archived' ? 'active' : 'archived'))
                 }
                 className={`${chipBase} ${insightScope === 'archived' ? chipActive : chipInactive}`}
-                title={isPolish ? 'Pokaż zarchiwizowane wnioski' : 'Show archived insights'}
+                title={t('interview.hub.showArchivedInsights')}
               >
                 <Archive size={14} />
-                <span>{isPolish ? 'Zarchiwizowane' : 'Archived'}</span>
+                <span>{t('interview.hub.archived2')}</span>
               </button>
             </div>
             <div className="shrink-0" />
@@ -4201,24 +4125,24 @@ export const InterviewHub: React.FC = () => {
       }> = [
         {
           id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
+          label: t('interview.hub.all'),
           count: interviewInitiativeStats.total,
         },
         {
           id: 'draft',
-          label: isPolish ? 'Szkice' : 'Drafts',
+          label: t('interview.hub.drafts'),
           count: interviewInitiativeStats.draft,
           icon: Edit2,
         },
         {
           id: 'pending_review',
-          label: isPolish ? 'Do przegladu' : 'Pending review',
+          label: t('interview.hub.pendingReview3'),
           count: interviewInitiativeStats.pendingReview,
           icon: Clock,
         },
         {
           id: 'promoted',
-          label: isPolish ? 'Przekazane dalej' : 'Moved forward',
+          label: t('interview.hub.movedForward'),
           count: interviewInitiativeStats.promoted,
           icon: Rocket,
         },
@@ -4251,7 +4175,7 @@ export const InterviewHub: React.FC = () => {
         setSelectedInitiativeIds(new Set());
         await loadInterviewInitiatives();
         toast.success(
-          isPolish ? `Zaktualizowano (${targetIds.length})` : `Updated (${targetIds.length})`
+          t('interview.hub.updatedCountParen', { count: targetIds.length })
         );
       };
 
@@ -4277,7 +4201,7 @@ export const InterviewHub: React.FC = () => {
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {selectedCount} {t('interview.hub.selected')}
                 </span>
                 <button
                   type="button"
@@ -4285,7 +4209,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
-                  {isPolish ? 'Odznacz' : 'Clear'}
+                  {t('interview.hub.clear')}
                 </button>
                 {/* Separator — status-zależne */}
                 <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
@@ -4297,7 +4221,7 @@ export const InterviewHub: React.FC = () => {
                     className={MENU_3_ACTION_NEUTRAL}
                   >
                     <ArrowRight size={14} />
-                    {isPolish ? 'Wyślij do przeglądu' : 'Send to review'}
+                    {t('interview.hub.sendToReview')}
                   </button>
                 )}
                 {/* Zatwierdź — tylko gdy zaznaczone są pending + canReview */}
@@ -4315,7 +4239,7 @@ export const InterviewHub: React.FC = () => {
                     className={MENU_3_ACTION_NEUTRAL}
                   >
                     <Rocket size={14} />
-                    {isPolish ? 'Zatwierdź i przekaż dalej' : 'Approve & move forward'}
+                    {t('interview.hub.approveMoveForward')}
                   </button>
                 )}
                 {/* Otwórz w module — dla zaznaczonych promoted (zawsze dostępna akcja) */}
@@ -4332,7 +4256,7 @@ export const InterviewHub: React.FC = () => {
                     className={MENU_3_ACTION_NEUTRAL}
                   >
                     <ExternalLink size={14} />
-                    {isPolish ? 'Otwórz w module' : 'Open in module'}
+                    {t('interview.hub.openInModule')}
                   </button>
                 )}
                 {/* Separator + lifecycle (backlog B-1 — disabled z notą) */}
@@ -4340,11 +4264,11 @@ export const InterviewHub: React.FC = () => {
                 <button
                   type="button"
                   disabled
-                  title={isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)'}
+                  title={t('interview.hub.comingSoonBackend')}
                   className={`${MENU_3_ACTION_NEUTRAL} cursor-not-allowed opacity-40`}
                 >
                   <Archive size={14} />
-                  {isPolish ? 'Archiwizuj' : 'Archive'}
+                  {t('interview.hub.archive')}
                 </button>
               </div>
               <div className="shrink-0" />
@@ -4484,7 +4408,7 @@ export const InterviewHub: React.FC = () => {
     const sessionColumns: StandardTableColumn[] = [
       {
         id: 'name',
-        label: isPolish ? 'Nazwa' : 'Name',
+        label: t('interview.hub.name'),
         render: (row: InterviewSession) => (
           <div className="flex items-center gap-3 min-w-0">
             <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
@@ -4498,7 +4422,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'template',
-        label: isPolish ? 'Szablon' : 'Template',
+        label: t('interview.hub.template2'),
         width: '160px',
         filterable: true,
         filterOptions: sessionFilterOptions.template,
@@ -4510,20 +4434,20 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'assignee',
-        label: isPolish ? 'Przydzielony' : 'Assignee',
+        label: t('interview.hub.assignee'),
         width: '170px',
         filterable: true,
         filterOptions: sessionFilterOptions.assignee,
         render: (row: InterviewSession) => (
           <AssigneeCell
             name={row.assigneeName || row.respondentName || null}
-            unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+            unassignedLabel={t('interview.hub.unassigned')}
           />
         ),
       },
       {
         id: 'status',
-        label: isPolish ? 'Status' : 'Status',
+        label: t('interview.hub.status'),
         width: '150px',
         filterable: true,
         filterOptions: sessionFilterOptions.status,
@@ -4533,21 +4457,21 @@ export const InterviewHub: React.FC = () => {
           return (
             <EntityStatusChip
               status={workflowStatus}
-              label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+              label={t(`interview.hub.sessionStatusLabel.${workflowStatus}`, statusConfig.label.en)}
             />
           );
         },
       },
       {
         id: 'progress',
-        label: isPolish ? 'Postęp' : 'Progress',
+        label: t('interview.hub.progress'),
         width: '130px',
         align: 'right',
         render: (row: InterviewSession) => <ProgressCell value={getSessionProgress(row)} />,
       },
       {
         id: 'due',
-        label: isPolish ? 'Termin' : 'Due',
+        label: t('interview.hub.due'),
         width: '160px',
         sortable: true,
         sortAccessor: (row: InterviewSession) => (row.dueAt ? new Date(row.dueAt).getTime() : 0),
@@ -4567,9 +4491,9 @@ export const InterviewHub: React.FC = () => {
             <DueChip
               label={
                 overdue
-                  ? isPolish
-                    ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
-                    : `${absDays}d overdue`
+                  ? absDays === 1
+                    ? t('interview.hub.overdueDaysOne', { count: absDays })
+                    : t('interview.hub.overdueDaysOther', { count: absDays })
                   : dateLabel
               }
               risk={overdue ? 'overdue' : 'none'}
@@ -4581,7 +4505,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'submitted',
-        label: isPolish ? 'Wysłano' : 'Submitted',
+        label: t('interview.hub.submitted2'),
         width: '150px',
         sortable: true,
         sortAccessor: (row: InterviewSession) =>
@@ -4615,18 +4539,16 @@ export const InterviewHub: React.FC = () => {
         rowDescription={(row) => {
           const session = row as unknown as InterviewSession;
           const secondaryMeta = session.templateName || session.templateCategory || '—';
-          return `${isPolish ? 'Szablon' : 'Template'}: ${secondaryMeta}`;
+          return `${t('interview.hub.template2')}: ${secondaryMeta}`;
         }}
         defaultSort={{ columnId: 'due', direction: 'asc' }}
         persistKey="interview.sessions.list"
         selection={{ selectedIds: selectedSessionIds, onChange: setSelectedSessionIds }}
         empty={{
           icon: Brain,
-          title: isPolish ? 'Przeprowadź pierwszy wywiad' : 'Run your first interview',
-          description: isPolish
-            ? 'Rozpocznij pierwszy wywiad z interesariuszem. Wybierz szablon lub zbuduj go od podstaw.'
-            : 'Start your first stakeholder interview. Pick a template or build one from scratch.',
-          actionLabel: isPolish ? 'Użyj szablonu' : 'Use a template',
+          title: t('interview.hub.runYourFirstInterview'),
+          description: t('interview.hub.startYourFirstStakeholderInterview'),
+          actionLabel: t('interview.hub.useATemplate'),
           onAction: () => {
             setActiveTab('templates');
             setActiveDocumentId(null);
@@ -4646,7 +4568,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'approve',
-                      label: isPolish ? 'Zatwierdź' : 'Approve',
+                      label: t('interview.hub.approve'),
                       icon: Check,
                       onClick: () => handleApproveAssignment(linkedAssignment),
                     },
@@ -4656,7 +4578,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'generate-insight',
-                      label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
+                      label: t('interview.hub.generateAiInsights'),
                       icon: Lightbulb,
                       onClick: () => handleGenerateInsight(session, 'summary'),
                     },
@@ -4668,7 +4590,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'send-back',
-                      label: isPolish ? 'Odeślij' : 'Send back',
+                      label: t('interview.hub.sendBack2'),
                       icon: ArrowRight,
                       onClick: () => handleOpenSendBackModal(linkedAssignment),
                     },
@@ -4678,7 +4600,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'remind',
-                      label: isPolish ? 'Przypomnij' : 'Remind',
+                      label: t('interview.hub.remind'),
                       icon: Clock,
                       onClick: () => handleOpenReminderModal(linkedAssignment),
                     },
@@ -4690,7 +4612,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'restore',
-                      label: isPolish ? 'Przywróć' : 'Restore',
+                      label: t('interview.hub.restore'),
                       icon: RotateCcw,
                       disabled: sessionLifecycleBusy,
                       onClick: () => handleSessionLifecycleAction(session, 'restore'),
@@ -4701,7 +4623,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'untrash',
-                      label: isPolish ? 'Przywróć' : 'Restore',
+                      label: t('interview.hub.restore'),
                       icon: RotateCcw,
                       disabled: sessionLifecycleBusy,
                       onClick: () => handleSessionLifecycleAction(session, 'untrash'),
@@ -4713,11 +4635,11 @@ export const InterviewHub: React.FC = () => {
               ? [
                   {
                     id: 'delay',
-                    label: isPolish ? 'Odłóż termin' : 'Delay',
+                    label: t('interview.hub.delay'),
                     icon: Clock,
                     submenu: [1, 3, 7].map((d) => ({
                       id: `delay-${d}`,
-                      label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                      label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
                       icon: Clock,
                       onClick: () => void handleDelayAssignment(linkedAssignment, d),
                     })),
@@ -4733,20 +4655,18 @@ export const InterviewHub: React.FC = () => {
               archiveNote:
                 sessionLifecycle === 'active'
                   ? undefined
-                  : isPolish
-                    ? 'Użyj „Przywróć” powyżej'
-                    : 'Use “Restore” above',
+                  : t('interview.hub.useRestoreAbove'),
               // Brak endpointu edycji sesji — disabled z notą (StandardTable dokłada ją sama).
             },
             destructive:
               sessionLifecycle === 'archived'
                 ? {
-                    label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                    label: t('interview.hub.moveToTrash'),
                     onClick: () => handleSessionLifecycleAction(session, 'trash'),
                   }
                 : sessionLifecycle === 'trash'
                   ? {
-                      label: isPolish ? 'Usuń na stałe' : 'Delete forever',
+                      label: t('interview.hub.deleteForever'),
                       onClick: () => {
                         setSessionDeleteConfirmText('');
                         setSessionDeleteTarget(session);
@@ -4754,7 +4674,7 @@ export const InterviewHub: React.FC = () => {
                     }
                   : {
                       // sessionLifecycle === 'active' — archiwizuj najpierw (StandardTable dokłada notę).
-                      note: isPolish ? 'Archiwizuj najpierw' : 'Archive first',
+                      note: t('interview.hub.archiveFirst'),
                     },
           };
         }}
@@ -4787,13 +4707,13 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'approve',
-                      label: isPolish ? 'Zatwierdź' : 'Approve',
+                      label: t('interview.hub.approve'),
                       icon: Check,
                       onClick: () => handleApproveAssignment(linkedAssignment),
                     },
                     {
                       id: 'send-back',
-                      label: isPolish ? 'Odeślij' : 'Send back',
+                      label: t('interview.hub.sendBack2'),
                       icon: ArrowRight,
                       onClick: () => handleOpenSendBackModal(linkedAssignment),
                       variant: 'danger' as const,
@@ -4804,7 +4724,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'remind',
-                      label: isPolish ? 'Przypomnij' : 'Remind',
+                      label: t('interview.hub.remind'),
                       icon: Clock,
                       onClick: () => handleOpenReminderModal(linkedAssignment),
                     },
@@ -4814,7 +4734,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'generate-insight',
-                      label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
+                      label: t('interview.hub.generateAiInsights'),
                       icon: Lightbulb,
                       onClick: () => handleGenerateInsight(session, 'summary'),
                     },
@@ -4829,24 +4749,24 @@ export const InterviewHub: React.FC = () => {
             actions: [
               {
                 id: 'open_preview',
-                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                label: t('interview.hub.openPreview'),
                 icon: ChevronRight,
                 onClick: () =>
                   onCardClick ? onCardClick(session.id) : setPreviewSessionId(session.id),
               },
               {
                 id: 'edit',
-                label: isPolish ? 'Edytuj' : 'Edit',
+                label: t('interview.hub.edit'),
                 icon: Edit2,
                 disabled: true,
-                description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                description: t('interview.hub.comingSoonBackend'),
                 onClick: () => {},
               },
               ...(sessionLifecycle === 'active'
                 ? [
                     {
                       id: 'archive',
-                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                      label: t('interview.hub.archive'),
                       icon: Archive,
                       disabled: sessionLifecycleBusy,
                       onClick: () => handleSessionLifecycleAction(session, 'archive'),
@@ -4857,7 +4777,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'restore',
-                      label: isPolish ? 'Przywróć' : 'Restore',
+                      label: t('interview.hub.restore'),
                       icon: RotateCcw,
                       disabled: sessionLifecycleBusy,
                       onClick: () => handleSessionLifecycleAction(session, 'restore'),
@@ -4868,7 +4788,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'untrash',
-                      label: isPolish ? 'Przywróć' : 'Restore',
+                      label: t('interview.hub.restore'),
                       icon: RotateCcw,
                       disabled: sessionLifecycleBusy,
                       onClick: () => handleSessionLifecycleAction(session, 'untrash'),
@@ -4879,12 +4799,12 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'delay',
-                      label: isPolish ? 'Odłóż termin' : 'Delay',
+                      label: t('interview.hub.delay'),
                       icon: Clock,
                       onClick: () => {},
                       submenu: [1, 3, 7].map((d) => ({
                         id: `delay-${d}`,
-                        label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                        label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
                         icon: Clock,
                         onClick: () => void handleDelayAssignment(linkedAssignment, d),
                       })),
@@ -4902,11 +4822,11 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'trash-from-active',
-                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                      label: t('interview.hub.moveToTrash'),
                       icon: Trash2,
                       variant: 'danger' as const,
                       disabled: true,
-                      description: isPolish ? 'Archiwizuj najpierw' : 'Archive first',
+                      description: t('interview.hub.archiveFirst'),
                       onClick: () => {},
                     },
                   ]
@@ -4915,7 +4835,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'trash',
-                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                      label: t('interview.hub.moveToTrash'),
                       icon: Trash2,
                       variant: 'danger' as const,
                       disabled: sessionLifecycleBusy,
@@ -4927,7 +4847,7 @@ export const InterviewHub: React.FC = () => {
                 ? [
                     {
                       id: 'delete-forever',
-                      label: isPolish ? 'Usuń na stałe' : 'Delete forever',
+                      label: t('interview.hub.deleteForever'),
                       icon: Trash2,
                       variant: 'danger' as const,
                       disabled: sessionLifecycleBusy,
@@ -5017,11 +4937,11 @@ export const InterviewHub: React.FC = () => {
               {/* canon §4.1/§8.1: status via EntityStatusChip (statusChipTone → c.*) */}
               <EntityStatusChip
                 status={workflowStatus}
-                label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                label={t(`interview.hub.sessionStatusLabel.${workflowStatus}`, statusConfig.label.en)}
               />
               <span className="text-xs text-slate-600 dark:text-slate-400">
                 {session.dueAt
-                  ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
+                  ? `${t('interview.hub.due2')} ${new Date(session.dueAt).toLocaleDateString()}`
                   : new Date(session.startedAt).toLocaleDateString()}
               </span>
             </div>
@@ -5038,7 +4958,7 @@ export const InterviewHub: React.FC = () => {
                     className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-200 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25 transition-colors"
                   >
                     <Check size={12} />
-                    {isPolish ? 'Zatwierdź' : 'Approve'}
+                    {t('interview.hub.approve')}
                   </button>
                   <button
                     type="button"
@@ -5049,7 +4969,7 @@ export const InterviewHub: React.FC = () => {
                     className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-200 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25 transition-colors"
                   >
                     <ArrowRight size={12} />
-                    {isPolish ? 'Odeślij' : 'Send back'}
+                    {t('interview.hub.sendBack2')}
                   </button>
                 </>
               )}
@@ -5063,7 +4983,7 @@ export const InterviewHub: React.FC = () => {
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:border-slate-500/30 dark:bg-slate-500/15 dark:text-slate-300 dark:hover:bg-slate-500/25 transition-colors"
                 >
                   <Clock size={12} />
-                  {isPolish ? 'Przypomnij' : 'Remind'}
+                  {t('interview.hub.remind')}
                 </button>
               )}
               {isApproved && (
@@ -5076,7 +4996,7 @@ export const InterviewHub: React.FC = () => {
                   className="inline-flex items-center gap-1.5 rounded-full border border-c-info bg-c-info/10 px-2.5 py-1 text-[11px] font-medium text-c-info hover:bg-c-info/10 dark:border-c-info/30 dark:bg-c-info/15 dark:text-c-info dark:hover:bg-c-info/25 transition-colors"
                 >
                   <Lightbulb size={12} />
-                  {isPolish ? 'AI insight' : 'AI insight'}
+                  {t('interview.hub.aiInsight')}
                 </button>
               )}
             </div>
@@ -5184,14 +5104,14 @@ export const InterviewHub: React.FC = () => {
       await V8InterviewApi.exportInsight(insightId, { target: 'tools' }).catch(() =>
         Api.post(`/interview/insights/${insightId}/export`, { target: 'tools' })
       );
-      toast.success(isPolish ? 'Wyeksportowano do narzędzi' : 'Exported to tools');
+      toast.success(t('interview.hub.exportedToTools'));
       // Refresh insights
       const insightsRes = await V8InterviewApi.listInsights()
         .then((r) => r.insights)
         .catch(() => Api.get('/interview/insights').catch(() => []));
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
+      toast.error(t('interview.hub.failedToExport'));
       console.error('[InterviewHub] Failed to export insight:', error);
     }
   };
@@ -5201,13 +5121,13 @@ export const InterviewHub: React.FC = () => {
       await V8InterviewApi.exportInsight(insightId, { target: 'assessment' }).catch(() =>
         Api.post(`/interview/insights/${insightId}/export`, { target: 'assessment' })
       );
-      toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
+      toast.success(t('interview.hub.exportedToAssessment'));
       const insightsRes = await V8InterviewApi.listInsights()
         .then((r) => r.insights)
         .catch(() => Api.get('/interview/insights').catch(() => []));
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
+      toast.error(t('interview.hub.failedToExport'));
       console.error('[InterviewHub] Failed to export insight to assessment:', error);
     }
   };
@@ -5216,9 +5136,7 @@ export const InterviewHub: React.FC = () => {
   const handleDeleteInsight = async (insightId: string) => {
     if (
       !confirm(
-        isPolish
-          ? 'Czy na pewno chcesz usunąć ten wniosek?'
-          : 'Are you sure you want to delete this insight?'
+        t('interview.hub.areYouSureYouWant')
       )
     ) {
       return;
@@ -5227,10 +5145,10 @@ export const InterviewHub: React.FC = () => {
       await V8InterviewApi.deleteInsight(insightId).catch(() =>
         Api.delete(`/interview/insights/${insightId}`)
       );
-      toast.success(isPolish ? 'Wniosek usunięty' : 'Insight deleted');
+      toast.success(t('interview.hub.insightDeleted'));
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete');
+      toast.error(t('interview.hub.failedToDelete'));
       console.error('[InterviewHub] Failed to delete insight:', error);
     }
   };
@@ -5250,22 +5168,14 @@ export const InterviewHub: React.FC = () => {
       });
       toast.success(
         archived
-          ? isPolish
-            ? 'Wniosek zarchiwizowany'
-            : 'Insight archived'
-          : isPolish
-            ? 'Wniosek przywrócony'
-            : 'Insight restored'
+          ? t('interview.hub.insightArchived')
+          : t('interview.hub.insightRestored')
       );
     } catch (error) {
       toast.error(
         archived
-          ? isPolish
-            ? 'Nie udało się zarchiwizować'
-            : 'Failed to archive'
-          : isPolish
-            ? 'Nie udało się przywrócić'
-            : 'Failed to restore'
+          ? t('interview.hub.failedToArchive')
+          : t('interview.hub.failedToRestore')
       );
       console.error('[InterviewHub] Failed to set insight archived:', error);
     }
@@ -5280,10 +5190,10 @@ export const InterviewHub: React.FC = () => {
     try {
       const newInsight = await V8InterviewApi.forkInsight(insightId);
       if (!newInsight?.id) {
-        toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
+        toast.error(t('interview.hub.failedToForkInsight'));
         return;
       }
-      toast.success(isPolish ? 'Utworzono kopię insightu' : 'Insight forked');
+      toast.success(t('interview.hub.insightForked'));
       const insightsRes = await V8InterviewApi.listInsights()
         .then((r) => r.insights)
         .catch(() => Api.get('/interview/insights').catch(() => []));
@@ -5292,11 +5202,11 @@ export const InterviewHub: React.FC = () => {
         id: newInsight.id,
         type: 'interview_insight',
         subType: 'interview',
-        name: newInsight.title || (isPolish ? 'Insight' : 'Insight'),
+        name: newInsight.title || (t('interview.hub.insight')),
         status: (newInsight.status || 'active').toUpperCase() as any,
       });
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
+      toast.error(t('interview.hub.failedToForkInsight'));
       console.error('[InterviewHub] Failed to fork insight:', error);
     } finally {
       setForkingInsightIds((prev) => {
@@ -5323,16 +5233,12 @@ export const InterviewHub: React.FC = () => {
       setInsights((prev) => prev.filter((i) => !idSet.has(i.id)));
       setSelectedInsightIds(new Set());
       toast.success(
-        archived
-          ? isPolish
-            ? `Zarchiwizowano (${ids.length})`
-            : `Archived (${ids.length})`
-          : isPolish
-            ? `Przywrócono (${ids.length})`
-            : `Restored (${ids.length})`
+        t(archived ? 'interview.hub.archivedCountParen' : 'interview.hub.restoredCountParen', {
+          count: ids.length,
+        })
       );
     } catch (error) {
-      toast.error(isPolish ? 'Operacja częściowo nieudana' : 'Operation partially failed');
+      toast.error(t('interview.hub.operationPartiallyFailed'));
       console.error('[InterviewHub] Bulk archive/restore failed:', error);
     }
   };
@@ -5348,7 +5254,7 @@ export const InterviewHub: React.FC = () => {
   ) => {
     const insightStatusCopy = (
       insight: (typeof rows)[number]
-    ): { label: { en: string; pl: string }; statusKey: string } => {
+    ): { label: { en: string; pl: string }; statusKey: string; labelKey: string } => {
       const status = (insight.reviewStatus === 'in_review' || insight.reviewStatus === 'published'
         ? insight.reviewStatus
         : insight.status) || 'completed';
@@ -5360,13 +5266,14 @@ export const InterviewHub: React.FC = () => {
         published: { label: { en: 'Published', pl: 'Opublikowane' }, statusKey: 'APPROVED' },
         failed: { label: { en: 'Failed', pl: 'Błąd' }, statusKey: 'BLOCKED' },
       };
-      return configs[status] || configs.completed;
+      const resolvedStatus = configs[status] ? status : 'completed';
+      return { ...(configs[status] || configs.completed), labelKey: resolvedStatus };
     };
 
     const insightColumns: StandardTableColumn[] = [
       {
         id: 'title',
-        label: isPolish ? 'Tytuł' : 'Title',
+        label: t('interview.hub.title'),
         sortable: true,
         sortAccessor: (row: (typeof rows)[number]) => row.title || '',
         render: (row: (typeof rows)[number]) => (
@@ -5377,7 +5284,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'type',
-        label: isPolish ? 'Typ' : 'Type',
+        label: t('interview.hub.type'),
         width: '160px',
         filterable: true,
         filterOptions: INSIGHT_TYPE_FILTER_OPTIONS,
@@ -5396,14 +5303,14 @@ export const InterviewHub: React.FC = () => {
                   style={{ backgroundColor: categoryTone(promptType)! }}
                 />
               ) : null}
-              {isPolish ? typeConfig.label.pl : typeConfig.label.en}
+              {t(`interview.hub.insightTypeLabel.${promptType}`, typeConfig.label.en)}
             </span>
           );
         },
       },
       {
         id: 'status',
-        label: isPolish ? 'Status' : 'Status',
+        label: t('interview.hub.status'),
         width: '150px',
         filterable: true,
         filterOptions: INSIGHT_STATUS_FILTER_OPTIONS,
@@ -5428,14 +5335,14 @@ export const InterviewHub: React.FC = () => {
           return (
             <EntityStatusChip
               status={statusCopy.statusKey}
-              label={isPolish ? statusCopy.label.pl : statusCopy.label.en}
+              label={t(`interview.hub.insightStatusLabel.${statusCopy.labelKey}`, statusCopy.label.en)}
             />
           );
         },
       },
       {
         id: 'source',
-        label: isPolish ? 'Źródło' : 'Source',
+        label: t('interview.hub.source'),
         width: '150px',
         filterable: true,
         filterOptions: INSIGHT_SOURCE_FILTER_OPTIONS,
@@ -5449,14 +5356,14 @@ export const InterviewHub: React.FC = () => {
           return (
             <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
               <ClipboardList size={11} />
-              {sessionCount} {sessionCount === 1 ? (isPolish ? 'sesja' : 'session') : isPolish ? 'sesji' : 'sessions'}
+              {sessionCount} {sessionCount === 1 ? (t('interview.hub.session')) : t('interview.hub.sessions2')}
             </span>
           );
         },
       },
       {
         id: 'exports',
-        label: isPolish ? 'Wyeksportowano' : 'Exported to',
+        label: t('interview.hub.exportedTo'),
         width: '160px',
         filterable: true,
         filterOptions: INSIGHT_EXPORTS_FILTER_OPTIONS,
@@ -5466,13 +5373,13 @@ export const InterviewHub: React.FC = () => {
               {row.exportedToTools && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
                   <Send size={10} />
-                  {isPolish ? 'Narzędzia' : 'Tools'}
+                  {t('interview.hub.tools')}
                 </span>
               )}
               {row.exportedToAssessment && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
                   <FileText size={10} />
-                  {isPolish ? 'Ocena' : 'Assessment'}
+                  {t('interview.hub.assessment')}
                 </span>
               )}
             </div>
@@ -5482,7 +5389,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'date',
-        label: isPolish ? 'Data' : 'Date',
+        label: t('interview.hub.date'),
         width: '130px',
         sortable: true,
         sortAccessor: (row: (typeof rows)[number]) =>
@@ -5523,14 +5430,10 @@ export const InterviewHub: React.FC = () => {
         selection={{ selectedIds: selectedInsightIds, onChange: setSelectedInsightIds }}
         empty={{
           icon: Lightbulb,
-          title: isPolish ? 'Brak wniosków' : 'No insights yet',
-          description: isPolish
-            ? 'Wnioski są generowane automatycznie przez AI na podstawie zakończonych wywiadów. Kliknij "Nowy Insight" aby wygenerować wnioski z wybranych sesji.'
-            : 'Insights are generated automatically by AI based on completed interviews. Click "New Insight" to generate insights from selected sessions.',
+          title: t('interview.hub.noInsightsYet'),
+          description: t('interview.hub.insightsAreGeneratedAutomaticallyBy'),
           actionLabel: canCreateInsights
-            ? isPolish
-              ? 'Generuj wnioski AI'
-              : 'Generate AI Insights'
+            ? t('interview.hub.generateAiInsights')
             : undefined,
           onAction: canCreateInsights
             ? () => {
@@ -5546,7 +5449,7 @@ export const InterviewHub: React.FC = () => {
             primary: [
               {
                 id: 'download',
-                label: isPolish ? 'Pobierz' : 'Download',
+                label: t('interview.hub.download'),
                 icon: Download,
                 onClick: () => {
                   const promptType =
@@ -5565,7 +5468,7 @@ export const InterviewHub: React.FC = () => {
               // kebaba wiersza: tworzy niezależną kopię insightu i otwiera ją.
               {
                 id: 'fork',
-                label: isPolish ? 'Rozgałęź' : 'Fork',
+                label: t('interview.hub.fork'),
                 icon: GitFork,
                 disabled: forkingInsightIds.has(insight.id),
                 onClick: () => handleForkInsight(insight.id),
@@ -5582,12 +5485,8 @@ export const InterviewHub: React.FC = () => {
               {
                 id: 'export-tools',
                 label: insight.exportedToTools
-                  ? isPolish
-                    ? 'Wyeksportowano do Tools'
-                    : 'Exported to Tools'
-                  : isPolish
-                    ? 'Tools'
-                    : 'Tools',
+                  ? t('interview.hub.exportedToTools')
+                  : t('interview.hub.tools'),
                 icon: Send,
                 disabled: !!insight.exportedToTools,
                 onClick: () => handleExportInsightToTools(insight.id),
@@ -5595,54 +5494,48 @@ export const InterviewHub: React.FC = () => {
               {
                 id: 'export-assessment',
                 label: insight.exportedToAssessment
-                  ? isPolish
-                    ? 'Wyeksportowano do Assessment'
-                    : 'Exported to Assessment'
-                  : isPolish
-                    ? 'Assessment'
-                    : 'Assessment',
+                  ? t('interview.hub.exportedToAssessment')
+                  : t('interview.hub.assessment'),
                 icon: FileText,
                 disabled: !!insight.exportedToAssessment,
                 onClick: () => handleExportInsightToAssessment(insight.id),
               },
               {
                 id: 'convert-initiative',
-                label: isPolish ? 'Inicjatywa' : 'Initiative',
+                label: t('interview.hub.initiative'),
                 icon: Target,
-                note: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                note: t('interview.hub.comingSoonBackend'),
               },
               {
                 id: 'convert-presentation',
-                label: isPolish ? 'Prezentacja' : 'Presentation',
+                label: t('interview.hub.presentation'),
                 icon: Presentation,
-                note: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                note: t('interview.hub.comingSoonBackend'),
               },
             ],
             universalHandlers: {
               preview: () => (opts?.onRowClick ? opts.onRowClick(insight.id) : handleViewInsight(insight)),
               edit: undefined,
-              editNote: isPolish ? 'Wnioski AI — tylko do odczytu' : 'AI-generated — read-only',
+              editNote: t('interview.hub.aiGeneratedReadOnly'),
               archive: isArchived
                 ? undefined
                 : () => handleSetInsightArchived(insight.id, true),
               archiveNote: isArchived
-                ? isPolish
-                  ? 'Użyj „Przywróć” poniżej'
-                  : 'Use “Restore” below'
+                ? t('interview.hub.useRestoreBelow')
                 : undefined,
             },
             statusTransitions: isArchived
               ? [
                   {
                     id: 'restore',
-                    label: isPolish ? 'Przywróć' : 'Restore',
+                    label: t('interview.hub.restore'),
                     icon: RotateCcw,
                     onClick: () => handleSetInsightArchived(insight.id, false),
                   },
                 ]
               : [],
             destructive: {
-              label: isPolish ? 'Usuń' : 'Delete',
+              label: t('interview.hub.delete'),
               onClick: () => handleDeleteInsight(insight.id),
             },
           };
@@ -5663,15 +5556,13 @@ export const InterviewHub: React.FC = () => {
       actions: [
         {
           id: 'use',
-          label: isPolish ? 'Użyj szablonu' : 'Use template',
+          label: t('interview.hub.useTemplate'),
           icon: Sparkles,
           onClick: async () => {
             const projectId = await ensureProjectId();
             if (!projectId) {
               toast.error(
-                isPolish
-                  ? 'Wybierz projekt przed utworzeniem sesji'
-                  : 'Select a project before creating a session'
+                t('interview.hub.selectAProjectBeforeCreating')
               );
               return;
             }
@@ -5689,10 +5580,10 @@ export const InterviewHub: React.FC = () => {
                   name: newSession.name || 'Interview Session',
                   status: ((newSession as any)?.status || 'in_progress').toUpperCase() as any,
                 });
-                toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
+                toast.success(t('interview.hub.sessionCreated'));
               })
               .catch(() => {
-                toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
+                toast.error(t('interview.hub.failedToCreateSession'));
               });
           },
         },
@@ -5700,7 +5591,7 @@ export const InterviewHub: React.FC = () => {
           ? [
               {
                 id: 'assign',
-                label: isPolish ? 'Przydziel' : 'Assign',
+                label: t('interview.hub.assign'),
                 icon: UserPlus,
                 onClick: () => {
                   setSelectedTemplateForAssign(template);
@@ -5711,13 +5602,13 @@ export const InterviewHub: React.FC = () => {
           : []),
         {
           id: 'clone',
-          label: isPolish ? 'Klonuj szablon' : 'Clone template',
+          label: t('interview.hub.cloneTemplate'),
           icon: Copy,
           onClick: () => handleCloneTemplate(template),
         },
         {
           id: 'view-usage',
-          label: isPolish ? 'Zobacz użycie' : 'View usage',
+          label: t('interview.hub.viewUsage'),
           icon: BarChart3,
           rightLabel: String(getTemplateUsageCount(template)),
           onClick: () => handleViewTemplate(template),
@@ -5727,12 +5618,8 @@ export const InterviewHub: React.FC = () => {
               {
                 id: 'toggle-default',
                 label: template.isDefault
-                  ? isPolish
-                    ? 'Usuń jako domyślny'
-                    : 'Unset default'
-                  : isPolish
-                    ? 'Ustaw jako domyślny'
-                    : 'Set as default',
+                  ? t('interview.hub.unsetDefault')
+                  : t('interview.hub.setAsDefault'),
                 icon: template.isDefault ? StarOff : Star,
                 onClick: () => handleToggleTemplateDefault(template),
               },
@@ -5748,17 +5635,17 @@ export const InterviewHub: React.FC = () => {
       actions: [
         {
           id: 'open',
-          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          label: t('interview.hub.openPreview'),
           icon: ChevronRight,
           // canon §9: "Open preview" → side pane, NOT full view
           onClick: () => setSelectedTemplateId(template.id),
         },
         {
           id: 'edit',
-          label: isPolish ? 'Edytuj szablon' : 'Edit template',
+          label: t('interview.hub.editTemplate'),
           icon: Edit2,
           disabled: !canAssign,
-          description: !canAssign ? (isPolish ? 'Tylko menedżer' : 'Manager only') : undefined,
+          description: !canAssign ? (t('interview.hub.managerOnly')) : undefined,
           onClick: () => canAssign && handleEditTemplate(template.id),
         },
         ...(canAssign && !template.isDefault
@@ -5766,7 +5653,7 @@ export const InterviewHub: React.FC = () => {
             ? [
                 {
                   id: 'restore',
-                  label: isPolish ? 'Przywróć szablon' : 'Restore template',
+                  label: t('interview.hub.restoreTemplate'),
                   icon: RotateCcw,
                   onClick: () => handleRestoreTemplate(template),
                 },
@@ -5774,7 +5661,7 @@ export const InterviewHub: React.FC = () => {
             : [
                 {
                   id: 'archive',
-                  label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                  label: t('interview.hub.archiveTemplate'),
                   icon: Archive,
                   onClick: () => handleArchiveTemplate(template),
                 },
@@ -5783,10 +5670,10 @@ export const InterviewHub: React.FC = () => {
             ? [
                 {
                   id: 'archive',
-                  label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                  label: t('interview.hub.archiveTemplate'),
                   icon: Archive,
                   disabled: true,
-                  description: isPolish ? 'Tylko menedżer' : 'Manager only',
+                  description: t('interview.hub.managerOnly'),
                   onClick: () => {},
                 },
               ]
@@ -5802,7 +5689,7 @@ export const InterviewHub: React.FC = () => {
           ? [
               {
                 id: 'delete',
-                label: isPolish ? 'Usuń szablon' : 'Delete template',
+                label: t('interview.hub.deleteTemplate'),
                 icon: Trash2,
                 onClick: () => handleDeleteTemplate(template),
                 variant: 'danger' as const,
@@ -5812,11 +5699,11 @@ export const InterviewHub: React.FC = () => {
             ? [
                 {
                   id: 'delete',
-                  label: isPolish ? 'Usuń szablon' : 'Delete template',
+                  label: t('interview.hub.deleteTemplate'),
                   icon: Trash2,
                   variant: 'danger' as const,
                   disabled: true,
-                  description: isPolish ? 'Tylko menedżer' : 'Manager only',
+                  description: t('interview.hub.managerOnly'),
                   onClick: () => {},
                 },
               ]
@@ -5833,7 +5720,7 @@ export const InterviewHub: React.FC = () => {
     const templateColumns: StandardTableColumn[] = [
       {
         id: 'name',
-        label: isPolish ? 'Nazwa' : 'Name',
+        label: t('interview.hub.name'),
         sortable: true,
         sortAccessor: (row: InterviewTemplate) => row.name || '',
         render: (row: InterviewTemplate) => (
@@ -5849,7 +5736,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'category',
-        label: isPolish ? 'Kategoria' : 'Category',
+        label: t('interview.hub.category'),
         width: '170px',
         filterable: true,
         filterOptions: TEMPLATE_CATEGORY_FILTER_OPTIONS,
@@ -5873,7 +5760,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'questions',
-        label: isPolish ? 'Pytania' : 'Questions',
+        label: t('interview.hub.questions'),
         width: '110px',
         align: 'right',
         sortable: true,
@@ -5884,7 +5771,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'usage',
-        label: isPolish ? 'Użycia' : 'Usage',
+        label: t('interview.hub.usage'),
         width: '110px',
         align: 'right',
         sortable: true,
@@ -5900,7 +5787,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'lastUsed',
-        label: isPolish ? 'Ostatnio użyty' : 'Last used',
+        label: t('interview.hub.lastUsed'),
         width: '140px',
         sortable: true,
         sortAccessor: (row: InterviewTemplate) => {
@@ -5913,7 +5800,7 @@ export const InterviewHub: React.FC = () => {
       },
       {
         id: 'status',
-        label: isPolish ? 'Status' : 'Status',
+        label: t('interview.hub.status'),
         width: '160px',
         filterable: true,
         filterOptions: TEMPLATE_STATUS_FILTER_OPTIONS,
@@ -5921,14 +5808,14 @@ export const InterviewHub: React.FC = () => {
           <div className="inline-flex items-center gap-1.5">
             <EntityStatusChip
               status={String(row.status || 'draft')}
-              label={getTemplateStatusChip(row.status, isPolish).label}
+              label={getTemplateStatusChip(row.status, t).label}
             />
             {row.isDefault && (
               <span
                 className={INTERVIEW_META_CHIP_CLASS}
-                title={isPolish ? 'Domyślny szablon' : 'Default template'}
+                title={t('interview.hub.defaultTemplate')}
               >
-                {isPolish ? 'Domyślny' : 'Default'}
+                {t('interview.hub.default')}
               </span>
             )}
           </div>
@@ -5956,10 +5843,10 @@ export const InterviewHub: React.FC = () => {
           return (
             template.description ||
             [
-              template.scope ? getTemplateSourceLabel(template.scope, isPolish) : null,
+              template.scope ? getTemplateSourceLabel(template.scope, t) : null,
               areaTags
                 .slice(0, 2)
-                .map((tag) => getTemplateAreaTagLabel(tag, isPolish))
+                .map((tag) => getTemplateAreaTagLabel(tag, t))
                 .join(' · '),
             ]
               .filter(Boolean)
@@ -5972,11 +5859,9 @@ export const InterviewHub: React.FC = () => {
         selection={{ selectedIds: selectedTemplateIds, onChange: setSelectedTemplateIds }}
         empty={{
           icon: FileText,
-          title: isPolish ? 'Brak szablonów' : 'No templates yet',
-          description: isPolish
-            ? 'Utwórz szablon, aby przyspieszyć kolejne wywiady.'
-            : 'Create a template to speed up your next interviews.',
-          actionLabel: canAssign ? (isPolish ? 'Nowy szablon' : 'New template') : undefined,
+          title: t('interview.hub.noTemplatesYet'),
+          description: t('interview.hub.createATemplateToSpeed'),
+          actionLabel: canAssign ? (t('interview.hub.newTemplate2')) : undefined,
           onAction: canAssign ? handleNewTemplate : undefined,
         }}
         rowActions={(row) => buildTemplateRowSections(row as unknown as InterviewTemplate)}
@@ -5993,7 +5878,7 @@ export const InterviewHub: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FileText size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
           <p className="text-sm text-c-text-muted">
-            {isPolish ? 'Brak szablonów' : 'No templates found'}
+            {t('interview.hub.noTemplatesFound')}
           </p>
           {canAssign && (
             <button
@@ -6001,7 +5886,7 @@ export const InterviewHub: React.FC = () => {
               className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98]"
             >
               <FilePlus size={16} />
-              {isPolish ? 'Nowy szablon' : 'New template'}
+              {t('interview.hub.newTemplate2')}
             </button>
           )}
         </div>
@@ -6014,16 +5899,10 @@ export const InterviewHub: React.FC = () => {
           const isSystem = template.scope === 'system';
           const isOrg = template.scope === 'organization';
           const scopeLabel = isSystem
-            ? isPolish
-              ? 'Systemowy'
-              : 'System'
+            ? t('interview.hub.system')
             : isOrg
-              ? isPolish
-                ? 'Organizacja'
-                : 'Organization'
-              : isPolish
-                ? 'Prywatny'
-                : 'Private';
+              ? t('interview.hub.organization')
+              : t('interview.hub.private');
           const scopeColor = isSystem
             ? 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200'
             : isOrg
@@ -6031,12 +5910,8 @@ export const InterviewHub: React.FC = () => {
               : 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200';
           const statusLabel =
             template.status === 'approved'
-              ? isPolish
-                ? 'Opublikowany'
-                : 'Published'
-              : isPolish
-                ? 'Wersja robocza'
-                : 'Draft';
+              ? t('interview.hub.published')
+              : t('interview.hub.draft');
           const statusColor =
             template.status === 'approved'
               ? 'border border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100'
@@ -6114,7 +5989,7 @@ export const InterviewHub: React.FC = () => {
                         key={tag}
                         className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-c-text-muted"
                       >
-                        {getTemplateAreaTagLabel(tag, isPolish)}
+                        {getTemplateAreaTagLabel(tag, t)}
                       </span>
                     ))}
                     {areaTags.length > 4 && (
@@ -6128,7 +6003,7 @@ export const InterviewHub: React.FC = () => {
 
               <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
                 <span>
-                  {template.questionCount} {isPolish ? 'pytań' : 'questions'}
+                  {template.questionCount} {t('interview.hub.questions2')}
                 </span>
                 {template.estimatedTimeMinutes && <span>{template.estimatedTimeMinutes} min</span>}
                 <span>{template.category}</span>
@@ -6255,7 +6130,7 @@ export const InterviewHub: React.FC = () => {
   // Triada standard.)
 
   const getAssignmentTitle = useCallback(
-    (a: InterviewAssignment) => a.template?.name || (isPolish ? 'Wywiad' : 'Interview'),
+    (a: InterviewAssignment) => a.template?.name || (t('interview.hub.interview')),
     [isPolish]
   );
   const getAssignmentDescription = useCallback(
@@ -6263,9 +6138,9 @@ export const InterviewHub: React.FC = () => {
       const description = String(a.template?.description || '').trim();
       if (description) return description;
       const category = String(a.template?.category || '').trim();
-      if (category) return isPolish ? `Kategoria: ${category}` : `Category: ${category}`;
+      if (category) return t('interview.hub.categoryColon', { category });
       const assignee = String(a.assignee?.name || a.assignee?.email || '').trim();
-      if (assignee) return isPolish ? `Przydzielony do: ${assignee}` : `Assigned to: ${assignee}`;
+      if (assignee) return t('interview.hub.assignedToColon', { assignee });
       return '';
     },
     [isPolish]
@@ -6298,23 +6173,8 @@ export const InterviewHub: React.FC = () => {
   }, []);
 
   const getAssignmentStatusLabel = useCallback(
-    (status: string) => {
-      const labels: Record<string, { pl: string; en: string }> = {
-        assigned: { pl: 'Przydzielony', en: 'Assigned' },
-        drafting: { pl: 'Szkic', en: 'Draft' },
-        in_progress: { pl: 'W trakcie', en: 'In progress' },
-        review: { pl: 'Do przeglądu', en: 'In review' },
-        submitted: { pl: 'Wysłany', en: 'Submitted' },
-        sent_back: { pl: 'Do poprawy', en: 'Sent back' },
-        approved: { pl: 'Zatwierdzony', en: 'Approved' },
-        completed: { pl: 'Zakończony', en: 'Completed' },
-        rejected: { pl: 'Odrzucony', en: 'Rejected' },
-        accepted: { pl: 'Zaakceptowany', en: 'Accepted' },
-      };
-      const hit = labels[status] || { pl: status, en: status };
-      return isPolish ? hit.pl : hit.en;
-    },
-    [isPolish]
+    (status: string) => t(`interview.hub.assignmentStatusFull.${status}`, status),
+    [t]
   );
 
   // VISUAL_STANDARD §5.3 — assignment status badge = TINTED pill (color @~14%
@@ -6356,9 +6216,10 @@ export const InterviewHub: React.FC = () => {
         const absDays = Math.abs(days);
         return {
           days,
-          label: isPolish
-            ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
-            : `${absDays}d overdue`,
+          label:
+            absDays === 1
+              ? t('interview.hub.overdueDaysOne', { count: absDays })
+              : t('interview.hub.overdueDaysOther', { count: absDays }),
           colorClass:
             'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
@@ -6366,7 +6227,7 @@ export const InterviewHub: React.FC = () => {
       if (days === 0) {
         return {
           days,
-          label: isPolish ? 'Dziś!' : 'Today!',
+          label: t('interview.hub.today'),
           colorClass:
             'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
@@ -6374,14 +6235,14 @@ export const InterviewHub: React.FC = () => {
       if (days <= 3) {
         return {
           days,
-          label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
+          label: days === 1 ? t('interview.hub.daysLeftOne', { count: days }) : t('interview.hub.daysLeftOther', { count: days }),
           colorClass:
             'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
         };
       }
       return {
         days,
-        label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
+        label: days === 1 ? t('interview.hub.daysLeftOne', { count: days }) : t('interview.hub.daysLeftOther', { count: days }),
         colorClass:
           'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
       };
@@ -6395,13 +6256,11 @@ export const InterviewHub: React.FC = () => {
         const projectId = await ensureProjectId();
         if (!projectId) {
           toast.error(
-            isPolish
-              ? 'Wybierz projekt przed rozpoczęciem wywiadu'
-              : 'Select a project before starting'
+            t('interview.hub.selectAProjectBeforeStarting')
           );
           return;
         }
-        toast.loading(isPolish ? 'Rozpoczynanie wywiadu...' : 'Starting interview...');
+        toast.loading(t('interview.hub.startingInterview'));
         const result = (await V8InterviewApi.startAssignment(assignment.id, {
           projectId,
         }).catch(() =>
@@ -6414,7 +6273,7 @@ export const InterviewHub: React.FC = () => {
         // Open the session - backend returns { assignmentId, session }
         const session = result?.session;
         if (session?.id) {
-          toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
+          toast.success(t('interview.hub.interviewStarted'));
           handleOpenDocument({
             id: session.id,
             type: 'interview_session',
@@ -6425,7 +6284,7 @@ export const InterviewHub: React.FC = () => {
         } else {
           console.warn('[InterviewHub] No session in result:', result);
           toast.error(
-            isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response'
+            t('interview.hub.noSessionInServerResponse')
           );
         }
 
@@ -6441,7 +6300,7 @@ export const InterviewHub: React.FC = () => {
         console.error('[InterviewHub] Failed to start assignment:', error);
         safeToastError(
           error,
-          isPolish ? 'Nie udało się rozpocząć wywiadu' : 'Failed to start interview',
+          t('interview.hub.failedToStartInterview'),
           isPolish
         );
       }
@@ -6494,9 +6353,7 @@ export const InterviewHub: React.FC = () => {
         // Manager view: if not started, show info
         if (isManagerView && !assignment.sessionId) {
           toast(
-            isPolish
-              ? 'Wywiad nie został jeszcze rozpoczęty przez przypisanego użytkownika'
-              : 'Interview has not been started by the assignee yet',
+            t('interview.hub.interviewHasNotBeenStarted'),
             { duration: 4000, icon: 'ℹ️' }
           );
           return;
@@ -6507,7 +6364,7 @@ export const InterviewHub: React.FC = () => {
         console.error('[InterviewHub] Failed to open assignment:', error);
         safeToastError(
           error,
-          isPolish ? 'Nie udało się otworzyć assignmentu' : 'Failed to open assignment',
+          t('interview.hub.failedToOpenAssignment'),
           isPolish
         );
       }
@@ -6531,25 +6388,15 @@ export const InterviewHub: React.FC = () => {
         const intentLine = (() => {
           switch (intent) {
             case 'summary':
-              return isPolish
-                ? 'Podsumuj czego dotyczy i co jest wymagane.'
-                : 'Summarize what this is and what is required.';
+              return t('interview.hub.summarizeWhatThisIsAnd');
             case 'risks':
-              return isPolish
-                ? 'Wypisz ryzyka i typowe blokery (max 5).'
-                : 'List risks and typical blockers (max 5).';
+              return t('interview.hub.listRisksAndTypicalBlockers');
             case 'next_steps':
-              return isPolish
-                ? 'Zaproponuj następne kroki (max 5), konkretnie.'
-                : 'Propose next steps (max 5), concrete.';
+              return t('interview.hub.proposeNextStepsMax5');
             case 'expand_details':
-              return isPolish
-                ? 'Rozwiń szczegóły do krótkiego planu wykonania.'
-                : 'Expand details into a short execution plan.';
+              return t('interview.hub.expandDetailsIntoAShort');
             case 'summarize_details':
-              return isPolish
-                ? 'Podsumuj szczegóły w 5 punktach.'
-                : 'Summarize details in 5 bullets.';
+              return t('interview.hub.summarizeDetailsIn5Bullets');
           }
         })();
 
@@ -6568,9 +6415,7 @@ Return ONLY the answer text (no markdown fences).`;
         const aiRes = await Api.post('/ai/chat', {
           message: prompt,
           history: [],
-          systemInstruction: isPolish
-            ? 'Jesteś praktycznym PMO asystentem. Odpowiadasz krótko, konkretnie i bez ogólników.'
-            : 'You are a practical PMO assistant. Respond briefly, concretely, and avoid generic filler.',
+          systemInstruction: t('interview.hub.youAreAPracticalPmo'),
           roleName: 'Interview Inbox Preview',
         });
 
@@ -6605,7 +6450,7 @@ Return ONLY the answer text (no markdown fences).`;
           ? [
               {
                 id: 'start',
-                label: isPolish ? 'Rozpocznij' : 'Start',
+                label: t('interview.hub.start'),
                 icon: Sparkles,
                 onClick: () => startInterviewAssignment(assignment),
               },
@@ -6615,7 +6460,7 @@ Return ONLY the answer text (no markdown fences).`;
           ? [
               {
                 id: 'continue',
-                label: isPolish ? 'Kontynuuj' : 'Continue',
+                label: t('interview.hub.continue'),
                 icon: ChevronRight,
                 onClick: async () => {
                   const session = await Api.get(`/interview/sessions/${assignment.sessionId}`);
@@ -6634,7 +6479,7 @@ Return ONLY the answer text (no markdown fences).`;
           ? [
               {
                 id: 'fix',
-                label: isPolish ? 'Popraw' : 'Fix & Resubmit',
+                label: t('interview.hub.fixResubmit'),
                 icon: RotateCcw,
                 onClick: async () => {
                   const session = await Api.get(`/interview/sessions/${assignment.sessionId}`);
@@ -6653,13 +6498,13 @@ Return ONLY the answer text (no markdown fences).`;
           ? [
               {
                 id: 'approve',
-                label: isPolish ? 'Zatwierdź' : 'Approve',
+                label: t('interview.hub.approve'),
                 icon: Check,
                 onClick: () => handleOpenApproveModal(assignment),
               },
               {
                 id: 'sendback',
-                label: isPolish ? 'Zwróć do poprawy' : 'Send back',
+                label: t('interview.hub.sendBack3'),
                 icon: RotateCcw,
                 onClick: () => handleOpenSendBackModal(assignment),
                 variant: 'danger' as const,
@@ -6672,7 +6517,7 @@ Return ONLY the answer text (no markdown fences).`;
           ? [
               {
                 id: 'reassign',
-                label: isPolish ? 'Przypisz ponownie' : 'Reassign',
+                label: t('interview.hub.reassign'),
                 icon: UserPlus,
                 onClick: () => handleReassignAssignment(assignment),
               },
@@ -6685,13 +6530,13 @@ Return ONLY the answer text (no markdown fences).`;
           ? [
               {
                 id: 'remind',
-                label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
+                label: t('interview.hub.sendReminder'),
                 icon: Bell,
                 onClick: () => handleOpenReminderModal(assignment),
               },
               {
                 id: 'escalate',
-                label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
+                label: t('interview.hub.escalateNow'),
                 icon: ArrowUpRight,
                 disabled: Boolean(assignment.escalatedAt) || Boolean(assignment.escalationTarget),
                 onClick: () => handleEscalateNow(assignment),
@@ -6707,7 +6552,7 @@ Return ONLY the answer text (no markdown fences).`;
       actions: [
         {
           id: 'open',
-          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          label: t('interview.hub.openPreview'),
           icon: ChevronRight,
           // canon §9: "Open preview" → side pane, NOT full view
           onClick: () => {
@@ -6717,7 +6562,7 @@ Return ONLY the answer text (no markdown fences).`;
         },
         {
           id: 'edit',
-          label: isPolish ? 'Edytuj' : 'Edit',
+          label: t('interview.hub.edit'),
           icon: Edit2,
           // Contextual: manager edits via manage modal; assignee edits answers.
           onClick: () =>
@@ -6728,26 +6573,26 @@ Return ONLY the answer text (no markdown fences).`;
         managedLifecycle === 'archived' && showAssignee
           ? {
               id: 'restore',
-              label: isPolish ? 'Przywróć' : 'Restore',
+              label: t('interview.hub.restore'),
               icon: RotateCcw,
               disabled: managedLifecycleBusy,
               onClick: () => handleAssignmentLifecycleAction(assignment, 'restore'),
             }
           : {
               id: 'archive',
-              label: isPolish ? 'Archiwizuj' : 'Archive',
+              label: t('interview.hub.archive'),
               icon: Archive,
               disabled: managedLifecycleBusy,
               onClick: () => handleAssignmentLifecycleAction(assignment, 'archive'),
             },
         {
           id: 'delay',
-          label: isPolish ? 'Odłóż termin' : 'Delay',
+          label: t('interview.hub.delay'),
           icon: Clock,
           onClick: () => {},
           submenu: [1, 3, 7].map((d) => ({
             id: `delay-${d}`,
-            label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+            label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
             icon: Clock,
             onClick: () => void handleDelayAssignment(assignment, d),
           })),
@@ -6761,11 +6606,11 @@ Return ONLY the answer text (no markdown fences).`;
       actions: [
         {
           id: 'delete',
-          label: isPolish ? 'Usuń' : 'Delete',
+          label: t('interview.hub.delete'),
           icon: Trash2,
           variant: 'danger' as const,
           disabled: true,
-          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          description: t('interview.hub.comingSoonBackend'),
           onClick: () => {},
         },
       ],
@@ -6778,14 +6623,14 @@ Return ONLY the answer text (no markdown fences).`;
     showAssignee: boolean = false
   ) => {
     const getAssignmentTemplateValue = (a: InterviewAssignment) =>
-      a.template?.name || (isPolish ? 'Wywiad' : 'Interview');
+      a.template?.name || (t('interview.hub.interview'));
     const getAssignmentAssigneeValue = (a: InterviewAssignment) =>
-      a.assignee?.name || a.assignee?.email || (isPolish ? 'Nieznany' : 'Unknown');
+      a.assignee?.name || a.assignee?.email || (t('interview.hub.unknown'));
 
     const assignmentColumns: StandardTableColumn[] = [
       {
         id: 'template',
-        label: isPolish ? 'Szablon' : 'Template',
+        label: t('interview.hub.template2'),
         width: '320px',
         filterable: true,
         filterOptions: Array.from(new Set(assignments.map(getAssignmentTemplateValue)))
@@ -6823,7 +6668,7 @@ Return ONLY the answer text (no markdown fences).`;
         ? [
             {
               id: 'assignee',
-              label: isPolish ? 'Przydzielony do' : 'Assignee',
+              label: t('interview.hub.assignee2'),
               width: '170px',
               filterable: true,
               filterOptions: Array.from(new Set(assignments.map(getAssignmentAssigneeValue)))
@@ -6832,7 +6677,7 @@ Return ONLY the answer text (no markdown fences).`;
               render: (row: InterviewAssignment) => (
                 <AssigneeCell
                   name={row.assignee?.name || row.assignee?.email || null}
-                  unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+                  unassignedLabel={t('interview.hub.unassigned')}
                 />
               ),
             } as StandardTableColumn,
@@ -6840,7 +6685,7 @@ Return ONLY the answer text (no markdown fences).`;
         : []),
       {
         id: 'status',
-        label: isPolish ? 'Status' : 'Status',
+        label: t('interview.hub.status'),
         width: '150px',
         filterable: true,
         filterOptions: ASSIGNMENT_STATUS_OPTION_ORDER.filter((v) =>
@@ -6866,7 +6711,7 @@ Return ONLY the answer text (no markdown fences).`;
       },
       {
         id: 'progress',
-        label: isPolish ? 'Postęp' : 'Progress',
+        label: t('interview.hub.progress'),
         width: '130px',
         align: 'right',
         sortable: true,
@@ -6877,7 +6722,7 @@ Return ONLY the answer text (no markdown fences).`;
       },
       {
         id: 'due',
-        label: isPolish ? 'Do terminu' : 'Days to Due',
+        label: t('interview.hub.daysToDue'),
         width: '160px',
         sortable: true,
         sortAccessor: (row: InterviewAssignment) =>
@@ -6901,7 +6746,7 @@ Return ONLY the answer text (no markdown fences).`;
         ? [
             {
               id: 'submitted',
-              label: isPolish ? 'Przesłano' : 'Submitted',
+              label: t('interview.hub.submitted3'),
               width: '150px',
               render: (row: InterviewAssignment) =>
                 row.submittedAt ? (
@@ -6918,7 +6763,7 @@ Return ONLY the answer text (no markdown fences).`;
             } as StandardTableColumn,
             {
               id: 'aiScore',
-              label: isPolish ? 'Ocena AI' : 'AI Score',
+              label: t('interview.hub.aiScore'),
               width: '120px',
               align: 'right',
               render: (row: InterviewAssignment) => {
@@ -6932,9 +6777,7 @@ Return ONLY the answer text (no markdown fences).`;
                 const pct = Math.round(Math.max(0, Math.min(1, (score - 1) / 4)) * 100);
                 const tone =
                   pct >= 75 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
-                const title = isPolish
-                  ? `Ocena jakości AI wg rubryki (konkretność/dowody/głębia/mierzalność/spójność): ${score.toFixed(1)}/5`
-                  : `AI quality score per rubric (concreteness/evidence/depth/measurability/coherence): ${score.toFixed(1)}/5`;
+                const title = t('interview.hub.aiQualityScoreTitle', { score: score.toFixed(1) });
                 return (
                   <span
                     className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
@@ -6948,7 +6791,7 @@ Return ONLY the answer text (no markdown fences).`;
             } as StandardTableColumn,
             {
               id: 'escalation',
-              label: isPolish ? 'Eskalacja' : 'Escalation',
+              label: t('interview.hub.escalation'),
               width: '160px',
               render: (row: InterviewAssignment) =>
                 row.escalatedAt || row.escalationTarget ? (
@@ -6957,13 +6800,13 @@ Return ONLY the answer text (no markdown fences).`;
                     title={
                       row.escalationTarget?.name ||
                       row.escalationTarget?.email ||
-                      (isPolish ? 'Eskalowano' : 'Escalated')
+                      (t('interview.hub.escalated'))
                     }
                   >
                     <ArrowUpRight size={11} />
                     {row.escalationTarget?.name ||
                       row.escalationTarget?.email ||
-                      (isPolish ? 'Eskalowano' : 'Escalated')}
+                      (t('interview.hub.escalated'))}
                   </span>
                 ) : (
                   <span className="text-xs text-c-text-muted">—</span>
@@ -6991,7 +6834,7 @@ Return ONLY the answer text (no markdown fences).`;
         selection={{ selectedIds: selectedAssignmentIds, onChange: setSelectedAssignmentIds }}
         empty={{
           icon: Inbox,
-          title: isPolish ? 'Brak przydziałów' : 'No assignments',
+          title: t('interview.hub.noAssignments'),
         }}
         rowActions={(row) =>
           buildAssignmentRowSections(row as unknown as InterviewAssignment, showAssignee)
@@ -7126,12 +6969,10 @@ Return ONLY the answer text (no markdown fences).`;
         <EmptyState
           variant="error"
           title={
-            isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'
+            t('interview.hub.couldNotLoadYourInterviews')
           }
           description={
-            isPolish
-              ? 'Coś poszło nie tak podczas ładowania wywiadów. Odśwież stronę lub skontaktuj się z pomocą techniczną, jeśli problem się powtarza.'
-              : 'Something went wrong loading your interviews. Please refresh or contact support if the issue persists.'
+            t('interview.hub.somethingWentWrongLoadingYour')
           }
           onRetry={() => window.location.reload()}
         />
@@ -7157,7 +6998,7 @@ Return ONLY the answer text (no markdown fences).`;
           role="alert"
           className="mx-4 mt-3 rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/25 dark:bg-amber-500/10 dark:text-amber-100"
         >
-          <span className="font-semibold">{isPolish ? 'Tryb ograniczony' : 'Degraded mode'}:</span>{' '}
+          <span className="font-semibold">{t('interview.hub.degradedMode')}:</span>{' '}
           {tabDegradedMessage}
         </div>
       ) : null;
@@ -7235,19 +7076,19 @@ Return ONLY the answer text (no markdown fences).`;
               };
               const relations = [
                 {
-                  label: `${isPolish ? 'Assignee' : 'Assignee'}: ${s.assigneeName || s.respondentName || '—'}`,
+                  label: `${t('interview.hub.assignee3')}: ${s.assigneeName || s.respondentName || '—'}`,
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
                 {
-                  label: `${isPolish ? 'Template' : 'Template'}: ${s.templateName || s.templateCategory || '—'}`,
+                  label: `${t('interview.hub.template')}: ${s.templateName || s.templateCategory || '—'}`,
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
                 {
-                  label: `${isPolish ? 'Projekt' : 'Project'}: ${s.projectId || '—'}`,
+                  label: `${t('interview.hub.project')}: ${s.projectId || '—'}`,
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
                 {
-                  label: `${isPolish ? 'Organizacja' : 'Org'}: ${s.organizationId || '—'}`,
+                  label: `${t('interview.hub.org')}: ${s.organizationId || '—'}`,
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
               ];
@@ -7306,10 +7147,11 @@ Return ONLY the answer text (no markdown fences).`;
               ? 1
               : 0;
         if (count > 0) {
-          const enLabel = count === 1 ? 'session' : 'sessions';
-          return `${count} ${isPolish ? 'sesji' : enLabel}`;
+          const unit =
+            count === 1 ? t('interview.hub.sessionUnitOne') : t('interview.hub.sessionUnitOther');
+          return `${count} ${unit}`;
         }
-        return isPolish ? 'Ogólne' : 'General';
+        return t('interview.hub.general');
       };
 
       const groupedInsights = (() => {
@@ -7344,18 +7186,17 @@ Return ONLY the answer text (no markdown fences).`;
         : null;
 
       const getInsightTypeLabel = (type?: string) => {
-        const t = (en: string, pl: string) => (isPolish ? pl : en);
         switch ((type || 'summary').toLowerCase()) {
           case 'summary':
-            return t('Summary', 'Podsumowanie');
+            return t('interview.hub.insightTypeShort.summary');
           case 'trends':
-            return t('Trends', 'Trendy');
+            return t('interview.hub.insightTypeShort.trends');
           case 'problems':
-            return t('Problems', 'Problemy');
+            return t('interview.hub.insightTypeShort.problems');
           case 'opportunities':
-            return t('Opportunities', 'Szanse');
+            return t('interview.hub.insightTypeShort.opportunities');
           case 'recommendations':
-            return t('Recommendations', 'Rekomendacje');
+            return t('interview.hub.insightTypeShort.recommendations');
           default:
             return type || '—';
         }
@@ -7373,9 +7214,9 @@ Return ONLY the answer text (no markdown fences).`;
           renderPreview={(item) => {
             const type = (item.promptType || item.insightType || item.type || 'summary') as string;
             const sourceLabel = item.sourceSessionCount
-              ? `${item.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
+              ? `${item.sourceSessionCount} ${t('interview.hub.sessions2')}`
               : item.sessionId
-                ? `${isPolish ? 'Sesja' : 'Session'} ${item.sessionId.slice(0, 8)}…`
+                ? `${t('interview.hub.session2')} ${item.sessionId.slice(0, 8)}…`
                 : '—';
             const dateStr = item.createdAt
               ? new Date(item.createdAt).toLocaleDateString(undefined, {
@@ -7455,9 +7296,7 @@ Return ONLY the answer text (no markdown fences).`;
                 sourceLabel={sourceLabel}
                 dateStr={
                   createdRelative
-                    ? isPolish
-                      ? `Utworzono ${createdRelative}`
-                      : `Created ${createdRelative}`
+                    ? t('interview.hub.createdRelative', { relative: createdRelative })
                     : dateStr
                 }
                 detailsText={detailsText}
@@ -7548,12 +7387,12 @@ Return ONLY the answer text (no markdown fences).`;
       const statusMeta = (statusValue?: string) => {
         const status = String(statusValue || 'DRAFT').toUpperCase();
         if (status === 'PENDING_REVIEW') {
-          return { label: isPolish ? 'Do przeglądu' : 'Pending review' };
+          return { label: t('interview.hub.pendingReview4') };
         }
         if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(status)) {
-          return { label: isPolish ? 'Przekazane dalej' : 'Moved forward' };
+          return { label: t('interview.hub.movedForward') };
         }
-        return { label: isPolish ? 'Szkic' : 'Draft' };
+        return { label: t('interview.hub.draft3') };
       };
 
       // Map initiative priority → canon PriorityChip level (neutral shell + colored dot).
@@ -7588,7 +7427,7 @@ Return ONLY the answer text (no markdown fences).`;
       // PreviewableItem requires title:string — coalesce from title/name.
       const withInitiativeTitle = (it: InterviewInitiativeDraft) => ({
         ...it,
-        title: it.title || it.name || (isPolish ? 'Inicjatywa' : 'Initiative'),
+        title: it.title || it.name || (t('interview.hub.initiative')),
       });
 
       // Side-preview body for an initiative (canon §7.3: meta → details).
@@ -7601,7 +7440,7 @@ Return ONLY the answer text (no markdown fences).`;
         const dateStr =
           item.updatedAt || item.createdAt
             ? new Date(item.updatedAt || item.createdAt || '').toLocaleDateString(
-                isPolish ? 'pl-PL' : 'en-US'
+                t('interview.hub.enUs')
               )
             : '—';
         const promoted = isInitiativePromoted(item.status);
@@ -7627,7 +7466,7 @@ Return ONLY the answer text (no markdown fences).`;
             </div>
             <div>
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPolish ? 'Szczegóły' : 'Details'}
+                {t('interview.hub.details')}
               </div>
               {desc ? (
                 <div className="whitespace-pre-wrap text-sm leading-relaxed text-c-text-secondary">
@@ -7635,15 +7474,13 @@ Return ONLY the answer text (no markdown fences).`;
                 </div>
               ) : (
                 <div className="text-sm text-slate-400 dark:text-slate-500">
-                  {isPolish ? 'Brak opisu.' : 'No description.'}
+                  {t('interview.hub.noDescription')}
                 </div>
               )}
             </div>
             {!promoted ? (
               <div className="rounded-lg border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
-                {isPolish
-                  ? 'Wersja robocza — pozostaje w Wywiadzie do czasu przekazania dalej.'
-                  : 'Draft — stays in Interview until it is moved forward.'}
+                {t('interview.hub.draftStaysInInterviewUntil')}
               </div>
             ) : null}
           </div>
@@ -7659,12 +7496,8 @@ Return ONLY the answer text (no markdown fences).`;
         const isDecisions = kind === 'decisions';
         const Icon = isDecisions ? Target : ClipboardList;
         const heading = isDecisions
-          ? isPolish
-            ? 'Decyzje z wywiadu'
-            : 'Decisions from interviews'
-          : isPolish
-            ? 'Zadania z wywiadu'
-            : 'Tasks from interviews';
+          ? t('interview.hub.decisionsFromInterviews')
+          : t('interview.hub.tasksFromInterviews');
         const basePath = isDecisions ? '/my-work/decisions' : '/my-work/tasks';
         return (
           <div className="flex-1 rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-white/[0.06] dark:bg-navy-900/50">
@@ -7680,12 +7513,8 @@ Return ONLY the answer text (no markdown fences).`;
             {items.length === 0 ? (
               <p className="text-[11px] text-c-text-muted">
                 {isDecisions
-                  ? isPolish
-                    ? 'Brak decyzji przekazanych z wniosków wywiadu.'
-                    : 'No decisions handed off from interview findings yet.'
-                  : isPolish
-                    ? 'Brak zadań przekazanych z wniosków wywiadu.'
-                    : 'No tasks handed off from interview findings yet.'}
+                  ? t('interview.hub.noDecisionsHandedOffFrom')
+                  : t('interview.hub.noTasksHandedOffFrom')}
               </p>
             ) : (
               <ul className="flex flex-col gap-1">
@@ -7697,7 +7526,7 @@ Return ONLY the answer text (no markdown fences).`;
                       className="group flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[12px] text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.05]"
                     >
                       <span className="truncate">
-                        {item.title || item.name || (isPolish ? '(bez tytułu)' : '(untitled)')}
+                        {item.title || item.name || (t('interview.hub.untitled'))}
                       </span>
                       <ExternalLink
                         size={11}
@@ -7708,7 +7537,7 @@ Return ONLY the answer text (no markdown fences).`;
                 ))}
                 {items.length > 6 ? (
                   <li className="px-1.5 pt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
-                    {isPolish ? `+${items.length - 6} więcej` : `+${items.length - 6} more`}
+                    {t('interview.hub.plusMoreCount', { count: items.length - 6 })}
                   </li>
                 ) : null}
               </ul>
@@ -7725,12 +7554,10 @@ Return ONLY the answer text (no markdown fences).`;
               <div className="mb-2 flex items-center gap-2">
                 <Send size={13} className="text-crimson-500" />
                 <span className="text-[12px] font-semibold text-c-text-secondary">
-                  {isPolish ? 'Przekazane z wywiadu' : 'Handed off from interviews'}
+                  {t('interview.hub.handedOffFromInterviews')}
                 </span>
                 <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                  {isPolish
-                    ? 'Decyzje i zadania stworzone z wniosków'
-                    : 'Decisions and tasks created from findings'}
+                  {t('interview.hub.decisionsAndTasksCreatedFrom')}
                 </span>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -7760,19 +7587,19 @@ Return ONLY the answer text (no markdown fences).`;
                 const relations: Array<{ label: string; tone?: string }> = [];
                 if (src)
                   relations.push({
-                    label: `${isPolish ? 'Wniosek' : 'Insight'}: ${(src.title || src.id).slice(0, 40)}`,
+                    label: `${t('interview.hub.insight2')}: ${(src.title || src.id).slice(0, 40)}`,
                     tone: 'text-amber-600 dark:text-amber-300',
                   });
                 if (item.priority)
                   relations.push({
-                    label: `${isPolish ? 'Priorytet' : 'Priority'}: ${String(item.priority).toLowerCase()}`,
+                    label: `${t('interview.hub.priority')}: ${String(item.priority).toLowerCase()}`,
                     tone: 'text-c-text-secondary',
                   });
                 if (item.updatedAt || item.createdAt)
                   relations.push({
-                    label: `${isPolish ? 'Aktualizacja' : 'Updated'}: ${new Date(
+                    label: `${t('interview.hub.updated')}: ${new Date(
                       item.updatedAt || item.createdAt || ''
-                    ).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}`,
+                    ).toLocaleDateString(t('interview.hub.enUs'))}`,
                     tone: 'text-slate-600 dark:text-slate-300',
                   });
 
@@ -7813,7 +7640,7 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="flex flex-col items-center gap-3 py-16">
                       <Rocket className="h-10 w-10 text-slate-300 dark:text-slate-600" />
                       <p className="text-sm text-c-text-muted">
-                        {isPolish ? 'Brak inicjatyw' : 'No initiatives yet'}
+                        {t('interview.hub.noInitiativesYet')}
                       </p>
                     </div>
                   ) : (
@@ -7822,7 +7649,7 @@ Return ONLY the answer text (no markdown fences).`;
                         const cardTitle =
                           initiative.title ||
                           initiative.name ||
-                          (isPolish ? 'Inicjatywa' : 'Initiative');
+                          (t('interview.hub.initiative'));
                         const status = String(initiative.status || 'DRAFT').toUpperCase();
                         const m = statusMeta(status);
                         const isSelected = selectedInterviewInitiativeId === initiative.id;
@@ -7831,7 +7658,7 @@ Return ONLY the answer text (no markdown fences).`;
                           .trim();
                         const dateStr = initiative.createdAt
                           ? new Date(initiative.createdAt).toLocaleDateString(
-                              isPolish ? 'pl-PL' : 'en-US',
+                              t('interview.hub.enUs'),
                               { month: 'short', day: 'numeric' }
                             )
                           : '—';
@@ -7883,18 +7710,12 @@ Return ONLY the answer text (no markdown fences).`;
                                 {initiative.priority
                                   ? String(initiative.priority).charAt(0).toUpperCase() +
                                     String(initiative.priority).slice(1).toLowerCase()
-                                  : isPolish
-                                    ? 'Brak priorytetu'
-                                    : 'No priority'}
+                                  : t('interview.hub.noPriority')}
                               </span>
                               <span>
                                 {src
-                                  ? isPolish
-                                    ? '1 wniosek'
-                                    : '1 insight'
-                                  : isPolish
-                                    ? 'bez źródła'
-                                    : 'no source'}
+                                  ? t('interview.hub.1Insight')
+                                  : t('interview.hub.noSource')}
                               </span>
                               <span>{dateStr}</span>
                             </div>
@@ -7915,9 +7736,7 @@ Return ONLY the answer text (no markdown fences).`;
                                         ? [
                                             {
                                               id: 'send-to-review',
-                                              label: isPolish
-                                                ? 'Wyślij do przeglądu'
-                                                : 'Send to review',
+                                              label: t('interview.hub.sendToReview'),
                                               icon: ArrowRight,
                                               onClick: () =>
                                                 void handleUpdateInterviewInitiativeStatus(
@@ -7933,9 +7752,7 @@ Return ONLY the answer text (no markdown fences).`;
                                               ? [
                                                   {
                                                     id: 'approve-to-initiatives',
-                                                    label: isPolish
-                                                      ? 'Zatwierdź i przekaż dalej'
-                                                      : 'Approve and move forward',
+                                                    label: t('interview.hub.approveAndMoveForward'),
                                                     icon: Rocket,
                                                     onClick: () =>
                                                       void handleUpdateInterviewInitiativeStatus(
@@ -7948,7 +7765,7 @@ Return ONLY the answer text (no markdown fences).`;
                                               : []),
                                             {
                                               id: 'back-to-draft',
-                                              label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
+                                              label: t('interview.hub.backToDraft'),
                                               icon: RotateCcw,
                                               onClick: () =>
                                                 void handleUpdateInterviewInitiativeStatus(
@@ -7966,26 +7783,22 @@ Return ONLY the answer text (no markdown fences).`;
                                     actions: [
                                       {
                                         id: 'open-preview',
-                                        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                                        label: t('interview.hub.openPreview'),
                                         icon: ChevronRight,
                                         onClick: () =>
                                           setSelectedInterviewInitiativeId(initiative.id),
                                       },
                                       {
                                         id: 'edit',
-                                        label: isPolish ? 'Edytuj' : 'Edit',
+                                        label: t('interview.hub.edit'),
                                         icon: Edit2,
                                         disabled: true,
-                                        description: isPolish
-                                          ? 'Wkrótce (backend)'
-                                          : 'Coming soon (backend)',
+                                        description: t('interview.hub.comingSoonBackend'),
                                         onClick: () => {},
                                       },
                                       {
                                         id: 'open-module',
-                                        label: isPolish
-                                          ? 'Otwórz w module Initiatives'
-                                          : 'Open in Initiatives',
+                                        label: t('interview.hub.openInInitiatives'),
                                         icon: ExternalLink,
                                         onClick: () =>
                                           navigate(
@@ -7994,11 +7807,9 @@ Return ONLY the answer text (no markdown fences).`;
                                       },
                                       {
                                         id: 'archive',
-                                        label: isPolish ? 'Archiwizuj' : 'Archive',
+                                        label: t('interview.hub.archive'),
                                         icon: Archive,
-                                        description: isPolish
-                                          ? 'Wkrótce (backend)'
-                                          : 'Coming soon (backend)',
+                                        description: t('interview.hub.comingSoonBackend'),
                                         disabled: true,
                                         onClick: () => {},
                                       },
@@ -8010,12 +7821,10 @@ Return ONLY the answer text (no markdown fences).`;
                                     actions: [
                                       {
                                         id: 'delete',
-                                        label: isPolish ? 'Usuń' : 'Delete',
+                                        label: t('interview.hub.delete'),
                                         icon: Trash2,
                                         variant: 'danger' as const,
-                                        description: isPolish
-                                          ? 'Wkrótce (backend)'
-                                          : 'Coming soon (backend)',
+                                        description: t('interview.hub.comingSoonBackend'),
                                         disabled: true,
                                         onClick: () => {},
                                       },
@@ -8034,33 +7843,33 @@ Return ONLY the answer text (no markdown fences).`;
                     columns={[
                       {
                         id: 'title',
-                        label: isPolish ? 'Inicjatywa' : 'Initiative',
+                        label: t('interview.hub.initiative'),
                         sortable: true,
                         sortAccessor: (row: InterviewInitiativeDraft) =>
                           row.title || row.name || '',
                         render: (row: InterviewInitiativeDraft) => (
                           <span
                             className="truncate block text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100"
-                            title={row.title || row.name || (isPolish ? 'Inicjatywa' : 'Initiative')}
+                            title={row.title || row.name || (t('interview.hub.initiative'))}
                           >
-                            {row.title || row.name || (isPolish ? 'Inicjatywa' : 'Initiative')}
+                            {row.title || row.name || (t('interview.hub.initiative'))}
                           </span>
                         ),
                       },
                       {
                         id: 'status',
-                        label: isPolish ? 'Status' : 'Status',
+                        label: t('interview.hub.status'),
                         width: '160px',
                         filterable: true,
                         filterOptions: [
-                          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft' },
+                          { value: 'draft', label: t('interview.hub.draft3') },
                           {
                             value: 'pending_review',
-                            label: isPolish ? 'Do przeglądu' : 'Pending review',
+                            label: t('interview.hub.pendingReview4'),
                           },
                           {
                             value: 'moved_forward',
-                            label: isPolish ? 'Przekazane dalej' : 'Moved forward',
+                            label: t('interview.hub.movedForward'),
                           },
                         ],
                         render: (row: InterviewInitiativeDraft) => {
@@ -8071,14 +7880,14 @@ Return ONLY the answer text (no markdown fences).`;
                       },
                       {
                         id: 'priority',
-                        label: isPolish ? 'Priorytet' : 'Priority',
+                        label: t('interview.hub.priority'),
                         width: '130px',
                         filterable: true,
                         filterOptions: [
-                          { value: 'critical', label: isPolish ? 'Krytyczny' : 'Critical' },
-                          { value: 'high', label: isPolish ? 'Wysoki' : 'High' },
-                          { value: 'medium', label: isPolish ? 'Średni' : 'Medium' },
-                          { value: 'low', label: isPolish ? 'Niski' : 'Low' },
+                          { value: 'critical', label: t('interview.hub.critical') },
+                          { value: 'high', label: t('interview.hub.high') },
+                          { value: 'medium', label: t('interview.hub.medium') },
+                          { value: 'low', label: t('interview.hub.low') },
                         ],
                         render: (row: InterviewInitiativeDraft) =>
                           row.priority ? (
@@ -8092,12 +7901,12 @@ Return ONLY the answer text (no markdown fences).`;
                       },
                       {
                         id: 'source',
-                        label: isPolish ? 'Źródło' : 'Source',
+                        label: t('interview.hub.source'),
                         width: '140px',
                         filterable: true,
                         filterOptions: [
                           { value: 'insight', label: 'Insight' },
-                          { value: 'none', label: isPolish ? 'Brak' : 'None' },
+                          { value: 'none', label: t('interview.hub.none') },
                         ],
                         render: (row: InterviewInitiativeDraft) => {
                           const sourceInsight = row.sourceId
@@ -8123,7 +7932,7 @@ Return ONLY the answer text (no markdown fences).`;
                       },
                       {
                         id: 'date',
-                        label: isPolish ? 'Data' : 'Date',
+                        label: t('interview.hub.date'),
                         width: '140px',
                         sortable: true,
                         sortAccessor: (row: InterviewInitiativeDraft) => {
@@ -8134,7 +7943,7 @@ Return ONLY the answer text (no markdown fences).`;
                           row.updatedAt || row.createdAt ? (
                             <span className="text-xs text-c-text-muted">
                               {new Date(row.updatedAt || row.createdAt || '').toLocaleDateString(
-                                isPolish ? 'pl-PL' : 'en-US'
+                                t('interview.hub.enUs')
                               )}
                             </span>
                           ) : (
@@ -8165,23 +7974,15 @@ Return ONLY the answer text (no markdown fences).`;
                       icon: Rocket,
                       title:
                         interviewInitiatives.length === 0
-                          ? isPolish
-                            ? 'Brak inicjatyw stworzonych z wywiadu'
-                            : 'No initiatives created from interview yet'
-                          : isPolish
-                            ? 'Brak inicjatyw dla tego filtra'
-                            : 'No initiatives here',
+                          ? t('interview.hub.noInitiativesCreatedFromInterview')
+                          : t('interview.hub.noInitiativesHere'),
                       description:
                         interviewInitiatives.length === 0
-                          ? isPolish
-                            ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
-                            : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'
+                          ? t('interview.hub.noInitiativesYetPromoteInsights')
                           : undefined,
                       actionLabel:
                         interviewInitiatives.length === 0
-                          ? isPolish
-                            ? 'Przejdź do Wniosków'
-                            : 'Go to Insights'
+                          ? t('interview.hub.goToInsights')
                           : undefined,
                       onAction:
                         interviewInitiatives.length === 0
@@ -8200,7 +8001,7 @@ Return ONLY the answer text (no markdown fences).`;
                             ? [
                                 {
                                   id: 'send-to-review',
-                                  label: isPolish ? 'Wyślij do przeglądu' : 'Send to review',
+                                  label: t('interview.hub.sendToReview'),
                                   icon: ArrowRight,
                                   onClick: () =>
                                     void handleUpdateInterviewInitiativeStatus(
@@ -8214,9 +8015,7 @@ Return ONLY the answer text (no markdown fences).`;
                             ? [
                                 {
                                   id: 'approve-to-initiatives',
-                                  label: isPolish
-                                    ? 'Zatwierdź i przekaż dalej'
-                                    : 'Approve and move forward',
+                                  label: t('interview.hub.approveAndMoveForward'),
                                   icon: Rocket,
                                   onClick: () =>
                                     void handleUpdateInterviewInitiativeStatus(
@@ -8229,7 +8028,7 @@ Return ONLY the answer text (no markdown fences).`;
                             : []),
                           {
                             id: 'open-module',
-                            label: isPolish ? 'Otwórz w module Initiatives' : 'Open in Initiatives',
+                            label: t('interview.hub.openInInitiatives'),
                             icon: ExternalLink,
                             onClick: () =>
                               navigate(
@@ -8242,7 +8041,7 @@ Return ONLY the answer text (no markdown fences).`;
                             ? [
                                 {
                                   id: 'back-to-draft',
-                                  label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
+                                  label: t('interview.hub.backToDraft'),
                                   icon: RotateCcw,
                                   onClick: () =>
                                     void handleUpdateInterviewInitiativeStatus(
@@ -8254,11 +8053,11 @@ Return ONLY the answer text (no markdown fences).`;
                             : [],
                         universalHandlers: {
                           preview: () => setSelectedInterviewInitiativeId(initiative.id),
-                          editNote: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
-                          archiveNote: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                          editNote: t('interview.hub.comingSoonBackend'),
+                          archiveNote: t('interview.hub.comingSoonBackend'),
                         },
                         destructive: {
-                          note: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                          note: t('interview.hub.comingSoonBackend'),
                         },
                       };
                     }}
@@ -8284,16 +8083,10 @@ Return ONLY the answer text (no markdown fences).`;
         const qs = templateQuestionsById[templateId] || [];
         const header =
           kind === 'summary'
-            ? isPolish
-              ? 'Podsumuj ten szablon wywiadu.'
-              : 'Summarize this interview template.'
+            ? t('interview.hub.summarizeThisInterviewTemplate')
             : kind === 'improvements'
-              ? isPolish
-                ? 'Zaproponuj usprawnienia i lepsze brzmienie pytań.'
-                : 'Propose improvements and better wording for questions.'
-              : isPolish
-                ? 'Wykryj luki: czego brakuje, by odpowiedzi były kompletne.'
-                : 'Detect gaps: what is missing for complete answers.';
+              ? t('interview.hub.proposeImprovementsAndBetterWording')
+              : t('interview.hub.detectGapsWhatIsMissing');
 
         const qLines = qs
           .map((q: any, idx: number) => {
@@ -8313,7 +8106,7 @@ Return ONLY the answer text (no markdown fences).`;
           '',
           `Name: ${tpl?.name || '—'}`,
           `Category: ${tpl?.category || '—'}`,
-          `Source: ${getTemplateSourceLabel(tpl?.scope, isPolish)}`,
+          `Source: ${getTemplateSourceLabel(tpl?.scope, t)}`,
           `Area tags: ${(tpl?.areaTags || []).join(', ') || '—'}`,
           `Status: ${tpl?.isDefault ? 'Default' : 'Active'}`,
           `Questions count: ${tpl?.questionCount ?? '—'}`,
@@ -8328,9 +8121,9 @@ Return ONLY the answer text (no markdown fences).`;
       const copyToClipboard = async (text: string) => {
         try {
           await navigator.clipboard.writeText(text);
-          toast.success(isPolish ? 'Skopiowano do schowka' : 'Copied to clipboard');
+          toast.success(t('interview.hub.copiedToClipboard'));
         } catch {
-          toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+          toast.error(t('interview.hub.copyFailed'));
         }
       };
 
@@ -8447,33 +8240,33 @@ Return ONLY the answer text (no markdown fences).`;
       const inboxColumns: StandardTableColumn[] = [
         {
           id: 'template',
-          label: isPolish ? 'Typ' : 'Type',
+          label: t('interview.hub.type'),
           width: '160px',
           render: (row: InterviewAssignment) => (
             <span className="text-xs font-semibold text-c-text-secondary">
-              {row.template?.name || (isPolish ? 'Wywiad' : 'Interview')}
+              {row.template?.name || (t('interview.hub.interview'))}
             </span>
           ),
         },
         {
           id: 'name',
-          label: isPolish ? 'Nazwa' : 'Name',
+          label: t('interview.hub.name'),
           render: (row: InterviewAssignment) => (
             <span className="text-sm font-semibold text-c-text">{getAssignmentTitle(row)}</span>
           ),
         },
         {
           id: 'status',
-          label: isPolish ? 'Status' : 'Status',
+          label: t('interview.hub.status'),
           width: '150px',
           filterable: true,
           filterOptions: [
-            { value: 'assigned', label: isPolish ? 'Przydzielony' : 'Assigned' },
-            { value: 'in_progress', label: isPolish ? 'W trakcie' : 'In progress' },
-            { value: 'submitted', label: isPolish ? 'Wysłany' : 'Submitted' },
-            { value: 'sent_back', label: isPolish ? 'Do poprawy' : 'Sent back' },
-            { value: 'approved', label: isPolish ? 'Zatwierdzony' : 'Approved' },
-            { value: 'completed', label: isPolish ? 'Zakończony' : 'Completed' },
+            { value: 'assigned', label: t('interview.hub.assigned2') },
+            { value: 'in_progress', label: t('interview.hub.inProgress') },
+            { value: 'submitted', label: t('interview.hub.submitted4') },
+            { value: 'sent_back', label: t('interview.hub.sentBack') },
+            { value: 'approved', label: t('interview.hub.approved2') },
+            { value: 'completed', label: t('interview.hub.completed') },
           ],
           render: (row: InterviewAssignment) => (
             <EntityStatusChip status={row.status} label={getAssignmentStatusLabel(row.status)} />
@@ -8481,7 +8274,7 @@ Return ONLY the answer text (no markdown fences).`;
         },
         {
           id: 'progress',
-          label: isPolish ? 'Postęp' : 'Progress',
+          label: t('interview.hub.progress'),
           width: '130px',
           align: 'right',
           render: (row: InterviewAssignment) => (
@@ -8490,7 +8283,7 @@ Return ONLY the answer text (no markdown fences).`;
         },
         {
           id: 'dueAt',
-          label: isPolish ? 'Dni do terminu' : 'Days to due',
+          label: t('interview.hub.daysToDue2'),
           width: '160px',
           sortable: true,
           sortAccessor: (row: InterviewAssignment) => (row.dueAt ? new Date(row.dueAt).getTime() : 0),
@@ -8507,12 +8300,12 @@ Return ONLY the answer text (no markdown fences).`;
         },
         {
           id: 'assignee',
-          label: isPolish ? 'Przypisany' : 'Assignee',
+          label: t('interview.hub.assignee4'),
           width: '170px',
           render: (row: InterviewAssignment) => (
             <AssigneeCell
               name={row.assignee?.name || row.assignee?.email || null}
-              unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+              unassignedLabel={t('interview.hub.unassigned')}
             />
           ),
         },
@@ -8526,7 +8319,7 @@ Return ONLY the answer text (no markdown fences).`;
                     {
                       id: 'start',
                       variant: 'positive',
-                      label: isPolish ? 'Rozpocznij' : 'Start',
+                      label: t('interview.hub.start'),
                       icon: Sparkles,
                       onClick: () => startInterviewAssignment(selectedRow),
                     },
@@ -8537,7 +8330,7 @@ Return ONLY the answer text (no markdown fences).`;
                       {
                         id: 'fix',
                         variant: 'positive',
-                        label: isPolish ? 'Popraw' : 'Fix & Resubmit',
+                        label: t('interview.hub.fixResubmit'),
                         icon: RotateCcw,
                         onClick: () => void openInterviewAssignmentFull(selectedRow, false),
                       },
@@ -8548,7 +8341,7 @@ Return ONLY the answer text (no markdown fences).`;
                         {
                           id: 'continue',
                           variant: 'positive',
-                          label: isPolish ? 'Kontynuuj' : 'Continue',
+                          label: t('interview.hub.continue'),
                           icon: ChevronRight,
                           onClick: () => void openInterviewAssignmentFull(selectedRow, false),
                         },
@@ -8558,7 +8351,7 @@ Return ONLY the answer text (no markdown fences).`;
               {
                 id: 'open',
                 variant: 'neutral',
-                label: isPolish ? 'Otwórz' : 'Open',
+                label: t('interview.hub.open'),
                 icon: ExternalLink,
                 shortcut: 'O',
                 onClick: () => void openInterviewAssignmentFull(selectedRow, false),
@@ -8567,7 +8360,7 @@ Return ONLY the answer text (no markdown fences).`;
             time: [1, 3, 7].map((d) => ({
               id: `delay-${d}`,
               variant: 'warning' as const,
-              label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+              label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
               icon: Clock,
               onClick: () => void handleDelayAssignment(selectedRow, d),
             })),
@@ -8597,10 +8390,8 @@ Return ONLY the answer text (no markdown fences).`;
                 selection={{ selectedIds: selectedAssignmentIds, onChange: setSelectedAssignmentIds }}
                 empty={{
                   icon: Inbox,
-                  title: isPolish ? 'Brak przydziałów' : 'No assignments',
-                  description: isPolish
-                    ? 'Nie masz jeszcze żadnych przydzielonych wywiadów.'
-                    : 'You have no interview assignments yet.',
+                  title: t('interview.hub.noAssignments'),
+                  description: t('interview.hub.youHaveNoInterviewAssignments'),
                 }}
                 rowMenu={(row): StandardRowMenu => {
                   const a = row as unknown as InterviewAssignment;
@@ -8610,7 +8401,7 @@ Return ONLY the answer text (no markdown fences).`;
                         ? [
                             {
                               id: 'start',
-                              label: isPolish ? 'Rozpocznij' : 'Start',
+                              label: t('interview.hub.start'),
                               icon: Sparkles,
                               onClick: () => startInterviewAssignment(a),
                             },
@@ -8620,7 +8411,7 @@ Return ONLY the answer text (no markdown fences).`;
                         ? [
                             {
                               id: 'continue',
-                              label: isPolish ? 'Kontynuuj' : 'Continue',
+                              label: t('interview.hub.continue'),
                               icon: ChevronRight,
                               onClick: () => void openInterviewAssignmentFull(a, false),
                             },
@@ -8630,7 +8421,7 @@ Return ONLY the answer text (no markdown fences).`;
                         ? [
                             {
                               id: 'fix',
-                              label: isPolish ? 'Popraw' : 'Fix & Resubmit',
+                              label: t('interview.hub.fixResubmit'),
                               icon: RotateCcw,
                               onClick: () => void openInterviewAssignmentFull(a, false),
                             },
@@ -8640,11 +8431,11 @@ Return ONLY the answer text (no markdown fences).`;
                     timeActions: [
                       {
                         id: 'delay',
-                        label: isPolish ? 'Odłóż termin' : 'Delay',
+                        label: t('interview.hub.delay'),
                         icon: Clock,
                         submenu: [1, 3, 7].map((d) => ({
                           id: `delay-${d}`,
-                          label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                          label: d === 1 ? t('interview.hub.plusDaysOne', { count: d }) : t('interview.hub.plusDaysOther', { count: d }),
                           icon: Clock,
                           onClick: () => void handleDelayAssignment(a, d),
                         })),
@@ -8682,7 +8473,7 @@ Return ONLY the answer text (no markdown fences).`;
                         tone: statusChipTone(selectedRow.status),
                       },
                       {
-                        label: `${isPolish ? 'Postęp' : 'Progress'}: ${selectedRow.session?.completenessPercent ?? 0}%`,
+                        label: `${t('interview.hub.progress')}: ${selectedRow.session?.completenessPercent ?? 0}%`,
                         tone: 'neutral',
                       },
                     ],
@@ -8700,7 +8491,7 @@ Return ONLY the answer text (no markdown fences).`;
                   details={{
                     text:
                       String(previewDetailsOverride ?? selectedRow.template?.description ?? '').trim() ||
-                      (isPolish ? 'Brak opisu.' : 'No description.'),
+                      (t('interview.hub.noDescription')),
                     onCopy: () => {
                       const text = String(
                         previewDetailsOverride ?? selectedRow.template?.description ?? ''
@@ -8713,13 +8504,13 @@ Return ONLY the answer text (no markdown fences).`;
                       ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
                       : ['Summarize', 'Risks', 'Next steps'],
                     disabled: true,
-                    disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
+                    disabledTooltip: t('interview.hub.comingSoon'),
                   }}
                   relations={
                     selectedRow.sessionId || selectedRow.session?.id
                       ? [
                           {
-                            label: `${isPolish ? 'Sesja' : 'Session'}: ${(selectedRow.sessionId || selectedRow.session?.id || '').slice(0, 8)}…`,
+                            label: `${t('interview.hub.session2')}: ${(selectedRow.sessionId || selectedRow.session?.id || '').slice(0, 8)}…`,
                             onClick: () => void openInterviewAssignmentFull(selectedRow, false),
                           },
                         ]
@@ -8781,7 +8572,7 @@ Return ONLY the answer text (no markdown fences).`;
                     statusColor={statusColor}
                     progress={progress}
                     daysToDue={dtd}
-                    detailsText={detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
+                    detailsText={detailsText || (t('interview.hub.noDescription'))}
                     detailsMenuOpen={previewDetailsMenuOpen}
                     onToggleDetailsMenu={() => setPreviewDetailsMenuOpen((v) => !v)}
                     onDetailsAction={(action) => {
@@ -8808,12 +8599,12 @@ Return ONLY the answer text (no markdown fences).`;
                 const relations: Array<{ label: string; tone: string }> = [];
                 if (a.template?.category)
                   relations.push({
-                    label: `${isPolish ? 'Kategoria' : 'Category'}: ${a.template.category}`,
+                    label: `${t('interview.hub.category')}: ${a.template.category}`,
                     tone: 'text-c-text-secondary',
                   });
                 if (a.sessionId || a.session?.id)
                   relations.push({
-                    label: `${isPolish ? 'Sesja' : 'Session'}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
+                    label: `${t('interview.hub.session2')}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
                     tone: 'text-blue-600 dark:text-blue-300',
                   });
 
@@ -8842,7 +8633,7 @@ Return ONLY the answer text (no markdown fences).`;
                       const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
                       setPreviewAiLastIntent(intent);
                       const text = await runAssignmentAi(intent, a);
-                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(t('interview.hub.aiUnavailable'));
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
@@ -8850,7 +8641,7 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     onRegenerateAi={async () => {
                       const text = await runAssignmentAi(previewAiLastIntent, a);
-                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(t('interview.hub.aiUnavailable'));
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
@@ -8890,7 +8681,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="pl-4 pr-1.5 pt-3 pb-4">
                   {rows.length === 0 ? (
                     <div className="py-12 text-center text-sm text-c-text-muted">
-                      {isPolish ? 'Brak przydziałów' : 'No assignments'}
+                      {t('interview.hub.noAssignments')}
                     </div>
                   ) : (
                     renderAssignmentsGrid(rows, false)
@@ -8952,7 +8743,7 @@ Return ONLY the answer text (no markdown fences).`;
                     statusColor={statusColor}
                     progress={progress}
                     daysToDue={dtd}
-                    detailsText={detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
+                    detailsText={detailsText || (t('interview.hub.noDescription'))}
                     detailsMenuOpen={previewDetailsMenuOpen}
                     onToggleDetailsMenu={() => setPreviewDetailsMenuOpen((v) => !v)}
                     onDetailsAction={(action) => {
@@ -8979,12 +8770,12 @@ Return ONLY the answer text (no markdown fences).`;
                 const relations: Array<{ label: string; tone: string }> = [];
                 if (a.template?.category)
                   relations.push({
-                    label: `${isPolish ? 'Kategoria' : 'Category'}: ${a.template.category}`,
+                    label: `${t('interview.hub.category')}: ${a.template.category}`,
                     tone: 'text-c-text-secondary',
                   });
                 if (a.sessionId || a.session?.id)
                   relations.push({
-                    label: `${isPolish ? 'Sesja' : 'Session'}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
+                    label: `${t('interview.hub.session2')}: ${(a.sessionId || a.session?.id || '').slice(0, 8)}…`,
                     tone: 'text-blue-600 dark:text-blue-300',
                   });
 
@@ -9013,7 +8804,7 @@ Return ONLY the answer text (no markdown fences).`;
                       const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
                       setPreviewAiLastIntent(intent);
                       const text = await runAssignmentAi(intent, a);
-                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(t('interview.hub.aiUnavailable'));
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
@@ -9021,7 +8812,7 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     onRegenerateAi={async () => {
                       const text = await runAssignmentAi(previewAiLastIntent, a);
-                      if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      if (!text) setPreviewAiError(t('interview.hub.aiUnavailable'));
                       else {
                         setPreviewAiError(null);
                         setPreviewAiText(text);
@@ -9048,7 +8839,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="pl-4 pr-1.5 pt-3 pb-4">
                   {rows.length === 0 ? (
                     <div className="py-12 text-center text-sm text-c-text-muted">
-                      {isPolish ? 'Brak przydziałów' : 'No assignments'}
+                      {t('interview.hub.noAssignments')}
                     </div>
                   ) : (
                     renderAssignmentsGrid(rows, true)
@@ -9072,12 +8863,10 @@ Return ONLY the answer text (no markdown fences).`;
             {renderDegradedBanner()}
             <AlertTriangle size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
             <p className="text-lg font-medium text-c-text">
-              {isPolish ? 'Brak wniosków do przeglądu' : 'No insights pending review'}
+              {t('interview.hub.noInsightsPendingReview')}
             </p>
             <p className="text-sm text-c-text-muted mt-1">
-              {isPolish
-                ? 'Wszystkie wnioski zostały przejrzane.'
-                : 'All insights have been reviewed.'}
+              {t('interview.hub.allInsightsHaveBeenReviewed')}
             </p>
           </div>
         );
@@ -9119,33 +8908,33 @@ Return ONLY the answer text (no markdown fences).`;
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
                           {new Date(insight.createdAt).toLocaleDateString(
-                            isPolish ? 'pl-PL' : 'en-US'
+                            t('interview.hub.enUs')
                           )}
                         </span>
                       )}
                       {findingsCount > 0 && (
                         <span className="flex items-center gap-1">
                           <Target size={12} />
-                          {findingsCount} {isPolish ? 'wyników' : 'findings'}
+                          {findingsCount} {t('interview.hub.findings')}
                         </span>
                       )}
                       {crossPerspectiveCount > 0 && (
                         <span className="flex items-center gap-1">
                           <Users size={12} />
-                          {crossPerspectiveCount} {isPolish ? 'cross-role' : 'cross-role'}
+                          {crossPerspectiveCount} {t('interview.hub.crossRole')}
                         </span>
                       )}
                       {divergenceCount > 0 && (
                         <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300">
                           <AlertTriangle size={12} />
-                          {divergenceCount} {isPolish ? 'rozjazdów' : 'divergences'}
+                          {divergenceCount} {t('interview.hub.divergences')}
                         </span>
                       )}
                     </div>
                   </div>
                   <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-500/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    {isPolish ? 'Do przeglądu' : 'In Review'}
+                    {t('interview.hub.inReview2')}
                   </span>
                 </div>
               </button>
@@ -9254,14 +9043,12 @@ Return ONLY the answer text (no markdown fences).`;
             type="button"
             onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
             className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-c-text-secondary hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
-            title={isPolish ? 'Obszar pytań' : 'Question area'}
+            title={t('interview.hub.questionArea')}
           >
             <span className={templateAreaTagFilter.length > 0 ? 'text-c-accent' : ''}>
               {templateAreaTagFilter.length > 0
-                ? `${isPolish ? 'Obszar' : 'Area'}: ${templateAreaTagFilter.length}`
-                : isPolish
-                  ? 'Obszar: wszystkie'
-                  : 'Area: all'}
+                ? `${t('interview.hub.area')}: ${templateAreaTagFilter.length}`
+                : t('interview.hub.areaAll')}
             </span>
             <ChevronDown size={14} />
           </button>
@@ -9277,7 +9064,7 @@ Return ONLY the answer text (no markdown fences).`;
                   onClick={() => setTemplateAreaTagFilter([])}
                   className="w-full text-left px-3 py-2 text-xs font-medium text-c-text-muted hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg"
                 >
-                  {isPolish ? 'Wyczyść filtr' : 'Clear filter'}
+                  {t('interview.hub.clearFilter')}
                 </button>
                 {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
                   const checked = templateAreaTagFilter.includes(tag);
@@ -9296,7 +9083,7 @@ Return ONLY the answer text (no markdown fences).`;
                         }
                         className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                       />
-                      <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                      <span>{getTemplateAreaTagLabel(tag, t)}</span>
                     </label>
                   );
                 })}
@@ -9309,12 +9096,12 @@ Return ONLY the answer text (no markdown fences).`;
             value={templateSourceFilter}
             onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
             className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-c-text-secondary hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Źródło szablonu' : 'Template source'}
+            title={t('interview.hub.templateSource')}
           >
-            <option value="all">{isPolish ? 'Źródło: wszystkie' : 'Source: all'}</option>
-            <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
-            <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
-            <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
+            <option value="all">{t('interview.hub.sourceAll')}</option>
+            <option value="application">{t('interview.hub.application')}</option>
+            <option value="organization">{t('interview.hub.organization')}</option>
+            <option value="user">{t('interview.hub.user')}</option>
           </select>
           <ChevronDown
             size={14}
@@ -9325,13 +9112,13 @@ Return ONLY the answer text (no markdown fences).`;
           key="templates-view"
           className={viewSegmentClass}
           role="radiogroup"
-          aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}
+          aria-label={t('interview.hub.templatesViewMode')}
         >
           <button
             type="button"
             onClick={() => setTemplatesViewMode('table')}
             className={viewButtonClass(templatesViewMode === 'table')}
-            title={isPolish ? 'Tabela' : 'Table'}
+            title={t('interview.hub.table')}
             role="radio"
             aria-checked={templatesViewMode === 'table'}
           >
@@ -9341,7 +9128,7 @@ Return ONLY the answer text (no markdown fences).`;
             type="button"
             onClick={() => setTemplatesViewMode('cards')}
             className={viewButtonClass(templatesViewMode === 'cards')}
-            title={isPolish ? 'Karty' : 'Cards'}
+            title={t('interview.hub.cards')}
             role="radio"
             aria-checked={templatesViewMode === 'cards'}
           >
@@ -9357,12 +9144,12 @@ Return ONLY the answer text (no markdown fences).`;
           key="insights-view"
           className={viewSegmentClass}
           role="radiogroup"
-          aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+          aria-label={t('interview.hub.viewMode')}
         >
           <button
             onClick={() => setInsightsViewMode('flat')}
             className={viewButtonClass(insightsViewMode === 'flat')}
-            title={isPolish ? 'Lista' : 'List'}
+            title={t('interview.hub.list')}
             role="radio"
             aria-checked={insightsViewMode === 'flat'}
           >
@@ -9371,7 +9158,7 @@ Return ONLY the answer text (no markdown fences).`;
           <button
             onClick={() => setInsightsViewMode('report')}
             className={viewButtonClass(insightsViewMode === 'report')}
-            title={isPolish ? 'Wg raportu' : 'By report'}
+            title={t('interview.hub.byReport')}
             role="radio"
             aria-checked={insightsViewMode === 'report'}
           >
@@ -9387,13 +9174,13 @@ Return ONLY the answer text (no markdown fences).`;
           key="sessions-view"
           className={viewSegmentClass}
           role="radiogroup"
-          aria-label={isPolish ? 'Tryb widoku sesji' : 'Sessions view mode'}
+          aria-label={t('interview.hub.sessionsViewMode')}
         >
           <button
             type="button"
             onClick={() => setViewMode('table')}
             className={viewButtonClass(viewMode === 'table')}
-            title={isPolish ? 'Lista' : 'List'}
+            title={t('interview.hub.list')}
             role="radio"
             aria-checked={viewMode === 'table'}
           >
@@ -9403,7 +9190,7 @@ Return ONLY the answer text (no markdown fences).`;
             type="button"
             onClick={() => setViewMode('grid')}
             className={viewButtonClass(viewMode === 'grid')}
-            title={isPolish ? 'Karty' : 'Cards'}
+            title={t('interview.hub.cards')}
             role="radio"
             aria-checked={viewMode === 'grid'}
           >
@@ -9419,12 +9206,12 @@ Return ONLY the answer text (no markdown fences).`;
           key="assignments-view"
           className={viewSegmentClass}
           role="radiogroup"
-          aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+          aria-label={t('interview.hub.viewMode')}
         >
           <button
             onClick={() => setAssignmentsViewMode('list')}
             className={viewButtonClass(assignmentsViewMode === 'list')}
-            title={isPolish ? 'Lista' : 'List'}
+            title={t('interview.hub.list')}
             role="radio"
             aria-checked={assignmentsViewMode === 'list'}
           >
@@ -9433,7 +9220,7 @@ Return ONLY the answer text (no markdown fences).`;
           <button
             onClick={() => setAssignmentsViewMode('cards')}
             className={viewButtonClass(assignmentsViewMode === 'cards')}
-            title={isPolish ? 'Karty' : 'Cards'}
+            title={t('interview.hub.cards')}
             role="radio"
             aria-checked={assignmentsViewMode === 'cards'}
           >
@@ -9449,13 +9236,13 @@ Return ONLY the answer text (no markdown fences).`;
           key="initiatives-view"
           className={viewSegmentClass}
           role="radiogroup"
-          aria-label={isPolish ? 'Tryb widoku inicjatyw' : 'Initiatives view mode'}
+          aria-label={t('interview.hub.initiativesViewMode')}
         >
           <button
             type="button"
             onClick={() => setInitiativesViewMode('table')}
             className={viewButtonClass(initiativesViewMode === 'table')}
-            title={isPolish ? 'Lista' : 'List'}
+            title={t('interview.hub.list')}
             role="radio"
             aria-checked={initiativesViewMode === 'table'}
           >
@@ -9465,7 +9252,7 @@ Return ONLY the answer text (no markdown fences).`;
             type="button"
             onClick={() => setInitiativesViewMode('cards')}
             className={viewButtonClass(initiativesViewMode === 'cards')}
-            title={isPolish ? 'Karty' : 'Cards'}
+            title={t('interview.hub.cards')}
             role="radio"
             aria-checked={initiativesViewMode === 'cards'}
           >
@@ -9500,7 +9287,7 @@ Return ONLY the answer text (no markdown fences).`;
           onClick={handleNewSession}
           className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
-          <span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
+          <span>{t('interview.hub.newSession')}</span>
         </button>
       );
     }
@@ -9510,7 +9297,7 @@ Return ONLY the answer text (no markdown fences).`;
           onClick={handleNewTemplate}
           className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
-          <span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
+          <span>{t('interview.hub.newTemplate2')}</span>
         </button>
       );
     }
@@ -9525,7 +9312,7 @@ Return ONLY the answer text (no markdown fences).`;
           disabled={!canCreateInsights}
           className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
-          <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
+          <span>{t('interview.hub.newInsight')}</span>
         </button>
       );
     }
@@ -9541,16 +9328,12 @@ Return ONLY the answer text (no markdown fences).`;
           disabled={!canCreateInsights}
           title={
             canCreateInsights
-              ? isPolish
-                ? 'Uruchom kreator inicjatyw z evidence z wywiadow'
-                : 'Run initiative wizard with interview evidence'
-              : isPolish
-                ? 'Brak uprawnien: poproś admina o capability initiative.create lub interview.insight.create.'
-                : 'No permission: request initiative.create or interview.insight.create capability from admin.'
+              ? t('interview.hub.runInitiativeWizardWithInterview')
+              : t('interview.hub.noPermissionRequestInitiativeCreate')
           }
           className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
-          <span>{isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}</span>
+          <span>{t('interview.hub.addInitiatives')}</span>
         </button>
       );
     }
@@ -9563,7 +9346,7 @@ Return ONLY the answer text (no markdown fences).`;
           }}
           className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
-          <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
+          <span>{t('interview.hub.assign')}</span>
         </button>
       );
     }
@@ -9633,7 +9416,6 @@ Return ONLY the answer text (no markdown fences).`;
             steps={pipelineSteps}
             activeTab={activeTab as ModuleTab}
             onStepChange={handleMainTabChange}
-            isPolish={isPolish}
           />
         ) : null}
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
@@ -9721,7 +9503,7 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
-                {isPolish ? 'Wyślij przypomnienie' : 'Send Reminder'}
+                {t('interview.hub.sendReminder2')}
               </h2>
               <button
                 onClick={() => {
@@ -9735,9 +9517,9 @@ Return ONLY the answer text (no markdown fences).`;
             </div>
             <div className="p-4">
               <p className="text-sm text-c-text-muted mb-4">
-                {isPolish
-                  ? `Czy na pewno chcesz wysłać przypomnienie do ${selectedAssignment.assignee?.name || 'użytkownika'}?`
-                  : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`}
+                {t('interview.hub.confirmSendReminderTo', {
+                  name: selectedAssignment.assignee?.name || t('interview.hub.theUserFallback'),
+                })}
               </p>
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
                 <div className="text-sm text-c-text font-medium">
@@ -9745,10 +9527,8 @@ Return ONLY the answer text (no markdown fences).`;
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
                   {selectedAssignment.dueAt
-                    ? `${isPolish ? 'Termin:' : 'Due:'} ${new Date(selectedAssignment.dueAt).toLocaleDateString()}`
-                    : isPolish
-                      ? 'Brak terminu'
-                      : 'No due date'}
+                    ? `${t('interview.hub.due3')} ${new Date(selectedAssignment.dueAt).toLocaleDateString()}`
+                    : t('interview.hub.noDueDate')}
                 </div>
               </div>
               <div className="flex gap-3">
@@ -9759,7 +9539,7 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('interview.hub.cancel')}
                 </button>
                 <button
                   onClick={async () => {
@@ -9767,14 +9547,14 @@ Return ONLY the answer text (no markdown fences).`;
                       await V8InterviewApi.remindAssignment(selectedAssignment.id).catch(() =>
                         Api.post(`/interview/assignments/${selectedAssignment.id}/remind`, {})
                       );
-                      toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
+                      toast.success(t('interview.hub.reminderSent'));
                       setShowReminderModal(false);
                       setSelectedAssignment(null);
                     } catch (error: any) {
                       console.error('[InterviewHub] Failed to send reminder from modal:', error);
                       safeToastError(
                         error,
-                        isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder',
+                        t('interview.hub.failedToSendReminder'),
                         isPolish
                       );
                     }
@@ -9782,7 +9562,7 @@ Return ONLY the answer text (no markdown fences).`;
                   className="flex-1 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
                 >
                   <Bell size={16} className="inline mr-2" />
-                  {isPolish ? 'Wyślij' : 'Send'}
+                  {t('interview.hub.send')}
                 </button>
               </div>
             </div>
@@ -9797,7 +9577,7 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
-                {isPolish ? 'Usuń sesję na stałe' : 'Delete session forever'}
+                {t('interview.hub.deleteSessionForever')}
               </h2>
               <button
                 onClick={() => {
@@ -9811,9 +9591,7 @@ Return ONLY the answer text (no markdown fences).`;
             </div>
             <div className="p-4">
               <p className="text-sm text-c-text-muted mb-4">
-                {isPolish
-                  ? 'Tej operacji nie można cofnąć. Sesja oraz jej pytania, notatki i dowody zostaną trwale usunięte.'
-                  : 'This cannot be undone. The session and its questions, notes and evidence will be permanently removed.'}
+                {t('interview.hub.thisCannotBeUndoneThe')}
               </p>
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
                 <div className="text-sm text-c-text font-medium truncate">
@@ -9821,19 +9599,11 @@ Return ONLY the answer text (no markdown fences).`;
                 </div>
               </div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                {isPolish ? (
-                  <>
-                    Wpisz{' '}
-                    <span className="font-semibold text-c-danger">DELETE</span>,
-                    aby potwierdzić
-                  </>
-                ) : (
-                  <>
-                    Type{' '}
-                    <span className="font-semibold text-c-danger">DELETE</span>{' '}
-                    to confirm
-                  </>
-                )}
+                <>
+                  {t('interview.hub.typeDeletePrefix')}{' '}
+                  <span className="font-semibold text-c-danger">DELETE</span>
+                  {t('interview.hub.typeDeleteSuffix')}
+                </>
               </label>
               <input
                 type="text"
@@ -9851,7 +9621,7 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('interview.hub.cancel')}
                 </button>
                 <button
                   onClick={handleConfirmDeleteSession}
@@ -9862,7 +9632,7 @@ Return ONLY the answer text (no markdown fences).`;
                   className="flex-1 px-4 py-2 rounded-lg bg-c-danger hover:bg-c-danger/90 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 size={16} className="inline mr-2" />
-                  {isPolish ? 'Usuń na stałe' : 'Delete forever'}
+                  {t('interview.hub.deleteForever')}
                 </button>
               </div>
             </div>
@@ -9876,7 +9646,7 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
-                {isPolish ? 'Zwróć do poprawy' : 'Send Back for Revision'}
+                {t('interview.hub.sendBackForRevision')}
               </h2>
               <button
                 onClick={() => {
@@ -9898,16 +9668,14 @@ Return ONLY the answer text (no markdown fences).`;
               className="p-4"
             >
               <p className="text-sm text-c-text-muted mb-4">
-                {isPolish
-                  ? 'Podaj powód zwrotu wywiadu do poprawy:'
-                  : 'Provide a reason for sending the interview back:'}
+                {t('interview.hub.provideAReasonForSending')}
               </p>
               <textarea
                 name="reason"
                 required
                 rows={4}
                 placeholder={
-                  isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
+                  t('interview.hub.describeWhatNeedsToBe')
                 }
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-c-text placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition resize-none"
               />
@@ -9920,14 +9688,14 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('interview.hub.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 rounded-lg bg-c-danger hover:bg-c-danger/90 text-white font-medium transition-colors"
                 >
                   <RotateCcw size={16} className="inline mr-2" />
-                  {isPolish ? 'Zwróć' : 'Send Back'}
+                  {t('interview.hub.sendBack4')}
                 </button>
               </div>
             </form>
@@ -9944,7 +9712,7 @@ Return ONLY the answer text (no markdown fences).`;
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Check size={18} className="text-emerald-500" />
-                {isPolish ? 'Zatwierdź wywiad' : 'Approve interview'}
+                {t('interview.hub.approveInterview')}
               </h2>
               <button
                 onClick={() => {
@@ -9964,7 +9732,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="text-xs text-slate-500 mt-1">
                   {selectedAssignment.assignee?.name ||
                     selectedAssignment.assignee?.email ||
-                    (isPolish ? 'Nieznany' : 'Unknown')}
+                    (t('interview.hub.unknown'))}
                 </div>
               </div>
 
@@ -9975,9 +9743,7 @@ Return ONLY the answer text (no markdown fences).`;
                   return (
                     <div className="rounded-lg border border-c-border-subtle bg-white dark:bg-navy-800/60 p-3 mb-4 text-sm text-c-text-muted flex items-center gap-2">
                       <Sparkles size={14} className="text-slate-400" />
-                      {isPolish
-                        ? 'Ocena AI niedostępna dla tego wywiadu.'
-                        : 'AI assessment not available for this interview.'}
+                      {t('interview.hub.aiAssessmentNotAvailableFor')}
                     </div>
                   );
                 }
@@ -9993,7 +9759,7 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold uppercase tracking-wide text-c-info dark:text-c-info flex items-center gap-1.5">
                         <Gauge size={14} />
-                        {isPolish ? 'Ocena AI' : 'AI assessment'}
+                        {t('interview.hub.aiAssessment')}
                       </span>
                       {pct !== null ? (
                         <span
@@ -10012,7 +9778,7 @@ Return ONLY the answer text (no markdown fences).`;
                     {weak.length > 0 ? (
                       <div className="mt-2.5">
                         <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                          {isPolish ? 'Słabe / krótkie odpowiedzi:' : 'Weak / short answers:'}
+                          {t('interview.hub.weakShortAnswers')}
                         </div>
                         <ul className="space-y-1 max-h-40 overflow-auto">
                           {weak.slice(0, 8).map((w) => (
@@ -10036,9 +9802,7 @@ Return ONLY the answer text (no markdown fences).`;
                       </div>
                     ) : (
                       <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">
-                        {isPolish
-                          ? 'Brak słabych odpowiedzi wykrytych przez AI.'
-                          : 'No weak answers flagged by AI.'}
+                        {t('interview.hub.noWeakAnswersFlaggedBy')}
                       </div>
                     )}
                   </div>
@@ -10056,7 +9820,7 @@ Return ONLY the answer text (no markdown fences).`;
                   className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-c-danger/40 text-c-danger hover:bg-c-danger/[0.08] font-medium transition-colors"
                 >
                   <RotateCcw size={16} className="inline mr-2" />
-                  {isPolish ? 'Zwróć do poprawy' : 'Send back'}
+                  {t('interview.hub.sendBack3')}
                 </button>
                 <button
                   type="button"
@@ -10069,7 +9833,7 @@ Return ONLY the answer text (no markdown fences).`;
                   className="flex-1 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-colors"
                 >
                   <Check size={16} className="inline mr-2" />
-                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                  {t('interview.hub.approve')}
                 </button>
               </div>
             </div>
@@ -10084,7 +9848,7 @@ Return ONLY the answer text (no markdown fences).`;
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <CalendarClock size={18} className="text-c-info" />
-                {isPolish ? 'Zmień termin' : 'Change due date'}
+                {t('interview.hub.changeDueDate')}
               </h2>
               <button
                 onClick={() => {
@@ -10104,11 +9868,11 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="text-xs text-slate-500 mt-1">
                   {selectedAssignment.assignee?.name ||
                     selectedAssignment.assignee?.email ||
-                    (isPolish ? 'Nieznany' : 'Unknown')}
+                    (t('interview.hub.unknown'))}
                 </div>
               </div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                {isPolish ? 'Nowy termin' : 'New due date'}
+                {t('interview.hub.newDueDate')}
               </label>
               <input
                 type="date"
@@ -10125,7 +9889,7 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('interview.hub.cancel')}
                 </button>
                 <button
                   type="button"
@@ -10138,7 +9902,7 @@ Return ONLY the answer text (no markdown fences).`;
                   ) : (
                     <CalendarClock size={16} className="inline mr-2" />
                   )}
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('interview.hub.save')}
                 </button>
               </div>
             </div>
@@ -10153,7 +9917,7 @@ Return ONLY the answer text (no markdown fences).`;
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <BarChart3 size={20} className="text-c-info" />
-                {isPolish ? 'Analityka wywiadów' : 'Interview Analytics'}
+                {t('interview.hub.interviewAnalytics')}
               </h2>
               <button
                 onClick={() => setShowAnalytics(false)}
@@ -10168,7 +9932,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-white">{sessions.length}</div>
                   <div className="text-sm text-c-text-muted">
-                    {isPolish ? 'Wszystkie sesje' : 'Total Sessions'}
+                    {t('interview.hub.totalSessions')}
                   </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
@@ -10180,7 +9944,7 @@ Return ONLY the answer text (no markdown fences).`;
                     }
                   </div>
                   <div className="text-sm text-c-text-muted">
-                    {isPolish ? 'Zatwierdzone' : 'Approved'}
+                    {t('interview.hub.approved')}
                   </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
@@ -10188,13 +9952,13 @@ Return ONLY the answer text (no markdown fences).`;
                     {sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length}
                   </div>
                   <div className="text-sm text-c-text-muted">
-                    {isPolish ? 'W trakcie' : 'In Progress'}
+                    {t('interview.hub.inProgress2')}
                   </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-amber-400">{insights.length}</div>
                   <div className="text-sm text-c-text-muted">
-                    {isPolish ? 'Wnioski AI' : 'AI Insights'}
+                    {t('interview.hub.aiInsights2')}
                   </div>
                 </div>
               </div>
@@ -10202,7 +9966,7 @@ Return ONLY the answer text (no markdown fences).`;
               {/* Assignment Stats */}
               <div className="bg-navy-800 border border-c-border-subtle rounded-xl p-4 mb-6">
                 <h3 className="text-sm font-semibold text-c-text mb-4">
-                  {isPolish ? 'Statystyki przydziałów' : 'Assignment Statistics'}
+                  {t('interview.hub.assignmentStatistics')}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
@@ -10210,7 +9974,7 @@ Return ONLY the answer text (no markdown fences).`;
                       {managedAssignments.length}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {isPolish ? 'Zarządzane' : 'Managed'}
+                      {t('interview.hub.managed')}
                     </div>
                   </div>
                   <div>
@@ -10218,7 +9982,7 @@ Return ONLY the answer text (no markdown fences).`;
                       {overdueAssignments.length}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {isPolish ? 'Przeterminowane' : 'Overdue'}
+                      {t('interview.hub.overdue2')}
                     </div>
                   </div>
                   <div>
@@ -10226,7 +9990,7 @@ Return ONLY the answer text (no markdown fences).`;
                       {managedAssignments.filter((a) => a.status === 'completed').length}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {isPolish ? 'Ukończone' : 'Completed'}
+                      {t('interview.hub.completed2')}
                     </div>
                   </div>
                   <div>
@@ -10234,7 +9998,7 @@ Return ONLY the answer text (no markdown fences).`;
                       {managedAssignments.filter((a) => a.status === 'submitted').length}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {isPolish ? 'Do przeglądu' : 'Pending Review'}
+                      {t('interview.hub.pendingReview')}
                     </div>
                   </div>
                 </div>
@@ -10243,7 +10007,7 @@ Return ONLY the answer text (no markdown fences).`;
               {/* Template Usage */}
               <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                 <h3 className="text-sm font-semibold text-c-text mb-4">
-                  {isPolish ? 'Użycie szablonów' : 'Template Usage'}
+                  {t('interview.hub.templateUsage')}
                 </h3>
                 <div className="space-y-3">
                   {templates.slice(0, 5).map((template) => (
@@ -10253,7 +10017,7 @@ Return ONLY the answer text (no markdown fences).`;
                         <span className="text-sm text-slate-600">{template.name}</span>
                       </div>
                       <span className="text-xs text-slate-500">
-                        {template.questionCount} {isPolish ? 'pytań' : 'questions'}
+                        {template.questionCount} {t('interview.hub.questions2')}
                       </span>
                     </div>
                   ))}
@@ -10261,9 +10025,7 @@ Return ONLY the answer text (no markdown fences).`;
               </div>
 
               <p className="text-center text-slate-500 text-sm mt-6">
-                {isPolish
-                  ? 'Przejdź do zakładki Analytics, aby zobaczyć szczegóły'
-                  : 'Visit the Analytics tab for detailed insights'}
+                {t('interview.hub.visitTheAnalyticsTabFor')}
               </p>
             </div>
           </div>

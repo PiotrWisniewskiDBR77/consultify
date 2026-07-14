@@ -1,5 +1,6 @@
 import { ArrowRight, Copy, ExternalLink, Rocket, RotateCcw } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   type ActionRow,
@@ -42,6 +43,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
   onOpenInModule,
   onCopyId,
 }) => {
+  const { t } = useTranslation();
   const relationItems: RelationItem[] = relations.map((r) => ({
     label: r.label,
     tone: r.tone ?? 'text-[var(--c-text-secondary)]',
@@ -56,7 +58,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     ...(isDraft && onSendToReview
       ? [
           {
-            label: isPolish ? 'Wyślij do przeglądu' : 'Send to review',
+            label: t('interview.initiativePreview.sendToReview'),
             icon: ArrowRight,
             onClick: onSendToReview,
             colorScheme: 'neutral' as const,
@@ -66,7 +68,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     ...(isPending && canReview && onApproveMoveForward
       ? [
           {
-            label: isPolish ? 'Zatwierdź i przekaż dalej' : 'Approve and move forward',
+            label: t('interview.initiativePreview.approveAndMoveForward'),
             icon: Rocket,
             onClick: onApproveMoveForward,
             colorScheme: 'primary' as const,
@@ -76,7 +78,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     ...(isPending && onBackToDraft
       ? [
           {
-            label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
+            label: t('interview.initiativePreview.backToDraft'),
             icon: RotateCcw,
             onClick: onBackToDraft,
             colorScheme: 'neutral' as const,
@@ -88,7 +90,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
           {
             // M13 flow redesign: the DOCUMENT is the working surface — for a
             // DRAFT this is the primary move (staging stays a source view).
-            label: isPolish ? 'Otwórz dokument inicjatywy' : 'Open initiative document',
+            label: t('interview.initiativePreview.openInitiativeDocument'),
             icon: ExternalLink,
             onClick: onOpenInModule,
             colorScheme: isDraft ? ('primary' as const) : ('neutral' as const),
@@ -96,7 +98,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
         ]
       : []),
     {
-      label: isPolish ? 'Kopiuj ID' : 'Copy ID',
+      label: t('interview.initiativePreview.copyId'),
       icon: Copy,
       onClick: onCopyId,
       colorScheme: 'neutral' as const,
@@ -110,15 +112,15 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     <div className="space-y-2.5">
       <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
         <PreviewAIHintStrip
-          hints={
-            isPolish
-              ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
-              : ['Summarize', 'Risks', 'Next steps']
-          }
+          hints={[
+            t('interview.initiativePreview.summarize'),
+            t('interview.initiativePreview.risks'),
+            t('interview.initiativePreview.nextSteps'),
+          ]}
           onRunHint={() => {}}
           disabled
           disabledTooltip={
-            isPolish ? 'AI dla inicjatyw — wkrótce' : 'AI for initiatives — coming soon'
+            t('interview.initiativePreview.aiForInitiativesComingSoon')
           }
         />
       </div>

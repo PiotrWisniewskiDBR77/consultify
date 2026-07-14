@@ -46,7 +46,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
   isLoading = false,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [showNewNote, setShowNewNote] = useState(false);
@@ -115,7 +115,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-[var(--c-text)]">
-            {isPolish ? 'Notatki' : 'Notes'}
+            {t('interview.notesPanel.notes')}
           </h3>
           <MetaChip label={filteredNotes.length} />
         </div>
@@ -131,7 +131,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                   : 'text-[var(--c-text-secondary)]'
               }`}
             >
-              {isPolish ? 'Wszystkie' : 'All'}
+              {t('interview.notesPanel.all')}
             </button>
             <button
               onClick={() => setFilter('category')}
@@ -141,7 +141,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                   : 'text-[var(--c-text-secondary)]'
               }`}
             >
-              {isPolish ? 'Kategoria' : 'Category'}
+              {t('interview.notesPanel.category')}
             </button>
           </div>
 
@@ -152,7 +152,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
               className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--c-accent)] hover:bg-[var(--c-accent-soft)] rounded-token-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
             >
               <Plus size={14} />
-              {isPolish ? 'Dodaj' : 'Add'}
+              {t('interview.notesPanel.add')}
             </button>
           )}
         </div>
@@ -166,7 +166,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             className="w-full p-2 text-sm font-medium border border-[var(--c-border)] rounded-token-md bg-[var(--c-surface)] text-[var(--c-text)] placeholder:text-[var(--c-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)]"
-            placeholder={isPolish ? 'Tytuł notatki...' : 'Note title...'}
+            placeholder={t('interview.notesPanel.noteTitle')}
             autoFocus
           />
           <textarea
@@ -174,17 +174,18 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             onChange={(e) => setNewContent(e.target.value)}
             className="w-full p-2 text-sm border border-[var(--c-border)] rounded-token-md bg-[var(--c-surface)] text-[var(--c-text)] placeholder:text-[var(--c-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)] resize-none"
             rows={4}
-            placeholder={isPolish ? 'Treść notatki...' : 'Note content...'}
+            placeholder={t('interview.notesPanel.noteContent')}
           />
           <div className="flex justify-between items-center">
             <span className="text-xs text-[var(--c-text-muted)]">
               {activeCategory && (
                 <>
-                  {isPolish ? 'Kategoria:' : 'Category:'}{' '}
+                  {t('interview.notesPanel.category2')}{' '}
                   <span className="font-medium">
-                    {isPolish
-                      ? CATEGORY_CONFIG[activeCategory].labelPl
-                      : CATEGORY_CONFIG[activeCategory].labelEn}
+                    {t(
+                      `interview.workspace.categoryLabel.${activeCategory}`,
+                      CATEGORY_CONFIG[activeCategory].labelEn
+                    )}
                   </span>
                 </>
               )}
@@ -198,14 +199,14 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                 }}
                 className="px-3 py-1.5 text-sm text-[var(--c-text-secondary)] hover:text-[var(--c-text)] rounded-token-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('interview.notesPanel.cancel')}
               </button>
               <button
                 onClick={handleCreateNote}
                 disabled={!newTitle.trim()}
                 className="px-3 py-1.5 text-sm bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 disabled:opacity-50 rounded-token-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
               >
-                {isPolish ? 'Zapisz' : 'Save'}
+                {t('interview.notesPanel.save')}
               </button>
             </div>
           </div>
@@ -248,14 +249,14 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                       }}
                       className="px-3 py-1.5 text-sm text-[var(--c-text-secondary)] hover:text-[var(--c-text)] rounded-token-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                     >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
+                      {t('interview.notesPanel.cancel')}
                     </button>
                     <button
                       onClick={() => handleSaveEdit(note.id)}
                       disabled={!editTitle.trim()}
                       className="px-3 py-1.5 text-sm bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 disabled:opacity-50 rounded-token-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                     >
-                      {isPolish ? 'Zapisz' : 'Save'}
+                      {t('interview.notesPanel.save')}
                     </button>
                   </div>
                 </div>
@@ -272,7 +273,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                           <span
                             className={`px-1.5 py-0.5 text-xs rounded-token-xs ${categoryConfig.bgColor} ${categoryConfig.color}`}
                           >
-                            {isPolish ? categoryConfig.labelPl : categoryConfig.labelEn}
+                            {t(`interview.workspace.categoryLabel.${note.category}`, categoryConfig.labelEn)}
                           </span>
                         )}
                       </div>
@@ -297,14 +298,14 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--c-text)] hover:bg-[var(--c-surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                             >
                               <Edit3 size={14} />
-                              {isPolish ? 'Edytuj' : 'Edit'}
+                              {t('interview.notesPanel.edit')}
                             </button>
                             <button
                               onClick={() => handleDeleteNote(note.id)}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--c-danger)] hover:bg-c-danger/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                             >
                               <Trash2 size={14} />
-                              {isPolish ? 'Usuń' : 'Delete'}
+                              {t('interview.notesPanel.delete')}
                             </button>
                           </div>
                         )}
@@ -330,18 +331,16 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
           <EmptyState
             variant="new"
             icon={FileText}
-            title={isPolish ? 'Brak notatek' : 'No notes yet'}
+            title={t('interview.notesPanel.noNotesYet')}
             description={
-              isPolish
-                ? 'Dodaj pierwszą notatkę, aby zapisać obserwacje z wywiadu.'
-                : 'Add your first note to capture observations from the interview.'
+              t('interview.notesPanel.addYourFirstNoteTo')
             }
             compact
             primaryAction={
               readOnly
                 ? undefined
                 : {
-                    label: isPolish ? 'Dodaj notatkę' : 'Add note',
+                    label: t('interview.notesPanel.addNote'),
                     onClick: () => setShowNewNote(true),
                     icon: Plus,
                   }

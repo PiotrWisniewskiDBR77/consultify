@@ -169,7 +169,7 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   isLoading = false,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   // Filter questions for current category
@@ -268,9 +268,7 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
       } catch (error) {
         console.error('[QuestionsList] Failed to save answer:', error);
         setSaveError(
-          isPolish
-            ? 'Nie udało się zapisać. Spróbuj ponownie.'
-            : 'Failed to save. Please try again.'
+          t('interview.questionsList.failedToSavePleaseTry')
         );
       } finally {
         setSavingId(null);
@@ -368,19 +366,17 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
       setChatQuestion(question);
       const categoryLabel = category || 'General';
       const existingAnswer = question.answerText
-        ? `\n\n${isPolish ? 'Dotychczasowa odpowiedź:' : 'Current answer:'} ${question.answerText}`
+        ? `\n\n${t('interview.questionsList.currentAnswer')} ${question.answerText}`
         : '';
       const existingNotes = question.notes
-        ? `\n${isPolish ? 'Notatki:' : 'Notes:'} ${question.notes}`
+        ? `\n${t('interview.questionsList.notes')} ${question.notes}`
         : '';
       setChatMessages([
         {
           role: 'ai',
           content:
-            (isPolish
-              ? `Jestem asystentem AI dla sekcji "${categoryLabel}". Opisz krótko kontekst i fakty. Ja pomogę ułożyć odpowiedź i potem możesz ją wstawić do pytania.`
-              : `I'm the AI assistant for the "${categoryLabel}" section. Describe the context and facts briefly. I will help draft the answer, and you can insert it into the question.`) +
-            `\n\n${isPolish ? 'Pytanie:' : 'Question:'} ${question.questionText}${existingAnswer}${existingNotes}`,
+            t('interview.questionsList.aiAssistantForSectionIntro', { section: categoryLabel }) +
+            `\n\n${t('interview.questionsList.question')} ${question.questionText}${existingAnswer}${existingNotes}`,
         },
       ]);
       setChatInput('');
@@ -431,9 +427,7 @@ Rules:
         ...prev,
         {
           role: 'ai',
-          content: isPolish
-            ? 'Wystąpił błąd. Spróbuj ponownie.'
-            : 'An error occurred. Please try again.',
+          content: t('interview.questionsList.anErrorOccurredPleaseTry'),
         },
       ]);
     } finally {
@@ -486,7 +480,7 @@ Rules:
               ? 'bg-amber-400 text-white'
               : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
           } ${readOnly ? 'cursor-default' : 'hover:scale-110'}`}
-          title={`${isPolish ? 'Pewność' : 'Confidence'}: ${score}/5`}
+          title={`${t('interview.questionsList.confidence')}: ${score}/5`}
         >
           {score}
         </button>
@@ -512,7 +506,7 @@ Rules:
             >
               <Icon size={14} className={config.color} />
               <span className="text-slate-700 dark:text-slate-300">
-                {isPolish ? config.labelPl : config.labelEn}
+                {t(`interview.questionsList.statusLabel.${status}`, config.labelEn)}
               </span>
               {question.status === status && (
                 <Check size={14} className="ml-auto text-emerald-500" />
@@ -537,7 +531,7 @@ Rules:
             className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-800`}
           >
             <span className={`px-2 py-0.5 rounded text-xs ${tag.color}`}>
-              {isPolish ? tag.labelPl : tag.labelEn}
+              {t(`interview.questionsList.tagLabel.${tag.value}`, tag.labelEn)}
             </span>
             {question.tags.includes(tag.value) && (
               <Check size={14} className="ml-auto text-emerald-500" />
@@ -563,7 +557,7 @@ Rules:
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-            <span>{isPolish ? 'Postęp w tej sekcji' : 'Progress in this section'}</span>
+            <span>{t('interview.questionsList.progressInThisSection')}</span>
             <span className="tabular-nums">
               {answeredCount}/{totalCount} · {percent}%
             </span>
@@ -584,16 +578,12 @@ Rules:
           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title={
             nextMissing
-              ? isPolish
-                ? 'Otwórz następne brakujące pytanie w tej sekcji'
-                : 'Open next missing question in this section'
-              : isPolish
-                ? 'Wszystkie pytania uzupełnione'
-                : 'All questions answered'
+              ? t('interview.questionsList.openNextMissingQuestionIn')
+              : t('interview.questionsList.allQuestionsAnswered')
           }
         >
           <ChevronRight size={14} />
-          {isPolish ? 'Następne brakujące' : 'Next missing'}
+          {t('interview.questionsList.nextMissing')}
           {missingCount > 0 && (
             <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
               {missingCount}
@@ -610,9 +600,7 @@ Rules:
         >
           <span className="flex items-center gap-2">
             <Sparkles size={14} />
-            {isPolish
-              ? 'Zacznij od następnego brakującego pytania'
-              : 'Start with the next missing question'}
+            {t('interview.questionsList.startWithTheNextMissing')}
           </span>
           <ChevronRight size={16} />
         </button>
@@ -640,7 +628,7 @@ Rules:
 
               const metaPills: MetaPill[] = [
                 {
-                  label: isPolish ? statusConfig.labelPl : statusConfig.labelEn,
+                  label: t(`interview.questionsList.statusLabel.${item.status}`, statusConfig.labelEn),
                   className: `${statusConfig.bgColor} ${statusConfig.color}`,
                   icon: StatusIcon,
                 },
@@ -651,9 +639,11 @@ Rules:
                   icon: Star,
                 },
                 ...item.tags.map((tag) => {
-                  const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
+                  const tagConfig = TAG_OPTIONS.find((tg) => tg.value === tag);
                   return {
-                    label: tagConfig ? (isPolish ? tagConfig.labelPl : tagConfig.labelEn) : tag,
+                    label: tagConfig
+                      ? t(`interview.questionsList.tagLabel.${tag}`, tagConfig.labelEn)
+                      : tag,
                     className: tagConfig?.color || 'bg-slate-100 text-slate-600',
                   };
                 }),
@@ -673,7 +663,7 @@ Rules:
                               }
                               className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                             >
-                              {isPolish ? 'Zmień status' : 'Change status'}
+                              {t('interview.questionsList.changeStatus')}
                             </button>
                             {renderStatusMenu(item)}
                           </div>
@@ -687,7 +677,7 @@ Rules:
                               className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                             >
                               <Tag size={12} />
-                              {isPolish ? 'Tagi' : 'Tags'}
+                              {t('interview.questionsList.tags')}
                             </button>
                             {renderTagMenu(item)}
                           </div>
@@ -695,7 +685,7 @@ Rules:
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Poziom pewności' : 'Confidence level'}
+                          {t('interview.questionsList.confidenceLevel')}
                         </span>
                         {renderConfidenceSelector(item.id, item.confidenceScore)}
                       </div>
@@ -737,7 +727,7 @@ Rules:
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Odpowiedź' : 'Answer'}
+                        {t('interview.questionsList.answer')}
                       </span>
                       {!readOnly && !isEditing && (
                         <div className="flex items-center gap-2">
@@ -754,7 +744,7 @@ Rules:
                             className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
                           >
                             <MessageSquare size={12} />
-                            {isPolish ? 'Czat' : 'Chat'}
+                            {t('interview.questionsList.chat')}
                           </button>
                         </div>
                       )}
@@ -767,13 +757,13 @@ Rules:
                           onChange={(e) => setEditValue(e.target.value)}
                           className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[140px]"
                           rows={6}
-                          placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your answer...'}
+                          placeholder={t('interview.questionsList.typeYourAnswer')}
                           autoFocus
                         />
 
                         <div>
                           <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                            {isPolish ? 'Notatki (opcjonalne)' : 'Notes (optional)'}
+                            {t('interview.questionsList.notesOptional')}
                           </label>
                           <textarea
                             value={editNotes}
@@ -781,9 +771,7 @@ Rules:
                             className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus resize-none min-h-[72px]"
                             rows={3}
                             placeholder={
-                              isPolish
-                                ? 'Dodatkowe notatki, kontekst...'
-                                : 'Additional notes, context...'
+                              t('interview.questionsList.additionalNotesContext')
                             }
                           />
                         </div>
@@ -798,9 +786,7 @@ Rules:
                         <div className="flex items-center gap-2 text-xs text-slate-600">
                           <Sparkles size={12} />
                           <span>
-                            {isPolish
-                              ? 'Użyj AI lub czatu, aby szybciej dopracować odpowiedź.'
-                              : 'Use AI or chat to refine the answer faster.'}
+                            {t('interview.questionsList.useAiOrChatTo')}
                           </span>
                         </div>
                       </div>
@@ -819,7 +805,7 @@ Rules:
                             {item.notes && (
                               <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-navy-700/50">
                                 <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
-                                  {isPolish ? 'Notatki' : 'Notes'}
+                                  {t('interview.questionsList.notes2')}
                                 </span>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 whitespace-pre-wrap">
                                   {item.notes}
@@ -831,7 +817,7 @@ Rules:
                           <div className="flex items-center justify-center gap-2 py-6">
                             <Plus size={16} />
                             <span className="font-medium">
-                              {isPolish ? 'Kliknij, aby dodać odpowiedź' : 'Click to add an answer'}
+                              {t('interview.questionsList.clickToAddAnAnswer')}
                             </span>
                           </div>
                         )}
@@ -857,12 +843,8 @@ Rules:
                 return (
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {item.answerText
-                      ? isPolish
-                        ? 'Odpowiedź zapisana.'
-                        : 'Answer saved.'
-                      : isPolish
-                        ? 'Brak odpowiedzi.'
-                        : 'No answer yet.'}
+                      ? t('interview.questionsList.answerSaved')
+                      : t('interview.questionsList.noAnswerYet')}
                   </div>
                 );
               }
@@ -872,13 +854,13 @@ Rules:
                   {
                     buttons: [
                       {
-                        label: isPolish ? 'Anuluj' : 'Cancel',
+                        label: t('interview.questionsList.cancel'),
                         onClick: handleCancelEdit,
                         colorScheme: 'neutral',
                         shortcut: 'Esc',
                       },
                       {
-                        label: isPolish ? 'Zapisz' : 'Save',
+                        label: t('interview.questionsList.save'),
                         icon: savingId === item.id ? RefreshCw : Check,
                         onClick: () => handleSaveAnswer(item.id),
                         colorScheme: 'primary',
@@ -896,26 +878,22 @@ Rules:
                   buttons: [
                     {
                       label: item.answerText
-                        ? isPolish
-                          ? 'Edytuj odpowiedź'
-                          : 'Edit answer'
-                        : isPolish
-                          ? 'Dodaj odpowiedź'
-                          : 'Add answer',
+                        ? t('interview.questionsList.editAnswer')
+                        : t('interview.questionsList.addAnswer'),
                       icon: Edit3,
                       onClick: () => handleStartEdit(item),
                       colorScheme: 'neutral',
                       shortcut: 'E',
                     },
                     {
-                      label: isPolish ? 'Czat AI' : 'AI chat',
+                      label: t('interview.questionsList.aiChat'),
                       icon: MessageSquare,
                       onClick: () => openChatForQuestion(item),
                       colorScheme: 'neutral',
                       shortcut: 'C',
                     },
                     {
-                      label: isPolish ? 'Wstępna propozycja AI' : 'Draft with AI',
+                      label: t('interview.questionsList.draftWithAi'),
                       icon: Sparkles,
                       onClick: () => handleAISuggest(item),
                       colorScheme: 'purple',
@@ -939,22 +917,22 @@ Rules:
                   <thead>
                     <tr className="border-b border-slate-200/60 dark:border-navy-700/50 bg-slate-50/80 dark:bg-navy-950/50">
                       <th className="w-[84px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Status' : 'Status'}
+                        {t('interview.questionsList.status')}
                       </th>
                       <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Pytanie' : 'Question'}
+                        {t('interview.questionsList.question2')}
                       </th>
                       <th className="w-[104px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Pewność' : 'Confidence'}
+                        {t('interview.questionsList.confidence')}
                       </th>
                       <th className="w-[160px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Tagi' : 'Tags'}
+                        {t('interview.questionsList.tags')}
                       </th>
                       <th className="w-[220px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Odpowiedź' : 'Answer'}
+                        {t('interview.questionsList.answer')}
                       </th>
                       <th className="w-[124px] px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Akcje' : 'Actions'}
+                        {t('interview.questionsList.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -988,7 +966,7 @@ Rules:
                                 }}
                                 disabled={readOnly}
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusConfig.bgColor} ${readOnly ? 'cursor-default' : 'hover:opacity-80'}`}
-                                title={isPolish ? statusConfig.labelPl : statusConfig.labelEn}
+                                title={t(`interview.questionsList.statusLabel.${question.status}`, statusConfig.labelEn)}
                               >
                                 <StatusIcon size={16} className={statusConfig.color} />
                               </button>
@@ -1002,12 +980,8 @@ Rules:
                               </div>
                               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
                                 {question.answerText
-                                  ? isPolish
-                                    ? 'Kliknij, aby podejrzeć lub edytować odpowiedź'
-                                    : 'Click to review or edit the answer'
-                                  : isPolish
-                                    ? 'Brak odpowiedzi'
-                                    : 'No answer yet'}
+                                  ? t('interview.questionsList.clickToReviewOrEdit')
+                                  : t('interview.questionsList.noAnswerYet2')}
                               </div>
                             </div>
                           </td>
@@ -1030,13 +1004,13 @@ Rules:
                             {question.tags.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {question.tags.slice(0, 2).map((tag) => {
-                                  const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
+                                  const tagConfig = TAG_OPTIONS.find((tg) => tg.value === tag);
                                   return tagConfig ? (
                                     <span
                                       key={tag}
                                       className={`px-1.5 py-0.5 rounded text-[11px] ${tagConfig.color}`}
                                     >
-                                      {isPolish ? tagConfig.labelPl : tagConfig.labelEn}
+                                      {t(`interview.questionsList.tagLabel.${tag}`, tagConfig.labelEn)}
                                     </span>
                                   ) : null;
                                 })}
@@ -1053,7 +1027,7 @@ Rules:
                           <td className="px-4 py-3">
                             <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                               {question.answerText ||
-                                (isPolish ? 'Brak odpowiedzi' : 'No answer yet')}
+                                (t('interview.questionsList.noAnswerYet2'))}
                             </div>
                           </td>
                           <td className="px-4 py-3">
@@ -1066,9 +1040,7 @@ Rules:
                                   onClick={() => openChatForQuestion(question)}
                                   className="p-1.5 rounded hover:bg-c-info/10 dark:hover:bg-c-info/30 transition-colors"
                                   title={
-                                    isPolish
-                                      ? 'Czat AI do tego pytania'
-                                      : 'AI chat for this question'
+                                    t('interview.questionsList.aiChatForThisQuestion')
                                   }
                                 >
                                   <Sparkles size={14} className="text-c-info" />
@@ -1082,7 +1054,7 @@ Rules:
                                   }
                                   disabled={readOnly}
                                   className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-                                  title={isPolish ? 'Tagi' : 'Tags'}
+                                  title={t('interview.questionsList.tags')}
                                 >
                                   <Tag size={14} className="text-slate-600" />
                                 </button>
@@ -1091,7 +1063,7 @@ Rules:
                               <button
                                 onClick={() => setExpandedId(question.id)}
                                 className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-                                title={isPolish ? 'Pokaż szczegóły' : 'Show details'}
+                                title={t('interview.questionsList.showDetails')}
                               >
                                 <ChevronRight
                                   size={16}
@@ -1120,12 +1092,10 @@ Rules:
             <MessageSquare className="w-7 h-7 text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-            {isPolish ? 'Brak pytań w tej kategorii' : 'No questions in this category'}
+            {t('interview.questionsList.noQuestionsInThisCategory')}
           </p>
           <p className="text-xs text-slate-600 dark:text-slate-500 mb-4 max-w-xs">
-            {isPolish
-              ? "Pytania pojawią się po przypisaniu template'u lub możesz dodać własne pytania"
-              : 'Questions will appear after assigning a template, or you can add custom questions'}
+            {t('interview.questionsList.questionsWillAppearAfterAssigning')}
           </p>
           {!readOnly && (
             <button
@@ -1133,7 +1103,7 @@ Rules:
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors"
             >
               <Plus size={16} />
-              {isPolish ? 'Dodaj pytanie' : 'Add question'}
+              {t('interview.questionsList.addQuestion')}
             </button>
           )}
         </div>
@@ -1149,7 +1119,7 @@ Rules:
                 value={newQuestionText}
                 onChange={(e) => setNewQuestionText(e.target.value)}
                 className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder={isPolish ? 'Wpisz treść pytania...' : 'Enter question text...'}
+                placeholder={t('interview.questionsList.enterQuestionText')}
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleAddQuestion();
@@ -1164,14 +1134,14 @@ Rules:
                   }}
                   className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('interview.questionsList.cancel')}
                 </button>
                 <button
                   onClick={handleAddQuestion}
                   disabled={!newQuestionText.trim()}
                   className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white rounded-lg"
                 >
-                  {isPolish ? 'Dodaj' : 'Add'}
+                  {t('interview.questionsList.add')}
                 </button>
               </div>
             </div>
@@ -1183,7 +1153,7 @@ Rules:
                   className="flex-1 flex items-center justify-center gap-2 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-navy-800 rounded-lg border border-dashed border-slate-200 dark:border-navy-700"
                 >
                   <Plus size={16} />
-                  {isPolish ? 'Dodaj pytanie' : 'Add question'}
+                  {t('interview.questionsList.addQuestion')}
                 </button>
                 {/* E5.1: AI proposes next questions */}
                 <button
@@ -1191,9 +1161,10 @@ Rules:
                     if (!category) return;
                     const categoryLabel = typeof category === 'string' ? category : category;
                     const existingQs = categoryQuestions.map((q) => q.questionText).join('\n- ');
-                    const prompt = isPolish
-                      ? `Na podstawie istniejących pytań w kategorii "${categoryLabel}":\n- ${existingQs}\n\nZaproponuj 3 nowe, uzupełniające pytania do wywiadu, które pomogą uzyskać pełniejszy obraz.`
-                      : `Based on existing questions in category "${categoryLabel}":\n- ${existingQs}\n\nPropose 3 new, complementary interview questions that will help get a fuller picture.`;
+                    const prompt = t('interview.questionsList.proposeNewQuestionsPrompt', {
+                      category: categoryLabel,
+                      existing: existingQs,
+                    });
                     try {
                       const response = await sendMessageToAI([], prompt);
                       if (response) {
@@ -1208,11 +1179,11 @@ Rules:
                   }}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm text-c-info dark:text-c-info hover:bg-c-info/10 dark:hover:bg-c-info/20 rounded-lg border border-dashed border-c-info dark:border-c-info transition-colors"
                   title={
-                    isPolish ? 'AI zaproponuje kolejne pytania' : 'AI will propose next questions'
+                    t('interview.questionsList.aiWillProposeNextQuestions')
                   }
                 >
                   <Lightbulb size={14} />
-                  {isPolish ? 'Zaproponuj pytania' : 'Propose questions'}
+                  {t('interview.questionsList.proposeQuestions')}
                 </button>
               </div>
             )
@@ -1230,7 +1201,7 @@ Rules:
                 <TeresaMark size={18} />
                 <div className="min-w-0">
                   <div className="font-semibold text-sm truncate">
-                    {isPolish ? 'Czat do pytania' : 'Chat for question'}
+                    {t('interview.questionsList.chatForQuestion')}
                   </div>
                   <div className="text-xs text-slate-700 dark:text-slate-300 truncate">
                     {chatQuestion.questionText}
@@ -1281,7 +1252,7 @@ Rules:
                     <TeresaMark size={12} className="text-white" />
                   </div>
                   <div className="px-3 py-2 bg-c-info/10 dark:bg-c-info/20 rounded-lg text-sm text-slate-600">
-                    {isPolish ? 'Piszę...' : 'Typing...'}
+                    {t('interview.questionsList.typing')}
                   </div>
                 </div>
               )}
@@ -1292,7 +1263,7 @@ Rules:
               <div className="flex gap-2">
                 <input
                   className="flex-1 bg-slate-100 dark:bg-navy-950 border border-transparent focus:border-c-focus rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-c-focus transition-all dark:text-white text-sm"
-                  placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your response...'}
+                  placeholder={t('interview.questionsList.typeYourResponse')}
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
@@ -1302,7 +1273,7 @@ Rules:
                   onClick={handleChatSend}
                   disabled={!chatInput.trim() || chatLoading}
                   className="bg-c-text hover:bg-c-text-secondary disabled:bg-slate-300 text-c-bg p-3 rounded-xl transition-colors"
-                  title={isPolish ? 'Wyślij' : 'Send'}
+                  title={t('interview.questionsList.send')}
                 >
                   <Send size={18} />
                 </button>
@@ -1310,25 +1281,19 @@ Rules:
 
               <div className="flex items-center justify-between">
                 <button onClick={closeChat} className="text-sm text-slate-500 hover:text-slate-300">
-                  {isPolish ? 'Zamknij' : 'Close'}
+                  {t('interview.questionsList.close')}
                 </button>
                 <button
                   onClick={handleApplyChatToQuestion}
                   disabled={applyLoading || chatMessages.length < 2}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
                   title={
-                    isPolish
-                      ? 'Wstaw propozycję do pola (human-in-the-loop)'
-                      : 'Insert draft into field (human-in-the-loop)'
+                    t('interview.questionsList.insertDraftIntoFieldHuman')
                   }
                 >
                   {applyLoading
-                    ? isPolish
-                      ? 'Wstawiam...'
-                      : 'Applying...'
-                    : isPolish
-                      ? 'Wstaw do pytania'
-                      : 'Insert to question'}
+                    ? t('interview.questionsList.applying')
+                    : t('interview.questionsList.insertToQuestion')}
                 </button>
               </div>
             </div>

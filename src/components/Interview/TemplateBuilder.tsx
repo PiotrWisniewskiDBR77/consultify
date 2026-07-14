@@ -224,17 +224,20 @@ const AnswerTypePreview: React.FC<{
   options?: string[];
   isPolish: boolean;
 }> = ({ answerType, options, isPolish }) => {
+  const { t } = useTranslation();
   const sampleOptions =
     options && options.length > 0
       ? options.slice(0, 3)
-      : isPolish
-        ? ['Opcja A', 'Opcja B', 'Opcja C']
-        : ['Option A', 'Option B', 'Option C'];
+      : [
+          t('interview.templateBuilder.sampleOptionA'),
+          t('interview.templateBuilder.sampleOptionB'),
+          t('interview.templateBuilder.sampleOptionC'),
+        ];
 
   if (answerType === 'open') {
     return (
       <div className="h-12 rounded-md border border-dashed border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 py-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-        {isPolish ? 'Pole tekstowe na odpowiedź…' : 'Free text answer…'}
+        {t('interview.templateBuilder.freeTextAnswer')}
       </div>
     );
   }
@@ -285,10 +288,10 @@ const AnswerTypePreview: React.FC<{
     return (
       <div className="flex items-center gap-2">
         <span className="rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-medium text-white">
-          {isPolish ? 'Tak' : 'Yes'}
+          {t('interview.templateBuilder.yes')}
         </span>
         <span className="rounded-full border border-slate-300 dark:border-navy-600 px-2.5 py-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Nie' : 'No'}
+          {t('interview.templateBuilder.no')}
         </span>
       </div>
     );
@@ -304,7 +307,7 @@ const AnswerTypePreview: React.FC<{
     return (
       <div className="flex h-8 w-32 items-center gap-2 rounded-md border border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 text-[11px] text-slate-400 dark:text-slate-500">
         <CalendarDays size={12} className="opacity-60" />
-        {isPolish ? 'DD.MM.RRRR' : 'MM/DD/YYYY'}
+        {t('interview.templateBuilder.mmDdYyyy')}
       </div>
     );
   }
@@ -320,6 +323,7 @@ const RespondentQuestionPreview: React.FC<{
   index: number;
   isPolish: boolean;
 }> = ({ question, index, isPolish }) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
       <div className="flex items-start gap-2">
@@ -328,7 +332,7 @@ const RespondentQuestionPreview: React.FC<{
         </span>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-medium text-slate-900 dark:text-white">
-            {question.questionText || (isPolish ? '(Pytanie bez treści)' : '(Untitled question)')}
+            {question.questionText || (t('interview.templateBuilder.untitledQuestion'))}
             {question.isRequired ? <span className="ml-1 text-danger-500">*</span> : null}
           </p>
           {question.description ? (
@@ -623,7 +627,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       );
     } catch (error) {
       console.error('[TemplateBuilder] Failed to load template:', error);
-      toast.error(isPolish ? 'Nie udało się załadować szablonu' : 'Failed to load template');
+      toast.error(t('interview.templateBuilder.failedToLoadTemplate'));
     } finally {
       setIsLoading(false);
     }
@@ -662,16 +666,14 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         scope: 'private',
       });
       toast.success(
-        isPolish
-          ? 'Szablon sklonowany — otwieramy kopię do edycji'
-          : 'Template cloned — opening copy for editing'
+        t('interview.templateBuilder.templateClonedOpeningCopyFor')
       );
       if (onSuccess && cloned?.id) {
         onSuccess({ ...cloned, id: cloned.id } as Partial<Template> & { id: string });
       }
     } catch (error) {
       console.error('[TemplateBuilder] Clone failed:', error);
-      toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
+      toast.error(t('interview.templateBuilder.failedToCloneTemplate'));
     } finally {
       setIsCloning(false);
     }
@@ -679,21 +681,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   const allowedAnswerTypesLabel = useMemo(() => {
     if (allowedAnswerTypes.length === ANSWER_TYPES.length) {
-      return isPolish ? 'Wszystkie formy odpowiedzi' : 'All answer types';
+      return t('interview.templateBuilder.allAnswerTypes');
     }
     return allowedAnswerTypes
       .map(
         (type) =>
-          ANSWER_TYPES.find((item) => item.id === type)?.[isPolish ? 'labelPl' : 'labelEn'] || type
+          ANSWER_TYPES.find((item) => item.id === type)?.[t('interview.templateBuilder.labelen')] || type
       )
       .join(', ');
   }, [allowedAnswerTypes, isPolish]);
 
   const areaTagsLabel = useMemo(() => {
     if (areaTags.length === 0) {
-      return isPolish ? 'Wybierz obszary' : 'Select areas';
+      return t('interview.templateBuilder.selectAreas');
     }
-    return areaTags.map((tag) => getTemplateAreaTagLabel(tag, isPolish)).join(', ');
+    return areaTags.map((tag) => getTemplateAreaTagLabel(tag, t)).join(', ');
   }, [areaTags, isPolish]);
 
   const toggleAllowedAnswerType = useCallback((type: AnswerType) => {
@@ -751,39 +753,29 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     let firstInvalidQuestion: { id: string; message: string } | null = null;
 
     if (!template.name?.trim()) {
-      newErrors.name = isPolish ? 'Nazwa jest wymagana' : 'Name is required';
+      newErrors.name = t('interview.templateBuilder.nameIsRequired');
     }
 
     if (questions.length === 0) {
-      newErrors.questions = isPolish
-        ? 'Dodaj przynajmniej jedno pytanie'
-        : 'Add at least one question';
+      newErrors.questions = t('interview.templateBuilder.addAtLeastOneQuestion');
     }
 
     questions.forEach((q) => {
       if (!q.questionText?.trim()) {
-        newErrors[`question_${q.id}`] = isPolish
-          ? 'Treść pytania jest wymagana'
-          : 'Question text is required';
+        newErrors[`question_${q.id}`] = t('interview.templateBuilder.questionTextIsRequired');
         if (!firstInvalidQuestion) {
           firstInvalidQuestion = {
             id: q.id,
-            message: isPolish
-              ? 'Jedno z pytań nie ma tytułu / treści'
-              : 'One of the questions is missing title/text',
+            message: t('interview.templateBuilder.oneOfTheQuestionsIs'),
           };
         }
       }
       if ((q.answerType === 'select' || q.answerType === 'scale') && q.answerOptions.length < 2) {
-        newErrors[`options_${q.id}`] = isPolish
-          ? 'Dodaj przynajmniej 2 opcje'
-          : 'Add at least 2 options';
+        newErrors[`options_${q.id}`] = t('interview.templateBuilder.addAtLeast2Options');
         if (!firstInvalidQuestion) {
           firstInvalidQuestion = {
             id: q.id,
-            message: isPolish
-              ? 'Pytanie typu wybór / skala musi mieć co najmniej 2 opcje'
-              : 'A select/scale question needs at least 2 options',
+            message: t('interview.templateBuilder.aSelectScaleQuestionNeeds'),
           };
         }
       }
@@ -797,7 +789,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         (firstInvalidQuestion as { id: string; message: string } | null)?.message ||
         newErrors.name ||
         newErrors.questions ||
-        (isPolish ? 'Popraw błędy w formularzu' : 'Fix form errors'),
+        (t('interview.templateBuilder.fixFormErrors')),
     };
   }, [template, questions, isPolish]);
 
@@ -922,7 +914,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       if (ordered.length === 0) {
         if (!silent) {
           toast.error(
-            isPolish ? 'Dodaj pytania, aby sprawdzić jakość' : 'Add questions to check quality'
+            t('interview.templateBuilder.addQuestionsToCheckQuality')
           );
         }
         return null;
@@ -948,7 +940,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         console.error('[TemplateBuilder] Quality check failed:', error);
         if (!silent) {
           toast.error(
-            isPolish ? 'Nie udało się sprawdzić jakości' : 'Could not check template quality'
+            t('interview.templateBuilder.couldNotCheckTemplateQuality')
           );
         }
         return null;
@@ -964,7 +956,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (!result) return;
     if (result.averageScore >= 70 && result.totalWarnings === 0) {
       toast.success(
-        isPolish ? 'Jakość szablonu wygląda świetnie!' : 'Template quality looks great!'
+        t('interview.templateBuilder.templateQualityLooksGreat')
       );
     }
   }, [evaluateQuality, isPolish]);
@@ -1049,21 +1041,18 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
         toast.success(
           publish
-            ? isPolish
-              ? 'Szablon opublikowany!'
-              : 'Template published!'
-            : isPolish
-              ? 'Szablon zapisany!'
-              : 'Template saved!'
+            ? t('interview.templateBuilder.templatePublished')
+            : t('interview.templateBuilder.templateSaved')
         );
 
         // Non-blocking AI quality gate: surface a warning when questions are weak.
         const quality = await evaluateQuality(true);
         if (quality && (quality.averageScore < 70 || quality.totalWarnings > 0)) {
           toast(
-            isPolish
-              ? `Jakość szablonu: ${quality.averageScore}/100 — ${quality.totalWarnings} ostrzeżenie(a). Sprawdź przed publikacją.`
-              : `Template quality: ${quality.averageScore}/100 — ${quality.totalWarnings} warning(s). Review before publishing.`,
+            t('interview.templateBuilder.templateQualitySummary', {
+              score: quality.averageScore,
+              warnings: quality.totalWarnings,
+            }),
             { icon: '⚠️', duration: 6000 }
           );
         }
@@ -1081,7 +1070,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         }
       } catch (error) {
         console.error('[TemplateBuilder] Failed to save:', error);
-        toast.error(isPolish ? 'Nie udało się zapisać szablonu' : 'Failed to save template');
+        toast.error(t('interview.templateBuilder.failedToSaveTemplate'));
       } finally {
         setIsSaving(false);
       }
@@ -1103,9 +1092,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const handleGenerateWithAI = useCallback(async () => {
     if (!template.description?.trim() && !importedSourceText.trim()) {
       toast.error(
-        isPolish
-          ? 'Dodaj opis briefu albo zaimportuj plik TXT/PDF'
-          : 'Add a brief description or import a TXT/PDF file'
+        t('interview.templateBuilder.addABriefDescriptionOr')
       );
       return;
     }
@@ -1113,9 +1100,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (
       questions.length > 0 &&
       !window.confirm(
-        isPolish
-          ? 'AI zastąpi bieżącą listę pytań nowym draftem. Kontynuować?'
-          : 'AI will replace the current question list with a new draft. Continue?'
+        t('interview.templateBuilder.aiWillReplaceTheCurrent')
       )
     ) {
       return;
@@ -1162,7 +1147,7 @@ Rules:
 - exampleAnswer: write one short, concrete, plausible sample answer (1-3 sentences, or a short list for select/scale) that shows the respondent the level of specificity expected. Never invent real company facts — keep it generic/illustrative.
 - Return ${Math.max(1, targetQuestionCount - questionCountTolerance)} to ${targetQuestionCount + questionCountTolerance} questions.`;
 
-    const userPrompt = `Language: ${isPolish ? 'Polish' : 'English'}
+    const userPrompt = `Language: ${t('interview.templateBuilder.english')}
 Topic: ${template.name || ''}
 Description: ${template.description || ''}
 Area tags: ${areaTags.join(', ') || '(none)'}
@@ -1251,11 +1236,11 @@ ${importedSourceText.trim() || '(none)'}`;
       );
       setQuestions(normalizedQuestions);
       toast.success(
-        isPolish ? 'AI przygotowało draft arkusza pytań' : 'AI prepared a template draft'
+        t('interview.templateBuilder.aiPreparedATemplateDraft')
       );
     } catch (error) {
       console.error('[TemplateBuilder] AI generation failed:', error);
-      toast.error(isPolish ? 'Nie udało się wygenerować draftu AI' : 'Failed to generate AI draft');
+      toast.error(t('interview.templateBuilder.failedToGenerateAiDraft'));
     } finally {
       setIsAiGenerating(false);
     }
@@ -1287,7 +1272,7 @@ ${importedSourceText.trim() || '(none)'}`;
 
       if (!isPdf && !isTxt) {
         toast.error(
-          isPolish ? 'Obsługiwane są tylko pliki TXT i PDF' : 'Only TXT and PDF are supported'
+          t('interview.templateBuilder.onlyTxtAndPdfAre')
         );
         return null;
       }
@@ -1309,7 +1294,7 @@ ${importedSourceText.trim() || '(none)'}`;
         };
       } catch (error) {
         console.error('[TemplateBuilder] Failed to import source:', error);
-        toast.error(isPolish ? 'Nie udało się zaimportować pliku' : 'Failed to import file');
+        toast.error(t('interview.templateBuilder.failedToImportFile'));
         return null;
       } finally {
         setIsImportingSource(false);
@@ -1323,9 +1308,7 @@ ${importedSourceText.trim() || '(none)'}`;
       const sourceText = String(importedSurveyText ?? importedSourceText ?? '').trim();
       if (orderedQuestions.length === 0 && !sourceText) {
         toast.error(
-          isPolish
-            ? 'Dodaj pytania albo wrzuć ankietę do analizy'
-            : 'Add questions or upload a survey to review'
+          t('interview.templateBuilder.addQuestionsOrUploadA')
         );
         return;
       }
@@ -1359,9 +1342,7 @@ ${importedSourceText.trim() || '(none)'}`;
           .map((question) => ({
             questionId: String(question.id),
             questionText: String(question.questionText || ''),
-            reason: isPolish
-              ? 'Krótka / testowa / potencjalnie niskiej jakości pozycja'
-              : 'Short / test / potentially low-quality entry',
+            reason: t('interview.templateBuilder.shortTestPotentiallyLowQuality'),
           }))
           .slice(0, 8);
 
@@ -1434,7 +1415,7 @@ Schema:
   }
 }`;
 
-        const userPrompt = `Language: ${isPolish ? 'Polish' : 'English'}
+        const userPrompt = `Language: ${t('interview.templateBuilder.english')}
 Topic: ${template.name || ''}
 Description: ${template.description || ''}
 Area tags: ${areaTags.join(', ') || '(none)'}
@@ -1604,9 +1585,7 @@ ${sourceText || '(none)'}`;
 
         if (!hasAny) {
           toast.success(
-            isPolish
-              ? 'AI uznało, że ankieta wygląda już bardzo dobrze'
-              : 'AI believes the survey already looks strong'
+            t('interview.templateBuilder.aiBelievesTheSurveyAlready')
           );
           return;
         }
@@ -1638,7 +1617,7 @@ ${sourceText || '(none)'}`;
       } catch (error) {
         console.error('[TemplateBuilder] AI proposal failed:', error);
         toast.error(
-          isPolish ? 'Nie udało się przygotować sugestii AI' : 'Failed to prepare AI suggestions'
+          t('interview.templateBuilder.failedToPrepareAiSuggestions')
         );
       } finally {
         setIsAiGenerating(false);
@@ -1688,9 +1667,7 @@ ${sourceText || '(none)'}`;
 
     if (removeIds.size > 0) {
       const shouldContinue = window.confirm(
-        isPolish
-          ? `Usunąć ${removeIds.size} pytanie/pytania z ankiety?`
-          : `Remove ${removeIds.size} question(s) from the survey?`
+        t('interview.templateBuilder.confirmRemoveQuestions', { count: removeIds.size })
       );
       if (!shouldContinue) return;
     }
@@ -1802,7 +1779,7 @@ ${sourceText || '(none)'}`;
     });
 
     closeAiProposalModal();
-    toast.success(isPolish ? 'Zastosowano sugestie AI' : 'Applied AI suggestions');
+    toast.success(t('interview.templateBuilder.appliedAiSuggestions'));
   }, [
     aiProposal,
     applySuggestedOrder,
@@ -1840,12 +1817,8 @@ ${sourceText || '(none)'}`;
             <div className="min-w-0">
               <div className="text-[11px] font-medium text-slate-600 dark:text-slate-200">
                 {template.status === 'draft'
-                  ? isPolish
-                    ? 'Draft'
-                    : 'Draft'
-                  : isPolish
-                    ? 'Published'
-                    : 'Published'}
+                  ? t('interview.templateBuilder.draft')
+                  : t('interview.templateBuilder.published')}
               </div>
             </div>
           </div>
@@ -1866,7 +1839,7 @@ ${sourceText || '(none)'}`;
               {/* Name */}
               <div className="mb-3">
                 <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                  {isPolish ? 'Topic' : 'Topic'} *
+                  {t('interview.templateBuilder.topic')} *
                 </label>
                 <input
                   type="text"
@@ -1874,9 +1847,7 @@ ${sourceText || '(none)'}`;
                   onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
                   disabled={isApplicationTemplate}
                   placeholder={
-                    isPolish
-                      ? 'np. Digital maturity w produkcji'
-                      : 'e.g. Digital maturity in manufacturing'
+                    t('interview.templateBuilder.eGDigitalMaturityIn')
                   }
                   className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
@@ -1890,7 +1861,7 @@ ${sourceText || '(none)'}`;
               {/* Description */}
               <div className="mb-3">
                 <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                  {isPolish ? 'Opis' : 'Description'}
+                  {t('interview.templateBuilder.description')}
                 </label>
                 <textarea
                   value={template.description || ''}
@@ -1899,9 +1870,7 @@ ${sourceText || '(none)'}`;
                   }
                   disabled={isApplicationTemplate}
                   placeholder={
-                    isPolish
-                      ? 'Opisz cel ankiety, kontekst biznesowy, dokładność odpowiedzi i czego AI ma pilnować przy budowie pytań...'
-                      : 'Describe the survey goal, business context, expected answer precision, and what AI should optimize in the questions...'
+                    t('interview.templateBuilder.describeTheSurveyGoalBusiness')
                   }
                   rows={6}
                   className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all resize-none"
@@ -1911,9 +1880,7 @@ ${sourceText || '(none)'}`;
               {isApplicationTemplate ? (
                 <div className="mb-3 rounded-lg border border-c-info/20 bg-c-info/8 px-3 py-2.5">
                   <p className="text-[11px] leading-relaxed text-c-info dark:text-c-info mb-2">
-                    {isPolish
-                      ? 'To jest szablon systemowy (tylko do odczytu). Sklonuj go, aby edytować własną kopię.'
-                      : 'This is a system template (read-only). Clone it to edit your own copy.'}
+                    {t('interview.templateBuilder.thisIsASystemTemplate')}
                   </p>
                   <button
                     type="button"
@@ -1926,24 +1893,24 @@ ${sourceText || '(none)'}`;
                     ) : (
                       <Copy size={13} />
                     )}
-                    {isPolish ? 'Klonuj do edycji' : 'Clone to edit'}
+                    {t('interview.templateBuilder.cloneToEdit')}
                   </button>
                 </div>
               ) : null}
 
               <div className="mb-3">
                 <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                  {isPolish ? 'Biblioteka' : 'Library'}
+                  {t('interview.templateBuilder.library')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     {
                       id: 'private',
-                      label: isPolish ? 'Personal' : 'Personal',
+                      label: t('interview.templateBuilder.personal'),
                     },
                     {
                       id: 'organization',
-                      label: isPolish ? 'Organization' : 'Organization',
+                      label: t('interview.templateBuilder.organization'),
                     },
                   ].map((option) => {
                     const isActive = (template.scope || 'private') === option.id;
@@ -1973,7 +1940,7 @@ ${sourceText || '(none)'}`;
 
               <div className="mb-3 relative">
                 <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                  {isPolish ? 'Dostępne formy odpowiedzi' : 'Available answer types'}
+                  {t('interview.templateBuilder.availableAnswerTypes')}
                 </label>
                 <button
                   type="button"
@@ -2003,7 +1970,7 @@ ${sourceText || '(none)'}`;
                             disabled={isApplicationTemplate}
                             className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                           />
-                          <span>{isPolish ? type.labelPl : type.labelEn}</span>
+                          <span>{t(`interview.templateBuilder.answerTypeLabel.${type.id}`, type.labelEn)}</span>
                         </label>
                       );
                     })}
@@ -2013,7 +1980,7 @@ ${sourceText || '(none)'}`;
 
               <div className="mb-3 relative">
                 <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                  {isPolish ? 'Obszary' : 'Area tags'}
+                  {t('interview.templateBuilder.areaTags')}
                 </label>
                 <button
                   type="button"
@@ -2043,7 +2010,7 @@ ${sourceText || '(none)'}`;
                             disabled={isApplicationTemplate}
                             className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                           />
-                          <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                          <span>{getTemplateAreaTagLabel(tag, t)}</span>
                         </label>
                       );
                     })}
@@ -2054,7 +2021,7 @@ ${sourceText || '(none)'}`;
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                    {isPolish ? 'Liczba pytań' : 'Question count'}
+                    {t('interview.templateBuilder.questionCount')}
                   </label>
                   <input
                     type="number"
@@ -2070,7 +2037,7 @@ ${sourceText || '(none)'}`;
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                    {isPolish ? 'Dokładność +/-' : 'Tolerance +/-'}
+                    {t('interview.templateBuilder.tolerance')}
                   </label>
                   <input
                     type="number"
@@ -2089,7 +2056,7 @@ ${sourceText || '(none)'}`;
               <div className="grid grid-cols-2 gap-3">
                 <div className="mb-3">
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                    {isPolish ? 'Czas (min)' : 'Time (min)'}
+                    {t('interview.templateBuilder.timeMin')}
                   </label>
                   <input
                     type="number"
@@ -2109,7 +2076,7 @@ ${sourceText || '(none)'}`;
 
                 <div className="mb-3">
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                    {isPolish ? 'Tryb runtime' : 'Runtime mode'}
+                    {t('interview.templateBuilder.runtimeMode')}
                   </label>
                   <Select
                     value={template.runtimeModeDefault || 'one_question_per_screen'}
@@ -2120,10 +2087,10 @@ ${sourceText || '(none)'}`;
                       }))
                     }
                     disabled={isApplicationTemplate}
-                    aria-label={isPolish ? 'Tryb runtime' : 'Runtime mode'}
+                    aria-label={t('interview.templateBuilder.runtimeMode')}
                     options={RUNTIME_MODE_OPTIONS.map((opt) => ({
                       value: opt.id,
-                      label: isPolish ? opt.labelPl : opt.labelEn,
+                      label: t(`interview.templateBuilder.runtimeModeLabel.${opt.id}`, opt.labelEn),
                     }))}
                   />
                 </div>
@@ -2140,7 +2107,7 @@ ${sourceText || '(none)'}`;
                 ) : (
                   <Sparkles size={15} />
                 )}
-                {isPolish ? 'Stwórz ankietę z AI' : 'Create survey with AI'}
+                {t('interview.templateBuilder.createSurveyWithAi')}
               </button>
 
               {errors.questions && (
@@ -2160,7 +2127,7 @@ ${sourceText || '(none)'}`;
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                   <span className="w-2 h-2 rounded-full bg-blue-500" />
                   <span>
-                    ({orderedQuestions.length} {isPolish ? 'pytań' : 'questions'})
+                    ({orderedQuestions.length} {t('interview.templateBuilder.questions')})
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -2171,12 +2138,10 @@ ${sourceText || '(none)'}`;
                     onClick={() => setShowRespondentPreview(true)}
                     disabled={orderedQuestions.length === 0}
                     title={
-                      isPolish
-                        ? 'Zobacz formularz oczami respondenta'
-                        : 'See the form as a respondent would'
+                      t('interview.templateBuilder.seeTheFormAsA')
                     }
                   >
-                    {isPolish ? 'Podgląd' : 'Preview'}
+                    {t('interview.templateBuilder.preview')}
                   </Button>
                   <Button
                     variant="outline"
@@ -2195,7 +2160,7 @@ ${sourceText || '(none)'}`;
                     onClick={handleAddQuestion}
                     disabled={isApplicationTemplate}
                   >
-                    {isPolish ? 'Dodaj pytanie' : 'Add Question'}
+                    {t('interview.templateBuilder.addQuestion')}
                   </Button>
                   <Button
                     variant="outline"
@@ -2205,13 +2170,11 @@ ${sourceText || '(none)'}`;
                     disabled={isAiGenerating || isApplicationTemplate}
                     loading={isAiGenerating}
                     title={
-                      isPolish
-                        ? 'Użyj AI, aby przejrzeć i poprawić istniejące pytania (to NIE tworzy ankiety od zera — od tego jest „Stwórz ankietę z AI")'
-                        : 'Use AI to review & improve the existing questions (this does NOT create a survey from scratch — use "Create survey with AI" for that)'
+                      t('interview.templateBuilder.useAiToReviewImprove')
                     }
                     className="text-c-accent border-c-accent/30 hover:bg-c-accent/5 dark:hover:bg-c-accent/10"
                   >
-                    {isPolish ? 'Popraw z AI' : 'Improve with AI'}
+                    {t('interview.templateBuilder.improveWithAi')}
                   </Button>
                 </div>
               </div>
@@ -2233,10 +2196,10 @@ ${sourceText || '(none)'}`;
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <HelpCircle size={48} className="text-slate-600 mb-4" />
                     <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
-                      {isPolish ? 'Brak pytań w formularzu' : 'No questions in this form'}
+                      {t('interview.templateBuilder.noQuestionsInThisForm')}
                     </p>
                     <Button variant="primary" icon={<Plus />} onClick={handleAddQuestion}>
-                      {isPolish ? 'Dodaj pierwsze pytanie' : 'Add first question'}
+                      {t('interview.templateBuilder.addFirstQuestion')}
                     </Button>
                   </div>
                 ) : (
@@ -2296,13 +2259,11 @@ ${sourceText || '(none)'}`;
               <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 dark:border-navy-700">
                 <div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {isPolish ? 'Propozycje zmian od AI' : 'AI change proposal'}
+                    {t('interview.templateBuilder.aiChangeProposal')}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {aiProposal.summary ||
-                      (isPolish
-                        ? 'AI przejrzało ankietę i przygotowało zmiany do zatwierdzenia.'
-                        : 'AI reviewed the survey and prepared changes for approval.')}
+                      (t('interview.templateBuilder.aiReviewedTheSurveyAnd'))}
                   </p>
                 </div>
                 <button
@@ -2318,9 +2279,7 @@ ${sourceText || '(none)'}`;
                 {(aiProposal.update || []).length > 0 ? (
                   <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
                     <div className="text-sm font-medium text-slate-900 dark:text-white">
-                      {isPolish
-                        ? 'Zmiany w istniejących pytaniach'
-                        : 'Updates to existing questions'}
+                      {t('interview.templateBuilder.updatesToExistingQuestions')}
                     </div>
                     {(aiProposal.update || []).map((item) => {
                       const current = orderedQuestions.find(
@@ -2346,13 +2305,13 @@ ${sourceText || '(none)'}`;
                             />
                             <div className="min-w-0 flex-1 space-y-2">
                               <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {isPolish ? 'Teraz' : 'Current'}
+                                {t('interview.templateBuilder.current')}
                               </div>
                               <p className="text-sm text-slate-700 dark:text-slate-200">
                                 {current.questionText}
                               </p>
                               <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {isPolish ? 'Propozycja AI' : 'AI proposal'}
+                                {t('interview.templateBuilder.aiProposal')}
                               </div>
                               <p className="text-sm font-medium text-slate-900 dark:text-white">
                                 {item.questionText || current.questionText}
@@ -2363,7 +2322,7 @@ ${sourceText || '(none)'}`;
                                       (type) => type.id === normalizeAnswerType(item.answerType)
                                     )
                                   : ANSWER_TYPES.find((type) => type.id === current.answerType))?.[
-                                  isPolish ? 'labelPl' : 'labelEn'
+                                  t('interview.templateBuilder.labelen')
                                 ] || '-'}
                               </p>
                               {item.rationale ? (
@@ -2382,7 +2341,7 @@ ${sourceText || '(none)'}`;
                 {(aiProposal.add || []).length > 0 ? (
                   <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
                     <div className="text-sm font-medium text-slate-900 dark:text-white">
-                      {isPolish ? 'Nowe pytania do dodania' : 'New questions to add'}
+                      {t('interview.templateBuilder.newQuestionsToAdd')}
                     </div>
                     {(aiProposal.add || []).map((item, index) => (
                       <label
@@ -2408,7 +2367,7 @@ ${sourceText || '(none)'}`;
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                               {ANSWER_TYPES.find(
                                 (type) => type.id === normalizeAnswerType(item.answerType)
-                              )?.[isPolish ? 'labelPl' : 'labelEn'] || '-'}
+                              )?.[t('interview.templateBuilder.labelen')] || '-'}
                             </p>
                             {item.rationale ? (
                               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -2425,7 +2384,7 @@ ${sourceText || '(none)'}`;
                 {(aiProposal.remove || []).length > 0 ? (
                   <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
                     <div className="text-sm font-medium text-slate-900 dark:text-white">
-                      {isPolish ? 'Pytania do usunięcia' : 'Questions to remove'}
+                      {t('interview.templateBuilder.questionsToRemove')}
                     </div>
                     {(aiProposal.remove || []).map((item) => {
                       const current = orderedQuestions.find(
@@ -2474,13 +2433,11 @@ ${sourceText || '(none)'}`;
                     />
                     <div className="space-y-1">
                       <div className="text-sm font-medium text-slate-900 dark:text-white">
-                        {isPolish ? 'Zastosuj sugerowaną kolejność' : 'Apply suggested order'}
+                        {t('interview.templateBuilder.applySuggestedOrder')}
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {aiProposal.reorder.note ||
-                          (isPolish
-                            ? 'AI proponuje lepszą sekwencję pytań.'
-                            : 'AI suggests a better question sequence.')}
+                          (t('interview.templateBuilder.aiSuggestsABetterQuestion'))}
                       </p>
                     </div>
                   </label>
@@ -2489,9 +2446,7 @@ ${sourceText || '(none)'}`;
 
               <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Usunięcia są domyślnie odznaczone.'
-                    : 'Removals are unchecked by default.'}
+                  {t('interview.templateBuilder.removalsAreUncheckedByDefault')}
                 </div>
                 <div className="flex items-center gap-3">
                   <button
@@ -2499,7 +2454,7 @@ ${sourceText || '(none)'}`;
                     onClick={closeAiProposalModal}
                     className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
                   >
-                    {isPolish ? 'Zamknij' : 'Close'}
+                    {t('interview.templateBuilder.close')}
                   </button>
                   <button
                     type="button"
@@ -2507,7 +2462,7 @@ ${sourceText || '(none)'}`;
                     className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-c-info/40 dark:border-c-info/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
                   >
                     <Sparkles size={14} />
-                    {isPolish ? 'Zastosuj sugestie AI' : 'Apply AI suggestions'}
+                    {t('interview.templateBuilder.applyAiSuggestions')}
                   </button>
                 </div>
               </div>
@@ -2523,17 +2478,15 @@ ${sourceText || '(none)'}`;
                 <div>
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                     <Eye size={15} className="text-c-info dark:text-c-info" />
-                    {isPolish ? 'Podgląd respondenta' : 'Respondent preview'}
+                    {t('interview.templateBuilder.respondentPreview')}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {template.name ||
-                      (isPolish
-                        ? 'Tak respondent widzi ten formularz'
-                        : 'How a respondent sees this form')}
+                      (t('interview.templateBuilder.howARespondentSeesThis'))}
                     {' · '}
-                    {orderedQuestions.length} {isPolish ? 'pytań' : 'questions'}
+                    {orderedQuestions.length} {t('interview.templateBuilder.questions')}
                     {template.estimatedTimeMinutes
-                      ? ` · ~${template.estimatedTimeMinutes} ${isPolish ? 'min' : 'min'}`
+                      ? ` · ~${template.estimatedTimeMinutes} ${t('interview.templateBuilder.min')}`
                       : ''}
                   </p>
                 </div>
@@ -2541,7 +2494,7 @@ ${sourceText || '(none)'}`;
                   type="button"
                   onClick={() => setShowRespondentPreview(false)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
-                  aria-label={isPolish ? 'Zamknij' : 'Close'}
+                  aria-label={t('interview.templateBuilder.close')}
                 >
                   <X size={14} />
                 </button>
@@ -2574,16 +2527,14 @@ ${sourceText || '(none)'}`;
 
               <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Podgląd tylko do odczytu — odpowiedzi nie są zapisywane.'
-                    : 'Read-only preview — answers are not recorded.'}
+                  {t('interview.templateBuilder.readOnlyPreviewAnswersAre')}
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowRespondentPreview(false)}
                   className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
                 >
-                  {isPolish ? 'Zamknij podgląd' : 'Close preview'}
+                  {t('interview.templateBuilder.closePreview')}
                 </button>
               </div>
             </div>
@@ -2600,12 +2551,12 @@ ${sourceText || '(none)'}`;
                 </span>
                 <div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {isPolish ? 'Teresa sprawdziła Twój szablon' : 'Teresa reviewed your template'}
+                    {t('interview.templateBuilder.teresaReviewedYourTemplate')}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish
-                      ? `${qualityResult.totalWarnings} uwag(a) do rozważenia`
-                      : `${qualityResult.totalWarnings} item(s) to consider`}
+                    {t('interview.templateBuilder.itemsToConsider', {
+                      count: qualityResult.totalWarnings,
+                    })}
                   </div>
                 </div>
               </div>
@@ -2625,7 +2576,7 @@ ${sourceText || '(none)'}`;
                   type="button"
                   onClick={() => setQualityResult(null)}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"
-                  aria-label={isPolish ? 'Zamknij' : 'Dismiss'}
+                  aria-label={t('interview.templateBuilder.dismiss')}
                 >
                   <X size={14} />
                 </button>
@@ -2639,7 +2590,7 @@ ${sourceText || '(none)'}`;
                     const q = questions.find((qq) => qq.id === r.questionId);
                     const label =
                       q?.questionText?.slice(0, 60) ||
-                      (isPolish ? `Pytanie ${idx + 1}` : `Question ${idx + 1}`);
+                      t('interview.templateBuilder.questionNumberFallback', { number: idx + 1 });
                     return (
                       <li
                         key={r.questionId || idx}
@@ -2670,9 +2621,7 @@ ${sourceText || '(none)'}`;
               </ul>
             ) : (
               <div className="mt-3 text-xs text-emerald-700 dark:text-emerald-300">
-                {isPolish
-                  ? 'Brak ostrzeżeń — pytania wyglądają dobrze.'
-                  : 'No warnings — your questions look solid.'}
+                {t('interview.templateBuilder.noWarningsYourQuestionsLook')}
               </div>
             )}
           </div>
@@ -2681,11 +2630,11 @@ ${sourceText || '(none)'}`;
         {/* Footer */}
         <div className="p-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between shrink-0">
           <div className="text-xs text-slate-500">
-            {questions.length} {isPolish ? 'pytań łącznie' : 'total questions'}
+            {questions.length} {t('interview.templateBuilder.totalQuestions')}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={onClose}>
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('interview.templateBuilder.cancel')}
             </Button>
             <Button
               variant="outline"
@@ -2694,9 +2643,9 @@ ${sourceText || '(none)'}`;
               onClick={handleCheckQuality}
               disabled={isCheckingQuality || questions.length === 0}
               loading={isCheckingQuality}
-              title={isPolish ? 'Sprawdź jakość pytań (AI)' : 'Check question quality (AI)'}
+              title={t('interview.templateBuilder.checkQuestionQualityAi')}
             >
-              {isPolish ? 'Sprawdź jakość' : 'Check quality'}
+              {t('interview.templateBuilder.checkQuality')}
             </Button>
             <Button
               variant="outline"
@@ -2706,7 +2655,7 @@ ${sourceText || '(none)'}`;
               disabled={isSaving || isApplicationTemplate}
               loading={isSaving}
             >
-              {isPolish ? 'Zapisz wersję roboczą' : 'Save Draft'}
+              {t('interview.templateBuilder.saveDraft')}
             </Button>
             <Button
               variant="primary"
@@ -2716,7 +2665,7 @@ ${sourceText || '(none)'}`;
               disabled={isSaving || isApplicationTemplate}
               loading={isSaving}
             >
-              {isPolish ? 'Opublikuj' : 'Publish'}
+              {t('interview.templateBuilder.publish')}
             </Button>
           </div>
         </div>
@@ -2745,6 +2694,7 @@ interface QuestionCardProps {
 }
 
 const SortableQuestionCard: React.FC<QuestionCardProps> = (props) => {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: props.question.id,
     disabled: props.readOnly,
@@ -2772,7 +2722,7 @@ const SortableQuestionCard: React.FC<QuestionCardProps> = (props) => {
                 ? 'opacity-40 cursor-not-allowed'
                 : 'cursor-grab active:cursor-grabbing'
             }`}
-            title={props.isPolish ? 'Przeciągnij aby zmienić kolejność' : 'Drag to reorder'}
+            title={props.t('interview.templateBuilder.dragToReorder')}
           >
             <GripVertical size={12} />
           </button>
@@ -2799,6 +2749,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onMoveUp,
   onMoveDown,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(question.isNew || false);
   const [newOption, setNewOption] = useState('');
   const [showSectionInput, setShowSectionInput] = useState(false);
@@ -2853,20 +2804,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
         <div className="flex-1 min-w-0">
           <p className="text-[12px] text-slate-800 dark:text-slate-100 truncate">
-            {question.questionText || (isPolish ? '(Nowe pytanie)' : '(New question)')}
+            {question.questionText || (t('interview.templateBuilder.newQuestion'))}
           </p>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           {question.isRequired && (
             <span className="px-1.5 py-0.5 bg-danger-500/15 text-danger-500 dark:text-danger-300 text-[10px] rounded border border-danger-500/20 leading-none">
-              {isPolish ? 'Wymagane' : 'Required'}
+              {t('interview.templateBuilder.required')}
             </span>
           )}
           <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700/70 text-slate-600 dark:text-slate-200 text-[10px] rounded border border-slate-300 dark:border-slate-600/60 leading-none">
             {
               ANSWER_TYPES.find((t) => t.id === question.answerType)?.[
-                isPolish ? 'labelPl' : 'labelEn'
+                t('interview.templateBuilder.labelen')
               ]
             }
           </span>
@@ -2881,7 +2832,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               openEditor();
             }}
             className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-            title={isPolish ? 'Edytuj pytanie' : 'Edit question'}
+            title={t('interview.templateBuilder.editQuestion')}
           >
             <Pencil size={12} />
           </button>
@@ -2894,7 +2845,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               }}
               disabled={readOnly}
               className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
-              title={isPolish ? 'Duplikuj pytanie' : 'Duplicate question'}
+              title={t('interview.templateBuilder.duplicateQuestion')}
             >
               <Copy size={12} />
             </button>
@@ -2936,7 +2887,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {/* Question Text */}
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-              {isPolish ? 'Tytuł / treść pytania' : 'Question title / text'} *
+              {t('interview.templateBuilder.questionTitleText')} *
             </label>
             <textarea
               ref={questionTextRef}
@@ -2944,7 +2895,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={(e) => onUpdate({ questionText: e.target.value })}
               disabled={readOnly}
               placeholder={
-                isPolish ? 'Wpisz nazwę i treść pytania...' : 'Enter the question title and text...'
+                t('interview.templateBuilder.enterTheQuestionTitleAnd')
               }
               rows={2}
               className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
@@ -2958,16 +2909,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {/* Category */}
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-              {isPolish ? 'Kategoria' : 'Category'}
+              {t('interview.templateBuilder.category')}
             </label>
             <Select
               value={question.category}
               onChange={(value) => onUpdate({ category: value as QuestionCategory })}
               disabled={readOnly}
-              aria-label={isPolish ? 'Kategoria pytania' : 'Question category'}
+              aria-label={t('interview.templateBuilder.questionCategory')}
               options={QUESTION_CATEGORIES.map((c) => ({
                 value: c.id,
-                label: isPolish ? c.labelPl : c.labelEn,
+                label: t(`interview.templateBuilder.categoryLabel.${c.id}`, c.labelEn),
               }))}
             />
           </div>
@@ -2976,16 +2927,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             {/* Answer Type */}
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                {isPolish ? 'Typ odpowiedzi' : 'Answer Type'}
+                {t('interview.templateBuilder.answerType')}
               </label>
               <Select
                 value={question.answerType}
                 onChange={(value) => onUpdate({ answerType: value as AnswerType })}
                 disabled={readOnly}
-                aria-label={isPolish ? 'Typ odpowiedzi' : 'Answer Type'}
+                aria-label={t('interview.templateBuilder.answerType')}
                 options={ANSWER_TYPES.map((type) => ({
                   value: type.id,
-                  label: isPolish ? type.labelPl : type.labelEn,
+                  label: t(`interview.templateBuilder.answerTypeLabel.${type.id}`, type.labelEn),
                 }))}
               />
               {/* Inline preview of how the chosen type renders to a respondent */}
@@ -2995,7 +2946,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     const Icon = ANSWER_TYPE_ICONS[question.answerType];
                     return <Icon size={11} />;
                   })()}
-                  {isPolish ? 'Podgląd' : 'Preview'}
+                  {t('interview.templateBuilder.preview')}
                 </div>
                 <AnswerTypePreview
                   answerType={question.answerType}
@@ -3008,7 +2959,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             {/* Required */}
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                {isPolish ? 'Wymagane' : 'Required'}
+                {t('interview.templateBuilder.required')}
               </label>
               <button
                 onClick={() => onUpdate({ isRequired: !question.isRequired })}
@@ -3020,12 +2971,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 } disabled:opacity-50 disabled:pointer-events-none`}
               >
                 {question.isRequired
-                  ? isPolish
-                    ? 'Tak, wymagane'
-                    : 'Yes, required'
-                  : isPolish
-                    ? 'Nie, opcjonalne'
-                    : 'No, optional'}
+                  ? t('interview.templateBuilder.yesRequired')
+                  : t('interview.templateBuilder.noOptional')}
               </button>
             </div>
           </div>
@@ -3034,7 +2981,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {(question.answerType === 'select' || question.answerType === 'scale') && (
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                {isPolish ? 'Opcje odpowiedzi' : 'Answer Options'}
+                {t('interview.templateBuilder.answerOptions')}
               </label>
               <div className="space-y-2">
                 {question.answerOptions.map((opt, idx) => (
@@ -3068,7 +3015,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     onChange={(e) => setNewOption(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddOption()}
                     disabled={readOnly}
-                    placeholder={isPolish ? 'Dodaj opcję...' : 'Add option...'}
+                    placeholder={t('interview.templateBuilder.addOption')}
                     className={`flex-1 ${fieldClassName}`}
                   />
                   <button
@@ -3089,7 +3036,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {/* Help Hint */}
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-              {isPolish ? 'Podpowiedź (opcjonalnie)' : 'Help Hint (optional)'}
+              {t('interview.templateBuilder.helpHintOptional')}
             </label>
             <input
               type="text"
@@ -3097,9 +3044,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={(e) => onUpdate({ helpHint: e.target.value })}
               disabled={readOnly}
               placeholder={
-                isPolish
-                  ? 'Dodatkowe wskazówki dla respondenta...'
-                  : 'Additional guidance for respondent...'
+                t('interview.templateBuilder.additionalGuidanceForRespondent')
               }
               className={fieldClassName}
             />
@@ -3109,11 +3054,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised/50 p-3 space-y-3">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-c-text-muted">
               <HelpCircle size={11} />
-              {isPolish ? 'Wskazówka dla respondenta' : 'Guidance for respondent'}
+              {t('interview.templateBuilder.guidanceForRespondent')}
             </div>
             <div className="space-y-1">
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Instrukcja — jak odpowiadać' : 'Instruction — how to answer'}
+                {t('interview.templateBuilder.instructionHowToAnswer')}
               </label>
               <textarea
                 value={question.guidance || ''}
@@ -3122,15 +3067,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 rows={2}
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={
-                  isPolish
-                    ? 'Statyczna instrukcja widoczna przy pytaniu w formularzu odpowiedzi...'
-                    : 'Static instruction shown next to the question in the answer form...'
+                  t('interview.templateBuilder.staticInstructionShownNextTo')
                 }
               />
             </div>
             <div className="space-y-1">
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Przykładowa odpowiedź' : 'Example answer'}
+                {t('interview.templateBuilder.exampleAnswer')}
               </label>
               <textarea
                 value={question.exampleAnswer || ''}
@@ -3139,9 +3082,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 rows={2}
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={
-                  isPolish
-                    ? 'np. „W 2023 OEE wyniosło 72%, głównie przez przestoje linii 3."'
-                    : 'e.g. "In 2023 OEE was 72%, mainly due to Line 3 downtime."'
+                  t('interview.templateBuilder.eGIn2023Oee')
                 }
               />
             </div>
@@ -3150,7 +3091,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {/* Description / helper text */}
           <div className="space-y-1">
             <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-              {isPolish ? 'Opis / tekst pomocniczy' : 'Description / helper text'}
+              {t('interview.templateBuilder.descriptionHelperText')}
             </label>
             <textarea
               value={question.description || ''}
@@ -3159,9 +3100,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               rows={2}
               className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
-                isPolish
-                  ? 'Dodatkowy kontekst wyświetlany pod pytaniem...'
-                  : 'Additional context shown below the question...'
+                t('interview.templateBuilder.additionalContextShownBelowThe')
               }
             />
           </div>
@@ -3169,7 +3108,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {/* Evidence prompt */}
           <div className="space-y-1">
             <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-              {isPolish ? 'Zachęta do dowodów' : 'Evidence prompt'}
+              {t('interview.templateBuilder.evidencePrompt')}
             </label>
             <input
               type="text"
@@ -3178,16 +3117,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               disabled={readOnly}
               className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
-                isPolish
-                  ? 'np. Załącz raport lub link do dokumentacji'
-                  : 'e.g. Attach a report or link to documentation'
+                t('interview.templateBuilder.eGAttachAReport')
               }
             />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-              {isPolish ? 'Oczekiwana forma odpowiedzi' : 'Expected answer shape'}
+              {t('interview.templateBuilder.expectedAnswerShape')}
             </label>
             <input
               type="text"
@@ -3195,9 +3132,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={(e) => onUpdate({ expectedAnswerShape: e.target.value })}
               disabled={readOnly}
               placeholder={
-                isPolish
-                  ? 'np. Krótka odpowiedź z przykładem i liczbą'
-                  : 'e.g. Short factual answer with one example and a number'
+                t('interview.templateBuilder.eGShortFactualAnswer')
               }
               className={fieldClassName}
             />
@@ -3205,31 +3140,31 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-              {isPolish ? 'Dodatkowe modality odpowiedzi' : 'Additional answer modalities'}
+              {t('interview.templateBuilder.additionalAnswerModalities')}
             </label>
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {[
                 {
                   key: 'allowVoice',
-                  label: isPolish ? 'Nagranie głosowe' : 'Voice answer',
+                  label: t('interview.templateBuilder.voiceAnswer'),
                   icon: Mic,
                   value: !!question.allowVoice,
                 },
                 {
                   key: 'allowFileUpload',
-                  label: isPolish ? 'Załączniki' : 'Attachments',
+                  label: t('interview.templateBuilder.attachments'),
                   icon: Paperclip,
                   value: !!question.allowFileUpload,
                 },
                 {
                   key: 'allowUrl',
-                  label: isPolish ? 'Linki' : 'Links',
+                  label: t('interview.templateBuilder.links'),
                   icon: Link2,
                   value: !!question.allowUrl,
                 },
                 {
                   key: 'allowContextNote',
-                  label: isPolish ? 'Nota kontekstowa' : 'Context note',
+                  label: t('interview.templateBuilder.contextNote'),
                   icon: MessageSquare,
                   value: question.allowContextNote !== false,
                 },
@@ -3264,9 +3199,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                     <Layers size={12} />
-                    {isPolish
-                      ? 'Nagłówek sekcji (zaczyna grupę)'
-                      : 'Section header (starts a group)'}
+                    {t('interview.templateBuilder.sectionHeaderStartsAGroup')}
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -3275,7 +3208,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                       onChange={(e) => onSetSection(e.target.value)}
                       disabled={readOnly}
                       autoFocus={showSectionInput && !question.sectionTitle}
-                      placeholder={isPolish ? 'np. Strategia i wizja' : 'e.g. Strategy & vision'}
+                      placeholder={t('interview.templateBuilder.eGStrategyVision')}
                       className={`flex-1 ${fieldClassName}`}
                     />
                     <button
@@ -3286,7 +3219,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                       }}
                       disabled={readOnly}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-danger-500/20 text-slate-600 hover:text-danger-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                      title={isPolish ? 'Usuń nagłówek sekcji' : 'Remove section header'}
+                      title={t('interview.templateBuilder.removeSectionHeader')}
                     >
                       <X size={14} />
                     </button>
@@ -3300,9 +3233,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-c-info dark:text-c-info hover:text-c-info dark:hover:text-c-info transition-colors disabled:opacity-40 disabled:pointer-events-none"
                 >
                   <Plus size={12} />
-                  {isPolish
-                    ? 'Dodaj nagłówek sekcji nad tym pytaniem'
-                    : 'Add section header above this question'}
+                  {t('interview.templateBuilder.addSectionHeaderAboveThis')}
                 </button>
               )}
             </div>

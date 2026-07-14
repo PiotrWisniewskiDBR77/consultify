@@ -1,5 +1,6 @@
 import { Copy, ExternalLink, Pencil, Trash2, UserPlus } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   type ActionRow,
@@ -42,8 +43,8 @@ export interface InterviewTemplatePreviewBodyProps {
   isPolish: boolean;
   questions: TemplateQuestion[];
   questionsLoading: boolean;
-  getTemplateSourceLabel: (scope: string | undefined, isPolish: boolean) => string;
-  getTemplateAreaTagLabel: (tag: string, isPolish: boolean) => string;
+  getTemplateSourceLabel: (scope: string | undefined, t: (key: string) => string) => string;
+  getTemplateAreaTagLabel: (tag: string, t: (key: string) => string) => string;
   onDetailsAction: (action: string) => void;
   /** Show Delete action in Details kebab (e.g. when canAssign && !template.isDefault) */
   canDelete?: boolean;
@@ -64,53 +65,48 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
   onDetailsAction,
   canDelete = false,
 }) => {
+  const { t } = useTranslation();
   const pills: MetaPill[] = [
-    { label: isPolish ? 'Szablon' : 'Template', className: TEMPLATE_BADGE_CLASS },
+    { label: t('interview.templatePreview.template'), className: TEMPLATE_BADGE_CLASS },
     ...((template.category
       ? [{ label: template.category, className: NEUTRAL_PILL_CLASS }]
       : []) as MetaPill[]),
     ...((template.scope
-      ? [{ label: getTemplateSourceLabel(template.scope, isPolish), className: NEUTRAL_PILL_CLASS }]
+      ? [{ label: getTemplateSourceLabel(template.scope, t), className: NEUTRAL_PILL_CLASS }]
       : []) as MetaPill[]),
     {
       label: template.isDefault
-        ? isPolish
-          ? 'Domyślny'
-          : 'Default'
-        : isPolish
-          ? 'Aktywny'
-          : 'Active',
+        ? t('interview.templatePreview.default')
+        : t('interview.templatePreview.active'),
       className: NEUTRAL_PILL_CLASS,
     },
     {
-      label: `${template.questionCount ?? 0} ${isPolish ? 'pytań' : 'questions'}`,
+      label: `${template.questionCount ?? 0} ${t('interview.templatePreview.questions')}`,
       className: NEUTRAL_PILL_CLASS,
     },
     ...((template.estimatedTimeMinutes
       ? [{ label: `${template.estimatedTimeMinutes} min`, className: NEUTRAL_PILL_CLASS }]
       : []) as MetaPill[]),
     ...((template.areaTags || []).map((tag) => ({
-      label: getTemplateAreaTagLabel(tag, isPolish),
+      label: getTemplateAreaTagLabel(tag, t),
       className: NEUTRAL_PILL_CLASS,
     })) as MetaPill[]),
   ];
 
   const descriptionText = (template.description || '').trim()
     ? template.description!
-    : isPolish
-      ? 'Brak opisu.'
-      : 'No description.';
+    : t('interview.templatePreview.noDescription');
 
   const detailsActions = [
     {
       id: 'edit',
-      label: isPolish ? 'Edytuj' : 'Edit',
+      label: t('interview.templatePreview.edit'),
       icon: Pencil,
       onClick: () => onDetailsAction('edit'),
     },
     {
       id: 'duplicate',
-      label: isPolish ? 'Duplikuj' : 'Duplicate',
+      label: t('interview.templatePreview.duplicate'),
       icon: Copy,
       onClick: () => onDetailsAction('duplicate'),
     },
@@ -118,7 +114,7 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
       ? [
           {
             id: 'delete',
-            label: isPolish ? 'Usuń' : 'Delete',
+            label: t('interview.templatePreview.delete'),
             icon: Trash2,
             onClick: () => onDetailsAction('delete'),
           },
@@ -137,7 +133,7 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
         pills={pills}
         trailing={
           <span className="text-[11px] text-[var(--c-text-muted)]">
-            {isPolish ? 'Utworzono' : 'Created'}:{' '}
+            {t('interview.templatePreview.created')}:{' '}
             {template.createdAt ? new Date(template.createdAt).toLocaleDateString() : '—'}
           </span>
         }
@@ -147,25 +143,25 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
         </div>
         {template.audience ? (
           <div className="mt-1 text-[11px] text-[var(--c-text-muted)]">
-            {isPolish ? 'Odbiorcy' : 'Audience'}: {template.audience}
+            {t('interview.templatePreview.audience')}: {template.audience}
           </div>
         ) : null}
       </PreviewMetaCard>
 
       <PreviewDetailsSection
         text={descriptionText}
-        label={isPolish ? 'Szczegóły' : 'Details'}
+        label={t('interview.templatePreview.details')}
         customActions={detailsActions}
       />
 
       <div className="space-y-2">
         <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--c-text-muted)]">
-          {isPolish ? 'Pytania' : 'Questions'}
+          {t('interview.templatePreview.questions2')}
         </div>
         <div className="space-y-1.5">
           {questionsLoading ? (
             <div className="text-xs text-[var(--c-text-muted)]">
-              {isPolish ? 'Ładowanie…' : 'Loading…'}
+              {t('interview.templatePreview.loading')}
             </div>
           ) : questionItems.length > 0 ? (
             questionItems.map((q, idx) => {
@@ -184,7 +180,7 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
             })
           ) : (
             <div className="text-xs text-[var(--c-text-muted)]">
-              {isPolish ? 'Brak pytań do podglądu.' : 'No questions to preview.'}
+              {t('interview.templatePreview.noQuestionsToPreview')}
             </div>
           )}
         </div>
@@ -220,9 +216,10 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
   aiHints,
   onRunAiHint,
 }) => {
+  const { t } = useTranslation();
   const relationItems: RelationItem[] = [
-    { label: `${isPolish ? 'Kategoria' : 'Category'}: ${template.category || '—'}` },
-    { label: `${isPolish ? 'Użycia' : 'Used'}: ${usageCount}` },
+    { label: `${t('interview.templatePreview.category')}: ${template.category || '—'}` },
+    { label: `${t('interview.templatePreview.used')}: ${usageCount}` },
   ];
 
   const actionRows: ActionRow[] = [
@@ -231,7 +228,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
         ...(onAssign
           ? [
               {
-                label: isPolish ? 'Przypisz' : 'Assign',
+                label: t('interview.templatePreview.assign'),
                 icon: UserPlus,
                 onClick: onAssign,
                 colorScheme: 'primary' as const,
@@ -241,7 +238,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
             ]
           : []),
         {
-          label: canAssign ? (isPolish ? 'Edytuj' : 'Edit') : isPolish ? 'Otwórz' : 'Open',
+          label: canAssign ? (t('interview.templatePreview.edit')) : t('interview.templatePreview.open'),
           icon: ExternalLink,
           onClick: onOpenFull,
           colorScheme: onAssign ? 'primary' : 'primary',
@@ -251,7 +248,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
         ...(onClone
           ? [
               {
-                label: isPolish ? 'Duplikuj' : 'Duplicate',
+                label: t('interview.templatePreview.duplicate'),
                 icon: Copy,
                 onClick: onClone,
                 colorScheme: 'neutral' as const,
@@ -266,7 +263,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
           {
             buttons: [
               {
-                label: isPolish ? 'Usuń' : 'Delete',
+                label: t('interview.templatePreview.delete'),
                 icon: Trash2,
                 onClick: onDelete,
                 colorScheme: 'red' as const,

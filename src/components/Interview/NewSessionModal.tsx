@@ -65,7 +65,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
   onCreated,
   templates,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { currentUser, currentProjectId } = useAppStore();
 
@@ -155,18 +155,18 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
   const handleSubmit = useCallback(async () => {
     // Validation
     if (!selectedTemplateId) {
-      toast.error(isPolish ? 'Wybierz szablon' : 'Please select a template');
+      toast.error(t('interview.newSessionModal.pleaseSelectATemplate'));
       return;
     }
 
     if (!dueDate) {
-      toast.error(isPolish ? 'Podaj termin' : 'Please set a due date');
+      toast.error(t('interview.newSessionModal.pleaseSetADueDate'));
       return;
     }
 
     if (mode === 'team' && selectedAssignees.length === 0) {
       toast.error(
-        isPolish ? 'Wybierz przynajmniej jedną osobę' : 'Please select at least one assignee'
+        t('interview.newSessionModal.pleaseSelectAtLeastOne')
       );
       return;
     }
@@ -180,7 +180,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
           projectId: currentProjectId,
           name: `Interview ${new Date().toLocaleDateString()}`,
         });
-        toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
+        toast.success(t('interview.newSessionModal.sessionCreated'));
         onCreated(session);
       } else {
         // Create assignment for team
@@ -197,19 +197,17 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
         });
         toast.success(
           (assignment as any)?.splitAssignments
-            ? isPolish
-              ? `Utworzono ${(assignment as any)?.createdCount || assigneeIds.length} osobne przydziały`
-              : `Created ${(assignment as any)?.createdCount || assigneeIds.length} separate assignments`
-            : isPolish
-              ? 'Przydzielono wywiad'
-              : 'Interview assigned'
+            ? t('interview.newSessionModal.createdSeparateAssignmentsCount', {
+                count: (assignment as any)?.createdCount || assigneeIds.length,
+              })
+            : t('interview.newSessionModal.interviewAssigned')
         );
         onCreated(assignment);
       }
       onClose();
     } catch (err: any) {
       console.error('[NewSessionModal] Failed to create:', err);
-      toast.error(err?.message || (isPolish ? 'Nie udalo sie utworzyc' : 'Failed to create'));
+      toast.error(err?.message || (t('interview.newSessionModal.failedToCreate')));
     } finally {
       setIsSubmitting(false);
     }
@@ -244,12 +242,10 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
           <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
             <div>
               <h2 className="text-slate-900 dark:text-white font-semibold text-lg">
-                {isPolish ? 'Utwórz wywiad' : 'Create Interview'}
+                {t('interview.newSessionModal.createInterview')}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 text-sm">
-                {isPolish
-                  ? 'Rozpocznij dla siebie lub przydziel zespolowi'
-                  : 'Start for yourself or assign to team'}
+                {t('interview.newSessionModal.startForYourselfOrAssign')}
               </p>
             </div>
             <button
@@ -265,7 +261,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Mode Selection */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
-                {isPolish ? 'Tryb' : 'Mode'}
+                {t('interview.newSessionModal.mode')}
               </label>
               <div className="flex gap-3">
                 <button
@@ -281,7 +277,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                   `}
                 >
                   <User size={18} />
-                  {isPolish ? 'Dla siebie' : 'For myself'}
+                  {t('interview.newSessionModal.forMyself')}
                 </button>
                 <button
                   type="button"
@@ -296,7 +292,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                   `}
                 >
                   <Users size={18} />
-                  {isPolish ? 'Przydziel zespolowi' : 'Assign to team'}
+                  {t('interview.newSessionModal.assignToTeam')}
                 </button>
               </div>
             </div>
@@ -304,7 +300,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Template Selection */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
-                {isPolish ? 'Szablon' : 'Template'} *
+                {t('interview.newSessionModal.template')} *
               </label>
               <div className="relative">
                 <button
@@ -319,13 +315,13 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                       </span>
                       {selectedTemplate.questionCount && (
                         <span className="ml-2 text-xs text-slate-500">
-                          ({selectedTemplate.questionCount} {isPolish ? 'pytań' : 'questions'})
+                          ({selectedTemplate.questionCount} {t('interview.newSessionModal.questions')})
                         </span>
                       )}
                     </div>
                   ) : (
                     <span className="text-slate-500">
-                      {isPolish ? 'Wybierz szablon...' : 'Select template...'}
+                      {t('interview.newSessionModal.selectTemplate')}
                     </span>
                   )}
                   <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
@@ -374,20 +370,18 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {mode === 'team' && (
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
-                  {isPolish ? 'Przypisani' : 'Assignees'} *
+                  {t('interview.newSessionModal.assignees')} *
                 </label>
                 {loadingMembers ? (
                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                     <Loader2 size={14} className="animate-spin" />
-                    {isPolish ? 'Ladowanie...' : 'Loading...'}
+                    {t('interview.newSessionModal.loading')}
                   </div>
                 ) : (
                   <div className="max-h-40 overflow-auto space-y-1 bg-slate-50 dark:bg-navy-800/50 rounded-lg p-2 border border-slate-200 dark:border-navy-700">
                     {teamMembers.length === 0 ? (
                       <p className="text-slate-500 text-sm p-2">
-                        {isPolish
-                          ? 'Brak dostepnych czlonkow zespolu'
-                          : 'No team members available'}
+                        {t('interview.newSessionModal.noTeamMembersAvailable')}
                       </p>
                     ) : (
                       teamMembers.map((member) => (
@@ -437,14 +431,14 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                 {selectedAssignees.length > 1 && (
                   <div className="mt-2">
                     <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish ? 'Lider zespolu' : 'Team Lead'}
+                      {t('interview.newSessionModal.teamLead')}
                     </label>
                     <select
                       value={teamLeadId}
                       onChange={(e) => setTeamLeadId(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm"
                     >
-                      <option value="">{isPolish ? 'Wybierz lidera...' : 'Select lead...'}</option>
+                      <option value="">{t('interview.newSessionModal.selectLead')}</option>
                       {selectedAssignees.map((id) => {
                         const member = teamMembers.find((m) => m.id === id);
                         return member ? (
@@ -462,7 +456,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Due Date */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
-                {isPolish ? 'Termin' : 'Due Date'} *
+                {t('interview.newSessionModal.dueDate')} *
               </label>
               <div className="relative">
                 <Calendar
@@ -483,7 +477,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {mode === 'team' && (
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
-                  {isPolish ? 'Priorytet' : 'Priority'}
+                  {t('interview.newSessionModal.priority')}
                 </label>
                 <div className="relative">
                   <button
@@ -494,9 +488,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[priority].color}`}
                     >
-                      {isPolish
-                        ? PRIORITY_CONFIG[priority].labelPl
-                        : PRIORITY_CONFIG[priority].label}
+                      {t(`interview.newSessionModal.priorityLabel.${priority}`, PRIORITY_CONFIG[priority].label)}
                     </span>
                     <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                   </button>
@@ -519,7 +511,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                           <span
                             className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[p].color}`}
                           >
-                            {isPolish ? PRIORITY_CONFIG[p].labelPl : PRIORITY_CONFIG[p].label}
+                            {t(`interview.newSessionModal.priorityLabel.${p}`, PRIORITY_CONFIG[p].label)}
                           </span>
                           {priority === p && <Check size={16} className="text-c-info" />}
                         </button>
@@ -534,15 +526,13 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {mode === 'team' && (
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
-                  {isPolish ? 'Notatki (opcjonalnie)' : 'Notes (optional)'}
+                  {t('interview.newSessionModal.notesOptional')}
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={
-                    isPolish
-                      ? 'Dodaj instrukcje dla przypisanych...'
-                      : 'Add instructions for assignees...'
+                    t('interview.newSessionModal.addInstructionsForAssignees')
                   }
                   rows={3}
                   className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm placeholder-slate-500 resize-none"
@@ -559,7 +549,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
               disabled={isSubmitting}
               className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {isPolish ? 'Anuluj' : 'Cancel'}
+              {t('interview.newSessionModal.cancel')}
             </button>
             <button
               type="button"
@@ -570,18 +560,14 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
               {isSubmitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  {isPolish ? 'Tworzenie...' : 'Creating...'}
+                  {t('interview.newSessionModal.creating')}
                 </>
               ) : (
                 <>
                   <Plus size={16} />
                   {mode === 'myself'
-                    ? isPolish
-                      ? 'Rozpocznij'
-                      : 'Start'
-                    : isPolish
-                      ? 'Przydziel'
-                      : 'Assign'}
+                    ? t('interview.newSessionModal.start')
+                    : t('interview.newSessionModal.assign')}
                 </>
               )}
             </button>

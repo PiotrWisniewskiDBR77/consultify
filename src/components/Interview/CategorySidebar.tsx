@@ -129,8 +129,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
   sessionStatus = 'active',
   lastUpdated,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   // Calculate overall progress
   const totalQuestions = progress.reduce((sum, p) => sum + p.totalQuestions, 0);
@@ -158,13 +157,9 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           `}
           >
             {sessionStatus === 'completed'
-              ? isPolish
-                ? 'Zakończona'
-                : 'Completed'
+              ? t('interview.categorySidebar.completed')
               : sessionStatus === 'active'
-                ? isPolish
-                  ? 'W trakcie'
-                  : 'In Progress'
+                ? t('interview.categorySidebar.inProgress')
                 : sessionStatus}
           </span>
           {lastUpdated && (
@@ -179,10 +174,10 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       <div className="p-4 border-b border-[var(--c-border-subtle)]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-[var(--c-text)]">
-            {isPolish ? 'Postęp' : 'Progress'}
+            {t('interview.categorySidebar.progress')}
           </span>
           <span className="text-sm text-[var(--c-text-muted)]">
-            {completedCategories}/5 {isPolish ? 'kategorii' : 'categories'}
+            {completedCategories}/5 {t('interview.categorySidebar.categories')}
           </span>
         </div>
         <div className="h-2 bg-[var(--c-border-subtle)] rounded-token-pill overflow-hidden">
@@ -192,7 +187,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           />
         </div>
         <p className="mt-1 text-xs text-[var(--c-text-secondary)]">
-          {answeredQuestions}/{totalQuestions} {isPolish ? 'pytań' : 'questions'} ({overallPercent}
+          {answeredQuestions}/{totalQuestions} {t('interview.categorySidebar.questions')} ({overallPercent}
           %)
         </p>
       </div>
@@ -258,10 +253,10 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                       }
                     `}
                   >
-                    {isPolish ? config.labelPl : config.labelEn}
+                    {t(`interview.workspace.categoryLabel.${category}`, config.labelEn)}
                   </span>
                   <span className="text-xs text-[var(--c-text-muted)]">
-                    {answered}/{total} {isPolish ? 'odp.' : 'ans.'}
+                    {answered}/{total} {t('interview.categorySidebar.ans')}
                   </span>
                 </div>
                 <ChevronRight
@@ -280,7 +275,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       {/* Footer info */}
       <div className="p-3 border-t border-[var(--c-border-subtle)]">
         <p className="text-xs text-[var(--c-text-muted)] text-center">
-          {isPolish ? 'Tylko fakty - bez rekomendacji' : 'Facts only - no recommendations'}
+          {t('interview.categorySidebar.factsOnlyNoRecommendations')}
         </p>
       </div>
     </div>

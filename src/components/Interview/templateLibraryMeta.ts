@@ -53,35 +53,21 @@ export const getTemplateSourceFilterFromScope = (scope?: string | null): Templat
   return 'all';
 };
 
-export const getTemplateSourceLabel = (scope: string | undefined, isPolish: boolean): string => {
+export const getTemplateSourceLabel = (
+  scope: string | undefined,
+  t: (key: string) => string
+): string => {
   const filter = getTemplateSourceFilterFromScope(scope);
-  if (filter === 'application') return isPolish ? 'Aplikacja' : 'Application';
-  if (filter === 'organization') return isPolish ? 'Organizacja' : 'Organization';
-  if (filter === 'user') return isPolish ? 'Użytkownik' : 'User';
-  return isPolish ? 'Wszystkie' : 'All';
+  if (filter === 'application') return t('interview.templateLibraryMeta.application');
+  if (filter === 'organization') return t('interview.templateLibraryMeta.organization');
+  if (filter === 'user') return t('interview.templateLibraryMeta.user');
+  return t('interview.templateLibraryMeta.all');
 };
 
-export const getTemplateAreaTagLabel = (tag: string, isPolish: boolean): string => {
+export const getTemplateAreaTagLabel = (tag: string, t: (key: string) => string): string => {
   const normalized = String(tag || '')
     .trim()
     .toLowerCase();
-  const labels: Record<string, { pl: string; en: string }> = {
-    strategy: { pl: 'Strategia', en: 'Strategy' },
-    operations: { pl: 'Operacje', en: 'Operations' },
-    digital: { pl: 'Digital', en: 'Digital' },
-    finance: { pl: 'Finanse', en: 'Finance' },
-    people: { pl: 'Ludzie', en: 'People' },
-    sales: { pl: 'Sprzedaż', en: 'Sales' },
-    marketing: { pl: 'Marketing', en: 'Marketing' },
-    procurement: { pl: 'Zakupy', en: 'Procurement' },
-    'customer-service': { pl: 'Obsługa klienta', en: 'Customer service' },
-    delivery: { pl: 'Dostarczenie', en: 'Delivery' },
-    it: { pl: 'IT', en: 'IT' },
-    data: { pl: 'Dane', en: 'Data' },
-    risk: { pl: 'Ryzyko', en: 'Risk' },
-    compliance: { pl: 'Compliance', en: 'Compliance' },
-    hr: { pl: 'HR', en: 'HR' },
-    pmo: { pl: 'PMO', en: 'PMO' },
-  };
-  return labels[normalized]?.[isPolish ? 'pl' : 'en'] || normalized;
+  if (!AREA_TAG_SET.has(normalized)) return normalized;
+  return t(`interview.templateLibraryMeta.areaTag.${normalized}`, normalized);
 };

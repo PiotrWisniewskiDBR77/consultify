@@ -105,13 +105,16 @@ function normalizeAnswerType(answerType?: string): string {
     .replace(/\s+/g, '_');
 }
 
-function buildDefaultOptions(question: InterviewQuestion, isPolish: boolean): string[] {
+function buildDefaultOptions(question: InterviewQuestion, t: (key: string) => string): string[] {
   const normalized = normalizeAnswerType(question.answerType);
   if (Array.isArray(question.answerOptions) && question.answerOptions.length > 0) {
     return question.answerOptions;
   }
   if (QUESTION_INPUT_TYPES.yesNo.has(normalized)) {
-    return isPolish ? ['Tak', 'Nie'] : ['Yes', 'No'];
+    return [
+      t('interview.singleQuestionRuntime.yes'),
+      t('interview.singleQuestionRuntime.no'),
+    ];
   }
   if (QUESTION_INPUT_TYPES.rating.has(normalized)) {
     return ['1', '2', '3', '4', '5'];
@@ -120,29 +123,29 @@ function buildDefaultOptions(question: InterviewQuestion, isPolish: boolean): st
 }
 
 function getAnswerTypeLabel(
-  answerType?: string,
-  isPolish = false
+  answerType: string | undefined,
+  t: (key: string) => string
 ): { label: string; icon: 'text' | 'hash' | 'check' | 'calendar' } {
   const normalized = normalizeAnswerType(answerType);
   if (QUESTION_INPUT_TYPES.longText.has(normalized))
-    return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeText'), icon: 'text' };
   if (QUESTION_INPUT_TYPES.shortText.has(normalized))
-    return { label: isPolish ? 'Krótki tekst' : 'Short text', icon: 'text' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeShortText'), icon: 'text' };
   if (QUESTION_INPUT_TYPES.number.has(normalized))
-    return { label: isPolish ? 'Liczba' : 'Number', icon: 'hash' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeNumber'), icon: 'hash' };
   if (QUESTION_INPUT_TYPES.singleChoice.has(normalized))
-    return { label: isPolish ? 'Wybór' : 'Choice', icon: 'check' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeChoice'), icon: 'check' };
   if (QUESTION_INPUT_TYPES.multiChoice.has(normalized))
-    return { label: isPolish ? 'Wielokrotny' : 'Multi', icon: 'check' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeMulti'), icon: 'check' };
   if (QUESTION_INPUT_TYPES.yesNo.has(normalized))
-    return { label: isPolish ? 'Tak/Nie' : 'Yes/No', icon: 'check' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeYesNo'), icon: 'check' };
   if (QUESTION_INPUT_TYPES.rating.has(normalized))
-    return { label: isPolish ? 'Skala' : 'Scale', icon: 'hash' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeScale'), icon: 'hash' };
   if (QUESTION_INPUT_TYPES.dropdown.has(normalized))
-    return { label: isPolish ? 'Lista' : 'Dropdown', icon: 'check' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeDropdown'), icon: 'check' };
   if (QUESTION_INPUT_TYPES.date.has(normalized))
-    return { label: isPolish ? 'Data' : 'Date', icon: 'calendar' };
-  return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
+    return { label: t('interview.singleQuestionRuntime.answerTypeDate'), icon: 'calendar' };
+  return { label: t('interview.singleQuestionRuntime.answerTypeText'), icon: 'text' };
 }
 
 // Demo seed data tags evidence/linked items with raw ids like `seed_iq_…` that leak
@@ -199,7 +202,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   immersive = false,
   answerHistoryByQuestionId,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
 
   // #48B — "poprzednia wersja" disclosure toggle, keyed by question id so only
@@ -412,8 +415,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   }, []);
 
   const currentQuestionOptions = useMemo(
-    () => (currentQuestion ? buildDefaultOptions(currentQuestion, isPolish) : []),
-    [currentQuestion, isPolish]
+    () => (currentQuestion ? buildDefaultOptions(currentQuestion, t) : []),
+    [currentQuestion, t]
   );
 
   const hasUnsavedChanges =
@@ -515,7 +518,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       answerText: voiceTranscriptDraft.trim(),
       status: 'answered',
     });
-    toast.success(isPolish ? 'Transkrypcja zatwierdzona.' : 'Transcript approved.');
+    toast.success(t('interview.singleQuestionRuntime.transcriptApproved'));
   }, [currentQuestion, isPolish, onUpdateQuestion, voiceTranscriptDraft]);
 
   const navigateToQuestion = useCallback(
@@ -523,9 +526,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       if (!question) return;
       if (voiceNeedsApproval) {
         toast.error(
-          isPolish
-            ? 'Zatwierdź transkrypcję przed przejściem dalej.'
-            : 'Please approve the transcript before continuing.'
+          t('interview.singleQuestionRuntime.pleaseApproveTheTranscriptBefore')
         );
         return;
       }
@@ -571,7 +572,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
       if (isChoiceType && !isTextInput && /^[1-9]$/.test(e.key)) {
         const idx = parseInt(e.key, 10) - 1;
-        const options = buildDefaultOptions(currentQuestion, isPolish);
+        const options = buildDefaultOptions(currentQuestion, t);
         if (idx < options.length) {
           e.preventDefault();
           setInputMode('text_answer');
@@ -626,7 +627,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           await onUploadFile(file, currentQuestion.category, currentQuestion.id);
         }
       } catch {
-        toast.error(isPolish ? 'Nie udało się dodać załącznika.' : 'Failed to add attachment.');
+        toast.error(t('interview.singleQuestionRuntime.failedToAddAttachment'));
       } finally {
         setIsUploadingAttachment(false);
       }
@@ -772,7 +773,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         currentQuestion.id
       );
       setArtifactPopoverOpen(false);
-      toast.success(isPolish ? `Powiązano: ${ref.title}` : `Linked: ${ref.title}`);
+      toast.success(t('interview.singleQuestionRuntime.linkedColon', { title: ref.title }));
     },
     [currentQuestion, isPolish, onAddLink]
   );
@@ -799,7 +800,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           setAiImproveResult(data);
         }
       } catch {
-        toast.error(isPolish ? 'Nie udało się ulepszyć odpowiedzi' : 'Failed to improve answer');
+        toast.error(t('interview.singleQuestionRuntime.failedToImproveAnswer'));
       } finally {
         setAiImproving(false);
       }
@@ -826,7 +827,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         setAiExplainResult(data);
       }
     } catch {
-      toast.error(isPolish ? 'Nie udało się wyjaśnić pytania' : 'Failed to explain question');
+      toast.error(t('interview.singleQuestionRuntime.failedToExplainQuestion'));
     } finally {
       setAiExplaining(false);
     }
@@ -851,7 +852,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognitionAPI) {
         const recognition = new SpeechRecognitionAPI();
-        recognition.lang = isPolish ? 'pl-PL' : 'en-US';
+        recognition.lang = t('interview.singleQuestionRuntime.enUs');
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onresult = (e: any) => {
@@ -971,9 +972,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             });
 
             toast.success(
-              isPolish
-                ? `Transkrypcja dodana${!serverText && browserTranscript ? ' (przeglądarka)' : ''}.`
-                : `Transcript added${!serverText && browserTranscript ? ' (browser)' : ''}.`
+              t(
+                !serverText && browserTranscript
+                  ? 'interview.singleQuestionRuntime.transcriptAddedBrowser'
+                  : 'interview.singleQuestionRuntime.transcriptAdded'
+              )
             );
           } catch (error) {
             if (browserTranscript) {
@@ -986,7 +989,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 status: 'in_progress',
               });
               toast.success(
-                isPolish ? 'Transkrypcja dodana (przeglądarka).' : 'Transcript added (browser).'
+                t('interview.singleQuestionRuntime.transcriptAddedBrowser')
               );
             } else {
               // Nothing to save: server STT failed AND the browser produced no
@@ -995,9 +998,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               // plainly so they type the answer instead of assuming it vanished.
               console.error('[InterviewSingleQuestionRuntime] Voice transcription failed:', error);
               toast.error(
-                isPolish
-                  ? 'Nie rozpoznano mowy w nagraniu. Wpisz odpowiedź ręcznie lub nagraj ponownie.'
-                  : 'No speech was recognised. Type the answer manually or record again.'
+                t('interview.singleQuestionRuntime.noSpeechWasRecognisedType')
               );
             }
           } finally {
@@ -1011,9 +1012,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       setIsRecording(true);
     } catch (error) {
       toast.error(
-        isPolish
-          ? 'Brak dostępu do mikrofonu lub nagrywanie jest niedostępne.'
-          : 'Microphone access is unavailable.'
+        t('interview.singleQuestionRuntime.microphoneAccessIsUnavailable')
       );
       console.error('[InterviewSingleQuestionRuntime] Recording failed:', error);
     }
@@ -1134,7 +1133,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <span className={answerDraft ? '' : 'text-slate-600 dark:text-slate-500'}>
-              {answerDraft || (isPolish ? 'Wybierz opcję...' : 'Select an option...')}
+              {answerDraft || (t('interview.singleQuestionRuntime.selectAnOption'))}
             </span>
             <ChevronDown
               size={16}
@@ -1196,7 +1195,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           }}
           disabled={readOnly}
           className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
-          placeholder={isPolish ? 'Wpisz wartość' : 'Enter a value'}
+          placeholder={t('interview.singleQuestionRuntime.enterAValue')}
         />
       );
     }
@@ -1218,9 +1217,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white'
         }`}
         placeholder={
-          isPolish
-            ? 'Wpisz odpowiedź albo nagraj ją poniżej...'
-            : 'Write the answer or record it below...'
+          t('interview.singleQuestionRuntime.writeTheAnswerOrRecord')
         }
       />
     );
@@ -1274,7 +1271,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           <FileText size={24} className="text-slate-600" />
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish ? 'Brak pytań w tej sekcji.' : 'No questions are available in this section.'}
+          {t('interview.singleQuestionRuntime.noQuestionsAreAvailableIn')}
         </p>
       </div>
     );
@@ -1290,7 +1287,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Przegląd przed wysłaniem' : 'Review before submitting'}
+                {t('interview.singleQuestionRuntime.reviewBeforeSubmitting')}
               </h2>
               <div className="flex items-center gap-3 mt-2">
                 <div className="w-32 h-1.5 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
@@ -1310,7 +1307,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200"
             >
               <ArrowLeft size={14} />
-              {isPolish ? 'Wróć do pytań' : 'Back to questions'}
+              {t('interview.singleQuestionRuntime.backToQuestions')}
             </button>
           </div>
 
@@ -1318,9 +1315,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             <div className="mb-4 rounded-xl border border-danger-200/70 dark:border-danger-500/20 bg-danger-50/70 dark:bg-danger-500/10 px-4 py-3">
               <p className="text-sm font-medium text-danger-600 dark:text-danger-400">
                 <CircleAlert size={14} className="inline mr-1.5 -mt-0.5" />
-                {isPolish
-                  ? `${requiredMissing.length} wymaganych pytań bez odpowiedzi`
-                  : `${requiredMissing.length} required questions unanswered`}
+                {t('interview.singleQuestionRuntime.requiredQuestionsUnanswered', {
+                  count: requiredMissing.length,
+                })}
               </p>
             </div>
           )}
@@ -1388,7 +1385,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${catConfig.bgColor} ${catConfig.color}`}
                       >
                         <catConfig.icon size={11} />
-                        {isPolish ? catConfig.labelPl : catConfig.labelEn}
+                        {t(`interview.workspace.categoryLabel.${cat}`, catConfig.labelEn)}
                       </span>
                       <span className="text-xs text-slate-600 dark:text-slate-500">
                         {catInfo.answered}/{catInfo.total}
@@ -1455,7 +1452,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
               >
                 <ArrowLeft size={16} />
-                {isPolish ? 'Wróć do pytań' : 'Back to questions'}
+                {t('interview.singleQuestionRuntime.backToQuestions')}
               </button>
               <button
                 type="button"
@@ -1469,12 +1466,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   <Check size={16} />
                 )}
                 {isSubmitting
-                  ? isPolish
-                    ? 'Wysyłanie...'
-                    : 'Submitting...'
-                  : isPolish
-                    ? 'Zatwierdź i wyślij'
-                    : 'Submit'}
+                  ? t('interview.singleQuestionRuntime.submitting')
+                  : t('interview.singleQuestionRuntime.submit')}
               </button>
             </div>
           </div>
@@ -1495,13 +1488,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           ref={navRef}
           className="hidden md:flex flex-col w-72 shrink-0 border-r border-white/[0.06] bg-white/[0.02] dark:bg-white/[0.01]"
           role="navigation"
-          aria-label={isPolish ? 'Nawigacja pytań' : 'Question navigation'}
+          aria-label={t('interview.singleQuestionRuntime.questionNavigation')}
         >
           {/* Header with progress */}
           <div className="px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
-                {isPolish ? 'Pytania' : 'Questions'}
+                {t('interview.singleQuestionRuntime.questions')}
               </p>
               <span
                 className={`text-[10px] font-semibold tabular-nums ${
@@ -1524,7 +1517,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             {answeredCount < orderedQuestions.length && (
               <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1.5">
                 {orderedQuestions.length - answeredCount}{' '}
-                {isPolish ? 'do uzupełnienia' : 'remaining'}
+                {t('interview.singleQuestionRuntime.remaining')}
               </p>
             )}
           </div>
@@ -1590,11 +1583,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 void persistCurrentQuestion();
                 setRuntimeView('review');
               }}
-              aria-label={isPolish ? 'Przejdź do przeglądu' : 'Go to review'}
+              aria-label={t('interview.singleQuestionRuntime.goToReview')}
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
             >
               <ClipboardList size={13} />
-              {isPolish ? 'Przegląd' : 'Review'}
+              {t('interview.singleQuestionRuntime.review')}
             </button>
             {onSaveAndExit && (
               <button
@@ -1602,11 +1595,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 onClick={() => {
                   void persistCurrentQuestion().then(() => onSaveAndExit?.());
                 }}
-                aria-label={isPolish ? 'Zapisz i wyjdź' : 'Save and exit'}
+                aria-label={t('interview.singleQuestionRuntime.saveAndExit')}
                 className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
               >
                 <LogOut size={13} />
-                {isPolish ? 'Zapisz i wyjdź' : 'Save & Exit'}
+                {t('interview.singleQuestionRuntime.saveExit')}
               </button>
             )}
           </div>
@@ -1616,7 +1609,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         <nav
           className="hidden md:flex flex-col w-48 shrink-0 space-y-1"
           role="navigation"
-          aria-label={isPolish ? 'Nawigacja kategorii' : 'Category navigation'}
+          aria-label={t('interview.singleQuestionRuntime.categoryNavigation')}
         >
           {sessionName && (
             <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500 truncate">
@@ -1641,7 +1634,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50'
                 }`}
               >
-                <span className="truncate">{isPolish ? catConfig.labelPl : catConfig.labelEn}</span>
+                <span className="truncate">{t(`interview.workspace.categoryLabel.${cat}`, catConfig.labelEn)}</span>
                 <span
                   className={`text-[10px] tabular-nums shrink-0 ${isDone ? 'text-emerald-500' : ''}`}
                 >
@@ -1660,7 +1653,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
             >
               <ClipboardList size={13} />
-              {isPolish ? 'Przegląd' : 'Review'}
+              {t('interview.singleQuestionRuntime.review')}
             </button>
             {onSaveAndExit && (
               <button
@@ -1671,7 +1664,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
               >
                 <LogOut size={13} />
-                {isPolish ? 'Zapisz i wyjdź' : 'Save & Exit'}
+                {t('interview.singleQuestionRuntime.saveExit')}
               </button>
             )}
           </div>
@@ -1702,7 +1695,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  {isPolish ? catConfig.labelPl : catConfig.labelEn}
+                  {t(`interview.workspace.categoryLabel.${cat}`, catConfig.labelEn)}
                   <span
                     className={`text-[10px] tabular-nums ${catInfo.answered === catInfo.total && catInfo.total > 0 ? 'text-emerald-500' : ''}`}
                   >
@@ -1726,7 +1719,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${activeCategoryConfig.bgColor} ${activeCategoryConfig.color}`}
               >
-                {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
+                {t(
+                  `interview.workspace.categoryLabel.${currentQuestion?.category}`,
+                  activeCategoryConfig.labelEn
+                )}
               </span>
             )}
             <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
@@ -1777,12 +1773,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         {currentIndex + 1}
                       </span>
                       <span className="text-xs text-slate-600 dark:text-slate-500 tabular-nums">
-                        {isPolish ? 'z' : 'of'} {orderedQuestions.length}
+                        {t('interview.singleQuestionRuntime.of')} {orderedQuestions.length}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {(() => {
-                        const typeInfo = getAnswerTypeLabel(currentQuestion.answerType, isPolish);
+                        const typeInfo = getAnswerTypeLabel(currentQuestion.answerType, t);
                         const TypeIcon =
                           typeInfo.icon === 'hash'
                             ? Hash
@@ -1813,7 +1809,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           }`}
                         >
                           <CircleAlert size={10} />
-                          {isPolish ? 'Wymagane' : 'Required'}
+                          {t('interview.singleQuestionRuntime.required')}
                         </span>
                       )}
                     </div>
@@ -1839,9 +1835,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     <button
                       type="button"
                       onClick={openGuidance}
-                      title={isPolish ? 'Jak odpowiedzieć?' : 'How to answer?'}
+                      title={t('interview.singleQuestionRuntime.howToAnswer')}
                       aria-label={
-                        isPolish ? 'Pokaż wskazówkę i przykład' : 'Show guidance and example'
+                        t('interview.singleQuestionRuntime.showGuidanceAndExample')
                       }
                       aria-expanded={guidanceOpen}
                       className={`relative shrink-0 mt-1 inline-flex items-center justify-center w-8 h-8 rounded-full border transition-colors ${
@@ -1883,15 +1879,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             aria-expanded={isOpen}
                             className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                             title={
-                              isPolish
-                                ? 'Treść odpowiedzi zapisana przed odesłaniem do poprawy'
-                                : 'Answer content saved before it was sent back for revision'
+                              t('interview.singleQuestionRuntime.answerContentSavedBeforeIt')
                             }
                           >
                             <History size={12} />
-                            {isPolish
-                              ? `Poprzednia wersja (${history.length})`
-                              : `Previous version (${history.length})`}
+                            {t('interview.singleQuestionRuntime.previousVersionCount', {
+                              count: history.length,
+                            })}
                             <ChevronDown
                               size={12}
                               className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -1903,12 +1897,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 <div key={entry.id} className="space-y-1">
                                   <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                     {new Date(entry.savedAt).toLocaleString(
-                                      isPolish ? 'pl-PL' : 'en-US'
+                                      t('interview.singleQuestionRuntime.enUs')
                                     )}
                                   </div>
                                   <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
                                     {entry.answerText?.trim() ||
-                                      (isPolish ? '(brak odpowiedzi)' : '(no answer)')}
+                                      (t('interview.singleQuestionRuntime.noAnswer'))}
                                   </p>
                                 </div>
                               ))}
@@ -1930,12 +1924,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       <div className="flex items-center justify-between">
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">
                           <Lightbulb size={11} />
-                          {isPolish ? 'Jak odpowiedzieć' : 'How to answer'}
+                          {t('interview.singleQuestionRuntime.howToAnswer2')}
                         </span>
                         <button
                           type="button"
                           onClick={() => setGuidanceOpen(false)}
-                          aria-label={isPolish ? 'Zamknij' : 'Close'}
+                          aria-label={t('interview.singleQuestionRuntime.close')}
                           className="text-amber-500/70 hover:text-amber-600 dark:hover:text-amber-300 transition-colors"
                         >
                           <X size={13} />
@@ -1944,14 +1938,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
                       <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-100/90">
                         {questionGuidance?.instruction ||
-                          (isPolish
-                            ? 'Odpowiedz konkretnie i własnymi słowami — podaj liczby, przykłady lub kontekst, jeśli to możliwe. Możesz też nagrać odpowiedź lub dołączyć plik.'
-                            : 'Answer specifically in your own words — include numbers, examples or context where you can. You can also record your answer or attach a file.')}
+                          (t('interview.singleQuestionRuntime.answerSpecificallyInYourOwn'))}
                       </p>
 
                       {questionGuidance?.expected && (
                         <p className="text-xs text-amber-700/90 dark:text-amber-300/80">
-                          {isPolish ? 'Oczekiwany format: ' : 'Expected format: '}
+                          {t('interview.singleQuestionRuntime.expectedFormat')}
                           <span className="font-medium">{questionGuidance.expected}</span>
                         </p>
                       )}
@@ -1959,7 +1951,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       {questionGuidance?.example && (
                         <div className="space-y-1">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-500 dark:text-amber-400">
-                            {isPolish ? 'Przykład' : 'Example'}
+                            {t('interview.singleQuestionRuntime.example')}
                           </p>
                           <p className="text-xs leading-relaxed italic text-amber-800 dark:text-amber-200/80">
                             &ldquo;{questionGuidance.example}&rdquo;
@@ -1980,16 +1972,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             <Sparkles size={11} />
                           )}
                           {aiExplaining
-                            ? isPolish
-                              ? 'Analizuję...'
-                              : 'Analyzing...'
+                            ? t('interview.singleQuestionRuntime.analyzing')
                             : aiExplainResult
-                              ? isPolish
-                                ? 'Ukryj rozwinięcie AI'
-                                : 'Hide AI deep-dive'
-                              : isPolish
-                                ? 'Rozwiń z AI i daj przykłady'
-                                : 'Expand with AI & give examples'}
+                              ? t('interview.singleQuestionRuntime.hideAiDeepDive')
+                              : t('interview.singleQuestionRuntime.expandWithAiGiveExamples')}
                         </button>
                       )}
                     </div>
@@ -2021,7 +2007,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                     : 'text-amber-700 dark:text-amber-400/70'
                                 }`}
                               >
-                                {isPolish ? 'Wskazówka' : 'Hint'}
+                                {t('interview.singleQuestionRuntime.hint')}
                               </span>
                               <p
                                 className={`text-sm leading-relaxed ${
@@ -2058,7 +2044,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                     : 'text-sky-700 dark:text-sky-400/70'
                                 }`}
                               >
-                                {isPolish ? 'Czego szukamy' : 'What we look for'}
+                                {t('interview.singleQuestionRuntime.whatWeLookFor')}
                               </span>
                               <p
                                 className={`text-sm leading-relaxed ${
@@ -2090,7 +2076,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         className="shrink-0 text-c-info dark:text-c-info"
                       />
                       <span className="text-xs text-c-info dark:text-c-info">
-                        {isPolish ? 'Oczekiwany format:' : 'Expected format:'}{' '}
+                        {t('interview.singleQuestionRuntime.expectedFormat2')}{' '}
                         <span className="font-medium">{currentQuestion.expectedAnswerShape}</span>
                       </span>
                     </div>
@@ -2105,7 +2091,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       {aiExplainResult.exampleAnswers.length > 0 && (
                         <div className="space-y-1.5">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-info dark:text-c-info">
-                            {isPolish ? 'Przykładowe odpowiedzi' : 'Example answers'}
+                            {t('interview.singleQuestionRuntime.exampleAnswers')}
                           </p>
                           {aiExplainResult.exampleAnswers.map((ex, i) => (
                             <div
@@ -2166,7 +2152,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-c-info bg-c-info/10 backdrop-blur-[1px]">
                         <span className="inline-flex items-center gap-1.5 text-sm font-medium text-c-info dark:text-c-info">
                           <Paperclip size={14} />
-                          {isPolish ? 'Upuść, aby dołączyć' : 'Drop to attach'}
+                          {t('interview.singleQuestionRuntime.dropToAttach')}
                         </span>
                       </div>
                     )}
@@ -2198,9 +2184,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         />
                         <div className="min-w-0 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
                           <span>
-                            {isPolish
-                              ? 'Wygląda na zbyt krótkie — spróbuj dodać konkretny przykład albo liczbę.'
-                              : 'This looks short — try adding a concrete example or a number.'}
+                            {t('interview.singleQuestionRuntime.thisLooksShortTryAdding')}
                           </span>
                           {trimmed.length >= 3 && (
                             <button
@@ -2208,7 +2192,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               onClick={() => setAiDropdownOpen(true)}
                               className="ml-1.5 font-semibold underline decoration-dotted underline-offset-2 hover:text-amber-800 dark:hover:text-amber-200"
                             >
-                              {isPolish ? 'Użyj AI, aby rozwinąć' : 'Use AI to expand'}
+                              {t('interview.singleQuestionRuntime.useAiToExpand')}
                             </button>
                           )}
                         </div>
@@ -2242,12 +2226,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       >
                         {isRecording ? <PauseCircle size={11} /> : <Mic size={11} />}
                         {isRecording
-                          ? isPolish
-                            ? 'Stop'
-                            : 'Stop'
-                          : isPolish
-                            ? 'Nagraj'
-                            : 'Record'}
+                          ? t('interview.singleQuestionRuntime.stop')
+                          : t('interview.singleQuestionRuntime.record')}
                       </button>
 
                       {/* Attach file (inline) */}
@@ -2262,7 +2242,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         }`}
                       >
                         <Paperclip size={11} />
-                        {isPolish ? 'Plik' : 'File'}
+                        {t('interview.singleQuestionRuntime.file')}
                       </button>
 
                       {/* Attach image (inline) */}
@@ -2281,7 +2261,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         ) : (
                           <ImageIcon size={11} />
                         )}
-                        {isPolish ? 'Obraz' : 'Image'}
+                        {t('interview.singleQuestionRuntime.image')}
                       </button>
 
                       {/* AI Improve dropdown */}
@@ -2368,7 +2348,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   }`}
                                 >
                                   <span className="text-xs">{item.icon}</span>
-                                  {isPolish ? item.labelPl : item.labelEn}
+                                  {t(`interview.singleQuestionRuntime.aiImproveMode.${item.mode}`, item.labelEn)}
                                 </button>
                               ))}
                             </div>
@@ -2389,7 +2369,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     >
                       <div className="flex items-center justify-between">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
-                          {isPolish ? 'Ulepszona wersja' : 'Improved version'}
+                          {t('interview.singleQuestionRuntime.improvedVersion')}
                         </p>
                         <span className="text-[10px] text-emerald-500/70 dark:text-emerald-400/60">
                           <Sparkles size={9} className="inline mr-0.5 -mt-0.5" />
@@ -2409,13 +2389,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             setAnswerDraft(aiImproveResult.improvedText);
                             setAiImproveResult(null);
                             toast.success(
-                              isPolish ? 'Zastosowano ulepszoną wersję' : 'Applied improved version'
+                              t('interview.singleQuestionRuntime.appliedImprovedVersion')
                             );
                           }}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600 transition-colors"
                         >
                           <Check size={12} />
-                          {isPolish ? 'Zastosuj' : 'Apply'}
+                          {t('interview.singleQuestionRuntime.apply')}
                         </button>
                         <button
                           type="button"
@@ -2426,7 +2406,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
                           }`}
                         >
-                          {isPolish ? 'Odrzuć' : 'Dismiss'}
+                          {t('interview.singleQuestionRuntime.dismiss')}
                         </button>
                       </div>
                     </div>
@@ -2463,12 +2443,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   type="button"
                                   disabled
                                   title={
-                                    isPolish
-                                      ? 'Usuń w panelu Dowody'
-                                      : 'Remove from the Evidence panel'
+                                    t('interview.singleQuestionRuntime.removeFromTheEvidencePanel')
                                   }
                                   className="absolute top-1 right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/50 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity cursor-not-allowed"
-                                  aria-label={isPolish ? 'Usuń' : 'Remove'}
+                                  aria-label={t('interview.singleQuestionRuntime.remove')}
                                 >
                                   <X size={11} />
                                 </button>
@@ -2485,24 +2463,18 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 {cleanEvidenceLabel(
                                   item,
                                   isAudio
-                                    ? isPolish
-                                      ? 'Nagranie'
-                                      : 'Recording'
-                                    : isPolish
-                                      ? 'Załącznik'
-                                      : 'Attachment'
+                                    ? t('interview.singleQuestionRuntime.recording')
+                                    : t('interview.singleQuestionRuntime.attachment')
                                 )}
                               </span>
                               <button
                                 type="button"
                                 disabled
                                 title={
-                                  isPolish
-                                    ? 'Usuń w panelu Dowody'
-                                    : 'Remove from the Evidence panel'
+                                  t('interview.singleQuestionRuntime.removeFromTheEvidencePanel')
                                 }
                                 className="inline-flex items-center justify-center text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                                aria-label={isPolish ? 'Usuń' : 'Remove'}
+                                aria-label={t('interview.singleQuestionRuntime.remove')}
                               >
                                 <Trash2 size={11} />
                               </button>
@@ -2515,9 +2487,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   {voiceNeedsApproval && (
                     <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 px-4 py-3 space-y-2">
                       <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                        {isPolish
-                          ? 'Sprawdź transkrypcję i zatwierdź przed kontynuacją:'
-                          : 'Review the transcript and approve before continuing:'}
+                        {t('interview.singleQuestionRuntime.reviewTheTranscriptAndApprove')}
                       </p>
                       <textarea
                         value={voiceTranscriptDraft}
@@ -2541,7 +2511,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               });
                             }
                             toast.success(
-                              isPolish ? 'Transkrypcja odrzucona.' : 'Transcript discarded.'
+                              t('interview.singleQuestionRuntime.transcriptDiscarded')
                             );
                           }}
                           className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
@@ -2551,16 +2521,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           }`}
                         >
                           <X size={12} />
-                          {isPolish ? 'Odrzuć i ponów' : 'Discard & retry'}
+                          {t('interview.singleQuestionRuntime.discardRetry')}
                         </button>
                         <button
                           type="button"
                           onClick={handleApproveTranscript}
-                          aria-label={isPolish ? 'Zatwierdź transkrypcję' : 'Approve transcript'}
+                          aria-label={t('interview.singleQuestionRuntime.approveTranscript')}
                           className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white"
                         >
                           <Check size={14} />
-                          {isPolish ? 'Zatwierdź' : 'Approve'}
+                          {t('interview.singleQuestionRuntime.approve')}
                         </button>
                       </div>
                     </div>
@@ -2571,12 +2541,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       {isTranscribing ? (
                         <span className="inline-flex items-center gap-2">
                           <Loader2 size={14} className="animate-spin" />
-                          {isPolish ? 'Trwa transkrypcja nagrania...' : 'Transcribing recording...'}
+                          {t('interview.singleQuestionRuntime.transcribingRecording')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5">
                           <Check size={14} className="text-emerald-500" />
-                          {isPolish ? 'Transkrypcja zatwierdzona.' : 'Transcript approved.'}
+                          {t('interview.singleQuestionRuntime.transcriptApproved')}
                         </span>
                       )}
                     </div>
@@ -2594,7 +2564,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   }`}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
-                    {isPolish ? 'Dodatkowy kontekst' : 'Additional context'}
+                    {t('interview.singleQuestionRuntime.additionalContext')}
                   </p>
 
                   {/* Context note (always visible) */}
@@ -2609,9 +2579,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
                     }`}
                     placeholder={
-                      isPolish
-                        ? 'Komentarz, niuans, wyjaśnienie do odpowiedzi...'
-                        : 'Comment, nuance, clarification for this answer...'
+                      t('interview.singleQuestionRuntime.commentNuanceClarificationForThis')
                     }
                   />
 
@@ -2649,7 +2617,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         }`}
                       >
                         <Waypoints size={11} />
-                        {isPolish ? 'Artefakt' : 'Artifact'}
+                        {t('interview.singleQuestionRuntime.artifact')}
                       </button>
                     </div>
                   )}
@@ -2662,7 +2630,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         value={linkName}
                         onChange={(event) => setLinkName(event.target.value)}
                         className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
-                        placeholder={isPolish ? 'Nazwa linku' : 'Link title'}
+                        placeholder={t('interview.singleQuestionRuntime.linkTitle')}
                       />
                       <input
                         type="url"
@@ -2679,7 +2647,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                         >
                           <Check size={12} />
-                          {isPolish ? 'Dodaj' : 'Add'}
+                          {t('interview.singleQuestionRuntime.add')}
                         </button>
                       </div>
                     </div>
@@ -2709,7 +2677,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               <span className="truncate max-w-[140px]">
                                 {cleanEvidenceLabel(
                                   item,
-                                  isArtifact ? (isPolish ? 'Artefakt' : 'Artifact') : 'Link'
+                                  isArtifact ? (t('interview.singleQuestionRuntime.artifact')) : 'Link'
                                 )}
                               </span>
                             </span>
@@ -2739,29 +2707,25 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 <>
                   <Loader2 size={14} className={isPersisting ? 'animate-spin' : ''} />
                   {isPersisting
-                    ? isPolish
-                      ? 'Zapisuję...'
-                      : 'Saving...'
-                    : isPolish
-                      ? 'Niezapisane zmiany'
-                      : 'Unsaved changes'}
+                    ? t('interview.singleQuestionRuntime.saving')
+                    : t('interview.singleQuestionRuntime.unsavedChanges')}
                 </>
               ) : autoSaved ? (
                 <>
                   <Check size={14} className="text-emerald-500" />
                   <span className="text-emerald-500">
-                    {isPolish ? 'Auto-zapisano' : 'Auto-saved'}
+                    {t('interview.singleQuestionRuntime.autoSaved')}
                   </span>
                 </>
               ) : (
                 <>
                   <Check size={14} />
-                  {isPolish ? 'Zapisano' : 'Saved'}
+                  {t('interview.singleQuestionRuntime.saved')}
                 </>
               )}
               <span className="text-slate-600 dark:text-navy-700 mx-1">|</span>
               <span className="text-[11px] text-slate-600 dark:text-slate-500">
-                Esc={isPolish ? 'zapisz' : 'save'} · Enter={isPolish ? 'dalej' : 'next'}
+                Esc={t('interview.singleQuestionRuntime.save')} · Enter={t('interview.singleQuestionRuntime.next')}
               </span>
             </div>
 
@@ -2770,7 +2734,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 type="button"
                 onClick={() => navigateToQuestion(previousQuestion)}
                 disabled={!previousQuestion || isPersisting}
-                aria-label={isPolish ? 'Poprzednie pytanie' : 'Previous question'}
+                aria-label={t('interview.singleQuestionRuntime.previousQuestion')}
                 className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${
                   immersive
                     ? 'border-white/[0.08] text-slate-600 hover:text-slate-200 hover:border-white/[0.15]'
@@ -2778,7 +2742,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 }`}
               >
                 <ArrowLeft size={16} />
-                {isPolish ? 'Wstecz' : 'Back'}
+                {t('interview.singleQuestionRuntime.back')}
               </button>
 
               {!readOnly && (
@@ -2786,7 +2750,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   type="button"
                   onClick={() => void persistCurrentQuestion()}
                   disabled={isPersisting}
-                  aria-label={isPolish ? 'Zapisz odpowiedź' : 'Save answer'}
+                  aria-label={t('interview.singleQuestionRuntime.saveAnswer')}
                   className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${
                     immersive
                       ? 'border-c-info/20 bg-c-info/10 text-c-info hover:bg-c-info/15'
@@ -2798,7 +2762,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   ) : (
                     <Check size={16} />
                   )}
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('interview.singleQuestionRuntime.save2')}
                 </button>
               )}
 
@@ -2809,25 +2773,25 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     void persistCurrentQuestion().then(() => setRuntimeView('review'));
                   }}
                   disabled={readOnly || isPersisting}
-                  aria-label={isPolish ? 'Przejrzyj i wyślij' : 'Review and submit'}
+                  aria-label={t('interview.singleQuestionRuntime.reviewAndSubmit')}
                   className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/20"
                 >
                   <ClipboardList size={16} />
-                  {isPolish ? 'Przejrzyj i wyślij' : 'Review & Submit'}
+                  {t('interview.singleQuestionRuntime.reviewSubmit')}
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => navigateToQuestion(nextQuestion)}
                   disabled={!nextQuestion || isPersisting}
-                  aria-label={isPolish ? 'Następne pytanie' : 'Next question'}
+                  aria-label={t('interview.singleQuestionRuntime.nextQuestion')}
                   className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold disabled:opacity-50 ${
                     immersive
                       ? 'bg-navy-900 text-white shadow-lg shadow-c-info/20 hover:bg-c-info'
                       : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
                   }`}
                 >
-                  {isPolish ? 'Następne' : 'Next'}
+                  {t('interview.singleQuestionRuntime.next2')}
                   <ArrowRight size={16} />
                 </button>
               )}

@@ -1,5 +1,6 @@
 import { ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   type ActionRow,
@@ -35,6 +36,7 @@ export const InterviewAssignmentPreviewBody: React.FC<InterviewAssignmentPreview
   detailsText,
   onDetailsAction,
 }) => {
+  const { t } = useTranslation();
   const pills: MetaPill[] = [
     {
       label: statusLabel,
@@ -42,7 +44,7 @@ export const InterviewAssignmentPreviewBody: React.FC<InterviewAssignmentPreview
       dot: 'bg-current',
     },
     {
-      label: `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,
+      label: `${t('interview.assignmentPreview.progress')}: ${progress}%`,
       className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
     },
     ...(daysToDue
@@ -63,7 +65,7 @@ export const InterviewAssignmentPreviewBody: React.FC<InterviewAssignmentPreview
             className="mt-2 text-xs text-[var(--c-text-secondary)] truncate"
             title={assignment.assignee?.name || assignment.assignee?.email}
           >
-            {isPolish ? 'Przydzielony do' : 'Assignee'}:{' '}
+            {t('interview.assignmentPreview.assignee')}:{' '}
             {assignment.assignee?.name || assignment.assignee?.email}
           </div>
         ) : null}
@@ -116,6 +118,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
   onFixAssignment,
   onOpenFull,
 }) => {
+  const { t } = useTranslation();
   const relationItems: RelationItem[] = relations.map((r) => ({
     label: r.label,
     tone: r.tone,
@@ -126,7 +129,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
 
   if (assignment.status === 'assigned' && onStartAssignment) {
     buttons.push({
-      label: isPolish ? 'Rozpocznij' : 'Start',
+      label: t('interview.assignmentPreview.start'),
       icon: Sparkles,
       onClick: onStartAssignment,
       colorScheme: 'primary',
@@ -135,7 +138,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
     });
   } else if (assignment.status === 'in_progress' && hasSession && onContinueAssignment) {
     buttons.push({
-      label: isPolish ? 'Kontynuuj' : 'Continue',
+      label: t('interview.assignmentPreview.continue'),
       icon: ChevronRight,
       onClick: onContinueAssignment,
       colorScheme: 'primary',
@@ -144,7 +147,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
     });
   } else if (assignment.status === 'sent_back' && hasSession && onFixAssignment) {
     buttons.push({
-      label: isPolish ? 'Popraw' : 'Fix & resubmit',
+      label: t('interview.assignmentPreview.fixResubmit'),
       icon: RotateCcw,
       onClick: onFixAssignment,
       colorScheme: 'amber',
@@ -176,7 +179,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
 
       <PreviewRelations
         items={relationItems}
-        emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
+        emptyLabel={t('interview.assignmentPreview.noLinkedDocuments')}
       />
 
       {rows.length > 0 && <PreviewActionBar rows={rows} />}
