@@ -15684,6 +15684,93 @@
         "modelsPerTier": "Dostępne modele wg poziomu",
         "modelsInTiers": "{{modelCount}} modeli w {{tierCount}} poziomach",
         "noModelsAvailable": "Brak dostępnych modeli"
+      },
+      "llmView": {
+        "errors": {
+          "statusUnavailable": "Status LLM niedostępny",
+          "loadStatus": "Nie udało się załadować statusu LLM",
+          "loadProviders": "Nie udało się załadować dostawców",
+          "loadPrompts": "Nie udało się załadować promptów",
+          "loadAnalyticsData": "Nie udało się załadować danych analitycznych",
+          "loadAnalytics": "Nie udało się załadować analiz",
+          "healthCheckFailed": "Sprawdzanie stanu nie powiodło się",
+          "refreshHealth": "Nie udało się odświeżyć stanu",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Połączenie nie powiodło się",
+          "testFailedFor": "Test nie powiódł się dla {{provider}}",
+          "connectionFailedWithMessage": "Połączenie nie powiodło się: {{message}}",
+          "testFailedExecute": "Nie udało się wykonać testu",
+          "operationFailed": "Operacja nie powiodła się",
+          "updatePrompt": "Nie udało się zaktualizować promptu",
+          "deleteFailed": "Usuwanie nie powiodło się"
+        },
+        "toasts": {
+          "healthCheckComplete": "Sprawdzanie stanu zakończone: {{count}} zdrowych dostawców",
+          "providerHealthy": "{{provider}} działa poprawnie ({{latency}}ms)",
+          "providerUpdated": "Zaktualizowano dostawcę",
+          "providerAdded": "Dodano dostawcę",
+          "promptUpdated": "Zaktualizowano prompt systemowy",
+          "providerDeleted": "Usunięto dostawcę"
+        },
+        "tabs": {
+          "providers": "Dostawcy LLM",
+          "health": "Panel stanu",
+          "prompts": "Persony systemowe (prompty)"
+        },
+        "providersUnavailable": "Dostawcy LLM niedostępni",
+        "readOnly": {
+          "providersTitle": "Konfiguracja dostawców LLM jest tylko do odczytu",
+          "providersDescription": "Akcje zarządzania dostawcami nie są pokazywane, dopóki przepływ przechowywania i audytu nie zostanie w pełni podłączony.",
+          "promptsTitle": "Prompty systemowe są tylko do odczytu",
+          "promptsDescription": "Edycja promptów jest ukryta, dopóki atrybucja użytkownika, przechowywanie i metadane audytu nie zostaną podłączone."
+        },
+        "loadedProviders": "Załadowani dostawcy:",
+        "promptsUnavailable": "Prompty systemowe niedostępne",
+        "loadedPrompts": "Załadowane prompty:",
+        "analyticsUnavailable": "Analityka LLM niedostępna",
+        "kpi": {
+          "last7days": "OSTATNIE 7 DNI",
+          "totalRequests": "Łączna liczba żądań",
+          "avgLatency": "ŚR. OPÓŹNIENIE",
+          "responseTime": "Czas odpowiedzi",
+          "estCost": "SZAC. KOSZT",
+          "totalSpend": "Łączne wydatki",
+          "errorRate": "WSKAŹNIK BŁĘDÓW",
+          "failedRequests": "{{count}} nieudanych żądań"
+        },
+        "recentInteractions": "Ostatnie interakcje",
+        "viewAllLogs": "Zobacz wszystkie logi",
+        "columns": {
+          "status": "Status",
+          "time": "Czas",
+          "providerModel": "Dostawca / Model",
+          "latency": "Opóźnienie",
+          "cost": "Koszt",
+          "details": "Szczegóły"
+        },
+        "success": "Sukces",
+        "noLogs": "Nie znaleziono logów z ostatnich 7 dni.",
+        "healthUnavailable": "Status stanu LLM niedostępny",
+        "summary": {
+          "healthy": "Zdrowe",
+          "degraded": "Obniżone",
+          "unhealthy": "Niesprawne",
+          "total": "Łącznie"
+        },
+        "default": "Domyślny:",
+        "lastCheckDuration": "Ostatnie sprawdzenie: {{time}}({{duration}}ms)",
+        "refreshing": "Odświeżanie...",
+        "refreshAll": "Odśwież wszystko",
+        "criticalErrors": "Błędy krytyczne",
+        "defaultBadge": "Domyślny",
+        "vision": "Wizja",
+        "tools": "Narzędzia",
+        "noApiKey": "Brak klucza API",
+        "priorityCost": "Priorytet: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Obwód: {{state}}",
+        "failuresCount": "({{count}} błędów)",
+        "fallbackChains": "Łańcuchy zapasowe"
       }
     }
   },

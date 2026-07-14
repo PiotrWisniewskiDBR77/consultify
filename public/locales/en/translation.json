@@ -15033,6 +15033,93 @@
         "modelsPerTier": "Models Available per Tier",
         "modelsInTiers": "{{modelCount}} models in {{tierCount}} tiers",
         "noModelsAvailable": "No models available"
+      },
+      "llmView": {
+        "errors": {
+          "statusUnavailable": "LLM status unavailable",
+          "loadStatus": "Failed to load LLM status",
+          "loadProviders": "Failed to load providers",
+          "loadPrompts": "Failed to load prompts",
+          "loadAnalyticsData": "Failed to load analytics data",
+          "loadAnalytics": "Failed to load analytics",
+          "healthCheckFailed": "Health check failed",
+          "refreshHealth": "Failed to refresh health",
+          "providerError": "{{provider}}: {{error}}",
+          "connectionFailed": "Connection failed",
+          "testFailedFor": "Test failed for {{provider}}",
+          "connectionFailedWithMessage": "Connection Failed: {{message}}",
+          "testFailedExecute": "Test failed to execute",
+          "operationFailed": "Operation failed",
+          "updatePrompt": "Failed to update prompt",
+          "deleteFailed": "Delete failed"
+        },
+        "toasts": {
+          "healthCheckComplete": "Health check complete: {{count}} healthy providers",
+          "providerHealthy": "{{provider}} is healthy ({{latency}}ms)",
+          "providerUpdated": "Provider updated",
+          "providerAdded": "Provider added",
+          "promptUpdated": "System Prompt Updated",
+          "providerDeleted": "Provider deleted"
+        },
+        "tabs": {
+          "providers": "LLM Providers",
+          "health": "Health Dashboard",
+          "prompts": "System Personas (Prompts)"
+        },
+        "providersUnavailable": "LLM providers unavailable",
+        "readOnly": {
+          "providersTitle": "LLM provider configuration is read-only",
+          "providersDescription": "Provider management actions are not shown until the persistence and audit workflow is fully connected.",
+          "promptsTitle": "System prompts are read-only",
+          "promptsDescription": "Prompt editing is hidden until user attribution, persistence, and audit metadata are wired."
+        },
+        "loadedProviders": "Loaded providers:",
+        "promptsUnavailable": "System prompts unavailable",
+        "loadedPrompts": "Loaded prompts:",
+        "analyticsUnavailable": "LLM analytics unavailable",
+        "kpi": {
+          "last7days": "LAST 7 DAYS",
+          "totalRequests": "Total Requests",
+          "avgLatency": "AVG LATENCY",
+          "responseTime": "Response Time",
+          "estCost": "EST. COST",
+          "totalSpend": "Total Spend",
+          "errorRate": "ERROR RATE",
+          "failedRequests": "{{count}} Failed Requests"
+        },
+        "recentInteractions": "Recent Interactions",
+        "viewAllLogs": "View All Logs",
+        "columns": {
+          "status": "Status",
+          "time": "Time",
+          "providerModel": "Provider / Model",
+          "latency": "Latency",
+          "cost": "Cost",
+          "details": "Details"
+        },
+        "success": "Success",
+        "noLogs": "No logs found in the last 7 days.",
+        "healthUnavailable": "LLM health status unavailable",
+        "summary": {
+          "healthy": "Healthy",
+          "degraded": "Degraded",
+          "unhealthy": "Unhealthy",
+          "total": "Total"
+        },
+        "default": "Default:",
+        "lastCheckDuration": "Last check: {{time}}({{duration}}ms)",
+        "refreshing": "Refreshing...",
+        "refreshAll": "Refresh All",
+        "criticalErrors": "Critical Errors",
+        "defaultBadge": "Default",
+        "vision": "Vision",
+        "tools": "Tools",
+        "noApiKey": "No API Key",
+        "priorityCost": "Priority: {{priority}} | ${{cost}}/1k",
+        "test": "Test",
+        "circuit": "Circuit: {{state}}",
+        "failuresCount": "({{count}} failures)",
+        "fallbackChains": "Fallback Chains"
       }
     }
   },
