@@ -1,6 +1,14 @@
 -- Canvas Content Contract: additive columns for Markdown-first / JSON-native artifacts.
 -- Legacy content/content_json fields are intentionally kept during this phase.
 
+-- FRESH-DB GUARD (2026-07-14): work_canvas_drafts is created by
+-- 760_work_canvas_runtime.sql, which sorts AFTER this file on a fresh replay.
+-- Run this section only when the table exists; 760 re-adds the columns
+-- idempotently (the data backfill below is a no-op on a fresh, empty table).
+-- No behaviour change on already-migrated DBs.
+DO $$ BEGIN
+IF to_regclass('public.work_canvas_drafts') IS NOT NULL THEN
+
 ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT DEFAULT 'markdown';
 ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT;
 ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_json_native TEXT;
@@ -40,6 +48,9 @@ SET markdown_projection_status = CASE
   ELSE 'synced'
 END
 WHERE markdown_projection_status IS NULL OR markdown_projection_status NOT IN ('synced', 'stale', 'failed', 'missing');
+
+END IF;
+END $$;
 
 ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS canonical_format TEXT DEFAULT 'markdown';
 ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS content_md TEXT;

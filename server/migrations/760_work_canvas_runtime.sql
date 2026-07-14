@@ -27,6 +27,19 @@ CREATE TABLE IF NOT EXISTS work_canvas_drafts (
   updated_at TEXT NOT NULL
 );
 
+-- FRESH-DB PARITY (2026-07-14): 20260502_canvas_content_contract.sql sorts BEFORE
+-- this file, so on a fresh replay its work_canvas_drafts section is skipped
+-- (guarded on table existence). Re-add the content-contract columns here
+-- idempotently so the final schema matches staging/prod. No-op where they exist.
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT DEFAULT 'markdown';
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT;
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_json_native TEXT;
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_schema_version TEXT;
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT DEFAULT 'synced';
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT;
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_stale_at TEXT;
+ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS projection_error TEXT;
+
 CREATE TABLE IF NOT EXISTS work_canvas_proposals (
   id TEXT PRIMARY KEY,
   draft_id TEXT NOT NULL,
