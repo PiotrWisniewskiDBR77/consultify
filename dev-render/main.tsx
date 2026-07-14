@@ -228,7 +228,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <Wave5InternalCrimsonScreen />,
   },
   'unified-create-launcher': {
-    label: 'I1-I3 Faza 0 — UnifiedCreateLauncher "+ Nowy" (Insight/Initiative/Decision), Krok 0',
+    label:
+      'I1-I3 Faza 0/1 — UnifiedCreateLauncher "+ Nowy" (Insight/Initiative/Decision), Krok 0 — &context=mywork|interview|initiatives',
     render: () => <UnifiedCreateLauncherScreen />,
   },
 };
