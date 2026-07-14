@@ -1024,24 +1024,21 @@ jobs:
   # RUNTIME SMOKE (Playwright + started web servers)
   # Deterministic AI Chat end-to-end guarantee.
   #
-  # STATUS 2026-07-14: informational (continue-on-error) — the ai-chat spec is
-  # deterministically red due to PRODUCT drift, not CI environment: the E2E
-  # identity gets 403 "not a member of this organization" (role:none) on
-  # POST /conversations/:id/messages (team-conversation permission model added
-  # after the spec), the local transport circuit breaker then blocks retries,
-  # and the E2E_MODE stub in /ai/chat/stream does not persist messages despite
-  # its comment. Verified locally: stream + E2E_OK render WORK; persistence is
-  # what fails. Flip continue-on-error back to blocking once the e2e identity
-  # is granted membership (or E2E_MODE bypasses the membership gate) and the
-  # stub persists messages.
+  # STATUS 2026-07-14: blocking again. Was informational (continue-on-error) because
+  # the ai-chat spec was deterministically red due to product drift: the E2E identity
+  # had no organization_members row (team-conversation permission model added after
+  # the spec was written), and the E2E_MODE stub in /ai/chat/stream didn't persist
+  # messages despite its comment. Fixed: server/src/middleware/auth.middleware.ts now
+  # seeds an organization_members row for the E2E_MODE bypass identity, and the
+  # /ai/chat/stream E2E_MODE stub persists both messages (server/src/routes/ai.routes.ts).
+  # Verified green locally (tests/e2e/runtime, 3/3 passed) before re-enabling the gate.
   # ═══════════════════════════════════════════════════════════════
   e2e-runtime-smoke:
-    name: 🔥 Runtime Smoke (AI Chat) [informational — known-red canary, see workflow comment]
+    name: 🔥 Runtime Smoke (AI Chat)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [unit-tests, component-tests]
     if: ${{ github.event_name != 'pull_request' }}
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -1073,16 +1070,6 @@ jobs:
           E2E_BASE_URL: http://127.0.0.1:3000
           TEST_SUPPORT_KEY: local-test-support-key-change-me
           PLAYWRIGHT_JUNIT_OUTPUT_NAME: e2e-results.xml
-
-      - name: Explain informational status
-        if: failure()
-        run: |
-          echo "## 🔥 Runtime Smoke (AI Chat) — informational, known-red canary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Deterministic product drift (NOT a CI environment issue): the e2e identity gets" >> "$GITHUB_STEP_SUMMARY"
-          echo "403 'not a member of this organization' on message persistence, and the E2E_MODE" >> "$GITHUB_STEP_SUMMARY"
-          echo "stub in /ai/chat/stream does not persist messages. See the job comment in" >> "$GITHUB_STEP_SUMMARY"
-          echo ".github/workflows/test-suite.yml for the full diagnosis and un-gating criteria." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Runtime Smoke report
         if: always()
