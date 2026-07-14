@@ -2035,7 +2035,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 onClick: () =>
                   void copyAsMarkdown(
                     { title: task.title, status: statusCfg.label, description: desc },
-                    t('myWork.tasksList.en2', 'en')
+                    isPolish ? 'pl' : 'en'
                   ),
               },
               {
@@ -2043,7 +2043,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 onClick: () =>
                   void copyForSlack(
                     { title: task.title, status: statusCfg.label, description: desc },
-                    t('myWork.tasksList.en3', 'en')
+                    isPolish ? 'pl' : 'en'
                   ),
               },
             ];

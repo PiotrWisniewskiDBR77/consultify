@@ -69,5 +69,10 @@ export const getTemplateAreaTagLabel = (tag: string, t: (key: string) => string)
     .trim()
     .toLowerCase();
   if (!AREA_TAG_SET.has(normalized)) return normalized;
-  return t(`interview.templateLibraryMeta.areaTag.${normalized}`, normalized);
+  // i18next bez tłumaczenia zwraca sam klucz — wtedy fallback na surowy tag
+  // (odpowiednik defaultValue, ale bez poszerzania sygnatury `t`, na którą
+  // nie da się kontrawariantnie podstawić TFunction).
+  const key = `interview.templateLibraryMeta.areaTag.${normalized}`;
+  const label = t(key);
+  return label === key ? normalized : label;
 };

@@ -3928,11 +3928,9 @@ Return ONLY the final comment text.`;
       const u = users.find((usr) => usr.id === ownerId);
       return u ? `${u.firstName} ${u.lastName}`.trim() : '';
     })();
-    const statusLabel = (STATUS_CONFIG[status] || STATUS_CONFIG.todo).label[
-      t('myWork.taskDetail.en', 'en')
-    ];
+    const statusLabel = (STATUS_CONFIG[status] || STATUS_CONFIG.todo).label[isPolish ? 'pl' : 'en'];
     const priorityLabel = (PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium).label[
-      t('myWork.taskDetail.en2', 'en')
+      isPolish ? 'pl' : 'en'
     ];
     const dash = '—';
     const fmtDate = (v?: string) => {

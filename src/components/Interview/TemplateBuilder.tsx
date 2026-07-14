@@ -2295,7 +2295,7 @@ ${sourceText || '(none)'}`;
                                       (type) => type.id === normalizeAnswerType(item.answerType)
                                     )
                                   : ANSWER_TYPES.find((type) => type.id === current.answerType))?.[
-                                  t('interview.templateBuilder.labelen')
+                                  isPolish ? 'labelPl' : 'labelEn'
                                 ] || '-'}
                               </p>
                               {item.rationale ? (
@@ -2340,7 +2340,7 @@ ${sourceText || '(none)'}`;
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                               {ANSWER_TYPES.find(
                                 (type) => type.id === normalizeAnswerType(item.answerType)
-                              )?.[t('interview.templateBuilder.labelen')] || '-'}
+                              )?.[isPolish ? 'labelPl' : 'labelEn'] || '-'}
                             </p>
                             {item.rationale ? (
                               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -2788,8 +2788,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           )}
           <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700/70 text-slate-600 dark:text-slate-200 text-[10px] rounded border border-slate-300 dark:border-slate-600/60 leading-none">
             {
-              ANSWER_TYPES.find((t) => t.id === question.answerType)?.[
-                t('interview.templateBuilder.labelen')
+              ANSWER_TYPES.find((item) => item.id === question.answerType)?.[
+                isPolish ? 'labelPl' : 'labelEn'
               ]
             }
           </span>

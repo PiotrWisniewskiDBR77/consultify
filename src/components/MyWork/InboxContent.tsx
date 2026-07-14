@@ -1328,7 +1328,7 @@ const PreviewPane: React.FC<{
             description: descriptionTrimmed,
             aiSummary: aiResult?.brief,
           },
-          i18n.t('myWork.inboxContent.en', 'en')
+          isPolish ? 'pl' : 'en'
         ),
     },
     {
@@ -1340,7 +1340,7 @@ const PreviewPane: React.FC<{
             description: descriptionTrimmed,
             aiSummary: aiResult?.brief,
           },
-          i18n.t('myWork.inboxContent.en2', 'en')
+          isPolish ? 'pl' : 'en'
         ),
     },
   ];
@@ -2564,7 +2564,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.section }}>
             <span className="text-xs text-c-text-secondary">
               {SMART_SECTIONS.find((s) => s.id === item.section)?.[
-                t('myWork.inboxContent.labelEn', 'labelEn')
+                isPolish ? 'labelPl' : 'labelEn'
               ] || item.section}
             </span>
           </td>

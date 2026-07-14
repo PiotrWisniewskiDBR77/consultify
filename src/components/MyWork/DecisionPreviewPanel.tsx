@@ -303,7 +303,7 @@ export const DecisionPreviewBody: React.FC<{
                     status: decision?.status ?? undefined,
                     description: detailsText,
                   },
-                  i18n.t('myWork.decisionPreview.en2', 'en')
+                  isPolish ? 'pl' : 'en'
                 ),
             },
             ...(isSlackConnected
@@ -318,7 +318,7 @@ export const DecisionPreviewBody: React.FC<{
                           status: decision?.status ?? undefined,
                           description: detailsText,
                         },
-                        i18n.t('myWork.decisionPreview.en3', 'en')
+                        isPolish ? 'pl' : 'en'
                       ),
                   },
                 ]
