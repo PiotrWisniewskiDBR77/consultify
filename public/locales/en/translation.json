@@ -21861,6 +21861,19 @@
         "aiNarrative": "AI Narrative",
         "generating": "Generating...",
         "generateAiSummary": "Generate AI summary"
+      },
+      "toolbar": {
+        "aiViewName": "AI view",
+        "proposalApplied": "Proposal applied",
+        "applyFailed": "Apply failed",
+        "aiSchemaAssistant": "AI schema assistant",
+        "more": "More",
+        "manageFields": "Manage Fields",
+        "tableSchemaAssistant": "Table schema assistant",
+        "draftSchemaChangesWithAi": "Draft schema changes with AI.",
+        "couldNotAddRows": "Could not add rows",
+        "rowInsertRequiresPlatformTable": "Row insert is available once the platform table is loaded.",
+        "addedRows": "Added {{count}} rows"
       }
     },
     "mindmap": {

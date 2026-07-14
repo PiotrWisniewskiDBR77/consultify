@@ -55,6 +55,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/primitives/Button';
 import {
@@ -187,6 +188,7 @@ export interface TableToolbarProps {
 // ---------------------------------------------------------------------------
 
 export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
+  const { t } = useTranslation();
   const ctx = useTableData();
   const {
     active: usePlatform,
@@ -195,7 +197,6 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
     tableId,
     refresh,
     locked,
-    isPl,
     columns,
     visibleColumns,
     savedViews,
@@ -302,7 +303,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         if (accepted.views?.length) {
           for (const v of accepted.views) {
             if (v.layout) setViewLayout(v.layout as ViewLayout);
-            await saveCurrentView(v.name || (isPl ? 'Widok AI' : 'AI view'), columns);
+            await saveCurrentView(
+              v.name || t('ideas.table.toolbar.aiViewName', 'AI view'),
+              columns
+            );
           }
         }
         if (accepted.rows?.length && tableId) {
@@ -314,28 +318,30 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         await refresh();
         setAiProposal(null);
         setAiSchemaSheetOpen(false);
-        toast.success(isPl ? 'Zastosowano propozycję' : 'Proposal applied');
+        toast.success(t('ideas.table.toolbar.proposalApplied', 'Proposal applied'));
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
-        toast.error(msg || (isPl ? 'Nie udało się zastosować' : 'Apply failed'));
+        toast.error(msg || t('ideas.table.toolbar.applyFailed', 'Apply failed'));
       }
     },
-    [columns, handleAddColumn, isPl, refresh, saveCurrentView, setViewLayout, tableId]
+    [columns, handleAddColumn, refresh, saveCurrentView, setViewLayout, t, tableId]
   );
 
   // Layout items — FROZEN order per V5-IDEA-24
   const layoutItems = [
-    { id: 'table' as const, icon: Table2, label: isPl ? 'Tabela' : 'Table' },
+    { id: 'table' as const, icon: Table2, label: t('ideas.table.table', 'Table') },
     { id: 'kanban' as const, icon: KanbanSquare, label: 'Kanban' },
     { id: 'timeline' as const, icon: GanttChart, label: 'Timeline / Gantt' },
-    { id: 'calendar' as const, icon: Calendar, label: isPl ? 'Kalendarz' : 'Calendar' },
+    { id: 'calendar' as const, icon: Calendar, label: t('ideas.table.calendar', 'Calendar') },
     { id: 'matrix' as const, icon: LayoutGrid, label: 'Matrix' },
-    { id: 'grid' as const, icon: Grid3X3, label: isPl ? 'Galeria' : 'Gallery' },
+    { id: 'grid' as const, icon: Grid3X3, label: t('ideas.table.gallery', 'Gallery') },
   ];
 
   return (
     <div className="flex flex-wrap items-center gap-1 md:gap-2 bg-c-surface backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] mx-3 my-2 px-4 py-2 flex-shrink-0">
-      <div className="text-xs font-semibold text-c-text mr-2">{isPl ? 'Tabela' : 'Table'}</div>
+      <div className="text-xs font-semibold text-c-text mr-2">
+        {t('ideas.table.table', 'Table')}
+      </div>
 
       {/* Collaboration Presence */}
       <WorkspacePresenceIndicatorComponent
@@ -416,7 +422,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               setShowSaveViewDialog(true);
             }}
             className="p-1 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface transition-colors"
-            title={isPl ? 'Zapisz widok' : 'Save view'}
+            title={t('ideas.table.saveView', 'Save view')}
           >
             <Plus size={12} />
           </button>
@@ -434,13 +440,13 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-semibold mb-2 text-c-text">
-              {isPl ? 'Zapisz widok' : 'Save view'}
+              {t('ideas.table.saveView', 'Save view')}
             </h3>
             <input
               autoFocus
               value={saveViewName}
               onChange={(e) => setSaveViewName(e.target.value)}
-              placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
+              placeholder={t('ideas.table.viewName', 'View name…')}
               className="w-full h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-blue-500/30 mb-3"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && saveViewName.trim()) handleSaveView(saveViewName.trim());
@@ -451,14 +457,14 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 onClick={() => setShowSaveViewDialog(false)}
                 className="px-3 py-1.5 text-xs rounded-lg text-c-text-muted hover:bg-c-surface-raised"
               >
-                {isPl ? 'Anuluj' : 'Cancel'}
+                {t('ideas.table.cancel', 'Cancel')}
               </button>
               <button
                 disabled={!saveViewName.trim()}
                 onClick={() => handleSaveView(saveViewName.trim())}
                 className="px-3 py-1.5 text-xs rounded-lg bg-c-text text-c-surface hover:opacity-90 disabled:opacity-40"
               >
-                {isPl ? 'Zapisz' : 'Save'}
+                {t('ideas.table.save', 'Save')}
               </button>
             </div>
           </div>
@@ -484,7 +490,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 setViewContextMenu(null);
               }}
             >
-              {isPl ? 'Zmień nazwę' : 'Rename'}
+              {t('ideas.table.rename', 'Rename')}
             </button>
             <button
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text"
@@ -500,21 +506,21 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     width: c.width,
                   })),
                 });
-                toast.success(isPl ? 'Widok zaktualizowany' : 'View updated');
+                toast.success(t('ideas.table.viewUpdated', 'View updated'));
                 setViewContextMenu(null);
               }}
             >
-              {isPl ? 'Aktualizuj' : 'Update'}
+              {t('ideas.table.update', 'Update')}
             </button>
             <button
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-danger-50 dark:hover:bg-danger-900/20 text-danger-600"
               onClick={() => {
                 deleteSavedView(viewContextMenu.viewId);
-                toast.success(isPl ? 'Widok usunięty' : 'View deleted');
+                toast.success(t('ideas.table.viewDeleted', 'View deleted'));
                 setViewContextMenu(null);
               }}
             >
-              {isPl ? 'Usuń' : 'Delete'}
+              {t('ideas.table.delete', 'Delete')}
             </button>
           </div>
         </div>
@@ -531,7 +537,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <input
           value={props.filterInput}
           onChange={(e) => props.onFilterInputChange(e.target.value)}
-          placeholder={isPl ? 'Filtruj…' : 'Filter…'}
+          placeholder={t('ideas.table.filter', 'Filter…')}
           className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
         />
         {props.filterInput && (
@@ -604,10 +610,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
           groupBy ? 'bg-c-surface text-c-text' : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
-        title={isPl ? 'Grupuj' : 'Group'}
+        title={t('ideas.table.group', 'Group')}
       >
         <Group size={12} />
-        <span className="hidden sm:inline">{isPl ? 'Grupuj' : 'Group'}</span>
+        <span className="hidden sm:inline">{t('ideas.table.group', 'Group')}</span>
       </button>
 
       {/* View layout switcher — FROZEN order */}
@@ -638,7 +644,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             setAiSchemaSheetOpen(true);
           }}
           icon={<Sparkles />}
-          title={isPl ? 'Asystent schematu AI' : 'AI schema assistant'}
+          title={t('ideas.table.toolbar.aiSchemaAssistant', 'AI schema assistant')}
         >
           AI
         </Button>
@@ -688,7 +694,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <ToolbarIconButton
           onClick={() => setShowMoreMenu((p) => !p)}
           active={showMoreMenu}
-          title={isPl ? 'Więcej' : 'More'}
+          title={t('ideas.table.toolbar.more', 'More')}
           className="!px-2"
         >
           <MoreHorizontal size={14} />
@@ -710,86 +716,90 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               const items: MoreItem[] = [
                 {
                   icon: Layers,
-                  label: isPl ? 'AI Kategoryzacja' : 'AI Categorize',
+                  label: t('ideas.table.aiCategorize', 'AI Categorize'),
                   onClick: props.onShowAICategorize,
                   show: !locked,
                 },
                 {
                   icon: Trophy,
-                  label: isPl ? 'Model scoringowy' : 'Scoring Model',
+                  label: t('ideas.table.scoringModel', 'Scoring Model'),
                   onClick: props.onShowScoringModel,
                 },
                 {
                   icon: Presentation,
-                  label: isPl ? 'Eksport do prezentacji' : 'Export to Presentation',
+                  label: t('ideas.table.exportToPresentation', 'Export to Presentation'),
                   onClick: props.onShowExportPresentation,
                 },
                 {
                   icon: Rocket,
-                  label: isPl ? 'Pipeline pomysłów' : 'Idea Pipeline',
+                  label: t('ideas.table.ideaPipeline', 'Idea Pipeline'),
                   onClick: props.onShowPipeline,
                 },
-                { icon: Brain, label: 'AI Copilot', onClick: props.onShowCopilot },
+                {
+                  icon: Brain,
+                  label: t('ideas.table.aiCopilot', 'AI Copilot'),
+                  onClick: props.onShowCopilot,
+                },
                 {
                   icon: Mic,
-                  label: isPl ? 'Głos / Obraz' : 'Voice / Image',
+                  label: t('ideas.table.voiceImage', 'Voice / Image'),
                   onClick: props.onShowVoiceInput,
                 },
                 {
                   icon: Network,
-                  label: isPl ? 'Relacje między tabelami' : 'Cross-table Relations',
+                  label: t('ideas.table.crossTableRelations', 'Cross-table Relations'),
                   onClick: props.onShowCrossRelations,
                 },
                 {
                   icon: Flame,
-                  label: isPl ? 'Heatmapa' : 'Heatmap',
+                  label: t('ideas.table.heatmap', 'Heatmap'),
                   onClick: props.onToggleHeatmap,
                   active: props.heatmapColumns.size > 0,
                 },
                 {
                   icon: History,
-                  label: isPl ? 'Historia zmian' : 'History',
+                  label: t('ideas.table.history', 'History'),
                   onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' }),
                   active: ui.showAuditTrail,
                 },
                 {
                   icon: Activity,
-                  label: isPl ? 'Aktywność' : 'Activity',
+                  label: t('ideas.table.activity', 'Activity'),
                   onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' }),
                   active: ui.showActivityFeed,
                 },
                 {
                   icon: Keyboard,
-                  label: isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)',
+                  label: t('ideas.table.keyboardShortcuts', 'Keyboard shortcuts (?)'),
                   onClick: props.onShowKeyboardShortcuts,
                 },
                 {
                   icon: LayoutTemplate,
-                  label: isPl ? 'Szablony' : 'Templates',
+                  label: t('ideas.table.templates', 'Templates'),
                   onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' }),
                   show: !locked,
                 },
                 {
                   icon: Send,
-                  label: isPl ? 'Dystrybucja' : 'Distribute',
+                  label: t('ideas.table.distribute', 'Distribute'),
                   onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showDistribution' }),
                   show: !locked,
                 },
                 {
                   icon: LayoutGrid,
-                  label: isPl ? 'Generator frameworków' : 'Framework Generator',
+                  label: t('ideas.table.frameworkGenerator', 'Framework Generator'),
                   onClick: props.onShowFrameworkGen,
                   show: !locked,
                 },
                 {
                   icon: Paintbrush,
-                  label: isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting',
+                  label: t('ideas.table.conditionalFormatting', 'Conditional Formatting'),
                   onClick: props.onShowConditionalFmt,
                   active: props.formatRules.length > 0,
                 },
                 {
                   icon: Palette,
-                  label: isPl ? 'Paleta kolorów' : 'Color Palette',
+                  label: t('ideas.table.colorPalette', 'Color Palette'),
                   onClick: () => setShowColorPalette(true),
                 },
               ];
@@ -836,22 +846,14 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 }`}
               >
                 {tab === 'data'
-                  ? isPl
-                    ? 'Dane'
-                    : 'Data'
+                  ? t('ideas.table.data', 'Data')
                   : tab === 'forms'
-                    ? isPl
-                      ? 'Formularze'
-                      : 'Forms'
+                    ? t('ideas.table.forms', 'Forms')
                     : tab === 'interfaces'
-                      ? isPl
-                        ? 'Interfejsy'
-                        : 'Interfaces'
+                      ? t('ideas.table.interfaces', 'Interfaces')
                       : tab === 'models'
-                        ? isPl
-                          ? 'Modele'
-                          : 'Models'
-                        : 'Workflow'}
+                        ? t('ideas.table.models', 'Models')
+                        : t('ideas.table.workflow', 'Workflow')}
               </button>
             ))}
           </div>
@@ -863,7 +865,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               uiDispatch({ type: 'SET_PANEL', panel: 'showInterfaceDesigner', value: true })
             }
             active={ui.showInterfaceDesigner}
-            title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+            title={t('ideas.table.interfaceDesigner', 'Interface Designer')}
           >
             <Layout size={12} />
           </ToolbarIconButton>
@@ -871,7 +873,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {usePlatform && !locked && (
           <ToolbarIconButton
             onClick={() => uiDispatch({ type: 'SET_PANEL', panel: 'showFormBuilder', value: true })}
-            title={isPl ? 'Kreator formularzy' : 'Form Builder'}
+            title={t('ideas.table.formBuilder', 'Form Builder')}
           >
             <FileText size={12} />
           </ToolbarIconButton>
@@ -887,42 +889,42 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10'
                   : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
-              title={isPl ? 'Narzędzia' : 'Tools'}
+              title={t('ideas.table.tools', 'Tools')}
             >
               <Grid3X3 size={12} />
-              <span className="hidden lg:inline">{isPl ? 'Narzędzia' : 'Tools'}</span>
+              <span className="hidden lg:inline">{t('ideas.table.tools', 'Tools')}</span>
               <ChevronDown size={10} />
             </button>
             {showToolsMenu && (
               <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto">
                 <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
-                  {isPl ? 'Workflow' : 'Workflow'}
+                  {t('ideas.table.workflow', 'Workflow')}
                 </div>
                 {[
                   {
                     onClick: props.onShowAutomationsManager,
                     icon: <Rocket size={14} className="text-amber-500" />,
-                    label: isPl ? 'Automatyzacje' : 'Automations',
+                    label: t('ideas.table.automations', 'Automations'),
                   },
                   {
                     onClick: props.onShowSyncManager,
                     icon: <Link2 size={14} className="text-blue-500" />,
-                    label: isPl ? 'Synchronizacja danych' : 'Data Sync',
+                    label: t('ideas.table.dataSync', 'Data Sync'),
                   },
                   {
                     onClick: props.onShowWebhookRelays,
                     icon: <Webhook size={14} className="text-indigo-500" />,
-                    label: isPl ? 'Webhook Relay' : 'Webhook Relays',
+                    label: t('ideas.table.webhookRelays', 'Webhook Relays'),
                   },
                   {
                     onClick: props.onShowSharingManager,
                     icon: <Network size={14} className="text-green-500" />,
-                    label: isPl ? 'Udostępnianie' : 'Sharing & Permissions',
+                    label: t('ideas.table.sharingPermissions', 'Sharing & Permissions'),
                   },
                   {
                     onClick: props.onShowDistributionManager,
                     icon: <Send size={14} className="text-pink-500" />,
-                    label: isPl ? 'Dystrybucja' : 'Distribution',
+                    label: t('ideas.table.distribution', 'Distribution'),
                   },
                 ].map((item, i) => (
                   <button
@@ -938,14 +940,14 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 ))}
                 <div className="border-t border-c-border-subtle my-1" />
                 <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
-                  {isPl ? 'Budowanie' : 'Build'}
+                  {t('ideas.table.build', 'Build')}
                 </div>
                 {[
                   {
                     onClick: () =>
                       uiDispatch({ type: 'SET_PANEL', panel: 'showFormBuilder', value: true }),
                     icon: <FileText size={14} className="text-blue-500" />,
-                    label: isPl ? 'Formularze' : 'Forms',
+                    label: t('ideas.table.forms', 'Forms'),
                   },
                   {
                     onClick: () =>
@@ -955,13 +957,13 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                         value: true,
                       }),
                     icon: <Layout size={14} className="text-blue-500" />,
-                    label: isPl ? 'Interfejsy' : 'Interfaces',
+                    label: t('ideas.table.interfaces', 'Interfaces'),
                   },
                   {
                     onClick: () =>
                       uiDispatch({ type: 'SET_PANEL', panel: 'showTemplateGallery', value: true }),
                     icon: <LayoutTemplate size={14} className="text-emerald-500" />,
-                    label: isPl ? 'Szablony' : 'Templates',
+                    label: t('ideas.table.templates', 'Templates'),
                   },
                 ].map((item, i) => (
                   <button
@@ -984,7 +986,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text"
                 >
                   <Layers size={14} className="text-indigo-500" />{' '}
-                  {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
+                  {t('ideas.table.consultifyLink', 'Consultify Link')}
                 </button>
               </div>
             )}
@@ -999,26 +1001,26 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             onClick={props.onShowAICategorize}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
-            <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+            <Layers size={14} /> {t('ideas.table.aiCategorize', 'AI Categorize')}
           </button>
         )}
         <button
           onClick={props.onShowScoringModel}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
+          <Trophy size={14} /> {t('ideas.table.scoring', 'Scoring')}
         </button>
         <button
           onClick={props.onShowExportPresentation}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
+          <Presentation size={14} /> {t('ideas.table.presentation', 'Presentation')}
         </button>
         <button
           onClick={props.onShowPipeline}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
+          <Rocket size={14} /> {t('ideas.table.pipeline', 'Pipeline')}
         </button>
         <button
           onClick={props.onShowCopilot}
@@ -1030,37 +1032,37 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={props.onShowVoiceInput}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
+          <Mic size={14} /> {t('ideas.table.voiceImage', 'Voice / Image')}
         </button>
         <button
           onClick={props.onShowCrossRelations}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
+          <Network size={14} /> {t('ideas.table.relations', 'Relations')}
         </button>
         <button
           onClick={props.onToggleHeatmap}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
+          <Flame size={14} /> {t('ideas.table.heatmap', 'Heatmap')}
         </button>
         <button
           onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' })}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <History size={14} /> {isPl ? 'Historia' : 'History'}
+          <History size={14} /> {t('ideas.table.history', 'History')}
         </button>
         <button
           onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' })}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
+          <Activity size={14} /> {t('ideas.table.activity', 'Activity')}
         </button>
         <button
           onClick={props.onShowConditionalFmt}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
+          <Paintbrush size={14} /> {t('ideas.table.formatting', 'Formatting')}
         </button>
         {!locked && (
           <button
@@ -1075,7 +1077,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' })}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
-            <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
+            <LayoutTemplate size={14} /> {t('ideas.table.templates', 'Templates')}
           </button>
         )}
       </MobileToolbarMenuComponent>
@@ -1086,7 +1088,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <button
             onClick={props.onShowConnectorList}
             className="relative p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary transition-colors"
-            title={isPl ? 'Konektory' : 'Connectors'}
+            title={t('ideas.table.connectors', 'Connectors')}
           >
             <Layers size={12} />
             {props.connectors.connectors.some((c) => c.lastRunStatus === 'running') && (
@@ -1100,7 +1102,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {usePlatform && (
           <ToolbarIconButton
             onClick={props.onShowWebhookRelays}
-            title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}
+            title={t('ideas.table.webhookRelaysZapierMake', 'Webhook Relays (Zapier/Make)')}
           >
             <Webhook size={12} />
           </ToolbarIconButton>
@@ -1115,20 +1117,20 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {!locked && (
           <ToolbarIconButton
             onClick={() => csvInputRef.current?.click()}
-            title={isPl ? 'Importuj CSV' : 'Import CSV'}
+            title={t('ideas.table.importCsv', 'Import CSV')}
           >
             <Upload size={12} />
           </ToolbarIconButton>
         )}
         <ToolbarIconButton
           onClick={props.onExportCSV}
-          title={isPl ? 'Eksportuj CSV' : 'Export CSV'}
+          title={t('ideas.table.exportCsv', 'Export CSV')}
         >
           <Download size={12} />
         </ToolbarIconButton>
         <ToolbarIconButton
           onClick={props.onCopyToClipboard}
-          title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
+          title={t('ideas.table.copyToClipboard', 'Copy to clipboard')}
         >
           <ClipboardCopy size={12} />
         </ToolbarIconButton>
@@ -1139,7 +1141,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <button
           onClick={() => setShowColumnConfig(!showColumnConfig)}
           className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-          title={isPl ? 'Kolumny' : 'Columns'}
+          title={t('ideas.table.columns', 'Columns')}
         >
           <Columns3 size={12} />
         </button>
@@ -1168,7 +1170,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 }}
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-c-text hover:bg-c-surface transition-colors"
               >
-                <Plus size={12} /> {isPl ? 'Nowa kolumna' : 'New column'}
+                <Plus size={12} /> {t('ideas.table.newColumn', 'New column')}
               </button>
               {/* Field Manager button — wires the orphaned FieldManager component */}
               {usePlatform && (
@@ -1179,7 +1181,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   }}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
                 >
-                  <Columns3 size={12} /> {isPl ? 'Zarządzaj polami' : 'Manage Fields'}
+                  <Columns3 size={12} /> {t('ideas.table.toolbar.manageFields', 'Manage Fields')}
                 </button>
               )}
             </div>
@@ -1213,7 +1215,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {selectedRowIds.size > 0 && (
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-bold text-c-text bg-c-surface px-2 py-0.5 rounded-lg">
-            {selectedRowIds.size} {isPl ? 'zaznaczonych' : 'selected'}
+            {selectedRowIds.size} {t('ideas.table.selected', 'selected')}
           </span>
           {!locked && (
             <>
@@ -1222,35 +1224,30 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   onClick={() => setShowBulkConvertMenu((p) => !p)}
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
                 >
-                  <ArrowRight size={11} /> {isPl ? 'Konwertuj' : 'Convert'} <ChevronDown size={9} />
+                  <ArrowRight size={11} /> {t('ideas.table.convert', 'Convert')}{' '}
+                  <ChevronDown size={9} />
                 </button>
                 {showBulkConvertMenu && (
                   <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1">
-                    {(['initiative', 'task', 'decision'] as const).map((t) => (
+                    {(['initiative', 'task', 'decision'] as const).map((convertType) => (
                       <button
-                        key={t}
-                        onClick={() => props.onBulkConvert(t)}
+                        key={convertType}
+                        onClick={() => props.onBulkConvert(convertType)}
                         className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-c-text hover:bg-c-surface-raised transition-colors capitalize"
                       >
                         →{' '}
-                        {t === 'initiative'
-                          ? isPl
-                            ? 'Inicjatywa'
-                            : 'Initiative'
-                          : t === 'task'
-                            ? isPl
-                              ? 'Zadanie'
-                              : 'Task'
-                            : isPl
-                              ? 'Decyzja'
-                              : 'Decision'}
+                        {convertType === 'initiative'
+                          ? t('ideas.table.initiative', 'Initiative')
+                          : convertType === 'task'
+                            ? t('ideas.table.task', 'Task')
+                            : t('ideas.table.decision', 'Decision')}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
               <Button variant="danger" size="sm" onClick={handleBulkDelete} icon={<Trash2 />}>
-                {isPl ? 'Usuń' : 'Delete'}
+                {t('ideas.table.delete', 'Delete')}
               </Button>
             </>
           )}
@@ -1264,14 +1261,14 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             onClick={handleAddRow}
             data-testid="table-add-row"
             className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-            title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
+            title={t('ideas.table.addBlankRow', 'Add blank row')}
           >
-            <Plus size={12} /> {isPl ? 'Wiersz' : 'Row'}
+            <Plus size={12} /> {t('ideas.table.row', 'Row')}
           </button>
           <button
             onClick={props.onAddRowWithTemplate}
             className="px-1 py-1.5 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors border-l border-c-border-subtle"
-            title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
+            title={t('ideas.table.addFromTemplate', 'Add from template')}
           >
             <ChevronDown size={10} />
           </button>
@@ -1288,7 +1285,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         loading={saving}
         icon={<Save />}
       >
-        {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
+        {saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
       </Button>
 
       <Sheet
@@ -1300,10 +1297,12 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       >
         <SheetContent side="right" className="flex w-full max-w-md flex-col p-0 sm:max-w-lg">
           <SheetHeader className="relative border-b border-c-border-subtle pr-12">
-            <SheetTitle>{isPl ? 'Asystent schematu tabeli' : 'Table schema assistant'}</SheetTitle>
+            <SheetTitle>
+              {t('ideas.table.toolbar.tableSchemaAssistant', 'Table schema assistant')}
+            </SheetTitle>
             <SheetDescription>
               {[base?.name, table?.name].filter(Boolean).join(' · ') ||
-                (isPl ? 'Zaproponuj zmiany struktury przez AI.' : 'Draft schema changes with AI.')}
+                t('ideas.table.toolbar.draftSchemaChangesWithAi', 'Draft schema changes with AI.')}
             </SheetDescription>
             <div className="absolute right-4 top-4">
               <SheetClose className="relative text-c-text-muted hover:text-c-text" />
@@ -1338,9 +1337,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 onAddRows={(rows) => {
                   if (!tableId || !rows.length) {
                     toast(
-                      isPl
-                        ? 'Dodawanie wierszy jest dostępne po załadowaniu tabeli platformy.'
-                        : 'Row insert is available once the platform table is loaded.'
+                      t(
+                        'ideas.table.toolbar.rowInsertRequiresPlatformTable',
+                        'Row insert is available once the platform table is loaded.'
+                      )
                     );
                     return;
                   }
@@ -1354,11 +1354,15 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                       }
                       await refresh();
                       toast.success(
-                        isPl ? `Dodano ${rows.length} wierszy` : `Added ${rows.length} rows`
+                        t('ideas.table.toolbar.addedRows', 'Added {{count}} rows', {
+                          count: rows.length,
+                        })
                       );
                     } catch (e: unknown) {
                       const msg = e instanceof Error ? e.message : String(e);
-                      toast.error(msg || (isPl ? 'Błąd zapisu wierszy' : 'Could not add rows'));
+                      toast.error(
+                        msg || t('ideas.table.toolbar.couldNotAddRows', 'Could not add rows')
+                      );
                     }
                   })();
                 }}

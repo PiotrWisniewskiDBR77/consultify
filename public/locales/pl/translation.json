@@ -22937,6 +22937,19 @@
         "aiNarrative": "Narracja AI",
         "generating": "Generuję...",
         "generateAiSummary": "Generuj podsumowanie AI"
+      },
+      "toolbar": {
+        "aiViewName": "Widok AI",
+        "proposalApplied": "Zastosowano propozycję",
+        "applyFailed": "Nie udało się zastosować",
+        "aiSchemaAssistant": "Asystent schematu AI",
+        "more": "Więcej",
+        "manageFields": "Zarządzaj polami",
+        "tableSchemaAssistant": "Asystent schematu tabeli",
+        "draftSchemaChangesWithAi": "Zaproponuj zmiany struktury przez AI.",
+        "couldNotAddRows": "Błąd zapisu wierszy",
+        "rowInsertRequiresPlatformTable": "Dodawanie wierszy jest dostępne po załadowaniu tabeli platformy.",
+        "addedRows": "Dodano {{count}} wierszy"
       }
     },
     "mindmap": {
