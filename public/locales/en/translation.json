@@ -4625,6 +4625,12 @@
         "styleChanged": "Style: {{style}}",
         "shapeChanged": "Shape: {{shape}}"
       }
+    },
+    "notebookContent": {
+      "toast": {
+        "pinFailed": "Failed to pin",
+        "statusUpdateFailed": "Failed to update status"
+      }
     }
   },
   "step1": {
@@ -22050,7 +22056,12 @@
         "and": "AND",
         "or": "OR",
         "addFilter": "Add filter"
-      }
+      },
+      "kanban": "Kanban",
+      "timelineGantt": "Timeline / Gantt",
+      "matrix": "Matrix",
+      "undoShortcut": "Undo (Ctrl+Z)",
+      "redoShortcut": "Redo (Ctrl+Y)"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",

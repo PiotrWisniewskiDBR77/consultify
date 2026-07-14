@@ -1236,7 +1236,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       const result = await Api.pinNotebookPage(pageId);
       setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, pinned: result.pinned } : p)));
     } catch {
-      toast.error('Failed to pin');
+      toast.error(t('myWork.notebookContent.toast.pinFailed', 'Failed to pin'));
     }
   }, []);
 
@@ -1245,7 +1245,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       await Api.setNotebookPageStatus(pageId, status);
       setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, status } : p)));
     } catch {
-      toast.error('Failed to update status');
+      toast.error(t('myWork.notebookContent.toast.statusUpdateFailed', 'Failed to update status'));
     }
   }, []);
 

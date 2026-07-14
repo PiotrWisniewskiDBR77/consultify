@@ -3860,6 +3860,12 @@
         "styleChanged": "Styl: {{style}}",
         "shapeChanged": "Kształt: {{shape}}"
       }
+    },
+    "notebookContent": {
+      "toast": {
+        "pinFailed": "Nie udało się przypiąć",
+        "statusUpdateFailed": "Nie udało się zaktualizować statusu"
+      }
     }
   },
   "step1": {
@@ -23126,7 +23132,12 @@
         "and": "I",
         "or": "LUB",
         "addFilter": "Dodaj filtr"
-      }
+      },
+      "kanban": "Kanban",
+      "timelineGantt": "Oś czasu / Gantt",
+      "matrix": "Macierz",
+      "undoShortcut": "Cofnij (Ctrl+Z)",
+      "redoShortcut": "Ponów (Ctrl+Y)"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",
