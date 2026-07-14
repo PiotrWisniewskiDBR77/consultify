@@ -481,9 +481,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       setIdeas((prev) => prev.map((i) => (i.id === idea.id ? ({ ...i, folderId } as MyIdea) : i)));
       try {
         await Api.setIdeaFolder(idea.id, folderId);
-        toast.success(isPolish ? 'Przeniesiono' : 'Moved', { duration: 800 });
+        toast.success(t('myWork.ideasList.toastSuccess', 'Moved'), { duration: 800 });
       } catch {
-        toast.error(isPolish ? 'Nie udało się przenieść' : 'Failed to move idea');
+        toast.error(t('myWork.ideasList.toastError', 'Failed to move idea'));
         fetchIdeas();
       }
     },
@@ -491,13 +491,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   );
 
   const handleCreateFolder = useCallback(async () => {
-    const name = window.prompt(isPolish ? 'Nazwa folderu' : 'Folder name')?.trim();
+    const name = window.prompt(t('myWork.ideasList.windowPrompt', 'Folder name'))?.trim();
     if (!name) return;
     try {
       const created = await Api.createMyIdeaFolder({ name });
       setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
     } catch {
-      toast.error(isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder');
+      toast.error(t('myWork.ideasList.toastError2', 'Failed to create folder'));
     }
   }, [isPolish]);
 
@@ -509,7 +509,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         if (activeFolderId === folderId) setActiveFolderId(null);
         fetchIdeas(); // ideas were unfiled server-side
       } catch {
-        toast.error(isPolish ? 'Nie udało się usunąć folderu' : 'Failed to delete folder');
+        toast.error(t('myWork.ideasList.toastError3', 'Failed to delete folder'));
       }
     },
     [activeFolderId, fetchIdeas, isPolish]
@@ -533,7 +533,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       showStarredOnly,
       recents: recentIdeas.map((idea) => ({
         id: idea.id,
-        title: idea.title || (isPolish ? 'Bez tytułu' : 'Untitled'),
+        title: idea.title || (t('myWork.ideasList.untitled', 'Untitled')),
       })),
       selectFolder: (folderId) => setActiveFolderId(folderId),
       createFolder: handleCreateFolder,
@@ -840,7 +840,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       clearSelection();
       await fetchIdeas();
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+      toast.error(err?.message || (t('myWork.ideasList.failed', 'Failed')));
     } finally {
       setBulkBusy(false);
     }
@@ -851,12 +851,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     if (ids.length === 0) return;
 
     const ok = await showConfirm({
-      title: isPolish ? 'Usunąć zaznaczone pomysły?' : 'Delete selected ideas?',
+      title: t('myWork.ideasList.title', 'Delete selected ideas?'),
       description: isPolish
         ? `${ids.length} pomysłów zostanie trwale usuniętych.`
         : `${ids.length} idea(s) will be permanently deleted.`,
-      confirmLabel: isPolish ? 'Usuń' : 'Delete',
-      cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+      confirmLabel: t('myWork.ideasList.confirmLabel', 'Delete'),
+      cancelLabel: t('myWork.ideasList.cancelLabel', 'Cancel'),
       variant: 'danger',
     });
     if (!ok) return;
@@ -866,11 +866,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       await Promise.all(ids.map((id) => Api.deleteMyIdea(id)));
       trackFunnelEvent('idea_triaged', { action: 'delete', count: ids.length });
       trackFunnelEvent('idea_bulk_deleted', { count: ids.length });
-      toast.success(isPolish ? 'Usunięto' : 'Deleted');
+      toast.success(t('myWork.ideasList.toastSuccess2', 'Deleted'));
       clearSelection();
       await fetchIdeas();
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+      toast.error(err?.message || (t('myWork.ideasList.failed2', 'Failed')));
     } finally {
       setBulkBusy(false);
     }
@@ -879,22 +879,22 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const handleDeleteSingleIdea = useCallback(
     async (idea: MyIdea) => {
       const ok = await showConfirm({
-        title: isPolish ? 'Usunąć pomysł?' : 'Delete idea?',
+        title: t('myWork.ideasList.title2', 'Delete idea?'),
         description: isPolish
           ? `„${idea.title || 'Bez tytułu'}" zostanie trwale usunięty.`
           : `"${idea.title || 'Untitled'}" will be permanently deleted.`,
-        confirmLabel: isPolish ? 'Usuń' : 'Delete',
-        cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+        confirmLabel: t('myWork.ideasList.confirmLabel2', 'Delete'),
+        cancelLabel: t('myWork.ideasList.cancelLabel2', 'Cancel'),
         variant: 'danger',
       });
       if (!ok) return;
       try {
         await Api.deleteMyIdea(idea.id);
         trackFunnelEvent('idea_triaged', { action: 'delete', count: 1 });
-        toast.success(isPolish ? 'Usunięto' : 'Deleted');
+        toast.success(t('myWork.ideasList.toastSuccess3', 'Deleted'));
         await fetchIdeas();
       } catch (err: any) {
-        toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
+        toast.error(err?.message || (t('myWork.ideasList.failedToDelete', 'Failed to delete')));
       }
     },
     [showConfirm, fetchIdeas, isPolish]
@@ -1012,13 +1012,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             sessionId: result.sourceSessionId,
           });
         }
-        toast.success(isPolish ? 'Gotowe' : 'Done');
+        toast.success(t('myWork.ideasList.toastSuccess4', 'Done'));
         if (!ideaOverride) {
           setConvertIdea(null);
         }
         await fetchIdeas();
       } catch (err: any) {
-        toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+        toast.error(err?.message || (t('myWork.ideasList.failed3', 'Failed')));
       } finally {
         setConverting(false);
       }
@@ -1040,7 +1040,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         });
       } catch (err: any) {
         toast.error(
-          err?.message || (isPolish ? 'Nie udało się otworzyć czata' : 'Failed to open chat')
+          err?.message || (t('myWork.ideasList.failedToOpenChat', 'Failed to open chat'))
         );
       }
     },
@@ -1058,15 +1058,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             ...idea,
             source: 'my-work-ideas-row-menu',
             requestedAnalysis: 'ai_insights',
-            promptHint: isPolish
-              ? 'Przygotuj krótkie AI Insights dla tego pomysłu: potencjał, ryzyka, następne kroki i możliwe konwersje.'
-              : 'Prepare concise AI insights for this idea: potential, risks, next steps and possible conversions.',
+            promptHint: t('myWork.ideasList.promptHint', 'Prepare concise AI insights for this idea: potential, risks, next steps and possible conversions.'),
           },
         });
       } catch (err: any) {
         toast.error(
           err?.message ||
-            (isPolish ? 'Nie udało się otworzyć AI Insights' : 'Failed to open AI Insights')
+            (t('myWork.ideasList.failedToOpenAI', 'Failed to open AI Insights'))
         );
       }
     },
@@ -1185,7 +1183,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
           ) : null}
         </PreviewMetaCard>
-        <PreviewDetailsSection text={idea.body || ''} label={isPolish ? 'Szczegóły' : 'Details'} />
+        <PreviewDetailsSection text={idea.body || ''} label={t('myWork.ideasList.label', 'Details')} />
       </div>
     );
   };
@@ -1197,7 +1195,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     const relationItems: RelationItem[] = [];
     if ((idea as any).sourceType) {
       relationItems.push({
-        label: `${isPolish ? 'Źródło' : 'Source'}: ${(idea as any).sourceType}`,
+        label: `${t('myWork.ideasList.source', 'Source')}: ${(idea as any).sourceType}`,
         tone: 'text-c-text-secondary',
       });
     }
@@ -1206,19 +1204,19 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         columns: 3,
         buttons: [
           {
-            label: isPolish ? 'Konwertuj' : 'Convert',
+            label: t('myWork.ideasList.label2', 'Convert'),
             icon: Sparkles,
             onClick: () => setConvertIdea(idea),
             colorScheme: 'purple',
           },
           {
-            label: isPolish ? 'Otwórz Flow' : 'Open Flow',
+            label: t('myWork.ideasList.label3', 'Open Flow'),
             icon: Workflow,
             onClick: () => openIdeaInProcessFlow(idea),
             colorScheme: 'emerald',
           },
           {
-            label: isPolish ? 'Usuń' : 'Delete',
+            label: t('myWork.ideasList.label4', 'Delete'),
             icon: Trash2,
             onClick: () => handleDeleteSingleIdea(idea),
             colorScheme: 'red',
@@ -1232,7 +1230,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         <div className="border-t border-c-border-subtle my-3" />
         <PreviewRelations
           items={relationItems}
-          emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
+          emptyLabel={t('myWork.ideasList.emptyLabel', 'No linked documents')}
         />
         <div className="border-t border-c-border-subtle my-3" />
         <PreviewActionBar rows={actionRows} />
@@ -1257,7 +1255,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       actions: [
         {
           id: 'open',
-          label: isPolish ? 'Otwórz' : 'Open',
+          label: t('myWork.ideasList.label5', 'Open'),
           icon: ExternalLink,
           onClick: () => openIdea(idea.id, idea),
         },
@@ -1290,23 +1288,23 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     {
       id: 'convert',
       kind: 'convert',
-      label: isPolish ? 'Konwertuj do' : 'Convert to',
+      label: t('myWork.ideasList.label6', 'Convert to'),
       actions: [
         {
           id: 'convert_initiative',
-          label: isPolish ? 'Inicjatywa' : 'Initiative',
+          label: t('myWork.ideasList.label7', 'Initiative'),
           icon: Rocket,
           onClick: () => handleConvert('initiative', idea),
         },
         {
           id: 'convert_tasks',
-          label: isPolish ? 'Zadania' : 'Tasks',
+          label: t('myWork.ideasList.label8', 'Tasks'),
           icon: CheckCircle2,
           onClick: () => handleConvert('task_set', idea),
         },
         {
           id: 'convert_decision',
-          label: isPolish ? 'Decyzja' : 'Decision',
+          label: t('myWork.ideasList.label9', 'Decision'),
           icon: Star,
           onClick: () => handleConvert('decision', idea),
         },
@@ -1323,11 +1321,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           {
             id: 'folder',
             kind: 'manage' as const,
-            label: isPolish ? 'Folder' : 'Folder',
+            label: t('myWork.ideasList.label10', 'Folder'),
             actions: [
               {
                 id: 'folder-none',
-                label: isPolish ? 'Bez folderu' : 'No folder',
+                label: t('myWork.ideasList.label11', 'No folder'),
                 icon: FolderMinus,
                 onClick: () => handleMoveToFolder(idea, null),
                 disabled: !(idea as any).folderId,
@@ -1350,22 +1348,22 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       actions: [
         {
           id: 'open-preview',
-          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          label: t('myWork.ideasList.label12', 'Open preview'),
           icon: ChevronRight,
           onClick: () => setPreviewIdeaId(idea.id),
         },
         {
           id: 'edit',
-          label: isPolish ? 'Edytuj' : 'Edit',
+          label: t('myWork.ideasList.label13', 'Edit'),
           icon: Edit2,
           onClick: () => openIdea(idea.id, idea),
         },
         {
           id: 'archive',
-          label: isPolish ? 'Archiwizuj' : 'Archive',
+          label: t('myWork.ideasList.label14', 'Archive'),
           icon: Archive,
           disabled: true,
-          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          description: t('myWork.ideasList.description', 'Coming soon (backend)'),
           onClick: () => {},
         },
       ],
@@ -1376,26 +1374,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       actions: [
         {
           id: 'output_presentation',
-          label: isPolish ? 'Prezentacja' : 'Presentation',
+          label: t('myWork.ideasList.label15', 'Presentation'),
           icon: Presentation,
           disabled: true,
-          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          rightLabel: t('myWork.ideasList.rightLabel', 'soon'),
           onClick: () => undefined,
         },
         {
           id: 'output_report',
-          label: isPolish ? 'Raport' : 'Report',
+          label: t('myWork.ideasList.label16', 'Report'),
           icon: GitBranch,
           disabled: true,
-          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          rightLabel: t('myWork.ideasList.rightLabel2', 'soon'),
           onClick: () => undefined,
         },
         {
           id: 'output_table',
-          label: isPolish ? 'Tabela' : 'Table',
+          label: t('myWork.ideasList.label17', 'Table'),
           icon: Table2,
           disabled: true,
-          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          rightLabel: t('myWork.ideasList.rightLabel3', 'soon'),
           onClick: () => undefined,
         },
       ],
@@ -1406,7 +1404,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       actions: [
         {
           id: 'delete',
-          label: isPolish ? 'Usuń' : 'Delete',
+          label: t('myWork.ideasList.label18', 'Delete'),
           icon: Trash2,
           variant: 'danger',
           onClick: () => handleDeleteSingleIdea(idea),
@@ -1433,7 +1431,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
     const sorted = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
     if (untagged.length > 0) {
-      sorted.push([isPolish ? 'Bez tagów' : 'Untagged', untagged]);
+      sorted.push([t('myWork.ideasList.untagged', 'Untagged'), untagged]);
     }
     return sorted;
   }, [sortedIdeas, isPolish]);
@@ -1473,7 +1471,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-primary-500" />
             <div className="text-sm font-semibold text-c-text">
-              {isPolish ? 'Konwertuj pomysł' : 'Convert idea'}
+              {t('myWork.ideasList.convertIdea', 'Convert idea')}
             </div>
           </div>
           <button
@@ -1492,29 +1490,29 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 target: 'initiative' as const,
                 icon: Rocket,
                 color: 'text-amber-500',
-                label: isPolish ? 'Inicjatywa' : 'Initiative',
-                desc: isPolish ? 'Utwórz inicjatywę w PMO' : 'Create a PMO initiative',
+                label: t('myWork.ideasList.label19', 'Initiative'),
+                desc: t('myWork.ideasList.desc', 'Create a PMO initiative'),
               },
               {
                 target: 'task_set' as const,
                 icon: CheckCircle2,
                 color: 'text-emerald-500',
-                label: isPolish ? 'Taski' : 'Tasks',
-                desc: isPolish ? 'Z next steps (jeśli są)' : 'From next steps (if available)',
+                label: t('myWork.ideasList.label20', 'Tasks'),
+                desc: t('myWork.ideasList.desc2', 'From next steps (if available)'),
               },
               {
                 target: 'decision' as const,
                 icon: Star,
                 color: 'text-blue-500',
-                label: isPolish ? 'Decyzja' : 'Decision',
-                desc: isPolish ? 'Artefakt decyzyjny' : 'Decision artifact',
+                label: t('myWork.ideasList.label21', 'Decision'),
+                desc: t('myWork.ideasList.desc3', 'Decision artifact'),
               },
               {
                 target: 'team_chat' as const,
                 icon: MessageSquarePlus,
                 color: 'text-blue-500',
-                label: isPolish ? 'Team Chat' : 'Team Chat',
-                desc: isPolish ? 'Wątek do omówienia' : 'Discussion thread',
+                label: t('myWork.ideasList.label22', 'Team Chat'),
+                desc: t('myWork.ideasList.desc4', 'Discussion thread'),
               },
             ].map(({ target, icon: Icon, color, label, desc }) => (
               <button
@@ -1538,12 +1536,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             disabled={converting}
             className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors disabled:opacity-50"
           >
-            {isPolish ? 'Zamknij' : 'Close'}
+            {t('myWork.ideasList.close', 'Close')}
           </button>
           {converting && (
             <div className="flex items-center gap-2 text-xs text-c-text-muted">
               <Loader2 size={14} className="animate-spin" />
-              {isPolish ? 'Tworzę…' : 'Creating…'}
+              {t('myWork.ideasList.creating', 'Creating…')}
             </div>
           )}
         </div>
@@ -1566,7 +1564,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <div className="flex items-center gap-2">
             <Tag size={16} className="text-amber-500" />
             <div className="text-sm font-semibold text-c-text">
-              {isPolish ? 'Dodaj tag' : 'Add tag'}
+              {t('myWork.ideasList.addTag', 'Add tag')}
             </div>
           </div>
           <button
@@ -1586,7 +1584,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <input
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
-            placeholder={isPolish ? 'np. backlog' : 'e.g. backlog'}
+            placeholder={t('myWork.ideasList.placeholder', 'e.g. backlog')}
             className="w-full h-10 px-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             autoFocus
           />
@@ -1597,7 +1595,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             disabled={bulkBusy}
             className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors disabled:opacity-50"
           >
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('myWork.ideasList.cancel', 'Cancel')}
           </button>
           <button
             onClick={bulkAddTag}
@@ -1605,7 +1603,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {bulkBusy && <Loader2 size={14} className="animate-spin" />}
-            {isPolish ? 'Dodaj' : 'Add'}
+            {t('myWork.ideasList.add', 'Add')}
           </button>
         </div>
       </div>
@@ -1632,7 +1630,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             <Folder size={44} className="text-c-text-muted" />
           </div>
           <h3 className="text-lg font-medium text-c-text-secondary mb-2">
-            {isPolish ? 'Ten folder jest pusty' : 'This folder is empty'}
+            {t('myWork.ideasList.thisFolderIsEmpty', 'This folder is empty')}
           </h3>
           <p className="text-sm text-c-text-muted mb-4 max-w-md">
             {isPolish
@@ -1646,7 +1644,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
           >
             <ChevronLeft size={15} />
-            {isPolish ? 'Wróć do wszystkich' : 'Back to all ideas'}
+            {t('myWork.ideasList.backToAllIdeas', 'Back to all ideas')}
           </button>
         </div>
       );
@@ -1659,18 +1657,16 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <Sparkles size={16} className="absolute -top-1 -right-1 text-amber-500 animate-pulse" />
         </div>
         <h3 className="text-lg font-medium text-c-text-secondary mb-2">
-          {isPolish ? 'Twój ogród pomysłów czeka' : 'Your Idea Garden awaits'}
+          {t('myWork.ideasList.yourIdeaGardenAwaits', 'Your Idea Garden awaits')}
         </h3>
         <p className="text-sm text-c-text-muted mb-4 max-w-md">
-          {isPolish
-            ? 'Zasiej pierwszy pomysł — AI pomoże go rozwinąć, zbada kontekst i zaproponuje kreatywne warianty.'
-            : 'Plant your first idea — AI will help it grow, research context, and propose creative variants.'}
+          {t('myWork.ideasList.plantYourFirstIdea', 'Plant your first idea — AI will help it grow, research context, and propose creative variants.')}
         </p>
         <button
           onClick={onCreateIdea}
           className="inline-flex h-9 items-center justify-center rounded-full border border-c-text bg-c-text px-4 text-sm font-semibold text-c-bg transition-colors duration-150 hover:bg-c-text-secondary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-c-text dark:bg-c-text dark:hover:bg-c-text-secondary"
         >
-          {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
+          {t('myWork.ideasList.plantAnIdea', 'Plant an idea')}
         </button>
       </div>
     );
@@ -1860,7 +1856,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         className="font-semibold text-sm text-c-text line-clamp-2 leading-snug"
                         title={idea.title || ''}
                       >
-                        {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                        {idea.title || (t('myWork.ideasList.untitled2', 'Untitled'))}
                       </h4>
 
                       {/* Zone 3 — Description (when available) */}
@@ -1925,7 +1921,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           </div>
           <div>
             <h2 className="text-sm font-semibold text-c-text">
-              {isPolish ? 'Pomysły wg tagów' : 'Ideas by Tags'}
+              {t('myWork.ideasList.ideasByTags', 'Ideas by Tags')}
             </h2>
             <p className="text-[11px] text-c-text-muted">
               {isPolish
@@ -2014,7 +2010,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                               openIdeaInProcessFlow(idea);
                             }}
                             className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/15 transition-colors"
-                            title={isPolish ? 'Otwórz w Process Flow' : 'Open in Process Flow'}
+                            title={t('myWork.ideasList.title3', 'Open in Process Flow')}
                           >
                             <Workflow size={10} />
                             Flow
