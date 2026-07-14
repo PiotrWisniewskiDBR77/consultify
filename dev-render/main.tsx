@@ -39,6 +39,7 @@ import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
 import ResultsThreePairsScreen from './screens/results-three-pairs';
+import RoseDangerTokenParityScreen from './screens/rose-danger-token-parity';
 import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 import StandardKanbanCardScreen from './screens/standard-kanban-card';
 import TemplateBuilderDeckScreen from './screens/template-builder-deck';
@@ -165,6 +166,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'settings-crimson-neutralized': {
     label: 'Fala 1 Settings — crimson CTA/toggle/selected → neutralne (PRZED/PO, kanon #1)',
     render: () => <SettingsCrimsonNeutralizedScreen />,
+  },
+  'rose-danger-token-parity': {
+    label: 'fix/rose-regression — dowód parytetu rose-* vs danger-* (Execution+Settings sweep)',
+    render: () => <RoseDangerTokenParityScreen />,
   },
   'wave4-choices-crimson': {
     label:
