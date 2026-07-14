@@ -9,8 +9,9 @@ interface CheckboxProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 /**
- * Canonical checkbox — crimson (c-accent) is the correct brand accent for the
- * selected state; focus ring stays blue (c-focus, never crimson).
+ * Canonical checkbox — neutral/blue (c-focus) fill for the selected state
+ * (active states are neutral per TRIADA kanon, never crimson); focus ring
+ * stays blue (c-focus, never crimson).
  */
 const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
   ({ className, checked = false, onCheckedChange, ...props }, ref) => {
@@ -24,7 +25,7 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
           'peer h-4 w-4 shrink-0 rounded-sm border border-c-border-subtle transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-c-surface',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          checked ? 'border-c-accent bg-c-accent text-white' : 'bg-c-surface-raised',
+          checked ? 'border-c-focus-solid bg-c-focus-solid text-white' : 'bg-c-surface-raised',
           className
         )}
         onClick={() => onCheckedChange?.(!checked)}

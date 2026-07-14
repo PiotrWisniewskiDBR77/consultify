@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fala 6 — crimson w prymitywach + landing (BEFORE/AFTER)</title>
+<style>
+  /* === PRAWDZIWE wartości tokenów z src/index.css === */
+  .light {
+    --c-surface:#ffffff; --c-surface-raised:#f8fafc;
+    --c-border-subtle:#e6e9ed; --c-border:#cbd2da; --c-border-strong:#9aa6b5;
+    --c-text:#0f172a; --c-text-secondary:#475569; --c-text-muted:#64748b;
+    --c-accent:#85182f; --c-focus:rgba(37,99,235,0.4);
+  }
+  .dark {
+    --c-surface:#0f172a; --c-surface-raised:#15213b;
+    --c-border-subtle:rgba(148,163,184,0.12); --c-border:rgba(148,163,184,0.22); --c-border-strong:rgba(148,163,184,0.36);
+    --c-text:#f4f7fb; --c-text-secondary:#b8c4d6; --c-text-muted:#8a99b0;
+    --c-accent:#c8324a; --c-focus:rgba(91,141,239,0.45);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#e2e5ea; color:#0f172a; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:#556; font-size:13px; margin:0 0 20px; }
+  .wrap { padding:24px; max-width:1180px; margin:0 auto; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .panel { border-radius:14px; padding:20px; background:var(--c-surface); color:var(--c-text); border:1px solid var(--c-border-subtle); }
+  .panel.raised { background:var(--c-surface-raised); }
+  .tag { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; padding:3px 8px; border-radius:999px; margin-bottom:14px; }
+  .tag.before { background:#fde8ec; color:#85182f; }
+  .tag.after  { background:#e3ecff; color:#1e40af; }
+  .row { display:flex; align-items:center; gap:12px; margin:12px 0; }
+  .lbl { font-size:13px; color:var(--c-text-secondary); min-width:120px; }
+  section { margin:30px 0; }
+  .secTitle { font-size:14px; font-weight:800; margin:0 0 2px; text-transform:uppercase; letter-spacing:.05em; color:#334; }
+  .secNote { font-size:12.5px; color:#667; margin:0 0 14px; }
+
+  /* ---- Switch primitive (odwzorowanie 1:1) ---- */
+  .sw { position:relative; height:20px; width:36px; border-radius:999px; flex:none; transition:.15s; }
+  .sw .knob { position:absolute; top:2px; height:16px; width:16px; border-radius:999px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:.15s; }
+  .sw.on  .knob { left:18px; }
+  .sw.off .knob { left:2px; }
+  .sw.on.crimson  { background:var(--c-accent); }
+  .sw.on.focus    { background:var(--c-focus); }
+  .sw.off         { background:var(--c-border); }
+
+  /* ---- Checkbox primitive ---- */
+  .cb { height:18px; width:18px; border-radius:4px; border:1px solid var(--c-border-subtle); display:flex; align-items:center; justify-content:center; flex:none; }
+  .cb.on.crimson { background:var(--c-accent); border-color:var(--c-accent); color:#fff; }
+  .cb.on.focus   { background:var(--c-focus); border-color:var(--c-focus); color:#fff; }
+  .cb.off        { background:var(--c-surface-raised); }
+  .cb svg { width:14px; height:14px; }
+
+  /* ---- Landing CTA ---- */
+  .cta { display:inline-flex; align-items:center; gap:8px; font-weight:700; font-size:14px; padding:12px 22px; border-radius:12px; border:none; cursor:default; }
+  .cta.pill { border-radius:999px; }
+  .cta.crimson { background:var(--c-accent); color:#fff; box-shadow:0 8px 20px -8px var(--c-accent); }
+  .cta.ink     { background:var(--c-text); color:var(--c-surface); box-shadow:0 8px 20px -10px rgba(15,23,42,.5); }
+
+  .consumers { columns:2; font-size:12.5px; color:#445; line-height:1.9; }
+  .consumers li { break-inside:avoid; }
+  ul { margin:6px 0 0; padding-left:18px; }
+  .note { background:#fff8e6; border:1px solid #f5d98b; border-radius:10px; padding:12px 14px; font-size:12.5px; color:#6b5514; margin-top:14px; }
+  .mode { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#889; margin:0 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fala 6 — crimson w prymitywach współdzielonych + landing</h1>
+  <p class="sub">BEFORE = obecny crimson (bg-c-accent) · AFTER = neutralny (toggle/checkbox → bg-c-focus, CTA landing → bg-c-text ink). Wartości tokenów wprost z src/index.css. Weryfikacja wzrokiem, nie „testy przeszły".</p>
+
+  <!-- ============ CZĘŚĆ A ============ -->
+  <section>
+    <p class="secTitle">Część A — prymitywy formularzowe (NAPRAWIONE na gałęzi wave6)</p>
+    <p class="secNote">Archetyp TRIADA: aktywny stan = neutralny, focus = niebieski c-focus. Wzorzec 1:1 z templateBuilderFields.tsx.</p>
+
+    <div class="grid2">
+      <!-- LIGHT -->
+      <div class="panel light">
+        <p class="mode">Light</p>
+        <div class="row"><span class="lbl">Switch ON <span class="tag before" style="margin:0">before</span></span>
+          <div class="sw on crimson"><span class="knob"></span></div></div>
+        <div class="row"><span class="lbl">Switch ON <span class="tag after" style="margin:0">after</span></span>
+          <div class="sw on focus"><span class="knob"></span></div></div>
+        <div class="row"><span class="lbl">Switch OFF (bez zmian)</span>
+          <div class="sw off"><span class="knob"></span></div></div>
+        <div class="row"><span class="lbl">Checkbox ✓ <span class="tag before" style="margin:0">before</span></span>
+          <div class="cb on crimson"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>
+          <span class="lbl">Checkbox ✓ <span class="tag after" style="margin:0">after</span></span>
+          <div class="cb on focus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>
+          <div class="cb off"></div>
+        </div>
+      </div>
+      <!-- DARK -->
+      <div class="panel dark">
+        <p class="mode" style="color:#8a99b0">Dark</p>
+        <div class="row"><span class="lbl">Switch ON <span class="tag before" style="margin:0">before</span></span>
+          <div class="sw on crimson"><span class="knob"></span></div></div>
+        <div class="row"><span class="lbl">Switch ON <span class="tag after" style="margin:0">after</span></span>
+          <div class="sw on focus"><span class="knob"></span></div></div>
+        <div class="row"><span class="lbl">Switch OFF (bez zmian)</span>
+          <div class="sw off"><span class="knob"></span></div></div>
+        <div class="row"><span class="lbl">Checkbox ✓ <span class="tag before" style="margin:0">before</span></span>
+          <div class="cb on crimson"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>
+          <span class="lbl">Checkbox ✓ <span class="tag after" style="margin:0">after</span></span>
+          <div class="cb on focus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>
+          <div class="cb off"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Niuans do oceny:</b> c-focus to półprzezroczysty niebieski (alpha 0.4). Toggle ON jest wyraźnie mniej „krzykliwy" niż crimson — zgodny z kanonem i z istniejącym wzorcem (templateBuilderFields), ale jeśli Piotr chce mocniejszego ON, to decyzja kanonu (nie tej fali).
+    </div>
+
+    <div style="margin-top:16px" class="panel light">
+      <p class="mode">Ripple — ekrany dotknięte naprawą (primitives/Switch ~10 konsumentów)</p>
+      <ul class="consumers">
+        <li>MyWork · TaskDetailView</li>
+        <li>MyWork · DecisionDetailView</li>
+        <li>MyWork · DecisionsPanel</li>
+        <li>MyWork · NotificationDetailView</li>
+        <li>Interview · InterviewHub</li>
+        <li>Interview · AssignInterviewModal</li>
+        <li>Initiatives · InitiativeDocumentView</li>
+        <li>DiscoveryTools · ToolDocumentView</li>
+        <li>Presentations · DeckBuilder</li>
+        <li>settings · AdvancedSettings</li>
+        <li>settings · DeveloperSettings (ui/switch)</li>
+        <li>settings · ExportDataSettings (ui/checkbox)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ CZĘŚĆ B ============ -->
+  <section>
+    <p class="secTitle">Część B — landing CTA (PRZYKŁAD, nie rekomendacja — gałąź wave6-landing-neutral-EXAMPLE)</p>
+    <p class="secNote">Pytanie do Piotra: landing ma własne reguły brandingu (crimson = kolor marki), czy stosujemy kanon wnętrza apki (CTA neutralne)?</p>
+
+    <div class="grid2">
+      <div class="panel light">
+        <p class="mode">Light</p>
+        <span class="tag before">before · crimson brand</span>
+        <div class="row"><button class="cta crimson">Launch Free Trial →</button></div>
+        <div class="row"><button class="cta pill crimson">Start trial →</button></div>
+        <span class="tag after">after · neutral ink</span>
+        <div class="row"><button class="cta ink">Launch Free Trial →</button></div>
+        <div class="row"><button class="cta pill ink">Start trial →</button></div>
+      </div>
+      <div class="panel dark">
+        <p class="mode" style="color:#8a99b0">Dark</p>
+        <span class="tag before">before · crimson brand</span>
+        <div class="row"><button class="cta crimson">Launch Free Trial →</button></div>
+        <div class="row"><button class="cta pill crimson">Start trial →</button></div>
+        <span class="tag after">after · neutral ink</span>
+        <div class="row"><button class="cta ink">Launch Free Trial →</button></div>
+        <div class="row"><button class="cta pill ink">Start trial →</button></div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>W przykładzie zneutralizowano TYLKO 13 przycisków CTA.</b> NIE ruszono (zostają crimson, osobna decyzja): awatary brandowe Anny, badge „MOST POPULAR", panel enterprise, header mini-assessmentu, progress bary, dekoracyjne kropki i podkreślenia. To celowo — żeby porównanie CTA↔CTA było uczciwe.
+    </div>
+  </section>
+</div>
+</body>
+</html>

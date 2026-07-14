@@ -1,8 +1,9 @@
 /**
  * Switch — canonical primitive wrapping the shadcn `switch.tsx`.
  *
- * Enforces the `--c-*` tokens (crimson "on" track, neutral "off" track,
- * crimson focus ring) and adds an optional inline label + error/hint, so
+ * Enforces the `--c-*` tokens (neutral/blue c-focus "on" track — active states
+ * are neutral per TRIADA kanon, never crimson — neutral "off" track, blue
+ * c-focus focus ring) and adds an optional inline label + error/hint, so
  * modules import from `primitives` rather than the raw shadcn component.
  */
 
@@ -32,7 +33,7 @@ export interface SwitchProps {
 }
 
 const TRACK_BASE =
-  'h-5 w-9 border-transparent data-[state=on]:bg-c-accent ' +
+  'h-5 w-9 border-transparent data-[state=on]:bg-c-focus-solid ' +
   'focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-offset-c-surface';
 
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
@@ -68,7 +69,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         aria-label={!label ? ariaLabel : undefined}
         aria-describedby={describedById}
         data-state={checked ? 'on' : 'off'}
-        className={cn(TRACK_BASE, checked ? 'bg-c-accent' : 'bg-c-border', switchClassName)}
+        className={cn(TRACK_BASE, checked ? 'bg-c-focus-solid' : 'bg-c-border', switchClassName)}
       />
     );
 
