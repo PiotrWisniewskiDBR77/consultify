@@ -63,8 +63,7 @@ export const ProvenanceCell: React.FC<ProvenanceCellProps> = ({
   onMutated,
   testId = 'provenance-cell',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const enabled = useMemo(() => isRecordProvenanceEnabled(), []);
 
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -96,12 +95,12 @@ export const ProvenanceCell: React.FC<ProvenanceCellProps> = ({
     } catch (err) {
       setError(
         (err as { message?: string })?.message ??
-          (isPl ? 'Nie udało się pobrać źródeł.' : 'Failed to load sources.')
+          t('ideas.table.failedToLoadSources', 'Failed to load sources.')
       );
     } finally {
       setLoading(false);
     }
-  }, [recordId, isPl]);
+  }, [recordId, t]);
 
   const loadAllowed = useCallback(async (): Promise<void> => {
     if (!recordId) return;
@@ -138,7 +137,7 @@ export const ProvenanceCell: React.FC<ProvenanceCellProps> = ({
     } catch (err) {
       setError(
         (err as { message?: string })?.message ??
-          (isPl ? 'Nie udało się zmienić statusu.' : 'Failed to change status.')
+          t('ideas.table.failedToChangeStatus', 'Failed to change status.')
       );
     } finally {
       setStatusBusy(false);
@@ -202,13 +201,11 @@ export const ProvenanceCell: React.FC<ProvenanceCellProps> = ({
         <FileText size={11} aria-hidden />
         <span>
           {activeCount}{' '}
-          {isPl
-            ? activeCount === 1
-              ? 'źródło'
-              : 'źródeł'
-            : activeCount === 1
-              ? 'source'
-              : 'sources'}
+          {t('ideas.table.sourcesCount', {
+            count: activeCount,
+            defaultValue_one: 'source',
+            defaultValue_other: 'sources',
+          } as any)}
         </span>
         <ChevronDown size={10} aria-hidden />
       </button>

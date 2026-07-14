@@ -18810,6 +18810,44 @@
         "daily": "Codziennie o 9:00",
         "weekly": "Co tydzień (Pon 9:00)",
         "monthly": "Co miesiąc (1., 9:00)"
+      },
+      "noLinkedTableConfigured": "Brak powiązanej tabeli",
+      "add": "Dodaj",
+      "provenanceChain": "Łańcuch pochodzenia",
+      "completedWithErrors": "Zakończono z błędami",
+      "completedSuccessfully": "Zakończono pomyślnie",
+      "executing": "Wykonywanie…",
+      "undoChanges": "Cofnij zmiany",
+      "operationsFailedCount": "{{failed}} z {{total}} operacji nie powiodło się",
+      "ready": "Gotowe",
+      "inProgress": "W trakcie",
+      "starting": "Początek",
+      "ideaCompleteness": "Kompletność pomysłu",
+      "ideaIsReadyForConversionToInitiative": "Pomysł jest gotowy do konwersji na inicjatywę",
+      "autoAssignColorsToRows": "Auto-przypisz kolory do wierszy",
+      "noNumericColumns": "Brak kolumn numerycznych",
+      "more": "więcej",
+      "noItems": "Brak elementów",
+      "other": "Inne",
+      "noStickyNotes": "Brak karteczek",
+      "noRecords": "Brak elementów",
+      "addARecordToSeeTheGallery": "Dodaj pierwszy rekord, aby zobaczyć galerię",
+      "failedToLoadSources": "Nie udało się pobrać źródeł.",
+      "failedToChangeStatus": "Nie udało się zmienić statusu.",
+      "sourcesCount_one": "źródło",
+      "sourcesCount_other": "źródeł",
+      "sourcesCount": "źródeł",
+      "metric": {
+        "nodes": "Węzły",
+        "edges": "Połączenia",
+        "branches": "Gałęzie",
+        "completeness": "Kompletność"
+      },
+      "quadrant": {
+        "quickWins": "Szybkie wygrane",
+        "majorProjects": "Duże projekty",
+        "fillIns": "Uzupełnienia",
+        "thanklessTasks": "Niewdzięczne zadania"
       }
     }
   }

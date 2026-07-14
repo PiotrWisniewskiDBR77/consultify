@@ -439,8 +439,7 @@ const LinkedRecordEditor: React.FC<CellEditorProps> = ({
   onCancel,
   linkedRecordContext,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const linkedTableId =
     linkedRecordContext?.linkedTableId ??
@@ -458,7 +457,7 @@ const LinkedRecordEditor: React.FC<CellEditorProps> = ({
     return (
       <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] text-c-text-secondary">
         <Link2 className="h-3.5 w-3.5" />
-        {isPl ? 'Brak powiązanej tabeli' : 'No linked table configured'}
+        {t('ideas.table.noLinkedTableConfigured', 'No linked table configured')}
       </div>
     );
   }

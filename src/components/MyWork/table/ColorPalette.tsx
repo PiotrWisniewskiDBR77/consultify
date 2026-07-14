@@ -24,8 +24,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
   onPaletteChange,
   onAutoAssign,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   if (!open) return null;
 
@@ -34,7 +33,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
           <Palette size={10} className="inline mr-1" />
-          {isPl ? 'Paleta kolorów' : 'Color Palette'}
+          {t('ideas.table.colorPalette', 'Color Palette')}
         </span>
       </div>
 
@@ -70,7 +69,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
           }}
           className="w-full px-3 py-2 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
         >
-          {isPl ? 'Auto-przypisz kolory do wierszy' : 'Auto-assign colors to rows'}
+          {t('ideas.table.autoAssignColorsToRows', 'Auto-assign colors to rows')}
         </button>
       </div>
     </div>

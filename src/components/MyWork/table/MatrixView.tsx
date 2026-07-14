@@ -20,8 +20,8 @@ interface MatrixViewProps {
 }
 
 interface Quadrant {
+  labelKey: string;
   labelEn: string;
-  labelPl: string;
   color: string;
   xRange: [number, number];
   yRange: [number, number];
@@ -46,8 +46,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
   onFieldChange,
   onAxisChange,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [dragNodeId, setDragNodeId] = useState<string | null>(null);
   const [dropQuadrant, setDropQuadrant] = useState<number | null>(null);
   const quadrantRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -75,31 +74,31 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
   const quadrants: Quadrant[] = useMemo(
     () => [
       {
+        labelKey: 'quickWins',
         labelEn: 'Quick Wins',
-        labelPl: 'Szybkie wygrane',
         color:
           'bg-[color-mix(in_srgb,var(--c-success)_10%,transparent)] border-[color-mix(in_srgb,var(--c-success)_22%,transparent)]',
         xRange: [midX, maxX],
         yRange: [minY, midY],
       },
       {
+        labelKey: 'majorProjects',
         labelEn: 'Major Projects',
-        labelPl: 'Duże projekty',
         color:
           'bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] border-[color-mix(in_srgb,var(--c-warning)_22%,transparent)]',
         xRange: [midX, maxX],
         yRange: [midY, maxY],
       },
       {
+        labelKey: 'fillIns',
         labelEn: 'Fill-ins',
-        labelPl: 'Uzupełnienia',
         color: 'bg-c-surface-raised border-c-border-subtle',
         xRange: [minX, midX],
         yRange: [minY, midY],
       },
       {
+        labelKey: 'thanklessTasks',
         labelEn: 'Thankless Tasks',
-        labelPl: 'Niewdzięczne zadania',
         color:
           'bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)] border-[color-mix(in_srgb,var(--c-danger)_22%,transparent)]',
         xRange: [minX, midX],
@@ -248,7 +247,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
               }}
             >
               <div className="text-[10px] font-bold text-c-text-secondary mb-2 flex-shrink-0">
-                {isPl ? q.labelPl : q.labelEn}
+                {t(`ideas.table.quadrant.${q.labelKey}`, q.labelEn)}
                 <span className="ml-1 text-c-text-muted">({nodesByQuadrant[idx].length})</span>
               </div>
               <div className="flex-1 min-h-[100px] relative">
@@ -293,7 +292,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 {nodesByQuadrant[idx].length === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-[10px] text-c-text-muted">
-                      {isPl ? 'Brak elementów' : 'No items'}
+                      {t('ideas.table.noItems', 'No items')}
                     </span>
                   </div>
                 )}

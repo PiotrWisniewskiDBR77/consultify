@@ -136,8 +136,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
     onOpenPicker,
     locked = false,
   }) => {
-    const { i18n } = useTranslation();
-    const isPl = i18n.language?.startsWith('pl');
+    const { t } = useTranslation();
 
     const [links, setLinks] = useState<LinkedRecordData[]>([]);
     const [loading, setLoading] = useState(false);
@@ -230,7 +229,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
           className="flex items-center gap-1.5 text-xs text-c-text-secondary transition-colors hover:text-blue-500 disabled:cursor-default disabled:hover:text-c-text-muted"
         >
           <Link2 className="h-3.5 w-3.5" />
-          <span>{isPl ? 'Brak powiązań' : 'No linked records'}</span>
+          <span>{t('ideas.table.noLinkedRecords', 'No linked records')}</span>
         </button>
       );
     }
@@ -274,7 +273,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
             onClick={onOpenPicker}
             className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-bold text-c-text-muted transition-colors hover:bg-c-border-subtle hover:text-blue-600"
           >
-            +{overflow} {isPl ? 'więcej' : 'more'}
+            +{overflow} {t('ideas.table.more', 'more')}
           </button>
         )}
         {!locked && (

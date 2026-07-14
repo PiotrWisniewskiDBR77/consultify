@@ -201,8 +201,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
   palette,
   onPaletteChange,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const numericTypes = new Set(['number', 'rating', 'progress', 'currency']);
   const numericCols = columns.filter((c) => numericTypes.has(c.type) && c.visible);
 
@@ -213,7 +212,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
       <div className="flex items-center gap-2 mb-2">
         <Flame size={12} className="text-amber-500" />
         <span className="text-[10px] font-bold text-c-text">
-          {isPl ? 'Heatmapa' : 'Heatmap'}
+          {t('ideas.table.heatmap', 'Heatmap')}
         </span>
         <div className="flex-1" />
         <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
@@ -252,7 +251,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
         ))}
         {numericCols.length === 0 && (
           <p className="text-[9px] text-c-text-secondary text-center py-2">
-            {isPl ? 'Brak kolumn numerycznych' : 'No numeric columns'}
+            {t('ideas.table.noNumericColumns', 'No numeric columns')}
           </p>
         )}
       </div>
