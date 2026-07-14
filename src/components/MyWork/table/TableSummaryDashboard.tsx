@@ -35,8 +35,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
   columns,
   ideaId,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
 
   const [aiNarrative, setAiNarrative] = useState<string>('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -127,15 +126,15 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
         language: i18n.language,
       });
       const texts = (result?.suggestions || []).map((s: any) => s.text || s.detail || '');
-      setAiNarrative(texts.join(' ') || (isPl ? 'Brak wyników' : 'No results'));
+      setAiNarrative(texts.join(' ') || t('ideas.table.summaryDashboard.noResults', 'No results'));
     } catch {
       setAiNarrative(
-        isPl ? 'Nie udało się wygenerować podsumowania' : 'Failed to generate summary'
+        t('ideas.table.summaryDashboard.failedToGenerateSummary', 'Failed to generate summary')
       );
     } finally {
       setAiLoading(false);
     }
-  }, [i18n.language, ideaId, isPl, nodes, stats, visibleCols]);
+  }, [i18n.language, ideaId, nodes, stats, t, visibleCols]);
 
   if (!open) return null;
 
@@ -148,7 +147,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
       >
         <BarChart3 size={13} className="text-c-accent" />
         <span className="text-[11px] font-bold text-c-text">
-          {isPl ? 'Podsumowanie tabeli' : 'Table Summary'}
+          {t('ideas.table.summaryDashboard.tableSummary', 'Table Summary')}
         </span>
         <div className="flex-1" />
         {expanded ? (
@@ -164,13 +163,13 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
               {
-                label: isPl ? 'Pomysły' : 'Ideas',
+                label: t('ideas.table.summaryDashboard.ideas', 'Ideas'),
                 value: stats.totalRows,
                 icon: FileText,
                 color: 'var(--c-info)',
               },
               {
-                label: isPl ? 'Kompletność' : 'Completeness',
+                label: t('ideas.table.summaryDashboard.completeness', 'Completeness'),
                 value: `${stats.completeness}%`,
                 icon: CheckCircle2,
                 color:
@@ -181,13 +180,13 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                       : 'var(--c-danger)',
               },
               {
-                label: isPl ? 'Kategorie' : 'Categories',
+                label: t('ideas.table.summaryDashboard.categories', 'Categories'),
                 value: stats.categories,
                 icon: TrendingUp,
                 color: 'var(--c-info)',
               },
               {
-                label: isPl ? 'Z komentarzami' : 'With comments',
+                label: t('ideas.table.summaryDashboard.withComments', 'With comments'),
                 value: stats.withComments,
                 icon: FileText,
                 color: 'var(--c-info)',
@@ -216,7 +215,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
           {/* Completeness gauge */}
           <div className="rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-3">
             <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-2 block">
-              {isPl ? 'Kompletność danych' : 'Data completeness'}
+              {t('ideas.table.summaryDashboard.dataCompleteness', 'Data completeness')}
             </span>
             <div className="h-2.5 rounded-full bg-c-border-subtle overflow-hidden">
               <div
@@ -230,16 +229,10 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
             <span className="text-[10px] text-c-text-muted mt-1 block">
               {stats.completeness}% —{' '}
               {stats.completeness > 70
-                ? isPl
-                  ? 'Dobrze'
-                  : 'Good'
+                ? t('ideas.table.summaryDashboard.good', 'Good')
                 : stats.completeness > 40
-                  ? isPl
-                    ? 'Średnio'
-                    : 'Average'
-                  : isPl
-                    ? 'Nisko'
-                    : 'Low'}
+                  ? t('ideas.table.summaryDashboard.average', 'Average')
+                  : t('ideas.table.summaryDashboard.low', 'Low')}
             </span>
           </div>
 
@@ -293,10 +286,12 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                   </span>
                   <div className="grid grid-cols-2 gap-1 text-[10px]">
                     <span className="text-c-text-muted">
-                      {isPl ? 'Śr.' : 'Avg'}: <strong className="text-c-text">{avg}</strong>
+                      {t('ideas.table.summaryDashboard.avg', 'Avg')}:{' '}
+                      <strong className="text-c-text">{avg}</strong>
                     </span>
                     <span className="text-c-text-muted">
-                      {isPl ? 'Suma' : 'Sum'}: <strong className="text-c-text">{sum}</strong>
+                      {t('ideas.table.summaryDashboard.sum', 'Sum')}:{' '}
+                      <strong className="text-c-text">{sum}</strong>
                     </span>
                     <span className="text-c-text-muted">
                       Min: <strong className="text-c-text">{min}</strong>
@@ -315,7 +310,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
             <div className="flex items-center gap-1.5 mb-2">
               <Sparkles size={11} className="text-c-accent" />
               <span className="text-[10px] font-bold text-c-accent">
-                {isPl ? 'Narracja AI' : 'AI Narrative'}
+                {t('ideas.table.summaryDashboard.aiNarrative', 'AI Narrative')}
               </span>
             </div>
             {aiNarrative ? (
@@ -332,12 +327,8 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                   <Sparkles size={12} />
                 )}
                 {aiLoading
-                  ? isPl
-                    ? 'Generuję...'
-                    : 'Generating...'
-                  : isPl
-                    ? 'Generuj podsumowanie AI'
-                    : 'Generate AI summary'}
+                  ? t('ideas.table.summaryDashboard.generating', 'Generating...')
+                  : t('ideas.table.summaryDashboard.generateAiSummary', 'Generate AI summary')}
               </button>
             )}
           </div>

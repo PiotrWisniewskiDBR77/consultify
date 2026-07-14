@@ -58,6 +58,12 @@ export class ViewErrorBoundary extends React.Component<
       lng,
       defaultValue: 'Switch to Grid',
     });
+    const bodyText = i18n.t('ideas.table.errorBoundary.body', {
+      lng,
+      defaultValue:
+        'The {{viewName}} layout hit an unexpected error. Runtime details are hidden for safety.',
+      viewName,
+    });
 
     return (
       <div
@@ -66,10 +72,7 @@ export class ViewErrorBoundary extends React.Component<
       >
         <div className="max-w-md space-y-2">
           <h3 className="text-sm font-semibold text-c-text">{title}</h3>
-          <p className="text-xs text-c-text-muted">
-            The <span className="font-medium text-c-text-secondary">{viewName}</span> layout hit an
-            unexpected error. Runtime details are hidden for safety.
-          </p>
+          <p className="text-xs text-c-text-muted">{bodyText}</p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <button

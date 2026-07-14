@@ -66,11 +66,13 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
       const data = await listTemplates(activeCategory !== 'all' ? activeCategory : undefined);
       setTemplates(Array.isArray(data) ? data : []);
     } catch (err) {
-      toast.error(isPl ? 'Nie udało się załadować szablonów' : 'Failed to load templates');
+      toast.error(
+        t('ideas.table.recordTemplates.failedToLoadTemplates', 'Failed to load templates')
+      );
     } finally {
       setLoading(false);
     }
-  }, [activeCategory, isPl]);
+  }, [activeCategory, t]);
 
   useEffect(() => {
     fetchTemplates();
@@ -93,17 +95,21 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
         setUsingId(templateId);
         const base = await applyTableTemplate(templateId, workspaceId, templateName);
         toast.success(
-          isPl ? `Szablon "${templateName}" zastosowany!` : `Template "${templateName}" applied!`
+          t('ideas.table.templateGallery.templateApplied', 'Template "{{name}}" applied!', {
+            name: templateName,
+          })
         );
         onTemplateUsed?.(base);
         onClose();
       } catch (err) {
-        toast.error(isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template');
+        toast.error(
+          t('ideas.table.templateGallery.failedToApplyTemplate', 'Failed to apply template')
+        );
       } finally {
         setUsingId(null);
       }
     },
-    [workspaceId, isPl, onTemplateUsed, onClose]
+    [workspaceId, t, onTemplateUsed, onClose]
   );
 
   return (
@@ -120,7 +126,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
           <div className="flex items-center gap-2">
             <LayoutTemplate size={18} className="text-c-accent" />
             <h2 className="text-base font-semibold text-c-text">
-              {isPl ? 'Galeria szablonów' : 'Template Gallery'}
+              {t('ideas.table.templateGallery.templateGalleryTitle', 'Template Gallery')}
             </h2>
           </div>
           <button
@@ -141,7 +147,10 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isPl ? 'Szukaj szablonów…' : 'Search templates…'}
+              placeholder={t(
+                'ideas.table.templateGallery.searchTemplatesPlaceholder',
+                'Search templates…'
+              )}
               className="w-full h-9 pl-9 pr-3 rounded-lg text-sm bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
@@ -167,19 +176,18 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
           {loading ? (
             <LoadingState
               variant="progress"
-              label={isPl ? 'Ładowanie szablonów…' : 'Loading templates…'}
+              label={t('ideas.table.templateGallery.loadingTemplates', 'Loading templates…')}
             />
           ) : filtered.length === 0 ? (
             <EmptyState
               variant="filter"
               icon={FileText}
               compact
-              title={isPl ? 'Brak szablonów' : 'No templates found'}
-              description={
-                isPl
-                  ? 'Zmień filtr lub wyszukiwanie, aby zobaczyć dostępne szablony.'
-                  : 'Adjust the filter or search to see available templates.'
-              }
+              title={t('ideas.table.templateGallery.noTemplatesFound', 'No templates found')}
+              description={t(
+                'ideas.table.templateGallery.adjustFilterOrSearch',
+                'Adjust the filter or search to see available templates.'
+              )}
             />
           ) : (
             <div className="grid grid-cols-2 gap-4">
@@ -210,10 +218,10 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-c-text-secondary">
                         {tpl.usage_count > 0
-                          ? `${tpl.usage_count} ${isPl ? 'użyć' : 'uses'}`
-                          : isPl
-                            ? 'Nowy'
-                            : 'New'}
+                          ? t('ideas.table.templateGallery.usesCount', '{{count}} uses', {
+                              count: tpl.usage_count,
+                            })
+                          : t('ideas.table.templateGallery.newBadge', 'New')}
                       </span>
                       <button
                         onClick={() => handleUseTemplate(tpl.id, tpl.name)}
@@ -221,7 +229,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-text text-c-surface hover:opacity-90 disabled:opacity-50 transition-colors"
                       >
                         {usingId === tpl.id ? <Loader2 size={12} className="animate-spin" /> : null}
-                        {isPl ? 'Użyj' : 'Use'}
+                        {t('ideas.table.templateGallery.use', 'Use')}
                       </button>
                     </div>
                     {tpl.schema_snapshot?.tables && (

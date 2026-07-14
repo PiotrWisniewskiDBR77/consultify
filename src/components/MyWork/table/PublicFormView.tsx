@@ -5,7 +5,9 @@
 
 import { AlertCircle, Check, CheckSquare, Loader2, Square } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import * as tablePlatformApi from '@/services/api/tablePlatform.api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ export interface PublicFormViewProps {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function PublicFormView({ slug }: PublicFormViewProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<PublicFormData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +85,10 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
         setValues(initial);
       })
       .catch((e) => {
-        if (!cancelled) setError(e.message || 'Failed to load form');
+        if (!cancelled)
+          setError(
+            e.message || t('ideas.table.publicForm.failedToLoadForm', 'Failed to load form')
+          );
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -122,7 +128,9 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
       const isEmpty = val === undefined || val === null || val === '';
 
       if (fc.required && isEmpty) {
-        errors[fc.fieldId] = `${fc.label ?? field.name} is required`;
+        errors[fc.fieldId] = t('ideas.table.publicForm.fieldIsRequired', '{{label}} is required', {
+          label: fc.label ?? field.name,
+        });
         continue;
       }
 
@@ -152,7 +160,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
           window.location.href = config.redirectUrl;
         }
       } catch (err: any) {
-        setError(err.message || 'Submission failed');
+        setError(err.message || t('ideas.table.publicForm.submissionFailed', 'Submission failed'));
       } finally {
         setSubmitting(false);
       }
@@ -184,7 +192,9 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
       <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <div className="mx-4 max-w-md rounded-2xl border border-rose-200 bg-c-surface p-8 text-center dark:border-rose-800">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-rose-500" />
-          <h2 className="mb-2 text-lg font-semibold text-c-text">Form not found</h2>
+          <h2 className="mb-2 text-lg font-semibold text-c-text">
+            {t('ideas.table.publicForm.formNotFound', 'Form not found')}
+          </h2>
           <p className="text-sm text-c-text-muted">{error}</p>
         </div>
       </div>
@@ -203,14 +213,15 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
             <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
           <h2 className="mb-2 text-lg font-semibold text-c-text">
-            {config.submitMessage || 'Thank you for your submission!'}
+            {config.submitMessage ||
+              t('ideas.table.publicForm.thankYouForSubmission', 'Thank you for your submission!')}
           </h2>
           {config.allowMultiple && (
             <button
               onClick={handleSubmitAnother}
               className="mt-4 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
             >
-              Submit another response
+              {t('ideas.table.publicForm.submitAnotherResponse', 'Submit another response')}
             </button>
           )}
         </div>
@@ -259,12 +270,14 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Submit
+              {t('ideas.table.publicForm.submit', 'Submit')}
             </button>
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-c-text-secondary">Powered by Table Platform</p>
+        <p className="mt-4 text-center text-xs text-c-text-secondary">
+          {t('ideas.table.publicForm.poweredByTablePlatform', 'Powered by Table Platform')}
+        </p>
       </div>
     </div>
   );
@@ -281,6 +294,7 @@ interface FormFieldProps {
 }
 
 function FormField({ field, config, value, error, onChange }: FormFieldProps) {
+  const { t } = useTranslation();
   const label = config.label || field.name;
 
   return (
@@ -296,6 +310,7 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
         value={value}
         onChange={onChange}
         hasError={!!error}
+        t={t}
       />
       {error && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
     </div>
@@ -308,9 +323,10 @@ interface FieldInputProps {
   value: unknown;
   onChange: (value: unknown) => void;
   hasError: boolean;
+  t: (key: string, fallback: string) => string;
 }
 
-function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInputProps) {
+function FieldInput({ fieldType, options, value, onChange, hasError, t }: FieldInputProps) {
   const baseClass = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
     hasError ? 'border-rose-300 dark:border-rose-700' : 'border-c-border-subtle'
   }`;
@@ -366,7 +382,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
           ) : (
             <Square className="h-5 w-5 text-c-text-secondary" />
           )}
-          {value ? 'Yes' : 'No'}
+          {value ? t('ideas.table.publicForm.yes', 'Yes') : t('ideas.table.publicForm.no', 'No')}
         </button>
       );
 
@@ -391,7 +407,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
           onChange={(e) => onChange(e.target.value || undefined)}
           className={baseClass}
         >
-          <option value="">Select...</option>
+          <option value="">{t('ideas.table.publicForm.selectEllipsis', 'Select...')}</option>
           {opts?.map((o) => {
             const val = o.value ?? o.name ?? o.id ?? '';
             return (
@@ -444,7 +460,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
           type="email"
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="email@example.com"
+          placeholder={t('ideas.table.publicForm.emailPlaceholder', 'email@example.com')}
           className={baseClass}
         />
       );
@@ -455,7 +471,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
           type="url"
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="https://..."
+          placeholder={t('ideas.table.publicForm.urlPlaceholder', 'https://...')}
           className={baseClass}
         />
       );
@@ -466,7 +482,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
           type="tel"
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="+1 (555) 123-4567"
+          placeholder={t('ideas.table.publicForm.phonePlaceholder', '+1 (555) 123-4567')}
           className={baseClass}
         />
       );
@@ -493,14 +509,24 @@ function validateFieldType(fieldType: string, value: unknown, label: string): st
     case 'currency':
     case 'percent':
       if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
-        return `${label} must be a valid number`;
+        return i18n.t(
+          'ideas.table.publicForm.mustBeValidNumber',
+          '{{label}} must be a valid number',
+          {
+            label,
+          }
+        );
       }
       break;
 
     case 'email': {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (typeof value === 'string' && !emailRegex.test(value)) {
-        return `${label} must be a valid email address`;
+        return i18n.t(
+          'ideas.table.publicForm.mustBeValidEmail',
+          '{{label}} must be a valid email address',
+          { label }
+        );
       }
       break;
     }
@@ -510,20 +536,28 @@ function validateFieldType(fieldType: string, value: unknown, label: string): st
         try {
           new URL(value);
         } catch {
-          return `${label} must be a valid URL`;
+          return i18n.t('ideas.table.publicForm.mustBeValidUrl', '{{label}} must be a valid URL', {
+            label,
+          });
         }
       }
       break;
 
     case 'phone':
       if (typeof value === 'string' && value.length > 30) {
-        return `${label} is too long (max 30 characters)`;
+        return i18n.t(
+          'ideas.table.publicForm.tooLongMax30',
+          '{{label}} is too long (max 30 characters)',
+          { label }
+        );
       }
       break;
 
     case 'date':
       if (typeof value === 'string' && isNaN(Date.parse(value))) {
-        return `${label} must be a valid date`;
+        return i18n.t('ideas.table.publicForm.mustBeValidDate', '{{label}} must be a valid date', {
+          label,
+        });
       }
       break;
   }

@@ -44,7 +44,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
   ideaId,
   onAddRows,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [mode, setMode] = useState<InputMode>('voice');
@@ -63,9 +63,10 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setTranscript(
-        isPl
-          ? 'Przeglądarka nie obsługuje rozpoznawania mowy.'
-          : 'Browser does not support speech recognition.'
+        t(
+          'ideas.table.voiceImageInput.browserNoSpeechSupport',
+          'Browser does not support speech recognition.'
+        )
       );
       return;
     }
@@ -94,7 +95,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
     recognitionRef.current = recognition;
     recognition.start();
     setIsRecording(true);
-  }, [isPl]);
+  }, [isPl, t]);
 
   const stopRecording = useCallback(() => {
     recognitionRef.current?.stop();
@@ -244,12 +245,8 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           )}
           <span className="text-sm font-bold text-c-text">
             {mode === 'voice'
-              ? isPl
-                ? 'Dyktowanie głosowe'
-                : 'Voice Input'
-              : isPl
-                ? 'Obraz → Pomysły'
-                : 'Image → Ideas'}
+              ? t('ideas.table.voiceImageInput.voiceInputTitle', 'Voice Input')
+              : t('ideas.table.voiceImageInput.imageToIdeasTitle', 'Image → Ideas')}
           </span>
           <div className="flex-1" />
           <div className="flex items-center gap-0.5 rounded-lg border border-c-border-subtle overflow-hidden">
@@ -258,14 +255,14 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
               className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary'}`}
             >
               <Mic size={10} className="inline mr-0.5" />
-              {isPl ? 'Głos' : 'Voice'}
+              {t('ideas.table.voiceImageInput.voice', 'Voice')}
             </button>
             <button
               onClick={() => setMode('image')}
               className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary'}`}
             >
               <ImageIcon size={10} className="inline mr-0.5" />
-              {isPl ? 'Obraz' : 'Image'}
+              {t('ideas.table.voiceImageInput.image', 'Image')}
             </button>
           </div>
           <button
@@ -292,12 +289,14 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
               </button>
               <p className="text-[10px] text-c-text-secondary mt-2">
                 {isRecording
-                  ? isPl
-                    ? 'Nagrywam… kliknij aby zatrzymać'
-                    : 'Recording… click to stop'
-                  : isPl
-                    ? 'Kliknij aby rozpocząć dyktowanie'
-                    : 'Click to start dictating'}
+                  ? t(
+                      'ideas.table.voiceImageInput.recordingClickToStop',
+                      'Recording… click to stop'
+                    )
+                  : t(
+                      'ideas.table.voiceImageInput.clickToStartDictating',
+                      'Click to start dictating'
+                    )}
               </p>
               {transcript && (
                 <div className="mt-3 p-3 rounded-xl bg-c-surface-raised text-left">
@@ -331,16 +330,17 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 <>
                   <Upload size={24} className="text-c-text-secondary mx-auto mb-2" />
                   <p className="text-[11px] text-c-text-muted">
-                    {isPl
-                      ? 'Upuść obraz, wklej screenshot (Ctrl+V) lub'
-                      : 'Drop image, paste screenshot (Ctrl+V) or'}
+                    {t(
+                      'ideas.table.voiceImageInput.dropImageOrPaste',
+                      'Drop image, paste screenshot (Ctrl+V) or'
+                    )}
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
                   >
                     <ImageIcon size={10} />
-                    {isPl ? 'Wybierz plik' : 'Choose file'}
+                    {t('ideas.table.voiceImageInput.chooseFile', 'Choose file')}
                   </button>
                   <input
                     ref={fileInputRef}
@@ -366,12 +366,8 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Mic size={12} />}
             {loading
-              ? isPl
-                ? 'Analizuję…'
-                : 'Analyzing…'
-              : isPl
-                ? 'Rozpoznaj pomysły'
-                : 'Parse ideas'}
+              ? t('ideas.table.voiceImageInput.analyzing', 'Analyzing…')
+              : t('ideas.table.voiceImageInput.parseIdeas', 'Parse ideas')}
           </button>
         </div>
 
@@ -379,15 +375,16 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
         <div className="flex-1 overflow-auto px-5 py-4">
           {parsedIdeas.length === 0 ? (
             <p className="text-xs text-c-text-secondary text-center py-4">
-              {isPl
-                ? 'Nagraj głos lub wgraj obraz, potem kliknij "Rozpoznaj"'
-                : 'Record voice or upload image, then click "Parse"'}
+              {t(
+                'ideas.table.voiceImageInput.recordOrUploadThenParse',
+                'Record voice or upload image, then click "Parse"'
+              )}
             </p>
           ) : (
             <div className="space-y-1.5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                 {parsedIdeas.filter((p) => p.selected).length}/{parsedIdeas.length}{' '}
-                {isPl ? 'wybranych' : 'selected'}
+                {t('ideas.table.voiceImageInput.selected', 'selected')}
               </p>
               {parsedIdeas.map((idea, idx) => (
                 <label
@@ -428,7 +425,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
               onClick={onClose}
               className="px-3 py-1.5 rounded-xl text-xs font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
             >
-              {isPl ? 'Anuluj' : 'Cancel'}
+              {t('ideas.table.cancel', 'Cancel')}
             </button>
             <div className="flex-1" />
             <button
@@ -437,9 +434,9 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
             >
               <Plus size={12} />
-              {isPl
-                ? `Dodaj ${parsedIdeas.filter((p) => p.selected).length} pomysłów`
-                : `Add ${parsedIdeas.filter((p) => p.selected).length} ideas`}
+              {t('ideas.table.voiceImageInput.addNIdeas', 'Add {{count}} ideas', {
+                count: parsedIdeas.filter((p) => p.selected).length,
+              })}
             </button>
           </div>
         )}

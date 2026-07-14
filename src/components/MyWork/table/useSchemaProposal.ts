@@ -5,6 +5,7 @@
 
 import { useCallback, useState } from 'react';
 
+import i18n from '@/i18n';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 export interface ProposalHistoryEntry {
@@ -96,7 +97,14 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setProposal(result);
         addToHistory(result, 'pending');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to generate proposal');
+        setError(
+          err instanceof Error
+            ? err.message
+            : i18n.t(
+                'ideas.table.schemaProposal.failedToGenerateProposal',
+                'Failed to generate proposal'
+              )
+        );
         setProposal(null);
       } finally {
         setLoading(false);
@@ -108,7 +116,10 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
   const executeProposal = useCallback(
     async (approvedOperationIds?: string[]): Promise<unknown> => {
       const pid = getProposalId();
-      if (!pid) throw new Error('No proposal loaded');
+      if (!pid)
+        throw new Error(
+          i18n.t('ideas.table.schemaProposal.noProposalLoaded', 'No proposal loaded')
+        );
       setLoading(true);
       setError(null);
       try {
@@ -117,7 +128,14 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setExecutionResult(result);
         return result;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to execute proposal');
+        setError(
+          err instanceof Error
+            ? err.message
+            : i18n.t(
+                'ideas.table.schemaProposal.failedToExecuteProposal',
+                'Failed to execute proposal'
+              )
+        );
         throw err;
       } finally {
         setLoading(false);
@@ -138,7 +156,14 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setProposal(null);
         setExecutionResult(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to reject proposal');
+        setError(
+          err instanceof Error
+            ? err.message
+            : i18n.t(
+                'ideas.table.schemaProposal.failedToRejectProposal',
+                'Failed to reject proposal'
+              )
+        );
       } finally {
         setLoading(false);
       }
@@ -157,7 +182,14 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setProposal(result);
         addToHistory(result, 'refined');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to refine proposal');
+        setError(
+          err instanceof Error
+            ? err.message
+            : i18n.t(
+                'ideas.table.schemaProposal.failedToRefineProposal',
+                'Failed to refine proposal'
+              )
+        );
       } finally {
         setLoading(false);
       }
@@ -176,7 +208,11 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
       setExecutionResult(null);
       setProposal(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to undo proposal');
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t('ideas.table.schemaProposal.failedToUndoProposal', 'Failed to undo proposal')
+      );
     } finally {
       setLoading(false);
     }
@@ -192,7 +228,11 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
       addToHistory(proposal, 'redone');
       setExecutionResult(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to redo proposal');
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t('ideas.table.schemaProposal.failedToRedoProposal', 'Failed to redo proposal')
+      );
     } finally {
       setLoading(false);
     }

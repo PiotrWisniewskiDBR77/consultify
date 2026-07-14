@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import i18n from '@/i18n';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type {
   FilterGroup as TPFilterGroup,
@@ -241,7 +242,12 @@ export function useTablePlatformBridge(
       try {
         const result = await ensureBaseAndTable();
         if (!result) {
-          setError('Failed to initialize base or table');
+          setError(
+            i18n.t(
+              'ideas.table.tablePlatformBridge.failedToInitializeBaseOrTable',
+              'Failed to initialize base or table'
+            )
+          );
           setLoading(false);
           return;
         }
@@ -305,7 +311,14 @@ export function useTablePlatformBridge(
         setHasMore(Boolean(listData.hasMore ?? false));
         cursorRef.current = listData.cursor;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load table data');
+        setError(
+          err instanceof Error
+            ? err.message
+            : i18n.t(
+                'ideas.table.tablePlatformBridge.failedToLoadTableData',
+                'Failed to load table data'
+              )
+        );
         setRecords([]);
         setTotalRecords(0);
         setHasMore(false);
@@ -352,7 +365,14 @@ export function useTablePlatformBridge(
       setHasMore(Boolean(listData.hasMore ?? false));
       cursorRef.current = listData.cursor;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load more records');
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t(
+              'ideas.table.tablePlatformBridge.failedToLoadMoreRecords',
+              'Failed to load more records'
+            )
+      );
     } finally {
       setLoading(false);
     }

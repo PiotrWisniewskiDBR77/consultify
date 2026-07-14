@@ -42,17 +42,16 @@ function formatDate(ts: string): string {
 
 const SnapshotRow = React.memo(function SnapshotRow({
   snapshot,
-  isPl,
   onRestore,
   onDelete,
   restoring,
 }: {
   snapshot: SnapshotSummary;
-  isPl: boolean;
   onRestore: (id: string) => void;
   onDelete: (id: string) => void;
   restoring: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 border-b border-c-border-subtle last:border-0 group">
       <div className="w-8 h-8 rounded-lg bg-c-accent-soft flex items-center justify-center flex-shrink-0">
@@ -67,7 +66,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
           </span>
           <span className="flex items-center gap-0.5">
             <Database size={9} />
-            {snapshot.recordCount} {isPl ? 'rekordów' : 'records'}
+            {snapshot.recordCount} {t('ideas.table.snapshotManager.records', 'records')}
           </span>
         </div>
       </div>
@@ -76,7 +75,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
           onClick={() => onRestore(snapshot.id)}
           disabled={restoring === snapshot.id}
           className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors disabled:opacity-40"
-          title={isPl ? 'Przywróć' : 'Restore'}
+          title={t('ideas.table.snapshotManager.restore', 'Restore')}
         >
           {restoring === snapshot.id ? (
             <Loader2 size={12} className="animate-spin" />
@@ -87,7 +86,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
         <button
           onClick={() => onDelete(snapshot.id)}
           className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
-          title={isPl ? 'Usuń' : 'Delete'}
+          title={t('ideas.table.delete', 'Delete')}
         >
           <Trash2 size={12} />
         </button>
@@ -99,8 +98,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose, baseId }) => {
-  const { i18n } = useTranslation();
-  const isPl = !!i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -198,7 +196,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
           <Camera size={16} className="text-c-accent" />
           <span className="text-sm font-bold text-c-text flex-1">
-            {isPl ? 'Migawki' : 'Snapshots'}
+            {t('ideas.table.snapshotManager.snapshotsTitle', 'Snapshots')}
           </span>
           <button
             onClick={onClose}
@@ -216,7 +214,10 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
                 autoFocus
                 value={snapshotName}
                 onChange={(e) => setSnapshotName(e.target.value)}
-                placeholder={isPl ? 'Nazwa migawki…' : 'Snapshot name…'}
+                placeholder={t(
+                  'ideas.table.snapshotManager.snapshotNamePlaceholder',
+                  'Snapshot name…'
+                )}
                 className="flex-1 h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-c-focus text-c-text"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleCreate();
@@ -229,7 +230,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
                 className="h-8 px-3 rounded-lg text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors disabled:opacity-40 flex items-center gap-1"
               >
                 {creating ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
-                {isPl ? 'Utwórz' : 'Create'}
+                {t('ideas.table.recordTemplates.create', 'Create')}
               </button>
               <button
                 onClick={() => setShowCreateInput(false)}
@@ -244,7 +245,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
               className="w-full py-2 rounded-lg text-xs font-semibold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors flex items-center justify-center gap-1.5"
             >
               <Camera size={13} />
-              {isPl ? 'Utwórz migawkę' : 'Create snapshot'}
+              {t('ideas.table.snapshotManager.createSnapshot', 'Create snapshot')}
             </button>
           )}
         </div>
@@ -258,19 +259,17 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
               variant="new"
               icon={Archive}
               compact
-              title={isPl ? 'Brak migawek' : 'No snapshots yet'}
-              description={
-                isPl
-                  ? 'Utwórz migawkę, aby zachować aktualny stan danych.'
-                  : 'Create a snapshot to preserve the current data state.'
-              }
+              title={t('ideas.table.snapshotManager.noSnapshotsYet', 'No snapshots yet')}
+              description={t(
+                'ideas.table.snapshotManager.createSnapshotToPreserve',
+                'Create a snapshot to preserve the current data state.'
+              )}
             />
           ) : (
             snapshots.map((snap) => (
               <SnapshotRow
                 key={snap.id}
                 snapshot={snap}
-                isPl={isPl}
                 onRestore={(id) => setConfirmRestore(id)}
                 onDelete={handleDelete}
                 restoring={restoring}
@@ -284,26 +283,27 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 rounded-2xl">
             <div className="bg-c-surface rounded-xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] p-4 w-72">
               <h4 className="text-sm font-bold text-c-text mb-2">
-                {isPl ? 'Przywrócić migawkę?' : 'Restore snapshot?'}
+                {t('ideas.table.snapshotManager.restoreSnapshotQuestion', 'Restore snapshot?')}
               </h4>
               <p className="text-[11px] text-c-text-muted mb-4">
-                {isPl
-                  ? 'Obecne dane zostaną zastąpione danymi z migawki. Tej operacji nie można cofnąć.'
-                  : 'Current data will be replaced with snapshot data. This action cannot be undone.'}
+                {t(
+                  'ideas.table.snapshotManager.restoreWarning',
+                  'Current data will be replaced with snapshot data. This action cannot be undone.'
+                )}
               </p>
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setConfirmRestore(null)}
                   className="px-3 py-1.5 text-xs rounded-lg text-c-text-muted hover:bg-c-surface-raised"
                 >
-                  {isPl ? 'Anuluj' : 'Cancel'}
+                  {t('ideas.table.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={() => handleRestore(confirmRestore)}
                   className="px-3 py-1.5 text-xs rounded-lg bg-rose-500 text-white hover:bg-rose-600 font-semibold flex items-center gap-1"
                 >
                   <RotateCcw size={11} />
-                  {isPl ? 'Przywróć' : 'Restore'}
+                  {t('ideas.table.snapshotManager.restore', 'Restore')}
                 </button>
               </div>
             </div>

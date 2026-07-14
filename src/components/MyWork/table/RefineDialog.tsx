@@ -40,8 +40,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
   onClose,
   loading = false,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const [message, setMessage] = useState('');
   const [showHistory, setShowHistory] = useState(false);
@@ -86,19 +85,15 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, []);
 
-  const suggestions = isPl
-    ? [
-        'Dodaj pole priorytet',
-        'Zmień opcje statusu na: Nowy, Aktywny, Zamknięty',
-        'Dodaj tabelę powiązaną',
-        'Usuń niepotrzebne pola',
-      ]
-    : [
-        'Add a priority field',
-        'Change status options to: New, Active, Closed',
-        'Add a related table',
-        'Remove unnecessary fields',
-      ];
+  const suggestions = [
+    t('ideas.table.refineDialog.suggestionAddPriority', 'Add a priority field'),
+    t(
+      'ideas.table.refineDialog.suggestionChangeStatus',
+      'Change status options to: New, Active, Closed'
+    ),
+    t('ideas.table.refineDialog.suggestionAddRelatedTable', 'Add a related table'),
+    t('ideas.table.refineDialog.suggestionRemoveFields', 'Remove unnecessary fields'),
+  ];
 
   return (
     <div
@@ -115,10 +110,10 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-semibold text-c-text">
-                {isPl ? 'Doprecyzuj propozycję' : 'Refine Proposal'}
+                {t('ideas.table.refineDialog.refineProposal', 'Refine Proposal')}
               </h3>
               <p className="text-[10px] text-c-text-secondary">
-                {isPl ? `Wersja ${currentVersion}` : `Version ${currentVersion}`} ·{' '}
+                {t('ideas.table.refineDialog.versionN', 'Version {{n}}', { n: currentVersion })} ·{' '}
                 {proposalIntent.replace(/_/g, ' ')}
               </p>
             </div>
@@ -134,7 +129,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
         {/* Current proposal summary */}
         <div className="px-5 py-3 bg-c-surface-raised border-b border-c-border-subtle">
           <p className="text-[11px] font-medium text-c-text-muted uppercase tracking-wider mb-1">
-            {isPl ? 'Aktualna propozycja' : 'Current proposal'}
+            {t('ideas.table.refineDialog.currentProposal', 'Current proposal')}
           </p>
           <p className="text-xs text-c-text leading-relaxed line-clamp-3">{proposalSummary}</p>
         </div>
@@ -150,18 +145,17 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                 autoResize();
               }}
               onKeyDown={handleKeyDown}
-              placeholder={
-                isPl
-                  ? 'Opisz zmiany, np. "Dodaj pole priorytet", "Zmień opcje statusu"…'
-                  : 'Describe changes, e.g., "Add a priority field", "Change status options"…'
-              }
+              placeholder={t(
+                'ideas.table.refineDialog.describeChangesPlaceholder',
+                'Describe changes, e.g., "Add a priority field", "Change status options"…'
+              )}
               disabled={loading}
               rows={3}
               className="w-full px-4 py-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm text-c-text placeholder-c-text-muted focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none resize-none transition-colors disabled:opacity-50"
             />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <span className="text-[9px] text-c-text-secondary">
-                {isPl ? '⌘+Enter wyślij' : '⌘+Enter to send'}
+                {t('ideas.table.refineDialog.cmdEnterToSend', '⌘+Enter to send')}
               </span>
             </div>
           </div>
@@ -189,7 +183,8 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
               className="flex items-center gap-1.5 py-2 text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary transition-colors w-full"
             >
               <History size={12} />
-              {isPl ? 'Historia doprecyzowań' : 'Refinement history'} ({refinementHistory.length})
+              {t('ideas.table.refineDialog.refinementHistory', 'Refinement history')} (
+              {refinementHistory.length})
             </button>
             <div
               className={`overflow-hidden transition-all duration-200 ${
@@ -228,7 +223,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
             disabled={loading}
             className="px-4 py-2 rounded-xl text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.table.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -238,12 +233,12 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
             {loading ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
-                {isPl ? 'Przetwarzanie…' : 'Processing…'}
+                {t('ideas.table.refineDialog.processing', 'Processing…')}
               </>
             ) : (
               <>
                 <Sparkles size={14} />
-                {isPl ? 'Doprecyzuj' : 'Refine'}
+                {t('ideas.table.refineDialog.refine', 'Refine')}
               </>
             )}
           </button>

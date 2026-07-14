@@ -17,6 +17,7 @@ import {
   Star,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type {
   AiClassificationFieldOptions,
@@ -269,6 +270,7 @@ const AttachmentDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 };
 
 const ButtonDisplay: React.FC<{ fieldOptions?: Record<string, unknown> }> = ({ fieldOptions }) => {
+  const { t } = useTranslation();
   const opts = fieldOptions as
     | {
         label?: string;
@@ -294,7 +296,7 @@ const ButtonDisplay: React.FC<{ fieldOptions?: Record<string, unknown> }> = ({ f
       }}
       className="px-2 py-0.5 rounded bg-c-accent-soft text-c-accent text-xs font-medium hover:bg-c-accent transition-colors"
     >
-      {opts?.label || 'Action'}
+      {opts?.label || t('ideas.table.action', 'Action')}
     </button>
   );
 };

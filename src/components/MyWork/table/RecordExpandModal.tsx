@@ -63,6 +63,7 @@ const FieldValueDisplay: React.FC<{
   isEditing: boolean;
   onChange?: (v: unknown) => void;
 }> = ({ value, fieldType, fieldOptions, isEditing, onChange }) => {
+  const { t } = useTranslation();
   if (value == null || value === '') {
     return <span className="text-xs text-c-text-muted italic">—</span>;
   }
@@ -155,7 +156,11 @@ const FieldValueDisplay: React.FC<{
       <div className="flex flex-wrap gap-2">
         {items.map((att, i) => {
           const item = att as Record<string, unknown>;
-          const name = String(item?.fileName ?? item?.name ?? `File ${i + 1}`);
+          const name = String(
+            item?.fileName ??
+              item?.name ??
+              t('ideas.table.fileNumbered', 'File {{n}}', { n: i + 1 })
+          );
           const mime = String(item?.mimeType ?? '');
           const isImage = mime.startsWith('image/');
           return (

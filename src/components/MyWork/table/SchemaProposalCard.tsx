@@ -266,6 +266,7 @@ const OperationItem: React.FC<{
   onToggleExpand: () => void;
   warning?: SchemaProposalWarning;
 }> = ({ op, isPl, selected, expanded, onToggleSelect, onToggleExpand, warning }) => {
+  const { t } = useTranslation();
   const { label, icon: Icon, color } = getOpMeta(op.operationType, isPl);
   const description = formatOperationDescription(op, isPl);
 
@@ -305,7 +306,7 @@ const OperationItem: React.FC<{
         {op.payload && (
           <div className="px-3 pb-2 pl-[2.25rem]">
             <div className="text-[10px] text-c-text-muted bg-c-surface-raised rounded-lg p-2 overflow-x-auto max-h-32 overflow-y-auto font-mono">
-              {renderPayloadDetails(op.payload, isPl)}
+              {renderPayloadDetails(op.payload, t)}
             </div>
             {warning && (
               <div className="mt-1.5 flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
@@ -320,7 +321,10 @@ const OperationItem: React.FC<{
   );
 };
 
-function renderPayloadDetails(payload: Record<string, unknown>, isPl: boolean): React.ReactNode {
+function renderPayloadDetails(
+  payload: Record<string, unknown>,
+  t: (key: string, fallback: string) => string
+): React.ReactNode {
   const fields = payload.fields as Array<Record<string, unknown>> | undefined;
   if (fields && Array.isArray(fields)) {
     return (
@@ -333,7 +337,9 @@ function renderPayloadDetails(payload: Record<string, unknown>, isPl: boolean): 
             <span className="text-c-text-secondary">—</span>
             <span>{String(f.type ?? f.fieldType ?? 'text')}</span>
             {Boolean(f.required) && (
-              <span className="text-danger-500 text-[9px]">{isPl ? 'wymagane' : 'required'}</span>
+              <span className="text-danger-500 text-[9px]">
+                {t('ideas.table.schemaDiff.required', 'required')}
+              </span>
             )}
           </div>
         ))}
@@ -358,7 +364,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
   loading = false,
   executed = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [selectedOps, setSelectedOps] = useState<Set<string>>(
@@ -491,16 +497,17 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             {allOpsVisible ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            {isPl ? 'Operacje' : 'Operations'} ({proposal.operations.length})
+            {t('ideas.table.schemaProposal.operations', 'Operations')} ({proposal.operations.length}
+            )
           </button>
           {allOpsVisible && (
             <div className="flex gap-1">
               <button onClick={selectAll} className="text-[10px] text-c-accent hover:underline">
-                {isPl ? 'Wszystkie' : 'All'}
+                {t('ideas.table.schemaProposal.selectAll', 'All')}
               </button>
               <span className="text-c-text-secondary">|</span>
               <button onClick={selectNone} className="text-[10px] text-c-accent hover:underline">
-                {isPl ? 'Żadne' : 'None'}
+                {t('ideas.table.schemaProposal.selectNone', 'None')}
               </button>
               {onShowDiff && (
                 <>
@@ -509,7 +516,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
                     onClick={onShowDiff}
                     className="text-[10px] text-sky-600 dark:text-sky-400 hover:underline"
                   >
-                    {isPl ? 'Podgląd diff' : 'Diff preview'}
+                    {t('ideas.table.schemaProposal.diffPreview', 'Diff preview')}
                   </button>
                 </>
               )}
@@ -565,7 +572,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
               className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              {isPl ? 'Zatwierdź' : 'Approve'}
+              {t('ideas.table.schemaProposal.approve', 'Approve')}
               {selectedOps.size < proposal.operations.length &&
                 ` (${selectedOps.size}/${proposal.operations.length})`}
             </button>
@@ -575,7 +582,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
               className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-danger-600 text-white hover:bg-danger-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <X size={14} />
-              {isPl ? 'Odrzuć' : 'Reject'}
+              {t('ideas.table.schemaProposal.reject', 'Reject')}
             </button>
             <button
               onClick={() => onRefine('')}
@@ -583,7 +590,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
               className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-sky-600 text-white hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <Edit3 size={14} />
-              {isPl ? 'Doprecyzuj' : 'Refine'}
+              {t('ideas.table.refineDialog.refine', 'Refine')}
             </button>
           </>
         ) : (
@@ -594,7 +601,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
               className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-              {isPl ? 'Cofnij' : 'Undo'}
+              {t('ideas.table.schemaProposal.undo', 'Undo')}
             </button>
           )
         )}

@@ -61,7 +61,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
   onApplySuggestion,
   ideaId,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [suggestions, setSuggestions] = useState<SmartSuggestion[]>([]);
@@ -80,14 +80,16 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       result.push({
         id: 'completeness-1',
         type: 'completeness',
-        title: isPl ? 'Niekompletne wiersze' : 'Incomplete rows',
-        detail: isPl
-          ? `${emptyCount} ${emptyCount === 1 ? 'wiersz ma' : 'wierszy ma'} mniej niż 30% wypełnionych pól. Rozważ uzupełnienie lub użyj AI do auto-fill.`
-          : `${emptyCount} row${emptyCount === 1 ? ' has' : 's have'} less than 30% filled fields. Consider filling them or use AI auto-fill.`,
+        title: t('ideas.table.smartSuggestions.incompleteRowsTitle', 'Incomplete rows'),
+        detail: t(
+          'ideas.table.smartSuggestions.incompleteRowsDetail',
+          '{{count}} row(s) with less than 30% filled fields. Consider filling them or use AI auto-fill.',
+          { count: emptyCount }
+        ),
         confidence: 0.9,
         icon: 'checklist',
         action: {
-          label: isPl ? 'AI Auto-fill' : 'AI Auto-fill',
+          label: t('ideas.table.smartSuggestions.aiAutoFill', 'AI Auto-fill'),
           payload: { type: 'auto_fill_empty' },
         },
       });
@@ -105,10 +107,18 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
         result.push({
           id: `pattern-${col.key}`,
           type: 'pattern',
-          title: isPl ? `Dominujący wzorzec: ${col.header}` : `Dominant pattern: ${col.header}`,
-          detail: isPl
-            ? `${Math.round((dominant[1] / nodes.length) * 100)}% wierszy ma wartość "${dominant[0]}". Rozważ dodanie większej różnorodności.`
-            : `${Math.round((dominant[1] / nodes.length) * 100)}% of rows have value "${dominant[0]}". Consider adding more diversity.`,
+          title: t(
+            'ideas.table.smartSuggestions.dominantPatternTitle',
+            'Dominant pattern: {{header}}',
+            {
+              header: col.header,
+            }
+          ),
+          detail: t(
+            'ideas.table.smartSuggestions.dominantPatternDetail',
+            '{{pct}}% of rows have value "{{value}}". Consider adding more diversity.',
+            { pct: Math.round((dominant[1] / nodes.length) * 100), value: dominant[0] }
+          ),
           confidence: 0.75,
           icon: 'trending',
         });
@@ -119,14 +129,15 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       result.push({
         id: 'layout-add-rating',
         type: 'layout',
-        title: isPl ? 'Dodaj kolumnę oceny' : 'Add a rating column',
-        detail: isPl
-          ? 'Masz wiele pomysłów — dodanie kolumny oceny pozwoli priorytetyzować najlepsze.'
-          : 'You have many ideas — adding a rating column will help prioritize the best ones.',
+        title: t('ideas.table.smartSuggestions.addRatingColumnTitle', 'Add a rating column'),
+        detail: t(
+          'ideas.table.smartSuggestions.addRatingColumnDetail',
+          'You have many ideas — adding a rating column will help prioritize the best ones.'
+        ),
         confidence: 0.7,
         icon: 'lightbulb',
         action: {
-          label: isPl ? 'Dodaj kolumnę' : 'Add column',
+          label: t('ideas.table.smartSuggestions.addColumn', 'Add column'),
           payload: { type: 'add_column', columnType: 'rating' },
         },
       });
@@ -136,10 +147,24 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       result.push({
         id: 'summary-stats',
         type: 'summary',
-        title: isPl ? 'Podsumowanie' : 'Summary',
-        detail: isPl
-          ? `${nodes.length} pomysłów w ${new Set(nodes.map((n) => n.data?.type || 'idea')).size} kategoriach. Średnia kompletność: ${Math.round((nodes.reduce((acc, n) => acc + columns.filter((c) => c.visible && n.data?.[c.key]).length, 0) / nodes.length / Math.max(columns.filter((c) => c.visible).length, 1)) * 100)}%.`
-          : `${nodes.length} ideas across ${new Set(nodes.map((n) => n.data?.type || 'idea')).size} categories. Average completeness: ${Math.round((nodes.reduce((acc, n) => acc + columns.filter((c) => c.visible && n.data?.[c.key]).length, 0) / nodes.length / Math.max(columns.filter((c) => c.visible).length, 1)) * 100)}%.`,
+        title: t('ideas.table.smartSuggestions.summaryTitle', 'Summary'),
+        detail: t(
+          'ideas.table.smartSuggestions.summaryDetail',
+          '{{count}} ideas across {{categories}} categories. Average completeness: {{pct}}%.',
+          {
+            count: nodes.length,
+            categories: new Set(nodes.map((n) => n.data?.type || 'idea')).size,
+            pct: Math.round(
+              (nodes.reduce(
+                (acc, n) => acc + columns.filter((c) => c.visible && n.data?.[c.key]).length,
+                0
+              ) /
+                nodes.length /
+                Math.max(columns.filter((c) => c.visible).length, 1)) *
+                100
+            ),
+          }
+        ),
         confidence: 1,
         icon: 'chart',
       });
@@ -149,10 +174,11 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       result.push({
         id: 'arrangement-kanban',
         type: 'arrangement',
-        title: isPl ? 'Spróbuj widoku Kanban' : 'Try Kanban view',
-        detail: isPl
-          ? 'Przy tej liczbie pomysłów widok Kanban może pomóc w organizacji.'
-          : 'With this many ideas, Kanban view might help organize them better.',
+        title: t('ideas.table.smartSuggestions.tryKanbanTitle', 'Try Kanban view'),
+        detail: t(
+          'ideas.table.smartSuggestions.tryKanbanDetail',
+          'With this many ideas, Kanban view might help organize them better.'
+        ),
         confidence: 0.65,
         icon: 'grid',
         action: { label: 'Kanban', payload: { type: 'switch_view', view: 'kanban' } },
@@ -160,7 +186,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
     }
 
     return result;
-  }, [columns, isPl, nodes]);
+  }, [columns, isPl, nodes, t]);
 
   const fetchAISuggestions = useCallback(async (): Promise<SmartSuggestion[]> => {
     if (!ideaId || nodes.length < 2) return [];
@@ -182,18 +208,21 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       return (result?.suggestions || []).map((s: any, idx: number) => ({
         id: `ai-${idx}-${Date.now()}`,
         type: 'action' as const,
-        title: s.title || (isPl ? 'Sugestia AI' : 'AI Suggestion'),
+        title: s.title || t('ideas.table.smartSuggestions.aiSuggestion', 'AI Suggestion'),
         detail: s.text || s.detail || '',
         confidence: s.confidence || 0.7,
         icon: 'zap' as const,
         action: s.action
-          ? { label: s.action.label || 'Apply', payload: s.action.payload || {} }
+          ? {
+              label: s.action.label || t('ideas.table.smartSuggestions.apply', 'Apply'),
+              payload: s.action.payload || {},
+            }
           : undefined,
       }));
     } catch {
       return [];
     }
-  }, [columns, ideaId, isPl, nodes]);
+  }, [columns, ideaId, isPl, nodes, t]);
 
   useEffect(() => {
     if (!visible || nodes.length === 0) return;
@@ -320,7 +349,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       <button
         onClick={onDismiss}
         className="p-1 rounded hover:bg-c-surface-raised transition-colors flex-shrink-0"
-        title={isPl ? 'Zamknij pasek' : 'Close bar'}
+        title={t('ideas.table.smartSuggestions.closeBar', 'Close bar')}
       >
         <CheckCircle2 size={11} className="text-c-text-secondary" />
       </button>

@@ -119,7 +119,6 @@ export default function PublicViewPage() {
         <div className="rounded-xl border border-danger-200 bg-danger-50 dark:border-danger-800 dark:bg-danger-900/20 p-8 max-w-md text-center">
           <h2 className="text-lg font-semibold text-danger-800 dark:text-danger-200">
             {t('table.viewUnavailable')}
-            View Unavailable
           </h2>
           <p className="mt-2 text-sm text-danger-600 dark:text-danger-300">{error}</p>
         </div>

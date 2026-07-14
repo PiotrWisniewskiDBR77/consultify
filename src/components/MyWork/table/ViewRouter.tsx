@@ -96,7 +96,6 @@ interface PlatformGridViewProps {
   onOpenLinkedRecord: (recordId: string, tableId: string) => void;
   viewConfig?: { missing_fields?: string[]; missing_field_names?: Record<string, string> };
   onRemoveMissingField?: (fieldId: string) => void;
-  isPl: boolean;
   /** R5: conditional-formatting rules applied per-cell. */
   formatRules: FormatRule[];
 }
@@ -115,9 +114,9 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   onOpenLinkedRecord,
   viewConfig,
   onRemoveMissingField,
-  isPl,
   formatRules,
 }) => {
+  const { t } = useTranslation();
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
       return (
@@ -263,7 +262,9 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
             {visibleColumns.map((col) => {
               const missing = isMissingField(col.key, viewConfig);
               const missingFieldName =
-                viewConfig?.missing_field_names?.[col.key] ?? col.header ?? 'Unknown';
+                viewConfig?.missing_field_names?.[col.key] ??
+                col.header ??
+                t('ideas.table.viewRouter.unknown', 'Unknown');
               if (missing) {
                 return (
                   <th
@@ -272,13 +273,17 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                   >
                     <div className="flex items-center gap-1.5">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      <span className="min-w-0 truncate">[Missing: {missingFieldName}]</span>
+                      <span className="min-w-0 truncate">
+                        {t('ideas.table.viewRouter.missingField', '[Missing: {{name}}]', {
+                          name: missingFieldName,
+                        })}
+                      </span>
                       <button
                         type="button"
                         onClick={() => onRemoveMissingField?.(col.key)}
                         className="ml-auto shrink-0 text-c-warning hover:brightness-110"
-                        title={isPl ? 'Usuń z widoku' : 'Remove from view'}
-                        aria-label={isPl ? 'Usuń z widoku' : 'Remove from view'}
+                        title={t('ideas.table.viewRouter.removeFromView', 'Remove from view')}
+                        aria-label={t('ideas.table.viewRouter.removeFromView', 'Remove from view')}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -308,8 +313,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
 // ── Main router ──────────────────────────────────────────────────────────────
 
 export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
   const csvInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -489,7 +493,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
         if (!kanbanGroupColumn) {
           return (
             <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
-              {isPl ? 'Brak kolumny grupującej' : 'No grouping column'}
+              {t('ideas.table.viewRouter.noGroupingColumn', 'No grouping column')}
             </div>
           );
         }
@@ -532,7 +536,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
         if (!mxX || !mxY) {
           return (
             <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
-              {isPl ? 'Brak kolumn' : 'No columns'}
+              {t('ideas.table.viewRouter.noColumns', 'No columns')}
             </div>
           );
         }
@@ -577,17 +581,17 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     mxX,
     mxY,
     onMatrixAxisChange,
-    isPl,
+    t,
   ]);
 
   const mobileLayoutItems: { id: ViewLayout; icon: typeof Table2; label: string }[] = [
-    { id: 'table', icon: Table2, label: isPl ? 'Tabela' : 'Table' },
+    { id: 'table', icon: Table2, label: t('ideas.table.table', 'Table') },
     { id: 'kanban', icon: KanbanSquare, label: 'Kanban' },
     { id: 'timeline', icon: GanttChart, label: 'Timeline' },
-    { id: 'calendar', icon: Calendar, label: isPl ? 'Kalendarz' : 'Calendar' },
+    { id: 'calendar', icon: Calendar, label: t('ideas.table.calendar', 'Calendar') },
     { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
-    { id: 'grid', icon: Grid3X3, label: isPl ? 'Galeria' : 'Gallery' },
-    { id: 'sticky', icon: StickyNote, label: isPl ? 'Notatki' : 'Notes' },
+    { id: 'grid', icon: Grid3X3, label: t('ideas.table.gallery', 'Gallery') },
+    { id: 'sticky', icon: StickyNote, label: t('ideas.table.viewRouter.notes', 'Notes') },
   ];
 
   const switchToGrid = useCallback(() => setViewLayout('grid'), [setViewLayout]);
@@ -628,7 +632,6 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           onOpenLinkedRecord={onOpenLinkedRecord}
           viewConfig={activeViewConfig}
           onRemoveMissingField={handleRemoveMissingField}
-          isPl={isPl}
           formatRules={formatRules}
         />
       </ViewErrorBoundary>
@@ -680,7 +683,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-c-border-subtle pb-2">
         <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-c-text-muted">
           <Table2 className="h-3.5 w-3.5" />
-          <span>{isPl ? 'Widok' : 'View'}</span>
+          <span>{t('ideas.table.view', 'View')}</span>
         </div>
         <ViewSwitcher
           views={platformViews}
@@ -698,7 +701,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           style={{ bottom: 'calc(3.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
           <div className="mb-1 text-center text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-            {isPl ? 'Układ widoku' : 'View layout'}
+            {t('ideas.table.viewRouter.viewLayout', 'View layout')}
           </div>
           <div className="flex flex-wrap justify-center gap-1">
             {mobileLayoutItems.map((item) => {
@@ -744,7 +747,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-c-text-secondary disabled:opacity-40"
         >
           <Plus className="h-5 w-5 text-c-accent" />
-          {isPl ? 'Rekord' : 'Record'}
+          {t('ideas.table.viewRouter.record', 'Record')}
         </button>
         <button
           type="button"
@@ -755,7 +758,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-c-text-secondary"
         >
           <Filter className="h-5 w-5 text-c-text-muted" />
-          {isPl ? 'Filtr' : 'Filter'}
+          {t('ideas.table.viewRouter.filter', 'Filter')}
         </button>
         <button
           type="button"
@@ -765,7 +768,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           }`}
         >
           <Layout className="h-5 w-5" />
-          {isPl ? 'Widok' : 'View'}
+          {t('ideas.table.view', 'View')}
         </button>
       </div>
 
