@@ -36,6 +36,7 @@ import EvFootballFieldScreen from './screens/ev-football-field';
 import I18nFala1SmokeScreen from './screens/i18n-fala1-smoke';
 import IdeaTemplatesCatalogScreen from './screens/idea-templates-catalog';
 import IdeasTeresaPanelScreen from './screens/ideas-teresa-panel';
+import MindmapI18nSmokeScreen from './screens/mindmap-i18n-smoke';
 import NotatnikCentrumMysliScreen from './screens/notatnik-centrum-mysli';
 import NotatnikOsieroconeGrafScreen from './screens/notatnik-osierocone-graf';
 import PublicBookingWidgetScreen from './screens/public-booking-widget';
@@ -150,6 +151,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
     render: () => <StandardKanbanCardScreen />,
+  },
+  'mindmap-i18n-smoke': {
+    label: 'Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*)',
+    render: () => <MindmapI18nSmokeScreen />,
   },
   'i18n-fala1-smoke': {
     label:
