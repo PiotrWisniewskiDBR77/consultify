@@ -2143,15 +2143,19 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       into AI Improve. Skipped for choice/rating/number/date inputs. */}
                   {(() => {
                     if (readOnly) return null;
-                    const t = normalizeAnswerType(currentQuestion.answerType);
+                    // REALNY BUG (fix przy zerowaniu type-checka): lokalne `t`
+                    // przesłaniało i18n-owe `t` — dwa t('interview…') niżej
+                    // wywoływały STRING jak funkcję → TypeError w runtime,
+                    // gdy tylko hint „za krótka odpowiedź" miał się pokazać.
+                    const answerTypeNorm = normalizeAnswerType(currentQuestion.answerType);
                     const isFreeText =
-                      !QUESTION_INPUT_TYPES.yesNo.has(t) &&
-                      !QUESTION_INPUT_TYPES.singleChoice.has(t) &&
-                      !QUESTION_INPUT_TYPES.multiChoice.has(t) &&
-                      !QUESTION_INPUT_TYPES.rating.has(t) &&
-                      !QUESTION_INPUT_TYPES.dropdown.has(t) &&
-                      !QUESTION_INPUT_TYPES.date.has(t) &&
-                      !QUESTION_INPUT_TYPES.number.has(t);
+                      !QUESTION_INPUT_TYPES.yesNo.has(answerTypeNorm) &&
+                      !QUESTION_INPUT_TYPES.singleChoice.has(answerTypeNorm) &&
+                      !QUESTION_INPUT_TYPES.multiChoice.has(answerTypeNorm) &&
+                      !QUESTION_INPUT_TYPES.rating.has(answerTypeNorm) &&
+                      !QUESTION_INPUT_TYPES.dropdown.has(answerTypeNorm) &&
+                      !QUESTION_INPUT_TYPES.date.has(answerTypeNorm) &&
+                      !QUESTION_INPUT_TYPES.number.has(answerTypeNorm);
                     const trimmed = answerDraft.trim();
                     const tooShort =
                       isFreeText && trimmed.length > 0 && trimmed.length < 20 && !aiImproveResult;

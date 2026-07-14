@@ -1106,16 +1106,19 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                       </div>
 
                       <div className="max-h-56 overflow-auto">
-                        {mutedTypes.map((t) => (
+                        {/* REALNY BUG (fix przy zerowaniu type-checka): param `t`
+                            przesłaniał i18n-owe `t` — t('…unmute') wywoływało
+                            string jak funkcję → TypeError przy renderze listy. */}
+                        {mutedTypes.map((mutedType) => (
                           <div
-                            key={t}
+                            key={mutedType}
                             className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                           >
                             <span className="text-xs text-c-text-secondary truncate">
-                              {t.replace(/_/g, ' ')}
+                              {mutedType.replace(/_/g, ' ')}
                             </span>
                             <button
-                              onClick={() => unmuteNotificationTypeForSession(t)}
+                              onClick={() => unmuteNotificationTypeForSession(mutedType)}
                               className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-c-border text-c-text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                             >
                               {t('myWork.notificationsContent.unmute', 'Unmute')}
