@@ -3760,7 +3760,18 @@
       "label14": "Seed",
       "label15": "Growing",
       "label16": "Mature",
-      "label17": "Actionable"
+      "label17": "Actionable",
+      "activityType": {
+        "created": "Created",
+        "status": "Status",
+        "assigned": "Assigned",
+        "comment": "Comment",
+        "edit": "Edit",
+        "attachment": "Attachment",
+        "deadline": "Deadline",
+        "priority": "Priority"
+      },
+      "email": "Email"
     },
     "dependencies": {
       "toastError": "Select a source task first",

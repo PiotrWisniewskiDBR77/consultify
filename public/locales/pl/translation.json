@@ -2995,7 +2995,18 @@
       "label14": "Ziarno",
       "label15": "Rośnie",
       "label16": "Dojrzała",
-      "label17": "Do działania"
+      "label17": "Do działania",
+      "activityType": {
+        "created": "Utworzono",
+        "status": "Status",
+        "assigned": "Przypisano",
+        "comment": "Komentarz",
+        "edit": "Edycja",
+        "attachment": "Załącznik",
+        "deadline": "Termin",
+        "priority": "Priorytet"
+      },
+      "email": "E-mail"
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
