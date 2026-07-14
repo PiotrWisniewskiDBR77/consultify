@@ -147,8 +147,7 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
   onSelect,
   anchorRect,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const handleSelect = useCallback(
     (tpl: RowTemplate) => {
@@ -184,7 +183,7 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
       >
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-            {isPl ? 'Szablon wiersza' : 'Row Template'}
+            {t('ideas.table.rowTemplatePicker.title', 'Row Template')}
           </span>
           <button onClick={onClose} className="p-0.5 rounded hover:bg-c-surface-raised">
             <X size={11} className="text-c-text-muted" />
@@ -207,10 +206,10 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[11px] font-bold text-c-text-secondary">
-                    {isPl ? tpl.labelPl : tpl.labelEn}
+                    {t(`ideas.table.rowTemplate.${tpl.id}.label`, tpl.labelEn)}
                   </div>
                   <div className="text-[9px] text-c-text-muted truncate">
-                    {isPl ? tpl.descPl : tpl.descEn}
+                    {t(`ideas.table.rowTemplate.${tpl.id}.desc`, tpl.descEn)}
                   </div>
                 </div>
               </button>

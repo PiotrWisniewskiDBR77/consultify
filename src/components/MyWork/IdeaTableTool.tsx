@@ -290,7 +290,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   });
 
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
-  const schema = useTableSchema(isPl, ideaId);
+  const schema = useTableSchema(t, ideaId);
   const {
     columns,
     setColumns,

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import i18n from '@/i18n';
+
 export interface ViewErrorBoundaryProps {
   viewName: string;
   onSwitchToGrid: () => void;
@@ -43,10 +45,19 @@ export class ViewErrorBoundary extends React.Component<
       return children;
     }
 
-    const isPl = locale?.startsWith('pl');
-    const title = isPl ? 'Coś poszło nie tak w tym widoku' : 'Something went wrong in this view';
-    const retryLabel = isPl ? 'Ponów' : 'Retry';
-    const switchLabel = isPl ? 'Przełącz na siatkę' : 'Switch to Grid';
+    // Class component — no hooks available, so translate via the i18next
+    // singleton with an explicit `lng` override so the `locale` prop (not the
+    // global current language) drives the text, matching the previous isPl contract.
+    const lng = locale || 'en';
+    const title = i18n.t('ideas.table.errorBoundary.title', {
+      lng,
+      defaultValue: 'Something went wrong in this view',
+    });
+    const retryLabel = i18n.t('ideas.table.errorBoundary.retry', { lng, defaultValue: 'Retry' });
+    const switchLabel = i18n.t('ideas.table.errorBoundary.switchToGrid', {
+      lng,
+      defaultValue: 'Switch to Grid',
+    });
 
     return (
       <div

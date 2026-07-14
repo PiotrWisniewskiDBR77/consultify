@@ -22432,7 +22432,110 @@
         "thanklessTasks": "Niewdzięczne zadania"
       },
       "copySuffix": "(kopia)",
-      "autoSaved": "Automatycznie zapisane"
+      "autoSaved": "Automatycznie zapisane",
+      "records": "rekordów",
+      "selectedCount": "zaznaczonych",
+      "agg": {
+        "none": "Brak",
+        "sum": "Suma",
+        "avg": "Średnia",
+        "min": "Min",
+        "max": "Max",
+        "count": "Liczba"
+      },
+      "rowTemplatePicker": {
+        "title": "Szablon wiersza"
+      },
+      "rowTemplate": {
+        "blank": {
+          "label": "Pusty wiersz",
+          "desc": "Pusty wiersz do ręcznego wypełnienia"
+        },
+        "idea": {
+          "label": "Pomysł",
+          "desc": "Nowy pomysł z wpływem i wysiłkiem"
+        },
+        "action_item": {
+          "label": "Zadanie",
+          "desc": "Zadanie z właścicielem i terminem"
+        },
+        "risk": {
+          "label": "Ryzyko",
+          "desc": "Ryzyko z prawdopodobieństwem i wpływem"
+        },
+        "stakeholder": {
+          "label": "Interesariusz",
+          "desc": "Osoba lub grupa z wpływem i zainteresowaniem"
+        },
+        "opportunity": {
+          "label": "Szansa",
+          "desc": "Szansa biznesowa do zbadania"
+        },
+        "decision": {
+          "label": "Decyzja",
+          "desc": "Decyzja do podjęcia z opcjami"
+        },
+        "requirement": {
+          "label": "Wymaganie",
+          "desc": "Wymaganie biznesowe lub techniczne"
+        },
+        "kpi": {
+          "label": "KPI / Metryka",
+          "desc": "Kluczowy wskaźnik do śledzenia"
+        },
+        "constraint": {
+          "label": "Ograniczenie",
+          "desc": "Ograniczenie lub warunek brzegowy"
+        }
+      },
+      "shortcuts": {
+        "title": "Skróty klawiszowe",
+        "group": {
+          "navigation": "Nawigacja",
+          "editing": "Edycja",
+          "viewsTools": "Widoki i narzędzia"
+        },
+        "item": {
+          "moveBetweenRows": "Przejdź między wierszami",
+          "nextCell": "Następna komórka",
+          "previousCell": "Poprzednia komórka",
+          "moveToRowBelow": "Przejdź do wiersza poniżej",
+          "deselectClosePanel": "Odznacz / zamknij panel",
+          "nextColumn": "Następna kolumna",
+          "previousColumn": "Poprzednia kolumna",
+          "undo": "Cofnij",
+          "redo": "Ponów",
+          "deleteSelectedRows": "Usuń zaznaczone wiersze",
+          "save": "Zapisz",
+          "addNewRow": "Dodaj nowy wiersz",
+          "openAIAssistant": "Otwórz Asystenta AI",
+          "showKeyboardShortcuts": "Pokaż skróty klawiszowe",
+          "switchToKanban": "Przełącz na Kanban",
+          "switchToStickyNotes": "Przełącz na Karteczki",
+          "switchToMatrix": "Przełącz na Matrix",
+          "switchToTable": "Przełącz na Tabelę",
+          "toggleFilters": "Przełącz filtry",
+          "toggleSummaryDashboard": "Przełącz podsumowanie"
+        }
+      },
+      "column": {
+        "type": "Typ",
+        "label": "Etykieta",
+        "status": "Status",
+        "priority": "Priorytet",
+        "owner": "Właściciel",
+        "impact": "Wpływ",
+        "effort": "Wysiłek",
+        "created_time": "Utworzono",
+        "created_by": "Utworzył",
+        "last_edited_time": "Ostatnia edycja",
+        "last_edited_by": "Edytował"
+      },
+      "errorBoundary": {
+        "title": "Coś poszło nie tak w tym widoku",
+        "retry": "Ponów",
+        "switchToGrid": "Przełącz na siatkę"
+      }
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",

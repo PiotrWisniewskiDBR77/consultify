@@ -21356,7 +21356,110 @@
         "thanklessTasks": "Thankless Tasks"
       },
       "copySuffix": "(copy)",
-      "autoSaved": "Auto-saved"
+      "autoSaved": "Auto-saved",
+      "records": "records",
+      "selectedCount": "selected",
+      "agg": {
+        "none": "None",
+        "sum": "Sum",
+        "avg": "Average",
+        "min": "Min",
+        "max": "Max",
+        "count": "Count"
+      },
+      "rowTemplatePicker": {
+        "title": "Row Template"
+      },
+      "rowTemplate": {
+        "blank": {
+          "label": "Blank row",
+          "desc": "Empty row to fill manually"
+        },
+        "idea": {
+          "label": "Idea",
+          "desc": "New idea with impact & effort"
+        },
+        "action_item": {
+          "label": "Action Item",
+          "desc": "Actionable task with owner & deadline"
+        },
+        "risk": {
+          "label": "Risk",
+          "desc": "Risk item with probability & impact"
+        },
+        "stakeholder": {
+          "label": "Stakeholder",
+          "desc": "Person or group with influence & interest"
+        },
+        "opportunity": {
+          "label": "Opportunity",
+          "desc": "Business opportunity to explore"
+        },
+        "decision": {
+          "label": "Decision",
+          "desc": "Decision to be made with options"
+        },
+        "requirement": {
+          "label": "Requirement",
+          "desc": "Business or technical requirement"
+        },
+        "kpi": {
+          "label": "KPI / Metric",
+          "desc": "Key performance indicator to track"
+        },
+        "constraint": {
+          "label": "Constraint",
+          "desc": "Limitation or boundary condition"
+        }
+      },
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "group": {
+          "navigation": "Navigation",
+          "editing": "Editing",
+          "viewsTools": "Views & Tools"
+        },
+        "item": {
+          "moveBetweenRows": "Move between rows",
+          "nextCell": "Next cell",
+          "previousCell": "Previous cell",
+          "moveToRowBelow": "Move to row below",
+          "deselectClosePanel": "Deselect / close panel",
+          "nextColumn": "Next column",
+          "previousColumn": "Previous column",
+          "undo": "Undo",
+          "redo": "Redo",
+          "deleteSelectedRows": "Delete selected rows",
+          "save": "Save",
+          "addNewRow": "Add new row",
+          "openAIAssistant": "Open AI Assistant",
+          "showKeyboardShortcuts": "Show keyboard shortcuts",
+          "switchToKanban": "Switch to Kanban",
+          "switchToStickyNotes": "Switch to Sticky Notes",
+          "switchToMatrix": "Switch to Matrix",
+          "switchToTable": "Switch to Table",
+          "toggleFilters": "Toggle filters",
+          "toggleSummaryDashboard": "Toggle summary dashboard"
+        }
+      },
+      "column": {
+        "type": "Type",
+        "label": "Label",
+        "status": "Status",
+        "priority": "Priority",
+        "owner": "Owner",
+        "impact": "Impact",
+        "effort": "Effort",
+        "created_time": "Created",
+        "created_by": "Created by",
+        "last_edited_time": "Last edited",
+        "last_edited_by": "Last edited by"
+      },
+      "errorBoundary": {
+        "title": "Something went wrong in this view",
+        "retry": "Retry",
+        "switchToGrid": "Switch to Grid"
+      }
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
