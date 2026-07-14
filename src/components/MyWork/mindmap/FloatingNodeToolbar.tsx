@@ -139,7 +139,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   onOpenChatAboutNode,
   onAction,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const isMulti = mode === 'multi';
   const [openDropdown, setOpenDropdown] = useState<DropdownId>(null);
@@ -186,9 +186,9 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         {/* Multi-select label — replaces the single-node growth affordances */}
         {isMulti && (
           <div className="flex h-9 items-center px-2 text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted whitespace-nowrap">
-            {isPl
-              ? `${selectionCount ?? ''} zaznaczonych`.trim()
-              : `${selectionCount ?? ''} selected`.trim()}
+            {t('ideas.mindmap.nSelected', '{{count}} selected', {
+              count: selectionCount ?? '',
+            }).trim()}
           </div>
         )}
 
@@ -280,12 +280,12 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <button
               onClick={onAddChild}
               disabled={disabled}
-              title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-              aria-label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+              title={t('ideas.mindmap.addChildTab', 'Add child (Tab)')}
+              aria-label={t('ideas.mindmap.addChildTab', 'Add child (Tab)')}
               className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
             >
               <Plus size={14} strokeWidth={2.5} />
-              <span className="text-[10px] font-semibold">{isPl ? 'Gałąź' : 'Child'}</span>
+              <span className="text-[10px] font-semibold">{t('ideas.mindmap.child', 'Child')}</span>
             </button>
 
             {/* 0b. Add sibling — secondary growth affordance */}
@@ -293,12 +293,14 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               <button
                 onClick={onAddSibling}
                 disabled={disabled}
-                title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
-                aria-label={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
+                title={t('ideas.mindmap.addSiblingShiftEnter', 'Add sibling (Shift+Enter)')}
+                aria-label={t('ideas.mindmap.addSiblingShiftEnter', 'Add sibling (Shift+Enter)')}
                 className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
               >
                 <GitBranch size={13} />
-                <span className="text-[10px] font-medium">{isPl ? 'Sąsiad' : 'Sibling'}</span>
+                <span className="text-[10px] font-medium">
+                  {t('ideas.mindmap.sibling', 'Sibling')}
+                </span>
               </button>
             )}
 
@@ -306,8 +308,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <button
               onClick={() => onAction('ctx_edit')}
               disabled={disabled || isProtected}
-              title={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
-              aria-label={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
+              title={t('ideas.mindmap.renameF2', 'Rename (F2)')}
+              aria-label={t('ideas.mindmap.renameF2', 'Rename (F2)')}
               className={btnClass(false)}
             >
               <Edit3 size={13} />
@@ -326,7 +328,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                       ? 'Expand (Space)'
                       : 'Collapse (Space)'
                 }
-                aria-label={isPl ? 'Zwiń/Rozwiń' : 'Collapse/Expand'}
+                aria-label={t('ideas.mindmap.collapseExpand', 'Collapse/Expand')}
                 className={btnClass(false)}
               >
                 {nodeData?._collapsed ? <UnfoldVertical size={13} /> : <FoldVertical size={13} />}
@@ -341,8 +343,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <div className="relative">
           <button
             onClick={() => toggle('semanticType')}
-            title={isPl ? 'Typ węzła' : 'Node type'}
-            aria-label={isPl ? 'Typ węzła' : 'Node type'}
+            title={t('ideas.mindmap.nodeType', 'Node type')}
+            aria-label={t('ideas.mindmap.nodeType', 'Node type')}
             className={btnClass(openDropdown === 'semanticType')}
           >
             <CircleDot size={13} />
@@ -363,8 +365,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <div className="relative">
           <button
             onClick={() => toggle('semantic')}
-            title={isPl ? 'Semantyka i tagi' : 'Semantics and tags'}
-            aria-label={isPl ? 'Semantyka i tagi' : 'Semantics and tags'}
+            title={t('ideas.mindmap.semanticsTags', 'Semantics and tags')}
+            aria-label={t('ideas.mindmap.semanticsTags', 'Semantics and tags')}
             className={btnClass(openDropdown === 'semantic')}
           >
             <Tags size={13} />
@@ -389,8 +391,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <div className="relative">
           <button
             onClick={() => toggle('branchTheme')}
-            title={isPl ? 'Styl linii' : 'Line style'}
-            aria-label={isPl ? 'Styl linii' : 'Line style'}
+            title={t('ideas.mindmap.lineStyle', 'Line style')}
+            aria-label={t('ideas.mindmap.lineStyle', 'Line style')}
             className={btnClass(openDropdown === 'branchTheme')}
           >
             <Waypoints size={13} />
@@ -410,8 +412,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         {/* 3. Auto-layout toggle */}
         <button
           onClick={() => onUpdate({ autoLayout: !style.autoLayout })}
-          title={isPl ? 'Auto-układ gałęzi' : 'Auto-layout branch'}
-          aria-label={isPl ? 'Auto-układ gałęzi' : 'Auto-layout branch'}
+          title={t('ideas.mindmap.autoLayoutBranch', 'Auto-layout branch')}
+          aria-label={t('ideas.mindmap.autoLayoutBranch', 'Auto-layout branch')}
           className={btnClass(!!style.autoLayout)}
         >
           <ToggleRight size={13} />
@@ -421,8 +423,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <div className="relative">
           <button
             onClick={() => toggle('color')}
-            title={isPl ? 'Kolor' : 'Color'}
-            aria-label={isPl ? 'Kolor' : 'Color'}
+            title={t('ideas.mindmap.color', 'Color')}
+            aria-label={t('ideas.mindmap.color', 'Color')}
             className={btnClass(openDropdown === 'color')}
           >
             <div
@@ -448,8 +450,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <div className="relative">
           <button
             onClick={() => toggle('fontSize')}
-            title={isPl ? 'Rozmiar czcionki' : 'Font size'}
-            aria-label={isPl ? 'Rozmiar czcionki' : 'Font size'}
+            title={t('ideas.mindmap.fontSize', 'Font size')}
+            aria-label={t('ideas.mindmap.fontSize', 'Font size')}
             className={`${btnClass(openDropdown === 'fontSize')} text-[10px] font-semibold`}
           >
             {style.fontSize || 14}
@@ -468,8 +470,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         {/* 6. Bold */}
         <button
           onClick={() => onUpdate({ bold: !style.bold })}
-          title={isPl ? 'Pogrubienie' : 'Bold'}
-          aria-label={isPl ? 'Pogrubienie' : 'Bold'}
+          title={t('ideas.mindmap.bold', 'Bold')}
+          aria-label={t('ideas.mindmap.bold', 'Bold')}
           className={btnClass(!!style.bold)}
         >
           <Bold size={13} />
@@ -482,8 +484,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <div className="relative">
             <button
               onClick={() => toggle('artifacts')}
-              title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
-              aria-label={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+              title={t('ideas.mindmap.linkedArtifacts', 'Linked artifacts')}
+              aria-label={t('ideas.mindmap.linkedArtifacts', 'Linked artifacts')}
               className={btnClass(openDropdown === 'artifacts')}
             >
               <Paperclip size={13} />
@@ -518,8 +520,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <div className="relative">
             <button
               onClick={() => toggle('task')}
-              title={isPl ? 'Szybkie zadanie' : 'Quick task'}
-              aria-label={isPl ? 'Szybkie zadanie' : 'Quick task'}
+              title={t('ideas.mindmap.quickTask', 'Quick task')}
+              aria-label={t('ideas.mindmap.quickTask', 'Quick task')}
               className={btnClass(openDropdown === 'task')}
             >
               <CheckSquare size={13} />
@@ -544,8 +546,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <button
               onClick={() => toggle('convertBranch')}
               disabled={disabled}
-              title={isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
-              aria-label={isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
+              title={t('ideas.mindmap.convertBranch', 'Convert branch to...')}
+              aria-label={t('ideas.mindmap.convertBranch', 'Convert branch to...')}
               className={btnClass(openDropdown === 'convertBranch')}
             >
               <GitPullRequest size={13} />
@@ -553,33 +555,33 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             {openDropdown === 'convertBranch' && (
               <div className="absolute top-full right-0 mt-1 z-dropdown min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
-                  {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
+                  {t('ideas.mindmap.convertBranch', 'Convert branch to...')}
                 </div>
                 {(
                   [
                     {
                       id: 'ctx_subtree_convert_decision',
-                      label: isPl ? 'Decyzja' : 'Decision',
+                      label: t('ideas.mindmap.decision', 'Decision'),
                       icon: Star,
                     },
                     {
                       id: 'ctx_subtree_convert_tasks',
-                      label: isPl ? 'Zadania' : 'Tasks',
+                      label: t('ideas.mindmap.tasks', 'Tasks'),
                       icon: ListChecks,
                     },
                     {
                       id: 'ctx_subtree_convert_task_set',
-                      label: isPl ? 'Zestaw zadań' : 'Task set',
+                      label: t('ideas.mindmap.taskSet', 'Task set'),
                       icon: ListChecks,
                     },
                     {
                       id: 'ctx_subtree_convert_initiative',
-                      label: isPl ? 'Inicjatywa' : 'Initiative',
+                      label: t('ideas.mindmap.initiative', 'Initiative'),
                       icon: Rocket,
                     },
                     {
                       id: 'ctx_subtree_convert_process_flow',
-                      label: isPl ? 'Przepływ procesu' : 'Process Flow',
+                      label: t('ideas.mindmap.processFlow', 'Process Flow'),
                       icon: Waypoints,
                     },
                   ] as const
@@ -608,9 +610,11 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         {/* 9. Lock */}
         <button
           onClick={() => onUpdate({ locked: !style.locked })}
-          title={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : style.locked ? 'Unlock' : 'Lock'}
+          title={
+            style.locked ? t('ideas.mindmap.unlock', 'Unlock') : t('ideas.mindmap.lock', 'Lock')
+          }
           aria-label={
-            isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : style.locked ? 'Unlock' : 'Lock'
+            style.locked ? t('ideas.mindmap.unlock', 'Unlock') : t('ideas.mindmap.lock', 'Lock')
           }
           className={btnClass(!!style.locked)}
         >
@@ -623,7 +627,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <button
               onClick={() => toggle('quickNotes')}
               disabled={disabled}
-              title={isPl ? 'Szybka notatka' : 'Quick notes'}
+              title={t('ideas.mindmap.quickNotes', 'Quick notes')}
               className={btnClass(openDropdown === 'quickNotes')}
             >
               <StickyNote size={13} />
@@ -648,7 +652,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <button
               onClick={() => toggle('quickTags')}
               disabled={disabled}
-              title={isPl ? 'Szybkie tagi' : 'Quick tags'}
+              title={t('ideas.mindmap.quickTags', 'Quick tags')}
               className={btnClass(openDropdown === 'quickTags')}
             >
               <Hash size={13} />
@@ -673,7 +677,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <button
               onClick={() => toggle('quickLink')}
               disabled={disabled}
-              title={isPl ? 'Szybki link' : 'Quick link'}
+              title={t('ideas.mindmap.quickLink', 'Quick link')}
               className={btnClass(openDropdown === 'quickLink')}
             >
               <Link2 size={13} />
@@ -723,8 +727,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         {!isMulti && (
           <button
             onClick={(e) => onOpenContextMenu({ x: e.clientX, y: e.clientY })}
-            title={isPl ? 'Więcej opcji' : 'More options'}
-            aria-label={isPl ? 'Więcej opcji' : 'More options'}
+            title={t('ideas.mindmap.moreOptions', 'More options')}
+            aria-label={t('ideas.mindmap.moreOptions', 'More options')}
             className={btnClass(false)}
           >
             <MoreVertical size={13} />

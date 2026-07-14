@@ -28,7 +28,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
   onClose,
   onAttach,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [type, setType] = useState<ArtifactType>('initiative');
   const [artifactId, setArtifactId] = useState('');
@@ -57,7 +57,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text">
             <Link2 size={16} />
-            {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
+            {t('ideas.mindmap.attachArtifact', 'Attach artifact')}
           </div>
           <button
             onClick={onClose}
@@ -69,7 +69,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
 
         <div className="mb-2">
           <label className="mb-1 block text-[11px] text-c-text-secondary dark:text-c-text-muted">
-            {isPl ? 'Typ' : 'Type'}
+            {t('ideas.mindmap.type', 'Type')}
           </label>
           <select
             value={type}
@@ -93,20 +93,20 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
             value={artifactId}
             onChange={(e) => setArtifactId(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder={isPl ? 'ID artefaktu...' : 'Artifact ID...'}
+            placeholder={t('ideas.mindmap.artifactId', 'Artifact ID...')}
             className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
 
         <div className="mb-3">
           <label className="mb-1 block text-[11px] text-c-text-secondary dark:text-c-text-muted">
-            {isPl ? 'Etykieta (opcjonalnie)' : 'Label (optional)'}
+            {t('ideas.mindmap.labelOptional', 'Label (optional)')}
           </label>
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder={isPl ? 'Opis powiązania...' : 'Relationship description...'}
+            placeholder={t('ideas.mindmap.relationshipDescription', 'Relationship description...')}
             className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
@@ -116,14 +116,14 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
             onClick={onClose}
             className="rounded px-3 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.mindmap.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!artifactId.trim()}
             className="rounded bg-c-info px-3 py-1 text-xs text-c-text hover:bg-c-info disabled:opacity-40"
           >
-            {isPl ? 'Dołącz' : 'Attach'}
+            {t('ideas.mindmap.attach', 'Attach')}
           </button>
         </div>
       </div>

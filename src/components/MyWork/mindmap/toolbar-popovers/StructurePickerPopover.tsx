@@ -4,6 +4,7 @@
  */
 import { Brain, GitBranch, type LucideIcon, Network, Rows3, Timer, Waypoints } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { MapStructureType } from '../../ideaSelectionTypes';
 
@@ -80,11 +81,12 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
   onSelect,
   onClose,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl overflow-hidden">
       <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border-subtle">
         <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-          {isPl ? 'Typ struktury' : 'Structure Type'}
+          {t('ideas.mindmap.structureType2', 'Structure Type')}
         </div>
       </div>
       <div className="px-1 py-1">

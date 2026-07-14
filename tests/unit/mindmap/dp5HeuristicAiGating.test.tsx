@@ -56,7 +56,7 @@ describe('DP-5: AIActionsPopover heuristic action gating', () => {
     const btn = screen.getByText('Auto-clustering').closest('button');
     expect(btn).toBeTruthy();
     expect(btn).toBeDisabled();
-    expect(screen.getByText('Coming soon')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
     if (btn) fireEvent.click(btn);
     expect(onAction).not.toHaveBeenCalledWith('mm_ai_cluster');
   });
@@ -67,7 +67,7 @@ describe('DP-5: AIActionsPopover heuristic action gating', () => {
     const btn = screen.getByText('Auto-clustering').closest('button');
     expect(btn).toBeTruthy();
     expect(btn).not.toBeDisabled();
-    expect(screen.queryByText('Coming soon')).toBeNull();
+    expect(screen.queryByText('ideas.mindmap.comingSoon')).toBeNull();
     if (btn) fireEvent.click(btn);
     expect(onAction).toHaveBeenCalledWith('mm_ai_cluster');
   });
@@ -81,9 +81,9 @@ describe('DP-5: AIActionsPopover heuristic action gating', () => {
     }
   });
 
-  it('uses the Polish "Wkrótce" label when isPl', () => {
+  it('renders the comingSoon badge key when isPl (badge text now flows through t(), not the isPl prop)', () => {
     render(<AIActionsPopover {...baseProps} isPl />);
-    expect(screen.getByText('Wkrótce')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
   });
 });
 
@@ -115,7 +115,7 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
     const btn = screen.getByText('Detect dependencies').closest('button');
     expect(btn).toBeTruthy();
     expect(btn).toBeDisabled();
-    expect(screen.getByText('Coming soon')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
     if (btn) fireEvent.click(btn);
     expect(onAction).not.toHaveBeenCalledWith('ctx_dependencies');
   });
@@ -127,7 +127,7 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
     const btn = screen.getByText('Detect dependencies').closest('button');
     expect(btn).toBeTruthy();
     expect(btn).not.toBeDisabled();
-    expect(screen.queryByText('Coming soon')).toBeNull();
+    expect(screen.queryByText('ideas.mindmap.comingSoon')).toBeNull();
     if (btn) fireEvent.click(btn);
     expect(onAction).toHaveBeenCalledWith('ctx_dependencies');
   });

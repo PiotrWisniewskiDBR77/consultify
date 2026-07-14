@@ -13,6 +13,7 @@ import {
   Upload,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ImportExportPopoverProps {
   isPl: boolean;
@@ -80,6 +81,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
   onAction,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const dispatch = (action: string) => {
     onAction(action);
     onClose();
@@ -92,7 +94,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
     >
       <div className="px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-          {isPl ? 'Import' : 'Import'}
+          {t('ideas.mindmap.import', 'Import')}
         </div>
         {IMPORT_ACTIONS.map((a) => {
           const Icon = a.iconEl;
@@ -115,7 +117,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
       </div>
       <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-          {isPl ? 'Eksport' : 'Export'}
+          {t('ideas.mindmap.export', 'Export')}
         </div>
         {EXPORT_ACTIONS.map((a) => {
           const Icon = a.iconEl;
@@ -147,7 +149,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
           className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
         >
           <Clock size={12} className="text-c-warning shrink-0" />
-          {isPl ? 'Historia wersji' : 'Version History'}
+          {t('ideas.mindmap.versionHistory', 'Version History')}
           <span className="ml-auto text-[9px] text-c-text-secondary">⌘⇧H</span>
         </button>
       </div>

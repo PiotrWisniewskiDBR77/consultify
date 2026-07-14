@@ -8,6 +8,7 @@ import {
   Star,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SemanticTypeDropdownProps {
   isPl: boolean;
@@ -56,10 +57,11 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
   onSelect,
   onClose,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="w-48 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl py-1">
       <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-        {isPl ? 'Typ węzła' : 'Node type'}
+        {t('ideas.mindmap.nodeType', 'Node type')}
       </div>
       {SEMANTIC_TYPE_OPTIONS.map((t) => {
         const Icon = t.iconEl;

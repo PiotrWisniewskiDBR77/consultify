@@ -26,8 +26,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
   locked,
   onFocusBranch,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
 
   const branches = useMemo((): BranchBalance[] => {
@@ -79,7 +78,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <Scale size={14} className="text-c-info shrink-0" />
           <span className="text-[11px] font-bold text-c-info dark:text-c-info flex-1">
-            {isPl ? 'Mapa niezbalansowana' : 'Unbalanced Map'}
+            {t('ideas.mindmap.unbalancedMap', 'Unbalanced Map')}
           </span>
           <button
             onClick={() => setDismissed(true)}
@@ -112,7 +111,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           {emptyBranches.length > 0 && (
             <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border-subtle">
               <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted mb-1">
-                {isPl ? 'Puste gałęzie:' : 'Empty branches:'}
+                {t('ideas.mindmap.emptyBranches', 'Empty branches:')}
               </div>
               {emptyBranches.map((b) => (
                 <button
@@ -131,7 +130,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           {weakBranches.length > 0 && (
             <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border-subtle">
               <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted mb-1">
-                {isPl ? 'Słabe gałęzie (1 element):' : 'Weak branches (1 item):'}
+                {t('ideas.mindmap.weakBranches1Item', 'Weak branches (1 item):')}
               </div>
               {weakBranches.map((b) => (
                 <button

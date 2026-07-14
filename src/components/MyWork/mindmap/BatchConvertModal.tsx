@@ -28,7 +28,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
   locked,
   onConvert,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -64,7 +64,9 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
       try {
         onConvert(Array.from(selected), target);
         toast.success(
-          isPl ? `Konwertowano ${selected.size} elementów` : `Converted ${selected.size} items`,
+          t('ideas.mindmap.convertedNItems', 'Converted {{count}} items', {
+            count: selected.size,
+          }),
           { duration: 1500 }
         );
         onClose();
@@ -72,7 +74,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
         setConverting(false);
       }
     },
-    [isPl, onClose, onConvert, selected]
+    [onClose, onConvert, selected, t]
   );
 
   if (!open) return null;
@@ -83,7 +85,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Konwersja zbiorcza' : 'Batch Convert'}
+              {t('ideas.mindmap.batchConvert', 'Batch Convert')}
             </h3>
             <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-0.5">
               {isPl
@@ -109,7 +111,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
             ) : (
               <Square size={14} className="text-c-text-secondary" />
             )}
-            {isPl ? 'Zaznacz wszystko' : 'Select all'}
+            {t('ideas.mindmap.selectAll', 'Select all')}
           </button>
 
           <div className="space-y-1">

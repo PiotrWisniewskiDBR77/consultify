@@ -51,8 +51,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
   locked,
   onApplyPriorities,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
 
   const [recommendations, setRecommendations] = useState<PriorityRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -124,9 +123,9 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
     onApplyPriorities(
       recommendations.map((r) => ({ nodeId: r.nodeId, priority: r.suggestedPriority }))
     );
-    toast.success(isPl ? 'Priorytety zaktualizowane' : 'Priorities updated', { duration: 1200 });
+    toast.success(t('ideas.mindmap.prioritiesUpdated', 'Priorities updated'), { duration: 1200 });
     onClose();
-  }, [isPl, onApplyPriorities, onClose, recommendations]);
+  }, [onApplyPriorities, onClose, recommendations]);
 
   if (!open) return null;
 
@@ -138,13 +137,14 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
             <div className="flex items-center gap-2">
               <Target size={16} className="text-c-warning" />
               <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-                {isPl ? 'AI: Priorytetyzacja' : 'AI: Priority Recommender'}
+                {t('ideas.mindmap.aiPriorityRecommender', 'AI: Priority Recommender')}
               </h3>
             </div>
             <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
-              {isPl
-                ? 'Analiza impact/effort z kontekstem KPI firmy.'
-                : 'Impact/effort analysis with company KPI context.'}
+              {t(
+                'ideas.mindmap.impactEffortAnalysisCompanyKpiContext',
+                'Impact/effort analysis with company KPI context.'
+              )}
             </p>
           </div>
           <button
@@ -163,9 +163,10 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
-                {isPl
-                  ? 'AI przeanalizuje priorytety Twoich pomysłów.'
-                  : 'AI will analyze the priorities of your ideas.'}
+                {t(
+                  'ideas.mindmap.aiWillAnalyzePrioritiesYourIdeas',
+                  'AI will analyze the priorities of your ideas.'
+                )}
               </p>
               <button
                 onClick={analyze}
@@ -173,7 +174,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-warning dark:text-c-warning transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
-                {isPl ? 'Analizuj priorytety' : 'Analyze priorities'}
+                {t('ideas.mindmap.analyzePriorities', 'Analyze priorities')}
               </button>
             </div>
           )}
@@ -182,7 +183,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-warning" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Analizuję...' : 'Analyzing...'}
+                {t('ideas.mindmap.analyzing', 'Analyzing...')}
               </span>
             </div>
           )}
@@ -192,7 +193,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
               {/* Sort controls */}
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
-                  {isPl ? 'Sortuj:' : 'Sort:'}
+                  {t('ideas.mindmap.sort', 'Sort:')}
                 </span>
                 {(['rank', 'impact', 'effort'] as const).map((s) => (
                   <button
@@ -201,9 +202,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                     className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
                   >
                     {s === 'rank'
-                      ? isPl
-                        ? 'Ranking'
-                        : 'Rank'
+                      ? t('ideas.mindmap.rank', 'Rank')
                       : s === 'impact'
                         ? 'Impact'
                         : 'Effort'}
@@ -231,12 +230,12 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                       <span
                         className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${IMPACT_COLORS[rec.impact]}`}
                       >
-                        {isPl ? 'Wpływ' : 'Impact'}: {rec.impact}
+                        {t('ideas.mindmap.impact', 'Impact')}: {rec.impact}
                       </span>
                       <span
                         className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${EFFORT_COLORS[rec.effort]}`}
                       >
-                        {isPl ? 'Wysiłek' : 'Effort'}: {rec.effort}
+                        {t('ideas.mindmap.effort', 'Effort')}: {rec.effort}
                       </span>
                     </div>
                     <div className="w-10 text-right">
@@ -260,7 +259,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
               onClick={onClose}
               className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
-              {isPl ? 'Anuluj' : 'Cancel'}
+              {t('ideas.mindmap.cancel', 'Cancel')}
             </button>
             <button
               onClick={handleApplyAll}
@@ -268,7 +267,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all disabled:opacity-40"
             >
               <CheckCircle2 size={12} />
-              {isPl ? 'Zastosuj priorytety' : 'Apply priorities'}
+              {t('ideas.mindmap.applyPriorities', 'Apply priorities')}
             </button>
           </div>
         )}

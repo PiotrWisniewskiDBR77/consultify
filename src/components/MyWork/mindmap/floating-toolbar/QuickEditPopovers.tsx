@@ -4,6 +4,7 @@
  */
 import { Hash, Link2, Plus, StickyNote, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /* ─── Quick Notes ─────────────────────────────────────────────────────────── */
 
@@ -16,12 +17,12 @@ interface QuickNotesPopoverProps {
 }
 
 export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
-  isPl,
   nodeId,
   currentNotes,
   onSave,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [value, setValue] = useState(currentNotes || '');
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -39,7 +40,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-c-text-secondary dark:text-c-text-muted">
           <StickyNote size={12} />
-          {isPl ? 'Notatki' : 'Notes'}
+          {t('ideas.mindmap.notes', 'Notes')}
         </div>
         <button
           onClick={onClose}
@@ -52,7 +53,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
         ref={ref}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder={isPl ? 'Dodaj notatkę…' : 'Add a note…'}
+        placeholder={t('ideas.mindmap.addNote', 'Add a note…')}
         className="w-full h-20 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-c-border"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSave();
@@ -62,7 +63,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
         onClick={handleSave}
         className="mt-2 w-full py-1.5 rounded-lg bg-c-surface text-c-text dark:bg-c-surface-raised dark:text-c-text dark:hover:bg-c-surface-raised text-xs font-medium hover:bg-c-surface transition-colors"
       >
-        {isPl ? 'Zapisz' : 'Save'}
+        {t('ideas.mindmap.save', 'Save')}
       </button>
     </div>
   );
@@ -79,12 +80,12 @@ interface QuickTagsPopoverProps {
 }
 
 export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
-  isPl,
   nodeId,
   currentTags,
   onSave,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [tags, setTags] = useState<string[]>(currentTags || []);
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +118,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-c-text-secondary dark:text-c-text-muted">
           <Hash size={12} />
-          {isPl ? 'Tagi' : 'Tags'}
+          {t('ideas.mindmap.tags', 'Tags')}
         </div>
         <button
           onClick={onClose}
@@ -152,7 +153,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
               addTag();
             }
           }}
-          placeholder={isPl ? 'Nowy tag…' : 'New tag…'}
+          placeholder={t('ideas.mindmap.newTag', 'New tag…')}
           className="flex-1 h-7 px-2 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg focus:outline-none focus:ring-1 focus:ring-c-border"
         />
         <button
@@ -177,12 +178,12 @@ interface QuickLinkPopoverProps {
 }
 
 export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
-  isPl,
   nodeId,
   currentLink,
   onSave,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [value, setValue] = useState(currentLink || '');
   const ref = useRef<HTMLInputElement>(null);
 
@@ -200,7 +201,7 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-c-text-secondary dark:text-c-text-muted">
           <Link2 size={12} />
-          {isPl ? 'Link' : 'Link'}
+          {t('ideas.mindmap.link', 'Link')}
         </div>
         <button
           onClick={onClose}
@@ -223,7 +224,7 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
         onClick={handleSave}
         className="mt-2 w-full py-1.5 rounded-lg bg-c-surface text-c-text dark:bg-c-surface-raised dark:text-c-text dark:hover:bg-c-surface-raised text-xs font-medium hover:bg-c-surface transition-colors"
       >
-        {isPl ? 'Zapisz' : 'Save'}
+        {t('ideas.mindmap.save', 'Save')}
       </button>
     </div>
   );

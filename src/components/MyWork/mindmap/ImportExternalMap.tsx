@@ -170,67 +170,64 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
   locked,
   onImport,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<ImportedNode | null>(null);
   const [fileName, setFileName] = useState('');
 
-  const handleFile = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const handleFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      setLoading(true);
-      setFileName(file.name);
+    setLoading(true);
+    setFileName(file.name);
 
-      try {
-        let root: ImportedNode | null = null;
+    try {
+      let root: ImportedNode | null = null;
 
-        if (file.name.endsWith('.mm')) {
-          const text = await file.text();
-          root = parseFreeMindXML(text);
-        } else if (file.name.endsWith('.xmind')) {
-          root = await parseXMindZip(file);
-        } else if (file.name.endsWith('.opml')) {
-          const text = await file.text();
-          root = parseOPML(text);
-        } else {
-          toast.error(
-            isPl
-              ? 'Nieobsługiwany format. Użyj .mm, .xmind lub .opml'
-              : 'Unsupported format. Use .mm, .xmind, or .opml'
-          );
-          setLoading(false);
-          return;
-        }
-
-        if (!root) {
-          toast.error(isPl ? 'Nie udało się sparsować pliku' : 'Failed to parse file');
-        } else {
-          setPreview(root);
-        }
-      } catch (err: any) {
-        toast.error(err?.message || 'Import failed');
-      } finally {
+      if (file.name.endsWith('.mm')) {
+        const text = await file.text();
+        root = parseFreeMindXML(text);
+      } else if (file.name.endsWith('.xmind')) {
+        root = await parseXMindZip(file);
+      } else if (file.name.endsWith('.opml')) {
+        const text = await file.text();
+        root = parseOPML(text);
+      } else {
+        toast.error(
+          t(
+            'ideas.mindmap.unsupportedFormatUseMmXmindOpml',
+            'Unsupported format. Use .mm, .xmind, or .opml'
+          )
+        );
         setLoading(false);
+        return;
       }
-    },
-    [isPl]
-  );
+
+      if (!root) {
+        toast.error(t('ideas.mindmap.failedParseFile', 'Failed to parse file'));
+      } else {
+        setPreview(root);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Import failed');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleImport = useCallback(() => {
     if (!preview) return;
     const flat = flattenTree(preview);
     onImport(flat);
     const total = countNodes(preview);
-    toast.success(isPl ? `Zaimportowano ${total} węzłów` : `Imported ${total} nodes`, {
+    toast.success(t('ideas.mindmap.importedNNodes', 'Imported {{count}} nodes', { count: total }), {
       duration: 1500,
     });
     onClose();
-  }, [isPl, onClose, onImport, preview]);
+  }, [onClose, onImport, preview, t]);
 
   const renderTree = (node: ImportedNode, depth: number = 0): React.ReactNode => (
     <div key={node.id} style={{ marginLeft: depth * 16 }}>
@@ -262,7 +259,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
           <div className="flex items-center gap-2">
             <FileUp size={16} className="text-c-info" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Import mapy' : 'Import Mind Map'}
+              {t('ideas.mindmap.importMindMap', 'Import Mind Map')}
             </h3>
           </div>
           <button
@@ -281,9 +278,10 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
-                {isPl
-                  ? 'Importuj mapę z pliku .mm (FreeMind), .xmind (XMind) lub .opml (OPML).'
-                  : 'Import a map from .mm (FreeMind), .xmind (XMind), or .opml (OPML) file.'}
+                {t(
+                  'ideas.mindmap.importMapFromMmFreemindXmind',
+                  'Import a map from .mm (FreeMind), .xmind (XMind), or .opml (OPML) file.'
+                )}
               </p>
               <input
                 ref={fileRef}
@@ -298,7 +296,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
               >
                 <Upload size={14} />
-                {isPl ? 'Wybierz plik' : 'Choose file'}
+                {t('ideas.mindmap.chooseFile', 'Choose file')}
               </button>
             </div>
           )}
@@ -307,7 +305,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-info" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Parsuję...' : 'Parsing...'}
+                {t('ideas.mindmap.parsing', 'Parsing...')}
               </span>
             </div>
           )}
@@ -317,8 +315,8 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
               <div className="mb-3 p-2 rounded-xl bg-c-surface-raised border border-c-info">
                 <div className="text-[10px] font-bold text-c-info dark:text-c-info">{fileName}</div>
                 <div className="text-[9px] text-c-text-secondary">
-                  {nodeCount} {isPl ? 'węzłów' : 'nodes'} · {preview.children.length}{' '}
-                  {isPl ? 'gałęzi' : 'branches'}
+                  {nodeCount} {t('ideas.mindmap.nodes', 'nodes')} · {preview.children.length}{' '}
+                  {t('ideas.mindmap.branches', 'branches')}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle max-h-[250px] overflow-y-auto">
@@ -337,7 +335,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
               }}
               className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
-              {isPl ? 'Inny plik' : 'Different file'}
+              {t('ideas.mindmap.differentFile', 'Different file')}
             </button>
             <button
               onClick={handleImport}
@@ -345,7 +343,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-info dark:text-c-info border border-c-info transition-all disabled:opacity-40"
             >
               <FileUp size={12} />
-              {isPl ? 'Importuj do mapy' : 'Import to map'}
+              {t('ideas.mindmap.importMap', 'Import to map')}
             </button>
           </div>
         )}

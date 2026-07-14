@@ -52,23 +52,23 @@ describe('FloatingNodeToolbar — mode="multi" (M06 Fala 3.2)', () => {
   it('shows the shared styling controls that apply to the whole selection', () => {
     render(<FloatingNodeToolbar {...baseProps} mode="multi" selectionCount={3} />);
 
-    expect(screen.getByTitle('Node type')).toBeTruthy();
-    expect(screen.getByTitle('Line style')).toBeTruthy();
-    expect(screen.getByTitle('Auto-layout branch')).toBeTruthy();
-    expect(screen.getByTitle('Color')).toBeTruthy();
-    expect(screen.getByTitle('Font size')).toBeTruthy();
-    expect(screen.getByTitle('Bold')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.nodeType')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.lineStyle')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.autoLayoutBranch')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.color')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.fontSize')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.bold')).toBeTruthy();
   });
 
   it('shows the selection count label', () => {
     render(<FloatingNodeToolbar {...baseProps} mode="multi" selectionCount={5} />);
-    expect(screen.getByText('5 selected')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.nSelected')).toBeTruthy();
   });
 
   it('applying a style calls onUpdate once with the patch (caller fans it out to all selected nodes)', () => {
     const onUpdate = vi.fn();
     render(<FloatingNodeToolbar {...baseProps} mode="multi" selectionCount={2} onUpdate={onUpdate} />);
-    const boldBtn = screen.getByTitle('Bold');
+    const boldBtn = screen.getByTitle('ideas.mindmap.bold');
     fireEvent.click(boldBtn);
     expect(onUpdate).toHaveBeenCalledWith({ bold: true });
   });
@@ -77,7 +77,7 @@ describe('FloatingNodeToolbar — mode="multi" (M06 Fala 3.2)', () => {
     render(<FloatingNodeToolbar {...baseProps} />);
     const buttons = screen.getAllByRole('button');
     expect(buttons.length).toBeGreaterThanOrEqual(10);
-    expect(screen.getByTitle('Add child (Tab)')).toBeTruthy();
-    expect(screen.getByTitle('More options')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.addChildTab')).toBeTruthy();
+    expect(screen.getByTitle('ideas.mindmap.moreOptions')).toBeTruthy();
   });
 });

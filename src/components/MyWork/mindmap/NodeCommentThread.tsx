@@ -62,7 +62,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   onAddComment,
   onDeleteComment,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [text, setText] = useState('');
@@ -133,7 +133,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
           return;
         }
       } catch {
-        toast.error(isPl ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+        toast.error(t('ideas.mindmap.failedAddComment', 'Failed to add comment'));
       }
     }
 
@@ -169,7 +169,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
           onDeleteComment(nodeId, commentId);
           return;
         } catch {
-          toast.error(isPl ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+          toast.error(t('ideas.mindmap.failedDeleteComment', 'Failed to delete comment'));
         }
       }
       onDeleteComment(nodeId, commentId);
@@ -231,7 +231,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
         <MessageSquare size={14} className="text-c-info shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="text-[11px] font-bold text-c-text dark:text-c-text truncate">
-            {isPl ? 'Komentarze' : 'Comments'}
+            {t('ideas.mindmap.comments', 'Comments')}
           </div>
           <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted truncate">
             {nodeLabel}
@@ -256,7 +256,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
 
         {!loading && comments.length === 0 && (
           <div className="text-center py-8 text-[11px] text-c-text-secondary">
-            {isPl ? 'Brak komentarzy. Napisz pierwszy!' : 'No comments yet. Write the first one!'}
+            {t('ideas.mindmap.noCommentsYetWriteFirstOne', 'No comments yet. Write the first one!')}
           </div>
         )}
 
@@ -301,7 +301,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
               {mentionQuery !== null && mentionSuggestions.length > 0 && (
                 <div
                   role="listbox"
-                  aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
+                  aria-label={t('ideas.mindmap.mentionTeammate', 'Mention a teammate')}
                   className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
                 >
                   {mentionSuggestions.map((user) => (
@@ -329,9 +329,10 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 rows={2}
-                placeholder={
-                  isPl ? 'Napisz komentarz... (@wzmianka)' : 'Write a comment... (@mention)'
-                }
+                placeholder={t(
+                  'ideas.mindmap.writeCommentMention',
+                  'Write a comment... (@mention)'
+                )}
                 className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none"
               />
               <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-c-text-secondary" />

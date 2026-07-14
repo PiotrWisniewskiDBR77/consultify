@@ -26,8 +26,7 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
   nodes,
   edges,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [format, setFormat] = useState<EmbedFormat>('markdown');
   const [copied, setCopied] = useState(false);
 
@@ -111,13 +110,13 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
       .writeText(embedContent)
       .then(() => {
         setCopied(true);
-        toast.success(isPl ? 'Skopiowano!' : 'Copied!', { duration: 1000 });
+        toast.success(t('ideas.mindmap.copied', 'Copied!'), { duration: 1000 });
         setTimeout(() => setCopied(false), 2000);
       })
       .catch(() => {
         toast.error('Failed to copy');
       });
-  }, [embedContent, isPl]);
+  }, [embedContent]);
 
   if (!open) return null;
 
@@ -134,7 +133,7 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
           <div className="flex items-center gap-2">
             <Code size={16} className="text-c-info" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Osadź w raporcie' : 'Embed in Report'}
+              {t('ideas.mindmap.embedReport', 'Embed in Report')}
             </h3>
           </div>
           <button
@@ -181,9 +180,10 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
           </div>
 
           <p className="text-[9px] text-c-text-secondary mt-3 text-center">
-            {isPl
-              ? 'Skopiuj i wklej do raportu, prezentacji lub dokumentu.'
-              : 'Copy and paste into your report, presentation, or document.'}
+            {t(
+              'ideas.mindmap.copyPasteIntoYourReportPresentation',
+              'Copy and paste into your report, presentation, or document.'
+            )}
           </p>
         </div>
       </div>

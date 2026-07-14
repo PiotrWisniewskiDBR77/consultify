@@ -30,8 +30,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
   nodes,
   edges,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [rotateX, setRotateX] = useState(-20);
@@ -168,9 +167,9 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
           <ChevronLeft size={16} />
         </button>
         <Box size={16} className="text-c-text-muted" />
-        <h2 className="text-sm font-bold text-c-text">{isPl ? 'Widok 3D' : '3D View'}</h2>
+        <h2 className="text-sm font-bold text-c-text">{t('ideas.mindmap.n3dView', '3D View')}</h2>
         <span className="text-[10px] text-c-text-secondary ml-2">
-          {isPl ? 'Przeciągnij, aby obrócić' : 'Drag to rotate'}
+          {t('ideas.mindmap.dragRotate', 'Drag to rotate')}
         </span>
         <div className="flex-1" />
         <button

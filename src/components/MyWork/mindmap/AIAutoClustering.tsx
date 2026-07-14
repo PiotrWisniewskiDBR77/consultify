@@ -48,8 +48,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
   locked,
   onApplyClusters,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
 
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,9 +104,9 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
 
   const handleApply = useCallback(() => {
     onApplyClusters(clusters);
-    toast.success(isPl ? 'Klastry zastosowane' : 'Clusters applied', { duration: 1200 });
+    toast.success(t('ideas.mindmap.clustersApplied', 'Clusters applied'), { duration: 1200 });
     onClose();
-  }, [clusters, isPl, onApplyClusters, onClose]);
+  }, [clusters, onApplyClusters, onClose]);
 
   if (!open) return null;
 
@@ -118,7 +117,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
           <div className="flex items-center gap-2">
             <Group size={16} className="text-c-info" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'AI: Auto-Clustering' : 'AI: Auto-Clustering'}
+              {t('ideas.mindmap.aiAutoClustering', 'AI: Auto-Clustering')}
             </h3>
           </div>
           <button
@@ -137,9 +136,10 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
-                {isPl
-                  ? 'AI pogrupuje pomysły w klastry tematyczne.'
-                  : 'AI will group ideas into thematic clusters.'}
+                {t(
+                  'ideas.mindmap.aiWillGroupIdeasIntoThematic',
+                  'AI will group ideas into thematic clusters.'
+                )}
               </p>
               <button
                 onClick={detectClusters}
@@ -147,7 +147,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
-                {isPl ? 'Wykryj klastry' : 'Detect clusters'}
+                {t('ideas.mindmap.detectClusters', 'Detect clusters')}
               </button>
             </div>
           )}
@@ -156,7 +156,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-info" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Grupuję...' : 'Clustering...'}
+                {t('ideas.mindmap.clustering', 'Clustering...')}
               </span>
             </div>
           )}
@@ -203,7 +203,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                   disabled={loading}
                   className="inline-flex items-center gap-1 text-[10px] text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
-                  <RefreshCw size={10} /> {isPl ? 'Ponownie' : 'Re-run'}
+                  <RefreshCw size={10} /> {t('ideas.mindmap.reRun', 'Re-run')}
                 </button>
                 <div className="flex-1" />
                 <button
@@ -211,7 +211,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                   disabled={locked}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-c-surface-raised text-c-info dark:text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                 >
-                  <Zap size={12} /> {isPl ? 'Zastosuj klastry' : 'Apply clusters'}
+                  <Zap size={12} /> {t('ideas.mindmap.applyClusters', 'Apply clusters')}
                 </button>
               </div>
             </div>

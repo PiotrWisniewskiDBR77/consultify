@@ -21,8 +21,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
   currentAssignee,
   recentAssignees = [],
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [value, setValue] = useState(currentAssignee || '');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -52,7 +51,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text">
             <UserPlus size={16} />
-            {isPl ? 'Przypisz osobę' : 'Assign person'}
+            {t('ideas.mindmap.assignPerson', 'Assign person')}
           </div>
           <button
             onClick={onClose}
@@ -68,14 +67,14 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          placeholder={isPl ? 'Imię i nazwisko...' : 'Name...'}
+          placeholder={t('ideas.mindmap.name', 'Name...')}
           className="mb-2 w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
         />
 
         {uniqueRecent.length > 0 && (
           <div className="mb-3">
             <div className="mb-1 text-[10px] uppercase tracking-wider text-c-text-secondary">
-              {isPl ? 'Ostatnio przypisani' : 'Recent'}
+              {t('ideas.mindmap.recent', 'Recent')}
             </div>
             <div className="flex flex-wrap gap-1">
               {uniqueRecent.map((name) => (
@@ -99,14 +98,14 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
             onClick={onClose}
             className="rounded px-3 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.mindmap.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!value.trim()}
             className="rounded bg-c-info px-3 py-1 text-xs text-c-text hover:bg-c-info disabled:opacity-40"
           >
-            {isPl ? 'Przypisz' : 'Assign'}
+            {t('ideas.mindmap.assign', 'Assign')}
           </button>
         </div>
       </div>

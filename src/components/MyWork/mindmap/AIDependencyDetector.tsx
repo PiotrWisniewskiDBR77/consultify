@@ -77,7 +77,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
   onAddDependency,
   onAddAll,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [dependencies, setDependencies] = useState<DetectedDependency[]>([]);
@@ -151,9 +151,9 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
     (dep: DetectedDependency) => {
       onAddDependency(dep);
       setApplied((prev) => new Set([...prev, dep.id]));
-      toast.success(isPl ? 'Dodano zależność' : 'Dependency added', { duration: 800 });
+      toast.success(t('ideas.mindmap.dependencyAdded', 'Dependency added'), { duration: 800 });
     },
-    [isPl, onAddDependency]
+    [onAddDependency, t]
   );
 
   const handleApplyAll = useCallback(() => {
@@ -162,10 +162,12 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
     onAddAll(unapplied);
     setApplied(new Set(dependencies.map((d) => d.id)));
     toast.success(
-      isPl ? `Dodano ${unapplied.length} zależności` : `Added ${unapplied.length} dependencies`,
+      t('ideas.mindmap.addedNDependencies', 'Added {{count}} dependencies', {
+        count: unapplied.length,
+      }),
       { duration: 1200 }
     );
-  }, [applied, dependencies, isPl, onAddAll]);
+  }, [applied, dependencies, onAddAll, t]);
 
   if (!open) return null;
 
@@ -177,13 +179,14 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
             <div className="flex items-center gap-2">
               <Network size={16} className="text-c-text-secondary" />
               <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-                {isPl ? 'AI: Wykrywanie zależności' : 'AI: Dependency Detection'}
+                {t('ideas.mindmap.aiDependencyDetection', 'AI: Dependency Detection')}
               </h3>
             </div>
             <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
-              {isPl
-                ? 'AI analizuje powiązania między nodami z różnych gałęzi.'
-                : 'AI analyzes relationships between nodes across different branches.'}
+              {t(
+                'ideas.mindmap.aiAnalyzesRelationshipsBetweenNodesAcross',
+                'AI analyzes relationships between nodes across different branches.'
+              )}
             </p>
           </div>
           <button
@@ -202,9 +205,10 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
-                {isPl
-                  ? 'Wykryj ukryte zależności między pomysłami.'
-                  : 'Discover hidden dependencies between ideas.'}
+                {t(
+                  'ideas.mindmap.discoverHiddenDependenciesBetweenIdeas',
+                  'Discover hidden dependencies between ideas.'
+                )}
               </p>
               <button
                 onClick={detectDependencies}
@@ -212,7 +216,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all disabled:opacity-40"
               >
                 <Network size={14} />
-                {isPl ? 'Analizuj zależności' : 'Analyze dependencies'}
+                {t('ideas.mindmap.analyzeDependencies', 'Analyze dependencies')}
               </button>
             </div>
           )}
@@ -221,7 +225,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-text-secondary" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Analizuję powiązania...' : 'Analyzing connections...'}
+                {t('ideas.mindmap.analyzingConnections', 'Analyzing connections...')}
               </span>
             </div>
           )}
@@ -280,7 +284,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                         className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40"
                       >
                         <Plus size={9} />
-                        {isPl ? 'Dodaj połączenie' : 'Add connection'}
+                        {t('ideas.mindmap.addConnection', 'Add connection')}
                       </button>
                     )}
                   </div>
@@ -293,7 +297,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                   disabled={loading}
                   className="text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text transition-colors"
                 >
-                  {isPl ? 'Ponowna analiza' : 'Re-analyze'}
+                  {t('ideas.mindmap.reAnalyze', 'Re-analyze')}
                 </button>
                 <div className="flex-1" />
                 <button
@@ -302,7 +306,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                 >
                   <Network size={12} />
-                  {isPl ? 'Dodaj wszystkie' : 'Add all'}
+                  {t('ideas.mindmap.addAll', 'Add all')}
                 </button>
               </div>
             </div>

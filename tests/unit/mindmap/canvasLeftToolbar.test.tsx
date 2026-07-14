@@ -65,14 +65,18 @@ describe('CanvasLeftToolbar', () => {
 
     const connectBtn = screen
       .getAllByRole('button')
-      .find((b) => b.getAttribute('title') === 'Finish connecting and return to select');
+      .find((b) => b.getAttribute('title') === 'ideas.mindmap.finishConnectingReturnSelect');
 
     if (connectBtn) fireEvent.click(connectBtn);
     expect(onAction).toHaveBeenCalledWith('mm_select_mode');
     expect(
       screen
         .getAllByRole('button')
-        .find((b) => b.getAttribute('title') === 'Connect — click Connect or empty canvas to return to select')
+        .find(
+          (b) =>
+            b.getAttribute('title') ===
+            'Connect — click Connect or empty canvas to return to select'
+        )
     ).toBeTruthy();
   });
 
@@ -81,7 +85,7 @@ describe('CanvasLeftToolbar', () => {
     const aiBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'AI');
     expect(aiBtn).toBeTruthy();
     if (aiBtn) fireEvent.click(aiBtn);
-    expect(screen.getByText('New AI conversation')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.newAiConversation')).toBeTruthy();
   });
 
   it('renders undo/redo buttons', () => {

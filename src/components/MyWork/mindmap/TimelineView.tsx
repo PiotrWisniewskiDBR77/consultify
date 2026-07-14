@@ -44,8 +44,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   nodes,
   onSelectNode,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   const grouped = useMemo(() => {
     const groups: Record<string, TimelineNode[]> = {};
@@ -72,10 +71,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         </button>
         <Calendar size={16} className="text-c-warning" />
         <h2 className="text-sm font-bold text-c-text dark:text-c-text">
-          {isPl ? 'Widok osi czasu' : 'Timeline View'}
+          {t('ideas.mindmap.timelineView', 'Timeline View')}
         </h2>
         <span className="text-[10px] text-c-text-secondary ml-auto">
-          {nodes.length} {isPl ? 'elementów' : 'items'}
+          {nodes.length} {t('ideas.mindmap.items', 'items')}
         </span>
       </div>
 
@@ -122,7 +121,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     ))}
                     {items.length === 0 && (
                       <div className="text-center py-4 text-[10px] text-c-text-secondary">
-                        {isPl ? 'Brak elementów' : 'No items'}
+                        {t('ideas.mindmap.noItems', 'No items')}
                       </div>
                     )}
                   </div>

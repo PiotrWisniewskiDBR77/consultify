@@ -32,7 +32,7 @@ describe('ColorPickerPopover', () => {
 
   it('renders opacity slider', () => {
     render(<ColorPickerPopover {...baseProps} />);
-    expect(screen.getByText('Opacity')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.opacity')).toBeTruthy();
     expect(screen.getByText('100%')).toBeTruthy();
   });
 
@@ -55,7 +55,7 @@ describe('ColorPickerPopover', () => {
   it('randomize button dispatches a color', () => {
     const onUpdate = vi.fn();
     render(<ColorPickerPopover {...baseProps} onUpdate={onUpdate} />);
-    fireEvent.click(screen.getByText('Random'));
+    fireEvent.click(screen.getByText('ideas.mindmap.random'));
     expect(onUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ color: expect.any(String) })
     );

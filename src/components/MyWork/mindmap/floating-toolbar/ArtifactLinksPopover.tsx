@@ -1,5 +1,6 @@
 import { ExternalLink, Link2, Paperclip, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { type ArtifactLink, getArtifactLabel } from '@/utils/artifactLinks';
 
@@ -22,11 +23,12 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
   onOpenArtifact,
   onRemoveArtifact,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="w-72 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl p-3 space-y-3">
       <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
         <Paperclip size={11} />
-        {isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+        {t('ideas.mindmap.linkedArtifacts', 'Linked artifacts')}
       </div>
 
       {links.length > 0 ? (
@@ -37,9 +39,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
             const fallbackLabel =
               artifactType && artifactId
                 ? `${getArtifactLabel(artifactType, isPl ? 'pl' : 'en')} ${artifactId}`
-                : isPl
-                  ? 'Artefakt'
-                  : 'Artifact';
+                : t('ideas.mindmap.artifact', 'Artifact');
             return (
               <div
                 key={`${artifactType || 'artifact'}-${artifactId || index}`}
@@ -62,7 +62,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
                     type="button"
                     onClick={() => onOpenArtifact(link)}
                     className="text-c-text-secondary hover:text-c-text dark:hover:text-c-text transition-colors"
-                    title={isPl ? 'Otwórz artefakt' : 'Open artifact'}
+                    title={t('ideas.mindmap.openArtifact', 'Open artifact')}
                   >
                     <ExternalLink size={12} />
                   </button>
@@ -71,7 +71,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
                     disabled={disabled}
                     onClick={() => onRemoveArtifact(link)}
                     className="text-c-text-secondary hover:text-c-danger transition-colors disabled:opacity-40"
-                    title={isPl ? 'Usuń powiązanie' : 'Remove link'}
+                    title={t('ideas.mindmap.removeLink', 'Remove link')}
                   >
                     <Trash2 size={12} />
                   </button>
@@ -82,9 +82,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-c-border-subtle dark:border-c-border-subtle px-3 py-4 text-center text-[11px] text-c-text-secondary dark:text-c-text-muted">
-          {isPl
-            ? 'Brak podłączonych artefaktów do tego węzła.'
-            : 'No artifacts linked to this node yet.'}
+          {t('ideas.mindmap.noArtifactsLinkedThisNodeYet', 'No artifacts linked to this node yet.')}
         </div>
       )}
 
@@ -96,7 +94,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
           className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text disabled:opacity-40"
         >
           <Plus size={11} />
-          {isPl ? 'Dołącz' : 'Attach'}
+          {t('ideas.mindmap.attach', 'Attach')}
         </button>
         <button
           type="button"
@@ -104,7 +102,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
           className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
         >
           <Link2 size={11} />
-          {isPl ? 'Pełny widok' : 'Full view'}
+          {t('ideas.mindmap.fullView', 'Full view')}
         </button>
       </div>
     </div>

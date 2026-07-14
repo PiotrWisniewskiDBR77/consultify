@@ -1,5 +1,6 @@
 import { Brain, Lightbulb, Link2, MessageCircle, Sparkles, Wand2, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { SidekickContext } from '../aiSidekickContext';
 
@@ -45,6 +46,7 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
   onOpenChatAboutNode,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [ctx, setCtx] = useState<SidekickContext | null>(null);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
         className="w-full flex items-center gap-2 px-2 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
       >
         <MessageCircle size={12} className="shrink-0" />
-        {isPl ? 'Zapytaj AI o ten węzeł' : 'Ask AI about this node'}
+        {t('ideas.mindmap.askAiAboutThisNode', 'Ask AI about this node')}
       </button>
       <div className="border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
       {AI_ACTIONS.map((a) => {

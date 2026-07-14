@@ -29,6 +29,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
+// Module-scope singleton for use in formatTimestamp() below, which is a plain
+// helper (not a component) and cannot call the useTranslation() hook.
+import i18nInstance from '@/i18n';
 
 import TeresaMark from '../../shared/TeresaMark';
 import type { CanvasAIReplayEntry, CanvasGovernanceStatus } from '../ideaSelectionTypes';
@@ -99,10 +102,12 @@ function formatTimestamp(iso: string, isPl: boolean): string {
     const now = new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffMin = Math.floor(diffMs / 60_000);
-    if (diffMin < 1) return isPl ? 'Przed chwilą' : 'Just now';
-    if (diffMin < 60) return isPl ? `${diffMin} min temu` : `${diffMin}m ago`;
+    if (diffMin < 1) return i18nInstance.t('ideas.mindmap.justNow', 'Just now');
+    if (diffMin < 60)
+      return i18nInstance.t('ideas.mindmap.nMinAgo', '{{count}}m ago', { count: diffMin });
     const diffH = Math.floor(diffMin / 60);
-    if (diffH < 24) return isPl ? `${diffH}h temu` : `${diffH}h ago`;
+    if (diffH < 24)
+      return i18nInstance.t('ideas.mindmap.nHAgo', '{{count}}h ago', { count: diffH });
     return d.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', {
       month: 'short',
       day: 'numeric',
@@ -169,7 +174,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
   currentUserName,
   onGovernanceUpdate,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
 
   const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(
@@ -259,8 +264,8 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
 
   return (
     <ToolsPanelShell
-      title={isPl ? 'Governance AI' : 'AI Governance'}
-      subtitle={isPl ? 'Przegląd i kontrola' : 'Review & control'}
+      title={t('ideas.mindmap.aiGovernance', 'AI Governance')}
+      subtitle={t('ideas.mindmap.reviewControl', 'Review & control')}
       icon={
         <div className="w-7 h-7 rounded-lg bg-c-surface-raised flex items-center justify-center shadow-sm ">
           <Shield size={13} className="text-c-text" />
@@ -277,12 +282,13 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[11px] font-semibold text-c-warning dark:text-c-warning">
-                {isPl ? 'Niesprawdzone zmiany AI' : 'Unreviewed AI changes'}
+                {t('ideas.mindmap.unreviewedAiChanges', 'Unreviewed AI changes')}
               </div>
               <div className="text-[10px] text-c-warning dark:text-c-warning mt-0.5">
-                {isPl
-                  ? 'AI dokonało zmian, które nie zostały jeszcze zrecenzowane.'
-                  : 'AI made changes that have not been reviewed yet.'}
+                {t(
+                  'ideas.mindmap.aiMadeChangesThatHaveNot',
+                  'AI made changes that have not been reviewed yet.'
+                )}
               </div>
             </div>
           </div>
@@ -298,7 +304,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
           </div>
           {governance.reviewedBy && (
             <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary">
-              {isPl ? 'przez' : 'by'} {governance.reviewedBy}
+              {t('ideas.mindmap.by', 'by')} {governance.reviewedBy}
             </span>
           )}
         </div>
@@ -312,7 +318,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
           >
             <Activity size={12} className="text-c-text-secondary" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-muted flex-1">
-              {isPl ? 'Oś czasu AI' : 'AI Activity Timeline'}
+              {t('ideas.mindmap.aiActivityTimeline', 'AI Activity Timeline')}
             </span>
             <span className="text-[9px] text-c-text-secondary mr-1">{sortedLog.length}</span>
             {expandedSections.has('timeline') ? (
@@ -326,9 +332,10 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             <div className="mt-2 space-y-1.5">
               {sortedLog.length === 0 ? (
                 <div className="text-[10px] text-c-text-secondary dark:text-c-text-secondary text-center py-3">
-                  {isPl
-                    ? 'Brak akcji AI — canvas jest w pełni ręczny'
-                    : 'No AI actions — canvas is fully manual'}
+                  {t(
+                    'ideas.mindmap.noAiActionsCanvasFullyManual',
+                    'No AI actions — canvas is fully manual'
+                  )}
                 </div>
               ) : (
                 sortedLog.map((entry) => {
@@ -358,7 +365,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                               {formatTimestamp(entry.acceptedAt, !!isPl)}
                             </span>
                             <span className="text-[9px] text-c-text-secondary">
-                              {proposalCount} {isPl ? 'propozycji' : 'proposals'}
+                              {proposalCount} {t('ideas.mindmap.proposals', 'proposals')}
                             </span>
                           </div>
                         </div>
@@ -376,7 +383,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                         <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-c-border-subtle dark:border-c-border-subtle">
                           <div className="pt-2">
                             <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
-                              {isPl ? 'Narzędzie' : 'Tool'}
+                              {t('ideas.mindmap.tool', 'Tool')}
                             </div>
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted">
                               {entry.tool}
@@ -386,7 +393,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                           {entry.rationale?.length > 0 && (
                             <div>
                               <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
-                                {isPl ? 'Uzasadnienie' : 'Rationale'}
+                                {t('ideas.mindmap.rationale', 'Rationale')}
                               </div>
                               <div className="space-y-1">
                                 {entry.rationale.map((r, i) => (
@@ -404,7 +411,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                           {entry.citations?.length > 0 && (
                             <div>
                               <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
-                                {isPl ? 'Cytowania' : 'Citations'}
+                                {t('ideas.mindmap.citations', 'Citations')}
                               </div>
                               <div className="flex flex-wrap gap-1">
                                 {entry.citations.map((c, i) => (
@@ -446,7 +453,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
           >
             <ShieldCheck size={12} className="text-c-success" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-c-success dark:text-c-success flex-1">
-              {isPl ? 'Kontrola review' : 'Review Controls'}
+              {t('ideas.mindmap.reviewControls', 'Review Controls')}
             </span>
             {expandedSections.has('review') ? (
               <ChevronUp size={12} className="text-c-success" />
@@ -460,14 +467,15 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
               {/* Review note */}
               <div>
                 <label className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1 block">
-                  {isPl ? 'Notatka review' : 'Review note'}
+                  {t('ideas.mindmap.reviewNote', 'Review note')}
                 </label>
                 <textarea
                   value={reviewNote}
                   onChange={(e) => setReviewNote(e.target.value)}
-                  placeholder={
-                    isPl ? 'Opcjonalny komentarz do review...' : 'Optional review comment...'
-                  }
+                  placeholder={t(
+                    'ideas.mindmap.optionalReviewComment',
+                    'Optional review comment...'
+                  )}
                   rows={2}
                   className="w-full text-[10px] px-2.5 py-1.5 rounded-lg border border-c-success dark:border-c-success bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-success resize-none"
                 />
@@ -509,7 +517,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
               {governance.lastReviewedAt && (
                 <div className="text-[9px] text-c-text-secondary dark:text-c-text-secondary flex items-center gap-1">
                   <Clock size={9} />
-                  {isPl ? 'Ostatni review' : 'Last review'}:{' '}
+                  {t('ideas.mindmap.lastReview', 'Last review')}:{' '}
                   {formatTimestamp(governance.lastReviewedAt, !!isPl)}
                   {governance.reviewedBy && ` (${governance.reviewedBy})`}
                 </div>
@@ -533,7 +541,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
           >
             <BarChart3 size={12} className="text-c-info" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-c-info dark:text-c-info flex-1">
-              {isPl ? 'Statystyki AI' : 'AI Statistics'}
+              {t('ideas.mindmap.aiStatistics', 'AI Statistics')}
             </span>
             {expandedSections.has('stats') ? (
               <ChevronUp size={12} className="text-c-info" />
@@ -551,7 +559,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     {stats.totalActions}
                   </div>
                   <div className="text-[9px] text-c-text-secondary">
-                    {isPl ? 'Akcji AI' : 'AI actions'}
+                    {t('ideas.mindmap.aiActions', 'AI actions')}
                   </div>
                 </div>
                 <div className="rounded-lg bg-c-surface-raised dark:bg-c-surface-raised p-2 border border-c-info dark:border-c-info">
@@ -559,7 +567,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     {stats.totalProposals}
                   </div>
                   <div className="text-[9px] text-c-text-secondary">
-                    {isPl ? 'Propozycji' : 'Proposals'}
+                    {t('ideas.mindmap.proposals2', 'Proposals')}
                   </div>
                 </div>
               </div>
@@ -567,7 +575,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
               {/* AI vs Manual nodes */}
               <div className="rounded-lg bg-c-surface-raised dark:bg-c-surface-raised p-2 border border-c-info dark:border-c-info">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1.5">
-                  {isPl ? 'Węzły: AI vs ręczne' : 'Nodes: AI vs manual'}
+                  {t('ideas.mindmap.nodesAiVsManual', 'Nodes: AI vs manual')}
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
@@ -593,11 +601,11 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-[9px] text-c-text-secondary flex items-center gap-1">
                     <TeresaMark size={8} />
-                    {isPl ? 'AI' : 'AI'}: {stats.nodesFromAI}
+                    {t('ideas.mindmap.ai', 'AI')}: {stats.nodesFromAI}
                   </span>
                   <span className="text-[9px] text-c-text-secondary flex items-center gap-1">
                     <Sparkles size={8} />
-                    {isPl ? 'Ręczne' : 'Manual'}: {stats.manualNodes}
+                    {t('ideas.mindmap.manual', 'Manual')}: {stats.manualNodes}
                   </span>
                 </div>
               </div>
@@ -606,7 +614,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
               {stats.mostUsedGenerator && (
                 <div className="rounded-lg bg-c-surface-raised dark:bg-c-surface-raised p-2 border border-c-info dark:border-c-info">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
-                    {isPl ? 'Najczęściej używany generator' : 'Most used generator'}
+                    {t('ideas.mindmap.mostUsedGenerator', 'Most used generator')}
                   </div>
                   <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted">
                     {isPl
@@ -616,7 +624,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                           .en}
                   </div>
                   <div className="text-[9px] text-c-text-secondary mt-0.5">
-                    {stats.mostUsedGenerator.count}× {isPl ? 'użyć' : 'uses'}
+                    {stats.mostUsedGenerator.count}× {t('ideas.mindmap.uses', 'uses')}
                   </div>
                 </div>
               )}
@@ -625,7 +633,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
               {stats.lastAiAction && (
                 <div className="text-[9px] text-c-text-secondary dark:text-c-text-secondary flex items-center gap-1">
                   <Clock size={9} />
-                  {isPl ? 'Ostatnia akcja AI' : 'Last AI action'}:{' '}
+                  {t('ideas.mindmap.lastAiAction', 'Last AI action')}:{' '}
                   {formatTimestamp(stats.lastAiAction, !!isPl)}
                 </div>
               )}
@@ -647,7 +655,7 @@ interface AIGovernanceBadgeProps {
 }
 
 export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensions, onClick }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
 
   const governance = useMemo(() => parseGovernance(mapExtensions), [mapExtensions]);

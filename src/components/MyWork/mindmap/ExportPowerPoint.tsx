@@ -86,7 +86,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
   ideaTitle,
   branches,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [exporting, setExporting] = useState(false);
   const nativePptx = isMindmapPptxNativeEnabled();
@@ -111,7 +111,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         toast.success(
-          isPl ? 'Prezentacja .pptx wyeksportowana!' : 'Presentation (.pptx) exported!',
+          t('ideas.mindmap.presentationPptxExported', 'Presentation (.pptx) exported!'),
           {
             duration: 1500,
           }
@@ -131,7 +131,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success(isPl ? 'Prezentacja wyeksportowana!' : 'Presentation exported!', {
+      toast.success(t('ideas.mindmap.presentationExported', 'Presentation exported!'), {
         duration: 1500,
       });
       onClose();
@@ -163,7 +163,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
           <div className="flex items-center gap-2">
             <Presentation size={16} className="text-c-info" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Eksport prezentacji' : 'Export Presentation'}
+              {t('ideas.mindmap.exportPresentation', 'Export Presentation')}
             </h3>
           </div>
           <button
@@ -180,8 +180,9 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
               {ideaTitle}
             </div>
             <div className="text-[10px] text-c-text-secondary mt-1">
-              {branches.length} {isPl ? 'gałęzi' : 'branches'} · {totalIdeas}{' '}
-              {isPl ? 'pomysłów' : 'ideas'} · {branches.length + 2} {isPl ? 'slajdów' : 'slides'}
+              {branches.length} {t('ideas.mindmap.branches', 'branches')} · {totalIdeas}{' '}
+              {t('ideas.mindmap.ideas', 'ideas')} · {branches.length + 2}{' '}
+              {t('ideas.mindmap.slides', 'slides')}
             </div>
           </div>
 
@@ -193,12 +194,8 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
             >
               {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
               {nativePptx
-                ? isPl
-                  ? 'Pobierz .pptx'
-                  : 'Download .pptx'
-                : isPl
-                  ? 'Pobierz HTML (do PDF/PPTX)'
-                  : 'Download HTML (for PDF/PPTX)'}
+                ? t('ideas.mindmap.downloadPptx', 'Download .pptx')
+                : t('ideas.mindmap.downloadHtmlPdfPptx', 'Download HTML (for PDF/PPTX)')}
             </button>
             {!nativePptx ? (
               <button
@@ -206,19 +203,21 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all"
               >
                 <FileText size={14} />
-                {isPl ? 'Drukuj / Zapisz jako PDF' : 'Print / Save as PDF'}
+                {t('ideas.mindmap.printSaveAsPdf', 'Print / Save as PDF')}
               </button>
             ) : null}
           </div>
 
           <p className="text-[9px] text-c-text-secondary mt-3 text-center">
             {nativePptx
-              ? isPl
-                ? 'Prawdziwy plik .pptx — otwórz w PowerPoint lub Keynote.'
-                : 'Real .pptx file — open in PowerPoint or Keynote.'
-              : isPl
-                ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.'
-                : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
+              ? t(
+                  'ideas.mindmap.realPptxFileOpenPowerpointKeynote',
+                  'Real .pptx file — open in PowerPoint or Keynote.'
+                )
+              : t(
+                  'ideas.mindmap.openHtmlBrowserUseCtrlP',
+                  'Open HTML in browser and use Ctrl+P to save as PDF.'
+                )}
           </p>
         </div>
       </div>

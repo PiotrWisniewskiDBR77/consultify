@@ -173,7 +173,7 @@ describe('UnifiedNodeDetailDrawer — shared core parity', () => {
   it('editing notes fires onUpdateNode on blur (shared depth model)', () => {
     const onUpdateNode = vi.fn();
     render(<UnifiedNodeDetailDrawer {...mindmapProps({ onUpdateNode })} />);
-    const notes = screen.getByPlaceholderText('Add notes, details...') as HTMLTextAreaElement;
+    const notes = screen.getByPlaceholderText('ideas.mindmap.addNotesDetails') as HTMLTextAreaElement;
     fireEvent.change(notes, { target: { value: 'hello' } });
     fireEvent.blur(notes);
     expect(onUpdateNode).toHaveBeenCalledWith('n1', { notes: 'hello' });
@@ -186,7 +186,7 @@ describe('UnifiedNodeDetailDrawer — mindmap variant capabilities', () => {
   it('renders Convert footer and fires onConvertNode', () => {
     const onConvertNode = vi.fn();
     render(<UnifiedNodeDetailDrawer {...mindmapProps({ onConvertNode })} />);
-    fireEvent.click(screen.getByRole('button', { name: /Convert → Initiative/ }));
+    fireEvent.click(screen.getByRole('button', { name: /ideas\.mindmap\.convertInitiative/ }));
     expect(onConvertNode).toHaveBeenCalledWith('n1', 'initiative');
   });
 
@@ -200,8 +200,8 @@ describe('UnifiedNodeDetailDrawer — mindmap variant capabilities', () => {
 
   it('shows Company Context section (mindmap-only)', () => {
     render(<UnifiedNodeDetailDrawer {...mindmapProps()} />);
-    expect(screen.getByText('Company Context')).toBeTruthy();
-    expect(screen.getByText('AI: Expand Topic')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.companyContext')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.aiExpandTopic')).toBeTruthy();
   });
 });
 
@@ -210,11 +210,11 @@ describe('UnifiedNodeDetailDrawer — mindmap variant capabilities', () => {
 describe('UnifiedNodeDetailDrawer — idea variant capabilities', () => {
   it('renders priority, owner, comments, attachments (idea-only sections)', () => {
     render(<UnifiedNodeDetailDrawer {...ideaProps()} />);
-    expect(screen.getByText(/Priority/)).toBeTruthy();
-    expect(screen.getByText('Owner')).toBeTruthy();
-    expect(screen.getByText('Comments')).toBeTruthy();
-    expect(screen.getByText('Attachments')).toBeTruthy();
-    expect(screen.getByText('AI Context')).toBeTruthy();
+    expect(screen.getByText(/ideas\.mindmap\.priority/)).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.owner')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.comments')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.attachments')).toBeTruthy();
+    expect(screen.getByText('ideas.mindmap.aiContext')).toBeTruthy();
   });
 
   it('fetches AI context + server artifacts on open (idea-only)', () => {
@@ -228,7 +228,7 @@ describe('UnifiedNodeDetailDrawer — idea variant capabilities', () => {
   it('adding a comment calls onUpdateNode with comments patch', () => {
     const onUpdateNode = vi.fn();
     render(<UnifiedNodeDetailDrawer {...ideaProps({ onUpdateNode })} />);
-    const box = screen.getByPlaceholderText('Add comment...') as HTMLTextAreaElement;
+    const box = screen.getByPlaceholderText('ideas.mindmap.addComment') as HTMLTextAreaElement;
     fireEvent.change(box, { target: { value: 'nice' } });
     fireEvent.keyDown(box, { key: 'Enter', shiftKey: false });
     expect(onUpdateNode).toHaveBeenCalledTimes(1);

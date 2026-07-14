@@ -249,7 +249,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   familyCounts,
   canvasContainerRef,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [openPopover, setOpenPopover] = useState<PopoverId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -340,12 +340,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               {interactionMode === 'pan'
                 ? 'PAN'
                 : interactionMode === 'connect'
-                  ? isPl
-                    ? 'LNK'
-                    : 'LNK'
-                  : isPl
-                    ? 'SEL'
-                    : 'SEL'}
+                  ? t('ideas.mindmap.lnk', 'LNK')
+                  : t('ideas.mindmap.sel', 'SEL')}
             </span>
           </div>
         </div>
@@ -358,9 +354,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     const slotTitle =
       activeTool === 'mindmap' && slot.id === 'connect'
         ? interactionMode === 'connect'
-          ? isPl
-            ? 'Zakończ łączenie i wróć do zaznaczania'
-            : 'Finish connecting and return to select'
+          ? t(
+              'ideas.mindmap.finishConnectingReturnSelect',
+              'Finish connecting and return to select'
+            )
           : isPl
             ? slot.labelPl
             : slot.labelEn

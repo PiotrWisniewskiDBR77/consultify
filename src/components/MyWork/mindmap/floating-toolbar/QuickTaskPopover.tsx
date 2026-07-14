@@ -4,6 +4,7 @@
 import { CheckSquare, Plus, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface QuickTaskPopoverProps {
   isPl: boolean;
@@ -14,17 +15,17 @@ interface QuickTaskPopoverProps {
 }
 
 export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
-  isPl,
   nodeId,
   nodeLabel,
   onClose,
   onAction,
 }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(nodeLabel || '');
 
   const handleCreate = useCallback(() => {
     if (!title.trim()) {
-      toast.error(isPl ? 'Podaj tytuł zadania' : 'Enter task title');
+      toast.error(t('ideas.mindmap.enterTaskTitle', 'Enter task title'));
       return;
     }
     window.dispatchEvent(
@@ -32,9 +33,9 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
         detail: { action: 'create_task', nodeId, taskTitle: title.trim() },
       })
     );
-    toast.success(isPl ? 'Zadanie utworzone' : 'Task created');
+    toast.success(t('ideas.mindmap.taskCreated', 'Task created'));
     onClose();
-  }, [isPl, nodeId, onClose, title]);
+  }, [nodeId, onClose, t, title]);
 
   const handleAttach = useCallback(() => {
     onAction('ctx_attach_artifact');
@@ -46,7 +47,7 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-c-text-secondary dark:text-c-text flex items-center gap-1.5">
           <CheckSquare size={12} className="text-c-text-secondary" />
-          {isPl ? 'Szybkie zadanie' : 'Quick task'}
+          {t('ideas.mindmap.quickTask', 'Quick task')}
         </span>
         <button
           onClick={onClose}
@@ -60,7 +61,7 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-        placeholder={isPl ? 'Tytuł zadania…' : 'Task title…'}
+        placeholder={t('ideas.mindmap.taskTitle', 'Task title…')}
         autoFocus
         className="w-full h-8 px-2.5 rounded-lg text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted placeholder:text-c-text-muted focus:outline-none focus:border-c-border-subtle transition-colors"
       />
@@ -71,13 +72,13 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
           className="flex-1 flex items-center justify-center gap-1 h-7 rounded-lg text-[11px] font-medium bg-c-surface dark:bg-c-surface-raised text-c-text dark:text-c-text-secondary hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
         >
           <Plus size={11} />
-          {isPl ? 'Utwórz' : 'Create'}
+          {t('ideas.mindmap.create', 'Create')}
         </button>
         <button
           onClick={handleAttach}
           className="flex-1 flex items-center justify-center gap-1 h-7 rounded-lg text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
         >
-          {isPl ? 'Dołącz istniejące' : 'Attach existing'}
+          {t('ideas.mindmap.attachExisting', 'Attach existing')}
         </button>
       </div>
     </div>

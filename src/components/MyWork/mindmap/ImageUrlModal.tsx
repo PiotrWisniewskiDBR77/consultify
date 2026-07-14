@@ -12,8 +12,7 @@ interface ImageUrlModalProps {
 }
 
 export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onSubmit }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [url, setUrl] = useState('');
 
   const handleSubmit = useCallback(() => {
@@ -38,7 +37,7 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text">
             <Image size={16} />
-            {isPl ? 'Dodaj obraz' : 'Add image'}
+            {t('ideas.mindmap.addImage', 'Add image')}
           </div>
           <button
             onClick={onClose}
@@ -53,7 +52,7 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          placeholder={isPl ? 'URL obrazka...' : 'Image URL...'}
+          placeholder={t('ideas.mindmap.imageUrl', 'Image URL...')}
           className="mb-3 w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
         />
 
@@ -75,14 +74,14 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
             onClick={onClose}
             className="rounded px-3 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.mindmap.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!url.trim()}
             className="rounded bg-c-info px-3 py-1 text-xs text-c-text hover:bg-c-info disabled:opacity-40"
           >
-            {isPl ? 'Dodaj' : 'Add'}
+            {t('ideas.mindmap.add', 'Add')}
           </button>
         </div>
       </div>

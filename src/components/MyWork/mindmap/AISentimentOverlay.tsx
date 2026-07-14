@@ -41,8 +41,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
   locked,
   onApplySentiment,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
 
   const [results, setResults] = useState<SentimentResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,9 +89,9 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
 
   const handleApply = useCallback(() => {
     onApplySentiment(results);
-    toast.success(isPl ? 'Sentyment zastosowany' : 'Sentiment applied', { duration: 1200 });
+    toast.success(t('ideas.mindmap.sentimentApplied', 'Sentiment applied'), { duration: 1200 });
     onClose();
-  }, [isPl, onApplySentiment, onClose, results]);
+  }, [onApplySentiment, onClose, results]);
 
   if (!open) return null;
 
@@ -106,7 +105,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
           <div className="flex items-center gap-2">
             <SmilePlus size={16} className="text-c-success" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'AI: Analiza sentymentu' : 'AI: Sentiment Analysis'}
+              {t('ideas.mindmap.aiSentimentAnalysis', 'AI: Sentiment Analysis')}
             </h3>
           </div>
           <button
@@ -125,9 +124,10 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
-                {isPl
-                  ? 'AI oceni sentyment pomysłów na podstawie danych firmy.'
-                  : 'AI will assess idea sentiment based on company data.'}
+                {t(
+                  'ideas.mindmap.aiWillAssessIdeaSentimentBased',
+                  'AI will assess idea sentiment based on company data.'
+                )}
               </p>
               <button
                 onClick={analyzeSentiment}
@@ -135,7 +135,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-success dark:text-c-success transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
-                {isPl ? 'Analizuj sentyment' : 'Analyze sentiment'}
+                {t('ideas.mindmap.analyzeSentiment', 'Analyze sentiment')}
               </button>
             </div>
           )}
@@ -144,7 +144,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-success" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Analizuję...' : 'Analyzing...'}
+                {t('ideas.mindmap.analyzing', 'Analyzing...')}
               </span>
             </div>
           )}
@@ -220,7 +220,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
               onClick={onClose}
               className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
-              {isPl ? 'Zamknij' : 'Close'}
+              {t('ideas.mindmap.close', 'Close')}
             </button>
             <button
               onClick={handleApply}
@@ -228,7 +228,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-success dark:text-c-success border border-c-success transition-all disabled:opacity-40"
             >
               <SmilePlus size={12} />
-              {isPl ? 'Zastosuj kolory' : 'Apply colors'}
+              {t('ideas.mindmap.applyColors', 'Apply colors')}
             </button>
           </div>
         )}

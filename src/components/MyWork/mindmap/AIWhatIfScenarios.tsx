@@ -42,7 +42,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
   locked,
   onApplyScenario,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [scenarios, setScenarios] = useState<WhatIfScenario[]>([]);
@@ -98,19 +98,19 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
       icon: Sparkles,
       color: 'text-c-success',
       bg: 'bg-c-success',
-      label: isPl ? 'Szansa' : 'Opportunity',
+      label: t('ideas.mindmap.opportunity', 'Opportunity'),
     },
     risk: {
       icon: AlertTriangle,
       color: 'text-c-danger',
       bg: 'bg-c-danger',
-      label: isPl ? 'Ryzyko' : 'Risk',
+      label: t('ideas.mindmap.risk', 'Risk'),
     },
     alternative: {
       icon: Route,
       color: 'text-c-info',
       bg: 'bg-c-info',
-      label: isPl ? 'Alternatywa' : 'Alternative',
+      label: t('ideas.mindmap.alternative', 'Alternative'),
     },
   };
 
@@ -129,7 +129,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
             <div className="flex items-center gap-2">
               <GitBranch size={14} className="text-c-text-secondary" />
               <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-                {isPl ? 'Co jeśli...?' : 'What if...?'}
+                {t('ideas.mindmap.whatIf', 'What if...?')}
               </h3>
             </div>
             <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
@@ -155,9 +155,10 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                 className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
               <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
-                {isPl
-                  ? 'Wygeneruj alternatywne ścieżki, ryzyka i szanse.'
-                  : 'Generate alternative paths, risks and opportunities.'}
+                {t(
+                  'ideas.mindmap.generateAlternativePathsRisksOpportunities',
+                  'Generate alternative paths, risks and opportunities.'
+                )}
               </p>
               <button
                 onClick={generateScenarios}
@@ -165,7 +166,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
-                {isPl ? 'Generuj scenariusze' : 'Generate scenarios'}
+                {t('ideas.mindmap.generateScenarios', 'Generate scenarios')}
               </button>
             </div>
           )}
@@ -174,7 +175,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-c-text-secondary" />
               <span className="text-[11px] text-c-text-secondary">
-                {isPl ? 'Analizuję...' : 'Analyzing...'}
+                {t('ideas.mindmap.analyzing', 'Analyzing...')}
               </span>
             </div>
           )}
@@ -212,7 +213,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                           <button
                             onClick={() => {
                               onApplyScenario(scenario);
-                              toast.success(isPl ? 'Dodano do mapy' : 'Added to map', {
+                              toast.success(t('ideas.mindmap.addedMap', 'Added to map'), {
                                 duration: 800,
                               });
                             }}
@@ -220,7 +221,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40"
                           >
                             <Zap size={9} />
-                            {isPl ? 'Dodaj do mapy' : 'Add to map'}
+                            {t('ideas.mindmap.addMap', 'Add to map')}
                           </button>
                         </div>
                       </div>
@@ -235,7 +236,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                 className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40 mt-2"
               >
                 <Sparkles size={10} />
-                {isPl ? 'Generuj ponownie' : 'Regenerate'}
+                {t('ideas.mindmap.regenerate', 'Regenerate')}
               </button>
             </div>
           )}

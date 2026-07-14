@@ -25,7 +25,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
   locked,
   onAddNodes,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [text, setText] = useState('');
@@ -44,7 +44,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
         };
         reader.readAsText(file);
       } else {
-        toast.error(isPl ? 'Obsługiwane formaty: .txt, .md' : 'Supported formats: .txt, .md');
+        toast.error(t('ideas.mindmap.supportedFormatsTxtMd', 'Supported formats: .txt, .md'));
       }
     },
     [isPl]
@@ -94,7 +94,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           <div className="flex items-center gap-2">
             <FileText size={16} className="text-c-info" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
-              {isPl ? 'Dokument → Mapa' : 'Document → Map'}
+              {t('ideas.mindmap.documentMap', 'Document → Map')}
             </h3>
           </div>
           <button
@@ -110,7 +110,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-c-border-subtle dark:border-c-border-subtle hover:border-c-info transition-colors cursor-pointer mb-3">
             <Upload size={16} className="text-c-text-secondary" />
             <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
-              {isPl ? 'Załaduj plik .txt lub .md' : 'Upload .txt or .md file'}
+              {t('ideas.mindmap.uploadTxtMdFile', 'Upload .txt or .md file')}
             </span>
             <input type="file" accept=".txt,.md" onChange={handleFileUpload} className="hidden" />
           </label>
@@ -120,9 +120,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={6}
-            placeholder={
-              isPl ? 'Lub wklej tekst dokumentu tutaj...' : 'Or paste document text here...'
-            }
+            placeholder={t('ideas.mindmap.pasteDocumentTextHere', 'Or paste document text here...')}
             className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none mb-3"
           />
 
@@ -134,19 +132,15 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             {loading
-              ? isPl
-                ? 'Ekstrakcja...'
-                : 'Extracting...'
-              : isPl
-                ? 'Wyodrębnij pomysły z AI'
-                : 'Extract ideas with AI'}
+              ? t('ideas.mindmap.extracting', 'Extracting...')
+              : t('ideas.mindmap.extractIdeasAi', 'Extract ideas with AI')}
           </button>
 
           {/* Extracted ideas */}
           {extractedIdeas.length > 0 && (
             <div>
               <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
-                {isPl ? 'Wyodrębnione pomysły' : 'Extracted ideas'} ({extractedIdeas.length})
+                {t('ideas.mindmap.extractedIdeas', 'Extracted ideas')} ({extractedIdeas.length})
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">
                 {extractedIdeas.map((idea, idx) => (
@@ -170,7 +164,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {t('ideas.mindmap.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleApply}
