@@ -823,9 +823,9 @@ export const AccessLimitsTab: React.FC = () => {
                       <td className="px-6 py-4 text-slate-600">
                         {t(
                           'admin.aiControlCenter.accessLimits.userTiers.requestsCount',
-                          '{{count}} requests',
+                          '{{value}} requests',
                           {
-                            count: user.usage.toLocaleString(),
+                            value: user.usage.toLocaleString(),
                           }
                         )}
                       </td>

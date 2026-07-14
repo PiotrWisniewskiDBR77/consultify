@@ -239,8 +239,8 @@ export const AdminLLMMultipliers = () => {
                   <td className="py-4 px-6 text-slate-700 dark:text-slate-300">
                     <div className="flex flex-col">
                       <span className="text-emerald-400 font-bold font-mono text-base">
-                        {t('admin.aiControlCenter.llmMultipliers.tokensValue', '{{count}} Tokens', {
-                          count: parseInt(userCostInTokens).toLocaleString(),
+                        {t('admin.aiControlCenter.llmMultipliers.tokensValue', '{{value}} Tokens', {
+                          value: parseInt(userCostInTokens).toLocaleString(),
                         })}
                       </span>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400">

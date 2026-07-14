@@ -14840,7 +14840,7 @@
           "userPriceSuffix": "(Tokens deducted per 1k)",
           "actions": "Actions"
         },
-        "tokensValue": "{{count}} Tokens",
+        "tokensValue": "{{value}} Tokens",
         "per1000Tokens": "per 1,000 input tokens",
         "editPricing": "Edit Pricing",
         "noProviders": "No providers found. Check database configuration.",
@@ -15065,7 +15065,7 @@
             "cost7d": "Cost (7d)",
             "actions": "Actions"
           },
-          "requestsCount": "{{count}} requests",
+          "requestsCount": "{{value}} requests",
           "viewDetails": "View Details"
         },
         "costDashboard": {

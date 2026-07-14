@@ -15491,7 +15491,7 @@
           "userPriceSuffix": "(tokeny odliczane za 1k)",
           "actions": "Akcje"
         },
-        "tokensValue": "{{count}} tokenów",
+        "tokensValue": "{{value}} tokenów",
         "per1000Tokens": "za 1000 tokenów wejściowych",
         "editPricing": "Edytuj ceny",
         "noProviders": "Nie znaleziono dostawców. Sprawdź konfigurację bazy danych.",
@@ -15716,7 +15716,7 @@
             "cost7d": "Koszt (7d)",
             "actions": "Akcje"
           },
-          "requestsCount": "{{count}} żądań",
+          "requestsCount": "{{value}} żądań",
           "viewDetails": "Zobacz szczegóły"
         },
         "costDashboard": {
