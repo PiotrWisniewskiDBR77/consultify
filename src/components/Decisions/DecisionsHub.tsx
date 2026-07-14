@@ -135,8 +135,8 @@ export const DecisionsHub: React.FC = () => {
               className="
                 inline-flex items-center justify-center h-9 rounded-lg px-4
                 text-sm font-medium transition-colors duration-150
-                text-white
-                bg-c-accent hover:opacity-90
+                text-c-surface
+                bg-c-text hover:opacity-90
                 active:scale-[0.98]
                 focus-visible:outline-none focus-visible:ring-2
                 focus-visible:ring-c-focus focus-visible:ring-offset-1

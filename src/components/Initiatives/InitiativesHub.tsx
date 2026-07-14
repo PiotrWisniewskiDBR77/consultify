@@ -2837,7 +2837,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setIsCreating(false);
                 }
               }}
-              className="w-full mt-6 py-2 text-sm text-white bg-c-accent hover:opacity-90 transition-colors rounded-lg disabled:opacity-50"
+              className="w-full mt-6 py-2 text-sm text-c-surface bg-c-text hover:opacity-90 transition-colors rounded-lg disabled:opacity-50"
             >
               {isCreating ? t('initiatives.form.creating') : t('initiatives.form.create')}
             </button>
@@ -2939,7 +2939,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               </button>
               <button
                 onClick={handleBulkApply}
-                className="px-4 py-2 text-sm text-white bg-c-accent hover:opacity-90 rounded-lg"
+                className="px-4 py-2 text-sm text-c-surface bg-c-text hover:opacity-90 rounded-lg"
               >
                 {t('initiatives.bulkEdit.applyChanges')}
               </button>

@@ -42,6 +42,7 @@ import TemplateBuilderDocScreen from './screens/template-builder-doc';
 import TemplateBuilderTableScreen from './screens/template-builder-table';
 import TemplateCreateWizardScreen from './screens/template-create-wizard';
 import TemplateLibraryNewEntryScreen from './screens/template-library-new-entry';
+import Wave4ChoicesCrimsonScreen from './screens/wave4-choices-crimson';
 import ZwornikProjectsScreen from './screens/zwornik-projects';
 import SettingsCrimsonNeutralizedScreen from './screens/settings-crimson-neutralized';
 
@@ -142,6 +143,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'settings-crimson-neutralized': {
     label: 'Fala 1 Settings — crimson CTA/toggle/selected → neutralne (PRZED/PO, kanon #1)',
     render: () => <SettingsCrimsonNeutralizedScreen />,
+  },
+  'wave4-choices-crimson': {
+    label: 'Fala 4: bg-c-accent CTA/wybor → neutralne (Assessment/Initiatives/Execution/Results/Decisions)',
+    render: () => <Wave4ChoicesCrimsonScreen />,
   },
 };
 

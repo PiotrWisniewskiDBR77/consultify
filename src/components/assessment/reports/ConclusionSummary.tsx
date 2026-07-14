@@ -155,7 +155,7 @@ export const FoFRoadBar: React.FC<{
               </div>
               <div className="relative h-2.5 rounded-full bg-c-border-subtle overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${it.atOrAboveFoF ? 'bg-c-success' : 'bg-c-accent'}`}
+                  className={`h-full rounded-full ${it.atOrAboveFoF ? 'bg-c-success' : 'bg-c-warning'}`}
                   style={{ width: `${curPct}%` }}
                 />
                 {/* FoF benchmark marker */}
@@ -171,7 +171,7 @@ export const FoFRoadBar: React.FC<{
       </div>
       <div className="mt-3 flex items-center gap-4 text-xs text-c-text-muted">
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-2 w-3 rounded-sm bg-c-accent" />
+          <span className="inline-block h-2 w-3 rounded-sm bg-c-warning" />
           {isPL ? 'Poziom obecny' : 'Current level'}
         </span>
         <span className="inline-flex items-center gap-1">

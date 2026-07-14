@@ -1408,10 +1408,10 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           <div className="relative">
             {todayPosition !== null && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-c-accent z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-c-text z-20"
                 style={{ left: `${todayPosition}%` }}
               >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-c-accent text-white text-[10px] font-medium rounded shadow-lg">
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-c-text text-c-surface text-[10px] font-medium rounded shadow-lg">
                   {t('execution.timeline.today')}
                 </div>
               </div>

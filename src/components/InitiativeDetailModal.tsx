@@ -2503,7 +2503,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           key={member.id}
                           className="bg-c-surface p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03] flex items-center gap-4"
                         >
-                          <div className="w-10 h-10 rounded-full bg-c-accent flex items-center justify-center text-white font-bold">
+                          <div className="w-10 h-10 rounded-full bg-c-info flex items-center justify-center text-white font-bold">
                             {member.user?.firstName?.[0] || '?'}
                           </div>
                           <div className="flex-1">

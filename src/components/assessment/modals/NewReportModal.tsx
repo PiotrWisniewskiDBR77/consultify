@@ -328,12 +328,12 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                             w-5 h-5 rounded-full flex items-center justify-center border-2
                                                             ${
                                                               isSelected
-                                                                ? 'bg-c-accent border-c-accent'
+                                                                ? 'bg-c-text border-c-accent'
                                                                 : 'border-c-border-subtle'
                                                             }
                                                         `}
                             >
-                              {isSelected && <CheckCircle2 size={12} className="text-white" />}
+                              {isSelected && <CheckCircle2 size={12} className="text-c-surface" />}
                             </div>
                             <div>
                               <p className="font-medium text-c-text text-sm">

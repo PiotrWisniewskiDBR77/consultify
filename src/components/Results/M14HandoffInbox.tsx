@@ -167,7 +167,7 @@ export const M14HandoffInbox: React.FC<{ onPromoted?: () => void }> = ({ onPromo
                   onClick={() => {
                     void handlePromote(benefit);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-c-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-c-text px-3 py-1.5 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50"
                 >
                   {busyId === benefit.id ? (
                     <Loader2 size={13} className="animate-spin" />
