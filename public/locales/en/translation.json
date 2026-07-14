@@ -14502,6 +14502,119 @@
         "pricingLogicIntro": "User Tokens are deducted based on the",
         "markupMultiplierTerm": "Markup Multiplier",
         "pricingLogicExample": "If a model costs $0.01/1k and you set a 2.0x multiplier, user pays 2000 platform tokens ($0.02 value approx) for 1000 input tokens."
+      },
+      "policyGovernance": {
+        "levels": {
+          "advisory": {
+            "title": "Advisory",
+            "description": "AI can only explain and suggest. No modifications."
+          },
+          "assisted": {
+            "title": "Assisted",
+            "description": "AI can create drafts that require approval."
+          },
+          "proactive": {
+            "title": "Proactive",
+            "description": "AI can execute low-risk actions automatically."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI operates autonomously within governance rules."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Advisor",
+            "description": "Provides guidance and recommendations"
+          },
+          "pmoManager": {
+            "title": "PMO Manager",
+            "description": "Manages project methodology"
+          },
+          "executor": {
+            "title": "Executor",
+            "description": "Executes approved actions"
+          },
+          "educator": {
+            "title": "Educator",
+            "description": "Teaches and explains concepts"
+          }
+        },
+        "errors": {
+          "load": "Failed to load organization AI settings",
+          "save": "Failed to save settings"
+        },
+        "toasts": {
+          "saved": "AI Policy settings saved"
+        },
+        "title": "AI Policy & Governance",
+        "description": "Configure AI behavior and governance rules for your organization",
+        "unsavedChanges": "Unsaved changes",
+        "saveChanges": "Save Changes",
+        "policyLevel": {
+          "title": "AI Policy Level",
+          "description": "Controls what actions AI can perform in your organization"
+        },
+        "maxAllowed": "Max Allowed",
+        "activeRoles": {
+          "title": "Active AI Roles",
+          "description": "Select which AI personas are available to users"
+        },
+        "defaultRole": "Default Role",
+        "defaultProactivity": {
+          "title": "Default Proactivity",
+          "description": "Default AI proactivity level for new users"
+        },
+        "governanceRules": {
+          "title": "Governance Rules",
+          "description": "Additional governance and approval settings"
+        },
+        "regulatoryMode": {
+          "title": "Regulatory Mode",
+          "description": "When enabled, AI operates in strict compliance mode. All actions require explicit approval.",
+          "note": "Note: Regulatory Mode can be configured per-project in Project Settings."
+        },
+        "projectOverrides": {
+          "title": "Project Overrides",
+          "description": "Individual projects can override organization AI policy settings.",
+          "viewLink": "View Project Overrides →"
+        }
+      },
+      "missionControl": {
+        "errors": {
+          "incompleteStatus": "AI mission status response was incomplete",
+          "incompleteTest": "Capability test response was incomplete",
+          "notConfirmed": "Capability test did not confirm success",
+          "fetchStatus": "Failed to fetch AI status",
+          "testFailed": "Capability test failed"
+        },
+        "unknownProvider": "Unknown provider",
+        "capabilities": {
+          "connection": "AI Connection (Basic)",
+          "eyes": "AI Eyes (Visual Context)",
+          "memory": "AI Memory (RAG)",
+          "hands": "AI Hands (MCP Tools)",
+          "reasoning": "MAX Mode (Reasoning)"
+        },
+        "title": "AI Mission Control",
+        "refreshStatus": "Refresh Status",
+        "unavailableTitle": "AI mission control unavailable",
+        "loading": "Loading AI mission status...",
+        "successRate": "Success Rate (Last 50)",
+        "excellent": "Excellent",
+        "degraded": "Degraded",
+        "avgLatency": "Avg Latency",
+        "perRequest": "per request",
+        "activeProviders": "Active Providers",
+        "noActiveProviders": "No active providers",
+        "diagnosticsTitle": "AI Capability Diagnostics",
+        "testDescription": "Test if {{capability}} is functioning correctly.",
+        "resultLatency": "{{status}} ({{latency}}ms)",
+        "statusUnavailable": "AI mission control status is unavailable",
+        "runTest": "Run Test",
+        "latestLogs": "LATEST DIAGNOSTIC LOGS",
+        "clear": "Clear",
+        "errorLabel": "Error: {{error}}"
       }
     }
   },

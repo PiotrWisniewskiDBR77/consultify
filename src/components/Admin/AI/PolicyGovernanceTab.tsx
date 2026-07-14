@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
@@ -31,51 +32,92 @@ import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
 import { ProactivitySelector, SettingsCard } from '../../AISettings';
 
-// Policy level configurations
-const POLICY_LEVELS = [
-  {
-    id: 'ADVISORY',
-    title: 'Advisory',
-    description: 'AI can only explain and suggest. No modifications.',
-    icon: MessageSquare,
-    color: 'text-slate-600 dark:text-slate-500',
-    bgColor: 'from-slate-700 to-slate-800',
-  },
-  {
-    id: 'ASSISTED',
-    title: 'Assisted',
-    description: 'AI can create drafts that require approval.',
-    icon: FileCode,
-    color: 'text-blue-400',
-    bgColor: 'from-blue-700 to-blue-800',
-  },
-  {
-    id: 'PROACTIVE',
-    title: 'Proactive',
-    description: 'AI can execute low-risk actions automatically.',
-    icon: Zap,
-    color: 'text-primary-400',
-    bgColor: 'from-primary-700 to-primary-800',
-  },
-  {
-    id: 'AUTOPILOT',
-    title: 'Autopilot',
-    description: 'AI operates autonomously within governance rules.',
-    icon: Brain,
-    color: 'text-emerald-400',
-    bgColor: 'from-emerald-700 to-emerald-800',
-  },
-];
-
-// AI Roles
-const AI_ROLES = [
-  { id: 'ADVISOR', title: 'Advisor', description: 'Provides guidance and recommendations' },
-  { id: 'PMO_MANAGER', title: 'PMO Manager', description: 'Manages project methodology' },
-  { id: 'EXECUTOR', title: 'Executor', description: 'Executes approved actions' },
-  { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' },
-];
-
 export const PolicyGovernanceTab: React.FC = () => {
+  const { t } = useTranslation();
+  // Policy level configurations
+  const POLICY_LEVELS = [
+    {
+      id: 'ADVISORY',
+      title: t('admin.aiControlCenter.policyGovernance.levels.advisory.title', 'Advisory'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.levels.advisory.description',
+        'AI can only explain and suggest. No modifications.'
+      ),
+      icon: MessageSquare,
+      color: 'text-slate-600 dark:text-slate-500',
+      bgColor: 'from-slate-700 to-slate-800',
+    },
+    {
+      id: 'ASSISTED',
+      title: t('admin.aiControlCenter.policyGovernance.levels.assisted.title', 'Assisted'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.levels.assisted.description',
+        'AI can create drafts that require approval.'
+      ),
+      icon: FileCode,
+      color: 'text-blue-400',
+      bgColor: 'from-blue-700 to-blue-800',
+    },
+    {
+      id: 'PROACTIVE',
+      title: t('admin.aiControlCenter.policyGovernance.levels.proactive.title', 'Proactive'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.levels.proactive.description',
+        'AI can execute low-risk actions automatically.'
+      ),
+      icon: Zap,
+      color: 'text-primary-400',
+      bgColor: 'from-primary-700 to-primary-800',
+    },
+    {
+      id: 'AUTOPILOT',
+      title: t('admin.aiControlCenter.policyGovernance.levels.autopilot.title', 'Autopilot'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.levels.autopilot.description',
+        'AI operates autonomously within governance rules.'
+      ),
+      icon: Brain,
+      color: 'text-emerald-400',
+      bgColor: 'from-emerald-700 to-emerald-800',
+    },
+  ];
+
+  // AI Roles
+  const AI_ROLES = [
+    {
+      id: 'ADVISOR',
+      title: t('admin.aiControlCenter.policyGovernance.roles.advisor.title', 'Advisor'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.roles.advisor.description',
+        'Provides guidance and recommendations'
+      ),
+    },
+    {
+      id: 'PMO_MANAGER',
+      title: t('admin.aiControlCenter.policyGovernance.roles.pmoManager.title', 'PMO Manager'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.roles.pmoManager.description',
+        'Manages project methodology'
+      ),
+    },
+    {
+      id: 'EXECUTOR',
+      title: t('admin.aiControlCenter.policyGovernance.roles.executor.title', 'Executor'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.roles.executor.description',
+        'Executes approved actions'
+      ),
+    },
+    {
+      id: 'EDUCATOR',
+      title: t('admin.aiControlCenter.policyGovernance.roles.educator.title', 'Educator'),
+      description: t(
+        'admin.aiControlCenter.policyGovernance.roles.educator.description',
+        'Teaches and explains concepts'
+      ),
+    },
+  ];
+
   const { currentOrganization } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,7 +144,12 @@ export const PolicyGovernanceTab: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
-      toast.error('Failed to load organization AI settings');
+      toast.error(
+        t(
+          'admin.aiControlCenter.policyGovernance.errors.load',
+          'Failed to load organization AI settings'
+        )
+      );
     }
     setLoading(false);
   };
@@ -125,12 +172,16 @@ export const PolicyGovernanceTab: React.FC = () => {
         const updated = await res.json();
         setSettings(updated);
         setHasChanges(false);
-        toast.success('AI Policy settings saved');
+        toast.success(
+          t('admin.aiControlCenter.policyGovernance.toasts.saved', 'AI Policy settings saved')
+        );
       } else {
         throw new Error('Save failed');
       }
     } catch (error) {
-      toast.error('Failed to save settings');
+      toast.error(
+        t('admin.aiControlCenter.policyGovernance.errors.save', 'Failed to save settings')
+      );
     }
     setSaving(false);
   };
@@ -160,10 +211,13 @@ export const PolicyGovernanceTab: React.FC = () => {
         <div>
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <Shield className="text-primary-600 dark:text-primary-400" size={20} />
-            AI Policy & Governance
+            {t('admin.aiControlCenter.policyGovernance.title', 'AI Policy & Governance')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Configure AI behavior and governance rules for your organization
+            {t(
+              'admin.aiControlCenter.policyGovernance.description',
+              'Configure AI behavior and governance rules for your organization'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -173,7 +227,7 @@ export const PolicyGovernanceTab: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-xs text-warning-700 dark:text-amber-400 bg-warning-500/10 px-3 py-1.5 rounded-full border border-warning-500/30 dark:border-transparent"
             >
-              Unsaved changes
+              {t('admin.aiControlCenter.policyGovernance.unsavedChanges', 'Unsaved changes')}
             </motion.span>
           )}
           <button
@@ -186,7 +240,7 @@ export const PolicyGovernanceTab: React.FC = () => {
             }`}
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Changes
+            {t('admin.aiControlCenter.policyGovernance.saveChanges', 'Save Changes')}
           </button>
         </div>
       </div>
@@ -195,8 +249,11 @@ export const PolicyGovernanceTab: React.FC = () => {
         <div className="space-y-6">
           {/* Policy Level */}
           <SettingsCard
-            title="AI Policy Level"
-            description="Controls what actions AI can perform in your organization"
+            title={t('admin.aiControlCenter.policyGovernance.policyLevel.title', 'AI Policy Level')}
+            description={t(
+              'admin.aiControlCenter.policyGovernance.policyLevel.description',
+              'Controls what actions AI can perform in your organization'
+            )}
             icon={Shield}
             iconColor="text-primary-400"
           >
@@ -225,7 +282,7 @@ export const PolicyGovernanceTab: React.FC = () => {
                   >
                     {isMax && (
                       <span className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full bg-warning-500/10 text-warning-700 dark:text-amber-400 border border-warning-500/30 dark:border-transparent">
-                        Max Allowed
+                        {t('admin.aiControlCenter.policyGovernance.maxAllowed', 'Max Allowed')}
                       </span>
                     )}
                     <div className="flex items-start gap-3">
@@ -255,8 +312,11 @@ export const PolicyGovernanceTab: React.FC = () => {
 
           {/* Active AI Roles */}
           <SettingsCard
-            title="Active AI Roles"
-            description="Select which AI personas are available to users"
+            title={t('admin.aiControlCenter.policyGovernance.activeRoles.title', 'Active AI Roles')}
+            description={t(
+              'admin.aiControlCenter.policyGovernance.activeRoles.description',
+              'Select which AI personas are available to users'
+            )}
             icon={Users}
             iconColor="text-blue-400"
           >
@@ -286,7 +346,7 @@ export const PolicyGovernanceTab: React.FC = () => {
 
             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
               <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
-                Default Role
+                {t('admin.aiControlCenter.policyGovernance.defaultRole', 'Default Role')}
               </label>
               <select
                 value={settings.defaultRole}
@@ -304,8 +364,14 @@ export const PolicyGovernanceTab: React.FC = () => {
 
           {/* Default Proactivity */}
           <SettingsCard
-            title="Default Proactivity"
-            description="Default AI proactivity level for new users"
+            title={t(
+              'admin.aiControlCenter.policyGovernance.defaultProactivity.title',
+              'Default Proactivity'
+            )}
+            description={t(
+              'admin.aiControlCenter.policyGovernance.defaultProactivity.description',
+              'Default AI proactivity level for new users'
+            )}
             icon={Zap}
             iconColor="text-emerald-400"
           >
@@ -318,8 +384,14 @@ export const PolicyGovernanceTab: React.FC = () => {
 
           {/* Governance Rules */}
           <SettingsCard
-            title="Governance Rules"
-            description="Additional governance and approval settings"
+            title={t(
+              'admin.aiControlCenter.policyGovernance.governanceRules.title',
+              'Governance Rules'
+            )}
+            description={t(
+              'admin.aiControlCenter.policyGovernance.governanceRules.description',
+              'Additional governance and approval settings'
+            )}
             icon={Lock}
             iconColor="text-amber-400"
           >
@@ -330,13 +402,23 @@ export const PolicyGovernanceTab: React.FC = () => {
                     <AlertTriangle size={16} className="text-warning-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-navy-900 dark:text-white">Regulatory Mode</h4>
+                    <h4 className="font-medium text-navy-900 dark:text-white">
+                      {t(
+                        'admin.aiControlCenter.policyGovernance.regulatoryMode.title',
+                        'Regulatory Mode'
+                      )}
+                    </h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      When enabled, AI operates in strict compliance mode. All actions require
-                      explicit approval.
+                      {t(
+                        'admin.aiControlCenter.policyGovernance.regulatoryMode.description',
+                        'When enabled, AI operates in strict compliance mode. All actions require explicit approval.'
+                      )}
                     </p>
                     <p className="text-xs text-warning-600 dark:text-amber-400 mt-2">
-                      Note: Regulatory Mode can be configured per-project in Project Settings.
+                      {t(
+                        'admin.aiControlCenter.policyGovernance.regulatoryMode.note',
+                        'Note: Regulatory Mode can be configured per-project in Project Settings.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -348,12 +430,23 @@ export const PolicyGovernanceTab: React.FC = () => {
                     <ListChecks size={16} className="text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-navy-900 dark:text-white">Project Overrides</h4>
+                    <h4 className="font-medium text-navy-900 dark:text-white">
+                      {t(
+                        'admin.aiControlCenter.policyGovernance.projectOverrides.title',
+                        'Project Overrides'
+                      )}
+                    </h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Individual projects can override organization AI policy settings.
+                      {t(
+                        'admin.aiControlCenter.policyGovernance.projectOverrides.description',
+                        'Individual projects can override organization AI policy settings.'
+                      )}
                     </p>
                     <button className="mt-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
-                      View Project Overrides →
+                      {t(
+                        'admin.aiControlCenter.policyGovernance.projectOverrides.viewLink',
+                        'View Project Overrides →'
+                      )}
                     </button>
                   </div>
                 </div>

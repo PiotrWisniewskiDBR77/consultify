@@ -15153,6 +15153,119 @@
         "pricingLogicIntro": "Tokeny użytkownika są odliczane na podstawie",
         "markupMultiplierTerm": "Mnożnik narzutu",
         "pricingLogicExample": "Jeśli model kosztuje 0,01 USD/1k, a ustawisz mnożnik 2,0x, użytkownik płaci 2000 tokenów platformy (wartość ok. 0,02 USD) za 1000 tokenów wejściowych."
+      },
+      "policyGovernance": {
+        "levels": {
+          "advisory": {
+            "title": "Doradczy",
+            "description": "AI może jedynie wyjaśniać i sugerować. Brak modyfikacji."
+          },
+          "assisted": {
+            "title": "Wspomagany",
+            "description": "AI może tworzyć wersje robocze wymagające zatwierdzenia."
+          },
+          "proactive": {
+            "title": "Proaktywny",
+            "description": "AI może automatycznie wykonywać działania niskiego ryzyka."
+          },
+          "autopilot": {
+            "title": "Autopilot",
+            "description": "AI działa autonomicznie w ramach zasad zarządzania."
+          }
+        },
+        "roles": {
+          "advisor": {
+            "title": "Doradca",
+            "description": "Dostarcza wskazówek i rekomendacji"
+          },
+          "pmoManager": {
+            "title": "Kierownik PMO",
+            "description": "Zarządza metodyką projektu"
+          },
+          "executor": {
+            "title": "Wykonawca",
+            "description": "Wykonuje zatwierdzone działania"
+          },
+          "educator": {
+            "title": "Edukator",
+            "description": "Naucza i wyjaśnia koncepcje"
+          }
+        },
+        "errors": {
+          "load": "Nie udało się załadować ustawień AI organizacji",
+          "save": "Nie udało się zapisać ustawień"
+        },
+        "toasts": {
+          "saved": "Zapisano ustawienia polityki AI"
+        },
+        "title": "Polityka i zarządzanie AI",
+        "description": "Skonfiguruj zachowanie AI i zasady zarządzania dla organizacji",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saveChanges": "Zapisz zmiany",
+        "policyLevel": {
+          "title": "Poziom polityki AI",
+          "description": "Kontroluje, jakie działania może wykonywać AI w organizacji"
+        },
+        "maxAllowed": "Maksymalny dozwolony",
+        "activeRoles": {
+          "title": "Aktywne role AI",
+          "description": "Wybierz, które persony AI są dostępne dla użytkowników"
+        },
+        "defaultRole": "Rola domyślna",
+        "defaultProactivity": {
+          "title": "Domyślna proaktywność",
+          "description": "Domyślny poziom proaktywności AI dla nowych użytkowników"
+        },
+        "governanceRules": {
+          "title": "Zasady zarządzania",
+          "description": "Dodatkowe ustawienia zarządzania i zatwierdzania"
+        },
+        "regulatoryMode": {
+          "title": "Tryb regulacyjny",
+          "description": "Gdy włączony, AI działa w trybie ścisłej zgodności. Wszystkie działania wymagają wyraźnego zatwierdzenia.",
+          "note": "Uwaga: Tryb regulacyjny można skonfigurować per projekt w ustawieniach projektu."
+        },
+        "projectOverrides": {
+          "title": "Nadpisania projektowe",
+          "description": "Poszczególne projekty mogą nadpisywać ustawienia polityki AI organizacji.",
+          "viewLink": "Zobacz nadpisania projektowe →"
+        }
+      },
+      "missionControl": {
+        "errors": {
+          "incompleteStatus": "Odpowiedź statusu misji AI była niekompletna",
+          "incompleteTest": "Odpowiedź testu funkcji była niekompletna",
+          "notConfirmed": "Test funkcji nie potwierdził powodzenia",
+          "fetchStatus": "Nie udało się pobrać statusu AI",
+          "testFailed": "Test funkcji nie powiódł się"
+        },
+        "unknownProvider": "Nieznany dostawca",
+        "capabilities": {
+          "connection": "Połączenie AI (podstawowe)",
+          "eyes": "Oczy AI (kontekst wizualny)",
+          "memory": "Pamięć AI (RAG)",
+          "hands": "Ręce AI (narzędzia MCP)",
+          "reasoning": "Tryb MAX (rozumowanie)"
+        },
+        "title": "Centrum dowodzenia AI",
+        "refreshStatus": "Odśwież status",
+        "unavailableTitle": "Centrum dowodzenia AI niedostępne",
+        "loading": "Ładowanie statusu misji AI...",
+        "successRate": "Wskaźnik powodzenia (ostatnie 50)",
+        "excellent": "Doskonały",
+        "degraded": "Obniżony",
+        "avgLatency": "Średnie opóźnienie",
+        "perRequest": "na żądanie",
+        "activeProviders": "Aktywni dostawcy",
+        "noActiveProviders": "Brak aktywnych dostawców",
+        "diagnosticsTitle": "Diagnostyka funkcji AI",
+        "testDescription": "Sprawdź, czy {{capability}} działa poprawnie.",
+        "resultLatency": "{{status}} ({{latency}}ms)",
+        "statusUnavailable": "Status centrum dowodzenia AI jest niedostępny",
+        "runTest": "Uruchom test",
+        "latestLogs": "NAJNOWSZE LOGI DIAGNOSTYCZNE",
+        "clear": "Wyczyść",
+        "errorLabel": "Błąd: {{error}}"
       }
     }
   },
