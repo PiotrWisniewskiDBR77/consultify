@@ -11,10 +11,7 @@
 
 import { type Response, Router } from 'express';
 
-import {
-  getPromptRegistrySummary,
-  verifyAllPromptChecksums,
-} from '../ai/promptRegistry.js';
+import { getPromptRegistrySummary, verifyAllPromptChecksums } from '../ai/promptRegistry.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
