@@ -356,23 +356,22 @@ const EDITOR_STYLES = `
 .ProseMirror {
   line-height: 1.75;
   font-size: 1rem;
-  color: #1e293b;
-  caret-color: #1E3A5F;
+  color: var(--c-text);
+  caret-color: #1E3A5F; /* celowy kolor edytora, brak tokenu (marka navy, nie c-info) */
 }
-.dark .ProseMirror { color: #e2e8f0; caret-color: #8EAACF; }
+.dark .ProseMirror { caret-color: #8EAACF; /* celowy kolor edytora, brak tokenu */ }
 .ProseMirror h1 { font-size: 1.625rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
 .ProseMirror h2 { font-size: 1.325rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
 .ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.3rem; }
 .ProseMirror > * + * { margin-top: 0.4rem; }
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: #94a3b8;
+  color: var(--c-text-muted);
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
   font-style: italic;
 }
-.dark .ProseMirror p.is-editor-empty:first-child::before { color: #475569; }
 
 /* Block hover with subtle left accent */
 .ProseMirror > *:not(table) {
@@ -400,7 +399,7 @@ const EDITOR_STYLES = `
   padding: 0.25rem 0;
 }
 .ProseMirror ul[data-type="taskList"] li label input[type="checkbox"] {
-  accent-color: #1E3A5F;
+  accent-color: #1E3A5F; /* celowy kolor edytora, brak tokenu */
   margin-top: 0.35rem;
   width: 16px;
   height: 16px;
@@ -418,10 +417,15 @@ const EDITOR_STYLES = `
   backdrop-filter: blur(4px);
 }
 .nb-callout:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+/* Gradient tints (2 lekkie stopnie na wariant) celowo zostają — brak w tokenach
+   odpowiednika "soft tint" dla warning/success/danger (jest tylko --c-accent-soft
+   dla crimson). Border-color: info=niebieski i purple=fiolet celowo zostają
+   literalne — c-info w tokenach to fiolet (#3b2883), więc "info" niebieski i
+   "purple" fiolet nie mają jednoznacznego bezstratnego odpowiednika c-*. */
 .nb-callout[data-variant="info"]     { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #f0f7ff 100%); }
-.nb-callout[data-variant="warning"]  { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef9e7 100%); }
-.nb-callout[data-variant="success"]  { border-color: #22c55e; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); }
-.nb-callout[data-variant="critical"] { border-color: #f43f5e; background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
+.nb-callout[data-variant="warning"]  { border-color: var(--c-warning); background: linear-gradient(135deg, #fffbeb 0%, #fef9e7 100%); }
+.nb-callout[data-variant="success"]  { border-color: var(--c-success); background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); }
+.nb-callout[data-variant="critical"] { border-color: var(--c-danger); background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
 .nb-callout[data-variant="purple"]   { border-color: #a855f7; background: linear-gradient(135deg, #faf5ff 0%, #f5f0ff 100%); }
 .dark .nb-callout[data-variant="info"]     { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.04)); }
 .dark .nb-callout[data-variant="warning"]  { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04)); }
@@ -431,26 +435,22 @@ const EDITOR_STYLES = `
 
 /* Details / Toggle — refined */
 .nb-details {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   border-radius: 0.75rem;
   margin: 0.75rem 0;
   overflow: hidden;
   transition: all 0.2s ease;
 }
-.nb-details:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-color: #cbd5e1; }
-.dark .nb-details { border-color: rgba(255,255,255,0.08); }
-.dark .nb-details:hover { border-color: rgba(255,255,255,0.14); }
+.nb-details:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-color: var(--c-border); }
 .nb-summary {
   cursor: pointer;
   font-weight: 600;
   padding: 0.625rem 0.875rem;
-  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  background: var(--c-surface-raised);
   user-select: text;
   transition: background 0.15s;
 }
-.nb-summary:hover { background: linear-gradient(180deg, #f1f5f9, #e2e8f0); }
-.dark .nb-summary { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); }
-.dark .nb-summary:hover { background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04)); }
+.nb-summary:hover { background: var(--c-border-subtle); }
 .nb-details-content { padding: 0.625rem 0.875rem 0.875rem; }
 
 /* Table — refined styling */
@@ -460,29 +460,28 @@ const EDITOR_STYLES = `
   margin: 0.75rem 0;
   border-radius: 0.75rem;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
 }
-.dark .ProseMirror table { border-color: rgba(255,255,255,0.08); }
 .ProseMirror th,
 .ProseMirror td {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   padding: 0.5rem 0.875rem;
   text-align: left;
   vertical-align: top;
 }
-.dark .ProseMirror th,
-.dark .ProseMirror td { border-color: rgba(255,255,255,0.08); }
 .ProseMirror th {
   font-weight: 600;
   font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
-  color: #64748b;
+  background: var(--c-surface-raised);
+  color: var(--c-text-muted);
 }
-.dark .ProseMirror th { background: rgba(255,255,255,0.04); color: #94a3b8; }
 
-/* Code block — polished */
+/* Code block — polished. Background is INTENTIONALLY always-dark (code-editor
+   convention) regardless of app theme, so these colors are NOT tokenized —
+   var(--c-text) would go near-black in light mode and break contrast on the
+   fixed-dark surface. celowy kolor edytora, brak tokenu. */
 .ProseMirror pre {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   color: #e2e8f0;
@@ -496,34 +495,34 @@ const EDITOR_STYLES = `
 }
 .ProseMirror code:not(pre code) {
   background: rgba(30,58,95,0.08);
-  color: #1E3A5F;
+  color: #1E3A5F; /* celowy kolor edytora, brak tokenu (marka navy) */
   padding: 0.15em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
-.dark .ProseMirror code:not(pre code) { background: rgba(142,170,207,0.15); color: #AECAEF; }
+.dark .ProseMirror code:not(pre code) { background: rgba(142,170,207,0.15); color: #AECAEF; /* celowy, brak tokenu */ }
 
 /* Horizontal rule — gradient */
 .ProseMirror hr {
   border: none;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+  background: linear-gradient(90deg, transparent, var(--c-border) 20%, var(--c-border) 80%, transparent);
   margin: 2rem 0;
 }
-.dark .ProseMirror hr { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.1) 80%, transparent); }
 
 /* Blockquote */
 .ProseMirror blockquote {
-  border-left: 3px solid #1E3A5F;
+  border-left: 3px solid #1E3A5F; /* celowy kolor edytora, brak tokenu (marka navy) */
   padding-left: 1rem;
   margin: 0.75rem 0;
-  color: #64748b;
+  color: var(--c-text-muted);
   font-style: italic;
 }
-.dark .ProseMirror blockquote { border-left-color: #6E8AAF; color: #94a3b8; }
+.dark .ProseMirror blockquote { border-left-color: #6E8AAF; /* celowy, brak tokenu */ }
 
-/* Link */
+/* Link — celowy kolor edytora (marka navy), brak tokenu: c-info to fiolet,
+   nie ma odpowiednika dla niebieskiego linku edytora. */
 .ProseMirror .nb-link,
 .ProseMirror a {
   color: #1E3A5F;
@@ -550,8 +549,8 @@ const EDITOR_STYLES = `
 
 /* Lists */
 .ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; }
-.ProseMirror li::marker { color: #1E3A5F; }
-.dark .ProseMirror li::marker { color: #8EAACF; }
+.ProseMirror li::marker { color: #1E3A5F; /* celowy kolor edytora, brak tokenu */ }
+.dark .ProseMirror li::marker { color: #8EAACF; /* celowy, brak tokenu */ }
 
 /* Focus ring on editor */
 .ProseMirror:focus { outline: none; }
@@ -619,16 +618,14 @@ const EDITOR_STYLES = `
   height: auto;
   border-radius: 0.75rem;
   margin: 0.75rem 0;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   display: block;
 }
-.dark .ProseMirror img.nb-image,
-.dark .ProseMirror img { border-color: rgba(255,255,255,0.08); }
 .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid #1E3A5F;
+  outline: 2px solid #1E3A5F; /* celowy kolor edytora, brak tokenu */
   outline-offset: 2px;
 }
-.dark .ProseMirror img.ProseMirror-selectednode { outline-color: #6E8AAF; }
+.dark .ProseMirror img.ProseMirror-selectednode { outline-color: #6E8AAF; /* celowy, brak tokenu */ }
 
 /* Bookmark card (rich link preview) */
 .ProseMirror a.nb-bookmark {
@@ -636,31 +633,27 @@ const EDITOR_STYLES = `
   align-items: stretch;
   gap: 0;
   margin: 0.75rem 0;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--c-border-subtle);
   border-radius: 0.75rem;
   overflow: hidden;
   text-decoration: none;
-  background: #ffffff;
+  background: var(--c-surface);
   transition: border-color 0.15s, background 0.15s;
   cursor: pointer;
 }
-.ProseMirror a.nb-bookmark:hover { border-color: #cbd5e1; background: #f8fafc; }
-.dark .ProseMirror a.nb-bookmark { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.02); }
-.dark .ProseMirror a.nb-bookmark:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); }
-.ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline: 2px solid #1E3A5F; outline-offset: 2px; }
-.dark .ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline-color: #6E8AAF; }
+.ProseMirror a.nb-bookmark:hover { border-color: var(--c-border); background: var(--c-surface-raised); }
+.ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline: 2px solid #1E3A5F; outline-offset: 2px; /* celowy kolor edytora, brak tokenu */ }
+.dark .ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline-color: #6E8AAF; /* celowy, brak tokenu */ }
 .ProseMirror .nb-bookmark-body { flex: 1 1 auto; min-width: 0; padding: 0.7rem 0.85rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .ProseMirror .nb-bookmark-title {
-  font-weight: 600; font-size: 0.9rem; color: #0f172a;
+  font-weight: 600; font-size: 0.9rem; color: var(--c-text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.dark .ProseMirror .nb-bookmark-title { color: #e2e8f0; }
 .ProseMirror .nb-bookmark-desc {
-  font-size: 0.8rem; color: #64748b; line-height: 1.35;
+  font-size: 0.8rem; color: var(--c-text-muted); line-height: 1.35;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.dark .ProseMirror .nb-bookmark-desc { color: #94a3b8; }
-.ProseMirror .nb-bookmark-link { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem; font-size: 0.72rem; color: #94a3b8; }
+.ProseMirror .nb-bookmark-link { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem; font-size: 0.72rem; color: var(--c-text-muted); }
 .ProseMirror img.nb-bookmark-favicon { width: 14px; height: 14px; margin: 0; border: none; border-radius: 3px; display: inline-block; flex: none; }
 .ProseMirror .nb-bookmark-thumb { flex: none; width: 120px; align-self: stretch; }
 .ProseMirror .nb-bookmark-thumb img { width: 120px; height: 100%; object-fit: cover; margin: 0; border: none; border-radius: 0; display: block; }
@@ -682,7 +675,10 @@ const EDITOR_STYLES = `
 }
 .ProseMirror pre.nb-code-block:hover::after { opacity: 1; }
 
-/* Syntax highlighting (lowlight / highlight.js token classes) — dark code surface */
+/* Syntax highlighting (lowlight / highlight.js token classes) — dark code surface.
+   celowe kolory edytora, brak tokenu: paleta musi zostać czytelna na STAŁE
+   ciemnym tle bloku kodu niezależnie od motywu aplikacji (c-chart-* zmieniają
+   się light/dark i nie gwarantują kontrastu na navy). */
 .ProseMirror pre .hljs-comment,
 .ProseMirror pre .hljs-quote { color: #64748b; font-style: italic; }
 .ProseMirror pre .hljs-keyword,

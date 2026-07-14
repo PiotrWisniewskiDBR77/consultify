@@ -211,7 +211,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
         data: { label: centerLabel },
         style: {
           background: 'var(--c-info)',
-          color: '#fff',
+          color: 'var(--c-tag-foreground)',
           border: 'none',
           borderRadius: 12,
           fontWeight: 600,
