@@ -82,6 +82,7 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { LoadingState } from '@/components/shared/states';
+import { UnifiedCreateLauncher } from '@/components/shared/UnifiedCreateLauncher';
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
@@ -111,6 +112,7 @@ import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
+import { isUnifiedCreateLauncherEnabled } from '@/utils/unifiedCreateLauncherFlag';
 
 import { CalendarView } from './Calendar/CalendarView';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
@@ -679,6 +681,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     Record<string, IdeaWorkspaceHubState>
   >({});
   const [showStartupTemplates, setShowStartupTemplates] = useState(false);
+  // I1-I3 Faza 0 — unified "+ Nowy" launcher (Insight/Initiative/Decision).
+  // Gated by isUnifiedCreateLauncherEnabled() (default OFF) — see
+  // Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0.
+  const [showUnifiedLauncher, setShowUnifiedLauncher] = useState(false);
   const [ideaStageFilter, setIdeaStageFilter] = useState<IdeaStage | 'all'>('all');
   const [ideasStageCounts, setIdeasStageCounts] = useState<{
     total: number;
@@ -4017,6 +4023,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             )}
 
+            {/* I1-I3 Faza 0 — unified "+ Nowy" launcher (Insight/Initiative/
+                Decision), additive next to the existing per-tab CTA above.
+                Flag OFF by default — see unifiedCreateLauncherFlag.ts. */}
+            {!activeDocumentId && isUnifiedCreateLauncherEnabled() && (
+              <button
+                onClick={() => setShowUnifiedLauncher(true)}
+                className={`${CTA_BASE} ${CTA_TONE.neutral}`}
+                data-testid="mywork-unified-create-launcher-trigger"
+              >
+                <span>{isPolish ? '+ Nowy' : '+ New'}</span>
+              </button>
+            )}
+
             {/* Ideas detail AI action lives in Menu 3 right slot. */}
           </div>
         </div>
@@ -4041,6 +4060,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         onClose={() => setShowStartupTemplates(false)}
         onSelect={handleStartupTemplateSelect}
       />
+
+      {/* I1-I3 Faza 0 — unified "+ Nowy" launcher (flag OFF by default). */}
+      {isUnifiedCreateLauncherEnabled() && (
+        <UnifiedCreateLauncher
+          isOpen={showUnifiedLauncher}
+          onClose={() => setShowUnifiedLauncher(false)}
+          projectId={currentProjectId || undefined}
+          isPolish={isPolish}
+          onCreated={() => setShowUnifiedLauncher(false)}
+        />
+      )}
     </div>
   );
 };
